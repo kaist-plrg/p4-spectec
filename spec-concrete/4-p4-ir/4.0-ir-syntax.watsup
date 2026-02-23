@@ -186,7 +186,7 @@ syntax expressionIR =
   | parenthesizedExpressionIR
 
 syntax expressionNoteIR = `( typeIR ctk )
-  hint(prose "type" %0 "and compile-time known-ness" %1)
+  hint(prose "a pair of type" %0 "and compile-time known-ness" %1)
   hint(prose_fields "type" "compile-time known-ness")
 
 syntax typedExpressionIR =
@@ -197,17 +197,19 @@ syntax typedExpressionIR =
 
 syntax typedExpressionListIR = typedExpressionIR*
 
-dec $type_of_typedExpressionIR(typedExpressionIR) : typeIR
-  hint(prose_in "the type of" %0)
-def $type_of_typedExpressionIR(_ `# `( typeIR _ )) = typeIR
-
-dec $ctk_of_typedExpressionIR(typedExpressionIR) : ctk
-  hint(prose_in "the compile-time known-ness of" %0)
-def $ctk_of_typedExpressionIR(_ `# `( _ ctk )) = ctk
-
 syntax memberAccessBaseIR =
   | TYPE prefixedNameIR
   | typedExpressionIR
+
+dec $type_of_typedExpressionIR(typedExpressionIR) : typeIR
+  hint(prose_in "the type of" %0)
+def $type_of_typedExpressionIR(typedExpressionIR) = typeIR
+  -- if _ `# `( typeIR _ ) = typedExpressionIR
+
+dec $ctk_of_typedExpressionIR(typedExpressionIR) : ctk
+  hint(prose_in "the compile-time known-ness of" %0)
+def $ctk_of_typedExpressionIR(typedExpressionIR) = ctk
+  -- if _ `# `( _ ctk ) = typedExpressionIR
 
 ;;
 ;; Keyset expressions
@@ -275,7 +277,8 @@ syntax typedLvalueIR = lvalueIR `# lvalueNoteIR
 
 dec $type_of_typedLvalueIR(typedLvalueIR) : typeIR
   hint(prose_in "the type of lvalue" %0)
-def $type_of_typedLvalueIR(_ `# `( typeIR )) = typeIR
+def $type_of_typedLvalueIR(typedLvalueIR) = typeIR
+  -- if _ `# `( typeIR ) = typedLvalueIR
 
 dec $typedLvalueIR_as_typedExpressionIR(typedLvalueIR)
   : typedExpressionIR?

@@ -45,52 +45,33 @@ let find_rename_ticks (frees : IdSet.t) (id : Id.t) : Id.t option =
   let id_rename = id_strip.it ^ String.make count_min '\'' $ id.at in
   if Id.eq id id_rename then None else Some id_rename
 
-let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
-  match instrs with
-  | [] -> []
-  | { it = IfI (exp_cond, iterexps, instrs_then); at; _ } :: instrs_t ->
+let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
+  match instr.it with
+  | IfI (exp_cond, iterexps, block_then) ->
       let frees = Ol.Free.free_exp exp_cond |> IdSet.union frees in
-      let instrs_then = upstream frees instrs_then in
-      let instr_h = IfI (exp_cond, iterexps, instrs_then) $ at in
-      let instrs_t = upstream frees instrs_t in
-      instr_h :: instrs_t
-  | {
-      it = HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold);
-      at;
-      _;
-    }
-    :: instrs_t ->
+      let block_then = upstream_block frees block_then in
+      IfI (exp_cond, iterexps, block_then) $ instr.at
+  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
       let frees = Ol.Free.free_exps exps |> IdSet.union frees in
-      let instrs_hold = upstream frees instrs_hold in
-      let instrs_nothold = upstream frees instrs_nothold in
-      let instr_h =
-        HoldI (id, (mixop, exps), iterexps, instrs_hold, instrs_nothold) $ at
-      in
-      let frees = Ol.Free.free_instrs instrs_hold |> IdSet.union frees in
-      let frees = Ol.Free.free_instrs instrs_nothold |> IdSet.union frees in
-      let instrs_t = upstream frees instrs_t in
-      instr_h :: instrs_t
-  | { it = CaseI (exp, cases, total); at; _ } :: instrs_t ->
+      let block_hold = upstream_block frees block_hold in
+      let block_nothold = upstream_block frees block_nothold in
+      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ instr.at
+  | CaseI (exp, cases, total) ->
       let frees = Ol.Free.free_exp exp |> IdSet.union frees in
       let cases =
         List.map
           (fun (guard, block) ->
             let frees = Ol.Free.free_guard guard |> IdSet.union frees in
-            let block = upstream frees block in
+            let block = upstream_block frees block in
             (guard, block))
           cases
       in
-      let instr_h = CaseI (exp, cases, total) $ at in
-      let instrs_t = upstream frees instrs_t in
-      instr_h :: instrs_t
-  | { it = GroupI (id, rel_signature, exps, instrs_group); at; _ } :: instrs_t
-    ->
+      CaseI (exp, cases, total) $ instr.at
+  | GroupI (id, rel_signature, exps, block) ->
       let frees = Ol.Free.free_exps exps |> IdSet.union frees in
-      let instrs_group = upstream frees instrs_group in
-      let instr_h = GroupI (id, rel_signature, exps, instrs_group) $ at in
-      let instrs_t = upstream frees instrs_t in
-      instr_h :: instrs_t
-  | { it = LetI (exp_l, exp_r, iterinstrs); at; _ } :: instrs_t ->
+      let block = upstream_block frees block in
+      GroupI (id, rel_signature, exps, block) $ instr.at
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let frees_l = Ol.Free.free_exp exp_l in
       let frees, renamer =
         frees_l |> IdSet.to_list
@@ -101,20 +82,21 @@ let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
                    let frees =
                      frees |> IdSet.remove id_l |> IdSet.add id_rename
                    in
-                   let renamer = Renamer.add id_l id_rename renamer in
+                   let renamer = Re.Renamer.add id_l id_rename renamer in
                    (frees, renamer)
                | None ->
                    let frees = IdSet.add id_l frees in
                    (frees, renamer))
-             (frees, Renamer.empty)
+             (frees, Re.Renamer.empty)
       in
-      let exp_l = Renamer.rename_exp renamer exp_l in
-      let iterinstrs = Renamer.rename_iterinstrs_bind renamer iterinstrs in
-      let instr_h = LetI (exp_l, exp_r, iterinstrs) $ at in
+      let exp_l = Re.Renamer.rename_exp renamer exp_l in
+      let iterinstrs = Re.Renamer.rename_iterinstrs_bind renamer iterinstrs in
       let frees = Ol.Free.free_exp exp_r |> IdSet.union frees in
-      let instrs_t = Renamer.rename_instrs renamer instrs_t |> upstream frees in
-      instr_h :: instrs_t
-  | { it = RuleI (id, (mixop, exps), inputs, iterinstrs); at; _ } :: instrs_t ->
+      let block =
+        Re.Renamer.rename_block renamer block |> upstream_block frees
+      in
+      LetI (exp_l, exp_r, iterinstrs, block) $ instr.at
+  | RuleI (id, (mixop, exps), inputs, iterinstrs, block) ->
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let frees_output = Ol.Free.free_exps exps_output in
       let frees, renamer =
@@ -126,64 +108,81 @@ let rec upstream (frees : IdSet.t) (instrs : instr list) : instr list =
                    let frees =
                      frees |> IdSet.remove id_output |> IdSet.add id_rename
                    in
-                   let renamer = Renamer.add id_output id_rename renamer in
+                   let renamer = Re.Renamer.add id_output id_rename renamer in
                    (frees, renamer)
                | None ->
                    let frees = IdSet.add id_output frees in
                    (frees, renamer))
-             (frees, Renamer.empty)
+             (frees, Re.Renamer.empty)
       in
-      let exps_output = Renamer.rename_exps renamer exps_output in
-      let iterinstrs = Renamer.rename_iterinstrs_bind renamer iterinstrs in
+      let exps_output = Re.Renamer.rename_exps renamer exps_output in
+      let iterinstrs = Re.Renamer.rename_iterinstrs_bind renamer iterinstrs in
       let exps = Hints.Input.combine inputs exps_input exps_output in
-      let instr_h = RuleI (id, (mixop, exps), inputs, iterinstrs) $ at in
-      let instrs_t = Renamer.rename_instrs renamer instrs_t |> upstream frees in
-      instr_h :: instrs_t
-  | instr_h :: instrs_t ->
-      let frees = Ol.Free.free_instr instr_h |> IdSet.union frees in
-      let instrs_t = upstream frees instrs_t in
-      instr_h :: instrs_t
+      let frees = Ol.Free.free_exps exps_input |> IdSet.union frees in
+      let block =
+        Re.Renamer.rename_block renamer block |> upstream_block frees
+      in
+      RuleI (id, (mixop, exps), inputs, iterinstrs, block) $ instr.at
+  | _ -> instr
 
-let apply_rel ((exps_match, instrs) : exp list * instr list) :
-    exp list * instr list =
+and upstream_block (frees : IdSet.t) (block : block) : block =
+  match block with
+  | [] -> []
+  | instr_h :: block_t ->
+      let instr_h = upstream_instr frees instr_h in
+      let block_t = upstream_block frees block_t in
+      instr_h :: block_t
+
+let apply_rel
+    ((exps_match, block, elseblock_opt) : exp list * block * elseblock option) :
+    exp list * block * elseblock option =
   let frees_match = Ol.Free.free_exps exps_match in
-  let frees, exps_match, instrs =
+  let frees, exps_match, block, elseblock_opt =
     frees_match |> IdSet.to_list
     |> List.fold_left
-         (fun (frees, exps_match, instrs) id ->
+         (fun (frees, exps_match, block, elseblock_opt) id ->
            match find_rename_ticks frees id with
            | Some id_rename ->
                let frees = IdSet.add id_rename frees in
-               let renamer = Renamer.singleton id id_rename in
-               let exps_match = Renamer.rename_exps renamer exps_match in
-               let instrs = Renamer.rename_instrs renamer instrs in
-               (frees, exps_match, instrs)
+               let renamer = Re.Renamer.singleton id id_rename in
+               let exps_match = Re.Renamer.rename_exps renamer exps_match in
+               let block = Re.Renamer.rename_block renamer block in
+               let elseblock_opt =
+                 Option.map (Re.Renamer.rename_block renamer) elseblock_opt
+               in
+               (frees, exps_match, block, elseblock_opt)
            | None ->
                let frees = IdSet.add id frees in
-               (frees, exps_match, instrs))
-         (IdSet.empty, exps_match, instrs)
+               (frees, exps_match, block, elseblock_opt))
+         (IdSet.empty, exps_match, block, elseblock_opt)
   in
-  let instrs = upstream frees instrs in
-  (exps_match, instrs)
+  let block = upstream_block frees block in
+  let elseblock_opt = Option.map (upstream_block frees) elseblock_opt in
+  (exps_match, block, elseblock_opt)
 
-let apply_func ((args_input, instrs) : arg list * instr list) :
-    arg list * instr list =
+let apply_func
+    ((args_input, block, elseblock_opt) : arg list * block * elseblock option) :
+    arg list * block * elseblock option =
   let frees_args = Ol.Free.free_args args_input in
-  let frees, args_input, instrs =
+  let frees, args_input, block, elseblock_opt =
     frees_args |> IdSet.to_list
     |> List.fold_left
-         (fun (frees, args_input, instrs) id ->
+         (fun (frees, args_input, block, elseblock_opt) id ->
            match find_rename_ticks frees id with
            | Some id_rename ->
                let frees = IdSet.add id_rename frees in
-               let renamer = Renamer.singleton id id_rename in
-               let args_input = Renamer.rename_args renamer args_input in
-               let instrs = Renamer.rename_instrs renamer instrs in
-               (frees, args_input, instrs)
+               let renamer = Re.Renamer.singleton id id_rename in
+               let args_input = Re.Renamer.rename_args renamer args_input in
+               let block = Re.Renamer.rename_block renamer block in
+               let elseblock_opt =
+                 Option.map (Re.Renamer.rename_block renamer) elseblock_opt
+               in
+               (frees, args_input, block, elseblock_opt)
            | None ->
                let frees = IdSet.add id frees in
-               (frees, args_input, instrs))
-         (IdSet.empty, args_input, instrs)
+               (frees, args_input, block, elseblock_opt))
+         (IdSet.empty, args_input, block, elseblock_opt)
   in
-  let instrs = upstream frees instrs in
-  (args_input, instrs)
+  let block = upstream_block frees block in
+  let elseblock_opt = Option.map (upstream_block frees) elseblock_opt in
+  (args_input, block, elseblock_opt)

@@ -353,11 +353,15 @@ rule Expr_inst/parenthesizedExpressionIR:
 ;; syntax typedExpressionListIR
 ;;
 
-rule Exprs_inst/nil:
-  p IC STO |- eps : STO eps
+rulegroup Exprs_inst {
 
-rule Exprs_inst/cons:
-  p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
-              : STO_2 (value_h :: value_t*)
-  -- Expr_inst: p IC STO_0 |- typedExpressionIR_h : STO_1 value_h
-  -- Exprs_inst: p IC STO_1 |- typedExpressionIR_t* : STO_2 value_t*
+  rule Exprs_inst/nil:
+    p IC STO |- eps : STO eps
+
+  rule Exprs_inst/cons:
+    p IC STO_0 |- typedExpressionIR_h :: typedExpressionIR_t*
+                : STO_2 (value_h :: value_t*)
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_h : STO_1 value_h
+    -- Exprs_inst: p IC STO_1 |- typedExpressionIR_t* : STO_2 value_t*
+
+}

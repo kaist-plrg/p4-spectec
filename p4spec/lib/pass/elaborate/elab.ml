@@ -25,43 +25,42 @@ let elab_iter (iter : iter) : Il.iter =
 
 (* Type destructuring *)
 
-let as_text_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : unit attempt_unit =
+let as_text_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : unit attempt =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
   match plaintyp.it with
   | TextT -> Ok ()
-  | _ -> fail_unit plaintyp.at "cannot destruct type as text"
+  | _ -> fail plaintyp.at "cannot destruct type as text"
 
 let as_iter_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
-    (plaintyp * iter) attempt_unit =
+    (plaintyp * iter) attempt =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
   match plaintyp.it with
   | IterT (plaintyp, iter) -> Ok (plaintyp, iter)
-  | _ -> fail_unit plaintyp.at "cannot destruct type as an iteration"
+  | _ -> fail plaintyp.at "cannot destruct type as an iteration"
 
 let as_tuple_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
-    plaintyp list attempt_unit =
+    plaintyp list attempt =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
   match plaintyp.it with
   | TupleT plaintyps -> Ok plaintyps
-  | _ -> fail_unit plaintyp.at "cannot destruct type as a tuple"
+  | _ -> fail plaintyp.at "cannot destruct type as a tuple"
 
-let as_list_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : plaintyp attempt_unit
-    =
+let as_list_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) : plaintyp attempt =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
   match plaintyp.it with
   | IterT (plaintyp, List) -> Ok plaintyp
-  | _ -> fail_unit plaintyp.at "cannot destruct type as a list"
+  | _ -> fail plaintyp.at "cannot destruct type as a list"
 
 let as_struct_plaintyp (ctx : Ctx.t) (plaintyp : plaintyp) :
-    typfield list attempt_unit =
+    typfield list attempt =
   let plaintyp = Plaintyp.expand_plaintyp ctx.tdenv plaintyp in
   match plaintyp.it with
   | VarT (tid, _) -> (
       let td_opt = Ctx.find_typdef_opt ctx tid in
       match td_opt with
       | Some (Defined (_, `Struct typfields)) -> Ok typfields
-      | _ -> fail_unit plaintyp.at "cannot destruct type as a struct")
-  | _ -> fail_unit plaintyp.at "cannot destruct type as a struct"
+      | _ -> fail plaintyp.at "cannot destruct type as a struct")
+  | _ -> fail plaintyp.at "cannot destruct type as a struct"
 
 (* Elaboration of plain types *)
 
@@ -212,10 +211,9 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
 (* Inference of expression type *)
 
 and fail_infer (at : region) (construct : string) =
-  fail_unit at ("cannot infer type of " ^ construct)
+  fail at ("cannot infer type of " ^ construct)
 
-and infer_exp (ctx : Ctx.t) (exp : exp) :
-    (Ctx.t * Il.exp * plaintyp) attempt_unit =
+and infer_exp (ctx : Ctx.t) (exp : exp) : (Ctx.t * Il.exp * plaintyp) attempt =
   let* ctx, exp_il, plaintyp = infer_exp' ctx exp.at exp.it in
   let typ_il = elab_plaintyp ctx (plaintyp $ exp.at) in
   let exp_il = exp_il $$ (exp.at, typ_il.it) in
@@ -223,7 +221,7 @@ and infer_exp (ctx : Ctx.t) (exp : exp) :
   Ok (ctx, exp_il, plaintyp)
 
 and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   match exp with
   | BoolE b -> infer_bool_exp ctx b
   | NumE (_, num) -> infer_num_exp ctx num
@@ -238,7 +236,7 @@ and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
   | ConsE (exp_h, exp_t) -> infer_cons_exp ctx exp_h exp_t
   | CatE (exp_l, exp_r) -> infer_cat_exp ctx exp_l exp_r
   | IdxE (exp_b, exp_i) -> infer_idx_exp ctx exp_b exp_i
-  | SliceE (exp_b, exp_l, exp_h) -> infer_slice_exp ctx exp_b exp_l exp_h
+  | SliceE (exp_b, exp_i, exp_n) -> infer_slice_exp ctx exp_b exp_i exp_n
   | LenE exp -> infer_len_exp ctx exp
   | MemE (exp_e, exp_s) -> infer_mem_exp ctx exp_e exp_s
   | StrE _ -> fail_infer at "struct expression"
@@ -259,7 +257,7 @@ and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
   | LatexE _ -> error at "misplaced LaTeX literal"
 
 and infer_exps (ctx : Ctx.t) (exps : exp list) :
-    (Ctx.t * Il.exp list * plaintyp list) attempt_unit =
+    (Ctx.t * Il.exp list * plaintyp list) attempt =
   match exps with
   | [] -> Ok (ctx, [], [])
   | exp :: exps ->
@@ -270,7 +268,7 @@ and infer_exps (ctx : Ctx.t) (exps : exp list) :
 (* Inference of boolean expressions *)
 
 and infer_bool_exp (ctx : Ctx.t) (b : bool) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let exp_il = Il.BoolE b in
   let plaintyp = BoolT in
   Ok (ctx, exp_il, plaintyp)
@@ -278,7 +276,7 @@ and infer_bool_exp (ctx : Ctx.t) (b : bool) :
 (* Inference of number expressions *)
 
 and infer_num_exp (ctx : Ctx.t) (num : Xl.Num.t) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let exp_il = Il.NumE num in
   let plaintyp = NumT (Xl.Num.to_typ num) in
   Ok (ctx, exp_il, plaintyp)
@@ -286,7 +284,7 @@ and infer_num_exp (ctx : Ctx.t) (num : Xl.Num.t) :
 (* Inference of text expressions *)
 
 and infer_text_exp (ctx : Ctx.t) (text : string) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let exp_il = Il.TextE text in
   let plaintyp = TextT in
   Ok (ctx, exp_il, plaintyp)
@@ -294,7 +292,7 @@ and infer_text_exp (ctx : Ctx.t) (text : string) :
 (* Inference of variable expressions *)
 
 and infer_var_exp (ctx : Ctx.t) (id : id) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let tid = Xl.Var.strip_var_suffix id in
   let meta_opt = Ctx.find_metavar_opt ctx tid in
   match meta_opt with
@@ -306,15 +304,15 @@ and infer_var_exp (ctx : Ctx.t) (id : id) :
 (* Inference of unary expressions *)
 
 and infer_unop (ctx : Ctx.t) (at : region) (unop : unop) (plaintyp : plaintyp)
-    (exp_il : Il.exp) : (Il.optyp * Il.exp * plaintyp') attempt_unit =
+    (exp_il : Il.exp) : (Il.optyp * Il.exp * plaintyp') attempt =
   let unop_candidates =
     match unop with
     | #Xl.Bool.unop -> [ (`BoolT, BoolT, BoolT) ]
     | #Xl.Num.unop ->
         [ (`NatT, NumT `NatT, NumT `NatT); (`IntT, NumT `IntT, NumT `IntT) ]
   in
-  let fail_unit =
-    fail_unit at
+  let fail =
+    fail at
       (F.asprintf "unary operator `%s` is not defined for operand type %s"
          (El.Print.string_of_unop unop)
          (El.Print.string_of_plaintyp plaintyp))
@@ -324,16 +322,16 @@ and infer_unop (ctx : Ctx.t) (at : region) (unop : unop) (plaintyp : plaintyp)
       match unop_infer with
       | Ok _ -> unop_infer
       | _ -> (
-          let exp_il_attempt_unit =
+          let exp_il_attempt =
             cast_exp ctx (plaintyp_expect $ plaintyp.at) plaintyp exp_il
           in
-          match exp_il_attempt_unit with
+          match exp_il_attempt with
           | Ok exp_il -> Ok (optyp_il, exp_il, plaintyp_res_expect)
-          | _ -> fail_unit))
-    fail_unit unop_candidates
+          | _ -> fail))
+    fail unop_candidates
 
 and infer_unop_exp (ctx : Ctx.t) (at : region) (unop : unop) (exp : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il, plaintyp = infer_exp ctx exp in
   let* optyp_il, exp_il, plaintyp_expect =
     infer_unop ctx at unop plaintyp exp_il
@@ -345,8 +343,7 @@ and infer_unop_exp (ctx : Ctx.t) (at : region) (unop : unop) (exp : exp) :
 
 and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
     (plaintyp_l : plaintyp) (exp_il_l : Il.exp) (plaintyp_r : plaintyp)
-    (exp_il_r : Il.exp) : (Il.optyp * Il.exp * Il.exp * plaintyp') attempt_unit
-    =
+    (exp_il_r : Il.exp) : (Il.optyp * Il.exp * Il.exp * plaintyp') attempt =
   let binop_candidates =
     match binop with
     | #Xl.Bool.binop -> [ (`BoolT, BoolT, BoolT, BoolT) ]
@@ -361,8 +358,8 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
           (`IntT, NumT `IntT, NumT `IntT, NumT `IntT);
         ]
   in
-  let fail_unit =
-    fail_unit at
+  let fail =
+    fail at
       (F.asprintf
          "binary operator `%s` is not defined for operand types %s and %s"
          (El.Print.string_of_binop binop)
@@ -384,11 +381,11 @@ and infer_binop (ctx : Ctx.t) (at : region) (binop : binop)
           match (exp_il_l_attempt, exp_il_r_attempt) with
           | Ok exp_il_l, Ok exp_il_r ->
               Ok (optyp_il, exp_il_l, exp_il_r, plaintyp_res_expect)
-          | _ -> fail_unit))
-    fail_unit binop_candidates
+          | _ -> fail))
+    fail binop_candidates
 
 and infer_binop_exp (ctx : Ctx.t) (at : region) (binop : binop) (exp_l : exp)
-    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il_l, plaintyp_l_infer = infer_exp ctx exp_l in
   let* ctx, exp_il_r, plaintyp_r_infer = infer_exp ctx exp_r in
   let* optyp_il, exp_il_l, exp_il_r, plaintyp_expect =
@@ -400,8 +397,8 @@ and infer_binop_exp (ctx : Ctx.t) (at : region) (binop : binop) (exp_l : exp)
 (* Inference of comparison expressions *)
 
 and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Xl.Bool.cmpop) (exp_l : exp)
-    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_r, plaintyp_r = infer_exp ctx exp_r in
@@ -421,12 +418,12 @@ and infer_cmpop_exp_bool (ctx : Ctx.t) (cmpop : Xl.Bool.cmpop) (exp_l : exp)
 
 and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
     (plaintyp_l : plaintyp) (exp_il_l : Il.exp) (plaintyp_r : plaintyp)
-    (exp_il_r : Il.exp) : (Il.optyp * Il.exp * Il.exp) attempt_unit =
+    (exp_il_r : Il.exp) : (Il.optyp * Il.exp * Il.exp) attempt =
   let cmpop_candidates =
     [ (`NatT, NumT `NatT, NumT `NatT); (`IntT, NumT `IntT, NumT `IntT) ]
   in
-  let fail_unit =
-    fail_unit at
+  let fail =
+    fail at
       (F.asprintf
          "comparison operator `%s` is not defined for operand types %s and %s"
          (El.Print.string_of_cmpop (cmpop :> Il.cmpop))
@@ -446,11 +443,11 @@ and infer_cmpop_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
           in
           match (exp_il_l_attempt, exp_il_r_attempt) with
           | Ok exp_il_l, Ok exp_il_r -> Ok (optyp_il, exp_il_l, exp_il_r)
-          | _ -> fail_unit))
-    fail_unit cmpop_candidates
+          | _ -> fail))
+    fail cmpop_candidates
 
 and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
-    (exp_l : exp) (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (exp_l : exp) (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il_l, plaintyp_l_infer = infer_exp ctx exp_l in
   let* ctx, exp_il_r, plaintyp_r_infer = infer_exp ctx exp_r in
   let* optyp_il, exp_il_l, exp_il_r =
@@ -461,7 +458,7 @@ and infer_cmpop_exp_num (ctx : Ctx.t) (at : region) (cmpop : Xl.Num.cmpop)
   Ok (ctx, exp_il, BoolT)
 
 and infer_cmpop_exp (ctx : Ctx.t) (at : region) (cmpop : cmpop) (exp_l : exp)
-    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (exp_r : exp) : (Ctx.t * Il.exp' * plaintyp') attempt =
   match cmpop with
   | #Xl.Bool.cmpop as cmpop -> infer_cmpop_exp_bool ctx cmpop exp_l exp_r
   | #Xl.Num.cmpop as cmpop -> infer_cmpop_exp_num ctx at cmpop exp_l exp_r
@@ -469,13 +466,13 @@ and infer_cmpop_exp (ctx : Ctx.t) (at : region) (cmpop : cmpop) (exp_l : exp)
 (* Inference of arithmetic expressions *)
 
 and infer_arith_exp (ctx : Ctx.t) (exp : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   infer_exp' ctx exp.at exp.it
 
 (* Inference of list expressions *)
 
 and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   match exps with
   | [] -> fail_infer at "empty list"
   | exp :: exps ->
@@ -491,7 +488,7 @@ and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
 (* Inference of cons expressions *)
 
 and infer_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il_h, plaintyp_h = infer_exp ctx exp_h in
   let plaintyp = IterT (plaintyp_h, List) in
   let* ctx, exp_il_t = elab_exp ctx (plaintyp $ plaintyp_h.at) exp_t in
@@ -501,8 +498,8 @@ and infer_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) :
 (* Inference of concatenation expressions *)
 
 and infer_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+    (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_l, plaintyp_l = infer_exp ctx exp_l in
@@ -521,8 +518,8 @@ and infer_cat_exp (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) :
 (* Inference of index expressions *)
 
 and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+    (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
@@ -539,30 +536,30 @@ and infer_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
 
 (* Inference of slice expressions *)
 
-and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_l : exp) (exp_h : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+and infer_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
+    (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
         let* _ = as_list_plaintyp ctx plaintyp_b in
-        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-        let exp_il = Il.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let* ctx, exp_il_n = elab_exp ctx (NumT `NatT $ exp_n.at) exp_n in
+        let exp_il = Il.SliceE (exp_il_b, exp_il_i, exp_il_n) in
         Ok (ctx, exp_il, plaintyp_b.it));
       (fun () ->
         let* ctx, exp_il_b = elab_exp ctx (TextT $ exp_b.at) exp_b in
-        let* ctx, exp_il_l = elab_exp ctx (NumT `NatT $ exp_l.at) exp_l in
-        let* ctx, exp_il_h = elab_exp ctx (NumT `NatT $ exp_h.at) exp_h in
-        let exp_il = Il.SliceE (exp_il_b, exp_il_l, exp_il_h) in
+        let* ctx, exp_il_i = elab_exp ctx (NumT `NatT $ exp_i.at) exp_i in
+        let* ctx, exp_il_n = elab_exp ctx (NumT `NatT $ exp_n.at) exp_n in
+        let exp_il = Il.SliceE (exp_il_b, exp_il_i, exp_il_n) in
         Ok (ctx, exp_il, TextT));
     ]
 
 (* Inference of member expressions *)
 
 and infer_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+    (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il_e, plaintyp_e = infer_exp ctx exp_e in
@@ -584,7 +581,7 @@ and infer_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
 (* Inference of dot expressions *)
 
 and infer_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il, plaintyp = infer_exp ctx exp in
   let* typfields = as_struct_plaintyp ctx plaintyp in
   let* plaintyp =
@@ -592,7 +589,7 @@ and infer_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) :
     |> fun typfield_opt ->
     match typfield_opt with
     | Some (_, plaintyp, _) -> Ok plaintyp
-    | None -> fail_unit exp.at "cannot infer type of field"
+    | None -> fail exp.at "cannot infer type of field"
   in
   let exp_il = Il.DotE (exp_il, atom) in
   Ok (ctx, exp_il, plaintyp.it)
@@ -600,7 +597,7 @@ and infer_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) :
 (* Inference of update expressions *)
 
 and infer_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il_b, plaintyp_b = infer_exp ctx exp_b in
   let* ctx, path_il, plaintyp_f = elab_path ctx plaintyp_b path in
   let* ctx, exp_il_f = elab_exp ctx plaintyp_f exp_f in
@@ -610,8 +607,8 @@ and infer_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
 (* Inference of length expressions *)
 
 and infer_len_exp (ctx : Ctx.t) (exp : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
-  choice
+    (Ctx.t * Il.exp' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, exp_il, plaintyp = infer_exp ctx exp in
@@ -629,13 +626,13 @@ and infer_len_exp (ctx : Ctx.t) (exp : exp) :
 (* Inference of parenthesized expressions *)
 
 and infer_paren_exp (ctx : Ctx.t) (exp : exp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   infer_exp' ctx exp.at exp.it
 
 (* Inference of tuple expressions *)
 
 and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exps_il, plaintyps = infer_exps ctx exps in
   let exp_il = Il.TupleE exps_il in
   let plaintyp = TupleT plaintyps in
@@ -644,7 +641,7 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 (* Inference of call expressions *)
 
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
-    (args : arg list) : (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (args : arg list) : (Ctx.t * Il.exp' * plaintyp') attempt =
   let tparams, params, plaintyp = Ctx.find_func_signature ctx id in
   check
     (List.length targs = List.length tparams)
@@ -660,7 +657,7 @@ and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
 (* Inference of iterated expressions *)
 
 and infer_iter_exp (ctx : Ctx.t) (exp : exp) (iter : iter) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il, plaintyp = infer_exp ctx exp in
   let iter_il = elab_iter iter in
   let exp_il = Il.IterE (exp_il, (iter_il, [])) in
@@ -670,7 +667,7 @@ and infer_iter_exp (ctx : Ctx.t) (exp : exp) (iter : iter) :
 (* Inference of subtype expressions *)
 
 and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
-    (Ctx.t * Il.exp' * plaintyp') attempt_unit =
+    (Ctx.t * Il.exp' * plaintyp') attempt =
   let* ctx, exp_il, plaintyp_exp = infer_exp ctx exp in
   let typ_il = elab_plaintyp ctx plaintyp in
   if
@@ -681,12 +678,12 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
     let plaintyp = BoolT in
     Ok (ctx, exp_il, plaintyp)
   else
-    fail_unit exp.at
+    fail exp.at
       (F.asprintf "incomparable types %s and %s"
          (El.Print.string_of_plaintyp plaintyp_exp)
          (El.Print.string_of_plaintyp plaintyp))
 
-(* Elaboration of expression type:
+(* Elaboration of expression:
 
    - If an iterated type is expected,
       - first try elaborating the expression as a singleton iteration,
@@ -694,24 +691,54 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
       - then try usual elaboration
    - Otherwise, directly try usual elaboration *)
 
+and is_pure_exp (exp_il : Il.exp) : bool =
+  match exp_il.it with
+  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
+  | UnE (_, _, exp_il) -> is_pure_exp exp_il
+  | BinE (_, _, exp_l_il, exp_r_il) | CmpE (_, _, exp_l_il, exp_r_il) ->
+      is_pure_exp exp_l_il && is_pure_exp exp_r_il
+  | UpCastE (_, exp_il)
+  | DownCastE (_, exp_il)
+  | SubE (exp_il, _)
+  | MatchE (exp_il, _) ->
+      is_pure_exp exp_il
+  | TupleE exps_il | CaseE (_, exps_il) -> List.for_all is_pure_exp exps_il
+  | StrE expfields_il ->
+      let exps_il = List.map snd expfields_il in
+      List.for_all is_pure_exp exps_il
+  | OptE (Some exp_il) -> is_pure_exp exp_il
+  | OptE None -> true
+  | ListE exps_il -> List.for_all is_pure_exp exps_il
+  | ConsE (exp_h_il, exp_t_il) -> is_pure_exp exp_h_il && is_pure_exp exp_t_il
+  | CatE (exp_l_il, exp_r_il) -> is_pure_exp exp_l_il && is_pure_exp exp_r_il
+  | MemE (exp_e_il, exp_s_il) -> is_pure_exp exp_e_il && is_pure_exp exp_s_il
+  | LenE exp_il | DotE (exp_il, _) -> is_pure_exp exp_il
+  | IdxE (exp_b_il, exp_i_il) -> is_pure_exp exp_b_il && is_pure_exp exp_i_il
+  | SliceE (exp_b_il, exp_i_il, exp_n_il) ->
+      is_pure_exp exp_b_il && is_pure_exp exp_i_il && is_pure_exp exp_n_il
+  | UpdE (exp_b_il, path_il, exp_f_il) ->
+      is_pure_exp exp_b_il && is_pure_path path_il && is_pure_exp exp_f_il
+  | CallE _ -> false
+  | IterE (exp_il, _) -> is_pure_exp exp_il
+
 and elab_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   elab_exp' ctx plaintyp_expect exp
-  |> nest_unit exp.at
+  |> nest exp.at
        (F.asprintf "elaboration of expression %s as type %s failed"
           (El.Print.string_of_exp exp)
           (El.Print.string_of_plaintyp plaintyp_expect))
 
 and elab_exp' (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   match as_iter_plaintyp ctx plaintyp_expect with
   | Ok (plaintyp_expect_base, iter_expect) ->
-      choice
+      choose_sequential
         [
           (fun () ->
             match exp.it with
-            | VarE id when id.it = "_" -> fail_unit_silent
-            | EpsE | ListE [] -> fail_unit_silent
+            | VarE id when id.it = "_" -> fail_silent
+            | EpsE | ListE [] -> fail_silent
             | _ ->
                 elab_exp_iter ctx plaintyp_expect plaintyp_expect_base
                   iter_expect exp);
@@ -720,11 +747,11 @@ and elab_exp' (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
   | _ -> elab_exp_normal ctx plaintyp_expect exp
 
 and elab_exps (ctx : Ctx.t) (plaintyps_expect : plaintyp list) (exps : exp list)
-    : (Ctx.t * Il.exp list) attempt_unit =
+    : (Ctx.t * Il.exp list) attempt =
   match (plaintyps_expect, exps) with
   | [], [] -> Ok (ctx, [])
-  | [], _ -> fail_unit no_region "more expressions than expected"
-  | _, [] -> fail_unit no_region "more expected types than expressions"
+  | [], _ -> fail no_region "more expressions than expected"
+  | _, [] -> fail no_region "more expected types than expressions"
   | plaintyp_expect :: plaintyps_expect, exp :: exps ->
       let* ctx, exp_il = elab_exp ctx plaintyp_expect exp in
       let* ctx, exps_il = elab_exps ctx plaintyps_expect exps in
@@ -734,7 +761,7 @@ and elab_exps (ctx : Ctx.t) (plaintyps_expect : plaintyp list) (exps : exp list)
 
 and elab_exp_iter (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     (plaintyp_expect_base : plaintyp) (iter_expect : iter) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   let* ctx, exp_il = elab_exp ctx plaintyp_expect_base exp in
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   match iter_expect with
@@ -759,10 +786,10 @@ and fail_cast (at : region) (plaintyp_a : plaintyp) (plaintyp_b : plaintyp) =
       (El.Print.string_of_plaintyp plaintyp_a)
       (El.Print.string_of_plaintyp plaintyp_b)
   in
-  fail_unit at msg
+  fail at msg
 
 and cast_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp)
-    (plaintyp_infer : plaintyp) (exp_il : Il.exp) : Il.exp attempt_unit =
+    (plaintyp_infer : plaintyp) (exp_il : Il.exp) : Il.exp attempt =
   if Types.Equiv.equiv_plaintyp ctx.tdenv plaintyp_expect plaintyp_infer then
     Ok exp_il
   else if Types.Sub.sub_plaintyp ctx.tdenv plaintyp_infer plaintyp_expect then
@@ -774,9 +801,9 @@ and cast_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp)
   else fail_cast exp_il.at plaintyp_infer plaintyp_expect
 
 and elab_exp_normal (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
-  let infer_attempt_unit = infer_exp ctx exp in
-  match infer_attempt_unit with
+    (Ctx.t * Il.exp) attempt =
+  let infer_attempt = infer_exp ctx exp in
+  match infer_attempt with
   | Ok (ctx, exp_il, plaintyp_infer) ->
       let* exp_il = cast_exp ctx plaintyp_expect plaintyp_infer exp_il in
       Ok (ctx, exp_il)
@@ -796,7 +823,7 @@ and elab_exp_normal (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
 (* Elaboration of wildcard variable expressions *)
 
 and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   let id_fresh, typ_fresh, iters_fresh =
     Il.Fresh.fresh_var_from_exp ~wildcard:true ctx.frees
@@ -809,17 +836,17 @@ and elab_exp_wildcard (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp) :
 (* Elaboration of plain expressions *)
 
 and fail_elab_plain (at : region) (msg : string) =
-  fail_unit at ("cannot elaborate expression because " ^ msg)
+  fail at ("cannot elaborate expression because " ^ msg)
 
 and elab_exp_plain (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   let* ctx, exp_il = elab_exp_plain' ctx exp.at plaintyp_expect exp.it in
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   let exp_il = exp_il $$ (exp.at, typ_il.it) in
   Ok (ctx, exp_il)
 
 and elab_exp_plain' (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp)
-    (exp : exp') : (Ctx.t * Il.exp') attempt_unit =
+    (exp : exp') : (Ctx.t * Il.exp') attempt =
   match exp with
   | BoolE _ | NumE _ | TextE _ | VarE _ ->
       fail_elab_plain at
@@ -833,14 +860,14 @@ and elab_exp_plain' (ctx : Ctx.t) (at : region) (plaintyp_expect : plaintyp)
   | TupleE exps -> elab_tuple_exp ctx plaintyp_expect exps
   | IterE (exp, iter) -> elab_iter_exp ctx plaintyp_expect exp iter
   | _ ->
-      fail_unit at
+      fail at
         (F.asprintf "(TODO elab_exp_plain) %s"
            (El.Print.string_of_exp (exp $ at)))
 
 (* Elaboration of episilon expressions *)
 
 and elab_eps_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) :
-    (Ctx.t * Il.exp') attempt_unit =
+    (Ctx.t * Il.exp') attempt =
   let* _plaintyp_expect, iter_expect = as_iter_plaintyp ctx plaintyp_expect in
   let exp_il =
     match iter_expect with Opt -> Il.OptE None | List -> Il.ListE []
@@ -850,7 +877,7 @@ and elab_eps_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) :
 (* Elaboration of list expressions *)
 
 and elab_list_exp_elementwise (ctx : Ctx.t) (plaintyp_expect : plaintyp)
-    (exps : exp list) : (Ctx.t * Il.exp list) attempt_unit =
+    (exps : exp list) : (Ctx.t * Il.exp list) attempt =
   match exps with
   | [] -> Ok (ctx, [])
   | exp :: exps ->
@@ -859,7 +886,7 @@ and elab_list_exp_elementwise (ctx : Ctx.t) (plaintyp_expect : plaintyp)
       Ok (ctx, exp_il :: exps_il)
 
 and elab_list_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exps : exp list) :
-    (Ctx.t * Il.exp') attempt_unit =
+    (Ctx.t * Il.exp') attempt =
   let* plaintyp_expect, iter_expect = as_iter_plaintyp ctx plaintyp_expect in
   match iter_expect with
   | Opt -> fail_elab_plain no_region "list expression with optional iteration"
@@ -871,7 +898,7 @@ and elab_list_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exps : exp list) :
 (* Elaboration of cons expressions *)
 
 and elab_cons_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_h : exp)
-    (exp_t : exp) : (Ctx.t * Il.exp') attempt_unit =
+    (exp_t : exp) : (Ctx.t * Il.exp') attempt =
   let* plaintyp_expect, iter_expect = as_iter_plaintyp ctx plaintyp_expect in
   let* ctx, exp_il_h = elab_exp ctx plaintyp_expect exp_h in
   let* ctx, exp_il_t =
@@ -885,8 +912,8 @@ and elab_cons_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_h : exp)
 (* Elaboration of concatenation expressions *)
 
 and elab_cat_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_l : exp)
-    (exp_r : exp) : (Ctx.t * Il.exp') attempt_unit =
-  choice
+    (exp_r : exp) : (Ctx.t * Il.exp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* plaintyp_expect, iter_expect =
@@ -909,7 +936,7 @@ and elab_cat_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp_l : exp)
 (* Elaboration of tuple expressions *)
 
 and elab_tuple_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exps : exp list)
-    : (Ctx.t * Il.exp') attempt_unit =
+    : (Ctx.t * Il.exp') attempt =
   let* plaintyps_expect = as_tuple_plaintyp ctx plaintyp_expect in
   let* ctx, exps_il = elab_exps ctx plaintyps_expect exps in
   let exp_il = Il.TupleE exps_il in
@@ -918,14 +945,14 @@ and elab_tuple_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exps : exp list)
 (* Elaboration of parenthesized expressions *)
 
 and elab_paren_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp) :
-    (Ctx.t * Il.exp') attempt_unit =
+    (Ctx.t * Il.exp') attempt =
   let* ctx, exp_il = elab_exp ctx plaintyp_expect exp in
   Ok (ctx, exp_il.it)
 
 (* Elaboration of iterated expressions *)
 
 and elab_iter_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp)
-    (iter : iter) : (Ctx.t * Il.exp') attempt_unit =
+    (iter : iter) : (Ctx.t * Il.exp') attempt =
   let* plaintyp_expect, iter_expect = as_iter_plaintyp ctx plaintyp_expect in
   if iter <> iter_expect then fail_elab_plain exp.at "iteration mismatch"
   else
@@ -936,12 +963,11 @@ and elab_iter_exp (ctx : Ctx.t) (plaintyp_expect : plaintyp) (exp : exp)
 
 (* Elaboration of notation expressions *)
 
-and fail_elab_not (at : region) (msg : string) :
-    (Ctx.t * Il.notexp) attempt_unit =
-  fail_unit at ("cannot elaborate notation expression because " ^ msg)
+and fail_elab_not (at : region) (msg : string) : (Ctx.t * Il.notexp) attempt =
+  fail at ("cannot elaborate notation expression because " ^ msg)
 
 and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
-    (Ctx.t * Il.notexp) attempt_unit =
+    (Ctx.t * Il.notexp) attempt =
   match typ with
   | PlainT plaintyp ->
       let mixop = [ []; [] ] in
@@ -1000,12 +1026,12 @@ and elab_exp_not (ctx : Ctx.t) (typ : typ) (exp : exp) :
 (* Elaboration of struct expressions *)
 
 and fail_elab_struct (at : region) (msg : string) :
-    (Ctx.t * (Il.atom * Il.exp) list) attempt_unit =
-  fail_unit at ("cannot elaborate struct expression because " ^ msg)
+    (Ctx.t * (Il.atom * Il.exp) list) attempt =
+  fail at ("cannot elaborate struct expression because " ^ msg)
 
 and elab_expfields (ctx : Ctx.t) (at : region)
     (typfields : (atom * plaintyp) list) (expfields : (atom * exp) list) :
-    (Ctx.t * (Il.atom * Il.exp) list) attempt_unit =
+    (Ctx.t * (Il.atom * Il.exp) list) attempt =
   match (typfields, expfields) with
   | [], [] -> Ok (ctx, [])
   | [], (atom_e, _) :: _ ->
@@ -1019,14 +1045,14 @@ and elab_expfields (ctx : Ctx.t) (at : region)
       Ok (ctx, (atom_t, exp_il) :: expfields_il)
 
 and elab_exp_struct (ctx : Ctx.t) (plaintyp_expect : plaintyp)
-    (typfields : typfield list) (exp : exp) : (Ctx.t * Il.exp) attempt_unit =
+    (typfields : typfield list) (exp : exp) : (Ctx.t * Il.exp) attempt =
   let* ctx, expfields_il = elab_exp_struct' ctx typfields exp in
   let typ_il = elab_plaintyp ctx plaintyp_expect in
   let exp_il = Il.StrE expfields_il $$ (exp.at, typ_il.it) in
   Ok (ctx, exp_il)
 
 and elab_exp_struct' (ctx : Ctx.t) (typfields : typfield list) (exp : exp) :
-    (Ctx.t * (Il.atom * Il.exp) list) attempt_unit =
+    (Ctx.t * (Il.atom * Il.exp) list) attempt =
   let typfields =
     List.map (fun (atom, plaintyp, _) -> (atom, plaintyp)) typfields
   in
@@ -1043,13 +1069,12 @@ and elab_exp_struct' (ctx : Ctx.t) (typfields : typfield list) (exp : exp) :
    propagate the type information while evaluating expressions,
    and it has to perform runtime type checks of whether a value is a subtype of some particular type *)
 
-and fail_elab_variant (at : region) (msg : string) :
-    (Ctx.t * Il.exp) attempt_unit =
-  fail_unit at ("cannot elaborate variant case because " ^ msg)
+and fail_elab_variant (at : region) (msg : string) : (Ctx.t * Il.exp) attempt =
+  fail at ("cannot elaborate variant case because " ^ msg)
 
 and elab_exp_variant (ctx : Ctx.t) (plaintyp_expect : plaintyp)
     (typcases : ((nottyp * hint list) * plaintyp) list) (exp : exp) :
-    (Ctx.t * Il.exp) attempt_unit =
+    (Ctx.t * Il.exp) attempt =
   let ctx, exps_il =
     List.fold_left
       (fun (ctx, exps_il) ((nottyp, _), plaintyp) ->
@@ -1076,8 +1101,16 @@ and elab_exp_variant (ctx : Ctx.t) (plaintyp_expect : plaintyp)
 
 (* Elaboration of paths *)
 
+and is_pure_path (path_il : Il.path) : bool =
+  match path_il.it with
+  | RootP -> true
+  | IdxP (path_il, exp_il) -> is_pure_path path_il && is_pure_exp exp_il
+  | SliceP (path_il, exp_il_i, exp_il_n) ->
+      is_pure_path path_il && is_pure_exp exp_il_i && is_pure_exp exp_il_n
+  | DotP (path_il, _) -> is_pure_path path_il
+
 and elab_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path) :
-    (Ctx.t * Il.path * plaintyp) attempt_unit =
+    (Ctx.t * Il.path * plaintyp) attempt =
   let* ctx, path_il, plaintyp = elab_path' ctx plaintyp_expect path.it in
   let plaintyp = plaintyp $ plaintyp_expect.at in
   let typ_il = elab_plaintyp ctx plaintyp in
@@ -1085,7 +1118,7 @@ and elab_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path) :
   Ok (ctx, path_il, plaintyp)
 
 and elab_path' (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path') :
-    (Ctx.t * Il.path' * plaintyp') attempt_unit =
+    (Ctx.t * Il.path' * plaintyp') attempt =
   match path with
   | RootP -> elab_root_path ctx plaintyp_expect
   | IdxP (path, exp) -> elab_idx_path ctx plaintyp_expect path exp
@@ -1096,14 +1129,14 @@ and elab_path' (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path') :
 (* Elaboration of root paths *)
 
 and elab_root_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) :
-    (Ctx.t * Il.path' * plaintyp') attempt_unit =
+    (Ctx.t * Il.path' * plaintyp') attempt =
   Ok (ctx, Il.RootP, plaintyp_expect.it)
 
 (* Elaboration of index paths *)
 
 and elab_idx_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
-    (exp : exp) : (Ctx.t * Il.path' * plaintyp') attempt_unit =
-  choice
+    (exp : exp) : (Ctx.t * Il.path' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
@@ -1122,8 +1155,8 @@ and elab_idx_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
 (* Elaboration of slice paths *)
 
 and elab_slice_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
-    (exp_l : exp) (exp_h : exp) : (Ctx.t * Il.path' * plaintyp') attempt_unit =
-  choice
+    (exp_l : exp) (exp_h : exp) : (Ctx.t * Il.path' * plaintyp') attempt =
+  choose_sequential
     [
       (fun () ->
         let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
@@ -1144,7 +1177,7 @@ and elab_slice_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
 (* Elaboration of dot paths *)
 
 and elab_dot_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
-    (atom : atom) : (Ctx.t * Il.path' * plaintyp') attempt_unit =
+    (atom : atom) : (Ctx.t * Il.path' * plaintyp') attempt =
   let* ctx, path_il, plaintyp = elab_path ctx plaintyp_expect path in
   let* typfields = as_struct_plaintyp ctx plaintyp in
   let* plaintyp =
@@ -1152,7 +1185,7 @@ and elab_dot_path (ctx : Ctx.t) (plaintyp_expect : plaintyp) (path : path)
     |> fun typfield_opt ->
     match typfield_opt with
     | Some (_, plaintyp, _) -> Ok plaintyp
-    | None -> fail_unit atom.at "cannot infer type of field"
+    | None -> fail atom.at "cannot infer type of field"
   in
   let path_il = Il.DotP (path_il, atom) in
   Ok (ctx, path_il, plaintyp.it)
@@ -1228,41 +1261,88 @@ and elab_args ?(as_def = false) (at : region) (ctx : Ctx.t)
 
 (* Elaboration of premises *)
 
-and elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * Il.prem option =
-  let ctx, prem_il_opt = elab_prem' ctx prem.it in
-  let prem_il_opt = Option.map (fun prem_il -> prem_il $ prem.at) prem_il_opt in
-  (ctx, prem_il_opt)
+type prem_internal = prem_internal' phrase
+and prem_internal' = SomePr of Il.prem' | VarPr | ElsePr
 
-and elab_prem' (ctx : Ctx.t) (prem : prem') : Ctx.t * Il.prem' option =
-  let wrap_ctx prem = (ctx, prem) in
-  let wrap_some (ctx, prem) = (ctx, Some prem) in
-  let wrap_none ctx = (ctx, None) in
+let internalize_prem (prem_il : Il.prem) : prem_internal =
+  SomePr prem_il.it $ prem_il.at
+
+let externalize_prem (prem_internal : prem_internal) : Il.prem option =
+  match prem_internal.it with
+  | SomePr prem_il -> Some (prem_il $ prem_internal.at)
+  | VarPr | ElsePr -> None
+
+let is_else_prem_internal (prem_internal : prem_internal) : bool =
+  match prem_internal.it with ElsePr -> true | _ -> false
+
+let rec is_pure_prem (prem_il : Il.prem) : bool =
+  match prem_il.it with
+  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ -> false
+  | LetPr (_, exp_r_il) -> is_pure_exp exp_r_il
+  | IterPr (prem_il, _) -> is_pure_prem prem_il
+  | DebugPr exp_il -> is_pure_exp exp_il
+
+let is_pure_prem_internal (prem_internal : prem_internal) : bool =
+  match prem_internal.it with
+  | SomePr prem_il -> is_pure_prem (prem_il $ prem_internal.at)
+  | VarPr -> true
+  | ElsePr -> false
+
+let check_prems_internal (at : region) (prems_internal : prem_internal list) :
+    unit =
+  let prems_non_else_internal =
+    prems_internal
+    |> List.filter (fun prem_internal ->
+           not (is_else_prem_internal prem_internal))
+  in
+  if List.length prems_internal = List.length prems_non_else_internal then ()
+  else if List.length prems_internal = List.length prems_non_else_internal + 1
+  then
+    check
+      (List.for_all is_pure_prem_internal prems_non_else_internal)
+      at "cannot have non-pure premises alongside an otherwise premise"
+  else error at "cannot use multiple otherwise premises"
+
+let rec elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal =
+  let ctx, prem_internal = elab_prem' ctx prem.it in
+  let prem_internal = prem_internal $ prem.at in
+  (ctx, prem_internal)
+
+and elab_prem' (ctx : Ctx.t) (prem : prem') : Ctx.t * prem_internal' =
+  let wrap_some (ctx, prem) = (ctx, SomePr prem) in
+  let wrap_var ctx = (ctx, VarPr) in
+  let wrap_else ctx = (ctx, ElsePr) in
   match prem with
-  | VarPr (id, plaintyp) -> elab_var_prem ctx id plaintyp |> wrap_none
+  | VarPr (id, plaintyp) -> elab_var_prem ctx id plaintyp |> wrap_var
   | RulePr (id, exp) -> elab_rule_prem ctx id exp |> wrap_some
   | RuleNotPr (id, exp) -> elab_rule_not_prem ctx id exp |> wrap_some
   | IfPr exp -> elab_if_prem ctx exp |> wrap_some
-  | ElsePr -> elab_else_prem () |> wrap_ctx |> wrap_some
+  | ElsePr -> ctx |> wrap_else
   | IterPr (prem, iter) -> elab_iter_prem ctx prem iter |> wrap_some
   | DebugPr exp -> elab_debug_prem ctx exp |> wrap_some
 
-and elab_prem_with_bind (ctx : Ctx.t) (prem : prem) : Ctx.t * Il.prem list =
-  let ctx, prem_il_opt = elab_prem ctx prem in
-  match prem_il_opt with
-  | Some prem_il ->
+and elab_prem_with_bind (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal list
+    =
+  let ctx, prem_internal = elab_prem ctx prem in
+  match prem_internal.it with
+  | SomePr prem_il ->
       let ctx, prem_il, sideconditions_il =
-        Dataflow.Analysis.analyze_prem ctx prem_il
+        Dataflow.Analysis.analyze_prem ctx (prem_il $ prem_internal.at)
       in
       let prems_il = prem_il :: sideconditions_il in
-      (ctx, prems_il)
-  | None -> (ctx, [])
+      let prems_internal =
+        List.map (fun prem_il -> SomePr prem_il.it $ prem_il.at) prems_il
+      in
+      (ctx, prems_internal)
+  | VarPr -> (ctx, [ prem_internal ])
+  | ElsePr -> (ctx, [ prem_internal ])
 
 and elab_prems_with_bind (ctx : Ctx.t) (prems : prem list) :
-    Ctx.t * Il.prem list =
+    Ctx.t * prem_internal list =
   List.fold_left
-    (fun (ctx, prems_il_acc) prem ->
-      let ctx, prems_il = elab_prem_with_bind ctx prem in
-      (ctx, prems_il_acc @ prems_il))
+    (fun (ctx, prems_internal_acc) prem ->
+      let ctx, prems_internal = elab_prem_with_bind ctx prem in
+      (ctx, prems_internal_acc @ prems_internal))
     (ctx, []) prems
 
 and elab_prem_il_with_bind (ctx : Ctx.t) (prem_il : Il.prem) :
@@ -1321,20 +1401,18 @@ and elab_if_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
   let prem_il = Il.IfPr exp_il in
   (ctx, prem_il)
 
-(* Elaboration of else premises *)
-
-and elab_else_prem () : Il.prem' = Il.ElsePr
-
 (* Elaboration of iterated premises *)
 
 and elab_iter_prem (ctx : Ctx.t) (prem : prem) (iter : iter) : Ctx.t * Il.prem'
     =
-  check
-    (match prem.it with VarPr _ | ElsePr -> false | _ -> true)
-    prem.at "only rule or if premises can be iterated";
   let iter_il = elab_iter iter in
-  let ctx, prem_il_opt = elab_prem ctx prem in
-  let prem_il = Option.get prem_il_opt in
+  let ctx, prem_internal = elab_prem ctx prem in
+  let prem_il =
+    match prem_internal.it with
+    | SomePr prem_il -> prem_il $ prem_internal.at
+    | VarPr -> error prem.at "cannot iterate a var premise"
+    | ElsePr -> error prem.at "cannot iterate an otherwise premise"
+  in
   let prem_il = Il.IterPr (prem_il, (iter_il, [], [])) in
   (ctx, prem_il)
 
@@ -1347,18 +1425,31 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
 
 (* Elaboration of rules *)
 
-let rec elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
+type rulepath_internal = SomePath of Il.rulepath | ElsePath of Il.rulepath
+
+type rulepaths_internal =
+  | SomePaths of Il.rulepath list
+  | ElsePaths of Il.rulepath
+
+type rulegroup_internal =
+  | SomeGroup of Il.rulegroup
+  | ElseGroup of Il.elsegroup
+
+let is_else_rulepath_internal (rulepath_internal : rulepath_internal) : bool =
+  match rulepath_internal with ElsePath _ -> true | SomePath _ -> false
+
+let elab_rule_input_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
     Ctx.t * Il.exp list * Il.prem list =
   Dataflow.Analysis.analyze_exps_as_bind ctx exps_il
 
-and elab_rule_signature (ctx : Ctx.t) (exps_il : Il.exp list) : Il.exp list =
+let elab_rule_signature (ctx : Ctx.t) (exps_il : Il.exp list) : Il.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
-and elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
+let elab_rule_output_with_bind (ctx : Ctx.t) (exps_il : Il.exp list) :
     Il.exp list =
   Dataflow.Analysis.analyze_exps_as_bound ctx exps_il
 
-and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
+let rec elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
     (exps_il_input_group : Il.exp list list) :
     Ctx.t list * Il.rulematch * Il.prem list list =
   let ctx_local_unified =
@@ -1404,40 +1495,58 @@ and elab_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   in
   (ctxs_local, rulematch_il, prems_il_unified_group)
 
-and elab_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
-    (prems_il_unified_group : Il.prem list list) (prems_group : prem list list)
-    (exps_il_output_group : Il.exp list list) : Il.rulepath list =
-  let ctxs_local, prems_il_group =
-    List.map2
-      (fun ctx_local prems ->
-        let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-        (ctx_local, prems_il))
-      ctxs_local prems_group
-    |> List.split
-  in
-  let prems_il_group =
-    List.map2
-      (fun prems_il_unified prems_il -> prems_il_unified @ prems_il)
-      prems_il_unified_group prems_il_group
-  in
-  let exps_il_output_group =
-    List.map2
-      (fun ctx_local exps_il_output ->
-        elab_rule_output_with_bind ctx_local exps_il_output)
-      ctxs_local exps_il_output_group
-  in
-  let rulepaths_il =
-    List.combine prems_il_group exps_il_output_group
+and elab_rulepath (ctx_local : Ctx.t) (id_rule : id)
+    (prems_il_unified : Il.prem list) (prems : prem list)
+    (exps_il_output : Il.exp list) : rulepath_internal =
+  let prems_internal_unified = List.map internalize_prem prems_il_unified in
+  let ctx_local, prems_internal = elab_prems_with_bind ctx_local prems in
+  let prems_internal = prems_internal_unified @ prems_internal in
+  check_prems_internal id_rule.at prems_internal;
+  let is_else_path = List.exists is_else_prem_internal prems_internal in
+  let prems_il = List.filter_map externalize_prem prems_internal in
+  let exps_il_output = elab_rule_output_with_bind ctx_local exps_il_output in
+  let rulepath_il = (id_rule, prems_il, exps_il_output) in
+  if is_else_path then ElsePath rulepath_il else SomePath rulepath_il
+
+and elab_rulepaths (at : region) (ctxs_local : Ctx.t list)
+    (id_rule_group : id list) (prems_il_unified_group : Il.prem list list)
+    (prems_group : prem list list) (exps_il_output_group : Il.exp list list) :
+    rulepaths_internal =
+  let rulepaths_internal =
+    ctxs_local |> List.map elab_rulepath
     |> List.map2
-         (fun id_rule (prems_il, exps_il_output) ->
-           (id_rule, prems_il, exps_il_output))
+         (fun id_rule elab_rulepath -> elab_rulepath id_rule)
          id_rule_group
+    |> List.map2
+         (fun prems_il_unified elab_rulepath -> elab_rulepath prems_il_unified)
+         prems_il_unified_group
+    |> List.map2 (fun prems elab_rulepath -> elab_rulepath prems) prems_group
+    |> List.map2
+         (fun exps_il_output elab_rulepath -> elab_rulepath exps_il_output)
+         exps_il_output_group
   in
-  rulepaths_il
+  let rulepaths_else_internal =
+    rulepaths_internal |> List.filter is_else_rulepath_internal
+  in
+  match rulepaths_else_internal with
+  | [] ->
+      let rulepaths_il =
+        rulepaths_internal
+        |> List.map (function
+             | SomePath rulepath_il -> rulepath_il
+             | _ -> assert false)
+      in
+      SomePaths rulepaths_il
+  | [ ElsePath rulepath_il_else ] ->
+      check
+        (List.length rulepaths_internal = 1)
+        at "cannot have other rule paths alongside an otherwise rule path";
+      ElsePaths rulepath_il_else
+  | _ -> error at "cannot use multiple otherwise rule paths in a rule group"
 
 and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
-    (rules : rule list) : Il.rulegroup =
-  let nottyp, _, inputs, _ = Ctx.find_defined_rel ctx id_rel in
+    (rules : rule list) : rulegroup_internal =
+  let nottyp, _, inputs, _, _ = Ctx.find_defined_rel ctx id_rel in
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1478,11 +1587,66 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
   let ctxs_local, rulematch_il, prems_il_unified_group =
     elab_rulematch ctx ctxs_local exps_il_input_group
   in
-  let rulepaths_il =
-    elab_rulepaths ctxs_local id_rule_group prems_il_unified_group prems_group
-      exps_il_output_group
+  let rulepaths_internal =
+    elab_rulepaths at ctxs_local id_rule_group prems_il_unified_group
+      prems_group exps_il_output_group
   in
-  (id_rulegroup, rulematch_il, rulepaths_il) $ at
+  match rulepaths_internal with
+  | SomePaths rulepaths_il ->
+      let rulegroup_il = (id_rulegroup, rulematch_il, rulepaths_il) $ at in
+      SomeGroup rulegroup_il
+  | ElsePaths rulepath_il ->
+      let elsegroup_il = (id_rulegroup, rulematch_il, rulepath_il) $ at in
+      ElseGroup elsegroup_il
+
+(* Elaboration of clauses *)
+
+type clause_internal = SomeClause of Il.clause | ElseClause of Il.clause
+
+let elab_clause_input_with_bind (ctx : Ctx.t) (at : region)
+    (params : param list) (args : arg list) : Ctx.t * Il.arg list * Il.prem list
+    =
+  let ctx, args_il = elab_args ~as_def:true at ctx params args in
+  let ctx, args_il, sideconditions_il =
+    Dataflow.Analysis.analyze_args_as_bind ctx args_il
+  in
+  (ctx, args_il, sideconditions_il)
+
+let elab_clause_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp)
+    : Ctx.t * Il.exp =
+  let+ ctx, exp_il = elab_exp ctx plaintyp exp in
+  let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
+  (ctx, exp_il)
+
+let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
+    (args : arg list) (exp : exp) (prems : prem list) : clause_internal =
+  let tparams_expected, params, plaintyp, _, _ = Ctx.find_defined_func ctx id in
+  check
+    (List.length tparams = List.length tparams_expected
+    && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
+    )
+    id.at "type arguments do not match";
+  check (List.length params = List.length args) at "arguments do not match";
+  let ctx_local = { ctx with frees = IdSet.empty } in
+  let ctx_local =
+    let def = FuncDefD (id, tparams, args, exp, prems) $ at in
+    El.Free.free_id_def def |> Ctx.add_frees ctx_local
+  in
+  let ctx_local = Ctx.add_tparams ctx_local tparams in
+  let ctx_local, args_il, sideconditions_il =
+    elab_clause_input_with_bind ctx_local at params args
+  in
+  let ctx_local, prems_internal = elab_prems_with_bind ctx_local prems in
+  let sideconditions_internal = List.map internalize_prem sideconditions_il in
+  let prems_internal = sideconditions_internal @ prems_internal in
+  check_prems_internal at prems_internal;
+  let is_else_clause = List.exists is_else_prem_internal prems_internal in
+  let prems_il = List.filter_map externalize_prem prems_internal in
+  let _ctx_local, exp_il =
+    elab_clause_output_with_bind ctx_local plaintyp exp
+  in
+  let clause_il = (args_il, exp_il, prems_il) $ at in
+  if is_else_clause then ElseClause clause_il else SomeClause clause_il
 
 (* Elaboration of definitions *)
 
@@ -1634,15 +1798,17 @@ and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
   let ctx = Ctx.add_defined_rel ctx id nottyp nottyp_il inputs in
-  let def_il = Il.RelD (id, nottyp_il, inputs, [], hints) $ at in
+  let def_il = Il.RelD (id, nottyp_il, inputs, [], None, hints) $ at in
   (ctx, def_il)
 
 (* Elaboration of rule groups *)
 
 and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
-  let rulegroup_il = elab_rulegroup ctx at id_rel id_rulegroup rules in
-  Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
+  let rulegroup_internal = elab_rulegroup ctx at id_rel id_rulegroup rules in
+  match rulegroup_internal with
+  | SomeGroup rulegroup_il -> Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
+  | ElseGroup elsegroup_il -> Ctx.add_defined_elsegroup ctx id_rel elsegroup_il
 
 (* Elaboration of function declarations *)
 
@@ -1700,7 +1866,9 @@ and elab_func_dec_def (ctx : Ctx.t) (at : region) (id : id)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
   let typ_il = elab_plaintyp ctx_local plaintyp in
-  let def_il = Il.FuncDecD (id, tparams, params_il, typ_il, [], hints) $ at in
+  let def_il =
+    Il.FuncDecD (id, tparams, params_il, typ_il, [], None, hints) $ at
+  in
   let ctx = Ctx.add_defined_func_dec ctx id tparams params plaintyp in
   (ctx, def_il)
 
@@ -1861,43 +2029,12 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
 
 (* Elaboration of function definitions *)
 
-and elab_def_input_with_bind (ctx : Ctx.t) (at : region) (params : param list)
-    (args : arg list) : Ctx.t * Il.arg list * Il.prem list =
-  let ctx, args_il = elab_args ~as_def:true at ctx params args in
-  let ctx, args_il, sideconditions_il =
-    Dataflow.Analysis.analyze_args_as_bind ctx args_il
-  in
-  (ctx, args_il, sideconditions_il)
-
-and elab_def_output_with_bind (ctx : Ctx.t) (plaintyp : plaintyp) (exp : exp) :
-    Ctx.t * Il.exp =
-  let+ ctx, exp_il = elab_exp ctx plaintyp exp in
-  let exp_il = Dataflow.Analysis.analyze_exp_as_bound ctx exp_il in
-  (ctx, exp_il)
-
 and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
-  let tparams_expected, params, plaintyp, _ = Ctx.find_defined_func ctx id in
-  check
-    (List.length tparams = List.length tparams_expected
-    && List.for_all2 ( = ) (List.map it tparams) (List.map it tparams_expected)
-    )
-    id.at "type arguments do not match";
-  check (List.length params = List.length args) at "arguments do not match";
-  let ctx_local = { ctx with frees = IdSet.empty } in
-  let ctx_local =
-    let def = FuncDefD (id, tparams, args, exp, prems) $ at in
-    El.Free.free_id_def def |> Ctx.add_frees ctx_local
-  in
-  let ctx_local = Ctx.add_tparams ctx_local tparams in
-  let ctx_local, args_il, sideconditions_il =
-    elab_def_input_with_bind ctx_local at params args
-  in
-  let ctx_local, prems_il = elab_prems_with_bind ctx_local prems in
-  let prems_il = sideconditions_il @ prems_il in
-  let _ctx_local, exp_il = elab_def_output_with_bind ctx_local plaintyp exp in
-  let clause_il = (args_il, exp_il, prems_il) $ at in
-  Ctx.add_defined_func_clause ctx id clause_il
+  let clause_internal = elab_clause ctx at id tparams args exp prems in
+  match clause_internal with
+  | SomeClause clause_il -> Ctx.add_defined_func_clause ctx id clause_il
+  | ElseClause clause_il -> Ctx.add_defined_func_elseclause ctx id clause_il
 
 (* Elaboration of spec *)
 
@@ -1919,9 +2056,12 @@ let populate_typs (ctx : Ctx.t) : unit =
 
 let populate_rule (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
-  | Il.RelD (id, nottyp_il, inputs, [], hints) ->
-      let _, _, _, rulegroups_il = Ctx.find_defined_rel ctx id in
-      Il.RelD (id, nottyp_il, inputs, rulegroups_il, hints) $ def_il.at
+  | Il.RelD (id, nottyp_il, inputs, [], None, hints) ->
+      let _, _, _, rulegroups_il, elsegroup_il_opt =
+        Ctx.find_defined_rel ctx id
+      in
+      Il.RelD (id, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt, hints)
+      $ def_il.at
   | Il.RelD _ -> error def_il.at "relation was already populated"
   | _ -> def_il
 
@@ -1930,7 +2070,7 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.RelD (id, _, _, [], _) ->
+      | Il.RelD (id, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "relation %s has no rule groups defined"
                (Id.to_string id))
@@ -1945,9 +2085,12 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   | Il.TableDecD (id, params_il, typ_il, [], hints) ->
       let _, _, tablerows_il = Ctx.find_table_func ctx id in
       Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
-  | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], hints) ->
-      let _, _, _, clauses_il = Ctx.find_defined_func ctx id in
-      Il.FuncDecD (id, tparams_il, params_il, typ_il, clauses_il, hints)
+  | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], None, hints) ->
+      let _, _, _, clauses_il, elseclause_il_opt =
+        Ctx.find_defined_func ctx id
+      in
+      Il.FuncDecD
+        (id, tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt, hints)
       $ def_il.at
   | Il.TableDecD _ -> error def_il.at "table was already populated"
   | Il.FuncDecD _ -> error def_il.at "function was already populated"
@@ -1961,7 +2104,7 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
       | Il.TableDecD (id, _, _, [], _) ->
           warn def_il.at
             (F.asprintf "table %s has no rows defined" (Id.to_string id))
-      | Il.FuncDecD (id, _, _, _, [], _) ->
+      | Il.FuncDecD (id, _, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
       | _ -> ())

@@ -2,14 +2,15 @@ module Value = Runtime.Dynamic_Il.Value
 module Dep = Runtime.Testgen_neg.Dep
 
 let make_deriving () =
-  (* Turn caching off *)
-  Hook.cache_off ();
   (* Value dependency graph and a reader for it *)
   let vdg = ref (Dep.Graph.empty ()) in
   let read () = !vdg in
   (* Instruction coverage measurement handler *)
   let module H : Handler.HANDLER = struct
     include Handler.Default
+
+    let init_spec (_spec : Handler.spec) : unit = Hook.cache_off ()
+    let finish () : unit = Hook.cache_on ()
 
     let on_program (value_program : Value.t) : unit =
       vdg := Dep.Graph.assemble_graph value_program

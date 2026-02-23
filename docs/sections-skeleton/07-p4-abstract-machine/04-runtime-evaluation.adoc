@@ -21,18 +21,21 @@ P4 program evaluation proceeds by invoking the objects in the global store. A
 call to a programmable block invokes the corresponding abstract machine:
 
 // Added
+${relation-title-source: Call_eval}
 ${relation-title-prose: Call_eval}
 
 // Added
 A call to an extern function invokes the corresponding extern function:
 
 // Added
+${relation-title-source: ExternFunctionCall_eval}
 ${relation-title-prose: ExternFunctionCall_eval}
 
 // Added
 A call to an extern method invokes the corresponding extern method:
 
 // Added
+${relation-title-source: ExternMethodCall_eval}
 ${relation-title-prose: ExternMethodCall_eval}
 
 ==== Evaluation context
@@ -61,7 +64,9 @@ The following sections describe the abstract machines that define the dynamic
 semantics of the programmable blocks in a P4 target.
 
 // Added
+ifndef::release[]
 NOTE: Added explanation for the evaluation context. Is this the right place?
+endif::[]
 
 [#sec-dynamic-evaluation-parser]
 ==== The parser abstract machine
@@ -95,6 +100,7 @@ execution of a traditional imperative program:
   `control` blocks.
 * Applying a `table` executes the corresponding match-action unit.
 
+[#sec-concurrency-model]
 ==== Concurrency model
 
 // 1134
@@ -112,7 +118,7 @@ the semantics of P4 programs with respect to such concurrent executions.
 // 1135
 Each top-level `parser` or `control` block is executed as a separate thread
 when invoked by the architecture. All the parameters of the block and all local
-variables are thread-local--i.e., each thread has a private copy of these
+variables are thread-local -- i.e., each thread has a private copy of these
 resources. This applies to the `packet_in` and `packet_out` parameters of
 parsers and deparsers.
 
@@ -125,7 +131,7 @@ from different threads must produce the same output.
 // 1137
 In contrast, `extern` blocks instantiated by a P4 program are global, shared
 across all threads. If `extern` blocks mediate access to state (e.g., counters,
-registers)--i.e., the methods of the `extern` block read and write state,
+registers) -- i.e., the methods of the `extern` block read and write state,
 these stateful operations are subject to data races. P4 mandates that execution
 of a method call on an extern instance is atomic.
 
@@ -181,4 +187,6 @@ model, including the interactions between multiple threads, is target-dependent
 and beyond the scope of this document.
 
 // Added
+ifndef::release[]
 NOTE: Added disclaimer about concurrency model.
+endif::[]

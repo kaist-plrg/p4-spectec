@@ -2,7 +2,7 @@ module Vars = Free.Vars
 module VarSet = Free.VarSet
 open Domain.Lib
 open Lang
-open Sl
+open Ll.Ast
 open Transform
 open Util.Source
 

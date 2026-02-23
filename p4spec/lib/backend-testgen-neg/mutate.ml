@@ -22,7 +22,8 @@ let ( let* ) = Option.bind
 (* Helpers for wrapping values *)
 
 let wrap_value (typ : typ') (value : value') : value =
-  value $$$ { vid = -1; typ }
+  let vhash = Runtime.Dynamic_Il.Value.hash_of value in
+  value $$$ { vid = -1; typ; vhash }
 
 let wrap_value_opt (typ : typ') (value_opt : value' option) : value option =
   Option.map (wrap_value typ) value_opt

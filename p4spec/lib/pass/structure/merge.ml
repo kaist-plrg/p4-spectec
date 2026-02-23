@@ -1,18 +1,22 @@
 open Ol.Ast
+open Ol.Eq
+open Util.Source
 
-let rec merge_block (instrs_a : instr list) (instrs_b : instr list) : instr list
-    =
-  match (instrs_a, instrs_b) with
-  | instr_a :: instrs_a, instr_b :: instrs_b when Ol.Eq.eq_instr instr_a instr_b
-    ->
-      let instrs = merge_block instrs_a instrs_b in
-      instr_a :: instrs
-  | _ -> instrs_a @ instrs_b
+let rec merge_block (block_a : instr list) (block_b : instr list) : block =
+  match (block_a, block_b) with
+  | ( { it = IfI (exp_cond_a, iterexps_a, block_a); at; _ } :: block_a_t,
+      { it = IfI (exp_cond_b, iterexps_b, block_b); _ } :: block_b_t )
+    when eq_exp exp_cond_a exp_cond_b && eq_iterexps iterexps_a iterexps_b ->
+      let block = merge_block block_a block_b in
+      let instr_h = IfI (exp_cond_a, iterexps_a, block) $ at in
+      let block_a = instr_h :: block_a_t in
+      merge_block block_a block_b_t
+  | _ -> block_a @ block_b
 
-and merge_blocks (instrs_group : instr list list) : instr list =
-  match instrs_group with
+and merge_blocks (blocks : block list) : block =
+  match blocks with
   | [] -> []
-  | [ instrs ] -> instrs
-  | instrs_a :: instrs_b :: instrs_group ->
-      let instrs = merge_block instrs_a instrs_b in
-      instrs @ merge_blocks instrs_group
+  | [ block ] -> block
+  | block_a :: block_b :: blocks_t ->
+      let block = merge_block block_a block_b in
+      merge_blocks (block :: blocks_t)

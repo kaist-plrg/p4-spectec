@@ -17,6 +17,7 @@ type name = string
 type id = string
 type number = string
 type port = string
+type handle = string
 type packet = string
 type expect = string
 type exact = bool
@@ -36,6 +37,9 @@ type stmt =
   | Packet of port * packet
   | NoPacket
   | Add of name * int option * mtch list * action * id option
-  | MirroringAdd of session * port
   | SetDefault of name * action
   | CheckCounter of id * id_or_index * (ctr option * cond * number)
+  | MirroringAdd of session * port
+  | McGroupCreate of id
+  | McNodeCreate of id * port
+  | McNodeAssociate of id * handle

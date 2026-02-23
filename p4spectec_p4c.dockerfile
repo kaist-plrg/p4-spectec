@@ -18,7 +18,7 @@ FROM base AS source
 
 RUN git clone https://github.com/kaist-plrg/p4-spectec.git && \
     cd p4-spectec && \
-    git checkout ntt-syntax && \
+    git checkout concrete && \
     git submodule update --init --recursive
 
 WORKDIR /home/p4-spectec
@@ -39,7 +39,7 @@ RUN apt-get update && \
 RUN opam init --disable-sandboxing --auto-setup && \
     opam switch create 5.1.0 && \
     eval $(opam env) && \
-    opam install dune menhir bignum core core_unix bisect_ppx -y
+    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx -y
 
 # Set opam environment permanently
 ENV OPAM_SWITCH_PREFIX=/root/.opam/5.1.0
@@ -51,7 +51,7 @@ ENV CAML_LD_LIBRARY_PATH=$OPAM_SWITCH_PREFIX/lib/stublibs:$OPAM_SWITCH_PREFIX/li
 # ---------------------------------------
 FROM opambase AS p4specbase
 
-RUN make build-spec && \
+RUN make build && \
     chmod a+x ./p4spectec
 
 # --------------------------------------
@@ -70,7 +70,14 @@ RUN chmod +x /usr/bin/creduce
 ENV P4SPECTEC_PATH=/home/p4-spectec
 
 # --------------------------------------
-# Stage 6: P4C dependencies
+# Stage 6: Asciidoc dependencies
+# --------------------------------------
+RUN docs/install-asciidoctor-linux.sh
+
+RUN echo 'source /usr/local/rvm/scripts/rvm' >> ~/.bashrc
+
+# --------------------------------------
+# Stage 7: P4C dependencies
 # --------------------------------------
 FROM reducebase AS p4cbase
 ENV DEBIAN_FRONTEND=noninteractive
@@ -84,7 +91,7 @@ RUN apt-get update && \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------
-# Stage 7: Build P4C
+# Stage 8: Build P4C
 # ---------------------------------------
 WORKDIR /home/p4-spectec/p4c/build
 # RUN ccache --set-config=max_size=1G

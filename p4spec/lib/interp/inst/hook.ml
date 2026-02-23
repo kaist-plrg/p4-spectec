@@ -7,6 +7,7 @@ open Handler
 (* Cache flag *)
 
 let cache = ref true
+let cache_on () = cache := true
 let cache_off () = cache := false
 let is_cache_on () = !cache
 

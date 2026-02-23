@@ -413,10 +413,21 @@ let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
    for more details.
 
    extern void recirculate_preserving_field_list(bit<8> index); *)
-let _recirculate_preserving_field_list (_value_ctx : Value.t)
-    (_value_sto : Value.t) : Value.t * Value.t =
-  error_no_region
-    "extern function recirculate_preserving_field_list is not implemented"
+let recirculate_preserving_field_list (value_ctx : Value.t)
+    (value_arch : Value.t) : Value.t * Value.t * Value.t =
+  let value_index = Spec.Func.find_var_e_local value_ctx "index" in
+  (* write recirculate index in arch state *)
+  let value_arch_state =
+    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    |> Arch.with_recirculate (Packet.RecirculateInfo.of_value value_index)
+    |> Arch.to_value
+  in
+  let value_arch = Spec.Func.update_archState_e value_arch value_arch_state in
+  let value_callResult =
+    let value_eps = wrap_opt_v "value" None in
+    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+  in
+  (value_ctx, value_arch, value_callResult)
 
 (* Calling clone_preserving_field_list during execution of the ingress
    or egress control will cause the packet to be cloned, sometimes

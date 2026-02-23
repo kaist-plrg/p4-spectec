@@ -3,7 +3,7 @@ open Sl
 
 (* Relation *)
 
-type t = Extern | Defined of exp list * instr list
+type t = Extern | Defined of exp list * block * elseblock option
 
 let to_string = function
   | Extern -> "extern relation"

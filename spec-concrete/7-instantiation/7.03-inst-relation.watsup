@@ -7,14 +7,14 @@ relation Expr_inst:
   hint(input %0 %1 %2 %3)
   hint(prose_in "compile-time evaluation of" %3#
                 ", under cursor" %0#", context" %1#", and store" %2)
-  hint(prose_out "the updated store" %4 "and" %5)
+  hint(prose_out "store" %4 "and" %5)
 
 relation Exprs_inst:
   cursor instContext store |- typedExpressionIR* : store value*
   hint(input %0 %1 %2 %3)
   hint(prose_in "compile-time evaluation of" %3#
                 ", under cursor" %0#", context" %1#", and store" %2)
-  hint(prose_out "the updated store" %4 "and" %5)
+  hint(prose_out "store" %4 "and" %5)
 
 ;;
 ;;;; Argument instantiation
@@ -34,7 +34,7 @@ relation DirectApplicationStmt_inst:
   hint(input %0 %1 %2 %3)
   hint(prose_in "compile-time evaluation of" %3#
                 ", under cursor" %0#", context" %1#", and store" %2)
-  hint(prose_out "\nthe updated store" %4
+  hint(prose_out "store" %4
                  "and desugared" %5 %6)
 
 relation Stmt_inst:
@@ -43,7 +43,7 @@ relation Stmt_inst:
   hint(input %0 %1 %2 %3)
   hint(prose_in "compile-time evaluation of" %3#
                 ", under cursor" %0#", context" %1#", and store" %2)
-  hint(prose_out "\nthe updated context" %4#
+  hint(prose_out "context" %4#
                  ", store" %5#", and" %6)
 
 relation BlockElementStmt_inst:
@@ -52,7 +52,7 @@ relation BlockElementStmt_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#
                 ", under context" %0#", and store" %1)
-  hint(prose_out "\nthe updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 relation BlockElementStmtList_inst:
@@ -61,7 +61,7 @@ relation BlockElementStmtList_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#
                 ", under context" %0#", and store" %1)
-  hint(prose_out "\nthe updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 relation Block_inst:
@@ -70,7 +70,7 @@ relation Block_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#
                 ", under context" %0#", and store" %1)
-  hint(prose_out "\nthe updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 ;;
@@ -85,7 +85,7 @@ relation ExternMethods_inst:
   instContext |- externMethodPrototypeIR* : instContext
   hint(input %0 %1)
   hint(prose_in "compile-time evaluation of" %1#", under context" %0)
-  hint(prose_out "the updated context" %2)
+  hint(prose_out "context" %2)
 
 ;;
 ;;;; Parser instantiation
@@ -97,7 +97,7 @@ relation ParserStmt_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3
+  hint(prose_out "context" %3
                  "and store" %4)
 
 relation ParserStmts_inst:
@@ -106,7 +106,7 @@ relation ParserStmts_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3
+  hint(prose_out "context" %3
                  "and store" %4)
 
 relation ParserState_inst:
@@ -115,7 +115,7 @@ relation ParserState_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3
+  hint(prose_out "context" %3
                  "and store" %4)
 
 relation ParserStates_inst:
@@ -124,7 +124,7 @@ relation ParserStates_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3
+  hint(prose_out "context" %3
                  "and store" %4)
 
 relation ParserLocalDecl_inst:
@@ -133,7 +133,7 @@ relation ParserLocalDecl_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 relation ParserLocalDecls_inst:
@@ -142,7 +142,7 @@ relation ParserLocalDecls_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0
                 "and store" %1)
-  hint(prose_out "the updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 ;;
@@ -153,16 +153,26 @@ relation TableProperty_inst:
   instContext store |- tablePropertyIR
                      : store tablePropertyIR
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under context" %0#
+                "and store" %1)
+  hint(prose_out "store" %3 "and" %4)
 
 relation TableProperties_inst:
   instContext store |- tablePropertyIR*
                      : store tablePropertyIR*
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under context" %0#
+                "and store" %1)
+  hint(prose_out "store" %3 "and" %4)
 
 relation ControlLocalDecl_inst:
   instContext store |- controlLocalDeclarationIR
                      : instContext store controlLocalDeclarationIR?
   hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#", under context" %0#
+                "and store" %1)
+  hint(prose_out "context" %3#
+                 ", store" %4#", and" %5)
 
 relation ControlLocalDecls_inst:
   instContext store |- controlLocalDeclarationIR*
@@ -170,7 +180,7 @@ relation ControlLocalDecls_inst:
   hint(input %0 %1 %2)
   hint(prose_in "compile-time evaluation of" %2#", under context" %0#
                 "and store" %1)
-  hint(prose_out "\nthe updated context" %3#
+  hint(prose_out "context" %3#
                  ", store" %4#", and" %5)
 
 ;;
@@ -183,7 +193,7 @@ relation ConstDecl_inst:
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under cursor" %0#
                 ", and context" %1)
-  hint(prose_out "the updated context" %3)
+  hint(prose_out "context" %3)
 
 relation InstDecl_inst:
   cursor instContext store |- instantiationIR
@@ -191,9 +201,8 @@ relation InstDecl_inst:
   hint(input %0 %1 %2 %3)
   hint(prose_in "loading" %3#", under cursor" %0#
                 ", context" %1#", and store" %2)
-  hint(prose_out "\nthe updated context" %4#
-                 ", store" %5#","
-                 "\nand the reference to the object" %6)
+  hint(prose_out "context" %4#", store" %5#","
+                 "\nand reference to object" %6)
 
 relation FuncDecl_inst:
   cursor instContext |- functionDeclarationIR
@@ -201,7 +210,7 @@ relation FuncDecl_inst:
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under cursor" %0#
                 ", and context" %1)
-  hint(prose_out "the updated context" %3)
+  hint(prose_out "context" %3)
 
 relation ActionDecl_inst:
   cursor instContext |- actionDeclarationIR
@@ -209,7 +218,7 @@ relation ActionDecl_inst:
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under cursor" %0#
                 ", and context" %1)
-  hint(prose_out "the updated context" %3)
+  hint(prose_out "context" %3)
 
 relation Decl_inst:
   instContext store |- declarationIR
@@ -217,8 +226,7 @@ relation Decl_inst:
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under context"
                 %0#", and store" %1)
-  hint(prose_out "the updated context" %4
-                 "and the store" %5)
+  hint(prose_out "context" %4 "and store" %5)
 
 relation Decls_inst:
   instContext store |- declarationIR*
@@ -226,15 +234,14 @@ relation Decls_inst:
   hint(input %0 %1 %2)
   hint(prose_in "loading" %2#", under context"
                 %0#", and store" %1)
-  hint(prose_out "the updated context" %4
-                 "and the store" %5)
+  hint(prose_out "context" %4 "and store" %5)
 
 relation Program_inst:
   |- p4program : globalInstLayer store
   hint(input %0)
   hint(prose_in "loading" %0)
-  hint(prose_out "the global instantiation layer" %1
-                 "and the store" %2)
+  hint(prose_out "global instantiation layer" %1
+                 "and store" %2)
 
 ;;
 ;;;; Instantiate constructor arguments using caller context,
@@ -254,7 +261,7 @@ relation Copy_in_inst:
   hint(input %0 %1 %2 %3 %4 %5 %6)
   hint(prose_in "copy-in from" %1 "layer of" %2 "with" %3
                 "to" %4 "layer of" %5 "with" %6#", under store" %0)
-  hint(prose_out "the updated store" %7
+  hint(prose_out "store" %7
                  "and context" %8)
 
 relation Copy_in_argument_inst_default:
@@ -270,7 +277,7 @@ relation Copy_in_inst_default:
   hint(input %0 %1 %2 %3 %4 %5)
   hint(prose_in "copy-in defaults" %5 "from" %1 "layer of" %2
                 "to" %3 "layer of" %4#", under store" %0)
-  hint(prose_out "the updated store" %6
+  hint(prose_out "store" %6
                  "and context" %7)
 
 ;;
@@ -286,7 +293,7 @@ relation Constructor_inst:
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "finding constructor for" %2 `< %3 > `( %4 )
                 "under cursor" %0#", and context" %1)
-  hint(prose_out "the constructor" %5 `< %6 >
+  hint(prose_out "constructor" %5 `< %6 >
                  "with defaults" %7 "and optionals" %8)
 
 relation Constructor_call:
@@ -298,5 +305,4 @@ relation Constructor_call:
   hint(prose_in "loading" %3 `< %4 > `( %5 )
                 "with defaults" %6 "and optionals" %7#", under cursor" %0#
                 ", context" %1#", and store" %2)
-  hint(prose_out "\nthe updated store" %8#
-               ",\nand the constructed" %9)
+  hint(prose_out "store" %8 "and constructed" %9)

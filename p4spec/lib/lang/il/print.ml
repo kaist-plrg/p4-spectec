@@ -307,7 +307,6 @@ and string_of_prem prem =
   | IfNotHoldPr (id, notexp) ->
       "if " ^ string_of_relid id ^ ": " ^ string_of_notexp notexp
       ^ " does not hold"
-  | ElsePr -> "otherwise"
   | LetPr (exp_l, exp_r) ->
       "let " ^ string_of_exp exp_l ^ " = " ^ string_of_exp exp_r
   | IterPr (({ it = IterPr _; _ } as prem), iterprem) ->
@@ -398,9 +397,7 @@ and string_of_rulepaths nottyp inputs rulepaths =
 
 and string_of_rulegroup nottyp inputs rulegroup =
   let rulegroupid, rulematch, rulepaths = rulegroup.it in
-  indent 1 ^ ";; "
-  ^ string_of_region rulegroup.at
-  ^ "\n" ^ indent 1 ^ "rulegroup "
+  indent 1 ^ "rulegroup "
   ^ string_of_rulegroupid rulegroupid
   ^ "\n\n " ^ indent 1 ^ "match\n\n"
   ^ string_of_rulematch nottyp inputs rulematch
@@ -412,12 +409,28 @@ and string_of_rulegroups nottyp inputs rulegroups =
   |> List.map (string_of_rulegroup nottyp inputs)
   |> String.concat "\n\n"
 
+and string_of_elsegroup nottyp inputs elsegroup =
+  let rulegroupid, rulematch, rulepath = elsegroup.it in
+  indent 1 ^ "rulegroup "
+  ^ string_of_rulegroupid rulegroupid
+  ^ "\n\n " ^ indent 1 ^ "match\n\n"
+  ^ string_of_rulematch nottyp inputs rulematch
+  ^ "\n\n " ^ indent 1 ^ "paths\n\n"
+  ^ string_of_rulepaths nottyp inputs [ rulepath ]
+
+and string_of_elsegroup_opt nottyp inputs elsegroup_opt =
+  match elsegroup_opt with
+  | None -> ""
+  | Some elsegroup ->
+      "\n\n" ^ indent 1 ^ "elsegroup\n\n"
+      ^ string_of_elsegroup nottyp inputs elsegroup
+
 (* Clause *)
 
 and string_of_clause idx clause =
   let args, exp, prems = clause.it in
-  ";; " ^ string_of_region clause.at ^ "\n" ^ indent 1 ^ "clause "
-  ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = " ^ string_of_exp exp
+  "clause " ^ string_of_int idx ^ " : " ^ string_of_args args ^ " = "
+  ^ string_of_exp exp
   ^ string_of_prems ~level:1 prems
 
 and string_of_clauses clauses =
@@ -425,6 +438,13 @@ and string_of_clauses clauses =
     (List.mapi
        (fun idx clause -> "\n\n" ^ indent 1 ^ string_of_clause idx clause)
        clauses)
+
+and string_of_elseclause elseclause = string_of_clause (-1) elseclause
+
+and string_of_elseclause_opt elseclause_opt =
+  match elseclause_opt with
+  | None -> ""
+  | Some elseclause -> "\n\n" ^ indent 1 ^ string_of_elseclause elseclause
 
 (* Table rows *)
 
@@ -453,8 +473,6 @@ and string_of_hints hints = String.concat "" (List.map string_of_hint hints)
 (* Definitions *)
 
 let rec string_of_def def =
-  ";; " ^ string_of_region def.at ^ "\n"
-  ^
   match def.it with
   | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (typid, tparams, deftyp, _) ->
@@ -463,10 +481,11 @@ let rec string_of_def def =
   | ExternRelD (relid, nottyp, _, _) ->
       "extern relation " ^ string_of_relid relid ^ ": "
       ^ string_of_nottyp nottyp
-  | RelD (relid, nottyp, inputs, rulegroups, _) ->
+  | RelD (relid, nottyp, inputs, rulegroups, elsegroup_opt, _) ->
       "relation " ^ string_of_relid relid ^ ": " ^ string_of_nottyp nottyp
       ^ "\n\n"
       ^ string_of_rulegroups nottyp inputs rulegroups
+      ^ string_of_elsegroup_opt nottyp inputs elsegroup_opt
   | ExternDecD (defid, tparams, params, typ, _) ->
       "extern def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
@@ -477,10 +496,11 @@ let rec string_of_def def =
       "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_typ typ ^ " ="
       ^ string_of_tablerows tablerows
-  | FuncDecD (defid, tparams, params, typ, clauses, _) ->
+  | FuncDecD (defid, tparams, params, typ, clauses, elseclause_opt, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses
+      ^ string_of_elseclause_opt elseclause_opt
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 

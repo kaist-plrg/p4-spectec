@@ -65,4 +65,3 @@ RUN cmake --build . -- -j$(nproc) VERBOSE=1 && \
 
 RUN pip3 install gcovr
 WORKDIR /home/p4-spectec
-

@@ -22,10 +22,15 @@ release:
 
 # Spec
 
-spec:
-	cd docs && make build && cd ..
-spec-html:
-	cd docs && make build-html && cd ..
+spec-draft:
+	cd docs && make draft && cd ..
+spec-draft-html:
+	cd docs && make draft-html && cd ..
+
+spec-release:
+	cd docs && make release && cd ..
+spec-release-html:
+	cd docs && make release-html && cd ..
 
 # Format
 
@@ -37,63 +42,68 @@ fmt:
 
 # Tests
 
+# Generate a test target: test-<alias> that runs `dune build @<alias>`
+define dune-alias-test
+.PHONY: test-$(1)
+test-$(1):
+	echo "#### Running (dune build @$(1))"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @$(1) --profile=release && echo OK || \
+	  (echo "####>" Failure running dune build @$(1). && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+endef
+
+# Fast tests (no -det)
+TEST_ALIASES := \
+  speclang \
+  run run-il run-sl \
+  sim-il sim-sl \
+  sim-v1model-p4c-il sim-v1model-p4c-sl \
+  sim-v1model-p4testgen-il sim-v1model-p4testgen-sl \
+  sim-v1model-custom-il sim-v1model-custom-sl \
+  sim-ebpf-p4c-il sim-ebpf-p4c-sl \
+  sim-ebpf-p4testgen-il sim-ebpf-p4testgen-sl \
+  p4parse
+
+$(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
+
+# Det tests (slow, with -det)
+DET_ALIASES := \
+  run-det run-il-det run-sl-det \
+  sim-il-det sim-sl-det \
+  sim-v1model-p4c-il-det sim-v1model-p4c-sl-det \
+  sim-v1model-p4testgen-il-det sim-v1model-p4testgen-sl-det \
+  sim-v1model-custom-il-det sim-v1model-custom-sl-det \
+  sim-ebpf-p4c-il-det sim-ebpf-p4c-sl-det \
+  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det
+
+$(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
+
+.PHONY: test-fast
+test-fast:
+	echo "#### Running fast tests (speclang, p4parse, run-sl, sim-sl)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
+	  (echo "####>" Failure running fast tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
 .PHONY: test-all
-.PHONY: test-speclang
-.PHONY: test-p4static test-p4static-il test-p4static-sl
-.PHONY: test-p4dynamic test-p4dynamic-v1model test-p4dynamic-ebpf test-p4dynamic-psa
-.PHONY: test-p4parse
-.PHONY: promote 
-
 test-all:
-	echo "#### Running (dune runtest)"
+	echo "#### Running all tests (without -det)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune runtest test --profile=release && echo OK || (echo "####>" Failure running dune test. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+	cd p4spec && opam exec -- dune runtest test --profile=release && echo OK || \
+	  (echo "####>" Failure running dune test. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
-test-speclang:
-	echo "#### Running (dune build @speclang)"
+.PHONY: test-all-det
+test-all-det:
+	echo "#### Running all tests (with -det)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @speclang --profile=release && echo OK || (echo "####>" Failure running dune build @speclang. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+	cd p4spec && opam exec -- dune build @speclang @p4parse @run-det @sim-il-det @sim-sl-det --profile=release && echo OK || \
+	  (echo "####>" Failure running det tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
-test-p4static:
-	echo "#### Running (dune build @p4static)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4static --profile=release && echo OK || (echo "####>" Failure running dune build @p4type. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4static-il:
-	echo "#### Running (dune build @p4static-il)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4static-il --profile=release && echo OK || (echo "####>" Failure running dune build @p4static. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4static-sl:
-	echo "#### Running (dune build @p4static-sl)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4static-sl --profile=release && echo OK || (echo "####>" Failure running dune build @p4static. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4dynamic:
-	echo "#### Running (dune build @p4dynamic)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4dynamic-v1model:
-	echo "#### Running (dune build @p4dynamic-v1model)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic-v1model --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4dynamic-ebpf:
-	echo "#### Running (dune build @p4dynamic-ebpf)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic-ebpf --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4dynamic-psa:
-	echo "#### Running (dune build @p4dynamic-psa)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4dynamic-psa --profile=release && echo OK || (echo "####>" Failure running dune build @p4dynamic. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-test-p4parse:
-	echo "#### Running (dune build @p4parse)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @p4parse --profile=release && echo OK || (echo "####>" Failure running dune build @p4parse. && echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
+.PHONY: promote
 promote:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune promote

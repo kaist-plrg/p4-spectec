@@ -97,6 +97,12 @@ rulegroup CallableType_ok/builtinMethodTypeIR {
     ---- ;; if the method is min/maxSizeInBits/Bytes builtin
     -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
                       "maxSizeInBits", "maxSizeInBytes" ]
+    ---- ;; check that the base type is not an object type
+    ---- ;; nor a synthesized type
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_base_unroll = $unroll_typeIR(typeIR_base)
+    -- if ~(typeIR_base_unroll <: objectTypeIR)
+    -- if ~(typeIR_base_unroll <: synthesizedTypeIR)
     ---- ;; create callable type
     -- if methodTypeIR = BUILTIN_METHOD nameIR `( eps ) `: INT
 
@@ -250,7 +256,7 @@ rule Call_ok/action:
   p TC |- actionTypeIR `< eps `# eps >
             `( argumentIR* `# id_default* `# id_optional* )
         : VOID `< eps > `( argumentIR_cast* )
-  -- if ACTION _ `( parameterIR* ) = actionTypeIR
+  -- if _ ACTION _ `( parameterIR* ) = actionTypeIR
   ---- ;; align parameters with arguments
   -- if GIVEN parameterIR_aligned* DEFAULT _
       = $align_parameterListIR(

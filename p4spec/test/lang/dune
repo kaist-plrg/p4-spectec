@@ -1,0 +1,62 @@
+;; Elaboration, structuring, and prose tests for specification language
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff prose.expected prose.actual)))))
+
+(rule
+ (alias speclang)
+ (action
+  (progn
+   (ignore-outputs
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff prose.expected prose.actual)))))
+
+;; Rules to generate outputs
+
+(rule
+ (target elab.actual)
+ (action
+  (with-stdout-to
+   elab.actual
+   (with-stderr-to
+    elab.err
+    (run ./test.exe elab -s ../../../../../spec-concrete)))))
+
+(rule
+ (target struct.actual)
+ (action
+  (with-stdout-to
+   struct.actual
+   (with-stderr-to
+    struct.err
+    (run ./test.exe struct -s ../../../../../spec-concrete)))))
+
+(rule
+ (target prose.actual)
+ (action
+  (with-stdout-to
+   prose.actual
+   (with-stderr-to
+    prose.err
+    (run ./test.exe prose -s ../../../../../spec-concrete)))))

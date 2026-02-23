@@ -78,9 +78,15 @@ syntax headerUnionTypeIR =
 
 syntax valueFieldIR = nameIR `= value `;
 
+syntax simpleEnumTypeIR =
+  ENUM typeId `{ nameIR* } hint(print %0)
+
+syntax serializableEnumTypeIR =
+  ENUM typeId `< typeIR > `{ valueFieldIR* } hint(print %0)
+
 syntax enumTypeIR =
-  | ENUM typeId `{ nameIR* }                     hint(print %0)
-  | ENUM typeId `< typeIR > `{ valueFieldIR* }   hint(print %0)
+  | simpleEnumTypeIR
+  | serializableEnumTypeIR
 
 syntax dataTypeIR =
   | listTypeIR

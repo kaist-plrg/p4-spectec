@@ -63,6 +63,12 @@ module type ARCH = sig
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
 
+  (* Multicast interface *)
+
+  val mc_mgrp_create : Value.t -> int -> Value.t
+  val mc_node_create : Value.t -> int -> int -> Value.t
+  val mc_node_associate : Value.t -> int -> int -> Value.t
+
   (* Pipeline evaluation *)
 
   val init_pipe : string list -> string -> Value.t * Value.t
@@ -82,7 +88,7 @@ module type INTERP_IL = sig
 
   (* Initialization *)
 
-  val init : Il.spec -> unit
+  val init : cache:bool -> det:bool -> Il.spec -> unit
 end
 
 module type INTERP_SL = sig
@@ -94,7 +100,7 @@ module type INTERP_SL = sig
 
   (* Initialization *)
 
-  val init : Sl.spec -> unit
+  val init : cache:bool -> det:bool -> Sl.spec -> unit
 end
 
 module type DRIVER = sig
@@ -109,5 +115,5 @@ module type DRIVER = sig
 
   (* Initialization *)
 
-  val init : spec -> unit
+  val init : ?cache:bool -> ?det:bool -> spec -> unit
 end

@@ -201,9 +201,9 @@ and string_of_phantom phantom = string_of_pid phantom
 and string_of_case ?(level = 0) ?(index = 0) case =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
-  let guard, instrs = case in
+  let guard, block = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
-    (string_of_instrs ~level:(level + 1) instrs)
+    (string_of_block ~level:(level + 1) block)
 
 and string_of_cases ?(level = 0) cases =
   cases
@@ -225,7 +225,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
-  | IfI (exp_cond, iterexps, instrs_then, None) ->
+  | IfI (exp_cond, iterexps, block_then, None) ->
       let s_short =
         Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
           (string_of_iterexps iterexps)
@@ -233,8 +233,8 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_instrs ~level:(level + 1) instrs_then)
-  | IfI (exp_cond, iterexps, instrs_then, Some phantom) ->
+          (string_of_block ~level:(level + 1) block_then)
+  | IfI (exp_cond, iterexps, block, Some phantom) ->
       let s_short =
         Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
           (string_of_iterexps iterexps)
@@ -242,11 +242,11 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s%s" order s_short
-          (string_of_instrs ~level:(level + 1) instrs_then)
+          (string_of_block ~level:(level + 1) block)
           ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
-      | BothH (instrs_hold, instrs_nothold) ->
+      | BothH (block_hold, block_nothold) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
               (string_of_notexp notexp)
@@ -255,10 +255,10 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s\n\n%sElse,\n\n%s" order s_short
-              (string_of_instrs ~level:(level + 1) instrs_hold)
+              (string_of_block ~level:(level + 1) block_hold)
               order
-              (string_of_instrs ~level:(level + 1) instrs_nothold)
-      | HoldH (instrs_hold, None) ->
+              (string_of_block ~level:(level + 1) block_nothold)
+      | HoldH (block_hold, None) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
               (string_of_notexp notexp)
@@ -267,8 +267,8 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s" order s_short
-              (string_of_instrs ~level:(level + 1) instrs_hold)
-      | HoldH (instrs_hold, Some phantom) ->
+              (string_of_block ~level:(level + 1) block_hold)
+      | HoldH (block_hold, Some phantom) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
               (string_of_notexp notexp)
@@ -277,9 +277,9 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
-              (string_of_instrs ~level:(level + 1) instrs_hold)
+              (string_of_block ~level:(level + 1) block_hold)
               ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
-      | NotHoldH (instrs_nothold, None) ->
+      | NotHoldH (block_nothold, None) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s does not hold, then"
               (string_of_relid id) (string_of_notexp notexp)
@@ -288,8 +288,8 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s" order s_short
-              (string_of_instrs ~level:(level + 1) instrs_nothold)
-      | NotHoldH (instrs_nothold, Some phantom) ->
+              (string_of_block ~level:(level + 1) block_nothold)
+      | NotHoldH (block_nothold, Some phantom) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s does not hold, then"
               (string_of_relid id) (string_of_notexp notexp)
@@ -298,7 +298,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
-              (string_of_instrs ~level:(level + 1) instrs_nothold)
+              (string_of_block ~level:(level + 1) block_nothold)
               ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
   | CaseI (exp, cases, None) ->
       let s_short = Format.asprintf "Case analysis on %s" (string_of_exp exp) in
@@ -313,13 +313,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
         Format.asprintf "%s%s\n\n%s%s" order s_short
           (string_of_cases ~level:(level + 1) cases)
           ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
-  | OtherwiseI instr ->
-      let s_short = "Otherwise" in
-      if short then s_short
-      else
-        Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_instr ~level:(level + 1) ~index:1 instr)
-  | GroupI (id_group, rel_signature, exps_group, instrs_group) ->
+  | GroupI (id_group, rel_signature, exps_group, block) ->
       let s_short =
         Format.asprintf "Group %s: %s" (string_of_relid id_group)
           (string_of_relinput rel_signature exps_group)
@@ -327,21 +321,27 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_instrs ~level:(level + 1) instrs_group)
-  | LetI (exp_l, exp_r, iterinstrs) ->
+          (string_of_block ~level:(level + 1) block)
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
       let s_short =
         Format.asprintf "(Let %s be %s)%s" (string_of_exp exp_l)
           (string_of_exp exp_r)
           (string_of_iterinstrs iterinstrs)
       in
-      if short then s_short else Format.asprintf "%s%s" order s_short
-  | RuleI (id_rel, notexp, _inputs, iterinstrs) ->
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_block ~level:(level + 1) block)
+  | RuleI (id_rel, notexp, _inputs, iterinstrs, block) ->
       let s_short =
         Format.asprintf "(%s: %s)%s" (string_of_relid id_rel)
           (string_of_notexp notexp)
           (string_of_iterinstrs iterinstrs)
       in
-      if short then s_short else Format.asprintf "%s%s" order s_short
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_block ~level:(level + 1) block)
   | ResultI (_, []) ->
       let s_short = "The relation holds" in
       if short then s_short else Format.asprintf "%s%s" order s_short
@@ -357,10 +357,22 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       let s_short = Format.asprintf "Debug: %s" (string_of_exp exp) in
       if short then s_short else Format.asprintf "%s%s" order s_short
 
-and string_of_instrs ?(level = 0) instrs =
-  instrs
-  |> List.mapi (fun idx instr -> string_of_instr ~level ~index:(idx + 1) instr)
+and string_of_block ?(level = 0) ?(index = 0) block =
+  block
+  |> List.mapi (fun idx instr ->
+         string_of_instr ~level ~index:(index + idx + 1) instr)
   |> String.concat "\n\n"
+
+and string_of_elseblock ?(level = 0) ?(index = 0) elseblock =
+  Format.asprintf "%s%d. Otherwise,\n\n%s"
+    (String.make (level * 2) ' ')
+    (index + 1)
+    (string_of_block ~level:(level + 1) elseblock)
+
+and string_of_elseblock_opt ?(level = 0) ?(index = 0) elseblock_opt =
+  match elseblock_opt with
+  | None -> ""
+  | Some elseblock -> "\n\n" ^ string_of_elseblock ~level ~index elseblock
 
 and string_of_iterinstr iterinstr =
   let iter, _, _ = iterinstr in
@@ -412,10 +424,11 @@ and string_of_extern_rel externrel =
   string_of_relid relid ^ ": " ^ string_of_relinput rel_signature exps_match
 
 and string_of_defined_rel rel =
-  let relid, rel_signature, exps_match, instrs, _hints = rel in
+  let relid, rel_signature, exps_match, block, elseblock_opt, _hints = rel in
   string_of_relid relid ^ ": "
   ^ string_of_relinput rel_signature exps_match
-  ^ "\n\n" ^ string_of_instrs instrs
+  ^ "\n\n" ^ string_of_block block
+  ^ string_of_elseblock_opt ~index:(List.length block) elseblock_opt
 
 (* Functions *)
 
@@ -432,7 +445,7 @@ let string_of_tablerow (tablerow : tablerow) =
   Format.asprintf "\n  Row : %s -> %s:\n\n%s"
     (string_of_exps ", " exps_match)
     (string_of_exp exp_result)
-    (string_of_instrs ~level:2 instrs)
+    (string_of_block ~level:2 instrs)
 
 let string_of_tablerows (tablerows : tablerow list) =
   String.concat "\n" (List.map string_of_tablerow tablerows)
@@ -443,15 +456,14 @@ let string_of_table_func (tablefunc : tablefunc) =
   ^ string_of_tablerows tablerows
 
 let string_of_defined_func (func : definedfunc) =
-  let defid, tparams, params, _typ, instrs, _hints = func in
+  let defid, tparams, params, _typ, block, elseblock_opt, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
-  ^ "\n\n" ^ string_of_instrs instrs
+  ^ "\n\n" ^ string_of_block block
+  ^ string_of_elseblock_opt ~index:(List.length block) elseblock_opt
 
 (* Definitions *)
 
 let rec string_of_def def =
-  ";; " ^ string_of_region def.at ^ "\n"
-  ^
   match def.it with
   | ExternTypD (id, _) -> "extern syntax " ^ string_of_typid id
   | TypD (id, tparams, deftyp, _) ->

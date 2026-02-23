@@ -30,3 +30,39 @@ let array_of_yojson (e_of_yojson : Yojson.Safe.t -> ('a, string) result)
       in
       aux [] lst
   | _ -> Error "expected a JSON list"
+
+(* JSON conversion helpers for key-value maps *)
+
+module Map = struct
+  module Make (V : sig
+    type t [@@deriving yojson]
+  end) =
+  struct
+    module M = Map.Make (Int)
+    include M
+
+    type t = V.t M.t
+
+    let to_yojson (t : t) : Yojson.Safe.t =
+      let kvs =
+        bindings t |> List.map (fun (k, v) -> (string_of_int k, V.to_yojson v))
+      in
+      `Assoc kvs
+
+    let of_yojson (j : Yojson.Safe.t) : (t, string) result =
+      match j with
+      | `Assoc kvs ->
+          let rec aux acc = function
+            | [] -> Ok acc
+            | (ks, vj) :: tl -> (
+                match int_of_string_opt ks with
+                | None -> Error ("Key is not an int: " ^ ks)
+                | Some k -> (
+                    match V.of_yojson vj with
+                    | Error e -> Error ("Value error at key " ^ ks ^ ": " ^ e)
+                    | Ok v -> aux (M.add k v acc) tl))
+          in
+          aux M.empty kvs
+      | _ -> Error "Expected JSON object"
+  end
+end

@@ -42,7 +42,7 @@ rulegroup Stmt_ok/assignmentStatement {
     ---- ;; check lvalue
     -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
     ---- ;; use lvalue as expression
-    -- if expression_lvalue = $lvalue_to_expression(lvalue)
+    -- if expression_lvalue = $lvalue_as_expression(lvalue)
     ---- ;; check binary expression
     -- if expression_binary = expression_lvalue binop expression
     -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
@@ -69,8 +69,8 @@ rulegroup Stmt_ok/callStatement {
     -- CallableTarget_lvalue_ok:
         p TC |- lvalue_callable : callableTargetIR
     ---- ;; check arguments
-    -- if argument* = $flatten_argumentList(argumentList)
-    -- (Argument_ok: p TC |- argument : argumentIR)*
+    -- ArgumentList_ok:
+        p TC |- argumentList : argumentIR*
     ---- ;; check lvalue as callable
     -- CallableType_ok:
         p TC |- callableTargetIR `< eps > `( argumentIR* )
@@ -264,7 +264,7 @@ rulegroup Stmt_ok/conditionalStatement {
 relation ForUpdateStmt_ok:
   typingContext |- forUpdateStatement : forUpdateStatementIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
+  hint(prose_in "typing" %1 "under context" %0)
   hint(prose_out %2)
 
 ;;;;;; lvalue `( argumentList )
@@ -302,7 +302,7 @@ rulegroup ForUpdateStmt_ok {
 relation ForUpdateStmtList_ok:
   typingContext |- forUpdateStatementList : forUpdateStatementIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
+  hint(prose_in "typing" %1 "under context" %0)
   hint(prose_out %3)
 
 rule ForUpdateStmtList_ok:
@@ -317,8 +317,8 @@ rule ForUpdateStmtList_ok:
 relation ForInitStmt_ok:
   typingContext |- forInitStatement : typingContext forInitStatementIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and" %3)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 ;;;;;; annotationList type name initializerOpt
 ;;;;;; forUpdateStatement
@@ -367,7 +367,7 @@ relation ForInitStmts_ok:
   typingContext |- forInitStatement* : typingContext forInitStatementIR*
   hint(input %0 %1)
 
-rulegroup ForInitStmts_ok/nil {
+rulegroup ForInitStmts_ok {
 
   rule ForInitStmts_ok/nil:
     TC |- eps : TC eps
@@ -385,8 +385,8 @@ rulegroup ForInitStmts_ok/nil {
 relation ForInitStmtList_ok:
   typingContext |- forInitStatementList : typingContext forInitStatementIR*
   hint(input %0 %1)
-  hint(prose_in "typing" %1 "under typing context" %0)
-  hint(prose_out "the updated typing context" %2 "and" %3)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 rule ForInitStmtList_ok:
   TC_0 |- forInitStatementList : TC_1 forInitStatementIR*
@@ -432,10 +432,12 @@ rule Stmt_ok/forStatement-three-clause:
 relation ForCollectionExpr_ok:
   typingContext typeIR |- forCollectionExpression : forCollectionExpressionIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "under typing context" %0 "with iterator type" %1)
+  hint(prose_in "typing" %2 "under context" %0 "with iterator type" %1)
   hint(prose_out %3)
 
 tbl dec $compat_range(typeIR, typeIR) : bool
+  hint(prose_true %0 "and" %1 "can be used as range bounds")
+  hint(prose_false %0 "and" %1 "cannot be used as range bounds")
 tbl def $compat_range =
   | (INT, INT) => true
   | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
@@ -451,8 +453,8 @@ rulegroup ForCollectionExpr_ok {
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check list type
-    -- if _ `# `( typeIR_list _ ) = typedExpressionIR
-    -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_list)
+    -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_expression)
     -- Cast_impl: typeIR_e -> typeIR_var
 
   rule ForCollectionExpr_ok/header-stack:
@@ -460,22 +462,22 @@ rulegroup ForCollectionExpr_ok {
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check header stack type
-    -- if _ `# `( typeIR_stack _ ) = typedExpressionIR
-    -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_stack)
+    -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
     -- Type_alpha: typeIR_e ~~ typeIR_var
 
   rule ForCollectionExpr_ok/range:
     TC typeIR_var |- expression_l `.. expression_r
-                  : typedExpressionIR_l_castd `.. typedExpressionIR_r_castd
+                  : typedExpressionIR_l_casted `.. typedExpressionIR_r_casted
     ---- ;; check both sides
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
     ---- ;; cast the expressions to the variable type
-    -- if typedExpressionIR_l_castd = $cast_unary(typedExpressionIR_l, typeIR_var)
-    -- if typedExpressionIR_r_castd = $cast_unary(typedExpressionIR_r, typeIR_var)
+    -- if typedExpressionIR_l_casted = $cast_unary(typedExpressionIR_l, typeIR_var)
+    -- if typedExpressionIR_r_casted = $cast_unary(typedExpressionIR_r, typeIR_var)
     ---- ;; fetch the types of both sides
-    -- if _ `# `( typeIR_l _ ) = typedExpressionIR_l_castd
-    -- if _ `# `( typeIR_r _ ) = typedExpressionIR_r_castd
+    -- if typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
+    -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted)
     -- if $compat_range(typeIR_l, typeIR_r)
 
 }
@@ -491,8 +493,9 @@ rulegroup Stmt_ok/forStatement-in {
     ---- ;; check that the type is assignable
     -- if $is_assignable_typeIR(typeIR)
     ---- ;; check collection expression
-    -- ForCollectionExpr_ok: TC_0 typeIR |- forCollectionExpression
-                                          : forCollectionExpressionIR
+    -- ForCollectionExpr_ok:
+        TC_0 typeIR |- forCollectionExpression
+                     : forCollectionExpressionIR
     ---- ;; enter new scope
     -- if TC_1 = $enter_t(TC_0)
     -- if nameIR = $name(name)
@@ -512,9 +515,10 @@ rulegroup Stmt_ok/forStatement-in {
                         `( annotationListNonEmpty
                            type name IN forCollectionExpression) statement
                     : TC_0 f_post forStatementIR
-    -- Stmt_ok: LOCAL TC_0 f l |- annotationList FOR
-                                    `( type name IN forCollectionExpression) statement
-                                : TC_1 f_post forStatementIR
+    -- Stmt_ok:
+        LOCAL TC_0 f l |- annotationList FOR
+                            `( type name IN forCollectionExpression) statement
+                        : TC_1 f_post forStatementIR
 
 }
 
@@ -552,7 +556,7 @@ def $check_switchLabel_default(switchLabel_h :: switchLabel_t*)
 relation SwitchLabel_table_ok:
   typingContext typeId |- switchLabel : switchLabelIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "for table" %1#", under typing context" %0)
+  hint(prose_in "typing" %2 "for table" %1#", under context" %0)
   hint(prose_out %3)
 
 ;;;;;;  DEFAULT
@@ -568,8 +572,8 @@ rulegroup SwitchLabel_table_ok {
     TC typeId_table |- prefixedNonTypeName : typedExpressionIR_label
     ---- ;; check that the label is a valid table action reference
     -- if `` nameIR_label = $prefixedNonTypeName(prefixedNonTypeName)
-    -- if typeId_table_enum = "action_list(" ++ typeId_table ++ ")" 
-    -- if id_label = typeId_table_enum ++ "." ++ nameIR_label
+    -- if typeId_table_enum = $concat_text([ "action_list(", typeId_table, ")" ])
+    -- if id_label = $concat_text([ typeId_table_enum, ".", nameIR_label ])
     -- if _ typeIR_label ctk_label value_label
         = $find_var_t(`` id_label, LOCAL, TC)
     -- if value_label
@@ -586,9 +590,9 @@ relation SwitchCase_table_ok:
   typingContext flow loopctxt typeId |- switchCase
                                       : flow switchCaseIR `# switchLabel
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "for table" %3#", under typing context" %0
+  hint(prose_in "typing" %4 "for table" %3#", under context" %0
                 "with abstract control flow" %1 "and loop context" %2)
-  hint(prose_out "the abstract control flow" %5#", and label" %6)
+  hint(prose_out "abstract control flow" %5 "and label" %6)
 
 ;;;;;; switchLabel `: blockStatement
 ;;;;;; switchLabel `: 
@@ -644,9 +648,9 @@ relation SwitchCaseList_table_ok:
   typingContext flow loopctxt typeId |- switchCaseList
                                       : flow switchCaseListIR `# switchLabel*
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "for table" %3#", under typing context" %0
-                "with abstract control flow" %1 "and loop context" %2)
-  hint(prose_out "the abstract control flow" %5#", " %6#", and labels" %7)
+  hint(prose_in "typing" %4 "for table" %3#", under context" %0#
+                ", abstract control flow" %1 "and loop context" %2)
+  hint(prose_out "abstract control flow" %5#", " %6#", and labels" %7)
 
 rule SwitchCaseList_table_ok:
   TC f l typeId_table |- switchCaseList
@@ -687,7 +691,7 @@ rule Stmt_ok/switchStatement-table:
 relation SwitchLabel_general_ok:
   typingContext typeIR |- switchLabel : switchLabelIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "under typing context" %0 "with switch key type" %1)
+  hint(prose_in "typing" %2 "under context" %0 "with switch key type" %1)
   hint(prose_out %3)
 
 ;;;;;;  DEFAULT
@@ -718,10 +722,10 @@ relation SwitchCase_general_ok:
   typingContext flow loopctxt typeIR |- switchCase
                                       : flow switchCaseIR `# switchLabel
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "under typing context" %0
+  hint(prose_in "typing" %4 "under context" %0
                 "with abstract control flow" %1# ", loop context" %2#
                 ", and switch key type" %3)
-  hint(prose_out "the abstract control flow" %5#", and label" %6)
+  hint(prose_out "abstract control flow" %5 "and label" %6)
 
 ;;;;;; switchLabel `: blockStatement
 ;;;;;; switchLabel `: 
@@ -780,10 +784,10 @@ relation SwitchCaseList_general_ok:
   typingContext flow loopctxt typeIR |- switchCaseList
                                       : flow switchCaseListIR `# switchLabel*
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "under typing context" %0
+  hint(prose_in "typing" %4 "under context" %0
                 "with abstract control flow" %1#", loop context" %2
                 ", and switch key type" %3)
-  hint(prose_out "the abstract control flow" %5#", and labels" %6)
+  hint(prose_out "abstract control flow" %5 "and labels" %6)
 
 rule SwitchCaseList_general_ok:
   TC f l typeIR_switch |- switchCaseList
@@ -794,6 +798,8 @@ rule SwitchCaseList_general_ok:
                             : f_post switchCaseIR* `# switchLabel*
 
 tbl dec $compat_switch(typeIR) : bool
+  hint(prose_true %0 "is a valid switch key type")
+  hint(prose_false %0 "is an invalid switch key type")
 tbl def $compat_switch =
   | ERROR => true
   | INT `< _ > => true
@@ -860,6 +866,10 @@ relation BlockElementStmts_ok:
   typingContext flow loopctxt |- blockElementStatement*
                                : typingContext flow blockElementStatementIR*
   hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %3 "under context" %0
+                "with abstract control flow" %1 "and loop context" %2)
+  hint(prose_out "context" %4#", abstract control flow" %5#", and" %6)
+
 
 rulegroup BlockElementStmts_ok {
 
@@ -870,9 +880,9 @@ rulegroup BlockElementStmts_ok {
     TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t*
                   : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
     -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h
-                                              : TC_1 f_1 blockElementStatementIR_h
+                                         : TC_1 f_1 blockElementStatementIR_h
     -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*
-                                                : TC_2 f_2 blockElementStatementIR_t*
+                                         : TC_2 f_2 blockElementStatementIR_t*
 
 }
 
