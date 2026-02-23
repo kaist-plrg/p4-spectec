@@ -6623,12 +6623,42 @@ def $cast_record(typeIR, recordValue) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
 
-  clause 1 : (typeIR, recordValue) = header typeId { true ; value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
+  clause 1 : (typeIR, recordValue) = struct typeId { value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: structTypeIR
+  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
+  -- if recordValue matches `RECORD{%,...}`
+  -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} ,...} = recordValue
+  -- let { id_default*{id_default <- id_default*} } = $diff_set<nameIR>({ id_t_field*{id_t_field <- id_t_field*} }, { nameIR_field*{nameIR_field <- nameIR_field*} })
+  -- (let typeIR'?{typeIR' <- typeIR'?} = $find_map<id, typeIR>({ id_t_field : typeIR_t_field*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} }, id_default))*{id_default <- id_default*, typeIR'? -> typeIR'?*}
+  -- (if typeIR'?{typeIR' <- typeIR'?} matches (_))*{typeIR'? <- typeIR'?*}
+  -- (let ?(typeIR_field_default) = typeIR'?{typeIR' <- typeIR'?})*{typeIR'? <- typeIR'?*, typeIR_field_default -> typeIR_field_default*}
+  -- (let value_field_default = $default(typeIR_field_default))*{typeIR_field_default <- typeIR_field_default*, value_field_default -> value_field_default*}
+  -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} ++ id_default : value_field_default*{id_default <- id_default*, value_field_default <- value_field_default*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 2 : (typeIR, recordValue) = header typeId { true ; value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
   -- if recordValue matches `RECORD{%}`
   -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = recordValue
   -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 3 : (typeIR, recordValue) = header typeId { true ; value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: headerTypeIR
+  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
+  -- if recordValue matches `RECORD{%,...}`
+  -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} ,...} = recordValue
+  -- let { id_default*{id_default <- id_default*} } = $diff_set<nameIR>({ id_t_field*{id_t_field <- id_t_field*} }, { nameIR_field*{nameIR_field <- nameIR_field*} })
+  -- (let typeIR'?{typeIR' <- typeIR'?} = $find_map<id, typeIR>({ id_t_field : typeIR_t_field*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} }, id_default))*{id_default <- id_default*, typeIR'? -> typeIR'?*}
+  -- (if typeIR'?{typeIR' <- typeIR'?} matches (_))*{typeIR'? <- typeIR'?*}
+  -- (let ?(typeIR_field_default) = typeIR'?{typeIR' <- typeIR'?})*{typeIR'? <- typeIR'?*, typeIR_field_default -> typeIR_field_default*}
+  -- (let value_field_default = $default(typeIR_field_default))*{typeIR_field_default <- typeIR_field_default*, value_field_default -> value_field_default*}
+  -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} ++ id_default : value_field_default*{id_default <- id_default*, value_field_default <- value_field_default*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}

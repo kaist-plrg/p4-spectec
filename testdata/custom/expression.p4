@@ -35,8 +35,9 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x09: tuple_default_abort;
             0x0A: tuple_default;
             0x0B: struct_abort;
-            0x0C: struct_default;
-            0x0D: struct_default_abort;
+            0x0C: struct_cont;
+            0x0D: struct_default;
+            0x0E: struct_default_abort;
             default: accept;
         }
     }
@@ -107,6 +108,15 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition accept;
     }
 
+    state struct_cont {
+        h.op.a = 0x10 + h.op.a;
+        b.extract(h.h[0]);
+        b.extract(h.h[1]);
+        Hdr2 x = { c = 16w3, b = 16w2, a = 8w1 };
+        h.h[0].a = x.a - 1;
+        transition accept;
+    }
+
     state struct_abort {
         h.op.a = 0x10 + h.op.a;
         Hdr x = { a = h.h.last.a };
@@ -115,7 +125,10 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
 
     state struct_default {
         h.op.a = 0x10 + h.op.a;
-        Hdr2 x = { a = 8w1, b = 16w2, c = 16w3 };
+        b.extract(h.h[0]);
+        b.extract(h.h[1]);
+        Hdr2 x = { a = 8w1, ... };
+        h.h[0].a = (bit<8>) x.b;
         transition accept;
     }
 

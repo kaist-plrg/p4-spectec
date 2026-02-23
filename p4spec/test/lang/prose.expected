@@ -3811,57 +3811,151 @@ xref:cast_record[``recordValue`` casted to type ``typeIR``]
 
 
 . If let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Check that ``recordValue`` matches pattern ``RECORD`` ``{`` ``%`` ``}``.
- .. Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
+ .. If let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``
- .. Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
- .. Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordValue``.
+  ... Let ``+{+`` ``id~default~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~t_field~^{asterisk}^`` ``+}+`` and ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``].
+  ... Let ``typeIR'^?^^{asterisk}^`` be the list of ``typeIR'^?^``, obtained by repeating:
++
+--
+   **** Let ``typeIR'^?^`` be xref:find_map[``id~default~`` in map ``+{+`` ``(`` ``id~t_field~`` ``+:+`` ``typeIR~t_field~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~default~`` in ``id~default~^{asterisk}^``
+  ... Check that ``typeIR'^?^`` is defined, for all ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``.
+  ... Let ``typeIR~field_default~^{asterisk}^`` be the list of ``typeIR~field_default~``, obtained by repeating:
++
+--
+   **** Let ``typeIR~field_default~`` be ``typeIR'^?^``.
+--
++
+for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
+  ... Let ``value~field_default~^{asterisk}^`` be the list of ``value~field_default~``, obtained by repeating:
++
+--
+   **** Let ``value~field_default~`` be xref:default[the default value for type ``typeIR~field_default~``].
+--
++
+for each ``typeIR~field_default~`` in ``typeIR~field_default~^{asterisk}^``
+  ... Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
++
+--
+   **** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``id~default~`` ``+:+`` ``value~field_default~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+for each ``value^?^`` in ``value^?^^{asterisk}^``
+  ... Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+  ... Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Check that ``recordValue`` matches pattern ``RECORD`` ``{`` ``%`` ``}``.
- .. Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
+ .. If let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``
- .. Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
- .. Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordValue``.
+  ... Let ``+{+`` ``id~default~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~t_field~^{asterisk}^`` ``+}+`` and ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``].
+  ... Let ``typeIR'^?^^{asterisk}^`` be the list of ``typeIR'^?^``, obtained by repeating:
++
+--
+   **** Let ``typeIR'^?^`` be xref:find_map[``id~default~`` in map ``+{+`` ``(`` ``id~t_field~`` ``+:+`` ``typeIR~t_field~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~default~`` in ``id~default~^{asterisk}^``
+  ... Check that ``typeIR'^?^`` is defined, for all ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``.
+  ... Let ``typeIR~field_default~^{asterisk}^`` be the list of ``typeIR~field_default~``, obtained by repeating:
++
+--
+   **** Let ``typeIR~field_default~`` be ``typeIR'^?^``.
+--
++
+for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
+  ... Let ``value~field_default~^{asterisk}^`` be the list of ``value~field_default~``, obtained by repeating:
++
+--
+   **** Let ``value~field_default~`` be xref:default[the default value for type ``typeIR~field_default~``].
+--
++
+for each ``typeIR~field_default~`` in ``typeIR~field_default~^{asterisk}^``
+  ... Let ``value^?^^{asterisk}^`` be the list of ``value^?^``, obtained by repeating:
++
+--
+   **** Let ``value^?^`` be xref:find_map[``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``id~default~`` ``+:+`` ``value~field_default~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list of ``value~field'~``, obtained by repeating:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+for each ``value^?^`` in ``value^?^^{asterisk}^``
+  ... Let ``value~field_cast~^{asterisk}^`` be the list of ``value~field_cast~``, obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+  ... Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_default[``defaultValue`` casted to type ``typeIR``]
 
