@@ -661,7 +661,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-02-08</span>
+<span id="revdate">2026-02-23</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -4965,7 +4965,8 @@ names to their type definitions, <code>callableTypeDefIR</code>.</p>
 <div id="constructorTypeDefEnv" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">constructorTypeDefIR
-   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt; `( constructorParameterIR* ) : typeIR
+   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt;
+       `( constructorParameterIR* ) : typeIR
    ;
 
 constructorTypeDefEnv = map&lt;constructorId, constructorTypeDefIR&gt;</code></pre>
@@ -10599,7 +10600,8 @@ externConstructorOrMethodPrototype
    ;
 
 externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt
+       `{ externConstructorOrMethodPrototypeList }
    ;</code></pre>
 </div>
 </div>
@@ -10627,7 +10629,8 @@ objects can be invoked on a packet:</p>
 <div id="externObjectTypeDefIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectTypeDefIR
-   : EXTERN typeId `&lt; typeParameterIR* , typeParameterIR* &gt; externMethodTypeDefEnv
+   : EXTERN typeId `&lt; typeParameterIR* , typeParameterIR* &gt;
+       externMethodTypeDefEnv
    ;</code></pre>
 </div>
 </div>
@@ -12876,7 +12879,8 @@ callableTypeIR
 <div id="definedFunctionTypeDefIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeDefIR
-   : FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   : FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* )
+       : typeIR
    ;</code></pre>
 </div>
 </div>
@@ -13144,7 +13148,8 @@ can be specialized to a function type.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionTypeDefIR
-   : FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   : FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* )
+       : typeIR
    ;
 
 definedFunctionTypeIR
@@ -13158,7 +13163,8 @@ definedFunctionTypeIR
 <div id="definedFunctionDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">definedFunctionDef
-   : FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR
+   : FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
+       blockStatementIR
    ;</code></pre>
 </div>
 </div>
@@ -13252,7 +13258,8 @@ specialized to extern function types.</p>
 <div id="externFunctionTypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externFunctionTypeDefIR
-   : EXTERN_FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   : EXTERN_FUNCTION nameIR `&lt; typeParameterIR* , typeParameterIR* &gt;
+       `( parameterIR* ) : typeIR
    ;
 
 externFunctionTypeIR
@@ -13403,7 +13410,8 @@ externConstructorOrMethodPrototype
    ;
 
 externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt
+       `{ externConstructorOrMethodPrototypeList }
    ;</code></pre>
 </div>
 </div>
@@ -13431,8 +13439,10 @@ showing how the methods of these objects can be invoked on a packet:</p>
 <div id="externMethodDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodTypeDefIR
-   : EXTERN_METHOD nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
-   | EXTERN_METHOD ABSTRACT nameIR `&lt; typeParameterIR* , typeParameterIR* &gt; `( parameterIR* ) : typeIR
+   : EXTERN_METHOD nameIR `&lt; typeParameterIR* , typeParameterIR* &gt;
+       `( parameterIR* ) : typeIR
+   | EXTERN_METHOD ABSTRACT nameIR `&lt; typeParameterIR* , typeParameterIR* &gt;
+       `( parameterIR* ) : typeIR
    ;
 
 externMethodTypeIR
@@ -13441,7 +13451,8 @@ externMethodTypeIR
    ;
 
 externMethodDef
-   : EXTERN_METHOD nameIR `&lt; typeParameterListIR &gt; `( parameterListIR ) blockStatementIR?
+   : EXTERN_METHOD nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
+       blockStatementIR?
    | EXTERN_METHOD ABSTRACT nameIR `&lt; typeParameterListIR &gt; `( parameterListIR )
    ;</code></pre>
 </div>
@@ -13629,7 +13640,8 @@ parserApplyMethodTypeIR
    ;
 
 parserApplyMethodDef
-   : PARSER_APPLY `( parameterListIR ) `{ parserLocalDeclarationListIR ; stateEnv }
+   : PARSER_APPLY `( parameterListIR )
+       `{ parserLocalDeclarationListIR ; stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -13735,7 +13747,8 @@ controlApplyMethodTypeIR
    ;
 
 controlApplyMethodDef
-   : CONTROL_APPLY `( parameterListIR ) `{ controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
+   : CONTROL_APPLY `( parameterListIR )
+       `{ controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -13986,7 +13999,9 @@ use of constructor parameters.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserDeclaration
-   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   : annotationList PARSER name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ parserLocalDeclarationList parserStateList }
    ;
 
 constructorParameterListOpt
@@ -14167,7 +14182,8 @@ constructors.</p>
    ;
 
 constructorTypeDefIR
-   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt; `( constructorParameterIR* ) : typeIR
+   : CONSTRUCTOR `&lt; typeParameterIR* , typeParameterIR* &gt;
+       `( constructorParameterIR* ) : typeIR
    ;</code></pre>
 </div>
 </div>
@@ -14261,7 +14277,8 @@ externMethodPrototype
    ;
 
 externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt
+       `{ externConstructorOrMethodPrototypeList }
    ;</code></pre>
 </div>
 </div>
@@ -14271,7 +14288,8 @@ externObjectDeclaration
 <div id="externMethodPrototypeIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectConstructorDef
-   : EXTERN nameIR `&lt; typeParameterListIR &gt; `( constructorParameterListIR ) `{ externMethodPrototypeListIR }
+   : EXTERN nameIR `&lt; typeParameterListIR &gt; `( constructorParameterListIR )
+       `{ externMethodPrototypeListIR }
    ;
 
 externMethodPrototypeIR
@@ -14585,7 +14603,9 @@ optional annotations).</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserDeclaration
-   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   : annotationList PARSER name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ parserLocalDeclarationList parserStateList }
    ;
 
 parserLocalDeclaration
@@ -14643,7 +14663,9 @@ as:</p>
 <div id="parserObjectConstructorDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObjectConstructorDef
-   : PARSER `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   : PARSER `&lt; typeParameterListIR &gt; `( parameterListIR )
+       `( constructorParameterListIR )
+       `{ parserLocalDeclarationListIR parserStateListIR }
    ;</code></pre>
 </div>
 </div>
@@ -14653,7 +14675,8 @@ as:</p>
 <div id="parserObject" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `&lt; theta &gt; `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   : PARSER `&lt; theta &gt; `( parameterListIR )
+       `{ frame parserLocalDeclarationListIR stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -14878,7 +14901,9 @@ type parameters, and a sequence of declarations of constants, variables,
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlDeclaration
-   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   : annotationList CONTROL name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ controlLocalDeclarationList APPLY controlBody }
    ;
 
 controlLocalDeclaration
@@ -14910,7 +14935,9 @@ as:</p>
 <div id="controlObjectConstructorDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObjectConstructorDef
-   : CONTROL `&lt; typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   : CONTROL `&lt; typeParameterListIR &gt; `( parameterListIR )
+       `( constructorParameterListIR )
+       `{ controlLocalDeclarationListIR APPLY controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -14920,7 +14947,8 @@ as:</p>
 <div id="controlObject" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `&lt; theta &gt; `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   : CONTROL `&lt; theta &gt; `( parameterListIR )
+       `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -17416,7 +17444,8 @@ methods.</p>
 <div id="instantiationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">instantiationIR
-   : annotationList typeIR constructorTargetIR `( argumentListIR ) nameIR objectInitializerOptIR ;
+   : annotationList typeIR constructorTargetIR `( argumentListIR ) nameIR
+       objectInitializerOptIR ;
    ;</code></pre>
 </div>
 </div>
@@ -18229,7 +18258,8 @@ functionDeclaration
 <div id="functionDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionPrototypeIR
-   : typeIR nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR )
+   : typeIR nameIR `&lt; typeParameterListIR , typeParameterListIR &gt;
+       `( parameterListIR )
    ;
 
 functionDeclarationIR
@@ -19447,7 +19477,8 @@ as:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt
+       `{ externConstructorOrMethodPrototypeList }
    ;
 
 externConstructorOrMethodPrototype
@@ -19882,7 +19913,8 @@ as:</p>
 <div id="externObjectDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externObjectDeclarationIR
-   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt; `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
+   : annotationList EXTERN nameIR `&lt; typeParameterListIR , &gt;
+       `{ externConstructorPrototypeListIR externMethodPrototypeListIR }
    ;
 
 externConstructorPrototypeIR
@@ -20322,7 +20354,9 @@ externMethodPrototypeIR
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserDeclaration
-   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   : annotationList PARSER name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ parserLocalDeclarationList parserStateList }
    ;
 
 parserLocalDeclaration
@@ -20345,7 +20379,9 @@ parserState
 <div id="parserStateIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserDeclarationIR
-   : annotationList PARSER nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ parserLocalDeclarationListIR parserStateListIR }
+   : annotationList PARSER nameIR `&lt; typeParameterListIR , typeParameterListIR &gt;
+       `( parameterListIR ) `( constructorParameterListIR )
+       `{ parserLocalDeclarationListIR parserStateListIR }
    ;
 
 parserLocalDeclarationIR
@@ -20356,7 +20392,8 @@ parserLocalDeclarationIR
    ;
 
 parserStateIR
-   : annotationList STATE nameIR `{ parserStatementListIR transitionStatementIR }
+   : annotationList STATE nameIR
+       `{ parserStatementListIR transitionStatementIR }
    ;</code></pre>
 </div>
 </div>
@@ -20563,7 +20600,8 @@ object constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserObject
-   : PARSER `&lt; theta &gt; `( parameterListIR ) `{ frame parserLocalDeclarationListIR stateEnv }
+   : PARSER `&lt; theta &gt; `( parameterListIR )
+       `{ frame parserLocalDeclarationListIR stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -20580,7 +20618,9 @@ object constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlDeclaration
-   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   : annotationList CONTROL name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ controlLocalDeclarationList APPLY controlBody }
    ;
 
 controlLocalDeclaration
@@ -20602,7 +20642,10 @@ controlBody = blockStatement</code></pre>
 <div id="controlBodyIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlDeclarationIR
-   : annotationList CONTROL nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) `( constructorParameterListIR ) `{ controlLocalDeclarationListIR APPLY controlBodyIR }
+   : annotationList CONTROL nameIR
+       `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR )
+       `( constructorParameterListIR )
+       `{ controlLocalDeclarationListIR APPLY controlBodyIR }
    ;
 
 controlLocalDeclarationIR
@@ -20819,7 +20862,8 @@ object constructors.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlObject
-   : CONTROL `&lt; theta &gt; `( parameterListIR ) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
+   : CONTROL `&lt; theta &gt; `( parameterListIR )
+       `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -21948,7 +21992,8 @@ typeField
 <div id="headerUnionTypeDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">headerUnionTypeDeclarationIR
-   : annotationList HEADER_UNION nameIR `&lt; typeParameterListIR &gt; `{ typeFieldListIR }
+   : annotationList HEADER_UNION nameIR `&lt; typeParameterListIR &gt;
+       `{ typeFieldListIR }
    ;
 
 typeFieldListIR = typeFieldIR*
@@ -22696,7 +22741,8 @@ typedefDeclarationIR
 <div id="parserTypeDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserTypeDeclarationIR
-   : annotationList PARSER nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) ;
+   : annotationList PARSER nameIR `&lt; typeParameterListIR , typeParameterListIR &gt;
+       `( parameterListIR ) ;
    ;</code></pre>
 </div>
 </div>
@@ -22850,7 +22896,8 @@ typedefDeclarationIR
 <div id="controlTypeDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlTypeDeclarationIR
-   : annotationList CONTROL nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) ;
+   : annotationList CONTROL nameIR
+       `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) ;
    ;</code></pre>
 </div>
 </div>
@@ -23004,7 +23051,8 @@ typedefDeclarationIR
 <div id="packageTypeDeclarationIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">packageTypeDeclarationIR
-   : annotationList PACKAGE nameIR `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) ;
+   : annotationList PACKAGE nameIR
+       `&lt; typeParameterListIR , typeParameterListIR &gt; `( parameterListIR ) ;
    ;</code></pre>
 </div>
 </div>
@@ -28821,9 +28869,12 @@ condition or a range or collection.</p>
 <div id="forCollectionExpression" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forStatement
-   : annotationList FOR `( forInitStatementList ; expression ; forUpdateStatementList ) statement
+   : annotationList FOR
+       `( forInitStatementList ; expression ; forUpdateStatementList ) statement
    | annotationList FOR `( type name IN forCollectionExpression ) statement
-   | annotationList FOR `( annotationListNonEmpty type name IN forCollectionExpression ) statement
+   | annotationList FOR
+       `( annotationListNonEmpty type name IN forCollectionExpression )
+       statement
    ;
 
 forInitStatementList
@@ -28897,9 +28948,14 @@ statement and its body.</p>
 <div id="forStatementIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forStatementIR
-   : annotationList FOR `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
-   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR
-   | annotationList FOR `( annotationList typeIR nameIR IN forCollectionExpressionIR ) statementIR
+   : annotationList FOR
+       `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR )
+       statementIR
+   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
+   | annotationList FOR
+       `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
    ;</code></pre>
 </div>
 </div>
@@ -28921,9 +28977,14 @@ body and before evaluating the condition again for the next iteration.</p>
 <div id="forUpdateStatementIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forStatementIR
-   : annotationList FOR `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
-   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR
-   | annotationList FOR `( annotationList typeIR nameIR IN forCollectionExpressionIR ) statementIR
+   : annotationList FOR
+       `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR )
+       statementIR
+   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
+   | annotationList FOR
+       `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
    ;
 
 forInitStatementListIR = forInitStatementIR*
@@ -30312,9 +30373,14 @@ the first iteration of the loop body.</p>
 <div id="forCollectionExpressionIR" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">forStatementIR
-   : annotationList FOR `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR ) statementIR
-   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR
-   | annotationList FOR `( annotationList typeIR nameIR IN forCollectionExpressionIR ) statementIR
+   : annotationList FOR
+       `( forInitStatementListIR ; typedExpressionIR ; forUpdateStatementListIR )
+       statementIR
+   | annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
+   | annotationList FOR
+       `( annotationList typeIR nameIR IN forCollectionExpressionIR )
+       statementIR
    ;
 
 forCollectionExpressionIR
@@ -43094,7 +43160,9 @@ parser object. See <a href="#sec-parser-object">Section 10.4</a> and
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserDeclaration
-   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   : annotationList PARSER name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ parserLocalDeclarationList parserStateList }
    ;
 
 parserLocalDeclaration
@@ -49555,7 +49623,9 @@ as follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlDeclaration
-   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   : annotationList CONTROL name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ controlLocalDeclarationList APPLY controlBody }
    ;
 
 controlLocalDeclaration
@@ -52304,7 +52374,8 @@ are forbidden in the expressions supplied as action arguments.</p>
 tableActionListIR = tableActionIR*
 
 tableActionIR
-   : annotationList tableActionReferenceIR # `( parameterListIR , parameterListIR ) ;
+   : annotationList tableActionReferenceIR #
+       `( parameterListIR , parameterListIR ) ;
    ;
 
 tableActionReferenceIR
@@ -53180,7 +53251,8 @@ tableEntryPriority
    ;
 
 tableEntry
-   : constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
+   : constOpt tableEntryPriority keysetExpression : tableActionReference
+       annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
    ;
 
@@ -53195,7 +53267,8 @@ tableEntryPriorityIR
    ;
 
 tableEntryIR
-   : constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
+   : constOptIR tableEntryPriorityOptIR keysetExpressionIR :
+       tableActionReferenceIR annotationList ;
    ;</code></pre>
 </div>
 </div>
@@ -57864,7 +57937,8 @@ directApplicationStatementIR
    ;
 
 instantiationIR
-   : annotationList typeIR constructorTargetIR `( argumentListIR ) nameIR objectInitializerOptIR ;
+   : annotationList typeIR constructorTargetIR `( argumentListIR ) nameIR
+       objectInitializerOptIR ;
    ;</code></pre>
 </div>
 </div>
@@ -59480,7 +59554,8 @@ result of callee resolution is:</p>
 <div id="builtinMethodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinMethodCallee
-   : BUILTIN_METHOD storageReference . nameIR `&lt; typeArgumentListIR &gt; `( parameterListIR )
+   : BUILTIN_METHOD storageReference . nameIR `&lt; typeArgumentListIR &gt;
+       `( parameterListIR )
    ;</code></pre>
 </div>
 </div>
@@ -59875,7 +59950,8 @@ result of callee resolution is:</p>
 <div id="externMethodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">externMethodCallee
-   : EXTERN_METHOD objectId . nameIR `&lt; typeParameterListIR &gt; `( parameterListIR # id* # id* ) `{ theta ; frame ; blockStatementIR? }
+   : EXTERN_METHOD objectId . nameIR `&lt; typeParameterListIR &gt;
+       `( parameterListIR # id* # id* ) `{ theta ; frame ; blockStatementIR? }
    ;</code></pre>
 </div>
 </div>
@@ -60102,7 +60178,8 @@ result of callee resolution is:</p>
 <div id="parserApplyMethodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">parserApplyMethodCallee
-   : PARSER objectId . APPLY `( parameterListIR # id* ) `{ theta ; frame ; parserLocalDeclarationListIR ; stateEnv }
+   : PARSER objectId . APPLY `( parameterListIR # id* )
+       `{ theta ; frame ; parserLocalDeclarationListIR ; stateEnv }
    ;</code></pre>
 </div>
 </div>
@@ -60327,7 +60404,8 @@ result of callee resolution is:</p>
 <div id="controlApplyMethodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlApplyMethodCallee
-   : CONTROL objectId . APPLY `( parameterListIR # id* ) `{ theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
+   : CONTROL objectId . APPLY `( parameterListIR # id* )
+       `{ theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR }
    ;</code></pre>
 </div>
 </div>
@@ -66858,9 +66936,12 @@ forCollectionExpression
    ;
 
 forStatement
-   : annotationList FOR `( forInitStatementList ; expression ; forUpdateStatementList ) statement
+   : annotationList FOR
+       `( forInitStatementList ; expression ; forUpdateStatementList ) statement
    | annotationList FOR `( type name IN forCollectionExpression ) statement
-   | annotationList FOR `( annotationListNonEmpty type name IN forCollectionExpression ) statement
+   | annotationList FOR
+       `( annotationListNonEmpty type name IN forCollectionExpression )
+       statement
    ;
 
 switchLabel
@@ -67039,7 +67120,8 @@ externConstructorOrMethodPrototypeList
    ;
 
 externObjectDeclaration
-   : annotationList EXTERN nonTypeName typeParameterListOpt `{ externConstructorOrMethodPrototypeList }
+   : annotationList EXTERN nonTypeName typeParameterListOpt
+       `{ externConstructorOrMethodPrototypeList }
    ;
 
 externDeclaration
@@ -67131,7 +67213,9 @@ parserLocalDeclarationList
    ;
 
 parserDeclaration
-   : annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }
+   : annotationList PARSER name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ parserLocalDeclarationList parserStateList }
    ;
 
 const
@@ -67172,7 +67256,8 @@ tableEntryPriority
    ;
 
 tableEntry
-   : constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
+   : constOpt tableEntryPriority keysetExpression : tableActionReference
+       annotationList ;
    | constOpt keysetExpression : tableActionReference annotationList ;
    ;
 
@@ -67217,7 +67302,9 @@ controlLocalDeclarationList
    ;
 
 controlDeclaration
-   : annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }
+   : annotationList CONTROL name typeParameterListOpt `( parameterList )
+       constructorParameterListOpt
+       `{ controlLocalDeclarationList APPLY controlBody }
    ;
 
 packageTypeDeclaration
@@ -67389,7 +67476,7 @@ p4program
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-02-08 16:22:04 +0900
+Last updated 2026-02-23 09:57:59 +0900
 </div>
 </div>
 </body>
