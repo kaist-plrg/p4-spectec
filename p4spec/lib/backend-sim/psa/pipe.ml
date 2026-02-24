@@ -1,6 +1,7 @@
 open Lang
 open Interface.Wrap
 open Interface.Unwrap
+open Interface.Pack
 open Interface.Unpack
 open Interface.Flatten
 module Value = Runtime.Sim.Value
@@ -57,9 +58,18 @@ struct
 
   (* Architectural state *)
 
-  type arch_state = unit [@@deriving yojson]
+  let init_arch_state = Arch.empty |> Arch.to_value
 
-  let init_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let get_arch_state : Arch.t state =
+    let+ _, value_arch, _ = get in
+    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+
+  let put_arch_state (arch_state : Arch.t) : unit state =
+    modify (fun (value_ctx, value_arch, txs) ->
+        let value_arch =
+          arch_state |> Arch.to_value |> Spec.Func.update_archState_e value_arch
+        in
+        (value_ctx, value_arch, txs))
 
   (* Extern objects *)
 
@@ -334,6 +344,99 @@ struct
       Value.t =
     error_no_region "mc_node_associate is not implemented for the psa simulator"
 
+  (* Packet state *)
+
+  let insert_packet (packet : Packet.t) : unit state =
+    let { packet_in; value_ctx; entrypoint } : Packet.t = packet in
+    let id_packet_in =
+      match entrypoint with
+      | Ingress -> "ingress_packet_in"
+      | Egress -> "egress_packet_in"
+    in
+    let value_objectId = wrap_list_v "id" [ wrap_text_v id_packet_in ] in
+    let packet_in = PacketIn packet_in in
+    let value_packet_in =
+      packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+    in
+    modify (fun (_, value_arch, txs) ->
+        let value_arch =
+          Spec.Func.update_objectState_e value_arch value_objectId
+            value_packet_in
+        in
+        (value_ctx, value_arch, txs))
+  (*
+     let remove_ingress_packet_in : unit state =
+       let* _, value_arch, _ = get in
+       let value_arch =
+         let packet_in =
+           value_arch |> get_ingress_packet_in |> Core.Object.PacketIn.reset
+         in
+         let packet_in = PacketIn packet_in in
+         let value_objectId =
+           wrap_list_v "id" [ wrap_text_v "ingress_packet_in" ]
+         in
+         let value_packet_in =
+           packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+         in
+         Spec.Func.update_objectState_e value_arch value_objectId value_packet_in
+       in
+       modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs)) *)
+
+  (* let remove_ingress_packet_out : unit state =
+     let* _, value_arch, _ = get in
+     let value_arch =
+       let packet_out = Core.Object.PacketOut.init () in
+       let packet_out = PacketOut packet_out in
+       let value_objectId =
+         wrap_list_v "id" [ wrap_text_v "ingress_packet_out" ]
+       in
+       let value_packet_out =
+         packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
+       in
+       Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
+     in
+     modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs)) *)
+
+  (* let is_ingress_clone : bool state =
+     let+ value_ctx, value_arch, _ = get in
+     let value_clone =
+       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+         "ingress_output_metadata" "clone"
+     in
+     unpack_p4_bool value_clone *)
+
+  let is_ingress_drop : bool state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_drop =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "drop"
+    in
+    unpack_p4_bool value_drop
+
+  (* let is_ingress_resubmit : bool state =
+     let+ value_ctx, value_arch, _ = get in
+     let value_drop =
+       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+         "ingress_output_metadata" "resubmit"
+     in
+     unpack_p4_bool value_drop *)
+
+  (* let is_egress_clone : bool state =
+     let+ value_ctx, value_arch, _ = get in
+     let value_clone =
+       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+         "egress_output_metadata" "clone"
+     in
+     unpack_p4_bool value_clone *)
+
+  let is_egress_drop : bool state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_drop =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "egress_output_metadata" "drop"
+    in
+    unpack_p4_bool value_drop
+
   (* Pipeline initializer *)
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) :
@@ -349,11 +452,105 @@ struct
     | Pass _ -> error_no_region "unexpected return from PSA_init"
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
 
-  (* Pipeline driver *)
+  (* Prepare context *)
 
-  let setup_ingress_pipe (rx : IO.rx) : unit state =
+  let prepare_unicast_ctx : unit state =
+    let* value_ctx, value_arch, txs = get in
+    (* Prepare egress port *)
+    let value_egress_port =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "egress_port"
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+        "egress_parser_input_metadata" "egress_port" value_egress_port
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+        "egress_input_metadata" "egress_port" value_egress_port
+    in
+    (* Prepare packet path *)
+    let value_packet_path = pack_p4_enum "PSA_PacketPath_t" "NORMAL_UNICAST" in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+        "egress_parser_input_metadata" "packet_path" value_packet_path
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+        "egress_input_metadata" "packet_path" value_packet_path
+    in
+    (* Prepare class of service *)
+    let value_cos =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "class_of_service"
+    in
+    let value_ctx =
+      Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+        "egress_input_metadata" "class_of_service" value_cos
+    in
+    put (value_ctx, value_arch, txs)
+
+  (* Schedule packet *)
+
+  let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
+    let* value_ctx, value_arch, _ = get in
+    let packet_in =
+      match entrypoint with
+      | Ingress -> get_ingress_packet_in value_arch
+      | Egress -> get_egress_packet_in value_arch
+    in
+    let packet = Packet.{ value_ctx; packet_in; entrypoint } in
+    let* arch_state = get_arch_state in
+    let queue = Scheduler.push_back packet arch_state.queue in
+    arch_state |> Arch.with_queue queue |> put_arch_state
+
+  let schedule_unicast : unit state =
+    let* value_ctx, value_arch, txs = prepare_unicast_ctx >> get in
+    (* Prepare egress packet *)
+    let egress_packet_in =
+      let packet_in = get_ingress_packet_in value_arch in
+      let packet_out = get_ingress_packet_out value_arch in
+      Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+    in
+    let value_egress_packet_in =
+      PacketIn (Core.Object.PacketIn.init egress_packet_in)
+      |> object_state_to_yojson
+      |> wrap_extern_v "objectState"
+    in
+    let value_objectId = wrap_list_v "id" [ wrap_text_v "egress_packet_in" ] in
+    let value_arch =
+      Spec.Func.update_objectState_e value_arch value_objectId
+        value_egress_packet_in
+    in
+    (* Schedule packet *)
+    put (value_ctx, value_arch, txs) >> schedule_packet Egress
+
+  let transfer_packet : unit state =
+    let* value_ctx, value_arch, txs = get in
+    (* Get egress port *)
+    let port =
+      let value_egress_port =
+        Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+          "ingress_output_metadata" "egress_port"
+      in
+      let _, int_egress_port = unpack_p4_fixedBit value_egress_port in
+      Bigint.to_int_exn int_egress_port
+    in
+    (* Get packet *)
+    let packet =
+      let packet_in = get_egress_packet_in value_arch in
+      let packet_out = get_egress_packet_out value_arch in
+      Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+    in
+    (* Transfer packet to port *)
+    let tx = (port, packet) in
+    put (value_ctx, value_arch, tx :: txs)
+
+  (* Setup packets and globals *)
+
+  let setup_rx (rx : IO.rx) : unit state =
     let port_in, packet_in = rx in
-    (* Setup packet_in object *)
+    (* Setup packet_in objects *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = object_state_to_yojson packet_in in
     let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
@@ -362,7 +559,11 @@ struct
       Spec.Rel.psa_ingress_init_packet_in value_ctx value_arch
         value_packet_in_state
     in
-    (* Setup packet_out object *)
+    let value_ctx, value_arch =
+      Spec.Rel.psa_egress_init_packet_in value_ctx value_arch
+        value_packet_in_state
+    in
+    (* Setup packet_out objects *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = object_state_to_yojson packet_out in
     let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
@@ -370,11 +571,20 @@ struct
       Spec.Rel.psa_ingress_init_packet_out value_ctx value_arch
         value_packet_out_state
     in
+    let value_ctx, value_arch =
+      Spec.Rel.psa_egress_init_packet_out value_ctx value_arch
+        value_packet_out_state
+    in
     (* Setup global variables *)
     let value_ctx =
       Spec.Rel.psa_ingress_init_globals value_ctx value_arch port_in
     in
+    let value_ctx =
+      Spec.Rel.psa_egress_init_globals value_ctx value_arch port_in
+    in
     put (value_ctx, value_arch, txs)
+
+  (* Ingress pipeline driver *)
 
   let drive_ip : unit state =
     let* value_parser_result = apply Spec.Rel.psa_ingress_parser in
@@ -391,64 +601,15 @@ struct
 
   let drive_ig : Value.t state = apply Spec.Rel.psa_ingress
   let drive_id : Value.t state = apply Spec.Rel.psa_ingress_deparser
+  let drive_ingress_pipe : Value.t state = drive_ip >> drive_ig >> drive_id
 
-  let ingress_resulting_port_packet (value_ctx : Value.t) (value_arch : Value.t)
-      : IO.tx list =
-    let value_drop =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-        "ingress_output_metadata" "drop"
-    in
-    let drop = unpack_p4_bool value_drop in
-    if drop then []
-    else
-      (* Get egress port *)
-      let value_egress_port =
-        Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-          "ingress_output_metadata" "egress_port"
-      in
-      let _, int_egress_port = unpack_p4_fixedBit value_egress_port in
-      let port = Bigint.to_int_exn int_egress_port in
-      (* Get input packet *)
-      let packet_in = get_ingress_packet_in value_arch in
-      (* Get output packet *)
-      let packet_out = get_ingress_packet_out value_arch in
-      let packet =
-        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
-      in
-      (* Return port and packet *)
-      let tx = (port, packet) in
-      [ tx ]
+  (* Packet replication engine *)
 
-  let drive_ingress_pipe : Value.t state =
-    let* result = drive_ip >> drive_ig >> drive_id in
-    let* value_ctx, value_arch, txs = get in
-    let ingress_txs = ingress_resulting_port_packet value_ctx value_arch in
-    put (value_ctx, value_arch, ingress_txs @ txs) >> return result
+  let run_pre : unit state =
+    let* drop = is_ingress_drop in
+    if drop then return () else schedule_unicast
 
-  let setup_egress_pipe (rx : IO.rx) : unit state =
-    let port_in, packet_in = rx in
-    (* Setup packet_in object *)
-    let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
-    let packet_in_state = object_state_to_yojson packet_in in
-    let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
-    let* value_ctx, value_arch, txs = get in
-    let value_ctx, value_arch =
-      Spec.Rel.psa_egress_init_packet_in value_ctx value_arch
-        value_packet_in_state
-    in
-    (* Setup packet_out object *)
-    let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
-    let packet_out_state = object_state_to_yojson packet_out in
-    let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
-    let value_ctx, value_arch =
-      Spec.Rel.psa_egress_init_packet_out value_ctx value_arch
-        value_packet_out_state
-    in
-    (* Setup global variables *)
-    let value_ctx =
-      Spec.Rel.psa_egress_init_globals value_ctx value_arch port_in
-    in
-    put (value_ctx, value_arch, txs)
+  (* Egress pipeline driver *)
 
   let drive_ep : unit state =
     let* value_parser_result = apply Spec.Rel.psa_egress_parser in
@@ -465,59 +626,38 @@ struct
 
   let drive_eg : Value.t state = apply Spec.Rel.psa_egress
   let drive_ed : Value.t state = apply Spec.Rel.psa_egress_deparser
+  let drive_egress_pipe : Value.t state = drive_ep >> drive_eg >> drive_ed
 
-  let egress_resulting_port_packet (value_ctx : Value.t) (value_arch : Value.t)
-      : IO.tx list =
-    let value_drop =
-      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-        "egress_output_metadata" "drop"
-    in
-    let drop = unpack_p4_bool value_drop in
-    if drop then []
-    else
-      (* Get egress port *)
-      let value_egress_port =
-        Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-          "ingress_output_metadata" "egress_port"
-      in
-      let _, int_egress_port = unpack_p4_fixedBit value_egress_port in
-      let port = Bigint.to_int_exn int_egress_port in
-      (* Get input packet *)
-      let packet_in = get_egress_packet_in value_arch in
-      (* Get output packet *)
-      let packet_out = get_egress_packet_out value_arch in
-      let packet =
-        Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
-      in
-      (* Return port and packet *)
-      let tx = (port, packet) in
-      [ tx ]
+  (* Buffering queueing engine *)
 
-  let drive_egress_pipe : Value.t state =
-    let* result = drive_ep >> drive_eg >> drive_ed in
-    let* value_ctx, value_arch, txs = get in
-    let egress_txs = egress_resulting_port_packet value_ctx value_arch in
-    put (value_ctx, value_arch, egress_txs @ txs) >> return result
+  let run_bqe : unit state =
+    let* drop = is_egress_drop in
+    if drop then return () else transfer_packet
 
   (* Scheduling packets *)
 
-  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t)
-      (ingress_rx : IO.rx) : Value.t * Value.t * IO.tx list =
-    let ingress_pipe : Value.t state =
-      setup_ingress_pipe ingress_rx >> drive_ingress_pipe
+  let drive_packet (packet : Packet.t) : unit state =
+    match packet.entrypoint with
+    | Ingress -> insert_packet packet >> drive_ingress_pipe >> run_pre
+    | Egress -> insert_packet packet >> drive_egress_pipe >> run_bqe
+
+  let rec run_scheduler () : unit state =
+    let* arch_state = get_arch_state in
+    match Scheduler.pop_front_opt arch_state.queue with
+    | None -> empty
+    | Some (packet, queue) ->
+        Arch.(arch_state |> with_queue queue)
+        |> put_arch_state >> drive_packet packet >> run_scheduler ()
+
+  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx list =
+    let pipe : unit state =
+      (* Setup port and packet *)
+      setup_rx rx >> schedule_packet Ingress >> run_scheduler ()
     in
-    let ingress_state_init = (value_ctx, value_arch, []) in
-    let _, (value_ctx, value_arch, ingress_txs) =
-      State.run ingress_pipe ingress_state_init
-    in
-    match ingress_txs with
-    | [] -> (value_ctx, value_arch, [])
-    | ingress_tx :: _ ->
-        let egress_pipe : Value.t state =
-          setup_egress_pipe ingress_tx >> drive_egress_pipe
-        in
-        let egress_state_init = (value_ctx, value_arch, []) in
-        State.run egress_pipe egress_state_init |> snd
+    let state_init = (value_ctx, value_arch, []) in
+    let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
+    (value_ctx, value_arch, List.rev txs)
 
   (* Initializer *)
 
