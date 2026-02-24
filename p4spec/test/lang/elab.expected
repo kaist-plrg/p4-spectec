@@ -13784,7 +13784,11 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Stmt_ok: local TC_0 f l |- annotationList for( type name in forCollectionExpression ) statement as statement : TC_1 f_post statementIR'
     -- if statementIR' <: forStatementIR
     -- let forStatementIR = statementIR' as forStatementIR
-    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+    -- let forStatementIR'' = forStatementIR
+    -- if forStatementIR'' matches `%FOR(%%IN%)%`
+    -- let annotationList' for( typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
+    -- let forStatementIR' = annotationList' for( annotationListNonEmpty as annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR
+    -- output: % % % % |- % : TC_0 f_post forStatementIR' as statementIR
 
   rulegroup breakStatement
 
@@ -21428,10 +21432,9 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     rulepath annotations
     -- let forStatementIR'' = forStatementIR'
     -- if forStatementIR'' matches `%FOR(%%%IN%)%`
-    -- let annotationList for( annotationList' typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
-    -- if (annotationList = annotationList')
+    -- let annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
     -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
-    -- let forStatementIR = annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR_body
+    -- let forStatementIR = annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR_body
     -- output: % % % |- % : IC STO_1 forStatementIR as statementIR
 
   rulegroup breakStatementIR

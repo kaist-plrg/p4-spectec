@@ -18500,11 +18500,19 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
                     1. (Let forStatementIR be (statementIR as forStatementIR))
 
-                      1. Result in: % % % % |- % : TC f_post (forStatementIR as statementIR)
+                      1. If ((forStatementIR matches pattern `%FOR(%%IN%)%`)), then
 
-                  1. Else Phantom#969
+                        1. (Let (annotationList' for( typeIR nameIR in forCollectionExpressionIR ) statementIR') be forStatementIR)
 
-          1. Else Phantom#970
+                          1. (Let forStatementIR' be (annotationList' for( (annotationListNonEmpty as annotationList) typeIR nameIR in forCollectionExpressionIR ) statementIR'))
+
+                            1. Result in: % % % % |- % : TC f_post (forStatementIR' as statementIR)
+
+                      1. Else Phantom#969
+
+                  1. Else Phantom#970
+
+          1. Else Phantom#971
 
     4. Case (% has type switchStatement)
 
@@ -18534,11 +18542,11 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
                               1. Result in: % % % % |- % : TC f_post (switchStatementIR as statementIR)
 
-                          1. Else Phantom#971
+                          1. Else Phantom#972
 
-                        1. Else Phantom#972
+                        1. Else Phantom#973
 
-                1. Else Phantom#973
+                1. Else Phantom#974
 
         2. Group switchStatement-general: (local) TC f l |- ((switch( expression_switch ){ switchCaseList }) as statement) : % % %
 
@@ -18558,13 +18566,13 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
                         1. Result in: % % % % |- % : TC f_post (switchStatementIR as statementIR)
 
-                    1. Else Phantom#974
+                    1. Else Phantom#975
 
-                  1. Else Phantom#975
+                  1. Else Phantom#976
 
-              1. Else Phantom#976
+              1. Else Phantom#977
 
-  1. Else Phantom#977
+  1. Else Phantom#978
 
   2. If ((l matches pattern `LOOP`)), then
 
@@ -18586,11 +18594,11 @@ relation Stmt_ok: p TC f l |- statement : % % %
 
             1. Result in: % % % % |- % : TC f (continueStatement as statementIR)
 
-    1. Else Phantom#978
+    1. Else Phantom#979
 
-  2. Else Phantom#979
+  2. Else Phantom#980
 
-2. Else Phantom#980
+2. Else Phantom#981
 
 relation BlockElementStmt_ok: TC_0 f l |- blockElementStatement : % % %
 
@@ -18664,7 +18672,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                   1. Result in: % % |- % : TC_1 parameterIR # (typeId_fresh)*
 
-          1. Else Phantom#981
+          1. Else Phantom#982
 
     2. Case (% has type initializer)
 
@@ -18700,7 +18708,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                                     1. Result in: % % |- % : TC_1 parameterIR # (typeId_fresh)*
 
-                        1. Else Phantom#982
+                        1. Else Phantom#983
 
                     2. Case (% matches pattern `LCTK`)
 
@@ -18722,11 +18730,11 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                                       1. Result in: % % |- % : TC_1 parameterIR # (typeId_fresh)*
 
-                        1. Else Phantom#983
+                        1. Else Phantom#984
 
-                  1. Else Phantom#984
+                  1. Else Phantom#985
 
-            1. Else Phantom#985
+            1. Else Phantom#986
 
 relation ParameterList_ok: p TC_0 |- parameterList : % % # %
 
@@ -18822,11 +18830,11 @@ relation ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : %
 
                               1. Result in: % % |- % : externMethodPrototypeIR
 
-                          1. Else Phantom#986
+                          1. Else Phantom#987
 
-                  1. Else Phantom#987
+                  1. Else Phantom#988
 
-            1. Else Phantom#988
+            1. Else Phantom#989
 
     2. Case (% matches pattern `%ABSTRACT%;`)
 
@@ -18856,11 +18864,11 @@ relation ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : %
 
                               1. Result in: % % |- % : externMethodPrototypeIR
 
-                          1. Else Phantom#989
+                          1. Else Phantom#990
 
-                  1. Else Phantom#990
+                  1. Else Phantom#991
 
-            1. Else Phantom#991
+            1. Else Phantom#992
 
 relation ExternConstructor_ok: TC_0 typeId_extern |- (annotationList typeIdentifier ( parameterList );) : %
 
@@ -18896,15 +18904,15 @@ relation ExternConstructor_ok: TC_0 typeId_extern |- (annotationList typeIdentif
 
                               1. Result in: % % |- % : externConstructorPrototypeIR
 
-                          1. Else Phantom#992
+                          1. Else Phantom#993
 
-                    1. Else Phantom#993
+                    1. Else Phantom#994
 
-              1. Else Phantom#994
+              1. Else Phantom#995
 
-          1. Else Phantom#995
+          1. Else Phantom#996
 
-    1. Else Phantom#996
+    1. Else Phantom#997
 
 relation ParserSelect_ok: TC_0 (nameIR_state)* |- (select( expressionList_key ){ selectCaseList }) : %
 
@@ -18928,7 +18936,7 @@ relation ParserSelect_ok: TC_0 (nameIR_state)* |- (select( expressionList_key ){
 
                   1. Result in: % % |- % : selectExpressionIR
 
-          1. Else Phantom#997
+          1. Else Phantom#998
 
 relation ParserTransition_ok: TC_0 (nameIR_state)* |- transitionStatement : %
 
@@ -18958,7 +18966,7 @@ relation ParserTransition_ok: TC_0 (nameIR_state)* |- transitionStatement : %
 
                     1. Result in: % % |- % : transitionStatementIR
 
-                1. Else Phantom#998
+                1. Else Phantom#999
 
           2. Case (% has type selectExpression)
 
@@ -19010,11 +19018,11 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                   1. Result in: % |- % : TC_0 (emptyStatementIR as parserStatementIR)
 
-              1. Else Phantom#999
+              1. Else Phantom#1000
 
-            1. Else Phantom#1000
+            1. Else Phantom#1001
 
-          1. Else Phantom#1001
+          1. Else Phantom#1002
 
   4. Case (% has type assignmentStatement)
 
@@ -19032,9 +19040,9 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                 1. Result in: % |- % : TC_1 (assignmentStatementIR as parserStatementIR)
 
-            1. Else Phantom#1002
+            1. Else Phantom#1003
 
-          1. Else Phantom#1003
+          1. Else Phantom#1004
 
   5. Case (% has type callStatement)
 
@@ -19052,9 +19060,9 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                 1. Result in: % |- % : TC_1 (callStatementIR as parserStatementIR)
 
-            1. Else Phantom#1004
+            1. Else Phantom#1005
 
-          1. Else Phantom#1005
+          1. Else Phantom#1006
 
   6. Case (% has type directApplicationStatement)
 
@@ -19072,9 +19080,9 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                 1. Result in: % |- % : TC_1 (directApplicationStatementIR as parserStatementIR)
 
-            1. Else Phantom#1006
+            1. Else Phantom#1007
 
-          1. Else Phantom#1007
+          1. Else Phantom#1008
 
   7. Case (% has type parserBlockStatement)
 
@@ -19114,7 +19122,7 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                       1. Result in: % |- % : TC_0 ((if( typedExpressionIR_cond ) parserStatementIR_then) as parserStatementIR)
 
-                  1. Else Phantom#1008
+                  1. Else Phantom#1009
 
           2. Case (% matches pattern `IF(%)%ELSE%`)
 
@@ -19132,7 +19140,7 @@ relation ParserStmt_ok: TC_0 |- parserStatement : % %
 
                         1. Result in: % |- % : TC_0 ((if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else) as parserStatementIR)
 
-                  1. Else Phantom#1009
+                  1. Else Phantom#1010
 
 relation ParserStmtList_ok: TC_0 |- parserStatementList : % %
 
@@ -19188,11 +19196,11 @@ relation ParserStateList_ok: TC |- parserStateList : %
 
                   1. Result in: % |- % : (parserStateIR)*
 
-            1. Else Phantom#1010
+            1. Else Phantom#1011
 
-          1. Else Phantom#1011
+          1. Else Phantom#1012
 
-        1. Else Phantom#1012
+        1. Else Phantom#1013
 
 relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
@@ -19254,11 +19262,11 @@ relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
                           1. Result in: % |- % : TC_1 (valueSetDeclarationIR as parserLocalDeclarationIR)
 
-                1. Else Phantom#1013
+                1. Else Phantom#1014
 
-            1. Else Phantom#1014
+            1. Else Phantom#1015
 
-          1. Else Phantom#1015
+          1. Else Phantom#1016
 
 relation ParserLocalDeclList_ok: TC_0 |- parserLocalDeclarationList : % %
 
@@ -19296,11 +19304,11 @@ relation TableKey_ok: TC TBLC_0 |- (expression : name_matchkind annotationList ;
 
                       1. Result in: % % |- % : TBLC_2 tableKeyIR
 
-              1. Else Phantom#1016
+              1. Else Phantom#1017
 
-            1. Else Phantom#1017
+            1. Else Phantom#1018
 
-        1. Else Phantom#1018
+        1. Else Phantom#1019
 
 relation TableKeys_ok: TC tableContext |- (tableKey)* : % %
 
@@ -19310,7 +19318,7 @@ relation TableKeys_ok: TC tableContext |- (tableKey)* : % %
 
     1. Result in: % % |- % : tableContext []
 
-  1. Else Phantom#1019
+  1. Else Phantom#1020
 
   2. If (((tableKey)* matches pattern _ :: _)), then
 
@@ -19322,7 +19330,7 @@ relation TableKeys_ok: TC tableContext |- (tableKey)* : % %
 
           1. Result in: % % |- % : TBLC_2 tableKeyIR_h :: (tableKeyIR_t)*
 
-  2. Else Phantom#1020
+  2. Else Phantom#1021
 
 relation Call_action_partial_ok: TC |- (parameterIR)* @ (argumentIR)* : % , % @ %
 
@@ -19340,9 +19348,9 @@ relation Call_action_partial_ok: TC |- (parameterIR)* @ (argumentIR)* : % , % @ 
 
             1. Result in: % |- % @ % : (parameterIR_data)* , (parameterIR_control)* @ (argumentIR_cast)*
 
-        1. Else Phantom#1021
+        1. Else Phantom#1022
 
-    1. Else Phantom#1022
+    1. Else Phantom#1023
 
 relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : % %
 
@@ -19380,11 +19388,11 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
                                 1. Result in: % % |- % : TBLC_1 tableActionIR
 
-                          1. Else Phantom#1023
+                          1. Else Phantom#1024
 
-                1. Else Phantom#1024
+                1. Else Phantom#1025
 
-            1. Else Phantom#1025
+            1. Else Phantom#1026
 
     2. Case (% matches pattern `%(%)`)
 
@@ -19418,9 +19426,9 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
                                   1. Result in: % % |- % : TBLC_1 tableActionIR
 
-                1. Else Phantom#1026
+                1. Else Phantom#1027
 
-            1. Else Phantom#1027
+            1. Else Phantom#1028
 
 relation TableActions_ok: TC tableContext |- (tableAction)* : % %
 
@@ -19430,7 +19438,7 @@ relation TableActions_ok: TC tableContext |- (tableAction)* : % %
 
     1. Result in: % % |- % : tableContext []
 
-  1. Else Phantom#1028
+  1. Else Phantom#1029
 
   2. If (((tableAction)* matches pattern _ :: _)), then
 
@@ -19442,7 +19450,7 @@ relation TableActions_ok: TC tableContext |- (tableAction)* : % %
 
           1. Result in: % % |- % : TBLC_2 tableActionIR_h :: (tableActionIR_t)*
 
-  2. Else Phantom#1029
+  2. Else Phantom#1030
 
 relation Call_action_default_ok: TC |- (parameterIR)* @ (argumentIR)* : % , % @ %
 
@@ -19458,7 +19466,7 @@ relation Call_action_default_ok: TC |- (parameterIR)* @ (argumentIR)* : % , % @ 
 
           1. Result in: % |- % @ % : (parameterIR_data)* , (parameterIR_control)* @ (argumentIR_cast)*
 
-      1. Else Phantom#1030
+      1. Else Phantom#1031
 
 relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
@@ -19476,7 +19484,7 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
             1. Result in: % % |- % : (prefixedNameIR ( [] ))
 
-          1. Else Phantom#1031
+          1. Else Phantom#1032
 
     2. Case (% has type callExpression)
 
@@ -19512,15 +19520,15 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
                                     1. Result in: % % |- % : (prefixedNameIR ( (argumentIR_cast)* ))
 
-                                  1. Else Phantom#1032
+                                  1. Else Phantom#1033
 
-                    1. Else Phantom#1033
+                    1. Else Phantom#1034
 
-            1. Else Phantom#1034
+            1. Else Phantom#1035
 
-        1. Else Phantom#1035
+        1. Else Phantom#1036
 
-  1. Else Phantom#1036
+  1. Else Phantom#1037
 
 relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
@@ -19542,9 +19550,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                 1. Result in: % % |- % : TBLS (simpleKeysetExpressionIR' as keysetExpressionIR)
 
-            1. Else Phantom#1037
+            1. Else Phantom#1038
 
-        1. Else Phantom#1038
+        1. Else Phantom#1039
 
   2. Case (% has type tupleKeysetExpression)
 
@@ -19568,9 +19576,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                       1. Result in: % % |- % : TBLS ((( [simpleKeysetExpressionIR'] )) as keysetExpressionIR)
 
-                  1. Else Phantom#1039
+                  1. Else Phantom#1040
 
-              1. Else Phantom#1040
+              1. Else Phantom#1041
 
         2. Case (% matches pattern `(%..%)`)
 
@@ -19588,9 +19596,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                       1. Result in: % % |- % : TBLS ((( [simpleKeysetExpressionIR'] )) as keysetExpressionIR)
 
-                  1. Else Phantom#1041
+                  1. Else Phantom#1042
 
-              1. Else Phantom#1042
+              1. Else Phantom#1043
 
         3. Case (% matches pattern `(DEFAULT)`)
 
@@ -19606,7 +19614,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                     1. Result in: % % |- % : TBLS ((( [(default)] )) as keysetExpressionIR)
 
-              1. Else Phantom#1043
+              1. Else Phantom#1044
 
             2. If ((((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri))) \/ (TBLC.mode = (prilpm)))), then
 
@@ -19614,7 +19622,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                 1. Result in: % % |- % : TBLS ((( [(default)] )) as keysetExpressionIR)
 
-            2. Else Phantom#1044
+            2. Else Phantom#1045
 
         4. Case (% matches pattern `(_)`)
 
@@ -19628,7 +19636,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                   1. Result in: % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
 
-              1. Else Phantom#1045
+              1. Else Phantom#1046
 
             2. If ((((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri))) \/ (TBLC.mode = (prilpm)))), then
 
@@ -19636,7 +19644,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                 1. Result in: % % |- % : TBLS ((( [(_)] )) as keysetExpressionIR)
 
-            2. Else Phantom#1046
+            2. Else Phantom#1047
 
         5. Case (% matches pattern `(%,%)`)
 
@@ -19654,9 +19662,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                       1. Result in: % % |- % : TBLS ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
 
-                  1. Else Phantom#1047
+                  1. Else Phantom#1048
 
-1. Else Phantom#1048
+1. Else Phantom#1049
 
 2. If ((keysetExpression has type simpleKeysetExpression)), then
 
@@ -19680,9 +19688,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                     1. Result in: % % |- % : TBLS (simpleKeysetExpressionIR' as keysetExpressionIR)
 
-                1. Else Phantom#1049
+                1. Else Phantom#1050
 
-            1. Else Phantom#1050
+            1. Else Phantom#1051
 
       2. Case (% matches pattern `%..%`)
 
@@ -19700,9 +19708,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                     1. Result in: % % |- % : TBLS (simpleKeysetExpressionIR' as keysetExpressionIR)
 
-                1. Else Phantom#1051
+                1. Else Phantom#1052
 
-            1. Else Phantom#1052
+            1. Else Phantom#1053
 
       3. Case (% matches pattern `DEFAULT`)
 
@@ -19718,7 +19726,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                   1. Result in: % % |- % : TBLS ((default) as keysetExpressionIR)
 
-            1. Else Phantom#1053
+            1. Else Phantom#1054
 
           2. If ((((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri))) \/ (TBLC.mode = (prilpm)))), then
 
@@ -19726,7 +19734,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
               1. Result in: % % |- % : TBLS ((default) as keysetExpressionIR)
 
-          2. Else Phantom#1054
+          2. Else Phantom#1055
 
       4. Case (% matches pattern `_`)
 
@@ -19740,7 +19748,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
                 1. Result in: % % |- % : TBLS ((_) as keysetExpressionIR)
 
-            1. Else Phantom#1055
+            1. Else Phantom#1056
 
           2. If ((((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri))) \/ (TBLC.mode = (prilpm)))), then
 
@@ -19748,11 +19756,11 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
               1. Result in: % % |- % : TBLS ((_) as keysetExpressionIR)
 
-          2. Else Phantom#1056
+          2. Else Phantom#1057
 
-    1. Else Phantom#1057
+    1. Else Phantom#1058
 
-2. Else Phantom#1058
+2. Else Phantom#1059
 
 relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
@@ -19770,7 +19778,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
             1. Result in: % % |- % : (prefixedNameIR ( [] ))
 
-          1. Else Phantom#1059
+          1. Else Phantom#1060
 
   2. Case (% matches pattern `%(%)`)
 
@@ -19800,9 +19808,9 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
                             1. Result in: % % |- % : (prefixedNameIR ( (argumentIR_cast)* ))
 
-                          1. Else Phantom#1060
+                          1. Else Phantom#1061
 
-            1. Else Phantom#1061
+            1. Else Phantom#1062
 
 relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? : % %
 
@@ -19816,7 +19824,7 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
         1. Result in: % % % |- % : tableContext ?()
 
-      1. Else Phantom#1062
+      1. Else Phantom#1063
 
       2. (Let matchMode be tableContext.mode)
 
@@ -19828,9 +19836,9 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
               1. Result in: % % % |- % : tableContext ?((priority= (d (n_prefix as int)) :))
 
-          1. Else Phantom#1063
+          1. Else Phantom#1064
 
-        1. Else Phantom#1064
+        1. Else Phantom#1065
 
       3. If (((tableContext.mode = (pri)) \/ (tableContext.mode = (prilpm)))), then
 
@@ -19856,7 +19864,7 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                             1. Result in: % % % |- % : TBLC_1 ?((priority= (d (n as int)) :))
 
-                      1. Else Phantom#1065
+                      1. Else Phantom#1066
 
               2. Case false
 
@@ -19884,7 +19892,7 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                             1. Result in: % % % |- % : TBLC_1 ?((priority= (d (n as int)) :))
 
-                      1. Else Phantom#1066
+                      1. Else Phantom#1067
 
               2. Case false
 
@@ -19898,7 +19906,7 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                         1. Result in: % % % |- % : TBLC_1 ?((priority= (d (n as int)) :))
 
-      3. Else Phantom#1067
+      3. Else Phantom#1068
 
   2. Case (% matches pattern (_))
 
@@ -19932,7 +19940,7 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                                 1. Result in: % % % |- % : TBLC_2 ?((priority= integerLiteral :))
 
-                        1. Else Phantom#1068
+                        1. Else Phantom#1069
 
                     2. Case (% =/= [])
 
@@ -19948,13 +19956,13 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                                 1. Result in: % % % |- % : TBLC_1 ?((priority= integerLiteral :))
 
-                          1. Else Phantom#1069
+                          1. Else Phantom#1070
 
-                      1. Else Phantom#1070
+                      1. Else Phantom#1071
 
-                1. Else Phantom#1071
+                1. Else Phantom#1072
 
-              1. Else Phantom#1072
+              1. Else Phantom#1073
 
         2. Case (% matches pattern `PRIORITY=(%):`)
 
@@ -19992,11 +20000,11 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                                           1. Result in: % % % |- % : TBLC_2 ?((priority=( typedExpressionIR ):))
 
-                                  1. Else Phantom#1073
+                                  1. Else Phantom#1074
 
-                            1. Else Phantom#1074
+                            1. Else Phantom#1075
 
-                        1. Else Phantom#1075
+                        1. Else Phantom#1076
 
                     2. Case (% =/= [])
 
@@ -20022,17 +20030,17 @@ relation TableEntry_priority_ok: TC tableContext TBLS |- (tableEntryPriority)? :
 
                                           1. Result in: % % % |- % : TBLC_1 ?((priority=( typedExpressionIR ):))
 
-                                    1. Else Phantom#1076
+                                    1. Else Phantom#1077
 
-                              1. Else Phantom#1077
+                              1. Else Phantom#1078
 
-                          1. Else Phantom#1078
+                          1. Else Phantom#1079
 
-                      1. Else Phantom#1079
+                      1. Else Phantom#1080
 
-                1. Else Phantom#1080
+                1. Else Phantom#1081
 
-              1. Else Phantom#1081
+              1. Else Phantom#1082
 
 relation TableEntry_ok: TC TBLC_0 |- tableEntry : % %
 
@@ -20082,7 +20090,7 @@ relation TableEntries_ok: TC tableContext |- (tableEntry)* : % %
 
     1. Result in: % % |- % : tableContext []
 
-  1. Else Phantom#1082
+  1. Else Phantom#1083
 
   2. If (((tableEntry)* matches pattern _ :: _)), then
 
@@ -20094,7 +20102,7 @@ relation TableEntries_ok: TC tableContext |- (tableEntry)* : % %
 
           1. Result in: % % |- % : TBLC_2 tableEntryIR_h :: (tableEntryIR_t)*
 
-  2. Else Phantom#1083
+  2. Else Phantom#1084
 
 relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
@@ -20144,7 +20152,7 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                     1. Result in: % % |- % : TBLC_3 ((annotationList constOptIR entries={ (tableEntryIR)* }) as tablePropertyIR)
 
-          1. Else Phantom#1084
+          1. Else Phantom#1085
 
   4. Case (% matches pattern `%%%%;`)
 
@@ -20162,7 +20170,7 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                 1. Result in: % % |- % : TBLC_0 tablePropertyIR
 
-        1. Else Phantom#1085
+        1. Else Phantom#1086
 
     2. (Let (annotationList constOpt tableCustomName (= expression) ;) be tableProperty)
 
@@ -20184,9 +20192,9 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                       1. Result in: % % |- % : TBLC_0 tablePropertyIR
 
-                1. Else Phantom#1086
+                1. Else Phantom#1087
 
-        1. Else Phantom#1087
+        1. Else Phantom#1088
 
         2. If (("largest_priority_wins" = $tableCustomName(tableCustomName))), then
 
@@ -20212,13 +20220,13 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                               1. Result in: % % |- % : TBLC_1 tablePropertyIR
 
-                    1. Else Phantom#1088
+                    1. Else Phantom#1089
 
-                1. Else Phantom#1089
+                1. Else Phantom#1090
 
-              1. Else Phantom#1090
+              1. Else Phantom#1091
 
-        2. Else Phantom#1091
+        2. Else Phantom#1092
 
         3. If (("priority_delta" = $tableCustomName(tableCustomName))), then
 
@@ -20254,17 +20262,17 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                                         1. Result in: % % |- % : TBLC_1 tablePropertyIR
 
-                                1. Else Phantom#1092
+                                1. Else Phantom#1093
 
-                            1. Else Phantom#1093
+                            1. Else Phantom#1094
 
-                      1. Else Phantom#1094
+                      1. Else Phantom#1095
 
-                  1. Else Phantom#1095
+                  1. Else Phantom#1096
 
-              1. Else Phantom#1096
+              1. Else Phantom#1097
 
-        3. Else Phantom#1097
+        3. Else Phantom#1098
 
         4. (Let nameIR be $tableCustomName(tableCustomName))
 
@@ -20278,7 +20286,7 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
                   1. Result in: % % |- % : TBLC_0 tablePropertyIR
 
-          1. Else Phantom#1098
+          1. Else Phantom#1099
 
 relation TableProperties_ok: TC tableContext |- (tableProperty)* : % %
 
@@ -20288,7 +20296,7 @@ relation TableProperties_ok: TC tableContext |- (tableProperty)* : % %
 
     1. Result in: % % |- % : tableContext []
 
-  1. Else Phantom#1099
+  1. Else Phantom#1100
 
   2. If (((tableProperty)* matches pattern _ :: _)), then
 
@@ -20300,7 +20308,7 @@ relation TableProperties_ok: TC tableContext |- (tableProperty)* : % %
 
           1. Result in: % % |- % : TBLC_2 tablePropertyIR_h :: (tablePropertyIR_t)*
 
-  2. Else Phantom#1100
+  2. Else Phantom#1101
 
 relation Table_ok: TC |- (tableProperty)* : % %
 
@@ -20332,11 +20340,11 @@ relation Table_ok: TC |- (tableProperty)* : % %
 
               1. Result in: % |- % : TBLC_1 (tablePropertyIR)*
 
-      1. Else Phantom#1101
+      1. Else Phantom#1102
 
-    1. Else Phantom#1102
+    1. Else Phantom#1103
 
-  1. Else Phantom#1103
+  1. Else Phantom#1104
 
 relation TableType_ok: TC_0 TBLC |- name : % %
 
@@ -20468,11 +20476,11 @@ relation VarDecl_ok: p TC_0 |- (annotationList type name initializerOpt ;) : % %
 
                     1. Result in: % % |- % : TC_1 variableDeclarationIR
 
-            1. Else Phantom#1104
+            1. Else Phantom#1105
 
-          1. Else Phantom#1105
+          1. Else Phantom#1106
 
-        1. Else Phantom#1106
+        1. Else Phantom#1107
 
     2. Case (% has type initializer)
 
@@ -20502,13 +20510,13 @@ relation VarDecl_ok: p TC_0 |- (annotationList type name initializerOpt ;) : % %
 
                               1. Result in: % % |- % : TC_1 variableDeclarationIR
 
-                    1. Else Phantom#1107
+                    1. Else Phantom#1108
 
-              1. Else Phantom#1108
+              1. Else Phantom#1109
 
-            1. Else Phantom#1109
+            1. Else Phantom#1110
 
-          1. Else Phantom#1110
+          1. Else Phantom#1111
 
 relation ConstDecl_ok: p TC_0 |- (annotationList const type name (= expression_value) ;) : % %
 
@@ -20540,13 +20548,13 @@ relation ConstDecl_ok: p TC_0 |- (annotationList const type name (= expression_v
 
                           1. Result in: % % |- % : TC_1 constantDeclarationIR
 
-              1. Else Phantom#1111
+              1. Else Phantom#1112
 
-          1. Else Phantom#1112
+          1. Else Phantom#1113
 
-      1. Else Phantom#1113
+      1. Else Phantom#1114
 
-    1. Else Phantom#1114
+    1. Else Phantom#1115
 
 relation InstDecl_ok: p TC_0 |- instantiation : % %
 
@@ -20576,7 +20584,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
                 1. Result in: % % |- % : TC_1 instantiationIR
 
-        1. Else Phantom#1115
+        1. Else Phantom#1116
 
     2. Case (% matches pattern `%%(%)%%;`)
 
@@ -20600,7 +20608,7 @@ relation InstDecl_ok: p TC_0 |- instantiation : % %
 
                 1. Result in: % % |- % : TC_1 instantiationIR
 
-        1. Else Phantom#1116
+        1. Else Phantom#1117
 
 relation FuncDecl_ok: p TC_0 |- (annotationList (typeOrVoid name typeParameterListOpt ( parameterList )) blockStatement) : % %
 
@@ -20634,11 +20642,11 @@ relation FuncDecl_ok: p TC_0 |- (annotationList (typeOrVoid name typeParameterLi
 
                             1. Result in: % % |- % : TC_4 functionDeclarationIR
 
-                      1. Else Phantom#1117
+                      1. Else Phantom#1118
 
-              1. Else Phantom#1118
+              1. Else Phantom#1119
 
-      1. Else Phantom#1119
+      1. Else Phantom#1120
 
 relation ActionDecl_ok: p TC_0 |- (annotationList action name ( parameterList ) blockStatement) : % %
 
@@ -20666,9 +20674,9 @@ relation ActionDecl_ok: p TC_0 |- (annotationList action name ( parameterList ) 
 
                       1. Result in: % % |- % : TC_3 actionDeclarationIR
 
-                1. Else Phantom#1120
+                1. Else Phantom#1121
 
-      1. Else Phantom#1121
+      1. Else Phantom#1122
 
 relation Decl_ok: TC_0 |- declaration : % %
 
@@ -20736,7 +20744,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                       1. Result in: % |- % : TC_1 ((error{ (nameIR)* }) as declarationIR)
 
-            1. Else Phantom#1122
+            1. Else Phantom#1123
 
   6. Case (% has type matchKindDeclaration)
 
@@ -20758,7 +20766,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                     1. Result in: % |- % : TC_1 ((match_kind{ (nameIR)* }) as declarationIR)
 
-            1. Else Phantom#1123
+            1. Else Phantom#1124
 
   7. Case (% has type externFunctionDeclaration)
 
@@ -20788,9 +20796,9 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                             1. Result in: % |- % : TC_4 (externFunctionDeclarationIR as declarationIR)
 
-                      1. Else Phantom#1124
+                      1. Else Phantom#1125
 
-              1. Else Phantom#1125
+              1. Else Phantom#1126
 
   8. Case (% has type externObjectDeclaration)
 
@@ -20838,7 +20846,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                               1. Result in: % |- % : TC_6 (externObjectDeclarationIR as declarationIR)
 
-                    1. Else Phantom#1126
+                    1. Else Phantom#1127
 
   9. Case (% has type parserDeclaration)
 
@@ -20884,11 +20892,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                             1. Result in: % |- % : TC_7 (parserDeclarationIR as declarationIR)
 
-                                      1. Else Phantom#1127
+                                      1. Else Phantom#1128
 
-                          1. Else Phantom#1128
+                          1. Else Phantom#1129
 
-                1. Else Phantom#1129
+                1. Else Phantom#1130
 
   10. Case (% has type controlDeclaration)
 
@@ -20934,11 +20942,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                             1. Result in: % |- % : TC_7 (controlDeclarationIR as declarationIR)
 
-                                      1. Else Phantom#1130
+                                      1. Else Phantom#1131
 
-                          1. Else Phantom#1131
+                          1. Else Phantom#1132
 
-                1. Else Phantom#1132
+                1. Else Phantom#1133
 
   11. Case (% has type enumTypeDeclaration)
 
@@ -20976,7 +20984,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                     1. Result in: % |- % : TC_2 (enumTypeDeclarationIR as declarationIR)
 
-                      1. Else Phantom#1133
+                      1. Else Phantom#1134
 
         2. Case (% matches pattern `%ENUM%%{%%}`)
 
@@ -21014,11 +21022,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                           1. Result in: % |- % : TC_3 (enumTypeDeclarationIR as declarationIR)
 
-                                    1. Else Phantom#1134
+                                    1. Else Phantom#1135
 
-                    1. Else Phantom#1135
+                    1. Else Phantom#1136
 
-                  1. Else Phantom#1136
+                  1. Else Phantom#1137
 
   12. Case (% has type structTypeDeclaration)
 
@@ -21048,9 +21056,9 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                             1. Result in: % |- % : TC_2 (structTypeDeclarationIR as declarationIR)
 
-                      1. Else Phantom#1137
+                      1. Else Phantom#1138
 
-              1. Else Phantom#1138
+              1. Else Phantom#1139
 
   13. Case (% has type headerTypeDeclaration)
 
@@ -21080,9 +21088,9 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                             1. Result in: % |- % : TC_2 (headerTypeDeclarationIR as declarationIR)
 
-                      1. Else Phantom#1139
+                      1. Else Phantom#1140
 
-              1. Else Phantom#1140
+              1. Else Phantom#1141
 
   14. Case (% has type headerUnionTypeDeclaration)
 
@@ -21112,9 +21120,9 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                             1. Result in: % |- % : TC_2 (headerUnionTypeDeclarationIR as declarationIR)
 
-                      1. Else Phantom#1141
+                      1. Else Phantom#1142
 
-              1. Else Phantom#1142
+              1. Else Phantom#1143
 
   15. Case (% has type typedefDeclaration)
 
@@ -21154,11 +21162,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                       1. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
-                                1. Else Phantom#1143
+                                1. Else Phantom#1144
 
-                          1. Else Phantom#1144
+                          1. Else Phantom#1145
 
-                        1. Else Phantom#1145
+                        1. Else Phantom#1146
 
                 2. Case (% has type derivedTypeDeclaration)
 
@@ -21200,7 +21208,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                                       1. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
-                                                1. Else Phantom#1146
+                                                1. Else Phantom#1147
 
                                         2. Case false
 
@@ -21220,15 +21228,15 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                                         1. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
-                                                  1. Else Phantom#1147
+                                                  1. Else Phantom#1148
 
-                                          1. Else Phantom#1148
+                                          1. Else Phantom#1149
 
-                                  1. Else Phantom#1149
+                                  1. Else Phantom#1150
 
-                            1. Else Phantom#1150
+                            1. Else Phantom#1151
 
-                      1. Else Phantom#1151
+                      1. Else Phantom#1152
 
         2. Case (% matches pattern `%TYPE%%;`)
 
@@ -21256,11 +21264,11 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                 1. Result in: % |- % : TC_1 (typedefDeclarationIR as declarationIR)
 
-                          1. Else Phantom#1152
+                          1. Else Phantom#1153
 
-                    1. Else Phantom#1153
+                    1. Else Phantom#1154
 
-                  1. Else Phantom#1154
+                  1. Else Phantom#1155
 
   16. Case (% has type parserTypeDeclaration)
 
@@ -21286,7 +21294,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                         1. Result in: % |- % : TC_4 (parserTypeDeclarationIR as declarationIR)
 
-                  1. Else Phantom#1155
+                  1. Else Phantom#1156
 
   17. Case (% has type controlTypeDeclaration)
 
@@ -21312,7 +21320,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                         1. Result in: % |- % : TC_4 (controlTypeDeclarationIR as declarationIR)
 
-                  1. Else Phantom#1156
+                  1. Else Phantom#1157
 
   18. Case (% has type packageTypeDeclaration)
 
@@ -21352,9 +21360,9 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                       1. Result in: % |- % : TC_5 (packageTypeDeclarationIR as declarationIR)
 
-                                1. Else Phantom#1157
+                                1. Else Phantom#1158
 
-                      1. Else Phantom#1158
+                      1. Else Phantom#1159
 
 relation Decls_ok: typingContext |- (declaration)* : % %
 
@@ -21364,7 +21372,7 @@ relation Decls_ok: typingContext |- (declaration)* : % %
 
     1. Result in: % |- % : typingContext []
 
-  1. Else Phantom#1159
+  1. Else Phantom#1160
 
   2. If (((declaration)* matches pattern _ :: _)), then
 
@@ -21376,7 +21384,7 @@ relation Decls_ok: typingContext |- (declaration)* : % %
 
           1. Result in: % |- % : TC_2 declarationIR_h :: (declarationIR_t)*
 
-  2. Else Phantom#1160
+  2. Else Phantom#1161
 
 relation Program_ok: |- p4program : %
 
@@ -21408,9 +21416,9 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
           1. Result in: % % % |- % @ % : typedExpressionIR_arg_cast
 
-      1. Else Phantom#1161
+      1. Else Phantom#1162
 
-1. Else Phantom#1162
+1. Else Phantom#1163
 
 2. Group out-inout: p TC actctxt |- (annotationList direction typeIR_param id parameterInitializerOptIR) @ typedExpressionIR_arg : %
 
@@ -21424,11 +21432,11 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
           1. Result in: % % % |- % @ % : typedExpressionIR_arg
 
-        1. Else Phantom#1163
+        1. Else Phantom#1164
 
-      1. Else Phantom#1164
+      1. Else Phantom#1165
 
-  1. Else Phantom#1165
+  1. Else Phantom#1166
 
 3. If ((direction matches pattern ``EMPTY`)), then
 
@@ -21446,7 +21454,7 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
               1. Result in: % % % |- % @ % : typedExpressionIR_arg_cast
 
-          1. Else Phantom#1166
+          1. Else Phantom#1167
 
       2. Case (% matches pattern `NOACTION`)
 
@@ -21460,11 +21468,11 @@ relation Call_convention_expr_ok: p TC actctxt |- (annotationList direction type
 
                 1. Result in: % % % |- % @ % : typedExpressionIR_arg_cast
 
-              1. Else Phantom#1167
+              1. Else Phantom#1168
 
-          1. Else Phantom#1168
+          1. Else Phantom#1169
 
-3. Else Phantom#1169
+3. Else Phantom#1170
 
 relation Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR : %
 
@@ -21502,7 +21510,7 @@ relation Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR :
 
             1. Result in: % % % |- % @ % : (nameIR =_)
 
-          1. Else Phantom#1170
+          1. Else Phantom#1171
 
   4. Case (% matches pattern `_`)
 
@@ -21514,7 +21522,7 @@ relation Call_convention_argument_ok: p TC actctxt |- parameterIR @ argumentIR :
 
           1. Result in: % % % |- % @ % : (_)
 
-        1. Else Phantom#1171
+        1. Else Phantom#1172
 
 relation Call_convention_ok: p TC actctxt |- (parameterIR)* @ (argumentIR)* : %
 
@@ -21526,9 +21534,9 @@ relation Call_convention_ok: p TC actctxt |- (parameterIR)* @ (argumentIR)* : %
 
       1. Result in: % % % |- % @ % : []
 
-    1. Else Phantom#1172
+    1. Else Phantom#1173
 
-  1. Else Phantom#1173
+  1. Else Phantom#1174
 
   2. If (((parameterIR)* matches pattern _ :: _)), then
 
@@ -21544,9 +21552,9 @@ relation Call_convention_ok: p TC actctxt |- (parameterIR)* @ (argumentIR)* : %
 
               1. Result in: % % % |- % @ % : argumentIR_h_cast :: (argumentIR_t_cast)*
 
-      1. Else Phantom#1174
+      1. Else Phantom#1175
 
-  2. Else Phantom#1175
+  2. Else Phantom#1176
 
 def $is_static_callableTypeIR(callableTypeIR)
 
@@ -21634,13 +21642,13 @@ relation CallableTarget_ok: p TC |- callableTarget : %
 
           1. Result in: % % |- % : (( callableTargetIR ))
 
-  1. Else Phantom#1176
+  1. Else Phantom#1177
 
   2. If ((callableTarget = ((this) as callableTarget))), then
 
     1. Result in: % % |- % : ((` "this") as callableTargetIR)
 
-  2. Else Phantom#1177
+  2. Else Phantom#1178
 
 relation CallableTarget_lvalue_ok: p TC |- lvalue : %
 
@@ -21678,13 +21686,13 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                       1. Result in: % % |- % < % >( % ): (actionTypeIR as callableTypeIR) <# [] >(# (id_default)* # (id_optional)* )
 
-                    1. Else Phantom#1178
+                    1. Else Phantom#1179
 
-                1. Else Phantom#1179
+                1. Else Phantom#1180
 
-            1. Else Phantom#1180
+            1. Else Phantom#1181
 
-      1. Else Phantom#1181
+      1. Else Phantom#1182
 
       2. Group functionTypeIR: p TC |- (prefixedNameIR as callableTargetIR) < (typeArgumentIR)* >( (argumentIR)* ): % <# % >(# % # % )
 
@@ -21710,13 +21718,13 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                             1. Result in: % % |- % < % >( % ): (functionTypeIR as callableTypeIR) <# (typeId_impl)* >(# (id_default)* # (id_optional)* )
 
-                          1. Else Phantom#1182
+                          1. Else Phantom#1183
 
-                    1. Else Phantom#1183
+                    1. Else Phantom#1184
 
-              1. Else Phantom#1184
+              1. Else Phantom#1185
 
-          1. Else Phantom#1185
+          1. Else Phantom#1186
 
   2. Case (% matches pattern `%.%`)
 
@@ -21744,9 +21752,9 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                           1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
-                      1. Else Phantom#1186
+                      1. Else Phantom#1187
 
-                    1. Else Phantom#1187
+                    1. Else Phantom#1188
 
               2. Case (% is in ["isValid"])
 
@@ -21772,7 +21780,7 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                             1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
-                    1. Else Phantom#1188
+                    1. Else Phantom#1189
 
               3. Case (% is in ["setValid", "setInvalid"])
 
@@ -21788,11 +21796,11 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                           1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
-                    1. Else Phantom#1189
+                    1. Else Phantom#1190
 
-            1. Else Phantom#1190
+            1. Else Phantom#1191
 
-          1. Else Phantom#1191
+          1. Else Phantom#1192
 
           2. If (((argumentIR)* matches pattern [ _/1 ])), then
 
@@ -21812,13 +21820,13 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                           1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
-                  1. Else Phantom#1192
+                  1. Else Phantom#1193
 
-            1. Else Phantom#1193
+            1. Else Phantom#1194
 
-          2. Else Phantom#1194
+          2. Else Phantom#1195
 
-      1. Else Phantom#1195
+      1. Else Phantom#1196
 
       2. Group externMethodTypeIR: p TC |- (typedExpressionIR_base . nameIR) < (typeArgumentIR)* >( (argumentIR)* ): % <# % >(# % # % )
 
@@ -21850,13 +21858,13 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                                   1. Result in: % % |- % < % >( % ): (externMethodTypeIR as callableTypeIR) <# (typeId_impl)* >(# (id_default)* # (id_optional)* )
 
-                                1. Else Phantom#1196
+                                1. Else Phantom#1197
 
-                          1. Else Phantom#1197
+                          1. Else Phantom#1198
 
-                    1. Else Phantom#1198
+                    1. Else Phantom#1199
 
-            1. Else Phantom#1199
+            1. Else Phantom#1200
 
       3. If ((nameIR = "apply")), then
 
@@ -21888,9 +21896,9 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                                   1. Result in: % % |- % < % >( % ): (parserApplyMethodTypeIR as callableTypeIR) <# [] >(# (id_default)* # (id_optional)* )
 
-                              1. Else Phantom#1200
+                              1. Else Phantom#1201
 
-                1. Else Phantom#1201
+                1. Else Phantom#1202
 
           2. Group controlApplyMethodTypeIR: p TC |- (typedExpressionIR_base . "apply") < [] >( (argumentIR)* ): % <# % >(# % # % )
 
@@ -21918,9 +21926,9 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                                   1. Result in: % % |- % < % >( % ): (controlApplyMethodTypeIR as callableTypeIR) <# [] >(# (id_default)* # (id_optional)* )
 
-                              1. Else Phantom#1202
+                              1. Else Phantom#1203
 
-                1. Else Phantom#1203
+                1. Else Phantom#1204
 
           3. If (((argumentIR)* matches pattern [])), then
 
@@ -21938,13 +21946,13 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                         1. Result in: % % |- % < % >( % ): (tableApplyMethodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
-                  1. Else Phantom#1204
+                  1. Else Phantom#1205
 
-          3. Else Phantom#1205
+          3. Else Phantom#1206
 
-        1. Else Phantom#1206
+        1. Else Phantom#1207
 
-      3. Else Phantom#1207
+      3. Else Phantom#1208
 
   3. Case (% matches pattern `(%)`)
 
@@ -21956,7 +21964,7 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
           1. Result in: % % |- % < % >( % ): callableTypeIR <# (typeId_inserted)* >(# (id_default)* # (id_optional)* )
 
-1. Else Phantom#1208
+1. Else Phantom#1209
 
 relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (argumentIR)* # (id_default)* # (id_optional)* ): % < % >( % )
 
@@ -21982,11 +21990,11 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                     1. Result in: % % |- % < % # % >( % # % # % ): ((void) as typeIR) < [] >( (argumentIR_cast)* )
 
-                1. Else Phantom#1209
+                1. Else Phantom#1210
 
-        1. Else Phantom#1210
+        1. Else Phantom#1211
 
-      1. Else Phantom#1211
+      1. Else Phantom#1212
 
   2. Case (% has type definedFunctionTypeIR)
 
@@ -22022,11 +22030,11 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                                   1. Result in: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                              1. Else Phantom#1212
+                              1. Else Phantom#1213
 
-                            1. Else Phantom#1213
+                            1. Else Phantom#1214
 
-                1. Else Phantom#1214
+                1. Else Phantom#1215
 
   3. Case (% has type externFunctionTypeIR)
 
@@ -22062,11 +22070,11 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                                   1. Result in: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                              1. Else Phantom#1215
+                              1. Else Phantom#1216
 
-                            1. Else Phantom#1216
+                            1. Else Phantom#1217
 
-                1. Else Phantom#1217
+                1. Else Phantom#1218
 
   4. Case (% has type builtinMethodTypeIR)
 
@@ -22086,9 +22094,9 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                   1. Result in: % % |- % < % # % >( % # % # % ): typeIR_ret < (typeArgumentIR)* >( (argumentIR_cast)* )
 
-              1. Else Phantom#1218
+              1. Else Phantom#1219
 
-      1. Else Phantom#1219
+      1. Else Phantom#1220
 
   5. Case (% has type externMethodTypeIR)
 
@@ -22126,13 +22134,13 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                                     1. Result in: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                                1. Else Phantom#1220
+                                1. Else Phantom#1221
 
-                              1. Else Phantom#1221
+                              1. Else Phantom#1222
 
-                  1. Else Phantom#1222
+                  1. Else Phantom#1223
 
-        1. Else Phantom#1223
+        1. Else Phantom#1224
 
       2. Group externMethodTypeIR-abstract: p TC |- (externMethodTypeIR as callableTypeIR) < (typeArgumentIR)* # (typeId)* >( (argumentIR)* # (id_default)* # (id_optional)* ): % < % >( % )
 
@@ -22166,13 +22174,13 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                                     1. Result in: % % |- % < % # % >( % # % # % ): typeIR_ret_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                                1. Else Phantom#1224
+                                1. Else Phantom#1225
 
-                              1. Else Phantom#1225
+                              1. Else Phantom#1226
 
-                  1. Else Phantom#1226
+                  1. Else Phantom#1227
 
-        1. Else Phantom#1227
+        1. Else Phantom#1228
 
   6. Case (% has type parserApplyMethodTypeIR)
 
@@ -22194,11 +22202,11 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                     1. Result in: % % |- % < % # % >( % # % # % ): ((void) as typeIR) < [] >( (argumentIR_cast)* )
 
-                1. Else Phantom#1228
+                1. Else Phantom#1229
 
-        1. Else Phantom#1229
+        1. Else Phantom#1230
 
-      1. Else Phantom#1230
+      1. Else Phantom#1231
 
   7. Case (% has type controlApplyMethodTypeIR)
 
@@ -22220,11 +22228,11 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                     1. Result in: % % |- % < % # % >( % # % # % ): ((void) as typeIR) < [] >( (argumentIR_cast)* )
 
-                1. Else Phantom#1231
+                1. Else Phantom#1232
 
-        1. Else Phantom#1232
+        1. Else Phantom#1233
 
-      1. Else Phantom#1233
+      1. Else Phantom#1234
 
   8. Case (% has type tableApplyMethodTypeIR)
 
@@ -22248,17 +22256,17 @@ relation Call_ok: p TC |- callableTypeIR < (typeArgumentIR)* # (typeId)* >( (arg
 
                       1. Result in: % % |- % < % # % >( % # % # % ): (tableMetadataStructTypeIR as typeIR) < [] >( [] )
 
-                    1. Else Phantom#1234
+                    1. Else Phantom#1235
 
-              1. Else Phantom#1235
+              1. Else Phantom#1236
 
-            1. Else Phantom#1236
+            1. Else Phantom#1237
 
-          1. Else Phantom#1237
+          1. Else Phantom#1238
 
-        1. Else Phantom#1238
+        1. Else Phantom#1239
 
-      1. Else Phantom#1239
+      1. Else Phantom#1240
 
 relation ConstructorType_ok: p TC |- (prefixedNameIR < (typeArgumentIR)* >) ( (argumentIR)* ): % <# % >(# % # % )
 
@@ -22280,11 +22288,11 @@ relation ConstructorType_ok: p TC |- (prefixedNameIR < (typeArgumentIR)* >) ( (a
 
                 1. Result in: % % |- % ( % ): constructorTypeIR <# (typeId_impl)* >(# (id_default)* # (id_optional)* )
 
-              1. Else Phantom#1240
+              1. Else Phantom#1241
 
-      1. Else Phantom#1241
+      1. Else Phantom#1242
 
-  1. Else Phantom#1242
+  1. Else Phantom#1243
 
   2. (Let (typeDefIR)? be $find_typeDef_t(p, TC, prefixedNameIR))
 
@@ -22308,13 +22316,13 @@ relation ConstructorType_ok: p TC |- (prefixedNameIR < (typeArgumentIR)* >) ( (a
 
                       1. Result in: % % |- % ( % ): constructorTypeIR <# (typeId_impl)* >(# (id_default)* # (id_optional)* )
 
-                    1. Else Phantom#1243
+                    1. Else Phantom#1244
 
-            1. Else Phantom#1244
+            1. Else Phantom#1245
 
-        1. Else Phantom#1245
+        1. Else Phantom#1246
 
-    1. Else Phantom#1246
+    1. Else Phantom#1247
 
   3. If (((typeArgumentIR)* = [])), then
 
@@ -22344,15 +22352,15 @@ relation ConstructorType_ok: p TC |- (prefixedNameIR < (typeArgumentIR)* >) ( (a
 
                             1. Result in: % % |- % ( % ): constructorTypeIR <# (typeId_impl)* >(# (id_default)* # (id_optional)* )
 
-                          1. Else Phantom#1247
+                          1. Else Phantom#1248
 
-                  1. Else Phantom#1248
+                  1. Else Phantom#1249
 
-          1. Else Phantom#1249
+          1. Else Phantom#1250
 
-      1. Else Phantom#1250
+      1. Else Phantom#1251
 
-  3. Else Phantom#1251
+  3. Else Phantom#1252
 
 syntax instctxt = 
    | named
@@ -22398,15 +22406,15 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # 
 
                                     1. Result in: % % % |- % < % # % >( % # % # % ): typeIR_object_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                                1. Else Phantom#1252
+                                1. Else Phantom#1253
 
-                              1. Else Phantom#1253
+                              1. Else Phantom#1254
 
-                  1. Else Phantom#1254
+                  1. Else Phantom#1255
 
-        1. Else Phantom#1255
+        1. Else Phantom#1256
 
-1. Else Phantom#1256
+1. Else Phantom#1257
 
 2. Group non-package: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # (typeId_infer)* >( (argumentIR)* # (id_default)* # (id_optional)* ): % < % >( % )
 
@@ -22442,13 +22450,13 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # 
 
                                 1. Result in: % % % |- % < % # % >( % # % # % ): typeIR_object_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                            1. Else Phantom#1257
+                            1. Else Phantom#1258
 
-                          1. Else Phantom#1258
+                          1. Else Phantom#1259
 
-              1. Else Phantom#1259
+              1. Else Phantom#1260
 
-      1. Else Phantom#1260
+      1. Else Phantom#1261
 
 def $reduce_serenum(typedExpressionIR)
 
@@ -22552,7 +22560,7 @@ def $cast_unary(typedExpressionIR, typeIR_to)
 
         1. Return ?(typedExpressionIR_cast)
 
-    1. Else Phantom#1261
+    1. Else Phantom#1262
 
 def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
@@ -23120,7 +23128,7 @@ def $result_concat(typeIR, typeIR')
 
           1. Return ((string) as typeIR)
 
-      1. Else Phantom#1262
+      1. Else Phantom#1263
 
   2. Case (% has type fixedIntTypeIR)
 
@@ -23140,7 +23148,7 @@ def $result_concat(typeIR, typeIR')
 
             1. Return ((int< (w_a + w_b) >) as typeIR)
 
-      1. Else Phantom#1263
+      1. Else Phantom#1264
 
   3. Case (% has type fixedBitTypeIR)
 
@@ -23160,7 +23168,7 @@ def $result_concat(typeIR, typeIR')
 
             1. Return ((bit< (w_a + w_b) >) as typeIR)
 
-      1. Else Phantom#1264
+      1. Else Phantom#1265
 
   4. Case (% has type typedefTypeIR)
 
@@ -23168,7 +23176,7 @@ def $result_concat(typeIR, typeIR')
 
       1. Return $result_concat(typeIR_l, typeIR')
 
-1. Else Phantom#1265
+1. Else Phantom#1266
 
 2. If ((typeIR' has type typedefTypeIR)), then
 
@@ -23176,7 +23184,7 @@ def $result_concat(typeIR, typeIR')
 
     1. Return $result_concat(typeIR, typeIR_r)
 
-2. Else Phantom#1266
+2. Else Phantom#1267
 
 tbl def $compat_logical(typeIR'', typeIR''')
 =
@@ -23406,7 +23414,7 @@ relation ParameterList_ok_inner: p typingContext |- (parameter)* : % % # %
 
     1. Result in: % % |- % : typingContext [] # []
 
-  1. Else Phantom#1267
+  1. Else Phantom#1268
 
   2. If (((parameter)* matches pattern _ :: _)), then
 
@@ -23422,7 +23430,7 @@ relation ParameterList_ok_inner: p typingContext |- (parameter)* : % % # %
 
               1. Result in: % % |- % : TC_2 (parameterIR)* # (typeId_fresh)*
 
-  2. Else Phantom#1268
+  2. Else Phantom#1269
 
 relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
@@ -23442,7 +23450,7 @@ relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
               1. Result in: % |- % : (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* ))
 
-          1. Else Phantom#1269
+          1. Else Phantom#1270
 
     2. Case (% matches pattern `%<%>(%)`)
 
@@ -23456,7 +23464,7 @@ relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
               1. Result in: % |- % : (callableTargetIR < (typeArgumentIR)* >( (argumentIR)* ))
 
-          1. Else Phantom#1270
+          1. Else Phantom#1271
 
     3. Case (% matches pattern `%%%`)
 
@@ -23472,9 +23480,9 @@ relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
                 1. Result in: % |- % : (typedLvalueIR assignop typedExpressionIR)
 
-              1. Else Phantom#1271
+              1. Else Phantom#1272
 
-          1. Else Phantom#1272
+          1. Else Phantom#1273
 
 relation ForUpdateStmtList_ok: TC |- forUpdateStatementList : %
 
@@ -23514,11 +23522,11 @@ relation ForInitStmt_ok: typingContext |- forInitStatement : % %
 
                         1. Result in: % |- % : TC_1 (annotationList typeIR nameIR ?())
 
-                  1. Else Phantom#1273
+                  1. Else Phantom#1274
 
-                1. Else Phantom#1274
+                1. Else Phantom#1275
 
-              1. Else Phantom#1275
+              1. Else Phantom#1276
 
           2. Case (% has type initializer)
 
@@ -23546,13 +23554,13 @@ relation ForInitStmt_ok: typingContext |- forInitStatement : % %
 
                                   1. Result in: % |- % : TC_1 (annotationList typeIR nameIR ?((= typedExpressionIR_init_cast)))
 
-                          1. Else Phantom#1276
+                          1. Else Phantom#1277
 
-                    1. Else Phantom#1277
+                    1. Else Phantom#1278
 
-                  1. Else Phantom#1278
+                  1. Else Phantom#1279
 
-                1. Else Phantom#1279
+                1. Else Phantom#1280
 
     2. Case (% has type forUpdateStatement)
 
@@ -23570,7 +23578,7 @@ relation ForInitStmts_ok: typingContext |- (forInitStatement)* : % %
 
     1. Result in: % |- % : typingContext []
 
-  1. Else Phantom#1280
+  1. Else Phantom#1281
 
   2. If (((forInitStatement)* matches pattern _ :: _)), then
 
@@ -23582,7 +23590,7 @@ relation ForInitStmts_ok: typingContext |- (forInitStatement)* : % %
 
           1. Result in: % |- % : TC_2 forInitStatementIR_h :: (forInitStatementIR_t)*
 
-  2. Else Phantom#1281
+  2. Else Phantom#1282
 
 relation ForInitStmtList_ok: TC_0 |- forInitStatementList : % %
 
@@ -23620,7 +23628,7 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
                       1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
-                    1. Else Phantom#1282
+                    1. Else Phantom#1283
 
                 2. Case (% has type headerStackTypeIR)
 
@@ -23630,9 +23638,9 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
                       1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
-                    1. Else Phantom#1283
+                    1. Else Phantom#1284
 
-              1. Else Phantom#1284
+              1. Else Phantom#1285
 
     2. Case (% matches pattern `%..%`)
 
@@ -23662,11 +23670,11 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
                               1. Result in: % % |- % : (typedExpressionIR_l_casted .. typedExpressionIR_r_casted)
 
-                            1. Else Phantom#1285
+                            1. Else Phantom#1286
 
-                    1. Else Phantom#1286
+                    1. Else Phantom#1287
 
-              1. Else Phantom#1287
+              1. Else Phantom#1288
 
 tbl def $compat_range(typeIR'', typeIR''')
 =
@@ -23789,15 +23797,15 @@ relation SwitchLabel_table_ok: TC typeId_table |- switchLabel : %
 
                                 1. Result in: % % |- % : (typedExpressionIR_label as switchLabelIR)
 
-                            1. Else Phantom#1288
+                            1. Else Phantom#1289
 
-                        1. Else Phantom#1289
+                        1. Else Phantom#1290
 
-                    1. Else Phantom#1290
+                    1. Else Phantom#1291
 
-          1. Else Phantom#1291
+          1. Else Phantom#1292
 
-  1. Else Phantom#1292
+  1. Else Phantom#1293
 
 relation SwitchCase_table_ok: TC f l typeId_table |- switchCase : % % # %
 
@@ -23835,7 +23843,7 @@ relation SwitchCases_table_ok: TC f l typeId_table |- (switchCase)* : % % # %
 
     1. Result in: % % % % |- % : f [] # []
 
-  1. Else Phantom#1293
+  1. Else Phantom#1294
 
   2. If (((switchCase)* matches pattern _ :: _)), then
 
@@ -23847,7 +23855,7 @@ relation SwitchCases_table_ok: TC f l typeId_table |- (switchCase)* : % % # %
 
           1. Result in: % % % % |- % : f_t switchCaseIR_h :: (switchCaseIR_t)* # switchLabel_h :: (switchLabel_t)*
 
-  2. Else Phantom#1294
+  2. Else Phantom#1295
 
 relation SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : % % # %
 
@@ -23889,9 +23897,9 @@ relation SwitchLabel_general_ok: TC typeIR |- switchLabel : %
 
                       1. Result in: % % |- % : (typedExpressionIR_label_cast as switchLabelIR)
 
-                    1. Else Phantom#1295
+                    1. Else Phantom#1296
 
-              1. Else Phantom#1296
+              1. Else Phantom#1297
 
 relation SwitchCase_general_ok: TC f l typeIR_switch |- switchCase : % % # %
 
@@ -23929,7 +23937,7 @@ relation SwitchCases_general_ok: TC f l typeIR_switch |- (switchCase)* : % % # %
 
     1. Result in: % % % % |- % : f [] # []
 
-  1. Else Phantom#1297
+  1. Else Phantom#1298
 
   2. If (((switchCase)* matches pattern _ :: _)), then
 
@@ -23941,7 +23949,7 @@ relation SwitchCases_general_ok: TC f l typeIR_switch |- (switchCase)* : % % # %
 
           1. Result in: % % % % |- % : f_t switchCaseIR_h :: (switchCaseIR_t)* # switchLabel_h :: (switchLabel_t)*
 
-  2. Else Phantom#1298
+  2. Else Phantom#1299
 
 relation SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : % % # %
 
@@ -24002,7 +24010,7 @@ relation BlockElementStmts_ok: typingContext flow l |- (blockElementStatement)* 
 
     1. Result in: % % % |- % : typingContext flow []
 
-  1. Else Phantom#1299
+  1. Else Phantom#1300
 
   2. If (((blockElementStatement)* matches pattern _ :: _)), then
 
@@ -24014,7 +24022,7 @@ relation BlockElementStmts_ok: typingContext flow l |- (blockElementStatement)* 
 
           1. Result in: % % % |- % : TC_2 f_2 blockElementStatementIR_h :: (blockElementStatementIR_t)*
 
-  2. Else Phantom#1300
+  2. Else Phantom#1301
 
 relation InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName < typeArgumentList >( argumentList ) name ;: % %
 
@@ -24068,7 +24076,7 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
                     1. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
 
-              1. Else Phantom#1301
+              1. Else Phantom#1302
 
     2. Case (% has type functionDeclaration)
 
@@ -24106,11 +24114,11 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
                                       1. Result in: % % % % |- % : typeFrame externMethodTypeDefEnv_init (functionDeclarationIR as objectDeclarationIR)
 
-                                1. Else Phantom#1302
+                                1. Else Phantom#1303
 
-                        1. Else Phantom#1303
+                        1. Else Phantom#1304
 
-                  1. Else Phantom#1304
+                  1. Else Phantom#1305
 
 relation ObjectDecls_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)* : % % %
 
@@ -24120,7 +24128,7 @@ relation ObjectDecls_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclara
 
     1. Result in: % % % % |- % : typeFrame externMethodTypeDefEnv []
 
-  1. Else Phantom#1305
+  1. Else Phantom#1306
 
   2. If (((objectDeclaration)* matches pattern _ :: _)), then
 
@@ -24132,7 +24140,7 @@ relation ObjectDecls_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclara
 
           1. Result in: % % % % |- % : typeFrame_2 externMethodTypeDefEnv_2 objectDeclarationIR_h :: (objectDeclarationIR_t)*
 
-  2. Else Phantom#1306
+  2. Else Phantom#1307
 
 relation ObjectDeclList_ok: p TC |- objectDeclarationList : % % %
 
@@ -24150,7 +24158,7 @@ def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callab
 
   1. Return externMethodTypeDefEnv_extern
 
-1. Else Phantom#1307
+1. Else Phantom#1308
 
 2. (Let ({ (pair<callableId, externMethodTypeDefIR>)* }) be set<pair<callableId, externMethodTypeDefIR>>)
 
@@ -24178,13 +24186,13 @@ def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callab
 
                         1. Return $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern_subst, ({ ((callableId_init_t : externMethodTypeDefIR_init_t))* }))
 
-                    1. Else Phantom#1308
+                    1. Else Phantom#1309
 
-              1. Else Phantom#1309
+              1. Else Phantom#1310
 
-          1. Else Phantom#1310
+          1. Else Phantom#1311
 
-  1. Else Phantom#1311
+  1. Else Phantom#1312
 
 relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName < typeArgumentList >( argumentList ) name ={ objectDeclarationList };: % %
 
@@ -24230,9 +24238,9 @@ relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeNam
 
                                         1. Result in: % % |- % % < % >( % ) % ={ % };: TC_2 instantiationIR
 
-                              1. Else Phantom#1312
+                              1. Else Phantom#1313
 
-                  1. Else Phantom#1313
+                  1. Else Phantom#1314
 
 def $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
 
@@ -24252,9 +24260,9 @@ def $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodProto
 
               1. Return ((externConstructorPrototype)*, (externMethodPrototype)*)
 
-          1. Else Phantom#1314
+          1. Else Phantom#1315
 
-    1. Else Phantom#1315
+    1. Else Phantom#1316
 
 def $constructorTypeDef_of_externConstructorPrototypeIR(typeParameterListIR_expl, typeIR, (_annotationList nameIR <, typeParameterListIR_impl >( (parameterIR)* );))
 
@@ -24286,9 +24294,9 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name = expressi
 
                     1. Result in: % % % |- % : TC_1 (nameIR = value)
 
-          1. Else Phantom#1316
+          1. Else Phantom#1317
 
-      1. Else Phantom#1317
+      1. Else Phantom#1318
 
 relation Enum_serializable_fields_ok: typingContext nameIR_enum typeIR |- (namedExpression)* : % %
 
@@ -24298,7 +24306,7 @@ relation Enum_serializable_fields_ok: typingContext nameIR_enum typeIR |- (named
 
     1. Result in: % % % |- % : typingContext []
 
-  1. Else Phantom#1318
+  1. Else Phantom#1319
 
   2. If (((namedExpression)* matches pattern _ :: _)), then
 
@@ -24312,7 +24320,7 @@ relation Enum_serializable_fields_ok: typingContext nameIR_enum typeIR |- (named
 
             1. Result in: % % % |- % : TC_2 (namedValueIR)*
 
-  2. Else Phantom#1319
+  2. Else Phantom#1320
 
 relation Enum_serializable_fieldList_ok: TC_0 nameIR_enum typeIR |- namedExpressionList : % %
 
@@ -24360,7 +24368,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
                             1. Result in: % % |- % : (typedExpressionIR_cast as simpleKeysetExpressionIR)
 
-                      1. Else Phantom#1320
+                      1. Else Phantom#1321
 
                 2. Case false
 
@@ -24372,7 +24380,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
                         1. Result in: % % |- % : (typedExpressionIR_cast as simpleKeysetExpressionIR)
 
-                  1. Else Phantom#1321
+                  1. Else Phantom#1322
 
   2. Case (% matches pattern `%&&&%`)
 
@@ -24412,13 +24420,13 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
                                       1. Result in: % % |- % : (typedExpressionIR_l_casted &&& typedExpressionIR_r_casted)
 
-                                  1. Else Phantom#1322
+                                  1. Else Phantom#1323
 
-                            1. Else Phantom#1323
+                            1. Else Phantom#1324
 
-                    1. Else Phantom#1324
+                    1. Else Phantom#1325
 
-              1. Else Phantom#1325
+              1. Else Phantom#1326
 
   3. Case (% matches pattern `%..%`)
 
@@ -24460,15 +24468,15 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
                                         1. Result in: % % |- % : (typedExpressionIR_l_casted .. typedExpressionIR_r_casted)
 
-                                    1. Else Phantom#1326
+                                    1. Else Phantom#1327
 
-                              1. Else Phantom#1327
+                              1. Else Phantom#1328
 
-                          1. Else Phantom#1328
+                          1. Else Phantom#1329
 
-                    1. Else Phantom#1329
+                    1. Else Phantom#1330
 
-              1. Else Phantom#1330
+              1. Else Phantom#1331
 
   4. Case (% matches pattern `DEFAULT`)
 
@@ -24557,7 +24565,7 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
             1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-      1. Else Phantom#1331
+      1. Else Phantom#1332
 
       2. If ((keysetExpression has type simpleKeysetExpression)), then
 
@@ -24581,9 +24589,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
                   1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-          1. Else Phantom#1332
+          1. Else Phantom#1333
 
-      2. Else Phantom#1333
+      2. Else Phantom#1334
 
       3. If ((keysetExpression = ((default) as keysetExpression))), then
 
@@ -24591,7 +24599,7 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
           1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-      3. Else Phantom#1334
+      3. Else Phantom#1335
 
       4. If ((keysetExpression = ((_) as keysetExpression))), then
 
@@ -24599,9 +24607,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
           1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-      4. Else Phantom#1335
+      4. Else Phantom#1336
 
-  1. Else Phantom#1336
+  1. Else Phantom#1337
 
   2. If (((typeIR)* = [])), then
 
@@ -24609,9 +24617,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
       1. Result in: % % |- % : ((default) as keysetExpressionIR)
 
-    1. Else Phantom#1337
+    1. Else Phantom#1338
 
-  2. Else Phantom#1338
+  2. Else Phantom#1339
 
   3. If ((keysetExpression = ((default) as keysetExpression))), then
 
@@ -24621,9 +24629,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
         1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-    1. Else Phantom#1339
+    1. Else Phantom#1340
 
-  3. Else Phantom#1340
+  3. Else Phantom#1341
 
   4. If ((keysetExpression = ((_) as keysetExpression))), then
 
@@ -24633,9 +24641,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
         1. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-    1. Else Phantom#1341
+    1. Else Phantom#1342
 
-  4. Else Phantom#1342
+  4. Else Phantom#1343
 
 2. If ((keysetExpression has type tupleKeysetExpression)), then
 
@@ -24677,9 +24685,9 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
                 1. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
-          1. Else Phantom#1343
+          1. Else Phantom#1344
 
-      1. Else Phantom#1344
+      1. Else Phantom#1345
 
       2. Case analysis on tupleKeysetExpression
 
@@ -24691,7 +24699,7 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
               1. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
-          1. Else Phantom#1345
+          1. Else Phantom#1346
 
         2. Case (% matches pattern `(_)`)
 
@@ -24701,7 +24709,7 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
               1. Result in: % % |- % : ((( [simpleKeysetExpressionIR] )) as keysetExpressionIR)
 
-          1. Else Phantom#1346
+          1. Else Phantom#1347
 
         3. Case (% matches pattern `(%,%)`)
 
@@ -24717,11 +24725,11 @@ relation SelectCase_keyset_ok: TC (typeIR)* |- keysetExpression : %
 
                     1. Result in: % % |- % : ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
 
-                1. Else Phantom#1347
+                1. Else Phantom#1348
 
-      2. Else Phantom#1348
+      2. Else Phantom#1349
 
-2. Else Phantom#1349
+2. Else Phantom#1350
 
 relation SelectCase_ok: TC (nameIR_state)* (typeIR_key)* |- (keysetExpression : name ;) : %
 
@@ -24735,7 +24743,7 @@ relation SelectCase_ok: TC (nameIR_state)* (typeIR_key)* |- (keysetExpression : 
 
         1. Result in: % % % |- % : (keysetExpressionIR : nameIR ;)
 
-      1. Else Phantom#1350
+      1. Else Phantom#1351
 
 relation ParserStmts_ok: typingContext |- (parserStatement)* : % %
 
@@ -24745,7 +24753,7 @@ relation ParserStmts_ok: typingContext |- (parserStatement)* : % %
 
     1. Result in: % |- % : typingContext []
 
-  1. Else Phantom#1351
+  1. Else Phantom#1352
 
   2. If (((parserStatement)* matches pattern _ :: _)), then
 
@@ -24757,7 +24765,7 @@ relation ParserStmts_ok: typingContext |- (parserStatement)* : % %
 
           1. Result in: % |- % : TC_2 parserStatementIR_h :: (parserStatementIR_t)*
 
-  2. Else Phantom#1352
+  2. Else Phantom#1353
 
 relation ParserLocalDecls_ok: typingContext |- (parserLocalDeclaration)* : % %
 
@@ -24767,7 +24775,7 @@ relation ParserLocalDecls_ok: typingContext |- (parserLocalDeclaration)* : % %
 
     1. Result in: % |- % : typingContext []
 
-  1. Else Phantom#1353
+  1. Else Phantom#1354
 
   2. If (((parserLocalDeclaration)* matches pattern _ :: _)), then
 
@@ -24779,7 +24787,7 @@ relation ParserLocalDecls_ok: typingContext |- (parserLocalDeclaration)* : % %
 
           1. Result in: % |- % : TC_2 parserLocalDeclarationIR_h :: (parserLocalDeclarationIR_t)*
 
-  2. Else Phantom#1354
+  2. Else Phantom#1355
 
 tbl def $compat_table_exact_optional_key(typeIR'')
 =
@@ -24979,9 +24987,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                               1. Result in: % % |- % @ % : (lpm n) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-                        1. Else Phantom#1355
+                        1. Else Phantom#1356
 
-              1. Else Phantom#1356
+              1. Else Phantom#1357
 
           2. Case (% =/= "lpm")
 
@@ -24999,7 +25007,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                         1. Result in: % % |- % @ % : (nolpm) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-                  1. Else Phantom#1357
+                  1. Else Phantom#1358
 
   2. Case (% matches pattern `%&&&%`)
 
@@ -25059,19 +25067,19 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                                                           1. Result in: % % |- % @ % : (lpm n_prefix) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
-                                                    1. Else Phantom#1358
+                                                    1. Else Phantom#1359
 
-                                              1. Else Phantom#1359
+                                              1. Else Phantom#1360
 
-                                          1. Else Phantom#1360
+                                          1. Else Phantom#1361
 
-                                    1. Else Phantom#1361
+                                    1. Else Phantom#1362
 
-                              1. Else Phantom#1362
+                              1. Else Phantom#1363
 
-                        1. Else Phantom#1363
+                        1. Else Phantom#1364
 
-              1. Else Phantom#1364
+              1. Else Phantom#1365
 
           2. Case (% = "ternary")
 
@@ -25099,13 +25107,13 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                                   1. Result in: % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced)
 
-                              1. Else Phantom#1365
+                              1. Else Phantom#1366
 
-                        1. Else Phantom#1366
+                        1. Else Phantom#1367
 
-                  1. Else Phantom#1367
+                  1. Else Phantom#1368
 
-        1. Else Phantom#1368
+        1. Else Phantom#1369
 
   3. Case (% matches pattern `DEFAULT`)
 
@@ -25123,7 +25131,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                 1. Result in: % % |- % @ % : (lpm n) (default)
 
-            1. Else Phantom#1369
+            1. Else Phantom#1370
 
         2. Case (% =/= "lpm")
 
@@ -25131,7 +25139,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
             1. Result in: % % |- % @ % : (nolpm) (default)
 
-          1. Else Phantom#1370
+          1. Else Phantom#1371
 
   4. Case (% matches pattern `_`)
 
@@ -25147,7 +25155,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
               1. Result in: % % |- % @ % : (lpm 0) (_)
 
-            1. Else Phantom#1371
+            1. Else Phantom#1372
 
         2. Case (% =/= "lpm")
 
@@ -25155,9 +25163,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
             1. Result in: % % |- % @ % : (nolpm) (_)
 
-          1. Else Phantom#1372
+          1. Else Phantom#1373
 
-1. Else Phantom#1373
+1. Else Phantom#1374
 
 2. If ((text = "range")), then
 
@@ -25191,15 +25199,15 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
                               1. Result in: % % |- % @ % : (nolpm) (typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced)
 
-                          1. Else Phantom#1374
+                          1. Else Phantom#1375
 
-                    1. Else Phantom#1375
+                    1. Else Phantom#1376
 
-              1. Else Phantom#1376
+              1. Else Phantom#1377
 
-  1. Else Phantom#1377
+  1. Else Phantom#1378
 
-2. Else Phantom#1378
+2. Else Phantom#1379
 
 relation TableEntry_keysets_simple_ok: TC TBLC tableEntryState |- (matchKey)* @ (simpleKeysetExpression)* : % %
 
@@ -25211,9 +25219,9 @@ relation TableEntry_keysets_simple_ok: TC TBLC tableEntryState |- (matchKey)* @ 
 
       1. Result in: % % % |- % @ % : tableEntryState []
 
-    1. Else Phantom#1379
+    1. Else Phantom#1380
 
-  1. Else Phantom#1380
+  1. Else Phantom#1381
 
   2. If (((matchKey)* matches pattern _ :: _)), then
 
@@ -25231,9 +25239,9 @@ relation TableEntry_keysets_simple_ok: TC TBLC tableEntryState |- (matchKey)* @ 
 
                 1. Result in: % % % |- % @ % : TBLS_3 simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)*
 
-      1. Else Phantom#1381
+      1. Else Phantom#1382
 
-  2. Else Phantom#1382
+  2. Else Phantom#1383
 
 def $is_tableKeysProperty(tableProperty)
 
@@ -25321,7 +25329,7 @@ relation ControlLocalDecls_ok: typingContext |- (controlLocalDeclaration)* : % %
 
     1. Result in: % |- % : typingContext []
 
-  1. Else Phantom#1383
+  1. Else Phantom#1384
 
   2. If (((controlLocalDeclaration)* matches pattern _ :: _)), then
 
@@ -25333,7 +25341,7 @@ relation ControlLocalDecls_ok: typingContext |- (controlLocalDeclaration)* : % %
 
           1. Result in: % |- % : TC_2 controlLocalDeclarationIR_h :: (controlLocalDeclarationIR_t)*
 
-  2. Else Phantom#1384
+  2. Else Phantom#1385
 
 relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
@@ -25357,11 +25365,11 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
                   1. The relation holds
 
-                1. Else Phantom#1385
+                1. Else Phantom#1386
 
-              1. Else Phantom#1386
+              1. Else Phantom#1387
 
-          1. Else Phantom#1387
+          1. Else Phantom#1388
 
   2. Case (% has type memberAccessExpressionIR)
 
@@ -25391,17 +25399,17 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
                             1. The relation holds
 
-                          1. Else Phantom#1388
+                          1. Else Phantom#1389
 
-                        1. Else Phantom#1389
+                        1. Else Phantom#1390
 
                     2. Case false
 
                       1. The relation holds
 
-            1. Else Phantom#1390
+            1. Else Phantom#1391
 
-      1. Else Phantom#1391
+      1. Else Phantom#1392
 
   3. Case (% has type indexAccessExpressionIR)
 
@@ -25413,7 +25421,7 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
           1. The relation holds
 
-        1. Else Phantom#1392
+        1. Else Phantom#1393
 
   4. Case (% has type sliceAccessExpressionIR)
 
@@ -25425,9 +25433,9 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
           1. The relation holds
 
-        1. Else Phantom#1393
+        1. Else Phantom#1394
 
-1. Else Phantom#1394
+1. Else Phantom#1395
 
 syntax infer = 
    | knownas typeIR
@@ -25447,7 +25455,7 @@ def $infer((typeId)*, (parameterIR)*, (argumentIR)*)
 
   1. Return $empty_map<typeId, typeIR>
 
-1. Else Phantom#1395
+1. Else Phantom#1396
 
 2. If (((typeId)* =/= [])), then
 
@@ -25463,7 +25471,7 @@ def $infer((typeId)*, (parameterIR)*, (argumentIR)*)
 
             1. Return inference_resolved
 
-2. Else Phantom#1396
+2. Else Phantom#1397
 
 def $infer'(constraint, parameterIR, argumentIR)
 
@@ -25705,7 +25713,7 @@ def $merge_constraint(constraint_pre, constraint_post)
 
       1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_pre)*, ({ [] }))
 
-    1. Else Phantom#1397
+    1. Else Phantom#1398
 
 def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
@@ -25727,7 +25735,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
             1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*, constraint_updated)
 
-        1. Else Phantom#1398
+        1. Else Phantom#1399
 
         2. (Let (infer)? be $find_map<typeId, infer>(constraint_post, typeId_h))
 
@@ -25743,11 +25751,11 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
                     1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*, constraint_updated)
 
-              1. Else Phantom#1399
+              1. Else Phantom#1400
 
-          1. Else Phantom#1400
+          1. Else Phantom#1401
 
-      1. Else Phantom#1401
+      1. Else Phantom#1402
 
       2. (Let (infer)? be $find_map<typeId, infer>(constraint_pre, typeId_h))
 
@@ -25765,7 +25773,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
                     1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*, constraint_updated)
 
-                1. Else Phantom#1402
+                1. Else Phantom#1403
 
                 2. (Let (infer'')? be $find_map<typeId, infer>(constraint_post, typeId_h))
 
@@ -25791,15 +25799,15 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*, constraint)
 
                                 1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*, constraint_updated)
 
-                            1. Else Phantom#1403
+                            1. Else Phantom#1404
 
-                      1. Else Phantom#1404
+                      1. Else Phantom#1405
 
-                  1. Else Phantom#1405
+                  1. Else Phantom#1406
 
-            1. Else Phantom#1406
+            1. Else Phantom#1407
 
-        1. Else Phantom#1407
+        1. Else Phantom#1408
 
 def $merge_constraints(constraint_pre, (constraint)*)
 
@@ -25827,7 +25835,7 @@ def $resolve_constraint(({ ((typeId : infer))* }))
 
     1. Return ({ ((typeId : typeIR))* })
 
-1. Else Phantom#1408
+1. Else Phantom#1409
 
 def $resolve_type_alias(typeIR)
 
@@ -25851,7 +25859,7 @@ def $resolve_type_alias(typeIR)
 
       1. Return (nameIR_alias, (typeIR_arg)*)
 
-1. Else Phantom#1409
+1. Else Phantom#1410
 
 def $instantiable_extern(cursor, TC, instctxt)
 
@@ -25971,7 +25979,7 @@ def $instantiable(p, TC, instctxt, typeIR)
 
       1. Return $instantiable_table(p, TC, instctxt)
 
-  1. Else Phantom#1410
+  1. Else Phantom#1411
 
 def $callable_action(cursor, TC)
 
@@ -26305,7 +26313,7 @@ def $parameterListIR_of_externMethodDef(externMethodDef)
 
     1. Return parameterListIR
 
-1. Else Phantom#1411
+1. Else Phantom#1412
 
 def $parameterListIR_of_parserApplyMethodDef((parser_apply( parameterListIR ){ _parserLocalDeclarationListIR ; _stateEnv }))
 
@@ -26496,7 +26504,7 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface)
 
     1. Return ?()
 
-  1. Else Phantom#1412
+  1. Else Phantom#1413
 
 2. If ((tableEntryPriorityInterface matches pattern (_))), then
 
@@ -26508,9 +26516,9 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface)
 
         1. Return ?((priority= (d (n_priority as int)) :))
 
-    1. Else Phantom#1413
+    1. Else Phantom#1414
 
-2. Else Phantom#1414
+2. Else Phantom#1415
 
 def $needs_priority_tableKeysPropertyIR((key={ (tableKeyIR)* }))
 
@@ -26546,9 +26554,9 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                         1. Return simpleKeysetExpressionIR
 
-            1. Else Phantom#1415
+            1. Else Phantom#1416
 
-      1. Else Phantom#1416
+      1. Else Phantom#1417
 
   2. Case (% = "ternary")
 
@@ -26596,9 +26604,9 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                                               1. Return simpleKeysetExpressionIR
 
-                                        1. Else Phantom#1417
+                                        1. Else Phantom#1418
 
-                          1. Else Phantom#1418
+                          1. Else Phantom#1419
 
             2. Case (% matches pattern ``BIN%`)
 
@@ -26636,13 +26644,13 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                                               1. Return simpleKeysetExpressionIR
 
-                                        1. Else Phantom#1419
+                                        1. Else Phantom#1420
 
-                          1. Else Phantom#1420
+                          1. Else Phantom#1421
 
-          1. Else Phantom#1421
+          1. Else Phantom#1422
 
-      1. Else Phantom#1422
+      1. Else Phantom#1423
 
   3. Case (% = "lpm")
 
@@ -26694,11 +26702,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                                                   1. Return simpleKeysetExpressionIR
 
-                                            1. Else Phantom#1423
+                                            1. Else Phantom#1424
 
-                              1. Else Phantom#1424
+                              1. Else Phantom#1425
 
-                  1. Else Phantom#1425
+                  1. Else Phantom#1426
 
             2. Case (% matches pattern ``BIN%`)
 
@@ -26740,11 +26748,11 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                                                   1. Return simpleKeysetExpressionIR
 
-                                            1. Else Phantom#1426
+                                            1. Else Phantom#1427
 
-                              1. Else Phantom#1427
+                              1. Else Phantom#1428
 
-                  1. Else Phantom#1428
+                  1. Else Phantom#1429
 
             3. Case (% matches pattern `%`SLASH%`)
 
@@ -26788,19 +26796,19 @@ def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface
 
                                                     1. Return simpleKeysetExpressionIR
 
-                                              1. Else Phantom#1429
+                                              1. Else Phantom#1430
 
-                                    1. Else Phantom#1430
+                                    1. Else Phantom#1431
 
-                        1. Else Phantom#1431
+                        1. Else Phantom#1432
 
-                    1. Else Phantom#1432
+                    1. Else Phantom#1433
 
-          1. Else Phantom#1433
+          1. Else Phantom#1434
 
-      1. Else Phantom#1434
+      1. Else Phantom#1435
 
-1. Else Phantom#1435
+1. Else Phantom#1436
 
 def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInterface)
 
@@ -26808,7 +26816,7 @@ def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInter
 
   1. Return []
 
-1. Else Phantom#1436
+1. Else Phantom#1437
 
 2. (Let (tableKeyInterface)* be tableKeysetInterface)
 
@@ -26820,7 +26828,7 @@ def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInter
 
         1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*, (tableKeyInterface)*)
 
-  1. Else Phantom#1437
+  1. Else Phantom#1438
 
 def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationList ;))
 
@@ -26834,7 +26842,7 @@ def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationLis
 
         1. Return (nameIR_key, nameIR_matchKind, typeIR)
 
-  1. Else Phantom#1438
+  1. Else Phantom#1439
 
 2. If (([] = $name_annotation(annotationList))), then
 
@@ -26844,7 +26852,7 @@ def $interface_of_tableKeyIR((typedExpressionIR : nameIR_matchKind annotationLis
 
       1. Return (nameIR_key, nameIR_matchKind, typeIR)
 
-2. Else Phantom#1439
+2. Else Phantom#1440
 
 def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface)*)
 
@@ -26858,7 +26866,7 @@ def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface
 
         1. Return ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
 
-    1. Else Phantom#1440
+    1. Else Phantom#1441
 
 def $alias_to_original_lookup_map((parameterIR)*)
 
@@ -26878,7 +26886,7 @@ def $alias_to_original_lookup_map((parameterIR)*)
 
               1. Return $extend_map<nameIR, nameIR>(({ ((nameIR_alias : nameIR_original))* }), ({ ((id : id))* }))
 
-      1. Else Phantom#1441
+      1. Else Phantom#1442
 
 def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
@@ -26898,9 +26906,9 @@ def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
               1. Return (i_aligned)*
 
-          1. Else Phantom#1442
+          1. Else Phantom#1443
 
-    1. Else Phantom#1443
+    1. Else Phantom#1444
 
 def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
 
@@ -26934,7 +26942,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
                 1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
 
-          1. Else Phantom#1444
+          1. Else Phantom#1445
 
           2. (Let (nameIR_annotation)* be $name_annotation(annotationList))
 
@@ -26952,7 +26960,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
                     1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
 
-            1. Else Phantom#1445
+            1. Else Phantom#1446
 
 def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
@@ -26972,7 +26980,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
           1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-        1. Else Phantom#1446
+        1. Else Phantom#1447
 
       2. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
 
@@ -26984,9 +26992,9 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
               1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-            1. Else Phantom#1447
+            1. Else Phantom#1448
 
-          1. Else Phantom#1448
+          1. Else Phantom#1449
 
           2. (Let (nameIR_annotation_dotPrefix)* be $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))
 
@@ -26998,9 +27006,9 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
                   1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-                1. Else Phantom#1449
+                1. Else Phantom#1450
 
-            1. Else Phantom#1450
+            1. Else Phantom#1451
 
             2. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
 
@@ -27010,7 +27018,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
                   1. Return ?((nameIR_action, tableActionIR_h))
 
-              1. Else Phantom#1451
+              1. Else Phantom#1452
 
 def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
 
@@ -27040,9 +27048,9 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
                         1. Return ((` nameIR_found) ( (argumentIR)* ))
 
-                  1. Else Phantom#1452
+                  1. Else Phantom#1453
 
-  1. Else Phantom#1453
+  1. Else Phantom#1454
 
 2. If ((?() = $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))), then
 
@@ -27072,11 +27080,11 @@ def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_act
 
                           1. Return ((` nameIR_found) ( (argumentIR)* ))
 
-                    1. Else Phantom#1454
+                    1. Else Phantom#1455
 
-    1. Else Phantom#1455
+    1. Else Phantom#1456
 
-2. Else Phantom#1456
+2. Else Phantom#1457
 
 def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
@@ -27098,7 +27106,7 @@ def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInter
 
                 1. Return (table typeId { frame TBL_updated })
 
-  1. Else Phantom#1457
+  1. Else Phantom#1458
 
 def $tableObject_add_default_action((table typeId { frame TBL }), tableActionInterface)
 
@@ -27114,7 +27122,7 @@ def $tableObject_add_default_action((table typeId { frame TBL }), tableActionInt
 
           1. Return (table typeId { frame TBL_updated })
 
-  1. Else Phantom#1458
+  1. Else Phantom#1459
 
 syntax frame = map<id, value>
 
@@ -27164,7 +27172,7 @@ def $find_store(store, objectId)
 
       1. Return object'
 
-  1. Else Phantom#1459
+  1. Else Phantom#1460
 
 syntax globalInstLayer = {constructor constructorDefEnv, type typeDefEnv, callable callableDefEnv, frame frame}
 
@@ -27200,7 +27208,7 @@ def $exit_i(IC)
 
       1. Return IC[local.frames = (frame_t)*]
 
-  1. Else Phantom#1460
+  1. Else Phantom#1461
 
 def $enter_path_i(IC, id)
 
@@ -27240,7 +27248,7 @@ def $add_var_i(cursor, IC, id, value)
 
         1. Return IC[global.frame = frame]
 
-    1. Else Phantom#1461
+    1. Else Phantom#1462
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27250,7 +27258,7 @@ def $add_var_i(cursor, IC, id, value)
 
         1. Return IC[block.frame = frame]
 
-    1. Else Phantom#1462
+    1. Else Phantom#1463
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -27266,9 +27274,9 @@ def $add_var_i(cursor, IC, id, value)
 
               1. Return IC[local.frames = frame_h' :: (frame_t)*]
 
-          1. Else Phantom#1463
+          1. Else Phantom#1464
 
-      1. Else Phantom#1464
+      1. Else Phantom#1465
 
 def $add_vars_i(p, IC, (id)*, (value)*)
 
@@ -27280,7 +27288,7 @@ def $add_vars_i(p, IC, (id)*, (value)*)
 
       1. Return IC
 
-    1. Else Phantom#1465
+    1. Else Phantom#1466
 
   2. Case (% matches pattern _ :: _)
 
@@ -27296,7 +27304,7 @@ def $add_vars_i(p, IC, (id)*, (value)*)
 
               1. Return IC''
 
-      1. Else Phantom#1466
+      1. Else Phantom#1467
 
 def $add_typeDef_i(cursor, IC, typeId, typeDefIR)
 
@@ -27306,7 +27314,7 @@ def $add_typeDef_i(cursor, IC, typeId, typeDefIR)
 
     1. Return IC[global.type = typeDefEnv]
 
-1. Else Phantom#1467
+1. Else Phantom#1468
 
 def $add_parserState_i(IC, nameIR, parserStateIR)
 
@@ -27316,7 +27324,7 @@ def $add_parserState_i(IC, nameIR, parserStateIR)
 
     1. Return IC[block.state = stateEnv]
 
-1. Else Phantom#1468
+1. Else Phantom#1469
 
 def $add_type_i(cursor, IC, typeId, typeIR)
 
@@ -27334,7 +27342,7 @@ def $add_type_i(cursor, IC, typeId, typeIR)
 
       1. Return IC[local.type = theta]
 
-1. Else Phantom#1469
+1. Else Phantom#1470
 
 def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
@@ -27346,7 +27354,7 @@ def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
       1. Return IC
 
-    1. Else Phantom#1470
+    1. Else Phantom#1471
 
   2. Case (% matches pattern _ :: _)
 
@@ -27360,7 +27368,7 @@ def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
             1. Return $add_types_i(p, IC', (typeId_t)*, (typeIR_t)*)
 
-      1. Else Phantom#1471
+      1. Else Phantom#1472
 
 def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
@@ -27374,7 +27382,7 @@ def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
         1. Return IC[global.callable = callableDefEnv]
 
-    1. Else Phantom#1472
+    1. Else Phantom#1473
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27384,9 +27392,9 @@ def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
         1. Return IC[block.callable = callableDefEnv]
 
-    1. Else Phantom#1473
+    1. Else Phantom#1474
 
-1. Else Phantom#1474
+1. Else Phantom#1475
 
 def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
@@ -27404,7 +27412,7 @@ def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
             1. Return IC[global.callable = callableDefEnv]
 
-        1. Else Phantom#1475
+        1. Else Phantom#1476
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27418,9 +27426,9 @@ def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
             1. Return IC[block.callable = callableDefEnv]
 
-        1. Else Phantom#1476
+        1. Else Phantom#1477
 
-1. Else Phantom#1477
+1. Else Phantom#1478
 
 def $add_constructorDef_i(IC, callableId, constructorDef)
 
@@ -27438,7 +27446,7 @@ def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
       1. Return IC
 
-    1. Else Phantom#1478
+    1. Else Phantom#1479
 
   2. Case (% matches pattern _ :: _)
 
@@ -27454,7 +27462,7 @@ def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
               1. Return IC''
 
-      1. Else Phantom#1479
+      1. Else Phantom#1480
 
 def $find_var_i(prefixedNameIR, p, IC)
 
@@ -27472,7 +27480,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
             1. Return value'
 
-        1. Else Phantom#1480
+        1. Else Phantom#1481
 
   2. Case (% matches pattern ``%`)
 
@@ -27490,7 +27498,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1481
+            1. Else Phantom#1482
 
         2. Case (% matches pattern `BLOCK`)
 
@@ -27502,13 +27510,13 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1482
+            1. Else Phantom#1483
 
           2. If ((?() = $find_map<id, value>(IC.block.frame, id))), then
 
             1. Return $find_var_i((` id), (global), IC)
 
-          2. Else Phantom#1483
+          2. Else Phantom#1484
 
         3. Case (% matches pattern `LOCAL`)
 
@@ -27520,13 +27528,13 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1484
+            1. Else Phantom#1485
 
           2. If ((?() = $find_maps<id, value>(IC.local.frames, id))), then
 
             1. Return $find_var_i((` id), (block), IC)
 
-          2. Else Phantom#1485
+          2. Else Phantom#1486
 
 def $find_typeDef_i(_cursor, IC, prefixedNameIR)
 
@@ -27618,7 +27626,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
         1. Result in: % % % |- % : STO (stringLiteral as value)
 
-  1. Else Phantom#1486
+  1. Else Phantom#1487
 
 2. Case analysis on expressionIR
 
@@ -27664,7 +27672,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
               1. Result in: % % % |- % : STO_2 $bin_op(binop, value_l, value_r)
 
-        1. Else Phantom#1487
+        1. Else Phantom#1488
 
         2. Case analysis on binop
 
@@ -27676,7 +27684,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                 1. Result in: % % % |- % : STO_1 ((`b false) as value)
 
-              1. Else Phantom#1488
+              1. Else Phantom#1489
 
               2. If ((value = ((`b true) as value))), then
 
@@ -27684,7 +27692,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                   1. Result in: % % % |- % : STO_2 value_r
 
-              2. Else Phantom#1489
+              2. Else Phantom#1490
 
           2. Case (% matches pattern `||`)
 
@@ -27694,7 +27702,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                 1. Result in: % % % |- % : STO_1 ((`b true) as value)
 
-              1. Else Phantom#1490
+              1. Else Phantom#1491
 
               2. If ((value = ((`b false) as value))), then
 
@@ -27702,9 +27710,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                   1. Result in: % % % |- % : STO_2 value_r
 
-              2. Else Phantom#1491
+              2. Else Phantom#1492
 
-        2. Else Phantom#1492
+        2. Else Phantom#1493
 
   5. Case (% has type ternaryExpressionIR)
 
@@ -27720,7 +27728,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
               1. Result in: % % % |- % : STO_2 value_true
 
-          1. Else Phantom#1493
+          1. Else Phantom#1494
 
           2. If ((value = ((`b false) as value))), then
 
@@ -27728,7 +27736,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
               1. Result in: % % % |- % : STO_2 value_false
 
-          2. Else Phantom#1494
+          2. Else Phantom#1495
 
   6. Case (% has type castExpressionIR)
 
@@ -27848,11 +27856,11 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO ((typeId . nameIR . value') as value)
 
-                            1. Else Phantom#1495
+                            1. Else Phantom#1496
 
-                    1. Else Phantom#1496
+                    1. Else Phantom#1497
 
-                1. Else Phantom#1497
+                1. Else Phantom#1498
 
         2. Case (% has type typedExpressionIR)
 
@@ -27872,9 +27880,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                         1. Result in: % % % |- % : STO ((d (n_size as int)) as value)
 
-                      1. Else Phantom#1498
+                      1. Else Phantom#1499
 
-                  1. Else Phantom#1499
+                  1. Else Phantom#1500
 
               2. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value)
 
@@ -27894,7 +27902,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1500
+                          1. Else Phantom#1501
 
                   2. Case (% has type headerValue)
 
@@ -27910,7 +27918,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1501
+                          1. Else Phantom#1502
 
                   3. Case (% has type headerUnionValue)
 
@@ -27926,9 +27934,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1502
+                          1. Else Phantom#1503
 
-                1. Else Phantom#1503
+                1. Else Phantom#1504
 
   12. Case (% has type indexAccessExpressionIR)
 
@@ -27962,9 +27970,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO_2 value'
 
-                            1. Else Phantom#1504
+                            1. Else Phantom#1505
 
-                        1. Else Phantom#1505
+                        1. Else Phantom#1506
 
                   2. Case (% has type headerStackValue)
 
@@ -27982,13 +27990,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO_2 value'
 
-                            1. Else Phantom#1506
+                            1. Else Phantom#1507
 
-                        1. Else Phantom#1507
+                        1. Else Phantom#1508
 
-                1. Else Phantom#1508
+                1. Else Phantom#1509
 
-            1. Else Phantom#1509
+            1. Else Phantom#1510
 
   13. Case (% has type sliceAccessExpressionIR)
 
@@ -28044,7 +28052,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                         1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                      1. Else Phantom#1510
+                      1. Else Phantom#1511
 
                 2. Case (% matches pattern `TYPE%.%`)
 
@@ -28066,7 +28074,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                   1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                                1. Else Phantom#1511
+                                1. Else Phantom#1512
 
                             2. Case false
 
@@ -28078,13 +28086,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                     1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                                  1. Else Phantom#1512
+                                  1. Else Phantom#1513
 
-                              1. Else Phantom#1513
+                              1. Else Phantom#1514
 
-                      1. Else Phantom#1514
+                      1. Else Phantom#1515
 
-              1. Else Phantom#1515
+              1. Else Phantom#1516
 
             2. If ((callableTargetIR matches pattern `(%)`)), then
 
@@ -28096,7 +28104,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                     1. Result in: % % % |- % : STO_1 value
 
-            2. Else Phantom#1516
+            2. Else Phantom#1517
 
   15. Case (% has type parenthesizedExpressionIR)
 
@@ -28108,7 +28116,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
           1. Result in: % % % |- % : STO_1 value
 
-2. Else Phantom#1517
+2. Else Phantom#1518
 
 relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
@@ -28118,7 +28126,7 @@ relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
     1. Result in: % % % |- % : store []
 
-  1. Else Phantom#1518
+  1. Else Phantom#1519
 
   2. If (((typedExpressionIR)* matches pattern _ :: _)), then
 
@@ -28130,7 +28138,7 @@ relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
           1. Result in: % % % |- % : STO_2 value_h :: (value_t)*
 
-  2. Else Phantom#1519
+  2. Else Phantom#1520
 
 relation Argument_inst: p IC STO_0 |- argumentIR : % %
 
@@ -28156,7 +28164,7 @@ relation Argument_inst: p IC STO_0 |- argumentIR : % %
 
           1. Result in: % % % |- % : STO_1 value
 
-1. Else Phantom#1520
+1. Else Phantom#1521
 
 relation DirectApplicationStmt_inst: p IC STO_0 |- (constructorTargetIR .apply( argumentListIR );) : % % %
 
@@ -28282,7 +28290,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
                 1. Result in: % % % |- % : IC STO_1 (forStatementIR' as statementIR)
 
-      1. Else Phantom#1521
+      1. Else Phantom#1522
 
       2. Group forStatementIR-in: p IC STO |- (forStatementIR as statementIR) : % % %
 
@@ -28300,17 +28308,13 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
           2. Case (% matches pattern `%FOR(%%%IN%)%`)
 
-            1. (Let (annotationList for( annotationList' typeIR nameIR in forCollectionExpressionIR ) statementIR') be forStatementIR)
+            1. (Let (annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR') be forStatementIR)
 
-              1. If ((annotationList = annotationList')), then
+              1. (Stmt_inst: p IC STO |- statementIR' : IC_body STO_1 statementIR_body)
 
-                1. (Stmt_inst: p IC STO |- statementIR' : IC_body STO_1 statementIR_body)
+                1. (Let forStatementIR' be (annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR_body))
 
-                  1. (Let forStatementIR' be (annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR_body))
-
-                    1. Result in: % % % |- % : IC STO_1 (forStatementIR' as statementIR)
-
-              1. Else Phantom#1522
+                  1. Result in: % % % |- % : IC STO_1 (forStatementIR' as statementIR)
 
         1. Else Phantom#1523
 

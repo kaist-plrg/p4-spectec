@@ -514,11 +514,18 @@ rulegroup Stmt_ok/forStatement-in {
     LOCAL TC_0 f l |- annotationList FOR
                         `( annotationListNonEmpty
                            type name IN forCollectionExpression) statement
-                    : TC_0 f_post forStatementIR
+                    : TC_0 f_post forStatementIR'
     -- Stmt_ok:
         LOCAL TC_0 f l |- annotationList FOR
                             `( type name IN forCollectionExpression) statement
                         : TC_1 f_post forStatementIR
+    -- if annotationList' FOR `(
+          typeIR nameIR IN forCollectionExpressionIR
+        ) statementIR = forStatementIR
+    -- if forStatementIR'
+        = annotationList' FOR `(
+            annotationListNonEmpty typeIR nameIR IN forCollectionExpressionIR
+          ) statementIR
 
 }
 

@@ -8155,7 +8155,10 @@ xref:Stmt_ok[Typing ``forStatement``, under cursor ``+LOCAL+``, context ``TC``, 
 * the result of xref:Stmt_ok[typing ``annotationList`` ``+FOR+`` ``+(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'``, under cursor ``+LOCAL+``, context ``TC``, abstract control flow ``f``, and loop context ``l``].
  .. Check that ``statementIR`` has type ``forStatementIR``.
  .. Let ``forStatementIR`` be ``statementIR``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR``.
+ .. Check that ``forStatementIR`` matches pattern ``%`` ``FOR`` ``(`` ``%`` ```` ``%`` ``IN`` ``%`` ``)`` ``%``.
+ .. Let ``annotationList'`` ``+FOR+`` ``+(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``.
+ .. Let ``forStatementIR'`` be ``annotationList'`` ``+FOR+`` ``+(+`` ``annotationListNonEmpty`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'``.
+ .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR'``.
 
 xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under cursor ``+LOCAL+``, context ``TC``, abstract control flow ``f``, and loop context ``l``]:
 
@@ -13407,11 +13410,10 @@ xref:Stmt_inst[Compile-time evaluation of ``forStatementIR``, under cursor ``p``
 * the result of xref:Stmt_inst[compile-time evaluation of ``statementIR'``, under cursor ``p``, context ``IC``, and store ``STO``].
  .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
  .. Result in context ``IC``, store ``STO~1~``, and ``forStatementIR'``.
-. Else if let ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList'`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``:
- .. Check that ``annotationList`` is equal to ``annotationList'``.
+. Else if let ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``:
  .. Let context ``IC~body~``, store ``STO~1~``, and ``statementIR~body~`` be
 * the result of xref:Stmt_inst[compile-time evaluation of ``statementIR'``, under cursor ``p``, context ``IC``, and store ``STO``].
- .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
+ .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
  .. Result in context ``IC``, store ``STO~1~``, and ``forStatementIR'``.
 
 xref:Stmt_inst[Compile-time evaluation of ``breakStatementIR``, under cursor ``p``, context ``IC``, and store ``STO``]:
