@@ -37,6 +37,9 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x03: conditional_else_cond_abort;
             0x04: return_abort;
             0x05: switch_abort;
+            0x06: switch_table_fallthrough;
+            0x07: switch_general_fallthrough;
+            0x08: switch_general_non_fallthrough_mismatch;
             default: accept;
         }
     }
@@ -75,12 +78,48 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
+
+    state switch_table_fallthrough {
+        h.op.a = 0x10 + h.op.a;
+        b.extract(h.h.next);
+        b.extract(h.h.next);
+        transition accept;
+    }
+
+    state switch_general_fallthrough {
+        h.op.a = 0x10 + h.op.a;
+        b.extract(h.h.next);
+        b.extract(h.h.next);
+        transition accept;
+    }
+
+    state switch_general_non_fallthrough_mismatch {
+        h.op.a = 0x10 + h.op.a;
+        b.extract(h.h.next);
+        b.extract(h.h.next);
+        transition accept;
+    }
 }
 
 control vrfy(inout Headers h, inout Meta m) { apply {} }
 control update(inout Headers h, inout Meta m) { apply {} }
 
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    action foo() { }
+    action nop() { }
+
+    table t {
+        actions = { nop; foo; }
+        key = {
+            h.op.a : exact;
+        }
+        const entries = {
+            100 : nop();
+            101 : foo();
+        }
+        default_action = nop;
+    }
+
     apply {
         if (h.op.a == 0x12) {
             if (b_exit())
@@ -105,6 +144,34 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
                 }
             }
         }
+
+        else if (h.op.a == 0x16) {
+            bit<8> x = 101;
+            switch (t.apply().action_run) {
+                nop:
+                foo: { x = 100; }
+            }
+            h.h[0].a = x - 100;
+        }
+
+        else if (h.op.a == 0x17) {
+            bit<8> x = 101;
+            switch (x) {
+                101:
+                102: { x = 100; }
+            }
+            h.h[0].a = x - 100;
+        }
+
+        else if (h.op.a == 0x18) {
+            bit<8> x = 100;
+            switch (x) {
+                1:
+                2: { x = 1; }
+            }
+            h.h[0].a = x - 100;
+        }
+
     }
 }
 
