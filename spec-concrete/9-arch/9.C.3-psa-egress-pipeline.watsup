@@ -43,138 +43,115 @@ rule PSA_egress_init_packet_out:
 ;;
 
 relation PSA_egress_init_parser_input_metadata:
-  evalContext arch |- int : evalContext
-  hint(input %0 %1 %2)
+  evalContext arch |- int text : evalContext
+  hint(input %0 %1 %2 %3)
 
 rule PSA_egress_init_parser_input_metadata:
-  EC_0 ARCH |- i_port : EC_3
-  ---- ;; initialize variable
-  -- if typeDefIR_psa_egress_parser_input_metadata
-      = $find_typeDef_e(GLOBAL, EC_0, `` "psa_egress_parser_input_metadata_t")
-  -- if typeIR_psa_egress_parser_input_metadata
-      = $specialize_typeDefIR(typeDefIR_psa_egress_parser_input_metadata, eps)
-  -- Var_init:
-      EC_0 |- typeIR_psa_egress_parser_input_metadata
-              "egress_parser_input_metadata"
-            : EC_1
+  EC_0 ARCH |- i_port t_path : EC_2
   ---- ;; setup port
   -- if storageReference_parser_input_port
       = (`` "egress_parser_input_metadata") `. "egress_port"
   -- if value_port = 32 W i_port
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_parser_input_port -> value_port : EC_2
+      GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
   ---- ;; setup packet path
   -- if storageReference_parser_input_path
       = (`` "egress_parser_input_metadata") `. "packet_path"
-  -- if value_path = "PSA_PacketPath_t" `. "NORMAL_UNICAST"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
   -- Lvalue_write:
-      GLOBAL EC_2 ARCH |- storageReference_parser_input_path -> value_path : EC_3
+      GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
 
 relation PSA_egress_init_input_metadata:
-  evalContext arch |- int : evalContext
-  hint(input %0 %1 %2)
+  evalContext arch |- int text int int : evalContext
+  hint(input %0 %1 %2 %3 %4 %5)
 
 rule PSA_egress_init_input_metadata:
-  EC_0 ARCH |- i_port : EC_6
-  ---- ;; initialize variable
-  -- if typeDefIR_psa_egress_input_metadata
-      = $find_typeDef_e(GLOBAL, EC_0, `` "psa_egress_input_metadata_t")
-  -- if typeIR_psa_egress_input_metadata
-      = $specialize_typeDefIR(typeDefIR_psa_egress_input_metadata, eps)
-  -- Var_init:
-      EC_0 |- typeIR_psa_egress_input_metadata
-              "egress_input_metadata"
-            : EC_1
+  EC_0 ARCH |- i_port t_path i_cos i_inst : EC_5
   ---- ;; setup class of service
-  -- if storageReference_cos
-      = (`` "ingress_output_metadata") `. "class_of_service"
-  -- Lvalue_read: GLOBAL EC_1 ARCH |- storageReference_cos : value_cos
   -- if storageReference_input_cos
       = (`` "egress_input_metadata") `. "class_of_service"
+  -- if value_cos = 8 W i_cos
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_input_cos -> value_cos : EC_2
+      GLOBAL EC_0 ARCH |- storageReference_input_cos -> value_cos : EC_1
   ---- ;; setup port
   -- if storageReference_input_port
       = (`` "egress_input_metadata") `. "egress_port"
   -- if value_port = 32 W i_port
   -- Lvalue_write:
-      GLOBAL EC_2 ARCH |- storageReference_input_port -> value_port : EC_3
+      GLOBAL EC_1 ARCH |- storageReference_input_port -> value_port : EC_2
   ---- ;; setup packet path
   -- if storageReference_input_path
       = (`` "egress_input_metadata") `. "packet_path"
-  -- if value_path = "PSA_PacketPath_t" `. "NORMAL_UNICAST"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
   -- Lvalue_write:
-      GLOBAL EC_3 ARCH |- storageReference_input_path -> value_path : EC_4
+      GLOBAL EC_2 ARCH |- storageReference_input_path -> value_path : EC_3
   ---- ;; setup instance
   -- if storageReference_input_instance
       = (`` "egress_input_metadata") `. "instance"
-  -- if value_instance = 16 W 0
+  -- if value_instance = 16 W i_inst
   -- Lvalue_write:
-      GLOBAL EC_4 ARCH |- storageReference_input_instance -> value_instance : EC_5
+      GLOBAL EC_3 ARCH |- storageReference_input_instance -> value_instance : EC_4
   ---- ;; (TODO) setup timestamp
   ---- ;; setup parser error
   -- if storageReference_input_parser_error
       = (`` "egress_input_metadata") `. "parser_error"
   -- if value_parser_error = ERROR `. "NoError"
   -- Lvalue_write:
-      GLOBAL EC_5 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_6
+      GLOBAL EC_4 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_5
 
 relation PSA_egress_init_output_metadata:
   evalContext arch |- evalContext
   hint(input %0 %1)
 
 rule PSA_egress_init_output_metadata:
-  EC_0 ARCH |- EC_3
-  ---- ;; initialize variable
-  -- if typeDefIR_psa_egress_output_metadata
-      = $find_typeDef_e(GLOBAL, EC_0, `` "psa_egress_output_metadata_t")
-  -- if typeIR_psa_egress_output_metadata
-      = $specialize_typeDefIR(typeDefIR_psa_egress_output_metadata, eps)
-  -- Var_init:
-      EC_0 |- typeIR_psa_egress_output_metadata
-              "egress_output_metadata"
-            : EC_1
+  EC_0 ARCH |- EC_2
   ---- ;; setup clone
   -- if storageReference_output_clone
       = (`` "egress_output_metadata") `. "clone"
   -- if value_clone = `B false
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_output_clone -> value_clone : EC_2
+      GLOBAL EC_0 ARCH |- storageReference_output_clone -> value_clone : EC_1
   ---- ;; setup drop
   -- if storageReference_output_drop
       = (`` "egress_output_metadata") `. "drop"
   -- if value_drop = `B false
   -- Lvalue_write:
-      GLOBAL EC_2 ARCH |- storageReference_output_drop -> value_drop : EC_3
+      GLOBAL EC_1 ARCH |- storageReference_output_drop -> value_drop : EC_2
 
 relation PSA_egress_init_deparser_input_metadata:
   evalContext arch |- int : evalContext
   hint(input %0 %1 %2)
 
 rule PSA_egress_init_deparser_input_metadata:
-  EC_0 ARCH |- i_port : EC_2
-  ---- ;; initialize variable
-  -- if typeDefIR_psa_egress_deparser_input_metadata
-      = $find_typeDef_e(GLOBAL, EC_0, `` "psa_egress_deparser_input_metadata_t")
-  -- if typeIR_psa_egress_deparser_input_metadata
-      = $specialize_typeDefIR(typeDefIR_psa_egress_deparser_input_metadata, eps)
-  -- Var_init:
-      EC_0 |- typeIR_psa_egress_deparser_input_metadata
-              "egress_deparser_input_metadata"
-            : EC_1
+  EC_0 ARCH |- i_port : EC_1
   ---- ;; setup port
   -- if storageReference_deparser_input_port
       = (`` "egress_deparser_input_metadata") `. "egress_port"
   -- if value_port = 32 W i_port
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_deparser_input_port -> value_port : EC_2
+      GLOBAL EC_0 ARCH |- storageReference_deparser_input_port -> value_port : EC_1
+
+relation PSA_egress_init_metadata:
+  evalContext arch |- int text int int : evalContext
+  hint(input %0 %1 %2 %3 %4 %5)
+
+rule PSA_egress_init_metadata:
+  EC_0 ARCH |- i_port t_path i_cos i_inst : EC_4
+  ---- ;; parser input metadata
+  -- PSA_egress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : EC_1
+  ---- ;; input metadata
+  -- PSA_egress_init_input_metadata: EC_1 ARCH |- i_port t_path i_cos i_inst : EC_2
+  ---- ;; output metadata
+  -- PSA_ingress_init_output_metadata: EC_2 ARCH |- EC_3
+  ---- ;; deparser input metadata
+  -- PSA_egress_init_deparser_input_metadata: EC_3 ARCH |- i_port : EC_4
 
 relation PSA_egress_init_globals:
   evalContext arch |- int : evalContext
   hint(input %0 %1 %2)
 
 rule PSA_egress_init_globals:
-  EC_0 ARCH |- i_port : EC_7
+  EC_0 ARCH |- i_port : EC_8
   -- if PACKAGE `< theta > `{ _ }
       = $find_object_e(ARCH, [ "main" ])
   ---- ;; hdr and user_meta
@@ -183,16 +160,50 @@ rule PSA_egress_init_globals:
   -- Var_init: EC_0 |- typeIR_hdr "egress_hdr" : EC_1
   -- Var_init: EC_1 |- typeIR_user_meta "egress_user_meta" : EC_2
   ---- ;; psa egress parser input metadata
-  -- PSA_egress_init_parser_input_metadata: EC_2 ARCH |- i_port : EC_3
+  -- if typeDefIR_psa_egress_parser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_2, `` "psa_egress_parser_input_metadata_t")
+  -- if typeIR_psa_egress_parser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_parser_input_metadata, eps)
+  -- Var_init:
+      EC_2 |- typeIR_psa_egress_parser_input_metadata
+              "egress_parser_input_metadata"
+            : EC_3
   ---- ;; psa egress input metadata
-  -- PSA_egress_init_input_metadata: EC_3 ARCH |- i_port : EC_4
+  -- if typeDefIR_psa_egress_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_3, `` "psa_egress_input_metadata_t")
+  -- if typeIR_psa_egress_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_input_metadata, eps)
+  -- Var_init:
+      EC_3 |- typeIR_psa_egress_input_metadata
+              "egress_input_metadata"
+            : EC_4
   ---- ;; psa egress output metadata
-  -- PSA_egress_init_output_metadata: EC_4 ARCH |- EC_5
+  -- if typeDefIR_psa_egress_output_metadata
+      = $find_typeDef_e(GLOBAL, EC_4, `` "psa_egress_output_metadata_t")
+  -- if typeIR_psa_egress_output_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_output_metadata, eps)
+  -- Var_init:
+      EC_4 |- typeIR_psa_egress_output_metadata
+              "egress_output_metadata"
+            : EC_5
   ---- ;; psa egress deparser input metadata
-  -- PSA_egress_init_deparser_input_metadata: EC_5 ARCH |- i_port : EC_6
+  -- if typeDefIR_psa_egress_deparser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_5, `` "psa_egress_deparser_input_metadata_t")
+  -- if typeIR_psa_egress_deparser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_deparser_input_metadata, eps)
+  -- Var_init:
+      EC_5 |- typeIR_psa_egress_deparser_input_metadata
+              "egress_deparser_input_metadata"
+            : EC_6
+  ---- ;; psa egress metadata
+  -- if storageReference_cos
+      = (`` "ingress_output_metadata") `. "class_of_service"
+  -- Lvalue_read: GLOBAL EC_6 ARCH |- storageReference_cos : integerValue_cos
+  -- if i_cos = $int_of_integerValue(integerValue_cos)
+  -- PSA_egress_init_metadata: EC_6 ARCH |- i_port "NORMAL_UNICAST" i_cos 0 : EC_7
   ---- ;; packet path related metadata
   -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
-  -- Var_init: EC_6 |- typeIR_clone_e2e_meta "clone_e2e_meta" : EC_7
+  -- Var_init: EC_7 |- typeIR_clone_e2e_meta "clone_e2e_meta" : EC_8
 
 ;;
 ;; Setup helpers
