@@ -25666,6 +25666,15 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- if (expressionResult = ` `b false as value as expressionResult)
     -- output: % % |- % : EC_cond ARCH_cond `empty as parserStatementResult
 
+    rulepath else-reject
+    -- let parserConditionalStatementIR' = parserConditionalStatementIR
+    -- if parserConditionalStatementIR' matches `IF(%)%ELSE%`
+    -- let if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else = parserConditionalStatementIR'
+    -- Expr_eval: local EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond expressionResult
+    -- if expressionResult <: rejectTransitionResult
+    -- let rejectTransitionResult = expressionResult as rejectTransitionResult
+    -- output: % % |- % : EC_cond ARCH_cond rejectTransitionResult as parserStatementResult
+
     rulepath else-cont-true
     -- let parserConditionalStatementIR' = parserConditionalStatementIR
     -- if parserConditionalStatementIR' matches `IF(%)%ELSE%`
