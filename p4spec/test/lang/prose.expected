@@ -15685,18 +15685,16 @@ xref:Stmt_eval[Runtime evaluation of ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` 
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under cursor ``+LOCAL+``, context ``EC``, and state ``ARCH``].
-. If let ``abortResult`` be ``expressionResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
-. Else:
- .. Let ``value`` be ``expressionResult``.
- .. Let the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``blockStatementIR^?^`` be
+. Check that ``expressionResult`` has type ``continueResult<value>``.
+. Let ``value`` be ``expressionResult``.
+. Let the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``blockStatementIR^?^`` be
 * the result of xref:SwitchCases_general_eval[runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``+LOCAL+`` and state ``EC~1~`` with switch key ``value``].
- .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
-  ... Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
+. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
+ .. Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under cursor ``+LOCAL+``, context ``EC~2~``, and state ``ARCH~2~``].
-  ... Result in context ``EC~3~``, state ``ARCH~3~``, and ``statementResult``.
- .. Else:
-  ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``+`EMPTY+``.
+ .. Result in context ``EC~3~``, state ``ARCH~3~``, and ``statementResult``.
+. Else:
+ .. Result in context ``EC~2~``, state ``ARCH~2~``, and ``+`EMPTY+``.
 
 xref:BlockElementStmt_eval[BlockElementStmt_eval]:
 
