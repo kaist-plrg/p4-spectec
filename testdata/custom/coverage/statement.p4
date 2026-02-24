@@ -93,34 +93,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
-
-    state parser_empty {
-        h.op.a = 0x10 + h.op.a;
-        ;
-        transition accept;
-    }
-
-    state parser_if_non_else {
-        if (true) {
-            h.op.a = 0x10 + h.op.a;
-        }
-
-        if (h.h.last.a == 0) { }
-
-        transition accept;
-    }
-
-    state parser_if_else_abort {
-        if (true) {
-            h.op.a = 0x10 + h.op.a;
-        } else {
-            h.op.a = 0;
-        }
-
-        if (h.h.last.a == 0) {} else {}
-
-        transition accept;
-    }
 }
 
 control vrfy(inout Headers h, inout Meta m) { apply {} }
