@@ -149,6 +149,10 @@ let rec upstream_instr (instr : instr) : block =
         let block = upstream_block block in
         let instr = LetI (exp_l, exp_r, iterinstrs, block) $ instr.at in
         [ instr ]
+  | LetI (exp_l, exp_r, iterinstrs, block) ->
+      let block = upstream_block block in
+      let instr = LetI (exp_l, exp_r, iterinstrs, block) $ instr.at in
+      [ instr ]
   | RuleI (id, notexp, inputs, iterinstrs, block) ->
       let block = upstream_block block in
       let instr = RuleI (id, notexp, inputs, iterinstrs, block) $ instr.at in

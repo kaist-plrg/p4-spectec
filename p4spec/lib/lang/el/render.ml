@@ -110,7 +110,7 @@ and render_typcase typcase =
                 col := !col + 1 + String.length s))
             typs_t;
           Buffer.contents buf)
-    | _ -> render_typ typ
+  | _ -> render_typ typ
 
 and render_typcases sep typcases =
   String.concat sep (List.map render_typcase typcases)

@@ -18,7 +18,7 @@ rule Call_convention_expr_ok/in:
 relation Expr_lvalue_ok:
   cursor typingContext |- typedExpressionIR
   hint(input %0 %1 %2)
-  hint(prose_in %2 "is a valid l-value, under cursor" %0 "and typing context" %1)
+  hint(prose_in %2 "is a valid l-value, under context" %1 "at" %0)
 
 rule Expr_lvalue_ok/referenceExpressionIR:
   p TC |- prefixedNameIR `# `( _ _ )
@@ -53,7 +53,7 @@ rule Expr_lvalue_ok/accessExpressionIR-indexAccessExpressionIR:
   p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( _ _ )
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
 
-rule Expr_lvalue_ok/accessExpressionIR-indexAccessExpressionIR-bitslice:
+rule Expr_lvalue_ok/accessExpressionIR-sliceAccessExpressionIR:
   p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi
                                     `: typedExpressionIR_lo ]) `# `( _ _ )
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_base

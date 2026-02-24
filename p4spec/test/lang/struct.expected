@@ -4438,7 +4438,7 @@ def $id_of_parameterIR((_annotationList _direction _typeIR id _parameterInitiali
 
 1. Return id
 
-def $default_of_parameterIR((_annotationList _direction _typeIR _id parameterInitializerOptIR))
+def $is_default_parameterIR((_annotationList _direction _typeIR _id parameterInitializerOptIR))
 
 1. (Let (parameterInitializerIR)? be parameterInitializerOptIR)
 
@@ -4449,10 +4449,6 @@ def $default_of_parameterIR((_annotationList _direction _typeIR _id parameterIni
 2. Otherwise,
 
   1. Return true
-
-def $is_default_parameterIR(parameterIR)
-
-1. Return $default_of_parameterIR(parameterIR)
 
 def $annotationList_of_parameterIR((annotationList _direction _typeIR _id _parameterInitializerOptIR))
 
@@ -12850,15 +12846,13 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
         1. If ((typeIR has type externObjectTypeIR)), then
 
-          1. (Let externObjectTypeIR be (typeIR as externObjectTypeIR))
+          1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
 
-            1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
+            1. If ($nestable_constructor_extern(typeIR'))*, then
 
-              1. If ($nestable_constructor_extern(typeIR'))*, then
+              1. The relation holds
 
-                1. The relation holds
-
-              1. Else Phantom#595
+            1. Else Phantom#595
 
         1. Else Phantom#596
 
@@ -12878,15 +12872,13 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
           1. If ((typeIR has type parserObjectTypeIR)), then
 
-            1. (Let parserObjectTypeIR be (typeIR as parserObjectTypeIR))
+            1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
 
-              1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
+              1. If ($nestable_constructor_parser(typeIR'))*, then
 
-                1. If ($nestable_constructor_parser(typeIR'))*, then
+                1. The relation holds
 
-                  1. The relation holds
-
-                1. Else Phantom#599
+              1. Else Phantom#599
 
           1. Else Phantom#600
 
@@ -12908,15 +12900,13 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
           1. If ((typeIR has type controlObjectTypeIR)), then
 
-            1. (Let controlObjectTypeIR be (typeIR as controlObjectTypeIR))
+            1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
 
-              1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
+              1. If ($nestable_constructor_control(typeIR'))*, then
 
-                1. If ($nestable_constructor_control(typeIR'))*, then
+                1. The relation holds
 
-                  1. The relation holds
-
-                1. Else Phantom#604
+              1. Else Phantom#604
 
           1. Else Phantom#605
 
@@ -12936,9 +12926,7 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
         1. If ((typeIR has type tableObjectTypeIR)), then
 
-          1. (Let tableObjectTypeIR be (typeIR as tableObjectTypeIR))
-
-            1. The relation holds
+          1. The relation holds
 
         1. Else Phantom#609
 
@@ -12956,15 +12944,13 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
         1. If ((typeIR has type packageObjectTypeIR)), then
 
-          1. (Let packageObjectTypeIR be (typeIR as packageObjectTypeIR))
+          1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
 
-            1. (Let (_annotationList _direction typeIR' _id _parameterInitializerOptIR) be parameterIR)*
+            1. If ($nestable_constructor_package(typeIR'))*, then
 
-              1. If ($nestable_constructor_package(typeIR'))*, then
+              1. The relation holds
 
-                1. The relation holds
-
-              1. Else Phantom#612
+            1. Else Phantom#612
 
         1. Else Phantom#613
 
@@ -12972,27 +12958,29 @@ relation ConstructorType_wf: B |- (constructor( (parameterIR)* ): typeIR_object)
 
   1. Else Phantom#615
 
-relation ConstructorTypeDef_wf: B |- (constructor< (typeParameterIR_expl)* , (typeParameterIR_impl)* >( (parameterIR)* ): typeIR_object)
+relation ConstructorTypeDef_wf: B |- constructorTypeDefIR
 
-1. Group : B |- (constructor< (typeParameterIR_expl)* , (typeParameterIR_impl)* >( (parameterIR)* ): typeIR_object)
+1. Group : B |- constructorTypeDefIR
 
-  1. If ($definable_constructor(typeIR_object)), then
+  1. (Let (constructor< (typeParameterIR_expl)* , (typeParameterIR_impl)* >( (parameterIR)* ): typeIR_object) be constructorTypeDefIR)
 
-    1. (Let (typeParameterIR)* be (typeParameterIR_expl)* ++ (typeParameterIR_impl)*)
+    1. If ($definable_constructor(typeIR_object)), then
 
-      1. If ($distinct_<typeId>((typeParameterIR)*)), then
+      1. (Let (typeParameterIR)* be (typeParameterIR_expl)* ++ (typeParameterIR_impl)*)
 
-        1. (Let B_inner be $union_set<typeId>(B, ({ (typeParameterIR)* })))
+        1. If ($distinct_<typeId>((typeParameterIR)*)), then
 
-          1. If (ConstructorType_wf: B_inner |- (constructor( (parameterIR)* ): typeIR_object)) holds, then
+          1. (Let B_inner be $union_set<typeId>(B, ({ (typeParameterIR)* })))
 
-            1. The relation holds
+            1. If (ConstructorType_wf: B_inner |- (constructor( (parameterIR)* ): typeIR_object)) holds, then
 
-          1. Else Phantom#616
+              1. The relation holds
 
-      1. Else Phantom#617
+            1. Else Phantom#616
 
-  1. Else Phantom#618
+        1. Else Phantom#617
+
+    1. Else Phantom#618
 
 tbl def $nestable_typedef(typeIR'')
 =
@@ -16566,17 +16554,15 @@ relation Expr_ok: p TC |- expression : %
 
                               1. Case true
 
-                                1. (Let (bit< _nat >) be (typeIR_r_reduced as fixedBitTypeIR))
+                                1. If (((typeIR_l_reduced = ((int) as typeIR)) => (ctk_r_reduced = (lctk)))), then
 
-                                  1. If (((typeIR_l_reduced = ((int) as typeIR)) => (ctk_r_reduced = (lctk)))), then
+                                  1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
 
-                                    1. (Let ctk_reduced be $join_ctk(ctk_l_reduced, ctk_r_reduced))
+                                    1. (Let expressionNoteIR be (( typeIR_l_reduced ctk_reduced )))
 
-                                      1. (Let expressionNoteIR be (( typeIR_l_reduced ctk_reduced )))
+                                      1. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
 
-                                        1. Result in: % % |- % : (((typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced) as expressionIR) # expressionNoteIR)
-
-                                  1. Else Phantom#835
+                                1. Else Phantom#835
 
                               2. Case false
 
@@ -21670,19 +21656,15 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                       1. Case (% has type headerTypeIR)
 
-                        1. (Let (header _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerTypeIR))
+                        1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((bool) as typeIR)) as methodTypeIR))
 
-                          1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((bool) as typeIR)) as methodTypeIR))
-
-                            1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
+                          1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
                       2. Case (% has type headerUnionTypeIR)
 
-                        1. (Let (header_union _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerUnionTypeIR))
+                        1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((bool) as typeIR)) as methodTypeIR))
 
-                          1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((bool) as typeIR)) as methodTypeIR))
-
-                            1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
+                          1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
                     1. Else Phantom#1185
 
@@ -21694,11 +21676,9 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                     1. If ((typeIR has type headerTypeIR)), then
 
-                      1. (Let (header _typeId < (_typeArgumentIR)* >{ (_fieldTypeIR)* }) be (typeIR as headerTypeIR))
+                      1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((void) as typeIR)) as methodTypeIR))
 
-                        1. (Let methodTypeIR be ((builtin_method nameIR ( [] ): ((void) as typeIR)) as methodTypeIR))
-
-                          1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
+                        1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
                     1. Else Phantom#1186
 
@@ -21716,13 +21696,11 @@ relation CallableType_ok: p TC |- callableTargetIR < (typeArgumentIR)* >( (argum
 
                   1. If ((typeIR has type headerStackTypeIR)), then
 
-                    1. (Let (typeIR' [ _nat ]) be (typeIR as headerStackTypeIR))
+                    1. (Let parameterIR be ((`empty) (`empty) ((int) as typeIR) "count" ?()))
 
-                      1. (Let parameterIR be ((`empty) (`empty) ((int) as typeIR) "count" ?()))
+                      1. (Let methodTypeIR be ((builtin_method nameIR ( [parameterIR] ): ((int) as typeIR)) as methodTypeIR))
 
-                        1. (Let methodTypeIR be ((builtin_method nameIR ( [parameterIR] ): ((int) as typeIR)) as methodTypeIR))
-
-                          1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
+                        1. Result in: % % |- % < % >( % ): (methodTypeIR as callableTypeIR) <# [] >(# [] # [] )
 
                   1. Else Phantom#1189
 
@@ -22282,39 +22260,37 @@ relation Inst_ok: cursor TC instctxt |- constructorTypeIR < (typeArgumentIR)* # 
 
         1. If ((typeIR has type packageObjectTypeIR)), then
 
-          1. (Let (package _typeId < (_typeArgumentIR)* >{ (_typeIR)* }) be (typeIR as packageObjectTypeIR))
+          1. (Let (given (parameterIR_aligned)* default (_parameterIR)*) be $align_parameterListIR((parameterIR)*, (argumentIR)*, (id_default)*, (id_optional)*))
 
-            1. (Let (given (parameterIR_aligned)* default (_parameterIR)*) be $align_parameterListIR((parameterIR)*, (argumentIR)*, (id_default)*, (id_optional)*))
+            1. (Let inference be $infer((typeId_infer)*, (parameterIR_aligned)*, (argumentIR)*))
 
-              1. (Let inference be $infer((typeId_infer)*, (parameterIR_aligned)*, (argumentIR)*))
+              1. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*
 
-                1. (Let (typeIR')? be $find_map<typeId, typeIR>(inference, typeId_infer))*
+                1. If (((typeIR')? matches pattern (_)))*, then
 
-                  1. If (((typeIR')? matches pattern (_)))*, then
+                  1. (Let ?(typeIR_inferred) be (typeIR')?)*
 
-                    1. (Let ?(typeIR_inferred) be (typeIR')?)*
+                    1. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
 
-                      1. (Let (typeArgumentIR_inferred)* be (typeArgumentIR)* ++ (typeIR_inferred)*)
+                      1. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
 
-                        1. (Let parameterIR_aligned_inferred be $subst_parameterIR(inference, parameterIR_aligned))*
+                        1. (Let typeIR_object_inferred be $subst_typeIR(inference, typeIR_object))
 
-                          1. (Let typeIR_object_inferred be $subst_typeIR(inference, typeIR_object))
+                          1. (Let constructorTypeIR_inferred be (constructor( (parameterIR_aligned_inferred)* ): typeIR_object_inferred))
 
-                            1. (Let constructorTypeIR_inferred be (constructor( (parameterIR_aligned_inferred)* ): typeIR_object_inferred))
+                            1. If (ConstructorType_wf: $bound((global), TC) |- constructorTypeIR_inferred) holds, then
 
-                              1. If (ConstructorType_wf: $bound((global), TC) |- constructorTypeIR_inferred) holds, then
+                              1. If ($instantiable((global), TC, instctxt, typeIR_object_inferred)), then
 
-                                1. If ($instantiable((global), TC, instctxt, typeIR_object_inferred)), then
+                                1. (Call_convention_ok: (block) TC (noaction) |- (parameterIR_aligned_inferred)* @ (argumentIR)* : (argumentIR_cast)*)
 
-                                  1. (Call_convention_ok: (block) TC (noaction) |- (parameterIR_aligned_inferred)* @ (argumentIR)* : (argumentIR_cast)*)
+                                  1. Result in: % % % |- % < % # % >( % # % # % ): typeIR_object_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
 
-                                    1. Result in: % % % |- % < % # % >( % # % # % ): typeIR_object_inferred < (typeArgumentIR_inferred)* >( (argumentIR_cast)* )
+                              1. Else Phantom#1249
 
-                                1. Else Phantom#1249
+                            1. Else Phantom#1250
 
-                              1. Else Phantom#1250
-
-                  1. Else Phantom#1251
+                1. Else Phantom#1251
 
         1. Else Phantom#1252
 
@@ -25295,17 +25271,15 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
                     1. Case true
 
-                      1. (Let (typeIR'' [ _nat ]) be (typeIR' as headerStackTypeIR))
+                      1. If (((nameIR = "next") \/ (nameIR = "last"))), then
 
-                        1. If (((nameIR = "next") \/ (nameIR = "last"))), then
+                        1. If ((((p = (block)) /\ (TC.block.kind = (parser))) \/ ((p = (local)) /\ (TC.local.kind = ((parser_state) as localKind))))), then
 
-                          1. If ((((p = (block)) /\ (TC.block.kind = (parser))) \/ ((p = (local)) /\ (TC.local.kind = ((parser_state) as localKind))))), then
+                          1. The relation holds
 
-                            1. The relation holds
+                        1. Else Phantom#1385
 
-                          1. Else Phantom#1385
-
-                        1. Else Phantom#1386
+                      1. Else Phantom#1386
 
                     2. Case false
 
@@ -25331,7 +25305,7 @@ relation Expr_lvalue_ok: p TC |- (expressionIR # (( typeIR ctk )))
 
     1. (Let (typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) be (expressionIR as sliceAccessExpressionIR))
 
-      1. Group accessExpressionIR-indexAccessExpressionIR-bitslice: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( typeIR ctk )))
+      1. Group accessExpressionIR-sliceAccessExpressionIR: p TC |- (((typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ]) as expressionIR) # (( typeIR ctk )))
 
         1. If (Expr_lvalue_ok: p TC |- typedExpressionIR_base) holds, then
 
@@ -29602,9 +29576,15 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                                           1. (Let objectState be $init_objectState(nameIR, (typeArgumentIR)*, (value_cparam)*))
 
-                                            1. (Let object_extern be ((extern nameIR < IC_callee_4.block.type >{ objectState IC_callee_4.block.frame ({ ((callableId : externMethodDef))* }) }) as object))
+                                            1. (Let theta_extern be IC_callee_4.block.type)
 
-                                              1. Result in: % % % |- % < % >( % # % # % ): STO_2 object_extern
+                                              1. (Let frame_extern be IC_callee_4.block.frame)
+
+                                                1. (Let externMethodDefEnv_extern be ({ ((callableId : externMethodDef))* }))
+
+                                                  1. (Let object_extern be ((extern nameIR < theta_extern >{ objectState frame_extern externMethodDefEnv_extern }) as object))
+
+                                                    1. Result in: % % % |- % < % >( % # % # % ): STO_2 object_extern
 
                                       1. Else Phantom#1567
 
@@ -29622,9 +29602,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
             1. (Let IC_callee_0 be $inherit_i((global), IC))
 
-              1. (Let theta be ({ ((typeParameterIR : typeArgumentIR))* }))
+              1. (Let theta_parser be ({ ((typeParameterIR : typeArgumentIR))* }))
 
-                1. (Let IC_callee_1 be IC_callee_0[block.type = theta])
+                1. (Let IC_callee_1 be IC_callee_0[block.type = theta_parser])
 
                   1. (Let (given (constructorParameterIR_aligned)* default (constructorParameterIR_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*, (id_optional)*))
 
@@ -29638,9 +29618,13 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                             1. (ParserStates_inst: IC_local STO_3 |- (parserStateIR)* : IC_state STO_4)
 
-                              1. (Let object_parser be ((parser< theta >( (parameterIR)* ){ IC_callee_3.block.frame (parserLocalDeclarationIR_inst)* IC_state.block.state }) as object))
+                              1. (Let frame_parser be IC_callee_3.block.frame)
 
-                                1. Result in: % % % |- % < % >( % # % # % ): STO_4 object_parser
+                                1. (Let stateEnv_parser be IC_state.block.state)
+
+                                  1. (Let object_parser be ((parser< theta_parser >( (parameterIR)* ){ frame_parser (parserLocalDeclarationIR_inst)* stateEnv_parser }) as object))
+
+                                    1. Result in: % % % |- % < % >( % # % # % ): STO_4 object_parser
 
   3. Case (% has type controlObjectConstructorDef)
 
@@ -29654,9 +29638,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
             1. (Let IC_callee_0 be $inherit_i((global), IC))
 
-              1. (Let theta be ({ ((typeParameterIR : typeArgumentIR))* }))
+              1. (Let theta_control be ({ ((typeParameterIR : typeArgumentIR))* }))
 
-                1. (Let IC_callee_1 be IC_callee_0[block.type = theta])
+                1. (Let IC_callee_1 be IC_callee_0[block.type = theta_control])
 
                   1. (Let (given (constructorParameterIR_aligned)* default (constructorParameterIR_default)*) be $align_parameterListIR((constructorParameterIR)*, (argumentIR)*, (id_default)*, (id_optional)*))
 
@@ -29666,21 +29650,23 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                         1. (Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 (constructorParameterIR_default)* ~> STO_2 IC_callee_3)
 
-                          1. (ControlLocalDecls_inst: IC_callee_3 STO_2 |- (controlLocalDeclarationIR)* : IC_local_0 STO_3 (controlLocalDeclarationIR')*)
+                          1. (ControlLocalDecls_inst: IC_callee_3 STO_2 |- (controlLocalDeclarationIR)* : IC_local_0 STO_3 (controlLocalDeclarationIR_inst)*)
 
-                            1. (Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR')
+                            1. (Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR_inst)
 
-                              1. (Let ({ ((callableId : callableDef))* }) be IC_local_1.block.callable)
+                              1. (Let frame_control be IC_callee_3.block.frame)
 
-                                1. If ((callableDef has type actionDef))*, then
+                                1. (Let ({ ((callableId : callableDef))* }) be IC_local_1.block.callable)
 
-                                  1. (Let actionDef be (callableDef as actionDef))*
+                                  1. If ((callableDef has type actionDef))*, then
 
-                                    1. (Let object_control be ((control< theta >( (parameterIR)* ){ IC_callee_3.block.frame (controlLocalDeclarationIR')* ({ ((callableId : actionDef))* }) controlBodyIR' }) as object))
+                                    1. (Let actionDef be (callableDef as actionDef))*
 
-                                      1. Result in: % % % |- % < % >( % # % # % ): STO_4 object_control
+                                      1. (Let object_control be ((control< theta_control >( (parameterIR)* ){ frame_control (controlLocalDeclarationIR_inst)* ({ ((callableId : actionDef))* }) controlBodyIR_inst }) as object))
 
-                                1. Else Phantom#1569
+                                        1. Result in: % % % |- % < % >( % # % # % ): STO_4 object_control
+
+                                  1. Else Phantom#1569
 
   4. Case (% has type packageObjectConstructorDef)
 
@@ -29704,9 +29690,13 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                       1. (Copy_in_inst_default: STO_1 p IC @ p_callee IC_callee_2 (constructorParameterIR_default)* ~> STO_2 IC_callee_3)
 
-                        1. (Let object_package be ((package< IC_callee_3.block.type >{ IC_callee_3.block.frame }) as object))
+                        1. (Let theta_package be IC_callee_3.block.type)
 
-                          1. Result in: % % % |- % < % >( % # % # % ): STO_2 object_package
+                          1. (Let frame_package be IC_callee_3.block.frame)
+
+                            1. (Let object_package be ((package< theta_package >{ frame_package }) as object))
+
+                              1. Result in: % % % |- % < % >( % # % # % ): STO_2 object_package
 
 relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
@@ -34605,29 +34595,27 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                 2. Case (% has type continueEmptyResult)
 
-                                  1. (Let continueEmptyResult be (parserDeclarationResult as continueEmptyResult))
+                                  1. (ParserState_trans: EC_callee_4 ARCH_2 |-transition "start" : EC_callee_5 ARCH_3 transitionResult)
 
-                                    1. (ParserState_trans: EC_callee_4 ARCH_2 |-transition "start" : EC_callee_5 ARCH_3 transitionResult)
+                                    1. Case analysis on transitionResult
 
-                                      1. Case analysis on transitionResult
+                                      1. Case (% has type rejectTransitionResult)
 
-                                        1. Case (% has type rejectTransitionResult)
+                                        1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
 
-                                          1. (Let rejectTransitionResult be (transitionResult as rejectTransitionResult))
+                                          1. (Copy_out: p_shared ARCH_3 |- p EC_1 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_2)
 
-                                            1. (Copy_out: p_shared ARCH_3 |- p EC_1 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_2)
+                                            1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 (rejectTransitionResult as callResult)
 
-                                              1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 (rejectTransitionResult as callResult)
+                                      2. Case (% has type acceptTransitionResult)
 
-                                        2. Case (% has type acceptTransitionResult)
+                                        1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
 
-                                          1. (Let acceptTransitionResult be (transitionResult as acceptTransitionResult))
+                                          1. (Copy_out: p_shared ARCH_3 |- p EC_1 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_2)
 
-                                            1. (Copy_out: p_shared ARCH_3 |- p EC_1 (parameterIR_aligned)* @ (block) EC_callee_5 ((storageReference)?)* ~> EC_2)
+                                            1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
 
-                                              1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
-
-                                      1. Else Phantom#1855
+                                    1. Else Phantom#1855
 
                     1. Else Phantom#1856
 
@@ -37078,11 +37066,9 @@ def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index)
 
                   1. (Let (struct _typeId < (_typeArgumentIR)* >{ (fieldTypeIR)* }) be (typeIR_meta as structTypeIR))
 
-                    1. (Let ((_annotationList _typeIR nameIR ;))* be (fieldTypeIR)*)
+                    1. (Let ((_annotationList _typeIR nameIR_field ;))* be $fields_with_field_list_index((fieldTypeIR)*, integerLiteral_index))
 
-                      1. (Let ((_annotationList' _typeIR' nameIR_field ;))* be $fields_with_field_list_index((fieldTypeIR)*, integerLiteral_index))
-
-                        1. Return (nameIR_field)*
+                      1. Return (nameIR_field)*
 
                 1. Else Phantom#2002
 
