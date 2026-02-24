@@ -36,10 +36,7 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x02: conditional_cond_abort;
             0x03: conditional_else_cond_abort;
             0x04: return_abort;
-            0x05: for_init_abort;
-            0x06: for_in_lhs_abort;
-            0x07: for_annotation_inside;
-            0x08: switch_abort;
+            0x05: switch_abort;
             default: accept;
         }
     }
@@ -74,21 +71,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition accept;
     }
 
-    state for_init_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state for_in_lhs_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state for_annotation_inside {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
     state switch_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
@@ -117,23 +99,6 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x15) {
-            bit<8> i;
-            for (i = n_exit(); i < 3; i = i + 1) { }
-        }
-
-        else if (h.op.a == 0x16) {
-            for (bit<8> i in n_exit() .. 3) { }
-        }
-
-        else if (h.op.a == 0x17) {
-            bit<8> c = 0;
-            for (@my_anno bit<8> i in 1 .. 3) {
-                c = c + 1;
-            }
-            h.h[0].a = c - 3;
-        }
-
-        else if (h.op.a == 0x18) {
             switch (n_exit()) {
                 default: {
                     bit<8> nop = 0;

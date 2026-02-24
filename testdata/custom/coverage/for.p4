@@ -1,0 +1,209 @@
+#include <core.p4>
+#include <v1model.p4>
+
+header Hdr {
+    bit<8> a;
+}
+
+struct Headers {
+    Hdr op;
+    Hdr[2] h;
+}
+
+struct Meta {}
+
+bit<8> n_exit() {
+    exit;
+    return 8w1;
+}
+
+void set_value(out bit<8> i, in bit<8> val) {
+    i = val;
+}
+
+void loop_return() {
+    for (bit<8> i = 0; i < 1; i = i + 1) {
+        return;
+    }
+}
+
+Hdr[2] get_header_stack_exit() {
+    Hdr[2] hdrs;
+    exit;
+    return hdrs;
+}
+
+parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm) {
+    state start {
+        b.extract(h.op);
+
+        transition select(h.op.a) {
+            0x00: for_init_assign_abort;
+            0x01: for_init_vardecl_abort;
+            0x02: for_init_vardecl_empty;
+            0x03: for_in_header_stack_abort;
+            0x04: for_in_header_stack;
+            0x05: for_in_list;
+            0x06: for_in_range_lhs_abort;
+            0x07: for_in_body_abort;
+            0x08: for_annotation_inside;
+            0x09: for_function_update;
+            0x0A: for_condition_abort;
+            0x0B: for_condition_false;
+            0x0C: for_return;
+            0x0D: test;
+            default: accept;
+        }
+    }
+
+    state for_init_assign_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_init_vardecl_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_init_vardecl_empty {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_init_empty {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_header_stack_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_header_stack {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_list {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_range_lhs_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_body_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_annotation_inside {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_function_update {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_condition_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_condition_false {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_return {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state test {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+}
+
+control vrfy(inout Headers h, inout Meta m) { apply {} }
+control update(inout Headers h, inout Meta m) { apply {} }
+
+control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    apply {
+        if (h.op.a == 0x10) {
+            bit<8> i;
+            for (i = n_exit(); i < 3; i = i + 1) { }
+        }
+
+        else if (h.op.a == 0x11) {
+            bit<8> i;
+            for (bit<8> i = n_exit(); i < 3; i = i + 1) { }
+        }
+
+        else if (h.op.a == 0x12) {
+            for (bit<8> i; false;) { }
+        }
+
+        else if (h.op.a == 0x13) {
+            for (Hdr h in get_header_stack_exit()) { }
+        }
+
+        else if (h.op.a == 0x14) {
+            for (Hdr h in h.h) { }
+        }
+
+        else if (h.op.a == 0x15) {
+            list<bit<8>> lst = {1, 2, 3};
+            for (bit<8> i in lst) { }
+        }
+
+        else if (h.op.a == 0x16) {
+            for (bit<8> i in n_exit() .. 3) { }
+        }
+
+        else if (h.op.a == 0x17) {
+            for (bit<8> i in 1 .. 3) {
+                exit;
+            }
+        }
+
+        else if (h.op.a == 0x18) {
+            bit<8> c = 0;
+            for (@my_anno bit<8> i in 1 .. 3) {
+                c = c + 1;
+            }
+            h.h[0].a = c - 3;
+        }
+
+        else if (h.op.a == 0x19) {
+            for (bit<8> i = 0; i < 2; set_value(i, 8w100)) { }
+        }
+
+        else if (h.op.a == 0x1A) {
+            for (bit<8> i = 0; i < n_exit(); i = i + 1) { }
+        }
+
+        else if (h.op.a == 0x1B) {
+            for (bit<8> i = 0; false; i = i + 1) { }
+        }
+
+        else if (h.op.a == 0x1C) {
+            loop_return();
+        }
+    }
+}
+
+control egress(inout Headers h, inout Meta m, inout standard_metadata_t sm) { apply {} }
+
+control deparser(packet_out b, in Headers h) {
+    apply { b.emit(h.op); b.emit(h.h); }
+}
+
+V1Switch(p(), vrfy(), ingress(), egress(), update(), deparser()) main;
