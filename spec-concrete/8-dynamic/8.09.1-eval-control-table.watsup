@@ -13,7 +13,7 @@ relation TableKey_eval:
                     : evalContext arch tableKeyResult
   hint(input %0 %1 %2)
   hint(prose_in "evaluating" %2 "under context" %0 "and state" %1)
-  hint(prose_out "the updated context" %3#", state" %4", and result" %5)
+  hint(prose_out "context" %3#", state" %4", and result" %5)
 
 rulegroup TableKey_eval {
 
@@ -43,7 +43,7 @@ relation TableKeys_eval:
                     : evalContext arch tableKeysResult
   hint(input %0 %1 %2)
   hint(prose_in "evaluating" %2 "under context" %0 "and state" %1)
-  hint(prose_out "the updated context" %3#", state" %4", and result" %5)
+  hint(prose_out "context" %3#", state" %4", and result" %5)
 
 rulegroup TableKeys_eval {
 
@@ -83,22 +83,11 @@ rulegroup TableKeys_eval {
 ;; Table match evaluation
 ;;
 
-relation TableEntryPriority_eval:
-  evalContext arch |- tableEntryPriorityIR? : nat?
-  hint(input %0 %1 %2)
-
-;;; syntax tableEntryPriorityIR =
-
-rule TableEntryPriority_eval/none:
-  EC ARCH |- eps : eps
-
-;;;; PRIORITY `= integerLiteral `: 
-
-rule TableEntryPriority_eval/integerLiteral:
-  EC ARCH |- PRIORITY `= integerLiteral `: : n
+dec $get_tableEntryPriority(tableEntryPriorityIR?) : nat?
+  hint(prose_in "the priority of" %0)
+def $get_tableEntryPriority(eps) = eps
+def $get_tableEntryPriority(PRIORITY `= integerLiteral `: ) = n
   -- if n = $nat_of_integerValue(integerLiteral)
-
-;;;; PRIORITY `= `( typedExpressionIR ) `:
 
 syntax tableMatch = nat? `: tableActionReferenceIR
 
@@ -110,6 +99,8 @@ relation TableMatch_eval:
   evalContext arch |- tableKeyValue* `@ tableEntryIR
                     : evalContext arch tableMatchResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating table match for keys" %2 "against" %3#", under context" %0 "and state" %1)
+  hint(prose_out "context" %4#", state" %5", and result" %6)
 
 rulegroup TableMatch_eval {
 
@@ -120,9 +111,8 @@ rulegroup TableMatch_eval {
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
-    ---- ;; evaluate table entry priority
-    -- TableEntryPriority_eval:
-        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
+    ---- ;; get table entry priority
+    -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
         EC_0 ARCH_0 |- keysetExpressionIR
@@ -135,9 +125,8 @@ rulegroup TableMatch_eval {
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
-    ---- ;; evaluate table entry priority
-    -- TableEntryPriority_eval:
-        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
+    ---- ;; get table entry priority
+    -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
         EC_0 ARCH_0 |- keysetExpressionIR
@@ -153,9 +142,8 @@ rulegroup TableMatch_eval {
     -- if _ tableEntryPriorityIR?
             keysetExpressionIR `: tableActionReferenceIR _ `;
         = tableEntryIR
-    ---- ;; evaluate table entry priority
-    -- TableEntryPriority_eval:
-        EC_0 ARCH_0 |- tableEntryPriorityIR? : n_priority?
+    ---- ;; get table entry priority
+    -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
     ---- ;; evaluate keyset expression
     -- Expr_eval_keyset:
         EC_0 ARCH_0 |- keysetExpressionIR
@@ -175,6 +163,8 @@ relation TableMatches_eval:
   evalContext arch |- tableKeyValue* `@ tableEntryListIR
                     : evalContext arch tableMatchesResult
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating table matches for keys" %2 "against" %3#", under context" %0 "and state" %1)
+  hint(prose_out "context" %4#", state" %5", and result" %6)
 
 rulegroup TableMatches_eval {
 
@@ -217,8 +207,10 @@ rulegroup TableMatches_eval {
 ;; Match-action table evaluation
 ;;
 
-dec $is_largest_priority_wins(tableCustomPropertyIR) : bool
 dec $largest_priority_wins(tableObjectProperty) : bool
+  hint(prose_true %0 "has largest_priority_wins property")
+  hint(prose_false %0 "does not have largest_priority_wins property")
+dec $is_largest_priority_wins(tableCustomPropertyIR) : bool
 
 def $is_largest_priority_wins(
     _ _ CUSTOM_CONST "largest_priority_wins" _ `;)
@@ -241,6 +233,7 @@ def $largest_priority_wins(TBL) = true
 
 dec $select_action(tableObjectProperty, tableMatch*)
   : tableActionReferenceIR
+  hint(prose_in "tie-breaking among matches" %1 "for table object" %0)
 
 def $select_action(TBL, eps) = tableActionReferenceIR
   -- if _ _ DEFAULT_ACTION `= tableActionReferenceIR `;

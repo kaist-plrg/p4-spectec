@@ -1849,8 +1849,17 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_compile_time_evaluation_77">16.3.4.2. Compile-time evaluation</a></li>
 </ul>
 </li>
-<li><a href="#sec-table-entries">16.3.5. Table entries</a></li>
-<li><a href="#sec-match-action-table-custom">16.3.6. Table custom properties</a></li>
+<li><a href="#sec-table-entry">16.3.5. Table entries</a>
+<ul class="sectlevel4">
+<li><a href="#sec-table-entry-priority">16.3.5.1. Entry priorities</a></li>
+</ul>
+</li>
+<li><a href="#sec-table-additional">16.3.6. Additional properties</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_115">16.3.6.1. Type checking</a></li>
+<li><a href="#_compile_time_evaluation_78">16.3.6.2. Compile-time evaluation</a></li>
+</ul>
+</li>
 <li><a href="#sec-match-action-table-invocation">16.3.7. Match-action table invocation</a></li>
 </ul>
 </li>
@@ -18893,7 +18902,7 @@ details on error elements.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>name<sup>*</sup></code> be <a href="#flatten_nameList">the list of names in <code>nameList</code></a>.</p>
+<p>Let <code>name<sup>*</sup></code> be <a href="#flatten_nameList"><code>nameList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sup>*</sup></code> be the list obtained by repeating:</p>
@@ -19111,7 +19120,7 @@ match kinds. See <a href="#sec-match-kind">Section 8.2.5</a> for more details on
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>name<sup>*</sup></code> be <a href="#flatten_nameList">the list of names in <code>nameList</code></a>.</p>
+<p>Let <code>name<sup>*</sup></code> be <a href="#flatten_nameList"><code>nameList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sup>*</sup></code> be the list obtained by repeating:</p>
@@ -20902,7 +20911,7 @@ namedValueIR
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
 </li>
 <li>
-<p>Let <code>name<sub>field</sub><sup>*</sup></code> be <a href="#flatten_nameList">the list of names in <code>nameList<sub>field</sub></code></a>.</p>
+<p>Let <code>name<sub>field</sub><sup>*</sup></code> be <a href="#flatten_nameList"><code>nameList<sub>field</sub></code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>field</sub><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -21547,7 +21556,7 @@ typeFieldIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>annotationList<sub>field</sub></code> <code>type<sub>field</sub></code> <code>name<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(</code> <code>annotationList<sub>field</sub></code> <code>type<sub>field</sub></code> <code>name<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList"><code>typeFieldList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>field</sub><sup>*</sup></code> be the list and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -21769,7 +21778,7 @@ typeFieldIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(</code> <code>annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList"><code>typeFieldList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -21992,7 +22001,7 @@ typeFieldIR
 </div>
 </li>
 <li>
-<p>Let <code>(</code> <code>annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList">the list of type fields in <code>typeFieldList</code></a>.</p>
+<p>Let <code>(</code> <code>annotationList<sub>f</sub></code> <code>type<sub>f</sub></code> <code>name<sub>f</sub></code> <code>;</code> <code>)<sup>*</sup></code> be <a href="#flatten_typeFieldList"><code>typeFieldList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>f</sub><sup>*</sup></code> be the list and <code>typeId'<sup>*</sup><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -27549,6 +27558,52 @@ blockElementStatementIR
 </div>
 </div>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Block_ok:
+  rule Block_ok:
+  TC_0 f l |- annotationList `{blockElementStatementList} : TC_1 f_post blockStatementIR
+ -- BlockElementStmtList_ok: TC_0 f l |- blockElementStatementList : TC_1 f_post blockElementStatementIR*
+ -- if blockStatementIR = annotationList `{blockElementStatementIR*}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Block_ok">Typing <code>annotationList</code> <code>{</code> <code>blockElementStatementList</code> <code>}</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmtList_ok">typing <code>blockElementStatementList</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>blockStatementIR</code> be <code>annotationList</code> <code>{</code> <code>blockElementStatementIR<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockStatementIR</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 <div class="paragraph">
 <p>A statement or declaration within a block statement is type checked by the
 relation:</p>
@@ -27584,9 +27639,6 @@ relation:</p>
 </ul>
 </div>
 </div>
-</div>
-<div class="paragraph">
-<p>It is implemented as:</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -27748,7 +27800,7 @@ relation:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>blockElementStatement<sup>*</sup></code> be <a href="#flatten_blockElementStatementList">the list of block element statements in <code>blockElementStatementList</code></a>.</p>
+<p>Let <code>blockElementStatement<sup>*</sup></code> be <a href="#flatten_blockElementStatementList"><code>blockElementStatementList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code> be</p>
@@ -27959,6 +28011,48 @@ relation:</p>
 </div>
 </div>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Block_inst:
+  rule Block_inst:
+  IC_0 STO_0 |- annotationList `{blockElementStatementListIR} : IC_1 STO_1 (annotationList `{blockElementStatementListIR_inst})
+ -- BlockElementStmtList_inst: IC_0 STO_0 |- blockElementStatementListIR : IC_1 STO_1 blockElementStatementListIR_inst</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Block_inst">Compile-time evaluation of <code>annotationList</code> <code>{</code> <code>blockElementStatementListIR</code> <code>}</code>, under context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>blockElementStatementListIR<sub>inst</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmtList_inst">compile-time evaluation of <code>blockElementStatementListIR</code>, under context <code>IC<sub>0</sub></code>, and store <code>STO<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>annotationList</code> <code>{</code> <code>blockElementStatementListIR<sub>inst</sub></code> <code>}</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 <div class="paragraph">
 <p>A block element is compile-time evaluated by the relation:</p>
 </div>
@@ -28116,6 +28210,78 @@ relation:</p>
 </div>
 </div>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup BlockElementStmtList_inst:
+  rule BlockElementStmtList_inst/nil:
+  IC STO |- eps : IC STO eps
+  rule BlockElementStmtList_inst/cons:
+  IC_0 STO_0 |- blockElementStatementIR_h :: blockElementStatementIR_t* : IC_2 STO_2 (blockElementStatementIR_h_inst :: blockElementStatementIR_t_inst*)
+ -- BlockElementStmt_inst: IC_0 STO_0 |- blockElementStatementIR_h : IC_1 STO_1 blockElementStatementIR_h_inst
+ -- BlockElementStmtList_inst: IC_1 STO_1 |- blockElementStatementIR_t* : IC_2 STO_2 blockElementStatementIR_t_inst*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#BlockElementStmtList_inst">Compile-time evaluation of <code>blockElementStatementIR<sup>*</sup></code>, under context <code>instContext</code>, and store <code>store</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>blockElementStatementIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>instContext</code>, store <code>store</code>, and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>blockElementStatementIR<sub>h</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code> be <code>blockElementStatementIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let context <code>IC<sub>1</sub></code>, store <code>STO<sub>1</sub></code>, and <code>blockElementStatementIR<sub>h_inst</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmt_inst">compile-time evaluation of <code>blockElementStatementIR<sub>h</sub></code>, under context <code>instContext</code>, and store <code>store</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>blockElementStatementIR<sub>t_inst</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmtList_inst">compile-time evaluation of <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code>, under context <code>IC<sub>1</sub></code>, and store <code>STO<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>IC<sub>2</sub></code>, store <code>STO<sub>2</sub></code>, and <code>blockElementStatementIR<sub>h_inst</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t_inst</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="_runtime_evaluation_11">13.8.3. Runtime evaluation</h4>
@@ -28201,6 +28367,48 @@ relation:</p>
 <p>Result in context <code>evalContext</code>, state <code>arch</code>, and <code>statementResult</code>.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Block_eval:
+  rule Block_eval:
+  EC_0 ARCH_0 |- annotationList `{blockElementStatementListIR} : EC_1 ARCH_1 statementResult
+ -- BlockElementStmtList_eval: EC_0 ARCH_0 |- blockElementStatementListIR : EC_1 ARCH_1 statementResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Block_eval">Runtime evaluation of <code>annotationList</code> <code>{</code> <code>blockElementStatementListIR</code> <code>}</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmtList_eval">runtime evaluation of <code>blockElementStatementListIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -28369,6 +28577,99 @@ relation:</p>
 <p>Result in context <code>evalContext</code>, state <code>arch</code>, and <code>statementResult</code>.</p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup BlockElementStmtList_eval:
+  rule BlockElementStmtList_eval/nil:
+  EC ARCH |- eps : EC ARCH `EMPTY
+  rule BlockElementStmtList_eval/cons-head-non-cont:
+  EC_0 ARCH_0 |- blockElementStatementIR_h :: blockElementStatementIR_t* : EC_1 ARCH_1 statementResult
+ -- BlockElementStmt_eval: EC_0 ARCH_0 |- blockElementStatementIR_h : EC_1 ARCH_1 statementResult
+ -- if statementResult =/= `EMPTY
+  rule BlockElementStmtList_eval/cons-head-cont:
+  EC_0 ARCH_0 |- blockElementStatementIR_h :: blockElementStatementIR_t* : EC_2 ARCH_2 statementResult
+ -- BlockElementStmt_eval: EC_0 ARCH_0 |- blockElementStatementIR_h : EC_1 ARCH_1 `EMPTY
+ -- BlockElementStmtList_eval: EC_1 ARCH_1 |- blockElementStatementIR_t* : EC_2 ARCH_2 statementResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#BlockElementStmtList_eval">Runtime evaluation of <code>blockElementStatementIR<sup>*</sup></code>, under context <code>evalContext</code>, and state <code>arch</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>blockElementStatementIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>evalContext</code>, state <code>arch</code>, and <code>`EMPTY</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>blockElementStatementIR<sub>h</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code> be <code>blockElementStatementIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmt_eval">runtime evaluation of <code>blockElementStatementIR<sub>h</sub></code>, under context <code>evalContext</code>, and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If <code>statementResult</code> is not equal to <code>`EMPTY</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>continueEmptyResult</code> be <code>statementResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#BlockElementStmtList_eval">runtime evaluation of <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code>, under context <code>EC<sub>1</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -38114,7 +38415,7 @@ sequenceOrRecordElementExpression
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expression<sub>e</sub><sup>*</sup></code> be <a href="#flatten_expressionList">the list of expressions in <code>expressionList</code></a>.</p>
+<p>Let <code>expression<sub>e</sub><sup>*</sup></code> be <a href="#flatten_expressionList"><code>expressionList</code> flattened</a>.</p>
 </li>
 <li>
 <p>If <code>...</code> is not in <code>expression<sub>e</sub><sup>*</sup></code>:</p>
@@ -38788,7 +39089,7 @@ sequenceOrRecordElementExpression
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let <code>(</code> <code>name<sub>f_t</sub></code> <code>=</code> <code>expression<sub>f_t</sub></code> <code>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
+<p>Let <code>(</code> <code>name<sub>f_t</sub></code> <code>=</code> <code>expression<sub>f_t</sub></code> <code>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList"><code>namedExpressionList<sub>t</sub></code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>name<sub>f</sub><sup>*</sup></code> be <code>name<sub>f_h</sub></code> <code>::</code> <code>name<sub>f_t</sub><sup>*</sup></code>.</p>
@@ -38894,7 +39195,7 @@ sequenceOrRecordElementExpression
 <p>Let <code>name<sub>f_h</sub></code> <code>=</code> <code>expression<sub>f_h</sub></code> <code>,</code> <code>namedExpressionList<sub>t</sub></code> <code>,</code> <code>...</code> be <code>recordElementExpression</code>.</p>
 </li>
 <li>
-<p>Let <code>(</code> <code>name<sub>f_t</sub></code> <code>=</code> <code>expression<sub>f_t</sub></code> <code>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList">the list of named expressions in <code>namedExpressionList<sub>t</sub></code></a>.</p>
+<p>Let <code>(</code> <code>name<sub>f_t</sub></code> <code>=</code> <code>expression<sub>f_t</sub></code> <code>)<sup>*</sup></code> be <a href="#flatten_namedExpressionList"><code>namedExpressionList<sub>t</sub></code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>name<sub>f</sub><sup>*</sup></code> be <code>name<sub>f_h</sub></code> <code>::</code> <code>name<sub>f_t</sub><sup>*</sup></code>.</p>
@@ -42012,7 +42313,7 @@ constructorTargetIR
 </div>
 </li>
 <li>
-<p>Let <code>realTypeArgument<sup>*</sup></code> be <a href="#flatten_realTypeArgumentList">the list of real type arguments in <code>realTypeArgumentList</code></a>.</p>
+<p>Let <code>realTypeArgument<sup>*</sup></code> be <a href="#flatten_realTypeArgumentList"><code>realTypeArgumentList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>typeArgumentIR<sup>*</sup></code> and fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
@@ -43756,7 +44057,7 @@ follows:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>parserLocalDeclaration<sup>*</sup></code> be <a href="#flatten_parserLocalDeclarationList">the list of parser local declarations in <code>parserLocalDeclarationList</code></a>.</p>
+<p>Let <code>parserLocalDeclaration<sup>*</sup></code> be <a href="#flatten_parserLocalDeclarationList"><code>parserLocalDeclarationList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let the updated context <code>TC<sub>1</sub></code> and the typed parser local declarations <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
@@ -44927,7 +45228,7 @@ be used.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>parserState<sup>*</sup></code> be <a href="#flatten_parserStateList">the list of parser states in <code>parserStateList</code></a>.</p>
+<p>Let <code>parserState<sup>*</sup></code> be <a href="#flatten_parserStateList"><code>parserStateList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>name<sub>state</sub><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -45083,7 +45384,7 @@ be used.</p>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#enter_t"><code>TC<sub>0</sub></code> with a new local frame</a>.</p>
 </li>
 <li>
-<p>Let <code>parserStatement<sup>*</sup></code> be <a href="#flatten_parserStatementList">the list of parser statements in <code>parserStatementList</code></a>.</p>
+<p>Let <code>parserStatement<sup>*</sup></code> be <a href="#flatten_parserStatementList"><code>parserStatementList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let the updated context <code>TC<sub>2</sub></code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code> be</p>
@@ -45607,7 +45908,7 @@ parserConditionalStatementIR
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>parserStatement<sup>*</sup></code> be <a href="#flatten_parserStatementList">the list of parser statements in <code>parserStatementList</code></a>.</p>
+<p>Let <code>parserStatement<sup>*</sup></code> be <a href="#flatten_parserStatementList"><code>parserStatementList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let the updated context <code>TC<sub>1</sub></code> and the typed parser statements <code>parserStatementIR<sup>*</sup></code> be</p>
@@ -48129,7 +48430,7 @@ non-exact field must be placed into a struct by itself, with the desired
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>expression<sub>key</sub><sup>*</sup></code> be <a href="#flatten_expressionList">the list of expressions in <code>expressionList<sub>key</sub></code></a>.</p>
+<p>Let <code>expression<sub>key</sub><sup>*</sup></code> be <a href="#flatten_expressionList"><code>expressionList<sub>key</sub></code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>key</sub><sup>*</sup></code> be the list obtained by repeating:</p>
@@ -48196,7 +48497,7 @@ non-exact field must be placed into a struct by itself, with the desired
 <p>Check that <a href="#Type_wf"><code>SET</code> <code>&lt;</code> <code>typeIR<sub>key_reduced</sub></code> <code>&gt;</code> is a well-formed type, with bound type variables <code>bound</code></a>, for all <code>typeIR<sub>key_reduced</sub></code> in <code>typeIR<sub>key_reduced</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <code>selectCase<sup>*</sup></code> be <a href="#flatten_selectCaseList">the list of select cases in <code>selectCaseList</code></a>.</p>
+<p>Let <code>selectCase<sup>*</sup></code> be <a href="#flatten_selectCaseList"><code>selectCaseList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let <code>selectCaseIR<sup>*</sup></code> be the list obtained by repeating:</p>
@@ -50024,7 +50325,7 @@ follows:</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>controlLocalDeclaration<sup>*</sup></code> be <a href="#flatten_controlLocalDeclarationList">the list of control local declarations in <code>controlLocalDeclarationList</code></a>.</p>
+<p>Let <code>controlLocalDeclaration<sup>*</sup></code> be <a href="#flatten_controlLocalDeclarationList"><code>controlLocalDeclarationList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let the updated context <code>TC<sub>1</sub></code> and the typed control local declarations <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
@@ -51065,11 +51366,11 @@ control plane software.</p>
 </li>
 <li>
 <p><code>largest_priority_wins</code>: Only useful for some tables with the
-<code>entries</code> property.  See <a href="#sec-table-entries">Section 16.3.5</a> for details.</p>
+<code>entries</code> property.  See <a href="#sec-table-entries">[sec-table-entries]</a> for details.</p>
 </li>
 <li>
 <p><code>priority_delta</code>: Only useful for some tables with the <code>entries</code>
-property.  See <a href="#sec-table-entries">Section 16.3.5</a> for details.</p>
+property.  See <a href="#sec-table-entries">[sec-table-entries]</a> for details.</p>
 </li>
 </ul>
 </div>
@@ -51521,7 +51822,7 @@ higher or lower numeric values; this choice is left to the target
 implementation.</p>
 </div>
 <div class="paragraph">
-<p>An example specifying entries for a table is given in <a href="#sec-table-entries">Section 16.3.5</a>.</p>
+<p>An example specifying entries for a table is given in <a href="#sec-table-entries">[sec-table-entries]</a>.</p>
 </div>
 <div class="paragraph">
 <p>If a table has no <code>key</code> property, or if the value of its <code>key</code> property is the
@@ -51569,7 +51870,7 @@ reject those cases with an error message in this case.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>tableKey<sup>*</sup></code> be <a href="#flatten_tableKeyList">the list of table keys in <code>tableKeyList</code></a>.</p>
+<p>Let <code>tableKey<sup>*</sup></code> be <a href="#flatten_tableKeyList"><code>tableKeyList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let table context <code>TBLC<sub>1</sub></code> and <code>tableKeyIR<sup>*</sup></code> be</p>
@@ -51893,7 +52194,7 @@ tableKeyIR
 <p>Evaluating <code>tableKeyIR</code> under context <code>evalContext</code> and state <code>arch</code>:</p>
 </li>
 <li>
-<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeyResult</code>.</p>
+<p>Result in context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeyResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -51962,7 +52263,7 @@ exitResult
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
@@ -51975,7 +52276,7 @@ exitResult
 <p>Let <code>tableKeyValue</code> be <code>value</code> <code>:</code> <code>nameIR</code>.</p>
 </li>
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyValue</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyValue</code>.</p>
 </li>
 </ol>
 </div>
@@ -52013,7 +52314,7 @@ exitResult
 <p>Evaluating <code>tableKeyListIR</code> under context <code>evalContext</code> and state <code>arch</code>:</p>
 </li>
 <li>
-<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeysResult</code>.</p>
+<p>Result in context <code>evalContext</code>, state <code>arch</code> , and result <code>tableKeysResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -52071,7 +52372,7 @@ exitResult
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> , and result <code>·</code>.</p>
+<p>Result in context <code>evalContext</code>, state <code>arch</code> , and result <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -52081,7 +52382,7 @@ exitResult
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyResult</code> be</p>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>tableKeyResult</code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -52095,7 +52396,7 @@ exitResult
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> , and result <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
@@ -52108,7 +52409,7 @@ exitResult
 <p>Let <code>tableKeyValue<sub>h</sub></code> be <code>tableKeyResult</code>.</p>
 </li>
 <li>
-<p>Let the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeysResult</code> be</p>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeysResult</code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -52122,7 +52423,7 @@ exitResult
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>EXIT</code>.</p>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
@@ -52138,7 +52439,7 @@ exitResult
 <p>Let <code>tableKeyValue<sup>*</sup></code> be <code>tableKeyValue<sub>h</sub></code> <code>::</code> <code>tableKeyValue<sub>t</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Result in the updated context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeyValue<sup>*</sup></code>.</p>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> , and result <code>tableKeyValue<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -52285,7 +52586,7 @@ are forbidden in the expressions supplied as action arguments.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let <code>tableAction<sup>*</sup></code> be <a href="#flatten_tableActionList">the list of table actions in <code>tableActionList</code></a>.</p>
+<p>Let <code>tableAction<sup>*</sup></code> be <a href="#flatten_tableActionList"><code>tableActionList</code> flattened</a>.</p>
 </li>
 <li>
 <p>Let table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR<sup>*</sup></code> be</p>
@@ -52488,8 +52789,7 @@ tableActionReferenceIR
  -- if (_, annotationList_action ACTION _ `(parameterIR*)) = $find_callableDef_non_overloaded_t(LOCAL, TC, prefixedNameIR)
  -- if annotation_name? = $find_name_annotation_opt(annotationList_action)
  -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+ -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*
  -- Call_action_partial_ok: TC |- parameterIR* @ argumentIR* : parameterIR_data* , parameterIR_control* @ argumentIR_cast*
  -- if TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
  -- if tableActionIR = annotationList_update (prefixedNameIR `(argumentIR_cast*)) # `(parameterIR_data* , parameterIR_control*) ;</pre>
@@ -52582,30 +52882,13 @@ tableActionReferenceIR
 <p>Let <code>annotationList<sub>update</sub></code> be <code><a href="#add_annotationList">$add_annotationList(annotationList,</code> <code>annotation<sub>name</sub><sup>?</sup>)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let <code>argumentIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Argument_ok">typing <code>argument</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -52932,8 +53215,7 @@ tableActionReferenceIR
   TC TBLC |- = (prefixedNonTypeName `(argumentList)) : prefixedNameIR `(argumentIR_cast*)
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
  -- if (parameterIR_action*, argumentIR_action*) = $find_action(TBLC, prefixedNameIR)
- -- if argument* = $flatten_argumentList(argumentList)
- -- (Argument_ok: LOCAL TC |- argument : argumentIR)*
+ -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*
  -- Call_action_default_ok: TC |- parameterIR_action* @ argumentIR* : parameterIR_action_data* , parameterIR_action_control* @ argumentIR_cast*
  -- if argumentIR_action_data* = argumentIR_action*[0 : |parameterIR_action_data*|]
  -- if argumentIR_cast_data* = argumentIR_cast*[0 : |parameterIR_action_data*|]
@@ -52993,30 +53275,13 @@ tableActionReferenceIR
 <p>Let <code>(</code> <code>parameterIR<sub>action</sub><sup>*</sup>,</code> <code>argumentIR<sub>action</sub><sup>*</sup></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <code><a href="#find_action">$find_action(TBLC,</code> <code>prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Let <code>argument<sup>*</sup></code> be <a href="#flatten_argumentList">the list of arguments in <code>argumentList</code></a>.</p>
-</li>
-<li>
-<p>Let <code>argumentIR<sup>*</sup></code> be the list obtained by repeating:</p>
-<div class="openblock">
-<div class="content">
+<p>Let <code>argumentIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Let <code>argumentIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Argument_ok">typing <code>argument</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#ArgumentList_ok">typing <code>argumentList</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>for each <code>argument</code> in <code>argument<sup>*</sup></code></p>
 </div>
 </li>
 <li>
@@ -53179,17 +53444,36 @@ following relation is used:</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="sec-table-entries">16.3.5. Table entries</h4>
-<div id="tableEntryIR" class="listingblock">
+<h4 id="sec-table-entry">16.3.5. Table entries</h4>
+<div class="paragraph">
+<p>While table entries are typically installed by the control plane, tables may
+also be initialized at compile time with a set of entries.</p>
+</div>
+<div class="paragraph">
+<p>Declaring these entries with <code>const entries</code> is useful in situations where
+tables are used to implement fixed algorithms&#8212;&#8203;defining table entries
+statically enables expressing these algorithms directly in P4, which allows the
+compiler to infer how the table is actually used and potentially make better
+allocation decisions for targets with limited resources.</p>
+</div>
+<div class="paragraph">
+<p>Declaring entries with <code>entries</code> (without the <code>const</code> qualifier) enables one to
+specify a mix of some immutable entries that are always in the table, and some
+mutable entries that the control plane is allowed to later change or remove.</p>
+</div>
+<div class="paragraph">
+<p>Entries declared in the P4 source are installed in the table when the program
+is loaded onto the target. Entries cannot be specified for a table with no key
+(see <a href="#sec-table-key">Section 16.3.2</a>).</p>
+</div>
+<div class="paragraph">
+<p>Table entries are defined using the following syntax:</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpression
-   : simpleKeysetExpression
-   | tupleKeysetExpression
-   ;
-
-tableEntryPriority
-   : PRIORITY = integerLiteral :
-   | PRIORITY = `( expression ) :
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableEntryList
+   : /* empty */
+   | tableEntryList tableEntry
    ;
 
 tableEntry
@@ -53198,30 +53482,834 @@ tableEntry
    | constOpt keysetExpression : tableActionReference annotationList ;
    ;
 
-keysetExpressionIR
-   : simpleKeysetExpressionIR
-   | tupleKeysetExpressionIR
-   ;
-
-tableEntryPriorityIR
+tableEntryPriority
    : PRIORITY = integerLiteral :
-   | PRIORITY = `( typedExpressionIR ) :
-   ;
+   | PRIORITY = `( expression ) :
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Table entries defined using <code>const entries</code> are immutable&#8212;&#8203;i.e., they can only
+be read by the control plane. The control plane is not allowed to remove or
+modify any entries defined within <code>const entries</code>, nor is it allowed to add
+entries to such a table. It is allowed for individual entries to have the
+<code>const</code> keyword before them, but this is redundant when the entries are
+declared using <code>const entries</code>.</p>
+</div>
+<div class="paragraph">
+<p>Table entries defined using <code>entries</code> (without a <code>const</code> qualifier before it)
+may have <code>const</code> before them, or not, independently for each entry. Entries
+with <code>const</code> before them may not be modified or removed by the control plane.
+Entries without <code>const</code> may be modified or removed by the control plane. It is
+permitted for the control plane to add entries to such a table (subject to
+table capacity limitations), unlike tables declared with <code>const entries</code>.</p>
+</div>
+<div class="paragraph">
+<p>Whether the control plane is allowed to modify a table&#8217;s default action at run
+time is determined by the table&#8217;s <code>default_action</code> table property (see
+<a href="#sec-table-default-action">Section 16.3.4</a>), independently of whether the control plane is
+allowed to modify the entries of the table.</p>
+</div>
+<div class="paragraph">
+<p>The <code>keysetExpression</code> component of an entry is a tuple that must provide a
+field for each key in the table keys (see <a href="#sec-table-props">[sec-table-props]</a>). The table key
+type must match the type of the element of the set. The <code>tableActionReference</code>
+component must be an action which appears in the table actions list (and must
+not have the <code>@defaultonly</code> annotation), with all its arguments bound.</p>
+</div>
+<div class="paragraph">
+<p>If no entry priorities are specified in the source code, and if the runtime API
+requires a priority for the entries of a table&#8212;&#8203;e.g. when using the P4 Runtime
+API, tables with at least one <code>ternary</code> search key field&#8212;&#8203;then the entries are
+matched in program order, stopping at the first matching entry. Architectures
+should define the significance of entry order (if any) for other kinds of
+tables.</p>
+</div>
+<div class="paragraph">
+<p>Because control-plane APIs cannot insert or remove entries of a table that is
+declared with <code>const entries</code>, the relative priorities of such a table&#8217;s
+entries are determined solely by the program order of the entries. Therefore
+assigning numeric priorities to entries of a table that has <code>const entries</code> is
+not allowed.</p>
+</div>
+<div class="paragraph">
+<p>Depending on the <code>match_kind</code> of the keys, key set expressions may define one
+or multiple entries. The compiler will synthesize the correct number of entries
+to be installed in the table. Target constraints may further restrict the
+ability of synthesizing entries. For example, if the number of synthesized
+entries exceeds the table size, the compiler implementation may choose to issue
+a warning or an error, depending on target capabilities.</p>
+</div>
+<div class="paragraph">
+<p>To illustrate, consider the following example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">header</span> hdr <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>  e<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">16</span><span style="color: #0550ae">&gt;</span> t<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>  l<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span>  r<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">1</span><span style="color: #0550ae">&gt;</span>  v<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
 
-tableEntryIR
-   : constOptIR tableEntryPriorityOptIR keysetExpressionIR :
-       tableActionReferenceIR annotationList ;
+<span style="color: #cf222e">struct</span> <span style="color: #953800">Header_t</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    hdr h<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">struct</span> <span style="color: #953800">Meta_t</span> <span style="color: #24292f;background-color: #f6f8fa">{}</span>
+
+<span style="color: #cf222e">control</span> ingress<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">inout</span> <span style="color: #953800">Header_t</span> h<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> <span style="color: #953800">Meta_t</span> m<span style="color: #24292f;background-color: #f6f8fa">,</span>
+                <span style="color: #cf222e">inout</span> <span style="color: #953800">standard_metadata_t</span> standard_meta<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+
+    <span style="color: #cf222e">action</span> a<span style="color: #24292f;background-color: #f6f8fa">()</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> standard_meta<span style="color: #0550ae">.</span>egress_spec <span style="color: #0550ae">=</span> <span style="color: #0550ae">0</span><span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">action</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">9</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> standard_meta<span style="color: #0550ae">.</span>egress_spec <span style="color: #0550ae">=</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+    <span style="color: #cf222e">table</span> t_exact_ternary <span style="color: #24292f;background-color: #f6f8fa">{</span>
+
+  	<span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+            h<span style="color: #0550ae">.</span>h<span style="color: #0550ae">.</span>e <span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span>
+            h<span style="color: #0550ae">.</span>h<span style="color: #0550ae">.</span>t <span style="color: #24292f;background-color: #f6f8fa">:</span> ternary<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+	<span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+            a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+            a_params<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+	<span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+
+        <span style="color: #cf222e">const</span> <span style="color: #cf222e">entries</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x01</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1111</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0xF</span>   <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x02</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1181</span>           <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x03</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1111</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0xF000</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x04</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1211</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0x02F0</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x04</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1311</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0x02F0</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x06</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">_</span>                <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">6</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+            <span style="color: #0550ae">_</span>                         <span style="color: #24292f;background-color: #f6f8fa">:</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example we define a set of 7 entries, all of which invoke action
+<code>a_params</code> except for the final entry which invokes action <code>a</code>. Once the
+program is loaded, these entries are installed in the table in the order they
+are enumerated in the program.</p>
+</div>
+<div class="sect4">
+<h5 id="sec-table-entry-priority">16.3.5.1. Entry priorities</h5>
+<div class="paragraph">
+<p>If a table has fields where their <code>match_kind</code>s are all <code>exact</code> or <code>lpm</code>,
+there is no reason to assign numeric priorities to its entries. If they are all
+<code>exact</code>, duplicate keys are not allowed, and thus every lookup key can match at
+most one entry, so there is no need for a tiebreaker. If there is an <code>lpm</code>
+field, the priority of the entry corresponds to the length of the prefix, i.e.
+if a lookup key matches multiple prefixes, the longest prefix is always the
+winner.</p>
+</div>
+<div class="paragraph">
+<p>For tables with other <code>match_kind</code> values, e.g. at least one <code>ternary</code> field,
+in general it is possible to install multiple entries such that the same lookup
+key can match the key of multiple entries installed into the table at the same
+time. Control plane APIs such as P4Runtime API <sup class="footnoteref">[<a class="footnote" href="#_footnotedef_2" title="View footnote.">2</a>]</sup> and TDI
+<sup class="footnote" id="_footnote_TDI">[<a id="_footnoteref_4" class="footnote" href="#_footnotedef_4" title="View footnote.">4</a>]</sup> require control plane software to provide
+a numeric priority with each entry added to such a table. This enables the data
+plane to determine which of several matching entries is the "winner", i.e. the
+one entry whose action is invoked.</p>
+</div>
+<div class="paragraph">
+<p>Unfortunately there are two commonly used, but different, ways of interpreting
+numeric priority values.</p>
+</div>
+<div class="paragraph">
+<p>The P4Runtime API requires numeric priorities to be positive integers, i.e. 1
+or larger, and defines that entries with larger priorities must win over
+entries with smaller priorities. We will call this convention
+<code>largest_priority_wins</code>.</p>
+</div>
+<div class="paragraph">
+<p>TDI requires numeric priorities to be non-negative integers, i.e. 0 or larger,
+and defines that entries with smaller priorities must win over entries with
+larger priorities. We will call this convention <code>smallest_priority_wins</code>.</p>
+</div>
+<div class="paragraph">
+<p>We wish to support either of these conventions when developers specify
+priorities for initial table entries in the program. Thus there is a table
+property <code>largest_priority_wins</code>. If explicitly specified for a table, its
+value must be boolean. If <code>true</code>, then the priority values use the
+<code>largest_priority_wins</code> convention. If <code>false</code>, then the priority values use
+the <code>smallest_priority_wins</code> convention. If the table property is not present
+at all, then the default convention is <code>true</code>, corresponding to
+<code>largest_priority_wins</code>.</p>
+</div>
+<div class="paragraph">
+<p>We also wish to support developers that want the convenience of predictable
+entry priority values automatically selected by the compiler, without having to
+write them in the program, plus the ability to specify entry priorities
+explicitly, if they wish.</p>
+</div>
+<div class="paragraph">
+<p>In some cases, developers may wish the initial priority values to have "gaps"
+between their values, to leave room for possible later insertion of new entries
+between two initial entries. They can achieve this by explicitly specifying all
+priority values, of course, but as a convenience we define the table property
+<code>priority_delta</code> to be a positive integer value, with a default value of 1 if
+not specified for a table, to use as a default difference between the
+priorities of consecutive entries.</p>
+</div>
+<div class="paragraph">
+<p>There are two steps that occur at compile time for a table with the <code>entries</code>
+property involving entry priorities:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Determine the value of the priority of every entry in the <code>entries</code> list.</p>
+</li>
+<li>
+<p>Issue any errors or warnings that are appropriate for these priority values.
+Warnings may be suppressed via an appropriate <code>@noWarn</code> annotation.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These steps are performed independently for each table with the <code>entries</code>
+property, and each is described in more detail below.</p>
+</div>
+<div class="paragraph">
+<p>In general, if the developer specifies a priority value for an entry, that is
+the value that will be used.</p>
+</div>
+<div class="paragraph">
+<p>If the developer does not specify priority values for any entry, then the
+compiler calculates priority values for every entry as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">// For this pseudocode, table entries in the `entries` list are
+// numbered 0 through n-1, 0 being the first to appear in order in the
+// source code.  Their priority values are named prio[0] through
+// prio[n-1].
+int p = 1;
+if (largest_priority_wins == true) {
+    for (int j = n-1; j &gt;= 0; j -= 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+} else {
+    for (int j = 0; j &lt; n; j += 1) {
+        prio[j] = p;
+        p += priority_delta;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the developer specifies priority values for at least one entry, then in
+order to simplify the rules for determining priorities of entries without one
+in the source code, the first entry <em>must</em> have a priority value explicitly
+provided. The priorities of entries that do not have one in the source code (if
+any) are determined as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">// Same conventions here as in the previous block of pseudocode above.
+// If entry j has a priority value specified in the source code,
+// prio_specified[j] is true, otherwise it is false.
+assert(prio_specified[0]);  // compile time error if prio_specified[0] is false
+p = prio[0];
+for (int j = 1; j &lt; n; j += 1) {
+    if (prio_specified[j]) {
+        p = prio[j];
+    } else {
+        if (largest_priority_wins == true) {
+            p -= priority_delta;
+        } else {
+            p += priority_delta;
+        }
+        prio[j] = p;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is the end of the first step: determining entry priorities.</p>
+</div>
+<div class="paragraph">
+<p>The priorities determined in this way are the values used when the P4 program
+is first loaded into a device. Afterwards, the priorities may only change by
+means provided by the control plane API in use.</p>
+</div>
+<div class="paragraph">
+<p>In the second step, the compiler issues errors for out of range priority
+values, and/or warnings for certain combinations of entry priorities that might
+be unintended by the developer, unless the developer explicitly disables those
+warnings.</p>
+</div>
+<div class="paragraph">
+<p>If any priority values are negative, or larger than the maximum supported
+value, that is a compile time error.</p>
+</div>
+<div class="paragraph">
+<p>If the annotation <code>@noWarn("duplicate_priorities")</code> is <em>not</em> used on the
+<code>entries</code> table property, then the compiler issues a warning if any two entries
+for the same table have equal priority values. Both P4Runtime and TDI leave it
+unspecified which entry is the winner if a lookup key matches multiple keys
+that all have the same priority, hence a warning is useful to less experienced
+developers that are unfamiliar with this unspecified behavior.</p>
+</div>
+<div class="paragraph">
+<p>If the annotation <code>@noWarn("duplicate_priorities")</code> is used on the <code>entries</code>
+table property, then no warnings of this type are ever issued by the compiler.
+Using equal priority values for multiple entries in the same table is sometimes
+useful in reducing the number of hardware updates required when adding entries
+to such a table.</p>
+</div>
+<div class="paragraph">
+<p>If the annotation <code>@noWarn("entries_out_of_priority_order")</code> is <em>not</em> used on
+the <code>entries</code> table property, then the compiler issues a warning if:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If <code>largest_priority_wins</code> is <code>true</code> for the table, and there is any pair of
+consecutive entries where <code>prio[j] &lt; prio[j+1]</code>, then a warning is issued for
+that pair of entries.</p>
+</li>
+<li>
+<p>If <code>largest_priority_wins</code> is <code>false</code> for the table, and there is any pair of
+consecutive entries where <code>prio[j] &gt; prio[j+1]</code>, then a warning is issued for
+that pair of entries.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This warning is useful to developers that want the order that entries appear in
+the source code to match the relative priority of entries in the target device.</p>
+</div>
+<div class="paragraph">
+<p>If the annotation <code>@noWarn("entries_out_of_priority_order")</code> is used on the
+<code>entries</code> table property, then no warnings of this type are ever issued by the
+compiler for this table.  his option is provided for developers who explicitly
+choose to specify entries in an order that does not match their relative
+priority order.</p>
+</div>
+<div class="paragraph">
+<p>The following example is the same as the first example in <a href="#sec-entries">[sec-entries]</a>,
+except for the definition of table <code>t_exact_ternary</code> shown below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">table</span> t_exact_ternary <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        h<span style="color: #0550ae">.</span>h<span style="color: #0550ae">.</span>e <span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        h<span style="color: #0550ae">.</span>h<span style="color: #0550ae">.</span>t <span style="color: #24292f;background-color: #f6f8fa">:</span> ternary<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+    <span style="color: #cf222e">actions</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+        a_params<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+
+    <span style="color: #cf222e">default_action</span> <span style="color: #0550ae">=</span> a<span style="color: #24292f;background-color: #f6f8fa">;</span>
+
+    largest_priority_wins <span style="color: #0550ae">=</span> false<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    priority_delta <span style="color: #0550ae">=</span> <span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #0550ae">@noWarn</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"duplicate_priorities"</span><span style="color: #24292f;background-color: #f6f8fa">)</span>
+    <span style="color: #cf222e">entries</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        <span style="color: #cf222e">const</span> priority<span style="color: #0550ae">=</span><span style="color: #0550ae">10</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x01</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1111</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0xF</span>   <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+                           <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x02</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1181</span>           <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">2</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// priority=20
+</span>                           <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x03</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x1000</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0xF000</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">3</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// priority=30
+</span>        <span style="color: #cf222e">const</span>              <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x04</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x0210</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0x02F0</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">4</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// priority=40
+</span>              priority<span style="color: #0550ae">=</span><span style="color: #0550ae">40</span><span style="color: #24292f;background-color: #f6f8fa">:</span> <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x04</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">0x0010</span> <span style="color: #0550ae">&amp;&amp;&amp;</span> <span style="color: #0550ae">0x02F0</span><span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+                           <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">0x06</span><span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #0550ae">_</span>                <span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> a_params<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">6</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// priority=50
+</span>    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The entries that do not have an explicit priority specified will be assigned
+the priority values shown in the comments, because <code>priority_delta</code> is 10, and
+because of those entries that do have priority values specified.</p>
+</div>
+<div class="paragraph">
+<p>Normally this program would cause a warning about multiple entries with the
+same priority of 40, but those warnings will be suppressed because of the
+<code>@noWarn("duplicate_priorities")</code> annotation.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-table-additional">16.3.6. Additional properties</h4>
+<div class="paragraph">
+<p>A <code>table</code> declaration defines its essential control and data plane
+interfaces&#8212;&#8203;i.e., keys and actions. However, the best way to implement a table
+may actually depend on the nature of the entries that will be installed at
+runtime (for example, tables could be dense or sparse, could be implemented as
+hash-tables, associative memories, tries, etc.) In addition, some architectures
+may support extra table properties whose semantics lies outside the scope of
+this specification. For example, in architectures where table resources are
+statically allocated, programmers may be required to define a <code>size</code> table
+property, which can be used by the compiler back-end to allocate storage
+resources. However, these architecture-specific properties may not change the
+semantics of table lookups, which always produce either a <code>hit</code> and an action
+or a <code>miss</code>--they can only change how those results are interpreted on the
+state of the data plane. This restriction is needed to ensure that it is
+possible to reason about the behavior of tables during compilation.</p>
+</div>
+<div class="paragraph">
+<p>As another example, an <code>implementation</code> property could be used to pass
+additional information to the compiler back-end. The value of this property
+could be an instance of an <code>extern</code> block chosen from a suitable library of
+components. For example, the core functionality of the P4<sub>14</sub> table
+<code>action_profile</code> constructs could be implemented on architectures that support
+this feature using a construct such as the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #cf222e">extern</span> ActionProfile <span style="color: #24292f;background-color: #f6f8fa">{</span>
+   ActionProfile<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">32</span><span style="color: #0550ae">&gt;</span> <span style="color: #cf222e">size</span><span style="color: #24292f;background-color: #f6f8fa">);</span> <span style="color: #6e7781">// number of distinct actions expected
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">table</span> t <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span> <span style="color: #6e7781">/* body omitted */</span> <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #cf222e">size</span> <span style="color: #0550ae">=</span> <span style="color: #0550ae">1024</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+    implementation <span style="color: #0550ae">=</span> ActionProfile<span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0550ae">32</span><span style="color: #24292f;background-color: #f6f8fa">);</span>  <span style="color: #6e7781">// constructor invocation
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here the action profile might be used to optimize for the case where the table
+has a large number of entries, but the actions associated with those entries
+are expected to range over a small number of distinct values. Introducing a
+layer of indirection enables sharing identical entries, which can significantly
+reduce the table&#8217;s storage requirements.</p>
+</div>
+<div class="sect4">
+<h5 id="_type_checking_115">16.3.6.1. Type checking</h5>
+<div class="paragraph">
+<p>Additional properties, including <code>size</code>, is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_ok/size-and-others:
+  rule TableProperty_ok/size:
+  TC TBLC |- annotationList constOpt tableCustomName (= expression) ; : TBLC tablePropertyIR
+ -- if "size" = $tableCustomName(tableCustomName)
+ -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+ -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+ -- if typeIR_unroll = $unroll_typeIR(typeIR)
+ -- if (typeIR_unroll &lt;: integerTypeIR) /\ ~(typeIR_unroll &lt;: varBitTypeIR)
+ -- if constOptIR = $flatten_constOpt(constOpt)
+ -- if tablePropertyIR = annotationList constOptIR CUSTOM "size" (= typedExpressionIR) ;
+  rule TableProperty_ok/others:
+  TC TBLC |- annotationList constOpt tableCustomName (= expression) ; : TBLC tablePropertyIR
+ -- if nameIR = $tableCustomName(tableCustomName)
+ -- if nameIR =/= "default_action" /\ nameIR =/= "size" /\ nameIR =/= "largest_priority_wins" /\ nameIR =/= "priority_delta"
+ -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+ -- if constOptIR = $flatten_constOpt(constOpt)
+ -- if tablePropertyIR = annotationList constOptIR CUSTOM nameIR (= typedExpressionIR) ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_ok">Typing <code>annotationList</code> <code>constOpt</code> <code>tableCustomName</code> <code>=</code> <code>expression</code> <code>;</code>, under context <code>TC</code> and table context <code>TBLC<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>"size"</code> is equal to <a href="#tableCustomName">the name of <code>tableCustomName</code></a>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typedExpressionIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>unroll</sub></code> be <a href="#unroll_typeIR"><code>typeIR</code> with typedefs unrolled</a>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR<sub>unroll</sub></code> has type <code>integerTypeIR</code> and <code>typeIR<sub>unroll</sub></code> does not have type <code>varBitTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>constOptIR</code> be <a href="#flatten_constOpt">the optional const qualifier in <code>constOpt</code></a>.</p>
+</li>
+<li>
+<p>Let <code>tablePropertyIR</code> be <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM</code> <code>"size"</code> <code>=</code> <code>typedExpressionIR</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in table context <code>TBLC<sub>0</sub></code> and <code>tablePropertyIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Let <code>nameIR</code> be <a href="#tableCustomName">the name of <code>tableCustomName</code></a>.</p>
+</li>
+<li>
+<p>If <code>nameIR</code> is not equal to <code>"default_action"</code> and <code>nameIR</code> is not equal to <code>"size"</code> and <code>nameIR</code> is not equal to <code>"largest_priority_wins"</code> and <code>nameIR</code> is not equal to <code>"priority_delta"</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typedExpressionIR</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_ok">typing <code>expression</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>constOptIR</code> be <a href="#flatten_constOpt">the optional const qualifier in <code>constOpt</code></a>.</p>
+</li>
+<li>
+<p>Let <code>tablePropertyIR</code> be <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM</code> <code>nameIR</code> <code>=</code> <code>typedExpressionIR</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in table context <code>TBLC<sub>0</sub></code> and <code>tablePropertyIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>After type checking, these are represented in P4<sub>IR</sub> as:</p>
+</div>
+<div id="tableCustomPropertyIR" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableCustomPropertyIR
+   : annotationList constOptIR CUSTOM nameIR initializerIR ;
+   | annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;
    ;</code></pre>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="sec-match-action-table-custom">16.3.6. Table custom properties</h4>
+<div class="sect4">
+<h5 id="_compile_time_evaluation_78">16.3.6.2. Compile-time evaluation</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup TableProperty_inst/tableCustomPropertyIR:
+  rule TableProperty_inst/custom:
+  IC STO_0 |- annotationList constOptIR CUSTOM nameIR (= typedExpressionIR) ; : STO_1 tableCustomPropertyIR_inst
+ -- if IC_inner = $enter_path_i(IC, nameIR)
+ -- Expr_inst: LOCAL IC_inner STO_0 |- typedExpressionIR : STO_1 value
+ -- if tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR (= `VALUE value) ;
+  rule TableProperty_inst/custom-const:
+  IC STO |- annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ; : STO tableCustomPropertyIR_inst
+ -- if tableCustomPropertyIR_inst = annotationList constOptIR CUSTOM_CONST nameIR constantInitializerIR ;</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#TableProperty_inst">Compile-time evaluation of <code>tableCustomPropertyIR</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM</code> <code>nameIR</code> <code>=</code> <code>typedExpressionIR</code> <code>;</code> be <code>tableCustomPropertyIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>IC<sub>inner</sub></code> be <a href="#enter_path_i"><code>IC</code> with <code>nameIR</code> added to the path</a>.</p>
+</li>
+<li>
+<p>Let store <code>STO<sub>1</sub></code> and <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR</code>, under context <code>IC<sub>inner</sub></code> and store <code>STO</code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>tableCustomPropertyIR<sub>inst</sub></code> be <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM_CONST</code> <code>nameIR</code> <code>=</code> <code>`VALUE</code> <code>value</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in store <code>STO<sub>1</sub></code> and <code>tableCustomPropertyIR<sub>inst</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM_CONST</code> <code>nameIR</code> <code>constantInitializerIR</code> <code>;</code> be <code>tableCustomPropertyIR</code>.</p>
+</li>
+<li>
+<p>Let <code>tableCustomPropertyIR<sub>inst</sub></code> be <code>annotationList</code> <code>constOptIR</code> <code>CUSTOM_CONST</code> <code>nameIR</code> <code>constantInitializerIR</code> <code>;</code>.</p>
+</li>
+<li>
+<p>Result in store <code>STO</code> and <code>tableCustomPropertyIR<sub>inst</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="sec-match-action-table-invocation">16.3.7. Match-action table invocation</h4>
+<div class="paragraph">
+<p>The semantics of a table invocation statement:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4">t<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>is given by the following pseudocode (see also <a href="#fig-maudataflow">Figure 11</a>):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4pseudo">apply_result(m) m.apply() {
+    apply_result(m) result;
 
+    var lookupKey = m.buildKey(m.key); // using key block
+    action RA = m.table.lookup(lookupKey);
+    if (RA == null) {      // miss in lookup table
+       result.hit = false;
+       RA = m.default_action;  // use default action
+    }
+    else {
+       result.hit = true;
+    }
+    result.miss = !result.hit;
+    result.action_run = action_type(RA);
+    evaluate_and_copy_in_RA_args(RA);
+    execute(RA);
+    copy_out_RA_args(RA);
+    return result;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The behavior of the <code>buildKey</code> call in the pseudocode above is to evaluate each
+key expression in the order they appear in the table key definition. The
+behavior must be the same as if the result of evaluating each key expression is
+assigned to a fresh temporary variable, before starting the evaluation of the
+following key expression. For example, this P4 table definition and apply call:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> f1 <span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #cf222e">in</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> a<span style="color: #24292f;background-color: #f6f8fa">,</span> <span style="color: #cf222e">inout</span> <span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> b<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    b <span style="color: #0550ae">=</span> a <span style="color: #0550ae">+</span> <span style="color: #0550ae">5</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #cf222e">return</span> a <span style="color: #0550ae">&gt;&gt;</span> <span style="color: #0550ae">1</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> x<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">table</span> t1 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        y <span style="color: #0550ae">&amp;</span> <span style="color: #0550ae">0x7</span>  <span style="color: #24292f;background-color: #f6f8fa">:</span> exact <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"masked_y"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+        f1<span style="color: #24292f;background-color: #f6f8fa">(</span>x<span style="color: #24292f;background-color: #f6f8fa">,</span> y<span style="color: #24292f;background-color: #f6f8fa">)</span> <span style="color: #24292f;background-color: #f6f8fa">:</span> exact <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"f1"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+        y        <span style="color: #24292f;background-color: #f6f8fa">:</span> exact<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #6e7781">// ... rest of table properties defined here, not relevant to example
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">// assign values to x and y here, not relevant to example
+</span>    t1<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>is equivalent in behavior to the following table definition and apply call:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="p4"><span style="color: #6e7781">// same definition of f1, x, and y as before, so they are not repeated here
+</span><span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> tmp_1<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> tmp_2<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #953800">bit</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">8</span><span style="color: #0550ae">&gt;</span> tmp_3<span style="color: #24292f;background-color: #f6f8fa">;</span>
+<span style="color: #cf222e">table</span> t1 <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #cf222e">key</span> <span style="color: #0550ae">=</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+        tmp_1 <span style="color: #24292f;background-color: #f6f8fa">:</span> exact <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"masked_y"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+        tmp_2 <span style="color: #24292f;background-color: #f6f8fa">:</span> exact <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"f1"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+        tmp_3 <span style="color: #24292f;background-color: #f6f8fa">:</span> exact <span style="color: #0550ae">@name</span><span style="color: #24292f;background-color: #f6f8fa">(</span><span style="color: #0a3069">"y"</span><span style="color: #24292f;background-color: #f6f8fa">);</span>
+    <span style="color: #24292f;background-color: #f6f8fa">}</span>
+    <span style="color: #6e7781">// ... rest of table properties defined here, not relevant to example
+</span><span style="color: #24292f;background-color: #f6f8fa">}</span>
+<span style="color: #cf222e">apply</span> <span style="color: #24292f;background-color: #f6f8fa">{</span>
+    <span style="color: #6e7781">// assign values to x and y here, not relevant to example
+</span>    tmp_1 <span style="color: #0550ae">=</span> y <span style="color: #0550ae">&amp;</span> <span style="color: #0550ae">0x7</span><span style="color: #24292f;background-color: #f6f8fa">;</span>
+    tmp_2 <span style="color: #0550ae">=</span> f1<span style="color: #24292f;background-color: #f6f8fa">(</span>x<span style="color: #24292f;background-color: #f6f8fa">,</span> y<span style="color: #24292f;background-color: #f6f8fa">);</span>
+    tmp_3 <span style="color: #0550ae">=</span> y<span style="color: #24292f;background-color: #f6f8fa">;</span>
+    t1<span style="color: #0550ae">.</span><span style="color: #cf222e">apply</span><span style="color: #24292f;background-color: #f6f8fa">();</span>
+<span style="color: #24292f;background-color: #f6f8fa">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the second code example above is given in order to specify
+the behavior of the first one. An implementation is free to choose
+any technique that achieves this behavior.<sup class="footnote" id="_footnote_MostP4ProgramsDontDoThis">[<a id="_footnoteref_5" class="footnote" href="#_footnotedef_5" title="View footnote.">5</a>]</sup></p>
+</div>
+<div class="paragraph">
+<p>The following algorithm describes the evaluation of a table apply method
+invocation:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/tableApplyMethodCallee:
+  rule Call_eval/tableApplyMethodCallee-exit:
+  p EC_0 ARCH_0 |- tableApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 EXIT
+ -- if TABLE objectId . APPLY `{frame ; TBL} = tableApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.FRAMES = [frame]]
+ -- if typeId :: _ = $rev_&lt;id&gt;(objectId)
+ -- Table_eval: EC_callee_1 ARCH_0 |- typeId TBL : EC_callee_2 ARCH_1 EXIT
+ -- if EC_1 = $copy_e(BLOCK, EC_callee_2, EC_0)
+  rule Call_eval/tableApplyMethodCallee-return:
+  p EC_0 ARCH_0 |- tableApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 returnResult
+ -- if TABLE objectId . APPLY `{frame ; TBL} = tableApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.FRAMES = [frame]]
+ -- if typeId :: _ = $rev_&lt;id&gt;(objectId)
+ -- Table_eval: EC_callee_1 ARCH_0 |- typeId TBL : EC_callee_2 ARCH_1 returnResult
+ -- if EC_1 = $copy_e(BLOCK, EC_callee_2, EC_0)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>tableApplyMethodCallee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>TABLE</code> <code>objectId</code> <code>.</code> <code>APPLY</code> <code>{</code> <code>frame</code> <code>;</code> <code>TBL</code> <code>}</code> be <code>tableApplyMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>BLOCK</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub></code> with <code>LOCAL.FRAMES</code> set to <code>frame</code>.</p>
+</li>
+<li>
+<p>Let <code>typeId<sup>*</sup></code> be <a href="#rev_">the reversal of <code>objectId</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is a non-empty list.</p>
+</li>
+<li>
+<p>Let <code>typeId'</code> <code>::</code> <code>_<sup>*</sup></code> be <code>typeId<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <a href="#Table_eval">EC<sub>callee_1</sub> ARCH<sub>0</sub> |- typeId' TBL : EC<sub>callee_2</sub> ARCH<sub>1</sub> tableResult</a>.</p>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>tableResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <code><a href="#copy_e">$copy_e(BLOCK,</code> <code>EC<sub>callee_2</sub>,</code> <code>EC<sub>0</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>returnResult</code> be <code>tableResult</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <code><a href="#copy_e">$copy_e(BLOCK,</code> <code>EC<sub>callee_2</sub>,</code> <code>EC<sub>0</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The table match-action is implemented as:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Table_eval: evalContext arch |- typeId tableObjectProperty : evalContext arch tableResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Table_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Table_eval">Table_eval: <code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId</code> <code>TBL</code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>${rulegroup-title-source: Table_eval}
+${rulegroup-title-prose: Table_eval}</p>
+</div>
 </div>
 </div>
 </div>
@@ -67407,6 +68495,12 @@ p4program
 </div>
 <div class="footnote" id="_footnotedef_3">
 <a href="#_footnoteref_3">3</a>. <a href="https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md" class="bare">https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/implementing-generalized-switch-statements.md</a>
+</div>
+<div class="footnote" id="_footnotedef_4">
+<a href="#_footnoteref_4">4</a>. TDI is the Table Driven Interface. More information can be found here: <a href="https://github.com/p4lang/tdi" class="bare">https://github.com/p4lang/tdi</a>
+</div>
+<div class="footnote" id="_footnotedef_5">
+<a href="#_footnoteref_5">5</a>. Most existing P4<sub>16</sub> programs today do not use function or method calls in table key expressions, and the order of evaluation of these key expressions makes no difference in the resulting lookup key value. In this overwhelmingly common case, if an implementation chooses to insert extra assignment statements to implement side-effecting key expressions, but does not insert them when there are no side-effecting key expressions, then in typical programs they will almost never be inserted.
 </div>
 </div>
 <div id="footer">

@@ -89,7 +89,7 @@ syntax nameList =
   | nameList `, name
 
 dec $flatten_nameList(nameList) : name*
-  hint(prose_in "the list of names in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_nameList(name) = name
 def $flatten_nameList(nameList `, name) =
   $flatten_nameList(nameList) ++ [ name ]
@@ -185,7 +185,7 @@ syntax typeParameterList =
   | typeParameterList `, typeParameter
 
 dec $flatten_typeParameterList(typeParameterList) : typeParameter*
-  hint(prose_in "the list of type parameters in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_typeParameterList(typeParameter) = typeParameter
 def $flatten_typeParameterList(typeParameterList `, typeParameter) =
   $flatten_typeParameterList(typeParameterList) ++ [ typeParameter ]
@@ -195,7 +195,7 @@ syntax typeParameterListOpt =
   | `< typeParameterList >
 
 dec $flatten_typeParameterListOpt(typeParameterListOpt) : typeParameter*
-  hint(prose_in "the list of type parameters in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_typeParameterListOpt(`EMPTY) = eps
 def $flatten_typeParameterListOpt(`< typeParameterList >)
   = $flatten_typeParameterList(typeParameterList)
@@ -218,7 +218,7 @@ syntax parameterList =
   | nonEmptyParameterList
 
 dec $flatten_parameterList(parameterList) : parameter*
-  hint(prose_in "the list of parameters in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_parameterList(`EMPTY) = eps
 def $flatten_parameterList(parameter) = parameter
 def $flatten_parameterList(nonEmptyParameterList `, parameter)
@@ -238,7 +238,7 @@ syntax constructorParameterListOpt =
 
 dec $flatten_constructorParameterListOpt(constructorParameterListOpt)
   : constructorParameter*
-  hint(prose_in "the list of constructor parameters in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_constructorParameterListOpt(`EMPTY) = eps
 def $flatten_constructorParameterListOpt(`( parameterList ))
   = $flatten_parameterList(parameterList)
@@ -254,7 +254,7 @@ syntax namedExpressionList =
   | namedExpressionList `, namedExpression
 
 dec $flatten_namedExpressionList(namedExpressionList) : namedExpression*
-  hint(prose_in "the list of named expressions in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_namedExpressionList(namedExpression) = namedExpression
 def $flatten_namedExpressionList(namedExpressionList `, namedExpression) =
   $flatten_namedExpressionList(namedExpressionList) ++ [ namedExpression ]
@@ -421,7 +421,7 @@ syntax expressionList =
   | expressionList `, expression
 
 dec $flatten_expressionList(expressionList) : expression*
-  hint(prose_in "the list of expressions in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_expressionList(`EMPTY) = eps
 def $flatten_expressionList(expression) = expression
 def $flatten_expressionList(expressionList `, expression) =
@@ -540,7 +540,7 @@ syntax simpleKeysetExpressionList =
 
 dec $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList)
   : simpleKeysetExpression*
-  hint(prose_in "the list of simple keyset expressions in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_simpleKeysetExpressionList(simpleKeysetExpression)
   = simpleKeysetExpression
 def $flatten_simpleKeysetExpressionList(
@@ -573,7 +573,7 @@ syntax realTypeArgumentList =
   | realTypeArgumentList `, realTypeArgument
 
 dec $flatten_realTypeArgumentList(realTypeArgumentList) : realTypeArgument*
-  hint(prose_in "the list of real type arguments in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_realTypeArgumentList(realTypeArgument) = realTypeArgument
 def $flatten_realTypeArgumentList(realTypeArgumentList `, realTypeArgument)
   = $flatten_realTypeArgumentList(realTypeArgumentList) ++ [ realTypeArgument ]
@@ -588,7 +588,7 @@ syntax typeArgumentList =
   | typeArgumentList `, typeArgument
 
 dec $flatten_typeArgumentList(typeArgumentList) : typeArgument*
-  hint(prose_in "the list of type arguments in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_typeArgumentList(`EMPTY) = eps
 def $flatten_typeArgumentList(typeArgument) = typeArgument
 def $flatten_typeArgumentList(typeArgumentList `, typeArgument)
@@ -613,7 +613,7 @@ syntax argumentList =
   | argumentListNonEmpty
 
 dec $flatten_argumentList(argumentList) : argument*
-  hint(prose_in "the list of arguments in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_argumentList(`EMPTY) = eps
 def $flatten_argumentList(argument) = argument
 def $flatten_argumentList(argumentListNonEmpty `, argument)
@@ -821,7 +821,7 @@ syntax switchCaseList =
   | switchCaseList switchCase
 
 dec $flatten_switchCaseList(switchCaseList) : switchCase*
-  hint(prose_in "the list of switch cases in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_switchCaseList(`EMPTY) = eps
 def $flatten_switchCaseList(switchCaseList switchCase)
   = $flatten_switchCaseList(switchCaseList) ++ [ switchCase ]
@@ -885,7 +885,7 @@ syntax blockElementStatementList =
 
 dec $flatten_blockElementStatementList(blockElementStatementList)
   : blockElementStatement*
-  hint(prose_in "the list of block element statements in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_blockElementStatementList(`EMPTY) = eps
 def $flatten_blockElementStatementList(
     blockElementStatementList blockElementStatement)
@@ -930,8 +930,9 @@ syntax objectDeclarationList =
   | `EMPTY
   | objectDeclarationList objectDeclaration
 
-dec $flatten_objectDeclarationList(objectDeclarationList) : objectDeclaration*
-  hint(prose_in "the list of object declarations in" %0)
+dec $flatten_objectDeclarationList(objectDeclarationList)
+  : objectDeclaration*
+  hint(prose_in %0 "flattened")
 def $flatten_objectDeclarationList(`EMPTY) = eps
 def $flatten_objectDeclarationList(
     objectDeclarationList objectDeclaration)
@@ -973,7 +974,7 @@ syntax typeFieldList =
   | typeFieldList typeField
 
 dec $flatten_typeFieldList(typeFieldList) : typeField*
-  hint(prose_in "the list of type fields in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_typeFieldList(`EMPTY) = eps
 def $flatten_typeFieldList(typeFieldList typeField)
   = $flatten_typeFieldList(typeFieldList) ++ [ typeField ]
@@ -1052,7 +1053,7 @@ syntax externConstructorOrMethodPrototypeList =
 dec $flatten_externConstructorOrMethodPrototypeList(
     externConstructorOrMethodPrototypeList)
   : externConstructorOrMethodPrototype*
-  hint(prose_in "the list of extern constructor or method prototypes in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_externConstructorOrMethodPrototypeList(`EMPTY) = eps
 def $flatten_externConstructorOrMethodPrototypeList(
     externConstructorOrMethodPrototypeList
@@ -1084,7 +1085,7 @@ syntax selectCaseList =
   | selectCaseList selectCase
 
 dec $flatten_selectCaseList(selectCaseList) : selectCase*
-  hint(prose_in "the list of select cases in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_selectCaseList(`EMPTY) = eps
 def $flatten_selectCaseList(selectCaseList selectCase)
   = $flatten_selectCaseList(selectCaseList) ++ [ selectCase ]
@@ -1149,7 +1150,7 @@ syntax parserStatementList =
   | parserStatementList parserStatement
 
 dec $flatten_parserStatementList(parserStatementList) : parserStatement*
-  hint(prose_in "the list of parser statements in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_parserStatementList(`EMPTY) = eps
 def $flatten_parserStatementList(parserStatementList parserStatement)
   = $flatten_parserStatementList(parserStatementList) ++ [ parserStatement ]
@@ -1162,7 +1163,7 @@ syntax parserStateList =
   | parserStateList parserState
 
 dec $flatten_parserStateList(parserStateList) : parserState*
-  hint(prose_in "the list of parser states in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_parserStateList(parserState) = parserState
 def $flatten_parserStateList(parserStateList parserState)
   = $flatten_parserStateList(parserStateList) ++ [ parserState ]
@@ -1179,7 +1180,7 @@ syntax parserLocalDeclarationList =
 
 dec $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   : parserLocalDeclaration*
-  hint(prose_in "the list of parser local declarations in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_parserLocalDeclarationList(`EMPTY) = eps
 def $flatten_parserLocalDeclarationList(
     parserLocalDeclarationList parserLocalDeclaration)
@@ -1221,7 +1222,7 @@ syntax tableKeyList =
   | tableKeyList tableKey
 
 dec $flatten_tableKeyList(tableKeyList) : tableKey*
-  hint(prose_in "the list of table keys in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_tableKeyList(`EMPTY) = eps
 def $flatten_tableKeyList(tableKeyList tableKey)
   = $flatten_tableKeyList(tableKeyList) ++ [ tableKey ]
@@ -1241,7 +1242,7 @@ syntax tableActionList =
   | tableActionList tableAction
 
 dec $flatten_tableActionList(tableActionList) : tableAction*
-  hint(prose_in "the list of table actions in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_tableActionList(`EMPTY) = eps
 def $flatten_tableActionList(tableActionList tableAction) =
   $flatten_tableActionList(tableActionList) ++ [ tableAction ]
@@ -1263,7 +1264,7 @@ syntax tableEntryList =
   | tableEntryList tableEntry
 
 dec $flatten_tableEntryList(tableEntryList) : tableEntry*
-  hint(prose_in "the list of table entries in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_tableEntryList(`EMPTY) = eps
 def $flatten_tableEntryList(tableEntryList tableEntry)
   = $flatten_tableEntryList(tableEntryList) ++ [ tableEntry ]
@@ -1283,7 +1284,7 @@ syntax tablePropertyList =
   | tablePropertyList tableProperty
 
 dec $flatten_tablePropertyList(tablePropertyList) : tableProperty*
-  hint(prose_in "the list of table properties in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_tablePropertyList(`EMPTY) = eps
 def $flatten_tablePropertyList(tablePropertyList tableProperty) =
   $flatten_tablePropertyList(tablePropertyList) ++ [ tableProperty ]
@@ -1317,7 +1318,7 @@ syntax controlLocalDeclarationList =
 
 dec $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
   : controlLocalDeclaration*
-  hint(prose_in "the list of control local declarations in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_controlLocalDeclarationList(`EMPTY) = eps
 def $flatten_controlLocalDeclarationList(
     controlLocalDeclarationList controlLocalDeclaration)
@@ -1414,7 +1415,7 @@ syntax annotationList =
   | annotationListNonEmpty
 
 dec $flatten_annotationList(annotationList) : annotation*
-  hint(prose_in "the list of annotations in" %0)
+  hint(prose_in %0 "flattened")
 def $flatten_annotationList(`EMPTY) = eps
 def $flatten_annotationList(annotation) = annotation
 def $flatten_annotationList(annotationListNonEmpty annotation)
