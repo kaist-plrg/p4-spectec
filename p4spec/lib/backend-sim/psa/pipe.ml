@@ -396,6 +396,21 @@ struct
     in
     modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs))
 
+  let remove_egress_packet_out : unit state =
+    let* _, value_arch, _ = get in
+    let value_arch =
+      let packet_out = Core.Object.PacketOut.init () in
+      let packet_out = PacketOut packet_out in
+      let value_objectId =
+        wrap_list_v "id" [ wrap_text_v "egress_packet_out" ]
+      in
+      let value_packet_out =
+        packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
+      in
+      Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
+    in
+    modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs))
+
   (* let is_ingress_clone : bool state =
      let+ value_ctx, value_arch, _ = get in
      let value_clone =
@@ -435,6 +450,15 @@ struct
         "egress_output_metadata" "drop"
     in
     unpack_p4_bool value_drop
+
+  let is_egress_recirculate : bool state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_port =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "egress_input_metadata" "egress_port"
+    in
+    let width_port, int_port = unpack_p4_fixedBit value_port in
+    Bigint.(width_port = of_int 32 && int_port = of_int 0xfffffffa)
 
   (* Pipeline initializer *)
 
@@ -489,11 +513,21 @@ struct
       unpack_p4_fixedBit value_ingress_port
       |> snd |> Bigint.to_int |> Option.get
     in
+    (* Init ingress metadata *)
     let value_ctx =
       Spec.Rel.psa_ingress_init_metadata value_ctx value_arch ingress_port
         "RESUBMIT"
     in
     put (value_ctx, value_arch, txs)
+
+  let prepare_recirculate_ctx : unit state =
+    (* Init ingress metadata *)
+    modify (fun (value_ctx, value_arch, txs) ->
+        let value_ctx =
+          Spec.Rel.psa_ingress_init_metadata value_ctx value_arch 0xfffffffa
+            "RECIRCULATE"
+        in
+        (value_ctx, value_arch, txs))
 
   (* Schedule packet *)
 
@@ -510,7 +544,7 @@ struct
     arch_state |> Arch.with_queue queue |> put_arch_state
 
   let schedule_unicast : unit state =
-    let* value_ctx, value_arch, txs = prepare_unicast_ctx >> get in
+    let* value_ctx, value_arch, txs = get in
     (* Prepare egress packet *)
     let egress_packet_in =
       let packet_in = get_ingress_packet_in value_arch in
@@ -528,11 +562,35 @@ struct
         value_egress_packet_in
     in
     (* Schedule packet *)
-    put (value_ctx, value_arch, txs) >> schedule_packet Egress
+    put (value_ctx, value_arch, txs)
+    >> prepare_unicast_ctx >> remove_egress_packet_out >> schedule_packet Egress
 
   let schedule_resubmit : unit state =
     prepare_resubmit_ctx >> remove_ingress_packet_in
     >> remove_ingress_packet_out >> schedule_packet Ingress
+
+  let schedule_recirculate : unit state =
+    let* value_ctx, value_arch, txs = get in
+    (* Prepare ingress packet *)
+    let ingress_packet_in =
+      let packet_in = get_egress_packet_in value_arch in
+      let packet_out = get_egress_packet_out value_arch in
+      Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+    in
+    let value_ingress_packet_in =
+      PacketIn (Core.Object.PacketIn.init ingress_packet_in)
+      |> object_state_to_yojson
+      |> wrap_extern_v "objectState"
+    in
+    let value_objectId = wrap_list_v "id" [ wrap_text_v "ingress_packet_in" ] in
+    let value_arch =
+      Spec.Func.update_objectState_e value_arch value_objectId
+        value_ingress_packet_in
+    in
+    (* Schedule packet *)
+    put (value_ctx, value_arch, txs)
+    >> prepare_recirculate_ctx >> remove_ingress_packet_out
+    >> schedule_packet Ingress
 
   let transfer_packet : unit state =
     let* value_ctx, value_arch, txs = get in
@@ -644,7 +702,10 @@ struct
 
   let run_bqe : unit state =
     let* drop = is_egress_drop in
-    if drop then return () else transfer_packet
+    if drop then return ()
+    else
+      let* recirculate = is_egress_recirculate in
+      if recirculate then schedule_recirculate else transfer_packet
 
   (* Scheduling packets *)
 
