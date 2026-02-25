@@ -2,7 +2,7 @@
 ;; Table context
 ;;
 
-syntax matchKey = typeIR `: id
+syntax matchKey = typeIR `: nameIR
 
 syntax matchAction = prefixedNameIR `( parameterIR* `@ argumentListIR )
 
@@ -12,7 +12,7 @@ syntax matchPriority =
     DELTA nat,
     LARGEST_WINS bool }
 
-syntax matchEntry =
+syntax matchEntries =
   { SIZE nat,
     CONST bool }
 
@@ -30,7 +30,7 @@ syntax tableContext =
   { KEYS matchKey*,
     ACTIONS matchAction*,
     PRIORITIES matchPriority,
-    ENTRIES matchEntry,
+    ENTRIES matchEntries,
     MODE matchMode }
 
 var TBLC : tableContext
@@ -43,7 +43,7 @@ syntax tableEntryState =
   ;; the entry is lpm, holding the prefix length
   | LPM nat
   ;; the entry is not lpm
-  | NOLPM
+  | NON_LPM
 
 var TBLS : tableEntryState
 
@@ -56,16 +56,16 @@ def $empty_tableContext
     = { KEYS eps,
         ACTIONS eps,
         PRIORITIES matchPriority,
-        ENTRIES matchEntry,
+        ENTRIES matchEntries,
         MODE NOPRI }
   -- if matchPriority
-        = { VALUES eps,
-            INIT false,
-            DELTA 1,
-            LARGEST_WINS true }
-  -- if matchEntry
-        = { SIZE 0,
-            CONST true }
+      = { VALUES eps,
+          INIT false,
+          DELTA 1,
+          LARGEST_WINS true }
+  -- if matchEntries
+      = { SIZE 0,
+          CONST true }
 
 ;;
 ;; Adders
@@ -185,9 +185,9 @@ def $find_table_priority_last(TBLC) = n*[n_last]
 
 dec $join_tableEntryState(tableEntryState, tableEntryState) : tableEntryState
 
-def $join_tableEntryState(NOLPM, LPM n) = LPM n
-def $join_tableEntryState(LPM n, NOLPM) = LPM n
-def $join_tableEntryState(NOLPM, NOLPM) = NOLPM
+def $join_tableEntryState(NON_LPM, LPM n) = LPM n
+def $join_tableEntryState(LPM n, NON_LPM) = LPM n
+def $join_tableEntryState(NON_LPM, NON_LPM) = NON_LPM
 
 dec $tableEntry_lpm_prefix(value) : nat
 dec $tableEntry_lpm_prefix'(value, nat) : nat

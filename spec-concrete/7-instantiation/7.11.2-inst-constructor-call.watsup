@@ -130,11 +130,14 @@ rule Constructor_call/externConstructorDef:
   -- if (_ _ _ id_cparam _ = constructorParameterIR)*
   -- if (value_cparam = $find_map<id, value>(IC_callee_4.BLOCK.FRAME, id_cparam))*
   -- if objectState = $init_objectState(nameIR, typeArgumentIR*, value_cparam*)
+  ---- ;; create extern object
+  -- if theta_extern = IC_callee_4.BLOCK.TYPE
+  -- if frame_extern = IC_callee_4.BLOCK.FRAME
+  -- if externMethodDefEnv_extern = `{ (callableId `: externMethodDef)* }
   -- if object_extern
-      = EXTERN nameIR `< IC_callee_4.BLOCK.TYPE >
-                      `{ objectState
-                         IC_callee_4.BLOCK.FRAME
-                         `{ (callableId `: externMethodDef)* } }
+      = EXTERN nameIR `< theta_extern >
+                      `{ objectState frame_extern
+                         externMethodDefEnv_extern }
 
 ;;; parserObjectConstructorDef
 ;;; syntax parserObjectConstructorDef =
@@ -155,8 +158,8 @@ rule Constructor_call/parserConstructorDef:
   -- if p_callee = BLOCK
   -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
   ---- ;; bind type arguments to the callee context
-  -- if theta = `{ (typeParameterIR `: typeArgumentIR)* }
-  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta ]
+  -- if theta_parser = `{ (typeParameterIR `: typeArgumentIR)* }
+  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta_parser ]
   ---- ;; align constructor parameters with arguments
   -- if GIVEN constructorParameterIR_aligned*
         DEFAULT constructorParameterIR_default*
@@ -181,11 +184,13 @@ rule Constructor_call/parserConstructorDef:
       IC_local STO_3 |- parserStateIR* : IC_state STO_4
   ---- ;; create parser object with the callee value environment
   ---- ;; and instantiated state environment
+  -- if frame_parser = IC_callee_3.BLOCK.FRAME
+  -- if stateEnv_parser = IC_state.BLOCK.STATE
   -- if object_parser
-      = PARSER `< theta > `( parameterIR* )
-          `{ IC_callee_3.BLOCK.FRAME
+      = PARSER `< theta_parser > `( parameterIR* )
+          `{ frame_parser
              parserLocalDeclarationIR_inst*
-             IC_state.BLOCK.STATE }
+             stateEnv_parser }
 
 ;;; controlObjectConstructorDef
 ;;; syntax controlObjectConstructorDef =
@@ -206,8 +211,8 @@ rule Constructor_call/controlConstructorDef:
   -- if p_callee = BLOCK
   -- if IC_callee_0 = $inherit_i(GLOBAL, IC)
   ---- ;; bind type arguments to the callee context
-  -- if theta = `{ (typeParameterIR `: typeArgumentIR)* }
-  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta ]
+  -- if theta_control = `{ (typeParameterIR `: typeArgumentIR)* }
+  -- if IC_callee_1 = IC_callee_0[ .BLOCK.TYPE = theta_control ]
   ---- ;; align constructor parameters with arguments
   -- if GIVEN constructorParameterIR_aligned*
         DEFAULT constructorParameterIR_default*
@@ -226,20 +231,22 @@ rule Constructor_call/controlConstructorDef:
   ---- ;; instantiate local declarations
   -- ControlLocalDecls_inst:
       IC_callee_3 STO_2 |- controlLocalDeclarationIR*
-                         : IC_local_0 STO_3 controlLocalDeclarationIR'*
+                         : IC_local_0 STO_3 controlLocalDeclarationIR_inst*
   ---- ;; instantiate control body
   -- Block_inst:
       IC_local_0 STO_3 |- controlBodyIR
-                        : IC_local_1 STO_4 controlBodyIR'
+                        : IC_local_1 STO_4 controlBodyIR_inst
   ---- ;; create control object with callee value environment
   ---- ;; and local action definition environment
+  -- if frame_control = IC_callee_3.BLOCK.FRAME
   -- if `{ (callableId `: actionDef)* } = IC_local_1.BLOCK.CALLABLE
+  -- if actionDefEnv_control = `{ (callableId `: actionDef)* }
   -- if object_control
-      = CONTROL `< theta > `( parameterIR* )
-          `{ IC_callee_3.BLOCK.FRAME
-             controlLocalDeclarationIR'*
+      = CONTROL `< theta_control > `( parameterIR* )
+          `{ frame_control
+             controlLocalDeclarationIR_inst*
              `{ (callableId `: actionDef)* }
-             controlBodyIR' }
+             controlBodyIR_inst }
 
 ;;; packageObjectConstructorDef
 ;;; syntax packageObjectConstructorDef =
@@ -274,5 +281,7 @@ rule Constructor_call/packageConstructorDef:
          `@ p_callee IC_callee_2 constructorParameterIR_default*
       ~> STO_2 IC_callee_3
   ---- ;; create package object with final callee context
+  -- if theta_package = IC_callee_3.BLOCK.TYPE
+  -- if frame_package = IC_callee_3.BLOCK.FRAME
   -- if object_package
-      = PACKAGE `< IC_callee_3.BLOCK.TYPE > `{ IC_callee_3.BLOCK.FRAME }
+      = PACKAGE `< theta_package > `{ frame_package }
