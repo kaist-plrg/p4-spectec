@@ -12,18 +12,8 @@ struct Headers {
 
 struct Meta {}
 
-bool b_exit() {
-    exit;
-    return true;
-}
-
-bit<8> n_exit() {
-    exit;
-    return 8w1;
-}
-
-bool b_return_exit() {
-    return b_exit();
+bit<8> bool_to_bit8(in bool x) {
+    return 8w0;
 }
 
 parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm) {
@@ -107,7 +97,6 @@ control update(inout Headers h, inout Meta m) { apply {} }
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
     action foo() { }
     action nop() { }
-
     table t {
         actions = { nop; foo; }
         key = {
@@ -120,25 +109,38 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         default_action = nop;
     }
 
+    action f() {
+        exit;
+    }
+
+    table t1 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t2 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t3 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+
     apply {
         if (h.op.a == 0x12) {
-            if (b_exit())
+            if (t1.apply().hit) {
                 log_msg("unreachable");
+                h.op.a = 0;
+            }
         }
 
         else if (h.op.a == 0x13) {
-            if (b_exit())
+            if (t2.apply().hit) {
                 log_msg("unreachable");
-            else
+                h.op.a = 0;
+            } else {
                 log_msg("unreachable");
+                h.op.a = 0;
+            }
         }
 
-        else if (h.op.a == 0x14) {
-            b_return_exit();
-        }
+        // else if (h.op.a == 0x14) {
+        //     return t3.apply().hit;
+        // }
 
         else if (h.op.a == 0x15) {
-            switch (n_exit()) {
+            switch (bool_to_bit8(t3.apply().hit)) {
                 default: {
                     bit<8> nop = 0;
                 }
@@ -171,7 +173,6 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             }
             h.h[0].a = x - 100;
         }
-
     }
 }
 
