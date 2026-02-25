@@ -266,6 +266,13 @@ module Make
         let port = int_of_string port in
         let value_arch = Arch.add_mirror_session value_arch session port in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringAddMc (session, id) ->
+        let session = int_of_string session in
+        let id = int_of_string id in
+        let value_arch = Arch.add_mirror_session_mc value_arch session id in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringGet _session ->
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.McGroupCreate mgid ->
         let mgid = int_of_string mgid in
         let value_arch = Arch.mc_mgrp_create value_arch mgid in

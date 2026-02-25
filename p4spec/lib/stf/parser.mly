@@ -18,7 +18,7 @@ open Ast
 %}
 
 %token END
-%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT MIRRORING_ADD PACKET_WILDCARD
+%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT MIRRORING_ADD MIRRORING_ADD_MC MIRRORING_GET PACKET_WILDCARD
 %token MC_GROUP_CREATE MC_NODE_CREATE MC_NODE_ASSOCIATE
 %token<string> ID
 %token COLON COMMA DATA_TERN DOT
@@ -56,6 +56,10 @@ stmt:
     { Expect($2, None, false) }
   | MIRRORING_ADD session port
     { MirroringAdd ($2, $3) }
+  | MIRRORING_ADD_MC session mgid
+    { MirroringAddMc ($2, $3) }
+  | MIRRORING_GET session
+    { MirroringGet ($2) }
   | NO_PACKET
     { NoPacket }
   | PACKET port packet_data
@@ -158,7 +162,7 @@ arg:
     { $1, $3 }
 
 session:
-  | DATA_DEC
+  | INT_CONST_DEC
     { $1 }
 
 port:

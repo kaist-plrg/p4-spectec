@@ -332,6 +332,19 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the psa simulator"
 
+  let add_mirror_session_mc (value_arch : Value.t) (session : int)
+      (multicast_group : int) : Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let mirrortable =
+      Mirror.Table.add session multicast_group arch_state.mirrortable
+    in
+    arch_state
+    |> Arch.with_mirrortable mirrortable
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
+
   (* Multicast interface *)
 
   let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
@@ -438,13 +451,13 @@ struct
     in
     modify (fun (value_ctx, _, txs) -> (value_ctx, value_arch, txs))
 
-  (* let is_ingress_clone : bool state =
-     let+ value_ctx, value_arch, _ = get in
-     let value_clone =
-       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-         "ingress_output_metadata" "clone"
-     in
-     unpack_p4_bool value_clone *)
+  let is_ingress_clone : bool state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_clone =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "clone"
+    in
+    unpack_p4_bool value_clone
 
   let is_ingress_drop : bool state =
     let+ value_ctx, value_arch, _ = get in
@@ -461,6 +474,15 @@ struct
         "ingress_output_metadata" "resubmit"
     in
     unpack_p4_bool value_drop
+
+  let get_ingress_clone_session_id : int state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_session =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "clone_session_id"
+    in
+    let _, int_session = unpack_p4_fixedBit value_session in
+    Bigint.to_int_exn int_session
 
   let get_multicast_group : int state =
     let+ value_ctx, value_arch, _ = get in
@@ -495,6 +517,15 @@ struct
     in
     let width_port, int_port = unpack_p4_fixedBit value_port in
     Bigint.(width_port = of_int 32 && int_port = of_int 0xfffffffa)
+
+  (* let get_egress_clone_session_id : int state =
+     let+ value_ctx, value_arch, _ = get in
+     let value_session =
+       Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+         "egress_output_metadata" "clone_session_id"
+     in
+     let _, int_session = unpack_p4_fixedBit value_session in
+     Bigint.to_int_exn int_session *)
 
   (* Pipeline initializer *)
 
@@ -553,6 +584,24 @@ struct
     let value_ctx =
       Spec.Rel.psa_egress_init_metadata value_ctx value_arch port
         "NORMAL_MULTICAST" cos instance
+    in
+    put (value_ctx, value_arch, txs)
+
+  let prepare_clone_i2e_ctx (instance : Multicast.instance)
+      (port : Multicast.port) : unit state =
+    let* value_ctx, value_arch, txs = get in
+    (* Prepare class of service *)
+    let value_cos =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "class_of_service"
+    in
+    let cos =
+      unpack_p4_fixedBit value_cos |> snd |> Bigint.to_int |> Option.get
+    in
+    (* Init egress metadata *)
+    let value_ctx =
+      Spec.Rel.psa_egress_init_metadata value_ctx value_arch port "CLONE_I2E"
+        cos instance
     in
     put (value_ctx, value_arch, txs)
 
@@ -659,6 +708,52 @@ struct
                         (value_ctx_original, value_arch, txs)))
         in
         sequence actions >> return ()
+    | None -> return ()
+
+  let schedule_clone_i2e (session : int) : unit state =
+    let open Multicast in
+    let* arch_state = get_arch_state in
+    match Mirror.Table.find_opt session arch_state.mirrortable with
+    | Some multicast_group -> (
+        match GroupMap.find_opt multicast_group arch_state.multicast.groups with
+        | Some node_handles ->
+            (* Preserve original store for ingress packet_in *)
+            let* _, value_arch_original, _ = get in
+            (* Prepare egress packet *)
+            let* value_ctx, value_arch, txs = remove_ingress_packet_in >> get in
+            let value_arch =
+              let egress_packet_in = get_ingress_packet_in value_arch in
+              let value_egress_packet_in =
+                PacketIn egress_packet_in |> object_state_to_yojson
+                |> wrap_extern_v "objectState"
+              in
+              let value_objectId =
+                wrap_list_v "id" [ wrap_text_v "egress_packet_in" ]
+              in
+              Spec.Func.update_objectState_e value_arch value_objectId
+                value_egress_packet_in
+            in
+            let* () = put (value_ctx, value_arch, txs) in
+            (* Prepare clone actions *)
+            let* arch_state = get_arch_state in
+            let actions =
+              node_handles
+              |> List.filter_map (fun handle ->
+                     NodeMap.find_opt handle arch_state.multicast.nodes)
+              |> List.flatten
+              |> List.map (fun node ->
+                     let* value_ctx_original, _, _ = get in
+                     prepare_clone_i2e_ctx node.instance node.port
+                     >> schedule_packet Egress
+                     >> modify (fun (_, value_arch, txs) ->
+                            (value_ctx_original, value_arch, txs)))
+            in
+            let* arch_state = sequence actions >> get_arch_state in
+            (* Restore original store *)
+            modify (fun (value_ctx, _, txs) ->
+                (value_ctx, value_arch_original, txs))
+            >> put_arch_state arch_state >> return ()
+        | None -> return ())
     | None -> return ()
 
   let schedule_resubmit : unit state =
@@ -769,6 +864,13 @@ struct
   (* Packet replication engine *)
 
   let run_pre : unit state =
+    let* clone = is_ingress_clone in
+    let* () =
+      if clone then
+        let* session = get_ingress_clone_session_id in
+        schedule_clone_i2e session
+      else return ()
+    in
     let* drop = is_ingress_drop in
     if drop then return ()
     else

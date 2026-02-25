@@ -62,6 +62,7 @@ module type ARCH = sig
   (* Mirror session interface *)
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
+  val add_mirror_session_mc : Value.t -> int -> int -> Value.t
 
   (* Multicast interface *)
 

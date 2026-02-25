@@ -96,6 +96,10 @@ let print_stmt fmt = function
         ctr print_cond cond print_number number
   | MirroringAdd (session, port) ->
       F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
+  | MirroringAddMc (session, id) ->
+      F.fprintf fmt "mirroring_add_mc %a %a" print_session session print_id id
+  | MirroringGet session ->
+      F.fprintf fmt "mirroring_get %a" print_session session
   | McGroupCreate id -> F.fprintf fmt "mc_mgrp_create %a" print_number id
   | McNodeCreate (id, port) ->
       F.fprintf fmt "mc_node_create %a %a" print_number id

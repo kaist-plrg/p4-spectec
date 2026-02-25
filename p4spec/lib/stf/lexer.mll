@@ -100,7 +100,11 @@ and keyword = parse
   | "expect"
     { lexer := Packet_data; EXPECT }
   | "mirroring_add"
-    { lexer := Packet_data; MIRRORING_ADD }
+    { MIRRORING_ADD }
+  | "mirroring_add_mc"
+    { MIRRORING_ADD_MC }
+  | "mirroring_get"
+    { MIRRORING_GET }
   | "no_packet"
     { NO_PACKET }
   | "packet"

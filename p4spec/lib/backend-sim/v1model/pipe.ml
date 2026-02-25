@@ -397,6 +397,10 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the v1model simulator"
+
   (* Multicast interface *)
 
   let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
