@@ -22,18 +22,30 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         b.extract(h.op);
 
         transition select(h.op.a) {
-            0x00: key_abort;
-            0x01: entry_abort;
+            0x00: key_head_abort;
+            0x01: key_cons_abort;
+            0x02: entry_abort;
+            0x03: multiple_entries_cons_abort;
             default: accept;
         }
     }
 
-    state key_abort {
+    state key_head_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state key_cons_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
 
     state entry_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state multiple_entries_cons_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -44,7 +56,7 @@ control update(inout Headers h, inout Meta m) { apply {} }
 
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
     action nop() {}
-    table t1 {
+    table t_key_head_abort {
         actions = { nop; }
         key = {
             n_exit() : exact;
@@ -54,7 +66,20 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
         default_action = nop;
     }
-    table t2 {
+
+    table t_key_cons_abort {
+        actions = { nop; }
+        key = {
+            h.op.a : exact;
+            n_exit() : exact;
+        }
+        const entries = {
+            (1, 1) : nop();
+        }
+        default_action = nop;
+    }
+
+    table t_entry_abort {
         actions = { nop; }
         key = {
             h.op.a : exact;
@@ -64,13 +89,34 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
         default_action = nop;
     }
+
+    table t_multiple_entries_cons_abort {
+        actions = { nop; }
+        key = {
+            h.op.a : exact;
+        }
+        const entries = {
+            1 : nop();
+            n_exit() : nop();
+        }
+        default_action = nop;
+    }
+
     apply {
         if (h.op.a == 0x10) {
-            t1.apply();
+            t_key_head_abort.apply();
         }
 
         else if (h.op.a == 0x11) {
-            t2.apply();
+            t_key_cons_abort.apply();
+        }
+
+        else if (h.op.a == 0x12) {
+            t_entry_abort.apply();
+        }
+
+        else if (h.op.a == 0x13) {
+            t_multiple_entries_cons_abort.apply();
         }
     }
 }
