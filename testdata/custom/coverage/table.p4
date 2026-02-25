@@ -12,9 +12,8 @@ struct Headers {
 
 struct Meta {}
 
-bit<8> n_exit() {
-    exit;
-    return 8w1;
+bit<8> bool_to_bit8(in bool x) {
+    return 8w0;
 }
 
 parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm) {
@@ -55,11 +54,17 @@ control vrfy(inout Headers h, inout Meta m) { apply {} }
 control update(inout Headers h, inout Meta m) { apply {} }
 
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    action f() {
+        exit;
+    }
+
+    table t { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+
     action nop() {}
     table t_key_head_abort {
         actions = { nop; }
         key = {
-            n_exit() : exact;
+            bool_to_bit8(t.apply().hit) : exact;
         }
         const entries = {
             1 : nop();
@@ -71,7 +76,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         actions = { nop; }
         key = {
             h.op.a : exact;
-            n_exit() : exact;
+            bool_to_bit8(t.apply().hit) : exact;
         }
         const entries = {
             (1, 1) : nop();
@@ -85,7 +90,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             h.op.a : exact;
         }
         const entries = {
-            n_exit() : nop();
+            bool_to_bit8(t.apply().hit) : nop();
         }
         default_action = nop;
     }
@@ -97,7 +102,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
         const entries = {
             1 : nop();
-            n_exit() : nop();
+            bool_to_bit8(t.apply().hit) : nop();
         }
         default_action = nop;
     }
