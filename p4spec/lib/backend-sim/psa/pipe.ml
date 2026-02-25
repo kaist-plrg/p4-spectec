@@ -332,16 +332,41 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the psa simulator"
 
-  let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
-    error_no_region "mc_mgrp_create is not implemented for the psa simulator"
+  let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast = Multicast.State.group_create mgid arch_state.multicast in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+  let mc_node_create (value_arch : Value.t) (instance : int) (port : int) :
       Value.t =
-    error_no_region "mc_node_create is not implemented for the psa simulator"
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast =
+      Multicast.State.node_create instance port arch_state.multicast
+    in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
+  let mc_node_associate (value_arch : Value.t) (mgid : int) (handle : int) :
       Value.t =
-    error_no_region "mc_node_associate is not implemented for the psa simulator"
+    let arch_state =
+      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    in
+    let multicast =
+      Multicast.State.node_associate mgid handle arch_state.multicast
+    in
+    arch_state
+    |> Arch.with_multicast multicast
+    |> Arch.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   (* Packet state *)
 
@@ -435,6 +460,15 @@ struct
     in
     unpack_p4_bool value_drop
 
+  let get_multicast_group : int state =
+    let+ value_ctx, value_arch, _ = get in
+    let value_mcast_grp =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "multicast_group"
+    in
+    let _, int_mcast_grp = unpack_p4_fixedBit value_mcast_grp in
+    Bigint.to_int_exn int_mcast_grp
+
   (* let is_egress_clone : bool state =
      let+ value_ctx, value_arch, _ = get in
      let value_clone =
@@ -502,6 +536,24 @@ struct
     in
     put (value_ctx, value_arch, txs)
 
+  let prepare_multicast_ctx (instance : Multicast.instance)
+      (port : Multicast.port) : unit state =
+    let* value_ctx, value_arch, txs = get in
+    (* Prepare class of service *)
+    let value_cos =
+      Spec.Rel.lvalue_read_dot_global value_ctx value_arch
+        "ingress_output_metadata" "class_of_service"
+    in
+    let cos =
+      unpack_p4_fixedBit value_cos |> snd |> Bigint.to_int |> Option.get
+    in
+    (* Init egress metadata *)
+    let value_ctx =
+      Spec.Rel.psa_egress_init_metadata value_ctx value_arch port
+        "NORMAL_MULTICAST" cos instance
+    in
+    put (value_ctx, value_arch, txs)
+
   let prepare_resubmit_ctx : unit state =
     let* value_ctx, value_arch, txs = get in
     (* Prepare ingress port *)
@@ -563,11 +615,48 @@ struct
     in
     (* Schedule packet *)
     put (value_ctx, value_arch, txs)
-    >> prepare_unicast_ctx >> remove_egress_packet_out >> schedule_packet Egress
+    >> prepare_unicast_ctx >> schedule_packet Egress
+
+  let schedule_multicast (multicast_group : int) : unit state =
+    let open Multicast in
+    let* arch_state = get_arch_state in
+    match GroupMap.find_opt multicast_group arch_state.multicast.groups with
+    | Some node_handles ->
+        (* Prepare egress packet *)
+        let* value_ctx, value_arch, txs = get in
+        let value_arch =
+          let egress_packet_in =
+            let packet_in = get_ingress_packet_in value_arch in
+            let packet_out = get_ingress_packet_out value_arch in
+            Format.asprintf "%a" Core.Object.Packet.pp (packet_in, packet_out)
+          in
+          let value_egress_packet_in =
+            PacketIn (Core.Object.PacketIn.init egress_packet_in)
+            |> object_state_to_yojson
+            |> wrap_extern_v "objectState"
+          in
+          let value_objectId =
+            wrap_list_v "id" [ wrap_text_v "egress_packet_in" ]
+          in
+          Spec.Func.update_objectState_e value_arch value_objectId
+            value_egress_packet_in
+        in
+        let* () = put (value_ctx, value_arch, txs) in
+        (* Prepare multicast actions *)
+        let* arch_state = get_arch_state in
+        let actions =
+          node_handles
+          |> List.filter_map (fun handle ->
+                 NodeMap.find_opt handle arch_state.multicast.nodes)
+          |> List.map (fun node ->
+                 prepare_multicast_ctx node.instance node.port
+                 >> schedule_packet Egress)
+        in
+        sequence actions >> return ()
+    | None -> return ()
 
   let schedule_resubmit : unit state =
-    prepare_resubmit_ctx >> remove_ingress_packet_in
-    >> remove_ingress_packet_out >> schedule_packet Ingress
+    prepare_resubmit_ctx >> remove_ingress_packet_in >> schedule_packet Ingress
 
   let schedule_recirculate : unit state =
     let* value_ctx, value_arch, txs = get in
@@ -589,8 +678,7 @@ struct
     in
     (* Schedule packet *)
     put (value_ctx, value_arch, txs)
-    >> prepare_recirculate_ctx >> remove_ingress_packet_out
-    >> schedule_packet Ingress
+    >> prepare_recirculate_ctx >> schedule_packet Ingress
 
   let transfer_packet : unit state =
     let* value_ctx, value_arch, txs = get in
@@ -598,7 +686,7 @@ struct
     let port =
       let value_egress_port =
         Spec.Rel.lvalue_read_dot_global value_ctx value_arch
-          "ingress_output_metadata" "egress_port"
+          "egress_input_metadata" "egress_port"
       in
       let _, int_egress_port = unpack_p4_fixedBit value_egress_port in
       Bigint.to_int_exn int_egress_port
@@ -668,7 +756,9 @@ struct
 
   let drive_ig : Value.t state = apply Spec.Rel.psa_ingress
   let drive_id : Value.t state = apply Spec.Rel.psa_ingress_deparser
-  let drive_ingress_pipe : Value.t state = drive_ip >> drive_ig >> drive_id
+
+  let drive_ingress_pipe : Value.t state =
+    drive_ip >> drive_ig >> remove_ingress_packet_out >> drive_id
 
   (* Packet replication engine *)
 
@@ -677,7 +767,11 @@ struct
     if drop then return ()
     else
       let* resubmit = is_ingress_resubmit in
-      if resubmit then schedule_resubmit else schedule_unicast
+      if resubmit then schedule_resubmit
+      else
+        let* multicast_group = get_multicast_group in
+        if multicast_group <> 0 then schedule_multicast multicast_group
+        else schedule_unicast
 
   (* Egress pipeline driver *)
 
@@ -696,7 +790,9 @@ struct
 
   let drive_eg : Value.t state = apply Spec.Rel.psa_egress
   let drive_ed : Value.t state = apply Spec.Rel.psa_egress_deparser
-  let drive_egress_pipe : Value.t state = drive_ep >> drive_eg >> drive_ed
+
+  let drive_egress_pipe : Value.t state =
+    drive_ep >> drive_eg >> remove_egress_packet_out >> drive_ed
 
   (* Buffering queueing engine *)
 
