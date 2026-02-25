@@ -1,0 +1,214 @@
+<!-- For collapsible table of contents,
+     adapted https://github.com/asciidoctor/asciidoctor/issues/699 -->
+
+<script>
+    // Note: the extra spaces around the JSDoc types are necessary otherwise
+    // Asciidoctor thinks it is supposed to substitute attributes.
+    // See https://github.com/asciidoctor/asciidoctor/issues/4663
+    document.addEventListener("DOMContentLoaded", function () {
+        /**
+         * @typedef TocEntry
+         * @property { string } title The title of the section.
+         * @property { string } href The link to the section.
+         * @property { TocEntry[] } children Subsections (empty array if none).
+         */
+
+        /**
+         * Extract the Table of Contents from the HTML that Asciidoctor
+         * generates.
+         *
+         * @param { Element } ul A <ul> element in the ToC.
+         * @returns { TocEntry[] } List of ToC entries.
+         */
+        function extractToc(ul) {
+            return Array.from(ul.children).map(li => {
+                const link = li.querySelector("a");
+                const sublist = li.querySelector("ul");
+                return {
+                    title: link?.textContent || "",
+                    href: link?.getAttribute("href") || "",
+                    children: sublist !== null ? extractToc(sublist) : []
+                };
+            });
+        }
+
+        /**
+         * Creates an HTML element for a ToC item that uses <details>
+         * so the ToC is foldable.
+         *
+         * @param { TocEntry } entry - The ToC item data.
+         * @returns { HTMLElement } The created element.
+         */
+        function createToC(entry) {
+            if (entry.children.length === 0) {
+                const link = document.createElement("a");
+                link.classList.add("toc-link", "toc-link-leaf");
+                link.textContent = entry.title;
+                link.href = entry.href;
+                return link;
+            }
+
+            const details = document.createElement("details");
+            details.classList.add("toc-section");
+
+            const summary = document.createElement("summary");
+            summary.classList.add("toc-summary");
+
+            const link = document.createElement("a");
+            link.classList.add("toc-link");
+            link.textContent = entry.title;
+            link.href = entry.href;
+            link.addEventListener("click", (e) => {
+                e.stopPropagation();   // prevent summary from double-toggling
+                details.open = !details.open;
+                // default navigation (href) proceeds normally
+            });
+
+            summary.appendChild(link);
+            details.appendChild(summary);
+
+            for (const child of entry.children) {
+                details.appendChild(createToC(child));
+            }
+
+            return details;
+        }
+
+        const toc = document.getElementById("toc");
+        const tocUl = document.querySelector("#toc ul");
+        if (toc === null || tocUl === null) {
+            throw Error("#toc/#toc ul element not found");
+        }
+
+        // Extract ToC structure.
+        const tocData = extractToc(tocUl);
+
+        // Create new ToC.
+        const newToc = document.createElement("div");
+        newToc.id = "toc";
+        newToc.className = "toc2";
+        for (const entry of tocData) {
+            newToc.appendChild(createToC(entry));
+        }
+
+        // Replace old ToC with foldable ToC.
+        toc.replaceWith(newToc);
+
+        // Open level-1 entries so level-2 summaries (NUM.NUM) are visible but collapsed
+        for (const el of newToc.querySelectorAll(":scope > details")) {
+            el.open = true;
+        }
+
+        // Expand / Collapse all button
+        const toggleBtn = document.createElement("button");
+        toggleBtn.id = "toc-toggle-btn";
+        toggleBtn.textContent = "Collapse all";
+        let allExpanded = true;
+        toggleBtn.addEventListener("click", () => {
+            allExpanded = !allExpanded;
+            for (const d of newToc.querySelectorAll("details")) {
+                d.open = allExpanded;
+            }
+            toggleBtn.textContent = allExpanded ? "Collapse all" : "Expand all";
+        });
+        newToc.insertBefore(toggleBtn, newToc.firstChild);
+    });
+</script>
+<style>
+/* ── Links (shared base) ─────────────────────────────── */
+#toc a.toc-link {
+    display: block;
+    padding: 4px 8px 4px 6px;
+    border-radius: 3px;
+    color: #3e3e3e;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+#toc a.toc-link:hover {
+    background: rgba(177, 33, 70, 0.08);
+    color: #B12146;
+}
+
+/* ── Summary row (parent section header) ─────────────── */
+#toc summary.toc-summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+#toc summary.toc-summary::-webkit-details-marker { display: none; }
+#toc summary.toc-summary::marker               { display: none; }
+
+/* custom rotating chevron */
+#toc summary.toc-summary::before {
+    content: "▶";
+    font-size: 0.6em;
+    color: #aaa;
+    flex-shrink: 0;
+    width: 1em;
+    text-align: center;
+    transition: transform 0.2s;
+}
+#toc details[open] > summary.toc-summary::before {
+    transform: rotate(90deg);
+}
+
+/* link inside summary fills the row */
+#toc summary.toc-summary > a.toc-link {
+    flex: 1;
+    padding: 4px 4px 4px 2px;
+}
+
+/* ── Leaf items (no children) ────────────────────────── */
+#toc a.toc-link-leaf {
+    display: flex;
+    align-items: center;
+    gap: 6px;   /* 4px (same as summary) + 2px to match a.toc-link's padding-left:2px */
+    padding: 3px 8px 3px 0;
+    color: #3e3e3e;
+    text-decoration: none;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+}
+/* phantom chevron — identical geometry to the real one, just invisible */
+#toc a.toc-link-leaf::before {
+    content: "▶";
+    font-size: 0.6em;
+    width: 1em;
+    flex-shrink: 0;
+    text-align: center;
+    visibility: hidden;
+}
+#toc a.toc-link-leaf:hover {
+    background: rgba(177, 33, 70, 0.08);
+    color: #B12146;
+}
+
+/* ── Nesting indentation (cascades automatically) ────── */
+#toc details > details,
+#toc details > a.toc-link-leaf {
+    padding-left: 1em;
+}
+
+/* ── Details reset ───────────────────────────────────── */
+#toc details.toc-section { margin: 0; }
+
+/* ── Expand / Collapse all button ────────────────────── */
+#toc-toggle-btn {
+    display: block;
+    margin: 0 0 8px;
+    padding: 3px 10px;
+    font-size: 0.8em;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #666;
+}
+#toc-toggle-btn:hover {
+    border-color: #B12146;
+    color: #B12146;
+}
+</style>
