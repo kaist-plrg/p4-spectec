@@ -409,11 +409,14 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (value_arch : Value.t) (rid : int) (port : int) : Value.t =
+  let mc_node_create (value_arch : Value.t) (rid : int) (ports : int list) :
+      Value.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch.of_value
     in
-    let multicast = Multicast.State.node_create rid port arch_state.multicast in
+    let multicast =
+      Multicast.State.node_create rid ports arch_state.multicast
+    in
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
@@ -768,6 +771,7 @@ struct
           node_handles
           |> List.filter_map (fun handle ->
                  NodeMap.find_opt handle arch_state.multicast.nodes)
+          |> List.flatten
           |> List.map (fun node ->
                  prepare_multicast_ctx node.rid node.port
                  >> schedule_packet Egress)

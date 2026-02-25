@@ -332,6 +332,8 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the psa simulator"
 
+  (* Multicast interface *)
+
   let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch.of_value
@@ -342,13 +344,13 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (value_arch : Value.t) (instance : int) (port : int) :
-      Value.t =
+  let mc_node_create (value_arch : Value.t) (instance : int) (ports : int list)
+      : Value.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch.of_value
     in
     let multicast =
-      Multicast.State.node_create instance port arch_state.multicast
+      Multicast.State.node_create instance ports arch_state.multicast
     in
     arch_state
     |> Arch.with_multicast multicast
@@ -648,9 +650,13 @@ struct
           node_handles
           |> List.filter_map (fun handle ->
                  NodeMap.find_opt handle arch_state.multicast.nodes)
+          |> List.flatten
           |> List.map (fun node ->
+                 let* value_ctx_original, _, _ = get in
                  prepare_multicast_ctx node.instance node.port
-                 >> schedule_packet Egress)
+                 >> schedule_packet Egress
+                 >> modify (fun (_, value_arch, txs) ->
+                        (value_ctx_original, value_arch, txs)))
         in
         sequence actions >> return ()
     | None -> return ()

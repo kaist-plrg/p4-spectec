@@ -41,5 +41,5 @@ type stmt =
   | CheckCounter of id * id_or_index * (ctr option * cond * number)
   | MirroringAdd of session * port
   | McGroupCreate of id
-  | McNodeCreate of id * port
+  | McNodeCreate of id * port list
   | McNodeAssociate of id * handle

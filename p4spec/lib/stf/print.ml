@@ -98,7 +98,9 @@ let print_stmt fmt = function
       F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
   | McGroupCreate id -> F.fprintf fmt "mc_mgrp_create %a" print_number id
   | McNodeCreate (id, port) ->
-      F.fprintf fmt "mc_node_create %a %a" print_number id print_number port
+      F.fprintf fmt "mc_node_create %a %a" print_number id
+        (F.pp_print_list ~pp_sep:(fun fmt () -> F.fprintf fmt " ") print_number)
+        port
   | McNodeAssociate (id, handle) ->
       F.fprintf fmt "mc_mgrp_associate %a %a" print_number id print_number
         handle

@@ -66,7 +66,7 @@ module type ARCH = sig
   (* Multicast interface *)
 
   val mc_mgrp_create : Value.t -> int -> Value.t
-  val mc_node_create : Value.t -> int -> int -> Value.t
+  val mc_node_create : Value.t -> int -> int list -> Value.t
   val mc_node_associate : Value.t -> int -> int -> Value.t
 
   (* Pipeline evaluation *)

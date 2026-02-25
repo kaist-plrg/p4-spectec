@@ -64,7 +64,7 @@ stmt:
     { SetDefault($2, $3) }
   | MC_GROUP_CREATE mgid
     { McGroupCreate($2) }
-  | MC_NODE_CREATE rid number
+  | MC_NODE_CREATE rid number_list
     { McNodeCreate($2, $3) }
   | MC_NODE_ASSOCIATE mgid handle
     { McNodeAssociate($2, $3) }
@@ -88,6 +88,12 @@ number_or_lpm:
     { Ast.Slash($1, $3) }
   | number
     { Ast.Num($1) }
+
+number_list:
+  | number
+    { [$1] }
+  | number number_list
+    { $1 :: $2 }
 
 match_list:
   | matcht

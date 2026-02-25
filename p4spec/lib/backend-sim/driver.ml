@@ -270,10 +270,10 @@ module Make
         let mgid = int_of_string mgid in
         let value_arch = Arch.mc_mgrp_create value_arch mgid in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
-    | Stf.Ast.McNodeCreate (rid, port) ->
+    | Stf.Ast.McNodeCreate (rid, ports) ->
         let rid = int_of_string rid in
-        let port = int_of_string port in
-        let value_arch = Arch.mc_node_create value_arch rid port in
+        let ports = List.map int_of_string ports in
+        let value_arch = Arch.mc_node_create value_arch rid ports in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.McNodeAssociate (mgid, handle) ->
         let mgid = int_of_string mgid in

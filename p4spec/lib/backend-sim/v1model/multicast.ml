@@ -20,7 +20,7 @@ end)
 type node = { port : port; rid : rid } [@@deriving yojson]
 
 module NodeMap = Json.Map.Make (struct
-  type t = node [@@deriving yojson]
+  type t = node list [@@deriving yojson]
 end)
 
 (* Multicast state *)
@@ -43,12 +43,12 @@ module State = struct
     let groups = GroupMap.add mgid group groups in
     { next_handle; groups; nodes }
 
-  let node_create (rid : rid) (port : port) ({ next_handle; groups; nodes } : t)
-      : t =
+  let node_create (rid : rid) (ports : port list)
+      ({ next_handle; groups; nodes } : t) : t =
     let handle = next_handle in
-    let node = { port; rid } in
+    let nodes_created = List.map (fun port -> { port; rid }) ports in
     let next_handle = handle + 1 in
-    let nodes = NodeMap.add handle node nodes in
+    let nodes = NodeMap.add handle nodes_created nodes in
     { next_handle; groups; nodes }
 
   let node_associate (mgid : mgid) (handle : handle)

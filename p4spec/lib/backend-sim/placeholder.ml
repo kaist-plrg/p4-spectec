@@ -121,7 +121,7 @@ struct
   let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
     error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_ports : int list) :
       Value.t =
     error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
