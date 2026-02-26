@@ -1066,11 +1066,22 @@ and prosify_tablegroup (ctx : Ctx.t) (at : region) (tablegroup : tablegroup) :
   in
   let row_headers_pl = List.map find_signatures row_headers_pat in
   let param_pl = prosify_param ctx param in
+  let prosify_col_header cid (hints : Sl.hint list) : Pl.col_header =
+    let label_opt =
+      List.find_map
+        (fun El.{ hintid; hintexp } ->
+          if hintid.it = "tbl_col" then Hints.Label.init hintexp else None)
+        hints
+    in
+    match label_opt with
+    | Some label -> Pl.LabelCol label
+    | None -> Pl.FuncCol cid
+  in
   let col_headers_pl =
     tablecols
-    |> List.map (fun (cid, _, _) ->
-           let func_title = prosify_func_title ctx cid [] [ param ] typ in
-           (cid, func_title))
+    |> List.map (fun (cid, _, col_hints) ->
+           let col_header = prosify_col_header cid col_hints in
+           col_header)
   in
   (* Re-map the content against the refined row headers *)
   let content =

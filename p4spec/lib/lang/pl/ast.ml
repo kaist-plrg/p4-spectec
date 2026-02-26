@@ -205,7 +205,7 @@ type group_title = id * Sl.hint list * param * typ
    than any single explicit expression). *)
 type row_header = exp list
 
-type col_header = id * func_title
+type col_header = FuncCol of id | LabelCol of Hints.Label.t
 
 type tablegroup = {
   title : group_title;

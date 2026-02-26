@@ -733,7 +733,7 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
   in
   let col_headers_prose =
     col_headers
-    |> List.map (fun (_, title) -> render_func_title title)
+    |> List.map (function FuncCol id -> id.it | LabelCol label -> label)
     |> String.concat " | "
   in
   let table_header =
