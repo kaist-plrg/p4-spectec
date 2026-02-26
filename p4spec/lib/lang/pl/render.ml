@@ -726,7 +726,7 @@ and render_builtin_func_def (builtinfunc : builtinfunc) : string =
 
 and render_tablegroup_def (tablegroup : tablegroup) : string =
   let { title; row_headers; col_headers; content } = tablegroup in
-  let gid, _hints, param, _typ = title in
+  let gid, _hint_true, _hint_false, param, _typ = title in
   let num_cols = List.length col_headers + 1 in
   let table_meta =
     "[cols=\"" ^ string_of_int num_cols ^ "\", options=\"header\"]\n"
@@ -814,7 +814,7 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
         |> List.mapi (fun idx exp ->
                "["
                ^ string_of_int (idx + 1)
-               ^ "] " ^ render_exp in_prose exp ^ "\n")
+               ^ "] " ^ render_exp in_prose exp ^ " +\n")
         |> String.concat "\n")
       ^ "--"
   in

@@ -969,7 +969,7 @@ and lookup_cell (ctx : Ctx.t) (row_header_pat : Pattern.t)
 
 and prosify_tablegroup (ctx : Ctx.t) (at : region) (tablegroup : tablegroup) :
     Pl.def =
-  let gid, param, typ, tablecols, hints = tablegroup in
+  let gid, param, typ, tablecols, _ = tablegroup in
   let ctx = Ctx.enter_func ctx gid in
   let typ_match =
     match param.it with Sl.ExpP (t, _) -> t | Sl.DefP _ -> assert false
@@ -1092,7 +1092,9 @@ and prosify_tablegroup (ctx : Ctx.t) (at : region) (tablegroup : tablegroup) :
           tablecols)
       row_headers_pat
   in
-  let title = (gid, hints, param_pl, typ) in
+  let hint_true = Ctx.find_hint_prose_true ctx (`Func gid) in
+  let hint_false = Ctx.find_hint_prose_false ctx (`Func gid) in
+  let title = (gid, hint_true, hint_false, param_pl, typ) in
   let tablegroup_pl =
     {
       Pl.title;

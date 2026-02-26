@@ -80,6 +80,16 @@ and validate' (cursor : int) (hint : t) (items : 'a list) : (int, string) result
       Ok cursor_r
   | _ -> Ok cursor
 
+(* Fill a specific hole index with a text label *)
+
+let rec fill_label (idx : int) (label : string) (hint : t) : t =
+  match hint with
+  | HoleH (`Num i) when i = idx -> TextH label
+  | SeqH hints -> SeqH (List.map (fill_label idx label) hints)
+  | BrackH (l, h, r) -> BrackH (l, fill_label idx label h, r)
+  | FuseH (h1, h2) -> FuseH (fill_label idx label h1, fill_label idx label h2)
+  | _ -> hint
+
 (* Alternation *)
 
 let rec alternate ?(base_text : string -> string = fun x -> x)

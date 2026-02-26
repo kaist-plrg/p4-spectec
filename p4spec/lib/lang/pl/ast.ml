@@ -198,7 +198,7 @@ type func = func_title * block
 
 (* Tables *)
 
-type group_title = id * Sl.hint list * param * typ
+type group_title = id * Hints.Alter.t option * Hints.Alter.t option * param * typ
 
 (* A row header is one or more match expressions from the SL tablerow
    signatures that cover this row (multiple when refined rows are finer

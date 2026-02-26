@@ -79,7 +79,7 @@ module Prose = struct
     type value = Value.t
 
     let id_of_group_title group_title =
-      let id, _, _, _ = group_title in
+      let id, _, _, _, _ = group_title in
       id
 
     let init_def (def : Pl.def) : (key * value) option =
