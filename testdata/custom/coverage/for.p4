@@ -158,7 +158,6 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x11) {
-            bit<8> i;
             for (bit<8> i = bto8(t2.apply().hit); i < 3; i = i + 1) { }
         }
 
