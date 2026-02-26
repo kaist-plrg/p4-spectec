@@ -45,7 +45,7 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x0C: for_condition_abort;
             0x0D: for_condition_false;
             0x0E: for_return;
-            0x0F: test;
+            0x0F: for_in_range_empty;
             default: accept;
         }
     }
@@ -96,6 +96,11 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 
     state for_in_body_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state for_in_range_empty {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -224,6 +229,12 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         else if (h.op.a == 0x1E) {
             for (bit<8> i = 0; i < 1; i = i + 1) {
                 return;
+            }
+        }
+
+        else if (h.op.a == 0x1F) {
+            for (bit<8> i in 3..0) {
+                h.op.a = 0;
             }
         }
     }
