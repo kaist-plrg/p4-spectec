@@ -81,9 +81,51 @@ let load_defs (henv : HEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
       (henv, tdenv)
   | ExternDecD (fid, _, _, _, hints)
   | BuiltinDecD (fid, _, _, _, hints)
-  | TableDecD (fid, _, _, _, hints)
   | FuncDecD (fid, _, _, _, _, _, hints) ->
       let henv = load_hints (`Func fid) henv hints in
+      (henv, tdenv)
+  | TableGroupD (gid, _, _, tablecols, hints) ->
+      let henv = load_hints (`Func gid) henv hints in
+      let prose_true_opt =
+        HEnv.find_alter henv ("prose_true" $ no_region) (`Func gid)
+      in
+      let prose_false_opt =
+        HEnv.find_alter henv ("prose_false" $ no_region) (`Func gid)
+      in
+      let henv =
+        List.fold_left
+          (fun henv (cid, _, col_hints) ->
+            let col_label_opt =
+              List.find_map
+                (fun El.{ hintid; hintexp } ->
+                  if hintid.it = "tbl_col" then Hints.Label.init hintexp
+                  else None)
+                col_hints
+            in
+            match col_label_opt with
+            | None -> henv
+            | Some col_label ->
+                let col_fid = gid.it ^ "." ^ cid.it $ gid.at in
+                let henv =
+                  match prose_true_opt with
+                  | Some pt ->
+                      HEnv.add_alter henv ("prose_true" $ no_region)
+                        (`Func col_fid)
+                        (Hints.Alter.fill_label 1 col_label pt)
+                  | None -> henv
+                in
+                let henv =
+                  match prose_false_opt with
+                  | Some pf ->
+                      HEnv.add_alter henv
+                        ("prose_false" $ no_region)
+                        (`Func col_fid)
+                        (Hints.Alter.fill_label 1 col_label pf)
+                  | None -> henv
+                in
+                henv)
+          henv tablecols
+      in
       (henv, tdenv)
 
 let load_spec (spec : Sl.spec) : HEnv.t * TDEnv.t =

@@ -45,7 +45,9 @@ let adoc_bold (s : string) = "*" ^ s ^ "*"
 let adoc_mono (s : string) = "``" ^ s ^ "``"
 
 let adoc_mono_chopped (s : string) =
-  s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
+  s |> String.split_on_char ' '
+  |> List.filter (function "" -> false | _ -> true)
+  |> List.map adoc_mono |> String.concat " "
 
 let adoc_as_code (ctx : context) (s : string) : string =
   if ctx.in_code then s else adoc_mono_chopped s
@@ -151,7 +153,7 @@ let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
 let code_of_mixop mixop =
   let mixop = List.map (List.map it) mixop in
-  String.concat " % "
+  String.concat " {underscore} "
     (List.map
        (fun atoms -> String.concat " " (List.map Atom.string_of_atom atoms))
        mixop)
@@ -595,8 +597,8 @@ let rec render_def (def : def) : string =
   | RelD rel -> render_defined_rel_def rel
   | ExternDecD externfunc -> render_extern_func_def externfunc
   | BuiltinDecD builtinfunc -> render_builtin_func_def builtinfunc
-  | TableDecD tablefunc -> render_table_func_def tablefunc
   | FuncDecD func -> render_defined_func_def func
+  | TableGroupD tablegroup -> render_tablegroup_def tablegroup
 
 and render_defs defs = defs |> List.map render_def |> String.concat "\n\n"
 
@@ -720,37 +722,106 @@ and render_extern_func_def (externfunc : externfunc) : string =
 and render_builtin_func_def (builtinfunc : builtinfunc) : string =
   render_func_header builtinfunc
 
-(* Table function definitions *)
+(* Tablegroup definitions *)
 
-and render_table_func_def (tablefunc : tablefunc) : string =
-  let func_title, tablerows = tablefunc in
-  let params =
-    match func_title with
-    | ProseFuncTitle (`Check (_, _, params))
-    | ProseFuncTitle (`Yield (_, _, params))
-    | MathFuncTitle (_, _, params) ->
-        params
-  in
+and render_tablegroup_def (tablegroup : tablegroup) : string =
+  let { title; row_headers; col_headers; content } = tablegroup in
+  let gid, hint_true, _hint_false, param, _typ = title in
+  let num_cols = List.length col_headers + 1 in
   let table_meta =
-    "[cols=\""
-    ^ string_of_int (List.length params + 1)
-    ^ "\", options=\"header\"]\n"
+    "[cols=\"" ^ string_of_int num_cols ^ "\", options=\"header\"]\n"
+  in
+  let col_headers_prose =
+    col_headers
+    |> List.map (function FuncCol id -> id.it | LabelCol label -> label)
+    |> String.concat " | "
+  in
+  let corner_header =
+    match hint_true with
+    | Some hint -> Hints.Alter.alternate hint (fun s -> s) [ "↓"; "→" ]
+    | None -> render_param in_prose param
   in
   let table_header =
-    "|===" ^ "\n" ^ "| " ^ render_params in_prose params ^ " | " ^ "Result \n\n"
+    "|===" ^ "\n" ^ "| " ^ corner_header ^ " | " ^ col_headers_prose ^ "\n\n"
+  in
+  let render_row_header (exps : row_header) =
+    render_exps in_prose ~sep:" +\n" exps
+  in
+  (* Collect unique complex (non-bool) expressions, preserving first-occurrence order *)
+  let unique_complex_exps =
+    List.concat content
+    |> List.fold_left
+         (fun exps_acc exp ->
+           match exp.it with
+           | BoolE _ -> exps_acc
+           | _ ->
+               if List.exists (Eq.eq_exp exp) exps_acc then exps_acc
+               else exps_acc @ [ exp ])
+         []
+  in
+  (* Get 1-based placeholder number for a complex expression *)
+  let get_placeholder exp =
+    let rec find n = function
+      | [] -> assert false
+      | e :: _ when Eq.eq_exp e exp -> n
+      | _ :: rest -> find (n + 1) rest
+    in
+    find 1 unique_complex_exps
+  in
+  let render_cell exp =
+    match exp.it with
+    | BoolE b -> if b then "✅" else "❌"
+    | _ -> "[" ^ string_of_int (get_placeholder exp) ^ "]"
   in
   let table_rows =
-    tablerows
-    |> List.map (fun tablerow ->
-           let exps_sig, exp_res, _instrs = tablerow in
-           let row_output = render_exp in_code exp_res in
-           let row_input = render_exps in_code exps_sig in
-           "| " ^ row_input ^ " | " ^ row_output)
+    (* Find index of longest header *)
+    let longest_idx =
+      row_headers
+      |> List.mapi (fun idx row_header -> (idx, List.length row_header))
+      |> List.fold_left
+           (fun (max_idx, max_len) (idx, len) ->
+             if len > max_len then (idx, len) else (max_idx, max_len))
+           (0, 0)
+      |> fst
+    in
+    (* Move longest row to end *)
+    let move_to_end lst idx =
+      let elem = List.nth lst idx in
+      let others =
+        List.mapi (fun i x -> if i = idx then None else Some x) lst
+        |> List.filter_map Fun.id
+      in
+      others @ [ elem ]
+    in
+    let row_headers = move_to_end row_headers longest_idx in
+    let content = move_to_end content longest_idx in
+    List.mapi
+      (fun row_idx (row_header, row_content) ->
+        let is_longest = row_idx = List.length row_headers - 1 in
+        let header_prose =
+          if is_longest then "otherwise" else render_row_header row_header
+        in
+        let content_prose =
+          row_content |> List.map render_cell |> String.concat " | "
+        in
+        "| " ^ header_prose ^ " | " ^ content_prose)
+      (List.combine row_headers content)
     |> String.concat "\n"
   in
   let table_footer = "\n\n|===" in
-  render_func_header func_title
-  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer
+  let legend =
+    if unique_complex_exps = [] then ""
+    else
+      "\n\n[.small]\n--\n"
+      ^ (unique_complex_exps
+        |> List.mapi (fun idx exp ->
+               "["
+               ^ string_of_int (idx + 1)
+               ^ "] " ^ render_exp in_prose exp ^ " +\n")
+        |> String.concat "\n")
+      ^ "--"
+  in
+  table_meta ^ table_header ^ table_rows ^ table_footer ^ legend
 
 (* Defined function definitions *)
 

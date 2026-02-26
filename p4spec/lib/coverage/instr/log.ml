@@ -107,26 +107,32 @@ let log_defined_rel (cover : Multi.t) (rel : rel) : string =
 
 (* Functions *)
 
-let log_tablerow (cover : Multi.t) (tablerow : tablerow) : string =
-  let exps_match, exp_result, block = tablerow in
-  "\n Row : "
-  ^ string_of_exps ", " exps_match
-  ^ " -> " ^ string_of_exp exp_result ^ "\n\n"
-  ^ log_block ~level:2 cover block
-
-let log_tablerows (cover : Multi.t) (tablerows : tablerow list) : string =
-  tablerows |> List.map (log_tablerow cover) |> String.concat "\n"
-
-let log_table_func (cover : Multi.t) (tablefunc : tablefunc) : string =
-  let defid, params, _typ_ret, tablerows, _hints = tablefunc in
-  string_of_defid defid ^ string_of_params params ^ "\n=\n"
-  ^ log_tablerows cover tablerows
-
 let log_defined_func (cover : Multi.t) (func : definedfunc) : string =
   let defid, tparams, params, _typ_ret, block, elseblock_opt, _hints = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
   ^ "\n\n" ^ log_block cover block
   ^ log_elseblock_opt ~index:(List.length block) cover elseblock_opt
+
+let log_tablerow (cover : Multi.t) (tablerow : tablerow) : string =
+  let exp_match, exp_result, block = tablerow in
+  "\n Row : " ^ string_of_exp exp_match ^ " -> " ^ string_of_exp exp_result
+  ^ "\n\n"
+  ^ log_block ~level:2 cover block
+
+let log_tablerows (cover : Multi.t) (tablerows : tablerow list) : string =
+  tablerows |> List.map (log_tablerow cover) |> String.concat "\n"
+
+let log_tablecol (cover : Multi.t) (tablecol : tablecol) : string =
+  let defid, tablerows, _hints = tablecol in
+  string_of_defid defid ^ "\n=\n" ^ log_tablerows cover tablerows
+
+let log_tablecols (cover : Multi.t) (tablecols : tablecol list) : string =
+  tablecols |> List.map (log_tablecol cover) |> String.concat "\n\n"
+
+let log_tablegroup (cover : Multi.t) (tablegroup : tablegroup) : string =
+  let defid, param, _typ_ret, tablecols, _hints = tablegroup in
+  string_of_defid defid ^ string_of_param param ^ "\n=\n"
+  ^ log_tablecols cover tablecols
 
 (* Definitions *)
 
@@ -143,8 +149,8 @@ let log_def (cover : Multi.t) (def : def) : string =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD tablefunc -> "tbl def " ^ log_table_func cover tablefunc
   | FuncDecD func -> "def " ^ log_defined_func cover func
+  | TableGroupD tablegroup -> "tbl def " ^ log_tablegroup cover tablegroup
 
 let log_defs (cover : Multi.t) (defs : def list) : string =
   String.concat "\n\n" (List.map (log_def cover) defs)

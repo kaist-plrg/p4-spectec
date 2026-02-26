@@ -66,4 +66,9 @@ module HEnv = struct
     match find henv hid key with
     | Some (Hintkinds.Kind.Fields hint_fields) -> Some hint_fields
     | _ -> None
+
+  let find_label (henv : t) (hid : HId.t) (key : key) : Hints.Label.t option =
+    match find henv hid key with
+    | Some (Hintkinds.Kind.Label hint_label) -> Some hint_label
+    | _ -> None
 end

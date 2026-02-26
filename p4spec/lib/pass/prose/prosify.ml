@@ -3,11 +3,15 @@ open Lang
 open Xl
 open Ll.Ast
 open Util.Source
+module Pattern = Elaborate.Pattern
+module Typdef = Runtime.Dynamic_Sl.Typdef
+open Runtime.Prose.Envs
+open Error
 
 (* Expression prosification *)
 
 let prosify_hole_exp () : Pl.exp =
-  Pl.VarE ("%" $ no_region) $$ (no_region, Il.TextT)
+  Pl.VarE ("_" $ no_region) $$ (no_region, Il.TextT)
 
 let rec prosify_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
   prosify_exp' ctx exp $$ (exp.at, exp.note)
@@ -660,10 +664,10 @@ let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
       prosify_extern_func_def ctx def.at externfunc |> wrap_some
   | BuiltinDecD builtinfunc ->
       prosify_builtin_func_def ctx def.at builtinfunc |> wrap_some
-  | TableDecD tablefunc ->
-      prosify_table_func_def ctx def.at tablefunc |> wrap_some
   | FuncDecD definedfunc ->
       prosify_defined_func_def ctx def.at definedfunc |> wrap_some
+  | TableGroupD tablegroup ->
+      prosify_tablegroup ctx def.at tablegroup |> wrap_some
 
 (* Relation prosification *)
 
@@ -908,35 +912,6 @@ and prosify_builtin_func_def (ctx : Ctx.t) (at : region)
   let func_title_pl = prosify_func_title ctx_local id tparams params typ_ret in
   Pl.BuiltinDecD func_title_pl $ at
 
-(* Table function definition prosification *)
-
-and prosify_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Pl.tablerow =
-  let exps_input, exp_output, block = tablerow in
-  let block = Linearize.linearize_block block in
-  let exps_input_pl = prosify_exps ctx exps_input in
-  let exp_output_pl = prosify_exp ctx exp_output in
-  let ctx =
-    let frees =
-      IdSet.union
-        (Sl.Free.free_exps exps_input)
-        (IdSet.union (Sl.Free.free_exp exp_output) (Ll.Free.free_block block))
-    in
-    Ctx.set_free ctx frees
-  in
-  let block_pl = prosify_block ctx block in
-  (exps_input_pl, exp_output_pl, block_pl)
-
-and prosify_tablerows (ctx : Ctx.t) (tablerows : tablerow list) :
-    Pl.tablerow list =
-  List.map (prosify_tablerow ctx) tablerows
-
-and prosify_table_func_def (ctx : Ctx.t) (at : region) (tablefunc : tablefunc) :
-    Pl.def =
-  let id, params, typ_ret, tablerows, _ = tablefunc in
-  let func_title_pl = prosify_func_title ctx id [] params typ_ret in
-  let tablerows_pl = prosify_tablerows ctx tablerows in
-  Pl.TableDecD (func_title_pl, tablerows_pl) $ at
-
 (* Defined function definition prosification *)
 
 and prosify_defined_func_def (ctx : Ctx.t) (at : region)
@@ -956,6 +931,179 @@ and prosify_defined_func_def (ctx : Ctx.t) (at : region)
   in
   let block_pl = prosify_block ctx block in
   Pl.FuncDecD (func_title_pl, block_pl) $ at
+
+(* Tablegroup prosification: pattern extraction and helpers *)
+
+and pattern_of_typ (ctx : Ctx.t) (typ : typ) : Pattern.t =
+  match typ.it with
+  | VarT (vid, _) -> (
+      match TDEnv.find_opt vid ctx.tdenv with
+      | Some (Typdef.Defined (_, { it = VariantT typcases; _ })) ->
+          let nottyps = typcases |> List.map fst in
+          nottyps |> List.map it |> List.map fst |> Pattern.of_list
+      | _ ->
+          error typ.at
+            ("unknown variant type id: " ^ Il.Print.string_of_typid vid))
+  | _ -> error typ.at "expected variable type for tablegroup match"
+
+and pattern_of_exp (ctx : Ctx.t) (exp : exp) : Elaborate.Pattern.t =
+  match exp.it with
+  | VarE _ -> pattern_of_typ ctx (exp.note $ exp.at)
+  | UpCastE (_, { it = VarE _; note; at }) -> pattern_of_typ ctx (note $ at)
+  | UpCastE (_, { it = CaseE notexp; _ }) ->
+      let mixop, _ = notexp in
+      [ mixop ] |> Pattern.of_list
+  | _ -> error exp.at "tablegroup row: expected VarE, CaseE, or UpCastE pattern"
+
+and lookup_cell (ctx : Ctx.t) (row_header_pat : Pattern.t)
+    (tablerows : tablerow list) : Pl.exp =
+  let find_match (exp_sig, exp_out, _) =
+    let tablerow_pat = pattern_of_exp ctx exp_sig in
+    if Pattern.subset row_header_pat tablerow_pat then Some exp_out else None
+  in
+  match List.find_map find_match tablerows with
+  | Some exp -> prosify_exp ctx exp
+  | None ->
+      Error.error no_region
+        "tablegroup: no tablerow matches refined row (incomplete table)"
+
+and prosify_tablegroup (ctx : Ctx.t) (at : region) (tablegroup : tablegroup) :
+    Pl.def =
+  let gid, param, typ, tablecols, _ = tablegroup in
+  let ctx = Ctx.enter_func ctx gid in
+  let typ_match =
+    match param.it with Sl.ExpP (t, _) -> t | Sl.DefP _ -> assert false
+  in
+  let tid =
+    match typ_match.it with VarT (tid, _) -> tid | _ -> assert false
+  in
+  let total = pattern_of_typ ctx typ_match in
+  (* List of columns, where each column is a list of rows. *)
+  let tablecols_pat : Pattern.t list list =
+    tablecols
+    |> List.map (fun (_, tablerows, _) ->
+           List.map
+             (fun (exp_sig, _, _) -> pattern_of_exp ctx exp_sig)
+             tablerows)
+  in
+  (* From all columns, extract a single optimal list of rows *)
+  let row_headers_pat = Pattern.refine_rows ~total tablecols_pat in
+  (* Construct fallback expression for a single mixop when no SL tablerow
+     signature explicitly covers the refined row. Fills each sub-expression
+     slot with a hole placeholder. *)
+  let case_exp_of_mixop (mixop : mixop) : Pl.exp =
+    let num_subexps = List.length mixop - 1 in
+    let holes = List.init num_subexps (fun _ -> prosify_hole_exp ()) in
+    let cid = (tid, mixop) in
+    let hint_prose_opt = Ctx.find_hint_prose ctx (`Typ cid) in
+    Pl.CaseE (tid, mixop, holes, hint_prose_opt)
+    $$ (no_region, Il.VarT (tid, []))
+  in
+  (* For each refined row pattern, collect the matching signatures.
+     The refined row may be finer than the original signature, in which
+     case we fall back to constructing a CaseE per mixop in the pattern. *)
+  let find_signatures (row_header_pat : Pattern.t) : Pl.exp list =
+    (* Collect matching exp_sigs per column *)
+    let cols_sig : exp list list =
+      List.filter_map
+        (fun (_, tablerows, _) ->
+          let matching =
+            List.filter_map
+              (fun (exp_sig, _, _) ->
+                let exp_sig_pat = pattern_of_exp ctx exp_sig in
+                if Pattern.subset exp_sig_pat row_header_pat then Some exp_sig
+                else None)
+              tablerows
+          in
+          (* Skips when no rows match, indicating the refined row matches a wildcard signature *)
+          if matching = [] then None else Some matching)
+        tablecols
+    in
+    match cols_sig with
+    | [] ->
+        (* Build fallback expressions for each mixop. *)
+        Pattern.elements row_header_pat |> List.map case_exp_of_mixop
+    | row_sig :: _ ->
+        (* Columns may use different signature forms for the same refined row:
+           some "bind" by destructuring (e.g. TYPE _ typeIR as typeIR)
+           while others simply upcast (newTypeIR as typeIR).
+           In the presence of both binding and casting signatures, the binding
+           signature is accepted as row header. We verify that all binding
+           signatures are identical and use them as the canonical row header;
+           if none exist we fall back to the first result. *)
+        (* TODO: technically, upcasting is also a binding. To do this correctly,
+           we must filter out signatures whose bindings are unused in the body.
+           This phase might also be better suited for structuring. *)
+        let is_binding (exp : exp) =
+          match exp.it with
+          | UpCastE (_, inner) -> (
+              match inner.it with CaseE _ -> true | _ -> false)
+          | _ -> false
+        in
+        let binding_sigs =
+          List.filter (fun exps -> List.exists is_binding exps) cols_sig
+        in
+        let row_sig =
+          match binding_sigs with
+          | [] -> row_sig
+          | row_sig_hd :: rows_sig ->
+              List.iter
+                (fun row_sig ->
+                  let eq =
+                    List.length row_sig_hd = List.length row_sig
+                    && List.for_all2 Eq.eq_exp row_sig_hd row_sig
+                  in
+                  if not eq then
+                    Error.error no_region
+                      (Printf.sprintf
+                         "tblgroup %s: row bindings differ across columns\n\
+                          row pattern: %s" gid.it
+                         (Pattern.to_string row_header_pat)))
+                rows_sig;
+              row_sig_hd
+        in
+        List.map (prosify_exp ctx) row_sig
+  in
+  let row_headers_pl = List.map find_signatures row_headers_pat in
+  let param_pl = prosify_param ctx param in
+  let prosify_col_header cid (hints : Sl.hint list) : Pl.col_header =
+    let label_opt =
+      List.find_map
+        (fun El.{ hintid; hintexp } ->
+          if hintid.it = "tbl_col" then Hints.Label.init hintexp else None)
+        hints
+    in
+    match label_opt with
+    | Some label -> Pl.LabelCol label
+    | None -> Pl.FuncCol cid
+  in
+  let col_headers_pl =
+    tablecols
+    |> List.map (fun (cid, _, col_hints) ->
+           let col_header = prosify_col_header cid col_hints in
+           col_header)
+  in
+  (* Re-map the content against the refined row headers *)
+  let content =
+    List.map
+      (fun row_header_pat ->
+        List.map
+          (fun (_, tablerows, _) -> lookup_cell ctx row_header_pat tablerows)
+          tablecols)
+      row_headers_pat
+  in
+  let hint_true = Ctx.find_hint_prose_true ctx (`Func gid) in
+  let hint_false = Ctx.find_hint_prose_false ctx (`Func gid) in
+  let title = (gid, hint_true, hint_false, param_pl, typ) in
+  let tablegroup_pl =
+    {
+      Pl.title;
+      row_headers = row_headers_pl;
+      col_headers = col_headers_pl;
+      content;
+    }
+  in
+  Pl.TableGroupD tablegroup_pl $ at
 
 (* Entry point *)
 

@@ -279,6 +279,7 @@ and token = parse
   | "text" { TEXT }
   | "syntax" { SYNTAX }
   | "extern" { EXTERN }
+  | "tblgroup" { TABLEGROUP }
   | "tbl" { TABLE }
   | "relation" { RELATION }
   | "rulegroup" { RULEGROUP }
@@ -309,6 +310,7 @@ and token = parse
   | (upid as s) "<" { if is_var s then LOID_LANGLE s else UPID_LANGLE s }
   | (loid as s) "<" { LOID_LANGLE s }
   | "."(id as s) { DOTID s }
+  | "."(id as s)"(" { DOTID_LPAREN s }
   | line_comment eof { EOF }
   | line_comment '\n' { Lexing.new_line lexbuf; token lexbuf }
   | line_comment { token lexbuf (* causes error on following position *) }

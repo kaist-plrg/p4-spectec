@@ -77,13 +77,13 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token EQ NEQ UP BAR
 
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX EXTERN TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
+%token SYNTAX EXTERN TABLEGROUP TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
 %token<string> TEXTLIT
 %token<string> UPID LOID DOTID
-%token<string> UPID_LPAREN LOID_LPAREN UPID_LANGLE LOID_LANGLE
+%token<string> UPID_LPAREN LOID_LPAREN DOTID_LPAREN UPID_LANGLE LOID_LANGLE
 %token EOF
 
 %right DOUBLE_ARROW DOUBLE_ARROW_BOTH DOUBLE_ARROW_SUB DOUBLE_ARROW_LONG
@@ -184,8 +184,17 @@ ruleids :
   | SLASH ruleid ruleids { "/" ^ $2 ^ $3 }
   | MINUS ruleid ruleids { "-" ^ $2 ^ $3 }
 
-defid : id { $1 @@@ $sloc }
-defid_lparen : id_lparen { $1 @@@ $sloc }
+(* All function identifiers allow dots.
+   TODO: only allow dots in table columns *)
+defid : defid_ { $1 @@@ $sloc }
+defid_ :
+  | id { $1 }
+  | defid_ DOTID { $1 ^ "." ^ $2 }
+
+defid_lparen :
+  | id_lparen { $1 @@@ $sloc }
+  | defid_ DOTID_LPAREN { ($1 ^ "." ^ $2) @@@ $sloc }
+
 defid_langle : id_langle { $1 @@@ $sloc }
 
 hintid : id { $1 }
@@ -709,7 +718,7 @@ prem_ :
     }
   | DEBUG exp { DebugPr $2 }
 
-(* Matchecases *)
+(* Matchcases *)
 
 table_body :
   | bar tablerows = bar_list(tablerow) { tablerows }
@@ -718,6 +727,10 @@ tablerow :
   | pattern = exp_seq DOUBLE_ARROW body = exp_bin
     { let region = over_region [ pattern.at; body.at ] in
       (pattern, body) $ region }
+
+tablecol :
+  | TABLE DEC DOLLAR id = defid hints = hint*
+    { (id, hints) $ id.at }
 
 (* Hints *)
 
@@ -798,10 +811,12 @@ def_ :
   | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
     { BuiltinDecD ($4, $6, $8, $11, $12) }
   (* Table function declaration *)
-  | TABLE DEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
-    { TableDecD (id, [], typ_ret, hints) }
-  | TABLE DEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
-    { TableDecD (id, params, typ_ret, hints) }
+  | TABLE DEC DOLLAR id = defid_lparen param = param RPAREN COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, param, typ_ret, hints) }
+  | TABLEGROUP id = defid_lparen param = param RPAREN
+    COLON typ_ret = plaintyp hints = hint*
+    LBRACE tablecols = list(tablecol) RBRACE
+    { TableGroupD (id, param, typ_ret, tablecols, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
     { FuncDecD ($3, [], [], $5, $6) }

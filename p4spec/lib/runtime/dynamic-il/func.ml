@@ -6,7 +6,7 @@ open Il
 type t =
   | Extern
   | Builtin
-  | Table of param list * tablerow list
+  | Table of Table.Func.t
   | Defined of tparam list * clause list * elseclause option
 
 let to_string = function

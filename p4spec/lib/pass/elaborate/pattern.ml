@@ -1,115 +1,72 @@
 open Domain
 open Lang
-open Il
-open Util.Source
 
-(* Pattern is a set of notation types *)
+(* A Pattern is a set of mixops.
+   Allows for an accurate representation of which mixop variants are
+   allowed, including wildcards. *)
 
-module Nottyp = struct
-  type t = nottyp
+include Set.Make (Mixop)
 
-  let compare (t_a : t) (t_b : t) : int =
-    let mixop_a, typs_a = t_a.it in
-    let mixop_b, typs_b = t_b.it in
-    let compare_mixop = Mixop.compare mixop_a mixop_b in
-    if compare_mixop <> 0 then compare_mixop
-    else
-      let typs_a = List.map it typs_a in
-      let typs_b = List.map it typs_b in
-      List.compare compare typs_a typs_b
-end
-
-module PatternSet = struct
-  include Set.Make (Nottyp)
-
-  let to_string (pattern_set : t) : string =
-    "{"
-    ^ (elements pattern_set
-      |> List.map Il.Print.string_of_nottyp
-      |> String.concat " | ")
-    ^ "}"
-end
-
-module PatternSets = struct
-  type t = PatternSet.t list
-
-  let to_string (pattern_sets : t) : string =
-    "("
-    ^ (pattern_sets |> List.map PatternSet.to_string |> String.concat ", ")
-    ^ ")"
-end
-
-(* Stringifier *)
+let to_string (pattern : t) : string =
+  "{"
+  ^ (elements pattern
+    |> List.map Il.Print.string_of_mixop
+    |> String.concat " | ")
+  ^ "}"
 
 (* Exclusiveness check *)
 
-let has_overlap (pattern_sets_a : PatternSets.t)
-    (pattern_sets_b : PatternSets.t) : bool =
-  List.for_all2
-    (fun pattern_set_a pattern_set_b ->
-      PatternSet.inter pattern_set_a pattern_set_b |> PatternSet.is_empty |> not)
-    pattern_sets_a pattern_sets_b
+let has_overlap (pat1 : t) (pat2 : t) : bool =
+  inter pat1 pat2 |> is_empty |> not
 
-let find_overlap (pattern_sets_group : PatternSets.t list) :
-    (PatternSets.t * PatternSets.t) option =
+(* Check whether a list of patterns contains an overlap and returns the
+   first pair of overlapping patterns if it exists. *)
+let find_overlap (patterns : t list) : (t * t) option =
   let rec find_overlap' = function
     | [] -> None
-    | pattern_sets_h :: pattern_sets_group_t -> (
-        match
-          List.find_opt (has_overlap pattern_sets_h) pattern_sets_group_t
-        with
-        | Some pattern_sets_conflict ->
-            Some (pattern_sets_h, pattern_sets_conflict)
-        | None -> find_overlap' pattern_sets_group_t)
+    | pat :: rest -> (
+        match List.find_opt (has_overlap pat) rest with
+        | Some pat_conflict -> Some (pat, pat_conflict)
+        | None -> find_overlap' rest)
   in
-  find_overlap' pattern_sets_group
+  find_overlap' patterns
 
 (* Exhaustiveness check *)
 
-let subtract (pattern_sets_total : PatternSets.t) (pattern_sets : PatternSets.t)
-    : PatternSets.t list =
-  if not (has_overlap pattern_sets_total pattern_sets) then
-    [ pattern_sets_total ]
-  else
-    (* F × F' − W × W' =  (F - W) × F'  U  (F ∩ W) × (F' - W') *)
-    let rec subtract' (pattern_sets_from : PatternSets.t)
-        (pattern_sets : PatternSets.t) (pattern_sets_prefix : PatternSets.t) :
-        PatternSets.t list =
-      match (pattern_sets_from, pattern_sets) with
-      | [], [] -> []
-      | ( pattern_set_from_h :: pattern_sets_from_t,
-          pattern_set_h :: pattern_sets_t ) ->
-          let pattern_set_diff =
-            PatternSet.diff pattern_set_from_h pattern_set_h
-          in
-          let pattern_set_inter =
-            PatternSet.inter pattern_set_from_h pattern_set_h
-          in
-          (* (F - W) × F' *)
-          let pattern_sets_group_fragment =
-            if PatternSet.is_empty pattern_set_diff then []
-            else
-              [
-                List.rev (pattern_set_diff :: pattern_sets_prefix)
-                @ pattern_sets_from_t;
-              ]
-          in
-          (* (F ∩ W) × (F' - W) *)
-          if PatternSet.is_empty pattern_set_inter then
-            pattern_sets_group_fragment
-          else
-            pattern_sets_group_fragment
-            @ subtract' pattern_sets_from_t pattern_sets_t
-                (pattern_set_inter :: pattern_sets_prefix)
-      | _ -> assert false
-    in
-    subtract' pattern_sets_total pattern_sets []
+(* Repeatedly subtracts each row from the total set to find
+   uncovered fragments. If the result is empty, the pattern is
+   exhaustive. *)
+let find_missing ~(total : t) (rows : t list) : t =
+  List.fold_left (fun remainder row -> diff remainder row) total rows
 
-let find_missing (pattern_sets_total : PatternSets.t)
-    (pattern_sets_group : PatternSets.t list) : PatternSets.t list =
+(* Refinement: compute minimal set of non-overlapping patterns that
+   can handle all supplied columns.
+   This preserves sets that are already split, and repeatedly splits
+*)
+let refine_rows ~(total : t) (columns : t list list) : t list =
+  (* Make the wildcards explicit and append to each column. *)
+  let complete_columns =
+    List.map
+      (fun column ->
+        (* First, remove any trailing wildcard expanded as the total set *)
+        let explicit_column =
+          match List.rev column with
+          | last_row :: rest when last_row = total -> List.rev rest
+          | _ -> column
+        in
+        (* Compute the exact wildcard set and append to the column *)
+        let wildcard = find_missing ~total explicit_column in
+        explicit_column @ [ wildcard ])
+      columns
+  in
   List.fold_left
-    (fun pattern_sets_total pattern_sets ->
+    (fun refinement column ->
       List.concat_map
-        (fun pattern_sets_total -> subtract pattern_sets_total pattern_sets)
-        pattern_sets_total)
-    [ pattern_sets_total ] pattern_sets_group
+        (fun refined_row ->
+          List.filter_map
+            (fun column ->
+              let intersection = inter refined_row column in
+              if is_empty intersection then None else Some intersection)
+            column)
+        refinement)
+    [ total ] complete_columns

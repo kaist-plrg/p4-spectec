@@ -23,36 +23,39 @@ def $unroll_aliasType(typeIR) = typeIR
 ;; Checkers for type properties
 ;;
 
+tblgroup typeIR_is(typeIR) : bool
+  hint(prose_true %0 "can be" %1)
+  hint(prose_false %0 "cannot be" %1)
+{
+  tbl dec $defaultable  hint(tbl_col "default-initialized")
+  tbl dec $equalable    hint(tbl_col "compared for equality")
+  tbl dec $assignable   hint(tbl_col "assigned to")
+}
+
 ;;; Default
 
-tbl dec $is_defaultable_typeIR(typeIR) : bool
-  hint(prose_true %0 "can be default-initialized")
-  hint(prose_false %0 "cannot be default-initialized")
-tbl def $is_defaultable_typeIR =
+tbl def $typeIR_is.defaultable =
   | BOOL => true
   | ERROR => true
   | STRING => true
   | integerTypeIR => true
-  | TYPEDEF _ typeIR => $is_defaultable_typeIR(typeIR)
-  | TYPE _ typeIR => $is_defaultable_typeIR(typeIR)
-  | TUPLE `< typeIR* > => $forall_($is_defaultable_typeIR(typeIR)*)
-  | typeIR `[ _ ] => $is_defaultable_typeIR(typeIR)
-  | STRUCT _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
-  | HEADER _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
-  | HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
+  | TYPEDEF _ typeIR => $typeIR_is.defaultable(typeIR)
+  | TYPE _ typeIR => $typeIR_is.defaultable(typeIR)
+  | TUPLE `< typeIR* > => $forall_($typeIR_is.defaultable(typeIR)*)
+  | typeIR `[ _ ] => $typeIR_is.defaultable(typeIR)
+  | STRUCT _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($typeIR_is.defaultable(typeIR)*)
+  | HEADER _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($typeIR_is.defaultable(typeIR)*)
+  | HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($typeIR_is.defaultable(typeIR)*)
   | ENUM _ `{ _ } => true
-  | ENUM _ `< typeIR > `{ _ } => $is_defaultable_typeIR(typeIR)
+  | ENUM _ `< typeIR > `{ _ } => $typeIR_is.defaultable(typeIR)
   | _ => false
 
 ;;; Equals
 
-tbl dec $is_equalable_typeIR(typeIR) : bool
-  hint(prose_true %0 "supports equality comparison")
-  hint(prose_false %0 "does not support equality comparison")
-tbl def $is_equalable_typeIR =
+tbl def $typeIR_is.equalable =
   | VOID => false
   | `` typeId => false
-  | TYPEDEF _ typeIR => $is_equalable_typeIR(typeIR)
+  | TYPEDEF _ typeIR => $typeIR_is.equalable(typeIR)
   | externObjectTypeIR => false
   | parserObjectTypeIR => false
   | controlObjectTypeIR => false
@@ -68,14 +71,11 @@ tbl def $is_equalable_typeIR =
 
 ;;; Assignable
 
-tbl dec $is_assignable_typeIR(typeIR) : bool
-  hint(prose_true %0 "supports assignment")
-  hint(prose_false %0 "does not support assignment")
-tbl def $is_assignable_typeIR =
+tbl def $typeIR_is.assignable =
   | VOID => false
   | STRING => false
   | INT => false
-  | TYPEDEF _ typeIR => $is_assignable_typeIR(typeIR)
+  | TYPEDEF _ typeIR => $typeIR_is.assignable(typeIR)
   | objectTypeIR => false
   | synthesizedTypeIR => false
   | _ => true

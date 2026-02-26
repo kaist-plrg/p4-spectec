@@ -128,11 +128,18 @@ let free_elseclause_opt (elseclause_opt : elseclause option) : t =
 (* Table rows *)
 
 let free_tablerow (tablerow : tablerow) : t =
-  let _exps_signature, args, exp, prems = tablerow.it in
-  free_args args + free_exp exp + free_prems prems
+  let _exp_signature, arg, exp, prems = tablerow.it in
+  free_arg arg + free_exp exp + free_prems prems
 
 let free_tablerows (tablerows : tablerow list) : t =
   tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty
+
+let free_tablecol (tablecol : tablecol) : t =
+  let _, tablerows, _hints = tablecol.it in
+  free_tablerows tablerows
+
+let free_tablecols (tablecols : tablecol list) : t =
+  tablecols |> List.map free_tablecol |> List.fold_left ( + ) empty
 
 (* Definitions *)
 
@@ -140,7 +147,7 @@ let free_def (def : def) : t =
   match def.it with
   | RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
       free_rulegroups rulegroups + free_elsegroup_opt elsegroup_opt
-  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | TableGroupD (_, _, _, tablecols, _) -> free_tablecols tablecols
   | FuncDecD (_, _, _, _, clauses, elseclause_opt, _) ->
       free_clauses clauses + free_elseclause_opt elseclause_opt
   | _ -> empty

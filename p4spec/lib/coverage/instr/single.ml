@@ -78,6 +78,15 @@ module Cover = struct
       (fun cover tablerow -> init_tablerow cover id tablerow)
       cover tablerows
 
+  let init_tablecol (cover : t) (id : id) (tablecol : tablecol) : t =
+    let _, tablerows, _ = tablecol in
+    init_tablerows cover id tablerows
+
+  let init_tablecols (cover : t) (id : id) (tablecols : tablecol list) : t =
+    List.fold_left
+      (fun cover tablecol -> init_tablecol cover id tablecol)
+      cover tablecols
+
   let init_def (cover : t) (def : def) : t =
     match def.it with
     | RelD (id, _, _, block, elseblock_opt, hints) when not (is_ignored hints)
@@ -92,8 +101,8 @@ module Cover = struct
         match elseblock_opt with
         | Some elseblock -> init_block cover id elseblock
         | None -> cover)
-    | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
-        init_tablerows cover id tablerows
+    | TableGroupD (id, _, _, tablecols, hints) when not (is_ignored hints) ->
+        init_tablecols cover id tablecols
     | _ -> cover
 
   let init_spec (spec : spec) : t = List.fold_left init_def empty spec

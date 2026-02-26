@@ -1284,12 +1284,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (tablerow : tablerow) (values_input : value list) :
       Ctx.t * arg list * prem list * exp =
-    let _, args_input, exp_output, prems = tablerow.it in
+    let _, arg_input, exp_output, prems = tablerow.it in
     check
-      (List.length args_input = List.length values_input)
+      (List.length values_input = 1)
       tablerow.at "arity mismatch while matching table row";
-    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
-    (ctx, args_input, prems, exp_output)
+    let ctx = assign_args ctx_caller ctx_callee [ arg_input ] values_input in
+    (ctx, [ arg_input ], prems, exp_output)
 
   and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id)
       (tablerows : tablerow list) (values_input : value list) : value backtrack

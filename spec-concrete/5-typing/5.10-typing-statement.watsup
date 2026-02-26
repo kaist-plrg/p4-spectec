@@ -332,7 +332,7 @@ rulegroup ForInitStmt_ok {
     -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
     -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
     ---- ;; check that the type is assignable
-    -- if $is_assignable_typeIR(typeIR)
+    -- if $typeIR_is.assignable(typeIR)
     ---- ;; update the context
     -- if nameIR = $name(name)
     -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
@@ -344,7 +344,7 @@ rulegroup ForInitStmt_ok {
     -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
     -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
     ---- ;; check that the type is assignable
-    -- if $is_assignable_typeIR(typeIR)
+    -- if $typeIR_is.assignable(typeIR)
     ---- ;; check expression
     -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
     ---- ;; check that the expression matches the type
@@ -435,16 +435,14 @@ relation ForCollectionExpr_ok:
   hint(prose_in "typing" %2 "under context" %0 "with iterator type" %1)
   hint(prose_out %3)
 
-tbl dec $compat_range(typeIR, typeIR) : bool
-  hint(prose_true %0 "and" %1 "can be used as range bounds")
-  hint(prose_false %0 "and" %1 "cannot be used as range bounds")
-tbl def $compat_range =
-  | (INT, INT) => true
-  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r) => $compat_range(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r) => $compat_range(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_range(typeIR, typeIR) : bool
+def $compat_range(INT, INT) = true
+def $compat_range(INT `< w_l >, INT `< w_r >) = $(w_l = w_r)
+def $compat_range(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_range(TYPEDEF _ typeIR_l, typeIR_r) = $compat_range(typeIR_l, typeIR_r)
+  -- if ~(typeIR_r <: typedefTypeIR)
+def $compat_range(typeIR_l, TYPEDEF _ typeIR_r) = $compat_range(typeIR_l, typeIR_r)
+def $compat_range(_, _) = false
 
 rulegroup ForCollectionExpr_ok {
 
@@ -491,7 +489,7 @@ rulegroup Stmt_ok/forStatement-in {
     -- Type_ok: LOCAL TC_0 |- type : typeIR `# eps
     -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
     ---- ;; check that the type is assignable
-    -- if $is_assignable_typeIR(typeIR)
+    -- if $typeIR_is.assignable(typeIR)
     ---- ;; check collection expression
     -- ForCollectionExpr_ok:
         TC_0 typeIR |- forCollectionExpression

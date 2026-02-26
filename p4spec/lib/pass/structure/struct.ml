@@ -213,11 +213,11 @@ let rec struct_def (tdenv : TDEnv.t) (def : def) : Sl.def =
       struct_extern_dec_def at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def at id tparams params typ hints
-  | TableDecD (id, params, typ, tablerows, hints) ->
-      struct_table_dec_def tdenv at id params tablerows typ hints
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       struct_func_dec_def tdenv at id tparams params typ clauses elseclause_opt
         hints
+  | TableGroupD (id, params, typ, tablecols, hints) ->
+      struct_tablegroup_def tdenv at id params typ tablecols hints
 
 (* Structuring relation definitions *)
 
@@ -333,37 +333,6 @@ and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
   let builtinfunc = (id_dec, tparams, params, typ, hints) in
   Sl.BuiltinDecD builtinfunc $ at
 
-and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
-    (params : param list) (tablerows : tablerow list) (typ : typ)
-    (hints : hint list) : Sl.def =
-  let exps_signature_group, clauses =
-    tablerows
-    |> List.map (fun tablerow ->
-           let exps_signature, args, exp_output, prems = tablerow.it in
-           let clause = (args, exp_output, prems) $ tablerow.at in
-           (exps_signature, clause))
-    |> List.split
-  in
-  let args_input, paths, _ = Antiunify.antiunify_clauses clauses None in
-  let params = struct_params_from_args params args_input in
-  let blocks_tablerows =
-    paths
-    |> List.map struct_tablerow_path
-    |> List.map (Optimize.optimize_without_else tdenv)
-    |> List.map (Totalize.totalize_without_else tdenv)
-    |> List.map Instrument.instrument_without_else
-  in
-  let exp_output_group = paths |> List.split |> snd in
-  let tablerows =
-    List.combine exps_signature_group exp_output_group
-    |> List.map2
-         (fun instrs_tablerows (exps_signature, exp_output) ->
-           (exps_signature, exp_output, instrs_tablerows))
-         blocks_tablerows
-  in
-  let tablefunc = (id_dec, params, typ, tablerows, hints) in
-  Sl.TableDecD tablefunc $ at
-
 and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
     (tparams : tparam list) (params : param list) (typ : typ)
     (clauses : clause list) (elseclause_opt : clause option) (hints : hint list)
@@ -384,6 +353,64 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   let block, elseblock_opt = Instrument.instrument block elseblock_opt in
   let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in
   Sl.FuncDecD func $ at
+
+and struct_tablegroup_def (tdenv : TDEnv.t) (at : region) (gid : id)
+    (param : param) (typ : typ) (tablecols : tablecol list) (hints : hint list)
+    : Sl.def =
+  let _frees, param_sl = struct_param IdSet.empty param in
+  (* Extract the base variable id from a (possibly iterated) param expression *)
+  let rec id_of_exp (exp : exp) : id =
+    match exp.it with
+    | VarE id -> id
+    | IterE (exp', _) -> id_of_exp exp'
+    | _ -> assert false
+  in
+  let param_sl_id =
+    match param_sl.it with
+    | Sl.ExpP (_, exp) -> id_of_exp exp
+    | Sl.DefP _ -> assert false
+  in
+  let struct_tablecol (tablecol : tablecol) : Sl.tablecol =
+    let cid, tablerows, hints = tablecol.it in
+    let exps_signature_group, clauses =
+      tablerows
+      |> List.map (fun tablerow ->
+             let exp_signature, arg, exp_output, prems = tablerow.it in
+             let clause = ([ arg ], exp_output, prems) $ tablerow.at in
+             (exp_signature, clause))
+      |> List.split
+    in
+    let args_input, paths, _ = Antiunify.antiunify_clauses clauses None in
+    let col_param = struct_params_from_args [ param ] args_input |> List.hd in
+    let renamer =
+      match col_param.it with
+      | Sl.ExpP (_, exp) ->
+          let col_id = id_of_exp exp in
+          if Eq.eq_id col_id param_sl_id then Re.Renamer.empty
+          else Re.Renamer.singleton col_id param_sl_id
+      | Sl.DefP _ -> Re.Renamer.empty
+    in
+    let blocks_tablerows =
+      paths
+      |> List.map struct_tablerow_path
+      |> List.map (Optimize.optimize_without_else tdenv)
+      |> List.map (Totalize.totalize_without_else tdenv)
+      |> List.map (Re.Renamer.rename_instrs renamer)
+      |> List.map Instrument.instrument_without_else
+    in
+    let exp_output_group = paths |> List.split |> snd in
+    let tablerows =
+      List.combine exps_signature_group exp_output_group
+      |> List.map2
+           (fun instrs_tablerows (exp_signature, exp_output) ->
+             (exp_signature, exp_output, instrs_tablerows))
+           blocks_tablerows
+    in
+    (cid, tablerows, hints)
+  in
+  let tablecols = List.map struct_tablecol tablecols in
+  let tablegroup = (gid, param_sl, typ, tablecols, hints) in
+  Sl.TableGroupD tablegroup $ at
 
 (* Load type definitions *)
 

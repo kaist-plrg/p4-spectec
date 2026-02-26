@@ -194,11 +194,25 @@ type externfunc = func_title
 
 type builtinfunc = func_title
 
-type tablerow = exp list * exp * block
-
-type tablefunc = func_title * tablerow list
-
 type func = func_title * block
+
+(* Tables *)
+
+type group_title = id * Hints.Alter.t option * Hints.Alter.t option * param * typ
+
+(* A row header is one or more match expressions from the SL tablerow
+   signatures that cover this row (multiple when refined rows are finer
+   than any single explicit expression). *)
+type row_header = exp list
+
+type col_header = FuncCol of id | LabelCol of Hints.Label.t
+
+type tablegroup = {
+  title : group_title;
+  row_headers : row_header list;
+  col_headers : col_header list;
+  content : exp list list;
+}
 
 (* Definitions *)
 
@@ -208,8 +222,8 @@ and def' =
   | RelD of rel
   | ExternDecD of externfunc
   | BuiltinDecD of builtinfunc
-  | TableDecD of tablefunc
   | FuncDecD of func
+  | TableGroupD of tablegroup
 
 (* Spec *)
 

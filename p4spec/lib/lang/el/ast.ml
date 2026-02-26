@@ -174,6 +174,10 @@ and rule' = id * id * exp * prem list
 and tablerow = tablerow' phrase
 and tablerow' = exp * exp
 
+(* `tbl` `dec` id hint* *)
+and tablecol = tablecol' phrase
+and tablecol' = id * hint list
+
 (* Definitions *)
 
 type def = def' phrase
@@ -196,8 +200,10 @@ and def' =
   | ExternDecD of id * tparam list * param list * plaintyp * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
-  (* `tbl` `dec` id list(param, `,`) `:` plaintyp hint* *)
-  | TableDecD of id * param list * plaintyp * hint list
+  (* `tbl` `dec` id param `:` plaintyp hint* *)
+  | TableDecD of id * param * plaintyp * hint list
+  (* `tblgroup` id list(param, `,`) `:` plaintyp column* *)
+  | TableGroupD of id * param * plaintyp * tablecol list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | FuncDecD of id * tparam list * param list * plaintyp * hint list
   (* `tbl` `def` id `=` list(`|` tablerow, nl) *)

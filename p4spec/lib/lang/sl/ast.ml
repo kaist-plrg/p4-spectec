@@ -193,16 +193,18 @@ type externfunc = id * tparam list * param list * typ * hint list
 type builtinfunc = id * tparam list * param list * typ * hint list
 [@@deriving yojson]
 
-(* `(` list(exp, `,`)* `)` `->` exp block *)
-type tablerow = exp list * exp * block
-[@@deriving yojson]
-
-(* id `(` list(param, `,`) `)` `:` typ tablerow* hint* *)
-type tablefunc = id * param list * typ * tablerow list * hint list
-[@@deriving yojson]
-
 (* id `<` list(tparam, `,`) `>` list(arg, `,`) `:` typ block elseblock? hint* *)
 type definedfunc = id * tparam list * param list * typ * block * elseblock option * hint list
+[@@deriving yojson]
+
+(* exp `->` exp instr* *)
+type tablerow = exp * exp * instr list
+[@@deriving yojson]
+
+type tablecol = id * tablerow list * hint list
+[@@deriving yojson]
+
+type tablegroup = id * param * typ * tablecol list * hint list
 [@@deriving yojson]
 
 (* Definitions *)
@@ -221,10 +223,10 @@ and def' =
   | ExternDecD of externfunc
   (* `builtin` `dec` builtinfunc *)
   | BuiltinDecD of builtinfunc
-  (* `tbl` `dec` tablefunc *)
-  | TableDecD of tablefunc
   (* `dec` func *)
   | FuncDecD of definedfunc
+  (* `tblgroup` tablegroup *)
+  | TableGroupD of tablegroup
 [@@deriving yojson]
 
 (* Spec *)

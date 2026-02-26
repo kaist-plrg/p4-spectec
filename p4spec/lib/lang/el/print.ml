@@ -253,6 +253,13 @@ and string_of_tablerow tablerow =
 and string_of_tablerows tablerows =
   String.concat "\n  | " (List.map string_of_tablerow tablerows)
 
+and string_of_tablecol tablecol =
+  let id, _hints = tablecol.it in
+  string_of_defid id
+
+and string_of_tablecols tablecols =
+  String.concat ", " (List.map string_of_tablecol tablecols)
+
 (* Definitions *)
 
 let string_of_def def =
@@ -286,8 +293,8 @@ let string_of_def def =
       "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | TableDecD (defid, params, plaintyp, _hints) ->
-      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+  | TableDecD (defid, param, plaintyp, _hints) ->
+      "tbl dec " ^ string_of_defid defid ^ string_of_param param ^ " : "
       ^ string_of_plaintyp plaintyp
   | FuncDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
@@ -299,6 +306,12 @@ let string_of_def def =
   | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
+  | TableGroupD (defid, param, plaintyp, tablecols, _hints) ->
+      "tblgroup " ^ string_of_defid defid ^ string_of_param param ^ " : "
+      ^ string_of_plaintyp plaintyp
+      ^ "{"
+      ^ string_of_tablecols tablecols
+      ^ "}"
   | SepD -> "\n\n"
 
 (* Spec *)

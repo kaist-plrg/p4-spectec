@@ -94,7 +94,7 @@ rulegroup Cast_expl_neq/enumTypeIR-serializable {
 
 rule Cast_expl_neq/defaultTypeIR:
   DEFAULT -> typeIR_b
-  -- if $is_defaultable_typeIR(typeIR_b)
+  -- if $typeIR_is.defaultable(typeIR_b)
 
 rulegroup Cast_expl_neq/invalidHeaderTypeIR {
 
@@ -138,13 +138,13 @@ rulegroup Cast_expl_neq/sequenceTypeIR-default {
     -- if (typeIR_b_non_default*, typeIR_b_default*)
         = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
     -- (Cast_expl: typeIR_a -> typeIR_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_b_default)*
 
   rule Cast_expl_neq/headerStackTypeIR:
     SEQ `< typeIR_a* `, `... > -> typeIR_b `[ n_size ]
     -- if $(|typeIR_a*| < n_size)
     -- (Cast_expl: typeIR_a -> typeIR_b)*
-    -- if $is_defaultable_typeIR(typeIR_b)
+    -- if $typeIR_is.defaultable(typeIR_b)
 
   rule Cast_expl_neq/structTypeIR:
     SEQ `< typeIR_a* `, `... >
@@ -153,7 +153,7 @@ rulegroup Cast_expl_neq/sequenceTypeIR-default {
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
     -- (Cast_expl: typeIR_a -> typeIR_field_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
   rule Cast_expl_neq/headerTypeIR:
     SEQ `< typeIR_a* `, `... >
@@ -162,7 +162,7 @@ rulegroup Cast_expl_neq/sequenceTypeIR-default {
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
     -- (Cast_expl: typeIR_a -> typeIR_field_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
 }
 
@@ -206,7 +206,7 @@ rulegroup Cast_expl_neq/recordTypeIR-default {
     -- if `{ id_default* } = $diff_set<id>(`{ id_field_b* }, `{ id_field_a* })
     -- if (typeIR_field_b_default
           = $find_map<id, typeIR>(`{ (id_field_b `: typeIR_field_b)* }, id_default))*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
   rule Cast_expl_neq/headerTypeIR:
     RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
@@ -222,7 +222,7 @@ rulegroup Cast_expl_neq/recordTypeIR-default {
     -- if `{ id_default* } = $diff_set<id>(`{ id_field_b* }, `{ id_field_a* })
     -- if (typeIR_field_b_default
           = $find_map<id, typeIR>(`{ (id_field_b `: typeIR_field_b)* }, id_default))*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
 }
 
@@ -267,7 +267,7 @@ rule Cast_impl_neq/enumTypeIR-serializable:
 
 rule Cast_impl_neq/defaultTypeIR:
   DEFAULT -> typeIR_b
-  -- if $is_defaultable_typeIR(typeIR_b)
+  -- if $typeIR_is.defaultable(typeIR_b)
 
 rulegroup Cast_impl_neq/invalidHeaderTypeIR {
 
@@ -315,13 +315,13 @@ rulegroup Cast_impl_neq/sequenceTypeIR-default {
     -- if (typeIR_b_non_default*, typeIR_b_default*)
         = $partition_<typeIR>(typeIR_b*, |typeIR_a*|)
     -- (Cast_impl: typeIR_a -> typeIR_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_b_default)*
 
   rule Cast_impl_neq/headerStackTypeIR:
     SEQ `< typeIR_a* `, `... > -> typeIR_b `[ n_size ]
     -- if $(|typeIR_a*| < n_size)
     -- (Cast_impl: typeIR_a -> typeIR_b)*
-    -- if $is_defaultable_typeIR(typeIR_b)
+    -- if $typeIR_is.defaultable(typeIR_b)
 
   rule Cast_impl_neq/structTypeIR:
     SEQ `< typeIR_a* `, `... >
@@ -330,7 +330,7 @@ rulegroup Cast_impl_neq/sequenceTypeIR-default {
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
     -- (Cast_impl: typeIR_a -> typeIR_field_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
   rule Cast_impl_neq/headerTypeIR:
     SEQ `< typeIR_a* `, `... >
@@ -339,7 +339,7 @@ rulegroup Cast_impl_neq/sequenceTypeIR-default {
     -- if (typeIR_field_b_non_default*, typeIR_field_b_default*)
         = $partition_<typeIR>(typeIR_field_b*, |typeIR_a*|)
     -- (Cast_impl: typeIR_a -> typeIR_field_b_non_default)*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
 }
 
@@ -383,7 +383,7 @@ rulegroup Cast_impl_neq/recordTypeIR-default {
     -- if `{ id_default* } = $diff_set<id>(`{ id_field_b* }, `{ id_field_a* })
     -- if (typeIR_field_b_default
           = $find_map<id, typeIR>(`{ (id_field_b `: typeIR_field_b)* }, id_default))*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
   rule Cast_impl_neq/headerTypeIR:
     RECORD `{ (_ typeIR_field_a id_field_a `;)* `, `... }
@@ -399,7 +399,7 @@ rulegroup Cast_impl_neq/recordTypeIR-default {
     -- if `{ id_default* } = $diff_set<id>(`{ id_field_b* }, `{ id_field_a* })
     -- if (typeIR_field_b_default
           = $find_map<id, typeIR>(`{ (id_field_b `: typeIR_field_b)* }, id_default))*
-    -- if $is_defaultable_typeIR(typeIR_field_b_default)*
+    -- if $typeIR_is.defaultable(typeIR_field_b_default)*
 
 }
 
