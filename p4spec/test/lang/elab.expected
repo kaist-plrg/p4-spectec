@@ -23354,26 +23354,24 @@ def $find_type_e(cursor, evalContext, nameIR) : typeIR? =
 
 def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : callResolution<(cursor, callableDef)>? =
 
-  clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
-  -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches ``%`
-  -- let ` nameIR = prefixedNameIR
+  clause 0 : (_cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
   -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
-  clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
-  -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches ``%`
-  -- let ` nameIR = prefixedNameIR
+  clause 1 : (_cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
   clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches `.%`
-  -- let . nameIR = prefixedNameIR
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
@@ -23381,8 +23379,8 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
 
   clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches `.%`
-  -- let . nameIR = prefixedNameIR
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
