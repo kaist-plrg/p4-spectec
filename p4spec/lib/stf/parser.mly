@@ -54,7 +54,7 @@ stmt:
     { Expect($2, None, true) }
   | EXPECT port
     { Expect($2, None, false) }
-  | MIRRORING_ADD session port
+  | MIRRORING_ADD session port_mirror
     { MirroringAdd ($2, $3) }
   | MIRRORING_ADD_MC session mgid
     { MirroringAddMc ($2, $3) }
@@ -167,6 +167,10 @@ session:
 
 port:
   | DATA_DEC
+    { $1 }
+
+port_mirror:
+  | INT_CONST_DEC
     { $1 }
 
 mgid:
