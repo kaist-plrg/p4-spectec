@@ -12,11 +12,6 @@ struct Headers {
 
 struct Meta {}
 
-bit<8> n_exit() {
-    exit;
-    return 8w1;
-}
-
 parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm) {
     state start {
         b.extract(h.op);
@@ -25,18 +20,31 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 }
 
-control vrfy(inout Headers h, inout Meta m) { apply { } }
+control vrfy(inout Headers h, inout Meta m) {
+    apply { }
+}
 
-control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) { apply { } }
+control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    apply { }
+}
 
-control egress(inout Headers h, inout Meta m, inout standard_metadata_t sm) { apply { } }
+control egress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    apply {
+        if (h.op.a == 0x1) {
+            exit;
+            h.op.a = 0x2;
+        }
+    }
+}
 
-control check(inout Headers h, inout Meta m) { apply { } }
+control check(inout Headers h, inout Meta m) {
+    apply { }
+}
 
 control deparser(packet_out b, in Headers h) {
     apply {
-        b.emit(n_exit());
         b.emit(h.op);
+        b.emit(h.checksum);
     }
 }
 
