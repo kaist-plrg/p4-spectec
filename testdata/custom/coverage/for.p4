@@ -166,11 +166,11 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x13) {
-            for (Hdr h in get_header_stack(t3.apply().hit)) { }
+            for (Hdr x in get_header_stack(t3.apply().hit)) { }
         }
 
         else if (h.op.a == 0x14) {
-            for (Hdr h in h.h) { }
+            for (Hdr x in h.h) { }
         }
 
         else if (h.op.a == 0x15) {
