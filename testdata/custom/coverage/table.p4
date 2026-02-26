@@ -23,6 +23,7 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition select(h.op.a) {
             0x00: key_head_abort;
             0x01: key_cons_abort;
+            0x02: largest_priority_wins;
             default: accept;
         }
     }
@@ -33,6 +34,11 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 
     state key_cons_abort {
+        h.op.a = 0x10 + h.op.a;
+        transition accept;
+    }
+
+    state largest_priority_wins {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -73,6 +79,21 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         default_action = nop;
     }
 
+    table t_largest_priority_wins {
+        actions = { nop; }
+        key = {
+            8w1 : exact;
+            h.op.a : ternary;
+        }
+        largest_priority_wins = false;
+        priority_delta = 1;
+        entries = {
+            const priority=1: (8w1, 0x12 &&& 0xFF) : nop();
+            const priority=2: (8w1, 0x32 &&& 0xDF) : nop();
+        }
+        default_action = nop;
+    }
+
     apply {
         if (h.op.a == 0x10) {
             t_key_head_abort.apply();
@@ -80,6 +101,10 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
 
         else if (h.op.a == 0x11) {
             t_key_cons_abort.apply();
+        }
+
+        else if (h.op.a == 0x12) {
+            t_largest_priority_wins.apply();
         }
     }
 }
