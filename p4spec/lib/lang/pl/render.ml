@@ -750,14 +750,38 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
     | _ -> render_exp in_prose exp
   in
   let table_rows =
-    List.map2
-      (fun row_header content ->
-        let header_prose = render_row_header row_header in
+    (* Find index of longest header *)
+    let longest_idx =
+      row_headers
+      |> List.mapi (fun idx row_header -> (idx, List.length row_header))
+      |> List.fold_left
+           (fun (max_idx, max_len) (idx, len) ->
+             if len > max_len then (idx, len) else (max_idx, max_len))
+           (0, 0)
+      |> fst
+    in
+    (* Move longest row to end *)
+    let move_to_end lst idx =
+      let elem = List.nth lst idx in
+      let others =
+        List.mapi (fun i x -> if i = idx then None else Some x) lst
+        |> List.filter_map Fun.id
+      in
+      others @ [ elem ]
+    in
+    let row_headers = move_to_end row_headers longest_idx in
+    let content = move_to_end content longest_idx in
+    List.mapi
+      (fun row_idx (row_header, row_content) ->
+        let is_longest = row_idx = List.length row_headers - 1 in
+        let header_prose =
+          if is_longest then "otherwise" else render_row_header row_header
+        in
         let content_prose =
-          content |> List.map render_cell |> String.concat " | "
+          row_content |> List.map render_cell |> String.concat " | "
         in
         "| " ^ header_prose ^ " | " ^ content_prose)
-      row_headers content
+      (List.combine row_headers content)
     |> String.concat "\n"
   in
   let table_footer = "\n\n|===" in
