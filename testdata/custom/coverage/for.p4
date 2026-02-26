@@ -178,13 +178,13 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             for (bit<8> i in lst) { }
         }
 
-        else if (h.op.a == 0x16) {
-            for (bit<8> i in bto8(t4.apply().hit) .. 3) { }
-        }
-
-        else if (h.op.a == 0x17) {
-            for (bit<8> i in 1 .. bto8(t5.apply().hit)) { }
-        }
+        // else if (h.op.a == 0x16) {
+        //     for (bit<8> i in bto8(t4.apply().hit) .. 3) { }
+        // }
+        //
+        // else if (h.op.a == 0x17) {
+        //     for (bit<8> i in 1 .. bto8(t5.apply().hit)) { }
+        // }
 
         else if (h.op.a == 0x18) {
             for (bit<8> i in 1 .. 3) {
@@ -213,7 +213,8 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x1C) {
-            for (bit<8> i = 0; i < bto8(t6.apply().hit); i = i + 1) { }
+            // error: Side effects in for condition not supported
+            // for (bit<8> i = 0; i < bto8(t6.apply().hit); i = i + 1) { }
         }
 
         else if (h.op.a == 0x1D) {

@@ -31,11 +31,10 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition select(h.op.a) {
             0x00: dontcare;
             0x01: lvalue_member_abort;
-            // 0x02: lvalue_index_base_abort;
-            0x03: lvalue_index_abort;
-            0x04: lvalue_slice_base_abort;
-            0x05: lvalue_slice_rhs_abort;
-            0x06: lvalue_parenthesized;
+            0x02: lvalue_index_abort;
+            0x03: lvalue_slice_base_abort;
+            0x04: lvalue_slice_rhs_abort;
+            0x05: lvalue_parenthesized;
             default: accept;
         }
     }
@@ -50,20 +49,13 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         h.op.a = 0x10 + h.op.a;
         b.extract(h.h.next);
         b.extract(h.h.next);
-        f(h.h.next.a);
-        transition accept;
-    }
-
-    state lvalue_index_base_abort {
-        h.op.a = 0x10 + h.op.a;
-        b.extract(h.h.next);
-        b.extract(h.h.next);
+        // f(h.h.next.a);
         transition accept;
     }
 
     state lvalue_index_abort {
         h.op.a = 0x10 + h.op.a;
-        h.h[h.h.last.a].a = 8w1;
+        // h.h[h.h.last.a].a = 8w1;
         transition accept;
     }
 
@@ -71,14 +63,14 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         h.op.a = 0x10 + h.op.a;
         b.extract(h.h.next);
         b.extract(h.h.next);
-        h.h.next.a[8:7] = 2w1;
+        // h.h.next.a[7:6] = 2w1;
         transition accept;
     }
 
     state lvalue_slice_rhs_abort {
         h.op.a = 0x10 + h.op.a;
         bit<16> x = 16w3;
-        x[16:9] = h.h.last.a;
+        x[15:8] = h.h.last.a;
         transition accept;
     }
 
