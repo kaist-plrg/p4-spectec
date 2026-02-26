@@ -23,8 +23,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition select(h.op.a) {
             0x00: key_head_abort;
             0x01: key_cons_abort;
-            0x02: entry_abort;
-            0x03: multiple_entries_cons_abort;
             default: accept;
         }
     }
@@ -38,16 +36,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
-
-    state entry_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state multiple_entries_cons_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
 }
 
 control vrfy(inout Headers h, inout Meta m) { apply {} }
@@ -58,13 +46,14 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         exit;
     }
 
-    table t { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t1 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t2 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
 
     action nop() {}
     table t_key_head_abort {
         actions = { nop; }
         key = {
-            bool_to_bit8(t.apply().hit) : exact;
+            bool_to_bit8(t1.apply().hit) : exact @name("f1");
         }
         const entries = {
             1 : nop();
@@ -76,33 +65,10 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         actions = { nop; }
         key = {
             h.op.a : exact;
-            bool_to_bit8(t.apply().hit) : exact;
+            bool_to_bit8(t2.apply().hit) : exact @name("f1");
         }
         const entries = {
             (1, 1) : nop();
-        }
-        default_action = nop;
-    }
-
-    table t_entry_abort {
-        actions = { nop; }
-        key = {
-            h.op.a : exact;
-        }
-        const entries = {
-            bool_to_bit8(t.apply().hit) : nop();
-        }
-        default_action = nop;
-    }
-
-    table t_multiple_entries_cons_abort {
-        actions = { nop; }
-        key = {
-            h.op.a : exact;
-        }
-        const entries = {
-            1 : nop();
-            bool_to_bit8(t.apply().hit) : nop();
         }
         default_action = nop;
     }
@@ -114,14 +80,6 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
 
         else if (h.op.a == 0x11) {
             t_key_cons_abort.apply();
-        }
-
-        else if (h.op.a == 0x12) {
-            t_entry_abort.apply();
-        }
-
-        else if (h.op.a == 0x13) {
-            t_multiple_entries_cons_abort.apply();
         }
     }
 }
