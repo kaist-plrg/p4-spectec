@@ -77,7 +77,8 @@ struct
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
     | Register of Object.Register.t
-    | Hash of Object.Hash.t
+    | Hash of Object.HashExtern.t
+    | InternetChecksum of Object.InternetChecksum.t
   [@@deriving yojson]
 
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
@@ -131,9 +132,15 @@ struct
         let register = Register register in
         register |> object_state_to_yojson |> wrap_extern_v "objectState"
     | "Hash" ->
-        let hash = Object.Hash.init value_type_args value_args in
+        let hash = Object.HashExtern.init value_type_args value_args in
         let hash = Hash hash in
         hash |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "InternetChecksum" ->
+        let checksum =
+          Object.InternetChecksum.init value_type_args value_args
+        in
+        let checksum = InternetChecksum checksum in
+        checksum |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -274,16 +281,52 @@ struct
           (register, value_ctx, value_arch, value_callResult)
       | Hash hash, "get_hash", [ "data" ] ->
           let hash, value_ctx, value_arch, value_callResult =
-            Object.Hash.get_hash value_ctx value_arch hash
+            Object.HashExtern.get_hash value_ctx value_arch hash
           in
           let hash = Hash hash in
           (hash, value_ctx, value_arch, value_callResult)
       | Hash hash, "get_hash", [ "base"; "data"; "max" ] ->
           let hash, value_ctx, value_arch, value_callResult =
-            Object.Hash.get_hash_adjust value_ctx value_arch hash
+            Object.HashExtern.get_hash_adjust value_ctx value_arch hash
           in
           let hash = Hash hash in
           (hash, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "clear", [] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.clear value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "add", [ "data" ] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.add value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "subtract", [ "data" ] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.subtract value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "get", [] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.get value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "get_state", [] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.get_state value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
+      | InternetChecksum checksum, "set_state", [ "checksum_state" ] ->
+          let checksum, value_ctx, value_arch, value_callResult =
+            Object.InternetChecksum.set_state value_ctx value_arch checksum
+          in
+          let checksum = InternetChecksum checksum in
+          (checksum, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v

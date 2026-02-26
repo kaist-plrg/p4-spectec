@@ -190,7 +190,7 @@ end
 
 (* Hash *)
 
-module Hash = struct
+module HashExtern = struct
   (* Type *)
 
   type t = string [@@deriving yojson]
@@ -213,7 +213,11 @@ module Hash = struct
                (List.length values_arg))
     in
     match unpack_p4_enum value_algo with
-    | "PSA_HashAlgorithm_t", algo -> String.lowercase_ascii algo
+    | "PSA_HashAlgorithm_t", "IDENTITY" -> "identity"
+    | "PSA_HashAlgorithm_t", "CRC32" -> "crc32"
+    | "PSA_HashAlgorithm_t", "CRC16" -> "crc16"
+    | "PSA_HashAlgorithm_t", "ONES_COMPLEMENT16" -> "csum16"
+    | "PSA_HashAlgorithm_t", algo -> algo
     | _ -> assert false
 
   (* Compute the hash for data.
@@ -271,4 +275,130 @@ module Hash = struct
       [ Term "RETURN"; NT value_result_opt ] #@ "returnResult"
     in
     (hash, value_ctx, value_arch, value_callResult)
+end
+
+(* InternetChecksum *)
+
+module InternetChecksum = struct
+  (* Type *)
+
+  type t =
+    (Bigint.t
+    [@to_yojson Util.Json.bigint_to_yojson]
+    [@of_yojson Util.Json.bigint_of_yojson])
+  [@@deriving yojson]
+
+  let pp fmt (_ck : t) = Format.fprintf fmt "InternetChecksum"
+
+  (* extern InternetChecksum
+
+     Checksum based on `ONES_COMPLEMENT16` algorithm used in IPv4, TCP, and UDP.
+     Supports incremental updating via `subtract` method.
+     See IETF RFC 1624.
+
+     InternetChecksum(); *)
+
+  let init (_value_type_args : Value.t) (_value_args : Value.t) : t =
+    Bigint.zero
+
+  (* Reset internal state and prepare unit for computation. Every
+     instance of an InternetChecksum object is automatically
+     initialized as if clear() had been called on it, once for each
+     time the parser or control it is instantiated within is
+     executed.  All state maintained by it is independent per packet.
+
+     void clear(); *)
+
+  let clear (value_ctx : Value.t) (value_arch : Value.t) (_checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (Bigint.zero, value_ctx, value_arch, value_callResult)
+
+  (* Add data to checksum. data must be a multiple of 16 bits long.
+
+     void add<T>(in T data); *)
+
+  let add (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let values =
+      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
+    in
+    let checksum = Hash.compute_checksum "csum16" ~value_init:checksum values in
+    let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (checksum, value_ctx, value_arch, value_callResult)
+
+  (* Subtract data from existing checksum. data must be a multiple of
+     16 bits long.
+
+     void subtract<T>(in T data); *)
+
+  let subtract (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let values =
+      Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
+    in
+    let checksum =
+      Hash.compute_checksum "csum16_sub" ~value_init:checksum values
+    in
+    let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (checksum, value_ctx, value_arch, value_callResult)
+
+  (* Get checksum for data added (and not removed) since last clear
+
+     bit<16> get(); *)
+
+  let get (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
+    let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
+    let value_callResult =
+      let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
+      [ Term "RETURN"; NT value_checksum_opt ] #@ "returnResult"
+    in
+    (checksum, value_ctx, value_arch, value_callResult)
+
+  (* Get current state of checksum computation.  The return value is
+     only intended to be used for a future call to the set_state
+     method.
+
+     bit<16> get_state(); *)
+
+  let get_state (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
+    let value_callResult =
+      let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
+      [ Term "RETURN"; NT value_checksum_opt ] #@ "returnResult"
+    in
+    (checksum, value_ctx, value_arch, value_callResult)
+
+  (* Restore the state of the InternetChecksum instance to one
+     returned from an earlier call to the get_state method.  This
+     state could have been returned from the same instance of the
+     InternetChecksum extern, or a different one.
+
+     void set_state(in bit<16> checksum_state); *)
+
+  let set_state (value_ctx : Value.t) (value_arch : Value.t) (_checksum : t) :
+      t * Value.t * Value.t * Value.t =
+    let checksum_state =
+      Spec.Func.find_var_e_local value_ctx "checksum_state"
+      |> unpack_p4_fixedBit |> snd
+    in
+    let value_callResult =
+      let value_eps = wrap_opt_v "value" None in
+      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    in
+    (checksum_state, value_ctx, value_arch, value_callResult)
 end
