@@ -76,6 +76,8 @@ struct
     | PacketIn of Core.Object.PacketIn.t
     | PacketOut of Core.Object.PacketOut.t
     | Counter of Object.Counter.t
+    | Register of Object.Register.t
+    | Hash of Object.Hash.t
   [@@deriving yojson]
 
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
@@ -124,6 +126,14 @@ struct
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
         counter |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "Register" ->
+        let register = Object.Register.init value_type_args value_args in
+        let register = Register register in
+        register |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "Hash" ->
+        let hash = Object.Hash.init value_type_args value_args in
+        let hash = Hash hash in
+        hash |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -250,6 +260,30 @@ struct
           in
           let counter = Counter counter in
           (counter, value_ctx, value_arch, value_callResult)
+      | Register register, "read", [ "index" ] ->
+          let register, value_ctx, value_arch, value_callResult =
+            Object.Register.read value_ctx value_arch register
+          in
+          let register = Register register in
+          (register, value_ctx, value_arch, value_callResult)
+      | Register register, "write", [ "index"; "value" ] ->
+          let register, value_ctx, value_arch, value_callResult =
+            Object.Register.write value_ctx value_arch register
+          in
+          let register = Register register in
+          (register, value_ctx, value_arch, value_callResult)
+      | Hash hash, "get_hash", [ "data" ] ->
+          let hash, value_ctx, value_arch, value_callResult =
+            Object.Hash.get_hash value_ctx value_arch hash
+          in
+          let hash = Hash hash in
+          (hash, value_ctx, value_arch, value_callResult)
+      | Hash hash, "get_hash", [ "base"; "data"; "max" ] ->
+          let hash, value_ctx, value_arch, value_callResult =
+            Object.Hash.get_hash_adjust value_ctx value_arch hash
+          in
+          let hash = Hash hash in
+          (hash, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v
