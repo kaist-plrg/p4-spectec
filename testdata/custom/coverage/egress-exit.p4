@@ -34,7 +34,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
 
 control egress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
     apply {
-        if (h.op.a == 0x1) {
+        if (h.op.a == 0x0) {
             exit;
             h.op.a = 0x2;
         }
