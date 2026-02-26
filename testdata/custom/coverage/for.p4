@@ -12,24 +12,16 @@ struct Headers {
 
 struct Meta {}
 
-bit<8> n_exit() {
-    exit;
-    return 8w1;
+bit<8> bto8(in bool x) {
+    return 8w0;
 }
 
 void set_value(out bit<8> i, in bit<8> val) {
     i = val;
 }
 
-void loop_return() {
-    for (bit<8> i = 0; i < 1; i = i + 1) {
-        return;
-    }
-}
-
-Hdr[2] get_header_stack_exit() {
+Hdr[2] get_header_stack(in bool x) {
     Hdr[2] hdrs;
-    exit;
     return hdrs;
 }
 
@@ -148,15 +140,26 @@ control vrfy(inout Headers h, inout Meta m) { apply {} }
 control update(inout Headers h, inout Meta m) { apply {} }
 
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
+    action f() {
+        exit;
+    }
+
+    table t1 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t2 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t3 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t4 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t5 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+    table t6 { actions = { f; } key = { h.op.a : exact; } default_action = f; }
+
     apply {
         if (h.op.a == 0x10) {
             bit<8> i;
-            for (i = n_exit(); i < 3; i = i + 1) { }
+            for (i = bto8(t1.apply().hit); i < 3; i = i + 1) { }
         }
 
         else if (h.op.a == 0x11) {
             bit<8> i;
-            for (bit<8> i = n_exit(); i < 3; i = i + 1) { }
+            for (bit<8> i = bto8(t2.apply().hit); i < 3; i = i + 1) { }
         }
 
         else if (h.op.a == 0x12) {
@@ -164,7 +167,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x13) {
-            for (Hdr h in get_header_stack_exit()) { }
+            for (Hdr h in get_header_stack(t3.apply().hit)) { }
         }
 
         else if (h.op.a == 0x14) {
@@ -177,11 +180,11 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x16) {
-            for (bit<8> i in n_exit() .. 3) { }
+            for (bit<8> i in bto8(t4.apply().hit) .. 3) { }
         }
 
         else if (h.op.a == 0x17) {
-            for (bit<8> i in 1 .. n_exit()) { }
+            for (bit<8> i in 1 .. bto8(t5.apply().hit)) { }
         }
 
         else if (h.op.a == 0x18) {
@@ -211,7 +214,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x1C) {
-            for (bit<8> i = 0; i < n_exit(); i = i + 1) { }
+            for (bit<8> i = 0; i < bto8(t6.apply().hit); i = i + 1) { }
         }
 
         else if (h.op.a == 0x1D) {
@@ -219,7 +222,9 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x1E) {
-            loop_return();
+            for (bit<8> i = 0; i < 1; i = i + 1) {
+                return;
+            }
         }
     }
 }

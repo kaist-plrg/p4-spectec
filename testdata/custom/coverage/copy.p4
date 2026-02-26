@@ -12,14 +12,16 @@ struct Headers {
 
 struct Meta {}
 
-bit<8> n_exit() {
-    exit;
-    return 8w1;
+void f_in(in bit<8> a) { }
+void f_inout(inout bit<8> a) { }
+
+bit<8> bool_to_bit8(in bool x) {
+    return 8w0;
 }
 
-void arg_abort(in bit<8> arg) { }
-void f_in(in bit<8> a) { }
-void f_inout(inout bit<8> pirate) { }
+bit<32> bool_to_bit32(in bool x) {
+    return 32w0;
+}
 
 parser subparser(packet_in b, inout Hdr hdr, inout Headers h, in bit<8> w) {
     bit<8> x = h.h.last.a;
@@ -102,14 +104,27 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
 control vrfy(inout Headers h, inout Meta m) { apply {} }
 control update(inout Headers h, inout Meta m) { apply {} }
 
-control c(in bit<8> w) {
-    bit<8> x = n_exit();
-
-    apply {}
+control c(in bool w) {
+    action f() {
+        exit;
+    }
+    table t {
+        actions = { f; }
+        key = {
+            8w0 : exact;
+        }
+        default_action = f;
+    }
+    apply {
+        bool x = t.apply().hit;
+    }
 }
 
 control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
     action copy_in_abort(bit<8> a) {
+    }
+    action f() {
+        exit;
     }
 
     table t1 {
@@ -117,10 +132,35 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         key = {
             h.op.a : exact;
         }
-        const entries = {
-            0x12  : copy_in_abort(n_exit());
-        }
+        const entries = { }
     }
+
+    table t2 {
+        actions = { f; }
+        key = {
+            h.op.a : exact;
+        }
+        default_action = f;
+    }
+
+    table t3 {
+        actions = { f; }
+        key = {
+            h.op.a : exact;
+        }
+        default_action = f;
+    }
+
+    table t4 {
+        actions = { f; }
+        key = {
+            h.op.a : exact;
+        }
+        default_action = f;
+    }
+
+    c() c1;
+    c() c2;
 
     apply {
         if (h.op.a == 0x12) {
@@ -128,19 +168,23 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x13) {
-            arg_abort(n_exit());
+            f_in(bool_to_bit8(t2.apply().hit));
+            h.op.a = 0;
         }
 
         else if (h.op.a == 0x14) {
-            digest((bit<32>) n_exit(), 8w1);
+            digest(bool_to_bit32(t3.apply().hit), 8w1);
+            h.op.a = 0;
         }
 
         else if (h.op.a == 0x17) {
-            c.apply(n_exit());
+            c1.apply(t4.apply().hit);
+            h.op.a = 0;
         }
 
         else if (h.op.a == 0x18) {
-            c.apply(8w1);
+            c2.apply(true);
+            h.op.a = 0;
         }
     }
 }
