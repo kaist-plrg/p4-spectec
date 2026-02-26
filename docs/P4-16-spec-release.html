@@ -1244,7 +1244,16 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#_unrolling">8.7. Unrolling</a></li>
-<li><a href="#_nesting">8.8. Nesting</a></li>
+<li><a href="#_type_nesting_rules">8.8. Type Nesting Rules</a>
+<ul class="sectlevel4">
+<li><a href="#_alias_types">8.8.1. Alias types</a></li>
+<li><a href="#_data_types">8.8.2. Data types</a></li>
+<li><a href="#_synthesized_types">8.8.3. Synthesized types</a></li>
+<li><a href="#_callables">8.8.4. Callables</a></li>
+<li><a href="#_constructor_types">8.8.5. Constructor types</a></li>
+</ul>
+</li>
+<li><a href="#_properties_of_types">8.9. Properties of Types</a></li>
 </ul>
 </li>
 <li><a href="#_p4_callables">9. P4 callables</a>
@@ -12501,10 +12510,9 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 <div class="sect2">
-<h3 id="_nesting">8.8. Nesting</h3>
-<div class="paragraph">
-<p><a href="#nestable_alias">$nestable_alias</a>:</p>
-</div>
+<h3 id="_type_nesting_rules">8.8. Type Nesting Rules</h3>
+<div class="sect4">
+<h5 id="_alias_types">8.8.1. Alias types</h5>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
@@ -12607,9 +12615,9 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 </div>
-<div class="paragraph">
-<p><a href="#nestable_data">$nestable_data</a>:</p>
 </div>
+<div class="sect4">
+<h5 id="_data_types">8.8.2. Data types</h5>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 11.1111%;">
@@ -12889,9 +12897,9 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 </div>
-<div class="paragraph">
-<p><a href="#nestable_synthesized">$nestable_synthesized</a>:</p>
 </div>
+<div class="sect4">
+<h5 id="_synthesized_types">8.8.3. Synthesized types</h5>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 25%;">
@@ -12995,9 +13003,9 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 </div>
-<div class="paragraph">
-<p><a href="#nestable_callable">$nestable_callable</a>:</p>
 </div>
+<div class="sect4">
+<h5 id="_callables">8.8.4. Callables</h5>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 14.2857%;">
@@ -13125,9 +13133,9 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 </div>
 </div>
-<div class="paragraph">
-<p><a href="#nestable_constructor">$nestable_constructor</a>:</p>
 </div>
+<div class="sect4">
+<h5 id="_constructor_types">8.8.5. Constructor types</h5>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 20%;">
@@ -13203,6 +13211,220 @@ def $unroll_typeIR(typeIR) = typeIR
 </div>
 <div class="paragraph">
 <p>[4] <a href="nestable_constructor.package_obj"><code>typeIR</code> can be nested in a package object constructor type</a><br></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_properties_of_types">8.9. Properties of Types</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">↓ can be →</th>
+<th class="tableblock halign-left valign-top">default-initialized</th>
+<th class="tableblock halign-left valign-top">compared for equality</th>
+<th class="tableblock halign-left valign-top">assigned to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>BOOL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ERROR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>STRING</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[2]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[3]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPE</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TUPLE</code> <code>&lt;</code> <code>typeIR<sup>*</sup></code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[4]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>typeIR</code> <code>[</code> <code>_</code> <code>]</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>STRUCT</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR</code> <code>_</code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[4]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HEADER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR</code> <code>_</code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[4]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HEADER_UNION</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>_</code> <code>typeIR</code> <code>_</code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[4]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENUM</code> <code>_</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ENUM</code> <code>_</code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>VOID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>typeId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>externObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parserObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>controlObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>packageObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tableObjectTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DEFAULT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SEQ</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>,</code> <code>...</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RECORD</code> <code>{</code> <code>_<sup>*</sup></code> <code>,</code> <code>...</code> <code>}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>HEADER_INVALID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>setTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>tableMetadataTypeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RECORD</code> <code>{</code> <code>_</code> <code>}</code><br>
+<code>SEQ</code> <code>&lt;</code> <code>_</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LIST</code> <code>&lt;</code> <code>_</code> <code>&gt;</code><br>
+<code>MATCH_KIND</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">otherwise</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+</tbody>
+</table>
+<div class="openblock small">
+<div class="content">
+<div class="paragraph">
+<p>[1] <a href="typeIR_is.defaultable"><code>typeIR</code> can be default-initialized</a><br></p>
+</div>
+<div class="paragraph">
+<p>[2] <a href="typeIR_is.equalable"><code>typeIR</code> can be compared for equality</a><br></p>
+</div>
+<div class="paragraph">
+<p>[3] <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a><br></p>
+</div>
+<div class="paragraph">
+<p>[4] <a href="#forall_">all <code>$typeIR_is.defaultable(typeIR)<sup>*</sup></code> are true</a><br></p>
 </div>
 </div>
 </div>
@@ -17044,7 +17266,7 @@ initializerIR
   p TC_0 |- annotationList type name `EMPTY ; : TC_1 variableDeclarationIR
  -- Type_ok: p TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(p, TC_0) |- typeIR
- -- if $is_assignable_typeIR(typeIR)
+ -- if $typeIR_is.assignable(typeIR)
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(p, TC_0, nameIR, INOUT typeIR DYN eps)
  -- if variableDeclarationIR = annotationList typeIR nameIR eps ;
@@ -17052,7 +17274,7 @@ initializerIR
   p TC_0 |- annotationList type name (= expression_init) ; : TC_1 variableDeclarationIR
  -- Type_ok: p TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(p, TC_0) |- typeIR
- -- if $is_assignable_typeIR(typeIR)
+ -- if $typeIR_is.assignable(typeIR)
  -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
  -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
@@ -17098,7 +17320,7 @@ initializerIR
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+<p>Check that <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -17142,7 +17364,7 @@ initializerIR
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+<p>Check that <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be</p>
@@ -30345,14 +30567,14 @@ forUpdateStatementIR
   TC_0 |- annotationList type name `EMPTY : TC_1 (annotationList typeIR nameIR eps)
  -- Type_ok: LOCAL TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
- -- if $is_assignable_typeIR(typeIR)
+ -- if $typeIR_is.assignable(typeIR)
  -- if nameIR = $name(name)
  -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, INOUT typeIR DYN eps)
   rule ForInitStmt_ok/variableDeclaration-initializer:
   TC_0 |- annotationList type name (= expression_init) : TC_1 (annotationList typeIR nameIR (= typedExpressionIR_init_cast))
  -- Type_ok: LOCAL TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
- -- if $is_assignable_typeIR(typeIR)
+ -- if $typeIR_is.assignable(typeIR)
  -- Expr_ok: LOCAL TC_0 |- expression_init : typedExpressionIR_init
  -- if typedExpressionIR_init_cast = $cast_unary(typedExpressionIR_init, typeIR)
  -- if nameIR = $name(name)
@@ -30404,7 +30626,7 @@ forUpdateStatementIR
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+<p>Check that <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a>.</p>
 </li>
 <li>
 <p>Let <code>nameIR</code> be <a href="#name">the name of <code>name</code></a>.</p>
@@ -30445,7 +30667,7 @@ forUpdateStatementIR
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+<p>Check that <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>init</sub></code> be</p>
@@ -31567,7 +31789,7 @@ forCollectionExpressionIR
   LOCAL TC_0 f l |- annotationList FOR `(type name IN forCollectionExpression) statement : TC_0 f_post forStatementIR
  -- Type_ok: LOCAL TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
- -- if $is_assignable_typeIR(typeIR)
+ -- if $typeIR_is.assignable(typeIR)
  -- ForCollectionExpr_ok: TC_0 typeIR |- forCollectionExpression : forCollectionExpressionIR
  -- if TC_1 = $enter_t(TC_0)
  -- if nameIR = $name(name)
@@ -31618,7 +31840,7 @@ forCollectionExpressionIR
 <p>Check that <a href="#Type_wf"><code>typeIR</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_assignable_typeIR"><code>typeIR</code> supports assignment</a>.</p>
+<p>Check that <a href="typeIR_is.assignable"><code>typeIR</code> can be assigned to</a>.</p>
 </li>
 <li>
 <p>Let <code>forCollectionExpressionIR</code> be</p>
@@ -37379,7 +37601,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
  -- if typeIR_cast = $type_of_typedExpressionIR(typedExpressionIR_l_cast)
  -- if ctk_l_cast = $ctk_of_typedExpressionIR(typedExpressionIR_l_cast)
  -- if ctk_r_cast = $ctk_of_typedExpressionIR(typedExpressionIR_r_cast)
- -- if $is_equalable_typeIR(typeIR_cast)
+ -- if $typeIR_is.equalable(typeIR_cast)
  -- if ctk_cast = $join_ctk(ctk_l_cast, ctk_r_cast)
  -- if expressionNoteIR = `(BOOL ctk_cast)</pre>
 </div>
@@ -37434,7 +37656,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>ctk<sub>r_cast</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>r_cast</sub></code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_equalable_typeIR"><code>typeIR<sub>cast</sub></code> supports equality comparison</a>.</p>
+<p>Check that <a href="typeIR_is.equalable"><code>typeIR<sub>cast</sub></code> can be compared for equality</a>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>cast</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_cast</sub></code> and <code>ctk<sub>r_cast</sub></code></a>.</p>
@@ -42229,6 +42451,47 @@ memberAccessBaseIR
 </div>
 <div class="sect3">
 <h4 id="_local_compile_time_evaluation_14">14.14.2. Local compile-time evaluation</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">↓ can be used as an array index</th>
+<th class="tableblock halign-left valign-top">compat_array_index</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>BIT</code> <code>&lt;</code> <code>_</code> <code>&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">✅</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>TYPEDEF</code> <code>_</code> <code>typeIR</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[1]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">otherwise</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">❌</p></td>
+</tr>
+</tbody>
+</table>
+<div class="openblock small">
+<div class="content">
+<div class="paragraph">
+<p>[1] <a href="#compat_array_index"><code>typeIR</code> can be used as an array index</a><br></p>
+</div>
+</div>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -55759,7 +56022,7 @@ If so, no cast is needed.</p>
 <pre>rulegroup Cast_expl_neq/defaultTypeIR:
   rule Cast_expl_neq/defaultTypeIR:
   DEFAULT -&gt; typeIR_b
- -- if $is_defaultable_typeIR(typeIR_b)</pre>
+ -- if $typeIR_is.defaultable(typeIR_b)</pre>
 </div>
 </div>
 </div>
@@ -55777,7 +56040,7 @@ If so, no cast is needed.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR'</code> can be default-initialized</a>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR'</code> can be default-initialized</a>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -55960,24 +56223,24 @@ If so, no cast is needed.</p>
  -- if |typeIR_a*| &lt; |typeIR_b*|
  -- if (typeIR_b_non_default*, typeIR_b_default*) = $partition_&lt;typeIR&gt;(typeIR_b*, |typeIR_a*|)
  -- (Cast_expl: typeIR_a -&gt; typeIR_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_b_default))*
   rule Cast_expl_neq/headerStackTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; typeIR_b `[n_size]
  -- if |typeIR_a*| &lt; n_size
  -- (Cast_expl: typeIR_a -&gt; typeIR_b)*
- -- if $is_defaultable_typeIR(typeIR_b)
+ -- if $typeIR_is.defaultable(typeIR_b)
   rule Cast_expl_neq/structTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; STRUCT _ `&lt;_&gt; `{(_ typeIR_field_b _ ;)*}
  -- if |typeIR_a*| &lt; |typeIR_field_b*|
  -- if (typeIR_field_b_non_default*, typeIR_field_b_default*) = $partition_&lt;typeIR&gt;(typeIR_field_b*, |typeIR_a*|)
  -- (Cast_expl: typeIR_a -&gt; typeIR_field_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*
   rule Cast_expl_neq/headerTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; HEADER _ `&lt;_&gt; `{(_ typeIR_field_b _ ;)*}
  -- if |typeIR_a*| &lt; |typeIR_field_b*|
  -- if (typeIR_field_b_non_default*, typeIR_field_b_default*) = $partition_&lt;typeIR&gt;(typeIR_field_b*, |typeIR_a*|)
  -- (Cast_expl: typeIR_a -&gt; typeIR_field_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*</pre>
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*</pre>
 </div>
 </div>
 </div>
@@ -56008,7 +56271,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_expl"><code>typeIR<sub>a</sub></code> can be explicitly cast to <code>typeIR<sub>b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b_non_default</sub></code> in <code>typeIR<sub>b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>b_default</sub></code> in <code>typeIR<sub>b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>b_default</sub></code> in <code>typeIR<sub>b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56027,7 +56290,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_expl"><code>typeIR<sub>a</sub></code> can be explicitly cast to <code>typeIR<sub>b</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>b</sub></code> can be default-initialized</a>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>b</sub></code> can be default-initialized</a>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56049,7 +56312,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_expl"><code>typeIR<sub>a</sub></code> can be explicitly cast to <code>typeIR<sub>field_b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b_non_default</sub></code> in <code>typeIR<sub>field_b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56071,7 +56334,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_expl"><code>typeIR<sub>a</sub></code> can be explicitly cast to <code>typeIR<sub>field_b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b_non_default</sub></code> in <code>typeIR<sub>field_b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56317,7 +56580,7 @@ If so, no cast is needed.</p>
  -- (Cast_expl: typeIR_field_a_aligned -&gt; typeIR_field_b_non_default_aligned)*
  -- if `{id_default*} = $diff_set&lt;id&gt;(`{id_field_b*}, `{id_field_a*})
  -- (if (typeIR_field_b_default = $find_map&lt;id, typeIR&gt;(`{(id_field_b : typeIR_field_b)*}, id_default)))*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*
   rule Cast_expl_neq/headerTypeIR:
   RECORD `{(_ typeIR_field_a id_field_a ;)* , ...} -&gt; HEADER _ `&lt;_&gt; `{(_ typeIR_field_b id_field_b ;)*}
  -- if $sub_set&lt;id&gt;(`{id_field_a*}, `{id_field_b*})
@@ -56326,7 +56589,7 @@ If so, no cast is needed.</p>
  -- (Cast_expl: typeIR_field_a_aligned -&gt; typeIR_field_b_non_default_aligned)*
  -- if `{id_default*} = $diff_set&lt;id&gt;(`{id_field_b*}, `{id_field_a*})
  -- (if (typeIR_field_b_default = $find_map&lt;id, typeIR&gt;(`{(id_field_b : typeIR_field_b)*}, id_default)))*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*</pre>
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*</pre>
 </div>
 </div>
 </div>
@@ -56468,7 +56731,7 @@ If so, no cast is needed.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56601,7 +56864,7 @@ If so, no cast is needed.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -56914,7 +57177,7 @@ If so, no cast is needed.</p>
 <pre>rulegroup Cast_impl_neq/defaultTypeIR:
   rule Cast_impl_neq/defaultTypeIR:
   DEFAULT -&gt; typeIR_b
- -- if $is_defaultable_typeIR(typeIR_b)</pre>
+ -- if $typeIR_is.defaultable(typeIR_b)</pre>
 </div>
 </div>
 </div>
@@ -56932,7 +57195,7 @@ If so, no cast is needed.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR'</code> can be default-initialized</a>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR'</code> can be default-initialized</a>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57137,24 +57400,24 @@ If so, no cast is needed.</p>
  -- if |typeIR_a*| &lt; |typeIR_b*|
  -- if (typeIR_b_non_default*, typeIR_b_default*) = $partition_&lt;typeIR&gt;(typeIR_b*, |typeIR_a*|)
  -- (Cast_impl: typeIR_a -&gt; typeIR_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_b_default))*
   rule Cast_impl_neq/headerStackTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; typeIR_b `[n_size]
  -- if |typeIR_a*| &lt; n_size
  -- (Cast_impl: typeIR_a -&gt; typeIR_b)*
- -- if $is_defaultable_typeIR(typeIR_b)
+ -- if $typeIR_is.defaultable(typeIR_b)
   rule Cast_impl_neq/structTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; STRUCT _ `&lt;_&gt; `{(_ typeIR_field_b _ ;)*}
  -- if |typeIR_a*| &lt; |typeIR_field_b*|
  -- if (typeIR_field_b_non_default*, typeIR_field_b_default*) = $partition_&lt;typeIR&gt;(typeIR_field_b*, |typeIR_a*|)
  -- (Cast_impl: typeIR_a -&gt; typeIR_field_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*
   rule Cast_impl_neq/headerTypeIR:
   SEQ `&lt;typeIR_a* , ...&gt; -&gt; HEADER _ `&lt;_&gt; `{(_ typeIR_field_b _ ;)*}
  -- if |typeIR_a*| &lt; |typeIR_field_b*|
  -- if (typeIR_field_b_non_default*, typeIR_field_b_default*) = $partition_&lt;typeIR&gt;(typeIR_field_b*, |typeIR_a*|)
  -- (Cast_impl: typeIR_a -&gt; typeIR_field_b_non_default)*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*</pre>
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*</pre>
 </div>
 </div>
 </div>
@@ -57185,7 +57448,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_impl"><code>typeIR<sub>a</sub></code> can be implicitly cast to <code>typeIR<sub>b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b_non_default</sub></code> in <code>typeIR<sub>b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>b_default</sub></code> in <code>typeIR<sub>b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>b_default</sub></code> in <code>typeIR<sub>b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57204,7 +57467,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_impl"><code>typeIR<sub>a</sub></code> can be implicitly cast to <code>typeIR<sub>b</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>b</sub></code> can be default-initialized</a>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>b</sub></code> can be default-initialized</a>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57226,7 +57489,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_impl"><code>typeIR<sub>a</sub></code> can be implicitly cast to <code>typeIR<sub>field_b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b_non_default</sub></code> in <code>typeIR<sub>field_b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57248,7 +57511,7 @@ If so, no cast is needed.</p>
 <p>Check that <a href="#Cast_impl"><code>typeIR<sub>a</sub></code> can be implicitly cast to <code>typeIR<sub>field_b_non_default</sub></code></a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b_non_default</sub></code> in <code>typeIR<sub>field_b_non_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57494,7 +57757,7 @@ If so, no cast is needed.</p>
  -- (Cast_impl: typeIR_field_a_aligned -&gt; typeIR_field_b_non_default_aligned)*
  -- if `{id_default*} = $diff_set&lt;id&gt;(`{id_field_b*}, `{id_field_a*})
  -- (if (typeIR_field_b_default = $find_map&lt;id, typeIR&gt;(`{(id_field_b : typeIR_field_b)*}, id_default)))*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*
   rule Cast_impl_neq/headerTypeIR:
   RECORD `{(_ typeIR_field_a id_field_a ;)* , ...} -&gt; HEADER _ `&lt;_&gt; `{(_ typeIR_field_b id_field_b ;)*}
  -- if $sub_set&lt;id&gt;(`{id_field_a*}, `{id_field_b*})
@@ -57503,7 +57766,7 @@ If so, no cast is needed.</p>
  -- (Cast_impl: typeIR_field_a_aligned -&gt; typeIR_field_b_non_default_aligned)*
  -- if `{id_default*} = $diff_set&lt;id&gt;(`{id_field_b*}, `{id_field_a*})
  -- (if (typeIR_field_b_default = $find_map&lt;id, typeIR&gt;(`{(id_field_b : typeIR_field_b)*}, id_default)))*
- -- (if $is_defaultable_typeIR(typeIR_field_b_default))*</pre>
+ -- (if $typeIR_is.defaultable(typeIR_field_b_default))*</pre>
 </div>
 </div>
 </div>
@@ -57645,7 +57908,7 @@ If so, no cast is needed.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>
@@ -57778,7 +58041,7 @@ If so, no cast is needed.</p>
 </div>
 </li>
 <li>
-<p>Check that <a href="#is_defaultable_typeIR"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
+<p>Check that <a href="typeIR_is.defaultable"><code>typeIR<sub>field_b_default</sub></code> can be default-initialized</a>, for all <code>typeIR<sub>field_b_default</sub></code> in <code>typeIR<sub>field_b_default</sub><sup>*</sup></code>.</p>
 </li>
 <li>
 <p>Then, the relation holds.</p>

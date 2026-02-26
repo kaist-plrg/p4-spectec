@@ -4,25 +4,31 @@
 ;; syntax tableKey = expression `: name annotationList `;
 ;;
 
-tbl dec $compat_table_exact_optional_key(typeIR) : bool
-tbl def $compat_table_exact_optional_key =
+tblgroup compat_table_key'(typeIR) : bool
+  hint(prose_true %0 "is compatible with the match kind" %1)
+  hint(prose_false %0 "is not compatible with the match kind" %1)
+{
+  tbl dec $exact_optional  hint(tbl_col "exact/optional")
+  tbl dec $lpm_ternary_range hint(tbl_col "lpm/ternary/range")
+}
+
+tbl def $compat_table_key'.exact_optional =
   | BOOL => true
   | ERROR => true
   | integerTypeIR => true
-  | TYPEDEF _ typeIR => $compat_table_exact_optional_key(typeIR)
-  | TYPE _ typeIR => $compat_table_exact_optional_key(typeIR)
+  | TYPEDEF _ typeIR => $compat_table_key'.exact_optional(typeIR)
+  | TYPE _ typeIR => $compat_table_key'.exact_optional(typeIR)
   | ENUM _ `{ _ } => true
-  | ENUM _ `< typeIR > `{ _ } => $compat_table_exact_optional_key(typeIR)
+  | ENUM _ `< typeIR > `{ _ } => $compat_table_key'.exact_optional(typeIR)
   | _ => false
 
-tbl dec $compat_table_lpm_ternary_range_key(typeIR) : bool
-tbl def $compat_table_lpm_ternary_range_key =
+tbl def $compat_table_key'.lpm_ternary_range =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
-  | TYPEDEF _ typeIR => $compat_table_lpm_ternary_range_key(typeIR)
-  | TYPE _ typeIR => $compat_table_lpm_ternary_range_key(typeIR)
-  | ENUM _ `< typeIR > `{ _ } => $compat_table_lpm_ternary_range_key(typeIR)
+  | TYPEDEF _ typeIR => $compat_table_key'.lpm_ternary_range(typeIR)
+  | TYPE _ typeIR => $compat_table_key'.lpm_ternary_range(typeIR)
+  | ENUM _ `< typeIR > `{ _ } => $compat_table_key'.lpm_ternary_range(typeIR)
   | _ => false
 
 dec $compat_table_key(nameIR, typeIR) : bool
@@ -31,10 +37,10 @@ dec $compat_table_key(nameIR, typeIR) : bool
 
 def $compat_table_key(nameIR, typeIR) = true
   -- if nameIR = "exact" \/ nameIR = "optional"
-  -- if $compat_table_exact_optional_key(typeIR)
+  -- if $compat_table_key'.exact_optional(typeIR)
 def $compat_table_key(nameIR, typeIR) = true
   -- if nameIR = "lpm" \/ nameIR = "ternary" \/ nameIR = "range"
-  -- if $compat_table_lpm_ternary_range_key(typeIR)
+  -- if $compat_table_key'.lpm_ternary_range(typeIR)
 def $compat_table_key(nameIR, typeIR) = false
   -- otherwise
 

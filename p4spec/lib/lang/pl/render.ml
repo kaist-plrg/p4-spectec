@@ -821,9 +821,7 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
         |> String.concat "\n")
       ^ "--"
   in
-  (string_of_defid gid
-  |> adoc_as_link in_prose ~link:(string_of_defid ~link:true gid))
-  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer ^ legend
+  table_meta ^ table_header ^ table_rows ^ table_footer ^ legend
 
 (* Defined function definitions *)
 
