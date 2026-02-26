@@ -726,7 +726,7 @@ and render_builtin_func_def (builtinfunc : builtinfunc) : string =
 
 and render_tablegroup_def (tablegroup : tablegroup) : string =
   let { title; row_headers; col_headers; content } = tablegroup in
-  let gid, _hint_true, _hint_false, param, _typ = title in
+  let gid, hint_true, _hint_false, param, _typ = title in
   let num_cols = List.length col_headers + 1 in
   let table_meta =
     "[cols=\"" ^ string_of_int num_cols ^ "\", options=\"header\"]\n"
@@ -736,10 +736,13 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
     |> List.map (function FuncCol id -> id.it | LabelCol label -> label)
     |> String.concat " | "
   in
+  let corner_header =
+    match hint_true with
+    | Some hint -> Hints.Alter.alternate hint (fun s -> s) [ "↓"; "→" ]
+    | None -> render_param in_prose param
+  in
   let table_header =
-    "|===" ^ "\n" ^ "| "
-    ^ render_param in_prose param
-    ^ " | " ^ col_headers_prose ^ "\n\n"
+    "|===" ^ "\n" ^ "| " ^ corner_header ^ " | " ^ col_headers_prose ^ "\n\n"
   in
   let render_row_header (exps : row_header) =
     render_exps in_prose ~sep:" +\n" exps
