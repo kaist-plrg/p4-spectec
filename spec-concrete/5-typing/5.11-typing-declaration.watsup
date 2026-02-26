@@ -92,9 +92,8 @@ relation InstDecl_non_objectInitializer_ok:
                            `( argumentList ) name `;
                         : typingContext instantiationIR
   hint(input %0 %1 %2 %3 %4 %5 %6)
-  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `; "under cursor" %0
-                 "and typing context" %1)
-  hint(prose_out "the updated typing context" %7 "and" %8)
+  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `; "under context" %1 "at" %0)
+  hint(prose_out "context" %7 "and" %8)
 
 rule InstDecl_non_objectInitializer_ok:
   p TC_0 |- annotationList prefixedTypeName `< typeArgumentList >
@@ -134,8 +133,7 @@ relation ObjectDecl_ok:
   |- objectDeclaration
    : typeFrame externMethodTypeDefEnv objectDeclarationIR
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "under cursor" %0 "and typing context" %1
-                "with" %2 "and" %3)
+  hint(prose_in "typing" %4 "under context" %1 "with" %2 "and" %3 "at" %0)
   hint(prose_out %5 "and" %6
                  "of the object declaration and" %7)
 
@@ -206,8 +204,8 @@ relation ObjectDecls_ok:
   |- objectDeclaration*
    : typeFrame externMethodTypeDefEnv objectDeclarationListIR
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "typing" %4 "under cursor" %0 "and typing context" %1
-                "with" %2 "and" %3)
+  hint(prose_in "typing" %4 "under context" %1
+                "with" %2 "and" %3 "at" %0)
   hint(prose_out %5 "and" %6
                  "of the object declaration block and" %7)
 
@@ -237,7 +235,7 @@ relation ObjectDeclList_ok:
                         : typeFrame externMethodTypeDefEnv
                           objectDeclarationListIR
   hint(input %0 %1 %2)
-  hint(prose_in "typing" %2 "under cursor" %0 "and typing context" %1)
+  hint(prose_in "typing" %2 "under context" %1 "at" %0)
   hint(prose_out %3 "and" %4
                  "of the object declaration block and" %5)
 
@@ -293,9 +291,8 @@ relation InstDecl_objectInitializer_ok:
                            `( argumentList ) name `= `{ objectDeclarationList } `;
                         : typingContext instantiationIR
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
-  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `= `{ %7 } `; "under cursor" %0
-                 "and typing context" %1)
-  hint(prose_out "the updated typing context" %8 "and" %9)
+  hint(prose_in "typing" %2 %3 `< %4 > `( %5 ) %6 `= `{ %7 } `; "under context" %1 "at" %0)
+  hint(prose_out "context" %8 "and" %9)
 
 rule InstDecl_objectInitializer_ok:
   p TC_0 |- annotationList
@@ -789,8 +786,7 @@ relation Enum_serializable_field_ok:
   hint(input %0 %1 %2 %3)
   hint(prose_in "typing" %3 "under typing context" %0
                 "with enum name" %1 "and underlying" %2)
-  hint(prose_out "the updated typing context" %4#
-                 ", and field value" %5)
+  hint(prose_out "context" %4 "and field value" %5)
 
 rule Enum_serializable_field_ok:
   TC_0 nameIR_enum typeIR |- name `= expression
@@ -836,8 +832,7 @@ relation Enum_serializable_fieldList_ok:
   hint(input %0 %1 %2 %3)
   hint(prose_in "typing" %3 "under typing context" %0
                 "with enum name" %1 "and underlying" %2)
-  hint(prose_out "the updated typing context" %4
-                 "and field values" %6)
+  hint(prose_out "context" %4 "and field values" %6)
 
 rule Enum_serializable_fieldList_ok:
   TC_0 nameIR_enum typeIR |- namedExpressionList

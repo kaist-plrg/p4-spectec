@@ -17,8 +17,8 @@ relation TypeDef_wf:
 relation ParameterType_wf:
   bound |- parameterIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed parameter type, with bound type variables" %0)
-  hint(prose_false %1 "is not a well-formed parameter type, with bound type variables" %0)
+  hint(prose_true %1 "is a well-formed parameter, with bound type variables" %0)
+  hint(prose_false %1 "is not a well-formed parameter, with bound type variables" %0)
 
 relation ReturnType_wf:
   bound |- typeIR
@@ -41,8 +41,8 @@ relation CallableTypeDef_wf:
 relation ConstructorParameterType_wf:
   bound |- parameterIR
   hint(input %0 %1)
-  hint(prose_true %1 "is a well-formed constructor parameter type, with bound type variables" %0)
-  hint(prose_false %1 "is not a well-formed constructor parameter type, with bound type variables" %0)
+  hint(prose_true %1 "is a well-formed constructor parameter, with bound type variables" %0)
+  hint(prose_false %1 "is not a well-formed constructor parameter, with bound type variables" %0)
 
 relation ConstructorType_wf:
   bound |- constructorTypeIR
@@ -749,8 +749,10 @@ tbl def $definable_constructor =
   |  _ => false
 
 rule ConstructorTypeDef_wf:
-  B |- CONSTRUCTOR `< typeParameterIR_expl* `, typeParameterIR_impl* >
-            `( parameterIR* ) `: typeIR_object
+  B |- constructorTypeDefIR
+  -- if CONSTRUCTOR `< typeParameterIR_expl* `, typeParameterIR_impl* >
+          `( parameterIR* ) `: typeIR_object 
+      = constructorTypeDefIR
   -- if $definable_constructor(typeIR_object)
   -- if typeParameterIR*
       = typeParameterIR_expl* ++ typeParameterIR_impl*
