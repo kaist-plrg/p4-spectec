@@ -174,7 +174,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         }
 
         else if (h.op.a == 0x15) {
-            list<bit<8>> lst = {1, 2, 3};
+            list<bit<8>> lst = (list<bit<8>>){1, 2, 3};
             for (bit<8> i in lst) { }
         }
 
