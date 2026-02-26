@@ -48,7 +48,7 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
 
     state default_expr {
         h.op.a = 0x10 + h.op.a;
-        Hdr h = ...;
+        Hdr x = ...;
         transition accept;
     }
 
@@ -90,7 +90,7 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
 
     state invalid_header {
         h.op.a = 0x10 + h.op.a;
-        Hdr h = {#};
+        Hdr x = {#};
         transition accept;
     }
 
