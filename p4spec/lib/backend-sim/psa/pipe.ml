@@ -79,6 +79,7 @@ struct
     | Register of Object.Register.t
     | Hash of Object.HashExtern.t
     | InternetChecksum of Object.InternetChecksum.t
+    | Meter of Object.Meter.t
   [@@deriving yojson]
 
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
@@ -141,6 +142,10 @@ struct
         in
         let checksum = InternetChecksum checksum in
         checksum |> object_state_to_yojson |> wrap_extern_v "objectState"
+    | "Meter" ->
+        let meter = Object.Meter.init value_type_args value_args in
+        let meter = Meter meter in
+        meter |> object_state_to_yojson |> wrap_extern_v "objectState"
     | _ -> wrap_extern_v "objectState" `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
@@ -327,6 +332,18 @@ struct
           in
           let checksum = InternetChecksum checksum in
           (checksum, value_ctx, value_arch, value_callResult)
+      | Meter meter, "execute", [ "index"; "color" ] ->
+          let meter, value_ctx, value_arch, value_callResult =
+            Object.Meter.execute_color_aware value_ctx value_arch meter
+          in
+          let meter = Meter meter in
+          (meter, value_ctx, value_arch, value_callResult)
+      | Meter meter, "execute", [ "index" ] ->
+          let meter, value_ctx, value_arch, value_callResult =
+            Object.Meter.execute_color_blind value_ctx value_arch meter
+          in
+          let meter = Meter meter in
+          (meter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
             value_objectId |> unwrap_list_v |> List.map unwrap_text_v

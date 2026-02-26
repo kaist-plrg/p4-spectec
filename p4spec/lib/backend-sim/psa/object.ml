@@ -99,12 +99,82 @@ module Counter = struct
     (counter, value_ctx, value_arch, value_callResult)
 end
 
+(* Meter *)
+
+module Meter = struct
+  (* Type *)
+
+  type color = RED | GREEN | YELLOW [@@deriving yojson]
+  type t = Packets of color list | Bytes of color list [@@deriving yojson]
+
+  let pp fmt (_meter : t) = Format.fprintf fmt "Meter"
+
+  (* extern Meter<S>
+
+     Indexed meter with n_meters independent meter states.
+
+     Meter(bit<32> n_meters, PSA_MeterType_t type); *)
+
+  let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let values_arg = unwrap_list_v value_args in
+    let value_size, value_type =
+      match values_arg with
+      | [ value_size; value_type ] -> (value_size, value_type)
+      | _ ->
+          error_no_region
+            (Format.asprintf
+               "Meter constructor expects 2 arguments, but %d were given"
+               (List.length values_arg))
+    in
+    let _, size = unpack_p4_fixedBit value_size in
+    let size = Bigint.to_int_exn size in
+    let id_enum, id_type = unpack_p4_enum value_type in
+    match (id_enum, id_type) with
+    | "PSA_MeterType_t", "PACKETS" -> Packets (List.init size (fun _ -> GREEN))
+    | "PSA_MeterType_t", "BYTES" -> Bytes (List.init size (fun _ -> GREEN))
+    | _ ->
+        error_no_region
+          (Format.asprintf "invalid PSA_MeterType_t enum value: %s.%s" id_enum
+             id_type)
+
+  (* Use this method call to perform a color aware meter update (see
+     RFC 2698). The color of the packet before the method call was
+     made is specified by the color parameter.
+
+     PSA_MeterColor_t execute(in S index, in PSA_MeterColor_t color); *)
+
+  let execute_color_aware (value_ctx : Value.t) (value_arch : Value.t)
+      (meter : t) : t * Value.t * Value.t * Value.t =
+    (* NOTE: returning GREEN for now *)
+    let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
+    let value_callResult =
+      let value_color_opt = wrap_opt_v "value" (Some value_color) in
+      [ Term "RETURN"; NT value_color_opt ] #@ "returnResult"
+    in
+    (meter, value_ctx, value_arch, value_callResult)
+
+  (* Use this method call to perform a color blind meter update (see
+     RFC 2698).  It may be implemented via a call to execute(index,
+     MeterColor_t.GREEN), which has the same behavior.
+
+     PSA_MeterColor_t execute(in S index); *)
+
+  let execute_color_blind (value_ctx : Value.t) (value_arch : Value.t)
+      (meter : t) : t * Value.t * Value.t * Value.t =
+    (* NOTE: returning GREEN for now *)
+    let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
+    let value_callResult =
+      let value_color_opt = wrap_opt_v "value" (Some value_color) in
+      [ Term "RETURN"; NT value_color_opt ] #@ "returnResult"
+    in
+    (meter, value_ctx, value_arch, value_callResult)
+end
+
 (* Register *)
 
 module Register = struct
   (* Type *)
 
-  (* type t = { typ : Il.Ast.value; values : Il.Ast.value list } [@@deriving yojson] *)
   type t = { typ : Value.t; values : Value.t list } [@@deriving yojson]
 
   let pp fmt (_reg : t) = Format.fprintf fmt "Register"
