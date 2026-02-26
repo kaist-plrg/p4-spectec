@@ -13669,6 +13669,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath exitStatement
+    -- if ~(((p = block) /\ (TC.block.kind = parser)) \/ ((p = local) /\ $is_function_localKind(TC.local.kind)))
     -- output: % % % % |- % : TC f exit; as statementIR
 
   rulegroup blockStatement
@@ -17690,6 +17691,14 @@ relation ParameterList_ok_inner: cursor typingContext |- parameter* : typingCont
     -- let parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}
     -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- output: % % |- % : TC_2 parameterIR*{parameterIR <- parameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+
+def $is_function_localKind(localKind) : bool =
+
+  clause 0 : (localKind) = true
+  -- if localKind <: functionLocalKind
+  -- let functionLocalKind = localKind as functionLocalKind
+
+  clause -1 : (_localKind) = false
 
 relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatementIR
 

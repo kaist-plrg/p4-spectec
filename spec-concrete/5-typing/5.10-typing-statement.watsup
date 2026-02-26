@@ -201,11 +201,19 @@ rulegroup Stmt_ok/returnStatement {
 
 }
 
+dec $is_function_localKind(localKind) : bool
+def $is_function_localKind(functionLocalKind) = true
+def $is_function_localKind(_) = false
+  -- otherwise
+
 ;;; exitStatement
 ;;; syntax exitStatement = EXIT `;
 
 rule Stmt_ok/exitStatement:
   p TC f l |- EXIT `; : TC f (EXIT `;)
+  ---- ;; exit statements are not allowed within parsers or functions.
+  -- if ~((p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+        \/ (p = LOCAL /\ $is_function_localKind(TC.LOCAL.KIND)))
 
 ;;; blockStatement
 
