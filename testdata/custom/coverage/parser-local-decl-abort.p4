@@ -16,6 +16,9 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     bit<8> x = h.h.last.a;
 
     state start {
+        b.extract(h.op);
+        h.op = 0x1;
+
         transition accept;
     }
 }
