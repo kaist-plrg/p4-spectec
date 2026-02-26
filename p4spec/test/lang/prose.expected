@@ -1058,18 +1058,25 @@ xref:is_defaultable_typeIR[$is_defaultable_typeIR]:
 | ``+ERROR+`` | ✅
 | ``+STRING+`` | ✅
 | ``integerTypeIR`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:is_defaultable_typeIR[``typeIR`` can be default-initialized]
-| ``+TYPE+`` ``++_++`` ``typeIR`` | xref:is_defaultable_typeIR[``typeIR`` can be default-initialized]
-| ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | xref:forall_[all ``$is_defaultable_typeIR(typeIR)^{asterisk}^`` are true]
-| ``typeIR`` ``+[+`` ``++_++`` ``+]+`` | xref:is_defaultable_typeIR[``typeIR`` can be default-initialized]
-| ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | xref:forall_[all ``$is_defaultable_typeIR(typeIR)^{asterisk}^`` are true]
-| ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | xref:forall_[all ``$is_defaultable_typeIR(typeIR)^{asterisk}^`` are true]
-| ``+HEADER_UNION+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | xref:forall_[all ``$is_defaultable_typeIR(typeIR)^{asterisk}^`` are true]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
+| ``+TYPE+`` ``++_++`` ``typeIR`` | [1]
+| ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | [2]
+| ``typeIR`` ``+[+`` ``++_++`` ``+]+`` | [1]
+| ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | [2]
+| ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | [2]
+| ``+HEADER_UNION+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | [2]
 | ``+ENUM+`` ``++_++`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | ✅
-| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | xref:is_defaultable_typeIR[``typeIR`` can be default-initialized]
+| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] xref:is_defaultable_typeIR[``typeIR`` can be default-initialized]
+
+[2] xref:forall_[all ``$is_defaultable_typeIR(typeIR)^{asterisk}^`` are true]
+--
 
 xref:is_equalable_typeIR[$is_equalable_typeIR]:
 [cols="2", options="header"]
@@ -1078,7 +1085,7 @@ xref:is_equalable_typeIR[$is_equalable_typeIR]:
 
 | ``+VOID+`` | ❌
 | ``typeId`` | ❌
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:is_equalable_typeIR[``typeIR`` supports equality comparison]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | ``externObjectTypeIR`` | ❌
 | ``parserObjectTypeIR`` | ❌
 | ``controlObjectTypeIR`` | ❌
@@ -1094,6 +1101,11 @@ xref:is_equalable_typeIR[$is_equalable_typeIR]:
 
 |===
 
+[.small]
+--
+[1] xref:is_equalable_typeIR[``typeIR`` supports equality comparison]
+--
+
 xref:is_assignable_typeIR[$is_assignable_typeIR]:
 [cols="2", options="header"]
 |===
@@ -1102,12 +1114,17 @@ xref:is_assignable_typeIR[$is_assignable_typeIR]:
 | ``+VOID+`` | ❌
 | ``+STRING+`` | ❌
 | ``+INT+`` | ❌
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:is_assignable_typeIR[``typeIR`` supports assignment]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | ``objectTypeIR`` | ❌
 | ``synthesizedTypeIR`` | ❌
 | otherwise | ✅
 
 |===
+
+[.small]
+--
+[1] xref:is_assignable_typeIR[``typeIR`` supports assignment]
+--
 
 xref:typeId_of_typeDefIR[The name of ``typeDefIR``]
 
@@ -5544,7 +5561,7 @@ xref:nestable_alias[$nestable_alias]:
 | ``+INT+`` +
 ``+VARBIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅ | ❌
 | ``nameTypeIR`` | ✅ | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:nestable_alias.typedef[$nestable_alias.typedef(typeIR)]`` | ``xref:nestable_alias.new[$nestable_alias.new(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1] | [2]
 | ``newTypeIR`` | ✅ | ✅
 | ``dataTypeIR`` | ✅ | ❌
 | ``externObjectTypeIR`` | ✅ | ❌
@@ -5554,6 +5571,13 @@ xref:nestable_alias[$nestable_alias]:
 | otherwise | ❌ | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:nestable_alias.typedef[$nestable_alias.typedef(typeIR)]``
+
+[2] ``xref:nestable_alias.new[$nestable_alias.new(typeIR)]``
+--
 
 xref:nestable_data[$nestable_data]:
 [cols="9", options="header"]
@@ -5569,11 +5593,11 @@ xref:nestable_data[$nestable_data]:
 | ``varBitTypeIR`` | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌
 | ``+INT+`` | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
 | ``nameTypeIR`` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:nestable_data.list[$nestable_data.list(typeIR)]`` | ``xref:nestable_data.tuple[$nestable_data.tuple(typeIR)]`` | ``xref:nestable_data.headerStack[$nestable_data.headerStack(typeIR)]`` | ``xref:nestable_data.header[$nestable_data.header(typeIR)]`` | ``xref:nestable_data.struct_in_header[$nestable_data.struct_in_header(typeIR)]`` | ``xref:nestable_data.headerUnion[$nestable_data.headerUnion(typeIR)]`` | ``xref:nestable_data.enum_serializable[$nestable_data.enum_serializable(typeIR)]`` | ``xref:nestable_data.new_in_enum_serializable[$nestable_data.new_in_enum_serializable(typeIR)]``
-| ``+TYPE+`` ``++_++`` ``typeIR`` | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ``xref:nestable_data.new_in_enum_serializable[$nestable_data.new_in_enum_serializable(typeIR)]`` | ✅
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1] | [2] | [3] | [4] | [5] | [6] | [7] | [8]
+| ``+TYPE+`` ``++_++`` ``typeIR`` | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | [8] | ✅
 | ``tupleTypeIR`` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
 | ``headerStackTypeIR`` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
-| ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | ✅ | ✅ | ❌ | xref:forall_[all ``$nestable_data.struct_in_header(typeIR~field~)^{asterisk}^`` are true] | xref:forall_[all ``$nestable_data.struct_in_header(typeIR~field~)^{asterisk}^`` are true] | ❌ | ❌ | ❌
+| ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` | ✅ | ✅ | ❌ | [9] | [9] | ❌ | ❌ | ❌
 | ``headerTypeIR`` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌
 | ``headerUnionTypeIR`` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌
 | ``+ENUM+`` ``++_++`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌
@@ -5582,6 +5606,27 @@ xref:nestable_data[$nestable_data]:
 | otherwise | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:nestable_data.list[$nestable_data.list(typeIR)]``
+
+[2] ``xref:nestable_data.tuple[$nestable_data.tuple(typeIR)]``
+
+[3] ``xref:nestable_data.headerStack[$nestable_data.headerStack(typeIR)]``
+
+[4] ``xref:nestable_data.header[$nestable_data.header(typeIR)]``
+
+[5] ``xref:nestable_data.struct_in_header[$nestable_data.struct_in_header(typeIR)]``
+
+[6] ``xref:nestable_data.headerUnion[$nestable_data.headerUnion(typeIR)]``
+
+[7] ``xref:nestable_data.enum_serializable[$nestable_data.enum_serializable(typeIR)]``
+
+[8] ``xref:nestable_data.new_in_enum_serializable[$nestable_data.new_in_enum_serializable(typeIR)]``
+
+[9] xref:forall_[all ``$nestable_data.struct_in_header(typeIR~field~)^{asterisk}^`` are true]
+--
 
 xref:nestable_synthesized[$nestable_synthesized]:
 [cols="4", options="header"]
@@ -5593,14 +5638,27 @@ xref:nestable_synthesized[$nestable_synthesized]:
 | ``fixedIntTypeIR`` | ✅ | ✅ | ✅
 | ``fixedBitTypeIR`` | ✅ | ✅ | ✅
 | ``nameTypeIR`` | ✅ | ✅ | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:nestable_synthesized.set[$nestable_synthesized.set(typeIR)]`` | ``xref:nestable_synthesized.tuple_in_set[$nestable_synthesized.tuple_in_set(typeIR)]`` | ``xref:nestable_synthesized.sequence_in_set[$nestable_synthesized.sequence_in_set(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1] | [2] | [3]
 | ``newTypeIR`` | ✅ | ✅ | ✅
-| ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | xref:forall_[all ``$nestable_synthesized.tuple_in_set(typeIR)^{asterisk}^`` are true] | xref:forall_[all ``$nestable_synthesized.tuple_in_set(typeIR)^{asterisk}^`` are true] | xref:forall_[all ``$nestable_synthesized.sequence_in_set(typeIR)^{asterisk}^`` are true]
+| ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | [4] | [4] | [5]
 | ``enumTypeIR`` | ✅ | ✅ | ✅
-| ``+SEQ+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | xref:forall_[all ``$nestable_synthesized.sequence_in_set(typeIR)^{asterisk}^`` are true] | ❌ | xref:forall_[all ``$nestable_synthesized.sequence_in_set(typeIR)^{asterisk}^`` are true]
+| ``+SEQ+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` | [5] | ❌ | [5]
 | otherwise | ❌ | ❌ | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:nestable_synthesized.set[$nestable_synthesized.set(typeIR)]``
+
+[2] ``xref:nestable_synthesized.tuple_in_set[$nestable_synthesized.tuple_in_set(typeIR)]``
+
+[3] ``xref:nestable_synthesized.sequence_in_set[$nestable_synthesized.sequence_in_set(typeIR)]``
+
+[4] xref:forall_[all ``$nestable_synthesized.tuple_in_set(typeIR)^{asterisk}^`` are true]
+
+[5] xref:forall_[all ``$nestable_synthesized.sequence_in_set(typeIR)^{asterisk}^`` are true]
+--
 
 xref:nestable_callable[$nestable_callable]:
 [cols="7", options="header"]
@@ -5608,7 +5666,7 @@ xref:nestable_callable[$nestable_callable]:
 | ``typeIR`` | action type | defined function type | extern function type | extern method type | parser apply method type | control apply method type
 
 | ``+INT+`` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:nestable_callable.action[$nestable_callable.action(typeIR)]`` | ``xref:nestable_callable.definedFunction[$nestable_callable.definedFunction(typeIR)]`` | ``xref:nestable_callable.externFunction[$nestable_callable.externFunction(typeIR)]`` | ``xref:nestable_callable.externMethod[$nestable_callable.externMethod(typeIR)]`` | ``xref:nestable_callable.parserApplyMethod[$nestable_callable.parserApplyMethod(typeIR)]`` | ``xref:nestable_callable.controlApplyMethod[$nestable_callable.controlApplyMethod(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1] | [2] | [3] | [4] | [5] | [6]
 | ``parserObjectTypeIR`` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
 | ``controlObjectTypeIR`` | ❌ | ❌ | ❌ | ❌ | ❌ | ✅
 | ``packageObjectTypeIR`` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
@@ -5619,12 +5677,27 @@ xref:nestable_callable[$nestable_callable]:
 
 |===
 
+[.small]
+--
+[1] ``xref:nestable_callable.action[$nestable_callable.action(typeIR)]``
+
+[2] ``xref:nestable_callable.definedFunction[$nestable_callable.definedFunction(typeIR)]``
+
+[3] ``xref:nestable_callable.externFunction[$nestable_callable.externFunction(typeIR)]``
+
+[4] ``xref:nestable_callable.externMethod[$nestable_callable.externMethod(typeIR)]``
+
+[5] ``xref:nestable_callable.parserApplyMethod[$nestable_callable.parserApplyMethod(typeIR)]``
+
+[6] ``xref:nestable_callable.controlApplyMethod[$nestable_callable.controlApplyMethod(typeIR)]``
+--
+
 xref:nestable_constructor[$nestable_constructor]:
 [cols="5", options="header"]
 |===
 | ``typeIR`` | extern object constructor type | parser object constructor type | control object constructor type | package object constructor type
 
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:nestable_constructor.extern_obj[$nestable_constructor.extern_obj(typeIR)]`` | ``xref:nestable_constructor.parser_obj[$nestable_constructor.parser_obj(typeIR)]`` | ``xref:nestable_constructor.control_obj[$nestable_constructor.control_obj(typeIR)]`` | ``xref:nestable_constructor.package_obj[$nestable_constructor.package_obj(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1] | [2] | [3] | [4]
 | ``parserObjectTypeIR`` | ❌ | ✅ | ❌ | ✅
 | ``controlObjectTypeIR`` | ❌ | ❌ | ✅ | ✅
 | ``packageObjectTypeIR`` | ❌ | ❌ | ❌ | ✅
@@ -5632,6 +5705,17 @@ xref:nestable_constructor[$nestable_constructor]:
 | otherwise | ✅ | ✅ | ✅ | ✅
 
 |===
+
+[.small]
+--
+[1] ``xref:nestable_constructor.extern_obj[$nestable_constructor.extern_obj(typeIR)]``
+
+[2] ``xref:nestable_constructor.parser_obj[$nestable_constructor.parser_obj(typeIR)]``
+
+[3] ``xref:nestable_constructor.control_obj[$nestable_constructor.control_obj(typeIR)]``
+
+[4] ``xref:nestable_constructor.package_obj[$nestable_constructor.package_obj(typeIR)]``
+--
 
 xref:nestable_data.struct[``typeIR`` can be nested in a struct type]
 
@@ -5668,7 +5752,7 @@ xref:definable_constructor[$definable_constructor]:
 |===
 | ``typeIR`` | definable_constructor
 
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:definable_constructor[``typeIR`` can be constructed]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | ``externObjectTypeIR`` | ✅
 | ``parserObjectTypeIR`` | ✅
 | ``controlObjectTypeIR`` | ✅
@@ -5676,6 +5760,11 @@ xref:definable_constructor[$definable_constructor]:
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] xref:definable_constructor[``typeIR`` can be constructed]
+--
 
 xref:ExternFunctionCall_eval_lctk[ExternFunctionCall_eval_lctk]:
 
@@ -10241,10 +10330,15 @@ xref:compat_lnot[$compat_lnot]:
 | ``typeIR`` | compat_lnot
 
 | ``+BOOL+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:compat_lnot[$compat_lnot(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:compat_lnot[$compat_lnot(typeIR)]``
+--
 
 xref:compat_bnot[$compat_bnot]:
 [cols="2", options="header"]
@@ -10253,10 +10347,15 @@ xref:compat_bnot[$compat_bnot]:
 
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:compat_bnot[$compat_bnot(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:compat_bnot[$compat_bnot(typeIR)]``
+--
 
 xref:compat_uplusminus[$compat_uplusminus]:
 [cols="2", options="header"]
@@ -10266,10 +10365,15 @@ xref:compat_uplusminus[$compat_uplusminus]:
 | ``+INT+`` | ✅
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:compat_uplusminus[$compat_uplusminus(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:compat_uplusminus[$compat_uplusminus(typeIR)]``
+--
 
 xref:compat_plusminusmult[$compat_plusminusmult(typeIR, typeIR')]
 
@@ -10455,10 +10559,15 @@ xref:compat_array_index[$compat_array_index]:
 | ``+INT+`` | ✅
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:compat_array_index[``typeIR`` can be used as an array index]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] xref:compat_array_index[``typeIR`` can be used as an array index]
+--
 
 xref:compat_bitslice_base[$compat_bitslice_base]:
 [cols="2", options="header"]
@@ -10466,12 +10575,19 @@ xref:compat_bitslice_base[$compat_bitslice_base]:
 | ``typeIR`` | compat_bitslice_base
 
 | ``+INT+`` | ✅
-| ``+INT+`` ``+<+`` ``w`` ``+>+`` | ``w`` is greater than ``0``
+| ``+INT+`` ``+<+`` ``w`` ``+>+`` | [1]
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:compat_bitslice_base[``typeIR`` can be used as a bitslice base]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [2]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``w`` is greater than ``0``
+
+[2] xref:compat_bitslice_base[``typeIR`` can be used as a bitslice base]
+--
 
 xref:compat_bitslice_index[$compat_bitslice_index]:
 [cols="2", options="header"]
@@ -10481,10 +10597,15 @@ xref:compat_bitslice_index[$compat_bitslice_index]:
 | ``+INT+`` | ✅
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:compat_bitslice_index[``typeIR`` can be used as a bitslice index]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] xref:compat_bitslice_index[``typeIR`` can be used as a bitslice index]
+--
 
 <<is_valid_bitslice,``typeIR`` ``+[+`` ``n~lo~`` ``+:+`` ``n~hi~`` ``+]+`` is a valid bitslice>>
 
@@ -10850,11 +10971,16 @@ xref:compat_switch[$compat_switch]:
 | ``+ERROR+`` | ✅
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | xref:compat_switch[``typeIR`` is a valid switch key type]
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
 | ``enumTypeIR`` | ✅
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] xref:compat_switch[``typeIR`` is a valid switch key type]
+--
 
 xref:BlockElementStmts_ok[BlockElementStmts_ok]:
 
@@ -11306,13 +11432,18 @@ xref:compat_table_exact_optional_key[$compat_table_exact_optional_key]:
 | ``+BOOL+`` | ✅
 | ``+ERROR+`` | ✅
 | ``integerTypeIR`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:compat_table_exact_optional_key[$compat_table_exact_optional_key(typeIR)]``
-| ``+TYPE+`` ``++_++`` ``typeIR`` | ``xref:compat_table_exact_optional_key[$compat_table_exact_optional_key(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
+| ``+TYPE+`` ``++_++`` ``typeIR`` | [1]
 | ``+ENUM+`` ``++_++`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | ✅
-| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | ``xref:compat_table_exact_optional_key[$compat_table_exact_optional_key(typeIR)]``
+| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:compat_table_exact_optional_key[$compat_table_exact_optional_key(typeIR)]``
+--
 
 xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key]:
 [cols="2", options="header"]
@@ -11322,12 +11453,17 @@ xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key]:
 | ``+INT+`` | ✅
 | ``+INT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
 | ``+BIT+`` ``+<+`` ``++_++`` ``+>+`` | ✅
-| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | ``xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(typeIR)]``
-| ``+TYPE+`` ``++_++`` ``typeIR`` | ``xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(typeIR)]``
-| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | ``xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(typeIR)]``
+| ``+TYPEDEF+`` ``++_++`` ``typeIR`` | [1]
+| ``+TYPE+`` ``++_++`` ``typeIR`` | [1]
+| ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` | [1]
 | otherwise | ❌
 
 |===
+
+[.small]
+--
+[1] ``xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(typeIR)]``
+--
 
 xref:compat_table_key[``typeIR`` can be used with match kind ``nameIR``]
 

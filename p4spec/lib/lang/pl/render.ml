@@ -744,10 +744,31 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
   let render_row_header (exps : row_header) =
     render_exps in_prose ~sep:" +\n" exps
   in
+  (* Collect unique complex (non-bool) expressions, preserving first-occurrence order *)
+  let unique_complex_exps =
+    List.concat content
+    |> List.fold_left
+         (fun exps_acc exp ->
+           match exp.it with
+           | BoolE _ -> exps_acc
+           | _ ->
+               if List.exists (Eq.eq_exp exp) exps_acc then exps_acc
+               else exps_acc @ [ exp ])
+         []
+  in
+  (* Get 1-based placeholder number for a complex expression *)
+  let get_placeholder exp =
+    let rec find n = function
+      | [] -> assert false
+      | e :: _ when Eq.eq_exp e exp -> n
+      | _ :: rest -> find (n + 1) rest
+    in
+    find 1 unique_complex_exps
+  in
   let render_cell exp =
     match exp.it with
     | BoolE b -> if b then "✅" else "❌"
-    | _ -> render_exp in_prose exp
+    | _ -> "[" ^ string_of_int (get_placeholder exp) ^ "]"
   in
   let table_rows =
     (* Find index of longest header *)
@@ -785,9 +806,21 @@ and render_tablegroup_def (tablegroup : tablegroup) : string =
     |> String.concat "\n"
   in
   let table_footer = "\n\n|===" in
+  let legend =
+    if unique_complex_exps = [] then ""
+    else
+      "\n\n[.small]\n--\n"
+      ^ (unique_complex_exps
+        |> List.mapi (fun idx exp ->
+               "["
+               ^ string_of_int (idx + 1)
+               ^ "] " ^ render_exp in_prose exp ^ "\n")
+        |> String.concat "\n")
+      ^ "--"
+  in
   (string_of_defid gid
   |> adoc_as_link in_prose ~link:(string_of_defid ~link:true gid))
-  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer
+  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer ^ legend
 
 (* Defined function definitions *)
 
