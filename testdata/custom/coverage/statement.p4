@@ -160,7 +160,8 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             bit<8> x = 101;
             switch (x) {
                 101:
-                102: { x = 100; }
+                102:
+                103: { x = 100; }
             }
             h.h[0].a = x - 100;
         }
