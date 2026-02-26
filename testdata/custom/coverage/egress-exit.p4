@@ -5,9 +5,13 @@ header Hdr {
     bit<8> a;
 }
 
+header Checksum {
+    bit<16> a;
+}
+
 struct Headers {
     Hdr op;
-    bit<16> checksum;
+    Checksum checksum;
 }
 
 struct Meta {}
