@@ -14935,11 +14935,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``false``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 . Else if ``binop`` is ``||``:
  .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -14949,11 +14947,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``true``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 
 xref:Expr_eval[Evaluating ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionIR~true~`` ``+:+`` ``typedExpressionIR~false~`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
@@ -16175,26 +16171,24 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
 . Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
-. If let ``abortResult`` be ``storageReferenceResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. Else:
- .. Let ``storageReference^?^`` be ``storageReferenceResult``.
- .. Check that ``storageReference^?^`` is defined.
- .. Let ``storageReference'`` be ``storageReference^?^``.
- .. Let value ``value`` be
+. Check that ``storageReferenceResult`` has type ``continueResult<storageReference?>``.
+. Let ``storageReference^?^`` be ``storageReferenceResult``.
+. Check that ``storageReference^?^`` is defined.
+. Let ``storageReference'`` be ``storageReference^?^``.
+. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
- .. Check that ``value`` has type ``objectReferenceValue``.
- .. Let ``+REF+`` ``objectId`` be ``value``.
- .. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
- .. Check that ``object'`` has type ``externObject``.
- .. Let ``+EXTERN+`` ``++_++`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object'``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``].
- .. Let ``++_++`` ``+:+`` ``externMethodDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
- .. Check that ``externMethodDef`` matches pattern ``EXTERN_METHOD`` ``%`` ``<`` ``%`` ``>`` ``(`` ``%`` ``)`` ``%``.
- .. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
- .. Check that ``nameIR'`` is equal to ``nameIR'``.
- .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
+. Check that ``value`` has type ``objectReferenceValue``.
+. Let ``+REF+`` ``objectId`` be ``value``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``+EXTERN+`` ``++_++`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object'``.
+. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``].
+. Let ``++_++`` ``+:+`` ``externMethodDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
+. Check that ``externMethodDef`` matches pattern ``EXTERN_METHOD`` ``%`` ``<`` ``%`` ``>`` ``(`` ``%`` ``)`` ``%``.
+. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
+. Check that ``nameIR'`` is equal to ``nameIR'``.
+. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
+. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"apply"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
