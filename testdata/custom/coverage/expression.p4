@@ -30,18 +30,17 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x04: lor_lhs_abort;
             0x05: lor_rhs_abort;
             0x06: cast_abort;
-            0x07: invalid_header;
-            0x08: tuple_abort;
-            0x09: tuple_default_abort;
-            0x0A: tuple_default;
-            0x0B: struct_abort;
-            0x0C: struct_cont;
-            0x0D: struct_default;
-            0x0E: struct_default_abort;
-            0x0F: header_stack_size;
-            0x10: index_access_abort;
-            0x11: index_access_tuple;
-            0x12: callee_abort;
+            0x07: tuple_abort;
+            0x08: tuple_default_abort;
+            0x09: tuple_default;
+            0x0A: struct_abort;
+            0x0B: struct_cont;
+            0x0C: struct_default;
+            0x0D: struct_default_abort;
+            0x0E: header_stack_size;
+            0x0F: index_access_abort;
+            0x10: index_access_tuple;
+            0x11: callee_abort;
             default: accept;
         }
     }
@@ -85,12 +84,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     state cast_abort {
         h.op.a = 0x10 + h.op.a;
         bit<16> casted = (bit<16>) h.h.last.a;
-        transition accept;
-    }
-
-    state invalid_header {
-        h.op.a = 0x10 + h.op.a;
-        // Hdr x = {#};
         transition accept;
     }
 

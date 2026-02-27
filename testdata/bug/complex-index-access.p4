@@ -15,16 +15,8 @@ struct Meta {}
 parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm) {
     state start {
         b.extract(h.op);
-
-        transition select(h.op.a) {
-            0x00: parser_empty;
-            default: accept;
-        }
-    }
-
-    state parser_empty {
-        h.op.a = 0x10 + h.op.a;
-        ;
+        h.h[h.h.last.a].a = 8w1;
+        h.op.a = 0;
         transition accept;
     }
 }

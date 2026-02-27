@@ -38,13 +38,10 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition select(h.op.a) {
             0x00: copy_in_abort;
             0x01: copy_inout_abort;
-            0x02: action_abort;
-            0x03: defined_function_abort;
-            0x04: extern_function_abort;
-            0x05: parser_apply_copyin_abort;
-            0x06: parser_apply_local_decl_abort;
-            0x07: control_apply_copyin_abort;
-            0x08: control_apply_local_decl_abort;
+            0x02: defined_function_abort;
+            0x03: extern_function_abort;
+            0x04: control_apply_copyin_abort;
+            0x05: control_apply_local_decl_abort;
             default: accept;
         }
     }
@@ -63,11 +60,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
         transition accept;
     }
 
-    state action_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
     state defined_function_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
@@ -75,18 +67,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
 
     state extern_function_abort {
         h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state parser_apply_copyin_abort {
-        h.op.a = 0x10 + h.op.a;
-        subparser.apply(b, h.op, h, h.h.last.a);
-        transition accept;
-    }
-
-    state parser_apply_local_decl_abort {
-        h.op.a = 0x10 + h.op.a;
-        subparser.apply(b, h.op, h, 8w1);
         transition accept;
     }
 
@@ -128,11 +108,11 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
     }
 
     table t1 {
-        actions = { copy_in_abort; }
+        actions = { f; }
         key = {
             h.op.a : exact;
         }
-        const entries = { }
+        default_action = f;
     }
 
     table t2 {
@@ -151,38 +131,26 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
         default_action = f;
     }
 
-    table t4 {
-        actions = { f; }
-        key = {
-            h.op.a : exact;
-        }
-        default_action = f;
-    }
-
     c() c1;
     c() c2;
 
     apply {
         if (h.op.a == 0x12) {
-            t1.apply();
+            f_in(bool_to_bit8(t1.apply().hit));
+            h.op.a = 0;
         }
 
         else if (h.op.a == 0x13) {
-            f_in(bool_to_bit8(t2.apply().hit));
+            digest(bool_to_bit32(t2.apply().hit), 8w1);
             h.op.a = 0;
         }
 
         else if (h.op.a == 0x14) {
-            digest(bool_to_bit32(t3.apply().hit), 8w1);
+            c1.apply(t3.apply().hit);
             h.op.a = 0;
         }
 
-        else if (h.op.a == 0x17) {
-            c1.apply(t4.apply().hit);
-            h.op.a = 0;
-        }
-
-        else if (h.op.a == 0x18) {
+        else if (h.op.a == 0x15) {
             c2.apply(true);
             h.op.a = 0;
         }

@@ -25,11 +25,9 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x01: call_abort;
             0x02: conditional_cond_abort;
             0x03: conditional_else_cond_abort;
-            0x04: return_abort;
-            0x05: switch_abort;
-            0x06: switch_table_fallthrough;
-            0x07: switch_general_fallthrough;
-            0x08: switch_general_non_fallthrough_mismatch;
+            0x04: switch_abort;
+            0x05: switch_table_fallthrough;
+            0x06: switch_general_fallthrough;
             default: accept;
         }
     }
@@ -55,11 +53,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 
     state conditional_else_cond_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state return_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -135,11 +128,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             }
         }
 
-        // else if (h.op.a == 0x14) {
-        //     return t3.apply().hit;
-        // }
-
-        else if (h.op.a == 0x15) {
+        else if (h.op.a == 0x14) {
             switch (bool_to_bit8(t3.apply().hit)) {
                 default: {
                     bit<8> nop = 0;
@@ -147,7 +136,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             }
         }
 
-        else if (h.op.a == 0x16) {
+        else if (h.op.a == 0x15) {
             bit<8> x = 101;
             switch (t.apply().action_run) {
                 nop:
@@ -156,7 +145,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             h.h[0].a = x - 100;
         }
 
-        else if (h.op.a == 0x17) {
+        else if (h.op.a == 0x16) {
             bit<8> x = 101;
             switch (x) {
                 101:
@@ -166,7 +155,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             h.h[0].a = x - 100;
         }
 
-        else if (h.op.a == 0x18) {
+        else if (h.op.a == 0x17) {
             bit<8> x = 100;
             switch (x) {
                 1:

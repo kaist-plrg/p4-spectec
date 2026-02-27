@@ -36,16 +36,14 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
             0x03: for_in_header_stack_abort;
             0x04: for_in_header_stack;
             0x05: for_in_list;
-            0x06: for_in_range_lhs_abort;
-            0x07: for_in_range_rhs_abort;
-            0x08: for_in_body_abort;
-            0x09: for_in_break;
-            0x0A: for_annotation_inside;
-            0x0B: for_function_update;
-            0x0C: for_condition_abort;
-            0x0D: for_condition_false;
-            0x0E: for_return;
-            0x0F: for_in_range_empty;
+            0x06: for_in_body_abort;
+            0x07: for_in_break;
+            0x08: for_annotation_inside;
+            0x09: for_function_update;
+            0x0A: for_condition_abort;
+            0x0B: for_condition_false;
+            0x0C: for_return;
+            0x0D: for_in_range_empty;
             default: accept;
         }
     }
@@ -81,16 +79,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 
     state for_in_list {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state for_in_range_lhs_abort {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state for_in_range_rhs_abort {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -131,11 +119,6 @@ parser p(packet_in b, out Headers h, inout Meta m, inout standard_metadata_t sm)
     }
 
     state for_return {
-        h.op.a = 0x10 + h.op.a;
-        transition accept;
-    }
-
-    state test {
         h.op.a = 0x10 + h.op.a;
         transition accept;
     }
@@ -183,21 +166,13 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             for (bit<8> i in lst) { }
         }
 
-        // else if (h.op.a == 0x16) {
-        //     for (bit<8> i in bto8(t4.apply().hit) .. 3) { }
-        // }
-        //
-        // else if (h.op.a == 0x17) {
-        //     for (bit<8> i in 1 .. bto8(t5.apply().hit)) { }
-        // }
-
-        else if (h.op.a == 0x18) {
+        else if (h.op.a == 0x16) {
             for (bit<8> i in 1 .. 3) {
                 exit;
             }
         }
 
-        else if (h.op.a == 0x19) {
+        else if (h.op.a == 0x17) {
             for (bit<8> i in 1 .. 3) {
                 if (i == 2) {
                     break;
@@ -205,7 +180,7 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             }
         }
 
-        else if (h.op.a == 0x1A) {
+        else if (h.op.a == 0x18) {
             bit<8> c = 0;
             for (@my_anno bit<8> i in 1 .. 3) {
                 c = c + 1;
@@ -213,26 +188,26 @@ control ingress(inout Headers h, inout Meta m, inout standard_metadata_t sm) {
             h.h[0].a = c - 3;
         }
 
-        else if (h.op.a == 0x1B) {
+        else if (h.op.a == 0x19) {
             for (bit<8> i = 0; i < 2; set_value(i, 8w100)) { }
         }
 
-        else if (h.op.a == 0x1C) {
+        else if (h.op.a == 0x1A) {
             // error: Side effects in for condition not supported
             // for (bit<8> i = 0; i < bto8(t6.apply().hit); i = i + 1) { }
         }
 
-        else if (h.op.a == 0x1D) {
+        else if (h.op.a == 0x1B) {
             for (bit<8> i = 0; false; i = i + 1) { }
         }
 
-        else if (h.op.a == 0x1E) {
+        else if (h.op.a == 0x1C) {
             for (bit<8> i = 0; i < 1; i = i + 1) {
                 return;
             }
         }
 
-        else if (h.op.a == 0x1F) {
+        else if (h.op.a == 0x1D) {
             for (bit<8> i in 3..0) {
                 h.op.a = 0;
             }
