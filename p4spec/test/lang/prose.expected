@@ -17374,14 +17374,14 @@ xref:Var_init[Instantiating global variable ``nameIR`` of type ``typeIR`` in the
 
 xref:Extern_init[Extern_init]:
 
-* Instantiating extern ``evalContext`` in the evaluation context ``arch`` and state ``nameIR``:
+* Instantiating extern ``nameIR`` with name ``nameIR`` in the evaluation context ``evalContext`` and state ``arch``:
 * Result in the resulting state ``arch``.
 
-xref:Extern_init[Instantiating extern ``EC`` in the evaluation context ``ARCH~0~`` and state ``nameIR``]:
+xref:Extern_init[Instantiating extern ``nameIR~extern~`` with name ``nameIR`` in the evaluation context ``EC`` and state ``ARCH~0~``]:
 
 . Let ``IC`` be +{++PATH+ ``·``, +GLOBAL+ ``EC.+GLOBAL+``, +BLOCK+ ``EC.+BLOCK+``, +LOCAL+ ``EC.+LOCAL+``+}+.
 . Let constructor ``constructorDef`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` with defaults ``id^{asterisk}^`` and optionals ``id'^{asterisk}^`` be
-* the result of xref:Constructor_inst[finding constructor for ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+`` under context ``IC`` at ``+GLOBAL+``].
+* the result of xref:Constructor_inst[finding constructor for ``nameIR~extern~`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+`` under context ``IC`` at ``+GLOBAL+``].
 . Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
 . Check that ``id^{asterisk}^`` is an empty list.
 . Check that ``id'^{asterisk}^`` is an empty list.
@@ -17424,7 +17424,7 @@ xref:V1Model_init_packet_in[V1Model_init_packet_in: ``EC~0~`` ``ARCH~0~`` ``+|-+
 xref:V1Model_init_packet_in[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]:
 
 . Let the resulting state ``ARCH~1~`` be
-* the result of xref:Extern_init[instantiating extern ``EC~0~`` in the evaluation context ``ARCH~0~`` and state ``"packet_in"``].
+* the result of xref:Extern_init[instantiating extern ``"packet_in"`` with name ``"packet_in"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
 . Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"packet_in"`` to ``+REF+`` ``"packet_in"`` is added to the ``+GLOBAL+`` layer].
 . Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"packet_in"`` in ``ARCH~1~``].
 . Check that ``object'`` has type ``externObject``.
@@ -17439,7 +17439,7 @@ xref:V1Model_init_packet_out[V1Model_init_packet_out: ``EC~0~`` ``ARCH~0~`` ``+|
 xref:V1Model_init_packet_out[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_out~`` ``+:+`` ``%`` ``%``]:
 
 . Let the resulting state ``ARCH~1~`` be
-* the result of xref:Extern_init[instantiating extern ``EC~0~`` in the evaluation context ``ARCH~0~`` and state ``"packet_out"``].
+* the result of xref:Extern_init[instantiating extern ``"packet_out"`` with name ``"packet_out"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
 . Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"packet_out"`` to ``+REF+`` ``"packet_out"`` is added to the ``+GLOBAL+`` layer].
 . Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"packet_out"`` in ``ARCH~1~``].
 . Check that ``object'`` has type ``externObject``.
@@ -17829,7 +17829,7 @@ xref:EBPF_init_packet_in[EBPF_init_packet_in: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``o
 xref:EBPF_init_packet_in[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]:
 
 . Let the resulting state ``ARCH~1~`` be
-* the result of xref:Extern_init[instantiating extern ``EC~0~`` in the evaluation context ``ARCH~0~`` and state ``"packet_in"``].
+* the result of xref:Extern_init[instantiating extern ``"packet_in"`` with name ``"packet_in"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
 . Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"packet_in"`` to ``+REF+`` ``"packet_in"`` is added to the ``+GLOBAL+`` layer].
 . Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"packet_in"`` in ``ARCH~1~``].
 . Check that ``object'`` has type ``externObject``.
@@ -17934,6 +17934,760 @@ xref:EBPF_filter[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
 . Let ``typedExpressionIR~main~`` be ``xref:eBPF_setup_main_callee[$eBPF_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
 . Let ``typedExpressionIR~filt~`` be ``xref:eBPF_setup_filter_callee[$eBPF_setup_filter_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
 . Let ``callableTargetIR`` be ``typedExpressionIR~filt~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+RETURN+`` ``·``.
+. Else if let ``exitResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+
+xref:PSA_init[PSA_init]:
+
+* Initializing the evaluation context and state for ``p4program`` in the PSA architecture:
+* Result in the resulting evaluation context ``evalContext`` and state ``arch``.
+
+xref:PSA_init[Initializing the evaluation context and state for ``p4program`` in the PSA architecture]:
+
+. Let the resulting evaluation context ``EC`` and store ``STO`` be
+* the result of xref:Program_init[initializing the evaluation context and store for ``p4program``].
+. Let ``ARCH`` be +{++STATE+ ``xref:init_archState[$init_archState]``, +STORE+ ``STO``+}+.
+. Result in the resulting evaluation context ``EC`` and state ``ARCH``.
+
+xref:PSA_setup_normal_meta_argument[$PSA_setup_normal_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``argumentIR~normal_meta~`` be ``+.+`` ``"normal_meta"`` ``+#+`` ``+(+`` ``typeIR~normal_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~normal_meta~``.
+
+xref:PSA_setup_clone_i2e_meta_argument[$PSA_setup_clone_i2e_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``argumentIR~clone_i2e_meta~`` be ``+.+`` ``"clone_i2e_meta"`` ``+#+`` ``+(+`` ``typeIR~clone_i2e_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~clone_i2e_meta~``.
+
+xref:PSA_setup_clone_e2e_meta_argument[$PSA_setup_clone_e2e_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let ``argumentIR~clone_e2e_meta~`` be ``+.+`` ``"clone_e2e_meta"`` ``+#+`` ``+(+`` ``typeIR~clone_e2e_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~clone_e2e_meta~``.
+
+xref:PSA_setup_resubmit_meta_argument[$PSA_setup_resubmit_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``argumentIR~resubmit_meta~`` be ``+.+`` ``"resubmit_meta"`` ``+#+`` ``+(+`` ``typeIR~resubmit_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~resubmit_meta~``.
+
+xref:PSA_setup_recirculate_meta_argument[$PSA_setup_recirculate_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``argumentIR~recirculate_meta~`` be ``+.+`` ``"recirculate_meta"`` ``+#+`` ``+(+`` ``typeIR~recirculate_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~recirculate_meta~``.
+
+xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC, ARCH)]
+
+
+. Let ``typeDefIR~package~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"PSA_Switch")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~ingress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~ingress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``typeIR~egress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~egress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~ingress_hdr~,`` ``typeIR~ingress_user_meta~,`` ``typeIR~egress_hdr~,`` ``typeIR~egress_user_meta~,`` ``typeIR~normal_meta~,`` ``typeIR~clone_i2e_meta~,`` ``typeIR~clone_e2e_meta~,`` ``typeIR~resubmit_meta~,`` ``typeIR~recirculate_meta~`` ``+]+``.
+. Let ``typeIR~package~`` be xref:specialize_typeDefIR[``typeDefIR~package~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~main~`` be xref:typedExpressionIR[``"main"`` annotated with a pair of type ``typeIR~package~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~main~``.
+
+xref:PSA_ingress_init_packet_in[PSA_ingress_init_packet_in: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]
+
+xref:PSA_ingress_init_packet_in[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]:
+
+. Let the resulting state ``ARCH~1~`` be
+* the result of xref:Extern_init[instantiating extern ``"packet_in"`` with name ``"ingress_packet_in"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
+. Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"ingress_packet_in"`` to ``+REF+`` ``"ingress_packet_in"`` is added to the ``+GLOBAL+`` layer].
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"ingress_packet_in"`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``externObject~packet_in~`` be ``object'``.
+. Let ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``externObject~packet_in~``.
+. Let ``externObject~packet_in_init~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``+}+``.
+. Let ``ARCH~2~`` be ``xref:add_object_e[$add_object_e(ARCH~1~,`` ``"ingress_packet_in",`` ``externObject~packet_in_init~)]``.
+. Result in ``EC~1~`` and ``ARCH~2~``.
+
+xref:PSA_ingress_init_packet_out[PSA_ingress_init_packet_out: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_out~`` ``+:+`` ``%`` ``%``]
+
+xref:PSA_ingress_init_packet_out[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_out~`` ``+:+`` ``%`` ``%``]:
+
+. Let the resulting state ``ARCH~1~`` be
+* the result of xref:Extern_init[instantiating extern ``"packet_out"`` with name ``"ingress_packet_out"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
+. Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"ingress_packet_out"`` to ``+REF+`` ``"ingress_packet_out"`` is added to the ``+GLOBAL+`` layer].
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"ingress_packet_out"`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``externObject~packet_out~`` be ``object'``.
+. Let ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``externObject~packet_out~``.
+. Let ``externObject~packet_out_init~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState~packet_out~`` ``frame`` ``externMethodDefEnv`` ``+}+``.
+. Let ``ARCH~2~`` be ``xref:add_object_e[$add_object_e(ARCH~1~,`` ``"ingress_packet_out",`` ``externObject~packet_out_init~)]``.
+. Result in ``EC~1~`` and ``ARCH~2~``.
+
+xref:PSA_ingress_init_parser_input_metadata[PSA_ingress_init_parser_input_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]
+
+xref:PSA_ingress_init_parser_input_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]:
+
+. Let ``storageReference~parser_input_port~`` be ``"ingress_parser_input_metadata"`` ``+.+`` ``"ingress_port"``.
+. Let ``value~port~`` be ``32`` ``+W+`` ``i~port~``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~port~`` to ``storageReference~parser_input_port~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~parser_input_path~`` be ``"ingress_parser_input_metadata"`` ``+.+`` ``"packet_path"``.
+. Let ``value~path~`` be ``"PSA_PacketPath_t"`` ``+.+`` ``t~path~``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~path~`` to ``storageReference~parser_input_path~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~2~``.
+
+xref:PSA_ingress_init_input_metadata[PSA_ingress_init_input_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]
+
+xref:PSA_ingress_init_input_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]:
+
+. Let ``storageReference~input_port~`` be ``"ingress_input_metadata"`` ``+.+`` ``"ingress_port"``.
+. Let ``value~port~`` be ``32`` ``+W+`` ``i~port~``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~port~`` to ``storageReference~input_port~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_path~`` be ``"ingress_input_metadata"`` ``+.+`` ``"packet_path"``.
+. Let ``value~path~`` be ``"PSA_PacketPath_t"`` ``+.+`` ``t~path~``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~path~`` to ``storageReference~input_path~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_parser_error~`` be ``"ingress_input_metadata"`` ``+.+`` ``"parser_error"``.
+. Let ``value~parser_error~`` be ``+ERROR+`` ``+.+`` ``"NoError"``.
+. Let context ``EC~3~`` be
+* the result of xref:Lvalue_write[writing ``value~parser_error~`` to ``storageReference~input_parser_error~``, under context ``EC~2~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~3~``.
+
+xref:PSA_ingress_init_output_metadata[PSA_ingress_init_output_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``%``]
+
+xref:PSA_ingress_init_output_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``%``]:
+
+. Let ``storageReference~output_cos~`` be ``"ingress_output_metadata"`` ``+.+`` ``"class_of_service"``.
+. Let ``value~cos~`` be ``8`` ``+W+`` ``0``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~cos~`` to ``storageReference~output_cos~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~output_clone~`` be ``"ingress_output_metadata"`` ``+.+`` ``"clone"``.
+. Let ``value~clone~`` be ``+`B+`` ``false``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~clone~`` to ``storageReference~output_clone~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~output_drop~`` be ``"ingress_output_metadata"`` ``+.+`` ``"drop"``.
+. Let ``value~drop~`` be ``+`B+`` ``true``.
+. Let context ``EC~3~`` be
+* the result of xref:Lvalue_write[writing ``value~drop~`` to ``storageReference~output_drop~``, under context ``EC~2~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~output_resubmit~`` be ``"ingress_output_metadata"`` ``+.+`` ``"resubmit"``.
+. Let ``value~resubmit~`` be ``+`B+`` ``false``.
+. Let context ``EC~4~`` be
+* the result of xref:Lvalue_write[writing ``value~resubmit~`` to ``storageReference~output_resubmit~``, under context ``EC~3~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~output_mc_grp~`` be ``"ingress_output_metadata"`` ``+.+`` ``"multicast_group"``.
+. Let ``value~mc_grp~`` be ``32`` ``+W+`` ``0``.
+. Let context ``EC~5~`` be
+* the result of xref:Lvalue_write[writing ``value~mc_grp~`` to ``storageReference~output_mc_grp~``, under context ``EC~4~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~4~``.
+
+xref:PSA_ingress_init_metadata[PSA_ingress_init_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]
+
+xref:PSA_ingress_init_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]:
+
+. Let xref:PSA_ingress_init_parser_input_metadata[EC~0~ ARCH +|-+ i~port~ t~path~ +:+ EC~1~].
+. Let xref:PSA_ingress_init_input_metadata[EC~1~ ARCH +|-+ i~port~ t~path~ +:+ EC~2~].
+. Let xref:PSA_ingress_init_output_metadata[EC~2~ ARCH +|-+ EC~3~].
+. Result in ``EC~3~``.
+
+xref:PSA_ingress_init_globals[PSA_ingress_init_globals: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]
+
+xref:PSA_ingress_init_globals[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]:
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let the resulting evaluation context ``EC~1~`` be
+* the result of xref:Var_init[instantiating global variable ``"ingress_hdr"`` of type ``typeIR~hdr~`` in the evaluation context ``EC~0~``].
+. Let the resulting evaluation context ``EC~2~`` be
+* the result of xref:Var_init[instantiating global variable ``"ingress_user_meta"`` of type ``typeIR~user_meta~`` in the evaluation context ``EC~1~``].
+. Let ``typeDefIR~psa_ingress_parser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~2~,`` ``"psa_ingress_parser_input_metadata_t")]``.
+. Let ``typeIR~psa_ingress_parser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_ingress_parser_input_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~3~`` be
+* the result of xref:Var_init[instantiating global variable ``"ingress_parser_input_metadata"`` of type ``typeIR~psa_ingress_parser_input_metadata~`` in the evaluation context ``EC~2~``].
+. Let ``typeDefIR~psa_ingress_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~3~,`` ``"psa_ingress_input_metadata_t")]``.
+. Let ``typeIR~psa_ingress_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_ingress_input_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~4~`` be
+* the result of xref:Var_init[instantiating global variable ``"ingress_input_metadata"`` of type ``typeIR~psa_ingress_input_metadata~`` in the evaluation context ``EC~3~``].
+. Let ``typeDefIR~psa_ingress_output_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~4~,`` ``"psa_ingress_output_metadata_t")]``.
+. Let ``typeIR~psa_ingress_output_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_ingress_output_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~5~`` be
+* the result of xref:Var_init[instantiating global variable ``"ingress_output_metadata"`` of type ``typeIR~psa_ingress_output_metadata~`` in the evaluation context ``EC~4~``].
+. Let xref:PSA_ingress_init_metadata[EC~5~ ARCH +|-+ i~port~ "NORMAL" +:+ EC~6~].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let the resulting evaluation context ``EC~7~`` be
+* the result of xref:Var_init[instantiating global variable ``"normal_meta"`` of type ``typeIR~normal_meta~`` in the evaluation context ``EC~6~``].
+. Let the resulting evaluation context ``EC~8~`` be
+* the result of xref:Var_init[instantiating global variable ``"clone_i2e_meta"`` of type ``typeIR~clone_i2e_meta~`` in the evaluation context ``EC~7~``].
+. Let the resulting evaluation context ``EC~9~`` be
+* the result of xref:Var_init[instantiating global variable ``"resubmit_meta"`` of type ``typeIR~resubmit_meta~`` in the evaluation context ``EC~8~``].
+. Let the resulting evaluation context ``EC~10~`` be
+* the result of xref:Var_init[instantiating global variable ``"recirculate_meta"`` of type ``typeIR~recirculate_meta~`` in the evaluation context ``EC~9~``].
+. Result in ``EC~10~``.
+
+xref:PSA_setup_ingress_packet_in_argument[$PSA_setup_ingress_packet_in_argument(EC)]
+
+
+. Let ``typeDefIR~packet_in~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"packet_in")]``.
+. Let ``typeIR~packet_in~`` be xref:specialize_typeDefIR[``typeDefIR~packet_in~`` specialized by ``·``].
+. Let ``argumentIR~packet_in~`` be ``+.+`` ``"ingress_packet_in"`` ``+#+`` ``+(+`` ``typeIR~packet_in~`` ``+CTK+`` ``+)+``.
+. Return ``argumentIR~packet_in~``.
+
+xref:PSA_setup_ingress_packet_out_argument[$PSA_setup_ingress_packet_out_argument(EC)]
+
+
+. Let ``typeDefIR~packet_out~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"packet_out")]``.
+. Let ``typeIR~packet_out~`` be xref:specialize_typeDefIR[``typeDefIR~packet_out~`` specialized by ``·``].
+. Let ``argumentIR~packet_out~`` be ``+.+`` ``"ingress_packet_out"`` ``+#+`` ``+(+`` ``typeIR~packet_out~`` ``+CTK+`` ``+)+``.
+. Return ``argumentIR~packet_out~``.
+
+xref:PSA_setup_ingress_hdr_argument[$PSA_setup_ingress_hdr_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``argumentIR~hdr~`` be ``+.+`` ``"ingress_hdr"`` ``+#+`` ``+(+`` ``typeIR~hdr~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~hdr~``.
+
+xref:PSA_setup_ingress_user_meta_argument[$PSA_setup_ingress_user_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``argumentIR~user_meta~`` be ``+.+`` ``"ingress_user_meta"`` ``+#+`` ``+(+`` ``typeIR~user_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~user_meta~``.
+
+xref:PSA_setup_ingress_parser_input_metadata_argument[$PSA_setup_ingress_parser_input_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~parser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_ingress_parser_input_metadata_t")]``.
+. Let ``typeIR~parser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~parser_input_metadata~`` specialized by ``·``].
+. Let ``argumentIR~parser_input_metadata~`` be ``+.+`` ``"ingress_parser_input_metadata"`` ``+#+`` ``+(+`` ``typeIR~parser_input_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~parser_input_metadata~``.
+
+xref:PSA_setup_ingress_input_metadata_argument[$PSA_setup_ingress_input_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_ingress_input_metadata_t")]``.
+. Let ``typeIR~input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~input_metadata~`` specialized by ``·``].
+. Let ``argumentIR~input_metadata~`` be ``+.+`` ``"ingress_input_metadata"`` ``+#+`` ``+(+`` ``typeIR~input_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~input_metadata~``.
+
+xref:PSA_setup_ingress_output_metadata_argument[$PSA_setup_ingress_output_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~output_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_ingress_output_metadata_t")]``.
+. Let ``typeIR~output_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~output_metadata~`` specialized by ``·``].
+. Let ``argumentIR~output_metadata~`` be ``+.+`` ``"ingress_output_metadata"`` ``+#+`` ``+(+`` ``typeIR~output_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~output_metadata~``.
+
+xref:PSA_setup_ingress_pipeline_callee[$PSA_setup_ingress_pipeline_callee(EC, ARCH, typedExpressionIR~main~)]
+
+
+. Let ``typeDefIR~package~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"IngressPipeline")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~ingress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~ingress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~ingress_hdr~,`` ``typeIR~ingress_user_meta~,`` ``typeIR~normal_meta~,`` ``typeIR~clone_i2e_meta~,`` ``typeIR~resubmit_meta~,`` ``typeIR~recirculate_meta~`` ``+]+``.
+. Let ``typeIR~package~`` be xref:specialize_typeDefIR[``typeDefIR~package~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~ingress_pipeline~`` be xref:typedExpressionIR[``typedExpressionIR~main~`` ``+.+`` ``"ingress"`` annotated with a pair of type ``typeIR~package~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~ingress_pipeline~``.
+
+xref:PSA_setup_ingress_parser_callee[$PSA_setup_ingress_parser_callee(EC, ARCH, typedExpressionIR~ingress_pipeline~)]
+
+
+. Let ``typeDefIR~ingress_parser~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"IngressParser")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~ingress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~ingress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~ingress_hdr~,`` ``typeIR~ingress_user_meta~,`` ``typeIR~resubmit_meta~,`` ``typeIR~recirculate_meta~`` ``+]+``.
+. Let ``typeIR~ingress_parser~`` be xref:specialize_typeDefIR[``typeDefIR~ingress_parser~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~ingress_parser~`` be xref:typedExpressionIR[``typedExpressionIR~ingress_pipeline~`` ``+.+`` ``"ip"`` annotated with a pair of type ``typeIR~ingress_parser~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~ingress_parser~``.
+
+xref:PSA_setup_ingress_callee[$PSA_setup_ingress_callee(EC, ARCH, typedExpressionIR~ingress_pipeline~)]
+
+
+. Let ``typeDefIR~ingress~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"Ingress")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~ingress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~ingress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~ingress_hdr~,`` ``typeIR~ingress_user_meta~`` ``+]+``.
+. Let ``typeIR~ingress~`` be xref:specialize_typeDefIR[``typeDefIR~ingress~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~ingress~`` be xref:typedExpressionIR[``typedExpressionIR~ingress_pipeline~`` ``+.+`` ``"ig"`` annotated with a pair of type ``typeIR~ingress~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~ingress~``.
+
+xref:PSA_setup_ingress_deparser_callee[$PSA_setup_ingress_deparser_callee(EC, ARCH, typedExpressionIR~ingress_pipeline~)]
+
+
+. Let ``typeDefIR~ingress_deparser~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"IngressDeparser")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~ingress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"IH"`` in map ``theta``].
+. Let ``typeIR~ingress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"IM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~resubmit_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RESUBM"`` in map ``theta``].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~ingress_hdr~,`` ``typeIR~ingress_user_meta~,`` ``typeIR~clone_i2e_meta~,`` ``typeIR~resubmit_meta~,`` ``typeIR~normal_meta~`` ``+]+``.
+. Let ``typeIR~ingress_deparser~`` be xref:specialize_typeDefIR[``typeDefIR~ingress_deparser~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~ingress_deparser~`` be xref:typedExpressionIR[``typedExpressionIR~ingress_pipeline~`` ``+.+`` ``"id"`` annotated with a pair of type ``typeIR~ingress_deparser~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~ingress_deparser~``.
+
+xref:PSA_ingress_parser[PSA_ingress_parser: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_ingress_parser[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~packet_in~`` be ``xref:PSA_setup_ingress_packet_in_argument[$PSA_setup_ingress_packet_in_argument(EC~0~)]``.
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_ingress_hdr_argument[$PSA_setup_ingress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_ingress_user_meta_argument[$PSA_setup_ingress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~parser_input_metadata~`` be ``xref:PSA_setup_ingress_parser_input_metadata_argument[$PSA_setup_ingress_parser_input_metadata_argument(EC~0~)]``.
+. Let ``argumentIR~resubmit_meta~`` be ``xref:PSA_setup_resubmit_meta_argument[$PSA_setup_resubmit_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~recirculate_meta~`` be ``xref:PSA_setup_recirculate_meta_argument[$PSA_setup_recirculate_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~packet_in~,`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~parser_input_metadata~,`` ``argumentIR~resubmit_meta~,`` ``argumentIR~recirculate_meta~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~ingress_pipeline~`` be ``xref:PSA_setup_ingress_pipeline_callee[$PSA_setup_ingress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~ip~`` be ``xref:PSA_setup_ingress_parser_callee[$PSA_setup_ingress_parser_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~ingress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~ip~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+ACCEPT+``.
+. Else if let ``rejectTransitionResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``rejectTransitionResult``.
+
+xref:PSA_ingress[PSA_ingress: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_ingress[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_ingress_hdr_argument[$PSA_setup_ingress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_ingress_user_meta_argument[$PSA_setup_ingress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~input_metadata~`` be ``xref:PSA_setup_ingress_input_metadata_argument[$PSA_setup_ingress_input_metadata_argument(EC~0~)]``.
+. Let ``argumentIR~output_metadata~`` be ``xref:PSA_setup_ingress_output_metadata_argument[$PSA_setup_ingress_output_metadata_argument(EC~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~input_metadata~,`` ``argumentIR~output_metadata~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~ingress_pipeline~`` be ``xref:PSA_setup_ingress_pipeline_callee[$PSA_setup_ingress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~ig~`` be ``xref:PSA_setup_ingress_callee[$PSA_setup_ingress_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~ingress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~ig~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``exitResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+. Else if let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+RETURN+`` ``·``.
+
+xref:PSA_ingress_deparser[PSA_ingress_deparser: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_ingress_deparser[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~packet_out~`` be ``xref:PSA_setup_ingress_packet_out_argument[$PSA_setup_ingress_packet_out_argument(EC~0~)]``.
+. Let ``argumentIR~clone_i2e_meta~`` be ``xref:PSA_setup_clone_i2e_meta_argument[$PSA_setup_clone_i2e_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~resubmit_meta~`` be ``xref:PSA_setup_resubmit_meta_argument[$PSA_setup_resubmit_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~normal_meta~`` be ``xref:PSA_setup_normal_meta_argument[$PSA_setup_normal_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_ingress_hdr_argument[$PSA_setup_ingress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_ingress_user_meta_argument[$PSA_setup_ingress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~output_metadata~`` be ``xref:PSA_setup_ingress_output_metadata_argument[$PSA_setup_ingress_output_metadata_argument(EC~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~packet_out~,`` ``argumentIR~clone_i2e_meta~,`` ``argumentIR~resubmit_meta~,`` ``argumentIR~normal_meta~,`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~output_metadata~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~ingress_pipeline~`` be ``xref:PSA_setup_ingress_pipeline_callee[$PSA_setup_ingress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~id~`` be ``xref:PSA_setup_ingress_deparser_callee[$PSA_setup_ingress_deparser_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~ingress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~id~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+RETURN+`` ``·``.
+. Else if let ``exitResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+
+xref:PSA_egress_init_packet_in[PSA_egress_init_packet_in: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]
+
+xref:PSA_egress_init_packet_in[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_in~`` ``+:+`` ``%`` ``%``]:
+
+. Let the resulting state ``ARCH~1~`` be
+* the result of xref:Extern_init[instantiating extern ``"packet_in"`` with name ``"egress_packet_in"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
+. Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"egress_packet_in"`` to ``+REF+`` ``"egress_packet_in"`` is added to the ``+GLOBAL+`` layer].
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"egress_packet_in"`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``externObject~packet_in~`` be ``object'``.
+. Let ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``externObject~packet_in~``.
+. Let ``externObject~packet_in_init~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState~packet_in~`` ``frame`` ``externMethodDefEnv`` ``+}+``.
+. Let ``ARCH~2~`` be ``xref:add_object_e[$add_object_e(ARCH~1~,`` ``"egress_packet_in",`` ``externObject~packet_in_init~)]``.
+. Result in ``EC~1~`` and ``ARCH~2~``.
+
+xref:PSA_egress_init_packet_out[PSA_egress_init_packet_out: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_out~`` ``+:+`` ``%`` ``%``]
+
+xref:PSA_egress_init_packet_out[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``objectState~packet_out~`` ``+:+`` ``%`` ``%``]:
+
+. Let the resulting state ``ARCH~1~`` be
+* the result of xref:Extern_init[instantiating extern ``"packet_out"`` with name ``"egress_packet_out"`` in the evaluation context ``EC~0~`` and state ``ARCH~0~``].
+. Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``"egress_packet_out"`` to ``+REF+`` ``"egress_packet_out"`` is added to the ``+GLOBAL+`` layer].
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"egress_packet_out"`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``externObject~packet_out~`` be ``object'``.
+. Let ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``externObject~packet_out~``.
+. Let ``externObject~packet_out_init~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState~packet_out~`` ``frame`` ``externMethodDefEnv`` ``+}+``.
+. Let ``ARCH~2~`` be ``xref:add_object_e[$add_object_e(ARCH~1~,`` ``"egress_packet_out",`` ``externObject~packet_out_init~)]``.
+. Result in ``EC~1~`` and ``ARCH~2~``.
+
+xref:PSA_egress_init_parser_input_metadata[PSA_egress_init_parser_input_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]
+
+xref:PSA_egress_init_parser_input_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``+:+`` ``%``]:
+
+. Let ``storageReference~parser_input_port~`` be ``"egress_parser_input_metadata"`` ``+.+`` ``"egress_port"``.
+. Let ``value~port~`` be ``32`` ``+W+`` ``i~port~``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~port~`` to ``storageReference~parser_input_port~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~parser_input_path~`` be ``"egress_parser_input_metadata"`` ``+.+`` ``"packet_path"``.
+. Let ``value~path~`` be ``"PSA_PacketPath_t"`` ``+.+`` ``t~path~``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~path~`` to ``storageReference~parser_input_path~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~2~``.
+
+xref:PSA_egress_init_input_metadata[PSA_egress_init_input_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``i~cos~`` ``i~inst~`` ``+:+`` ``%``]
+
+xref:PSA_egress_init_input_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``i~cos~`` ``i~inst~`` ``+:+`` ``%``]:
+
+. Let ``storageReference~input_cos~`` be ``"egress_input_metadata"`` ``+.+`` ``"class_of_service"``.
+. Let ``value~cos~`` be ``8`` ``+W+`` ``i~cos~``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~cos~`` to ``storageReference~input_cos~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_port~`` be ``"egress_input_metadata"`` ``+.+`` ``"egress_port"``.
+. Let ``value~port~`` be ``32`` ``+W+`` ``i~port~``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~port~`` to ``storageReference~input_port~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_path~`` be ``"egress_input_metadata"`` ``+.+`` ``"packet_path"``.
+. Let ``value~path~`` be ``"PSA_PacketPath_t"`` ``+.+`` ``t~path~``.
+. Let context ``EC~3~`` be
+* the result of xref:Lvalue_write[writing ``value~path~`` to ``storageReference~input_path~``, under context ``EC~2~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_instance~`` be ``"egress_input_metadata"`` ``+.+`` ``"instance"``.
+. Let ``value~instance~`` be ``16`` ``+W+`` ``i~inst~``.
+. Let context ``EC~4~`` be
+* the result of xref:Lvalue_write[writing ``value~instance~`` to ``storageReference~input_instance~``, under context ``EC~3~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~input_parser_error~`` be ``"egress_input_metadata"`` ``+.+`` ``"parser_error"``.
+. Let ``value~parser_error~`` be ``+ERROR+`` ``+.+`` ``"NoError"``.
+. Let context ``EC~5~`` be
+* the result of xref:Lvalue_write[writing ``value~parser_error~`` to ``storageReference~input_parser_error~``, under context ``EC~4~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~5~``.
+
+xref:PSA_egress_init_output_metadata[PSA_egress_init_output_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``%``]
+
+xref:PSA_egress_init_output_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``%``]:
+
+. Let ``storageReference~output_clone~`` be ``"egress_output_metadata"`` ``+.+`` ``"clone"``.
+. Let ``value~clone~`` be ``+`B+`` ``false``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~clone~`` to ``storageReference~output_clone~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Let ``storageReference~output_drop~`` be ``"egress_output_metadata"`` ``+.+`` ``"drop"``.
+. Let ``value~drop~`` be ``+`B+`` ``false``.
+. Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``value~drop~`` to ``storageReference~output_drop~``, under context ``EC~1~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~2~``.
+
+xref:PSA_egress_init_deparser_input_metadata[PSA_egress_init_deparser_input_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]
+
+xref:PSA_egress_init_deparser_input_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]:
+
+. Let ``storageReference~deparser_input_port~`` be ``"egress_deparser_input_metadata"`` ``+.+`` ``"egress_port"``.
+. Let ``value~port~`` be ``32`` ``+W+`` ``i~port~``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~port~`` to ``storageReference~deparser_input_port~``, under context ``EC~0~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Result in ``EC~1~``.
+
+xref:PSA_egress_init_metadata[PSA_egress_init_metadata: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``i~cos~`` ``i~inst~`` ``+:+`` ``%``]
+
+xref:PSA_egress_init_metadata[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``t~path~`` ``i~cos~`` ``i~inst~`` ``+:+`` ``%``]:
+
+. Let xref:PSA_egress_init_parser_input_metadata[EC~0~ ARCH +|-+ i~port~ t~path~ +:+ EC~1~].
+. Let xref:PSA_egress_init_input_metadata[EC~1~ ARCH +|-+ i~port~ t~path~ i~cos~ i~inst~ +:+ EC~2~].
+. Let xref:PSA_egress_init_output_metadata[EC~2~ ARCH +|-+ EC~3~].
+. Let xref:PSA_egress_init_deparser_input_metadata[EC~3~ ARCH +|-+ i~port~ +:+ EC~4~].
+. Result in ``EC~4~``.
+
+xref:PSA_egress_init_globals[PSA_egress_init_globals: ``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]
+
+xref:PSA_egress_init_globals[``EC~0~`` ``ARCH`` ``+|-+`` ``i~port~`` ``+:+`` ``%``]:
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let the resulting evaluation context ``EC~1~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_hdr"`` of type ``typeIR~hdr~`` in the evaluation context ``EC~0~``].
+. Let the resulting evaluation context ``EC~2~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_user_meta"`` of type ``typeIR~user_meta~`` in the evaluation context ``EC~1~``].
+. Let ``typeDefIR~psa_egress_parser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~2~,`` ``"psa_egress_parser_input_metadata_t")]``.
+. Let ``typeIR~psa_egress_parser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_egress_parser_input_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~3~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_parser_input_metadata"`` of type ``typeIR~psa_egress_parser_input_metadata~`` in the evaluation context ``EC~2~``].
+. Let ``typeDefIR~psa_egress_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~3~,`` ``"psa_egress_input_metadata_t")]``.
+. Let ``typeIR~psa_egress_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_egress_input_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~4~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_input_metadata"`` of type ``typeIR~psa_egress_input_metadata~`` in the evaluation context ``EC~3~``].
+. Let ``typeDefIR~psa_egress_output_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~4~,`` ``"psa_egress_output_metadata_t")]``.
+. Let ``typeIR~psa_egress_output_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_egress_output_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~5~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_output_metadata"`` of type ``typeIR~psa_egress_output_metadata~`` in the evaluation context ``EC~4~``].
+. Let ``typeDefIR~psa_egress_deparser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC~5~,`` ``"psa_egress_deparser_input_metadata_t")]``.
+. Let ``typeIR~psa_egress_deparser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~psa_egress_deparser_input_metadata~`` specialized by ``·``].
+. Let the resulting evaluation context ``EC~6~`` be
+* the result of xref:Var_init[instantiating global variable ``"egress_deparser_input_metadata"`` of type ``typeIR~psa_egress_deparser_input_metadata~`` in the evaluation context ``EC~5~``].
+. Let ``storageReference~cos~`` be ``"ingress_output_metadata"`` ``+.+`` ``"class_of_service"``.
+. Let value ``value`` be
+* the result of xref:Lvalue_read[reading from ``storageReference~cos~``, under context ``EC~6~`` and state ``ARCH`` at ``+GLOBAL+``].
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~cos~`` be ``value``.
+. Let ``i~cos~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~cos~``].
+. Let xref:PSA_egress_init_metadata[EC~6~ ARCH +|-+ i~port~ "NORMAL_UNICAST" i~cos~ 0 +:+ EC~7~].
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let the resulting evaluation context ``EC~8~`` be
+* the result of xref:Var_init[instantiating global variable ``"clone_e2e_meta"`` of type ``typeIR~clone_e2e_meta~`` in the evaluation context ``EC~7~``].
+. Result in ``EC~8~``.
+
+xref:PSA_setup_egress_packet_in_argument[$PSA_setup_egress_packet_in_argument(EC)]
+
+
+. Let ``typeDefIR~packet_in~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"packet_in")]``.
+. Let ``typeIR~packet_in~`` be xref:specialize_typeDefIR[``typeDefIR~packet_in~`` specialized by ``·``].
+. Let ``argumentIR~packet_in~`` be ``+.+`` ``"egress_packet_in"`` ``+#+`` ``+(+`` ``typeIR~packet_in~`` ``+CTK+`` ``+)+``.
+. Return ``argumentIR~packet_in~``.
+
+xref:PSA_setup_egress_packet_out_argument[$PSA_setup_egress_packet_out_argument(EC)]
+
+
+. Let ``typeDefIR~packet_out~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"packet_out")]``.
+. Let ``typeIR~packet_out~`` be xref:specialize_typeDefIR[``typeDefIR~packet_out~`` specialized by ``·``].
+. Let ``argumentIR~packet_out~`` be ``+.+`` ``"egress_packet_out"`` ``+#+`` ``+(+`` ``typeIR~packet_out~`` ``+CTK+`` ``+)+``.
+. Return ``argumentIR~packet_out~``.
+
+xref:PSA_setup_egress_hdr_argument[$PSA_setup_egress_hdr_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``argumentIR~hdr~`` be ``+.+`` ``"egress_hdr"`` ``+#+`` ``+(+`` ``typeIR~hdr~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~hdr~``.
+
+xref:PSA_setup_egress_user_meta_argument[$PSA_setup_egress_user_meta_argument(ARCH)]
+
+
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``argumentIR~user_meta~`` be ``+.+`` ``"egress_user_meta"`` ``+#+`` ``+(+`` ``typeIR~user_meta~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~user_meta~``.
+
+xref:PSA_setup_egress_parser_input_metadata_argument[$PSA_setup_egress_parser_input_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~parser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_egress_parser_input_metadata_t")]``.
+. Let ``typeIR~parser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~parser_input_metadata~`` specialized by ``·``].
+. Let ``argumentIR~parser_input_metadata~`` be ``+.+`` ``"egress_parser_input_metadata"`` ``+#+`` ``+(+`` ``typeIR~parser_input_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~parser_input_metadata~``.
+
+xref:PSA_setup_egress_input_metadata_argument[$PSA_setup_egress_input_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_egress_input_metadata_t")]``.
+. Let ``typeIR~input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~input_metadata~`` specialized by ``·``].
+. Let ``argumentIR~input_metadata~`` be ``+.+`` ``"egress_input_metadata"`` ``+#+`` ``+(+`` ``typeIR~input_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~input_metadata~``.
+
+xref:PSA_setup_egress_output_metadata_argument[$PSA_setup_egress_output_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~output_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_egress_output_metadata_t")]``.
+. Let ``typeIR~output_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~output_metadata~`` specialized by ``·``].
+. Let ``argumentIR~output_metadata~`` be ``+.+`` ``"egress_output_metadata"`` ``+#+`` ``+(+`` ``typeIR~output_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~output_metadata~``.
+
+xref:PSA_setup_egress_deparser_input_metadata_argument[$PSA_setup_egress_deparser_input_metadata_argument(EC)]
+
+
+. Let ``typeDefIR~deparser_input_metadata~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"psa_egress_deparser_input_metadata_t")]``.
+. Let ``typeIR~deparser_input_metadata~`` be xref:specialize_typeDefIR[``typeDefIR~deparser_input_metadata~`` specialized by ``·``].
+. Let ``argumentIR~deparser_input_metadata~`` be ``+.+`` ``"egress_deparser_input_metadata"`` ``+#+`` ``+(+`` ``typeIR~deparser_input_metadata~`` ``+DYN+`` ``+)+``.
+. Return ``argumentIR~deparser_input_metadata~``.
+
+xref:PSA_setup_egress_pipeline_callee[$PSA_setup_egress_pipeline_callee(EC, ARCH, typedExpressionIR~main~)]
+
+
+. Let ``typeDefIR~package~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"EgressPipeline")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~egress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~egress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~egress_hdr~,`` ``typeIR~egress_user_meta~,`` ``typeIR~normal_meta~,`` ``typeIR~clone_i2e_meta~,`` ``typeIR~clone_e2e_meta~,`` ``typeIR~recirculate_meta~`` ``+]+``.
+. Let ``typeIR~package~`` be xref:specialize_typeDefIR[``typeDefIR~package~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~egress_pipeline~`` be xref:typedExpressionIR[``typedExpressionIR~main~`` ``+.+`` ``"egress"`` annotated with a pair of type ``typeIR~package~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~egress_pipeline~``.
+
+xref:PSA_setup_egress_parser_callee[$PSA_setup_egress_parser_callee(EC, ARCH, typedExpressionIR~egress_pipeline~)]
+
+
+. Let ``typeDefIR~egress_parser~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"EgressParser")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~egress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~egress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``typeIR~normal_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"NM"`` in map ``theta``].
+. Let ``typeIR~clone_i2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CI2EM"`` in map ``theta``].
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~egress_hdr~,`` ``typeIR~egress_user_meta~,`` ``typeIR~normal_meta~,`` ``typeIR~clone_i2e_meta~,`` ``typeIR~clone_e2e_meta~`` ``+]+``.
+. Let ``typeIR~egress_parser~`` be xref:specialize_typeDefIR[``typeDefIR~egress_parser~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~egress_parser~`` be xref:typedExpressionIR[``typedExpressionIR~egress_pipeline~`` ``+.+`` ``"ep"`` annotated with a pair of type ``typeIR~egress_parser~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~egress_parser~``.
+
+xref:PSA_setup_egress_callee[$PSA_setup_egress_callee(EC, ARCH, typedExpressionIR~egress_pipeline~)]
+
+
+. Let ``typeDefIR~egress~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"Egress")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~egress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~egress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~egress_hdr~,`` ``typeIR~egress_user_meta~`` ``+]+``.
+. Let ``typeIR~egress~`` be xref:specialize_typeDefIR[``typeDefIR~egress~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~egress~`` be xref:typedExpressionIR[``typedExpressionIR~egress_pipeline~`` ``+.+`` ``"eg"`` annotated with a pair of type ``typeIR~egress~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~egress~``.
+
+xref:PSA_setup_egress_deparser_callee[$PSA_setup_egress_deparser_callee(EC, ARCH, typedExpressionIR~egress_pipeline~)]
+
+
+. Let ``typeDefIR~egress_deparser~`` be xref:option_get[*!*] ``xref:find_typeDef_e[$find_typeDef_e(+GLOBAL+,`` ``EC,`` ``"EgressDeparser")]``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``"main"`` in ``ARCH``].
+. Check that ``object'`` has type ``packageObject``.
+. Let ``+PACKAGE+`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``+}+`` be ``object'``.
+. Let ``typeIR~egress_hdr~`` be xref:option_get[*!*] xref:find_map[the value of ``"EH"`` in map ``theta``].
+. Let ``typeIR~egress_user_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"EM"`` in map ``theta``].
+. Let ``typeIR~clone_e2e_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"CE2EM"`` in map ``theta``].
+. Let ``typeIR~recirculate_meta~`` be xref:option_get[*!*] xref:find_map[the value of ``"RECIRCM"`` in map ``theta``].
+. Let ``typeIR~arg~^{asterisk}^`` be ``+[+`` ``typeIR~egress_hdr~,`` ``typeIR~egress_user_meta~,`` ``typeIR~clone_e2e_meta~,`` ``typeIR~recirculate_meta~`` ``+]+``.
+. Let ``typeIR~egress_deparser~`` be xref:specialize_typeDefIR[``typeDefIR~egress_deparser~`` specialized by ``typeIR~arg~^{asterisk}^``].
+. Let ``typedExpressionIR~egress_deparser~`` be xref:typedExpressionIR[``typedExpressionIR~egress_pipeline~`` ``+.+`` ``"ed"`` annotated with a pair of type ``typeIR~egress_deparser~`` and compile-time known-ness ``+CTK+``].
+. Return ``typedExpressionIR~egress_deparser~``.
+
+xref:PSA_egress_parser[PSA_egress_parser: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_egress_parser[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~packet_in~`` be ``xref:PSA_setup_egress_packet_in_argument[$PSA_setup_egress_packet_in_argument(EC~0~)]``.
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_egress_hdr_argument[$PSA_setup_egress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_egress_user_meta_argument[$PSA_setup_egress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~parser_input_metadata~`` be ``xref:PSA_setup_egress_parser_input_metadata_argument[$PSA_setup_egress_parser_input_metadata_argument(EC~0~)]``.
+. Let ``argumentIR~normal_meta~`` be ``xref:PSA_setup_normal_meta_argument[$PSA_setup_normal_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~clone_i2e_meta~`` be ``xref:PSA_setup_clone_i2e_meta_argument[$PSA_setup_clone_i2e_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~clone_e2e_meta~`` be ``xref:PSA_setup_clone_e2e_meta_argument[$PSA_setup_clone_e2e_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~packet_in~,`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~parser_input_metadata~,`` ``argumentIR~normal_meta~,`` ``argumentIR~clone_i2e_meta~,`` ``argumentIR~clone_e2e_meta~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~egress_pipeline~`` be ``xref:PSA_setup_egress_pipeline_callee[$PSA_setup_egress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~ep~`` be ``xref:PSA_setup_egress_parser_callee[$PSA_setup_egress_parser_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~egress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~ep~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+ACCEPT+``.
+. Else if let ``rejectTransitionResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``rejectTransitionResult``.
+
+xref:PSA_egress[PSA_egress: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_egress[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_egress_hdr_argument[$PSA_setup_egress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_egress_user_meta_argument[$PSA_setup_egress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~input_metadata~`` be ``xref:PSA_setup_egress_input_metadata_argument[$PSA_setup_egress_input_metadata_argument(EC~0~)]``.
+. Let ``argumentIR~output_metadata~`` be ``xref:PSA_setup_egress_output_metadata_argument[$PSA_setup_egress_output_metadata_argument(EC~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~input_metadata~,`` ``argumentIR~output_metadata~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~egress_pipeline~`` be ``xref:PSA_setup_egress_pipeline_callee[$PSA_setup_egress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~eg~`` be ``xref:PSA_setup_egress_callee[$PSA_setup_egress_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~egress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~eg~`` ``+.+`` ``"apply"``.
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
+. If let ``exitResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+. Else if let ``continueEmptyResult`` be ``statementResult``:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+RETURN+`` ``·``.
+
+xref:PSA_egress_deparser[PSA_egress_deparser: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]
+
+xref:PSA_egress_deparser[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``%`` ``%`` ``%``]:
+
+. Let ``argumentIR~packet_out~`` be ``xref:PSA_setup_egress_packet_out_argument[$PSA_setup_egress_packet_out_argument(EC~0~)]``.
+. Let ``argumentIR~clone_e2e_meta~`` be ``xref:PSA_setup_clone_e2e_meta_argument[$PSA_setup_clone_e2e_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~recirculate_meta~`` be ``xref:PSA_setup_recirculate_meta_argument[$PSA_setup_recirculate_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~hdr~`` be ``xref:PSA_setup_egress_hdr_argument[$PSA_setup_egress_hdr_argument(ARCH~0~)]``.
+. Let ``argumentIR~user_meta~`` be ``xref:PSA_setup_egress_user_meta_argument[$PSA_setup_egress_user_meta_argument(ARCH~0~)]``.
+. Let ``argumentIR~output_metadata~`` be ``xref:PSA_setup_egress_output_metadata_argument[$PSA_setup_egress_output_metadata_argument(EC~0~)]``.
+. Let ``argumentIR~deparser_input_metadata~`` be ``xref:PSA_setup_egress_deparser_input_metadata_argument[$PSA_setup_egress_deparser_input_metadata_argument(EC~0~)]``.
+. Let ``argumentIR^{asterisk}^`` be ``+[+`` ``argumentIR~packet_out~,`` ``argumentIR~clone_e2e_meta~,`` ``argumentIR~recirculate_meta~,`` ``argumentIR~hdr~,`` ``argumentIR~user_meta~,`` ``argumentIR~output_metadata~,`` ``argumentIR~deparser_input_metadata~`` ``+]+``.
+. Let ``typedExpressionIR~main~`` be ``xref:PSA_setup_main_callee[$PSA_setup_main_callee(EC~0~,`` ``ARCH~0~)]``.
+. Let ``typedExpressionIR~egress_pipeline~`` be ``xref:PSA_setup_egress_pipeline_callee[$PSA_setup_egress_pipeline_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~main~)]``.
+. Let ``typedExpressionIR~ed~`` be ``xref:PSA_setup_egress_deparser_callee[$PSA_setup_egress_deparser_callee(EC~0~,`` ``ARCH~0~,`` ``typedExpressionIR~egress_pipeline~)]``.
+. Let ``callableTargetIR`` be ``typedExpressionIR~ed~`` ``+.+`` ``"apply"``.
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+GLOBAL+``].
 . If let ``continueEmptyResult`` be ``statementResult``:
