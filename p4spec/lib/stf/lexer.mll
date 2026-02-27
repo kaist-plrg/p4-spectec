@@ -121,6 +121,12 @@ and keyword = parse
     { MC_NODE_CREATE }
   | "mc_node_associate"
     { MC_NODE_ASSOCIATE }
+  | "register_read"
+    { REGISTER_READ }
+  | "register_write"
+    { REGISTER_WRITE }
+  | "register_reset"
+    { REGISTER_RESET }
   | "wait"
     { WAIT }
   | '\n'

@@ -18,8 +18,10 @@ open Ast
 %}
 
 %token END
-%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT MIRRORING_ADD MIRRORING_ADD_MC MIRRORING_GET PACKET_WILDCARD
+%token ADD ALL BYTES CHECK_COUNTER EXPECT NO_PACKET PACKET PACKETS EXACT REMOVE SETDEFAULT WAIT PACKET_WILDCARD
+%token MIRRORING_ADD MIRRORING_ADD_MC MIRRORING_GET
 %token MC_GROUP_CREATE MC_NODE_CREATE MC_NODE_ASSOCIATE
+%token REGISTER_READ REGISTER_WRITE REGISTER_RESET
 %token<string> ID
 %token COLON COMMA DATA_TERN DOT
 %token<string> INT_CONST_DEC TERN_CONST_HEX INT_CONST_HEX INT_CONST_BIN DATA_DEC DATA_HEX
@@ -55,11 +57,11 @@ stmt:
   | EXPECT port
     { Expect($2, None, false) }
   | MIRRORING_ADD session port_mirror
-    { MirroringAdd ($2, $3) }
+    { MirroringAdd($2, $3) }
   | MIRRORING_ADD_MC session mgid
-    { MirroringAddMc ($2, $3) }
+    { MirroringAddMc($2, $3) }
   | MIRRORING_GET session
-    { MirroringGet ($2) }
+    { MirroringGet($2) }
   | NO_PACKET
     { NoPacket }
   | PACKET port packet_data
@@ -72,6 +74,12 @@ stmt:
     { McNodeCreate($2, $3) }
   | MC_NODE_ASSOCIATE mgid handle
     { McNodeAssociate($2, $3) }
+  | REGISTER_READ qualified_name number
+    { RegisterRead($2, $3) }
+  | REGISTER_WRITE qualified_name number number
+    { RegisterWrite($2, $3, $4) }
+  | REGISTER_RESET qualified_name
+    { RegisterReset($2) }
   | REMOVE ALL
     { RemoveAll }
   | WAIT

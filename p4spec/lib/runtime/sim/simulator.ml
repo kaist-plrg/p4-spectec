@@ -70,6 +70,12 @@ module type ARCH = sig
   val mc_node_create : Value.t -> int -> int list -> Value.t
   val mc_node_associate : Value.t -> int -> int -> Value.t
 
+  (* Register interface *)
+
+  val register_read : Value.t -> string -> int -> Value.t
+  val register_write : Value.t -> string -> int -> int -> Value.t
+  val register_reset : Value.t -> string -> Value.t
+
   (* Pipeline evaluation *)
 
   val init_pipe : string list -> string -> Value.t * Value.t

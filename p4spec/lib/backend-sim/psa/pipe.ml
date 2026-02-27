@@ -2,6 +2,7 @@ open Lang
 open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
+open Interface.Pack
 open Interface.Flatten
 module Value = Runtime.Sim.Value
 module IO = Runtime.Sim.Io
@@ -112,6 +113,25 @@ struct
     match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "egress_packet_out extern not found"
+
+  let get_register (value_arch : Value.t) (reg_name : string) :
+      Object.Register.t =
+    let names = String.split_on_char '.' reg_name in
+    let values_name = List.map wrap_text_v names in
+    let value_objectId = wrap_list_v "id" values_name in
+    match get_object_state value_arch value_objectId with
+    | Register register -> register
+    | _ -> error_no_region ("Register extern " ^ reg_name ^ " not found")
+
+  let put_register (value_arch : Value.t) (reg_name : string)
+      (reg : Object.Register.t) : Value.t =
+    let names = String.split_on_char '.' reg_name in
+    let values_name = List.map wrap_text_v names in
+    let value_objectId = wrap_list_v "id" values_name in
+    let value_reg =
+      Register reg |> object_state_to_yojson |> wrap_extern_v "objectState"
+    in
+    Spec.Func.update_objectState_e value_arch value_objectId value_reg
 
   (* Extern calls *)
 
@@ -476,6 +496,39 @@ struct
     |> Arch.with_multicast multicast
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
+
+  (* Register interface *)
+
+  let register_read (value_arch : Value.t) (reg_name : string) (index : int) :
+      Value.t =
+    let reg = get_register value_arch reg_name in
+    let _value =
+      if index < List.length reg.values then List.nth reg.values index
+      else Spec.Func.default reg.typ
+    in
+    (* Print register value *)
+    (* Format.printf "%s[%d] = %s\n" reg_name index (Value.to_string value); *)
+    value_arch
+
+  let register_write (value_arch : Value.t) (reg_name : string) (index : int)
+      (value : int) : Value.t =
+    let reg = get_register value_arch reg_name in
+    let value_value = Bigint.of_int value |> pack_p4_arbitraryInt in
+    let value_value = Spec.Func.cast_op reg.typ value_value in
+    let values =
+      List.mapi
+        (fun idx value -> if idx = index then value_value else value)
+        reg.values
+    in
+    let reg = { reg with values } in
+    put_register value_arch reg_name reg
+
+  let register_reset (value_arch : Value.t) (reg_name : string) : Value.t =
+    let reg = get_register value_arch reg_name in
+    let value_default = Spec.Func.default reg.typ in
+    let values = List.map (fun _ -> value_default) reg.values in
+    let reg = { reg with values } in
+    put_register value_arch reg_name reg
 
   (* Packet state *)
 

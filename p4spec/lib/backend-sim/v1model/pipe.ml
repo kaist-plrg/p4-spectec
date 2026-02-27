@@ -439,6 +439,21 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region "register_read is not implemented for the v1model simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region
+      "register_write is not implemented for the v1model simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region
+      "register_reset is not implemented for the v1model simulator"
+
   (* Packet state *)
 
   let insert_packet (packet : Packet.t) : unit state =

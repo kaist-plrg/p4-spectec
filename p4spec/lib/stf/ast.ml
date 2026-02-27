@@ -45,3 +45,6 @@ type stmt =
   | McGroupCreate of id
   | McNodeCreate of id * port list
   | McNodeAssociate of id * handle
+  | RegisterRead of name * number
+  | RegisterWrite of name * number * number
+  | RegisterReset of name
