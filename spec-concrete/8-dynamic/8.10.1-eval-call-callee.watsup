@@ -140,16 +140,6 @@ rulegroup Callee_eval/builtinMethodCallee {
 
 rulegroup Callee_eval/externMethodCallee {
 
-  rule Callee_eval/abort:
-    p EC_0 ARCH_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
-                   : EC_1 ARCH_1 abortResult
-    ---- ;; get storage reference of expression base
-    -- if typedLvalueIR
-        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
-    -- Lvalue_eval:
-        p EC_0 ARCH_0 |- typedLvalueIR
-                       : EC_1 ARCH_1 abortResult
-
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR `. nameIR) `< `_ > `( argumentListIR )
                    : EC_1 ARCH_1 (`` externMethodCallee)
