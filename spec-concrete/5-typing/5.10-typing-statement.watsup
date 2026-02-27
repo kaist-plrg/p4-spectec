@@ -201,11 +201,19 @@ rulegroup Stmt_ok/returnStatement {
 
 }
 
+dec $is_function_localKind(localKind) : bool
+def $is_function_localKind(functionLocalKind) = true
+def $is_function_localKind(_) = false
+  -- otherwise
+
 ;;; exitStatement
 ;;; syntax exitStatement = EXIT `;
 
 rule Stmt_ok/exitStatement:
   p TC f l |- EXIT `; : TC f (EXIT `;)
+  ---- ;; exit statements are not allowed within parsers or functions.
+  -- if ~((p = BLOCK /\ TC.BLOCK.KIND = PARSER)
+        \/ (p = LOCAL /\ $is_function_localKind(TC.LOCAL.KIND)))
 
 ;;; blockStatement
 
@@ -514,11 +522,18 @@ rulegroup Stmt_ok/forStatement-in {
     LOCAL TC_0 f l |- annotationList FOR
                         `( annotationListNonEmpty
                            type name IN forCollectionExpression) statement
-                    : TC_0 f_post forStatementIR
+                    : TC_0 f_post forStatementIR'
     -- Stmt_ok:
         LOCAL TC_0 f l |- annotationList FOR
                             `( type name IN forCollectionExpression) statement
                         : TC_1 f_post forStatementIR
+    -- if annotationList' FOR `(
+          typeIR nameIR IN forCollectionExpressionIR
+        ) statementIR = forStatementIR
+    -- if forStatementIR'
+        = annotationList' FOR `(
+            annotationListNonEmpty typeIR nameIR IN forCollectionExpressionIR
+          ) statementIR
 
 }
 

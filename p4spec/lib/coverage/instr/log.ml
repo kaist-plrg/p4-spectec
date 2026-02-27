@@ -131,8 +131,6 @@ let log_defined_func (cover : Multi.t) (func : definedfunc) : string =
 (* Definitions *)
 
 let log_def (cover : Multi.t) (def : def) : string =
-  (";; " ^ string_of_region def.at ^ "\n")
-  ^
   match def.it with
   | ExternTypD (typid, _) -> "extern syntax " ^ string_of_typid typid
   | TypD (typid, tparams, deftyp, _) ->

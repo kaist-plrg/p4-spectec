@@ -3732,16 +3732,41 @@ xref:cast_sequence[``sequenceValue`` casted to type ``typeIR``]
 for each ``value`` in ``value^{asterisk}^``
  .. Return ``+LIST+`` ``+[+`` ``value'^{asterisk}^`` ``+]+``.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR'^{asterisk}^`` ``+>+`` be ``typeIR``:
- .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
- .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Let ``value'^{asterisk}^`` be the list and ``value'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Let ``value'^{asterisk}^`` be the list and ``value'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value'`` be xref:cast_op[``value`` casted to type ``typeIR'``].
+   **** Let ``value'`` be xref:cast_op[``value`` casted to type ``typeIR'``].
 --
 +
 for each ``typeIR'`` in ``typeIR'^{asterisk}^`` and ``value`` in ``value^{asterisk}^``
- .. Return ``+TUPLE+`` ``+(+`` ``value'^{asterisk}^`` ``+)+``.
+  ... Return ``+TUPLE+`` ``+(+`` ``value'^{asterisk}^`` ``+)+``.
+ .. Else:
+  ... Let ``+SEQ+`` ``+(+`` ``value~seq~^{asterisk}^`` ``+,+`` ``+...+`` ``+)+`` be ``sequenceValue``.
+  ... Let ``n~typeIR~`` be the length of ``typeIR'^{asterisk}^``.
+  ... Let ``n~value~`` be the length of ``value~seq~^{asterisk}^``.
+  ... Check that ``n~typeIR~`` is greater than or equal to ``n~value~``.
+  ... Let ``typeIR~non_default~^{asterisk}^`` be ``typeIR'^{asterisk}^[1`` ``:`` ``n~value~]``.
+  ... Let ``value~non_default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~non_default~`` be xref:cast_op[``value~seq~`` casted to type ``typeIR~non_default~``].
+--
++
+for each ``typeIR~non_default~`` in ``typeIR~non_default~^{asterisk}^`` and ``value~seq~`` in ``value~seq~^{asterisk}^``
+  ... Let ``int`` be ``n~typeIR~`` ``-`` ``n~value~``.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~default~`` be ``int``.
+  ... Let ``typeIR~default~^{asterisk}^`` be ``typeIR'^{asterisk}^[n~value~`` ``:`` ``n~default~]``.
+  ... Let ``value~default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~default~`` be xref:default[the default value for type ``typeIR~default~``].
+--
++
+for each ``typeIR~default~`` in ``typeIR~default~^{asterisk}^``
+  ... Let ``value^{asterisk}^`` be ``value~non_default~^{asterisk}^`` concatenated with ``value~default~^{asterisk}^``.
+  ... Return ``+TUPLE+`` ``+(+`` ``value^{asterisk}^`` ``+)+``.
 . Else if let ``typeIR'`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR``:
  .. Check that ``sequenceValue`` matches pattern ``SEQ`` ``(`` ``%`` ``)``.
  .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
@@ -3781,57 +3806,151 @@ xref:cast_record[``recordValue`` casted to type ``typeIR``]
 
 
 . If let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Check that ``recordValue`` matches pattern ``RECORD`` ``{`` ``%`` ``}``.
- .. Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``
- .. Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
- .. Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordValue``.
+  ... Let ``+{+`` ``id~default~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~t_field~^{asterisk}^`` ``+}+`` and ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``].
+  ... Let ``typeIR'^?^^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``typeIR'^?^`` be xref:find_map[the value of ``id~default~`` in map ``+{+`` ``(`` ``id~t_field~`` ``+:+`` ``typeIR~t_field~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~default~`` in ``id~default~^{asterisk}^``
+  ... Check that ``typeIR'^?^`` is defined, for all ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``.
+  ... Let ``typeIR~field_default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``typeIR~field_default~`` be ``typeIR'^?^``.
+--
++
+for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
+  ... Let ``value~field_default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_default~`` be xref:default[the default value for type ``typeIR~field_default~``].
+--
++
+for each ``typeIR~field_default~`` in ``typeIR~field_default~^{asterisk}^``
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``id~default~`` ``+:+`` ``value~field_default~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+for each ``value^?^`` in ``value^?^^{asterisk}^``
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+  ... Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Check that ``recordValue`` matches pattern ``RECORD`` ``{`` ``%`` ``}``.
- .. Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``
- .. Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
- .. Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordValue``.
+  ... Let ``+{+`` ``id~default~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~t_field~^{asterisk}^`` ``+}+`` and ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+``].
+  ... Let ``typeIR'^?^^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``typeIR'^?^`` be xref:find_map[the value of ``id~default~`` in map ``+{+`` ``(`` ``id~t_field~`` ``+:+`` ``typeIR~t_field~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~default~`` in ``id~default~^{asterisk}^``
+  ... Check that ``typeIR'^?^`` is defined, for all ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``.
+  ... Let ``typeIR~field_default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``typeIR~field_default~`` be ``typeIR'^?^``.
+--
++
+for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
+  ... Let ``value~field_default~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_default~`` be xref:default[the default value for type ``typeIR~field_default~``].
+--
++
+for each ``typeIR~field_default~`` in ``typeIR~field_default~^{asterisk}^``
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+{+`` ``(`` ``nameIR~field~`` ``+:+`` ``value~field~`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``id~default~`` ``+:+`` ``value~field_default~`` ``)^{asterisk}^`` ``+}+``].
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+for each ``value^?^`` in ``value^?^^{asterisk}^``
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+  ... Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_default[``defaultValue`` casted to type ``typeIR``]
 
@@ -7939,6 +8058,7 @@ xref:Stmt_ok[Typing ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` `
 
 xref:Stmt_ok[Typing ``+EXIT+`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
 
+. Check that ``~p`` ``=`` ``+BLOCK+`` ``/\`` ``TC.+BLOCK+.+KIND+`` ``=`` ``+PARSER+`` ``\/`` ``p`` ``=`` ``+LOCAL+`` ``/\`` ``xref:is_function_localKind[$is_function_localKind(TC.+LOCAL+.+KIND+)]``.
 . Result in context ``TC``, abstract control flow ``f``, and ``+EXIT+`` ``+;+``.
 
 xref:Stmt_ok[Typing ``conditionalStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
@@ -8027,7 +8147,10 @@ xref:Stmt_ok[Typing ``forStatement``, under context ``TC``, abstract control flo
 * the result of xref:Stmt_ok[typing ``annotationList`` ``+FOR+`` ``+(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``].
  .. Check that ``statementIR`` has type ``forStatementIR``.
  .. Let ``forStatementIR`` be ``statementIR``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR``.
+ .. Check that ``forStatementIR`` matches pattern ``%`` ``FOR`` ``(`` ``%`` ```` ``%`` ``IN`` ``%`` ``)`` ``%``.
+ .. Let ``annotationList'`` ``+FOR+`` ``+(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``.
+ .. Let ``forStatementIR'`` be ``annotationList'`` ``+FOR+`` ``+(+`` ``annotationListNonEmpty`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'``.
+ .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR'``.
 
 xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
 
@@ -10751,6 +10874,12 @@ xref:ParameterList_ok_inner[``p`` ``typingContext`` ``+|-+`` ``parameter^{asteri
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
  .. Result in ``TC~2~``, ``parameterIR^{asterisk}^``, and ``typeId~fresh~^{asterisk}^``.
 
+xref:is_function_localKind[$is_function_localKind(localKind)]
+
+
+. If ``localKind`` has type ``functionLocalKind``: return ``true``.
+. Otherwise: return ``false``.
+
 xref:ForUpdateStmt_ok[ForUpdateStmt_ok]:
 
 * Typing ``forUpdateStatement`` under context ``typingContext``:
@@ -13250,11 +13379,10 @@ xref:Stmt_inst[Compile-time evaluation of ``forStatementIR``, under context ``IC
 * the result of xref:Stmt_inst[compile-time evaluation of ``statementIR'``, under context ``IC`` and store ``STO`` at ``p``].
  .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
  .. Result in context ``IC``, store ``STO~1~``, and ``forStatementIR'``.
-. Else if let ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList'`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``:
- .. Check that ``annotationList`` is equal to ``annotationList'``.
+. Else if let ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR'`` be ``forStatementIR``:
  .. Let context ``IC~body~``, store ``STO~1~``, and ``statementIR~body~`` be
 * the result of xref:Stmt_inst[compile-time evaluation of ``statementIR'``, under context ``IC`` and store ``STO`` at ``p``].
- .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
+ .. Let ``forStatementIR'`` be ``annotationList`` ``+FOR+`` ``+(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR~body~``.
  .. Result in context ``IC``, store ``STO~1~``, and ``forStatementIR'``.
 
 xref:Stmt_inst[Compile-time evaluation of ``breakStatementIR``, under context ``IC`` and store ``STO`` at ``p``]:
@@ -14580,22 +14708,22 @@ xref:find_type_e[$find_type_e(cursor, EC, nameIR)]
 xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) in the ``cursor`` layer of ``EC``]
 
 
+. If let ``+.+`` ``nameIR`` be ``prefixedNameIR``:
+ .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
+ .. Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
+ .. If let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
+  ... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
+ .. If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
+  ... Return ``·``.
 . If ``cursor`` is ``GLOBAL``:
- .. If let ``nameIR`` be ``prefixedNameIR``:
-  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
-  ... If let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
-   .... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
-  ... If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
-   .... Return ``·``.
- .. Else:
-  ... Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
-  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
-  ... If let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
-   .... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
-  ... If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
-   .... Return ``·``.
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
+ .. Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
+ .. If let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
+  ... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
+ .. If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
+  ... Return ``·``.
 . Else if ``cursor`` is ``BLOCK``:
  .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
  .. Let ``nameIR`` be ``prefixedNameIR``.
@@ -14807,11 +14935,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``false``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 . Else if ``binop`` is ``||``:
  .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -14821,11 +14947,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``true``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 
 xref:Expr_eval[Evaluating ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionIR~true~`` ``+:+`` ``typedExpressionIR~false~`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
@@ -15534,18 +15658,16 @@ xref:Stmt_eval[Runtime evaluation of ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` 
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC`` and state ``ARCH`` at ``+LOCAL+``].
-. If let ``abortResult`` be ``expressionResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
-. Else:
- .. Let ``value`` be ``expressionResult``.
- .. Let the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``blockStatementIR^?^`` be
+. Check that ``expressionResult`` has type ``continueResult<value>``.
+. Let ``value`` be ``expressionResult``.
+. Let the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``blockStatementIR^?^`` be
 * the result of xref:SwitchCases_general_eval[runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``+LOCAL+`` and state ``EC~1~`` with switch key ``value``].
- .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
-  ... Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
+. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
+ .. Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``+LOCAL+``].
-  ... Result in context ``EC~3~``, state ``ARCH~3~``, and ``statementResult``.
- .. Else:
-  ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``+`EMPTY+``.
+ .. Result in context ``EC~3~``, state ``ARCH~3~``, and ``statementResult``.
+. Else:
+ .. Result in context ``EC~2~``, state ``ARCH~2~``, and ``+`EMPTY+``.
 
 xref:BlockElementStmt_eval[BlockElementStmt_eval]:
 
@@ -15669,6 +15791,8 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
  .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+ .. If let ``rejectTransitionResult`` be ``expressionResult``:
+  ... Result in context ``EC~cond~``, state ``ARCH~cond~``, and ``rejectTransitionResult``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
@@ -16047,26 +16171,24 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
 . Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
-. If let ``abortResult`` be ``storageReferenceResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. Else:
- .. Let ``storageReference^?^`` be ``storageReferenceResult``.
- .. Check that ``storageReference^?^`` is defined.
- .. Let ``storageReference'`` be ``storageReference^?^``.
- .. Let value ``value`` be
+. Check that ``storageReferenceResult`` has type ``continueResult<storageReference?>``.
+. Let ``storageReference^?^`` be ``storageReferenceResult``.
+. Check that ``storageReference^?^`` is defined.
+. Let ``storageReference'`` be ``storageReference^?^``.
+. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
- .. Check that ``value`` has type ``objectReferenceValue``.
- .. Let ``+REF+`` ``objectId`` be ``value``.
- .. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
- .. Check that ``object'`` has type ``externObject``.
- .. Let ``+EXTERN+`` ``++_++`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object'``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``].
- .. Let ``++_++`` ``+:+`` ``externMethodDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
- .. Check that ``externMethodDef`` matches pattern ``EXTERN_METHOD`` ``%`` ``<`` ``%`` ``>`` ``(`` ``%`` ``)`` ``%``.
- .. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
- .. Check that ``nameIR'`` is equal to ``nameIR'``.
- .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
+. Check that ``value`` has type ``objectReferenceValue``.
+. Let ``+REF+`` ``objectId`` be ``value``.
+. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
+. Check that ``object'`` has type ``externObject``.
+. Let ``+EXTERN+`` ``++_++`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object'``.
+. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``].
+. Let ``++_++`` ``+:+`` ``externMethodDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
+. Check that ``externMethodDef`` matches pattern ``EXTERN_METHOD`` ``%`` ``<`` ``%`` ``>`` ``(`` ``%`` ``)`` ``%``.
+. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
+. Check that ``nameIR'`` is equal to ``nameIR'``.
+. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
+. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"apply"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 

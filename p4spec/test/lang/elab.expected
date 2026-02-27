@@ -6568,7 +6568,24 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- if sequenceValue matches `SEQ(%)`
   -- let seq( value*{value <- value*} ) = sequenceValue
 
-  clause 2 : (typeIR', sequenceValue) = header_stack[ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size )] as value
+  clause 2 : (typeIR', sequenceValue) = tuple( value*{value <- value*} ) as value
+  -- if typeIR' <: tupleTypeIR
+  -- let tuple< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
+  -- if sequenceValue matches `SEQ(%,...)`
+  -- let seq( value_seq*{value_seq <- value_seq*} ,...) = sequenceValue
+  -- let n_typeIR = |typeIR*{typeIR <- typeIR*}|
+  -- let n_value = |value_seq*{value_seq <- value_seq*}|
+  -- if (n_typeIR >= n_value)
+  -- let typeIR_non_default*{typeIR_non_default <- typeIR_non_default*} = typeIR*{typeIR <- typeIR*}[1 : n_value]
+  -- (let value_non_default = $cast_op(typeIR_non_default, value_seq))*{typeIR_non_default <- typeIR_non_default*, value_seq <- value_seq*, value_non_default -> value_non_default*}
+  -- let int = (n_typeIR - n_value)
+  -- if int <: nat
+  -- let n_default = int as nat
+  -- let typeIR_default*{typeIR_default <- typeIR_default*} = typeIR*{typeIR <- typeIR*}[n_value : n_default]
+  -- (let value_default = $default(typeIR_default))*{typeIR_default <- typeIR_default*, value_default -> value_default*}
+  -- let value*{value <- value*} = value_non_default*{value_non_default <- value_non_default*} ++ value_default*{value_default <- value_default*}
+
+  clause 3 : (typeIR', sequenceValue) = header_stack[ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size )] as value
   -- if typeIR' <: headerStackTypeIR
   -- let typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- if sequenceValue matches `SEQ(%)`
@@ -6576,14 +6593,14 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- (let value_cast = $cast_op(typeIR, value))*{value <- value*, value_cast -> value_cast*}
   -- let n_idx = |value*{value <- value*}|
 
-  clause 3 : (typeIR, sequenceValue) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 4 : (typeIR, sequenceValue) = struct typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: structTypeIR
   -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
   -- if sequenceValue matches `SEQ(%)`
   -- let seq( value*{value <- value*} ) = sequenceValue
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
-  clause 4 : (typeIR, sequenceValue) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 5 : (typeIR, sequenceValue) = header typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
   -- if sequenceValue matches `SEQ(%)`
@@ -6602,12 +6619,42 @@ def $cast_record(typeIR, recordValue) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
 
-  clause 1 : (typeIR, recordValue) = header typeId { true ; value_field_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
+  clause 1 : (typeIR, recordValue) = struct typeId { value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: structTypeIR
+  -- let struct typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
+  -- if recordValue matches `RECORD{%,...}`
+  -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} ,...} = recordValue
+  -- let { id_default*{id_default <- id_default*} } = $diff_set<nameIR>({ id_t_field*{id_t_field <- id_t_field*} }, { nameIR_field*{nameIR_field <- nameIR_field*} })
+  -- (let typeIR'?{typeIR' <- typeIR'?} = $find_map<id, typeIR>({ id_t_field : typeIR_t_field*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} }, id_default))*{id_default <- id_default*, typeIR'? -> typeIR'?*}
+  -- (if typeIR'?{typeIR' <- typeIR'?} matches (_))*{typeIR'? <- typeIR'?*}
+  -- (let ?(typeIR_field_default) = typeIR'?{typeIR' <- typeIR'?})*{typeIR'? <- typeIR'?*, typeIR_field_default -> typeIR_field_default*}
+  -- (let value_field_default = $default(typeIR_field_default))*{typeIR_field_default <- typeIR_field_default*, value_field_default -> value_field_default*}
+  -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} ++ id_default : value_field_default*{id_default <- id_default*, value_field_default <- value_field_default*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 2 : (typeIR, recordValue) = header typeId { true ; value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
   -- if recordValue matches `RECORD{%}`
   -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } = recordValue
   -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 3 : (typeIR, recordValue) = header typeId { true ; value_field_cast id_t_field ;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: headerTypeIR
+  -- let header typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} >{ _annotationList typeIR_t_field id_t_field ;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
+  -- if recordValue matches `RECORD{%,...}`
+  -- let record{ value_field nameIR_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} ,...} = recordValue
+  -- let { id_default*{id_default <- id_default*} } = $diff_set<nameIR>({ id_t_field*{id_t_field <- id_t_field*} }, { nameIR_field*{nameIR_field <- nameIR_field*} })
+  -- (let typeIR'?{typeIR' <- typeIR'?} = $find_map<id, typeIR>({ id_t_field : typeIR_t_field*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} }, id_default))*{id_default <- id_default*, typeIR'? -> typeIR'?*}
+  -- (if typeIR'?{typeIR' <- typeIR'?} matches (_))*{typeIR'? <- typeIR'?*}
+  -- (let ?(typeIR_field_default) = typeIR'?{typeIR' <- typeIR'?})*{typeIR'? <- typeIR'?*, typeIR_field_default -> typeIR_field_default*}
+  -- (let value_field_default = $default(typeIR_field_default))*{typeIR_field_default <- typeIR_field_default*, value_field_default -> value_field_default*}
+  -- (let value?{value <- value?} = $find_map<id, value>({ nameIR_field : value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} ++ id_default : value_field_default*{id_default <- id_default*, value_field_default <- value_field_default*} }, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
@@ -13618,6 +13665,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath exitStatement
+    -- if ~(((p = block) /\ (TC.block.kind = parser)) \/ ((p = local) /\ $is_function_localKind(TC.local.kind)))
     -- output: % % % % |- % : TC f exit; as statementIR
 
   rulegroup blockStatement
@@ -13733,7 +13781,11 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Stmt_ok: local TC_0 f l |- annotationList for( type name in forCollectionExpression ) statement as statement : TC_1 f_post statementIR'
     -- if statementIR' <: forStatementIR
     -- let forStatementIR = statementIR' as forStatementIR
-    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+    -- let forStatementIR'' = forStatementIR
+    -- if forStatementIR'' matches `%FOR(%%IN%)%`
+    -- let annotationList' for( typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
+    -- let forStatementIR' = annotationList' for( annotationListNonEmpty as annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR
+    -- output: % % % % |- % : TC_0 f_post forStatementIR' as statementIR
 
   rulegroup breakStatement
 
@@ -17571,6 +17623,14 @@ relation ParameterList_ok_inner: cursor typingContext |- parameter* : typingCont
     -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- output: % % |- % : TC_2 parameterIR*{parameterIR <- parameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
+def $is_function_localKind(localKind) : bool =
+
+  clause 0 : (localKind) = true
+  -- if localKind <: functionLocalKind
+  -- let functionLocalKind = localKind as functionLocalKind
+
+  clause -1 : (_localKind) = false
+
 relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatementIR
 
   rulegroup 
@@ -21312,10 +21372,9 @@ relation Stmt_inst: cursor instContext store |- statementIR : instContext store 
     rulepath annotations
     -- let forStatementIR'' = forStatementIR'
     -- if forStatementIR'' matches `%FOR(%%%IN%)%`
-    -- let annotationList for( annotationList' typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
-    -- if (annotationList = annotationList')
+    -- let annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR = forStatementIR''
     -- Stmt_inst: p IC STO_0 |- statementIR : IC_body STO_1 statementIR_body
-    -- let forStatementIR = annotationList for( annotationList typeIR nameIR in forCollectionExpressionIR ) statementIR_body
+    -- let forStatementIR = annotationList for( annotationList_in typeIR nameIR in forCollectionExpressionIR ) statementIR_body
     -- output: % % % |- % : IC STO_1 forStatementIR as statementIR
 
   rulegroup breakStatementIR
@@ -23295,26 +23354,24 @@ def $find_type_e(cursor, evalContext, nameIR) : typeIR? =
 
 def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argumentIR*) : callResolution<(cursor, callableDef)>? =
 
-  clause 0 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
-  -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches ``%`
-  -- let ` nameIR = prefixedNameIR
+  clause 0 : (_cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
   -- let ?(callableId : callableDef # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?}
 
-  clause 1 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
-  -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches ``%`
-  -- let ` nameIR = prefixedNameIR
+  clause 1 : (_cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
   clause 2 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?(callableId : (global, callableDef) # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*})
   -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches `.%`
-  -- let . nameIR = prefixedNameIR
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef)
   -- if callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)
@@ -23322,8 +23379,8 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
 
   clause 3 : (cursor, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = ?()
   -- if cursor matches `GLOBAL`
-  -- if prefixedNameIR matches `.%`
-  -- let . nameIR = prefixedNameIR
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
   -- let callTargetKey = $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*})
   -- if (?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))
 
@@ -23628,15 +23685,6 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let expressionResult = ` `b false as value as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-    rulepath land-true-abort
-    -- if (binop' = &&)
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
-    -- if (expressionResult' = ` `b true as value as expressionResult)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult''
-    -- if expressionResult'' <: abortResult
-    -- let abortResult = expressionResult'' as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as expressionResult
-
     rulepath land-true
     -- if (binop' = &&)
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
@@ -23657,15 +23705,6 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (expressionResult' = ` `b true as value as expressionResult)
     -- let expressionResult = ` `b true as value as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
-
-    rulepath lor-false-abort
-    -- if (binop' = ||)
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
-    -- if (expressionResult' = ` `b false as value as expressionResult)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult''
-    -- if expressionResult'' <: abortResult
-    -- let abortResult = expressionResult'' as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as expressionResult
 
     rulepath lor-false
     -- if (binop' = ||)
@@ -25286,12 +25325,6 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
 
    paths
 
-    rulepath target-abort
-    -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: abortResult
-    -- let abortResult = expressionResult as abortResult
-    -- output: % % % |- % : EC_1 ARCH_1 abortResult as statementResult
-
     rulepath target-cont-match
     -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
@@ -25564,6 +25597,15 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- Expr_eval: local EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond expressionResult
     -- if (expressionResult = ` `b false as value as expressionResult)
     -- output: % % |- % : EC_cond ARCH_cond `empty as parserStatementResult
+
+    rulepath else-reject
+    -- let parserConditionalStatementIR' = parserConditionalStatementIR
+    -- if parserConditionalStatementIR' matches `IF(%)%ELSE%`
+    -- let if( typedExpressionIR_cond ) parserStatementIR_then else parserStatementIR_else = parserConditionalStatementIR'
+    -- Expr_eval: local EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond expressionResult
+    -- if expressionResult <: rejectTransitionResult
+    -- let rejectTransitionResult = expressionResult as rejectTransitionResult
+    -- output: % % |- % : EC_cond ARCH_cond rejectTransitionResult as parserStatementResult
 
     rulepath else-cont-true
     -- let parserConditionalStatementIR' = parserConditionalStatementIR
@@ -26311,15 +26353,6 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR <_>( argumentL
     -- let typedExpressionIR . nameIR = callableTargetIR
 
    paths
-
-    rulepath abort
-    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
-    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
-    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
-    -- if storageReferenceResult <: abortResult
-    -- let abortResult = storageReferenceResult as abortResult
-    -- output: % % % |- % <_>( % ): EC_1 ARCH_1 abortResult as calleeResult
 
     rulepath cont
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)

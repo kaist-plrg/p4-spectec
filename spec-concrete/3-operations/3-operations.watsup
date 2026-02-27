@@ -716,6 +716,19 @@ def $cast_sequence(LIST `< typeIR >, SEQ `( value* ))
   = LIST `[ $cast_op(typeIR, value)* ]
 def $cast_sequence(TUPLE `< typeIR* >, SEQ `( value* ))
   = TUPLE `( $cast_op(typeIR, value)* )
+def $cast_sequence(TUPLE `< typeIR* >, SEQ `( value_seq* `, `... ))
+  = TUPLE `( value* )
+  -- if n_typeIR = |typeIR*|
+  -- if n_value = |value_seq*|
+  -- if $(n_typeIR >= n_value)
+  ---- ;; non-default values
+  -- if typeIR_non_default* = typeIR*[1 : n_value]
+  -- if (value_non_default = $cast_op(typeIR_non_default, value_seq))*
+  ---- ;; default values
+  -- if n_default = $(n_typeIR - n_value)
+  -- if typeIR_default* = typeIR*[n_value : n_default]
+  -- if (value_default = $default(typeIR_default))*
+  -- if value* = value_non_default* ++ value_default*
 def $cast_sequence(typeIR `[ n_size ], SEQ `( value* ))
   = HEADER_STACK `[ value_cast* `( n_idx `; n_size ) ]
   -- if (value_cast = $cast_op(typeIR, value))*
@@ -749,11 +762,39 @@ def $cast_record(
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
 def $cast_record(
+    STRUCT typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
+    RECORD `{ (value_field nameIR_field `;)* `, `... })
+  = STRUCT typeId `{ (value_field_cast id_t_field `;)* }
+  -- if `{ id_default* } = $diff_set<nameIR>(`{ id_t_field* }, `{ nameIR_field* })
+  -- if (typeIR_field_default
+      = $find_map<id, typeIR>(`{ (id_t_field `: typeIR_t_field)* }, id_default))*
+  -- if (value_field_default = $default(typeIR_field_default))*
+  -- if (value_field'
+      = $find_map<id, value>(`{
+        (nameIR_field `: value_field)* ++ (id_default `: value_field_default)*
+        }, id_t_field))*
+  -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
+
+def $cast_record(
     HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
     RECORD `{ (value_field nameIR_field `;)* })
-  = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
+  = HEADER typeId `{ true `; (value_field_cast id_t_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
+  -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
+
+def $cast_record(
+    HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
+    RECORD `{ (value_field nameIR_field `;)* `, `... })
+  = HEADER typeId `{ true `; (value_field_cast id_t_field `;)* }
+  -- if `{ id_default* } = $diff_set<nameIR>(`{ id_t_field* }, `{ nameIR_field* })
+  -- if (typeIR_field_default
+      = $find_map<id, typeIR>(`{ (id_t_field `: typeIR_t_field)* }, id_default))*
+  -- if (value_field_default = $default(typeIR_field_default))*
+  -- if (value_field'
+      = $find_map<id, value>(`{
+        (nameIR_field `: value_field)* ++ (id_default `: value_field_default)*
+        }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
 
 def $cast_op(typeIR, recordValue) = $cast_record(typeIR_unroll, recordValue)
