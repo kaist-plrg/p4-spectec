@@ -187,9 +187,8 @@ let render_out_itervars ctx vars : string =
     if String.starts_with ~prefix:"_" id.it then None
     else
       Some
-        (F.asprintf "%s be the list of %s"
-           (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx)
-           (render_var in_code var |> adoc_as_code ctx))
+        (F.asprintf "%s be the list"
+           (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx))
   in
   List.filter_map render_out_var vars |> render_list
 
@@ -513,7 +512,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         (render_instr ~level instr)
         (render_in_itervars in_prose vars_in)
   | ForEachI (vars_out, instr, vars_in) ->
-      F.asprintf "%sLet %s, obtained by repeating:\n%s%s\n%sfor each %s" bullet
+      F.asprintf "%sLet %s obtained by repeating:\n%s%s\n%sfor each %s" bullet
         (render_out_itervars in_prose vars_out)
         adoc_attach_block
         (render_instr ~level:(level + 1) ~unordered:true instr
@@ -557,7 +556,7 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
   | RuleI rel_call ->
       F.asprintf "%sLet %s." bullet (render_rel_call in_prose rel_call)
   | ReturnI exp -> F.asprintf "%sReturn %s." bullet (render_exp in_prose exp)
-  | ResultI (ProseResult `Hold) -> bullet ^ "The relation holds."
+  | ResultI (ProseResult `Hold) -> bullet ^ "Then, the relation holds."
   | ResultI (ProseResult (`Yield (hint, exps))) ->
       F.asprintf "%sResult in %s." bullet
         (render_alter_hint in_prose hint (reindent_lines ~level:0) render_exp

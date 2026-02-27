@@ -83,7 +83,34 @@ and render_typfields sep typfields =
 
 and render_typcase typcase =
   let typ, _hints = typcase in
-  render_typ typ
+  match typ with
+  | NotationT { it = SeqT typs; _ } -> (
+      let width_max = 80 in
+      let col_start = 5 in
+      let indent = "       " in
+      let col_indent = String.length indent in
+      match typs with
+      | [] -> ""
+      | typ_h :: typs_t ->
+          let buf = Buffer.create 64 in
+          let s_h = render_typ typ_h in
+          Buffer.add_string buf s_h;
+          let col = ref (col_start + String.length s_h) in
+          List.iter
+            (fun typ ->
+              let s = render_typ typ in
+              if !col + 1 + String.length s > width_max then (
+                Buffer.add_char buf '\n';
+                Buffer.add_string buf indent;
+                Buffer.add_string buf s;
+                col := col_indent + String.length s)
+              else (
+                Buffer.add_char buf ' ';
+                Buffer.add_string buf s;
+                col := !col + 1 + String.length s))
+            typs_t;
+          Buffer.contents buf)
+  | _ -> render_typ typ
 
 and render_typcases sep typcases =
   String.concat sep (List.map render_typcase typcases)

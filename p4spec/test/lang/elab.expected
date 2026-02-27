@@ -3623,16 +3623,12 @@ def $id_of_parameterIR(parameterIR) : id =
 
   clause 0 : (_annotationList _direction _typeIR id _parameterInitializerOptIR) = id
 
-def $default_of_parameterIR(parameterIR) : bool =
+def $is_default_parameterIR(parameterIR) : bool =
 
   clause 0 : (_annotationList _direction _typeIR _id parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?}) = false
   -- if parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?} matches ()
 
   clause -1 : (_annotationList _direction _typeIR _id _parameterInitializerOptIR) = true
-
-def $is_default_parameterIR(parameterIR) : bool =
-
-  clause 0 : (parameterIR) = $default_of_parameterIR(parameterIR)
 
 def $annotationList_of_parameterIR(parameterIR) : annotationList =
 
@@ -7439,7 +7435,6 @@ syntax tableActionListIR = tableActionIR*
 
 syntax tableEntryPriorityIR = 
    | priority= integerLiteral :
-   | priority=( typedExpressionIR ):
 
 syntax tableEntryPriorityOptIR = tableEntryPriorityIR?
 
@@ -8513,14 +8508,14 @@ def $find_local_return_type_t(typingContext) : typeIR? =
   clause -1 : (TC) = ?()
 
 syntax matchKey = 
-   | typeIR : id
+   | typeIR : nameIR
 
 syntax matchAction = 
    | prefixedNameIR ( parameterIR* @ argumentListIR )
 
 syntax matchPriority = {values nat*, init bool, delta nat, largest_wins bool}
 
-syntax matchEntry = {size nat, const bool}
+syntax matchEntries = {size nat, const bool}
 
 syntax matchMode = 
    | nopri
@@ -8528,17 +8523,17 @@ syntax matchMode =
    | pri
    | prilpm
 
-syntax tableContext = {keys matchKey*, actions matchAction*, priorities matchPriority, entries matchEntry, mode matchMode}
+syntax tableContext = {keys matchKey*, actions matchAction*, priorities matchPriority, entries matchEntries, mode matchMode}
 
 syntax tableEntryState = 
    | lpm nat
-   | nolpm
+   | non_lpm
 
 def $empty_tableContext : tableContext =
 
-  clause 0 :  = {keys [], actions [], priorities matchPriority, entries matchEntry, mode nopri}
+  clause 0 :  = {keys [], actions [], priorities matchPriority, entries matchEntries, mode nopri}
   -- let matchPriority = {values [], init false, delta 1, largest_wins true}
-  -- let matchEntry = {size 0, const true}
+  -- let matchEntries = {size 0, const true}
 
 def $add_key_tbl(tableContext, id, typeIR) : tableContext =
 
@@ -8653,18 +8648,18 @@ def $find_table_priority_last(tableContext) : nat =
 def $join_tableEntryState(tableEntryState, tableEntryState) : tableEntryState =
 
   clause 0 : (tableEntryState, tableEntryState') = lpm n
-  -- if tableEntryState matches `NOLPM`
+  -- if tableEntryState matches `NON_LPM`
   -- if tableEntryState' matches `LPM%`
   -- let lpm n = tableEntryState'
 
   clause 1 : (tableEntryState, tableEntryState') = lpm n
   -- if tableEntryState matches `LPM%`
   -- let lpm n = tableEntryState
-  -- if tableEntryState' matches `NOLPM`
+  -- if tableEntryState' matches `NON_LPM`
 
-  clause 2 : (tableEntryState, tableEntryState') = nolpm
-  -- if tableEntryState matches `NOLPM`
-  -- if tableEntryState' matches `NOLPM`
+  clause 2 : (tableEntryState, tableEntryState') = non_lpm
+  -- if tableEntryState matches `NON_LPM`
+  -- if tableEntryState' matches `NON_LPM`
 
 def $tableEntry_lpm_prefix(value) : nat =
 
@@ -9461,12 +9456,13 @@ relation ConstructorTypeDef_wf: bound |- constructorTypeDefIR
 
    match
 
-    (signature) B |- constructor< typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR_object
-    B |- constructor< typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR_object
+    (signature) B |- constructorTypeDefIR
+    B |- constructorTypeDefIR
 
    paths
 
     rulepath 
+    -- let constructor< typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} >( parameterIR*{parameterIR <- parameterIR*} ): typeIR_object = constructorTypeDefIR
     -- if $definable_constructor(typeIR_object)
     -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
     -- if $distinct_<typeId>(typeParameterIR*{typeParameterIR <- typeParameterIR*})
@@ -14540,8 +14536,7 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- let annotationList_action action _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = callableTypeDefIR as actionTypeIR
     -- let annotation_name?{annotation_name <- annotation_name?} = $find_name_annotation_opt(annotationList_action)
     -- let annotationList_update = $add_annotationList(annotationList, annotation_name?{annotation_name <- annotation_name?})
-    -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
-    -- (Argument_ok: local TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+    -- ArgumentList_ok: local TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ argumentIR*{argumentIR <- argumentIR*} : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- let TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
     -- let tableActionIR = annotationList_update prefixedNameIR ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
@@ -14621,8 +14616,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- let (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?} = $find_action(TBLC, prefixedNameIR)
     -- if (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?} matches (_)
     -- let ?((parameterIR_action*{parameterIR_action <- parameterIR_action*}, argumentIR_action*{argumentIR_action <- argumentIR_action*})) = (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?}
-    -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
-    -- (Argument_ok: local TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+    -- ArgumentList_ok: local TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_default_ok: TC |- parameterIR_action*{parameterIR_action <- parameterIR_action*} @ argumentIR*{argumentIR <- argumentIR*} : parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*} , parameterIR_action_control*{parameterIR_action_control <- parameterIR_action_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
@@ -14631,7 +14625,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
 
 relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
 
-  rulegroup simpleKeysetExpression-expression
+  rulegroup expression
 
    match
 
@@ -14642,190 +14636,154 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
 
    paths
 
-    rulepath simpleKeysetExpression-expression
+    rulepath expression
     -- if (|TBLC.keys| = 1)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ [expression as simpleKeysetExpression] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ [expression as simpleKeysetExpression] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
 
-  rulegroup simpleKeysetExpression-mask
+  rulegroup mask
 
    match
 
-    (signature) TC TBLC |- expression_l &&& expression_r as keysetExpression : % %
+    (signature) TC TBLC |- keysetExpression : % %
     TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
+
+   paths
+
+    rulepath simple
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
     -- if simpleKeysetExpression matches `%&&&%`
     -- let expression_l &&& expression_r = simpleKeysetExpression
-
-   paths
-
-    rulepath simpleKeysetExpression-mask
     -- if (|TBLC.keys| = 1)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ [expression_l &&& expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ [expression_l &&& expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
 
-  rulegroup simpleKeysetExpression-range
-
-   match
-
-    (signature) TC TBLC |- expression_l .. expression_r as keysetExpression : % %
-    TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
-    -- if simpleKeysetExpression matches `%..%`
-    -- let expression_l .. expression_r = simpleKeysetExpression
-
-   paths
-
-    rulepath simpleKeysetExpression-range
-    -- if (|TBLC.keys| = 1)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ [expression_l .. expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
-    -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
-    -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
-    -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
-
-  rulegroup simpleKeysetExpression-default
-
-   match
-
-    (signature) TC TBLC |- default as keysetExpression : % %
-    TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
-    -- if simpleKeysetExpression matches `DEFAULT`
-
-   paths
-
-    rulepath noprilpm
-    -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
-    -- let TBLS = lpm n
-    -- output: % % |- % : TBLS default as keysetExpressionIR
-
-    rulepath non-noprilpm
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
-    -- let TBLS = nolpm
-    -- output: % % |- % : TBLS default as keysetExpressionIR
-
-  rulegroup simpleKeysetExpression-dontcare
-
-   match
-
-    (signature) TC TBLC |- _ as keysetExpression : % %
-    TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: simpleKeysetExpression
-    -- let simpleKeysetExpression = keysetExpression as simpleKeysetExpression
-    -- if simpleKeysetExpression matches `_`
-
-   paths
-
-    rulepath noprilpm
-    -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
-    -- let TBLS = lpm 0
-    -- output: % % |- % : TBLS _ as keysetExpressionIR
-
-    rulepath non-noprilpm
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
-    -- let TBLS = nolpm
-    -- output: % % |- % : TBLS _ as keysetExpressionIR
-
-  rulegroup tupleKeysetExpression-mask
-
-   match
-
-    (signature) TC TBLC |- ( expression_l &&& expression_r ) as keysetExpression : % %
-    TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+    rulepath tuple
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression' as tupleKeysetExpression
     -- if tupleKeysetExpression matches `(%&&&%)`
     -- let ( expression_l &&& expression_r ) = tupleKeysetExpression
-
-   paths
-
-    rulepath tupleKeysetExpression-mask
     -- if (|TBLC.keys| = 1)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ [expression_l &&& expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ [expression_l &&& expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  rulegroup tupleKeysetExpression-range
+  rulegroup range
 
    match
 
-    (signature) TC TBLC |- ( expression_l .. expression_r ) as keysetExpression : % %
+    (signature) TC TBLC |- keysetExpression : % %
     TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
+
+   paths
+
+    rulepath simple
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: simpleKeysetExpression
+    -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
+    -- if simpleKeysetExpression matches `%..%`
+    -- let expression_l .. expression_r = simpleKeysetExpression
+    -- if (|TBLC.keys| = 1)
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ [expression_l .. expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
+    -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- output: % % |- % : TBLS simpleKeysetExpressionIR as keysetExpressionIR
+
+    rulepath tuple
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: tupleKeysetExpression
+    -- let tupleKeysetExpression = keysetExpression' as tupleKeysetExpression
     -- if tupleKeysetExpression matches `(%..%)`
     -- let ( expression_l .. expression_r ) = tupleKeysetExpression
-
-   paths
-
-    rulepath tupleKeysetExpression-range
     -- if (|TBLC.keys| = 1)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ [expression_l .. expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ [expression_l .. expression_r] : TBLS simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches [ _/1 ]
     -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
     -- output: % % |- % : TBLS ( [simpleKeysetExpressionIR] ) as keysetExpressionIR
 
-  rulegroup tupleKeysetExpression-default
+  rulegroup default
 
    match
 
-    (signature) TC TBLC |- (default) as keysetExpression : % %
+    (signature) TC TBLC |- keysetExpression : % %
     TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(DEFAULT)`
 
    paths
 
-    rulepath noprilpm
+    rulepath simple-noprilpm
+    -- if (keysetExpression = default as keysetExpression)
+    -- let matchMode = TBLC.mode
+    -- if matchMode matches `NOPRILPM%`
+    -- let noprilpm n = matchMode
+    -- let TBLS = lpm n
+    -- output: % % |- % : TBLS default as keysetExpressionIR
+
+    rulepath simple-non-noprilpm
+    -- if (keysetExpression = default as keysetExpression)
+    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- let TBLS = non_lpm
+    -- output: % % |- % : TBLS default as keysetExpressionIR
+
+    rulepath tuple-noprilpm
+    -- if (keysetExpression = (default) as keysetExpression)
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm n = matchMode
     -- let TBLS = lpm n
     -- output: % % |- % : TBLS ( [default] ) as keysetExpressionIR
 
-    rulepath non-noprilpm
+    rulepath tuple-non-noprilpm
+    -- if (keysetExpression = (default) as keysetExpression)
     -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
-    -- let TBLS = nolpm
+    -- let TBLS = non_lpm
     -- output: % % |- % : TBLS ( [default] ) as keysetExpressionIR
 
-  rulegroup tupleKeysetExpression-dontcare
+  rulegroup dontcare
 
    match
 
-    (signature) TC TBLC |- (_) as keysetExpression : % %
+    (signature) TC TBLC |- keysetExpression : % %
     TC TBLC |- keysetExpression : % %
-    -- if keysetExpression <: tupleKeysetExpression
-    -- let tupleKeysetExpression = keysetExpression as tupleKeysetExpression
-    -- if tupleKeysetExpression matches `(_)`
 
    paths
 
-    rulepath noprilpm
+    rulepath simple-noprilpm
+    -- if (keysetExpression = _ as keysetExpression)
+    -- let matchMode = TBLC.mode
+    -- if matchMode matches `NOPRILPM%`
+    -- let noprilpm n = matchMode
+    -- let TBLS = lpm 0
+    -- output: % % |- % : TBLS _ as keysetExpressionIR
+
+    rulepath simple-non-noprilpm
+    -- if (keysetExpression = _ as keysetExpression)
+    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- let TBLS = non_lpm
+    -- output: % % |- % : TBLS _ as keysetExpressionIR
+
+    rulepath tuple-noprilpm
+    -- if (keysetExpression = (_) as keysetExpression)
     -- let matchMode = TBLC.mode
     -- if matchMode matches `NOPRILPM%`
     -- let noprilpm n = matchMode
     -- let TBLS = lpm 0
     -- output: % % |- % : TBLS ( [_] ) as keysetExpressionIR
 
-    rulepath non-noprilpm
+    rulepath tuple-non-noprilpm
+    -- if (keysetExpression = (_) as keysetExpression)
     -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
-    -- let TBLS = nolpm
+    -- let TBLS = non_lpm
     -- output: % % |- % : TBLS ( [_] ) as keysetExpressionIR
 
-  rulegroup tupleKeysetExpression-list
+  rulegroup list
 
    match
 
@@ -14838,49 +14796,41 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
 
    paths
 
-    rulepath tupleKeysetExpression-list
+    rulepath list
     -- let simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- let simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*}
     -- if (|TBLC.keys| = |simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}|)
-    -- TableEntry_keysets_simple_ok: TC TBLC nolpm |- TBLC.keys @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : TBLS simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
+    -- TableEntry_keysets_simple_ok: TC TBLC non_lpm |- TBLC.keys @ simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : TBLS simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
     -- output: % % |- % : TBLS ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 
 relation TableEntry_action_ok: typingContext tableContext |- tableActionReference : tableActionReferenceIR
 
-  rulegroup prefixedNonTypeName
+  rulegroup 
 
    match
 
-    (signature) TC TBLC |- prefixedNonTypeName as tableActionReference : %
+    (signature) TC TBLC |- tableActionReference : %
     TC TBLC |- tableActionReference : %
-    -- if tableActionReference <: prefixedNonTypeName
-    -- let prefixedNonTypeName = tableActionReference as prefixedNonTypeName
 
    paths
 
     rulepath prefixedNonTypeName
+    -- let tableActionReference' = tableActionReference
+    -- if tableActionReference' <: prefixedNonTypeName
+    -- let prefixedNonTypeName = tableActionReference' as prefixedNonTypeName
     -- let prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (?(([], [])) = $find_action(TBLC, prefixedNameIR))
     -- output: % % |- % : prefixedNameIR ( [] )
 
-  rulegroup prefixedNonTypeName-argumentList
-
-   match
-
-    (signature) TC TBLC |- prefixedNonTypeName ( argumentList ) : %
-    TC TBLC |- tableActionReference : %
-    -- if tableActionReference matches `%(%)`
-    -- let prefixedNonTypeName ( argumentList ) = tableActionReference
-
-   paths
-
     rulepath prefixedNonTypeName-argumentList
+    -- let tableActionReference' = tableActionReference
+    -- if tableActionReference' matches `%(%)`
+    -- let prefixedNonTypeName ( argumentList ) = tableActionReference'
     -- let prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- let (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?} = $find_action(TBLC, prefixedNameIR)
     -- if (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?} matches (_)
     -- let ?((parameterIR_action*{parameterIR_action <- parameterIR_action*}, argumentIR_action*{argumentIR_action <- argumentIR_action*})) = (parameterIR*, argumentListIR)?{(parameterIR*, argumentListIR) <- (parameterIR*, argumentListIR)?}
-    -- let argument*{argument <- argument*} = $flatten_argumentList(argumentList)
-    -- (Argument_ok: local TC |- argument : argumentIR)*{argument <- argument*, argumentIR -> argumentIR*}
+    -- ArgumentList_ok: local TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_default_ok: TC |- parameterIR_action*{parameterIR_action <- parameterIR_action*} @ argumentIR*{argumentIR <- argumentIR*} : parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*} , parameterIR_action_control*{parameterIR_action_control <- parameterIR_action_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
@@ -14889,7 +14839,7 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
 
 relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
 
-  rulegroup non-specified
+  rulegroup none
 
    match
 
@@ -14914,52 +14864,33 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let lpm n_prefix = tableEntryState
     -- output: % % % |- % : TBLC ?(priority= d n_prefix as int :)
 
-    rulepath pri-prilpm-number-init-largest-wins
+    rulepath pri-prilpm-number-init
     -- let TBLC_0 = tableContext
     -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
     -- if (TBLC_0.priorities.values = [])
-    -- if TBLC_0.priorities.largest_wins
+    -- let b_lw = TBLC_0.priorities.largest_wins
     -- let n_size = TBLC_0.entries.size
     -- let n_delta = TBLC_0.priorities.delta
-    -- let int = (((n_size - 1) * n_delta as int) + 1 as int)
+    -- let int = $ite<int>(b_lw, (((n_size - 1) * n_delta as int) + 1 as int), 1 as int)
     -- if int <: nat
     -- let n = int as nat
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
 
-    rulepath pri-prilpm-number-init-non-largest-wins
-    -- let TBLC_0 = tableContext
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if (TBLC_0.priorities.values = [])
-    -- if ~TBLC_0.priorities.largest_wins
-    -- let TBLC_1 = $add_table_priority(TBLC_0, 1)
-    -- output: % % % |- % : TBLC_1 ?(priority= d 1 as int :)
-
-    rulepath pri-prilpm-number-non-init-largest-wins
+    rulepath pri-prilpm-number-non-init
     -- let TBLC_0 = tableContext
     -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
     -- if (TBLC_0.priorities.values =/= [])
-    -- if TBLC_0.priorities.largest_wins
+    -- let b_lw = TBLC_0.priorities.largest_wins
     -- let n_last = $find_table_priority_last(TBLC_0)
     -- let n_delta = TBLC_0.priorities.delta
-    -- let int = (n_last - n_delta)
+    -- let int = $ite<int>(b_lw, (n_last - n_delta), (n_last + n_delta) as int)
     -- if int <: nat
     -- let n = int as nat
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
 
-    rulepath pri-prilpm-number-non-init-non-largest-wins
-    -- let TBLC_0 = tableContext
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if (TBLC_0.priorities.values =/= [])
-    -- if ~TBLC_0.priorities.largest_wins
-    -- let n_last = $find_table_priority_last(TBLC_0)
-    -- let n_delta = TBLC_0.priorities.delta
-    -- let n = (n_last + n_delta)
-    -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
-
-  rulegroup specified-number
+  rulegroup number
 
    match
 
@@ -14994,7 +14925,7 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
     -- output: % % % |- % : TBLC_1 ?(priority= integerLiteral :)
 
-  rulegroup specified-expression
+  rulegroup expression
 
    match
 
@@ -15021,7 +14952,7 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = TBLC_0[priorities.init = true]
     -- let TBLC_2 = $add_table_priority(TBLC_1, n)
-    -- output: % % % |- % : TBLC_2 ?(priority=( typedExpressionIR ):)
+    -- output: % % % |- % : TBLC_2 ?(priority= d n as int :)
 
     rulepath pri-prilpm-expression-non-init
     -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
@@ -15037,22 +14968,23 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n) = nat?{nat <- nat?}
     -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority=( typedExpressionIR ):)
+    -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
 
 relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext tableEntryIR
 
-  rulegroup priority
+  rulegroup 
 
    match
 
-    (signature) TC TBLC_0 |- constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ; : % %
+    (signature) TC TBLC_0 |- tableEntry : % %
     TC TBLC_0 |- tableEntry : % %
-    -- if tableEntry matches `%%%:%%;`
-    -- let constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ; = tableEntry
 
    paths
 
     rulepath priority
+    -- let tableEntry' = tableEntry
+    -- if tableEntry' matches `%%%:%%;`
+    -- let constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ; = tableEntry'
     -- TableEntry_keyset_ok: TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
     -- TableEntry_action_ok: TC TBLC_0 |- tableActionReference : tableActionReferenceIR
     -- TableEntry_priority_ok: TC TBLC_0 TBLS |- ?(tableEntryPriority) : TBLC_1 tableEntryPriorityOptIR
@@ -15060,18 +14992,10 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
     -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
     -- output: % % |- % : TBLC_1 tableEntryIR
 
-  rulegroup non-priority
-
-   match
-
-    (signature) TC TBLC_0 |- constOpt keysetExpression : tableActionReference annotationList ; : % %
-    TC TBLC_0 |- tableEntry : % %
-    -- if tableEntry matches `%%:%%;`
-    -- let constOpt keysetExpression : tableActionReference annotationList ; = tableEntry
-
-   paths
-
     rulepath non-priority
+    -- let tableEntry' = tableEntry
+    -- if tableEntry' matches `%%:%%;`
+    -- let constOpt keysetExpression : tableActionReference annotationList ; = tableEntry'
     -- TableEntry_keyset_ok: TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
     -- TableEntry_action_ok: TC TBLC_0 |- tableActionReference : tableActionReferenceIR
     -- TableEntry_priority_ok: TC TBLC_0 TBLS |- ?() : TBLC_1 tableEntryPriorityOptIR
@@ -15176,30 +15100,18 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let tablePropertyIR = annotationList constOptIR default_action= tableActionReferenceIR ; as tablePropertyIR
     -- output: % % |- % : TBLC tablePropertyIR
 
-  rulegroup custom
+  rulegroup priority
 
    match
 
-    (signature) TC tableContext |- annotationList constOpt tableCustomName = expression ; : % %
-    TC tableContext |- tableProperty : % %
+    (signature) TC TBLC_0 |- annotationList constOpt tableCustomName = expression ; : % %
+    TC TBLC_0 |- tableProperty : % %
     -- if tableProperty matches `%%%%;`
     -- let annotationList constOpt tableCustomName = expression ; = tableProperty
 
    paths
 
-    rulepath size
-    -- let TBLC = tableContext
-    -- if ("size" = $tableCustomName(tableCustomName))
-    -- Expr_ok: local TC |- expression : typedExpressionIR
-    -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typeIR_unroll = $unroll_typeIR(typeIR)
-    -- if (typeIR_unroll <: integerTypeIR /\ ~typeIR_unroll <: varBitTypeIR)
-    -- let constOptIR = $flatten_constOpt(constOpt)
-    -- let tablePropertyIR = annotationList constOptIR custom "size" = typedExpressionIR ; as tablePropertyIR
-    -- output: % % |- % : TBLC tablePropertyIR
-
     rulepath largest-priority-wins
-    -- let TBLC_0 = tableContext
     -- if ("largest_priority_wins" = $tableCustomName(tableCustomName))
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
@@ -15207,14 +15119,13 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- if (bool as typeIR = $unroll_typeIR(typeIR))
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
     -- if value <: boolValue
-    -- let `b b_largest_priority_wins = value as boolValue
-    -- let TBLC_1 = TBLC_0[priorities.largest_wins = b_largest_priority_wins]
+    -- let `b b_lw = value as boolValue
+    -- let TBLC_1 = TBLC_0[priorities.largest_wins = b_lw]
     -- let constOptIR = $flatten_constOpt(constOpt)
-    -- let tablePropertyIR = annotationList constOptIR custom_const "largest_priority_wins" =`value `b b_largest_priority_wins as value ; as tablePropertyIR
+    -- let tablePropertyIR = annotationList constOptIR custom_const "largest_priority_wins" =`value `b b_lw as value ; as tablePropertyIR
     -- output: % % |- % : TBLC_1 tablePropertyIR
 
     rulepath priority-delta
-    -- let TBLC_0 = tableContext
     -- if ("priority_delta" = $tableCustomName(tableCustomName))
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
@@ -15233,8 +15144,28 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let tablePropertyIR = annotationList constOptIR custom_const "priority_delta" =`value d n_delta as int as value ; as tablePropertyIR
     -- output: % % |- % : TBLC_1 tablePropertyIR
 
-    rulepath unknown
-    -- let TBLC = tableContext
+  rulegroup size-and-others
+
+   match
+
+    (signature) TC TBLC |- annotationList constOpt tableCustomName = expression ; : % %
+    TC TBLC |- tableProperty : % %
+    -- if tableProperty matches `%%%%;`
+    -- let annotationList constOpt tableCustomName = expression ; = tableProperty
+
+   paths
+
+    rulepath size
+    -- if ("size" = $tableCustomName(tableCustomName))
+    -- Expr_ok: local TC |- expression : typedExpressionIR
+    -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- let typeIR_unroll = $unroll_typeIR(typeIR)
+    -- if (typeIR_unroll <: integerTypeIR /\ ~typeIR_unroll <: varBitTypeIR)
+    -- let constOptIR = $flatten_constOpt(constOpt)
+    -- let tablePropertyIR = annotationList constOptIR custom "size" = typedExpressionIR ; as tablePropertyIR
+    -- output: % % |- % : TBLC tablePropertyIR
+
+    rulepath others
     -- let nameIR = $tableCustomName(tableCustomName)
     -- if ((((nameIR =/= "default_action") /\ (nameIR =/= "size")) /\ (nameIR =/= "largest_priority_wins")) /\ (nameIR =/= "priority_delta"))
     -- Expr_ok: local TC |- expression : typedExpressionIR
@@ -18930,7 +18861,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- if Cast_impl: typeIR -> typeIR_key holds
     -- let typeIR_set = set< typeIR_key > as typeIR
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
-    -- output: % % |- % @ % : nolpm typedExpressionIR_set as simpleKeysetExpressionIR
+    -- output: % % |- % @ % : non_lpm typedExpressionIR_set as simpleKeysetExpressionIR
 
   rulegroup mask
 
@@ -18983,9 +18914,9 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_mask)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- output: % % |- % @ % : nolpm typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced
+    -- output: % % |- % @ % : non_lpm typedExpressionIR_l_reduced &&& typedExpressionIR_r_reduced
 
-  rulegroup range-range
+  rulegroup range
 
    match
 
@@ -18997,7 +18928,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
 
    paths
 
-    rulepath range-range
+    rulepath range
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
@@ -19009,7 +18940,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} = $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r_cast, $compat_range)
     -- if (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?} matches (_)
     -- let ?((typedExpressionIR_l_reduced, typedExpressionIR_r_reduced)) = (typedExpressionIR, typedExpressionIR)?{(typedExpressionIR, typedExpressionIR) <- (typedExpressionIR, typedExpressionIR)?}
-    -- output: % % |- % @ % : nolpm typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced
+    -- output: % % |- % @ % : non_lpm typedExpressionIR_l_reduced .. typedExpressionIR_r_reduced
 
   rulegroup default
 
@@ -19032,7 +18963,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let nameIR_matchkind = text
     -- if (nameIR_matchkind =/= "lpm")
     -- if (nameIR_matchkind =/= "exact")
-    -- output: % % |- % @ % : nolpm default
+    -- output: % % |- % @ % : non_lpm default
 
   rulegroup dontcare
 
@@ -19055,7 +18986,7 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let nameIR_matchkind = text
     -- if (nameIR_matchkind =/= "lpm")
     -- if (nameIR_matchkind =/= "exact")
-    -- output: % % |- % @ % : nolpm _
+    -- output: % % |- % @ % : non_lpm _
 
 relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryState |- matchKey* @ simpleKeysetExpression* : tableEntryState simpleKeysetExpressionIR*
 
@@ -19237,7 +19168,7 @@ relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
     -- the relation holds
 
-  rulegroup accessExpressionIR-indexAccessExpressionIR-bitslice
+  rulegroup accessExpressionIR-sliceAccessExpressionIR
 
    match
 
@@ -19248,7 +19179,7 @@ relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
 
    paths
 
-    rulepath accessExpressionIR-indexAccessExpressionIR-bitslice
+    rulepath accessExpressionIR-sliceAccessExpressionIR
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
     -- the relation holds
 
@@ -22869,7 +22800,10 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- (if value?{value <- value?} matches (_))*{value? <- value?*}
     -- (let ?(value_cparam) = value?{value <- value?})*{value? <- value?*, value_cparam -> value_cparam*}
     -- let objectState = $init_objectState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, value_cparam*{value_cparam <- value_cparam*})
-    -- let object_extern = extern nameIR < IC_callee_4.block.type >{ objectState IC_callee_4.block.frame { callableId : externMethodDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} } } as object
+    -- let theta_extern = IC_callee_4.block.type
+    -- let frame_extern = IC_callee_4.block.frame
+    -- let externMethodDefEnv_extern = { callableId : externMethodDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} }
+    -- let object_extern = extern nameIR < theta_extern >{ objectState frame_extern externMethodDefEnv_extern } as object
     -- output: % % % |- % < % >( % # % # % ): STO_2 object_extern
 
   rulegroup parserConstructorDef
@@ -22887,15 +22821,17 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- let parser< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} } = parserObjectConstructorDef
     -- let p_callee = block
     -- let IC_callee_0 = $inherit_i(global, IC)
-    -- let theta = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }
-    -- let IC_callee_1 = IC_callee_0[block.type = theta]
+    -- let theta_parser = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }
+    -- let IC_callee_1 = IC_callee_0[block.type = theta_parser]
     -- let given constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} default constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} @ p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ParserLocalDecls_inst: IC_callee_3 STO_2 |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : IC_local STO_3 parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*}
     -- ParserStates_inst: IC_local STO_3 |- parserStateIR*{parserStateIR <- parserStateIR*} : IC_state STO_4
-    -- let object_parser = parser< theta >( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_3.block.frame parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} IC_state.block.state } as object
+    -- let frame_parser = IC_callee_3.block.frame
+    -- let stateEnv_parser = IC_state.block.state
+    -- let object_parser = parser< theta_parser >( parameterIR*{parameterIR <- parameterIR*} ){ frame_parser parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*} stateEnv_parser } as object
     -- output: % % % |- % < % >( % # % # % ): STO_4 object_parser
 
   rulegroup controlConstructorDef
@@ -22913,18 +22849,20 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- let control< typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR } = controlObjectConstructorDef
     -- let p_callee = block
     -- let IC_callee_0 = $inherit_i(global, IC)
-    -- let theta = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }
-    -- let IC_callee_1 = IC_callee_0[block.type = theta]
+    -- let theta_control = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }
+    -- let IC_callee_1 = IC_callee_0[block.type = theta_control]
     -- let given constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} default constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} @ p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
-    -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : IC_local_0 STO_3 controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*}
-    -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR'
+    -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : IC_local_0 STO_3 controlLocalDeclarationIR_inst*{controlLocalDeclarationIR_inst <- controlLocalDeclarationIR_inst*}
+    -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR_inst
+    -- let frame_control = IC_callee_3.block.frame
     -- let { callableId : callableDef*{callableDef <- callableDef*, callableId <- callableId*} } = IC_local_1.block.callable
     -- (if callableDef <: actionDef)*{callableDef <- callableDef*}
     -- (let actionDef = callableDef as actionDef)*{callableDef <- callableDef*, actionDef -> actionDef*}
-    -- let object_control = control< theta >( parameterIR*{parameterIR <- parameterIR*} ){ IC_callee_3.block.frame controlLocalDeclarationIR'*{controlLocalDeclarationIR' <- controlLocalDeclarationIR'*} { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } controlBodyIR' } as object
+    -- let actionDefEnv_control = { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} }
+    -- let object_control = control< theta_control >( parameterIR*{parameterIR <- parameterIR*} ){ frame_control controlLocalDeclarationIR_inst*{controlLocalDeclarationIR_inst <- controlLocalDeclarationIR_inst*} { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} } controlBodyIR_inst } as object
     -- output: % % % |- % < % >( % # % # % ): STO_4 object_control
 
   rulegroup packageConstructorDef
@@ -22947,7 +22885,9 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} @ p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC @ p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
-    -- let object_package = package< IC_callee_3.block.type >{ IC_callee_3.block.frame } as object
+    -- let theta_package = IC_callee_3.block.type
+    -- let frame_package = IC_callee_3.block.frame
+    -- let object_package = package< theta_package >{ frame_package } as object
     -- output: % % % |- % < % >( % # % # % ): STO_2 object_package
 
 relation SwitchCase_inst: cursor instContext store |- switchCaseIR : store switchCaseIR
@@ -28351,39 +28291,17 @@ relation TableKeys_eval: evalContext arch |- tableKeyListIR : evalContext arch t
     -- let tableKeyValue*{tableKeyValue <- tableKeyValue*} = tableKeyValue_h :: tableKeyValue_t*{tableKeyValue_t <- tableKeyValue_t*}
     -- output: % % |- % : EC_2 ARCH_2 ` tableKeyValue*{tableKeyValue <- tableKeyValue*} as tableKeysResult
 
-relation TableEntryPriority_eval: evalContext arch |- tableEntryPriorityIR? : nat?
+def $get_tableEntryPriority(tableEntryPriorityIR?) : nat? =
 
-  rulegroup none
+  clause 0 : (tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?}) = ?()
+  -- if tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches ()
 
-   match
-
-    (signature) EC ARCH |- ?() : %
-    EC ARCH |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : %
-    -- if tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches ()
-
-   paths
-
-    rulepath none
-    -- output: % % |- % : ?()
-
-  rulegroup integerLiteral
-
-   match
-
-    (signature) EC ARCH |- ?(priority= integerLiteral :) : %
-    EC ARCH |- tableEntryPriorityIR'?{tableEntryPriorityIR' <- tableEntryPriorityIR'?} : %
-    -- if tableEntryPriorityIR'?{tableEntryPriorityIR' <- tableEntryPriorityIR'?} matches (_)
-    -- let ?(tableEntryPriorityIR) = tableEntryPriorityIR'?{tableEntryPriorityIR' <- tableEntryPriorityIR'?}
-    -- if tableEntryPriorityIR matches `PRIORITY=%:`
-    -- let priority= integerLiteral : = tableEntryPriorityIR
-
-   paths
-
-    rulepath integerLiteral
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n) = nat?{nat <- nat?}
-    -- output: % % |- % : ?(n)
+  clause 1 : (tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?}) = ?(n)
+  -- if tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches (_)
+  -- let ?(priority= integerLiteral :) = tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?}
+  -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n) = nat?{nat <- nat?}
 
 syntax tableMatch = 
    | nat? : tableActionReferenceIR
@@ -28405,7 +28323,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
 
     rulepath exit
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
-    -- TableEntryPriority_eval: EC_0 ARCH_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?}
+    -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
     -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: exitResult
     -- let exitResult = keysetExpressionResult as exitResult
@@ -28414,7 +28332,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
 
     rulepath no-match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
-    -- TableEntryPriority_eval: EC_0 ARCH_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?}
+    -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
     -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
@@ -28424,7 +28342,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
 
     rulepath match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
-    -- TableEntryPriority_eval: EC_0 ARCH_0 |- tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} : n_priority?{n_priority <- n_priority?}
+    -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
     -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
@@ -28496,15 +28414,6 @@ relation TableMatches_eval: evalContext arch |- tableKeyValue* @ tableEntryListI
     -- let tableMatch*{tableMatch <- tableMatch*} = $opt_as_seq_<tableMatch>(tableMatch_h?{tableMatch_h <- tableMatch_h?}) ++ tableMatch_t*{tableMatch_t <- tableMatch_t*}
     -- output: % % |- % @ % : EC_2 ARCH_2 ` tableMatch*{tableMatch <- tableMatch*} as tableMatchesResult
 
-def $is_largest_priority_wins(tableCustomPropertyIR) : bool =
-
-  clause 0 : (tableCustomPropertyIR) = true
-  -- if tableCustomPropertyIR matches `%%CUSTOM_CONST%%;`
-  -- let _annotationList _constOptIR custom_const text _constantInitializerIR ; = tableCustomPropertyIR
-  -- if (text = "largest_priority_wins")
-
-  clause -1 : (_tableCustomPropertyIR) = false
-
 def $largest_priority_wins(tableObjectProperty) : bool =
 
   clause 0 : (TBL) = b
@@ -28520,6 +28429,15 @@ def $largest_priority_wins(tableObjectProperty) : bool =
   clause 1 : (TBL) = true
   -- let tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*} = TBL.customs
   -- if ([] = $filter_<tableCustomPropertyIR>(tableCustomPropertyIR*{tableCustomPropertyIR <- tableCustomPropertyIR*}, $is_largest_priority_wins(tableCustomPropertyIR)*{tableCustomPropertyIR <- tableCustomPropertyIR*}))
+
+def $is_largest_priority_wins(tableCustomPropertyIR) : bool =
+
+  clause 0 : (tableCustomPropertyIR) = true
+  -- if tableCustomPropertyIR matches `%%CUSTOM_CONST%%;`
+  -- let _annotationList _constOptIR custom_const text _constantInitializerIR ; = tableCustomPropertyIR
+  -- if (text = "largest_priority_wins")
+
+  clause -1 : (_tableCustomPropertyIR) = false
 
 def $select_action(tableObjectProperty, tableMatch*) : tableActionReferenceIR =
 

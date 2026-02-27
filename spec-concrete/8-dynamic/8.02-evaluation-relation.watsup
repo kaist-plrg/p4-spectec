@@ -37,7 +37,7 @@ relation Expr_eval:
   cursor evalContext arch |- typedExpressionIR
                            : evalContext arch expressionResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_in "evaluating" %3#", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %4#", state" %5#" and" %6)
 
 syntax expressionListResult =
@@ -48,7 +48,7 @@ relation Exprs_eval:
   cursor evalContext arch |- typedExpressionIR*
                            : evalContext arch expressionListResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_in "evaluating" %3#", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %4#", state" %5#" and" %6)
 
 syntax keysetExpressionResult =
@@ -88,21 +88,20 @@ relation Lvalue_eval:
   cursor evalContext arch |- typedLvalueIR
                            : evalContext arch storageReferenceResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#", context" %1#", and state" %2)
-  hint(prose_out "context" %4#", state" %5#
-               ", and result" %6)
+  hint(prose_in "evaluating" %3#", under context" %1 "and state" %2 "at" %0)
+  hint(prose_out "context" %4#", state" %5#", and result" %6)
 
 relation Lvalue_read:
   cursor evalContext arch |- storageReference : value
   hint(input %0 %1 %2 %3)
-  hint(prose_in "reading from" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_in "reading from" %3#", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "value" %4)
 
 relation Lvalue_write:
   cursor evalContext arch |- storageReference -> value
                             : evalContext
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "writing" %4#" to" %3#", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_in "writing" %4#" to" %3#", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %5)
 
 ;;
@@ -130,7 +129,7 @@ relation Stmt_eval:
                            : evalContext arch statementResult
   hint(input %0 %1 %2 %3)
   hint(prose_in "runtime evaluation of" %3#
-                ", under cursor" %0#", context" %1#", and state" %2)
+                ", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %4#", state" %5#", and" %6)
 
 relation BlockElementStmt_eval:
@@ -305,18 +304,14 @@ relation VarDecl_eval:
   cursor evalContext arch |- variableDeclarationIR
                            : evalContext arch declarationResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "evaluating" %3#", under cursor" %0#
-                ", context" %1#", and state" %2)
-  hint(prose_out " context" %4#
-                 ", state" %5#
-                 ",\nand result" %6)
+  hint(prose_in "evaluating" %3#", under context" %1 "and state" %2 "at" %0)
+  hint(prose_out "context" %4#", state" %5#", and result" %6)
 
 relation ConstDecl_eval:
   cursor evalContext |- constantDeclarationIR
                       : evalContext
   hint(input %0 %1 %2)
-  hint(prose_in "evaluating" %2#", under cursor" %0#
-                ", and context" %1)
+  hint(prose_in "evaluating" %2#", under context" %1 "at" %0)
   hint(prose_out "context" %3)
 
 ;;
@@ -332,7 +327,7 @@ relation Callee_eval:
                            : evalContext arch calleeResult
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "finding callee" %3 `( %4 )#
-                ", under cursor" %0#", context" %1#", and state" %2)
+                ", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %5#", state" %6#", and callee" %7)
 
 syntax copyInArgumentResult =
@@ -356,9 +351,9 @@ relation Copy_in:
     `@ cursor evalContext argumentListIR
   ~> arch evalContext evalContext `# copyInResult
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
-  hint(prose_in "copy-in from" %7 "in" %5 "layer of" %6
-                "to" %4 "in" %2 "layer of" %3#
-                ", under cursor" %0 "and state" %1)
+  hint(prose_in "copy-in from" %7 "at" %5 "of" %6
+                "to" %4 "in" %2 "at" %3#
+                ", under state" %1 "at shared" %0)
   hint(prose_out "\nstate" %8#
                  "\n, caller's context" %9#
                  "\n, callee's context" %10#
@@ -385,9 +380,9 @@ relation Copy_out:
     `@ cursor evalContext storageReference?*
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
-  hint(prose_in "copy-out from" %4 "in" %2 "layer of" %3
-                "to" %7 "in" %5 "layer of" %6#
-                ", under cursor" %0 "and state" %1)
+  hint(prose_in "copy-out from" %4 "at" %2 "of" %3
+                "to" %7 "at" %5 "of" %6#
+                ", under state" %1 "at shared" %0)
   hint(prose_out %8)
 
 relation Call_eval:
@@ -395,7 +390,7 @@ relation Call_eval:
                                        `( argumentListIR )
                            : evalContext arch callResult
   hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under cursor" %0#", context" %1#", and state" %2)
+  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %6#", state" %7#", and call result" %8)
 
 extern relation ExternFunctionCall_eval:
