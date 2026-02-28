@@ -11,6 +11,13 @@ type stat = { durations : float list; exclude_run : int; fail_run : int }
 
 let empty_stat = { durations = []; exclude_run = 0; fail_run = 0 }
 
+let merge_stat (stat_a, log_a) (stat_b, log_b) =
+  ({
+    durations = stat_a.durations @ stat_b.durations;
+    exclude_run = stat_a.exclude_run + stat_b.exclude_run;
+    fail_run = stat_a.fail_run + stat_b.fail_run;
+  }, log_a ^ "\n" ^ log_b)
+
 let log_stat name stat total : unit =
   let excludes = stat.exclude_run in
   let fails = stat.fail_run in
@@ -37,7 +44,7 @@ exception TestRunErr of string * region * float
 exception TestRunNegErr of float
 exception TestParseFileErr of string * region * float
 exception TestParseStringErr of string * region * float
-exception TestParseRoundtripErr of float
+exception TestParseRoundtripErr of string * float
 exception TestUnknownErr of float
 
 (* Timer *)
