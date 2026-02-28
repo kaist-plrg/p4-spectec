@@ -18,7 +18,7 @@ open Lang
 open Il
 open Lexing
 open Context
-open Parser
+open Tokens
 open Wrap
 module Value = Runtime.Dynamic_Il.Value
 module F = Format
@@ -42,57 +42,31 @@ let current_line  = ref 1
 let current_fname = ref ""
 let line_start    = ref 1
 
-type lexer_state =
-  (* Nothing to recall from the previous tokens *)
-  | SRegular
-  | SRangle of Source.info
-  | SPragma
-  (* We have seen a template *)
-  | STemplate
-  (* We have seen an identifier:
-   * we have just emitted a [NAME] token.
-   * The next token will be either [IDENTIFIER] or [TYPENAME],
-   * depending on what kind of identifier this is *)
-  | SIdent of string * lexer_state
-    let lexer_state = ref SRegular
-    
-let reset () =
-  Context.reset ();
-  lexer_state := SRegular;
-  current_line := 1;
-  current_fname := "";
-  line_start := 1
+(* let lexer_state = ref SRegular *)
+(**)
+(* let reset () = *)
+(*   Context.reset (); *)
+(*   lexer_state := SRegular; *)
+(*   current_line := 1; *)
+(*   current_fname := ""; *)
+(*   line_start := 1 *)
 
 let line_number () = !current_line
 let filename () = !current_fname
 let start_of_line () = !line_start
 
-let set_line n =
-  current_line := n
-
-let set_start_of_line c =
-  line_start := c
-
-let set_filename s =
-  current_fname := s
-
 let set_lexer_debug_channel ch = set_debug_channel ch
-let newline lexbuf =
-  current_line := line_number() + 1 ;
-  set_start_of_line (lexeme_end lexbuf)
+let newline (env : Env.t) lexbuf =
+  env.line <- env.line + 1;
+  env.line_start <- lexeme_end lexbuf
 
-let info lexbuf : Source.info =
-  let f = filename () in
-  let c1 = lexeme_start lexbuf in
-  let c2 = lexeme_end lexbuf in
-  let c = start_of_line () in
-  let l = line_number() in
+let info (env : Env.t) lexbuf : Source.info =
   Source.I 
-    { filename = f;
-      line_start = l;
+    { filename = env.fname;
+      line_start = env.line;
       line_end = None;
-      col_start = c1 - c;
-      col_end = c2 - c }
+      col_start = lexeme_start lexbuf - env.line_start;
+      col_end = lexeme_end lexbuf - env.line_start; }
 
 let sanitize s =
   String.concat "" (String.split_on_char '_' s)
@@ -106,7 +80,7 @@ let parse_int n _info =
   let i = Bigint.of_string (sanitize n) in
   NumV (`Int i) |> with_typ (NumT `IntT)
 
-let parse_width_int s n _info =
+let parse_width_int s n info =
   let l_s = String.length s in
   let width = String.sub s 0 (l_s - 1) in
   let sign = String.sub s (l_s - 1) 1 in
@@ -148,410 +122,410 @@ let sign = [ '0'-'9' ]+ [ 'w' 's' ]
 
 let whitespace = [ ' ' '\t' '\012' '\r' ]
 
-rule tokenize = parse
+rule tokenize env = parse
   | "/*"
       { debug_token "/*";
-        match multiline_comment None lexbuf with 
-       | None -> tokenize lexbuf
+        match multiline_comment env None lexbuf with 
+       | None -> tokenize env lexbuf
        | Some info -> PRAGMA_END (info) }
   | "//"
-      { singleline_comment lexbuf; tokenize lexbuf }
+      { singleline_comment env lexbuf; tokenize env lexbuf }
   | '\n'
-      { debug_token "⏎\n"; newline lexbuf; PRAGMA_END (info lexbuf) }
+      { debug_token "⏎\n"; newline env lexbuf; PRAGMA_END (info env lexbuf) }
   | '"'
-      { let str, end_info = (string lexbuf) in
+      { let str, end_info = (string env lexbuf) in
         debug_token ("\"" ^ str ^ "\"");
         end_info |> ignore;
         let value = Value.make TextT (TextV str) in
         STRING_LITERAL value
       }
   | whitespace
-      { debug_token " "; tokenize lexbuf }
+      { debug_token " "; tokenize env lexbuf }
   | '#'
-      { debug_token ""; preprocessor lexbuf ; tokenize lexbuf }
+      { debug_token ""; preprocessor env lexbuf ; tokenize env lexbuf }
   | "@pragma"
-      { debug_token "@pragma"; PRAGMA (info lexbuf) }
+      { debug_token "@pragma"; PRAGMA (info env lexbuf) }
   | hex_number as n
-      { debug_token n; NUMBER_INT (parse_int n (info lexbuf), n) }
+      { debug_token n; NUMBER_INT (parse_int n (info env lexbuf), n) }
   | dec_number as n
-      { debug_token n; NUMBER_INT (parse_int (strip_prefix n) (info lexbuf), n) }
+      { debug_token n; NUMBER_INT (parse_int (strip_prefix n) (info env lexbuf), n) }
   | oct_number as n
-      { debug_token n; NUMBER_INT (parse_int n (info lexbuf), n) }
+      { debug_token n; NUMBER_INT (parse_int n (info env lexbuf), n) }
   | bin_number as n
-      { debug_token n; NUMBER_INT (parse_int n (info lexbuf), n) }
+      { debug_token n; NUMBER_INT (parse_int n (info env lexbuf), n) }
   | int as n
-      { debug_token n; NUMBER_INT (parse_int n (info lexbuf), n) }
+      { debug_token n; NUMBER_INT (parse_int n (info env lexbuf), n) }
   | (sign as s) (hex_number as n)
-      { NUMBER (parse_width_int s n (info lexbuf), n) }
+      { NUMBER (parse_width_int s n (info env lexbuf), n) }
   | (sign as s) (dec_number as n)
-      { NUMBER (parse_width_int s (strip_prefix n) (info lexbuf), n) }
+      { NUMBER (parse_width_int s (strip_prefix n) (info env lexbuf), n) }
   | (sign as s) (oct_number as n)
-      { NUMBER (parse_width_int s n (info lexbuf), n) }
+      { NUMBER (parse_width_int s n (info env lexbuf), n) }
   | (sign as s) (bin_number as n)
-      { NUMBER (parse_width_int s n (info lexbuf), n) }
+      { NUMBER (parse_width_int s n (info env lexbuf), n) }
   | (sign as s) (int as n)
-      { NUMBER (parse_width_int s n (info lexbuf), n) }
+      { NUMBER (parse_width_int s n (info env lexbuf), n) }
   | "abstract"
-      { debug_token "abstract"; ABSTRACT (info lexbuf) }
+      { debug_token "abstract"; ABSTRACT (info env lexbuf) }
   | "action"
-      { debug_token "action"; ACTION (info lexbuf) }
+      { debug_token "action"; ACTION (info env lexbuf) }
   | "actions"
-      { debug_token "actions"; ACTIONS (info lexbuf) }
+      { debug_token "actions"; ACTIONS (info env lexbuf) }
   | "apply"
-      { debug_token "apply"; APPLY (info lexbuf) }
+      { debug_token "apply"; APPLY (info env lexbuf) }
   | "bool"
-      { debug_token "bool"; BOOL (info lexbuf) }
+      { debug_token "bool"; BOOL (info env lexbuf) }
   | "bit"
-      { debug_token "bit"; BIT (info lexbuf) }
+      { debug_token "bit"; BIT (info env lexbuf) }
   | "break"
-      { debug_token "break"; BREAK (info lexbuf) }
+      { debug_token "break"; BREAK (info env lexbuf) }
   | "const"
-      { debug_token "const"; CONST (info lexbuf) }
+      { debug_token "const"; CONST (info env lexbuf) }
   | "continue"
-      { debug_token "continue"; CONTINUE (info lexbuf) }
+      { debug_token "continue"; CONTINUE (info env lexbuf) }
   | "control"
-      { debug_token "control"; CONTROL (info lexbuf) }
+      { debug_token "control"; CONTROL (info env lexbuf) }
   | "default"
-      { debug_token "default"; DEFAULT (info lexbuf) }
+      { debug_token "default"; DEFAULT (info env lexbuf) }
   | "else"
-      { debug_token "else"; ELSE (info lexbuf) }
+      { debug_token "else"; ELSE (info env lexbuf) }
   | "entries"
-      { debug_token "entries"; ENTRIES (info lexbuf) }
+      { debug_token "entries"; ENTRIES (info env lexbuf) }
   | "enum"
-      { debug_token "enum"; ENUM (info lexbuf) }
+      { debug_token "enum"; ENUM (info env lexbuf) }
   | "error"
-      { debug_token "error"; ERROR (info lexbuf) }
+      { debug_token "error"; ERROR (info env lexbuf) }
   | "exit"
-      { debug_token "exit"; EXIT (info lexbuf) }
+      { debug_token "exit"; EXIT (info env lexbuf) }
   | "extern"
-      { debug_token "extern"; EXTERN (info lexbuf) }
+      { debug_token "extern"; EXTERN (info env lexbuf) }
   | "header"
-      { debug_token "header"; HEADER (info lexbuf) }
+      { debug_token "header"; HEADER (info env lexbuf) }
   | "header_union"
-      { debug_token "header_union"; HEADER_UNION (info lexbuf) }
+      { debug_token "header_union"; HEADER_UNION (info env lexbuf) }
   | "true"
-      { debug_token "true"; TRUE (info lexbuf) }
+      { debug_token "true"; TRUE (info env lexbuf) }
   | "false"
-      { debug_token "false"; FALSE (info lexbuf) }
+      { debug_token "false"; FALSE (info env lexbuf) }
   | "for"
-      { debug_token "for"; FOR (info lexbuf) }
+      { debug_token "for"; FOR (info env lexbuf) }
   | "if"
-      { debug_token "if"; IF (info lexbuf) }
+      { debug_token "if"; IF (info env lexbuf) }
   | "in"
-      { debug_token "in"; IN (info lexbuf) }
+      { debug_token "in"; IN (info env lexbuf) }
   | "inout"
-      { debug_token "inout"; INOUT (info lexbuf) }
+      { debug_token "inout"; INOUT (info env lexbuf) }
   | "int"
-      { debug_token "int"; INT (info lexbuf) }
+      { debug_token "int"; INT (info env lexbuf) }
   | "key"
-      { debug_token "key"; KEY (info lexbuf) }
+      { debug_token "key"; KEY (info env lexbuf) }
   | "list"
-      { debug_token "list"; LIST (info lexbuf) }
+      { debug_token "list"; LIST (info env lexbuf) }
   | "match_kind"
-      { debug_token "match_kind"; MATCH_KIND (info lexbuf) }
+      { debug_token "match_kind"; MATCH_KIND (info env lexbuf) }
   | "out"
-      { debug_token "out"; OUT (info lexbuf) }
+      { debug_token "out"; OUT (info env lexbuf) }
   | "parser"
-      { debug_token "parser"; PARSER (info lexbuf) }
+      { debug_token "parser"; PARSER (info env lexbuf) }
   | "package"
-      { debug_token "package"; PACKAGE (info lexbuf) }
+      { debug_token "package"; PACKAGE (info env lexbuf) }
   | "pragma" 
-      { debug_token "pragma"; PRAGMA (info lexbuf) }
+      { debug_token "pragma"; PRAGMA (info env lexbuf) }
   | "priority"
-      { debug_token "priority"; PRIORITY (info lexbuf) }
+      { debug_token "priority"; PRIORITY (info env lexbuf) }
   | "return"
-      { debug_token "return"; RETURN (info lexbuf) }
+      { debug_token "return"; RETURN (info env lexbuf) }
   | "select"
-      { debug_token "select"; SELECT (info lexbuf) }
+      { debug_token "select"; SELECT (info env lexbuf) }
   | "state"
-      { debug_token "state"; STATE (info lexbuf) }
+      { debug_token "state"; STATE (info env lexbuf) }
   | "string"
-      { debug_token "string"; STRING (info lexbuf) }
+      { debug_token "string"; STRING (info env lexbuf) }
   | "struct"
-      { debug_token "struct"; STRUCT (info lexbuf) }
+      { debug_token "struct"; STRUCT (info env lexbuf) }
   | "switch"
-      { debug_token "switch"; SWITCH (info lexbuf) }
+      { debug_token "switch"; SWITCH (info env lexbuf) }
   | "table"
-      { debug_token "table"; TABLE (info lexbuf) }
+      { debug_token "table"; TABLE (info env lexbuf) }
   | "this"
-      { debug_token "this"; THIS (info lexbuf) }  
+      { debug_token "this"; THIS (info env lexbuf) }  
   | "transition"
-      { debug_token "transition"; TRANSITION (info lexbuf) }
+      { debug_token "transition"; TRANSITION (info env lexbuf) }
   | "tuple"
-      { debug_token "tuple"; TUPLE (info lexbuf) }
+      { debug_token "tuple"; TUPLE (info env lexbuf) }
   | "typedef"
-      { debug_token "typedef"; TYPEDEF (info lexbuf) }
+      { debug_token "typedef"; TYPEDEF (info env lexbuf) }
   | "type"
-      { debug_token "type"; TYPE (info lexbuf) }
+      { debug_token "type"; TYPE (info env lexbuf) }
   | "value_set"
-      { debug_token "value_set"; VALUE_SET (info lexbuf) }
+      { debug_token "value_set"; VALUE_SET (info env lexbuf) }
   | "varbit"
-      { debug_token "varbit"; VARBIT (info lexbuf) }
+      { debug_token "varbit"; VARBIT (info env lexbuf) }
   | "void"
-      { debug_token "void"; VOID (info lexbuf) }
+      { debug_token "void"; VOID (info env lexbuf) }
   | "_"
-      { debug_token "_"; DONTCARE (info lexbuf) }
+      { debug_token "_"; DONTCARE (info env lexbuf) }
   | name
       { let text = Lexing.lexeme lexbuf in
         debug_token text;
         let value = Value.make Il.TextT (TextV text) in
         NAME value }
   | "<="
-      { debug_token "<="; LE (info lexbuf) }
+      { debug_token "<="; LE (info env lexbuf) }
   | ">="
-      { debug_token ">="; GE (info lexbuf) }
+      { debug_token ">="; GE (info env lexbuf) }
   | "<<"
-      { debug_token "<<"; SHL (info lexbuf) }
+      { debug_token "<<"; SHL (info env lexbuf) }
   | "&&"
-      { debug_token "&&"; AND (info lexbuf) }
+      { debug_token "&&"; AND (info env lexbuf) }
   | "||"
-      { debug_token "||"; OR (info lexbuf) }
+      { debug_token "||"; OR (info env lexbuf) }
   | "!="
-      { debug_token "!="; NE (info lexbuf) }
+      { debug_token "!="; NE (info env lexbuf) }
   | "=="
-      { debug_token "=="; EQ (info lexbuf) }
+      { debug_token "=="; EQ (info env lexbuf) }
   | "+"
-      { debug_token "+"; PLUS (info lexbuf) }
+      { debug_token "+"; PLUS (info env lexbuf) }
   | "-"
-      { debug_token "-"; MINUS (info lexbuf) }
+      { debug_token "-"; MINUS (info env lexbuf) }
   | "|+|"
-      { debug_token "|+|"; PLUS_SAT (info lexbuf) }
+      { debug_token "|+|"; PLUS_SAT (info env lexbuf) }
   | "|-|"
-      { debug_token "|-|"; MINUS_SAT (info lexbuf) }
+      { debug_token "|-|"; MINUS_SAT (info env lexbuf) }
   | "*"
-      { debug_token "*"; MUL (info lexbuf) }
+      { debug_token "*"; MUL (info env lexbuf) }
   | "{#}"
-      { debug_token "{#}"; INVALID (info lexbuf) }
+      { debug_token "{#}"; INVALID (info env lexbuf) }
   | "/"
-      { debug_token "/"; DIV (info lexbuf) }
+      { debug_token "/"; DIV (info env lexbuf) }
   | "%"
-      { debug_token "%"; MOD (info lexbuf) }
+      { debug_token "%"; MOD (info env lexbuf) }
   | "|"
-      { debug_token "|"; BIT_OR (info lexbuf) }
+      { debug_token "|"; BIT_OR (info env lexbuf) }
   | "&"
-      { debug_token "&"; BIT_AND (info lexbuf) }
+      { debug_token "&"; BIT_AND (info env lexbuf) }
   | "^"
-      { debug_token "^"; BIT_XOR (info lexbuf) }
+      { debug_token "^"; BIT_XOR (info env lexbuf) }
   | "~"
-      { debug_token "~"; COMPLEMENT (info lexbuf) }
+      { debug_token "~"; COMPLEMENT (info env lexbuf) }
   | "["
-      { debug_token "["; L_BRACKET (info lexbuf) }
+      { debug_token "["; L_BRACKET (info env lexbuf) }
   | "]"
-      { debug_token "]"; R_BRACKET (info lexbuf) }
+      { debug_token "]"; R_BRACKET (info env lexbuf) }
   | "{"
-      { debug_token "{"; L_BRACE (info lexbuf) }
+      { debug_token "{"; L_BRACE (info env lexbuf) }
   | "}"
-      { debug_token "}"; R_BRACE (info lexbuf) }
+      { debug_token "}"; R_BRACE (info env lexbuf) }
   | "<"
-      { debug_token "<"; L_ANGLE (info lexbuf) }
+      { debug_token "<"; L_ANGLE (info env lexbuf) }
   | ">"
-      { debug_token ">"; R_ANGLE (info lexbuf) }
+      { debug_token ">"; R_ANGLE (info env lexbuf) }
   | "("
-      { debug_token "("; L_PAREN (info lexbuf) }
+      { debug_token "("; L_PAREN (info env lexbuf) }
   | ")"
-      { debug_token ")"; R_PAREN (info lexbuf) }
+      { debug_token ")"; R_PAREN (info env lexbuf) }
   | "!"
-      { debug_token "!"; NOT (info lexbuf) }
+      { debug_token "!"; NOT (info env lexbuf) }
   | ":"
-      { debug_token ":"; COLON (info lexbuf) }
+      { debug_token ":"; COLON (info env lexbuf) }
   | ","
-      { debug_token ","; COMMA (info lexbuf) }
+      { debug_token ","; COMMA (info env lexbuf) }
   | "?"
-      { debug_token "?"; QUESTION (info lexbuf) }
+      { debug_token "?"; QUESTION (info env lexbuf) }
   | "."
-      { debug_token "."; DOT (info lexbuf) }
+      { debug_token "."; DOT (info env lexbuf) }
   | "="
-      { debug_token "="; ASSIGN (info lexbuf) }
+      { debug_token "="; ASSIGN (info env lexbuf) }
   | ";"
-      { debug_token ";"; SEMICOLON (info lexbuf) }
+      { debug_token ";"; SEMICOLON (info env lexbuf) }
   | "@"
-      { debug_token "@"; AT (info lexbuf) }
+      { debug_token "@"; AT (info env lexbuf) }
   | "++"
-      { debug_token "++"; PLUSPLUS (info lexbuf) }
+      { debug_token "++"; PLUSPLUS (info env lexbuf) }
   | "&&&"
-      { debug_token "&&&"; MASK (info lexbuf) }
+      { debug_token "&&&"; MASK (info env lexbuf) }
   | "..."
-      { debug_token "..."; DOTS (info lexbuf) }
+      { debug_token "..."; DOTS (info env lexbuf) }
   | ".."
-      { debug_token ".."; RANGE (info lexbuf) }
+      { debug_token ".."; RANGE (info env lexbuf) }
   | "+="
-      { debug_token "+="; PLUS_ASSIGN (info lexbuf) }
+      { debug_token "+="; PLUS_ASSIGN (info env lexbuf) }
   | "|+|="
-      { debug_token "|+|="; PLUS_SAT_ASSIGN (info lexbuf) }
+      { debug_token "|+|="; PLUS_SAT_ASSIGN (info env lexbuf) }
   | "-="
-      { debug_token "-="; MINUS_ASSIGN (info lexbuf) }
+      { debug_token "-="; MINUS_ASSIGN (info env lexbuf) }
   | "|-|="
-      { debug_token "|-|="; MINUS_SAT_ASSIGN (info lexbuf) }
+      { debug_token "|-|="; MINUS_SAT_ASSIGN (info env lexbuf) }
   | "*="
-      { debug_token "*="; MUL_ASSIGN (info lexbuf) }
+      { debug_token "*="; MUL_ASSIGN (info env lexbuf) }
   | "/="
-      { debug_token "/="; DIV_ASSIGN (info lexbuf) } 
+      { debug_token "/="; DIV_ASSIGN (info env lexbuf) } 
   | "%="
-      { debug_token "%="; MOD_ASSIGN (info lexbuf) }
+      { debug_token "%="; MOD_ASSIGN (info env lexbuf) }
   | "<<="
-      { debug_token "<<="; SHL_ASSIGN (info lexbuf) }
+      { debug_token "<<="; SHL_ASSIGN (info env lexbuf) }
   | ">>="
-      { debug_token ">>="; SHR_ASSIGN (info lexbuf) }
+      { debug_token ">>="; SHR_ASSIGN (info env lexbuf) }
   | "&="
-      { debug_token "&="; BIT_AND_ASSIGN (info lexbuf) }
+      { debug_token "&="; BIT_AND_ASSIGN (info env lexbuf) }
   | "^="
-      { debug_token "^="; BIT_XOR_ASSIGN (info lexbuf) }
+      { debug_token "^="; BIT_XOR_ASSIGN (info env lexbuf) }
   | "|="
-      { debug_token "|="; BIT_OR_ASSIGN (info lexbuf) }
+      { debug_token "|="; BIT_OR_ASSIGN (info env lexbuf) }
   | eof
-      { debug_token "EOF"; END (info lexbuf) }
+      { debug_token "EOF"; END (info env lexbuf) }
   | _
       { let text = lexeme lexbuf in
         debug_token text;
         let value = Value.make Il.TextT (TextV text) in
         UNEXPECTED_TOKEN value }
-      
-and string = parse
+
+and string env = parse
   | eof
       { raise (Error "File ended while reading a string literal") }
   | "\\\""
-      { let rest, end_info = (string lexbuf) in
+      { let rest, end_info = (string env lexbuf) in
         ("\"" ^ rest, end_info) }
   | '\\' 'n'
-      { let rest, end_info = (string lexbuf) in
+      { let rest, end_info = (string env lexbuf) in
         ("\n" ^ rest, end_info) }
   | '\\' '\\'
-      { let rest, end_info = (string lexbuf) in
+      { let rest, end_info = (string env lexbuf) in
         ("\\" ^ rest, end_info) }
   | '\\' _ as c
       { raise (Error ("Escape sequences not yet supported: \\" ^ c)) }
   | '"'
-      { ("", info lexbuf) }
+      { ("", info env lexbuf) }
   | _ as chr
-      { let rest, end_info = (string lexbuf) in
+      { let rest, end_info = (string env lexbuf) in
         ((String.make 1 chr) ^ rest, end_info) }
     
 (* Preprocessor annotations indicate line and filename *)
-and preprocessor = parse
+and preprocessor env = parse
   | ' '
-      { preprocessor lexbuf }
+      { preprocessor env lexbuf }
   | int
       { let line = int_of_string (lexeme lexbuf) in
-        set_line line ; preprocessor lexbuf }
+        env.line <- line ; preprocessor env lexbuf }
   | '"'
-      { preprocessor_string lexbuf }
+      { preprocessor_string env lexbuf }
   | '\n'
-      { set_start_of_line (lexeme_end lexbuf) }
+      { env.line_start <- (lexeme_end lexbuf) }
   | _
-      { preprocessor lexbuf }
-      
-and preprocessor_string = parse
+      { preprocessor env lexbuf }
+
+and preprocessor_string env = parse
   | [^ '"'] * '"'
     { let filename = lexeme lexbuf in 
       let filename = String.sub filename 0 (String.length filename - 1) in
-      set_filename filename;
-      preprocessor_column lexbuf }
-      
+      env.fname <- filename; 
+      preprocessor_column env lexbuf }
+
 (* Once a filename has been recognized, ignore the rest of the line *)
-and preprocessor_column = parse
+and preprocessor_column env = parse
   | ' ' 
-      { preprocessor_column lexbuf }
+      { preprocessor_column env lexbuf }
   | '\n'
-      { set_start_of_line (lexeme_end lexbuf) }
+      { env.line_start <- (lexeme_end lexbuf) }
   | eof
       { () }
   | _
-      { preprocessor_column lexbuf }
-      
+      { preprocessor_column env lexbuf }
+
 (* Multi-line comment terminated by "*/" *)
-and multiline_comment opt = parse
+and multiline_comment env opt = parse
   | "*/"   { opt }
   | eof    { failwith "unterminated comment" }
-  | '\n'   { newline lexbuf; multiline_comment (Some(info lexbuf)) lexbuf }
-  | _      { multiline_comment opt lexbuf }
-      
+  | '\n'   { newline env lexbuf; multiline_comment env (Some(info env lexbuf)) lexbuf }
+  | _      { multiline_comment env opt lexbuf }
+
 (* Single-line comment terminated by a newline *)
-and singleline_comment = parse
-  | '\n'   { newline lexbuf }
+and singleline_comment env = parse
+  | '\n'   { newline env lexbuf }
   | eof    { () }
-  | _      { singleline_comment lexbuf }
-      
+  | _      { singleline_comment env lexbuf }
+
 {
-let rec lexer (lexbuf:lexbuf): token = 
-   match !lexer_state with
+let rec lexer (env : Env.t) (lexbuf : lexbuf): token = 
+   match env.state with
     | SIdent(id, next) ->
-      begin match get_kind id with
+      begin match get_kind env.context id with
       | TypeName true ->
-        lexer_state := STemplate;
+        env.state <- STemplate;
         TYPENAME
       | Ident true ->
-        lexer_state := STemplate;
+        env.state <- STemplate;
         IDENTIFIER
       | TypeName false ->
-        lexer_state := next;
+        env.state <- next;
         TYPENAME
       | Ident false ->
-        lexer_state := next;
+        env.state <- next;
         IDENTIFIER
       end
     | SRangle info1 -> 
-      begin match tokenize lexbuf with
+      begin match tokenize env lexbuf with
       | R_ANGLE info2 when Source.follows info1 info2 -> 
-        lexer_state := SRegular;
+        env.state <- SRegular;
         R_ANGLE_SHIFT info2
       | PRAGMA _ as token ->
-        lexer_state := SPragma;
+        env.state <- SPragma;
         token
       | PRAGMA_END _ -> 
-        lexer_state := SRegular;
-        lexer lexbuf
+        env.state <- SRegular;
+        lexer env lexbuf
       | NAME value as token ->
         let text = Value.get_text value in
-        lexer_state := SIdent (text, SRegular);
-        token          
+        env.state <- SIdent (text, SRegular);
+        token
       | token -> 
-        lexer_state := SRegular;
+        env.state <- SRegular;
         token
       end
     | SRegular ->
-      begin match tokenize lexbuf with
+      begin match tokenize env lexbuf with
       | NAME value as token ->
         let text = Value.get_text value in
-        lexer_state := SIdent (text, SRegular);
+        env.state <- SIdent (text, SRegular);
         token
       | PRAGMA _ as token ->
-        lexer_state := SPragma;
+        env.state <- SPragma;
         token
       | PRAGMA_END _ ->
-        lexer lexbuf
+        lexer env lexbuf
       | R_ANGLE info as token -> 
-        lexer_state := SRangle info;
+        env.state <- SRangle info;
         token
       | token ->
-        lexer_state := SRegular;
+        env.state <- SRegular;
         token
        end
     | STemplate ->
-      begin match tokenize lexbuf with
+      begin match tokenize env lexbuf with
       | L_ANGLE info -> L_ANGLE_ARGS info
       | NAME value as token ->
         let text = Value.get_text value in
-        lexer_state := SIdent (text, SRegular);
+        env.state <- SIdent (text, SRegular);
         token
       | PRAGMA _ as token ->
-        lexer_state := SPragma;
+        env.state <- SPragma;
         token
-      | PRAGMA_END _ -> lexer lexbuf
+      | PRAGMA_END _ -> lexer env lexbuf
       | R_ANGLE info as token -> 
-        lexer_state := SRangle info;
+        env.state <- SRangle info;
         token
       | token ->
-        lexer_state := SRegular;
+        env.state <- SRegular;
         token
        end
     | SPragma -> 
-      begin match tokenize lexbuf with
+      begin match tokenize env lexbuf with
       | PRAGMA_END _info as token -> 
-         lexer_state := SRegular;
+         env.state <- SRegular;
          token
       | NAME value as token ->
          let text = Value.get_text value in
-         lexer_state := SIdent(text, SPragma);
+         env.state <- SIdent(text, SPragma);
          token
       | token -> token
       end

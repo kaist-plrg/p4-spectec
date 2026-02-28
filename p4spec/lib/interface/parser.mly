@@ -6,82 +6,44 @@
   open Wrap
   open Flatten
 
-  let declare_var_of_il (value : value) (b : bool) : unit =
+  let declare_var_of_il ctx (value : value) (b : bool) : Context.t =
     let id = id_of_name value in
-    declare_var id b
+    declare_var ctx id b
 
-  let rec declare_vars_of_il (value : value) : unit =
+  let rec declare_vars_of_il ctx (value : value) : Context.t =
     match flatten_case_v_opt value with
     | Some ("nameList", [ []; [","]; [] ], [ v_nameList; v_name ]) ->
-        declare_vars_of_il v_nameList;
-        declare_var_of_il v_name false
+        let ctx = declare_vars_of_il ctx v_nameList in
+        declare_var_of_il ctx v_name false
     | Some ("identifier", _, _)
     | Some ("nonTypeName", _, _)
     | Some ("name", _, _)
-    | Some ("typeIdentifier", _, _) -> declare_var_of_il value false
+    | Some ("typeIdentifier", _, _) -> declare_var_of_il ctx value false
     | _ ->
         failwith
           (Printf.sprintf "@declare_vars_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
 
-  let declare_type_of_il (value : value) (b : bool) : unit =
+  let declare_type_of_il ctx (value : value) (b : bool) : Context.t =
     let id = id_of_name value in
-    declare_type id b
+    declare_type ctx id b
 
-  let rec declare_types_of_il (value: value) : unit =
+  let rec declare_types_of_il ctx (value: value) : Context.t =
     match flatten_case_v_opt value with
     | Some ("typeParameterList", [ []; [ "," ]; [] ], [ v_tpList; v_name ]) ->
-        declare_types_of_il v_tpList;
-        declare_type_of_il v_name false
+        let ctx = declare_types_of_il ctx v_tpList in
+        declare_type_of_il ctx v_name false
     | Some ("identifier", _, _)
     | Some ("nonTypeName", _, _)
     | Some ("name", _, _)
-    | Some ("typeIdentifier", _, _) -> declare_type_of_il value false
+    | Some ("typeIdentifier", _, _) -> declare_type_of_il ctx value false
     | _ ->
         failwith
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
 %}
 
-(**************************** TOKENS ******************************)
-%token<Source.info> END
-%token TYPENAME IDENTIFIER
-%token<Lang.Il.value> NAME STRING_LITERAL
-%token<Lang.Il.value * string> NUMBER_INT NUMBER
-%token<Source.info> LE GE SHL AND OR NE EQ
-%token<Source.info> PLUS MINUS PLUS_SAT MINUS_SAT MUL INVALID DIV MOD
-%token<Source.info> BIT_OR BIT_AND BIT_XOR COMPLEMENT
-%token<Source.info> L_BRACKET R_BRACKET L_BRACE R_BRACE L_ANGLE L_ANGLE_ARGS R_ANGLE R_ANGLE_SHIFT L_PAREN R_PAREN
-%token<Source.info> ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
-%token<Source.info> AT PLUSPLUS
-%token<Source.info> DONTCARE
-%token<Source.info> MASK DOTS RANGE
-%token<Source.info> TRUE FALSE
-%token<Source.info> ABSTRACT ACTION ACTIONS APPLY BOOL BIT BREAK CONST CONTINUE CONTROL DEFAULT
-%token<Source.info> ELSE ENTRIES ENUM ERROR EXIT EXTERN HEADER HEADER_UNION IF IN INOUT FOR
-%token<Source.info> INT KEY LIST SELECT MATCH_KIND OUT PACKAGE PARSER PRIORITY RETURN STATE STRING STRUCT
-%token<Source.info> SWITCH TABLE THIS TRANSITION TUPLE TYPEDEF TYPE VALUE_SET VARBIT VOID
-%token<Source.info> PRAGMA PRAGMA_END
-%token<Source.info> PLUS_ASSIGN PLUS_SAT_ASSIGN MINUS_ASSIGN MINUS_SAT_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN  SHL_ASSIGN SHR_ASSIGN BIT_AND_ASSIGN BIT_XOR_ASSIGN BIT_OR_ASSIGN
-%token<Lang.Il.value> UNEXPECTED_TOKEN
-
-(**************************** PRIORITY AND ASSOCIATIVITY ******************************)
-%right THEN ELSE
-%nonassoc QUESTION
-%nonassoc COLON
-%left OR
-%left AND
-%left EQ NE
-%left L_ANGLE R_ANGLE LE GE
-%left BIT_OR
-%left BIT_XOR
-%left BIT_AND
-%left SHL R_ANGLE_SHIFT
-%left PLUSPLUS PLUS MINUS PLUS_SAT MINUS_SAT
-%left MUL DIV MOD
-%right PREFIX
-%nonassoc L_PAREN L_BRACKET L_ANGLE_ARGS
-%left DOT
+%parameter <E : sig val lex_env : Env.t end>
 
 %start p4program
 
@@ -167,31 +129,35 @@
 (**************************** CONTEXTS ******************************)
 push_scope:
   | (* empty *)
-    { push_scope() }
+    { E.lex_env.context <- Context.push_scope E.lex_env.context }
 ;
 push_name:
   | n = name
-   { push_scope();
-     declare_type_of_il n false;
-     n }
+    {
+      E.lex_env.context <- Context.push_scope E.lex_env.context;
+      E.lex_env.context <- declare_type_of_il E.lex_env.context n false;
+      n
+    }
 ;
 push_externName:
   | n = externName
-    { push_scope();
-      declare_type_of_il n false;
-      n }
+    {
+      E.lex_env.context <- Context.push_scope E.lex_env.context;
+      E.lex_env.context <- declare_type_of_il E.lex_env.context n false;
+      n
+    }
 ;
 pop_scope:
   | (* empty *)
-    { pop_scope() }
+    { E.lex_env.context <- Context.pop_scope E.lex_env.context }
 ;
 go_toplevel:
   | (* empty *)
-    { go_toplevel () }
+    { E.lex_env.context <- Context.go_toplevel E.lex_env.context }
 ;
 go_local:
   | (* empty *)
-    { go_local () }
+    { E.lex_env.context <- Context.go_local E.lex_env.context }
 ;
 toplevel(X):
   | go_toplevel x = X go_local
@@ -202,7 +168,7 @@ toplevel(X):
 (* Aux *)
 externName:
 	| n = nonTypeName
-		{ declare_type_of_il n false;
+		{ E.lex_env.context <- declare_type_of_il E.lex_env.context n false;
       n }
 ;
 int:
@@ -415,14 +381,14 @@ typeParameterList:
 typeParameterListOpt:
 	| (* empty *) { [ Term "`EMPTY" ] #@ "typeParameterListOpt" }
 	| l_angle tps = typeParameterList r_angle
-    { declare_types_of_il tps;
+    { E.lex_env.context <- declare_types_of_il E.lex_env.context tps;
       [ Term "<"; NT tps; Term ">" ] #@ "typeParameterListOpt" }
 ;
 
 (* Parameters *)
 parameter:
 	| al = annotationList dir = direction t = typeRef n = name i = initializerOpt
-		{ declare_var_of_il n false;
+		{ E.lex_env.context <- declare_var_of_il E.lex_env.context n false;
       [ NT al; NT dir; NT t; NT n; NT i ] #@ "parameter" }
 ;
 
@@ -1034,7 +1000,7 @@ initializerOpt:
 
 variableDeclaration:
   | al = annotationList t = typeRef n = name i = initializerOpt SEMICOLON
-    { declare_var_of_il n false;
+    { E.lex_env.context <- declare_var_of_il E.lex_env.context n false;
       [ NT al; NT t; NT n; NT i; Term ";" ] #@ "variableDeclaration" }
 ;
 
@@ -1103,14 +1069,14 @@ objectDeclarationList:
 (* >> Error declarations *)
 errorDeclaration:
 	| ERROR L_BRACE nl = nameList R_BRACE
-    { declare_vars_of_il nl;
+    { E.lex_env.context <- declare_vars_of_il E.lex_env.context nl;
       [ Term "ERROR"; Term "{"; NT nl; Term "}" ] #@ "errorDeclaration" }
 ;
 
 (* >> Match kind declarations *)
 matchKindDeclaration:
 	| MATCH_KIND L_BRACE nl = nameList c = trailingCommaOpt R_BRACE
-    { declare_vars_of_il nl;
+    { E.lex_env.context <- declare_vars_of_il E.lex_env.context nl;
       [ Term "MATCH_KIND"; Term "{"; NT nl; NT c; Term "}" ] #@ "matchKindDeclaration" }
 ;
 
@@ -1188,7 +1154,7 @@ externFunctionDeclaration:
 		{ let decl =
         [ NT al; Term "EXTERN"; NT p; Term ";" ] #@ "externFunctionDeclaration"
       in
-      declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_function_prototype p) (has_type_params_function_prototype p);
       decl }
 ;
 
@@ -1223,7 +1189,7 @@ externObjectDeclaration:
         [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
           #@ "externObjectDeclaration"
       in
-      declare_type_of_il n (has_type_params_declaration decl);
+      E.lex_env.context <- declare_type_of_il E.lex_env.context n (has_type_params_declaration decl);
       decl }
 ;
 
@@ -1457,7 +1423,7 @@ controlLocalDeclaration:
     { d }
   | d = actionDeclaration
   | d = tableDeclaration
-    { declare_var (id_of_declaration d) false;
+    { E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_declaration d) false;
       d }
 ;
 
@@ -1496,16 +1462,16 @@ typeDeclaration:
 (* >> Declarations *)
 declaration:
   | const = constantDeclaration
-    { declare_var (id_of_declaration const) (has_type_params_declaration const);
+    { E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_declaration const) (has_type_params_declaration const);
       const }
   | inst = instantiation
-    { declare_var (id_of_declaration inst) false;
+    { E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_declaration inst) false;
       inst }
   | func = functionDeclaration
-    { declare_var (id_of_declaration func) (has_type_params_declaration func);
+    { E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_declaration func) (has_type_params_declaration func);
       func }
   | action = actionDeclaration
-    { declare_var (id_of_declaration action) false;
+    { E.lex_env.context <- Context.declare_var E.lex_env.context (id_of_declaration action) false;
       action }
   | d = errorDeclaration
   | d = matchKindDeclaration
@@ -1514,7 +1480,7 @@ declaration:
   | d = parserDeclaration
   | d = controlDeclaration
   | d = typeDeclaration
-    { declare_type (id_of_declaration d) (has_type_params_declaration d);
+    { E.lex_env.context <- Context.declare_type E.lex_env.context (id_of_declaration d) (has_type_params_declaration d);
       d }
 ;
 

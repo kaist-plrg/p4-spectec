@@ -11,32 +11,35 @@ let preprocess (includes : string list) (filename : string) =
 
 let lex (filename : string) (file : string) =
   try
-    let () = Lexer.reset () in
-    let () = Lexer.set_filename filename in
-    Lexing.from_string file
+    let lexbuf = Lexing.from_string file in
+    let env = Env.init filename in
+    (lexbuf, env)
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error_no_region
 
-let parse (lexbuf : Lexing.lexbuf) =
+let parse (lexbuf : Lexing.lexbuf) (env : Env.t) =
   let debug_level = Debug_config.get_parser_debug_level () in
+  let module P = Parser.Make (struct
+    let lex_env = env
+  end) in
   try
     match debug_level with
-    | Debug_config.Quiet -> Parser.p4program Lexer.lexer lexbuf
-    | _ -> Parser_debug.debug_parse Lexer.lexer lexbuf
+    | Debug_config.Quiet -> P.p4program (Lexer.lexer env) lexbuf
+    | _ -> Parser_debug.debug_parse (Lexer.lexer env) lexbuf
   with
   | Lexer.Error s ->
-      let info = Lexer.info lexbuf in
+      let info = Lexer.info env lexbuf in
       let msg = Format.asprintf "lexer error: %s" s in
       error (Source.to_region info) msg
-  | Parser.Error ->
-      let info = Lexer.info lexbuf in
+  | P.Error ->
+      let info = Lexer.info env lexbuf in
       let msg = Format.asprintf "syntax error" in
       error (Source.to_region info) msg
   | e -> raise e
 
 let parse_string (filename : string) (str : string) : Il.value =
   (* Assume str is preprocessed *)
-  let tokens = lex filename str in
-  parse tokens
+  let lexbuf, lex_env = lex filename str in
+  parse lexbuf lex_env
 
 let parse_file (includes : string list) (filename : string) : Il.value =
   let program = preprocess includes filename in

@@ -1,11 +1,17 @@
 (library
  (name interface)
  (public_name p4spectec.interface)
- (libraries core_unix menhirLib domain util lang runtime))
+ (libraries core_unix menhirLib domain util lang runtime)
+ (flags (:standard -w -67)))
 
 (ocamllex
  (modules lexer))
 
 (menhir
- (modules parser)
- (flags --explain --table --inspection))
+  (modules tokens)
+  (flags --only-tokens --table --inspection))
+
+(menhir
+ (modules tokens parser)
+ (merge_into parser)
+ (flags --explain --table --inspection --external-tokens Tokens))

@@ -17,44 +17,46 @@ module SMap = Map.Make (String)
 
 type has_params = bool
 type ident_kind = TypeName of has_params | Ident of has_params
-type t = ident_kind SMap.t list
 
-(* Current context, stored as a mutable global variable *)
-let context : t ref = ref [ SMap.empty ]
-let backup : t ref = ref []
+type t = {
+  context : ident_kind SMap.t list;
+  backup : ident_kind SMap.t list;
+}
 
-(* Resets context *)
-let reset () =
-  context := [ SMap.empty ];
-  backup := []
+let empty = {
+  context = [ SMap.empty ];
+  backup = [];
+}
 
 (* Associates [id] with [k] in map for current scope *)
-let declare (id : string) (k : ident_kind) : unit =
-  match !context with
+let declare (ctx : t) (id : string) (k : ident_kind) : t =
+  let context = match ctx.context with
   | [] -> failwith "ill-formed context"
   | m :: l ->
       Debug_config.context_debug_print ">>> Declaring %s as %s\n" id
         (match k with TypeName _ -> "TypeName" | Ident _ -> "Ident");
-      context := SMap.add id k m :: l
+      SMap.add id k m :: l
+  in
+  { ctx with context }
 
-let declare_type id has_params = declare id (TypeName has_params)
-let declare_types types = List.iter (fun s -> declare_type s false) types
-let declare_var id has_params = declare id (Ident has_params)
-let declare_vars vars = List.iter (fun s -> declare_var s false) vars
+let declare_type ctx id has_params = declare ctx id (TypeName has_params)
+let declare_types ctx types = List.fold_left (fun ctx' s -> declare_type ctx' s false) ctx types
+let declare_var ctx id has_params = declare ctx id (Ident has_params)
+let declare_vars ctx vars = List.fold_left (fun ctx' s -> declare_var ctx' s false) ctx vars
 
 (* Tests whether [id] is known as a type name. *)
-let get_kind (id : string) : ident_kind =
+let get_kind (ctx : t) (id : string) : ident_kind =
   let rec loop = function
     | [] -> Ident false
     | m :: rest -> (
         match SMap.find_opt id m with None -> loop rest | Some k -> k)
   in
-  loop !context
+  loop ctx.context
 
-let is_typename (id : string) : bool =
-  match get_kind id with TypeName _ -> true | _ -> false
+let is_typename (ctx : t) (id : string) : bool =
+  match get_kind ctx id with TypeName _ -> true | _ -> false
 
-let mark_template (id : string) =
+let mark_template (ctx : t) (id : string) : t =
   let rec loop = function
     | [] -> []
     | m :: rest -> (
@@ -63,32 +65,32 @@ let mark_template (id : string) =
         | Some (TypeName _) -> SMap.add id (TypeName true) m :: rest
         | Some (Ident _) -> SMap.add id (Ident true) m :: rest)
   in
-  context := loop !context
+  { ctx with context = loop ctx.context }
 
 (* Takes a snapshot of the current context. *)
-let push_scope () =
+let push_scope (ctx : t) : t =
   Debug_config.context_debug_print "[[ Pushing scope\n";
-  context := SMap.empty :: !context
+  { ctx with context = SMap.empty :: ctx.context }
 
 (* Remove scope *)
-let pop_scope () =
+let pop_scope (ctx : t) : t =
   Debug_config.context_debug_print "]] Popping scope\n";
-  match !context with
+  match ctx.context with
   | [] -> failwith "ill-formed context"
   | [ _ ] -> failwith "pop would produce ill-formed context"
-  | _ :: l -> context := l
+  | _ :: l -> { ctx with context = l }
 
-let go_toplevel () =
+let go_toplevel (ctx : t) : t =
   let rec loop c =
     match c with
     | [] -> failwith "ill-formed context"
-    | [ _ ] -> context := c
+    | [ _ ] -> c
     | _ :: l -> loop l
   in
-  backup := !context;
-  loop !context
+  { context = loop ctx.context; backup = ctx.context; }
 
-let go_local () = context := !backup
+let go_local (ctx : t) : t =
+  { ctx with context = ctx.backup }
 
 (* Printing functions for debugging *)
 let print_entry x k =
@@ -105,9 +107,9 @@ let print_map m =
       print_endline "")
     m
 
-let print_context () =
+let print_context ctx =
   List.iter
     (fun m ->
       print_map m;
       print_endline "----")
-    !context
+    ctx.context
