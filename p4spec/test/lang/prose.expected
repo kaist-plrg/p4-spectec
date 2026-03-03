@@ -3565,7 +3565,7 @@ xref:cast_bool[``boolValue`` casted to type ``typeIR``]
 . If let ``+BIT+`` ``+<+`` ``w`` ``+>+`` be ``typeIR``:
  .. If ``boolValue`` is equal to ``+`B+`` ``true``:
   ... Return ``w`` ``+W+`` ``1``.
- .. If ``boolValue`` is equal to ``+`B+`` ``false``:
+ .. Else if ``boolValue`` is equal to ``+`B+`` ``false``:
   ... Return ``w`` ``+W+`` ``0``.
 . Else if let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``:
  .. Return xref:cast_bool[``boolValue`` casted to type ``typeIR'``].
@@ -5974,7 +5974,7 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~l~`` ``
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~l~``, under context ``TC`` at ``p``].
  .. If ``value`` is equal to ``+`B+`` ``false``:
   ... Result in ``+`B+`` ``false``.
- .. If ``value`` is equal to ``+`B+`` ``true``:
+ .. Else if ``value`` is equal to ``+`B+`` ``true``:
   ... Let ``value~r~`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r~``, under context ``TC`` at ``p``].
   ... Result in ``value~r~``.
@@ -5983,7 +5983,7 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~l~`` ``
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~l~``, under context ``TC`` at ``p``].
  .. If ``value`` is equal to ``+`B+`` ``true``:
   ... Result in ``+`B+`` ``true``.
- .. If ``value`` is equal to ``+`B+`` ``false``:
+ .. Else if ``value`` is equal to ``+`B+`` ``false``:
   ... Let ``value~r~`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r~``, under context ``TC`` at ``p``].
   ... Result in ``value~r~``.
@@ -5996,7 +5996,7 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~cond~``
  .. Let ``value~true~`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~true~``, under context ``TC`` at ``p``].
  .. Result in ``value~true~``.
-. If ``value`` is equal to ``+`B+`` ``false``:
+. Else if ``value`` is equal to ``+`B+`` ``false``:
  .. Let ``value~false~`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~false~``, under context ``TC`` at ``p``].
  .. Result in ``value~false~``.
@@ -6467,9 +6467,9 @@ xref:Cast_expl_neq[``+INT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to `
 
 . If ``typeIR'`` is equal to ``+INT+``:
  .. Then, the relation holds.
-. If ``typeIR'`` has type ``fixedIntTypeIR``:
+. Else if ``typeIR'`` is equal to ``+BIT+`` ``+<+`` ``nat`` ``+>+``:
  .. Then, the relation holds.
-. If ``typeIR'`` is equal to ``+BIT+`` ``+<+`` ``nat`` ``+>+``:
+. If ``typeIR'`` has type ``fixedIntTypeIR``:
  .. Then, the relation holds.
 
 xref:Cast_expl_neq[``+BIT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to ``typeIR'`` (when unequal) when]:
@@ -6479,7 +6479,7 @@ xref:Cast_expl_neq[``+BIT+`` ``+<+`` ``nat`` ``+>+`` can be explicitly cast to `
  .. Then, the relation holds.
 . If ``typeIR'`` is equal to ``+INT+``:
  .. Then, the relation holds.
-. If ``typeIR'`` is equal to ``+INT+`` ``+<+`` ``nat`` ``+>+``:
+. Else if ``typeIR'`` is equal to ``+INT+`` ``+<+`` ``nat`` ``+>+``:
  .. Then, the relation holds.
 . If ``typeIR'`` has type ``fixedBitTypeIR``:
  .. Then, the relation holds.
@@ -8746,7 +8746,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
-. If ``keysetExpression`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
+. Else if ``keysetExpression`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
   ... Let ``TBLS`` be ``+LPM+`` ``n``.
@@ -8765,7 +8765,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+_+``.
-. If ``keysetExpression`` is equal to ``+(+`` ``+_+`` ``+)+``:
+. Else if ``keysetExpression`` is equal to ``+(+`` ``+_+`` ``+)+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
   ... Let ``TBLS`` be ``+LPM+`` ``0``.
@@ -11385,7 +11385,7 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
   ... Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+DEFAULT+`` under context ``TC`` with key type ``typeIR~key~``].
   ... Result in ``simpleKeysetExpressionIR``.
- .. If ``keysetExpression`` is equal to ``+_+``:
+ .. Else if ``keysetExpression`` is equal to ``+_+``:
   ... Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+_+`` under context ``TC`` with key type ``typeIR~key~``].
   ... Result in ``simpleKeysetExpressionIR``.
@@ -11397,7 +11397,7 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
  .. Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+DEFAULT+`` under context ``TC`` with key type ``+SEQ+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+``].
  .. Result in ``simpleKeysetExpressionIR``.
-. If ``keysetExpression`` is equal to ``+_+``:
+. Else if ``keysetExpression`` is equal to ``+_+``:
  .. Check that the length of ``typeIR^{asterisk}^`` is greater than ``1``.
  .. Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+_+`` under context ``TC`` with key type ``+SEQ+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+``].
@@ -12968,7 +12968,7 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~l~`` ``binop`` ``t
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~l~``, under context ``IC`` and store ``STO`` at ``p``].
  .. If ``value`` is equal to ``+`B+`` ``false``:
   ... Result in store ``STO~1~`` and ``+`B+`` ``false``.
- .. If ``value`` is equal to ``+`B+`` ``true``:
+ .. Else if ``value`` is equal to ``+`B+`` ``true``:
   ... Let store ``STO~2~`` and ``value~r~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~r~``, under context ``IC`` and store ``STO~1~`` at ``p``].
   ... Result in store ``STO~2~`` and ``value~r~``.
@@ -12977,7 +12977,7 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~l~`` ``binop`` ``t
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~l~``, under context ``IC`` and store ``STO`` at ``p``].
  .. If ``value`` is equal to ``+`B+`` ``true``:
   ... Result in store ``STO~1~`` and ``+`B+`` ``true``.
- .. If ``value`` is equal to ``+`B+`` ``false``:
+ .. Else if ``value`` is equal to ``+`B+`` ``false``:
   ... Let store ``STO~2~`` and ``value~r~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~r~``, under context ``IC`` and store ``STO~1~`` at ``p``].
   ... Result in store ``STO~2~`` and ``value~r~``.
@@ -12990,7 +12990,7 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~cond~`` ``+?+`` ``
  .. Let store ``STO~2~`` and ``value~true~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~true~``, under context ``IC`` and store ``STO~1~`` at ``p``].
  .. Result in store ``STO~2~`` and ``value~true~``.
-. If ``value`` is equal to ``+`B+`` ``false``:
+. Else if ``value`` is equal to ``+`B+`` ``false``:
  .. Let store ``STO~2~`` and ``value~false~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~false~``, under context ``IC`` and store ``STO~1~`` at ``p``].
  .. Result in store ``STO~2~`` and ``value~false~``.
@@ -14806,7 +14806,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
  .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Let ``expressionResult'`` be ``+`B+`` ``false``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``true``:
   ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
   ... If let ``abortResult`` be ``expressionResult'``:
@@ -14820,7 +14820,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
   ... Let ``expressionResult'`` be ``+`B+`` ``true``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
   ... If let ``abortResult`` be ``expressionResult'``:
@@ -14837,7 +14837,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionI
  .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~true~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~true~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
  .. Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~true~``.
-. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
  .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~false~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~false~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
  .. Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~false~``.
@@ -15435,7 +15435,7 @@ xref:Stmt_eval[Runtime evaluation of ``conditionalStatementIR``, under context `
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``statementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~`` at ``p``].
   ... Result in context ``EC~then~``, state ``ARCH~then~``, and ``statementResult``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Result in context ``EC~cond~``, state ``ARCH~cond~``, and ``+`EMPTY+``.
 . Else:
  .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~`` ``+ELSE+`` ``statementIR~else~`` be ``conditionalStatementIR``.
@@ -15447,7 +15447,7 @@ xref:Stmt_eval[Runtime evaluation of ``conditionalStatementIR``, under context `
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``statementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~`` at ``p``].
   ... Result in context ``EC~then~``, state ``ARCH~then~``, and ``statementResult``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Let context ``EC~else~``, state ``ARCH~else~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``statementIR~else~``, under context ``EC~cond~`` and state ``ARCH~cond~`` at ``p``].
   ... Result in context ``EC~else~``, state ``ARCH~else~``, and ``statementResult``.
@@ -15663,7 +15663,7 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
   ... Result in context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Result in context ``EC~cond~``, state ``ARCH~cond~``, and ``+`EMPTY+``.
 . Else:
  .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
@@ -15673,7 +15673,7 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
   ... Result in context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
- .. If ``expressionResult`` is equal to ``+`B+`` ``false``:
+ .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
   ... Let context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~else~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
   ... Result in context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult``.
@@ -16855,7 +16855,7 @@ xref:ForThreeClauseStmt_eval[Looping ``statementIR`` with condition ``typedExpre
 . If ``expressionResult`` is equal to ``+`B+`` ``false``:
  .. Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
-. If ``expressionResult`` is equal to ``+`B+`` ``true``:
+. Else if ``expressionResult`` is equal to ``+`B+`` ``true``:
  .. Let context ``EC~2~``, state ``ARCH~2~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``statementIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].
  .. If let ``abortResult`` be ``statementResult``:

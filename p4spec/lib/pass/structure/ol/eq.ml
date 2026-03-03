@@ -2,6 +2,10 @@ open Ast
 open Lang
 open Sl.Eq
 
+(* Types *)
+
+let eq_typ (typ_a : typ) (typ_b : typ) : bool = eq_typ typ_a typ_b
+
 (* Expressions *)
 
 let eq_exp (exp_a : exp) (exp_b : exp) : bool = eq_exp exp_a exp_b

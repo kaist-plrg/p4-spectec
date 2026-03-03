@@ -82,10 +82,15 @@ let rec disjoint_exp_literal (exp_a : exp) (exp_b : exp) : bool =
   | BoolE b_a, BoolE b_b -> b_a <> b_b
   | NumE n_a, NumE n_b -> not (Num.eq n_a n_b)
   | TextE t_a, TextE t_b -> t_a <> t_b
+  | UpCastE (typ_a, exp_a), UpCastE (typ_b, exp_b) when eq_typ typ_a typ_b ->
+      disjoint_exp_literal exp_a exp_b
   | TupleE exps_a, TupleE exps_b ->
       assert (List.length exps_a = List.length exps_b);
       List.exists2 disjoint_exp_literal exps_a exps_b
-  | CaseE (mixop_a, []), CaseE (mixop_b, []) -> not (Mixop.eq mixop_a mixop_b)
+  | CaseE (mixop_a, exps_a), CaseE (mixop_b, exps_b) ->
+      if Mixop.eq mixop_a mixop_b then
+        List.exists2 disjoint_exp_literal exps_a exps_b
+      else true
   | ListE exps_a, ListE exps_b when List.length exps_a = List.length exps_b ->
       List.exists2 disjoint_exp_literal exps_a exps_b
   | ListE _, ListE _ -> true
