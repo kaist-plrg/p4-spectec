@@ -21771,15 +21771,14 @@ relation ParserLocalDecl_inst: instContext store |- parserLocalDeclarationIR : i
    paths
 
     rulepath valueSetDeclarationIR
-    -- Expr_inst: block IC STO_0 |- typedExpressionIR_size : STO_1 value'
-    -- if value' <: integerValue
-    -- let integerValue_size = value' as integerValue
+    -- Expr_inst: block IC STO_0 |- typedExpressionIR_size : STO_1 value
+    -- if value <: integerValue
+    -- let integerValue_size = value as integerValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_size)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_size) = nat?{nat <- nat?}
     -- let typeIR_subst = $subst_type_i(block, IC, typeIR)
-    -- let value*{value <- value*} = $repeat_<value>($default(typeIR_subst), n_size)
-    -- let valueSetObject = value_set{ value*{value <- value*} ( n_size )}
+    -- let valueSetObject = value_set{ [] ( n_size )}
     -- let objectId = IC.path ++ [nameIR]
     -- let STO_2 = $add_store(STO_1, objectId, valueSetObject as object)
     -- let typeIR_set = set< typeIR > as typeIR

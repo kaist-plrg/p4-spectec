@@ -28587,19 +28587,17 @@ relation ParserLocalDecl_inst: IC_0 STO |- parserLocalDeclarationIR : % % %
 
                     1. (Let typeIR_subst be $subst_type_i((block), IC_0, typeIR))
 
-                      1. (Let (value')* be $repeat_<value>($default(typeIR_subst), n_size))
+                      1. (Let valueSetObject be (value_set{ [] ( n_size )}))
 
-                        1. (Let valueSetObject be (value_set{ (value')* ( n_size )}))
+                        1. (Let objectId be IC_0.path ++ [nameIR])
 
-                          1. (Let objectId be IC_0.path ++ [nameIR])
+                          1. (Let STO_2 be $add_store(STO_1, objectId, (valueSetObject as object)))
 
-                            1. (Let STO_2 be $add_store(STO_1, objectId, (valueSetObject as object)))
+                            1. (Let typeIR_set be ((set< typeIR >) as typeIR))
 
-                              1. (Let typeIR_set be ((set< typeIR >) as typeIR))
+                              1. (Let constantDeclarationIR be ((`empty) const typeIR_set nameIR (=`value ((ref objectId) as value)) ;))
 
-                                1. (Let constantDeclarationIR be ((`empty) const typeIR_set nameIR (=`value ((ref objectId) as value)) ;))
-
-                                  1. Result in: % % |- % : IC_0 STO_2 (constantDeclarationIR as parserLocalDeclarationIR)
+                                1. Result in: % % |- % : IC_0 STO_2 (constantDeclarationIR as parserLocalDeclarationIR)
 
                 1. Else Phantom#1543
 
