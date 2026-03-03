@@ -71,7 +71,7 @@ let p4_matches_stf filepath_p4 filepath_stf =
   let dir_stf = Filename.dirname filepath_stf in
   let base_stf = Filesys.base ~suffix:".stf" filepath_stf in
 
-  (base_p4 = dir_stf) || (dir_p4 = dir_stf && base_p4 = base_stf)
+  base_p4 = dir_stf || (dir_p4 = dir_stf && base_p4 = base_stf)
 
 let collect_test_pairs (arch : string) (testdirs_p4 : string list)
     (testdirs_stf : string list) (patchdir : string) : (string * string) list =
