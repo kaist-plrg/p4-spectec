@@ -10,7 +10,7 @@ let text_to_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let text = Extract.one at values_input |> Value.get_text in
-  let i = text |> int_of_string |> Bigint.of_int in
+  let i = Bigint.of_string text in
   let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
   add value;
   value
