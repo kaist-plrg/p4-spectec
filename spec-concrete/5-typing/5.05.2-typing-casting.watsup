@@ -508,6 +508,9 @@ def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
   -- if typedExpressionIR_cast
       = (`(typeIR_to) typedExpressionIR) `# `( typeIR_to ctk )
 
+def $cast_unary(typedExpressionIR, typeIR_to) = eps
+  -- otherwise
+
 ;;; Binary
 
 dec $cast_binary(typedExpressionIR, typedExpressionIR)
@@ -562,4 +565,31 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
   -- if typedExpressionIR_r =/= typedExpressionIR_r_cast
 
 def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
+  -- otherwise
+
+;;; Cast control plane-given values, which may need multiple casts inserted
+
+dec $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR?
+  hint(prose_in %0 "implicitly cast to" %1)
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_to)
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if TYPE _ typeIR_base = typeIR_to
+  -- if typedExpressionIR_newtype = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_newtype) `# `( typeIR_to ctk )
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if ENUM _ `< typeIR_base > `{ _ } = typeIR_to
+  -- if typedExpressionIR_enum = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_enum) `# `( typeIR_to ctk )
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = eps
   -- otherwise

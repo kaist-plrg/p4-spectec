@@ -73,16 +73,15 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -98,16 +97,15 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -126,16 +124,15 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -154,16 +151,15 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -181,14 +177,13 @@ def $tableObject_create_entry_key(
   -- if n_key_remaining_width = $(n_key_type_width - n_key_prefix_width)
   -- if i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if i_key_mask_value = $($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create lpm expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -206,16 +201,15 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(typedExpressionIR_base, typeIR)
   ---- ;; create optional match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
@@ -427,11 +421,10 @@ def $tableObject_create_entry_action(
           parameterIR_control*,
           tableActionArgumentInterface_update*)
   ---- ;; cast arguments to parameter types
-  -- if (_ _ typeIR_param nameIR_param _ = parameterIR_control)*
-  -- if (typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*
+  -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) `# `( INT DYN ))*
   -- if (typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+      = $cast_control_plane(typedExpressionIR_arg, typeIR_param))*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 def $tableObject_create_entry_action(
@@ -451,11 +444,10 @@ def $tableObject_create_entry_action(
           parameterIR_control*,
           tableActionArgumentInterface_update*)
   ---- ;; cast arguments to parameter types
-  -- if (_ _ typeIR_param nameIR_param _ = parameterIR_control)*
-  -- if (typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*
+  -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) `# `( INT DYN ))*
   -- if (typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+      = $cast_control_plane(typedExpressionIR_arg, typeIR_param))*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 ;;; Table entry creation
