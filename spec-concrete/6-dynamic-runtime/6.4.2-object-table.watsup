@@ -193,6 +193,33 @@ def $tableObject_create_entry_key(
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
+def $tableObject_create_entry_key(
+    (nameIR_key, "optional", typeIR),
+    tableKeyInterface*)
+  = simpleKeysetExpressionIR
+  ---- ;; check that the value is in binary format
+  -- if `BIN text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
+  ---- ;; check that the value is in optional format
+  -- if ~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = "")
+  ---- ;; create base expression
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
+  -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+  -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
+  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
+  -- if typedExpressionIR_base_cast
+      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  ---- ;; create mask expression
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+  -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+  -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+  -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
+  -- if typedExpressionIR_mask_cast
+      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  ---- ;; create optional match expression
+  -- if simpleKeysetExpressionIR
+      = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
+
 dec $tableObject_create_entry_keys(
     (nameIR, nameIR, typeIR)*,
     tableKeysetInterface)
@@ -254,7 +281,9 @@ def $alias_to_original_lookup_map(parameterIR*)
   = $extend_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, `{ (id `: id)* })
   -- if (annotationList _ _ id _ = parameterIR)*
   -- if (annotation* = $flatten_annotationList(annotationList))*
-  -- if (nameIR_names = $name_annotation_opt(annotation))**
+  -- if (nameIR_names_opt? = $name_annotation_opt(annotation))**
+  -- if (nameIR_names_seq* = $opt_as_seq_<nameIR>(nameIR_names_opt?))**
+  -- if (nameIR_names* = $concat_<nameIR>(nameIR_names_seq**))*
   -- if (nameIR_original, nameIR_aliases*)*
       = $filter_<(nameIR, nameIR*)>((id, nameIR_names*)*, ($(|nameIR_names*| > 0))*)
   -- if nameIR_alias* = (nameIR_aliases*[0])*
