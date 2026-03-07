@@ -303,13 +303,24 @@ module PacketIn = struct
     let size =
       value_sizeInBits |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
-    (* Advance cursor *)
-    let pkt = { pkt with idx = pkt.idx + size } in
-    let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    in
-    (pkt, value_ctx, value_arch, value_callResult)
+    if pkt.idx + size > pkt.len then
+      let value_callResult =
+        let value_err =
+          wrap_case_v
+            [ Term "ERROR"; Term "."; NT (wrap_text_v "PacketTooShort") ]
+          |> with_typ (wrap_var_t "errorValue")
+        in
+        [ Term "REJECT"; NT value_err ] #@ "rejectTransitionResult"
+      in
+      (pkt, value_ctx, value_arch, value_callResult)
+    else
+      (* Advance cursor *)
+      let pkt = { pkt with idx = pkt.idx + size } in
+      let value_callResult =
+        let value_eps = wrap_opt_v "value" None in
+        [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      in
+      (pkt, value_ctx, value_arch, value_callResult)
 
   (* @return packet length in bytes.  This method may be unavailable on
      some target architectures.
