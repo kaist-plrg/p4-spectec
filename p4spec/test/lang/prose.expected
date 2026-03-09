@@ -8558,12 +8558,15 @@ xref:TableKey_ok[Typing ``expression`` ``+:+`` ``name~matchkind~`` ``annotationL
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Let ``bound`` be xref:bound[bound type variables from the ``+LOCAL+`` layer of ``TC``].
 . Check that xref:Type_wf[``+SET+`` ``+<+`` ``typeIR`` ``+>+`` is a well-formed type, with bound type variables ``bound``].
+. Let ``text`` be xref:print_[``expression`` as text].
+. Let ``nameIR~default~`` be xref:strip_all_whitespace[the text ``text`` with all whitespace removed].
+. Let ``nameIR~key~`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR~default~)]``.
 . Let ``nameIR~matchkind~`` be xref:name[the name of ``name~matchkind~``].
 . Check that ``+MATCH_KIND+`` ``+.+`` ``nameIR~matchkind~`` is equal to xref:find_var_value_t[the value of variable ``nameIR~matchkind~`` from the ``+LOCAL+`` layer of ``TC``].
 . Check that xref:compat_table_key[``typeIR`` can be used with match kind ``nameIR~matchkind~``].
 . Let ``TBLC~1~`` be xref:update_mode_tbl[``TBLC~0~`` with match mode updated based on key ``nameIR~matchkind~`` of type ``typeIR``].
 . Let ``TBLC~2~`` be xref:add_key_tbl[``TBLC~1~`` with match key ``nameIR~matchkind~`` of type ``typeIR`` added].
-. Let ``tableKeyIR`` be ``typedExpressionIR`` ``+:+`` ``nameIR~matchkind~`` ``annotationList`` ``+;+``.
+. Let ``tableKeyIR`` be ``typedExpressionIR`` ``+#+`` ``nameIR~key~`` ``+:+`` ``nameIR~matchkind~`` ``annotationList`` ``+;+``.
 . Result in table context ``TBLC~2~`` and ``tableKeyIR``.
 
 xref:TableKeys_ok[TableKeys_ok]:
@@ -12326,7 +12329,7 @@ xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(+KEY
 . Let ``nameIR~matchKind~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``++_++`` ``+:+`` ``nameIR~matchKind~`` ``++_++`` ``+;+`` be ``tableKeyIR``.
+ ** Let ``++_++`` ``+#+`` ``++_++`` ``+:+`` ``nameIR~matchKind~`` ``++_++`` ``+;+`` be ``tableKeyIR``.
 --
 +
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
@@ -12439,18 +12442,11 @@ xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((nameIR, nameI
  .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys((`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
  .. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
 
-xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +:+ nameIR~matchKind~ annotationList +;+)]
+xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +#+ nameIR~key~ +:+ nameIR~matchKind~ annotationList +;+)]
 
 
-. Let ``nameIR^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
-. If let ``nameIR~key~`` be ``nameIR^{asterisk}^``:
- .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
-. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
- .. Let ``text`` be xref:print_[``typedExpressionIR`` as text].
- .. Let ``nameIR~key~`` be xref:strip_all_whitespace[the text ``text`` with all whitespace removed].
- .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
+. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+. Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
 
 xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(+KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+, tableKeyInterface^{asterisk}^)]
 
@@ -17188,7 +17184,7 @@ xref:TableKey_eval[TableKey_eval]:
 * Evaluating ``tableKeyIR`` under context ``evalContext`` and state ``arch``:
 * Result in context ``evalContext``, state ``arch`` , and result ``tableKeyResult``.
 
-xref:TableKey_eval[Evaluating ``typedExpressionIR`` ``+:+`` ``nameIR`` ``annotationList`` ``+;+`` under context ``EC~0~`` and state ``ARCH~0~``]:
+xref:TableKey_eval[Evaluating ``typedExpressionIR`` ``+#+`` ``nameIR'`` ``+:+`` ``nameIR`` ``annotationList`` ``+;+`` under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].

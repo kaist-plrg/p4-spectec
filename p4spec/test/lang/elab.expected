@@ -7432,7 +7432,7 @@ syntax constIR = const
 syntax constOptIR = constIR?
 
 syntax tableKeyIR = 
-   | typedExpressionIR : nameIR annotationList ;
+   | typedExpressionIR # nameIR : nameIR annotationList ;
 
 syntax tableKeyListIR = tableKeyIR*
 
@@ -14453,12 +14453,14 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if Type_wf: $bound(local, TC) |- set< typeIR > as typeIR holds
+    -- let nameIR_default = $strip_all_whitespace($print_<expression>(expression))
+    -- let nameIR_key = $name_annotation_default(annotationList, nameIR_default)
     -- let nameIR_matchkind = $name(name_matchkind)
     -- if (match_kind. nameIR_matchkind as value = $find_var_value_t(` nameIR_matchkind, local, TC))
     -- if $compat_table_key(nameIR_matchkind, typeIR)
     -- let TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
     -- let TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
-    -- let tableKeyIR = typedExpressionIR : nameIR_matchkind annotationList ;
+    -- let tableKeyIR = typedExpressionIR # nameIR_key : nameIR_matchkind annotationList ;
     -- output: % % |- % : TBLC_2 tableKeyIR
 
 relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR
@@ -20015,7 +20017,7 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface) : tableEntry
 def $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool =
 
   clause 0 : (key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} }) = $exists_((nameIR_matchKind = "ternary")*{nameIR_matchKind <- nameIR_matchKind*})
-  -- (let _typedExpressionIR : nameIR_matchKind _annotationList ; = tableKeyIR)*{tableKeyIR <- tableKeyIR*, _annotationList -> _annotationList*, _typedExpressionIR -> _typedExpressionIR*, nameIR_matchKind -> nameIR_matchKind*}
+  -- (let _typedExpressionIR # _nameIR : nameIR_matchKind _annotationList ; = tableKeyIR)*{tableKeyIR <- tableKeyIR*, _annotationList -> _annotationList*, _nameIR -> _nameIR*, _typedExpressionIR -> _typedExpressionIR*, nameIR_matchKind -> nameIR_matchKind*}
 
 def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface) : simpleKeysetExpressionIR =
 
@@ -20187,15 +20189,7 @@ def $tableObject_create_entry_keys((nameIR, nameIR, typeIR)*, tableKeysetInterfa
 
 def $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR) =
 
-  clause 0 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- let nameIR*{nameIR <- nameIR*} = $name_annotation(annotationList)
-  -- if nameIR*{nameIR <- nameIR*} matches [ _/1 ]
-  -- let [nameIR_key] = nameIR*{nameIR <- nameIR*}
-  -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-
-  clause 1 : (typedExpressionIR : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if ([] = $name_annotation(annotationList))
-  -- let nameIR_key = $strip_all_whitespace($print_<typedExpressionIR>(typedExpressionIR))
+  clause 0 : (typedExpressionIR # nameIR_key : nameIR_matchKind annotationList ;) = (nameIR_key, nameIR_matchKind, typeIR)
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
 def $tableObject_create_entry_keyset(tableKeysPropertyIR, tableKeysetInterface) : keysetExpressionIR =
@@ -28289,8 +28283,8 @@ relation TableKey_eval: evalContext arch |- tableKeyIR : evalContext arch tableK
 
    match
 
-    (signature) EC_0 ARCH_0 |- typedExpressionIR : nameIR _annotationList ; : % % %
-    EC_0 ARCH_0 |- typedExpressionIR : nameIR _annotationList ; : % % %
+    (signature) EC_0 ARCH_0 |- typedExpressionIR # _nameIR : nameIR _annotationList ; : % % %
+    EC_0 ARCH_0 |- typedExpressionIR # _nameIR : nameIR _annotationList ; : % % %
 
    paths
 
