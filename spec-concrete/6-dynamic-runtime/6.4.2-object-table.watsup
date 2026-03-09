@@ -36,7 +36,7 @@ def $tableObject_create_entry_priority(n_priority)
 dec $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool
 def $needs_priority_tableKeysPropertyIR(KEY `= `{ tableKeyIR* })  
     = $exists_((nameIR_matchKind = "ternary")*)  
-  -- (if _ `: nameIR_matchKind _ `; = tableKeyIR)*  
+  -- if (_ `# _ `: nameIR_matchKind _ `; = tableKeyIR)*  
 
 ;;; Table entry keyset creation
 
@@ -239,17 +239,8 @@ def $tableObject_create_entry_keys(
 dec $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR)
 
 def $interface_of_tableKeyIR(
-    typedExpressionIR `: nameIR_matchKind annotationList `;)
+    typedExpressionIR `# nameIR_key `: nameIR_matchKind annotationList `;)
   = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if nameIR_key = $name_annotation(annotationList)
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-def $interface_of_tableKeyIR(
-    typedExpressionIR `: nameIR_matchKind annotationList `;)
-  = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if eps = $name_annotation(annotationList)
-  -- if nameIR_key
-      = $strip_all_whitespace(
-          $print_<typedExpressionIR>(typedExpressionIR))
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
 dec $tableObject_create_entry_keyset(

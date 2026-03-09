@@ -46,6 +46,9 @@ rule TableKey_ok:
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   ---- ;; check that the expression can be embedded in a set
   -- Type_wf: $bound(LOCAL, TC) |- SET `< typeIR >
+  ---- ;; create key name
+  -- if nameIR_default = $strip_all_whitespace($print_<expression>(expression))
+  -- if nameIR_key = $name_annotation_default(annotationList, nameIR_default)
   ---- ;; check match kind
   -- if nameIR_matchkind = $name(name_matchkind)
   -- if MATCH_KIND `. nameIR_matchkind
@@ -58,7 +61,8 @@ rule TableKey_ok:
   -- if TBLC_2
       = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
   ---- ;; create IR
-  -- if tableKeyIR = typedExpressionIR `: nameIR_matchkind annotationList `;
+  -- if tableKeyIR
+      = typedExpressionIR `# nameIR_key `: nameIR_matchkind annotationList `;
 
 ;;
 ;; Table key property list typing
