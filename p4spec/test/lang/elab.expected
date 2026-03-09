@@ -6292,7 +6292,7 @@ def $cast_to_enum'(typeId, typeIR, valueFieldIR*, value) : value =
   -- let value_idx = $cast_op(typeIR, value_target)
   -- let id_unnamed = "__UNSPECIFIED"
 
-  clause 1 : (typeId, typeIR, valueFieldIR*{valueFieldIR <- valueFieldIR*}, value_target) = value_target
+  clause 1 : (typeId, typeIR, valueFieldIR*{valueFieldIR <- valueFieldIR*}, value_target) = typeId . nameIR . value as value
   -- if valueFieldIR*{valueFieldIR <- valueFieldIR*} matches _ :: _
   -- let valueFieldIR_h :: valueFieldIR_t*{valueFieldIR_t <- valueFieldIR_t*} = valueFieldIR*{valueFieldIR <- valueFieldIR*}
   -- let nameIR = value ; = valueFieldIR_h
@@ -6550,7 +6550,18 @@ def $cast_enum(typeIR, enumValue) : value =
   -- let typeId' . nameIR = enumValue
   -- if (typeId = typeId')
 
-  clause 1 : (typeIR, enumValue) = $cast_op(typeIR, value)
+  clause 1 : (typeIR, enumValue) = typeId . nameIR . value as value
+  -- if typeIR <: serializableEnumTypeIR
+  -- let enum typeId < _typeIR >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
+  -- if enumValue matches `%.%.%`
+  -- let typeId' . nameIR . value = enumValue
+  -- if (typeId = typeId')
+
+  clause 2 : (typeIR', enumValue) = set{ $cast_op(typeIR, enumValue as value) } as value
+  -- if typeIR' <: setTypeIR
+  -- let set< typeIR > = typeIR' as setTypeIR
+
+  clause 3 : (typeIR, enumValue) = $cast_op(typeIR, value)
   -- if enumValue matches `%.%.%`
   -- let _typeId . _nameIR . value = enumValue
 
@@ -14440,15 +14451,14 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
 
     rulepath 
     -- Expr_ok: local TC |- expression : typedExpressionIR
-    -- let typedExpressionIR_reduced = $reduce_serenum(typedExpressionIR)
-    -- let typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
-    -- if Type_wf: $bound(local, TC) |- set< typeIR_reduced > as typeIR holds
+    -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if Type_wf: $bound(local, TC) |- set< typeIR > as typeIR holds
     -- let nameIR_matchkind = $name(name_matchkind)
     -- if (match_kind. nameIR_matchkind as value = $find_var_value_t(` nameIR_matchkind, local, TC))
-    -- if $compat_table_key(nameIR_matchkind, typeIR_reduced)
-    -- let TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR_reduced)
-    -- let TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR_reduced)
-    -- let tableKeyIR = typedExpressionIR_reduced : nameIR_matchkind annotationList ;
+    -- if $compat_table_key(nameIR_matchkind, typeIR)
+    -- let TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
+    -- let TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+    -- let tableKeyIR = typedExpressionIR : nameIR_matchkind annotationList ;
     -- output: % % |- % : TBLC_2 tableKeyIR
 
 relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR
@@ -16949,6 +16959,8 @@ def $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
   -- if Cast_impl: typeIR -> typeIR_to holds
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
+  clause -1 : (typedExpressionIR, typeIR_to) = ?()
+
 def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
 
   clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r))
@@ -16992,6 +17004,55 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
   -- if (typedExpressionIR_r =/= typedExpressionIR_r_cast)
 
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
+
+def $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR? =
+
+  clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+
+  clause 1 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
+  -- if (bool as typeIR = typeIR_to)
+  -- if (int as typeIR = $type_of_typedExpressionIR(typedExpressionIR))
+  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+  -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
+
+  clause 2 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
+  -- let typeIR = typeIR_to
+  -- if typeIR <: typedefTypeIR
+  -- let typedef _typeId typeIR_base = typeIR as typedefTypeIR
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_typedef) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
+  -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR_typedef as expressionIR # ( typeIR_to ctk )
+
+  clause 3 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
+  -- let typeIR = typeIR_to
+  -- if typeIR <: newTypeIR
+  -- let type _typeId typeIR_base = typeIR as newTypeIR
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_newtype) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
+  -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR_newtype as expressionIR # ( typeIR_to ctk )
+
+  clause 4 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
+  -- let typeIR = typeIR_to
+  -- if typeIR <: serializableEnumTypeIR
+  -- let enum _typeId < typeIR_base >{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR as serializableEnumTypeIR
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_enum) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+  -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
+  -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR_enum as expressionIR # ( typeIR_to ctk )
+
+  clause -1 : (typedExpressionIR, typeIR_to) = ?()
 
 tbl def $compat_lnot(typeIR) : bool =
   row 0 :
@@ -19968,8 +20029,11 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let ?(text_key_value) = text'?{text' <- text'?}
   -- let i_key_value = $text_to_int(text_key_value)
   -- let typedExpressionIR = d i_key_value as expressionIR # ( int as typeIR dyn )
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR, typeIR)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let typeIR_set = set< typeIR > as typeIR
-  -- let simpleKeysetExpressionIR = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set dyn ) as simpleKeysetExpressionIR
+  -- let simpleKeysetExpressionIR = ( typeIR_set ) typedExpressionIR_cast as expressionIR # ( typeIR_set dyn ) as simpleKeysetExpressionIR
 
   clause 1 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
   -- if (text = "ternary")
@@ -19981,15 +20045,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_unrolled = $unroll_aliasType(typeIR)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -20004,15 +20067,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_unrolled = $unroll_aliasType(typeIR)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -20029,15 +20091,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_unrolled = $unroll_aliasType(typeIR)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -20054,15 +20115,14 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_unrolled = $unroll_aliasType(typeIR)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -20082,13 +20142,35 @@ def $tableObject_create_entry_key((nameIR, nameIR, typeIR), tableKeysetInterface
   -- let n_key_remaining_width = int as nat
   -- let i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width as int)
   -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
-  -- let typeIR_unrolled = $unroll_aliasType(typeIR)
-  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
   -- let i_key_mask_value = ($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
-  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
+  -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
+  -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
+  -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
+
+  clause 6 : ((nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
+  -- if (text = "optional")
+  -- let tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
+  -- if tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?} matches (_)
+  -- let ?(tableKeyValueInterface) = tableKeyValueInterface'?{tableKeyValueInterface' <- tableKeyValueInterface'?}
+  -- if tableKeyValueInterface matches ``BIN%`
+  -- let `bin text_key_value = tableKeyValueInterface
+  -- if (~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))
+  -- let text_key_base_value = $replace_text(text_key_value, "*", "0")
+  -- let i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+  -- let typedExpressionIR_base = d i_key_base_value as expressionIR # ( int as typeIR dyn )
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_base, typeIR)
+  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+  -- let ?(typedExpressionIR_base_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+  -- let text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+  -- let text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+  -- let i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+  -- let typedExpressionIR_mask = d i_key_mask_value as expressionIR # ( int as typeIR dyn )
+  -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_control_plane(typedExpressionIR_base, typeIR)
   -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
@@ -20129,9 +20211,9 @@ def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =
   clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = $extend_map<nameIR, nameIR>({ nameIR_alias : nameIR_original*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} }, { id : id*{id <- id*} })
   -- (let annotationList _direction _typeIR id _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, annotationList -> annotationList*, id -> id*}
   -- (let annotation*{annotation <- annotation*} = $flatten_annotationList(annotationList))*{annotationList <- annotationList*, annotation* -> annotation**}
-  -- (let nameIR?{nameIR <- nameIR?} = $name_annotation_opt(annotation))*{annotation <- annotation*, nameIR? -> nameIR?*}*{annotation* <- annotation**, nameIR?* -> nameIR?**}
-  -- (if nameIR?{nameIR <- nameIR?} matches (_))*{nameIR? <- nameIR?*}*{nameIR?* <- nameIR?**}
-  -- (let ?(nameIR_names) = nameIR?{nameIR <- nameIR?})*{nameIR? <- nameIR?*, nameIR_names -> nameIR_names*}*{nameIR?* <- nameIR?**, nameIR_names* -> nameIR_names**}
+  -- (let nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?} = $name_annotation_opt(annotation))*{annotation <- annotation*, nameIR_names_opt? -> nameIR_names_opt?*}*{annotation* <- annotation**, nameIR_names_opt?* -> nameIR_names_opt?**}
+  -- (let nameIR_names_seq*{nameIR_names_seq <- nameIR_names_seq*} = $opt_as_seq_<nameIR>(nameIR_names_opt?{nameIR_names_opt <- nameIR_names_opt?}))*{nameIR_names_opt? <- nameIR_names_opt?*, nameIR_names_seq* -> nameIR_names_seq**}*{nameIR_names_opt?* <- nameIR_names_opt?**, nameIR_names_seq** -> nameIR_names_seq***}
+  -- (let nameIR_names*{nameIR_names <- nameIR_names*} = $concat_<nameIR>(nameIR_names_seq*{nameIR_names_seq <- nameIR_names_seq*}*{nameIR_names_seq* <- nameIR_names_seq**}))*{nameIR_names_seq** <- nameIR_names_seq***, nameIR_names* -> nameIR_names**}
   -- let (nameIR_original, nameIR_aliases*{nameIR_aliases <- nameIR_aliases*})*{nameIR_aliases* <- nameIR_aliases**, nameIR_original <- nameIR_original*} = $filter_<(nameIR, nameIR*)>((id, nameIR_names*{nameIR_names <- nameIR_names*})*{id <- id*, nameIR_names* <- nameIR_names**}, (|nameIR_names*{nameIR_names <- nameIR_names*}| > 0)*{nameIR_names* <- nameIR_names**})
   -- let nameIR_alias*{nameIR_alias <- nameIR_alias*} = nameIR_aliases*{nameIR_aliases <- nameIR_aliases*}[0]*{nameIR_aliases* <- nameIR_aliases**}
 
@@ -20238,10 +20320,9 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_found
   -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
-  -- (let _annotationList _direction typeIR_param nameIR_param _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
-  -- (let typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*{typeIR_param <- typeIR_param*, typeIR_param_unrolled -> typeIR_param_unrolled*}
+  -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
   -- (let typedExpressionIR_arg = d i_arg_aligned as expressionIR # ( int as typeIR dyn ))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*{typeIR_param_unrolled <- typeIR_param_unrolled*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
   -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
@@ -20253,10 +20334,9 @@ def $tableObject_create_entry_action(tableActionsPropertyIR, tableActionInterfac
   -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
   -- let annotationList prefixedNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_found
   -- let i_arg_aligned*{i_arg_aligned <- i_arg_aligned*} = $align_tableActionArgumentInterfaces(parameterIR_control*{parameterIR_control <- parameterIR_control*}, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})
-  -- (let _annotationList _direction typeIR_param nameIR_param _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, nameIR_param -> nameIR_param*, typeIR_param -> typeIR_param*}
-  -- (let typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*{typeIR_param <- typeIR_param*, typeIR_param_unrolled -> typeIR_param_unrolled*}
+  -- (let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR_control)*{parameterIR_control <- parameterIR_control*, _annotationList -> _annotationList*, _direction -> _direction*, _id -> _id*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, typeIR_param -> typeIR_param*}
   -- (let typedExpressionIR_arg = d i_arg_aligned as expressionIR # ( int as typeIR dyn ))*{i_arg_aligned <- i_arg_aligned*, typedExpressionIR_arg -> typedExpressionIR_arg*}
-  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*{typeIR_param_unrolled <- typeIR_param_unrolled*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
+  -- (let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(typedExpressionIR_arg, typeIR_param))*{typeIR_param <- typeIR_param*, typedExpressionIR_arg <- typedExpressionIR_arg*, typedExpressionIR? -> typedExpressionIR?*}
   -- (if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_))*{typedExpressionIR? <- typedExpressionIR?*}
   -- (let ?(typedExpressionIR_arg_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})*{typedExpressionIR? <- typedExpressionIR?*, typedExpressionIR_arg_cast -> typedExpressionIR_arg_cast*}
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
