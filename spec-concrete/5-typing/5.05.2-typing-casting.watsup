@@ -577,6 +577,14 @@ def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
 
 def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
   -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if TYPEDEF _ typeIR_base = typeIR_to
+  -- if typedExpressionIR_typedef = $cast_control_plane(typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_typedef) `# `( typeIR_to ctk )
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
   -- if TYPE _ typeIR_base = typeIR_to
   -- if typedExpressionIR_newtype = $cast_control_plane(typedExpressionIR, typeIR_base)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
