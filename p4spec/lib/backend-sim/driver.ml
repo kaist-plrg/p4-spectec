@@ -260,25 +260,46 @@ module Make
             value_tableActionInterface
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
-    (* Other architecture updates *)
+    (* Mirror session updates *)
     | Stf.Ast.MirroringAdd (session, port) ->
         let session = int_of_string session in
         let port = int_of_string port in
         let value_arch = Arch.add_mirror_session value_arch session port in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringAddMc (session, id) ->
+        let session = int_of_string session in
+        let id = int_of_string id in
+        let value_arch = Arch.add_mirror_session_mc value_arch session id in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.MirroringGet _session ->
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    (* Multicast group updates *)
     | Stf.Ast.McGroupCreate mgid ->
         let mgid = int_of_string mgid in
         let value_arch = Arch.mc_mgrp_create value_arch mgid in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
-    | Stf.Ast.McNodeCreate (rid, port) ->
+    | Stf.Ast.McNodeCreate (rid, ports) ->
         let rid = int_of_string rid in
-        let port = int_of_string port in
-        let value_arch = Arch.mc_node_create value_arch rid port in
+        let ports = List.map int_of_string ports in
+        let value_arch = Arch.mc_node_create value_arch rid ports in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.McNodeAssociate (mgid, handle) ->
         let mgid = int_of_string mgid in
         let handle = int_of_string handle in
         let value_arch = Arch.mc_node_associate value_arch mgid handle in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    (* Register updates *)
+    | Stf.Ast.RegisterRead (reg_name, index) ->
+        let index = int_of_string index in
+        let value_arch = Arch.register_read value_arch reg_name index in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.RegisterWrite (reg_name, index, value) ->
+        let index = int_of_string index in
+        let value = int_of_string value in
+        let value_arch = Arch.register_write value_arch reg_name index value in
+        (value_ctx, value_arch, tx_output_queue, expect_queue)
+    | Stf.Ast.RegisterReset reg_name ->
+        let value_arch = Arch.register_reset value_arch reg_name in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     (* Async *)
     | Stf.Ast.Wait -> (value_ctx, value_arch, tx_output_queue, expect_queue)

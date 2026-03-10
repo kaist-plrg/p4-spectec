@@ -286,10 +286,14 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the ebpf simulator"
 
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the ebpf simulator"
+
   let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
     error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int list) :
       Value.t =
     error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
@@ -297,6 +301,19 @@ struct
       Value.t =
     error_no_region
       "mc_node_associate is not implemented for the ebpf simulator"
+
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region "register_read is not implemented for the ebpf simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region "register_write is not implemented for the ebpf simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region "register_reset is not implemented for the ebpf simulator"
 
   (* Pipeline initializer *)
 

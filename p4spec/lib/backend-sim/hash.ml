@@ -178,7 +178,8 @@ let compute_hash_crc32 (width : Bigint.t) (value : Bigint.t) : Bigint.t =
     mask32 bytes_value
   |> Bigint.bit_xor mask32
 
-let compute_hash_csum16 (width : Bigint.t) (value : Bigint.t) : Bigint.t =
+let compute_hash_csum16 (value_init : Bigint.t) (width : Bigint.t)
+    (value : Bigint.t) : Bigint.t =
   let add_one_complement (v : Bigint.t) (w : Bigint.t) : Bigint.t =
     let tmp = Bigint.(v + w) in
     let thres = power_of_two (Bigint.of_int 16) in
@@ -196,7 +197,32 @@ let compute_hash_csum16 (width : Bigint.t) (value : Bigint.t) : Bigint.t =
       let value = Bigint.(slice_bitstring value (msb - one) zero) in
       hash value_hash lsb value
   in
-  let value_hash = hash Bigint.zero width value in
+  let value_hash = hash value_init width value in
+  bitwise_neg value_hash (Bigint.of_int 16)
+
+let compute_hash_csum16_sub (value_init : Bigint.t) (width : Bigint.t)
+    (value : Bigint.t) : Bigint.t =
+  let add_one_complement (v : Bigint.t) (w : Bigint.t) : Bigint.t =
+    let tmp = Bigint.(v + w) in
+    let thres = power_of_two (Bigint.of_int 16) in
+    if Bigint.(tmp >= thres) then Bigint.((tmp % thres) + one)
+    else Bigint.(tmp % thres)
+  in
+  let rec hash (value_hash : Bigint.t) (width : Bigint.t) (value : Bigint.t) =
+    if Bigint.(width = zero) then value_hash
+    else
+      let msb = Bigint.(width - one) in
+      let lsb = Bigint.(width - of_int 16) in
+      let value_hash =
+        let value_neg =
+          bitwise_neg (slice_bitstring value msb lsb) (Bigint.of_int 16)
+        in
+        add_one_complement value_hash value_neg
+      in
+      let value = Bigint.(slice_bitstring value (msb - one) zero) in
+      hash value_hash lsb value
+  in
+  let value_hash = hash value_init width value in
   bitwise_neg value_hash (Bigint.of_int 16)
 
 let adjust (base : Bigint.t) (rmax : Bigint.t) (value : Bigint.t) : Bigint.t =
@@ -204,10 +230,11 @@ let adjust (base : Bigint.t) (rmax : Bigint.t) (value : Bigint.t) : Bigint.t =
 
 (* Entry point *)
 
-let compute_hash (algo : string) ((width, value) : Bigint.t * Bigint.t) :
-    Bigint.t =
+let compute_hash (algo : string) ?(value_init : Bigint.t = Bigint.zero)
+    ((width, value) : Bigint.t * Bigint.t) : Bigint.t =
   match algo with
-  | "csum16" -> compute_hash_csum16 width value
+  | "csum16" -> compute_hash_csum16 value_init width value
+  | "csum16_sub" -> compute_hash_csum16_sub value_init width value
   | "crc16" -> compute_hash_crc16 width value
   | "crc32" -> compute_hash_crc32 width value
   | "identity" -> value
@@ -226,5 +253,6 @@ let package (values : Value.t list) : Bigint.t * Bigint.t =
        (Bigint.zero, Bigint.zero)
   |> pad_right_to_16
 
-let compute_checksum (algo : string) (values : Value.t list) : Bigint.t =
-  values |> package |> compute_hash algo
+let compute_checksum (algo : string) ?(value_init : Bigint.t = Bigint.zero)
+    (values : Value.t list) : Bigint.t =
+  values |> package |> compute_hash algo ~value_init

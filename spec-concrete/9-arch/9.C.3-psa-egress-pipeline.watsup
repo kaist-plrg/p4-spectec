@@ -1,0 +1,633 @@
+;;
+;; PSA egress pipeline packet setup
+;;
+
+relation PSA_egress_init_packet_in:
+  evalContext arch |- objectState : evalContext arch
+  hint(input %0 %1 %2)
+
+rule PSA_egress_init_packet_in:
+  EC_0 ARCH_0 |- objectState_packet_in : EC_1 ARCH_2
+  ---- ;; initialize packet_in extern
+  -- Extern_init: EC_0 ARCH_0 |- "packet_in" "egress_packet_in" : ARCH_1
+  ---- ;; add packet_in to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "egress_packet_in", REF "egress_packet_in")
+  ---- ;; initialize packet_in state and update arch
+  -- if externObject_packet_in = $find_object_e(ARCH_1, [ "egress_packet_in" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_in
+  -- if externObject_packet_in_init
+      = EXTERN typeId `< theta > `{ objectState_packet_in frame externMethodDefEnv }
+  -- if ARCH_2 = $add_object_e(ARCH_1, [ "egress_packet_in" ], externObject_packet_in_init)
+
+relation PSA_egress_init_packet_out:
+  evalContext arch |- objectState : evalContext arch
+  hint(input %0 %1 %2)
+
+rule PSA_egress_init_packet_out:
+  EC_0 ARCH_0 |- objectState_packet_out : EC_1 ARCH_2
+  ---- ;; initialize packet_out extern
+  -- Extern_init: EC_0 ARCH_0 |- "packet_out" "egress_packet_out" : ARCH_1
+  ---- ;; add packet_out to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "egress_packet_out", REF "egress_packet_out")
+  ---- ;; initialize packet_out state and update arch
+  -- if externObject_packet_out = $find_object_e(ARCH_1, [ "egress_packet_out" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_out
+  -- if externObject_packet_out_init
+      = EXTERN typeId `< theta > `{ objectState_packet_out frame externMethodDefEnv }
+  -- if ARCH_2 = $add_object_e(ARCH_1, [ "egress_packet_out" ], externObject_packet_out_init)
+
+;;
+;; PSA egress initialization
+;;
+
+relation PSA_egress_init_parser_input_metadata:
+  evalContext arch |- int text : evalContext
+  hint(input %0 %1 %2 %3)
+
+rule PSA_egress_init_parser_input_metadata:
+  EC_0 ARCH |- i_port t_path : EC_2
+  ---- ;; setup port
+  -- if storageReference_parser_input_port
+      = (`` "egress_parser_input_metadata") `. "egress_port"
+  -- if value_port = 32 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
+  ---- ;; setup packet path
+  -- if storageReference_parser_input_path
+      = (`` "egress_parser_input_metadata") `. "packet_path"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
+
+relation PSA_egress_init_input_metadata:
+  evalContext arch |- int text int int : evalContext
+  hint(input %0 %1 %2 %3 %4 %5)
+
+rule PSA_egress_init_input_metadata:
+  EC_0 ARCH |- i_port t_path i_cos i_inst : EC_5
+  ---- ;; setup class of service
+  -- if storageReference_input_cos
+      = (`` "egress_input_metadata") `. "class_of_service"
+  -- if value_cos = 8 W i_cos
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_input_cos -> value_cos : EC_1
+  ---- ;; setup port
+  -- if storageReference_input_port
+      = (`` "egress_input_metadata") `. "egress_port"
+  -- if value_port = 32 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_input_port -> value_port : EC_2
+  ---- ;; setup packet path
+  -- if storageReference_input_path
+      = (`` "egress_input_metadata") `. "packet_path"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
+  -- Lvalue_write:
+      GLOBAL EC_2 ARCH |- storageReference_input_path -> value_path : EC_3
+  ---- ;; setup instance
+  -- if storageReference_input_instance
+      = (`` "egress_input_metadata") `. "instance"
+  -- if value_instance = 16 W i_inst
+  -- Lvalue_write:
+      GLOBAL EC_3 ARCH |- storageReference_input_instance -> value_instance : EC_4
+  ---- ;; (TODO) setup timestamp
+  ---- ;; setup parser error
+  -- if storageReference_input_parser_error
+      = (`` "egress_input_metadata") `. "parser_error"
+  -- if value_parser_error = ERROR `. "NoError"
+  -- Lvalue_write:
+      GLOBAL EC_4 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_5
+
+relation PSA_egress_init_output_metadata:
+  evalContext arch |- evalContext
+  hint(input %0 %1)
+
+rule PSA_egress_init_output_metadata:
+  EC_0 ARCH |- EC_2
+  ---- ;; setup clone
+  -- if storageReference_output_clone
+      = (`` "egress_output_metadata") `. "clone"
+  -- if value_clone = `B false
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_output_clone -> value_clone : EC_1
+  ---- ;; setup drop
+  -- if storageReference_output_drop
+      = (`` "egress_output_metadata") `. "drop"
+  -- if value_drop = `B false
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_output_drop -> value_drop : EC_2
+
+relation PSA_egress_init_deparser_input_metadata:
+  evalContext arch |- int : evalContext
+  hint(input %0 %1 %2)
+
+rule PSA_egress_init_deparser_input_metadata:
+  EC_0 ARCH |- i_port : EC_1
+  ---- ;; setup port
+  -- if storageReference_deparser_input_port
+      = (`` "egress_deparser_input_metadata") `. "egress_port"
+  -- if value_port = 32 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_deparser_input_port -> value_port : EC_1
+
+relation PSA_egress_init_metadata:
+  evalContext arch |- int text int int : evalContext
+  hint(input %0 %1 %2 %3 %4 %5)
+
+rule PSA_egress_init_metadata:
+  EC_0 ARCH |- i_port t_path i_cos i_inst : EC_4
+  ---- ;; parser input metadata
+  -- PSA_egress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : EC_1
+  ---- ;; input metadata
+  -- PSA_egress_init_input_metadata: EC_1 ARCH |- i_port t_path i_cos i_inst : EC_2
+  ---- ;; output metadata
+  -- PSA_egress_init_output_metadata: EC_2 ARCH |- EC_3
+  ---- ;; deparser input metadata
+  -- PSA_egress_init_deparser_input_metadata: EC_3 ARCH |- i_port : EC_4
+
+relation PSA_egress_init_globals:
+  evalContext arch |- int : evalContext
+  hint(input %0 %1 %2)
+
+rule PSA_egress_init_globals:
+  EC_0 ARCH |- i_port : EC_8
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  ---- ;; hdr and user_meta
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  -- Var_init: EC_0 |- typeIR_hdr "egress_hdr" : EC_1
+  -- Var_init: EC_1 |- typeIR_user_meta "egress_user_meta" : EC_2
+  ---- ;; psa egress parser input metadata
+  -- if typeDefIR_psa_egress_parser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_2, `` "psa_egress_parser_input_metadata_t")
+  -- if typeIR_psa_egress_parser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_parser_input_metadata, eps)
+  -- Var_init:
+      EC_2 |- typeIR_psa_egress_parser_input_metadata
+              "egress_parser_input_metadata"
+            : EC_3
+  ---- ;; psa egress input metadata
+  -- if typeDefIR_psa_egress_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_3, `` "psa_egress_input_metadata_t")
+  -- if typeIR_psa_egress_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_input_metadata, eps)
+  -- Var_init:
+      EC_3 |- typeIR_psa_egress_input_metadata
+              "egress_input_metadata"
+            : EC_4
+  ---- ;; psa egress output metadata
+  -- if typeDefIR_psa_egress_output_metadata
+      = $find_typeDef_e(GLOBAL, EC_4, `` "psa_egress_output_metadata_t")
+  -- if typeIR_psa_egress_output_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_output_metadata, eps)
+  -- Var_init:
+      EC_4 |- typeIR_psa_egress_output_metadata
+              "egress_output_metadata"
+            : EC_5
+  ---- ;; psa egress deparser input metadata
+  -- if typeDefIR_psa_egress_deparser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_5, `` "psa_egress_deparser_input_metadata_t")
+  -- if typeIR_psa_egress_deparser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_egress_deparser_input_metadata, eps)
+  -- Var_init:
+      EC_5 |- typeIR_psa_egress_deparser_input_metadata
+              "egress_deparser_input_metadata"
+            : EC_6
+  ---- ;; psa egress metadata
+  -- if storageReference_cos
+      = (`` "ingress_output_metadata") `. "class_of_service"
+  -- Lvalue_read: GLOBAL EC_6 ARCH |- storageReference_cos : integerValue_cos
+  -- if i_cos = $int_of_integerValue(integerValue_cos)
+  -- PSA_egress_init_metadata: EC_6 ARCH |- i_port "NORMAL_UNICAST" i_cos 0 : EC_7
+  ---- ;; packet path related metadata
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  -- Var_init: EC_7 |- typeIR_clone_e2e_meta "clone_e2e_meta" : EC_8
+
+;;
+;; Setup helpers
+;;
+
+dec $PSA_setup_egress_packet_in_argument(evalContext) : argumentIR
+def $PSA_setup_egress_packet_in_argument(EC) = argumentIR_packet_in
+  -- if typeDefIR_packet_in
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_in")
+  -- if typeIR_packet_in
+      = $specialize_typeDefIR(typeDefIR_packet_in, eps)
+  -- if argumentIR_packet_in
+      = (`. "egress_packet_in") `# `( typeIR_packet_in CTK )
+
+dec $PSA_setup_egress_packet_out_argument(evalContext) : argumentIR
+def $PSA_setup_egress_packet_out_argument(EC) = argumentIR_packet_out
+  -- if typeDefIR_packet_out
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_out")
+  -- if typeIR_packet_out
+      = $specialize_typeDefIR(typeDefIR_packet_out, eps)
+  -- if argumentIR_packet_out
+      = (`. "egress_packet_out") `# `( typeIR_packet_out CTK )
+
+dec $PSA_setup_egress_hdr_argument(arch) : argumentIR
+def $PSA_setup_egress_hdr_argument(ARCH) = argumentIR_hdr
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "EH") 
+  -- if argumentIR_hdr
+      = (`. "egress_hdr") `# `( typeIR_hdr DYN )
+
+dec $PSA_setup_egress_user_meta_argument(arch) : argumentIR
+def $PSA_setup_egress_user_meta_argument(ARCH) = argumentIR_user_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_user_meta = $find_map<typeId, typeIR>(theta, "EM") 
+  -- if argumentIR_user_meta
+      = (`. "egress_user_meta") `# `( typeIR_user_meta DYN )
+
+dec $PSA_setup_egress_parser_input_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_egress_parser_input_metadata_argument(EC)
+  = argumentIR_parser_input_metadata
+  -- if typeDefIR_parser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_egress_parser_input_metadata_t")
+  -- if typeIR_parser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_parser_input_metadata, eps)
+  -- if argumentIR_parser_input_metadata
+      = (`. "egress_parser_input_metadata") `# `( typeIR_parser_input_metadata DYN )
+
+dec $PSA_setup_egress_input_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_egress_input_metadata_argument(EC)
+  = argumentIR_input_metadata
+  -- if typeDefIR_input_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_egress_input_metadata_t")
+  -- if typeIR_input_metadata
+      = $specialize_typeDefIR(typeDefIR_input_metadata, eps)
+  -- if argumentIR_input_metadata
+      = (`. "egress_input_metadata") `# `( typeIR_input_metadata DYN )
+
+dec $PSA_setup_egress_output_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_egress_output_metadata_argument(EC)
+  = argumentIR_output_metadata
+  -- if typeDefIR_output_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_egress_output_metadata_t")
+  -- if typeIR_output_metadata
+      = $specialize_typeDefIR(typeDefIR_output_metadata, eps)
+  -- if argumentIR_output_metadata
+      = (`. "egress_output_metadata") `# `( typeIR_output_metadata DYN )
+
+dec $PSA_setup_egress_deparser_input_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_egress_deparser_input_metadata_argument(EC)
+  = argumentIR_deparser_input_metadata
+  -- if typeDefIR_deparser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_egress_deparser_input_metadata_t")
+  -- if typeIR_deparser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_deparser_input_metadata, eps)
+  -- if argumentIR_deparser_input_metadata
+      = (`. "egress_deparser_input_metadata") `# `( typeIR_deparser_input_metadata DYN )
+
+dec $PSA_setup_egress_pipeline_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_egress_pipeline_callee(
+    EC, ARCH, typedExpressionIR_main
+  )
+  = typedExpressionIR_egress_pipeline
+  ---- ;; get package type definition
+  -- if typeDefIR_package
+      = $find_typeDef_e(GLOBAL, EC, `` "EgressPipeline")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_egress_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_egress_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_egress_hdr, typeIR_egress_user_meta,
+          typeIR_normal_meta, typeIR_clone_i2e_meta,
+          typeIR_clone_e2e_meta, typeIR_recirculate_meta ]
+  -- if typeIR_package = $specialize_typeDefIR(typeDefIR_package, typeIR_arg*)
+  -- if typedExpressionIR_egress_pipeline
+      = (typedExpressionIR_main `. "egress") `# `( typeIR_package CTK )
+
+dec $PSA_setup_egress_parser_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_egress_parser_callee(
+    EC, ARCH, typedExpressionIR_egress_pipeline
+  )
+  = typedExpressionIR_egress_parser
+  ---- ;; get parser type definition
+  -- if typeDefIR_egress_parser = $find_typeDef_e(GLOBAL, EC, `` "EgressParser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_egress_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_egress_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_egress_hdr, typeIR_egress_user_meta,
+          typeIR_normal_meta, typeIR_clone_i2e_meta,
+          typeIR_clone_e2e_meta ]
+  -- if typeIR_egress_parser
+      = $specialize_typeDefIR(typeDefIR_egress_parser, typeIR_arg*)
+  -- if typedExpressionIR_egress_parser
+      = (typedExpressionIR_egress_pipeline `. "ep")
+          `# `( typeIR_egress_parser CTK )
+
+dec $PSA_setup_egress_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_egress_callee(
+    EC, ARCH, typedExpressionIR_egress_pipeline
+  )
+  = typedExpressionIR_egress
+  ---- ;; get egress type definition
+  -- if typeDefIR_egress = $find_typeDef_e(GLOBAL, EC, `` "Egress")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_egress_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_egress_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  ---- ;; create callee
+  -- if typeIR_arg* = [ typeIR_egress_hdr, typeIR_egress_user_meta ]
+  -- if typeIR_egress
+      = $specialize_typeDefIR(typeDefIR_egress, typeIR_arg*)
+  -- if typedExpressionIR_egress
+      = (typedExpressionIR_egress_pipeline `. "eg")
+          `# `( typeIR_egress CTK )
+
+dec $PSA_setup_egress_deparser_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_egress_deparser_callee(
+    EC, ARCH, typedExpressionIR_egress_pipeline
+  )
+  = typedExpressionIR_egress_deparser
+  ---- ;; get egress deparser type definition
+  -- if typeDefIR_egress_deparser = $find_typeDef_e(GLOBAL, EC, `` "EgressDeparser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_egress_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_egress_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_egress_hdr, typeIR_egress_user_meta,
+          typeIR_clone_e2e_meta, typeIR_recirculate_meta ]
+  -- if typeIR_egress_deparser
+      = $specialize_typeDefIR(typeDefIR_egress_deparser, typeIR_arg*)
+  -- if typedExpressionIR_egress_deparser
+      = (typedExpressionIR_egress_pipeline `. "ed")
+          `# `( typeIR_egress_deparser CTK )
+
+;;
+;; PSA egress parser invocation
+;;
+
+relation PSA_egress_parser:
+  evalContext arch |- evalContext arch transitionResult
+  hint(input %0 %1)
+
+rulegroup PSA_egress_parser {
+
+  rule PSA_egress_parser/cont:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 ACCEPT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $PSA_setup_egress_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_parser_input_metadata
+        = $PSA_setup_egress_parser_input_metadata_argument(EC_0)
+    -- if argumentIR_normal_meta
+        = $PSA_setup_normal_meta_argument(ARCH_0)
+    -- if argumentIR_clone_i2e_meta
+        = $PSA_setup_clone_i2e_meta_argument(ARCH_0)
+    -- if argumentIR_clone_e2e_meta
+        = $PSA_setup_clone_e2e_meta_argument(ARCH_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_parser_input_metadata,
+            argumentIR_normal_meta, argumentIR_clone_i2e_meta,
+            argumentIR_clone_e2e_meta ]
+    ---- ;; invoke the parser object (main.egress.ep)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ep
+        = $PSA_setup_egress_parser_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ep `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+
+  rule PSA_egress_parser/reject:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 rejectTransitionResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $PSA_setup_egress_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_parser_input_metadata
+        = $PSA_setup_egress_parser_input_metadata_argument(EC_0)
+    -- if argumentIR_normal_meta
+        = $PSA_setup_normal_meta_argument(ARCH_0)
+    -- if argumentIR_clone_i2e_meta
+        = $PSA_setup_clone_i2e_meta_argument(ARCH_0)
+    -- if argumentIR_clone_e2e_meta
+        = $PSA_setup_clone_e2e_meta_argument(ARCH_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_parser_input_metadata,
+            argumentIR_normal_meta, argumentIR_clone_i2e_meta,
+            argumentIR_clone_e2e_meta ]
+    ---- ;; invoke the parser object (main.egress.ep)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ep
+        = $PSA_setup_egress_parser_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ep `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 rejectTransitionResult
+
+}
+
+;;
+;; PSA egress invocation
+;;
+
+relation PSA_egress:
+  evalContext arch |- evalContext arch callResult
+  hint(input %0 %1)
+
+rulegroup PSA_egress {
+
+  rule PSA_egress/exit:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_input_metadata
+        = $PSA_setup_egress_input_metadata_argument(EC_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_egress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_input_metadata, argumentIR_output_metadata ]
+    ---- ;; invoke the egress object (main.egress.eg)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_eg
+        = $PSA_setup_egress_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 EXIT
+
+  rule PSA_egress/cont:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_input_metadata
+        = $PSA_setup_egress_input_metadata_argument(EC_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_egress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_input_metadata, argumentIR_output_metadata ]
+    ---- ;; invoke the egress object (main.egress.eg)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_eg
+        = $PSA_setup_egress_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+}
+
+;;
+;; PSA egress deparser invocation
+;;
+
+relation PSA_egress_deparser:
+  evalContext arch |- evalContext arch callResult
+  hint(input %0 %1)
+
+rulegroup PSA_egress_deparser {
+
+  rule PSA_egress_deparser/continueEmptyResult:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $PSA_setup_egress_packet_out_argument(EC_0)
+    -- if argumentIR_clone_e2e_meta
+        = $PSA_setup_clone_e2e_meta_argument(ARCH_0)
+    -- if argumentIR_recirculate_meta
+        = $PSA_setup_recirculate_meta_argument(ARCH_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_egress_output_metadata_argument(EC_0)
+    -- if argumentIR_deparser_input_metadata
+        = $PSA_setup_egress_deparser_input_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_out, argumentIR_clone_e2e_meta,
+            argumentIR_recirculate_meta, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_output_metadata,
+            argumentIR_deparser_input_metadata ]
+    ---- ;; invoke the deparser object (main.egress.ed)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ed
+        = $PSA_setup_egress_deparser_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ed `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+
+  rule PSA_egress_deparser/exit:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $PSA_setup_egress_packet_out_argument(EC_0)
+    -- if argumentIR_clone_e2e_meta
+        = $PSA_setup_clone_e2e_meta_argument(ARCH_0)
+    -- if argumentIR_recirculate_meta
+        = $PSA_setup_recirculate_meta_argument(ARCH_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_egress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_egress_user_meta_argument(ARCH_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_egress_output_metadata_argument(EC_0)
+    -- if argumentIR_deparser_input_metadata
+        = $PSA_setup_egress_deparser_input_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_out, argumentIR_clone_e2e_meta,
+            argumentIR_recirculate_meta, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_output_metadata,
+            argumentIR_deparser_input_metadata ]
+    ---- ;; invoke the deparser object (main.egress.ed)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_egress_pipeline
+        = $PSA_setup_egress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ed
+        = $PSA_setup_egress_deparser_callee(
+              EC_0, ARCH_0, typedExpressionIR_egress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ed `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 EXIT
+
+}
