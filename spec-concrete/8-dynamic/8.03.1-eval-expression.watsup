@@ -492,8 +492,9 @@ rulegroup Expr_eval/indexAccessExpressionIR {
         p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                        : EC_1 ARCH_1 (`` ([ headerStackValue_base, integerValue_index ]))
     -- if HEADER_STACK `[ value_elem* `( _ `; n_size ) ] = headerStackValue_base
-    -- if n_index = $nat_of_integerValue(integerValue_index)
-    -- if n_idx = $ite<int>($(n_index < n_size), n_index, $(n_size - 1))
+    -- if i_index = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_index < n_size) /\ $(i_index >= 0))
+    -- if n_idx = $ite<int>(b_in_bounds, i_index, $(n_size - 1))
     -- if expressionResult = `` value_elem*[n_idx]
 
 }

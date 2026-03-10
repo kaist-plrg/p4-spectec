@@ -15005,8 +15005,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Check that ``value`` has type ``integerValue``.
   ... Let ``integerValue~index~`` be ``value``.
   ... Let ``+HEADER_STACK+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-  ... Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-  ... Let ``int`` be xref:ite[``n~index~`` if ``n~index~`` is less than ``n~size~`` otherwise ``n~size~`` ``-`` ``1``].
+  ... Let ``i~index~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+  ... Let ``b~in_bounds~`` be ``i~index~`` is less than ``n~size~`` and ``i~index~`` is greater than or equal to ``0``.
+  ... Let ``int`` be xref:ite[``i~index~`` if ``b~in_bounds~`` otherwise ``n~size~`` ``-`` ``1``].
   ... Check that ``int`` has type ``nat``.
   ... Let ``n~idx~`` be ``int``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
@@ -15251,11 +15252,14 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
 . Check that ``value'`` has type ``headerStackValue``.
 . Let ``headerStackValue~base~`` be ``value'``.
 . Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-. Let ``n~idx~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-. If ``n~idx~`` is less than ``n~size~``:
+. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+. If ``b~in_bounds~``:
+ .. Check that ``i~idx~`` has type ``nat``.
+ .. Let ``n~idx~`` be ``i~idx~``.
  .. Let ``value''`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in value ``value''``.
-. If ``n~idx~`` is greater than or equal to ``n~size~``:
+. Else:
  .. Let ``value''`` be ``value~element~^{asterisk}^[0]``.
  .. Check that ``value''`` has type ``headerValue``.
  .. Let ``+HEADER+`` ``typeId`` ``+{+`` ``b~valid~`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``value''``.
@@ -15334,14 +15338,17 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference'`` ``+.+`` ``nameIR``,
 . Check that ``value''`` has type ``headerStackValue``.
 . Let ``headerStackValue~base~`` be ``value''``.
 . Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-. Let ``n~idx~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-. If ``n~idx~`` is less than ``n~size~``:
+. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+. If ``b~in_bounds~``:
+ .. Check that ``i~idx~`` has type ``nat``.
+ .. Let ``n~idx~`` be ``i~idx~``.
  .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
  .. Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
  .. Let context ``EC~1~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
  .. Result in context ``EC~1~``.
-. If ``n~idx~`` is greater than or equal to ``n~size~``:
+. Else:
  .. Result in context ``EC~0~``.
 
 <<Lvalue_write,Writing ``value`` to ``storageReference'`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``, under context ``EC~0~`` and state ``ARCH`` at ``p``>>:

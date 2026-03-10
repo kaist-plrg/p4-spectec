@@ -24095,10 +24095,9 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if value' <: integerValue
     -- let integerValue_index = value' as integerValue
     -- let header_stack[ value_elem*{value_elem <- value_elem*} ( _nat ; n_size )] = headerStackValue_base
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n_index) = nat?{nat <- nat?}
-    -- let int = $ite<int>((n_index < n_size), n_index as int, (n_size - 1))
+    -- let i_index = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_index < n_size as int) /\ (i_index >= 0 as int))
+    -- let int = $ite<int>(b_in_bounds, i_index, (n_size - 1))
     -- if int <: nat
     -- let n_idx = int as nat
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
@@ -24642,10 +24641,12 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = headerStackValue_base
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n_idx) = nat?{nat <- nat?}
-    -- if (n_idx < n_size)
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if b_in_bounds
+    -- let int = i_idx
+    -- if int <: nat
+    -- let n_idx = int as nat
     -- let value = value_element*{value_element <- value_element*}[n_idx]
     -- output: % % % |- % : value
 
@@ -24654,10 +24655,9 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = headerStackValue_base
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n_idx) = nat?{nat <- nat?}
-    -- if (n_idx >= n_size)
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if ~b_in_bounds
     -- let value''' = value_element*{value_element <- value_element*}[0]
     -- if value''' <: headerValue
     -- let header typeId { b_valid ; fieldValue*{fieldValue <- fieldValue*} } = value''' as headerValue
@@ -24802,10 +24802,12 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( n_base_idx ; n_size )] = headerStackValue_base
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n_idx) = nat?{nat <- nat?}
-    -- if (n_idx < n_size)
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if b_in_bounds
+    -- let int = i_idx
+    -- if int <: nat
+    -- let n_idx = int as nat
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = header_stack[ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ; n_size )]
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerStackValue_base_update as value : EC_1
@@ -24816,10 +24818,9 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
     -- let header_stack[ value_element*{value_element <- value_element*} ( _nat ; n_size )] = headerStackValue_base
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n_idx) = nat?{nat <- nat?}
-    -- if (n_idx >= n_size)
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if ~b_in_bounds
     -- output: % % % |- % -> % : EC_0
 
   rulegroup sliceAccess
