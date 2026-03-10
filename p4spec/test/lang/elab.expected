@@ -17007,6 +17007,31 @@ def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typ
 
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r) = ?()
 
+def $nat_to_error_nameIR(nat) : nameIR? =
+
+  clause 0 : (nat) = ?("NoError")
+  -- if (nat = 0)
+
+  clause 1 : (nat) = ?("PacketTooShort")
+  -- if (nat = 1)
+
+  clause 2 : (nat) = ?("NoMatch")
+  -- if (nat = 2)
+
+  clause 3 : (nat) = ?("StackOutOfBounds")
+  -- if (nat = 3)
+
+  clause 4 : (nat) = ?("HeaderTooShort")
+  -- if (nat = 4)
+
+  clause 5 : (nat) = ?("ParserTimeout")
+  -- if (nat = 5)
+
+  clause 6 : (nat) = ?("ParserInvalidArgument")
+  -- if (nat = 6)
+
+  clause -1 : (n) = ?()
+
 def $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR? =
 
   clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
@@ -17021,7 +17046,25 @@ def $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR? =
   -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR as expressionIR # ( typeIR_to ctk )
 
-  clause 2 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  clause 2 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_error)
+  -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
+  -- if (error as typeIR = typeIR_to)
+  -- let expressionIR # ( typeIR ctk ) = typedExpressionIR
+  -- if expressionIR <: integerLiteral
+  -- let integerLiteral = expressionIR as integerLiteral
+  -- if integerLiteral matches `D%`
+  -- let d int = integerLiteral
+  -- if int <: nat
+  -- let n = int as nat
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = int)
+  -- let nameIR'?{nameIR' <- nameIR'?} = $nat_to_error_nameIR(n)
+  -- if nameIR'?{nameIR' <- nameIR'?} matches (_)
+  -- let ?(nameIR) = nameIR'?{nameIR' <- nameIR'?}
+  -- let typedExpressionIR_error = error. nameIR as expressionIR # ( typeIR_to ctk )
+
+  clause 3 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
   -- let typeIR = typeIR_to
   -- if typeIR <: typedefTypeIR
@@ -17032,7 +17075,7 @@ def $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR? =
   -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR_typedef as expressionIR # ( typeIR_to ctk )
 
-  clause 3 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  clause 4 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
   -- let typeIR = typeIR_to
   -- if typeIR <: newTypeIR
@@ -17043,7 +17086,7 @@ def $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR? =
   -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
   -- let typedExpressionIR_cast = ( typeIR_to ) typedExpressionIR_newtype as expressionIR # ( typeIR_to ctk )
 
-  clause 4 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
+  clause 5 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- if (?() = $cast_unary(typedExpressionIR, typeIR_to))
   -- let typeIR = typeIR_to
   -- if typeIR <: serializableEnumTypeIR

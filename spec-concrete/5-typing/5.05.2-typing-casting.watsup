@@ -569,8 +569,19 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r) = eps
 
 ;;; Cast control plane-given values, which may need multiple casts inserted
 
+dec $nat_to_error_nameIR(nat) : nameIR?
+def $nat_to_error_nameIR(0) = "NoError"
+def $nat_to_error_nameIR(1) = "PacketTooShort"
+def $nat_to_error_nameIR(2) = "NoMatch"
+def $nat_to_error_nameIR(3) = "StackOutOfBounds"
+def $nat_to_error_nameIR(4) = "HeaderTooShort"
+def $nat_to_error_nameIR(5) = "ParserTimeout"
+def $nat_to_error_nameIR(6) = "ParserInvalidArgument"
+def $nat_to_error_nameIR(n) = eps
+  -- otherwise
+
 dec $cast_control_plane(typedExpressionIR, typeIR) : typedExpressionIR?
-  hint(prose_in %0 "implicitly cast to" %1)
+  hint(prose_in %0 "from control plane cast to" %1)
 
 def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
   -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_to)
@@ -582,6 +593,14 @@ def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
   -- if typedExpressionIR_cast
       = (`(typeIR_to) typedExpressionIR) `# `( typeIR_to ctk )
+
+def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_error
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if ERROR = typeIR_to
+  -- if (D n) `# `( INT ctk ) = typedExpressionIR
+  -- if nameIR = $nat_to_error_nameIR(n)
+  -- if typedExpressionIR_error
+      = (ERROR `. nameIR) `# `( typeIR_to ctk )
 
 def $cast_control_plane(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
   -- if eps = $cast_unary(typedExpressionIR, typeIR_to)

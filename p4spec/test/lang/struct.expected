@@ -22503,6 +22503,42 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
   1. Return ?()
 
+def $nat_to_error_nameIR(nat)
+
+1. Case analysis on nat
+
+  1. Case (% = 0)
+
+    1. Return ?("NoError")
+
+  2. Case (% = 1)
+
+    1. Return ?("PacketTooShort")
+
+  3. Case (% = 2)
+
+    1. Return ?("NoMatch")
+
+  4. Case (% = 3)
+
+    1. Return ?("StackOutOfBounds")
+
+  5. Case (% = 4)
+
+    1. Return ?("HeaderTooShort")
+
+  6. Case (% = 5)
+
+    1. Return ?("ParserTimeout")
+
+  7. Case (% = 6)
+
+    1. Return ?("ParserInvalidArgument")
+
+2. Otherwise,
+
+  1. Return ?()
+
 def $cast_control_plane(typedExpressionIR, typeIR_to)
 
 1. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR_to))
@@ -22525,7 +22561,37 @@ def $cast_control_plane(typedExpressionIR, typeIR_to)
 
           1. Return ?(typedExpressionIR_cast)
 
-  2. Case analysis on typeIR_to
+  2. If ((((error) as typeIR) = typeIR_to)), then
+
+    1. (Let (expressionIR # (( typeIR ctk ))) be typedExpressionIR)
+
+      1. If ((expressionIR has type integerLiteral)), then
+
+        1. (Let integerLiteral be (expressionIR as integerLiteral))
+
+          1. If ((integerLiteral matches pattern `D%`)), then
+
+            1. (Let (d int) be integerLiteral)
+
+              1. If ((int has type nat)), then
+
+                1. (Let n be (int as nat))
+
+                  1. If ((typeIR has type intTypeIR)), then
+
+                    1. (Let intTypeIR be (typeIR as intTypeIR))
+
+                      1. (Let (nameIR)? be $nat_to_error_nameIR(n))
+
+                        1. If (((nameIR)? matches pattern (_))), then
+
+                          1. (Let ?(nameIR') be (nameIR)?)
+
+                            1. (Let typedExpressionIR_error be (((error. nameIR') as expressionIR) # (( typeIR_to ctk ))))
+
+                              1. Return ?(typedExpressionIR_error)
+
+  3. Case analysis on typeIR_to
 
     1. Case (% has type typedefTypeIR)
 
