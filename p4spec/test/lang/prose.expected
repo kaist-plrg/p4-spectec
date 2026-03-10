@@ -13688,7 +13688,11 @@ xref:InstDecl_inst[Loading ``annotationList`` ``typeIR`` ``constructorTargetIR``
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
  .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
  .. Result in context ``IC~1~``, store ``STO~3~``, and reference to object ``constantDeclarationIR``.
-. Else:
+. Let ``nameIR'`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
+. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR'`` added to the path].
+. Let store ``STO~1~`` and instantiated ``object`` be
+* the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].
+. If ``object`` does not have type ``externObject``:
  .. Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.
  .. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object`` is added].
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
