@@ -288,6 +288,9 @@ def $add_callableDef_non_overload_t(BLOCK, TC, callableId, callableTypeDefIR) = 
 dec $add_constructorDef_t(typingContext, callableId, constructorTypeDefIR)
   : typingContext
   hint(prose_in "where" %1 "to" %2 "is added to" %0)
+dec $add_constructorDef_non_overload_t(typingContext, callableId, constructorTypeDefIR)
+  : typingContext
+  hint(prose_in "where" %1 "to" %2 "is added to" %0)
 dec $add_constructorDefs_t(typingContext, callableId*, constructorTypeDefIR*)
   : typingContext
   hint(prose_in "where each of" %1 "to each of" %2 "are added to" %0)
@@ -296,6 +299,17 @@ def $add_constructorDef_t(TC, callableId, constructorTypeDefIR) = TC'
   -- if constructorTypeDefEnv = TC.GLOBAL.CONSTRUCTOR
   -- if ~$in_set<callableId>(
           callableId, $dom_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv))
+  -- if constructorTypeDefEnv_update
+        = $add_map<callableId, constructorTypeDefIR>(
+            constructorTypeDefEnv, callableId, constructorTypeDefIR)
+  -- if TC' = TC [ .GLOBAL.CONSTRUCTOR = constructorTypeDefEnv_update ]
+
+def $add_constructorDef_non_overload_t(TC, callableId, constructorTypeDefIR) = TC'
+  -- if constructorTypeDefEnv = TC.GLOBAL.CONSTRUCTOR
+  -- if nameIR `( _ ) = callableId
+  -- if `{ (nameIR_k `( _ ))* }
+      = $dom_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv)
+  -- if ~$in_set<nameIR>(nameIR, `{ nameIR_k* })
   -- if constructorTypeDefEnv_update
         = $add_map<callableId, constructorTypeDefIR>(
             constructorTypeDefEnv, callableId, constructorTypeDefIR)

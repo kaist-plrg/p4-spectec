@@ -8279,6 +8279,16 @@ def $add_constructorDef_t(typingContext, callableId, constructorTypeDefIR) : typ
   -- let constructorTypeDefEnv_update = $add_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv, callableId, constructorTypeDefIR)
   -- let TC' = TC[global.constructor = constructorTypeDefEnv_update]
 
+def $add_constructorDef_non_overload_t(typingContext, callableId, constructorTypeDefIR) : typingContext =
+
+  clause 0 : (TC, callableId, constructorTypeDefIR) = TC'
+  -- let constructorTypeDefEnv = TC.global.constructor
+  -- let nameIR ( _id*{_id <- _id*} ) = callableId
+  -- let { nameIR_k ( _id'*{_id' <- _id'*} )*{_id'* <- _id'**, nameIR_k <- nameIR_k*} } = $dom_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv)
+  -- if ~$in_set<nameIR>(nameIR, { nameIR_k*{nameIR_k <- nameIR_k*} })
+  -- let constructorTypeDefEnv_update = $add_map<callableId, constructorTypeDefIR>(constructorTypeDefEnv, callableId, constructorTypeDefIR)
+  -- let TC' = TC[global.constructor = constructorTypeDefEnv_update]
+
 def $add_constructorDefs_t(typingContext, callableId*, constructorTypeDefIR*) : typingContext =
 
   clause 0 : (TC, callableId*{callableId <- callableId*}, constructorTypeDefIR*{constructorTypeDefIR <- constructorTypeDefIR*}) = TC
@@ -16036,7 +16046,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let typeIR_package = $typeIR_of_typeDefIR(packageObjectTypeDefIR as typeDefIR)
     -- let constructorTypeDefIR = constructor< typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_package
     -- if ConstructorTypeDef_wf: B |- constructorTypeDefIR holds
-    -- let TC_5 = $add_constructorDef_t(TC_4, constructorId, constructorTypeDefIR)
+    -- let TC_5 = $add_constructorDef_non_overload_t(TC_4, constructorId, constructorTypeDefIR)
     -- let packageTypeDeclarationIR = annotationList package nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} );
     -- output: % |- % : TC_5 packageTypeDeclarationIR as declarationIR
 

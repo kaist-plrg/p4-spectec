@@ -4806,6 +4806,17 @@ xref:add_constructorDef_t[Where ``callableId`` to ``constructorTypeDefIR`` is ad
 . Let ``TC'`` be ``TC`` with ``+GLOBAL+.+CONSTRUCTOR+`` set to ``constructorTypeDefEnv~update~``.
 . Return ``TC'``.
 
+xref:add_constructorDef_non_overload_t[Where ``callableId`` to ``constructorTypeDefIR`` is added to ``TC``]
+
+
+. Let ``constructorTypeDefEnv`` be ``TC.+GLOBAL+.+CONSTRUCTOR+``.
+. Let ``nameIR`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId``.
+. Let ``+{+`` ``(`` ``nameIR~k~`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` ``)^{asterisk}^`` ``+}+`` be xref:dom_map[the domain of the map ``constructorTypeDefEnv``].
+. Check that ``~xref:in_set[$in_set<nameIR>(nameIR,`` ``+{+`` ``nameIR~k~^{asterisk}^`` ``+}+)]``.
+. Let ``constructorTypeDefEnv~update~`` be xref:add_map[``constructorTypeDefEnv`` where ``callableId`` to ``constructorTypeDefIR`` is added].
+. Let ``TC'`` be ``TC`` with ``+GLOBAL+.+CONSTRUCTOR+`` set to ``constructorTypeDefEnv~update~``.
+. Return ``TC'``.
+
 xref:add_constructorDefs_t[Where each of ``callableId^{asterisk}^`` to each of ``constructorTypeDefIR^{asterisk}^`` are added to ``TC``]
 
 
@@ -9793,7 +9804,7 @@ for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
 . Let ``typeIR~package~`` be xref:typeIR_of_typeDefIR[the underlying type of ``packageObjectTypeDefIR``].
 . Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~package~``.
 . Check that xref:ConstructorTypeDef_wf[``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``B``].
-. Let ``TC~5~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~4~``].
+. Let ``TC~5~`` be xref:add_constructorDef_non_overload_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~4~``].
 . Let ``packageTypeDeclarationIR`` be ``annotationList`` ``+PACKAGE+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+;+``.
 . Result in context ``TC~5~`` and ``packageTypeDeclarationIR``.
 
