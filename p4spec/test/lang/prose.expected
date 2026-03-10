@@ -14819,11 +14819,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``true``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 
 xref:Expr_eval[Evaluating ``typedExpressionIR~cond~`` ``+?+`` ``typedExpressionIR~true~`` ``+:+`` ``typedExpressionIR~false~`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
@@ -15517,33 +15515,12 @@ xref:Stmt_eval[Runtime evaluation of ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` 
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
- .. Check that ``value`` has type ``tableMetadataEnumValue``.
- .. Let ``+TABLE_ENUM+`` ``++_++`` ``+.+`` ``id~enum~`` be ``value``.
- .. Let the matched block ``blockStatementIR^?^`` be
-* the result of xref:SwitchCases_table_eval[runtime evaluation of ``switchCaseIR^{asterisk}^`` for invocation of table ``id~enum~``].
- .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
-  ... Let context ``EC~2~``, state ``ARCH~2~``, and ``statementResult`` be
-* the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].
+ .. If let ``+TABLE_ENUM+`` ``++_++`` ``+.+`` ``id~enum~`` be ``value``:
+  ... Let xref:Switch_table_eval[EC~1~ ARCH~1~ +|-+ +SWITCH+ +(+ id~enum~ +)+ +{+ switchCaseIR^{asterisk}^ +}+ +:+ EC~2~ ARCH~2~ statementResult].
   ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``statementResult``.
  .. Else:
-  ... Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
-
-xref:Stmt_eval[Runtime evaluation of ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+``, under context ``EC`` and state ``ARCH`` at ``+LOCAL+``]:
-
-. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
-* the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC`` and state ``ARCH`` at ``+LOCAL+``].
-. If let ``abortResult`` be ``expressionResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
-. Else:
- .. Let ``value`` be ``expressionResult``.
- .. Let the updated evaluation context ``EC~2~``, state ``ARCH~2~``, and ``blockStatementIR^?^`` be
-* the result of xref:SwitchCases_general_eval[runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``+LOCAL+`` and state ``EC~1~`` with switch key ``value``].
- .. If let ``blockStatementIR'`` be ``blockStatementIR^?^``:
-  ... Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
-* the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``+LOCAL+``].
-  ... Result in context ``EC~3~``, state ``ARCH~3~``, and ``statementResult``.
- .. Else:
-  ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``+`EMPTY+``.
+  ... Let xref:Switch_general_eval[EC~1~ ARCH~1~ +|-+ +SWITCH+ +(+ value +)+ +{+ switchCaseIR^{asterisk}^ +}+ +:+ EC~2~ ARCH~2~ statementResult].
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``statementResult``.
 
 xref:BlockElementStmt_eval[BlockElementStmt_eval]:
 
@@ -16967,6 +16944,20 @@ xref:ForInStmt_eval[Looping over ``value^{asterisk}^`` with loop variable ``name
   ... Result in 
 * the updated evaluation context ``EC~3~``, state ``ARCH~2~``, and ``statementResult'``.
 
+xref:Switch_table_eval[Switch_table_eval: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``+SWITCH+`` ``+(+`` ``id~enum~`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+`` ``+:+`` ``%`` ``%`` ``%``]
+
+xref:Switch_table_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``+SWITCH+`` ``+(+`` ``id~enum~`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+`` ``+:+`` ``%`` ``%`` ``%``]:
+
+. Let the matched block ``blockStatementIR^?^`` be
+* the result of xref:SwitchCases_table_eval[runtime evaluation of ``switchCaseIR^{asterisk}^`` for invocation of table ``id~enum~``].
+. If ``blockStatementIR^?^`` is none:
+ .. Result in ``EC~0~``, ``ARCH~0~``, and ``+`EMPTY+``.
+. Else:
+ .. Let ``blockStatementIR'`` be ``blockStatementIR^?^``.
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``statementResult``.
+
 xref:match_switchLabelIR_table[``id`` matches ``switchLabelIR``]
 
 
@@ -17024,6 +17015,20 @@ xref:is_non_fallthrough_switchCaseIR[``switchCaseIR`` is not a fall-through case
 
 . If ``switchCaseIR`` matches pattern ``%`` ``:`` ``%``: return ``true``.
 . Else: return ``false``.
+
+xref:Switch_general_eval[Switch_general_eval: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``+SWITCH+`` ``+(+`` ``value`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+`` ``+:+`` ``%`` ``%`` ``%``]
+
+xref:Switch_general_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``+SWITCH+`` ``+(+`` ``value`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+`` ``+:+`` ``%`` ``%`` ``%``]:
+
+. Let the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``blockStatementIR^?^`` be
+* the result of xref:SwitchCases_general_eval[runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``+LOCAL+`` and state ``EC~0~`` with switch key ``value``].
+. If ``blockStatementIR^?^`` is none:
+ .. Result in ``EC~1~``, ``ARCH~1~``, and ``+`EMPTY+``.
+. Else:
+ .. Let ``blockStatementIR'`` be ``blockStatementIR^?^``.
+ .. Let context ``EC~2~``, state ``ARCH~2~``, and ``statementResult`` be
+* the result of xref:Stmt_eval[runtime evaluation of ``blockStatementIR'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].
+ .. Result in ``EC~2~``, ``ARCH~2~``, and ``statementResult``.
 
 xref:SwitchLabel_general_eval[SwitchLabel_general_eval]:
 

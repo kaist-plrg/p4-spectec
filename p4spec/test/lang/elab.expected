@@ -23661,15 +23661,6 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (binop' = ||)
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
     -- if (expressionResult' = ` `b false as value as expressionResult)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult''
-    -- if expressionResult'' <: abortResult
-    -- let abortResult = expressionResult'' as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as expressionResult
-
-    rulepath lor-false
-    -- if (binop' = ||)
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
-    -- if (expressionResult' = ` `b false as value as expressionResult)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult_r
     -- output: % % % |- % : EC_2 ARCH_2 expressionResult_r
 
@@ -25231,7 +25222,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     rulepath continueStatementIR
     -- output: % % % |- % : EC ARCH continue as statementResult
 
-  rulegroup switchStatementIR-table
+  rulegroup switchStatementIR
 
    match
 
@@ -25249,65 +25240,23 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % : EC_1 ARCH_1 abortResult as statementResult
 
-    rulepath target-cont-match
+    rulepath target-cont-table
     -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
     -- let value' = value
     -- if value' <: tableMetadataEnumValue
     -- let table_enum _typeId . id_enum = value' as tableMetadataEnumValue
-    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
-    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- Stmt_eval: local EC_1 ARCH_1 |- blockStatementIR as statementIR : EC_2 ARCH_2 statementResult
+    -- Switch_table_eval: EC_1 ARCH_1 |-switch( id_enum ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: EC_2 ARCH_2 statementResult
     -- output: % % % |- % : EC_2 ARCH_2 statementResult
 
-    rulepath target-cont-no-match
+    rulepath target-cont-general
     -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
-    -- let value' = value
-    -- if value' <: tableMetadataEnumValue
-    -- let table_enum _typeId . id_enum = value' as tableMetadataEnumValue
-    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
-    -- output: % % % |- % : EC_1 ARCH_1 `empty as statementResult
-
-  rulegroup switchStatementIR-general
-
-   match
-
-    (signature) local EC_0 ARCH_0 |- switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } as statementIR : % % %
-    cursor EC_0 ARCH_0 |- statementIR : % % %
-    -- if cursor matches `LOCAL`
-    -- if statementIR <: switchStatementIR
-    -- let switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } = statementIR as switchStatementIR
-
-   paths
-
-    rulepath target-abort
-    -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: abortResult
-    -- let abortResult = expressionResult as abortResult
-    -- output: % % % |- % : EC_1 ARCH_1 abortResult as statementResult
-
-    rulepath target-cont-match
-    -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: continueResult<value>
-    -- let ` value = expressionResult as continueResult<value>
-    -- SwitchCases_general_eval: local EC_1 ARCH_1 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_2 ARCH_2 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
-    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- Stmt_eval: local EC_2 ARCH_2 |- blockStatementIR as statementIR : EC_3 ARCH_3 statementResult
-    -- output: % % % |- % : EC_3 ARCH_3 statementResult
-
-    rulepath target-cont-no-match
-    -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: continueResult<value>
-    -- let ` value = expressionResult as continueResult<value>
-    -- SwitchCases_general_eval: local EC_1 ARCH_1 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_2 ARCH_2 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
-    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
-    -- output: % % % |- % : EC_2 ARCH_2 `empty as statementResult
+    -- if ~value <: tableMetadataEnumValue
+    -- Switch_general_eval: EC_1 ARCH_1 |-switch( value ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: EC_2 ARCH_2 statementResult
+    -- output: % % % |- % : EC_2 ARCH_2 statementResult
 
 relation BlockElementStmt_eval: evalContext arch |- blockElementStatementIR : evalContext arch statementResult
 
@@ -27913,6 +27862,29 @@ relation ForInStmt_eval: evalContext arch |- nameIR value* statementIR : evalCon
     -- ForInStmt_eval: EC_2 ARCH_1 |- nameIR value_t*{value_t <- value_t*} statementIR : EC_3 ARCH_2 statementResult
     -- output: % % |- % % % : EC_3 ARCH_2 statementResult
 
+relation Switch_table_eval: evalContext arch |-switch( id ){ switchCaseIR* }: evalContext arch statementResult
+
+  rulegroup 
+
+   match
+
+    (signature) EC_0 ARCH_0 |-switch( id_enum ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: % % %
+    EC_0 ARCH_0 |-switch( id_enum ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: % % %
+
+   paths
+
+    rulepath no-match
+    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
+    -- output: % % |-switch( % ){ % }: EC_0 ARCH_0 `empty as statementResult
+
+    rulepath match
+    -- SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
+    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- Stmt_eval: local EC_0 ARCH_0 |- blockStatementIR as statementIR : EC_1 ARCH_1 statementResult
+    -- output: % % |-switch( % ){ % }: EC_1 ARCH_1 statementResult
+
 def $match_switchLabelIR_table(id, switchLabelIR) : bool =
 
   clause 0 : (id, switchLabelIR) = true
@@ -28000,6 +27972,29 @@ def $is_non_fallthrough_switchCaseIR(switchCaseIR) : bool =
   clause 1 : (switchCaseIR) = false
   -- if switchCaseIR matches `%:`
   -- let switchLabelIR : = switchCaseIR
+
+relation Switch_general_eval: evalContext arch |-switch( value ){ switchCaseIR* }: evalContext arch statementResult
+
+  rulegroup 
+
+   match
+
+    (signature) EC_0 ARCH_0 |-switch( value ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: % % %
+    EC_0 ARCH_0 |-switch( value ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} }: % % %
+
+   paths
+
+    rulepath no-match
+    -- SwitchCases_general_eval: local EC_0 ARCH_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_1 ARCH_1 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches ()
+    -- output: % % |-switch( % ){ % }: EC_1 ARCH_1 `empty as statementResult
+
+    rulepath match
+    -- SwitchCases_general_eval: local EC_0 ARCH_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_1 ARCH_1 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- if blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} matches (_)
+    -- let ?(blockStatementIR) = blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+    -- Stmt_eval: local EC_1 ARCH_1 |- blockStatementIR as statementIR : EC_2 ARCH_2 statementResult
+    -- output: % % |-switch( % ){ % }: EC_2 ARCH_2 statementResult
 
 relation SwitchLabel_general_eval: cursor evalContext arch |- switchLabelIR : evalContext arch expressionResult
 
