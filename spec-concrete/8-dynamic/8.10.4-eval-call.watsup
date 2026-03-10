@@ -362,12 +362,41 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_0 ARCH_0 |- argumentIR
                       : EC_1 ARCH_1 (`` integerValue_count)
     -- if n_count = $nat_of_integerValue(integerValue_count)
+    -- if $(n_count < n_size)
     ---- ;; push front operation
     -- if value_front* = value_element*[0 : n_count]
     -- if (value_front_invalidated = $invalidate_value(value_front))*
     -- if n_back = $max_int([ 0, $(n_size - n_count) ])
     -- if value_back* = value_element*[0 : n_back]
     -- if value_element_updated* = value_front_invalidated* ++ value_back*
+    -- if n_idx_updated = $min_nat([ n_size, $(n_idx + n_count) ])
+    -- if headerStackValue_updated
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+    ---- ;; write back the updated header stack
+    -- Lvalue_write:
+        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
+                      : EC_2
+
+  rule Call_eval/header-stack-push_front-cont-overflow:
+    p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                   : EC_2 ARCH_1 (RETURN eps)
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "push_front"
+            `< eps > `( parameterIR )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 ARCH_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 ARCH_0 |- argumentIR
+                      : EC_1 ARCH_1 (`` integerValue_count)
+    -- if n_count = $nat_of_integerValue(integerValue_count)
+    -- if $(n_count >= n_size)
+    ---- ;; push front operation
+    -- if (value_element_updated = $invalidate_value(value_element))*
     -- if n_idx_updated = $min_nat([ n_size, $(n_idx + n_count) ])
     -- if headerStackValue_updated
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
@@ -409,6 +438,7 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_0 ARCH_0 |- argumentIR
                       : EC_1 ARCH_1 (`` integerValue_count)
     -- if n_count = $nat_of_integerValue(integerValue_count)
+    -- if $(n_count < n_size)
     ---- ;; pop front operation
     -- if n_front = $max_int([ 0, $(n_size - n_count) ])
     -- if value_front* = value_element*[n_count : n_front]
@@ -416,6 +446,34 @@ rulegroup Call_eval/builtinMethodCallee {
     -- if (value_back_invalidated = $invalidate_value(value_back))*
     -- if value_element_updated* = value_front* ++ value_back_invalidated*
     -- if n_idx_updated = n_front
+    -- if headerStackValue_updated
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+    ---- ;; write back the updated header stack
+    -- Lvalue_write:
+        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
+                      : EC_2
+
+  rule Call_eval/header-stack-pop_front-cont-overflow:
+    p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
+                   : EC_2 ARCH_1 (RETURN eps)
+    ---- ;; unpack the builtin method callee
+    -- if BUILTIN_METHOD storageReference `. "pop_front"
+            `< eps > `( parameterIR )
+        = builtinMethodCallee
+    ---- ;; read the value
+    -- Lvalue_read: 
+        p EC_0 ARCH_0 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+        = headerStackValue
+    ---- ;; evaluate argument
+    -- Argument_eval:
+        p EC_0 ARCH_0 |- argumentIR
+                      : EC_1 ARCH_1 (`` integerValue_count)
+    -- if n_count = $nat_of_integerValue(integerValue_count)
+    -- if $(n_count >= n_size)
+    ---- ;; pop front operation
+    -- if (value_element_updated = $invalidate_value(value_element))*
+    -- if n_idx_updated = $max_int([ 0, $(n_size - n_count) ])
     -- if headerStackValue_updated
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
     ---- ;; write back the updated header stack

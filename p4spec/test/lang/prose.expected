@@ -16399,24 +16399,38 @@ xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
    .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-   .... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
+   .... If ``n~count~`` is less than ``n~size~``:
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+    ..... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
+     ****** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
 --
 +
 for each ``value~front~`` in ``value~front~^{asterisk}^``
-   .... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~back~`` be ``int``.
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-   .... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-   .... Let context ``EC~2~`` be
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~back~`` be ``int``.
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... If ``n~count~`` is greater than or equal to ``n~size~``:
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
++
+--
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+--
++
+for each ``value~element~`` in ``value~element~^{asterisk}^``
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
  .. Else if ``text`` is equal to ``"pop_front"``:
   ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
   ... Check that ``parameterListIR`` is a list of length 1.
@@ -16433,23 +16447,39 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
    .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~front~`` be ``int``.
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-   .... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
+   .... If ``n~count~`` is less than ``n~size~``:
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~front~`` be ``int``.
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+    ..... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
+     ****** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
 --
 +
 for each ``value~back~`` in ``value~back~^{asterisk}^``
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-   .... Let context ``EC~2~`` be
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... If ``n~count~`` is greater than or equal to ``n~size~``:
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
++
+--
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+--
++
+for each ``value~element~`` in ``value~element~^{asterisk}^``
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~idx_updated~`` be ``int``.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
 . If ``argumentListIR`` is equal to ``·``:
  .. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
  .. If ``text`` is equal to ``"isValid"``:

@@ -26901,6 +26901,7 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
+    -- if (n_count < n_size)
     -- let value_front*{value_front <- value_front*} = value_element*{value_element <- value_element*}[0 : n_count]
     -- (let value_front_invalidated = $invalidate_value(value_front))*{value_front <- value_front*, value_front_invalidated -> value_front_invalidated*}
     -- let int = $max_int([0 as int, (n_size - n_count)])
@@ -26908,6 +26909,36 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let n_back = int as nat
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_back]
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*}
+    -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
+    -- let headerStackValue_updated = header_stack[ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size )]
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- output: % % % |- % @< % >( % ): EC_2 ARCH_1 return ?() as callResult
+
+    rulepath header-stack-push_front-cont-overflow
+    -- let EC_0 = evalContext
+    -- let ARCH_0 = arch
+    -- let argumentListIR' = argumentListIR
+    -- if argumentListIR' matches [ _/1 ]
+    -- let [argumentIR] = argumentListIR'
+    -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterListIR ) = builtinMethodCallee
+    -- if (text = "push_front")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterListIR matches [ _/1 ]
+    -- let [parameterIR] = parameterListIR
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue = value' as headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = headerStackValue
+    -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value'' = expressionResult as continueResult<value>
+    -- if value'' <: integerValue
+    -- let integerValue_count = value'' as integerValue
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_count) = nat?{nat <- nat?}
+    -- if (n_count >= n_size)
+    -- (let value_element_updated = $invalidate_value(value_element))*{value_element <- value_element*, value_element_updated -> value_element_updated*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
     -- let headerStackValue_updated = header_stack[ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size )]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
@@ -26956,6 +26987,7 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
+    -- if (n_count < n_size)
     -- let int = $max_int([0 as int, (n_size - n_count)])
     -- if int <: nat
     -- let n_front = int as nat
@@ -26964,6 +26996,38 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- (let value_back_invalidated = $invalidate_value(value_back))*{value_back <- value_back*, value_back_invalidated -> value_back_invalidated*}
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front*{value_front <- value_front*} ++ value_back_invalidated*{value_back_invalidated <- value_back_invalidated*}
     -- let n_idx_updated = n_front
+    -- let headerStackValue_updated = header_stack[ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size )]
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- output: % % % |- % @< % >( % ): EC_2 ARCH_1 return ?() as callResult
+
+    rulepath header-stack-pop_front-cont-overflow
+    -- let EC_0 = evalContext
+    -- let ARCH_0 = arch
+    -- let argumentListIR' = argumentListIR
+    -- if argumentListIR' matches [ _/1 ]
+    -- let [argumentIR] = argumentListIR'
+    -- let builtin_method storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} >( parameterListIR ) = builtinMethodCallee
+    -- if (text = "pop_front")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterListIR matches [ _/1 ]
+    -- let [parameterIR] = parameterListIR
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue = value' as headerStackValue
+    -- let header_stack[ value_element*{value_element <- value_element*} ( n_idx ; n_size )] = headerStackValue
+    -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let ` value'' = expressionResult as continueResult<value>
+    -- if value'' <: integerValue
+    -- let integerValue_count = value'' as integerValue
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_count) = nat?{nat <- nat?}
+    -- if (n_count >= n_size)
+    -- (let value_element_updated = $invalidate_value(value_element))*{value_element <- value_element*, value_element_updated -> value_element_updated*}
+    -- let int = $max_int([0 as int, (n_size - n_count)])
+    -- if int <: nat
+    -- let n_idx_updated = int as nat
     -- let headerStackValue_updated = header_stack[ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size )]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
     -- output: % % % |- % @< % >( % ): EC_2 ARCH_1 return ?() as callResult
