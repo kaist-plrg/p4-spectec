@@ -51,12 +51,13 @@ let sizeof_maxSizeInBits' (value_typ : Value.t) : Bigint.t =
 
 (* tableObject_add_entry *)
 
-let tableObject_add_entry (value_tableObject : Value.t)
+let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
     (value_tableEntryPriorityInterface : Value.t)
     (value_tableKeysetInterface : Value.t)
     (value_tableActionInterface : Value.t) : Value.t =
   !call "tableObject_add_entry" []
     [
+      value_ctx;
       value_tableObject;
       value_tableEntryPriorityInterface;
       value_tableKeysetInterface;
@@ -65,10 +66,11 @@ let tableObject_add_entry (value_tableObject : Value.t)
 
 (* tableObject_add_default_action *)
 
-let tableObject_add_default_action (value_tableObject : Value.t)
-    (value_tableActionInterface : Value.t) : Value.t =
+let tableObject_add_default_action (value_ctx : Value.t)
+    (value_tableObject : Value.t) (value_tableActionInterface : Value.t) :
+    Value.t =
   !call "tableObject_add_default_action" []
-    [ value_tableObject; value_tableActionInterface ]
+    [ value_ctx; value_tableObject; value_tableActionInterface ]
 
 (* find/update_object_qualified_e/unqualified_e *)
 

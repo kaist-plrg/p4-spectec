@@ -229,7 +229,7 @@ module Make
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =
-          Arch.table_add_entry value_arch value_tableName
+          Arch.table_add_entry value_ctx value_arch value_tableName
             value_tableEntryPriorityInterface value_tableKeysetInterface
             value_tableActionInterface
         in
@@ -256,7 +256,7 @@ module Make
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =
-          Arch.table_add_default_action value_arch value_tableName
+          Arch.table_add_default_action value_ctx value_arch value_tableName
             value_tableActionInterface
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)

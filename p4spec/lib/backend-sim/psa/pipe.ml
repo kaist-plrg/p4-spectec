@@ -412,29 +412,29 @@ struct
         Spec.Func.update_object_qualified_e value_arch value_objectId
           value_tableObject
 
-  let table_add_entry (value_arch : Value.t) (value_tableName : Value.t)
-      (value_tableEntryPriorityInterface : Value.t)
+  let table_add_entry (value_ctx : Value.t) (value_arch : Value.t)
+      (value_tableName : Value.t) (value_tableEntryPriorityInterface : Value.t)
       (value_tableKeysetInterface : Value.t)
       (value_tableActionInterface : Value.t) : Value.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
-      Spec.Func.tableObject_add_entry value_tableObject
+      Spec.Func.tableObject_add_entry value_ctx value_tableObject
         value_tableEntryPriorityInterface value_tableKeysetInterface
         value_tableActionInterface
     in
     (* Update store with modified table object *)
     update_table value_arch value_tableName value_tableObject
 
-  let table_add_default_action (value_arch : Value.t)
+  let table_add_default_action (value_ctx : Value.t) (value_arch : Value.t)
       (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
       Value.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
-      Spec.Func.tableObject_add_default_action value_tableObject
+      Spec.Func.tableObject_add_default_action value_ctx value_tableObject
         value_tableActionInterface
     in
     (* Update store with modified table object *)

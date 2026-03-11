@@ -7,9 +7,17 @@ open Util.Source
 
 (* Value map *)
 
-module VMap = Map.Make (Value)
+type map = (Value.t * Value.t) list
 
-type map = Value.t VMap.t
+let rec map_find_opt key = function
+  | [] -> None
+  | (k, v) :: _ when Value.eq k key -> Some v
+  | _ :: t -> map_find_opt key t
+
+let rec map_update key value = function
+  | [] -> [ (key, value) ]
+  | (k, _) :: t when Value.eq k key -> (key, value) :: t
+  | h :: t -> h :: map_update key value t
 
 (* Conversion between meta-maps and OCaml assoc lists *)
 
@@ -28,10 +36,6 @@ let map_of_value (value : value) : map =
       ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ],
         [ value_pairs ] ) ->
       Value.get_list value_pairs |> List.map tuple_of_value
-      |> List.fold_left
-           (fun map (value_key, value_value) ->
-             VMap.add value_key value_value map)
-           VMap.empty
   | _ ->
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
@@ -54,7 +58,7 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
         ( Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region,
           Il.List )
     in
-    Value.make typ (ListV (VMap.bindings map |> List.map value_of_tuple))
+    Value.make typ (ListV (map |> List.map value_of_tuple))
   in
   add value_pairs;
   let value =
@@ -76,7 +80,7 @@ let find_map (add : value -> unit) (at : region) (targs : targ list)
   let _typ_key, typ_value = Extract.two at targs in
   let value_map, value_key = Extract.two at values_input in
   let map = map_of_value value_map in
-  let value_opt = VMap.find_opt value_key map in
+  let value_opt = map_find_opt value_key map in
   let value =
     let typ = Il.IterT (typ_value, Il.Opt) in
     Value.make typ (OptV value_opt)
@@ -96,7 +100,7 @@ let find_maps (add : value -> unit) (at : region) (targs : targ list)
       (fun value_opt map ->
         match value_opt with
         | Some _ -> value_opt
-        | None -> VMap.find_opt value_key map)
+        | None -> map_find_opt value_key map)
       None maps
   in
   let value =
@@ -113,7 +117,7 @@ let add_map (add : value -> unit) (at : region) (targs : targ list)
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
   map_of_value value_map
-  |> VMap.add value_key value_value
+  |> map_update value_key value_value
   |> value_of_map add typ_key typ_value
 
 (* dec $adds_map<K, V>(map<K, V>, K*, V* ) : map<K, V> *)
@@ -126,7 +130,7 @@ let adds_map (add : value -> unit) (at : region) (targs : targ list)
   let values_key = value_keys |> Value.get_list in
   let values_value = value_values |> Value.get_list in
   List.fold_left2
-    (fun map value_key value_value -> VMap.add value_key value_value map)
+    (fun map value_key value_value -> map_update value_key value_value map)
     map values_key values_value
   |> value_of_map add typ_key typ_value
 
@@ -137,5 +141,5 @@ let update_map (add : value -> unit) (at : region) (targs : targ list)
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
   map_of_value value_map
-  |> VMap.add value_key value_value
+  |> map_update value_key value_value
   |> value_of_map add typ_key typ_value
