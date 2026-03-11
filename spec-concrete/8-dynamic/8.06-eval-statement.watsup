@@ -733,6 +733,11 @@ rule Stmt_eval/continueStatementIR:
 
 ;;;; Switch on table apply method result
 
+relation Switch_table_eval:
+  evalContext arch |- SWITCH `( id ) `{ switchCaseIR* }
+                    : evalContext arch statementResult
+  hint(input %0 %1 %2 %3)
+
 ;;;;; syntax switchLabelIR
 ;;;;;; DEFAULT
 ;;;;;; typedExpressionIR
@@ -805,49 +810,34 @@ rulegroup SwitchCases_table_eval {
 
 }
 
-rulegroup Stmt_eval/switchStatementIR-table {
+rulegroup Switch_table_eval {
 
-  rule Stmt_eval/target-abort:
-    LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                       : EC_1 ARCH_1 abortResult
-    ---- ;; evaluate switch target
-    -- Expr_eval:
-        LOCAL EC_0 ARCH_0 |- typedExpressionIR
-                           : EC_1 ARCH_1 abortResult
+  rule Switch_table_eval/no-match:
+    EC_0 ARCH_0 |- SWITCH `( id_enum ) `{ switchCaseIR* }
+                 : EC_0 ARCH_0 `EMPTY
+    ---- ;; find matching case
+    -- SwitchCases_table_eval:
+        id_enum |- switchCaseIR* : eps
 
-  rule Stmt_eval/target-cont-match:
-    LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                       : EC_2 ARCH_2 statementResult
-    ---- ;; evaluate switch target
-    -- Expr_eval:
-        LOCAL EC_0 ARCH_0 |- typedExpressionIR
-                           : EC_1 ARCH_1 (`` value)
-    ---- ;; if switch on table apply result
-    -- if TABLE_ENUM _ `. id_enum = value
+  rule Switch_table_eval/match:
+    EC_0 ARCH_0 |- SWITCH `( id_enum ) `{ switchCaseIR* }
+                 : EC_1 ARCH_1 statementResult
     ---- ;; find matching case
     -- SwitchCases_table_eval:
         id_enum |- switchCaseIR* : blockStatementIR
     ---- ;; evaluate matching case
     -- Stmt_eval:
-        LOCAL EC_1 ARCH_1 |- blockStatementIR
-                           : EC_2 ARCH_2 statementResult
-
-  rule Stmt_eval/target-cont-no-match:
-    LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                       : EC_1 ARCH_1 `EMPTY
-    ---- ;; evaluate switch target
-    -- Expr_eval:
-        LOCAL EC_0 ARCH_0 |- typedExpressionIR
-                           : EC_1 ARCH_1 (`` value)
-    ---- ;; if switch on table apply result
-    -- if TABLE_ENUM _ `. id_enum = value
-    ---- ;; find matching case
-    -- SwitchCases_table_eval:
-        id_enum |- switchCaseIR* : eps
+        LOCAL EC_0 ARCH_0 |- blockStatementIR
+                           : EC_1 ARCH_1 statementResult
 
 }
 
 ;;;; Switch on error, numeric or enumerated type expression
+
+relation Switch_general_eval:
+  evalContext arch |- SWITCH `( value ) `{ switchCaseIR* }
+                    : evalContext arch statementResult
+  hint(input %0 %1 %2 %3)
 
 ;;;;; syntax switchLabelIR
 ;;;;;; DEFAULT
@@ -956,7 +946,31 @@ rulegroup SwitchCases_general_eval {
 
 }
 
-rulegroup Stmt_eval/switchStatementIR-general {
+rulegroup Switch_general_eval {
+
+  rule Switch_general_eval/no-match:
+    EC_0 ARCH_0 |- SWITCH `( value ) `{ switchCaseIR* }
+                 : EC_1 ARCH_1 `EMPTY
+    ---- ;; find matching case
+    -- SwitchCases_general_eval:
+        LOCAL EC_0 ARCH_0 value |- switchCaseIR*
+                                 : EC_1 ARCH_1 eps
+
+  rule Switch_general_eval/match:
+    EC_0 ARCH_0 |- SWITCH `( value ) `{ switchCaseIR* }
+                 : EC_2 ARCH_2 statementResult
+    ---- ;; find matching case
+    -- SwitchCases_general_eval:
+        LOCAL EC_0 ARCH_0 value |- switchCaseIR*
+                                 : EC_1 ARCH_1 blockStatementIR
+    ---- ;; evaluate matching case
+    -- Stmt_eval:
+        LOCAL EC_1 ARCH_1 |- blockStatementIR
+                           : EC_2 ARCH_2 statementResult
+
+}
+
+rulegroup Stmt_eval/switchStatementIR {
 
   rule Stmt_eval/target-abort:
     LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
@@ -966,33 +980,33 @@ rulegroup Stmt_eval/switchStatementIR-general {
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 abortResult
 
-  rule Stmt_eval/target-cont-match:
+  rule Stmt_eval/target-cont-table:
     LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                       : EC_3 ARCH_3 statementResult
+                       : EC_2 ARCH_2 statementResult
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if TABLE_ENUM _ `. id_enum = value
     ---- ;; find matching case
-    -- SwitchCases_general_eval:
-        LOCAL EC_1 ARCH_1 value |- switchCaseIR*
-                                 : EC_2 ARCH_2 blockStatementIR
-    ---- ;; evaluate matching case
-    -- Stmt_eval:
-        LOCAL EC_2 ARCH_2 |- blockStatementIR
-                           : EC_3 ARCH_3 statementResult
+    -- Switch_table_eval:
+        EC_1 ARCH_1 |- SWITCH `( id_enum ) `{ switchCaseIR* }
+                     : EC_2 ARCH_2 statementResult
 
-  rule Stmt_eval/target-cont-no-match:
+  rule Stmt_eval/target-cont-general:
     LOCAL EC_0 ARCH_0 |- SWITCH `( typedExpressionIR ) `{ switchCaseIR* }
-                       : EC_2 ARCH_2 `EMPTY
+                       : EC_2 ARCH_2 statementResult
     ---- ;; evaluate switch target
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 (`` value)
+    ---- ;; if switch on table apply result
+    -- if ~(value <: tableMetadataEnumValue)
     ---- ;; find matching case
-    -- SwitchCases_general_eval:
-        LOCAL EC_1 ARCH_1 value |- switchCaseIR*
-                                 : EC_2 ARCH_2 eps
+    -- Switch_general_eval:
+        EC_1 ARCH_1 |- SWITCH `( value ) `{ switchCaseIR* }
+                     : EC_2 ARCH_2 statementResult
 
 }
 

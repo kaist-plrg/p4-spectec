@@ -397,6 +397,10 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the v1model simulator"
+
   (* Multicast interface *)
 
   let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
@@ -409,11 +413,14 @@ struct
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (value_arch : Value.t) (rid : int) (port : int) : Value.t =
+  let mc_node_create (value_arch : Value.t) (rid : int) (ports : int list) :
+      Value.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch.of_value
     in
-    let multicast = Multicast.State.node_create rid port arch_state.multicast in
+    let multicast =
+      Multicast.State.node_create rid ports arch_state.multicast
+    in
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
@@ -431,6 +438,21 @@ struct
     |> Arch.with_multicast multicast
     |> Arch.to_value
     |> Spec.Func.update_archState_e value_arch
+
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region "register_read is not implemented for the v1model simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region
+      "register_write is not implemented for the v1model simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region
+      "register_reset is not implemented for the v1model simulator"
 
   (* Packet state *)
 
@@ -768,6 +790,7 @@ struct
           node_handles
           |> List.filter_map (fun handle ->
                  NodeMap.find_opt handle arch_state.multicast.nodes)
+          |> List.flatten
           |> List.map (fun node ->
                  prepare_multicast_ctx node.rid node.port
                  >> schedule_packet Egress)

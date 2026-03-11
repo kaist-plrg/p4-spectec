@@ -96,12 +96,24 @@ let print_stmt fmt = function
         ctr print_cond cond print_number number
   | MirroringAdd (session, port) ->
       F.fprintf fmt "mirroring_add %a %a" print_session session print_port port
+  | MirroringAddMc (session, id) ->
+      F.fprintf fmt "mirroring_add_mc %a %a" print_session session print_id id
+  | MirroringGet session ->
+      F.fprintf fmt "mirroring_get %a" print_session session
   | McGroupCreate id -> F.fprintf fmt "mc_mgrp_create %a" print_number id
   | McNodeCreate (id, port) ->
-      F.fprintf fmt "mc_node_create %a %a" print_number id print_number port
+      F.fprintf fmt "mc_node_create %a %a" print_number id
+        (F.pp_print_list ~pp_sep:(fun fmt () -> F.fprintf fmt " ") print_number)
+        port
   | McNodeAssociate (id, handle) ->
       F.fprintf fmt "mc_mgrp_associate %a %a" print_number id print_number
         handle
+  | RegisterRead (name, index) ->
+      F.fprintf fmt "register_read %a %a" print_name name print_number index
+  | RegisterWrite (name, index, number) ->
+      F.fprintf fmt "register_write %a %a %a" print_name name print_number index
+        print_number number
+  | RegisterReset name -> F.fprintf fmt "register_reset %a" print_name name
 
 let print_stmts fmt stmts =
   F.pp_print_list

@@ -1,0 +1,601 @@
+;;
+;; PSA ingress pipeline packet setup
+;;
+
+relation PSA_ingress_init_packet_in:
+  evalContext arch |- objectState : evalContext arch
+  hint(input %0 %1 %2)
+
+rule PSA_ingress_init_packet_in:
+  EC_0 ARCH_0 |- objectState_packet_in : EC_1 ARCH_2
+  ---- ;; initialize packet_in extern
+  -- Extern_init: EC_0 ARCH_0 |- "packet_in" "ingress_packet_in" : ARCH_1
+  ---- ;; add packet_in to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "ingress_packet_in", REF "ingress_packet_in")
+  ---- ;; initialize packet_in state and update arch
+  -- if externObject_packet_in = $find_object_e(ARCH_1, [ "ingress_packet_in" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_in
+  -- if externObject_packet_in_init
+      = EXTERN typeId `< theta > `{ objectState_packet_in frame externMethodDefEnv }
+  -- if ARCH_2 = $add_object_e(ARCH_1, [ "ingress_packet_in" ], externObject_packet_in_init)
+
+relation PSA_ingress_init_packet_out:
+  evalContext arch |- objectState : evalContext arch
+  hint(input %0 %1 %2)
+
+rule PSA_ingress_init_packet_out:
+  EC_0 ARCH_0 |- objectState_packet_out : EC_1 ARCH_2
+  ---- ;; initialize packet_out extern
+  -- Extern_init: EC_0 ARCH_0 |- "packet_out" "ingress_packet_out" : ARCH_1
+  ---- ;; add packet_out to context
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "ingress_packet_out", REF "ingress_packet_out")
+  ---- ;; initialize packet_out state and update arch
+  -- if externObject_packet_out = $find_object_e(ARCH_1, [ "ingress_packet_out" ])
+  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+      = externObject_packet_out
+  -- if externObject_packet_out_init
+      = EXTERN typeId `< theta > `{ objectState_packet_out frame externMethodDefEnv }
+  -- if ARCH_2
+      = $add_object_e(ARCH_1, [ "ingress_packet_out" ], externObject_packet_out_init)
+
+;;
+;; PSA ingress initialization
+;;
+
+relation PSA_ingress_init_parser_input_metadata:
+  evalContext arch |- int text : evalContext
+  hint(input %0 %1 %2 %3)
+
+rule PSA_ingress_init_parser_input_metadata:
+  EC_0 ARCH |- i_port t_path : EC_2
+  ---- ;; setup port
+  -- if storageReference_parser_input_port
+      = (`` "ingress_parser_input_metadata") `. "ingress_port"
+  -- if value_port = 32 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
+  ---- ;; setup packet path
+  -- if storageReference_parser_input_path
+      = (`` "ingress_parser_input_metadata") `. "packet_path"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
+
+relation PSA_ingress_init_input_metadata:
+  evalContext arch |- int text : evalContext
+  hint(input %0 %1 %2 %3)
+
+rule PSA_ingress_init_input_metadata:
+  EC_0 ARCH |- i_port t_path : EC_3
+  ---- ;; setup port
+  -- if storageReference_input_port
+      = (`` "ingress_input_metadata") `. "ingress_port"
+  -- if value_port = 32 W i_port
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_input_port -> value_port : EC_1
+  ---- ;; setup packet path
+  -- if storageReference_input_path
+      = (`` "ingress_input_metadata") `. "packet_path"
+  -- if value_path = "PSA_PacketPath_t" `. t_path
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_input_path -> value_path : EC_2
+  ---- ;; (TODO) setup timestamp
+  ---- ;; setup parser error
+  -- if storageReference_input_parser_error
+      = (`` "ingress_input_metadata") `. "parser_error"
+  -- if value_parser_error = ERROR `. "NoError"
+  -- Lvalue_write:
+      GLOBAL EC_2 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_3
+
+relation PSA_ingress_init_output_metadata:
+  evalContext arch |- evalContext
+  hint(input %0 %1)
+
+rule PSA_ingress_init_output_metadata:
+  EC_0 ARCH |- EC_4
+  ---- ;; setup class of service
+  -- if storageReference_output_cos
+      = (`` "ingress_output_metadata") `. "class_of_service"
+  -- if value_cos = 8 W 0
+  -- Lvalue_write:
+      GLOBAL EC_0 ARCH |- storageReference_output_cos -> value_cos : EC_1
+  ---- ;; setup clone
+  -- if storageReference_output_clone
+      = (`` "ingress_output_metadata") `. "clone"
+  -- if value_clone = `B false
+  -- Lvalue_write:
+      GLOBAL EC_1 ARCH |- storageReference_output_clone -> value_clone : EC_2
+  ---- ;; setup drop
+  -- if storageReference_output_drop
+      = (`` "ingress_output_metadata") `. "drop"
+  -- if value_drop = `B true
+  -- Lvalue_write:
+      GLOBAL EC_2 ARCH |- storageReference_output_drop -> value_drop : EC_3
+  ---- ;; setup resubmit
+  -- if storageReference_output_resubmit
+      = (`` "ingress_output_metadata") `. "resubmit"
+  -- if value_resubmit = `B false
+  -- Lvalue_write:
+      GLOBAL EC_3 ARCH |- storageReference_output_resubmit -> value_resubmit : EC_4
+  ---- ;; setup multicast group
+  -- if storageReference_output_mc_grp
+      = (`` "ingress_output_metadata") `. "multicast_group"
+  -- if value_mc_grp = 32 W 0
+  -- Lvalue_write:
+      GLOBAL EC_4 ARCH |- storageReference_output_mc_grp -> value_mc_grp : EC_5
+
+relation PSA_ingress_init_metadata:
+  evalContext arch |- int text : evalContext
+  hint(input %0 %1 %2 %3)
+
+rule PSA_ingress_init_metadata:
+  EC_0 ARCH |- i_port t_path : EC_3
+  ---- ;; parser input metadata
+  -- PSA_ingress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : EC_1
+  ---- ;; input metadata
+  -- PSA_ingress_init_input_metadata: EC_1 ARCH |- i_port t_path : EC_2
+  ---- ;; output metadata
+  -- PSA_ingress_init_output_metadata: EC_2 ARCH |- EC_3
+
+relation PSA_ingress_init_globals:
+  evalContext arch |- int : evalContext
+  hint(input %0 %1 %2)
+
+rule PSA_ingress_init_globals:
+  EC_0 ARCH |- i_port : EC_10
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  ---- ;; hdr and user_meta
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  -- Var_init: EC_0 |- typeIR_hdr "ingress_hdr" : EC_1
+  -- Var_init: EC_1 |- typeIR_user_meta "ingress_user_meta" : EC_2
+  ---- ;; psa ingress parser input metadata
+  -- if typeDefIR_psa_ingress_parser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_2, `` "psa_ingress_parser_input_metadata_t")
+  -- if typeIR_psa_ingress_parser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_ingress_parser_input_metadata, eps)
+  -- Var_init:
+      EC_2 |- typeIR_psa_ingress_parser_input_metadata
+              "ingress_parser_input_metadata"
+            : EC_3
+  ---- ;; psa ingress input metadata
+  -- if typeDefIR_psa_ingress_input_metadata
+      = $find_typeDef_e(GLOBAL, EC_3, `` "psa_ingress_input_metadata_t")
+  -- if typeIR_psa_ingress_input_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_ingress_input_metadata, eps)
+  -- Var_init:
+      EC_3 |- typeIR_psa_ingress_input_metadata
+              "ingress_input_metadata"
+            : EC_4
+  ---- ;; psa ingress output metadata
+  -- if typeDefIR_psa_ingress_output_metadata
+      = $find_typeDef_e(GLOBAL, EC_4, `` "psa_ingress_output_metadata_t")
+  -- if typeIR_psa_ingress_output_metadata
+      = $specialize_typeDefIR(typeDefIR_psa_ingress_output_metadata, eps)
+  -- Var_init:
+      EC_4 |- typeIR_psa_ingress_output_metadata
+              "ingress_output_metadata"
+            : EC_5
+  ---- ;; psa ingress metadata
+  -- PSA_ingress_init_metadata: EC_5 ARCH |- i_port "NORMAL" : EC_6
+  ---- ;; packet path related metadata
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  -- Var_init: EC_6 |- typeIR_normal_meta "normal_meta" : EC_7
+  -- Var_init: EC_7 |- typeIR_clone_i2e_meta "clone_i2e_meta" : EC_8
+  -- Var_init: EC_8 |- typeIR_resubmit_meta "resubmit_meta" : EC_9
+  -- Var_init: EC_9 |- typeIR_recirculate_meta "recirculate_meta" : EC_10
+
+;;
+;; Setup helpers
+;;
+
+dec $PSA_setup_ingress_packet_in_argument(evalContext) : argumentIR
+def $PSA_setup_ingress_packet_in_argument(EC) = argumentIR_packet_in
+  -- if typeDefIR_packet_in
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_in")
+  -- if typeIR_packet_in
+      = $specialize_typeDefIR(typeDefIR_packet_in, eps)
+  -- if argumentIR_packet_in
+      = (`. "ingress_packet_in") `# `( typeIR_packet_in CTK )
+
+dec $PSA_setup_ingress_packet_out_argument(evalContext) : argumentIR
+def $PSA_setup_ingress_packet_out_argument(EC) = argumentIR_packet_out
+  -- if typeDefIR_packet_out
+      = $find_typeDef_e(GLOBAL, EC, `` "packet_out")
+  -- if typeIR_packet_out
+      = $specialize_typeDefIR(typeDefIR_packet_out, eps)
+  -- if argumentIR_packet_out
+      = (`. "ingress_packet_out") `# `( typeIR_packet_out CTK )
+
+dec $PSA_setup_ingress_hdr_argument(arch) : argumentIR
+def $PSA_setup_ingress_hdr_argument(ARCH) = argumentIR_hdr
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "IH") 
+  -- if argumentIR_hdr
+      = (`. "ingress_hdr") `# `( typeIR_hdr DYN )
+
+dec $PSA_setup_ingress_user_meta_argument(arch) : argumentIR
+def $PSA_setup_ingress_user_meta_argument(ARCH) = argumentIR_user_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_user_meta = $find_map<typeId, typeIR>(theta, "IM") 
+  -- if argumentIR_user_meta
+      = (`. "ingress_user_meta") `# `( typeIR_user_meta DYN )
+
+dec $PSA_setup_ingress_parser_input_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_ingress_parser_input_metadata_argument(EC)
+  = argumentIR_parser_input_metadata
+  -- if typeDefIR_parser_input_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_ingress_parser_input_metadata_t")
+  -- if typeIR_parser_input_metadata
+      = $specialize_typeDefIR(typeDefIR_parser_input_metadata, eps)
+  -- if argumentIR_parser_input_metadata
+      = (`. "ingress_parser_input_metadata") `# `( typeIR_parser_input_metadata DYN )
+
+dec $PSA_setup_ingress_input_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_ingress_input_metadata_argument(EC)
+  = argumentIR_input_metadata
+  -- if typeDefIR_input_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_ingress_input_metadata_t")
+  -- if typeIR_input_metadata
+      = $specialize_typeDefIR(typeDefIR_input_metadata, eps)
+  -- if argumentIR_input_metadata
+      = (`. "ingress_input_metadata") `# `( typeIR_input_metadata DYN )
+
+dec $PSA_setup_ingress_output_metadata_argument(evalContext) : argumentIR
+def $PSA_setup_ingress_output_metadata_argument(EC)
+  = argumentIR_output_metadata
+  -- if typeDefIR_output_metadata
+      = $find_typeDef_e(GLOBAL, EC, `` "psa_ingress_output_metadata_t")
+  -- if typeIR_output_metadata
+      = $specialize_typeDefIR(typeDefIR_output_metadata, eps)
+  -- if argumentIR_output_metadata
+      = (`. "ingress_output_metadata") `# `( typeIR_output_metadata DYN )
+
+dec $PSA_setup_ingress_pipeline_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_ingress_pipeline_callee(
+    EC, ARCH, typedExpressionIR_main
+  )
+  = typedExpressionIR_ingress_pipeline
+  ---- ;; get package type definition
+  -- if typeDefIR_package
+      = $find_typeDef_e(GLOBAL, EC, `` "IngressPipeline")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_ingress_hdr, typeIR_ingress_user_meta,
+          typeIR_normal_meta, typeIR_clone_i2e_meta,
+          typeIR_resubmit_meta, typeIR_recirculate_meta ]
+  -- if typeIR_package = $specialize_typeDefIR(typeDefIR_package, typeIR_arg*)
+  -- if typedExpressionIR_ingress_pipeline
+      = (typedExpressionIR_main `. "ingress") `# `( typeIR_package CTK )
+
+dec $PSA_setup_ingress_parser_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_ingress_parser_callee(
+    EC, ARCH, typedExpressionIR_ingress_pipeline
+  )
+  = typedExpressionIR_ingress_parser
+  ---- ;; get parser type definition
+  -- if typeDefIR_ingress_parser = $find_typeDef_e(GLOBAL, EC, `` "IngressParser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_ingress_hdr, typeIR_ingress_user_meta,
+          typeIR_resubmit_meta, typeIR_recirculate_meta ]
+  -- if typeIR_ingress_parser
+      = $specialize_typeDefIR(typeDefIR_ingress_parser, typeIR_arg*)
+  -- if typedExpressionIR_ingress_parser
+      = (typedExpressionIR_ingress_pipeline `. "ip")
+          `# `( typeIR_ingress_parser CTK )
+
+dec $PSA_setup_ingress_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_ingress_callee(
+    EC, ARCH, typedExpressionIR_ingress_pipeline
+  )
+  = typedExpressionIR_ingress
+  ---- ;; get ingress type definition
+  -- if typeDefIR_ingress = $find_typeDef_e(GLOBAL, EC, `` "Ingress")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  ---- ;; create callee
+  -- if typeIR_arg* = [ typeIR_ingress_hdr, typeIR_ingress_user_meta ]
+  -- if typeIR_ingress
+      = $specialize_typeDefIR(typeDefIR_ingress, typeIR_arg*)
+  -- if typedExpressionIR_ingress
+      = (typedExpressionIR_ingress_pipeline `. "ig")
+          `# `( typeIR_ingress CTK )
+
+dec $PSA_setup_ingress_deparser_callee(
+    evalContext, arch, typedExpressionIR
+  )
+  : typedExpressionIR
+def $PSA_setup_ingress_deparser_callee(
+    EC, ARCH, typedExpressionIR_ingress_pipeline
+  )
+  = typedExpressionIR_ingress_deparser
+  ---- ;; get ingress deparser type definition
+  -- if typeDefIR_ingress_deparser = $find_typeDef_e(GLOBAL, EC, `` "IngressDeparser")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_ingress_hdr, typeIR_ingress_user_meta,
+          typeIR_clone_i2e_meta, typeIR_resubmit_meta, typeIR_normal_meta ]
+  -- if typeIR_ingress_deparser
+      = $specialize_typeDefIR(typeDefIR_ingress_deparser, typeIR_arg*)
+  -- if typedExpressionIR_ingress_deparser
+      = (typedExpressionIR_ingress_pipeline `. "id")
+          `# `( typeIR_ingress_deparser CTK )
+
+;;
+;; PSA ingress parser invocation
+;;
+
+relation PSA_ingress_parser:
+  evalContext arch |- evalContext arch transitionResult
+  hint(input %0 %1)
+
+rulegroup PSA_ingress_parser {
+
+  rule PSA_ingress_parser/cont:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 ACCEPT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $PSA_setup_ingress_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_parser_input_metadata
+        = $PSA_setup_ingress_parser_input_metadata_argument(EC_0)
+    -- if argumentIR_resubmit_meta
+        = $PSA_setup_resubmit_meta_argument(ARCH_0)
+    -- if argumentIR_recirculate_meta
+        = $PSA_setup_recirculate_meta_argument(ARCH_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_parser_input_metadata,
+            argumentIR_resubmit_meta, argumentIR_recirculate_meta ]
+    ---- ;; invoke the parser object (main.ingress.ip)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ip
+        = $PSA_setup_ingress_parser_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ip `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+
+  rule PSA_ingress_parser/reject:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 rejectTransitionResult
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_in
+        = $PSA_setup_ingress_packet_in_argument(EC_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_parser_input_metadata
+        = $PSA_setup_ingress_parser_input_metadata_argument(EC_0)
+    -- if argumentIR_resubmit_meta
+        = $PSA_setup_resubmit_meta_argument(ARCH_0)
+    -- if argumentIR_recirculate_meta
+        = $PSA_setup_recirculate_meta_argument(ARCH_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_in, argumentIR_hdr,
+            argumentIR_user_meta, argumentIR_parser_input_metadata,
+            argumentIR_resubmit_meta, argumentIR_recirculate_meta ]
+    ---- ;; invoke the parser object (main.ingress.ip)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ip
+        = $PSA_setup_ingress_parser_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ip `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 rejectTransitionResult
+
+}
+
+;;
+;; PSA ingress invocation
+;;
+
+relation PSA_ingress:
+  evalContext arch |- evalContext arch callResult
+  hint(input %0 %1)
+
+rulegroup PSA_ingress {
+
+  rule PSA_ingress/exit:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_input_metadata
+        = $PSA_setup_ingress_input_metadata_argument(EC_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_ingress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_input_metadata, argumentIR_output_metadata ]
+    ---- ;; invoke the ingress object (main.ingress.ig)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ig
+        = $PSA_setup_ingress_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 EXIT
+
+  rule PSA_ingress/cont:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_input_metadata
+        = $PSA_setup_ingress_input_metadata_argument(EC_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_ingress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_input_metadata, argumentIR_output_metadata ]
+    ---- ;; invoke the ingress object (main.ingress.ig)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_ig
+        = $PSA_setup_ingress_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+}
+
+;;
+;; PSA ingress deparser invocation
+;;
+
+relation PSA_ingress_deparser:
+  evalContext arch |- evalContext arch callResult
+  hint(input %0 %1)
+
+rulegroup PSA_ingress_deparser {
+
+  rule PSA_ingress_deparser/continueEmptyResult:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 (RETURN eps)
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $PSA_setup_ingress_packet_out_argument(EC_0)
+    -- if argumentIR_clone_i2e_meta
+        = $PSA_setup_clone_i2e_meta_argument(ARCH_0)
+    -- if argumentIR_resubmit_meta
+        = $PSA_setup_resubmit_meta_argument(ARCH_0)
+    -- if argumentIR_normal_meta
+        = $PSA_setup_normal_meta_argument(ARCH_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_ingress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_out, argumentIR_clone_i2e_meta,
+            argumentIR_resubmit_meta, argumentIR_normal_meta,
+            argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_output_metadata ]
+    ---- ;; invoke the deparser object (main.ingress.id)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_id
+        = $PSA_setup_ingress_deparser_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_id `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 `EMPTY
+
+  rule PSA_ingress_deparser/exit:
+    EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
+    ---- ;; prepare the arguments
+    -- if argumentIR_packet_out
+        = $PSA_setup_ingress_packet_out_argument(EC_0)
+    -- if argumentIR_clone_i2e_meta
+        = $PSA_setup_clone_i2e_meta_argument(ARCH_0)
+    -- if argumentIR_resubmit_meta
+        = $PSA_setup_resubmit_meta_argument(ARCH_0)
+    -- if argumentIR_normal_meta
+        = $PSA_setup_normal_meta_argument(ARCH_0)
+    -- if argumentIR_hdr
+        = $PSA_setup_ingress_hdr_argument(ARCH_0)
+    -- if argumentIR_user_meta
+        = $PSA_setup_ingress_user_meta_argument(ARCH_0)
+    -- if argumentIR_output_metadata
+        = $PSA_setup_ingress_output_metadata_argument(EC_0)
+    -- if argumentIR*
+        = [ argumentIR_packet_out, argumentIR_clone_i2e_meta,
+            argumentIR_resubmit_meta, argumentIR_normal_meta,
+            argumentIR_hdr, argumentIR_user_meta,
+            argumentIR_output_metadata ]
+    ---- ;; invoke the deparser object (main.ingress.id)
+    -- if typedExpressionIR_main = $PSA_setup_main_callee(EC_0, ARCH_0)
+    -- if typedExpressionIR_ingress_pipeline
+        = $PSA_setup_ingress_pipeline_callee(
+              EC_0, ARCH_0, typedExpressionIR_main
+          )
+    -- if typedExpressionIR_id
+        = $PSA_setup_ingress_deparser_callee(
+              EC_0, ARCH_0, typedExpressionIR_ingress_pipeline
+          )
+    -- if callableTargetIR = typedExpressionIR_id `. "apply"
+    -- Stmt_eval:
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+                           : EC_1 ARCH_1 EXIT
+
+}
