@@ -238,8 +238,10 @@ rulegroup Lvalue_read/indexAccess {
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
         = headerStackValue_base
-    -- if n_idx = $nat_of_integerValue(integerValue_index)
-    -- if $(n_idx < n_size)
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
     -- if value = value_element*[ n_idx ]
 
   rule Lvalue_read/stack-out-of-bounds:
@@ -248,9 +250,10 @@ rulegroup Lvalue_read/indexAccess {
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
         = headerStackValue_base
-    -- if n_idx = $nat_of_integerValue(integerValue_index)
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     ---- ;; index access overflow
-    -- if $(n_idx >= n_size)
+    -- if ~b_in_bounds
     -- if HEADER typeId `{ b_valid `; fieldValue* } = value_element*[ 0 ]
     -- if value = HEADER typeId `{ false `; fieldValue* }
 
@@ -391,8 +394,10 @@ rulegroup Lvalue_write/indexAccess {
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( n_base_idx `; n_size ) ]
         = headerStackValue_base
-    -- if n_idx = $nat_of_integerValue(integerValue_index)
-    -- if $(n_idx < n_size)
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
     -- if value_element_update*
         = value_element* [ [n_idx] = value ]
     -- if headerStackValue_base_update
@@ -406,8 +411,9 @@ rulegroup Lvalue_write/indexAccess {
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
         = headerStackValue_base
-    -- if n_idx = $nat_of_integerValue(integerValue_index)
-    -- if $(n_idx >= n_size)
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if ~b_in_bounds
 
 }
 
