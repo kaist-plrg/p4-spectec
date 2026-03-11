@@ -97,14 +97,15 @@ struct
 
   (* Match-action table interface *)
 
-  let table_add_entry (_value_arch : Value.t) (_value_tableName : Value.t)
+  let table_add_entry (_value_ctx : Value.t) (_value_arch : Value.t)
+      (_value_tableName : Value.t)
       (_value_tableEntryPriorityInterface : Value.t)
       (_value_tableKeysetInterface : Value.t)
       (_value_tableActionInterface : Value.t) : Value.t =
     error_no_region
       "table_add_entry not implemented for the placeholder simulator"
 
-  let table_add_default_action (_value_arch : Value.t)
+  let table_add_default_action (_value_ctx : Value.t) (_value_arch : Value.t)
       (_value_tableName : Value.t) (_value_tableActionInterface : Value.t) :
       Value.t =
     error_no_region

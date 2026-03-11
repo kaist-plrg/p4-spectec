@@ -346,6 +346,10 @@ def $dom_map<K, V>(({ ((K : V))* }))
 
 1. Return ({ (K)* })
 
+def $codom_map<K, V>(({ ((K : V))* }))
+
+1. Return ({ (V)* })
+
 builtin def $find_map<K, V>(map<K, V>, K)
 
 builtin def $find_maps<K, V>((map<K, V>)*, K)
@@ -22503,148 +22507,6 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
   1. Return ?()
 
-def $nat_to_error_nameIR(nat)
-
-1. Case analysis on nat
-
-  1. Case (% = 0)
-
-    1. Return ?("NoError")
-
-  2. Case (% = 1)
-
-    1. Return ?("PacketTooShort")
-
-  3. Case (% = 2)
-
-    1. Return ?("NoMatch")
-
-  4. Case (% = 3)
-
-    1. Return ?("StackOutOfBounds")
-
-  5. Case (% = 4)
-
-    1. Return ?("HeaderTooShort")
-
-  6. Case (% = 5)
-
-    1. Return ?("ParserTimeout")
-
-  7. Case (% = 6)
-
-    1. Return ?("ParserInvalidArgument")
-
-2. Otherwise,
-
-  1. Return ?()
-
-def $cast_control_plane(typedExpressionIR, typeIR_to)
-
-1. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR_to))
-
-  1. If (((typedExpressionIR')? matches pattern (_))), then
-
-    1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
-
-      1. Return ?(typedExpressionIR_cast)
-
-2. If ((?() = $cast_unary(typedExpressionIR, typeIR_to))), then
-
-  1. If ((((bool) as typeIR) = typeIR_to)), then
-
-    1. If ((((int) as typeIR) = $type_of_typedExpressionIR(typedExpressionIR))), then
-
-      1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
-
-        1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR) as expressionIR) # (( typeIR_to ctk ))))
-
-          1. Return ?(typedExpressionIR_cast)
-
-  2. If ((((error) as typeIR) = typeIR_to)), then
-
-    1. (Let (expressionIR # (( typeIR ctk ))) be typedExpressionIR)
-
-      1. If ((expressionIR has type integerLiteral)), then
-
-        1. (Let integerLiteral be (expressionIR as integerLiteral))
-
-          1. If ((integerLiteral matches pattern `D%`)), then
-
-            1. (Let (d int) be integerLiteral)
-
-              1. If ((int has type nat)), then
-
-                1. (Let n be (int as nat))
-
-                  1. If ((typeIR has type intTypeIR)), then
-
-                    1. (Let intTypeIR be (typeIR as intTypeIR))
-
-                      1. (Let (nameIR)? be $nat_to_error_nameIR(n))
-
-                        1. If (((nameIR)? matches pattern (_))), then
-
-                          1. (Let ?(nameIR') be (nameIR)?)
-
-                            1. (Let typedExpressionIR_error be (((error. nameIR') as expressionIR) # (( typeIR_to ctk ))))
-
-                              1. Return ?(typedExpressionIR_error)
-
-  3. Case analysis on typeIR_to
-
-    1. Case (% has type typedefTypeIR)
-
-      1. (Let (typedef _typeId typeIR_base) be (typeIR_to as typedefTypeIR))
-
-        1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR, typeIR_base))
-
-          1. If (((typedExpressionIR')? matches pattern (_))), then
-
-            1. (Let ?(typedExpressionIR_typedef) be (typedExpressionIR')?)
-
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_typedef))
-
-                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_typedef) as expressionIR) # (( typeIR_to ctk ))))
-
-                  1. Return ?(typedExpressionIR_cast)
-
-    2. Case (% has type newTypeIR)
-
-      1. (Let (type _typeId typeIR_base) be (typeIR_to as newTypeIR))
-
-        1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR, typeIR_base))
-
-          1. If (((typedExpressionIR')? matches pattern (_))), then
-
-            1. (Let ?(typedExpressionIR_newtype) be (typedExpressionIR')?)
-
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_newtype))
-
-                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_newtype) as expressionIR) # (( typeIR_to ctk ))))
-
-                  1. Return ?(typedExpressionIR_cast)
-
-    3. Case (% has type serializableEnumTypeIR)
-
-      1. (Let (enum _typeId < typeIR_base >{ (_valueFieldIR)* }) be (typeIR_to as serializableEnumTypeIR))
-
-        1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR, typeIR_base))
-
-          1. If (((typedExpressionIR')? matches pattern (_))), then
-
-            1. (Let ?(typedExpressionIR_enum) be (typedExpressionIR')?)
-
-              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_enum))
-
-                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_enum) as expressionIR) # (( typeIR_to ctk ))))
-
-                  1. Return ?(typedExpressionIR_cast)
-
-3. Otherwise,
-
-  1. Return ?()
-
 tbl def $compat_lnot(typeIR'')
 =
 
@@ -26489,692 +26351,6 @@ syntax object =
    | table typeId { frame tableObjectProperty }
    | value_set{ value* ( nat )}
 
-syntax tableEntryPriorityInterface = int?
-
-syntax tableKeyValueInterface = 
-   | `bin text
-   | `hex text
-   | `dec text
-   | text `slash nat
-
-syntax tableKeyInterface = (nameIR, tableKeyValueInterface)
-
-syntax tableKeysetInterface = tableKeyInterface*
-
-syntax tableActionArgumentInterface = (nameIR, int)
-
-syntax tableActionInterface = (nameIR, tableActionArgumentInterface*)
-
-def $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
-
-1. Case analysis on tableKeyValueInterface
-
-  1. Case (% matches pattern ``BIN%`)
-
-    1. (Let (`bin t) be tableKeyValueInterface)
-
-      1. Return ?("0b" ++ t)
-
-  2. Case (% matches pattern ``HEX%`)
-
-    1. (Let (`hex t) be tableKeyValueInterface)
-
-      1. Return ?("0x" ++ t)
-
-  3. Case (% matches pattern ``DEC%`)
-
-    1. (Let (`dec t) be tableKeyValueInterface)
-
-      1. Return ?(t)
-
-  4. Case (% matches pattern `%`SLASH%`)
-
-    1. Return ?()
-
-def $tableObject_create_entry_priority(tableEntryPriorityInterface)
-
-1. (Let (int)? be tableEntryPriorityInterface)
-
-  1. If (((int)? matches pattern ())), then
-
-    1. Return ?()
-
-  1. Else Phantom#1408
-
-2. If ((tableEntryPriorityInterface matches pattern (_))), then
-
-  1. (Let ?(int) be tableEntryPriorityInterface)
-
-    1. If ((int has type nat)), then
-
-      1. (Let n_priority be (int as nat))
-
-        1. Return ?((priority= (d (n_priority as int)) :))
-
-    1. Else Phantom#1409
-
-2. Else Phantom#1410
-
-def $needs_priority_tableKeysPropertyIR((key={ (tableKeyIR)* }))
-
-1. (Let (_typedExpressionIR # _nameIR : nameIR_matchKind _annotationList ;) be tableKeyIR)*
-
-  1. Return $exists_(((nameIR_matchKind = "ternary"))*)
-
-def $tableObject_create_entry_key((nameIR_key, text, typeIR), (tableKeyInterface)*)
-
-1. Case analysis on text
-
-  1. Case (% = "exact")
-
-    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
-
-      1. If (((tableKeyValueInterface)? matches pattern (_))), then
-
-        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
-
-          1. (Let (text')? be $text_of_number_tableKeyValueInterface(tableKeyValueInterface'))
-
-            1. If (((text')? matches pattern (_))), then
-
-              1. (Let ?(text_key_value) be (text')?)
-
-                1. (Let i_key_value be $text_to_int(text_key_value))
-
-                  1. (Let typedExpressionIR be (((d i_key_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                    1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR, typeIR))
-
-                      1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                        1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
-
-                          1. (Let typeIR_set be ((set< typeIR >) as typeIR))
-
-                            1. (Let simpleKeysetExpressionIR be ((((( typeIR_set ) typedExpressionIR_cast) as expressionIR) # (( typeIR_set (dyn) ))) as simpleKeysetExpressionIR))
-
-                              1. Return simpleKeysetExpressionIR
-
-                      1. Else Phantom#1411
-
-            1. Else Phantom#1412
-
-      1. Else Phantom#1413
-
-  2. Case (% = "ternary")
-
-    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
-
-      1. If (((tableKeyValueInterface)? matches pattern (_))), then
-
-        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
-
-          1. Case analysis on tableKeyValueInterface'
-
-            1. Case (% matches pattern ``HEX%`)
-
-              1. (Let (`hex text_key_value) be tableKeyValueInterface')
-
-                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                  1. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
-
-                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                      1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                        1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
-
-                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
-
-                                  1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                    1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                          1. Return simpleKeysetExpressionIR
-
-                                    1. Else Phantom#1414
-
-                        1. Else Phantom#1415
-
-            2. Case (% matches pattern ``BIN%`)
-
-              1. (Let (`bin text_key_value) be tableKeyValueInterface')
-
-                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                  1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                      1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                        1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-                                  1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                    1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                          1. Return simpleKeysetExpressionIR
-
-                                    1. Else Phantom#1416
-
-                        1. Else Phantom#1417
-
-          1. Else Phantom#1418
-
-      1. Else Phantom#1419
-
-  3. Case (% = "lpm")
-
-    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
-
-      1. If (((tableKeyValueInterface)? matches pattern (_))), then
-
-        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
-
-          1. Case analysis on tableKeyValueInterface'
-
-            1. Case (% matches pattern ``HEX%`)
-
-              1. (Let (`hex text_key_value) be tableKeyValueInterface')
-
-                1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
-
-                  1. If (~$contains(text_key_value_prefix, "*")), then
-
-                    1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                      1. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
-
-                        1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                          1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                            1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                              1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                                1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
-
-                                  1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                    1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
-
-                                      1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                        1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                          1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                            1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                              1. Return simpleKeysetExpressionIR
-
-                                        1. Else Phantom#1420
-
-                            1. Else Phantom#1421
-
-                  1. Else Phantom#1422
-
-            2. Case (% matches pattern ``BIN%`)
-
-              1. (Let (`bin text_key_value) be tableKeyValueInterface')
-
-                1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
-
-                  1. If (~$contains(text_key_value_prefix, "*")), then
-
-                    1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                      1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-                        1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                          1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                            1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                              1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                                1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-                                  1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                    1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-                                      1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                        1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                          1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                            1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                              1. Return simpleKeysetExpressionIR
-
-                                        1. Else Phantom#1423
-
-                            1. Else Phantom#1424
-
-                  1. Else Phantom#1425
-
-            3. Case (% matches pattern `%`SLASH%`)
-
-              1. (Let (text_key_prefix_value `slash n_key_prefix_width) be tableKeyValueInterface')
-
-                1. (Let i_key_prefix_value be $text_to_int(text_key_prefix_value))
-
-                  1. (Let n_key_type_width be $sizeof_maxSizeInBits'(typeIR))
-
-                    1. If ((n_key_prefix_width <= n_key_type_width)), then
-
-                      1. (Let int be (n_key_type_width - n_key_prefix_width))
-
-                        1. If ((int has type nat)), then
-
-                          1. (Let n_key_remaining_width be (int as nat))
-
-                            1. (Let i_key_base_value be $shl(i_key_prefix_value, (n_key_remaining_width as int)))
-
-                              1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                                1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                  1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                                    1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                                      1. (Let i_key_mask_value be ($pow2(n_key_type_width) - $pow2(n_key_remaining_width)))
-
-                                        1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                          1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                            1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                              1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                                1. Return simpleKeysetExpressionIR
-
-                                          1. Else Phantom#1426
-
-                                  1. Else Phantom#1427
-
-                        1. Else Phantom#1428
-
-                    1. Else Phantom#1429
-
-          1. Else Phantom#1430
-
-      1. Else Phantom#1431
-
-  4. Case (% = "optional")
-
-    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
-
-      1. If (((tableKeyValueInterface)? matches pattern (_))), then
-
-        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
-
-          1. If ((tableKeyValueInterface' matches pattern ``BIN%`)), then
-
-            1. (Let (`bin text_key_value) be tableKeyValueInterface')
-
-              1. If ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))), then
-
-                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
-
-                  1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
-
-                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
-
-                      1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                        1. If (((typedExpressionIR)? matches pattern (_))), then
-
-                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
-
-                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
-
-                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
-
-                                1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
-
-                                  1. (Let (typedExpressionIR')? be $cast_control_plane(typedExpressionIR_base, typeIR))
-
-                                    1. If (((typedExpressionIR')? matches pattern (_))), then
-
-                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
-
-                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
-
-                                          1. Return simpleKeysetExpressionIR
-
-                                    1. Else Phantom#1432
-
-                        1. Else Phantom#1433
-
-              1. Else Phantom#1434
-
-          1. Else Phantom#1435
-
-      1. Else Phantom#1436
-
-1. Else Phantom#1437
-
-def $tableObject_create_entry_keys(((nameIR, nameIR, typeIR))*, tableKeysetInterface)
-
-1. If ((((nameIR, nameIR, typeIR))* matches pattern [])), then
-
-  1. Return []
-
-1. Else Phantom#1438
-
-2. (Let (tableKeyInterface)* be tableKeysetInterface)
-
-  1. If ((((nameIR, nameIR, typeIR))* matches pattern _ :: _)), then
-
-    1. (Let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))* be ((nameIR, nameIR, typeIR))*)
-
-      1. (Let simpleKeysetExpressionIR_h be $tableObject_create_entry_key((nameIR_key_h, nameIR_matchKind_h, typeIR_h), (tableKeyInterface)*))
-
-        1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*, (tableKeyInterface)*)
-
-  1. Else Phantom#1439
-
-def $interface_of_tableKeyIR((typedExpressionIR # nameIR_key : nameIR_matchKind annotationList ;))
-
-1. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
-
-  1. Return (nameIR_key, nameIR_matchKind, typeIR)
-
-def $tableObject_create_entry_keyset((key={ (tableKeyIR)* }), (tableKeyInterface)*)
-
-1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*
-
-  1. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*
-
-    1. If ($eq_set<nameIR>(({ (nameIR_key)* }), ({ (nameIR_key_update)* }))), then
-
-      1. (Let (simpleKeysetExpressionIR)* be $tableObject_create_entry_keys(((nameIR_key, nameIR_matchKind, typeIR))*, (tableKeyInterface)*))
-
-        1. Return ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
-
-    1. Else Phantom#1440
-
-def $alias_to_original_lookup_map((parameterIR)*)
-
-1. (Let (annotationList _direction _typeIR id _parameterInitializerOptIR) be parameterIR)*
-
-  1. (Let (annotation)* be $flatten_annotationList(annotationList))*
-
-    1. (Let (nameIR_names_opt)? be $name_annotation_opt(annotation))**
-
-      1. (Let (nameIR_names_seq)* be $opt_as_seq_<nameIR>((nameIR_names_opt)?))**
-
-        1. (Let (nameIR_names)* be $concat_<nameIR>(((nameIR_names_seq)*)*))*
-
-          1. (Let ((nameIR_original, (nameIR_aliases)*))* be $filter_<(nameIR, nameIR*)>(((id, (nameIR_names)*))*, ((|(nameIR_names)*| > 0))*))
-
-            1. (Let (nameIR_alias)* be ((nameIR_aliases)*[0])*)
-
-              1. Return $extend_map<nameIR, nameIR>(({ ((nameIR_alias : nameIR_original))* }), ({ ((id : id))* }))
-
-def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
-
-1. (Let ({ ((nameIR_alias : nameIR_original))* }) be $alias_to_original_lookup_map((parameterIR)*))
-
-  1. (Let (nameIR)? be $find_map<nameIR, nameIR>(({ ((nameIR_alias : nameIR_original))* }), nameIR_arg))*
-
-    1. If (((nameIR)? matches pattern (_)))*, then
-
-      1. (Let ?(nameIR_arg_resolved) be (nameIR)?)*
-
-        1. (Let (int)? be $align_tableActionArgumentInterfaces'(({ ((nameIR_arg_resolved : i_arg))* }), parameterIR))*
-
-          1. If (((int)? matches pattern (_)))*, then
-
-            1. (Let ?(i_aligned) be (int)?)*
-
-              1. Return (i_aligned)*
-
-          1. Else Phantom#1441
-
-    1. Else Phantom#1442
-
-def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
-
-1. Return $find_map<id, int>(({ ((id_arg : i_arg))* }), nameIR_param)
-
-def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
-
-1. Case analysis on (tableActionIR)*
-
-  1. Case (% matches pattern [])
-
-    1. Return ?()
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
-
-      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
-
-        1. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))
-
-          1. If (([] = $name_annotation(annotationList))), then
-
-            1. Case analysis on nameIR_action
-
-              1. Case (% = nameIR)
-
-                1. Return ?((nameIR_action, tableActionIR_h))
-
-              2. Case (% =/= nameIR)
-
-                1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
-
-          1. Else Phantom#1443
-
-          2. (Let (nameIR_annotation)* be $name_annotation(annotationList))
-
-            1. If (((nameIR_annotation)* =/= [])), then
-
-              1. (Let b_hit be ((nameIR = nameIR_action) \/ nameIR is in (nameIR_annotation)*))
-
-                1. Case analysis on b_hit
-
-                  1. Case true
-
-                    1. Return ?((nameIR_action, tableActionIR_h))
-
-                  2. Case false
-
-                    1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
-
-            1. Else Phantom#1444
-
-def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
-
-1. Case analysis on (tableActionIR)*
-
-  1. Case (% matches pattern [])
-
-    1. Return ?()
-
-  2. Case (% matches pattern _ :: _)
-
-    1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
-
-      1. (Let (annotationList (_prefixedNameIR ( _argumentListIR )) #( _parameterListIR , _parameterListIR' );) be tableActionIR_h)
-
-        1. If (([] = $name_annotation(annotationList))), then
-
-          1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
-
-        1. Else Phantom#1445
-
-      2. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
-
-        1. (Let (nameIR_annotation)* be $name_annotation(annotationList))
-
-          1. If (((nameIR_annotation)* =/= [])), then
-
-            1. If (([] = $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))), then
-
-              1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
-
-            1. Else Phantom#1446
-
-          1. Else Phantom#1447
-
-          2. (Let (nameIR_annotation_dotPrefix)* be $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))
-
-            1. If (((nameIR_annotation_dotPrefix)* =/= [])), then
-
-              1. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
-
-                1. If (~nameIR is in (nameIR_annotation_strip)*), then
-
-                  1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
-
-                1. Else Phantom#1448
-
-            1. Else Phantom#1449
-
-            2. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
-
-              1. If (nameIR is in (nameIR_annotation_strip)*), then
-
-                1. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))
-
-                  1. Return ?((nameIR_action, tableActionIR_h))
-
-              1. Else Phantom#1450
-
-def $tableObject_create_entry_action((actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
-
-1. (Let ((nameIR, tableActionIR))? be $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))
-
-  1. If ((((nameIR, tableActionIR))? matches pattern (_))), then
-
-    1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
-
-      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
-
-        1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
-
-          1. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*
-
-            1. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
-
-              1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_arg, typeIR_param))*
-
-                1. If (((typedExpressionIR)? matches pattern (_)))*, then
-
-                  1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
-
-                    1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
-
-                      1. Return ((` nameIR_found) ( (argumentIR)* ))
-
-                1. Else Phantom#1451
-
-  1. Else Phantom#1452
-
-2. If ((?() = $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))), then
-
-  1. (Let ((nameIR, tableActionIR))? be $find_tableActionIR_by_name((tableActionIR)*, nameIR_action_update))
-
-    1. If ((((nameIR, tableActionIR))? matches pattern (_))), then
-
-      1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
-
-        1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
-
-          1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
-
-            1. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*
-
-              1. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
-
-                1. (Let (typedExpressionIR)? be $cast_control_plane(typedExpressionIR_arg, typeIR_param))*
-
-                  1. If (((typedExpressionIR)? matches pattern (_)))*, then
-
-                    1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
-
-                      1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
-
-                        1. Return ((` nameIR_found) ( (argumentIR)* ))
-
-                  1. Else Phantom#1453
-
-    1. Else Phantom#1454
-
-2. Else Phantom#1455
-
-def $tableObject_add_entry((table typeId { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
-
-1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
-
-  1. If (($needs_priority_tableKeysPropertyIR(TBL.keys) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
-
-    1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(TBL.keys, tableKeysetInterface))
-
-      1. (Let tableActionReferenceIR be $tableObject_create_entry_action(TBL.actions, tableActionInterface))
-
-        1. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR (`empty) ;))
-
-          1. (Let (annotationList constOptIR entries={ (tableEntryIR)* }) be TBL.entries)
-
-            1. (Let tableEntriesPropertyIR_updated be (annotationList constOptIR entries={ (tableEntryIR)* ++ [tableEntryIR_update] }))
-
-              1. (Let TBL_updated be TBL[entries = tableEntriesPropertyIR_updated])
-
-                1. Return (table typeId { frame TBL_updated })
-
-  1. Else Phantom#1456
-
-def $tableObject_add_default_action((table typeId { frame TBL }), tableActionInterface)
-
-1. (Let (_annotationList (constIR)? default_action= _tableActionReferenceIR ;) be TBL.default_action)
-
-  1. If (((constIR)? matches pattern ())), then
-
-    1. (Let tableActionReferenceIR be $tableObject_create_entry_action(TBL.actions, tableActionInterface))
-
-      1. (Let tableDefaultActionPropertyIR be ((`empty) ?() default_action= tableActionReferenceIR ;))
-
-        1. (Let TBL_updated be TBL[default_action = tableDefaultActionPropertyIR])
-
-          1. Return (table typeId { frame TBL_updated })
-
-  1. Else Phantom#1457
-
 syntax frame = map<id, value>
 
 def $empty_frame
@@ -27223,7 +26399,7 @@ def $find_store(store, objectId)
 
       1. Return object'
 
-  1. Else Phantom#1458
+  1. Else Phantom#1408
 
 syntax globalInstLayer = {constructor constructorDefEnv, type typeDefEnv, callable callableDefEnv, frame frame}
 
@@ -27259,7 +26435,7 @@ def $exit_i(IC)
 
       1. Return IC[local.frames = (frame_t)*]
 
-  1. Else Phantom#1459
+  1. Else Phantom#1409
 
 def $enter_path_i(IC, id)
 
@@ -27299,7 +26475,7 @@ def $add_var_i(cursor, IC, id, value)
 
         1. Return IC[global.frame = frame]
 
-    1. Else Phantom#1460
+    1. Else Phantom#1410
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27309,7 +26485,7 @@ def $add_var_i(cursor, IC, id, value)
 
         1. Return IC[block.frame = frame]
 
-    1. Else Phantom#1461
+    1. Else Phantom#1411
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -27325,9 +26501,9 @@ def $add_var_i(cursor, IC, id, value)
 
               1. Return IC[local.frames = frame_h' :: (frame_t)*]
 
-          1. Else Phantom#1462
+          1. Else Phantom#1412
 
-      1. Else Phantom#1463
+      1. Else Phantom#1413
 
 def $add_vars_i(p, IC, (id)*, (value)*)
 
@@ -27339,7 +26515,7 @@ def $add_vars_i(p, IC, (id)*, (value)*)
 
       1. Return IC
 
-    1. Else Phantom#1464
+    1. Else Phantom#1414
 
   2. Case (% matches pattern _ :: _)
 
@@ -27355,7 +26531,7 @@ def $add_vars_i(p, IC, (id)*, (value)*)
 
               1. Return IC''
 
-      1. Else Phantom#1465
+      1. Else Phantom#1415
 
 def $add_typeDef_i(cursor, IC, typeId, typeDefIR)
 
@@ -27365,7 +26541,7 @@ def $add_typeDef_i(cursor, IC, typeId, typeDefIR)
 
     1. Return IC[global.type = typeDefEnv]
 
-1. Else Phantom#1466
+1. Else Phantom#1416
 
 def $add_parserState_i(IC, nameIR, parserStateIR)
 
@@ -27375,7 +26551,7 @@ def $add_parserState_i(IC, nameIR, parserStateIR)
 
     1. Return IC[block.state = stateEnv]
 
-1. Else Phantom#1467
+1. Else Phantom#1417
 
 def $add_type_i(cursor, IC, typeId, typeIR)
 
@@ -27393,7 +26569,7 @@ def $add_type_i(cursor, IC, typeId, typeIR)
 
       1. Return IC[local.type = theta]
 
-1. Else Phantom#1468
+1. Else Phantom#1418
 
 def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
@@ -27405,7 +26581,7 @@ def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
       1. Return IC
 
-    1. Else Phantom#1469
+    1. Else Phantom#1419
 
   2. Case (% matches pattern _ :: _)
 
@@ -27419,7 +26595,7 @@ def $add_types_i(p, IC, (typeId)*, (typeIR)*)
 
             1. Return $add_types_i(p, IC', (typeId_t)*, (typeIR_t)*)
 
-      1. Else Phantom#1470
+      1. Else Phantom#1420
 
 def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
@@ -27433,7 +26609,7 @@ def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
         1. Return IC[global.callable = callableDefEnv]
 
-    1. Else Phantom#1471
+    1. Else Phantom#1421
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27443,9 +26619,9 @@ def $add_callableDef_overload_i(cursor, IC, callableId, callableDef)
 
         1. Return IC[block.callable = callableDefEnv]
 
-    1. Else Phantom#1472
+    1. Else Phantom#1422
 
-1. Else Phantom#1473
+1. Else Phantom#1423
 
 def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
@@ -27463,7 +26639,7 @@ def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
             1. Return IC[global.callable = callableDefEnv]
 
-        1. Else Phantom#1474
+        1. Else Phantom#1424
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -27477,9 +26653,9 @@ def $add_callableDef_non_overload_i(cursor, IC, callableId, callableDef)
 
             1. Return IC[block.callable = callableDefEnv]
 
-        1. Else Phantom#1475
+        1. Else Phantom#1425
 
-1. Else Phantom#1476
+1. Else Phantom#1426
 
 def $add_constructorDef_i(IC, callableId, constructorDef)
 
@@ -27497,7 +26673,7 @@ def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
       1. Return IC
 
-    1. Else Phantom#1477
+    1. Else Phantom#1427
 
   2. Case (% matches pattern _ :: _)
 
@@ -27513,7 +26689,7 @@ def $add_constructorDefs_i(IC, (callableId)*, (constructorDef)*)
 
               1. Return IC''
 
-      1. Else Phantom#1478
+      1. Else Phantom#1428
 
 def $find_var_i(prefixedNameIR, p, IC)
 
@@ -27531,7 +26707,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
             1. Return value'
 
-        1. Else Phantom#1479
+        1. Else Phantom#1429
 
   2. Case (% matches pattern ``%`)
 
@@ -27549,7 +26725,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1480
+            1. Else Phantom#1430
 
         2. Case (% matches pattern `BLOCK`)
 
@@ -27561,13 +26737,13 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1481
+            1. Else Phantom#1431
 
           2. If ((?() = $find_map<id, value>(IC.block.frame, id))), then
 
             1. Return $find_var_i((` id), (global), IC)
 
-          2. Else Phantom#1482
+          2. Else Phantom#1432
 
         3. Case (% matches pattern `LOCAL`)
 
@@ -27579,13 +26755,13 @@ def $find_var_i(prefixedNameIR, p, IC)
 
                 1. Return value'
 
-            1. Else Phantom#1483
+            1. Else Phantom#1433
 
           2. If ((?() = $find_maps<id, value>(IC.local.frames, id))), then
 
             1. Return $find_var_i((` id), (block), IC)
 
-          2. Else Phantom#1484
+          2. Else Phantom#1434
 
 def $find_typeDef_i(_cursor, IC, prefixedNameIR)
 
@@ -27677,7 +26853,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
         1. Result in: % % % |- % : STO (stringLiteral as value)
 
-  1. Else Phantom#1485
+  1. Else Phantom#1435
 
 2. Case analysis on expressionIR
 
@@ -27723,7 +26899,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
               1. Result in: % % % |- % : STO_2 $bin_op(binop, value_l, value_r)
 
-        1. Else Phantom#1486
+        1. Else Phantom#1436
 
         2. Case analysis on binop
 
@@ -27743,7 +26919,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                     1. Result in: % % % |- % : STO_2 value_r
 
-              1. Else Phantom#1487
+              1. Else Phantom#1437
 
           2. Case (% matches pattern `||`)
 
@@ -27761,9 +26937,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                     1. Result in: % % % |- % : STO_2 value_r
 
-              1. Else Phantom#1488
+              1. Else Phantom#1438
 
-        2. Else Phantom#1489
+        2. Else Phantom#1439
 
   5. Case (% has type ternaryExpressionIR)
 
@@ -27787,7 +26963,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                 1. Result in: % % % |- % : STO_2 value_false
 
-          1. Else Phantom#1490
+          1. Else Phantom#1440
 
   6. Case (% has type castExpressionIR)
 
@@ -27907,11 +27083,11 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO ((typeId . nameIR . value') as value)
 
-                            1. Else Phantom#1491
+                            1. Else Phantom#1441
 
-                    1. Else Phantom#1492
+                    1. Else Phantom#1442
 
-                1. Else Phantom#1493
+                1. Else Phantom#1443
 
         2. Case (% has type typedExpressionIR)
 
@@ -27931,9 +27107,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                         1. Result in: % % % |- % : STO ((d (n_size as int)) as value)
 
-                      1. Else Phantom#1494
+                      1. Else Phantom#1444
 
-                  1. Else Phantom#1495
+                  1. Else Phantom#1445
 
               2. (Expr_inst: p IC STO |- typedExpressionIR_base : STO_1 value)
 
@@ -27953,7 +27129,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1496
+                          1. Else Phantom#1446
 
                   2. Case (% has type headerValue)
 
@@ -27969,7 +27145,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1497
+                          1. Else Phantom#1447
 
                   3. Case (% has type headerUnionValue)
 
@@ -27985,9 +27161,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                               1. Result in: % % % |- % : STO_1 value''
 
-                          1. Else Phantom#1498
+                          1. Else Phantom#1448
 
-                1. Else Phantom#1499
+                1. Else Phantom#1449
 
   12. Case (% has type indexAccessExpressionIR)
 
@@ -28021,9 +27197,9 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO_2 value'
 
-                            1. Else Phantom#1500
+                            1. Else Phantom#1450
 
-                        1. Else Phantom#1501
+                        1. Else Phantom#1451
 
                   2. Case (% has type headerStackValue)
 
@@ -28041,13 +27217,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                 1. Result in: % % % |- % : STO_2 value'
 
-                            1. Else Phantom#1502
+                            1. Else Phantom#1452
 
-                        1. Else Phantom#1503
+                        1. Else Phantom#1453
 
-                1. Else Phantom#1504
+                1. Else Phantom#1454
 
-            1. Else Phantom#1505
+            1. Else Phantom#1455
 
   13. Case (% has type sliceAccessExpressionIR)
 
@@ -28103,7 +27279,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                         1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                      1. Else Phantom#1506
+                      1. Else Phantom#1456
 
                 2. Case (% matches pattern `TYPE%.%`)
 
@@ -28125,7 +27301,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                   1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                                1. Else Phantom#1507
+                                1. Else Phantom#1457
 
                             2. Case false
 
@@ -28137,13 +27313,13 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                                     1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                                  1. Else Phantom#1508
+                                  1. Else Phantom#1458
 
-                              1. Else Phantom#1509
+                              1. Else Phantom#1459
 
-                      1. Else Phantom#1510
+                      1. Else Phantom#1460
 
-              1. Else Phantom#1511
+              1. Else Phantom#1461
 
             2. If ((callableTargetIR matches pattern `(%)`)), then
 
@@ -28155,7 +27331,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
                     1. Result in: % % % |- % : STO_1 value
 
-            2. Else Phantom#1512
+            2. Else Phantom#1462
 
   15. Case (% has type parenthesizedExpressionIR)
 
@@ -28167,7 +27343,7 @@ relation Expr_inst: p IC STO |- (expressionIR # expressionNoteIR) : % %
 
           1. Result in: % % % |- % : STO_1 value
 
-2. Else Phantom#1513
+2. Else Phantom#1463
 
 relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
@@ -28177,7 +27353,7 @@ relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
     1. Result in: % % % |- % : store []
 
-  1. Else Phantom#1514
+  1. Else Phantom#1464
 
   2. If (((typedExpressionIR)* matches pattern _ :: _)), then
 
@@ -28189,7 +27365,7 @@ relation Exprs_inst: p IC store |- (typedExpressionIR)* : % %
 
           1. Result in: % % % |- % : STO_2 value_h :: (value_t)*
 
-  2. Else Phantom#1515
+  2. Else Phantom#1465
 
 relation Argument_inst: p IC STO_0 |- argumentIR : % %
 
@@ -28215,7 +27391,7 @@ relation Argument_inst: p IC STO_0 |- argumentIR : % %
 
           1. Result in: % % % |- % : STO_1 value
 
-1. Else Phantom#1516
+1. Else Phantom#1466
 
 relation DirectApplicationStmt_inst: p IC STO_0 |- (constructorTargetIR .apply( argumentListIR );) : % % %
 
@@ -28341,7 +27517,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
                 1. Result in: % % % |- % : IC STO_1 (forStatementIR' as statementIR)
 
-      1. Else Phantom#1517
+      1. Else Phantom#1467
 
       2. Group forStatementIR-in: p IC STO |- (forStatementIR as statementIR) : % % %
 
@@ -28369,9 +27545,9 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
                     1. Result in: % % % |- % : IC STO_1 (forStatementIR' as statementIR)
 
-              1. Else Phantom#1518
+              1. Else Phantom#1468
 
-        1. Else Phantom#1519
+        1. Else Phantom#1469
 
   8. Case (% has type breakStatementIR)
 
@@ -28399,7 +27575,7 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
           1. Result in: % % % |- % : IC STO_1 ((switch( typedExpressionIR ){ switchCaseListIR_inst }) as statementIR)
 
-1. Else Phantom#1520
+1. Else Phantom#1470
 
 2. If ((p matches pattern `LOCAL`)), then
 
@@ -28427,9 +27603,9 @@ relation Stmt_inst: p IC STO |- statementIR : % % %
 
                 1. Result in: % % % |- % : IC_3 STO_1 ((annotationList { blockElementStatementListIR_inst }) as statementIR)
 
-  1. Else Phantom#1521
+  1. Else Phantom#1471
 
-2. Else Phantom#1522
+2. Else Phantom#1472
 
 relation BlockElementStmt_inst: instContext store |- blockElementStatementIR : % % %
 
@@ -28467,7 +27643,7 @@ relation BlockElementStmtList_inst: instContext store |- (blockElementStatementI
 
     1. Result in: % % |- % : instContext store []
 
-  1. Else Phantom#1523
+  1. Else Phantom#1473
 
   2. If (((blockElementStatementIR)* matches pattern _ :: _)), then
 
@@ -28479,7 +27655,7 @@ relation BlockElementStmtList_inst: instContext store |- (blockElementStatementI
 
           1. Result in: % % |- % : IC_2 STO_2 blockElementStatementIR_h_inst :: (blockElementStatementIR_t_inst)*
 
-  2. Else Phantom#1524
+  2. Else Phantom#1474
 
 relation Block_inst: IC_0 STO_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
@@ -28529,7 +27705,7 @@ relation ExternMethods_inst: instContext |- (externMethodPrototypeIR)* : %
 
     1. Result in: % |- % : instContext
 
-  1. Else Phantom#1525
+  1. Else Phantom#1475
 
   2. If (((externMethodPrototypeIR)* matches pattern _ :: _)), then
 
@@ -28541,7 +27717,7 @@ relation ExternMethods_inst: instContext |- (externMethodPrototypeIR)* : %
 
           1. Result in: % |- % : IC_2
 
-  2. Else Phantom#1526
+  2. Else Phantom#1476
 
 relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
@@ -28579,7 +27755,7 @@ relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
               1. Result in: % % |- % : IC_1 STO_1 (emptyStatementIR_inst as parserStatementIR)
 
-          1. Else Phantom#1527
+          1. Else Phantom#1477
 
   4. Case (% has type assignmentStatementIR)
 
@@ -28595,7 +27771,7 @@ relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
               1. Result in: % % |- % : IC_1 STO_1 (assignmentStatementIR_inst as parserStatementIR)
 
-          1. Else Phantom#1528
+          1. Else Phantom#1478
 
   5. Case (% has type callStatementIR)
 
@@ -28611,7 +27787,7 @@ relation ParserStmt_inst: IC_0 STO |- parserStatementIR : % % %
 
               1. Result in: % % |- % : IC_1 STO_1 (callStatementIR_inst as parserStatementIR)
 
-          1. Else Phantom#1529
+          1. Else Phantom#1479
 
   6. Case (% has type directApplicationStatementIR)
 
@@ -28671,7 +27847,7 @@ relation ParserStmts_inst: instContext store |- (parserStatementIR)* : % % %
 
     1. Result in: % % |- % : instContext store []
 
-  1. Else Phantom#1530
+  1. Else Phantom#1480
 
   2. If (((parserStatementIR)* matches pattern _ :: _)), then
 
@@ -28683,7 +27859,7 @@ relation ParserStmts_inst: instContext store |- (parserStatementIR)* : % % %
 
           1. Result in: % % |- % : IC_2 STO_2 parserStatementIR_h_inst :: (parserStatementIR_t_inst)*
 
-  2. Else Phantom#1531
+  2. Else Phantom#1481
 
 relation ParserState_inst: IC_0 STO_0 |- parserStateIR : % %
 
@@ -28707,7 +27883,7 @@ relation ParserStates_inst: instContext store |- (parserStateIR)* : % %
 
     1. Result in: % % |- % : instContext store
 
-  1. Else Phantom#1532
+  1. Else Phantom#1482
 
   2. If (((parserStateIR)* matches pattern _ :: _)), then
 
@@ -28719,7 +27895,7 @@ relation ParserStates_inst: instContext store |- (parserStateIR)* : % %
 
           1. Result in: % % |- % : IC_2 STO_2
 
-  2. Else Phantom#1533
+  2. Else Phantom#1483
 
 relation ParserLocalDecl_inst: IC_0 STO |- parserLocalDeclarationIR : % % %
 
@@ -28787,9 +27963,9 @@ relation ParserLocalDecl_inst: IC_0 STO |- parserLocalDeclarationIR : % % %
 
                                   1. Result in: % % |- % : IC_0 STO_2 (constantDeclarationIR as parserLocalDeclarationIR)
 
-                1. Else Phantom#1534
+                1. Else Phantom#1484
 
-          1. Else Phantom#1535
+          1. Else Phantom#1485
 
 relation ParserLocalDecls_inst: instContext store |- (parserLocalDeclarationIR)* : % % %
 
@@ -28799,7 +27975,7 @@ relation ParserLocalDecls_inst: instContext store |- (parserLocalDeclarationIR)*
 
     1. Result in: % % |- % : instContext store []
 
-  1. Else Phantom#1536
+  1. Else Phantom#1486
 
   2. If (((parserLocalDeclarationIR)* matches pattern _ :: _)), then
 
@@ -28811,7 +27987,7 @@ relation ParserLocalDecls_inst: instContext store |- (parserLocalDeclarationIR)*
 
           1. Result in: % % |- % : IC_2 STO_2 parserLocalDeclarationIR_h_inst :: (parserLocalDeclarationIR_t_inst)*
 
-  2. Else Phantom#1537
+  2. Else Phantom#1487
 
 relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
@@ -28885,7 +28061,7 @@ relation TableProperties_inst: IC store |- (tablePropertyIR)* : % %
 
     1. Result in: % % |- % : store []
 
-  1. Else Phantom#1538
+  1. Else Phantom#1488
 
   2. If (((tablePropertyIR)* matches pattern _ :: _)), then
 
@@ -28897,7 +28073,7 @@ relation TableProperties_inst: IC store |- (tablePropertyIR)* : % %
 
           1. Result in: % % |- % : STO_2 tablePropertyIR_h_inst :: (tablePropertyIR_t_inst)*
 
-  2. Else Phantom#1539
+  2. Else Phantom#1489
 
 relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
@@ -28977,7 +28153,7 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
                                     1. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-                              1. Else Phantom#1540
+                              1. Else Phantom#1490
 
                               2. (Let (nameIR')* be $name_annotation(annotationList))
 
@@ -28995,9 +28171,9 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
                                             1. Result in: % % |- % : IC_1 STO_3 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-                                1. Else Phantom#1541
+                                1. Else Phantom#1491
 
-                  1. Else Phantom#1542
+                  1. Else Phantom#1492
 
 relation ControlLocalDecls_inst: instContext store |- (controlLocalDeclarationIR)* : % % %
 
@@ -29007,7 +28183,7 @@ relation ControlLocalDecls_inst: instContext store |- (controlLocalDeclarationIR
 
     1. Result in: % % |- % : instContext store []
 
-  1. Else Phantom#1543
+  1. Else Phantom#1493
 
   2. If (((controlLocalDeclarationIR)* matches pattern _ :: _)), then
 
@@ -29031,7 +28207,7 @@ relation ControlLocalDecls_inst: instContext store |- (controlLocalDeclarationIR
 
                 1. Result in: % % |- % : IC_2 STO_2 controlLocalDeclarationIR_h_inst :: (controlLocalDeclarationIR_t_inst)*
 
-  2. Else Phantom#1544
+  2. Else Phantom#1494
 
 relation ConstDecl_inst: p IC_0 |- (annotationList const typeIR nameIR (=`value value) ;) : %
 
@@ -29435,11 +28611,11 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
                                               1. Result in: % % |- % : IC_1 STO
 
-                                      1. Else Phantom#1545
+                                      1. Else Phantom#1495
 
-                              1. Else Phantom#1546
+                              1. Else Phantom#1496
 
-                        1. Else Phantom#1547
+                        1. Else Phantom#1497
 
         2. Case (% matches pattern `%TYPE%%;`)
 
@@ -29505,7 +28681,7 @@ relation Decls_inst: instContext store |- (declarationIR)* : % %
 
     1. Result in: % % |- % : instContext store
 
-  1. Else Phantom#1548
+  1. Else Phantom#1498
 
   2. If (((declarationIR)* matches pattern _ :: _)), then
 
@@ -29517,7 +28693,7 @@ relation Decls_inst: instContext store |- (declarationIR)* : % %
 
           1. Result in: % % |- % : IC_2 STO_2
 
-  2. Else Phantom#1549
+  2. Else Phantom#1499
 
 relation Program_inst: |- p4program : % %
 
@@ -29555,9 +28731,9 @@ relation Copy_in_inst: store p_caller IC_caller (argumentIR)* @ p_callee instCon
 
       1. Result in: % % % % @ % % % ~> store instContext
 
-    1. Else Phantom#1550
+    1. Else Phantom#1500
 
-  1. Else Phantom#1551
+  1. Else Phantom#1501
 
   2. If (((argumentIR)* matches pattern _ :: _)), then
 
@@ -29573,9 +28749,9 @@ relation Copy_in_inst: store p_caller IC_caller (argumentIR)* @ p_callee instCon
 
               1. Result in: % % % % @ % % % ~> STO_2 IC_callee_2
 
-      1. Else Phantom#1552
+      1. Else Phantom#1502
 
-  2. Else Phantom#1553
+  2. Else Phantom#1503
 
 relation Copy_in_argument_inst_default: store p_caller IC_caller @ p_callee IC_callee_0 parameterIR ~> % %
 
@@ -29609,7 +28785,7 @@ relation Copy_in_argument_inst_default: store p_caller IC_caller @ p_callee IC_c
 
                 1. Result in: % % % @ % % % ~> store IC_callee_1
 
-    1. Else Phantom#1554
+    1. Else Phantom#1504
 
 relation Copy_in_inst_default: store p_caller IC_caller @ p_callee instContext (parameterIR)* ~> % %
 
@@ -29619,7 +28795,7 @@ relation Copy_in_inst_default: store p_caller IC_caller @ p_callee instContext (
 
     1. Result in: % % % @ % % % ~> store instContext
 
-  1. Else Phantom#1555
+  1. Else Phantom#1505
 
   2. If (((parameterIR)* matches pattern _ :: _)), then
 
@@ -29631,7 +28807,7 @@ relation Copy_in_inst_default: store p_caller IC_caller @ p_callee instContext (
 
           1. Result in: % % % @ % % % ~> STO_2 IC_callee_2
 
-  2. Else Phantom#1556
+  2. Else Phantom#1506
 
 relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR)* >( (argumentIR)* ): % < % >(# % # % )
 
@@ -29647,9 +28823,9 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR)* >( (argume
 
           1. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR)* >(# (id_default)* # (id_optional)* )
 
-      1. Else Phantom#1557
+      1. Else Phantom#1507
 
-  1. Else Phantom#1558
+  1. Else Phantom#1508
 
   2. (Let (typeDefIR)? be $find_typeDef_i(p, IC, prefixedNameIR))
 
@@ -29667,11 +28843,11 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR)* >( (argume
 
                 1. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR)* >(# (id_default)* # (id_optional)* )
 
-            1. Else Phantom#1559
+            1. Else Phantom#1509
 
-        1. Else Phantom#1560
+        1. Else Phantom#1510
 
-    1. Else Phantom#1561
+    1. Else Phantom#1511
 
   3. If (((typeArgumentIR)* = [])), then
 
@@ -29695,13 +28871,13 @@ relation Constructor_inst: p IC |- prefixedNameIR < (typeArgumentIR)* >( (argume
 
                       1. Result in: % % |- % < % >( % ): constructorDef < (typeArgumentIR')* >(# (id_default)* # (id_optional)* )
 
-                  1. Else Phantom#1562
+                  1. Else Phantom#1512
 
-          1. Else Phantom#1563
+          1. Else Phantom#1513
 
-      1. Else Phantom#1564
+      1. Else Phantom#1514
 
-  3. Else Phantom#1565
+  3. Else Phantom#1515
 
 relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (argumentIR)* # (id_default)* # (id_optional)* ): % %
 
@@ -29759,9 +28935,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                                                     1. Result in: % % % |- % < % >( % # % # % ): STO_2 object_extern
 
-                                      1. Else Phantom#1566
+                                      1. Else Phantom#1516
 
-                              1. Else Phantom#1567
+                              1. Else Phantom#1517
 
   2. Case (% has type parserObjectConstructorDef)
 
@@ -29839,7 +29015,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef < (typeArgumentIR)* >( (
 
                                         1. Result in: % % % |- % < % >( % # % # % ): STO_4 object_control
 
-                                  1. Else Phantom#1568
+                                  1. Else Phantom#1518
 
   4. Case (% has type packageObjectConstructorDef)
 
@@ -29889,7 +29065,7 @@ relation SwitchCase_inst: p IC store |- switchCaseIR : % %
 
               1. Result in: % % % |- % : STO_1 (switchLabelIR : blockStatementIR_inst)
 
-          1. Else Phantom#1569
+          1. Else Phantom#1519
 
     2. Case (% matches pattern `%:`)
 
@@ -29905,7 +29081,7 @@ relation SwitchCases_inst: p IC store |- (switchCaseIR)* : % %
 
     1. Result in: % % % |- % : store []
 
-  1. Else Phantom#1570
+  1. Else Phantom#1520
 
   2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -29917,7 +29093,7 @@ relation SwitchCases_inst: p IC store |- (switchCaseIR)* : % %
 
           1. Result in: % % % |- % : STO_2 switchCaseIR_h' :: (switchCaseIR_t')*
 
-  2. Else Phantom#1571
+  2. Else Phantom#1521
 
 def $merge_frames(frame, ({ ((id : value))* }))
 
@@ -29929,7 +29105,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 
   1. Return externMethodDefEnv
 
-1. Else Phantom#1572
+1. Else Phantom#1522
 
 2. (Let ({ (pair<callableId, callableDef>)* }) be set<pair<callableId, callableDef>>)
 
@@ -29947,9 +29123,9 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 
               1. Return $merge_externMethodDefEnvs(externMethodDefEnv_post, ({ ((callableId_t : callableDef_t))* }))
 
-      1. Else Phantom#1573
+      1. Else Phantom#1523
 
-  1. Else Phantom#1574
+  1. Else Phantom#1524
 
 relation ObjectDecl_inst: IC_0 store |- objectDeclarationIR : % %
 
@@ -29981,7 +29157,7 @@ relation ObjectDecls_inst: instContext store |- (objectDeclarationIR)* : % %
 
     1. Result in: % % |- % : instContext store
 
-  1. Else Phantom#1575
+  1. Else Phantom#1525
 
   2. If (((objectDeclarationIR)* matches pattern _ :: _)), then
 
@@ -29993,7 +29169,7 @@ relation ObjectDecls_inst: instContext store |- (objectDeclarationIR)* : % %
 
           1. Result in: % % |- % : IC_2 STO_2
 
-  2. Else Phantom#1576
+  2. Else Phantom#1526
 
 def $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
@@ -30059,15 +29235,15 @@ def $init_table((tablePropertyIR)*)
 
                                 1. Return TBL
 
-                          1. Else Phantom#1577
+                          1. Else Phantom#1527
 
-                  1. Else Phantom#1578
+                  1. Else Phantom#1528
 
-              1. Else Phantom#1579
+              1. Else Phantom#1529
 
-        1. Else Phantom#1580
+        1. Else Phantom#1530
 
-    1. Else Phantom#1581
+    1. Else Phantom#1531
 
 def $init_tableKeys((tablePropertyIR)*)
 
@@ -30083,15 +29259,15 @@ def $init_tableKeys((tablePropertyIR)*)
 
           1. Return tableKeysPropertyIR'
 
-      1. Else Phantom#1582
+      1. Else Phantom#1532
 
-  1. Else Phantom#1583
+  1. Else Phantom#1533
 
 2. If (([] = $filter_<tablePropertyIR>((tablePropertyIR)*, ((tablePropertyIR has type tableKeysPropertyIR))*))), then
 
   1. Return (key={ [] })
 
-2. Else Phantom#1584
+2. Else Phantom#1534
 
 def $init_tableEntries((tablePropertyIR)*)
 
@@ -30107,15 +29283,15 @@ def $init_tableEntries((tablePropertyIR)*)
 
           1. Return tableEntriesPropertyIR'
 
-      1. Else Phantom#1585
+      1. Else Phantom#1535
 
-  1. Else Phantom#1586
+  1. Else Phantom#1536
 
 2. If (([] = $filter_<tablePropertyIR>((tablePropertyIR)*, ((tablePropertyIR has type tableEntriesPropertyIR))*))), then
 
   1. Return ((`empty) ?() entries={ [] })
 
-2. Else Phantom#1587
+2. Else Phantom#1537
 
 syntax globalEvalLayer = globalInstLayer
 
@@ -30139,7 +29315,7 @@ def $exit_e(EC)
 
       1. Return EC[local.frames = (frame_t)*]
 
-  1. Else Phantom#1588
+  1. Else Phantom#1538
 
 def $inherit_e(cursor, EC)
 
@@ -30213,7 +29389,7 @@ def $add_var_e(cursor, EC, prefixedNameIR, value)
 
           1. Return EC[block.frame = frame]
 
-    1. Else Phantom#1589
+    1. Else Phantom#1539
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -30231,9 +29407,9 @@ def $add_var_e(cursor, EC, prefixedNameIR, value)
 
                 1. Return EC[local.frames = frame_h' :: (frame_t)*]
 
-          1. Else Phantom#1590
+          1. Else Phantom#1540
 
-    1. Else Phantom#1591
+    1. Else Phantom#1541
 
 def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
 
@@ -30245,7 +29421,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
 
       1. Return EC
 
-    1. Else Phantom#1592
+    1. Else Phantom#1542
 
   2. Case (% matches pattern _ :: _)
 
@@ -30261,7 +29437,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*, (value)*)
 
               1. Return EC''
 
-      1. Else Phantom#1593
+      1. Else Phantom#1543
 
 def $update_var_e(p, EC, prefixedNameIR, value)
 
@@ -30273,7 +29449,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
       1. Return EC[global.frame = frame]
 
-1. Else Phantom#1594
+1. Else Phantom#1544
 
 2. Case analysis on p
 
@@ -30291,9 +29467,9 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
               1. Return EC[global.frame = frame']
 
-          1. Else Phantom#1595
+          1. Else Phantom#1545
 
-    1. Else Phantom#1596
+    1. Else Phantom#1546
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -30315,7 +29491,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
               1. Return $update_var_e((global), EC, (` id), value)
 
-    1. Else Phantom#1597
+    1. Else Phantom#1547
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -30327,7 +29503,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
           1. Return $update_var_e((block), EC, (` id), value)
 
-        1. Else Phantom#1598
+        1. Else Phantom#1548
 
         2. (Let (frame)* be EC.local.frames)
 
@@ -30351,9 +29527,9 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
                       1. Return EC_pop'[local.frames = frame_h :: EC_pop'.local.frames]
 
-          1. Else Phantom#1599
+          1. Else Phantom#1549
 
-    1. Else Phantom#1600
+    1. Else Phantom#1550
 
 def $find_var_e(prefixedNameIR, p, EC)
 
@@ -30371,7 +29547,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
             1. Return value'
 
-        1. Else Phantom#1601
+        1. Else Phantom#1551
 
   2. Case (% matches pattern ``%`)
 
@@ -30389,7 +29565,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
                 1. Return value'
 
-            1. Else Phantom#1602
+            1. Else Phantom#1552
 
         2. Case (% matches pattern `BLOCK`)
 
@@ -30401,13 +29577,13 @@ def $find_var_e(prefixedNameIR, p, EC)
 
                 1. Return value'
 
-            1. Else Phantom#1603
+            1. Else Phantom#1553
 
           2. If ((?() = $find_map<id, value>(EC.block.frame, id))), then
 
             1. Return $find_var_e((` id), (global), EC)
 
-          2. Else Phantom#1604
+          2. Else Phantom#1554
 
         3. Case (% matches pattern `LOCAL`)
 
@@ -30419,13 +29595,13 @@ def $find_var_e(prefixedNameIR, p, EC)
 
                 1. Return value'
 
-            1. Else Phantom#1605
+            1. Else Phantom#1555
 
           2. If ((?() = $find_maps<id, value>(EC.local.frames, id))), then
 
             1. Return $find_var_e((` id), (block), EC)
 
-          2. Else Phantom#1606
+          2. Else Phantom#1556
 
 def $find_typeDef_e(_cursor, EC, prefixedNameIR)
 
@@ -30461,15 +29637,15 @@ def $find_type_e(cursor, EC, nameIR)
 
           1. Return ?(typeIR')
 
-      1. Else Phantom#1607
+      1. Else Phantom#1557
 
     2. If ((?() = $find_map<typeId, typeIR>(EC.local.type, nameIR))), then
 
       1. Return $find_type_e((block), EC, nameIR)
 
-    2. Else Phantom#1608
+    2. Else Phantom#1558
 
-1. Else Phantom#1609
+1. Else Phantom#1559
 
 def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
@@ -30493,13 +29669,13 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
                   1. Return ?((callableId : ((global), callableDef) # (id_default)* # (id_optional)*))
 
-              1. Else Phantom#1610
+              1. Else Phantom#1560
 
             2. If ((?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
               1. Return ?()
 
-            2. Else Phantom#1611
+            2. Else Phantom#1561
 
       2. Case (% matches pattern `.%`)
 
@@ -30515,13 +29691,13 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
                   1. Return ?((callableId : ((global), callableDef) # (id_default)* # (id_optional)*))
 
-              1. Else Phantom#1612
+              1. Else Phantom#1562
 
             2. If ((?() = $find_overloaded<callableDef>(EC.global.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
               1. Return ?()
 
-            2. Else Phantom#1613
+            2. Else Phantom#1563
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -30539,15 +29715,15 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
                 1. Return ?((callableId : ((block), callableDef) # (id_default)* # (id_optional)*))
 
-            1. Else Phantom#1614
+            1. Else Phantom#1564
 
           2. If ((?() = $find_overloaded<callableDef>(EC.block.callable, callTargetKey, $parameterListIR_of_callableDef))), then
 
             1. Return $find_callableDef_overloaded_e((global), EC, (` nameIR), (argumentIR)*)
 
-          2. Else Phantom#1615
+          2. Else Phantom#1565
 
-    1. Else Phantom#1616
+    1. Else Phantom#1566
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -30557,7 +29733,7 @@ def $find_callableDef_overloaded_e(cursor, EC, prefixedNameIR, (argumentIR)*)
 
         1. Return $find_callableDef_overloaded_e((block), EC, (` nameIR), (argumentIR)*)
 
-    1. Else Phantom#1617
+    1. Else Phantom#1567
 
 def $find_constructorDef_e(EC, prefixedNameIR, (argumentIR)*)
 
@@ -30689,7 +29865,7 @@ def $update_object_qualified_e(ARCH_0, objectId, object)
 
     1. Return ARCH_1
 
-1. Else Phantom#1618
+1. Else Phantom#1568
 
 def $update_object_unqualified_e(ARCH_0, id, object)
 
@@ -30711,9 +29887,9 @@ def $update_object_unqualified_e(ARCH_0, id, object)
 
                 1. Return ARCH_1
 
-          1. Else Phantom#1619
+          1. Else Phantom#1569
 
-      1. Else Phantom#1620
+      1. Else Phantom#1570
 
 def $update_objectState_e(ARCH_0, objectId, objectState)
 
@@ -30801,7 +29977,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
           1. Result in: % % % |- % : EC ARCH expressionResult
 
-  1. Else Phantom#1621
+  1. Else Phantom#1571
 
 2. Case analysis on expressionIR
 
@@ -30881,9 +30057,9 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                         1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                  1. Else Phantom#1622
+                  1. Else Phantom#1572
 
-        1. Else Phantom#1623
+        1. Else Phantom#1573
 
         2. Case analysis on binop
 
@@ -30897,7 +30073,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                   1. Result in: % % % |- % : EC_1 ARCH_1 (abortResult as expressionResult)
 
-              1. Else Phantom#1624
+              1. Else Phantom#1574
 
               2. Case analysis on expressionResult
 
@@ -30917,11 +30093,11 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                         1. Result in: % % % |- % : EC_2 ARCH_2 (abortResult as expressionResult)
 
-                    1. Else Phantom#1625
+                    1. Else Phantom#1575
 
                     2. Result in: % % % |- % : EC_2 ARCH_2 expressionResult'
 
-              2. Else Phantom#1626
+              2. Else Phantom#1576
 
           2. Case (% matches pattern `||`)
 
@@ -30933,7 +30109,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                   1. Result in: % % % |- % : EC_1 ARCH_1 (abortResult as expressionResult)
 
-              1. Else Phantom#1627
+              1. Else Phantom#1577
 
               2. Case analysis on expressionResult
 
@@ -30953,13 +30129,13 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                         1. Result in: % % % |- % : EC_2 ARCH_2 (abortResult as expressionResult)
 
-                    1. Else Phantom#1628
+                    1. Else Phantom#1578
 
                     2. Result in: % % % |- % : EC_2 ARCH_2 expressionResult'
 
-              2. Else Phantom#1629
+              2. Else Phantom#1579
 
-        2. Else Phantom#1630
+        2. Else Phantom#1580
 
   5. Case (% has type ternaryExpressionIR)
 
@@ -30975,7 +30151,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
               1. Result in: % % % |- % : EC_1 ARCH_1 (abortResult as expressionResult)
 
-          1. Else Phantom#1631
+          1. Else Phantom#1581
 
           2. Case analysis on expressionResult
 
@@ -30991,7 +30167,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                 1. Result in: % % % |- % : EC_2 ARCH_2 expressionResult_false
 
-          2. Else Phantom#1632
+          2. Else Phantom#1582
 
   6. Case (% has type castExpressionIR)
 
@@ -31187,11 +30363,11 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                   1. Result in: % % % |- % : EC ARCH expressionResult
 
-                            1. Else Phantom#1633
+                            1. Else Phantom#1583
 
-                    1. Else Phantom#1634
+                    1. Else Phantom#1584
 
-                1. Else Phantom#1635
+                1. Else Phantom#1585
 
         2. Case (% has type typedExpressionIR)
 
@@ -31255,7 +30431,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                                   1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                                          1. Else Phantom#1636
+                                          1. Else Phantom#1586
 
                                 3. Case (% = "lastIndex")
 
@@ -31271,9 +30447,9 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                             1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                                    1. Else Phantom#1637
+                                    1. Else Phantom#1587
 
-                              1. Else Phantom#1638
+                              1. Else Phantom#1588
 
                         2. Case (% has type structValue)
 
@@ -31291,7 +30467,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                       1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                                1. Else Phantom#1639
+                                1. Else Phantom#1589
 
                         3. Case (% has type headerValue)
 
@@ -31309,7 +30485,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                       1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                                1. Else Phantom#1640
+                                1. Else Phantom#1590
 
                         4. Case (% has type headerUnionValue)
 
@@ -31327,9 +30503,9 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                       1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                                1. Else Phantom#1641
+                                1. Else Phantom#1591
 
-                      1. Else Phantom#1642
+                      1. Else Phantom#1592
 
               2. (Expr_eval: p EC ARCH |- typedExpressionIR_base : EC_1 ARCH_1 expressionResult)
 
@@ -31363,11 +30539,11 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                 1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult'
 
-                          1. Else Phantom#1643
+                          1. Else Phantom#1593
 
-                    1. Else Phantom#1644
+                    1. Else Phantom#1594
 
-                1. Else Phantom#1645
+                1. Else Phantom#1595
 
   12. Case (% has type indexAccessExpressionIR)
 
@@ -31415,9 +30591,9 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                         1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                                  1. Else Phantom#1646
+                                  1. Else Phantom#1596
 
-                          1. Else Phantom#1647
+                          1. Else Phantom#1597
 
                       2. Case (% has type headerStackValue)
 
@@ -31445,15 +30621,15 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                               1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                                        1. Else Phantom#1648
+                                        1. Else Phantom#1598
 
-                                  1. Else Phantom#1649
+                                  1. Else Phantom#1599
 
-                          1. Else Phantom#1650
+                          1. Else Phantom#1600
 
-                    1. Else Phantom#1651
+                    1. Else Phantom#1601
 
-                1. Else Phantom#1652
+                1. Else Phantom#1602
 
   13. Case (% has type sliceAccessExpressionIR)
 
@@ -31483,7 +30659,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                       1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                1. Else Phantom#1653
+                1. Else Phantom#1603
 
   14. Case (% has type callExpressionIR)
 
@@ -31529,9 +30705,9 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
                                 1. Result in: % % % |- % : EC_2 ARCH_2 ((` value') as expressionResult)
 
-                            1. Else Phantom#1654
+                            1. Else Phantom#1604
 
-      1. Else Phantom#1655
+      1. Else Phantom#1605
 
   15. Case (% has type parenthesizedExpressionIR)
 
@@ -31543,7 +30719,7 @@ relation Expr_eval: p EC ARCH |- (expressionIR # expressionNoteIR) : % % %
 
           1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-2. Else Phantom#1656
+2. Else Phantom#1606
 
 syntax expressionListResult = 
    | ` value*
@@ -31558,7 +30734,7 @@ relation Exprs_eval: p evalContext arch |- (typedExpressionIR)* : % % %
 
     1. Result in: % % % |- % : evalContext arch ((` []) as expressionListResult)
 
-  1. Else Phantom#1657
+  1. Else Phantom#1607
 
   2. If (((typedExpressionIR)* matches pattern _ :: _)), then
 
@@ -31594,7 +30770,7 @@ relation Exprs_eval: p evalContext arch |- (typedExpressionIR)* : % % %
 
                       1. Result in: % % % |- % : EC_2 ARCH_2 ((` value_h :: (value_t)*) as expressionListResult)
 
-  2. Else Phantom#1658
+  2. Else Phantom#1608
 
 syntax keysetExpressionResult = 
    | ` setValue*
@@ -31635,7 +30811,7 @@ relation Argument_eval: p EC_0 ARCH_0 |- argumentIR : % % %
 
           1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-1. Else Phantom#1659
+1. Else Phantom#1609
 
 syntax storageReferenceResult = 
    | ` storageReference?
@@ -31662,7 +30838,7 @@ relation Argument_eval_lvalue: p EC_0 ARCH_0 |- argumentIR : % % %
 
                 1. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-          1. Else Phantom#1660
+          1. Else Phantom#1610
 
   2. Case (% matches pattern `%=%`)
 
@@ -31680,7 +30856,7 @@ relation Argument_eval_lvalue: p EC_0 ARCH_0 |- argumentIR : % % %
 
                 1. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-          1. Else Phantom#1661
+          1. Else Phantom#1611
 
   3. Case (% matches pattern `%=_`)
 
@@ -31750,7 +30926,7 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR # lvalueNoteIR) : % % %
 
                                     1. Result in: % % % |- % : EC_1 ARCH_1 (rejectTransitionResult as storageReferenceResult)
 
-                                1. Else Phantom#1662
+                                1. Else Phantom#1612
 
                                 2. If ((n_idx < n_size)), then
 
@@ -31758,9 +30934,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR # lvalueNoteIR) : % % %
 
                                     1. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult'
 
-                                2. Else Phantom#1663
+                                2. Else Phantom#1613
 
-                              1. Else Phantom#1664
+                              1. Else Phantom#1614
 
                         2. Case false
 
@@ -31768,7 +30944,7 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR # lvalueNoteIR) : % % %
 
                             1. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult'
 
-                1. Else Phantom#1665
+                1. Else Phantom#1615
 
   3. Case (% matches pattern `%[%]`)
 
@@ -31816,9 +30992,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR # lvalueNoteIR) : % % %
 
                                   1. Result in: % % % |- % : EC_2 ARCH_2 storageReferenceResult'
 
-                            1. Else Phantom#1666
+                            1. Else Phantom#1616
 
-                1. Else Phantom#1667
+                1. Else Phantom#1617
 
   4. Case (% matches pattern `%[%:%]`)
 
@@ -31866,9 +31042,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR # lvalueNoteIR) : % % %
 
                                   1. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult'
 
-                            1. Else Phantom#1668
+                            1. Else Phantom#1618
 
-                1. Else Phantom#1669
+                1. Else Phantom#1619
 
   5. Case (% matches pattern `(%)`)
 
@@ -31926,11 +31102,11 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                                 1. Result in: % % % |- % : value'
 
-                            1. Else Phantom#1670
+                            1. Else Phantom#1620
 
-                      1. Else Phantom#1671
+                      1. Else Phantom#1621
 
-                  1. Else Phantom#1672
+                  1. Else Phantom#1622
 
             2. Case (% has type headerStackValue)
 
@@ -31946,9 +31122,9 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                         1. Result in: % % % |- % : value
 
-                    1. Else Phantom#1673
+                    1. Else Phantom#1623
 
-                  1. Else Phantom#1674
+                  1. Else Phantom#1624
 
             3. Case (% has type structValue)
 
@@ -31964,7 +31140,7 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                         1. Result in: % % % |- % : value'
 
-                    1. Else Phantom#1675
+                    1. Else Phantom#1625
 
             4. Case (% has type headerValue)
 
@@ -31980,7 +31156,7 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                         1. Result in: % % % |- % : value'
 
-                    1. Else Phantom#1676
+                    1. Else Phantom#1626
 
             5. Case (% has type headerUnionValue)
 
@@ -31996,9 +31172,9 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                         1. Result in: % % % |- % : value'
 
-                    1. Else Phantom#1677
+                    1. Else Phantom#1627
 
-          1. Else Phantom#1678
+          1. Else Phantom#1628
 
   3. Case (% matches pattern `%[%]`)
 
@@ -32030,7 +31206,7 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                               1. Result in: % % % |- % : value''
 
-                          1. Else Phantom#1679
+                          1. Else Phantom#1629
 
                           2. If ((n_idx >= n_size)), then
 
@@ -32044,15 +31220,15 @@ relation Lvalue_read: p EC ARCH |- storageReference : %
 
                                     1. Result in: % % % |- % : value'''
 
-                              1. Else Phantom#1680
+                              1. Else Phantom#1630
 
-                          2. Else Phantom#1681
+                          2. Else Phantom#1631
 
-                      1. Else Phantom#1682
+                      1. Else Phantom#1632
 
-              1. Else Phantom#1683
+              1. Else Phantom#1633
 
-      1. Else Phantom#1684
+      1. Else Phantom#1634
 
   4. Case (% matches pattern `%[%:%]`)
 
@@ -32106,7 +31282,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference -> value : %
 
                           1. Result in: % % % |- % -> % : EC_1
 
-                  1. Else Phantom#1685
+                  1. Else Phantom#1635
 
             2. Case (% has type structValue)
 
@@ -32182,13 +31358,13 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference -> value : %
 
                                                 1. Result in: % % % |- % -> % : EC_1
 
-                                1. Else Phantom#1686
+                                1. Else Phantom#1636
 
-                          1. Else Phantom#1687
+                          1. Else Phantom#1637
 
-                      1. Else Phantom#1688
+                      1. Else Phantom#1638
 
-          1. Else Phantom#1689
+          1. Else Phantom#1639
 
   3. Case (% matches pattern `%[%]`)
 
@@ -32224,19 +31400,19 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference -> value : %
 
                                   1. Result in: % % % |- % -> % : EC_1
 
-                          1. Else Phantom#1690
+                          1. Else Phantom#1640
 
                           2. If ((n_idx >= n_size)), then
 
                             1. Result in: % % % |- % -> % : EC_0
 
-                          2. Else Phantom#1691
+                          2. Else Phantom#1641
 
-                      1. Else Phantom#1692
+                      1. Else Phantom#1642
 
-              1. Else Phantom#1693
+              1. Else Phantom#1643
 
-      1. Else Phantom#1694
+      1. Else Phantom#1644
 
   4. Case (% matches pattern `%[%:%]`)
 
@@ -32363,9 +31539,9 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                                             1. Result in: % % % |- % : EC_3 ARCH_2 ((`empty) as statementResult)
 
-                                    1. Else Phantom#1695
+                                    1. Else Phantom#1645
 
-                1. Else Phantom#1696
+                1. Else Phantom#1646
 
   3. Case (% has type callStatementIR)
 
@@ -32443,7 +31619,7 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                     1. Result in: % % % |- % : EC_cond ARCH_cond (abortResult as statementResult)
 
-                1. Else Phantom#1697
+                1. Else Phantom#1647
 
                 2. Case analysis on expressionResult
 
@@ -32457,7 +31633,7 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                     1. Result in: % % % |- % : EC_cond ARCH_cond ((`empty) as statementResult)
 
-                2. Else Phantom#1698
+                2. Else Phantom#1648
 
           2. Case (% matches pattern `IF(%)%ELSE%`)
 
@@ -32471,7 +31647,7 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                     1. Result in: % % % |- % : EC_cond ARCH_cond (abortResult as statementResult)
 
-                1. Else Phantom#1699
+                1. Else Phantom#1649
 
                 2. Case analysis on expressionResult
 
@@ -32487,9 +31663,9 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                       1. Result in: % % % |- % : EC_else ARCH_else statementResult
 
-                2. Else Phantom#1700
+                2. Else Phantom#1650
 
-1. Else Phantom#1701
+1. Else Phantom#1651
 
 2. If ((p matches pattern `LOCAL`)), then
 
@@ -32561,9 +31737,9 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                             1. Result in: % % % |- % : EC_4 ARCH_2 statementResult'
 
-                  1. Else Phantom#1702
+                  1. Else Phantom#1652
 
-        1. Else Phantom#1703
+        1. Else Phantom#1653
 
         2. Group forStatementIR-in: (local) EC ARCH |- (forStatementIR as statementIR) : % % %
 
@@ -32611,7 +31787,7 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                   1. Result in: % % % |- % : EC_1 ARCH_1 statementResult
 
-          1. Else Phantom#1704
+          1. Else Phantom#1654
 
     3. Case (% has type breakStatement)
 
@@ -32669,7 +31845,7 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                             1. Result in: % % % |- % : EC_1 ARCH_1 ((`empty) as statementResult)
 
-                  1. Else Phantom#1705
+                  1. Else Phantom#1655
 
         2. Group switchStatementIR-general: (local) EC ARCH |- ((switch( typedExpressionIR ){ (switchCaseIR)* }) as statementIR) : % % %
 
@@ -32703,9 +31879,9 @@ relation Stmt_eval: p EC ARCH |- statementIR : % % %
 
                         1. Result in: % % % |- % : EC_2 ARCH_2 ((`empty) as statementResult)
 
-  1. Else Phantom#1706
+  1. Else Phantom#1656
 
-2. Else Phantom#1707
+2. Else Phantom#1657
 
 relation BlockElementStmt_eval: EC_0 arch |- blockElementStatementIR : % % %
 
@@ -32745,7 +31921,7 @@ relation BlockElementStmtList_eval: evalContext arch |- (blockElementStatementIR
 
     1. Result in: % % |- % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#1708
+  1. Else Phantom#1658
 
   2. If (((blockElementStatementIR)* matches pattern _ :: _)), then
 
@@ -32757,7 +31933,7 @@ relation BlockElementStmtList_eval: evalContext arch |- (blockElementStatementIR
 
           1. Result in: % % |- % : EC_1 ARCH_1 statementResult
 
-        1. Else Phantom#1709
+        1. Else Phantom#1659
 
         2. If ((statementResult has type continueEmptyResult)), then
 
@@ -32767,9 +31943,9 @@ relation BlockElementStmtList_eval: evalContext arch |- (blockElementStatementIR
 
               1. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
-        2. Else Phantom#1710
+        2. Else Phantom#1660
 
-  2. Else Phantom#1711
+  2. Else Phantom#1661
 
 relation Block_eval: EC_0 ARCH_0 |- (annotationList { blockElementStatementListIR }) : % % %
 
@@ -32819,7 +31995,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                 1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as parserStatementResult)
 
-          1. Else Phantom#1712
+          1. Else Phantom#1662
 
   3. Case (% has type emptyStatementIR)
 
@@ -32835,7 +32011,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
               1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as parserStatementResult)
 
-          1. Else Phantom#1713
+          1. Else Phantom#1663
 
   4. Case (% has type assignmentStatementIR)
 
@@ -32859,7 +32035,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                 1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as parserStatementResult)
 
-          1. Else Phantom#1714
+          1. Else Phantom#1664
 
   5. Case (% has type callStatementIR)
 
@@ -32883,7 +32059,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                 1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as parserStatementResult)
 
-          1. Else Phantom#1715
+          1. Else Phantom#1665
 
   6. Case (% has type parserBlockStatementIR)
 
@@ -32919,7 +32095,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                     1. Result in: % % |- % : EC_cond ARCH_cond (rejectTransitionResult as parserStatementResult)
 
-                1. Else Phantom#1716
+                1. Else Phantom#1666
 
                 2. Case analysis on expressionResult
 
@@ -32933,7 +32109,7 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                     1. Result in: % % |- % : EC_cond ARCH_cond ((`empty) as parserStatementResult)
 
-                2. Else Phantom#1717
+                2. Else Phantom#1667
 
           2. Case (% matches pattern `IF(%)%ELSE%`)
 
@@ -32955,9 +32131,9 @@ relation ParserStmt_eval: EC_0 ARCH |- parserStatementIR : % % %
 
                       1. Result in: % % |- % : EC_else ARCH_else parserStatementResult
 
-                1. Else Phantom#1718
+                1. Else Phantom#1668
 
-1. Else Phantom#1719
+1. Else Phantom#1669
 
 relation ParserStmts_eval: evalContext arch |- (parserStatementIR)* : % % %
 
@@ -32967,7 +32143,7 @@ relation ParserStmts_eval: evalContext arch |- (parserStatementIR)* : % % %
 
     1. Result in: % % |- % : evalContext arch ((`empty) as parserStatementResult)
 
-  1. Else Phantom#1720
+  1. Else Phantom#1670
 
   2. If (((parserStatementIR)* matches pattern _ :: _)), then
 
@@ -32991,7 +32167,7 @@ relation ParserStmts_eval: evalContext arch |- (parserStatementIR)* : % % %
 
                 1. Result in: % % |- % : EC_2 ARCH_2 parserStatementResult'
 
-  2. Else Phantom#1721
+  2. Else Phantom#1671
 
 syntax transitionResult = 
    | accept
@@ -33038,7 +32214,7 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
                         1. Result in: % % |- % : EC_2 ARCH_2 (rejectTransitionResult as transitionResult)
 
-                    1. Else Phantom#1722
+                    1. Else Phantom#1672
 
                     2. If (((nameIR_state)? matches pattern (_))), then
 
@@ -33048,9 +32224,9 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
                           1. Result in: % % |- % : EC_3 ARCH_3 transitionResult
 
-                    2. Else Phantom#1723
+                    2. Else Phantom#1673
 
-      1. Else Phantom#1724
+      1. Else Phantom#1674
 
 relation ParserTransition_eval: evalContext arch |- (transition stateExpressionIR) : % % %
 
@@ -33074,13 +32250,13 @@ relation ParserTransition_eval: evalContext arch |- (transition stateExpressionI
 
               1. Result in: % % |- % : evalContext arch ((reject errorValue) as transitionResult)
 
-        1. Else Phantom#1725
+        1. Else Phantom#1675
 
         2. If (((nameIR =/= "accept") /\ (nameIR =/= "reject"))), then
 
           1. Result in: % % |- % : evalContext arch ((state nameIR) as transitionResult)
 
-        2. Else Phantom#1726
+        2. Else Phantom#1676
 
     2. Case (% has type selectExpressionIR)
 
@@ -33148,7 +32324,7 @@ relation ParserState_trans: EC_0 ARCH_0 |-transition nameIR : % % %
 
                   1. Result in: % % |-transition % : EC_2 ARCH_2 transitionResult'
 
-    1. Else Phantom#1727
+    1. Else Phantom#1677
 
 syntax parserDeclarationResult = parserStatementResult
 
@@ -33188,9 +32364,9 @@ relation ParserLocalDecl_eval: EC_0 ARCH |- parserLocalDeclarationIR : % % %
 
                 1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as parserDeclarationResult)
 
-          1. Else Phantom#1728
+          1. Else Phantom#1678
 
-1. Else Phantom#1729
+1. Else Phantom#1679
 
 relation ParserLocalDecls_eval: evalContext arch |- (parserLocalDeclarationIR)* : % % %
 
@@ -33200,7 +32376,7 @@ relation ParserLocalDecls_eval: evalContext arch |- (parserLocalDeclarationIR)* 
 
     1. Result in: % % |- % : evalContext arch ((`empty) as parserDeclarationResult)
 
-  1. Else Phantom#1730
+  1. Else Phantom#1680
 
   2. If (((parserLocalDeclarationIR)* matches pattern _ :: _)), then
 
@@ -33222,7 +32398,7 @@ relation ParserLocalDecls_eval: evalContext arch |- (parserLocalDeclarationIR)* 
 
               1. Result in: % % |- % : EC_2 ARCH_2 parserStatementResult
 
-  2. Else Phantom#1731
+  2. Else Phantom#1681
 
 syntax tableResult = 
    | exit
@@ -33290,7 +32466,7 @@ relation Table_eval: EC_0 ARCH_0 |- typeId TBL : % % %
 
                                         1. Result in: % % |- % % : EC_3 ARCH_3 ((return ?((tableMetadataStructValue as value))) as tableResult)
 
-                          1. Else Phantom#1732
+                          1. Else Phantom#1682
 
 syntax controlBodyResult = 
    | exit
@@ -33316,13 +32492,13 @@ relation ControlBody_eval: EC_0 ARCH_0 |- controlBodyIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((exit) as controlBodyResult)
 
-    1. Else Phantom#1733
+    1. Else Phantom#1683
 
     2. If ((statementResult = ((return ?()) as statementResult))), then
 
       1. Result in: % % |- % : EC_1 ARCH_1 ((return ?()) as controlBodyResult)
 
-    2. Else Phantom#1734
+    2. Else Phantom#1684
 
 syntax controlLocalDeclarationResult = 
    | `empty
@@ -33364,9 +32540,9 @@ relation ControlLocalDecl_eval: EC_0 ARCH |- controlLocalDeclarationIR : % % %
 
                 1. Result in: % % |- % : EC_1 ARCH_1 ((`empty) as controlLocalDeclarationResult)
 
-          1. Else Phantom#1735
+          1. Else Phantom#1685
 
-1. Else Phantom#1736
+1. Else Phantom#1686
 
 relation ControlLocalDecls_eval: evalContext arch |- (controlLocalDeclarationIR)* : % % %
 
@@ -33376,7 +32552,7 @@ relation ControlLocalDecls_eval: evalContext arch |- (controlLocalDeclarationIR)
 
     1. Result in: % % |- % : evalContext arch ((`empty) as controlLocalDeclarationResult)
 
-  1. Else Phantom#1737
+  1. Else Phantom#1687
 
   2. If (((controlLocalDeclarationIR)* matches pattern _ :: _)), then
 
@@ -33400,7 +32576,7 @@ relation ControlLocalDecls_eval: evalContext arch |- (controlLocalDeclarationIR)
 
                 1. Result in: % % |- % : EC_2 ARCH_2 controlLocalDeclarationResult'
 
-  2. Else Phantom#1738
+  2. Else Phantom#1688
 
 syntax declarationResult = 
    | `empty
@@ -33484,9 +32660,9 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                       1. Result in: % % % |- % <_>( % ): EC ARCH ((` (actionCallee as callee)) as calleeResult)
 
-              1. Else Phantom#1739
+              1. Else Phantom#1689
 
-          1. Else Phantom#1740
+          1. Else Phantom#1690
 
       2. Group externFunctionCallee: p EC ARCH |- (referenceExpressionIR as callableTargetIR) <_>( argumentListIR ): % % %
 
@@ -33506,9 +32682,9 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                       1. Result in: % % % |- % <_>( % ): EC ARCH ((` (externFunctionCallee as callee)) as calleeResult)
 
-              1. Else Phantom#1741
+              1. Else Phantom#1691
 
-          1. Else Phantom#1742
+          1. Else Phantom#1692
 
       3. Group definedFunctionCallee: p EC ARCH |- (referenceExpressionIR as callableTargetIR) <_>( argumentListIR ): % % %
 
@@ -33528,9 +32704,9 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                       1. Result in: % % % |- % <_>( % ): EC ARCH ((` (definedFunctionCallee as callee)) as calleeResult)
 
-              1. Else Phantom#1743
+              1. Else Phantom#1693
 
-          1. Else Phantom#1744
+          1. Else Phantom#1694
 
   2. Case (% matches pattern `%.%`)
 
@@ -33552,9 +32728,9 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                     1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 (abortResult as calleeResult)
 
-                1. Else Phantom#1745
+                1. Else Phantom#1695
 
-          1. Else Phantom#1746
+          1. Else Phantom#1696
 
         2. Case analysis on nameIR
 
@@ -33584,13 +32760,13 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                   1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-                          1. Else Phantom#1747
+                          1. Else Phantom#1697
 
-                      1. Else Phantom#1748
+                      1. Else Phantom#1698
 
-                1. Else Phantom#1749
+                1. Else Phantom#1699
 
-            1. Else Phantom#1750
+            1. Else Phantom#1700
 
           2. Case (% = "pop_front")
 
@@ -33618,13 +32794,13 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                   1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-                          1. Else Phantom#1751
+                          1. Else Phantom#1701
 
-                      1. Else Phantom#1752
+                      1. Else Phantom#1702
 
-                1. Else Phantom#1753
+                1. Else Phantom#1703
 
-            1. Else Phantom#1754
+            1. Else Phantom#1704
 
           3. Case (% = "isValid")
 
@@ -33650,13 +32826,13 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                 1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-                          1. Else Phantom#1755
+                          1. Else Phantom#1705
 
-                      1. Else Phantom#1756
+                      1. Else Phantom#1706
 
-                1. Else Phantom#1757
+                1. Else Phantom#1707
 
-            1. Else Phantom#1758
+            1. Else Phantom#1708
 
           4. Case (% = "setValid")
 
@@ -33682,13 +32858,13 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                 1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-                          1. Else Phantom#1759
+                          1. Else Phantom#1709
 
-                      1. Else Phantom#1760
+                      1. Else Phantom#1710
 
-                1. Else Phantom#1761
+                1. Else Phantom#1711
 
-            1. Else Phantom#1762
+            1. Else Phantom#1712
 
           5. Case (% = "setInvalid")
 
@@ -33714,15 +32890,15 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                 1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (builtinMethodCallee as callee)) as calleeResult)
 
-                          1. Else Phantom#1763
+                          1. Else Phantom#1713
 
-                      1. Else Phantom#1764
+                      1. Else Phantom#1714
 
-                1. Else Phantom#1765
+                1. Else Phantom#1715
 
-            1. Else Phantom#1766
+            1. Else Phantom#1716
 
-        2. Else Phantom#1767
+        2. Else Phantom#1717
 
       2. Group externMethodCallee: p EC ARCH |- (typedExpressionIR . nameIR) <_>( argumentListIR ): % % %
 
@@ -33784,21 +32960,21 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                                           1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (externMethodCallee as callee)) as calleeResult)
 
-                                                      1. Else Phantom#1768
+                                                      1. Else Phantom#1718
 
-                                                  1. Else Phantom#1769
+                                                  1. Else Phantom#1719
 
-                                              1. Else Phantom#1770
+                                              1. Else Phantom#1720
 
-                                      1. Else Phantom#1771
+                                      1. Else Phantom#1721
 
-                                  1. Else Phantom#1772
+                                  1. Else Phantom#1722
 
-                            1. Else Phantom#1773
+                            1. Else Phantom#1723
 
-                      1. Else Phantom#1774
+                      1. Else Phantom#1724
 
-          1. Else Phantom#1775
+          1. Else Phantom#1725
 
       3. If ((nameIR = "apply")), then
 
@@ -33860,17 +33036,17 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                                           1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (parserApplyMethodCallee as callee)) as calleeResult)
 
-                                                    1. Else Phantom#1776
+                                                    1. Else Phantom#1726
 
-                                        1. Else Phantom#1777
+                                        1. Else Phantom#1727
 
-                                    1. Else Phantom#1778
+                                    1. Else Phantom#1728
 
-                              1. Else Phantom#1779
+                              1. Else Phantom#1729
 
-                        1. Else Phantom#1780
+                        1. Else Phantom#1730
 
-            1. Else Phantom#1781
+            1. Else Phantom#1731
 
         2. Group controlApplyMethodCallee: p EC ARCH |- (typedExpressionIR . "apply") <_>( argumentListIR ): % % %
 
@@ -33930,21 +33106,21 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                                           1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (controlApplyMethodCallee as callee)) as calleeResult)
 
-                                                    1. Else Phantom#1782
+                                                    1. Else Phantom#1732
 
-                                        1. Else Phantom#1783
+                                        1. Else Phantom#1733
 
-                                    1. Else Phantom#1784
+                                    1. Else Phantom#1734
 
-                              1. Else Phantom#1785
+                              1. Else Phantom#1735
 
-                        1. Else Phantom#1786
+                        1. Else Phantom#1736
 
-            1. Else Phantom#1787
+            1. Else Phantom#1737
 
-      3. Else Phantom#1788
+      3. Else Phantom#1738
 
-1. Else Phantom#1789
+1. Else Phantom#1739
 
 2. (Let (argumentIR)* be argumentListIR)
 
@@ -34002,21 +33178,21 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                                                 1. Result in: % % % |- % <_>( % ): EC_1 ARCH_1 ((` (tableApplyMethodCallee as callee)) as calleeResult)
 
-                                          1. Else Phantom#1790
+                                          1. Else Phantom#1740
 
-                                      1. Else Phantom#1791
+                                      1. Else Phantom#1741
 
-                                1. Else Phantom#1792
+                                1. Else Phantom#1742
 
-                          1. Else Phantom#1793
+                          1. Else Phantom#1743
 
-              1. Else Phantom#1794
+              1. Else Phantom#1744
 
-        1. Else Phantom#1795
+        1. Else Phantom#1745
 
-      1. Else Phantom#1796
+      1. Else Phantom#1746
 
-  1. Else Phantom#1797
+  1. Else Phantom#1747
 
 syntax copyInArgumentResult = 
    | ` storageReference?
@@ -34047,7 +33223,7 @@ relation Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 (annotationList direct
 
               1. Result in: % |- % % % @ % % % ~> ARCH_1 EC_caller_1 EC_callee_1 # ((` ?()) as copyInArgumentResult)
 
-  1. Else Phantom#1798
+  1. Else Phantom#1748
 
 2. Case analysis on direction
 
@@ -34079,7 +33255,7 @@ relation Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 (annotationList direct
 
                       1. Result in: % |- % % % @ % % % ~> ARCH_1 EC_caller_1 EC_callee_1 # ((` ?(storageReference')) as copyInArgumentResult)
 
-              1. Else Phantom#1799
+              1. Else Phantom#1749
 
   2. Case (% matches pattern `OUT`)
 
@@ -34107,7 +33283,7 @@ relation Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 (annotationList direct
 
                     1. Result in: % |- % % % @ % % % ~> ARCH_1 EC_caller_1 EC_callee_1 # ((` (storageReference)?) as copyInArgumentResult)
 
-2. Else Phantom#1800
+2. Else Phantom#1750
 
 syntax copyInResult = 
    | ` storageReference?*
@@ -34126,9 +33302,9 @@ relation Copy_in: p_shared arch |- p_caller evalContext (parameterIR)* @ p_calle
 
         1. Result in: % % |- % % % @ % % % ~> arch evalContext EC_callee_1 # ((` []) as copyInResult)
 
-    1. Else Phantom#1801
+    1. Else Phantom#1751
 
-  1. Else Phantom#1802
+  1. Else Phantom#1752
 
   2. If (((parameterIR)* matches pattern _ :: _)), then
 
@@ -34174,11 +33350,11 @@ relation Copy_in: p_shared arch |- p_caller evalContext (parameterIR)* @ p_calle
 
                                 1. Result in: % % |- % % % @ % % % ~> ARCH_2 EC_caller_2 EC_callee_2 # ((` ((storageReference')?)*) as copyInResult)
 
-                          1. Else Phantom#1803
+                          1. Else Phantom#1753
 
-      1. Else Phantom#1804
+      1. Else Phantom#1754
 
-  2. Else Phantom#1805
+  2. Else Phantom#1755
 
 relation Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 ~> %
 
@@ -34198,9 +33374,9 @@ relation Copy_in_default: (parameterIR)* @ p_callee EC_callee_0 ~> %
 
               1. Result in: % @ % % ~> EC_callee_1
 
-        1. Else Phantom#1806
+        1. Else Phantom#1756
 
-    1. Else Phantom#1807
+    1. Else Phantom#1757
 
 relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList direction typeIR nameIR parameterInitializerOptIR) @ p_callee EC_callee (storageReference)? ~> %
 
@@ -34212,9 +33388,9 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList directi
 
       1. Result in: % |- % % % @ % % % ~> EC_caller_0
 
-    1. Else Phantom#1808
+    1. Else Phantom#1758
 
-1. Else Phantom#1809
+1. Else Phantom#1759
 
 2. Group out-inout: ARCH |- p_caller EC_caller_0 (annotationList direction typeIR nameIR parameterInitializerOptIR) @ p_callee EC_callee (storageReference)? ~> %
 
@@ -34226,7 +33402,7 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList directi
 
         1. Result in: % |- % % % @ % % % ~> EC_caller_0
 
-      1. Else Phantom#1810
+      1. Else Phantom#1760
 
     2. Case (% matches pattern (_))
 
@@ -34240,7 +33416,7 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList directi
 
               1. Result in: % |- % % % @ % % % ~> EC_caller_1
 
-        1. Else Phantom#1811
+        1. Else Phantom#1761
 
 relation Copy_out: p_shared ARCH |- p_caller EC_caller_0 parameterListIR @ p_callee EC_callee ((storageReference)?)* ~> %
 
@@ -34298,7 +33474,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                     1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((exit) as callResult)
 
-                              1. Else Phantom#1812
+                              1. Else Phantom#1762
 
                               2. If ((actionResult = ((return ?()) as actionResult))), then
 
@@ -34306,11 +33482,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                   1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 ((return ?()) as callResult)
 
-                              2. Else Phantom#1813
+                              2. Else Phantom#1763
 
-                    1. Else Phantom#1814
+                    1. Else Phantom#1764
 
-        1. Else Phantom#1815
+        1. Else Phantom#1765
 
     2. Case (% has type definedFunctionCallee)
 
@@ -34350,7 +33526,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                   1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-  1. Else Phantom#1816
+  1. Else Phantom#1766
 
   2. (Let (argumentIR)* be argumentListIR)
 
@@ -34394,7 +33570,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                     1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
-    1. Else Phantom#1817
+    1. Else Phantom#1767
 
   3. If ((callee has type builtinMethodCallee)), then
 
@@ -34472,17 +33648,17 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                                                       1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_1 ((return ?()) as callResult)
 
-                                                        1. Else Phantom#1818
+                                                        1. Else Phantom#1768
 
-                                              1. Else Phantom#1819
+                                              1. Else Phantom#1769
 
-                                        1. Else Phantom#1820
+                                        1. Else Phantom#1770
 
-                          1. Else Phantom#1821
+                          1. Else Phantom#1771
 
-                      1. Else Phantom#1822
+                      1. Else Phantom#1772
 
-                    1. Else Phantom#1823
+                    1. Else Phantom#1773
 
                   2. Case (% = "pop_front")
 
@@ -34542,21 +33718,21 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                                                     1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_1 ((return ?()) as callResult)
 
-                                                    1. Else Phantom#1824
+                                                    1. Else Phantom#1774
 
-                                              1. Else Phantom#1825
+                                              1. Else Phantom#1775
 
-                                        1. Else Phantom#1826
+                                        1. Else Phantom#1776
 
-                          1. Else Phantom#1827
+                          1. Else Phantom#1777
 
-                      1. Else Phantom#1828
+                      1. Else Phantom#1778
 
-                    1. Else Phantom#1829
+                    1. Else Phantom#1779
 
-                1. Else Phantom#1830
+                1. Else Phantom#1780
 
-          1. Else Phantom#1831
+          1. Else Phantom#1781
 
           2. If ((argumentListIR = [])), then
 
@@ -34598,11 +33774,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                       1. Result in: % % % |- % @< % >( % ): EC_0 ARCH_0 (returnResult as callResult)
 
-                        1. Else Phantom#1832
+                        1. Else Phantom#1782
 
-                    1. Else Phantom#1833
+                    1. Else Phantom#1783
 
-                  1. Else Phantom#1834
+                  1. Else Phantom#1784
 
                 2. Case (% = "setValid")
 
@@ -34626,11 +33802,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                     1. Result in: % % % |- % @< % >( % ): EC_1 ARCH_0 (returnResult as callResult)
 
-                        1. Else Phantom#1835
+                        1. Else Phantom#1785
 
-                    1. Else Phantom#1836
+                    1. Else Phantom#1786
 
-                  1. Else Phantom#1837
+                  1. Else Phantom#1787
 
                 3. Case (% = "setInvalid")
 
@@ -34654,19 +33830,19 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                     1. Result in: % % % |- % @< % >( % ): EC_1 ARCH_0 (returnResult as callResult)
 
-                        1. Else Phantom#1838
+                        1. Else Phantom#1788
 
-                    1. Else Phantom#1839
+                    1. Else Phantom#1789
 
-                  1. Else Phantom#1840
+                  1. Else Phantom#1790
 
-              1. Else Phantom#1841
+              1. Else Phantom#1791
 
-          2. Else Phantom#1842
+          2. Else Phantom#1792
 
-      1. Else Phantom#1843
+      1. Else Phantom#1793
 
-  3. Else Phantom#1844
+  3. Else Phantom#1794
 
   4. (Let (argumentIR)* be argumentListIR)
 
@@ -34716,9 +33892,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                           1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
-            1. Else Phantom#1845
+            1. Else Phantom#1795
 
-    1. Else Phantom#1846
+    1. Else Phantom#1796
 
 2. Case analysis on callee
 
@@ -34788,9 +33964,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                             1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
 
-                                    1. Else Phantom#1847
+                                    1. Else Phantom#1797
 
-                    1. Else Phantom#1848
+                    1. Else Phantom#1798
 
   2. Case (% has type controlApplyMethodCallee)
 
@@ -34852,7 +34028,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                               1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((exit) as callResult)
 
-                                        1. Else Phantom#1849
+                                        1. Else Phantom#1799
 
                                         2. If ((controlBodyResult = ((return ?()) as controlBodyResult))), then
 
@@ -34860,9 +34036,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                             1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_3 ((return ?()) as callResult)
 
-                                        2. Else Phantom#1850
+                                        2. Else Phantom#1800
 
-                      1. Else Phantom#1851
+                      1. Else Phantom#1801
 
   3. Case (% has type tableApplyMethodCallee)
 
@@ -34902,9 +34078,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                               1. Result in: % % % |- % @< % >( % ): EC_1 ARCH_1 (returnResult as callResult)
 
-                1. Else Phantom#1852
+                1. Else Phantom#1802
 
-2. Else Phantom#1853
+2. Else Phantom#1803
 
 extern relation ExternFunctionCall_eval: evalContext arch |- nameIR ( (nameIR')* ): % % %
 
@@ -34920,7 +34096,7 @@ def $match_keysets((setValue)*, (value)*)
 
       1. Return true
 
-    1. Else Phantom#1854
+    1. Else Phantom#1804
 
   2. Case (% matches pattern [ _/1 ])
 
@@ -34934,9 +34110,9 @@ def $match_keysets((setValue)*, (value)*)
 
             1. Return $match_keyset(setValue', value_key)
 
-          1. Else Phantom#1855
+          1. Else Phantom#1805
 
-      1. Else Phantom#1856
+      1. Else Phantom#1806
 
   3. Case (% matches pattern _ :: _)
 
@@ -34960,19 +34136,19 @@ def $match_keysets((setValue)*, (value)*)
 
                   1. Return false
 
-            1. Else Phantom#1857
+            1. Else Phantom#1807
 
-          1. Else Phantom#1858
+          1. Else Phantom#1808
 
-      1. Else Phantom#1859
+      1. Else Phantom#1809
 
-1. Else Phantom#1860
+1. Else Phantom#1810
 
 2. If (((setValue)* = [(set{...})])), then
 
   1. Return true
 
-2. Else Phantom#1861
+2. Else Phantom#1811
 
 def $match_keyset(setValue, value_key)
 
@@ -35061,11 +34237,11 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
                                   1. Result in: % % |- % : EC_1 ARCH_1 ((` setValue) as simpleKeysetExpressionResult)
 
-                            1. Else Phantom#1862
+                            1. Else Phantom#1812
 
-                        1. Else Phantom#1863
+                        1. Else Phantom#1813
 
-                1. Else Phantom#1864
+                1. Else Phantom#1814
 
   2. Case (% matches pattern `%&&&%`)
 
@@ -35143,7 +34319,7 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
                           1. Result in: % % |- % : EC_2 ARCH_2 ((` setValue) as simpleKeysetExpressionResult)
 
-1. Else Phantom#1865
+1. Else Phantom#1815
 
 2. Group default-any: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
@@ -35153,7 +34329,7 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
       1. Result in: % % |- % : EC_0 ARCH_0 ((` setValue) as simpleKeysetExpressionResult)
 
-  1. Else Phantom#1866
+  1. Else Phantom#1816
 
 relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR)* : % % %
 
@@ -35163,7 +34339,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
     1. Result in: % % |- % : evalContext arch ((` []) as keysetExpressionResult)
 
-  1. Else Phantom#1867
+  1. Else Phantom#1817
 
   2. If (((simpleKeysetExpressionIR)* matches pattern _ :: _)), then
 
@@ -35201,7 +34377,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
                         1. Result in: % % |- % : EC_2 ARCH_2 keysetExpressionResult'
 
-  2. Else Phantom#1868
+  2. Else Phantom#1818
 
 relation ForUpdateStmt_eval: EC_0 ARCH_0 |- forUpdateStatementIR : % % %
 
@@ -35233,7 +34409,7 @@ relation ForUpdateStmts_eval: evalContext arch |- (forUpdateStatementIR)* : % % 
 
     1. Result in: % % |- % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#1869
+  1. Else Phantom#1819
 
   2. If (((forUpdateStatementIR)* matches pattern _ :: _)), then
 
@@ -35257,9 +34433,9 @@ relation ForUpdateStmts_eval: evalContext arch |- (forUpdateStatementIR)* : % % 
 
                 1. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
-        1. Else Phantom#1870
+        1. Else Phantom#1820
 
-  2. Else Phantom#1871
+  2. Else Phantom#1821
 
 relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
 
@@ -35281,7 +34457,7 @@ relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
 
                 1. Result in: % % |- % : EC_1 arch ((`empty) as statementResult)
 
-        1. Else Phantom#1872
+        1. Else Phantom#1822
 
       2. (Let (annotationList typeIR nameIR initializerOptIR) be forInitStatementIR)
 
@@ -35307,7 +34483,7 @@ relation ForInitStmt_eval: EC_0 arch |- forInitStatementIR : % % %
 
                       1. Result in: % % |- % : EC_2 ARCH_1 ((`empty) as statementResult)
 
-        1. Else Phantom#1873
+        1. Else Phantom#1823
 
     2. Case (% has type forUpdateStatementIR)
 
@@ -35325,7 +34501,7 @@ relation ForInitStmts_eval: evalContext arch |- (forInitStatementIR)* : % % %
 
     1. Result in: % % |- % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#1874
+  1. Else Phantom#1824
 
   2. If (((forInitStatementIR)* matches pattern _ :: _)), then
 
@@ -35349,9 +34525,9 @@ relation ForInitStmts_eval: evalContext arch |- (forInitStatementIR)* : % % %
 
                 1. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
-        1. Else Phantom#1875
+        1. Else Phantom#1825
 
-  2. Else Phantom#1876
+  2. Else Phantom#1826
 
 relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
@@ -35365,7 +34541,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
         1. Result in: % % |- % % % : EC_1 ARCH_1 (abortResult as statementResult)
 
-    1. Else Phantom#1877
+    1. Else Phantom#1827
 
     2. Case analysis on expressionResult
 
@@ -35397,7 +34573,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
                 1. Result in: % % |- % % % : EC_2 ARCH_2 ((`empty) as statementResult)
 
-          1. Else Phantom#1878
+          1. Else Phantom#1828
 
           2. If (((statementResult = ((`empty) as statementResult)) \/ (statementResult = ((continue) as statementResult)))), then
 
@@ -35419,11 +34595,11 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
                       1. Result in: % % |- % % % : EC_4 ARCH_4 statementResult''
 
-              1. Else Phantom#1879
+              1. Else Phantom#1829
 
-          2. Else Phantom#1880
+          2. Else Phantom#1830
 
-    2. Else Phantom#1881
+    2. Else Phantom#1831
 
 relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % %
 
@@ -35467,7 +34643,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
                         1. Result in: % % |- % : EC_1 ARCH_1 ((` (value')*) as expressionListResult)
 
-                1. Else Phantom#1882
+                1. Else Phantom#1832
 
   2. Case (% matches pattern `%..%`)
 
@@ -35523,21 +34699,21 @@ def $values_of_setValue((set< typeIR >), setValue)
 
           1. Return value_l :: $values_of_setValue((set< typeIR >), (set{ value_l_inc .. value_r }))
 
-    1. Else Phantom#1883
+    1. Else Phantom#1833
 
     2. If ($bin_eq(value_l, value_r)), then
 
       1. Return [value_l]
 
-    2. Else Phantom#1884
+    2. Else Phantom#1834
 
     3. If ($bin_gt(value_l, value_r)), then
 
       1. Return []
 
-    3. Else Phantom#1885
+    3. Else Phantom#1835
 
-1. Else Phantom#1886
+1. Else Phantom#1836
 
 relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
@@ -35547,7 +34723,7 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
     1. Result in: % % |- % % % : evalContext arch ((`empty) as statementResult)
 
-  1. Else Phantom#1887
+  1. Else Phantom#1837
 
   2. If (((value)* matches pattern _ :: _)), then
 
@@ -35577,7 +34753,7 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
                 1. Result in: % % |- % % % : EC_2 ARCH_1 ((`empty) as statementResult)
 
-          1. Else Phantom#1888
+          1. Else Phantom#1838
 
           2. If (((statementResult = ((`empty) as statementResult)) \/ (statementResult = ((continue) as statementResult)))), then
 
@@ -35585,9 +34761,9 @@ relation ForInStmt_eval: evalContext arch |- nameIR (value)* statementIR : % % %
 
               1. Result in: % % |- % % % : EC_3 ARCH_2 statementResult'
 
-          2. Else Phantom#1889
+          2. Else Phantom#1839
 
-  2. Else Phantom#1890
+  2. Else Phantom#1840
 
 def $match_switchLabelIR_table(id, switchLabelIR)
 
@@ -35625,7 +34801,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
     1. Result in: % |- % : ?()
 
-  1. Else Phantom#1891
+  1. Else Phantom#1841
 
   2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -35669,9 +34845,9 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
                           1. Result in: % |- % : ?(blockStatementIR)
 
-                      1. Else Phantom#1892
+                      1. Else Phantom#1842
 
-                  1. Else Phantom#1893
+                  1. Else Phantom#1843
 
               2. Case false
 
@@ -35679,7 +34855,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)* : %
 
                   1. Result in: % |- % : (blockStatementIR)?
 
-  2. Else Phantom#1894
+  2. Else Phantom#1844
 
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
@@ -35713,7 +34889,7 @@ relation SwitchLabel_general_eval: cursor EC_0 ARCH_0 |- switchLabelIR : % % %
 
             1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-1. Else Phantom#1895
+1. Else Phantom#1845
 
 def $match_switchLabelIR_general(value, value')
 
@@ -35737,7 +34913,7 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
       1. Result in: % % % % |- % : EC_0 ARCH_0 ?()
 
-    1. Else Phantom#1896
+    1. Else Phantom#1846
 
     2. If (((switchCaseIR)* matches pattern _ :: _)), then
 
@@ -35767,7 +34943,7 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                           1. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?
 
-                1. Else Phantom#1897
+                1. Else Phantom#1847
 
           2. Case (% matches pattern `%:`)
 
@@ -35795,9 +34971,9 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                                   1. Result in: % % % % |- % : EC_1 ARCH_1 ?(blockStatementIR)
 
-                              1. Else Phantom#1898
+                              1. Else Phantom#1848
 
-                          1. Else Phantom#1899
+                          1. Else Phantom#1849
 
                       2. Case false
 
@@ -35805,11 +34981,11 @@ relation SwitchCases_general_eval: cursor EC_0 ARCH_0 value |- (switchCaseIR)* :
 
                           1. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?
 
-                1. Else Phantom#1900
+                1. Else Phantom#1850
 
-    2. Else Phantom#1901
+    2. Else Phantom#1851
 
-1. Else Phantom#1902
+1. Else Phantom#1852
 
 syntax selectCaseMatchResult = 
    | ` nameIR?
@@ -35843,7 +35019,7 @@ relation SelectCase_match: EC_0 ARCH_0 (value_key)* |- (keysetExpressionIR : nam
 
               1. Result in: % % % |- % : EC_1 ARCH_1 ((` ?(nameIR)) as selectCaseMatchResult)
 
-    1. Else Phantom#1903
+    1. Else Phantom#1853
 
 relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : % % %
 
@@ -35853,7 +35029,7 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
     1. Result in: % % % |- % : evalContext arch ((` ?()) as selectCaseMatchResult)
 
-  1. Else Phantom#1904
+  1. Else Phantom#1854
 
   2. If (((selectCaseIR)* matches pattern _ :: _)), then
 
@@ -35879,7 +35055,7 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
                   1. Result in: % % % |- % : EC_1 ARCH_1 ((` ?(nameIR_state)) as selectCaseMatchResult)
 
-              1. Else Phantom#1905
+              1. Else Phantom#1855
 
         2. If ((selectCaseMatchResult = ((` ?()) as selectCaseMatchResult))), then
 
@@ -35887,9 +35063,9 @@ relation SelectCases_match: evalContext arch (value_key)* |- (selectCaseIR)* : %
 
             1. Result in: % % % |- % : EC_2 ARCH_2 selectCaseMatchResult'
 
-        2. Else Phantom#1906
+        2. Else Phantom#1856
 
-  2. Else Phantom#1907
+  2. Else Phantom#1857
 
 syntax tableKeyValue = 
    | value : nameIR
@@ -35920,7 +35096,7 @@ relation TableKey_eval: EC_0 ARCH_0 |- (typedExpressionIR # nameIR' : nameIR ann
 
             1. Result in: % % |- % : EC_1 ARCH_1 ((` tableKeyValue) as tableKeyResult)
 
-    1. Else Phantom#1908
+    1. Else Phantom#1858
 
 syntax tableKeysResult = 
    | ` tableKeyValue*
@@ -35934,7 +35110,7 @@ relation TableKeys_eval: evalContext arch |- (tableKeyIR)* : % % %
 
     1. Result in: % % |- % : evalContext arch ((` []) as tableKeysResult)
 
-  1. Else Phantom#1909
+  1. Else Phantom#1859
 
   2. If (((tableKeyIR)* matches pattern _ :: _)), then
 
@@ -35972,7 +35148,7 @@ relation TableKeys_eval: evalContext arch |- (tableKeyIR)* : % % %
 
                         1. Result in: % % |- % : EC_2 ARCH_2 ((` (tableKeyValue)*) as tableKeysResult)
 
-  2. Else Phantom#1910
+  2. Else Phantom#1860
 
 def $get_tableEntryPriority((tableEntryPriorityIR)?)
 
@@ -35994,7 +35170,7 @@ def $get_tableEntryPriority((tableEntryPriorityIR)?)
 
             1. Return ?(n)
 
-        1. Else Phantom#1911
+        1. Else Phantom#1861
 
 syntax tableMatch = 
    | nat? : tableActionReferenceIR
@@ -36039,7 +35215,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- (tableKeyValue)* @ tableEntryIR : % % %
 
                       1. Result in: % % |- % @ % : EC_1 ARCH_1 ((` ?(tableMatch)) as tableMatchResult)
 
-        1. Else Phantom#1912
+        1. Else Phantom#1862
 
 syntax tableMatchesResult = 
    | ` tableMatch*
@@ -36053,7 +35229,7 @@ relation TableMatches_eval: evalContext arch |- (tableKeyValue)* @ (tableEntryIR
 
     1. Result in: % % |- % @ % : evalContext arch ((` []) as tableMatchesResult)
 
-  1. Else Phantom#1913
+  1. Else Phantom#1863
 
   2. If (((tableEntryIR)* matches pattern _ :: _)), then
 
@@ -36091,7 +35267,7 @@ relation TableMatches_eval: evalContext arch |- (tableKeyValue)* @ (tableEntryIR
 
                         1. Result in: % % |- % @ % : EC_2 ARCH_2 ((` (tableMatch)*) as tableMatchesResult)
 
-  2. Else Phantom#1914
+  2. Else Phantom#1864
 
 def $largest_priority_wins(TBL)
 
@@ -36113,17 +35289,17 @@ def $largest_priority_wins(TBL)
 
                 1. Return b
 
-            1. Else Phantom#1915
+            1. Else Phantom#1865
 
-        1. Else Phantom#1916
+        1. Else Phantom#1866
 
-    1. Else Phantom#1917
+    1. Else Phantom#1867
 
   2. If (([] = $filter_<tableCustomPropertyIR>((tableCustomPropertyIR)*, ($is_largest_priority_wins(tableCustomPropertyIR))*))), then
 
     1. Return true
 
-  2. Else Phantom#1918
+  2. Else Phantom#1868
 
 def $is_largest_priority_wins(tableCustomPropertyIR)
 
@@ -36157,7 +35333,7 @@ def $select_action(TBL, (tableMatch)*)
 
         1. Return tableActionReferenceIR
 
-1. Else Phantom#1919
+1. Else Phantom#1869
 
 2. If ((|(tableMatch)*| > 1)), then
 
@@ -36181,7 +35357,7 @@ def $select_action(TBL, (tableMatch)*)
 
                     1. Return tableActionReferenceIR_h
 
-                1. Else Phantom#1920
+                1. Else Phantom#1870
 
             2. Case false
 
@@ -36191,11 +35367,11 @@ def $select_action(TBL, (tableMatch)*)
 
                   1. Return tableActionReferenceIR_h
 
-              1. Else Phantom#1921
+              1. Else Phantom#1871
 
-    1. Else Phantom#1922
+    1. Else Phantom#1872
 
-2. Else Phantom#1923
+2. Else Phantom#1873
 
 relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee EC_callee ((storageReference)?)* ~> %
 
@@ -36207,9 +35383,9 @@ relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee 
 
       1. Result in: % |- % % % @ % % % ~> evalContext
 
-    1. Else Phantom#1924
+    1. Else Phantom#1874
 
-  1. Else Phantom#1925
+  1. Else Phantom#1875
 
   2. If (((parameterIR)* matches pattern _ :: _)), then
 
@@ -36227,9 +35403,9 @@ relation Copy_out_inner: ARCH |- p_caller evalContext (parameterIR)* @ p_callee 
 
                 1. Result in: % |- % % % @ % % % ~> EC_caller_2
 
-        1. Else Phantom#1926
+        1. Else Phantom#1876
 
-  2. Else Phantom#1927
+  2. Else Phantom#1877
 
 syntax actionResult = 
    | exit
@@ -36255,13 +35431,13 @@ relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((exit) as actionResult)
 
-    1. Else Phantom#1928
+    1. Else Phantom#1878
 
     2. If ((statementResult = ((return ?()) as statementResult))), then
 
       1. Result in: % % |- % : EC_1 ARCH_1 ((return ?()) as actionResult)
 
-    2. Else Phantom#1929
+    2. Else Phantom#1879
 
 syntax definedFunctionResult = 
    | exit
@@ -36293,7 +35469,7 @@ relation DefinedFunctionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 (returnResult as definedFunctionResult)
 
-    1. Else Phantom#1930
+    1. Else Phantom#1880
 
 def $isValid_fieldValue((value id ;))
 
@@ -36335,11 +35511,11 @@ relation Extern_init: EC ARCH_0 |- nameIR : %
 
                       1. Result in: % % |- % : ARCH_2
 
-          1. Else Phantom#1931
+          1. Else Phantom#1881
 
-        1. Else Phantom#1932
+        1. Else Phantom#1882
 
-      1. Else Phantom#1933
+      1. Else Phantom#1883
 
 relation Program_init: |- p4program : % %
 
@@ -36354,6 +35530,802 @@ relation Program_init: |- p4program : % %
         1. (Let EC be {global globalEvalLayer, block blockEvalLayer, local localEvalLayer})
 
           1. Result in: |- % : EC STO
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to)
+
+1. (Let (typedExpressionIR')? be $cast_unary(typedExpressionIR, typeIR_to))
+
+  1. If (((typedExpressionIR')? matches pattern (_))), then
+
+    1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
+
+      1. Return ?(typedExpressionIR_cast)
+
+2. If ((?() = $cast_unary(typedExpressionIR, typeIR_to))), then
+
+  1. If ((((bool) as typeIR) = typeIR_to)), then
+
+    1. If ((((int) as typeIR) = $type_of_typedExpressionIR(typedExpressionIR))), then
+
+      1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR))
+
+        1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR) as expressionIR) # (( typeIR_to ctk ))))
+
+          1. Return ?(typedExpressionIR_cast)
+
+  2. If ((((error) as typeIR) = typeIR_to)), then
+
+    1. (Let (expressionIR # (( typeIR ctk ))) be typedExpressionIR)
+
+      1. If ((expressionIR has type integerLiteral)), then
+
+        1. (Let integerLiteral be (expressionIR as integerLiteral))
+
+          1. If ((integerLiteral matches pattern `D%`)), then
+
+            1. (Let (d int) be integerLiteral)
+
+              1. If ((int has type nat)), then
+
+                1. (Let n be (int as nat))
+
+                  1. If ((typeIR has type intTypeIR)), then
+
+                    1. (Let intTypeIR be (typeIR as intTypeIR))
+
+                      1. (Let ({ (value_frame)* }) be $codom_map<id, value>(EC.global.frame))
+
+                        1. (Let (value_error)* be $filter_<value>((value_frame)*, ((value_frame has type errorValue))*))
+
+                          1. (Let value be (value_error)*[n])
+
+                            1. If ((value has type errorValue)), then
+
+                              1. (Let (error. nameIR_error) be (value as errorValue))
+
+                                1. (Let typedExpressionIR_error be (((error. nameIR_error) as expressionIR) # (( typeIR_to ctk ))))
+
+                                  1. Return ?(typedExpressionIR_error)
+
+  3. Case analysis on typeIR_to
+
+    1. Case (% has type typedefTypeIR)
+
+      1. (Let (typedef _typeId typeIR_base) be (typeIR_to as typedefTypeIR))
+
+        1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+
+          1. If (((typedExpressionIR')? matches pattern (_))), then
+
+            1. (Let ?(typedExpressionIR_typedef) be (typedExpressionIR')?)
+
+              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_typedef))
+
+                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_typedef) as expressionIR) # (( typeIR_to ctk ))))
+
+                  1. Return ?(typedExpressionIR_cast)
+
+    2. Case (% has type newTypeIR)
+
+      1. (Let (type _typeId typeIR_base) be (typeIR_to as newTypeIR))
+
+        1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+
+          1. If (((typedExpressionIR')? matches pattern (_))), then
+
+            1. (Let ?(typedExpressionIR_newtype) be (typedExpressionIR')?)
+
+              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_newtype))
+
+                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_newtype) as expressionIR) # (( typeIR_to ctk ))))
+
+                  1. Return ?(typedExpressionIR_cast)
+
+    3. Case (% has type serializableEnumTypeIR)
+
+      1. (Let (enum _typeId < typeIR_base >{ (_valueFieldIR)* }) be (typeIR_to as serializableEnumTypeIR))
+
+        1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR, typeIR_base))
+
+          1. If (((typedExpressionIR')? matches pattern (_))), then
+
+            1. (Let ?(typedExpressionIR_enum) be (typedExpressionIR')?)
+
+              1. (Let ctk be $ctk_of_typedExpressionIR(typedExpressionIR_enum))
+
+                1. (Let typedExpressionIR_cast be (((( typeIR_to ) typedExpressionIR_enum) as expressionIR) # (( typeIR_to ctk ))))
+
+                  1. Return ?(typedExpressionIR_cast)
+
+3. Otherwise,
+
+  1. Return ?()
+
+syntax tableEntryPriorityInterface = int?
+
+syntax tableKeyValueInterface = 
+   | `bin text
+   | `hex text
+   | `dec text
+   | text `slash nat
+
+syntax tableKeyInterface = (nameIR, tableKeyValueInterface)
+
+syntax tableKeysetInterface = tableKeyInterface*
+
+syntax tableActionArgumentInterface = (nameIR, int)
+
+syntax tableActionInterface = (nameIR, tableActionArgumentInterface*)
+
+def $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
+
+1. Case analysis on tableKeyValueInterface
+
+  1. Case (% matches pattern ``BIN%`)
+
+    1. (Let (`bin t) be tableKeyValueInterface)
+
+      1. Return ?("0b" ++ t)
+
+  2. Case (% matches pattern ``HEX%`)
+
+    1. (Let (`hex t) be tableKeyValueInterface)
+
+      1. Return ?("0x" ++ t)
+
+  3. Case (% matches pattern ``DEC%`)
+
+    1. (Let (`dec t) be tableKeyValueInterface)
+
+      1. Return ?(t)
+
+  4. Case (% matches pattern `%`SLASH%`)
+
+    1. Return ?()
+
+def $tableObject_create_entry_priority(tableEntryPriorityInterface)
+
+1. (Let (int)? be tableEntryPriorityInterface)
+
+  1. If (((int)? matches pattern ())), then
+
+    1. Return ?()
+
+  1. Else Phantom#1884
+
+2. If ((tableEntryPriorityInterface matches pattern (_))), then
+
+  1. (Let ?(int) be tableEntryPriorityInterface)
+
+    1. If ((int has type nat)), then
+
+      1. (Let n_priority be (int as nat))
+
+        1. Return ?((priority= (d (n_priority as int)) :))
+
+    1. Else Phantom#1885
+
+2. Else Phantom#1886
+
+def $needs_priority_tableKeysPropertyIR((key={ (tableKeyIR)* }))
+
+1. (Let (_typedExpressionIR # _nameIR : nameIR_matchKind _annotationList ;) be tableKeyIR)*
+
+  1. Return $exists_(((nameIR_matchKind = "ternary"))*)
+
+def $tableObject_create_entry_key(EC, (nameIR_key, text, typeIR), (tableKeyInterface)*)
+
+1. Case analysis on text
+
+  1. Case (% = "exact")
+
+    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
+
+      1. If (((tableKeyValueInterface)? matches pattern (_))), then
+
+        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
+
+          1. (Let (text')? be $text_of_number_tableKeyValueInterface(tableKeyValueInterface'))
+
+            1. If (((text')? matches pattern (_))), then
+
+              1. (Let ?(text_key_value) be (text')?)
+
+                1. (Let i_key_value be $text_to_int(text_key_value))
+
+                  1. (Let typedExpressionIR be (((d i_key_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                    1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR, typeIR))
+
+                      1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                        1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR')?)
+
+                          1. (Let typeIR_set be ((set< typeIR >) as typeIR))
+
+                            1. (Let simpleKeysetExpressionIR be ((((( typeIR_set ) typedExpressionIR_cast) as expressionIR) # (( typeIR_set (dyn) ))) as simpleKeysetExpressionIR))
+
+                              1. Return simpleKeysetExpressionIR
+
+                      1. Else Phantom#1887
+
+            1. Else Phantom#1888
+
+      1. Else Phantom#1889
+
+  2. Case (% = "ternary")
+
+    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
+
+      1. If (((tableKeyValueInterface)? matches pattern (_))), then
+
+        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
+
+          1. Case analysis on tableKeyValueInterface'
+
+            1. Case (% matches pattern ``HEX%`)
+
+              1. (Let (`hex text_key_value) be tableKeyValueInterface')
+
+                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                  1. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
+
+                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                      1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                        1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
+
+                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
+
+                                  1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                    1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                          1. Return simpleKeysetExpressionIR
+
+                                    1. Else Phantom#1890
+
+                        1. Else Phantom#1891
+
+            2. Case (% matches pattern ``BIN%`)
+
+              1. (Let (`bin text_key_value) be tableKeyValueInterface')
+
+                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                  1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                      1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                        1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+                                  1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                    1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                          1. Return simpleKeysetExpressionIR
+
+                                    1. Else Phantom#1892
+
+                        1. Else Phantom#1893
+
+          1. Else Phantom#1894
+
+      1. Else Phantom#1895
+
+  3. Case (% = "lpm")
+
+    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
+
+      1. If (((tableKeyValueInterface)? matches pattern (_))), then
+
+        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
+
+          1. Case analysis on tableKeyValueInterface'
+
+            1. Case (% matches pattern ``HEX%`)
+
+              1. (Let (`hex text_key_value) be tableKeyValueInterface')
+
+                1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
+
+                  1. If (~$contains(text_key_value_prefix, "*")), then
+
+                    1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                      1. (Let i_key_base_value be $text_to_int("0x" ++ text_key_base_value))
+
+                        1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                          1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                            1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                              1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                                1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "F"))
+
+                                  1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                    1. (Let i_key_mask_value be $text_to_int("0x" ++ text_key_mask_value'))
+
+                                      1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                        1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                          1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                            1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                              1. Return simpleKeysetExpressionIR
+
+                                        1. Else Phantom#1896
+
+                            1. Else Phantom#1897
+
+                  1. Else Phantom#1898
+
+            2. Case (% matches pattern ``BIN%`)
+
+              1. (Let (`bin text_key_value) be tableKeyValueInterface')
+
+                1. (Let text_key_value_prefix be $strip_suffix_rec(text_key_value, "*"))
+
+                  1. If (~$contains(text_key_value_prefix, "*")), then
+
+                    1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                      1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+                        1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                          1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                            1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                              1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                                1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+                                  1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                    1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+                                      1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                        1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                          1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                            1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                              1. Return simpleKeysetExpressionIR
+
+                                        1. Else Phantom#1899
+
+                            1. Else Phantom#1900
+
+                  1. Else Phantom#1901
+
+            3. Case (% matches pattern `%`SLASH%`)
+
+              1. (Let (text_key_prefix_value `slash n_key_prefix_width) be tableKeyValueInterface')
+
+                1. (Let i_key_prefix_value be $text_to_int(text_key_prefix_value))
+
+                  1. (Let n_key_type_width be $sizeof_maxSizeInBits'(typeIR))
+
+                    1. If ((n_key_prefix_width <= n_key_type_width)), then
+
+                      1. (Let int be (n_key_type_width - n_key_prefix_width))
+
+                        1. If ((int has type nat)), then
+
+                          1. (Let n_key_remaining_width be (int as nat))
+
+                            1. (Let i_key_base_value be $shl(i_key_prefix_value, (n_key_remaining_width as int)))
+
+                              1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                                1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                  1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                                    1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                                      1. (Let i_key_mask_value be ($pow2(n_key_type_width) - $pow2(n_key_remaining_width)))
+
+                                        1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                          1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                            1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                              1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                                1. Return simpleKeysetExpressionIR
+
+                                          1. Else Phantom#1902
+
+                                  1. Else Phantom#1903
+
+                        1. Else Phantom#1904
+
+                    1. Else Phantom#1905
+
+          1. Else Phantom#1906
+
+      1. Else Phantom#1907
+
+  4. Case (% = "optional")
+
+    1. (Let (tableKeyValueInterface)? be $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, (tableKeyInterface)*))
+
+      1. If (((tableKeyValueInterface)? matches pattern (_))), then
+
+        1. (Let ?(tableKeyValueInterface') be (tableKeyValueInterface)?)
+
+          1. If ((tableKeyValueInterface' matches pattern ``BIN%`)), then
+
+            1. (Let (`bin text_key_value) be tableKeyValueInterface')
+
+              1. If ((~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = ""))), then
+
+                1. (Let text_key_base_value be $replace_text(text_key_value, "*", "0"))
+
+                  1. (Let i_key_base_value be $text_to_int("0b" ++ text_key_base_value))
+
+                    1. (Let typedExpressionIR_base be (((d i_key_base_value) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+                      1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                        1. If (((typedExpressionIR)? matches pattern (_))), then
+
+                          1. (Let ?(typedExpressionIR_base_cast) be (typedExpressionIR)?)
+
+                            1. (Let text_key_mask_value be $replace_text_except(text_key_value, "*", "1"))
+
+                              1. (Let text_key_mask_value' be $replace_text(text_key_mask_value, "*", "0"))
+
+                                1. (Let i_key_mask_value be $text_to_int("0b" ++ text_key_mask_value'))
+
+                                  1. (Let (typedExpressionIR')? be $cast_control_plane(EC, typedExpressionIR_base, typeIR))
+
+                                    1. If (((typedExpressionIR')? matches pattern (_))), then
+
+                                      1. (Let ?(typedExpressionIR_mask_cast) be (typedExpressionIR')?)
+
+                                        1. (Let simpleKeysetExpressionIR be (typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast))
+
+                                          1. Return simpleKeysetExpressionIR
+
+                                    1. Else Phantom#1908
+
+                        1. Else Phantom#1909
+
+              1. Else Phantom#1910
+
+          1. Else Phantom#1911
+
+      1. Else Phantom#1912
+
+1. Else Phantom#1913
+
+def $tableObject_create_entry_keys(evalContext, ((nameIR, nameIR, typeIR))*, tableKeysetInterface)
+
+1. If ((((nameIR, nameIR, typeIR))* matches pattern [])), then
+
+  1. Return []
+
+1. Else Phantom#1914
+
+2. (Let (tableKeyInterface)* be tableKeysetInterface)
+
+  1. If ((((nameIR, nameIR, typeIR))* matches pattern _ :: _)), then
+
+    1. (Let (nameIR_key_h, nameIR_matchKind_h, typeIR_h) :: ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))* be ((nameIR, nameIR, typeIR))*)
+
+      1. (Let simpleKeysetExpressionIR_h be $tableObject_create_entry_key(evalContext, (nameIR_key_h, nameIR_matchKind_h, typeIR_h), (tableKeyInterface)*))
+
+        1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(evalContext, ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*, (tableKeyInterface)*)
+
+  1. Else Phantom#1915
+
+def $interface_of_tableKeyIR((typedExpressionIR # nameIR_key : nameIR_matchKind annotationList ;))
+
+1. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
+
+  1. Return (nameIR_key, nameIR_matchKind, typeIR)
+
+def $tableObject_create_entry_keyset(EC, (key={ (tableKeyIR)* }), (tableKeyInterface)*)
+
+1. (Let (nameIR_key, nameIR_matchKind, typeIR) be $interface_of_tableKeyIR(tableKeyIR))*
+
+  1. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*
+
+    1. If ($eq_set<nameIR>(({ (nameIR_key)* }), ({ (nameIR_key_update)* }))), then
+
+      1. (Let (simpleKeysetExpressionIR)* be $tableObject_create_entry_keys(EC, ((nameIR_key, nameIR_matchKind, typeIR))*, (tableKeyInterface)*))
+
+        1. Return ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
+
+    1. Else Phantom#1916
+
+def $alias_to_original_lookup_map((parameterIR)*)
+
+1. (Let (annotationList _direction _typeIR id _parameterInitializerOptIR) be parameterIR)*
+
+  1. (Let (annotation)* be $flatten_annotationList(annotationList))*
+
+    1. (Let (nameIR_names_opt)? be $name_annotation_opt(annotation))**
+
+      1. (Let (nameIR_names_seq)* be $opt_as_seq_<nameIR>((nameIR_names_opt)?))**
+
+        1. (Let (nameIR_names)* be $concat_<nameIR>(((nameIR_names_seq)*)*))*
+
+          1. (Let ((nameIR_original, (nameIR_aliases)*))* be $filter_<(nameIR, nameIR*)>(((id, (nameIR_names)*))*, ((|(nameIR_names)*| > 0))*))
+
+            1. (Let (nameIR_alias)* be ((nameIR_aliases)*[0])*)
+
+              1. Return $extend_map<nameIR, nameIR>(({ ((nameIR_alias : nameIR_original))* }), ({ ((id : id))* }))
+
+def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
+
+1. (Let ({ ((nameIR_alias : nameIR_original))* }) be $alias_to_original_lookup_map((parameterIR)*))
+
+  1. (Let (nameIR)? be $find_map<nameIR, nameIR>(({ ((nameIR_alias : nameIR_original))* }), nameIR_arg))*
+
+    1. If (((nameIR)? matches pattern (_)))*, then
+
+      1. (Let ?(nameIR_arg_resolved) be (nameIR)?)*
+
+        1. (Let (int)? be $align_tableActionArgumentInterfaces'(({ ((nameIR_arg_resolved : i_arg))* }), parameterIR))*
+
+          1. If (((int)? matches pattern (_)))*, then
+
+            1. (Let ?(i_aligned) be (int)?)*
+
+              1. Return (i_aligned)*
+
+          1. Else Phantom#1917
+
+    1. Else Phantom#1918
+
+def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
+
+1. Return $find_map<id, int>(({ ((id_arg : i_arg))* }), nameIR_param)
+
+def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
+
+1. Case analysis on (tableActionIR)*
+
+  1. Case (% matches pattern [])
+
+    1. Return ?()
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
+
+      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
+
+        1. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))
+
+          1. If (([] = $name_annotation(annotationList))), then
+
+            1. Case analysis on nameIR_action
+
+              1. Case (% = nameIR)
+
+                1. Return ?((nameIR_action, tableActionIR_h))
+
+              2. Case (% =/= nameIR)
+
+                1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
+
+          1. Else Phantom#1919
+
+          2. (Let (nameIR_annotation)* be $name_annotation(annotationList))
+
+            1. If (((nameIR_annotation)* =/= [])), then
+
+              1. (Let b_hit be ((nameIR = nameIR_action) \/ nameIR is in (nameIR_annotation)*))
+
+                1. Case analysis on b_hit
+
+                  1. Case true
+
+                    1. Return ?((nameIR_action, tableActionIR_h))
+
+                  2. Case false
+
+                    1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
+
+            1. Else Phantom#1920
+
+def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
+
+1. Case analysis on (tableActionIR)*
+
+  1. Case (% matches pattern [])
+
+    1. Return ?()
+
+  2. Case (% matches pattern _ :: _)
+
+    1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
+
+      1. (Let (annotationList (_prefixedNameIR ( _argumentListIR )) #( _parameterListIR , _parameterListIR' );) be tableActionIR_h)
+
+        1. If (([] = $name_annotation(annotationList))), then
+
+          1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
+
+        1. Else Phantom#1921
+
+      2. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
+
+        1. (Let (nameIR_annotation)* be $name_annotation(annotationList))
+
+          1. If (((nameIR_annotation)* =/= [])), then
+
+            1. If (([] = $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))), then
+
+              1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
+
+            1. Else Phantom#1922
+
+          1. Else Phantom#1923
+
+          2. (Let (nameIR_annotation_dotPrefix)* be $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))
+
+            1. If (((nameIR_annotation_dotPrefix)* =/= [])), then
+
+              1. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
+
+                1. If (~nameIR is in (nameIR_annotation_strip)*), then
+
+                  1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
+
+                1. Else Phantom#1924
+
+            1. Else Phantom#1925
+
+            2. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
+
+              1. If (nameIR is in (nameIR_annotation_strip)*), then
+
+                1. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))
+
+                  1. Return ?((nameIR_action, tableActionIR_h))
+
+              1. Else Phantom#1926
+
+def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
+
+1. (Let ((nameIR, tableActionIR))? be $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))
+
+  1. If ((((nameIR, tableActionIR))? matches pattern (_))), then
+
+    1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
+
+      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
+
+        1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
+
+          1. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*
+
+            1. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
+
+              1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
+
+                1. If (((typedExpressionIR)? matches pattern (_)))*, then
+
+                  1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
+
+                    1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
+
+                      1. Return ((` nameIR_found) ( (argumentIR)* ))
+
+                1. Else Phantom#1927
+
+  1. Else Phantom#1928
+
+2. If ((?() = $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))), then
+
+  1. (Let ((nameIR, tableActionIR))? be $find_tableActionIR_by_name((tableActionIR)*, nameIR_action_update))
+
+    1. If ((((nameIR, tableActionIR))? matches pattern (_))), then
+
+      1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
+
+        1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
+
+          1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
+
+            1. (Let (_annotationList _direction typeIR_param _id _parameterInitializerOptIR) be parameterIR_control)*
+
+              1. (Let typedExpressionIR_arg be (((d i_arg_aligned) as expressionIR) # (( ((int) as typeIR) (dyn) ))))*
+
+                1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
+
+                  1. If (((typedExpressionIR)? matches pattern (_)))*, then
+
+                    1. (Let ?(typedExpressionIR_arg_cast) be (typedExpressionIR)?)*
+
+                      1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
+
+                        1. Return ((` nameIR_found) ( (argumentIR)* ))
+
+                  1. Else Phantom#1929
+
+    1. Else Phantom#1930
+
+2. Else Phantom#1931
+
+def $tableObject_add_entry(EC, (table typeId { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
+
+1. (Let tableEntryPriorityOptIR be $tableObject_create_entry_priority(tableEntryPriorityInterface))
+
+  1. If (($needs_priority_tableKeysPropertyIR(TBL.keys) => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR))), then
+
+    1. (Let keysetExpressionIR be $tableObject_create_entry_keyset(EC, TBL.keys, tableKeysetInterface))
+
+      1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.actions, tableActionInterface))
+
+        1. (Let tableEntryIR_update be (?() tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR (`empty) ;))
+
+          1. (Let (annotationList constOptIR entries={ (tableEntryIR)* }) be TBL.entries)
+
+            1. (Let tableEntriesPropertyIR_updated be (annotationList constOptIR entries={ (tableEntryIR)* ++ [tableEntryIR_update] }))
+
+              1. (Let TBL_updated be TBL[entries = tableEntriesPropertyIR_updated])
+
+                1. Return (table typeId { frame TBL_updated })
+
+  1. Else Phantom#1932
+
+def $tableObject_add_default_action(EC, (table typeId { frame TBL }), tableActionInterface)
+
+1. (Let (_annotationList (constIR)? default_action= _tableActionReferenceIR ;) be TBL.default_action)
+
+  1. If (((constIR)? matches pattern ())), then
+
+    1. (Let tableActionReferenceIR be $tableObject_create_entry_action(EC, TBL.actions, tableActionInterface))
+
+      1. (Let tableDefaultActionPropertyIR be ((`empty) ?() default_action= tableActionReferenceIR ;))
+
+        1. (Let TBL_updated be TBL[default_action = tableDefaultActionPropertyIR])
+
+          1. Return (table typeId { frame TBL_updated })
+
+  1. Else Phantom#1933
 
 relation V1Model_init: |- p4program : % %
 

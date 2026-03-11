@@ -39,6 +39,8 @@ module type ARCH = sig
 
   val table_add_entry :
     Value.t ->
+    (* context *)
+    Value.t ->
     (* store *)
     Value.t ->
     (* table name *)
@@ -51,6 +53,8 @@ module type ARCH = sig
     Value.t (* store *)
 
   val table_add_default_action :
+    Value.t ->
+    (* context *)
     Value.t ->
     (* store *)
     Value.t ->
