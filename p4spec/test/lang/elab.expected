@@ -23629,15 +23629,6 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let expressionResult = ` `b false as value as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-    rulepath land-true-abort
-    -- if (binop' = &&)
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
-    -- if (expressionResult' = ` `b true as value as expressionResult)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult''
-    -- if expressionResult'' <: abortResult
-    -- let abortResult = expressionResult'' as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as expressionResult
-
     rulepath land-true
     -- if (binop' = &&)
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
@@ -23658,15 +23649,6 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (expressionResult' = ` `b true as value as expressionResult)
     -- let expressionResult = ` `b true as value as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
-
-    rulepath lor-false-abort
-    -- if (binop' = ||)
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult'
-    -- if (expressionResult' = ` `b false as value as expressionResult)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult''
-    -- if expressionResult'' <: abortResult
-    -- let abortResult = expressionResult'' as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as expressionResult
 
     rulepath lor-false
     -- if (binop' = ||)
@@ -25287,12 +25269,6 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let switch( typedExpressionIR ){ switchCaseIR*{switchCaseIR <- switchCaseIR*} } = statementIR as switchStatementIR
 
    paths
-
-    rulepath target-abort
-    -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
-    -- if expressionResult <: abortResult
-    -- let abortResult = expressionResult as abortResult
-    -- output: % % % |- % : EC_1 ARCH_1 abortResult as statementResult
 
     rulepath target-cont-match
     -- Expr_eval: local EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult

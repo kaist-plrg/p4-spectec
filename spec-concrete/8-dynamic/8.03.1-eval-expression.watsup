@@ -106,14 +106,6 @@ rulegroup Expr_eval/binaryExpressionIR {
                                  : EC_1 ARCH_1 (`` (`B false))
     -- if expressionResult = `` (`B false)
 
-  rule Expr_eval/land-true-abort:
-    p EC_0 ARCH_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
-                   : EC_2 ARCH_2 abortResult
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l
-                                 : EC_1 ARCH_1 (`` (`B true))
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r
-                                 : EC_2 ARCH_2 abortResult
-
   rule Expr_eval/land-true:
     p EC_0 ARCH_0 |- (typedExpressionIR_l `&& typedExpressionIR_r) `# _
                    : EC_2 ARCH_2 expressionResult_r
@@ -134,14 +126,6 @@ rulegroup Expr_eval/binaryExpressionIR {
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l
                                  : EC_1 ARCH_1 (`` (`B true))
     -- if expressionResult = `` (`B true)
-
-  rule Expr_eval/lor-false-abort:
-    p EC_0 ARCH_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
-                   : EC_2 ARCH_2 abortResult
-    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l
-                                 : EC_1 ARCH_1 (`` (`B false))
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r
-                                 : EC_2 ARCH_2 abortResult
 
   rule Expr_eval/lor-false:
     p EC_0 ARCH_0 |- (typedExpressionIR_l `|| typedExpressionIR_r) `# _
