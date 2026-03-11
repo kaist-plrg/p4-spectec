@@ -13292,7 +13292,11 @@ xref:InstDecl_inst[Loading ``annotationList`` ``typeIR`` ``constructorTargetIR``
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
  .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
  .. Result in context ``IC~1~``, store ``STO~3~``, and reference to object ``constantDeclarationIR``.
-. Else:
+. Let ``nameIR'`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
+. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR'`` added to the path].
+. Let store ``STO~1~`` and instantiated ``object`` be
+* the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].
+. If ``object`` does not have type ``externObject``:
  .. Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.
  .. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object`` is added].
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
@@ -14411,11 +14415,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~l~`` ``binop`` ``typedExpressionIR
   ... Let ``expressionResult'`` be ``+`B+`` ``false``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. Else if ``expressionResult`` is equal to ``+`B+`` ``true``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
+  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult'``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``abortResult``.
-  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult~r~``.
 . Else if ``binop`` is ``||``:
  .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -14607,8 +14609,9 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Check that ``value`` has type ``integerValue``.
   ... Let ``integerValue~index~`` be ``value``.
   ... Let ``+HEADER_STACK+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-  ... Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-  ... Let ``int`` be xref:ite[``n~index~`` if ``n~index~`` is less than ``n~size~`` otherwise ``n~size~`` ``-`` ``1``].
+  ... Let ``i~index~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+  ... Let ``b~in_bounds~`` be ``i~index~`` is less than ``n~size~`` and ``i~index~`` is greater than or equal to ``0``.
+  ... Let ``int`` be xref:ite[``i~index~`` if ``b~in_bounds~`` otherwise ``n~size~`` ``-`` ``1``].
   ... Check that ``int`` has type ``nat``.
   ... Let ``n~idx~`` be ``int``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
@@ -14853,11 +14856,14 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
 . Check that ``value'`` has type ``headerStackValue``.
 . Let ``headerStackValue~base~`` be ``value'``.
 . Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-. Let ``n~idx~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-. If ``n~idx~`` is less than ``n~size~``:
+. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+. If ``b~in_bounds~``:
+ .. Check that ``i~idx~`` has type ``nat``.
+ .. Let ``n~idx~`` be ``i~idx~``.
  .. Let ``value''`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in value ``value''``.
-. If ``n~idx~`` is greater than or equal to ``n~size~``:
+. Else:
  .. Let ``value''`` be ``value~element~^{asterisk}^[0]``.
  .. Check that ``value''`` has type ``headerValue``.
  .. Let ``+HEADER+`` ``typeId`` ``+{+`` ``b~valid~`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``value''``.
@@ -14936,14 +14942,17 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference'`` ``+.+`` ``nameIR``,
 . Check that ``value''`` has type ``headerStackValue``.
 . Let ``headerStackValue~base~`` be ``value''``.
 . Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
-. Let ``n~idx~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
-. If ``n~idx~`` is less than ``n~size~``:
+. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+. If ``b~in_bounds~``:
+ .. Check that ``i~idx~`` has type ``nat``.
+ .. Let ``n~idx~`` be ``i~idx~``.
  .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
  .. Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
  .. Let context ``EC~1~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
  .. Result in context ``EC~1~``.
-. If ``n~idx~`` is greater than or equal to ``n~size~``:
+. Else:
  .. Result in context ``EC~0~``.
 
 <<Lvalue_write,Writing ``value`` to ``storageReference'`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``, under context ``EC~0~`` and state ``ARCH`` at ``p``>>:
@@ -15969,24 +15978,38 @@ xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
    .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-   .... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
+   .... If ``n~count~`` is less than ``n~size~``:
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+    ..... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
+     ****** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
 --
 +
 for each ``value~front~`` in ``value~front~^{asterisk}^``
-   .... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~back~`` be ``int``.
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-   .... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-   .... Let context ``EC~2~`` be
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~back~`` be ``int``.
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... If ``n~count~`` is greater than or equal to ``n~size~``:
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
++
+--
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+--
++
+for each ``value~element~`` in ``value~element~^{asterisk}^``
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
  .. Else if ``text`` is equal to ``"pop_front"``:
   ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
   ... Check that ``parameterListIR`` is a list of length 1.
@@ -16003,23 +16026,39 @@ for each ``value~front~`` in ``value~front~^{asterisk}^``
    .... Check that ``value'`` has type ``integerValue``.
    .... Let ``integerValue~count~`` be ``value'``.
    .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-   .... Check that ``int`` has type ``nat``.
-   .... Let ``n~front~`` be ``int``.
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-   .... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
+   .... If ``n~count~`` is less than ``n~size~``:
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~front~`` be ``int``.
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+    ..... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
+     ****** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
 --
 +
 for each ``value~back~`` in ``value~back~^{asterisk}^``
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-   .... Let context ``EC~2~`` be
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... If ``n~count~`` is greater than or equal to ``n~size~``:
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
++
+--
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+--
++
+for each ``value~element~`` in ``value~element~^{asterisk}^``
+    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+    ..... Check that ``int`` has type ``nat``.
+    ..... Let ``n~idx_updated~`` be ``int``.
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+    ..... Let context ``EC~2~`` be
+* the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
 . If ``argumentListIR`` is equal to ``·``:
  .. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
  .. If ``text`` is equal to ``"isValid"``:
