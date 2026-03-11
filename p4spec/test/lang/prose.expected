@@ -1085,8 +1085,8 @@ xref:is_equalable_typeIR[``typeIR''`` supports equality comparison]:
 | packageObjectTypeIR | false
 | tableObjectTypeIR | false
 | +DEFAULT+ | false
-| +SEQ+ +<+ ++_++^{asterisk}^ +,+ +...+ +>+ | false
-| +RECORD+ +{+ ++_++^{asterisk}^ +,+ +...+ +}+ | false
+| sequenceTypeIR | false
+| recordTypeIR | false
 | +HEADER_INVALID+ | false
 | setTypeIR | false
 | tableMetadataTypeIR | false
@@ -8042,6 +8042,7 @@ xref:Stmt_ok[Typing ``forStatement``, under context ``TC``, abstract control flo
 
 xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
 
+. Check that ``TC.+LOCAL+.+KIND+`` is equal to ``+CONTROL_APPLY_METHOD+``.
 . Let ``typedExpressionIR~switch~`` be
 * the result of xref:Expr_ok[typing ``expression~switch~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typeIR~switch~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~switch~``].
@@ -8059,6 +8060,7 @@ xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` 
 
 xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
 
+. Check that ``TC.+LOCAL+.+KIND+`` is equal to ``+CONTROL_APPLY_METHOD+``.
 . Let ``typedExpressionIR~switch~`` be
 * the result of xref:Expr_ok[typing ``expression~switch~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typeIR~switch~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~switch~``].
@@ -9471,60 +9473,60 @@ for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{ast
 xref:Decl_ok[Typing ``annotationList`` ``+PARSER+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``constructorParameterListOpt`` ``+{+`` ``parserLocalDeclarationList`` ``parserStateList`` ``+}+`` under context ``TC~0~``]:
 
 . Let ``TC~1~`` be ``TC~0~`` with ``+BLOCK+.+KIND+`` set to ``+PARSER+``.
-. Let context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
-* the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under context ``TC~1~`` at ``+BLOCK+``].
-. Let context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under context ``TC~2~``].
-. Let context ``TC~4~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~3~`` at ``+BLOCK+``].
+. Check that ``typeParameterListOpt`` is ```EMPTY``.
+. Let context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
+* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under context ``TC~1~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let context ``TC~5~`` and ``parserLocalDeclarationIR^{asterisk}^`` be
-* the result of xref:ParserLocalDeclList_ok[typing ``parserLocalDeclarationList``, under context ``TC~4~``].
-. Let ``TC~6~`` be ``TC~5~`` with ``+LOCAL+.+KIND+`` set to ``+PARSER_STATE+``.
+. Let context ``TC~3~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId'^{asterisk}^`` be
+* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~2~`` at ``+BLOCK+``].
+. Check that ``typeId'^{asterisk}^`` is an empty list.
+. Let context ``TC~4~`` and ``parserLocalDeclarationIR^{asterisk}^`` be
+* the result of xref:ParserLocalDeclList_ok[typing ``parserLocalDeclarationList``, under context ``TC~3~``].
+. Let ``TC~5~`` be ``TC~4~`` with ``+LOCAL+.+KIND+`` set to ``+PARSER_STATE+``.
 . Let ``parserStateIR^{asterisk}^`` be
-* the result of xref:ParserStateList_ok[typing ``parserStateList``, under context ``TC~6~``].
+* the result of xref:ParserStateList_ok[typing ``parserStateList``, under context ``TC~5~``].
 . Let ``callableTypeDefIR`` be ``+PARSER_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
-. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~2~``].
+. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~1~``].
 . Check that xref:CallableTypeDef_wf[``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``constructorId`` be xref:constructorId[the constructor identifier for ``name`` ``constructorParameterListOpt``].
-. Let ``typeDefIR~parser~`` be ``+PARSER+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
+. Let ``typeDefIR~parser~`` be ``+PARSER+`` ``nameIR`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``typeIR~parser~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~parser~``].
-. Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~parser~``.
+. Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~parser~``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC~0~``].
 . Check that xref:ConstructorTypeDef_wf[``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``bound``].
-. Let ``TC~7~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
-. Let ``parserDeclarationIR`` be ``annotationList`` ``+PARSER+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``+}+``.
-. Result in context ``TC~7~`` and ``parserDeclarationIR``.
+. Let ``TC~6~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
+. Let ``parserDeclarationIR`` be ``annotationList`` ``+PARSER+`` ``nameIR`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``+}+``.
+. Result in context ``TC~6~`` and ``parserDeclarationIR``.
 
 xref:Decl_ok[Typing ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``constructorParameterListOpt`` ``+{+`` ``controlLocalDeclarationList`` ``+APPLY+`` ``controlBody`` ``+}+`` under context ``TC~0~``]:
 
 . Let ``TC~1~`` be ``TC~0~`` with ``+BLOCK+.+KIND+`` set to ``+CONTROL+``.
-. Let context ``TC~2~`` and type parameters ``typeId~expl~^{asterisk}^`` be
-* the result of xref:TypeParameterListOpt_ok[typing ``typeParameterListOpt``, under context ``TC~1~`` at ``+BLOCK+``].
-. Let context ``TC~3~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~impl~^{asterisk}^`` be
-* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under context ``TC~2~``].
-. Let context ``TC~4~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~3~`` at ``+BLOCK+``].
+. Check that ``typeParameterListOpt`` is ```EMPTY``.
+. Let context ``TC~2~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
+* the result of xref:ConstructorParameterListOpt_ok[typing ``constructorParameterListOpt`` under context ``TC~1~``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let context ``TC~5~`` and ``controlLocalDeclarationIR^{asterisk}^`` be
-* the result of xref:ControlLocalDeclList_ok[typing ``controlLocalDeclarationList``, under context ``TC~4~``].
-. Let ``TC~6~`` be ``TC~5~`` with ``+LOCAL+.+KIND+`` set to ``+CONTROL_APPLY_METHOD+``.
+. Let context ``TC~3~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId'^{asterisk}^`` be
+* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~2~`` at ``+BLOCK+``].
+. Check that ``typeId'^{asterisk}^`` is an empty list.
+. Let context ``TC~4~`` and ``controlLocalDeclarationIR^{asterisk}^`` be
+* the result of xref:ControlLocalDeclList_ok[typing ``controlLocalDeclarationList``, under context ``TC~3~``].
+. Let ``TC~5~`` be ``TC~4~`` with ``+LOCAL+.+KIND+`` set to ``+CONTROL_APPLY_METHOD+``.
 . Let context ``++_++``, abstract control flow ``++_++``, and ``controlBodyIR`` be
-* the result of xref:Block_ok[typing ``controlBody``, under context ``TC~6~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
+* the result of xref:Block_ok[typing ``controlBody``, under context ``TC~5~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
 . Let ``callableTypeDefIR`` be ``+CONTROL_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
-. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~2~``].
+. Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~1~``].
 . Check that xref:CallableTypeDef_wf[``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``constructorId`` be xref:constructorId[the constructor identifier for ``name`` ``constructorParameterListOpt``].
-. Let ``typeDefIR~control~`` be ``+CONTROL+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
+. Let ``typeDefIR~control~`` be ``+CONTROL+`` ``nameIR`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``typeIR~control~`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR~control~``].
-. Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~control~``.
+. Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~control~``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC~0~``].
 . Check that xref:ConstructorTypeDef_wf[``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``bound``].
-. Let ``TC~7~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
-. Let ``controlDeclarationIR`` be ``annotationList`` ``+CONTROL+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``controlLocalDeclarationIR^{asterisk}^`` ``+APPLY+`` ``controlBodyIR`` ``+}+``.
-. Result in context ``TC~7~`` and ``controlDeclarationIR``.
+. Let ``TC~6~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
+. Let ``controlDeclarationIR`` be ``annotationList`` ``+CONTROL+`` ``nameIR`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``controlLocalDeclarationIR^{asterisk}^`` ``+APPLY+`` ``controlBodyIR`` ``+}+``.
+. Result in context ``TC~6~`` and ``controlDeclarationIR``.
 
 xref:Decl_ok[Typing ``annotationList`` ``+ENUM+`` ``name`` ``+{+`` ``nameList~field~`` ``++_++`` ``+}+`` under context ``TC~0~``]:
 
@@ -11536,7 +11538,7 @@ xref:compat_table_lpm_ternary_range_key[$compat_table_lpm_ternary_range_key(type
 xref:compat_table_key[``typeIR`` can be used with match kind ``nameIR``]
 
 
-. If ``nameIR`` is equal to ``"exact"`` or ``nameIR`` is equal to ``"optional"``:
+. If ``nameIR`` is equal to ``"exact"`` or ``nameIR`` is equal to ``"optional"`` or ``nameIR`` is equal to ``"selector"``:
  .. Check that ``xref:compat_table_exact_optional_key[$compat_table_exact_optional_key(typeIR)]``.
  .. Return ``true``.
 . If ``nameIR`` is equal to ``"lpm"`` or ``nameIR`` is equal to ``"ternary"`` or ``nameIR`` is equal to ``"range"``:

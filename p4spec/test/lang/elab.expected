@@ -3311,19 +3311,15 @@ tbl def $is_equalable_typeIR(typeIR) : bool =
     -- let defaultTypeIR = typeIR as defaultTypeIR
     -- if (defaultTypeIR = default)
   row 9 :
-    (signature) seq< _typeIR*{_typeIR <- _typeIR*} ,...> as typeIR
+    (signature) sequenceTypeIR as typeIR
     (typeIR) -> false
     -- if typeIR <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR as sequenceTypeIR
-    -- if sequenceTypeIR matches `SEQ<%,...>`
-    -- let seq< _typeIR*{_typeIR <- _typeIR*} ,...> = sequenceTypeIR
   row 10 :
-    (signature) record{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} ,...} as typeIR
+    (signature) recordTypeIR as typeIR
     (typeIR) -> false
     -- if typeIR <: recordTypeIR
     -- let recordTypeIR = typeIR as recordTypeIR
-    -- if recordTypeIR matches `RECORD{%,...}`
-    -- let record{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} ,...} = recordTypeIR
   row 11 :
     (signature) header_invalid as typeIR
     (typeIR) -> false
@@ -13790,6 +13786,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath switchStatement-table
+    -- if (TC.local.kind = control_apply_method as localKind)
     -- Expr_ok: local TC |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- let typeIR = $unroll_typeIR(typeIR_switch)
@@ -13815,6 +13812,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath switchStatement-general
+    -- if (TC.local.kind = control_apply_method as localKind)
     -- Expr_ok: local TC |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if $compat_switch(typeIR_switch)
@@ -15699,24 +15697,25 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
     rulepath parserDeclaration
     -- let TC_1 = TC_0[block.kind = parser]
-    -- TypeParameterListOpt_ok: block TC_1 |- typeParameterListOpt : TC_2 typeId_expl*{typeId_expl <- typeId_expl*}
-    -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
-    -- ParameterList_ok: block TC_3 |- parameterList : TC_4 parameterIR*{parameterIR <- parameterIR*} # typeId*{typeId <- typeId*}
+    -- if (typeParameterListOpt = `empty)
+    -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
-    -- ParserLocalDeclList_ok: TC_4 |- parserLocalDeclarationList : TC_5 parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
-    -- let TC_6 = TC_5[local.kind = parser_state as localKind]
-    -- ParserStateList_ok: TC_6 |- parserStateList : parserStateIR*{parserStateIR <- parserStateIR*}
+    -- ParameterList_ok: block TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} # typeId'*{typeId' <- typeId'*}
+    -- if typeId'*{typeId' <- typeId'*} matches []
+    -- ParserLocalDeclList_ok: TC_3 |- parserLocalDeclarationList : TC_4 parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
+    -- let TC_5 = TC_4[local.kind = parser_state as localKind]
+    -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*{parserStateIR <- parserStateIR*}
     -- let callableTypeDefIR = parser_apply( parameterIR*{parameterIR <- parameterIR*} ) as callableTypeDefIR
-    -- if CallableTypeDef_wf: $bound(block, TC_2) |- callableTypeDefIR holds
+    -- if CallableTypeDef_wf: $bound(block, TC_1) |- callableTypeDefIR holds
     -- let nameIR = $name(name)
     -- let constructorId = $constructorId(name, constructorParameterListOpt)
-    -- let typeDefIR_parser = parser nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) as typeDefIR
+    -- let typeDefIR_parser = parser nameIR < [] , [] >( parameterIR*{parameterIR <- parameterIR*} ) as typeDefIR
     -- let typeIR_parser = $typeIR_of_typeDefIR(typeDefIR_parser)
-    -- let constructorTypeDefIR = constructor< typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_parser
+    -- let constructorTypeDefIR = constructor< [] , [] >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_parser
     -- if ConstructorTypeDef_wf: $bound(global, TC_0) |- constructorTypeDefIR holds
-    -- let TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
-    -- let parserDeclarationIR = annotationList parser nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }
-    -- output: % |- % : TC_7 parserDeclarationIR as declarationIR
+    -- let TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+    -- let parserDeclarationIR = annotationList parser nameIR < [] , [] >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }
+    -- output: % |- % : TC_6 parserDeclarationIR as declarationIR
 
   rulegroup controlDeclaration
 
@@ -15731,24 +15730,25 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
     rulepath controlDeclaration
     -- let TC_1 = TC_0[block.kind = control]
-    -- TypeParameterListOpt_ok: block TC_1 |- typeParameterListOpt : TC_2 typeId_expl*{typeId_expl <- typeId_expl*}
-    -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
-    -- ParameterList_ok: block TC_3 |- parameterList : TC_4 parameterIR*{parameterIR <- parameterIR*} # typeId*{typeId <- typeId*}
+    -- if (typeParameterListOpt = `empty)
+    -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
-    -- ControlLocalDeclList_ok: TC_4 |- controlLocalDeclarationList : TC_5 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
-    -- let TC_6 = TC_5[local.kind = control_apply_method as localKind]
-    -- Block_ok: TC_6 cont noloop |- controlBody : _typingContext _flow controlBodyIR
+    -- ParameterList_ok: block TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} # typeId'*{typeId' <- typeId'*}
+    -- if typeId'*{typeId' <- typeId'*} matches []
+    -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
+    -- let TC_5 = TC_4[local.kind = control_apply_method as localKind]
+    -- Block_ok: TC_5 cont noloop |- controlBody : _typingContext _flow controlBodyIR
     -- let callableTypeDefIR = control_apply( parameterIR*{parameterIR <- parameterIR*} ) as callableTypeDefIR
-    -- if CallableTypeDef_wf: $bound(block, TC_2) |- callableTypeDefIR holds
+    -- if CallableTypeDef_wf: $bound(block, TC_1) |- callableTypeDefIR holds
     -- let nameIR = $name(name)
     -- let constructorId = $constructorId(name, constructorParameterListOpt)
-    -- let typeDefIR_control = control nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} ) as typeDefIR
+    -- let typeDefIR_control = control nameIR < [] , [] >( parameterIR*{parameterIR <- parameterIR*} ) as typeDefIR
     -- let typeIR_control = $typeIR_of_typeDefIR(typeDefIR_control)
-    -- let constructorTypeDefIR = constructor< typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_control
+    -- let constructorTypeDefIR = constructor< [] , [] >( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ): typeIR_control
     -- if ConstructorTypeDef_wf: $bound(global, TC_0) |- constructorTypeDefIR holds
-    -- let TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
-    -- let controlDeclarationIR = annotationList control nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }
-    -- output: % |- % : TC_7 controlDeclarationIR as declarationIR
+    -- let TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+    -- let controlDeclarationIR = annotationList control nameIR < [] , [] >( parameterIR*{parameterIR <- parameterIR*} )( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ){ controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} apply controlBodyIR }
+    -- output: % |- % : TC_6 controlDeclarationIR as declarationIR
 
   rulegroup enumTypeDeclaration-non-serializable
 
@@ -18802,7 +18802,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
 def $compat_table_key(nameIR, typeIR) : bool =
 
   clause 0 : (nameIR, typeIR) = true
-  -- if ((nameIR = "exact") \/ (nameIR = "optional"))
+  -- if (((nameIR = "exact") \/ (nameIR = "optional")) \/ (nameIR = "selector"))
   -- if $compat_table_exact_optional_key(typeIR)
 
   clause 1 : (nameIR, typeIR) = true
