@@ -554,7 +554,7 @@ def $cast_to_enum'(typeId, typeIR, eps, value_target)
   -- if id_unnamed = "__UNSPECIFIED"
 
 def $cast_to_enum'(typeId, typeIR, valueFieldIR_h :: valueFieldIR_t*, value_target)
-  = value_target
+  = typeId `. nameIR `. value
   -- if nameIR `= value `; = valueFieldIR_h
   -- if $bin_eq(value, value_target)
 
@@ -701,7 +701,10 @@ dec $cast_enum(typeIR, enumValue) : value
   hint(testgen_ignore)
 
 def $cast_enum(ENUM typeId `{ _ }, typeId `. nameIR) = typeId `. nameIR
+def $cast_enum(ENUM typeId `< _ > `{ _ }, typeId `. nameIR `. value) = typeId `. nameIR `. value
+def $cast_enum(SET `< typeIR >, enumValue) = SET `{ $cast_op(typeIR, enumValue) }
 def $cast_enum(typeIR, _ `. _ `. value) = $cast_op(typeIR, value)
+  -- if ~(typeIR <: serializableEnumTypeIR) /\ ~(typeIR <: setTypeIR)
 
 def $cast_op(typeIR, enumValue) = $cast_enum(typeIR_unroll, enumValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)

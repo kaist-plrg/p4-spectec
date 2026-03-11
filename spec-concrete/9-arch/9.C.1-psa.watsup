@@ -1,0 +1,89 @@
+;;
+;; PSA architecture initialization
+;;
+
+relation PSA_init:
+  |- p4program : evalContext arch
+  hint(input %0)
+  hint(prose_in "initializing the evaluation context and state for"
+                %0 "in the PSA architecture")
+  hint(prose_out "the resulting evaluation context" %1#" and state" %2)
+
+rule PSA_init:
+  |- p4program : EC ARCH
+  ---- ;; instantiate the program
+  -- Program_init:
+      |- p4program : EC STO
+  -- if ARCH = { STATE $init_archState, STORE STO }
+
+;;
+;; Setup helpers
+;;
+
+dec $PSA_setup_normal_meta_argument(arch) : argumentIR
+def $PSA_setup_normal_meta_argument(ARCH) = argumentIR_normal_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if argumentIR_normal_meta
+      = (`. "normal_meta") `# `( typeIR_normal_meta DYN )
+
+dec $PSA_setup_clone_i2e_meta_argument(arch) : argumentIR
+def $PSA_setup_clone_i2e_meta_argument(ARCH) = argumentIR_clone_i2e_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if argumentIR_clone_i2e_meta
+      = (`. "clone_i2e_meta") `# `( typeIR_clone_i2e_meta DYN )
+
+dec $PSA_setup_clone_e2e_meta_argument(arch) : argumentIR
+def $PSA_setup_clone_e2e_meta_argument(ARCH) = argumentIR_clone_e2e_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  -- if argumentIR_clone_e2e_meta
+      = (`. "clone_e2e_meta") `# `( typeIR_clone_e2e_meta DYN )
+
+dec $PSA_setup_resubmit_meta_argument(arch) : argumentIR
+def $PSA_setup_resubmit_meta_argument(ARCH) = argumentIR_resubmit_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if argumentIR_resubmit_meta
+      = (`. "resubmit_meta") `# `( typeIR_resubmit_meta DYN )
+
+dec $PSA_setup_recirculate_meta_argument(arch) : argumentIR
+def $PSA_setup_recirculate_meta_argument(ARCH) = argumentIR_recirculate_meta
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  -- if argumentIR_recirculate_meta
+      = (`. "recirculate_meta") `# `( typeIR_recirculate_meta DYN )
+
+dec $PSA_setup_main_callee(evalContext, arch) : typedExpressionIR
+def $PSA_setup_main_callee(EC, ARCH) = typedExpressionIR_main
+  ---- ;; get package type definition
+  -- if typeDefIR_package
+      = $find_typeDef_e(GLOBAL, EC, `` "PSA_Switch")
+  ---- ;; get package type arguments
+  -- if PACKAGE `< theta > `{ _ }
+      = $find_object_e(ARCH, [ "main" ])
+  -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
+  -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
+  -- if typeIR_egress_hdr = $find_map<typeId, typeIR>(theta, "EH")
+  -- if typeIR_egress_user_meta = $find_map<typeId, typeIR>(theta, "EM")
+  -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
+  -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
+  -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
+  -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
+  -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
+  ---- ;; create callee
+  -- if typeIR_arg*
+      = [ typeIR_ingress_hdr, typeIR_ingress_user_meta,
+          typeIR_egress_hdr, typeIR_egress_user_meta,
+          typeIR_normal_meta, typeIR_clone_i2e_meta,
+          typeIR_clone_e2e_meta, typeIR_resubmit_meta,
+          typeIR_recirculate_meta ]
+  -- if typeIR_package = $specialize_typeDefIR(typeDefIR_package, typeIR_arg*)
+  -- if typedExpressionIR_main
+      = (`` "main") `# `( typeIR_package CTK )

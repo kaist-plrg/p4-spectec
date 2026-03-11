@@ -215,3 +215,139 @@ let ebpf_filter (value_ctx : Value.t) (value_arch : Value.t) :
   | [ value_ctx; value_arch; value_callResult ] ->
       (value_ctx, value_arch, value_callResult)
   | _ -> assert false
+
+(* PSA_ingress_init_packet_in/out *)
+
+let psa_ingress_init_packet_in (value_ctx : Value.t) (value_arch : Value.t)
+    (value_packet_in_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_ingress_init_packet_in"
+      [ value_ctx; value_arch; value_packet_in_state ]
+  with
+  | [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+  | _ -> assert false
+
+let psa_ingress_init_packet_out (value_ctx : Value.t) (value_arch : Value.t)
+    (value_packet_out_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_ingress_init_packet_out"
+      [ value_ctx; value_arch; value_packet_out_state ]
+  with
+  | [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+  | _ -> assert false
+
+(* PSA_ingress_init_metadata *)
+
+let psa_ingress_init_metadata (value_ctx : Value.t) (value_arch : Value.t)
+    (port : IO.port) (path : string) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  let value_path = wrap_text_v path in
+  match
+    !call "PSA_ingress_init_metadata"
+      [ value_ctx; value_arch; value_port; value_path ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_ingress_init_globals *)
+
+let psa_ingress_init_globals (value_ctx : Value.t) (value_arch : Value.t)
+    (port : IO.port) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  match
+    !call "PSA_ingress_init_globals" [ value_ctx; value_arch; value_port ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_ip/ig/id *)
+
+let psa_ingress_parser (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress_parser" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false
+
+let psa_ingress (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false
+
+let psa_ingress_deparser (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_ingress_deparser" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false
+
+(* PSA_egress_init_packet_in/out *)
+
+let psa_egress_init_packet_in (value_ctx : Value.t) (value_arch : Value.t)
+    (value_packet_in_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_egress_init_packet_in"
+      [ value_ctx; value_arch; value_packet_in_state ]
+  with
+  | [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+  | _ -> assert false
+
+let psa_egress_init_packet_out (value_ctx : Value.t) (value_arch : Value.t)
+    (value_packet_out_state : Value.t) : Value.t * Value.t =
+  match
+    !call "PSA_egress_init_packet_out"
+      [ value_ctx; value_arch; value_packet_out_state ]
+  with
+  | [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+  | _ -> assert false
+
+(* PSA_egress_init_metadata *)
+
+let psa_egress_init_metadata (value_ctx : Value.t) (value_arch : Value.t)
+    (port : IO.port) (path : string) (cos : int) (inst : int) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  let value_path = wrap_text_v path in
+  let value_cos = cos |> Bigint.of_int |> wrap_num_v_int in
+  let value_inst = inst |> Bigint.of_int |> wrap_num_v_int in
+  match
+    !call "PSA_egress_init_metadata"
+      [ value_ctx; value_arch; value_port; value_path; value_cos; value_inst ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_egress_init_globals *)
+
+let psa_egress_init_globals (value_ctx : Value.t) (value_arch : Value.t)
+    (port : IO.port) : Value.t =
+  let value_port = port |> Bigint.of_int |> wrap_num_v_int in
+  match
+    !call "PSA_egress_init_globals" [ value_ctx; value_arch; value_port ]
+  with
+  | [ value_ctx ] -> value_ctx
+  | _ -> assert false
+
+(* PSA_ep/eg/ed *)
+
+let psa_egress_parser (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress_parser" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false
+
+let psa_egress (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false
+
+let psa_egress_deparser (value_ctx : Value.t) (value_arch : Value.t) :
+    Value.t * Value.t * Value.t =
+  match !call "PSA_egress_deparser" [ value_ctx; value_arch ] with
+  | [ value_ctx; value_arch; value_callResult ] ->
+      (value_ctx, value_arch, value_callResult)
+  | _ -> assert false

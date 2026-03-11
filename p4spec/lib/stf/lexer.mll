@@ -100,7 +100,11 @@ and keyword = parse
   | "expect"
     { lexer := Packet_data; EXPECT }
   | "mirroring_add"
-    { lexer := Packet_data; MIRRORING_ADD }
+    { MIRRORING_ADD }
+  | "mirroring_add_mc"
+    { MIRRORING_ADD_MC }
+  | "mirroring_get"
+    { MIRRORING_GET }
   | "no_packet"
     { NO_PACKET }
   | "packet"
@@ -117,6 +121,12 @@ and keyword = parse
     { MC_NODE_CREATE }
   | "mc_node_associate"
     { MC_NODE_ASSOCIATE }
+  | "register_read"
+    { REGISTER_READ }
+  | "register_write"
+    { REGISTER_WRITE }
+  | "register_reset"
+    { REGISTER_RESET }
   | "wait"
     { WAIT }
   | '\n'

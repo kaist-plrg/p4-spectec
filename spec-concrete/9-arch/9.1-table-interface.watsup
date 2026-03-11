@@ -2,6 +2,60 @@
 ;; Table object helpers
 ;;
 
+;;; Cast control plane-given values, which may need multiple casts inserted
+
+dec $cast_control_plane(evalContext, typedExpressionIR, typeIR) : typedExpressionIR?
+  hint(prose_in %1 "from control plane cast to" %2 "in" %0)
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_to)
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if BOOL = typeIR_to
+  -- if INT = $type_of_typedExpressionIR(typedExpressionIR)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR) `# `( typeIR_to ctk )
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_error
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if ERROR = typeIR_to
+  -- if (D n) `# `( INT ctk ) = typedExpressionIR
+  -- if `{ value_frame* } = $codom_map<id, value>(EC.GLOBAL.FRAME)
+  -- if value_error* = $filter_<value>(value_frame*, (value_frame <: errorValue)*)
+  -- if ERROR `. nameIR_error = value_error*[n]
+  -- if typedExpressionIR_error
+      = (ERROR `. nameIR_error) `# `( typeIR_to ctk )
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if TYPEDEF _ typeIR_base = typeIR_to
+  -- if typedExpressionIR_typedef = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_typedef)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_typedef) `# `( typeIR_to ctk )
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if TYPE _ typeIR_base = typeIR_to
+  -- if typedExpressionIR_newtype = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_newtype)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_newtype) `# `( typeIR_to ctk )
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_cast
+  -- if eps = $cast_unary(typedExpressionIR, typeIR_to)
+  -- if ENUM _ `< typeIR_base > `{ _ } = typeIR_to
+  -- if typedExpressionIR_enum = $cast_control_plane(EC, typedExpressionIR, typeIR_base)
+  -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR_enum)
+  -- if typedExpressionIR_cast
+      = (`(typeIR_to) typedExpressionIR_enum) `# `( typeIR_to ctk )
+
+def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = eps
+  -- otherwise
+
+
 syntax tableEntryPriorityInterface = int?
 
 syntax tableKeyValueInterface =  
@@ -36,18 +90,20 @@ def $tableObject_create_entry_priority(n_priority)
 dec $needs_priority_tableKeysPropertyIR(tableKeysPropertyIR) : bool
 def $needs_priority_tableKeysPropertyIR(KEY `= `{ tableKeyIR* })  
     = $exists_((nameIR_matchKind = "ternary")*)  
-  -- (if _ `: nameIR_matchKind _ `; = tableKeyIR)*  
+  -- if (_ `# _ `: nameIR_matchKind _ `; = tableKeyIR)*  
 
 ;;; Table entry keyset creation
 
 ;;;; Table keyset creation
 
 dec $tableObject_create_entry_key(
+    evalContext,
     (nameIR, nameIR, typeIR),
     tableKeysetInterface)
   : simpleKeysetExpressionIR
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "exact", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -58,11 +114,13 @@ def $tableObject_create_entry_key(
   ---- ;; create exact match expression
   -- if i_key_value = $text_to_int(text_key_value)
   -- if typedExpressionIR = (D i_key_value) `# `( INT DYN )
+  -- if typedExpressionIR_cast = $cast_control_plane(EC, typedExpressionIR, typeIR)
   -- if typeIR_set = SET `< typeIR >
   -- if simpleKeysetExpressionIR
-      = (`( typeIR_set ) typedExpressionIR ) `# `( typeIR_set DYN )
+      = (`( typeIR_set ) typedExpressionIR_cast ) `# `( typeIR_set DYN )
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "ternary", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -73,21 +131,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "ternary", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -98,21 +156,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "lpm", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -126,21 +184,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0x" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "F")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0x" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "lpm", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -154,21 +212,21 @@ def $tableObject_create_entry_key(
   -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
   -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
   -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
   -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create ternary match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
 def $tableObject_create_entry_key(
+    EC,
     (nameIR_key, "lpm", typeIR),
     tableKeyInterface*)
   = simpleKeysetExpressionIR
@@ -181,34 +239,64 @@ def $tableObject_create_entry_key(
   -- if n_key_remaining_width = $(n_key_type_width - n_key_prefix_width)
   -- if i_key_base_value = $shl(i_key_prefix_value, n_key_remaining_width)
   -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
-  -- if typeIR_unrolled = $unroll_aliasType(typeIR)
   -- if typedExpressionIR_base_cast
-      = $cast_unary(typedExpressionIR_base, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create mask expression
   -- if i_key_mask_value = $($pow2(n_key_type_width) - $pow2(n_key_remaining_width))
   -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
   -- if typedExpressionIR_mask_cast
-      = $cast_unary(typedExpressionIR_mask, typeIR_unrolled)
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
   ---- ;; create lpm expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
+def $tableObject_create_entry_key(
+    EC,
+    (nameIR_key, "optional", typeIR),
+    tableKeyInterface*)
+  = simpleKeysetExpressionIR
+  ---- ;; check that the value is in binary format
+  -- if `BIN text_key_value
+      = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
+  ---- ;; check that the value is in optional format
+  -- if ~$contains(text_key_value, "*") \/ ($strip_suffix_rec(text_key_value, "*") = "")
+  ---- ;; create base expression
+  -- if text_key_base_value = $replace_text(text_key_value, "*", "0")
+  -- if i_key_base_value = $text_to_int("0b" ++ text_key_base_value)
+  -- if typedExpressionIR_base = (D i_key_base_value) `# `( INT DYN )
+  -- if typedExpressionIR_base_cast
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  ---- ;; create mask expression
+  -- if text_key_mask_value = $replace_text_except(text_key_value, "*", "1")
+  -- if text_key_mask_value' = $replace_text(text_key_mask_value, "*", "0")
+  -- if i_key_mask_value = $text_to_int("0b" ++ text_key_mask_value')
+  -- if typedExpressionIR_mask = (D i_key_mask_value) `# `( INT DYN )
+  -- if typedExpressionIR_mask_cast
+      = $cast_control_plane(EC, typedExpressionIR_base, typeIR)
+  ---- ;; create optional match expression
+  -- if simpleKeysetExpressionIR
+      = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
+
 dec $tableObject_create_entry_keys(
+    evalContext,
     (nameIR, nameIR, typeIR)*,
     tableKeysetInterface)
   : simpleKeysetExpressionIR*
 
-def $tableObject_create_entry_keys(eps, _) = eps
+def $tableObject_create_entry_keys(_, eps, _) = eps
 def $tableObject_create_entry_keys(
+    EC,
     (nameIR_key_h, nameIR_matchKind_h, typeIR_h)
       :: (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
     tableKeyInterface*)
   = simpleKeysetExpressionIR_h
       :: $tableObject_create_entry_keys(
+          EC,
           (nameIR_key_t, nameIR_matchKind_t, typeIR_t)*,
           tableKeyInterface*)
   -- if simpleKeysetExpressionIR_h
       = $tableObject_create_entry_key(
+          EC,
           (nameIR_key_h, nameIR_matchKind_h, typeIR_h),
           tableKeyInterface*)
 
@@ -217,25 +305,18 @@ def $tableObject_create_entry_keys(
 dec $interface_of_tableKeyIR(tableKeyIR) : (nameIR, nameIR, typeIR)
 
 def $interface_of_tableKeyIR(
-    typedExpressionIR `: nameIR_matchKind annotationList `;)
+    typedExpressionIR `# nameIR_key `: nameIR_matchKind annotationList `;)
   = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if nameIR_key = $name_annotation(annotationList)
-  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-def $interface_of_tableKeyIR(
-    typedExpressionIR `: nameIR_matchKind annotationList `;)
-  = (nameIR_key, nameIR_matchKind, typeIR)
-  -- if eps = $name_annotation(annotationList)
-  -- if nameIR_key
-      = $strip_all_whitespace(
-          $print_<typedExpressionIR>(typedExpressionIR))
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
 dec $tableObject_create_entry_keyset(
+    evalContext,
     tableKeysPropertyIR,
     tableKeysetInterface)
   : keysetExpressionIR
 
 def $tableObject_create_entry_keyset(
+    EC,
     KEY `= `{ tableKeyIR* },
     tableKeyInterface*)
   = `( simpleKeysetExpressionIR* )
@@ -247,14 +328,16 @@ def $tableObject_create_entry_keyset(
   -- if $eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update* })
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keys(
-          (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
+          EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
 
 dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
 def $alias_to_original_lookup_map(parameterIR*)
   = $extend_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, `{ (id `: id)* })
   -- if (annotationList _ _ id _ = parameterIR)*
   -- if (annotation* = $flatten_annotationList(annotationList))*
-  -- if (nameIR_names = $name_annotation_opt(annotation))**
+  -- if (nameIR_names_opt? = $name_annotation_opt(annotation))**
+  -- if (nameIR_names_seq* = $opt_as_seq_<nameIR>(nameIR_names_opt?))**
+  -- if (nameIR_names* = $concat_<nameIR>(nameIR_names_seq**))*
   -- if (nameIR_original, nameIR_aliases*)*
       = $filter_<(nameIR, nameIR*)>((id, nameIR_names*)*, ($(|nameIR_names*| > 0))*)
   -- if nameIR_alias* = (nameIR_aliases*[0])*
@@ -379,11 +462,13 @@ def $find_tableActionIR_by_dotPrefix(
 ;;; Table entry action creation
 
 dec $tableObject_create_entry_action(
+    evalContext,
     tableActionsPropertyIR,
     tableActionInterface)
   : tableActionReferenceIR
 
 def $tableObject_create_entry_action(
+    EC,
     ACTIONS `= `{ tableActionIR* },
     (nameIR_action_update, tableActionArgumentInterface_update*))
   = (`` nameIR_found) `( argumentIR* )
@@ -398,14 +483,14 @@ def $tableObject_create_entry_action(
           parameterIR_control*,
           tableActionArgumentInterface_update*)
   ---- ;; cast arguments to parameter types
-  -- if (_ _ typeIR_param nameIR_param _ = parameterIR_control)*
-  -- if (typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*
+  -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) `# `( INT DYN ))*
   -- if (typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+      = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 def $tableObject_create_entry_action(
+    EC,
     ACTIONS `= `{ tableActionIR* },
     (nameIR_action_update, tableActionArgumentInterface_update*))
   = (`` nameIR_found) `( argumentIR* )
@@ -422,16 +507,16 @@ def $tableObject_create_entry_action(
           parameterIR_control*,
           tableActionArgumentInterface_update*)
   ---- ;; cast arguments to parameter types
-  -- if (_ _ typeIR_param nameIR_param _ = parameterIR_control)*
-  -- if (typeIR_param_unrolled = $unroll_aliasType(typeIR_param))*
+  -- if (_ _ typeIR_param _ _ = parameterIR_control)*
   -- if (typedExpressionIR_arg = (D i_arg_aligned) `# `( INT DYN ))*
   -- if (typedExpressionIR_arg_cast
-      = $cast_unary(typedExpressionIR_arg, typeIR_param_unrolled))*
+      = $cast_control_plane(EC, typedExpressionIR_arg, typeIR_param))*
   -- if argumentIR* = argumentIR_data* ++ typedExpressionIR_arg_cast*
 
 ;;; Table entry creation
 
 dec $tableObject_add_entry(
+    evalContext,
     tableObject,
     tableEntryPriorityInterface,
     tableKeysetInterface,
@@ -439,6 +524,7 @@ dec $tableObject_add_entry(
   : tableObject
 
 def $tableObject_add_entry(
+    EC,
     TABLE typeId `{ frame TBL },
     tableEntryPriorityInterface,
     tableKeysetInterface,
@@ -450,9 +536,9 @@ def $tableObject_add_entry(
   -- if $needs_priority_tableKeysPropertyIR(TBL.KEYS)
       => $is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)
   -- if keysetExpressionIR
-      = $tableObject_create_entry_keyset(TBL.KEYS, tableKeysetInterface)
+      = $tableObject_create_entry_keyset(EC, TBL.KEYS, tableKeysetInterface)
   -- if tableActionReferenceIR
-      = $tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)
+      = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
   -- if tableEntryIR_update
       = eps tableEntryPriorityOptIR
           keysetExpressionIR `: tableActionReferenceIR `EMPTY `;
@@ -468,11 +554,13 @@ def $tableObject_add_entry(
 ;;; Table default action creation
 
 dec $tableObject_add_default_action(
+    evalContext,
     tableObject,
     tableActionInterface)
   : tableObject
 
 def $tableObject_add_default_action(
+    EC,
     TABLE typeId `{ frame TBL },
     tableActionInterface)
   = TABLE typeId `{ frame TBL_updated }
@@ -480,7 +568,7 @@ def $tableObject_add_default_action(
   -- if TBL.DEFAULT_ACTION = _ eps DEFAULT_ACTION `= _ `;
   ---- ;; create default action from the interface
   -- if tableActionReferenceIR
-      = $tableObject_create_entry_action(TBL.ACTIONS, tableActionInterface)
+      = $tableObject_create_entry_action(EC, TBL.ACTIONS, tableActionInterface)
   -- if tableDefaultActionPropertyIR 
       = `EMPTY eps DEFAULT_ACTION `= tableActionReferenceIR `;
   ---- ;; update the table

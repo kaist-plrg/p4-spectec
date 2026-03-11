@@ -40,6 +40,11 @@ type stmt =
   | SetDefault of name * action
   | CheckCounter of id * id_or_index * (ctr option * cond * number)
   | MirroringAdd of session * port
+  | MirroringAddMc of session * id
+  | MirroringGet of session
   | McGroupCreate of id
-  | McNodeCreate of id * port
+  | McNodeCreate of id * port list
   | McNodeAssociate of id * handle
+  | RegisterRead of name * number
+  | RegisterWrite of name * number * number
+  | RegisterReset of name

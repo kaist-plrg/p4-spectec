@@ -97,14 +97,15 @@ struct
 
   (* Match-action table interface *)
 
-  let table_add_entry (_value_arch : Value.t) (_value_tableName : Value.t)
+  let table_add_entry (_value_ctx : Value.t) (_value_arch : Value.t)
+      (_value_tableName : Value.t)
       (_value_tableEntryPriorityInterface : Value.t)
       (_value_tableKeysetInterface : Value.t)
       (_value_tableActionInterface : Value.t) : Value.t =
     error_no_region
       "table_add_entry not implemented for the placeholder simulator"
 
-  let table_add_default_action (_value_arch : Value.t)
+  let table_add_default_action (_value_ctx : Value.t) (_value_arch : Value.t)
       (_value_tableName : Value.t) (_value_tableActionInterface : Value.t) :
       Value.t =
     error_no_region
@@ -116,19 +117,41 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the placeholder simulator"
 
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the placeholder simulator"
+
   (* Multicast interface *)
 
   let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
-    error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
+    error_no_region
+      "mc_mgrp_create is not implemented for the placeholder simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_ports : int list) :
       Value.t =
-    error_no_region "mc_node_create is not implemented for the ebpf simulator"
+    error_no_region
+      "mc_node_create is not implemented for the placeholder simulator"
 
   let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
       Value.t =
     error_no_region
-      "mc_node_associate is not implemented for the ebpf simulator"
+      "mc_node_associate is not implemented for the placeholder simulator"
+
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region
+      "register_read is not implemented for the placeholder simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region
+      "register_write is not implemented for the placeholder simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region
+      "register_reset is not implemented for the placeholder simulator"
 
   (* Pipeline initializer *)
 

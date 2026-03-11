@@ -39,6 +39,8 @@ module type ARCH = sig
 
   val table_add_entry :
     Value.t ->
+    (* context *)
+    Value.t ->
     (* store *)
     Value.t ->
     (* table name *)
@@ -52,6 +54,8 @@ module type ARCH = sig
 
   val table_add_default_action :
     Value.t ->
+    (* context *)
+    Value.t ->
     (* store *)
     Value.t ->
     (* table name *)
@@ -62,12 +66,19 @@ module type ARCH = sig
   (* Mirror session interface *)
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
+  val add_mirror_session_mc : Value.t -> int -> int -> Value.t
 
   (* Multicast interface *)
 
   val mc_mgrp_create : Value.t -> int -> Value.t
-  val mc_node_create : Value.t -> int -> int -> Value.t
+  val mc_node_create : Value.t -> int -> int list -> Value.t
   val mc_node_associate : Value.t -> int -> int -> Value.t
+
+  (* Register interface *)
+
+  val register_read : Value.t -> string -> int -> Value.t
+  val register_write : Value.t -> string -> int -> int -> Value.t
+  val register_reset : Value.t -> string -> Value.t
 
   (* Pipeline evaluation *)
 

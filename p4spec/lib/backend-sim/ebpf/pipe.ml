@@ -252,29 +252,29 @@ struct
         Spec.Func.update_object_qualified_e value_arch value_objectId
           value_tableObject
 
-  let table_add_entry (value_arch : Value.t) (value_tableName : Value.t)
-      (value_tableEntryPriorityInterface : Value.t)
+  let table_add_entry (value_ctx : Value.t) (value_arch : Value.t)
+      (value_tableName : Value.t) (value_tableEntryPriorityInterface : Value.t)
       (value_tableKeysetInterface : Value.t)
       (value_tableActionInterface : Value.t) : Value.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
-      Spec.Func.tableObject_add_entry value_tableObject
+      Spec.Func.tableObject_add_entry value_ctx value_tableObject
         value_tableEntryPriorityInterface value_tableKeysetInterface
         value_tableActionInterface
     in
     (* Update arch with modified table object *)
     update_table value_arch value_tableName value_tableObject
 
-  let table_add_default_action (value_arch : Value.t)
+  let table_add_default_action (value_ctx : Value.t) (value_arch : Value.t)
       (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
       Value.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
     let value_tableObject =
-      Spec.Func.tableObject_add_default_action value_tableObject
+      Spec.Func.tableObject_add_default_action value_ctx value_tableObject
         value_tableActionInterface
     in
     (* Update arch with modified table object *)
@@ -286,10 +286,14 @@ struct
     error_no_region
       "add_mirror_session is not implemented for the ebpf simulator"
 
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the ebpf simulator"
+
   let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
     error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int) :
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int list) :
       Value.t =
     error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
@@ -297,6 +301,19 @@ struct
       Value.t =
     error_no_region
       "mc_node_associate is not implemented for the ebpf simulator"
+
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region "register_read is not implemented for the ebpf simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region "register_write is not implemented for the ebpf simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region "register_reset is not implemented for the ebpf simulator"
 
   (* Pipeline initializer *)
 
