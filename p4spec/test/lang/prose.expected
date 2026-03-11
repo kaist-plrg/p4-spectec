@@ -11420,6 +11420,12 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
   ... Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+_+`` under context ``TC`` with key type ``typeIR~key~``].
   ... Result in ``simpleKeysetExpressionIR``.
+. If let ``expression`` be ``keysetExpression``:
+ .. Check that the length of ``typeIR^{asterisk}^`` is greater than ``1``.
+ .. Let ``typeIR~key_tuple~`` be ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+``.
+ .. Let ``simpleKeysetExpressionIR`` be
+* the result of xref:SelectCase_keyset_simple_ok[typing ``expression`` under context ``TC`` with key type ``typeIR~key_tuple~``].
+ .. Result in ``simpleKeysetExpressionIR``.
 . If ``typeIR^{asterisk}^`` is equal to ``·``:
  .. Check that ``keysetExpression`` is equal to ``+DEFAULT+``.
  .. Result in ``+DEFAULT+``.
@@ -11603,14 +11609,29 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
  .. Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
  .. Result in ``+LPM+`` ``n`` and ``typedExpressionIR~set~``.
 . Else:
- .. Let ``typedExpressionIR`` be
+ .. If xref:is_singleton_list_expression[``expression`` is a singleton list expression]:
+  ... Check that ``expression`` has type ``sequenceOrRecordExpression``.
+  ... Let ``+{+`` ``sequenceOrRecordElementExpression`` ``trailingCommaOpt`` ``+}+`` be ``expression``.
+  ... Check that ``sequenceOrRecordElementExpression`` has type ``expression``.
+  ... Let ``expression~elem~`` be ``sequenceOrRecordElementExpression``.
+  ... Check that ``trailingCommaOpt`` is ```EMPTY``.
+  ... Let ``typedExpressionIR`` be
+* the result of xref:Expr_ok[typing ``expression~elem~``, under context ``TC`` at ``+LOCAL+``].
+  ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+  ... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
+  ... Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
+  ... Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
+  ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
+  ... Result in ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+ .. Else:
+  ... Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
- .. Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
- .. Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
- .. Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
- .. Result in ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+  ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+  ... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
+  ... Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
+  ... Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
+  ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
+  ... Result in ``+NON_LPM+`` and ``typedExpressionIR~set~``.
 
 xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
 
@@ -11676,6 +11697,15 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 . Let ``typedExpressionIR~r_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be xref:option_get[*!*] xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
 . Result in ``+NON_LPM+`` and ``typedExpressionIR~l_reduced~`` ``+..+`` ``typedExpressionIR~r_reduced~``.
+
+xref:is_singleton_list_expression[``expression`` is a singleton list expression]
+
+
+. If let ``+{+`` ``sequenceOrRecordElementExpression`` ``trailingCommaOpt`` ``+}+`` be ``expression``:
+ .. Check that ``sequenceOrRecordElementExpression`` has type ``expression``.
+ .. Check that ``trailingCommaOpt`` is ```EMPTY``.
+ .. Return ``true``.
+. Otherwise: return ``false``.
 
 xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok: ``TC`` ``TBLC`` ``tableEntryState`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]
 

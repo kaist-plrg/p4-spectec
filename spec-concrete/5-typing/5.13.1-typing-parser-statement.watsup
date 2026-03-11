@@ -153,6 +153,13 @@ rulegroup SelectCase_keyset_ok/simpleKeysetExpression {
     -- SelectCase_keyset_simple_ok:
         TC typeIR_key |- expression : simpleKeysetExpressionIR
 
+  rule SelectCase_keyset_ok/expression-list:
+    TC typeIR_key* |- expression : simpleKeysetExpressionIR
+    -- if $(|typeIR_key*| > 1)
+    -- if typeIR_key_tuple = TUPLE `< typeIR_key* >
+    -- SelectCase_keyset_simple_ok:
+        TC typeIR_key_tuple |- expression : simpleKeysetExpressionIR
+
   rule SelectCase_keyset_ok/mask:
     TC typeIR_key |- expression_l `&&& expression_r : simpleKeysetExpressionIR
     -- SelectCase_keyset_simple_ok:

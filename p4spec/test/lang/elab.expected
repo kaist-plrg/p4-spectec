@@ -18527,25 +18527,35 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
 
    match
 
-    (signature) TC typeIR''''*{typeIR'''' <- typeIR''''*} |- keysetExpression : %
-    TC typeIR''''*{typeIR'''' <- typeIR''''*} |- keysetExpression : %
+    (signature) TC typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} |- keysetExpression : %
+    TC typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} |- keysetExpression : %
 
    paths
 
     rulepath expression
-    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
-    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: expression
     -- let expression = keysetExpression' as expression
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- expression as simpleKeysetExpression : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
+    rulepath expression-list
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- let keysetExpression' = keysetExpression
+    -- if keysetExpression' <: expression
+    -- let expression = keysetExpression' as expression
+    -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
+    -- let typeIR_key_tuple = tuple< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR
+    -- SelectCase_keyset_simple_ok: TC typeIR_key_tuple |- expression as simpleKeysetExpression : simpleKeysetExpressionIR
+    -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
+
     rulepath mask
-    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
-    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
@@ -18555,9 +18565,9 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath range
-    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
-    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- let keysetExpression' = keysetExpression
     -- if keysetExpression' <: simpleKeysetExpression
     -- let simpleKeysetExpression = keysetExpression' as simpleKeysetExpression
@@ -18567,35 +18577,35 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath default-zero-to-one
-    -- if (typeIR''''*{typeIR'''' <- typeIR''''*} = [])
+    -- if (typeIR'''''''*{typeIR''''''' <- typeIR'''''''*} = [])
     -- if (keysetExpression = default as keysetExpression)
     -- output: % % |- % : default as keysetExpressionIR
 
     rulepath default-one-to-one
-    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
-    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- if (keysetExpression = default as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- default : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath default-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- if (keysetExpression = default as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- default : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath dontcare-one-to-one
-    -- let typeIR'''''*{typeIR''''' <- typeIR'''''*} = typeIR''''*{typeIR'''' <- typeIR''''*}
-    -- if typeIR'''''*{typeIR''''' <- typeIR'''''*} matches [ _/1 ]
-    -- let [typeIR_key] = typeIR'''''*{typeIR''''' <- typeIR'''''*}
+    -- let typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
+    -- if typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*} matches [ _/1 ]
+    -- let [typeIR_key] = typeIR''''''''*{typeIR'''''''' <- typeIR''''''''*}
     -- if (keysetExpression = _ as keysetExpression)
     -- SelectCase_keyset_simple_ok: TC typeIR_key |- _ : simpleKeysetExpressionIR
     -- output: % % |- % : simpleKeysetExpressionIR as keysetExpressionIR
 
     rulepath dontcare-many-to-one
-    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR''''*{typeIR'''' <- typeIR''''*}
+    -- let typeIR_key*{typeIR_key <- typeIR_key*} = typeIR'''''''*{typeIR''''''' <- typeIR'''''''*}
     -- if (keysetExpression = _ as keysetExpression)
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| > 1)
     -- SelectCase_keyset_simple_ok: TC seq< typeIR_key*{typeIR_key <- typeIR_key*} > as typeIR |- _ : simpleKeysetExpressionIR
@@ -18881,9 +18891,28 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
     -- output: % % |- % @ % : lpm n typedExpressionIR_set as simpleKeysetExpressionIR
 
-    rulepath non-lpm
+    rulepath non-lpm-singleton-seq
     -- let nameIR_matchkind = text
     -- if (nameIR_matchkind =/= "lpm")
+    -- if $is_singleton_list_expression(expression)
+    -- let expression' = expression
+    -- if expression' <: sequenceOrRecordExpression
+    -- let { sequenceOrRecordElementExpression trailingCommaOpt } = expression' as sequenceOrRecordExpression
+    -- if sequenceOrRecordElementExpression <: expression
+    -- let expression_elem = sequenceOrRecordElementExpression as expression
+    -- if trailingCommaOpt matches ``EMPTY`
+    -- Expr_ok: local TC |- expression_elem : typedExpressionIR
+    -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- if Cast_impl: typeIR -> typeIR_key holds
+    -- let typeIR_set = set< typeIR_key > as typeIR
+    -- let typedExpressionIR_set = ( typeIR_set ) typedExpressionIR as expressionIR # ( typeIR_set ctk )
+    -- output: % % |- % @ % : non_lpm typedExpressionIR_set as simpleKeysetExpressionIR
+
+    rulepath non-lpm-non-singleton-seq
+    -- let nameIR_matchkind = text
+    -- if (nameIR_matchkind =/= "lpm")
+    -- if ~$is_singleton_list_expression(expression)
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
@@ -19016,6 +19045,18 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     -- if (nameIR_matchkind =/= "lpm")
     -- if (nameIR_matchkind =/= "exact")
     -- output: % % |- % @ % : non_lpm _
+
+def $is_singleton_list_expression(expression) : bool =
+
+  clause 0 : (expression) = true
+  -- let expression' = expression
+  -- if expression' <: sequenceOrRecordExpression
+  -- let { sequenceOrRecordElementExpression trailingCommaOpt } = expression' as sequenceOrRecordExpression
+  -- if sequenceOrRecordElementExpression <: expression
+  -- let expression_elem = sequenceOrRecordElementExpression as expression
+  -- if trailingCommaOpt matches ``EMPTY`
+
+  clause -1 : (expression) = false
 
 relation TableEntry_keysets_simple_ok: typingContext tableContext tableEntryState |- matchKey* @ simpleKeysetExpression* : tableEntryState simpleKeysetExpressionIR*
 

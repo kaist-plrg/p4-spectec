@@ -290,6 +290,20 @@ relation TableEntry_keyset_simple_ok:
 
 ;;;;;; expression
 
+;; To account for the patterns used in:
+;;  * action-two-params.p4
+;;  * op_bin.p4
+;;  * table-entries-no-arg-actions.p4
+
+dec $is_singleton_list_expression(expression) : bool
+  hint(prose_true %0 "is a singleton list expression")
+  hint(prose_false %0 "is not a singleton list expression")
+
+def $is_singleton_list_expression(expression) = true
+  -- if expression = `{ expression_elem `EMPTY }
+def $is_singleton_list_expression(expression) = false
+  -- otherwise
+
 rulegroup TableEntry_keyset_simple_ok/expression {
 
   rule TableEntry_keyset_simple_ok/lpm:
@@ -308,11 +322,32 @@ rulegroup TableEntry_keyset_simple_ok/expression {
     -- if typedExpressionIR_set
         = (`( typeIR_set ) typedExpressionIR) `# `( typeIR_set ctk )
 
-  rule TableEntry_keyset_simple_ok/non-lpm:
+  rule TableEntry_keyset_simple_ok/non-lpm-singleton-seq:
     TC TBLC |- (typeIR_key `: nameIR_matchkind) `@ expression
              : NON_LPM typedExpressionIR_set
     ---- ;; check match mode
     -- if nameIR_matchkind =/= "lpm"
+    ---- ;; if a singleton sequence
+    -- if $is_singleton_list_expression(expression)
+    -- if `{ expression_elem `EMPTY } = expression
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC |- expression_elem : typedExpressionIR
+    -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
+    ---- ;; check compatibility with the key type
+    -- Cast_impl: typeIR -> typeIR_key
+    ---- ;; lift the expression to set type
+    -- if typeIR_set = SET `< typeIR_key >
+    -- if typedExpressionIR_set
+        = (`( typeIR_set ) typedExpressionIR) `# `( typeIR_set ctk )
+
+  rule TableEntry_keyset_simple_ok/non-lpm-non-singleton-seq:
+    TC TBLC |- (typeIR_key `: nameIR_matchkind) `@ expression
+             : NON_LPM typedExpressionIR_set
+    ---- ;; check match mode
+    -- if nameIR_matchkind =/= "lpm"
+    ---- ;; if not a singleton sequence
+    -- if ~$is_singleton_list_expression(expression)
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
