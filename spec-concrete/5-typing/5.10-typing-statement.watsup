@@ -664,6 +664,8 @@ rule SwitchCaseList_table_ok:
 rule Stmt_ok/switchStatement-table:
   LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
                 : TC f_post switchStatementIR
+  ---- ;; switch statements can only be used in a control apply block
+  -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
   -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
@@ -811,6 +813,8 @@ tbl def $compat_switch =
 rule Stmt_ok/switchStatement-general:
   LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
                 : TC f_post switchStatementIR
+  ---- ;; switch statements can only be used in a control apply block
+  -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
   -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
