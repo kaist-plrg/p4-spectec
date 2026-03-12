@@ -17216,6 +17216,11 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key
  .. Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
  .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
  .. Return ``simpleKeysetExpressionIR``.
+. Else if ``text`` is equal to ``"selector"``:
+ .. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+ .. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_control_plane[``typedExpressionIR~zero~`` from control plane cast to ``typeIR`` in ``EC``].
+ .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+&&&+`` ``typedExpressionIR~cast~``.
+ .. Return ``simpleKeysetExpressionIR``.
 
 xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(evalContext, (nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)]
 
@@ -17251,7 +17256,8 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 --
 +
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
-. Check that xref:eq_set[``+{+`` ``nameIR~key~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
+. Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
+. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
 . Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
 . Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 

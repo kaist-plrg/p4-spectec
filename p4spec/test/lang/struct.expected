@@ -36005,7 +36005,23 @@ def $tableObject_create_entry_key(EC, (nameIR_key, text, typeIR), (tableKeyInter
 
       1. Else Phantom#1922
 
-1. Else Phantom#1923
+  5. Case (% = "selector")
+
+    1. (Let typedExpressionIR_zero be (((d (0 as int)) as expressionIR) # (( ((int) as typeIR) (dyn) ))))
+
+      1. (Let (typedExpressionIR)? be $cast_control_plane(EC, typedExpressionIR_zero, typeIR))
+
+        1. If (((typedExpressionIR)? matches pattern (_))), then
+
+          1. (Let ?(typedExpressionIR_cast) be (typedExpressionIR)?)
+
+            1. (Let simpleKeysetExpressionIR be (typedExpressionIR_cast &&& typedExpressionIR_cast))
+
+              1. Return simpleKeysetExpressionIR
+
+        1. Else Phantom#1923
+
+1. Else Phantom#1924
 
 def $tableObject_create_entry_keys(evalContext, ((nameIR, nameIR, typeIR))*, tableKeysetInterface)
 
@@ -36013,7 +36029,7 @@ def $tableObject_create_entry_keys(evalContext, ((nameIR, nameIR, typeIR))*, tab
 
   1. Return []
 
-1. Else Phantom#1924
+1. Else Phantom#1925
 
 2. (Let (tableKeyInterface)* be tableKeysetInterface)
 
@@ -36025,7 +36041,7 @@ def $tableObject_create_entry_keys(evalContext, ((nameIR, nameIR, typeIR))*, tab
 
         1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(evalContext, ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*, (tableKeyInterface)*)
 
-  1. Else Phantom#1925
+  1. Else Phantom#1926
 
 def $interface_of_tableKeyIR((typedExpressionIR # nameIR_key : nameIR_matchKind annotationList ;))
 
@@ -36039,13 +36055,15 @@ def $tableObject_create_entry_keyset(EC, (key={ (tableKeyIR)* }), (tableKeyInter
 
   1. (Let (nameIR_key_update, tableKeyValueInterface_update) be tableKeyInterface)*
 
-    1. If ($eq_set<nameIR>(({ (nameIR_key)* }), ({ (nameIR_key_update)* }))), then
+    1. (Let (nameIR_key_non_selector)* be $filter_<nameIR>((nameIR_key)*, ((nameIR_matchKind =/= "selector"))*))
 
-      1. (Let (simpleKeysetExpressionIR)* be $tableObject_create_entry_keys(EC, ((nameIR_key, nameIR_matchKind, typeIR))*, (tableKeyInterface)*))
+      1. If ($eq_set<nameIR>(({ (nameIR_key_non_selector)* }), ({ (nameIR_key_update)* }))), then
 
-        1. Return ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
+        1. (Let (simpleKeysetExpressionIR)* be $tableObject_create_entry_keys(EC, ((nameIR_key, nameIR_matchKind, typeIR))*, (tableKeyInterface)*))
 
-    1. Else Phantom#1926
+          1. Return ((( (simpleKeysetExpressionIR)* )) as keysetExpressionIR)
+
+      1. Else Phantom#1927
 
 def $alias_to_original_lookup_map((parameterIR)*)
 
@@ -36083,9 +36101,9 @@ def $align_tableActionArgumentInterfaces((parameterIR)*, ((nameIR_arg, i_arg))*)
 
               1. Return (i_aligned)*
 
-          1. Else Phantom#1927
+          1. Else Phantom#1928
 
-    1. Else Phantom#1928
+    1. Else Phantom#1929
 
 def $align_tableActionArgumentInterfaces'(({ ((id_arg : i_arg))* }), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
 
@@ -36119,7 +36137,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
                 1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
 
-          1. Else Phantom#1929
+          1. Else Phantom#1930
 
           2. (Let (nameIR_annotation)* be $name_annotation(annotationList))
 
@@ -36137,7 +36155,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
                     1. Return $find_tableActionIR_by_name((tableActionIR_t)*, nameIR)
 
-            1. Else Phantom#1930
+            1. Else Phantom#1931
 
 def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
@@ -36157,7 +36175,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
           1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-        1. Else Phantom#1931
+        1. Else Phantom#1932
 
       2. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
 
@@ -36169,9 +36187,9 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
               1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-            1. Else Phantom#1932
+            1. Else Phantom#1933
 
-          1. Else Phantom#1933
+          1. Else Phantom#1934
 
           2. (Let (nameIR_annotation_dotPrefix)* be $filter_<nameIR>((nameIR_annotation)*, ($starts_with(nameIR_annotation, "."))*))
 
@@ -36183,9 +36201,9 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
                   1. Return $find_tableActionIR_by_dotPrefix((tableActionIR_t)*, nameIR)
 
-                1. Else Phantom#1934
+                1. Else Phantom#1935
 
-            1. Else Phantom#1935
+            1. Else Phantom#1936
 
             2. (Let (nameIR_annotation_strip)* be ($strip_prefix(nameIR_annotation_dotPrefix, "."))*)
 
@@ -36195,7 +36213,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
                   1. Return ?((nameIR_action, tableActionIR_h))
 
-              1. Else Phantom#1936
+              1. Else Phantom#1937
 
 def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR_action_update, (tableActionArgumentInterface_update)*))
 
@@ -36223,9 +36241,9 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
                       1. Return ((` nameIR_found) ( (argumentIR)* ))
 
-                1. Else Phantom#1937
+                1. Else Phantom#1938
 
-  1. Else Phantom#1938
+  1. Else Phantom#1939
 
 2. If ((?() = $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR_action_update))), then
 
@@ -36253,11 +36271,11 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
                         1. Return ((` nameIR_found) ( (argumentIR)* ))
 
-                  1. Else Phantom#1939
+                  1. Else Phantom#1940
 
-    1. Else Phantom#1940
+    1. Else Phantom#1941
 
-2. Else Phantom#1941
+2. Else Phantom#1942
 
 def $tableObject_add_entry(EC, (table typeId { frame TBL }), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
@@ -36279,7 +36297,7 @@ def $tableObject_add_entry(EC, (table typeId { frame TBL }), tableEntryPriorityI
 
                 1. Return (table typeId { frame TBL_updated })
 
-  1. Else Phantom#1942
+  1. Else Phantom#1943
 
 def $tableObject_add_default_action(EC, (table typeId { frame TBL }), tableActionInterface)
 
@@ -36295,7 +36313,7 @@ def $tableObject_add_default_action(EC, (table typeId { frame TBL }), tableActio
 
           1. Return (table typeId { frame TBL_updated })
 
-  1. Else Phantom#1943
+  1. Else Phantom#1944
 
 relation V1Model_init: |- p4program : % %
 
@@ -36333,9 +36351,9 @@ relation V1Model_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#1944
+            1. Else Phantom#1945
 
-        1. Else Phantom#1945
+        1. Else Phantom#1946
 
 relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -36363,9 +36381,9 @@ relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#1946
+            1. Else Phantom#1947
 
-        1. Else Phantom#1947
+        1. Else Phantom#1948
 
 relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
@@ -36415,15 +36433,15 @@ relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
                                             1. Result in: % % |- % : EC_4
 
-                              1. Else Phantom#1948
+                              1. Else Phantom#1949
 
-                    1. Else Phantom#1949
+                    1. Else Phantom#1950
 
-              1. Else Phantom#1950
+              1. Else Phantom#1951
 
-        1. Else Phantom#1951
+        1. Else Phantom#1952
 
-    1. Else Phantom#1952
+    1. Else Phantom#1953
 
 def $V1Model_setup_packet_in_argument(EC)
 
@@ -36439,7 +36457,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Phantom#1953
+  1. Else Phantom#1954
 
 def $V1Model_setup_packet_out_argument(EC)
 
@@ -36455,7 +36473,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Phantom#1954
+  1. Else Phantom#1955
 
 def $V1Model_setup_hdr_argument(ARCH)
 
@@ -36479,11 +36497,11 @@ def $V1Model_setup_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Phantom#1955
+            1. Else Phantom#1956
 
-      1. Else Phantom#1956
+      1. Else Phantom#1957
 
-  1. Else Phantom#1957
+  1. Else Phantom#1958
 
 def $V1Model_setup_meta_argument(ARCH)
 
@@ -36507,11 +36525,11 @@ def $V1Model_setup_meta_argument(ARCH)
 
                   1. Return argumentIR_meta
 
-            1. Else Phantom#1958
+            1. Else Phantom#1959
 
-      1. Else Phantom#1959
+      1. Else Phantom#1960
 
-  1. Else Phantom#1960
+  1. Else Phantom#1961
 
 def $V1Model_setup_standard_metadata_argument(EC)
 
@@ -36527,7 +36545,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
           1. Return argumentIR_standard_metadata
 
-  1. Else Phantom#1961
+  1. Else Phantom#1962
 
 def $V1Model_setup_main_callee(EC, ARCH)
 
@@ -36565,15 +36583,15 @@ def $V1Model_setup_main_callee(EC, ARCH)
 
                                 1. Return typedExpressionIR_main
 
-                        1. Else Phantom#1962
+                        1. Else Phantom#1963
 
-                  1. Else Phantom#1963
+                  1. Else Phantom#1964
 
-            1. Else Phantom#1964
+            1. Else Phantom#1965
 
-        1. Else Phantom#1965
+        1. Else Phantom#1966
 
-  1. Else Phantom#1966
+  1. Else Phantom#1967
 
 def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36611,15 +36629,15 @@ def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_parser
 
-                        1. Else Phantom#1967
+                        1. Else Phantom#1968
 
-                  1. Else Phantom#1968
+                  1. Else Phantom#1969
 
-            1. Else Phantom#1969
+            1. Else Phantom#1970
 
-        1. Else Phantom#1970
+        1. Else Phantom#1971
 
-  1. Else Phantom#1971
+  1. Else Phantom#1972
 
 def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36657,15 +36675,15 @@ def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_verify
 
-                        1. Else Phantom#1972
+                        1. Else Phantom#1973
 
-                  1. Else Phantom#1973
+                  1. Else Phantom#1974
 
-            1. Else Phantom#1974
+            1. Else Phantom#1975
 
-        1. Else Phantom#1975
+        1. Else Phantom#1976
 
-  1. Else Phantom#1976
+  1. Else Phantom#1977
 
 def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36703,15 +36721,15 @@ def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_ingress
 
-                        1. Else Phantom#1977
+                        1. Else Phantom#1978
 
-                  1. Else Phantom#1978
+                  1. Else Phantom#1979
 
-            1. Else Phantom#1979
+            1. Else Phantom#1980
 
-        1. Else Phantom#1980
+        1. Else Phantom#1981
 
-  1. Else Phantom#1981
+  1. Else Phantom#1982
 
 def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36749,15 +36767,15 @@ def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_egress
 
-                        1. Else Phantom#1982
+                        1. Else Phantom#1983
 
-                  1. Else Phantom#1983
+                  1. Else Phantom#1984
 
-            1. Else Phantom#1984
+            1. Else Phantom#1985
 
-        1. Else Phantom#1985
+        1. Else Phantom#1986
 
-  1. Else Phantom#1986
+  1. Else Phantom#1987
 
 def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36795,15 +36813,15 @@ def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_check
 
-                        1. Else Phantom#1987
+                        1. Else Phantom#1988
 
-                  1. Else Phantom#1988
+                  1. Else Phantom#1989
 
-            1. Else Phantom#1989
+            1. Else Phantom#1990
 
-        1. Else Phantom#1990
+        1. Else Phantom#1991
 
-  1. Else Phantom#1991
+  1. Else Phantom#1992
 
 def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -36835,13 +36853,13 @@ def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_deparse
 
-                  1. Else Phantom#1992
+                  1. Else Phantom#1993
 
-            1. Else Phantom#1993
+            1. Else Phantom#1994
 
-        1. Else Phantom#1994
+        1. Else Phantom#1995
 
-  1. Else Phantom#1995
+  1. Else Phantom#1996
 
 relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
@@ -36879,7 +36897,7 @@ relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
                           1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                    1. Else Phantom#1996
+                    1. Else Phantom#1997
 
 relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
@@ -36913,7 +36931,7 @@ relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                1. Else Phantom#1997
+                1. Else Phantom#1998
 
 relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
@@ -36949,7 +36967,7 @@ relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
                         1. Result in: % % |- EC_1 ARCH_1 ((return ?()) as callResult)
 
-                  1. Else Phantom#1998
+                  1. Else Phantom#1999
 
 relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
@@ -36985,7 +37003,7 @@ relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
                         1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                  1. Else Phantom#1999
+                  1. Else Phantom#2000
 
 relation V1Model_check: EC_0 ARCH_0 |- % % %
 
@@ -37019,7 +37037,7 @@ relation V1Model_check: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                1. Else Phantom#2000
+                1. Else Phantom#2001
 
 relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
@@ -37053,7 +37071,7 @@ relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                1. Else Phantom#2001
+                1. Else Phantom#2002
 
 def $field_list_annotation_index(annotationList)
 
@@ -37175,13 +37193,13 @@ def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index)
 
                       1. Return (nameIR_field)*
 
-                1. Else Phantom#2002
+                1. Else Phantom#2003
 
-            1. Else Phantom#2003
+            1. Else Phantom#2004
 
-      1. Else Phantom#2004
+      1. Else Phantom#2005
 
-  1. Else Phantom#2005
+  1. Else Phantom#2006
 
 relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
@@ -37191,7 +37209,7 @@ relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
     1. Result in: % % % |- % : EC_0
 
-  1. Else Phantom#2006
+  1. Else Phantom#2007
 
   2. If (((nameIR)* matches pattern _ :: _)), then
 
@@ -37207,7 +37225,7 @@ relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
               1. Result in: % % % |- % : EC_2
 
-  2. Else Phantom#2007
+  2. Else Phantom#2008
 
 relation V1Model_setup_preserved_meta_fields: EC_0 ARCH |- integerLiteral_index : %
 
@@ -37237,11 +37255,11 @@ relation V1Model_setup_preserved_meta_fields: EC_0 ARCH |- integerLiteral_index 
 
                         1. Result in: % % |- % : EC_2
 
-              1. Else Phantom#2008
+              1. Else Phantom#2009
 
-        1. Else Phantom#2009
+        1. Else Phantom#2010
 
-    1. Else Phantom#2010
+    1. Else Phantom#2011
 
 relation EBPF_init: |- p4program : % %
 
@@ -37279,9 +37297,9 @@ relation EBPF_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#2011
+            1. Else Phantom#2012
 
-        1. Else Phantom#2012
+        1. Else Phantom#2013
 
 relation EBPF_init_globals: EC_0 ARCH |- %
 
@@ -37309,11 +37327,11 @@ relation EBPF_init_globals: EC_0 ARCH |- %
 
                       1. Result in: % % |- EC_2
 
-              1. Else Phantom#2013
+              1. Else Phantom#2014
 
-        1. Else Phantom#2014
+        1. Else Phantom#2015
 
-    1. Else Phantom#2015
+    1. Else Phantom#2016
 
 def $eBPF_setup_packet_in_argument(EC)
 
@@ -37329,7 +37347,7 @@ def $eBPF_setup_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Phantom#2016
+  1. Else Phantom#2017
 
 def $eBPF_setup_headers_argument(ARCH)
 
@@ -37353,11 +37371,11 @@ def $eBPF_setup_headers_argument(ARCH)
 
                   1. Return argumentIR_headers
 
-            1. Else Phantom#2017
+            1. Else Phantom#2018
 
-      1. Else Phantom#2018
+      1. Else Phantom#2019
 
-  1. Else Phantom#2019
+  1. Else Phantom#2020
 
 def $eBPF_setup_main_callee(EC, ARCH)
 
@@ -37389,13 +37407,13 @@ def $eBPF_setup_main_callee(EC, ARCH)
 
                           1. Return typedExpressionIR_main
 
-                  1. Else Phantom#2020
+                  1. Else Phantom#2021
 
-            1. Else Phantom#2021
+            1. Else Phantom#2022
 
-        1. Else Phantom#2022
+        1. Else Phantom#2023
 
-  1. Else Phantom#2023
+  1. Else Phantom#2024
 
 def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -37427,13 +37445,13 @@ def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_parse
 
-                  1. Else Phantom#2024
+                  1. Else Phantom#2025
 
-            1. Else Phantom#2025
+            1. Else Phantom#2026
 
-        1. Else Phantom#2026
+        1. Else Phantom#2027
 
-  1. Else Phantom#2027
+  1. Else Phantom#2028
 
 def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -37465,13 +37483,13 @@ def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_filter
 
-                  1. Else Phantom#2028
+                  1. Else Phantom#2029
 
-            1. Else Phantom#2029
+            1. Else Phantom#2030
 
-        1. Else Phantom#2030
+        1. Else Phantom#2031
 
-  1. Else Phantom#2031
+  1. Else Phantom#2032
 
 relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
@@ -37505,7 +37523,7 @@ relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                1. Else Phantom#2032
+                1. Else Phantom#2033
 
 relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
@@ -37539,7 +37557,7 @@ relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                1. Else Phantom#2033
+                1. Else Phantom#2034
 
 relation PSA_init: |- p4program : % %
 
@@ -37573,11 +37591,11 @@ def $PSA_setup_normal_meta_argument(ARCH)
 
                   1. Return argumentIR_normal_meta
 
-            1. Else Phantom#2034
+            1. Else Phantom#2035
 
-      1. Else Phantom#2035
+      1. Else Phantom#2036
 
-  1. Else Phantom#2036
+  1. Else Phantom#2037
 
 def $PSA_setup_clone_i2e_meta_argument(ARCH)
 
@@ -37601,11 +37619,11 @@ def $PSA_setup_clone_i2e_meta_argument(ARCH)
 
                   1. Return argumentIR_clone_i2e_meta
 
-            1. Else Phantom#2037
+            1. Else Phantom#2038
 
-      1. Else Phantom#2038
+      1. Else Phantom#2039
 
-  1. Else Phantom#2039
+  1. Else Phantom#2040
 
 def $PSA_setup_clone_e2e_meta_argument(ARCH)
 
@@ -37629,11 +37647,11 @@ def $PSA_setup_clone_e2e_meta_argument(ARCH)
 
                   1. Return argumentIR_clone_e2e_meta
 
-            1. Else Phantom#2040
+            1. Else Phantom#2041
 
-      1. Else Phantom#2041
+      1. Else Phantom#2042
 
-  1. Else Phantom#2042
+  1. Else Phantom#2043
 
 def $PSA_setup_resubmit_meta_argument(ARCH)
 
@@ -37657,11 +37675,11 @@ def $PSA_setup_resubmit_meta_argument(ARCH)
 
                   1. Return argumentIR_resubmit_meta
 
-            1. Else Phantom#2043
+            1. Else Phantom#2044
 
-      1. Else Phantom#2044
+      1. Else Phantom#2045
 
-  1. Else Phantom#2045
+  1. Else Phantom#2046
 
 def $PSA_setup_recirculate_meta_argument(ARCH)
 
@@ -37685,11 +37703,11 @@ def $PSA_setup_recirculate_meta_argument(ARCH)
 
                   1. Return argumentIR_recirculate_meta
 
-            1. Else Phantom#2046
+            1. Else Phantom#2047
 
-      1. Else Phantom#2047
+      1. Else Phantom#2048
 
-  1. Else Phantom#2048
+  1. Else Phantom#2049
 
 def $PSA_setup_main_callee(EC, ARCH)
 
@@ -37771,29 +37789,29 @@ def $PSA_setup_main_callee(EC, ARCH)
 
                                                                             1. Return typedExpressionIR_main
 
-                                                                  1. Else Phantom#2049
+                                                                  1. Else Phantom#2050
 
-                                                            1. Else Phantom#2050
+                                                            1. Else Phantom#2051
 
-                                                      1. Else Phantom#2051
+                                                      1. Else Phantom#2052
 
-                                                1. Else Phantom#2052
+                                                1. Else Phantom#2053
 
-                                          1. Else Phantom#2053
+                                          1. Else Phantom#2054
 
-                                    1. Else Phantom#2054
+                                    1. Else Phantom#2055
 
-                              1. Else Phantom#2055
+                              1. Else Phantom#2056
 
-                        1. Else Phantom#2056
+                        1. Else Phantom#2057
 
-                  1. Else Phantom#2057
+                  1. Else Phantom#2058
 
-            1. Else Phantom#2058
+            1. Else Phantom#2059
 
-        1. Else Phantom#2059
+        1. Else Phantom#2060
 
-  1. Else Phantom#2060
+  1. Else Phantom#2061
 
 relation PSA_ingress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
@@ -37821,9 +37839,9 @@ relation PSA_ingress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#2061
+            1. Else Phantom#2062
 
-        1. Else Phantom#2062
+        1. Else Phantom#2063
 
 relation PSA_ingress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -37851,9 +37869,9 @@ relation PSA_ingress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % 
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#2063
+            1. Else Phantom#2064
 
-        1. Else Phantom#2064
+        1. Else Phantom#2065
 
 relation PSA_ingress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
@@ -38041,27 +38059,27 @@ relation PSA_ingress_init_globals: EC_0 ARCH |- i_port : %
 
                                                                                             1. Result in: % % |- % : EC_10
 
-                                                                                1. Else Phantom#2065
+                                                                                1. Else Phantom#2066
 
-                                                                          1. Else Phantom#2066
+                                                                          1. Else Phantom#2067
 
-                                                                    1. Else Phantom#2067
+                                                                    1. Else Phantom#2068
 
-                                                              1. Else Phantom#2068
+                                                              1. Else Phantom#2069
 
-                                                  1. Else Phantom#2069
+                                                  1. Else Phantom#2070
 
-                                        1. Else Phantom#2070
+                                        1. Else Phantom#2071
 
-                              1. Else Phantom#2071
+                              1. Else Phantom#2072
 
-                    1. Else Phantom#2072
+                    1. Else Phantom#2073
 
-              1. Else Phantom#2073
+              1. Else Phantom#2074
 
-        1. Else Phantom#2074
+        1. Else Phantom#2075
 
-    1. Else Phantom#2075
+    1. Else Phantom#2076
 
 def $PSA_setup_ingress_packet_in_argument(EC)
 
@@ -38077,7 +38095,7 @@ def $PSA_setup_ingress_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Phantom#2076
+  1. Else Phantom#2077
 
 def $PSA_setup_ingress_packet_out_argument(EC)
 
@@ -38093,7 +38111,7 @@ def $PSA_setup_ingress_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Phantom#2077
+  1. Else Phantom#2078
 
 def $PSA_setup_ingress_hdr_argument(ARCH)
 
@@ -38117,11 +38135,11 @@ def $PSA_setup_ingress_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Phantom#2078
+            1. Else Phantom#2079
 
-      1. Else Phantom#2079
+      1. Else Phantom#2080
 
-  1. Else Phantom#2080
+  1. Else Phantom#2081
 
 def $PSA_setup_ingress_user_meta_argument(ARCH)
 
@@ -38145,11 +38163,11 @@ def $PSA_setup_ingress_user_meta_argument(ARCH)
 
                   1. Return argumentIR_user_meta
 
-            1. Else Phantom#2081
+            1. Else Phantom#2082
 
-      1. Else Phantom#2082
+      1. Else Phantom#2083
 
-  1. Else Phantom#2083
+  1. Else Phantom#2084
 
 def $PSA_setup_ingress_parser_input_metadata_argument(EC)
 
@@ -38165,7 +38183,7 @@ def $PSA_setup_ingress_parser_input_metadata_argument(EC)
 
           1. Return argumentIR_parser_input_metadata
 
-  1. Else Phantom#2084
+  1. Else Phantom#2085
 
 def $PSA_setup_ingress_input_metadata_argument(EC)
 
@@ -38181,7 +38199,7 @@ def $PSA_setup_ingress_input_metadata_argument(EC)
 
           1. Return argumentIR_input_metadata
 
-  1. Else Phantom#2085
+  1. Else Phantom#2086
 
 def $PSA_setup_ingress_output_metadata_argument(EC)
 
@@ -38197,7 +38215,7 @@ def $PSA_setup_ingress_output_metadata_argument(EC)
 
           1. Return argumentIR_output_metadata
 
-  1. Else Phantom#2086
+  1. Else Phantom#2087
 
 def $PSA_setup_ingress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -38261,23 +38279,23 @@ def $PSA_setup_ingress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
                                                           1. Return typedExpressionIR_ingress_pipeline
 
-                                                1. Else Phantom#2087
+                                                1. Else Phantom#2088
 
-                                          1. Else Phantom#2088
+                                          1. Else Phantom#2089
 
-                                    1. Else Phantom#2089
+                                    1. Else Phantom#2090
 
-                              1. Else Phantom#2090
+                              1. Else Phantom#2091
 
-                        1. Else Phantom#2091
+                        1. Else Phantom#2092
 
-                  1. Else Phantom#2092
+                  1. Else Phantom#2093
 
-            1. Else Phantom#2093
+            1. Else Phantom#2094
 
-        1. Else Phantom#2094
+        1. Else Phantom#2095
 
-  1. Else Phantom#2095
+  1. Else Phantom#2096
 
 def $PSA_setup_ingress_parser_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -38329,19 +38347,19 @@ def $PSA_setup_ingress_parser_callee(EC, ARCH, typedExpressionIR_ingress_pipelin
 
                                               1. Return typedExpressionIR_ingress_parser
 
-                                    1. Else Phantom#2096
+                                    1. Else Phantom#2097
 
-                              1. Else Phantom#2097
+                              1. Else Phantom#2098
 
-                        1. Else Phantom#2098
+                        1. Else Phantom#2099
 
-                  1. Else Phantom#2099
+                  1. Else Phantom#2100
 
-            1. Else Phantom#2100
+            1. Else Phantom#2101
 
-        1. Else Phantom#2101
+        1. Else Phantom#2102
 
-  1. Else Phantom#2102
+  1. Else Phantom#2103
 
 def $PSA_setup_ingress_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -38381,15 +38399,15 @@ def $PSA_setup_ingress_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
                                   1. Return typedExpressionIR_ingress
 
-                        1. Else Phantom#2103
+                        1. Else Phantom#2104
 
-                  1. Else Phantom#2104
+                  1. Else Phantom#2105
 
-            1. Else Phantom#2105
+            1. Else Phantom#2106
 
-        1. Else Phantom#2106
+        1. Else Phantom#2107
 
-  1. Else Phantom#2107
+  1. Else Phantom#2108
 
 def $PSA_setup_ingress_deparser_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -38447,21 +38465,21 @@ def $PSA_setup_ingress_deparser_callee(EC, ARCH, typedExpressionIR_ingress_pipel
 
                                                     1. Return typedExpressionIR_ingress_deparser
 
-                                          1. Else Phantom#2108
+                                          1. Else Phantom#2109
 
-                                    1. Else Phantom#2109
+                                    1. Else Phantom#2110
 
-                              1. Else Phantom#2110
+                              1. Else Phantom#2111
 
-                        1. Else Phantom#2111
+                        1. Else Phantom#2112
 
-                  1. Else Phantom#2112
+                  1. Else Phantom#2113
 
-            1. Else Phantom#2113
+            1. Else Phantom#2114
 
-        1. Else Phantom#2114
+        1. Else Phantom#2115
 
-  1. Else Phantom#2115
+  1. Else Phantom#2116
 
 relation PSA_ingress_parser: EC_0 ARCH_0 |- % % %
 
@@ -38505,7 +38523,7 @@ relation PSA_ingress_parser: EC_0 ARCH_0 |- % % %
 
                                 1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                          1. Else Phantom#2116
+                          1. Else Phantom#2117
 
 relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
@@ -38545,7 +38563,7 @@ relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
                             1. Result in: % % |- EC_1 ARCH_1 ((return ?()) as callResult)
 
-                      1. Else Phantom#2117
+                      1. Else Phantom#2118
 
 relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -38591,7 +38609,7 @@ relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
                                   1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                            1. Else Phantom#2118
+                            1. Else Phantom#2119
 
 relation PSA_egress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
@@ -38619,9 +38637,9 @@ relation PSA_egress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#2119
+            1. Else Phantom#2120
 
-        1. Else Phantom#2120
+        1. Else Phantom#2121
 
 relation PSA_egress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -38649,9 +38667,9 @@ relation PSA_egress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
                       1. Result in: % % |- % : EC_1 ARCH_2
 
-            1. Else Phantom#2121
+            1. Else Phantom#2122
 
-        1. Else Phantom#2122
+        1. Else Phantom#2123
 
 relation PSA_egress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
@@ -38843,25 +38861,25 @@ relation PSA_egress_init_globals: EC_0 ARCH |- i_port : %
 
                                                                                         1. Result in: % % |- % : EC_8
 
-                                                                                  1. Else Phantom#2123
+                                                                                  1. Else Phantom#2124
 
-                                                                        1. Else Phantom#2124
+                                                                        1. Else Phantom#2125
 
-                                                            1. Else Phantom#2125
+                                                            1. Else Phantom#2126
 
-                                                  1. Else Phantom#2126
+                                                  1. Else Phantom#2127
 
-                                        1. Else Phantom#2127
+                                        1. Else Phantom#2128
 
-                              1. Else Phantom#2128
+                              1. Else Phantom#2129
 
-                    1. Else Phantom#2129
+                    1. Else Phantom#2130
 
-              1. Else Phantom#2130
+              1. Else Phantom#2131
 
-        1. Else Phantom#2131
+        1. Else Phantom#2132
 
-    1. Else Phantom#2132
+    1. Else Phantom#2133
 
 def $PSA_setup_egress_packet_in_argument(EC)
 
@@ -38877,7 +38895,7 @@ def $PSA_setup_egress_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Phantom#2133
+  1. Else Phantom#2134
 
 def $PSA_setup_egress_packet_out_argument(EC)
 
@@ -38893,7 +38911,7 @@ def $PSA_setup_egress_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Phantom#2134
+  1. Else Phantom#2135
 
 def $PSA_setup_egress_hdr_argument(ARCH)
 
@@ -38917,11 +38935,11 @@ def $PSA_setup_egress_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Phantom#2135
+            1. Else Phantom#2136
 
-      1. Else Phantom#2136
+      1. Else Phantom#2137
 
-  1. Else Phantom#2137
+  1. Else Phantom#2138
 
 def $PSA_setup_egress_user_meta_argument(ARCH)
 
@@ -38945,11 +38963,11 @@ def $PSA_setup_egress_user_meta_argument(ARCH)
 
                   1. Return argumentIR_user_meta
 
-            1. Else Phantom#2138
+            1. Else Phantom#2139
 
-      1. Else Phantom#2139
+      1. Else Phantom#2140
 
-  1. Else Phantom#2140
+  1. Else Phantom#2141
 
 def $PSA_setup_egress_parser_input_metadata_argument(EC)
 
@@ -38965,7 +38983,7 @@ def $PSA_setup_egress_parser_input_metadata_argument(EC)
 
           1. Return argumentIR_parser_input_metadata
 
-  1. Else Phantom#2141
+  1. Else Phantom#2142
 
 def $PSA_setup_egress_input_metadata_argument(EC)
 
@@ -38981,7 +38999,7 @@ def $PSA_setup_egress_input_metadata_argument(EC)
 
           1. Return argumentIR_input_metadata
 
-  1. Else Phantom#2142
+  1. Else Phantom#2143
 
 def $PSA_setup_egress_output_metadata_argument(EC)
 
@@ -38997,7 +39015,7 @@ def $PSA_setup_egress_output_metadata_argument(EC)
 
           1. Return argumentIR_output_metadata
 
-  1. Else Phantom#2143
+  1. Else Phantom#2144
 
 def $PSA_setup_egress_deparser_input_metadata_argument(EC)
 
@@ -39013,7 +39031,7 @@ def $PSA_setup_egress_deparser_input_metadata_argument(EC)
 
           1. Return argumentIR_deparser_input_metadata
 
-  1. Else Phantom#2144
+  1. Else Phantom#2145
 
 def $PSA_setup_egress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -39077,23 +39095,23 @@ def $PSA_setup_egress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
                                                           1. Return typedExpressionIR_egress_pipeline
 
-                                                1. Else Phantom#2145
+                                                1. Else Phantom#2146
 
-                                          1. Else Phantom#2146
+                                          1. Else Phantom#2147
 
-                                    1. Else Phantom#2147
+                                    1. Else Phantom#2148
 
-                              1. Else Phantom#2148
+                              1. Else Phantom#2149
 
-                        1. Else Phantom#2149
+                        1. Else Phantom#2150
 
-                  1. Else Phantom#2150
+                  1. Else Phantom#2151
 
-            1. Else Phantom#2151
+            1. Else Phantom#2152
 
-        1. Else Phantom#2152
+        1. Else Phantom#2153
 
-  1. Else Phantom#2153
+  1. Else Phantom#2154
 
 def $PSA_setup_egress_parser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -39151,21 +39169,21 @@ def $PSA_setup_egress_parser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
                                                     1. Return typedExpressionIR_egress_parser
 
-                                          1. Else Phantom#2154
+                                          1. Else Phantom#2155
 
-                                    1. Else Phantom#2155
+                                    1. Else Phantom#2156
 
-                              1. Else Phantom#2156
+                              1. Else Phantom#2157
 
-                        1. Else Phantom#2157
+                        1. Else Phantom#2158
 
-                  1. Else Phantom#2158
+                  1. Else Phantom#2159
 
-            1. Else Phantom#2159
+            1. Else Phantom#2160
 
-        1. Else Phantom#2160
+        1. Else Phantom#2161
 
-  1. Else Phantom#2161
+  1. Else Phantom#2162
 
 def $PSA_setup_egress_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -39205,15 +39223,15 @@ def $PSA_setup_egress_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
                                   1. Return typedExpressionIR_egress
 
-                        1. Else Phantom#2162
+                        1. Else Phantom#2163
 
-                  1. Else Phantom#2163
+                  1. Else Phantom#2164
 
-            1. Else Phantom#2164
+            1. Else Phantom#2165
 
-        1. Else Phantom#2165
+        1. Else Phantom#2166
 
-  1. Else Phantom#2166
+  1. Else Phantom#2167
 
 def $PSA_setup_egress_deparser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -39265,19 +39283,19 @@ def $PSA_setup_egress_deparser_callee(EC, ARCH, typedExpressionIR_egress_pipelin
 
                                               1. Return typedExpressionIR_egress_deparser
 
-                                    1. Else Phantom#2167
+                                    1. Else Phantom#2168
 
-                              1. Else Phantom#2168
+                              1. Else Phantom#2169
 
-                        1. Else Phantom#2169
+                        1. Else Phantom#2170
 
-                  1. Else Phantom#2170
+                  1. Else Phantom#2171
 
-            1. Else Phantom#2171
+            1. Else Phantom#2172
 
-        1. Else Phantom#2172
+        1. Else Phantom#2173
 
-  1. Else Phantom#2173
+  1. Else Phantom#2174
 
 relation PSA_egress_parser: EC_0 ARCH_0 |- % % %
 
@@ -39323,7 +39341,7 @@ relation PSA_egress_parser: EC_0 ARCH_0 |- % % %
 
                                   1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                            1. Else Phantom#2174
+                            1. Else Phantom#2175
 
 relation PSA_egress: EC_0 ARCH_0 |- % % %
 
@@ -39363,7 +39381,7 @@ relation PSA_egress: EC_0 ARCH_0 |- % % %
 
                             1. Result in: % % |- EC_1 ARCH_1 ((return ?()) as callResult)
 
-                      1. Else Phantom#2175
+                      1. Else Phantom#2176
 
 relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -39409,4 +39427,4 @@ relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
                                   1. Result in: % % |- EC_1 ARCH_1 ((exit) as callResult)
 
-                            1. Else Phantom#2176
+                            1. Else Phantom#2177

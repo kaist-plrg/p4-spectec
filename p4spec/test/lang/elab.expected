@@ -28534,6 +28534,14 @@ def $tableObject_create_entry_key(evalContext, (nameIR, nameIR, typeIR), tableKe
   -- let ?(typedExpressionIR_mask_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
   -- let simpleKeysetExpressionIR = typedExpressionIR_base_cast &&& typedExpressionIR_mask_cast
 
+  clause 7 : (EC, (nameIR_key, text, typeIR), tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = simpleKeysetExpressionIR
+  -- if (text = "selector")
+  -- let typedExpressionIR_zero = d 0 as int as expressionIR # ( int as typeIR dyn )
+  -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
+  -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+  -- let ?(typedExpressionIR_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+  -- let simpleKeysetExpressionIR = typedExpressionIR_cast &&& typedExpressionIR_cast
+
 def $tableObject_create_entry_keys(evalContext, (nameIR, nameIR, typeIR)*, tableKeysetInterface) : simpleKeysetExpressionIR* =
 
   clause 0 : (_evalContext, (nameIR, nameIR, typeIR)*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, _tableKeysetInterface) = []
@@ -28554,7 +28562,8 @@ def $tableObject_create_entry_keyset(evalContext, tableKeysPropertyIR, tableKeys
   clause 0 : (EC, key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} }, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*}) = ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
   -- (let (nameIR_key, nameIR_matchKind, typeIR) = $interface_of_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, nameIR_key -> nameIR_key*, nameIR_matchKind -> nameIR_matchKind*, typeIR -> typeIR*}
   -- (let (nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
-  -- if $eq_set<nameIR>({ nameIR_key*{nameIR_key <- nameIR_key*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
+  -- let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} = $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*})
+  -- if $eq_set<nameIR>({ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
   -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys(EC, (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface*{tableKeyInterface <- tableKeyInterface*})
 
 def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =

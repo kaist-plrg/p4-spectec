@@ -277,6 +277,18 @@ def $tableObject_create_entry_key(
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
 
+def $tableObject_create_entry_key(
+    EC,
+    (nameIR_key, "selector", typeIR),
+    tableKeyInterface*)
+  = simpleKeysetExpressionIR
+  ---- ;; create wildcard expression
+  -- if typedExpressionIR_zero = (D 0) `# `( INT DYN )
+  -- if typedExpressionIR_cast
+      = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
+  -- if simpleKeysetExpressionIR
+      = typedExpressionIR_cast `&&& typedExpressionIR_cast
+
 dec $tableObject_create_entry_keys(
     evalContext,
     (nameIR, nameIR, typeIR)*,
@@ -324,8 +336,10 @@ def $tableObject_create_entry_keyset(
   -- if ((nameIR_key, nameIR_matchKind, typeIR)
       = $interface_of_tableKeyIR(tableKeyIR))*
   -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
-  ---- ;; check that updates specify all keys
-  -- if $eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update* })
+  ---- ;; check that updates specify all keys except selectors
+  -- if nameIR_key_non_selector*
+      = $filter_<nameIR>(nameIR_key*, (nameIR_matchKind =/= "selector")*)
+  -- if $eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update* })
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keys(
           EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
