@@ -128,6 +128,8 @@ module Make
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list)
       (stmt_stf : Stf.Ast.stmt) :
       Il.value * Il.value * IO.tx list * IO.expect list =
+    (* Apply architecture-specific STF transformation *)
+    let stmt_stf = Arch.transform_stf_stmt stmt_stf in
     match stmt_stf with
     (* Packet I/O *)
     | Stf.Ast.Packet (port_in, packet_in) ->
