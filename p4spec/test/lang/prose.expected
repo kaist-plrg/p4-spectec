@@ -4738,9 +4738,9 @@ xref:add_typeDef_t[``TC`` where ``typeId`` to ``typeDefIR`` is added to the ``cu
 
 
 . If ``cursor`` is ``GLOBAL``:
- .. Let ``typeDefEnv`` be ``TC.+BLOCK+.+TYPE+``.
+ .. Let ``typeDefEnv`` be ``TC.+GLOBAL+.+TYPE+``.
  .. Check that ``~xref:in_set[$in_set<typeId>(typeId,`` ``$dom_map<typeId,`` ``typeDefIR>(typeDefEnv))]``.
- .. Let ``typeDefEnv~update~`` be xref:add_map[``TC.+GLOBAL+.+TYPE+`` where ``typeId`` to ``typeDefIR`` is added].
+ .. Let ``typeDefEnv~update~`` be xref:add_map[``typeDefEnv`` where ``typeId`` to ``typeDefIR`` is added].
  .. Let ``TC'`` be ``TC`` with ``+GLOBAL+.+TYPE+`` set to ``typeDefEnv~update~``.
  .. Return ``TC'``.
 . Else if ``cursor`` is ``BLOCK``:
@@ -6284,6 +6284,7 @@ xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
 . If let ``+INT+`` ``+<+`` ``int`` ``+>+`` be ``baseType``:
  .. Check that ``int`` has type ``nat``.
  .. Let ``n`` be ``int``.
+ .. Check that ``n`` is greater than ``0``.
  .. Result in ``+INT+`` ``+<+`` ``n`` ``+>+`` and fresh type variables ``·``.
 . Else if let ``+INT+`` ``+<+`` ``+(+`` ``expression`` ``+)+`` ``+>+`` be ``baseType``:
  .. Let ``typedExpressionIR`` be
@@ -6294,6 +6295,7 @@ xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
+ .. Check that ``n`` is greater than ``0``.
  .. Result in ``+INT+`` ``+<+`` ``n`` ``+>+`` and fresh type variables ``·``.
 
 xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
@@ -7180,6 +7182,12 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
  .. Result in xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 . Else:
  .. Check that ``ctk~r_reduced~`` is ``LCTK``.
+ .. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue~r~`` be ``value``.
+ .. Let ``i~r~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~r~``].
+ .. Check that ``i~r~`` is greater than or equal to ``0``.
  .. Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].
  .. Result in xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].

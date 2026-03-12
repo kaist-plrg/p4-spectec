@@ -8210,9 +8210,9 @@ def $add_typeDef_t(cursor, typingContext, typeId, typeDefIR) : typingContext =
 
   clause 0 : (cursor, TC, typeId, typeDefIR) = TC'
   -- if cursor matches `GLOBAL`
-  -- let typeDefEnv = TC.block.type
+  -- let typeDefEnv = TC.global.type
   -- if ~$in_set<typeId>(typeId, $dom_map<typeId, typeDefIR>(typeDefEnv))
-  -- let typeDefEnv_update = $add_map<typeId, typeDefIR>(TC.global.type, typeId, typeDefIR)
+  -- let typeDefEnv_update = $add_map<typeId, typeDefIR>(typeDefEnv, typeId, typeDefIR)
   -- let TC' = TC[global.type = typeDefEnv_update]
 
   clause 1 : (cursor, TC, typeId, typeDefIR) = TC'
@@ -11045,6 +11045,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let int< int > = baseType'
     -- if int <: nat
     -- let n = int as nat
+    -- if (n > 0)
     -- output: % % |- % : int< n > as typeIR # []
 
     rulepath expression
@@ -11059,6 +11060,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n) = nat?{nat <- nat?}
+    -- if (n > 0)
     -- output: % % |- % : int< n > as typeIR # []
 
   rulegroup fixedBit
@@ -12403,6 +12405,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ~typeIR_r_reduced <: fixedBitTypeIR
     -- if (ctk_r_reduced = lctk)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~> value
+    -- if value <: integerValue
+    -- let integerValue_r = value as integerValue
+    -- let i_r = $int_of_integerValue(integerValue_r)
+    -- if (i_r >= 0 as int)
     -- let ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- let expressionNoteIR = ( typeIR_l_reduced ctk_reduced )
     -- output: % % |- % : typedExpressionIR_l_reduced binop typedExpressionIR_r_reduced as expressionIR # expressionNoteIR
