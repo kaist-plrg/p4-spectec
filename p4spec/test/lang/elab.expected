@@ -1517,61 +1517,9 @@ syntax emptyStatement =
 
 syntax assignop = 
    | =
-   | +=
-   | -=
-   | |+|=
-   | |-|=
-   | *=
-   | /=
-   | %=
-   | <<=
-   | >>=
-   | &=
-   | ^=
-   | |=
 
 syntax assignmentStatement = 
    | lvalue assignop expression ;
-
-def $assignop_as_binop(assignop) : binop? =
-
-  clause 0 : (assignop) = ?(+)
-  -- if assignop matches `+=`
-
-  clause 1 : (assignop) = ?(-)
-  -- if assignop matches `-=`
-
-  clause 2 : (assignop) = ?(|+|)
-  -- if assignop matches `|+|=`
-
-  clause 3 : (assignop) = ?(|-|)
-  -- if assignop matches `|-|=`
-
-  clause 4 : (assignop) = ?(*)
-  -- if assignop matches `*=`
-
-  clause 5 : (assignop) = ?(/)
-  -- if assignop matches `/=`
-
-  clause 6 : (assignop) = ?(%)
-  -- if assignop matches `%=`
-
-  clause 7 : (assignop) = ?(<<)
-  -- if assignop matches `<<=`
-
-  clause 8 : (assignop) = ?(>>)
-  -- if assignop matches `>>=`
-
-  clause 9 : (assignop) = ?(&)
-  -- if assignop matches `&=`
-
-  clause 10 : (assignop) = ?(^)
-  -- if assignop matches `^=`
-
-  clause 11 : (assignop) = ?(|)
-  -- if assignop matches `|=`
-
-  clause -1 : (assignop) = ?()
 
 syntax callStatement = 
    | lvalue ( argumentList );
@@ -6062,13 +6010,7 @@ def $bin_bor(value, value) : value =
 
 def $bin_concat(value, value) : value =
 
-  clause 0 : (value, value') = " t_l ++ t_r " as value
-  -- if value <: stringLiteral
-  -- let " t_l " = value as stringLiteral
-  -- if value' <: stringLiteral
-  -- let " t_r " = value' as stringLiteral
-
-  clause 1 : (value, value') = w w i'' as value
+  clause 0 : (value, value') = w w i'' as value
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%W%`
@@ -6082,7 +6024,7 @@ def $bin_concat(value, value) : value =
   -- let w = (w_l + w_r)
   -- let i'' = $int_to_bitstr(w as int, i_l'')
 
-  clause 2 : (value, value') = w w i'' as value
+  clause 1 : (value, value') = w w i'' as value
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%W%`
@@ -6096,7 +6038,7 @@ def $bin_concat(value, value) : value =
   -- let w = (w_l + w_r)
   -- let i'' = $int_to_bitstr(w as int, i_l'')
 
-  clause 3 : (value, value') = w s i''' as value
+  clause 2 : (value, value') = w s i''' as value
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%S%`
@@ -6111,7 +6053,7 @@ def $bin_concat(value, value) : value =
   -- let w = (w_l + w_r)
   -- let i''' = $int_to_bitstr(w as int, i_l''')
 
-  clause 4 : (value, value') = w s i''' as value
+  clause 3 : (value, value') = w s i''' as value
   -- if value <: integerLiteral
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `%S%`
@@ -12518,7 +12460,6 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- let typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- let ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
-    -- if (((typeIR_l_reduced = string as typeIR) /\ (typeIR_r_reduced = string as typeIR)) => ((ctk_l_reduced = lctk) /\ (ctk_r_reduced = lctk)))
     -- let typeIR_reduced = $result_concat(typeIR_l_reduced, typeIR_r_reduced)
     -- let ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
     -- let expressionNoteIR = ( typeIR_reduced ctk_reduced )
@@ -13477,15 +13418,15 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
 
    match
 
-    (signature) p TC f l |- lvalue assignop' expression ; as statement : % % %
+    (signature) p TC f l |- lvalue = expression ; as statement : % % %
     p TC f l |- statement : % % %
     -- if statement <: assignmentStatement
-    -- let lvalue assignop' expression ; = statement as assignmentStatement
+    -- let lvalue assignop expression ; = statement as assignmentStatement
+    -- if (assignop = =)
 
    paths
 
     rulepath eq
-    -- if (assignop' = =)
     -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
@@ -13494,25 +13435,6 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- output: % % % % |- % : TC f typedLvalueIR = typedExpressionIR_cast ; as statementIR
-
-    rulepath compound
-    -- let assignop = assignop'
-    -- if (assignop =/= =)
-    -- let binop'?{binop' <- binop'?} = $assignop_as_binop(assignop)
-    -- if binop'?{binop' <- binop'?} matches (_)
-    -- let ?(binop) = binop'?{binop' <- binop'?}
-    -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
-    -- let expression_lvalue = $lvalue_as_expression(lvalue)
-    -- let expression_binary = expression_lvalue binop expression as expression
-    -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
-    -- let _lvalueIR # ( typeIR_lvalue ) = typedLvalueIR
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
-    -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(expressionIR # _expressionNoteIR) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- if expressionIR <: binaryExpressionIR
-    -- let _typedExpressionIR binop'' typedExpressionIR_cast = expressionIR as binaryExpressionIR
-    -- if (binop'' = binop)
-    -- output: % % % % |- % : TC f typedLvalueIR assignop typedExpressionIR_cast ; as statementIR
 
   rulegroup callStatement
 
@@ -17335,95 +17257,78 @@ tbl def $compat_bitwise(typeIR, typeIR) : bool =
 
 tbl def $compat_concat(typeIR, typeIR) : bool =
   row 0 :
-    (signature) string as typeIR, string as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: stringTypeIR
-    -- let stringTypeIR = typeIR as stringTypeIR
-    -- if (stringTypeIR = string)
-    -- if typeIR' <: stringTypeIR
-    -- let stringTypeIR' = typeIR' as stringTypeIR
-    -- if (stringTypeIR' = string)
-  row 1 :
     (signature) int< _nat > as typeIR, int< _nat' > as typeIR
     (typeIR, typeIR') -> true
     -- if typeIR <: fixedIntTypeIR
     -- let int< _nat > = typeIR as fixedIntTypeIR
     -- if typeIR' <: fixedIntTypeIR
     -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 2 :
+  row 1 :
     (signature) int< _nat > as typeIR, bit< _nat' > as typeIR
     (typeIR, typeIR') -> true
     -- if typeIR <: fixedIntTypeIR
     -- let int< _nat > = typeIR as fixedIntTypeIR
     -- if typeIR' <: fixedBitTypeIR
     -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 3 :
+  row 2 :
     (signature) bit< _nat > as typeIR, int< _nat' > as typeIR
     (typeIR, typeIR') -> true
     -- if typeIR <: fixedBitTypeIR
     -- let bit< _nat > = typeIR as fixedBitTypeIR
     -- if typeIR' <: fixedIntTypeIR
     -- let int< _nat' > = typeIR' as fixedIntTypeIR
-  row 4 :
+  row 3 :
     (signature) bit< _nat > as typeIR, bit< _nat' > as typeIR
     (typeIR, typeIR') -> true
     -- if typeIR <: fixedBitTypeIR
     -- let bit< _nat > = typeIR as fixedBitTypeIR
     -- if typeIR' <: fixedBitTypeIR
     -- let bit< _nat' > = typeIR' as fixedBitTypeIR
-  row 5 :
+  row 4 :
     (signature) typedef _typeId typeIR_l as typeIR, typeIR_r
     (typeIR, typeIR_r) -> $compat_concat(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
-  row 6 :
+  row 5 :
     (signature) typeIR_l, typedef _typeId typeIR_r as typeIR
     (typeIR_l, typeIR) -> $compat_concat(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
-  row 7 :
+  row 6 :
     (signature) _typeIR, _typeIR'
     (_typeIR, _typeIR') -> false
 
 def $result_concat(typeIR, typeIR) : typeIR =
 
-  clause 0 : (typeIR, typeIR') = string as typeIR
-  -- if typeIR <: stringTypeIR
-  -- let stringTypeIR = typeIR as stringTypeIR
-  -- if (stringTypeIR = string)
-  -- if typeIR' <: stringTypeIR
-  -- let stringTypeIR' = typeIR' as stringTypeIR
-  -- if (stringTypeIR' = string)
+  clause 0 : (typeIR, typeIR') = int< (w_a + w_b) > as typeIR
+  -- if typeIR <: fixedIntTypeIR
+  -- let int< w_a > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_b > = typeIR' as fixedIntTypeIR
 
   clause 1 : (typeIR, typeIR') = int< (w_a + w_b) > as typeIR
   -- if typeIR <: fixedIntTypeIR
   -- let int< w_a > = typeIR as fixedIntTypeIR
-  -- if typeIR' <: fixedIntTypeIR
-  -- let int< w_b > = typeIR' as fixedIntTypeIR
-
-  clause 2 : (typeIR, typeIR') = int< (w_a + w_b) > as typeIR
-  -- if typeIR <: fixedIntTypeIR
-  -- let int< w_a > = typeIR as fixedIntTypeIR
   -- if typeIR' <: fixedBitTypeIR
   -- let bit< w_b > = typeIR' as fixedBitTypeIR
+
+  clause 2 : (typeIR, typeIR') = bit< (w_a + w_b) > as typeIR
+  -- if typeIR <: fixedBitTypeIR
+  -- let bit< w_a > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let int< w_b > = typeIR' as fixedIntTypeIR
 
   clause 3 : (typeIR, typeIR') = bit< (w_a + w_b) > as typeIR
   -- if typeIR <: fixedBitTypeIR
   -- let bit< w_a > = typeIR as fixedBitTypeIR
-  -- if typeIR' <: fixedIntTypeIR
-  -- let int< w_b > = typeIR' as fixedIntTypeIR
-
-  clause 4 : (typeIR, typeIR') = bit< (w_a + w_b) > as typeIR
-  -- if typeIR <: fixedBitTypeIR
-  -- let bit< w_a > = typeIR as fixedBitTypeIR
   -- if typeIR' <: fixedBitTypeIR
   -- let bit< w_b > = typeIR' as fixedBitTypeIR
 
-  clause 5 : (typeIR, typeIR_r) = $result_concat(typeIR_l, typeIR_r)
+  clause 4 : (typeIR, typeIR_r) = $result_concat(typeIR_l, typeIR_r)
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_l = typeIR as typedefTypeIR
 
-  clause 6 : (typeIR_l, typeIR) = $result_concat(typeIR_l, typeIR_r)
+  clause 5 : (typeIR_l, typeIR) = $result_concat(typeIR_l, typeIR_r)
   -- if typeIR <: typedefTypeIR
   -- let typedef _typeId typeIR_r = typeIR as typedefTypeIR
   -- if ~typeIR_l <: typedefTypeIR
@@ -24587,20 +24492,6 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- if (assignop = =)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
-    -- if expressionResult <: abortResult
-    -- let abortResult = expressionResult as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as statementResult
-
-    rulepath typedLvalueIR-cont-compound-typedExpressionIR-abort
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
-    -- if storageReferenceResult <: continueResult<storageReference?>
-    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
-    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
-    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- if (assignop =/= =)
-    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value_l
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
@@ -24612,29 +24503,10 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- if (assignop = =)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
     -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value : EC_3
-    -- output: % % % |- % : EC_3 ARCH_2 `empty as statementResult
-
-    rulepath typedLvalueIR-cont-compound-typedExpressionIR-cont
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
-    -- if storageReferenceResult <: continueResult<storageReference?>
-    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
-    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
-    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- if (assignop =/= =)
-    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value_l
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
-    -- if expressionResult <: continueResult<value>
-    -- let ` value_r = expressionResult as continueResult<value>
-    -- let binop'?{binop' <- binop'?} = $assignop_as_binop(assignop)
-    -- if binop'?{binop' <- binop'?} matches (_)
-    -- let ?(binop) = binop'?{binop' <- binop'?}
-    -- let value_update = $bin_op(binop, value_l, value_r)
-    -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value_update : EC_3
     -- output: % % % |- % : EC_3 ARCH_2 `empty as statementResult
 
   rulegroup callStatementIR

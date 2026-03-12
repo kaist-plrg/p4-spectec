@@ -476,36 +476,6 @@ xref:expression_as_lvalue[The l-value corresponding to ``expression``]
  .. Let ``lvalue'`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression'``].
  .. Return ``+(+`` ``lvalue'`` ``+)+``.
 
-xref:assignop_as_binop[The binary operator corresponding to ``assignop``]
-
-
-. If ``assignop`` is ``+=``:
- .. Return ``+++``.
-. Else if ``assignop`` is ``-=``:
- .. Return ``+-+``.
-. Else if ``assignop`` is ``|+|=``:
- .. Return ``+|+|+``.
-. Else if ``assignop`` is ``|-|=``:
- .. Return ``+|-|+``.
-. Else if ``assignop`` is ``*=``:
- .. Return ``+*+``.
-. Else if ``assignop`` is ``/=``:
- .. Return ``+/+``.
-. Else if ``assignop`` is ``%=``:
- .. Return ``+%+``.
-. Else if ``assignop`` is ``<<=``:
- .. Return ``+<<+``.
-. Else if ``assignop`` is ``>>=``:
- .. Return ``+>>+``.
-. Else if ``assignop`` is ``&=``:
- .. Return ``+&+``.
-. Else if ``assignop`` is ``^=``:
- .. Return ``+^+``.
-. Else:
- .. Return ``+|+``.
-. Otherwise:
- .. Return ``·``.
-
 xref:flatten_forUpdateStatementList[$flatten_forUpdateStatementList(forUpdateStatementList)]
 
 
@@ -3383,43 +3353,40 @@ xref:bin_bor[``value`` ``+|+`` ``value'``]
 xref:bin_concat[``value`` ``++++`` ``value'``]
 
 
-. If let ``+"+`` ``t~l~`` ``+"+`` be ``value``:
- .. Check that ``value'`` has type ``stringLiteral``.
- .. Let ``+"+`` ``t~r~`` ``+"+`` be ``value'``.
- .. Return ``+"+`` ``t~l~`` ``{pp}`` ``t~r~`` ``+"+``.
-. Else if let ``integerLiteral`` be ``value``:
- .. If let ``w~l~`` ``+W+`` ``i~l~`` be ``integerLiteral``:
-  ... Check that ``value'`` has type ``integerLiteral``.
-  ... Let ``integerLiteral'`` be ``value'``.
-  ... If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
-   .... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].
-   .... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
-   .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].
-   .... Return ``w`` ``+W+`` ``i``.
-  ... Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
-   .... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].
-   .... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
-   .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].
-   .... Return ``w`` ``+W+`` ``i``.
- .. Else if let ``w~l~`` ``+S+`` ``i~l~`` be ``integerLiteral``:
-  ... Check that ``value'`` has type ``integerLiteral``.
-  ... Let ``integerLiteral'`` be ``value'``.
-  ... If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
-   .... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].
-   .... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].
-   .... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
-   .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].
-   .... Return ``w`` ``+S+`` ``i``.
-  ... Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
-   .... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].
-   .... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].
-   .... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
-   .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].
-   .... Return ``w`` ``+S+`` ``i``.
+. Check that ``value`` has type ``integerLiteral``.
+. Let ``integerLiteral`` be ``value``.
+. If let ``w~l~`` ``+W+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
+  ... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].
+  ... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
+  ... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+  ... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].
+  ... Return ``w`` ``+W+`` ``i``.
+ .. Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
+  ... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].
+  ... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
+  ... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+  ... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].
+  ... Return ``w`` ``+W+`` ``i``.
+. Else if let ``w~l~`` ``+S+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
+  ... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].
+  ... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].
+  ... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
+  ... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+  ... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].
+  ... Return ``w`` ``+S+`` ``i``.
+ .. Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
+  ... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].
+  ... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].
+  ... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
+  ... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+  ... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].
+  ... Return ``w`` ``+S+`` ``i``.
 
 xref:cast_op[``value`` casted to type ``typeIR``]
 
@@ -7251,7 +7218,6 @@ xref:Expr_ok[Typing ``expression~l~`` ``++++`` ``expression~r~``, under context 
 . Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
 . Let ``typeIR~r_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~r_reduced~``].
 . Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-. Check that if ``typeIR~l_reduced~`` is equal to ``+STRING+`` and ``typeIR~r_reduced~`` is equal to ``+STRING+``, then ``ctk~l_reduced~`` is equal to ``+LCTK+`` and ``ctk~r_reduced~`` is equal to ``+LCTK+``.
 . Let ``typeIR~reduced~`` be ``xref:result_concat[$result_concat(typeIR~l_reduced~,`` ``typeIR~r_reduced~)]``.
 . Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
 . Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
@@ -7877,31 +7843,16 @@ xref:Stmt_ok[Typing ``+;+``, under context ``TC``, abstract control flow ``f``, 
 
 . Result in context ``TC``, abstract control flow ``f``, and ``+;+``.
 
-xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``lvalue`` ``+=+`` ``expression`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
 
-. If ``assignop`` is ``=``:
- .. Let ``typedLvalueIR`` be
+. Let ``typedLvalueIR`` be
 * the result of xref:Lvalue_ok[typing ``lvalue``, under context ``TC`` at ``p``].
- .. Let ``typedExpressionIR`` be
+. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
- .. Let ``typeIR~l~`` be xref:type_of_typedLvalueIR[the type of lvalue ``typedLvalueIR``].
- .. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~l~``].
- .. Result in context ``TC``, abstract control flow ``f``, and ``typedLvalueIR`` ``+=+`` ``typedExpressionIR~cast~`` ``+;+``.
-. Else:
- .. Let ``binop'`` be xref:option_get[*!*] xref:assignop_as_binop[the binary operator corresponding to ``assignop``].
- .. Let ``typedLvalueIR`` be
-* the result of xref:Lvalue_ok[typing ``lvalue``, under context ``TC`` at ``p``].
- .. Let ``expression~lvalue~`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue``].
- .. Let ``expression~binary~`` be ``expression~lvalue~`` ``binop'`` ``expression``.
- .. Let ``typedExpressionIR~binary~`` be
-* the result of xref:Expr_ok[typing ``expression~binary~``, under context ``TC`` at ``p``].
- .. Let ``+(+`` ``typeIR~lvalue~`` ``+)+`` be the note of ``typedLvalueIR``.
- .. Let ``expressionIR`` ``+#+`` ``++_++`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~binary~`` implicitly cast to ``typeIR~lvalue~``].
- .. Check that ``expressionIR`` has type ``binaryExpressionIR``.
- .. Let ``++_++`` ``binop''`` ``typedExpressionIR~cast~`` be ``expressionIR``.
- .. Check that ``binop''`` is equal to ``binop'``.
- .. Result in context ``TC``, abstract control flow ``f``, and ``typedLvalueIR`` ``assignop`` ``typedExpressionIR~cast~`` ``+;+``.
+. Let ``typeIR~l~`` be xref:type_of_typedLvalueIR[the type of lvalue ``typedLvalueIR``].
+. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~l~``].
+. Result in context ``TC``, abstract control flow ``f``, and ``typedLvalueIR`` ``+=+`` ``typedExpressionIR~cast~`` ``+;+``.
 
 xref:Stmt_ok[Typing ``callStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
 
@@ -10650,7 +10601,6 @@ xref:compat_concat[$compat_concat(typeIR'', typeIR''')]:
 |===
 | (``typeIR''``, ``typeIR'''``) | Result 
 
-| +STRING+, +STRING+ | true
 | +INT+ +<+ ++_++ +>+, +INT+ +<+ ++_++ +>+ | true
 | +INT+ +<+ ++_++ +>+, +BIT+ +<+ ++_++ +>+ | true
 | +BIT+ +<+ ++_++ +>+, +INT+ +<+ ++_++ +>+ | true
@@ -10664,11 +10614,7 @@ xref:compat_concat[$compat_concat(typeIR'', typeIR''')]:
 xref:result_concat[$result_concat(typeIR, typeIR')]
 
 
-. If let ``stringTypeIR`` be ``typeIR``:
- .. Check that ``typeIR'`` has type ``stringTypeIR``.
- .. Let ``stringTypeIR'`` be ``typeIR'``.
- .. Return ``+STRING+``.
-. Else if let ``+INT+`` ``+<+`` ``w~a~`` ``+>+`` be ``typeIR``:
+. If let ``+INT+`` ``+<+`` ``w~a~`` ``+>+`` be ``typeIR``:
  .. If let ``+INT+`` ``+<+`` ``w~b~`` ``+>+`` be ``typeIR'``:
   ... Return ``+INT+`` ``+<+`` ``w~a~`` ``+`` ``w~b~`` ``+>+``.
  .. Else if let ``+BIT+`` ``+<+`` ``w~b~`` ``+>+`` be ``typeIR'``:
@@ -15035,30 +14981,15 @@ xref:Stmt_eval[Runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpre
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference^?^`` is defined.
  .. Let ``storageReference'`` be ``storageReference^?^``.
- .. If ``assignop`` is ``=``:
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult`` be
+ .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
-  ... Else:
-   .... Let ``value`` be ``expressionResult``.
-   .... Let context ``EC~3~`` be
-* the result of xref:Lvalue_write[writing ``value`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
-   .... Result in context ``EC~3~``, state ``ARCH~2~``, and ``+`EMPTY+``.
+ .. If let ``abortResult`` be ``expressionResult``:
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
  .. Else:
-  ... Let value ``value~l~`` be
-* the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult`` be
-* the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
-  ... Else:
-   .... Let ``value~r~`` be ``expressionResult``.
-   .... Let ``binop'`` be xref:option_get[*!*] xref:assignop_as_binop[the binary operator corresponding to ``assignop``].
-   .... Let ``value~update~`` be xref:bin_op[``value~l~`` ``binop'`` ``value~r~``].
-   .... Let context ``EC~3~`` be
-* the result of xref:Lvalue_write[writing ``value~update~`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
-   .... Result in context ``EC~3~``, state ``ARCH~2~``, and ``+`EMPTY+``.
+  ... Let ``value`` be ``expressionResult``.
+  ... Let context ``EC~3~`` be
+* the result of xref:Lvalue_write[writing ``value`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
+  ... Result in context ``EC~3~``, state ``ARCH~2~``, and ``+`EMPTY+``.
 
 xref:Stmt_eval[Runtime evaluation of ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
