@@ -24,6 +24,10 @@ type stf_result =
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
 module type ARCH = sig
+  (* STF AST transformation *)
+
+  val transform_stf_stmt : Stf.Ast.stmt -> Stf.Ast.stmt
+
   (* Extern evaluation *)
 
   val eval_extern_init : Value.t list -> Value.t

@@ -1,3 +1,0 @@
-This directory contains packet input files for P4 programs that did *not* have a corresponding `.stf` packet input in p4c's [test suite](https://github.com/kaist-plrg/p4c/tree/ba98dee3bd8df212217f1ea8a1d61817a2a7a8e4/testdata/p4_16_samples). All `.stf` files have been generated through [P4Testgen](https://github.com/p4lang/p4c/tree/main/backends/p4tools/modules/testgen), an extensible test oracle that uses symbolic execution to automatically generate input-output tests for P4 programs.
-
-Note that these stf files are for P4 tests that target the V1Model and eBPF architecture. Stf files for some P4 programs in p4c's test suite have not been generated due to P4Testgen rejecting those programs as input.

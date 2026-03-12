@@ -12,6 +12,8 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
+  let transform_stf_stmt = Fun.id
+
   (* Mode *)
 
   let mode : Sim.mode ref = ref (Sim.Empty_mode : Sim.mode)

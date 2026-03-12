@@ -10,6 +10,26 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
+  let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
+    let transform_name name =
+      Stf.Transform.Name.(
+        name
+        |> rewrite_substring
+             ~substrings:[ "pipe" ]
+             ~replacement:"main.filt")
+    in
+    let transform_action = Stf.Transform.Action.into_unqualified in
+    match stmt with
+    | Add (name, priority_opt, mtches, action, id_opt) ->
+        let name = transform_name name in
+        let action = transform_action action in
+        Add (name, priority_opt, mtches, action, id_opt)
+    | SetDefault (name, action) ->
+        let name = transform_name name in
+        let action = transform_action action in
+        SetDefault (name, action)
+    | _ -> stmt
+
   (* Mode *)
 
   let mode : Sim.mode ref = ref (Sim.Empty_mode : Sim.mode)
