@@ -29,6 +29,7 @@ let funcs =
   (* Texts *)
   |> Funcs.add "text_to_int" Texts.text_to_int
   |> Funcs.add "int_to_text" Texts.int_to_text
+  |> Funcs.add "split_text" Texts.split_text
   |> Funcs.add "strip_prefix" Texts.strip_prefix
   |> Funcs.add "strip_suffix" Texts.strip_suffix
   |> Funcs.add "strip_all_whitespace" Texts.strip_all_whitespace

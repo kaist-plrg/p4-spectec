@@ -162,7 +162,7 @@ rulegroup TableAction_ok {
         = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, eps)
     ---- ;; create IR
     -- if tableActionIR
-        = annotationList_update (prefixedNameIR `( eps ))
+        = annotationList_update (prefixedNameIR eps `( eps ))
             `# `( parameterIR_data* `, parameterIR_control* ) `;
 
   ;;;; prefixedNonTypeName `( argumentList )
@@ -188,7 +188,7 @@ rulegroup TableAction_ok {
         = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
     ---- ;; create IR
     -- if tableActionIR
-        = annotationList_update (prefixedNameIR `( argumentIR_cast* ))
+        = annotationList_update (prefixedNameIR eps `( argumentIR_cast* ))
             `# `( parameterIR_data* `, parameterIR_control* ) `;
 
 }
@@ -241,14 +241,14 @@ rulegroup TableDefaultAction_ok {
 
   rule TableDefaultAction_ok/prefixedNonTypeName:
     TC TBLC |- `= prefixedNonTypeName
-             : prefixedNameIR `( eps )
+             : prefixedNameIR eps `( eps )
     ---- ;; find matching action
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (eps, eps) = $find_action(TBLC, prefixedNameIR) 
 
   rule TableDefaultAction_ok/prefixedNonTypeName-argumentList:
     TC TBLC |- `= (prefixedNonTypeName `( argumentList ))
-             : prefixedNameIR `( argumentIR_cast* )
+             : prefixedNameIR eps `( argumentIR_cast* )
     ---- ;; find matching action
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (parameterIR_action*, argumentIR_action*)
@@ -658,14 +658,14 @@ rule TableEntry_keyset_ok/list:
 rulegroup TableEntry_action_ok {
 
   rule TableEntry_action_ok/prefixedNonTypeName:
-    TC TBLC |- prefixedNonTypeName : prefixedNameIR `( eps )
+    TC TBLC |- prefixedNonTypeName : prefixedNameIR eps `( eps )
     ---- ;; find matching action
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (eps, eps) = $find_action(TBLC, prefixedNameIR)
 
   rule TableEntry_action_ok/prefixedNonTypeName-argumentList:
     TC TBLC |- (prefixedNonTypeName `( argumentList ))
-             : prefixedNameIR `( argumentIR_cast* )
+             : prefixedNameIR eps `( argumentIR_cast* )
     ---- ;; find matching action
     -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (parameterIR_action*, argumentIR_action*)
@@ -1073,7 +1073,7 @@ def $insert_NoAction_tablePropertyIR(
   ---- ;; check that NoAction is not already present in actions
   -- if ACTIONS `= `{ tableActionIR* } = tablePropertyIR_h
   -- if (_ tableActionReferenceIR `# `( _ `, _ ) `; = tableActionIR)*
-  -- if tableActionReferenceIR_NoAction = (`. "NoAction") `( eps )
+  -- if tableActionReferenceIR_NoAction = (`. "NoAction") eps `( eps )
   -- if ~(tableActionReferenceIR_NoAction <- tableActionReferenceIR*)
   ---- ;; insert NoAction to table context and table properties
   -- if TBLC_1 = $add_action_tbl(TBLC_0, `. "NoAction", eps, eps)
@@ -1088,7 +1088,7 @@ def $insert_NoAction_tablePropertyIR(
   ---- ;; check that NoAction is already present in actions
   -- if ACTIONS `= `{ tableActionIR* } = tablePropertyIR_h
   -- if (_ tableActionReferenceIR `# `( _ `, _ ) `; = tableActionIR)*
-  -- if tableActionReferenceIR_NoAction = (`. "NoAction") `( eps )
+  -- if tableActionReferenceIR_NoAction = (`. "NoAction") eps `( eps )
   -- if (tableActionReferenceIR_NoAction <- tableActionReferenceIR*)
 def $insert_NoAction_tablePropertyIR(
     TBLC_0,
@@ -1118,7 +1118,7 @@ rulegroup Table_ok {
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
     ---- ;; insert NoAction as default_action
     -- if tablePropertyIR_default_action
-        = `EMPTY eps DEFAULT_ACTION `= ((`` "NoAction") `( eps )) `;
+        = `EMPTY eps DEFAULT_ACTION `= ((`` "NoAction") eps `( eps )) `;
     -- if (TBLC_2, tablePropertyIR_updated*)
         = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*)
 
