@@ -330,6 +330,29 @@ def $tableObject_create_entry_keyset(
       = $tableObject_create_entry_keys(
           EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
 
+def $tableObject_create_entry_keyset(
+    EC,
+    KEY `= `{ tableKeyIR* },
+    tableKeyInterface*)
+  = `( simpleKeysetExpressionIR* )
+  ---- ;; fetch table key interfaces
+  -- if ((nameIR_key, nameIR_matchKind, typeIR)
+      = $interface_of_tableKeyIR(tableKeyIR))*
+  -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
+  ---- ;; check that update keys are named as key.fieldn
+  -- if ~$eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update* })
+  -- if $forall_(($starts_with(nameIR_key_update, "key.field"))*)
+  ---- ;; substitute update key names with table key names
+  -- if (nameIR_key_update_num = $strip_prefix(nameIR_key_update, "key.field"))*
+  -- if (n_key_update = $text_to_int(nameIR_key_update_num))*
+  -- if (nameIR_key_update_subst = nameIR_key*[n_key_update])*
+  -- if $eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update_subst* })
+  -- if (tableKeyInterface_subst
+      = (nameIR_key_update_subst, tableKeyValueInterface_update))*
+  -- if simpleKeysetExpressionIR*
+      = $tableObject_create_entry_keys(
+          EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface_subst*)
+
 dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
 def $alias_to_original_lookup_map(parameterIR*)
   = $extend_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, `{ (id `: id)* })

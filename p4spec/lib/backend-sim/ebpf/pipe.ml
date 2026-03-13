@@ -16,10 +16,10 @@ struct
     let transform_name name =
       Stf.Transform.Name.(
         name
+        |> replace_substring ~substrings:[ "pipe_c1_" ]
+             ~replacement:"main.filt.c1."
         |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt.")
     in
-    let transform_match mtch = mtch in
-    let transform_matches = List.map transform_match in
     let transform_action (name, args) =
       let name = String.map (fun c -> if c = '_' then '.' else c) name in
       Stf.Transform.Action.into_unqualified (name, args)
@@ -27,7 +27,6 @@ struct
     match stmt with
     | Add (name, priority_opt, mtches, action, id_opt) ->
         let name = transform_name name in
-        let mtches = transform_matches mtches in
         let action = transform_action action in
         Add (name, priority_opt, mtches, action, id_opt)
     | SetDefault (name, action) ->
