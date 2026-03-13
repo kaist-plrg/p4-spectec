@@ -25,6 +25,24 @@ let int_to_text (add : value -> unit) (at : region) (targs : targ list)
   add value;
   value
 
+(* dec $split_text(text, text) : text* *)
+
+let split_text (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  Extract.zero at targs;
+  let value_text, value_separator = Extract.two at values_input in
+  let text = Value.get_text value_text in
+  let separator = Value.get_text value_separator in
+  assert (String.length separator = 1);
+  let parts = String.split_on_char (String.get separator 0) text in
+  let values = List.map (fun part -> Value.make Il.TextT (TextV part)) parts in
+  let value =
+    let typ = Il.IterT (Il.TextT $ no_region, Il.List) in
+    Value.make typ (ListV values)
+  in
+  add value;
+  value
+
 (* dec $strip_prefix(text, text) : text *)
 
 let strip_prefix (add : value -> unit) (at : region) (targs : targ list)

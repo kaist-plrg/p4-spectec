@@ -23,7 +23,7 @@ struct
              ~replacement:"main.eg")
     in
     let transform_matches = List.map Stf.Transform.Match.rewrite_valid in
-    let transform_action = Stf.Transform.Action.into_unqualified in
+    let transform_action (name, args) = (transform_name name, args) in
     match stmt with
     | Add (name, priority_opt, mtches, action, id_opt) ->
         let name = transform_name name in
