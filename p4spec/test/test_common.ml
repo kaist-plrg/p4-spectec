@@ -7,27 +7,78 @@ let version = "0.1"
 
 (* Statistics *)
 
-type stat = { durations : float list; exclude_run : int; fail_run : int }
+type stat = {
+  durations : float list;
+  exclude_run : int;
+  fail_run : int;
+  patch_run : int;
+  patch_exclude_run : int;
+  patch_fail_run : int;
+  exclude_by_subdir : (string * int) list;
+}
 
-let empty_stat = { durations = []; exclude_run = 0; fail_run = 0 }
+let empty_stat =
+  {
+    durations = [];
+    exclude_run = 0;
+    fail_run = 0;
+    patch_run = 0;
+    patch_exclude_run = 0;
+    patch_fail_run = 0;
+    exclude_by_subdir = [];
+  }
 
 let log_stat name stat total : unit =
   let excludes = stat.exclude_run in
   let fails = stat.fail_run in
   let passes = total - excludes - fails in
+  let patches = stat.patch_run in
   let exclude_rate = float_of_int excludes /. float_of_int total *. 100.0 in
   let pass_rate = float_of_int passes /. float_of_int total *. 100.0 in
   let fail_rate = float_of_int fails /. float_of_int total *. 100.0 in
+  let patch_rate = float_of_int patches /. float_of_int total *. 100.0 in
+  let patch_excludes = stat.patch_exclude_run in
+  let patch_fails = stat.patch_fail_run in
+  let patch_passes = patches - patch_excludes - patch_fails in
+  let patch_exclude_rate =
+    if patches = 0 then 0.0
+    else float_of_int patch_excludes /. float_of_int patches *. 100.0
+  in
+  let patch_pass_rate =
+    if patches = 0 then 0.0
+    else float_of_int patch_passes /. float_of_int patches *. 100.0
+  in
+  let patch_fail_rate =
+    if patches = 0 then 0.0
+    else float_of_int patch_fails /. float_of_int patches *. 100.0
+  in
   let durations = List.sort compare stat.durations in
   let duration_total = List.fold_left ( +. ) 0.0 durations in
   let duration_avg = duration_total /. float_of_int total in
   let duration_max = durations |> List.rev |> List.hd in
   let duration_min = durations |> List.hd in
   Format.asprintf
-    "%s: [EXCLUDE] %d/%d (%.2f%%) [PASS] %d/%d (%.2f%%) [FAIL] %d/%d (%.2f%%)"
+    "%s: [EXCLUDE] %d/%d (%.2f%%) [PASS] %d/%d (%.2f%%) [FAIL] %d/%d (%.2f%%) \
+     [PATCH] %d/%d (%.2f%%)"
     name excludes total exclude_rate passes total pass_rate fails total
-    fail_rate
+    fail_rate patches total patch_rate
   |> print_endline;
+  Format.asprintf
+    "%s: [PATCH]: [EXCLUDE] %d/%d (%.2f%%) [PASS] %d/%d (%.2f%%) [FAIL] %d/%d \
+     (%.2f%%)"
+    name patch_excludes patches patch_exclude_rate patch_passes patches
+    patch_pass_rate patch_fails patches patch_fail_rate
+  |> print_endline;
+  let exclude_by_subdir =
+    stat.exclude_by_subdir
+    |> List.sort (fun (a, _) (b, _) -> String.compare a b)
+  in
+  if exclude_by_subdir <> [] then (
+    Format.asprintf "%s [EXCLUDE by subdir]:" name |> print_endline;
+    List.iter
+      (fun (label, count) ->
+        Format.asprintf "  %s: %d" label count |> print_endline)
+      exclude_by_subdir);
   Format.eprintf "%s: [TOTAL] %.6f [AVG] %.6f [MAX] %.6f [MIN] %.6f\n" name
     duration_total duration_avg duration_max duration_min
 
