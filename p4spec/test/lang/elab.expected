@@ -26344,7 +26344,23 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let abortResult = copyInResult as abortResult
     -- output: % % % |- % @< % >( % ): EC_1 ARCH_1 abortResult as callResult
 
-    rulepath externFunctionCallee-cont
+    rulepath externFunctionCallee-copyin-cont-call-reject
+    -- let extern_function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) = externFunctionCallee
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
+    -- let given parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} default parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let p_shared = global
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 # copyInResult
+    -- if copyInResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_2 ~> EC_callee_3
+    -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+    -- ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 ARCH_2 callResult'
+    -- if callResult' <: rejectTransitionResult
+    -- let rejectTransitionResult = callResult' as rejectTransitionResult
+    -- output: % % % |- % @< % >( % ): EC_1 ARCH_2 rejectTransitionResult as callResult
+
+    rulepath externFunctionCallee-copyin-cont-call-non-reject
     -- let extern_function nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) = externFunctionCallee
     -- let EC_callee_0 = $inherit_e(global, EC_0)
     -- let EC_callee_1 = EC_callee_0[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
@@ -26356,6 +26372,7 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_2 ~> EC_callee_3
     -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
     -- ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_4 ARCH_2 callResult
+    -- if ~callResult <: rejectTransitionResult
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
     -- output: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
@@ -26636,7 +26653,26 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- let abortResult = copyInResult as abortResult
     -- output: % % % |- % @< % >( % ): EC_1 ARCH_1 abortResult as callResult
 
-    rulepath non-abstract-return
+    rulepath copyin-cont-non-abstract-reject
+    -- let extern_method objectId . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ){ theta ; frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} } = externMethodCallee
+    -- if blockStatementIR?{blockStatementIR <- blockStatementIR?} matches ()
+    -- let EC_callee_0 = $inherit_e(global, EC_0)
+    -- let EC_callee_1 = EC_callee_0[block.type = theta]
+    -- let EC_callee_2 = EC_callee_1[block.frame = frame]
+    -- let EC_callee_3 = EC_callee_2[local.type = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }]
+    -- let given parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} default parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let p_shared = global
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 # copyInResult
+    -- if copyInResult <: continueResult<storageReference?*>
+    -- let ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInResult as continueResult<storageReference?*>
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_4 ~> EC_callee_5
+    -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
+    -- ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_6 ARCH_2 callResult'
+    -- if callResult' <: rejectTransitionResult
+    -- let rejectTransitionResult = callResult' as rejectTransitionResult
+    -- output: % % % |- % @< % >( % ): EC_1 ARCH_2 rejectTransitionResult as callResult
+
+    rulepath copyin-cont-non-abstract-non-reject
     -- let extern_method objectId . nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} >( parameterIR*{parameterIR <- parameterIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ){ theta ; frame ; blockStatementIR?{blockStatementIR <- blockStatementIR?} } = externMethodCallee
     -- if blockStatementIR?{blockStatementIR <- blockStatementIR?} matches ()
     -- let EC_callee_0 = $inherit_e(global, EC_0)
@@ -26651,6 +26687,7 @@ relation Call_eval: cursor evalContext arch |- callee @< typeArgumentListIR >( a
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} @ local EC_callee_4 ~> EC_callee_5
     -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
     -- ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId . nameIR ( nameIR_param*{nameIR_param <- nameIR_param*} ): EC_callee_6 ARCH_2 callResult
+    -- if ~callResult <: rejectTransitionResult
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ local EC_callee_6 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
     -- output: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 

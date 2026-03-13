@@ -33454,9 +33454,19 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                 1. (ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR ( (nameIR_param)* ): EC_callee_4 ARCH_2 callResult)
 
-                                  1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_2)
+                                  1. Case analysis on (callResult has type rejectTransitionResult)
 
-                                    1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
+                                    1. Case true
+
+                                      1. (Let rejectTransitionResult be (callResult as rejectTransitionResult))
+
+                                        1. Result in: % % % |- % @< % >( % ): EC_1 ARCH_2 (rejectTransitionResult as callResult)
+
+                                    2. Case false
+
+                                      1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_4 ((storageReference)?)* ~> EC_2)
+
+                                        1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
     1. Else Phantom#1772
 
@@ -33818,9 +33828,19 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @< typeArgumentListIR >( argumentLis
 
                                       1. (ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId . nameIR ( (nameIR_param)* ): EC_callee_6 ARCH_2 callResult)
 
-                                        1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_6 ((storageReference)?)* ~> EC_2)
+                                        1. Case analysis on (callResult has type rejectTransitionResult)
 
-                                          1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
+                                          1. Case true
+
+                                            1. (Let rejectTransitionResult be (callResult as rejectTransitionResult))
+
+                                              1. Result in: % % % |- % @< % >( % ): EC_1 ARCH_2 (rejectTransitionResult as callResult)
+
+                                          2. Case false
+
+                                            1. (Copy_out: p_shared ARCH_2 |- p EC_1 (parameterIR_aligned)* @ (local) EC_callee_6 ((storageReference)?)* ~> EC_2)
+
+                                              1. Result in: % % % |- % @< % >( % ): EC_2 ARCH_2 callResult
 
             1. Else Phantom#1805
 
