@@ -1,4 +1,90 @@
 ;;
+;; Table action instantiation
+;;
+;; syntax tableActionIR
+;;
+
+rulegroup TableAction_inst {
+
+  rule TableAction_inst/name-annotation-dot-prefix:
+    IC STO |- annotationList tableActionReferenceIR
+              `# `( parameterListIR `, parameterListIR_control ) `;
+            : STO tableActionIR
+    -- if tableActionReferenceIR
+        = prefixedNameIR _ `( argumentListIR )
+    -- if (_, actionDef)
+        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
+    -- if annotationList_actionDef ACTION nameIR `( _ ) _
+        = actionDef
+    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
+    ---- ;; if name annotation has dot prefix, use a standalone name
+    -- if $starts_with(nameIR_anno, ".")
+    -- if controlPlaneNameIR = [ $strip_prefix(nameIR_anno, ".") ]
+    -- if tableActionReferenceIR'
+        = prefixedNameIR controlPlaneNameIR `( argumentListIR )
+    -- if tableActionIR = annotationList tableActionReferenceIR'
+          `# `( parameterListIR `, parameterListIR_control ) `;
+
+  rule TableAction_inst/name-annotation:
+    IC STO |- annotationList tableActionReferenceIR
+              `# `( parameterListIR `, parameterListIR_control ) `;
+            : STO tableActionIR
+    -- if tableActionReferenceIR
+        = prefixedNameIR _ `( argumentListIR )
+    -- if (_, actionDef)
+        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
+    -- if annotationList_actionDef ACTION nameIR `( _ ) _
+        = actionDef
+    -- if nameIR_anno = $name_annotation(annotationList_actionDef)
+    -- if ~$starts_with(nameIR_anno, ".")
+    -- if controlPlaneNameIR = IC.PATH ++ nameIR_anno
+    -- if tableActionReferenceIR'
+        = prefixedNameIR controlPlaneNameIR `( argumentListIR )
+    -- if tableActionIR = annotationList tableActionReferenceIR'
+          `# `( parameterListIR `, parameterListIR_control ) `;
+
+  rule TableAction_inst/no-name-annotation:
+    IC STO |- annotationList tableActionReferenceIR
+              `# `( parameterListIR `, parameterListIR_control ) `;
+            : STO tableActionIR
+    -- if tableActionReferenceIR
+        = prefixedNameIR _ `( argumentListIR )
+    -- if (_, actionDef)
+        = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
+    -- if annotationList_actionDef ACTION nameIR `( _ ) _
+        = actionDef
+    ---- ;; todo
+    -- if eps = $name_annotation(annotationList_actionDef)
+    -- if controlPlaneNameIR = IC.PATH ++ nameIR
+    -- if tableActionReferenceIR'
+        = prefixedNameIR controlPlaneNameIR `( argumentListIR )
+    -- if tableActionIR = annotationList tableActionReferenceIR'
+          `# `( parameterListIR `, parameterListIR_control ) `;
+
+}
+
+;;
+;; Table actions instantiation
+;;
+;; syntax tableActionListIR
+;;
+
+rulegroup TableActions_inst {
+
+  rule TableActions_inst/nil:
+    IC STO |- eps : STO eps
+
+  rule TableActions_inst/cons:
+    IC STO_0 |- tableActionIR_h :: tableActionIR_t*
+              : STO_1 (tableActionIR_h_inst :: tableActionIR_t_inst*)
+    -- TableAction_inst:
+        IC STO_0 |- tableActionIR_h : STO_1 tableActionIR_h_inst
+    -- TableActions_inst:
+        IC STO_1 |- tableActionIR_t* : STO_2 tableActionIR_t_inst*
+
+}
+
+;;
 ;; Table property instantiation
 ;;
 ;; syntax tablePropertyIR
@@ -12,7 +98,11 @@ rule TableProperty_inst/tableKeysPropertyIR:
 ;;; ACTIONS `= `{ tableActionListIR }
 
 rule TableProperty_inst/tableActionsPropertyIR:
-  IC STO |- tableActionsPropertyIR : STO tableActionsPropertyIR
+  IC STO_0 |- ACTIONS `= `{ tableActionListIR }
+          : STO_1 tableActionsPropertyIR
+  -- TableActions_inst:
+      IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
+  -- if tableActionsPropertyIR = ACTIONS `= `{ tableActionListIR_inst }
 
 ;;; annotationList constOptIR DEFAULT_ACTION `= tableActionReferenceIR `;
 

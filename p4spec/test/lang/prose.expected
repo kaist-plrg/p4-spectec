@@ -12449,6 +12449,28 @@ xref:add_callableDef_non_overload_i[``IC`` where ``callableId`` to ``callableDef
  .. Let ``callableDefEnv`` be xref:add_map[``IC.+BLOCK+.+CALLABLE+`` where ``callableId`` to ``callableDef`` is added].
  .. Return ``IC`` with ``+BLOCK+.+CALLABLE+`` set to ``callableDefEnv``.
 
+xref:find_callableDef_non_overload_i[The non-overloaded callable definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``]
+
+
+. If let ``+.+`` ``nameIR`` be ``prefixedNameIR``:
+ .. Return ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.
+. If ``p`` is ``GLOBAL``:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Return ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.
+. Else if ``p`` is ``BLOCK``:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.
+ .. If let ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``:
+  ... Return ( ``callableId``, ``callableDef`` ).
+ .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``:
+  ... Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
+. Else:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+BLOCK+`` layer of ``IC``].
+
 xref:add_constructorDef_i[Where ``callableId`` to ``constructorDef`` is added to ``IC``]
 
 
@@ -13129,6 +13151,46 @@ xref:ParserLocalDecls_inst[Compile-time evaluation of ``parserLocalDeclarationIR
 * the result of xref:ParserLocalDecls_inst[compile-time evaluation of ``parserLocalDeclarationIR~t~^{asterisk}^``, under context ``IC~1~`` and store ``STO~1~``].
  .. Result in context ``IC~2~``, store ``STO~2~``, and ``parserLocalDeclarationIR~h_inst~`` ``{two-colons}`` ``parserLocalDeclarationIR~t_inst~^{asterisk}^``.
 
+xref:TableAction_inst[TableAction_inst]:
+
+* Compile-time evaluation of ``tableActionIR``, under context ``instContext``and store ``store``:
+* Result in store ``store`` and ``tableActionIR``.
+
+xref:TableAction_inst[Compile-time evaluation of ``annotationList`` ``tableActionReferenceIR`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``, under context ``IC``and store ``STO``]:
+
+. Let ``prefixedNameIR`` ``++_++`` ``+(+`` ``argumentListIR`` ``+)+`` be ``tableActionReferenceIR``.
+. Let ``(`` ``++_++,`` ``callableDef`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``IC``].
+. Check that ``callableDef`` has type ``actionDef``.
+. Let ``actionDef`` be ``callableDef``.
+. Let ``annotationList~actionDef~`` ``+ACTION+`` ``nameIR`` ``+(+`` ``++_++`` ``+)+`` ``++_++`` be ``actionDef``.
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``.
+. If let ``nameIR~anno~`` be ``nameIR'^{asterisk}^``:
+ .. Let ``controlPlaneNameIR`` be ``IC.+PATH+`` concatenated with ``nameIR~anno~``.
+ .. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentListIR`` ``+)+``.
+ .. Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``.
+ .. Result in store ``STO`` and ``tableActionIR``.
+. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``:
+ .. Let ``controlPlaneNameIR`` be ``IC.+PATH+`` concatenated with ``nameIR``.
+ .. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentListIR`` ``+)+``.
+ .. Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``.
+ .. Result in store ``STO`` and ``tableActionIR``.
+
+xref:TableActions_inst[TableActions_inst]:
+
+* Compile-time evaluation of ``tableActionIR^{asterisk}^``, under context ``instContext``and store ``store``:
+* Result in store ``store`` and ``tableActionIR^{asterisk}^``.
+
+xref:TableActions_inst[Compile-time evaluation of ``tableActionIR^{asterisk}^``, under context ``IC``and store ``store``]:
+
+. If ``tableActionIR^{asterisk}^`` is equal to ``·``:
+ .. Result in store ``store`` and ``·``.
+. If let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``:
+ .. Let store ``STO~1~`` and ``tableActionIR~h_inst~`` be
+* the result of xref:TableAction_inst[compile-time evaluation of ``tableActionIR~h~``, under context ``IC``and store ``store``].
+ .. Let store ``STO~2~`` and ``tableActionIR~t_inst~^{asterisk}^`` be
+* the result of xref:TableActions_inst[compile-time evaluation of ``tableActionIR~t~^{asterisk}^``, under context ``IC``and store ``STO~1~``].
+ .. Result in store ``STO~1~`` and ``tableActionIR~h_inst~`` ``{two-colons}`` ``tableActionIR~t_inst~^{asterisk}^``.
+
 xref:TableProperty_inst[TableProperty_inst]:
 
 * Compile-time evaluation of ``tablePropertyIR``, under context ``instContext``and store ``store``:
@@ -13138,9 +13200,12 @@ xref:TableProperty_inst[Compile-time evaluation of ``tableKeysPropertyIR``, unde
 
 . Result in store ``STO`` and ``tableKeysPropertyIR``.
 
-xref:TableProperty_inst[Compile-time evaluation of ``tableActionsPropertyIR``, under context ``IC``and store ``STO``]:
+xref:TableProperty_inst[Compile-time evaluation of ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR`` ``+}+``, under context ``IC``and store ``STO``]:
 
-. Result in store ``STO`` and ``tableActionsPropertyIR``.
+. Let store ``STO~1~`` and ``tableActionListIR~inst~`` be
+* the result of xref:TableActions_inst[compile-time evaluation of ``tableActionListIR``, under context ``IC``and store ``STO``].
+. Let ``tableActionsPropertyIR`` be ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR~inst~`` ``+}+``.
+. Result in store ``STO~1~`` and ``tableActionsPropertyIR``.
 
 xref:TableProperty_inst[Compile-time evaluation of ``tableDefaultActionPropertyIR``, under context ``IC``and store ``STO``]:
 

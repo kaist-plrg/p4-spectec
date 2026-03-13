@@ -20076,6 +20076,36 @@ def $add_callableDef_non_overload_i(cursor, instContext, callableId, callableDef
   -- if ~$in_set<id>(id, { id_k*{id_k <- id_k*} })
   -- let callableDefEnv = $add_map<callableId, callableDef>(IC.block.callable, callableId, callableDef)
 
+def $find_callableDef_non_overload_i(cursor, instContext, prefixedNameIR) : (callableId, callableDef)? =
+
+  clause 0 : (p, IC, prefixedNameIR) = $find_non_overloaded<callableDef>(IC.global.callable, nameIR)
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
+
+  clause 1 : (cursor, IC, prefixedNameIR) = $find_non_overloaded<callableDef>(IC.global.callable, nameIR)
+  -- if cursor matches `GLOBAL`
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
+
+  clause 2 : (cursor, IC, prefixedNameIR) = ?((callableId, callableDef))
+  -- if cursor matches `BLOCK`
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
+  -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_non_overloaded<callableDef>(IC.block.callable, nameIR)
+  -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
+  -- let ?((callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+
+  clause 3 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(global, IC, ` nameIR)
+  -- if cursor matches `BLOCK`
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
+  -- if (?() = $find_non_overloaded<callableDef>(IC.block.callable, nameIR))
+
+  clause 4 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(block, IC, ` nameIR)
+  -- if cursor matches `LOCAL`
+  -- if prefixedNameIR matches ``%`
+  -- let ` nameIR = prefixedNameIR
+
 def $add_constructorDef_i(instContext, callableId, constructorDef) : instContext =
 
   clause 0 : (IC, callableId, constructorDef) = IC[global.constructor = constructorDefEnv]
@@ -21421,6 +21451,72 @@ relation ParserLocalDecls_inst: instContext store |- parserLocalDeclarationIR* :
     -- ParserLocalDecls_inst: IC_1 STO_1 |- parserLocalDeclarationIR_t*{parserLocalDeclarationIR_t <- parserLocalDeclarationIR_t*} : IC_2 STO_2 parserLocalDeclarationIR_t_inst*{parserLocalDeclarationIR_t_inst <- parserLocalDeclarationIR_t_inst*}
     -- output: % % |- % : IC_2 STO_2 parserLocalDeclarationIR_h_inst :: parserLocalDeclarationIR_t_inst*{parserLocalDeclarationIR_t_inst <- parserLocalDeclarationIR_t_inst*}
 
+relation TableAction_inst: instContext store |- tableActionIR : store tableActionIR
+
+  rulegroup 
+
+   match
+
+    (signature) IC STO |- annotationList tableActionReferenceIR #( parameterListIR , parameterListIR_control ); : % %
+    IC STO |- annotationList tableActionReferenceIR #( parameterListIR , parameterListIR_control ); : % %
+
+   paths
+
+    rulepath name-annotation
+    -- let prefixedNameIR _controlPlaneNameIR ( argumentListIR ) = tableActionReferenceIR
+    -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
+    -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
+    -- let ?((_callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+    -- if callableDef <: actionDef
+    -- let actionDef = callableDef as actionDef
+    -- let annotationList_actionDef action nameIR ( _parameterListIR ) _blockStatementIR = actionDef
+    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList_actionDef)
+    -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
+    -- let [nameIR_anno] = nameIR'*{nameIR' <- nameIR'*}
+    -- let controlPlaneNameIR = IC.path ++ [nameIR_anno]
+    -- let tableActionReferenceIR' = prefixedNameIR controlPlaneNameIR ( argumentListIR )
+    -- let tableActionIR = annotationList tableActionReferenceIR' #( parameterListIR , parameterListIR_control );
+    -- output: % % |- % : STO tableActionIR
+
+    rulepath no-name-annotation
+    -- let prefixedNameIR _controlPlaneNameIR ( argumentListIR ) = tableActionReferenceIR
+    -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
+    -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
+    -- let ?((_callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+    -- if callableDef <: actionDef
+    -- let actionDef = callableDef as actionDef
+    -- let annotationList_actionDef action nameIR ( _parameterListIR ) _blockStatementIR = actionDef
+    -- if ([] = $name_annotation(annotationList_actionDef))
+    -- let controlPlaneNameIR = IC.path ++ [nameIR]
+    -- let tableActionReferenceIR' = prefixedNameIR controlPlaneNameIR ( argumentListIR )
+    -- let tableActionIR = annotationList tableActionReferenceIR' #( parameterListIR , parameterListIR_control );
+    -- output: % % |- % : STO tableActionIR
+
+relation TableActions_inst: instContext store |- tableActionIR* : store tableActionIR*
+
+  rulegroup 
+
+   match
+
+    (signature) IC store |- tableActionIR*{tableActionIR <- tableActionIR*} : % %
+    IC store |- tableActionIR*{tableActionIR <- tableActionIR*} : % %
+
+   paths
+
+    rulepath nil
+    -- let STO = store
+    -- if (tableActionIR*{tableActionIR <- tableActionIR*} = [])
+    -- output: % % |- % : STO []
+
+    rulepath cons
+    -- let STO_0 = store
+    -- let tableActionIR'*{tableActionIR' <- tableActionIR'*} = tableActionIR*{tableActionIR <- tableActionIR*}
+    -- if tableActionIR'*{tableActionIR' <- tableActionIR'*} matches _ :: _
+    -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR'*{tableActionIR' <- tableActionIR'*}
+    -- TableAction_inst: IC STO_0 |- tableActionIR_h : STO_1 tableActionIR_h_inst
+    -- TableActions_inst: IC STO_1 |- tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} : STO_2 tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
+    -- output: % % |- % : STO_1 tableActionIR_h_inst :: tableActionIR_t_inst*{tableActionIR_t_inst <- tableActionIR_t_inst*}
+
 relation TableProperty_inst: instContext store |- tablePropertyIR : store tablePropertyIR
 
   rulegroup tableKeysPropertyIR
@@ -21441,15 +21537,17 @@ relation TableProperty_inst: instContext store |- tablePropertyIR : store tableP
 
    match
 
-    (signature) IC STO |- tableActionsPropertyIR as tablePropertyIR : % %
-    IC STO |- tablePropertyIR : % %
+    (signature) IC STO_0 |- actions={ tableActionListIR } as tablePropertyIR : % %
+    IC STO_0 |- tablePropertyIR : % %
     -- if tablePropertyIR <: tableActionsPropertyIR
-    -- let tableActionsPropertyIR = tablePropertyIR as tableActionsPropertyIR
+    -- let actions={ tableActionListIR } = tablePropertyIR as tableActionsPropertyIR
 
    paths
 
     rulepath tableActionsPropertyIR
-    -- output: % % |- % : STO tableActionsPropertyIR as tablePropertyIR
+    -- TableActions_inst: IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
+    -- let tableActionsPropertyIR = actions={ tableActionListIR_inst }
+    -- output: % % |- % : STO_1 tableActionsPropertyIR as tablePropertyIR
 
   rulegroup tableDefaultActionPropertyIR
 
