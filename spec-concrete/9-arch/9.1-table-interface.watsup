@@ -1,8 +1,6 @@
 ;;
-;; Table object helpers
+;; Cast control plane-given values, which may need multiple casts inserted
 ;;
-
-;;; Cast control plane-given values, which may need multiple casts inserted
 
 dec $cast_control_plane(evalContext, typedExpressionIR, typeIR) : typedExpressionIR?
   hint(prose_in %1 "from control plane cast to" %2 "in" %0)
@@ -55,6 +53,31 @@ def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = typedExpressionIR_ca
 def $cast_control_plane(EC, typedExpressionIR, typeIR_to) = eps
   -- otherwise
 
+;;
+;; Bitstring helpers
+;;
+
+dec $reverse_bytes_of_hex(text) : text
+dec $reverse_bytes_of_hex'(text) : text
+
+def $reverse_bytes_of_hex(t)
+  = "0x" ++ $reverse_bytes_of_hex'(t[2 : n_len_bytes])
+  -- if t[0 : 2] = "0x"
+  -- if n_len = |t|
+  -- if n_len_bytes = $(n_len - 2)
+def $reverse_bytes_of_hex'(t) = t
+  -- if $(|t| <= 2)
+def $reverse_bytes_of_hex'(t) = t_bytes_rev ++ t_byte
+  -- if n_len = |t|
+  -- if $(n_len > 2)
+  -- if t_byte = t[0 : 2]
+  -- if n_len_bytes = $(n_len - 2)
+  -- if t_bytes = t[2 : n_len_bytes]
+  -- if t_bytes_rev = $reverse_bytes_of_hex'(t_bytes)
+
+;;
+;; Table object helpers
+;;
 
 syntax tableEntryPriorityInterface = int?
 
@@ -233,7 +256,8 @@ def $tableObject_create_entry_key(
   -- if text_key_prefix_value `SLASH n_key_prefix_width
       = $assoc_<nameIR, tableKeyValueInterface>(nameIR_key, tableKeyInterface*)
   ---- ;; create base expression
-  -- if i_key_prefix_value = $text_to_int(text_key_prefix_value)
+  -- if text_key_prefix_value_rev = $reverse_bytes_of_hex(text_key_prefix_value)
+  -- if i_key_prefix_value = $text_to_int(text_key_prefix_value_rev)
   -- if n_key_type_width = $sizeof_maxSizeInBits'(typeIR)
   -- if $(n_key_prefix_width <= n_key_type_width)
   -- if n_key_remaining_width = $(n_key_type_width - n_key_prefix_width)
@@ -276,6 +300,18 @@ def $tableObject_create_entry_key(
   ---- ;; create optional match expression
   -- if simpleKeysetExpressionIR
       = typedExpressionIR_base_cast `&&& typedExpressionIR_mask_cast
+
+def $tableObject_create_entry_key(
+    EC,
+    (nameIR_key, "selector", typeIR),
+    tableKeyInterface*)
+  = simpleKeysetExpressionIR
+  ---- ;; create wildcard expression
+  -- if typedExpressionIR_zero = (D 0) `# `( INT DYN )
+  -- if typedExpressionIR_cast
+      = $cast_control_plane(EC, typedExpressionIR_zero, typeIR)
+  -- if simpleKeysetExpressionIR
+      = typedExpressionIR_cast `&&& typedExpressionIR_cast
 
 dec $tableObject_create_entry_keys(
     evalContext,
@@ -324,11 +360,38 @@ def $tableObject_create_entry_keyset(
   -- if ((nameIR_key, nameIR_matchKind, typeIR)
       = $interface_of_tableKeyIR(tableKeyIR))*
   -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
-  ---- ;; check that updates specify all keys
-  -- if $eq_set<nameIR>(`{ nameIR_key* }, `{ nameIR_key_update* })
+  ---- ;; check that updates specify all keys except selectors
+  -- if nameIR_key_non_selector*
+      = $filter_<nameIR>(nameIR_key*, (nameIR_matchKind =/= "selector")*)
+  -- if $eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update* })
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keys(
           EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
+
+def $tableObject_create_entry_keyset(
+    EC,
+    KEY `= `{ tableKeyIR* },
+    tableKeyInterface*)
+  = `( simpleKeysetExpressionIR* )
+  ---- ;; fetch table key interfaces
+  -- if ((nameIR_key, nameIR_matchKind, typeIR)
+      = $interface_of_tableKeyIR(tableKeyIR))*
+  -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
+  ---- ;; check that update keys are named as key.fieldn
+  -- if nameIR_key_non_selector*
+      = $filter_<nameIR>(nameIR_key*, (nameIR_matchKind =/= "selector")*)
+  -- if ~$eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update* })
+  -- if $forall_(($starts_with(nameIR_key_update, "key.field"))*)
+  ---- ;; substitute update key names with table key names
+  -- if (nameIR_key_update_num = $strip_prefix(nameIR_key_update, "key.field"))*
+  -- if (n_key_update = $text_to_int(nameIR_key_update_num))*
+  -- if (nameIR_key_update_subst = nameIR_key*[n_key_update])*
+  -- if $eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update_subst* })
+  -- if (tableKeyInterface_subst
+      = (nameIR_key_update_subst, tableKeyValueInterface_update))*
+  -- if simpleKeysetExpressionIR*
+      = $tableObject_create_entry_keys(
+          EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface_subst*)
 
 dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
 def $alias_to_original_lookup_map(parameterIR*)
@@ -349,20 +412,28 @@ dec $align_tableActionArgumentInterfaces(
   : int*
 dec $align_tableActionArgumentInterfaces'(
     map<id, int>, parameterIR)
-  : int?
+  : int
 
 def $align_tableActionArgumentInterfaces(
     parameterIR*, (nameIR_arg, i_arg)*)
   = i_aligned*
   -- if `{ (nameIR_alias `: nameIR_original)* } = $alias_to_original_lookup_map(parameterIR*)
   -- if (nameIR_arg_resolved = $find_map<nameIR, nameIR>(`{ (nameIR_alias `: nameIR_original)* }, nameIR_arg))*
+  -- if (_ _ _ nameIR_param _ = parameterIR)*
+  -- if $sub_set<nameIR>(`{ nameIR_arg_resolved* }, `{ nameIR_param* })
   -- (if i_aligned
        = $align_tableActionArgumentInterfaces'(
           `{ (nameIR_arg_resolved `: i_arg)* }, parameterIR))*
 
 def $align_tableActionArgumentInterfaces'(
     `{ (id_arg `: i_arg)* }, _ _ _ nameIR_param _)
-  = $find_map<id, int>(`{ (id_arg `: i_arg)* }, nameIR_param)
+  = i
+  -- if i = $find_map<id, int>(`{ (id_arg `: i_arg)* }, nameIR_param)
+
+def $align_tableActionArgumentInterfaces'(
+    `{ (id_arg `: i_arg)* }, _ _ _ nameIR_param _)
+  = 0
+  -- if eps = $find_map<id, int>(`{ (id_arg `: i_arg)* }, nameIR_param)
 
 ;;; Find table action by qualified name
 
