@@ -18,7 +18,7 @@ let patch ~(suffix : string) (filenames : string list)
     filenames
 
 let patch_with_basedir ~(suffix : string) (filenames : (string * string) list)
-    (filenames_patch : (string * string) list) : (string * string) list =
+    (filenames_patch : (string * string) list) : (string * string * bool) list =
   List.map
     (fun (basedir, filename) ->
       let filename_base = Filesys.base ~suffix filename in
@@ -30,8 +30,9 @@ let patch_with_basedir ~(suffix : string) (filenames : (string * string) list)
           filenames_patch
       in
       match filename_patch_opt with
-      | Some filename_patch -> filename_patch
-      | None -> (basedir, filename))
+      | Some (basedir_patch, filename_patch) ->
+          (basedir_patch, filename_patch, true)
+      | None -> (basedir, filename, false))
     filenames
 
 (* Collectors for exclusion *)
@@ -55,6 +56,29 @@ let collect_excludes (paths_exclude : string list) =
   in
   List.concat_map collect_exclude filenames_exclude
 
+let collect_excludes_by_subdir (paths_exclude : string list) :
+    (string * string list) list =
+  List.concat_map
+    (fun path_exclude ->
+      let parent_name = Filename.basename path_exclude in
+      let subdirs =
+        Sys_unix.readdir path_exclude
+        |> Array.to_list
+        |> List.filter (fun f ->
+               Sys_unix.is_directory_exn (path_exclude ^ "/" ^ f))
+        |> List.sort String.compare
+      in
+      List.map
+        (fun subdir ->
+          let subdir_path = path_exclude ^ "/" ^ subdir in
+          let filenames_exclude =
+            Filesys.collect_files ~suffix:".exclude" subdir_path
+          in
+          let entries = List.concat_map collect_exclude filenames_exclude in
+          (parent_name ^ "/" ^ subdir, entries))
+        subdirs)
+    paths_exclude
+
 (* Exclusion policy *)
 
 let should_exclude_pair (filename_p4 : string) (filename_stf : string)
@@ -74,7 +98,8 @@ let p4_matches_stf filepath_p4 filepath_stf =
   base_p4 = dir_stf || (dir_p4 = dir_stf && base_p4 = base_stf)
 
 let collect_test_pairs (arch : string) (testdirs_p4 : string list)
-    (testdirs_stf : string list) (patchdir : string) : (string * string) list =
+    (testdirs_stf : string list) (patchdir : string) :
+    (string * string * bool) list =
   let filenames_p4 =
     List.concat_map
       (Filesys.collect_files_with_basedir ~suffix:".p4")
@@ -115,19 +140,21 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
     patch_with_basedir ~suffix:".stf" filenames_stf filenames_stf_patch
   in
   filenames_p4
-  |> List.filter_map (fun (basedir_p4, filename_p4) ->
-         let filenames_stf =
+  |> List.filter_map (fun (basedir_p4, filename_p4, is_p4_patched) ->
+         let matched_stfs =
            List.filter_map
-             (fun (basedir_stf, filename_stf) ->
+             (fun (basedir_stf, filename_stf, is_stf_patched) ->
                if p4_matches_stf filename_p4 filename_stf then
-                 Some (basedir_stf ^ "/" ^ filename_stf)
+                 Some (basedir_stf ^ "/" ^ filename_stf, is_stf_patched)
                else None)
              filenames_stf
          in
-         match filenames_stf with
+         match matched_stfs with
          | [] -> None
-         | _ -> Some (basedir_p4 ^ "/" ^ filename_p4, filenames_stf))
-  |> List.concat_map (fun (filename_p4, filenames_stf) ->
+         | _ ->
+             Some (basedir_p4 ^ "/" ^ filename_p4, is_p4_patched, matched_stfs))
+  |> List.concat_map (fun (filename_p4, is_p4_patched, matched_stfs) ->
          List.map
-           (fun filename_stf -> (filename_p4, filename_stf))
-           filenames_stf)
+           (fun (filename_stf, is_stf_patched) ->
+             (filename_p4, filename_stf, is_p4_patched || is_stf_patched))
+           matched_stfs)

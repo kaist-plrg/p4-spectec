@@ -14,9 +14,7 @@ struct
     let transform_name name =
       Stf.Transform.Name.(
         name
-        |> rewrite_substring
-             ~substrings:[ "pipe" ]
-             ~replacement:"main.filt")
+        |> rewrite_substring ~substrings:[ "pipe" ] ~replacement:"main.filt")
     in
     let transform_action = Stf.Transform.Action.into_unqualified in
     match stmt with

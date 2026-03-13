@@ -2,14 +2,14 @@ module Name = struct
   let rewrite_substring ~(substrings : string list) ~(replacement : string)
       (name : Ast.name) : Ast.name =
     (match String.split_on_char '.' name with
-      | [] -> failwith "Unreachable"
-      | hd :: tl ->
-          if
-            List.exists
-              (fun substring -> Core.String.Caseless.is_substring hd ~substring)
-              substrings
-          then replacement :: tl
-          else hd :: tl)
+    | [] -> failwith "Unreachable"
+    | hd :: tl ->
+        if
+          List.exists
+            (fun substring -> Core.String.Caseless.is_substring hd ~substring)
+            substrings
+        then replacement :: tl
+        else hd :: tl)
     |> String.concat "."
 end
 
