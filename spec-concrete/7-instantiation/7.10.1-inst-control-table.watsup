@@ -12,7 +12,7 @@ rulegroup TableAction_inst {
             : STO tableActionIR
     -- if tableActionReferenceIR
         = prefixedNameIR _ `( argumentListIR )
-    -- if (_, actionDef)
+    -- if (cursor, _, actionDef)
         = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
     -- if annotationList_actionDef ACTION nameIR `( _ ) _
         = actionDef
@@ -31,13 +31,14 @@ rulegroup TableAction_inst {
             : STO tableActionIR
     -- if tableActionReferenceIR
         = prefixedNameIR _ `( argumentListIR )
-    -- if (_, actionDef)
+    -- if (cursor, _, actionDef)
         = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
     -- if annotationList_actionDef ACTION nameIR `( _ ) _
         = actionDef
     -- if nameIR_anno = $name_annotation(annotationList_actionDef)
     -- if ~$starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR = IC.PATH ++ nameIR_anno
+    -- if controlPlaneNameIR
+        = $ite<controlPlaneNameIR>(cursor = GLOBAL, nameIR, IC.PATH ++ nameIR_anno)
     -- if tableActionReferenceIR'
         = prefixedNameIR controlPlaneNameIR `( argumentListIR )
     -- if tableActionIR = annotationList tableActionReferenceIR'
@@ -49,13 +50,14 @@ rulegroup TableAction_inst {
             : STO tableActionIR
     -- if tableActionReferenceIR
         = prefixedNameIR _ `( argumentListIR )
-    -- if (_, actionDef)
+    -- if (cursor, _, actionDef)
         = $find_callableDef_non_overload_i(LOCAL, IC, prefixedNameIR)
     -- if annotationList_actionDef ACTION nameIR `( _ ) _
         = actionDef
     ---- ;; todo
     -- if eps = $name_annotation(annotationList_actionDef)
-    -- if controlPlaneNameIR = IC.PATH ++ nameIR
+    -- if controlPlaneNameIR
+        = $ite<controlPlaneNameIR>(cursor = GLOBAL, nameIR, IC.PATH ++ nameIR)
     -- if tableActionReferenceIR'
         = prefixedNameIR controlPlaneNameIR `( argumentListIR )
     -- if tableActionIR = annotationList tableActionReferenceIR'
