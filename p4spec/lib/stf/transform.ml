@@ -11,6 +11,16 @@ module Name = struct
         then replacement :: tl
         else hd :: tl)
     |> String.concat "."
+
+  let replace_substring ~(substrings : string list) ~(replacement : string)
+      (name : Ast.name) : Ast.name =
+    let open Core.String.Caseless in
+    List.fold_left
+      (fun name substring ->
+        if is_substring name ~substring then
+          substr_replace_first name ~pattern:substring ~with_:replacement
+        else name)
+      name substrings
 end
 
 module Match = struct
