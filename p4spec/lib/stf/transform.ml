@@ -33,4 +33,6 @@ module Action = struct
   let into_unqualified ((name, args) : Ast.action) : Ast.action =
     let name = String.split_on_char '.' name |> List.rev |> List.hd in
     (name, args)
+
+  let replace_substring = Name.replace_substring
 end

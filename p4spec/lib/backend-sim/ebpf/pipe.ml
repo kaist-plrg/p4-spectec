@@ -18,11 +18,20 @@ struct
         name
         |> replace_substring ~substrings:[ "pipe_c1_" ]
              ~replacement:"main.filt.c1."
-        |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt.")
+        |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt."
+        |> replace_substring ~substrings:[ "pipe" ] ~replacement:"main.filt")
     in
     let transform_action (name, args) =
-      let name = String.map (fun c -> if c = '_' then '.' else c) name in
-      Stf.Transform.Action.into_unqualified (name, args)
+      Stf.Transform.Action.(
+        let name =
+          name
+          |> replace_substring ~substrings:[ "pipe_c1_" ]
+               ~replacement:"main.filt.c1."
+          |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt."
+          |> replace_substring ~substrings:[ "_NoAction" ]
+               ~replacement:"NoAction"
+        in
+        into_unqualified (name, args))
     in
     match stmt with
     | Add (name, priority_opt, mtches, action, id_opt) ->
