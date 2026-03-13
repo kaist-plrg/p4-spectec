@@ -59,11 +59,18 @@ builtin dec $min_int(int*) : int
 
 builtin dec $text_to_int(text) : int
 builtin dec $int_to_text(int) : text
+builtin dec $split_text(text, text) : text*
 
 dec $concat_text(text*) : text
   hint(prose_in "the concatenation of" %0)
 def $concat_text(eps) = ""
 def $concat_text(t_h :: t_t*) = t_h ++ $concat_text(t_t*)
+
+dec $join_text(text*, text) : text
+  hint(prose_in "the result of joining" %0 "with separator" %1)
+def $join_text(eps, t_sep) = ""
+def $join_text([ t_h ], t_sep) = t_h
+def $join_text(t_h :: t_t*, t_sep) = t_h ++ t_sep ++ $join_text(t_t*, t_sep)
 
 dec $replace_text(text, text, text) : text
   hint(prose_in "the text" %0 "with all occurrences of" %1 "replaced by" %2)

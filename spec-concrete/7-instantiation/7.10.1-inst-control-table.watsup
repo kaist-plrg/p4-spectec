@@ -19,7 +19,7 @@ rulegroup TableAction_inst {
     -- if nameIR_anno = $name_annotation(annotationList_actionDef)
     ---- ;; if name annotation has dot prefix, use a standalone name
     -- if $starts_with(nameIR_anno, ".")
-    -- if controlPlaneNameIR = [ $strip_prefix(nameIR_anno, ".") ]
+    -- if controlPlaneNameIR = $strip_prefix(nameIR_anno, ".")
     -- if tableActionReferenceIR'
         = prefixedNameIR controlPlaneNameIR `( argumentListIR )
     -- if tableActionIR = annotationList tableActionReferenceIR'
@@ -38,7 +38,11 @@ rulegroup TableAction_inst {
     -- if nameIR_anno = $name_annotation(annotationList_actionDef)
     -- if ~$starts_with(nameIR_anno, ".")
     -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(cursor = GLOBAL, nameIR, IC.PATH ++ nameIR_anno)
+        = $ite<controlPlaneNameIR>(
+            cursor = GLOBAL,
+            nameIR_anno,
+            $join_text(IC.PATH ++ nameIR_anno, ".")
+          )
     -- if tableActionReferenceIR'
         = prefixedNameIR controlPlaneNameIR `( argumentListIR )
     -- if tableActionIR = annotationList tableActionReferenceIR'
@@ -57,7 +61,11 @@ rulegroup TableAction_inst {
     ---- ;; todo
     -- if eps = $name_annotation(annotationList_actionDef)
     -- if controlPlaneNameIR
-        = $ite<controlPlaneNameIR>(cursor = GLOBAL, nameIR, IC.PATH ++ nameIR)
+        = $ite<controlPlaneNameIR>(
+            cursor = GLOBAL,
+            nameIR,
+            $join_text(IC.PATH ++ nameIR, ".")
+          )
     -- if tableActionReferenceIR'
         = prefixedNameIR controlPlaneNameIR `( argumentListIR )
     -- if tableActionIR = annotationList tableActionReferenceIR'

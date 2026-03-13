@@ -24,12 +24,27 @@ builtin def $text_to_int(text) : int
 
 builtin def $int_to_text(int) : text
 
+builtin def $split_text(text, text) : text*
+
 def $concat_text(text*) : text =
 
   clause 0 : (text*{text <- text*}) = ""
   -- if text*{text <- text*} matches []
 
   clause 1 : (text*{text <- text*}) = t_h ++ $concat_text(t_t*{t_t <- t_t*})
+  -- if text*{text <- text*} matches _ :: _
+  -- let t_h :: t_t*{t_t <- t_t*} = text*{text <- text*}
+
+def $join_text(text*, text) : text =
+
+  clause 0 : (text*{text <- text*}, t_sep) = ""
+  -- if text*{text <- text*} matches []
+
+  clause 1 : (text*{text <- text*}, t_sep) = t_h
+  -- if text*{text <- text*} matches [ _/1 ]
+  -- let [t_h] = text*{text <- text*}
+
+  clause 2 : (text*{text <- text*}, t_sep) = t_h ++ t_sep ++ $join_text(t_t*{t_t <- t_t*}, t_sep)
   -- if text*{text <- text*} matches _ :: _
   -- let t_h :: t_t*{t_t <- t_t*} = text*{text <- text*}
 
@@ -7379,7 +7394,7 @@ syntax tableKeyIR =
 
 syntax tableKeyListIR = tableKeyIR*
 
-syntax controlPlaneNameIR = nameIR*
+syntax controlPlaneNameIR = nameIR?
 
 syntax tableActionReferenceIR = 
    | prefixedNameIR controlPlaneNameIR ( argumentListIR )
@@ -14477,7 +14492,7 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ [] : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR'*{argumentIR' <- argumentIR'*}
     -- if argumentIR'*{argumentIR' <- argumentIR'*} matches []
     -- let TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, [])
-    -- let tableActionIR = annotationList_update prefixedNameIR [] ( [] ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
+    -- let tableActionIR = annotationList_update prefixedNameIR ?() ( [] ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
     rulepath prefixedNonTypeName-argumentList
@@ -14495,7 +14510,7 @@ relation TableAction_ok: typingContext tableContext |- tableAction : tableContex
     -- ArgumentList_ok: local TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*} @ argumentIR*{argumentIR <- argumentIR*} : parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} @ argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- let TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, argumentIR_cast*{argumentIR_cast <- argumentIR_cast*})
-    -- let tableActionIR = annotationList_update prefixedNameIR [] ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
+    -- let tableActionIR = annotationList_update prefixedNameIR ?() ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) #( parameterIR_data*{parameterIR_data <- parameterIR_data*} , parameterIR_control*{parameterIR_control <- parameterIR_control*} );
     -- output: % % |- % : TBLC_1 tableActionIR
 
 relation TableActions_ok: typingContext tableContext |- tableAction* : tableContext tableActionListIR
@@ -14558,7 +14573,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- let prefixedNonTypeName = expression' as prefixedNonTypeName
     -- let prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (?(([], [])) = $find_action(TBLC, prefixedNameIR))
-    -- output: % % |- % : prefixedNameIR [] ( [] )
+    -- output: % % |- % : prefixedNameIR ?() ( [] )
 
     rulepath prefixedNonTypeName-argumentList
     -- let expression' = expression
@@ -14577,7 +14592,7 @@ relation TableDefaultAction_ok: typingContext tableContext |- initializer : tabl
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
-    -- output: % % |- % : prefixedNameIR [] ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- output: % % |- % : prefixedNameIR ?() ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
 relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : tableEntryState keysetExpressionIR
 
@@ -14776,7 +14791,7 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- let prefixedNonTypeName = tableActionReference' as prefixedNonTypeName
     -- let prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
     -- if (?(([], [])) = $find_action(TBLC, prefixedNameIR))
-    -- output: % % |- % : prefixedNameIR [] ( [] )
+    -- output: % % |- % : prefixedNameIR ?() ( [] )
 
     rulepath prefixedNonTypeName-argumentList
     -- let tableActionReference' = tableActionReference
@@ -14791,7 +14806,7 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- let argumentIR_action_data*{argumentIR_action_data <- argumentIR_action_data*} = argumentIR_action*{argumentIR_action <- argumentIR_action*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- let argumentIR_cast_data*{argumentIR_cast_data <- argumentIR_cast_data*} = argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}[0 : |parameterIR_action_data*{parameterIR_action_data <- parameterIR_action_data*}|]
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
-    -- output: % % |- % : prefixedNameIR [] ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- output: % % |- % : prefixedNameIR ?() ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
 relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
 
@@ -15171,7 +15186,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty(tableProperty)*{tableProperty <- tableProperty*})| = 0)
     -- let TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
-    -- let tablePropertyIR_default_action = `empty ?() default_action= ` "NoAction" [] ( [] ) ; as tablePropertyIR
+    -- let tablePropertyIR_default_action = `empty ?() default_action= ` "NoAction" ?() ( [] ) ; as tablePropertyIR
     -- let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
     -- output: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
 
@@ -19040,7 +19055,7 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- if tablePropertyIR' <: tableActionsPropertyIR
   -- let actions={ tableActionIR*{tableActionIR <- tableActionIR*} } = tablePropertyIR' as tableActionsPropertyIR
   -- (let _annotationList tableActionReferenceIR #( _parameterListIR , _parameterListIR' ); = tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, _parameterListIR' -> _parameterListIR'*, tableActionReferenceIR -> tableActionReferenceIR*}
-  -- let tableActionReferenceIR_NoAction = . "NoAction" [] ( [] )
+  -- let tableActionReferenceIR_NoAction = . "NoAction" ?() ( [] )
   -- if ~tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
   -- let TBLC_1 = $add_action_tbl(TBLC_0, . "NoAction", [], [])
   -- let tableActionIR_NoAction = `empty tableActionReferenceIR_NoAction #( [] , [] );
@@ -19053,7 +19068,7 @@ def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableCon
   -- if tablePropertyIR' <: tableActionsPropertyIR
   -- let actions={ tableActionIR*{tableActionIR <- tableActionIR*} } = tablePropertyIR' as tableActionsPropertyIR
   -- (let _annotationList tableActionReferenceIR #( _parameterListIR , _parameterListIR' ); = tableActionIR)*{tableActionIR <- tableActionIR*, _annotationList -> _annotationList*, _parameterListIR -> _parameterListIR*, _parameterListIR' -> _parameterListIR'*, tableActionReferenceIR -> tableActionReferenceIR*}
-  -- let tableActionReferenceIR_NoAction = . "NoAction" [] ( [] )
+  -- let tableActionReferenceIR_NoAction = . "NoAction" ?() ( [] )
   -- if tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
 
   clause 3 : (TBLC_0, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = (TBLC_1, tablePropertyIR_h :: tablePropertyIR_t_updated*{tablePropertyIR_t_updated <- tablePropertyIR_t_updated*})
@@ -20076,18 +20091,26 @@ def $add_callableDef_non_overload_i(cursor, instContext, callableId, callableDef
   -- if ~$in_set<id>(id, { id_k*{id_k <- id_k*} })
   -- let callableDefEnv = $add_map<callableId, callableDef>(IC.block.callable, callableId, callableDef)
 
-def $find_callableDef_non_overload_i(cursor, instContext, prefixedNameIR) : (callableId, callableDef)? =
+def $find_callableDef_non_overload_i(cursor, instContext, prefixedNameIR) : (cursor, callableId, callableDef)? =
 
-  clause 0 : (p, IC, prefixedNameIR) = $find_non_overloaded<callableDef>(IC.global.callable, nameIR)
+  clause 0 : (p, IC, prefixedNameIR) = ?()
   -- if prefixedNameIR matches `.%`
   -- let . nameIR = prefixedNameIR
+  -- if (?() = $find_non_overloaded<callableDef>(IC.global.callable, nameIR))
 
-  clause 1 : (cursor, IC, prefixedNameIR) = $find_non_overloaded<callableDef>(IC.global.callable, nameIR)
+  clause 1 : (p, IC, prefixedNameIR) = ?((global, callableId, callableDef))
+  -- if prefixedNameIR matches `.%`
+  -- let . nameIR = prefixedNameIR
+  -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_non_overloaded<callableDef>(IC.global.callable, nameIR)
+  -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
+  -- let ?((callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+
+  clause 2 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(global, IC, . nameIR)
   -- if cursor matches `GLOBAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
 
-  clause 2 : (cursor, IC, prefixedNameIR) = ?((callableId, callableDef))
+  clause 3 : (cursor, IC, prefixedNameIR) = ?((block, callableId, callableDef))
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
@@ -20095,13 +20118,13 @@ def $find_callableDef_non_overload_i(cursor, instContext, prefixedNameIR) : (cal
   -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
   -- let ?((callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
 
-  clause 3 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(global, IC, ` nameIR)
+  clause 4 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(global, IC, ` nameIR)
   -- if cursor matches `BLOCK`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
   -- if (?() = $find_non_overloaded<callableDef>(IC.block.callable, nameIR))
 
-  clause 4 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(block, IC, ` nameIR)
+  clause 5 : (cursor, IC, prefixedNameIR) = $find_callableDef_non_overload_i(block, IC, ` nameIR)
   -- if cursor matches `LOCAL`
   -- if prefixedNameIR matches ``%`
   -- let ` nameIR = prefixedNameIR
@@ -21462,32 +21485,50 @@ relation TableAction_inst: instContext store |- tableActionIR : store tableActio
 
    paths
 
-    rulepath name-annotation
+    rulepath name-annotation-dot-prefix
     -- let prefixedNameIR _controlPlaneNameIR ( argumentListIR ) = tableActionReferenceIR
-    -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
-    -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
-    -- let ?((_callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+    -- let (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
+    -- if (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} matches (_)
+    -- let ?((cursor, _callableId, callableDef)) = (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?}
     -- if callableDef <: actionDef
     -- let actionDef = callableDef as actionDef
     -- let annotationList_actionDef action nameIR ( _parameterListIR ) _blockStatementIR = actionDef
     -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList_actionDef)
     -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
     -- let [nameIR_anno] = nameIR'*{nameIR' <- nameIR'*}
-    -- let controlPlaneNameIR = IC.path ++ [nameIR_anno]
+    -- if $starts_with(nameIR_anno, ".")
+    -- let controlPlaneNameIR = ?($strip_prefix(nameIR_anno, "."))
+    -- let tableActionReferenceIR' = prefixedNameIR controlPlaneNameIR ( argumentListIR )
+    -- let tableActionIR = annotationList tableActionReferenceIR' #( parameterListIR , parameterListIR_control );
+    -- output: % % |- % : STO tableActionIR
+
+    rulepath name-annotation
+    -- let prefixedNameIR _controlPlaneNameIR ( argumentListIR ) = tableActionReferenceIR
+    -- let (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
+    -- if (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} matches (_)
+    -- let ?((cursor, _callableId, callableDef)) = (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?}
+    -- if callableDef <: actionDef
+    -- let actionDef = callableDef as actionDef
+    -- let annotationList_actionDef action nameIR ( _parameterListIR ) _blockStatementIR = actionDef
+    -- let nameIR'*{nameIR' <- nameIR'*} = $name_annotation(annotationList_actionDef)
+    -- if nameIR'*{nameIR' <- nameIR'*} matches [ _/1 ]
+    -- let [nameIR_anno] = nameIR'*{nameIR' <- nameIR'*}
+    -- if ~$starts_with(nameIR_anno, ".")
+    -- let controlPlaneNameIR = $ite<controlPlaneNameIR>((cursor = global), ?(nameIR_anno), ?($join_text(IC.path ++ [nameIR_anno], ".")))
     -- let tableActionReferenceIR' = prefixedNameIR controlPlaneNameIR ( argumentListIR )
     -- let tableActionIR = annotationList tableActionReferenceIR' #( parameterListIR , parameterListIR_control );
     -- output: % % |- % : STO tableActionIR
 
     rulepath no-name-annotation
     -- let prefixedNameIR _controlPlaneNameIR ( argumentListIR ) = tableActionReferenceIR
-    -- let (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
-    -- if (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?} matches (_)
-    -- let ?((_callableId, callableDef)) = (callableId, callableDef)?{(callableId, callableDef) <- (callableId, callableDef)?}
+    -- let (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} = $find_callableDef_non_overload_i(local, IC, prefixedNameIR)
+    -- if (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?} matches (_)
+    -- let ?((cursor, _callableId, callableDef)) = (cursor, callableId, callableDef)?{(cursor, callableId, callableDef) <- (cursor, callableId, callableDef)?}
     -- if callableDef <: actionDef
     -- let actionDef = callableDef as actionDef
     -- let annotationList_actionDef action nameIR ( _parameterListIR ) _blockStatementIR = actionDef
     -- if ([] = $name_annotation(annotationList_actionDef))
-    -- let controlPlaneNameIR = IC.path ++ [nameIR]
+    -- let controlPlaneNameIR = $ite<controlPlaneNameIR>((cursor = global), ?(nameIR), ?($join_text(IC.path ++ [nameIR], ".")))
     -- let tableActionReferenceIR' = prefixedNameIR controlPlaneNameIR ( argumentListIR )
     -- let tableActionIR = annotationList tableActionReferenceIR' #( parameterListIR , parameterListIR_control );
     -- output: % % |- % : STO tableActionIR
@@ -28683,90 +28724,72 @@ def $align_tableActionArgumentInterfaces'(map<id, int>, parameterIR) : int? =
 
   clause 0 : ({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR) = $find_map<id, int>({ id_arg : i_arg*{i_arg <- i_arg*, id_arg <- id_arg*} }, nameIR_param)
 
-def $find_tableActionIR_by_name(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
+def $find_tableActionIR_qualified(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = ?((nameIR_action, tableActionIR_h))
+  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_qualified(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if ([] = $name_annotation(annotationList))
-  -- if (nameIR_action = nameIR_target)
+  -- let annotationList tableActionReferenceIR #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
+  -- let prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) = tableActionReferenceIR
+  -- if (?(nameIR) =/= controlPlaneNameIR)
 
-  clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
+  clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
+  -- let annotationList tableActionReferenceIR #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
+  -- let prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) = tableActionReferenceIR
+  -- if (?(nameIR) = controlPlaneNameIR)
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- if ([] = $name_annotation(annotationList))
-  -- if (nameIR_action =/= nameIR_target)
 
-  clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
-  -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
-  -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
-  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
-  -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
-  -- if b_hit
+def $find_tableActionIR_unqualified(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_name(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
-  -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
-  -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
-  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
-  -- let b_hit = ((nameIR = nameIR_action) \/ nameIR <- nameIR_annotation*{nameIR_annotation <- nameIR_annotation*})
-  -- if ~b_hit
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?()
+  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
+  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| > 1)
 
-def $find_tableActionIR_by_dotPrefix(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
+  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_split*{nameIR_split <- nameIR_split*}[0])
+  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
+  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| = 1)
 
-  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, _nameIR) = ?()
+def $find_tableActionIR_unqualified'(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
+
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?()
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches []
 
-  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_target) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR_target)
+  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList _prefixedNameIR _controlPlaneNameIR ( _argumentListIR ) #( _parameterListIR , _parameterListIR' ); = tableActionIR_h
-  -- if ([] = $name_annotation(annotationList))
+  -- let annotationList tableActionReferenceIR #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
+  -- let prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) = tableActionReferenceIR
+  -- if controlPlaneNameIR matches (_)
+  -- let ?(nameIR_controlPlane) = controlPlaneNameIR
+  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR_controlPlane, ".")
+  -- let nameIR'*{nameIR' <- nameIR'*} = $rev_<nameIR>(nameIR_split*{nameIR_split <- nameIR_split*})
+  -- if nameIR'*{nameIR' <- nameIR'*} matches _ :: _
+  -- let nameIR_unqualified :: _nameIR*{_nameIR <- _nameIR*} = nameIR'*{nameIR' <- nameIR'*}
+  -- if (nameIR =/= nameIR_unqualified)
 
-  clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
+  clause 2 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
   -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
   -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
-  -- if (nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} =/= [])
-  -- if ([] = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*}))
-
-  clause 3 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_by_dotPrefix(tableActionIR_t*{tableActionIR_t <- tableActionIR_t*}, nameIR)
-  -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
-  -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
-  -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
-  -- if (nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} =/= [])
-  -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
-  -- if ~nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
-
-  clause 4 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?((nameIR_action, tableActionIR_h))
-  -- if tableActionIR*{tableActionIR <- tableActionIR*} matches _ :: _
-  -- let tableActionIR_h :: tableActionIR_t*{tableActionIR_t <- tableActionIR_t*} = tableActionIR*{tableActionIR <- tableActionIR*}
-  -- let annotationList prefixedNameIR _controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
-  -- let nameIR_annotation*{nameIR_annotation <- nameIR_annotation*} = $name_annotation(annotationList)
-  -- let nameIR_annotation_dotPrefix*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*} = $filter_<nameIR>(nameIR_annotation*{nameIR_annotation <- nameIR_annotation*}, $starts_with(nameIR_annotation, ".")*{nameIR_annotation <- nameIR_annotation*})
-  -- let nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*} = $strip_prefix(nameIR_annotation_dotPrefix, ".")*{nameIR_annotation_dotPrefix <- nameIR_annotation_dotPrefix*}
-  -- if nameIR <- nameIR_annotation_strip*{nameIR_annotation_strip <- nameIR_annotation_strip*}
+  -- let annotationList tableActionReferenceIR #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_h
+  -- let prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) = tableActionReferenceIR
+  -- if controlPlaneNameIR matches (_)
+  -- let ?(nameIR_controlPlane) = controlPlaneNameIR
+  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR_controlPlane, ".")
+  -- let nameIR'*{nameIR' <- nameIR'*} = $rev_<nameIR>(nameIR_split*{nameIR_split <- nameIR_split*})
+  -- if nameIR'*{nameIR' <- nameIR'*} matches _ :: _
+  -- let nameIR_unqualified :: _nameIR*{_nameIR <- _nameIR*} = nameIR'*{nameIR' <- nameIR'*}
+  -- if (nameIR = nameIR_unqualified)
   -- let nameIR_action = $flatten_prefixedNameIR(prefixedNameIR)
 
 def $tableObject_create_entry_action(evalContext, tableActionsPropertyIR, tableActionInterface) : tableActionReferenceIR =
 
   clause 0 : (EC, actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found controlPlaneNameIR ( argumentIR*{argumentIR <- argumentIR*} )
-  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
+  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
   -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
   -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
   -- let annotationList prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_found
@@ -28779,8 +28802,8 @@ def $tableObject_create_entry_action(evalContext, tableActionsPropertyIR, tableA
   -- let argumentIR*{argumentIR <- argumentIR*} = argumentIR_data*{argumentIR_data <- argumentIR_data*} ++ typedExpressionIR_arg_cast*{typedExpressionIR_arg_cast <- typedExpressionIR_arg_cast*} as argumentIR*
 
   clause 1 : (EC, actions={ tableActionIR*{tableActionIR <- tableActionIR*} }, (nameIR_action_update, tableActionArgumentInterface_update*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*})) = ` nameIR_found controlPlaneNameIR ( argumentIR*{argumentIR <- argumentIR*} )
-  -- if (?() = $find_tableActionIR_by_dotPrefix(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
-  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_by_name(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
+  -- if (?() = $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update))
+  -- let (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} = $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action_update)
   -- if (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?} matches (_)
   -- let ?((nameIR_found, tableActionIR_found)) = (nameIR, tableActionIR)?{(nameIR, tableActionIR) <- (nameIR, tableActionIR)?}
   -- let annotationList prefixedNameIR controlPlaneNameIR ( argumentIR_data*{argumentIR_data <- argumentIR_data*} ) #( _parameterListIR , parameterIR_control*{parameterIR_control <- parameterIR_control*} ); = tableActionIR_found
