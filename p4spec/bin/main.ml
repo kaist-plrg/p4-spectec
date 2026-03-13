@@ -416,6 +416,8 @@ let cover_sim_command =
          let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
          let filenames_p4, filenames_stf =
            Util.Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+           |> List.map (fun (filename_p4, filename_stf, _) ->
+                  (filename_p4, filename_stf))
            |> List.filter (fun (filename_p4, _) ->
                   not (List.exists (String.equal filename_p4) excludes_p4))
            |> List.split
