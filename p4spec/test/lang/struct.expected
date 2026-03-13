@@ -10150,8 +10150,10 @@ syntax tableKeyIR =
 
 syntax tableKeyListIR = tableKeyIR*
 
+syntax controlPlaneNameIR = nameIR*
+
 syntax tableActionReferenceIR = 
-   | prefixedNameIR ( argumentListIR )
+   | prefixedNameIR controlPlaneNameIR ( argumentListIR )
 
 syntax tableActionIR = 
    | annotationList tableActionReferenceIR #( parameterListIR , parameterListIR );
@@ -19217,7 +19219,7 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
                             1. (Let TBLC_1 be $add_action_tbl(TBLC_0, prefixedNameIR, (parameterIR)*, []))
 
-                              1. (Let tableActionIR be (annotationList_update (prefixedNameIR ( [] )) #( (parameterIR_data)* , (parameterIR_control)* );))
+                              1. (Let tableActionIR be (annotationList_update (prefixedNameIR [] ( [] )) #( (parameterIR_data)* , (parameterIR_control)* );))
 
                                 1. Result in: % % |- % : TBLC_1 tableActionIR
 
@@ -19253,7 +19255,7 @@ relation TableAction_ok: TC TBLC_0 |- (annotationList tableActionReference ;) : 
 
                             1. (Let TBLC_1 be $add_action_tbl(TBLC_0, prefixedNameIR, (parameterIR)*, (argumentIR_cast)*))
 
-                              1. (Let tableActionIR be (annotationList_update (prefixedNameIR ( (argumentIR_cast)* )) #( (parameterIR_data)* , (parameterIR_control)* );))
+                              1. (Let tableActionIR be (annotationList_update (prefixedNameIR [] ( (argumentIR_cast)* )) #( (parameterIR_data)* , (parameterIR_control)* );))
 
                                 1. Result in: % % |- % : TBLC_1 tableActionIR
 
@@ -19313,7 +19315,7 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
           1. If ((?(([], [])) = $find_action(TBLC, prefixedNameIR))), then
 
-            1. Result in: % % |- % : (prefixedNameIR ( [] ))
+            1. Result in: % % |- % : (prefixedNameIR [] ( [] ))
 
           1. Else Phantom#1026
 
@@ -19347,7 +19349,7 @@ relation TableDefaultAction_ok: TC TBLC |- (= expression) : %
 
                                 1. If ((argumentIR_action_data = argumentIR_cast_data))*, then
 
-                                  1. Result in: % % |- % : (prefixedNameIR ( (argumentIR_cast)* ))
+                                  1. Result in: % % |- % : (prefixedNameIR [] ( (argumentIR_cast)* ))
 
                                 1. Else Phantom#1027
 
@@ -19623,7 +19625,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
           1. If ((?(([], [])) = $find_action(TBLC, prefixedNameIR))), then
 
-            1. Result in: % % |- % : (prefixedNameIR ( [] ))
+            1. Result in: % % |- % : (prefixedNameIR [] ( [] ))
 
           1. Else Phantom#1060
 
@@ -19649,7 +19651,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
                         1. If ((argumentIR_action_data = argumentIR_cast_data))*, then
 
-                          1. Result in: % % |- % : (prefixedNameIR ( (argumentIR_cast)* ))
+                          1. Result in: % % |- % : (prefixedNameIR [] ( (argumentIR_cast)* ))
 
                         1. Else Phantom#1061
 
@@ -20147,7 +20149,7 @@ relation Table_ok: TC |- (tableProperty)* : % %
 
             1. (TableProperties_ok: TC TBLC_0 |- (tableProperty)* : TBLC_1 (tablePropertyIR)*)
 
-              1. (Let tablePropertyIR_default_action be (((`empty) ?() default_action= ((` "NoAction") ( [] )) ;) as tablePropertyIR))
+              1. (Let tablePropertyIR_default_action be (((`empty) ?() default_action= ((` "NoAction") [] ( [] )) ;) as tablePropertyIR))
 
                 1. (Let (TBLC_2, (tablePropertyIR_updated)*) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*))
 
@@ -25172,7 +25174,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, (tablePropertyIR)*)
 
             1. (Let (_annotationList tableActionReferenceIR #( _parameterListIR , _parameterListIR' );) be tableActionIR)*
 
-              1. (Let tableActionReferenceIR_NoAction be ((. "NoAction") ( [] )))
+              1. (Let tableActionReferenceIR_NoAction be ((. "NoAction") [] ( [] )))
 
                 1. Case analysis on tableActionReferenceIR_NoAction is in (tableActionReferenceIR)*
 
@@ -26058,7 +26060,7 @@ syntax storageReference =
    | storageReference [ value : value ]
 
 syntax actionDef = 
-   | action nameIR ( parameterListIR ) blockStatementIR
+   | annotationList action nameIR ( parameterListIR ) blockStatementIR
 
 syntax definedFunctionDef = 
    | function nameIR < typeParameterListIR >( parameterListIR ) blockStatementIR
@@ -26091,7 +26093,7 @@ syntax methodDef =
    | table_apply{ tablePropertyListIR }
 
 syntax callableDef = 
-   | action nameIR ( parameterListIR ) blockStatementIR
+   | annotationList action nameIR ( parameterListIR ) blockStatementIR
    | function nameIR < typeParameterListIR >( parameterListIR ) blockStatementIR
    | extern_function nameIR < typeParameterListIR >( parameterListIR )
    | extern_method nameIR < typeParameterListIR >( parameterListIR ) blockStatementIR?
@@ -26122,7 +26124,7 @@ def $parameterListIR_of_callableDef(callableDef)
 
       1. Return $parameterListIR_of_methodDef(methodDef)
 
-def $parameterListIR_of_actionDef((action _nameIR ( parameterListIR ) _blockStatementIR))
+def $parameterListIR_of_actionDef((annotationList action _nameIR ( parameterListIR ) _blockStatementIR))
 
 1. Return parameterListIR
 
@@ -28271,7 +28273,7 @@ relation ActionDecl_inst: p IC_0 |- (annotationList action nameIR ( parameterLis
 
   1. (Let callableId be $callableId_IR(nameIR, parameterListIR))
 
-    1. (Let actionDef be (action nameIR ( parameterListIR ) blockStatementIR))
+    1. (Let actionDef be (annotationList action nameIR ( parameterListIR ) blockStatementIR))
 
       1. (Let IC_1 be $add_callableDef_non_overload_i(p, IC_0, callableId, (actionDef as callableDef)))
 
@@ -32328,7 +32330,7 @@ relation Table_eval: EC_0 ARCH_0 |- typeId TBL : % % %
 
                     1. (Let (` (tableMatch)*) be (tableMatchesResult as continueResult<tableMatch*>))
 
-                      1. (Let (prefixedNameIR ( argumentListIR )) be $select_action(TBL, (tableMatch)*))
+                      1. (Let (prefixedNameIR _controlPlaneNameIR ( argumentListIR )) be $select_action(TBL, (tableMatch)*))
 
                         1. (Stmt_eval: (local) EC_2 ARCH_2 |- (((prefixedNameIR as callableTargetIR) < [] >( argumentListIR );) as statementIR) : EC_3 ARCH_3 statementResult)
 
@@ -32542,7 +32544,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR <_>( argumentListIR ): % % %
 
                 1. (Let (p_ref, actionDef) be ((cursor, callableDef) as (cursor, actionDef)))
 
-                  1. (Let (action nameIR ( parameterListIR ) blockStatementIR) be actionDef)
+                  1. (Let (_annotationList action nameIR ( parameterListIR ) blockStatementIR) be actionDef)
 
                     1. (Let actionCallee be (action p_ref . nameIR ( parameterListIR # (id_default)* ) blockStatementIR))
 
@@ -36103,7 +36105,7 @@ def $find_tableActionIR_by_name((tableActionIR)*, nameIR)
 
     1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
 
-      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
+      1. (Let (annotationList (prefixedNameIR _controlPlaneNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
 
         1. (Let nameIR_action be $flatten_prefixedNameIR(prefixedNameIR))
 
@@ -36151,7 +36153,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
     1. (Let tableActionIR_h :: (tableActionIR_t)* be (tableActionIR)*)
 
-      1. (Let (annotationList (_prefixedNameIR ( _argumentListIR )) #( _parameterListIR , _parameterListIR' );) be tableActionIR_h)
+      1. (Let (annotationList (_prefixedNameIR _controlPlaneNameIR ( _argumentListIR )) #( _parameterListIR , _parameterListIR' );) be tableActionIR_h)
 
         1. If (([] = $name_annotation(annotationList))), then
 
@@ -36159,7 +36161,7 @@ def $find_tableActionIR_by_dotPrefix((tableActionIR)*, nameIR)
 
         1. Else Phantom#1931
 
-      2. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
+      2. (Let (annotationList (prefixedNameIR _controlPlaneNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_h)
 
         1. (Let (nameIR_annotation)* be $name_annotation(annotationList))
 
@@ -36205,7 +36207,7 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
     1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
 
-      1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
+      1. (Let (annotationList (prefixedNameIR controlPlaneNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
 
         1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
 
@@ -36221,7 +36223,7 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
                     1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
 
-                      1. Return ((` nameIR_found) ( (argumentIR)* ))
+                      1. Return ((` nameIR_found) controlPlaneNameIR ( (argumentIR)* ))
 
                 1. Else Phantom#1937
 
@@ -36235,7 +36237,7 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
       1. (Let ?((nameIR_found, tableActionIR_found)) be ((nameIR, tableActionIR))?)
 
-        1. (Let (annotationList (prefixedNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
+        1. (Let (annotationList (prefixedNameIR controlPlaneNameIR ( (argumentIR_data)* )) #( _parameterListIR , (parameterIR_control)* );) be tableActionIR_found)
 
           1. (Let (i_arg_aligned)* be $align_tableActionArgumentInterfaces((parameterIR_control)*, (tableActionArgumentInterface_update)*))
 
@@ -36251,7 +36253,7 @@ def $tableObject_create_entry_action(EC, (actions={ (tableActionIR)* }), (nameIR
 
                       1. (Let (argumentIR)* be (argumentIR_data)* ++ ((typedExpressionIR_arg_cast)* as argumentIR*))
 
-                        1. Return ((` nameIR_found) ( (argumentIR)* ))
+                        1. Return ((` nameIR_found) controlPlaneNameIR ( (argumentIR)* ))
 
                   1. Else Phantom#1939
 
