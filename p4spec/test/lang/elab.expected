@@ -44,9 +44,11 @@ def $join_text(text*, text) : text =
   -- if text*{text <- text*} matches [ _/1 ]
   -- let [t_h] = text*{text <- text*}
 
-  clause 2 : (text*{text <- text*}, t_sep) = t_h ++ t_sep ++ $join_text(t_t*{t_t <- t_t*}, t_sep)
+  clause 2 : (text'*{text' <- text'*}, t_sep) = t_h1 ++ t_sep ++ $join_text(t_h2 :: t_t*{t_t <- t_t*}, t_sep)
+  -- if text'*{text' <- text'*} matches _ :: _
+  -- let t_h1 :: text*{text <- text*} = text'*{text' <- text'*}
   -- if text*{text <- text*} matches _ :: _
-  -- let t_h :: t_t*{t_t <- t_t*} = text*{text <- text*}
+  -- let t_h2 :: t_t*{t_t <- t_t*} = text*{text <- text*}
 
 def $replace_text(text, text, text) : text =
 
