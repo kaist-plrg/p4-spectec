@@ -17092,6 +17092,32 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
 . Otherwise:
  .. Return ``·``.
 
+xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
+
+
+. Check that ``t[0`` ``:`` ``2]`` is equal to ``"0x"``.
+. Let ``n~len~`` be the length of ``t``.
+. Let ``int`` be ``n~len~`` ``-`` ``2``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~len_bytes~`` be ``int``.
+. Let ``text`` be ``<<reverse_bytes_of_hex',$reverse_bytes_of_hex'(t[2`` ``:`` ``n~len_bytes~])>>``.
+. Return ``"0x"`` concatenated with ``text``.
+
+xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t)]
+
+
+. If the length of ``t`` is less than or equal to ``2``:
+ .. Return ``t``.
+. Let ``n~len~`` be the length of ``t``.
+. If ``n~len~`` is greater than ``2``:
+ .. Let ``t~byte~`` be ``t[0`` ``:`` ``2]``.
+ .. Let ``int`` be ``n~len~`` ``-`` ``2``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~len_bytes~`` be ``int``.
+ .. Let ``t~bytes~`` be ``t[2`` ``:`` ``n~len_bytes~]``.
+ .. Let ``t~bytes_rev~`` be ``xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t~bytes~)]``.
+ .. Return ``t~bytes_rev~`` concatenated with ``t~byte~``.
+
 xref:text_of_number_tableKeyValueInterface[$text_of_number_tableKeyValueInterface(tableKeyValueInterface)]
 
 
@@ -17192,7 +17218,8 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ``+`SLASH+`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
-  ... Let ``i~key_prefix_value~`` be ``xref:text_to_int[$text_to_int(text~key_prefix_value~)]``.
+  ... Let ``text~key_prefix_value_rev~`` be ``xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(text~key_prefix_value~)]``.
+  ... Let ``i~key_prefix_value~`` be ``xref:text_to_int[$text_to_int(text~key_prefix_value_rev~)]``.
   ... Let ``n~key_type_width~`` be ``xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR)]``.
   ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
   ... Let ``int`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
@@ -17263,9 +17290,50 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 +
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
 . Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
-. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
-. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
-. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
+. If xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``]:
+ .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
+ .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
+. Else:
+ .. Check that xref:forall_[all ``(`` ``$starts_with(nameIR~key_update~,`` ``"key.field")`` ``)^{asterisk}^`` are true].
+ .. Let ``nameIR~key_update_num~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``nameIR~key_update_num~`` be xref:strip_prefix[the text ``nameIR~key_update~`` with the prefix ``"key.field"`` removed].
+--
++
+for each ``nameIR~key_update~`` in ``nameIR~key_update~^{asterisk}^``
+ .. Let ``int^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``int`` be ``xref:text_to_int[$text_to_int(nameIR~key_update_num~)]``.
+--
++
+for each ``nameIR~key_update_num~`` in ``nameIR~key_update_num~^{asterisk}^``
+ .. Check that ``int`` has type ``nat``, for all ``int`` in ``int^{asterisk}^``.
+ .. Let ``n~key_update~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``n~key_update~`` be ``int``.
+--
++
+for each ``int`` in ``int^{asterisk}^``
+ .. Let ``nameIR~key_update_subst~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``nameIR~key_update_subst~`` be ``nameIR~key~^{asterisk}^[n~key_update~]``.
+--
++
+for each ``n~key_update~`` in ``n~key_update~^{asterisk}^``
+ .. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update_subst~^{asterisk}^`` ``+}+``].
+ .. Let ``tableKeyInterface~subst~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``tableKeyInterface~subst~`` be ( ``nameIR~key_update_subst~``, ``tableKeyValueInterface~update~`` ).
+--
++
+for each ``nameIR~key_update_subst~`` in ``nameIR~key_update_subst~^{asterisk}^`` and ``tableKeyValueInterface~update~`` in ``tableKeyValueInterface~update~^{asterisk}^``
+ .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface~subst~^{asterisk}^)]``.
+ .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
 xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
 
@@ -17328,27 +17396,31 @@ for each ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``
 --
 +
 for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``
-. Let ``int^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``nameIR~param~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
+ ** Let ``nameIR~param~`` be the name of ``parameterIR``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Check that ``int^?^`` is defined, for all ``int^?^`` in ``int^?^^{asterisk}^``.
+. Check that xref:sub_set[``+{+`` ``nameIR~arg_resolved~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``nameIR~param~^{asterisk}^`` ``+}+``].
 . Let ``i~aligned~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``i~aligned~`` be ``int^?^``.
+ ** Let ``i~aligned~`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
 --
 +
-for each ``int^?^`` in ``int^?^^{asterisk}^``
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Return ``i~aligned~^{asterisk}^``.
 
 xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+ ( id~arg~ +:+ i~arg~ )^{asterisk}^ +}+, ++_++ ++_++ ++_++ nameIR~param~ ++_++)]
 
 
-. Return xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
+. Let ``int^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
+. If let ``i`` be ``int^?^``:
+ .. Return ``i``.
+. If ``·`` is equal to xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``]:
+ .. Return ``0``.
 
 xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{asterisk}^, nameIR)]
 
