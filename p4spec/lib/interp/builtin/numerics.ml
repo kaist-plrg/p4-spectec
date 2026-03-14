@@ -5,6 +5,10 @@ module Value = Runtime.Dynamic_Il.Value
 open Error
 open Util.Source
 
+(* Maximum bit width *)
+
+let max_bit_width = Bigint.of_int 2048
+
 (* Conversion between meta-bits and OCaml bool array *)
 
 let bits_of_value (value : value) : bool array =
@@ -45,6 +49,7 @@ let shl (add : value -> unit) (at : region) (targs : targ list)
   let value_base, value_offset = Extract.two at values_input in
   let base = bigint_of_value value_base in
   let offset = bigint_of_value value_offset in
+  if Bigint.(offset > max_bit_width) then error at "shift amount too large";
   shl' base offset |> value_of_bigint add
 
 (* dec $shr(int, int) : int *)
@@ -61,6 +66,7 @@ let shr (add : value -> unit) (at : region) (targs : targ list)
   let value_base, value_offset = Extract.two at values_input in
   let base = bigint_of_value value_base in
   let offset = bigint_of_value value_offset in
+  if Bigint.(offset > max_bit_width) then error at "shift amount too large";
   shr' base offset |> value_of_bigint add
 
 (* dec $shr_arith(int, int, int) : int *)
@@ -80,6 +86,7 @@ let shr_arith (add : value -> unit) (at : region) (targs : targ list)
   let value_base, value_offset, value_modulus = Extract.three at values_input in
   let base = bigint_of_value value_base in
   let offset = bigint_of_value value_offset in
+  if Bigint.(offset > max_bit_width) then error at "shift amount too large";
   let modulus = bigint_of_value value_modulus in
   shr_arith' base offset modulus |> value_of_bigint add
 
@@ -108,6 +115,7 @@ let bitstr_to_int (add : value -> unit) (at : region) (targs : targ list)
   Extract.zero at targs;
   let value_width, value_bitstr = Extract.two at values_input in
   let width = bigint_of_value value_width in
+  if Bigint.(width > max_bit_width) then error at "bitstr width too large";
   let bitstr = bigint_of_value value_bitstr in
   bitstr_to_int' width bitstr |> value_of_bigint add
 
@@ -124,6 +132,7 @@ let int_to_bitstr (add : value -> unit) (at : region) (targs : targ list)
   Extract.zero at targs;
   let value_width, value_int = Extract.two at values_input in
   let width = bigint_of_value value_width in
+  if Bigint.(width > max_bit_width) then error at "bitstr width too large";
   let rawint = bigint_of_value value_int in
   int_to_bitstr' width rawint |> value_of_bigint add
 
@@ -172,7 +181,9 @@ let int_to_bits_unsigned (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let value_width, value_int = Extract.two at values_input in
-  let width = bigint_of_value value_width |> Bigint.to_int_exn in
+  let width = bigint_of_value value_width in
+  if Bigint.(width > max_bit_width) then error at "bitstr width too large";
+  let width = Bigint.to_int_exn width in
   let value = bigint_of_value value_int in
   int_to_bits_unsigned' value width |> value_of_bits add
 
@@ -182,7 +193,9 @@ let int_to_bits_signed (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let value_width, value_int = Extract.two at values_input in
-  let width = bigint_of_value value_width |> Bigint.to_int_exn in
+  let width = bigint_of_value value_width in
+  if Bigint.(width > max_bit_width) then error at "bitstr width too large";
+  let width = Bigint.to_int_exn width in
   let value = bigint_of_value value_int in
   let mask = Bigint.((one lsl width) - one) in
   let value = Bigint.(value land mask) in
