@@ -12,7 +12,22 @@ open Error
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
-  let transform_stf_stmt = Fun.id
+  let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
+    let transform_name name =
+      Stf.Transform.Name.(
+        name |> rewrite_substring ~substrings:[ "ingress" ] ~replacement:"ip.ig")
+    in
+    match stmt with
+    | RegisterRead (name, number) ->
+        let name = transform_name name in
+        RegisterRead (name, number)
+    | RegisterWrite (name, number_reg, number_index) ->
+        let name = transform_name name in
+        RegisterWrite (name, number_reg, number_index)
+    | RegisterReset name ->
+        let name = transform_name name in
+        RegisterReset name
+    | _ -> stmt
 
   (* Mode *)
 
