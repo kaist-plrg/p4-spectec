@@ -17387,44 +17387,14 @@ for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
  .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
  .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 . Else:
- .. Check that xref:forall_[all ``(`` ``$starts_with(nameIR~key_update~,`` ``"key.field")`` ``)^{asterisk}^`` are true].
- .. Let ``nameIR~key_update_num~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``nameIR~key_update_num~`` be xref:strip_prefix[the text ``nameIR~key_update~`` with the prefix ``"key.field"`` removed].
---
-+
-for each ``nameIR~key_update~`` in ``nameIR~key_update~^{asterisk}^``
- .. Let ``int^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``int`` be ``xref:text_to_int[$text_to_int(nameIR~key_update_num~)]``.
---
-+
-for each ``nameIR~key_update_num~`` in ``nameIR~key_update_num~^{asterisk}^``
- .. Check that ``int`` has type ``nat``, for all ``int`` in ``int^{asterisk}^``.
- .. Let ``n~key_update~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``n~key_update~`` be ``int``.
---
-+
-for each ``int`` in ``int^{asterisk}^``
- .. Let ``nameIR~key_update_subst~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``nameIR~key_update_subst~`` be ``nameIR~key~^{asterisk}^[n~key_update~]``.
---
-+
-for each ``n~key_update~`` in ``n~key_update~^{asterisk}^``
- .. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update_subst~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``nameIR~key_non_selector~^{asterisk}^`` is equal to the length of ``nameIR~key_update~^{asterisk}^``.
  .. Let ``tableKeyInterface~subst~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``tableKeyInterface~subst~`` be ( ``nameIR~key_update_subst~``, ``tableKeyValueInterface~update~`` ).
+  *** Let ``tableKeyInterface~subst~`` be ( ``nameIR~key_non_selector~``, ``tableKeyValueInterface~update~`` ).
 --
 +
-for each ``nameIR~key_update_subst~`` in ``nameIR~key_update_subst~^{asterisk}^`` and ``tableKeyValueInterface~update~`` in ``tableKeyValueInterface~update~^{asterisk}^``
+for each ``nameIR~key_non_selector~`` in ``nameIR~key_non_selector~^{asterisk}^`` and ``tableKeyValueInterface~update~`` in ``tableKeyValueInterface~update~^{asterisk}^``
  .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface~subst~^{asterisk}^)]``.
  .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
