@@ -28840,13 +28840,9 @@ def $find_tableActionIR_qualified(tableActionIR*, nameIR) : (nameIR, tableAction
 
 def $find_tableActionIR_unqualified(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?()
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action)
   -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
-  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| > 1)
-
-  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_split*{nameIR_split <- nameIR_split*}[0])
-  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
-  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| = 1)
+  -- let nameIR_action = $rev_<nameIR>(nameIR_split*{nameIR_split <- nameIR_split*})[0]
 
 def $find_tableActionIR_unqualified'(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 

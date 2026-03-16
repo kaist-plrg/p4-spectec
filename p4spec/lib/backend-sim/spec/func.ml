@@ -75,14 +75,13 @@ let tableObject_add_default_action (value_ctx : Value.t)
 (* find/update_object_qualified_e/unqualified_e *)
 
 let find_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t) :
-    Value.t =
+    Value.t option =
   !call "find_object_qualified_e" [] [ value_arch; value_objectId ]
-  |> unwrap_opt_v |> Option.get
+  |> unwrap_opt_v
 
 let find_object_unqualified_e (value_arch : Value.t) (value_id : Value.t) :
-    Value.t =
-  !call "find_object_unqualified_e" [] [ value_arch; value_id ]
-  |> unwrap_opt_v |> Option.get
+    Value.t option =
+  !call "find_object_unqualified_e" [] [ value_arch; value_id ] |> unwrap_opt_v
 
 let update_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t)
     (value_object : Value.t) : Value.t =
