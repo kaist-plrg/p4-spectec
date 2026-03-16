@@ -98,7 +98,7 @@ let p4_matches_stf filepath_p4 filepath_stf =
   base_p4 = dir_stf || (dir_p4 = dir_stf && base_p4 = base_stf)
 
 let collect_test_pairs (arch : string) (testdirs_p4 : string list)
-    (testdirs_stf : string list) (patchdir : string) :
+    (testdirs_stf : string list) (patchdirs : string list) :
     (string * string * bool) list =
   let filenames_p4 =
     List.concat_map
@@ -123,7 +123,8 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
       filenames_p4
   in
   let filenames_p4_patch =
-    Filesys.collect_files_with_basedir ~suffix:".p4" patchdir
+    patchdirs
+    |> List.concat_map (Filesys.collect_files_with_basedir ~suffix:".p4")
   in
   let filenames_p4 =
     patch_with_basedir ~suffix:".p4" filenames_p4 filenames_p4_patch
@@ -134,7 +135,8 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
       testdirs_stf
   in
   let filenames_stf_patch =
-    Filesys.collect_files_with_basedir ~suffix:".stf" patchdir
+    patchdirs
+    |> List.concat_map (Filesys.collect_files_with_basedir ~suffix:".stf")
   in
   let filenames_stf =
     patch_with_basedir ~suffix:".stf" filenames_stf filenames_stf_patch
