@@ -7,6 +7,10 @@ let version = "0.1"
 
 exception CommandError of string
 
+let exit_with_message ?(errorcode = 1) msg =
+  Format.printf "%s\n" msg;
+  exit errorcode
+
 (* Operations *)
 
 let frontend filenames_spec =
@@ -281,13 +285,15 @@ let run_command =
          let result = Driver.run_program relname includes_p4 filename_p4 in
          Inst.Hook.finish ();
          match result with
-         | Pass _ -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
-         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+         | Pass _ -> "passed\n" |> exit_with_message ~errorcode:42
+         | Fail (`Syntax (_, msg)) ->
+             "sytax error: " ^ msg |> exit_with_message ~errorcode:6
+         | Fail (`Runtime (_, msg)) ->
+             "runtime error: " ^ msg |> exit_with_message ~errorcode:6
        with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | CommandError msg -> exit_with_message msg ~errorcode:1
+       | ParseError (at, msg) -> string_of_error at msg |> exit_with_message ~errorcode:1
+       | ElabError (at, msg) -> string_of_error at msg |> exit_with_message ~errorcode:1)
 
 let sim_command =
   Core.Command.basic
@@ -332,14 +338,17 @@ let sim_command =
          in
          Inst.Hook.finish ();
          match result with
-         | Pass -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
-         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+         | Pass ->
+             exit_with_message "passed" ~errorcode:42
+         | Fail (`Syntax (_, msg)) ->
+             "sytax error: " ^ msg |> exit_with_message ~errorcode:6
+         | Fail (`Runtime (_, msg)) ->
+             "runtime error: " ^ msg |> exit_with_message ~errorcode:6
        with
-       | CommandError msg -> Format.printf "%s\n" msg
+       | CommandError msg -> exit_with_message msg ~errorcode:1
        | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg)
-       | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
+           string_of_error at msg |> exit_with_message ~errorcode:1
+       | StfError msg -> string_of_error no_region msg |> exit_with_message ~errorcode:1)
 
 let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
