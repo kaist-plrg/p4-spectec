@@ -28776,14 +28776,8 @@ def $tableObject_create_entry_keyset(evalContext, tableKeysPropertyIR, tableKeys
   -- (let (nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*, nameIR_key_update -> nameIR_key_update*, tableKeyValueInterface_update -> tableKeyValueInterface_update*}
   -- let nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} = $filter_<nameIR>(nameIR_key*{nameIR_key <- nameIR_key*}, (nameIR_matchKind =/= "selector")*{nameIR_matchKind <- nameIR_matchKind*})
   -- if ~$eq_set<nameIR>({ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} }, { nameIR_key_update*{nameIR_key_update <- nameIR_key_update*} })
-  -- if $forall_($starts_with(nameIR_key_update, "key.field")*{nameIR_key_update <- nameIR_key_update*})
-  -- (let nameIR_key_update_num = $strip_prefix(nameIR_key_update, "key.field"))*{nameIR_key_update <- nameIR_key_update*, nameIR_key_update_num -> nameIR_key_update_num*}
-  -- (let int = $text_to_int(nameIR_key_update_num))*{nameIR_key_update_num <- nameIR_key_update_num*, int -> int*}
-  -- (if int <: nat)*{int <- int*}
-  -- (let n_key_update = int as nat)*{int <- int*, n_key_update -> n_key_update*}
-  -- (let nameIR_key_update_subst = nameIR_key*{nameIR_key <- nameIR_key*}[n_key_update])*{n_key_update <- n_key_update*, nameIR_key_update_subst -> nameIR_key_update_subst*}
-  -- if $eq_set<nameIR>({ nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*} }, { nameIR_key_update_subst*{nameIR_key_update_subst <- nameIR_key_update_subst*} })
-  -- (let tableKeyInterface_subst = (nameIR_key_update_subst, tableKeyValueInterface_update))*{nameIR_key_update_subst <- nameIR_key_update_subst*, tableKeyValueInterface_update <- tableKeyValueInterface_update*, tableKeyInterface_subst -> tableKeyInterface_subst*}
+  -- if (|nameIR_key_non_selector*{nameIR_key_non_selector <- nameIR_key_non_selector*}| = |nameIR_key_update*{nameIR_key_update <- nameIR_key_update*}|)
+  -- (let tableKeyInterface_subst = (nameIR_key_non_selector, tableKeyValueInterface_update))*{nameIR_key_non_selector <- nameIR_key_non_selector*, tableKeyValueInterface_update <- tableKeyValueInterface_update*, tableKeyInterface_subst -> tableKeyInterface_subst*}
   -- let simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} = $tableObject_create_entry_keys(EC, (nameIR_key, nameIR_matchKind, typeIR)*{nameIR_key <- nameIR_key*, nameIR_matchKind <- nameIR_matchKind*, typeIR <- typeIR*}, tableKeyInterface_subst*{tableKeyInterface_subst <- tableKeyInterface_subst*})
 
 def $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR> =
@@ -28840,13 +28834,9 @@ def $find_tableActionIR_qualified(tableActionIR*, nameIR) : (nameIR, tableAction
 
 def $find_tableActionIR_unqualified(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 
-  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = ?()
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_action)
   -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
-  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| > 1)
-
-  clause 1 : (tableActionIR*{tableActionIR <- tableActionIR*}, nameIR) = $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR_split*{nameIR_split <- nameIR_split*}[0])
-  -- let nameIR_split*{nameIR_split <- nameIR_split*} = $split_text(nameIR, ".")
-  -- if (|nameIR_split*{nameIR_split <- nameIR_split*}| = 1)
+  -- let nameIR_action = $rev_<nameIR>(nameIR_split*{nameIR_split <- nameIR_split*})[0]
 
 def $find_tableActionIR_unqualified'(tableActionIR*, nameIR) : (nameIR, tableActionIR)? =
 

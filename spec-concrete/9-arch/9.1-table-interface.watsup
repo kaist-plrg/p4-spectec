@@ -377,18 +377,14 @@ def $tableObject_create_entry_keyset(
   -- if ((nameIR_key, nameIR_matchKind, typeIR)
       = $interface_of_tableKeyIR(tableKeyIR))*
   -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
-  ---- ;; check that update keys are named as key.fieldn
+  ---- ;; if key names don't match, use the given order
   -- if nameIR_key_non_selector*
       = $filter_<nameIR>(nameIR_key*, (nameIR_matchKind =/= "selector")*)
   -- if ~$eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update* })
-  -- if $forall_(($starts_with(nameIR_key_update, "key.field"))*)
+  -- if |nameIR_key_non_selector*| = |nameIR_key_update*|
   ---- ;; substitute update key names with table key names
-  -- if (nameIR_key_update_num = $strip_prefix(nameIR_key_update, "key.field"))*
-  -- if (n_key_update = $text_to_int(nameIR_key_update_num))*
-  -- if (nameIR_key_update_subst = nameIR_key*[n_key_update])*
-  -- if $eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update_subst* })
   -- if (tableKeyInterface_subst
-      = (nameIR_key_update_subst, tableKeyValueInterface_update))*
+      = (nameIR_key_non_selector, tableKeyValueInterface_update))*
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keys(
           EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface_subst*)
@@ -469,13 +465,10 @@ dec $find_tableActionIR_unqualified(tableActionIR*, nameIR)
 dec $find_tableActionIR_unqualified'(tableActionIR*, nameIR)
   : (nameIR, tableActionIR)?
 
-def $find_tableActionIR_unqualified(tableActionIR*, nameIR) = eps
-  -- if nameIR_split* = $split_text(nameIR, ".")
-  -- if $(|nameIR_split*| > 1)
 def $find_tableActionIR_unqualified(tableActionIR*, nameIR)
-  = $find_tableActionIR_unqualified'(tableActionIR*, nameIR_split*[0])
+  = $find_tableActionIR_unqualified'(tableActionIR*, nameIR_action)
   -- if nameIR_split* = $split_text(nameIR, ".")
-  -- if $(|nameIR_split*| = 1)
+  -- if nameIR_action = $rev_<nameIR>(nameIR_split*)[0]
 
 def $find_tableActionIR_unqualified'(eps, nameIR) = eps
 def $find_tableActionIR_unqualified'(
