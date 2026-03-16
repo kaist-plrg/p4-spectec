@@ -397,7 +397,7 @@ let cover_sim_command =
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"STF test directories"
      and patchdir =
-       flag "-patch-dir" (required string) ~doc:"directory for P4/STF patches"
+       flag "-patch-dir" (listed string) ~doc:"directory for P4/STF patches"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
