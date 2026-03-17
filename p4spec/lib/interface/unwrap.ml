@@ -29,6 +29,11 @@ let unwrap_tuple_v_two (value : value) : value * value =
   | TupleV [ v_a; v_b ] -> (v_a, v_b)
   | _ -> failwith "expected TupleV of length 2"
 
+let unwrap_tuple_v_three (value : value) : value * value * value =
+  match value.it with
+  | TupleV [ v_a; v_b; v_c ] -> (v_a, v_b, v_c)
+  | _ -> failwith "expected TupleV of length 3"
+
 let unwrap_opt_v (value : value) : value option =
   match value.it with
   | OptV value_opt -> value_opt
