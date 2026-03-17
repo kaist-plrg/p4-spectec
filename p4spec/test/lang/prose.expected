@@ -17365,6 +17365,19 @@ xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +#+ name
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
 
+xref:key_interface_of_tableObject[$key_interface_of_tableObject(+TABLE+ typeId +{+ frame TBL +}+)]
+
+
+. Let ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+`` be ``TBL.+KEYS+``.
+. Let ``nameIR~key~^{asterisk}^`` be the list, ``nameIR~matchKind~^{asterisk}^`` be the list, and ``typeIR^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)`` be ``xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(tableKeyIR)]``.
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+. Return ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^``.
+
 xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC, +KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+, tableKeyInterface^{asterisk}^)]
 
 
@@ -17383,20 +17396,9 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 +
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
 . Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
-. If xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``]:
- .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
- .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
-. Else:
- .. Check that the length of ``nameIR~key_non_selector~^{asterisk}^`` is equal to the length of ``nameIR~key_update~^{asterisk}^``.
- .. Let ``tableKeyInterface~subst~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``tableKeyInterface~subst~`` be ( ``nameIR~key_non_selector~``, ``tableKeyValueInterface~update~`` ).
---
-+
-for each ``nameIR~key_non_selector~`` in ``nameIR~key_non_selector~^{asterisk}^`` and ``tableKeyValueInterface~update~`` in ``tableKeyValueInterface~update~^{asterisk}^``
- .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface~subst~^{asterisk}^)]``.
- .. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
+. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
+. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
+. Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
 xref:alias_to_original_lookup_map[$alias_to_original_lookup_map(parameterIR^{asterisk}^)]
 
@@ -17607,14 +17609,16 @@ xref:tableObject_add_entry[$tableObject_add_entry(EC, +TABLE+ typeId +{+ frame T
 
 
 . Let ``tableEntryPriorityOptIR`` be ``xref:tableObject_create_entry_priority[$tableObject_create_entry_priority(tableEntryPriorityInterface)]``.
-. Check that if ``xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)]``, then ``xref:is_some_[$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)]``.
-. Let ``keysetExpressionIR`` be ``xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)]``.
-. Let ``tableActionReferenceIR`` be ``xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)]``.
-. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``+`EMPTY+`` ``+;+``.
-. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+`` be ``TBL.+ENTRIES+``.
-. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+}+``.
-. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
-. Return ``+TABLE+`` ``typeId`` ``+{+`` ``frame`` ``TBL~updated~`` ``+}+``.
+. If if ``xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)]``, then ``xref:is_some_[$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)]``:
+ .. Let ``keysetExpressionIR`` be ``xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)]``.
+ .. Let ``tableActionReferenceIR`` be ``xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)]``.
+ .. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``+`EMPTY+`` ``+;+``.
+ .. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+`` be ``TBL.+ENTRIES+``.
+ .. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+}+``.
+ .. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
+ .. Return ``+TABLE+`` ``typeId`` ``+{+`` ``frame`` ``TBL~updated~`` ``+}+``.
+. Otherwise:
+ .. Return ``·``.
 
 xref:tableObject_add_default_action[$tableObject_add_default_action(EC, +TABLE+ typeId +{+ frame TBL +}+, tableActionInterface)]
 
