@@ -1099,9 +1099,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let cond = Value.get_bool value_cond in
     (cond, value_cond)
 
-  and eval_if_cond_opt (_ctx : Ctx.t) (_exp_cond : exp) (_vars : var list)
-      (_iterexps : iterexp list) : bool * value option =
-    back_err no_region "(TODO) eval_if_cond_opt"
+  and eval_if_cond_opt (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
+      (iterexps : iterexp list) : bool * value option =
+    let ctx_sub_opt = Ctx.sub_opt ctx vars in
+    match ctx_sub_opt with
+    | Some ctx_sub ->
+        let cond, value_cond = eval_if_cond_iter ctx_sub exp_cond iterexps in
+        (cond, Some value_cond)
+    | None -> (false, None)
 
   and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
       (iterexps : iterexp list) : bool * value list =
@@ -1198,6 +1203,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_input;
     (hold, value_res)
 
+  and eval_hold_cond_opt (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (vars : var list) (iterexps : iterexp list) : bool * value option =
+    let ctx_sub_opt = Ctx.sub_opt ctx vars in
+    match ctx_sub_opt with
+    | Some ctx_sub ->
+        let cond, value_cond = eval_hold_cond_iter ctx_sub id notexp iterexps in
+        (cond, Some value_cond)
+    | None -> (false, None)
+
   and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
       (vars : var list) (iterexps : iterexp list) : bool * value list =
     let ctxs_sub = Ctx.sub_list ctx vars in
@@ -1223,7 +1237,22 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | iterexp_h :: iterexps_t -> (
         let iter_h, vars_h = iterexp_h in
         match iter_h with
-        | Opt -> back_err no_region "(TODO)"
+        | Opt ->
+            let cond, value_cond_opt =
+              eval_hold_cond_opt ctx id notexp vars_h iterexps_t
+            in
+            let value_cond =
+              Value.make
+                (Il.IterT (Il.BoolT $ no_region, Il.Opt))
+                (OptV value_cond_opt)
+            in
+            Hook.on_value value_cond;
+            List.iter
+              (fun (id, _typ, iters) ->
+                let value_sub = Ctx.find_value ctx (id, iters @ [ Il.Opt ]) in
+                Hook.on_value_dependency value_cond value_sub Dep.Edges.Iter)
+              vars_h;
+            (cond, value_cond)
         | List ->
             let cond, values_cond =
               eval_hold_cond_list ctx id notexp vars_h iterexps_t
@@ -1475,10 +1504,53 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let values_output = invoke_rel ctx id values_input in
     assign_exps ctx exps_output values_output
 
-  and eval_rule_opt (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
-      (_inputs : Hints.Input.t) (_vars_bound : var list) (_vars_bind : var list)
-      (_iterinstrs : iterinstr list) : Ctx.t =
-    back_err no_region "(TODO) eval_rule_opt"
+  and eval_rule_opt (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (inputs : Hints.Input.t) (vars_bound : var list) (vars_bind : var list)
+      (iterinstrs : iterinstr list) : Ctx.t =
+    (* Create a subcontext for the bound values *)
+    let ctx_sub_opt = Ctx.sub_opt ctx vars_bound in
+    let ctx, values_binding =
+      match ctx_sub_opt with
+      (* If the bound variable supposed to guide the iteration is already empty,
+         then the binding variables are also empty *)
+      | None ->
+          let values_binding =
+            List.map
+              (fun (_id_binding, typ_binding, iters_binding) ->
+                let typ =
+                  Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                in
+                Value.make typ.it (OptV None))
+              vars_bind
+          in
+          (ctx, values_binding)
+      (* Otherwise, evaluate the rule for the subcontext *)
+      | Some ctx_sub ->
+          let ctx_sub = eval_rule_iter' ctx_sub id notexp inputs iterinstrs in
+          let values_binding =
+            List.map
+              (fun (id_binding, typ_binding, iters_binding) ->
+                let value_binding =
+                  Ctx.find_value ctx_sub (id_binding, iters_binding)
+                in
+                let typ =
+                  Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                in
+                Value.make typ.it (OptV (Some value_binding)))
+              vars_bind
+          in
+          (ctx, values_binding)
+    in
+    List.fold_left2
+      (fun ctx (id_binding, _typ_binding, iters_binding) value_binding ->
+        Hook.on_value value_binding;
+        List.iter
+          (fun (id, _typ, iters) ->
+            let value_sub = Ctx.find_value ctx (id, iters @ [ Il.Opt ]) in
+            Hook.on_value_dependency value_binding value_sub Dep.Edges.Iter)
+          vars_bound;
+        Ctx.add_value ctx (id_binding, iters_binding @ [ Il.Opt ]) value_binding)
+      ctx vars_bind values_binding
 
   and eval_rule_list (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) (vars_bound : var list) (vars_bind : var list)

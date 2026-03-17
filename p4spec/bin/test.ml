@@ -82,8 +82,10 @@ let run_command =
          | Fail (`Runtime (_, msg)) ->
              "runtime error: " ^ msg |> exit_with_message ~errorcode:6
        with
-       | ParseError (at, msg) -> string_of_error at msg |> exit_with_message ~errorcode:1
-       | ElabError (at, msg) -> string_of_error at msg |> exit_with_message ~errorcode:1)
+       | ParseError (at, msg) ->
+           string_of_error at msg |> exit_with_message ~errorcode:1
+       | ElabError (at, msg) ->
+           string_of_error at msg |> exit_with_message ~errorcode:1)
 
 let sim_command =
   Core.Command.basic
@@ -128,8 +130,7 @@ let sim_command =
          in
          Inst.Hook.finish ();
          match result with
-         | Pass ->
-             exit_with_message "passed" ~errorcode:42
+         | Pass -> exit_with_message "passed" ~errorcode:42
          | Fail (`Syntax (_, msg)) ->
              "sytax error: " ^ msg |> exit_with_message ~errorcode:6
          | Fail (`Runtime (_, msg)) ->
@@ -137,15 +138,12 @@ let sim_command =
        with
        | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
            string_of_error at msg |> exit_with_message ~errorcode:1
-       | StfError msg -> string_of_error no_region msg |> exit_with_message ~errorcode:1)
+       | StfError msg ->
+           string_of_error no_region msg |> exit_with_message ~errorcode:1)
 
 let command =
   Core.Command.group
     ~summary:"p4spectec: a language design framework for the p4_16 language"
-    [
-      (* Execution *)
-      ("run", run_command);
-      ("sim", sim_command);
-    ]
+    [ (* Execution *) ("run", run_command); ("sim", sim_command) ]
 
 let () = Command_unix.run ~version command
