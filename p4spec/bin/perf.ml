@@ -267,11 +267,11 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
         }
 
 let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
-    testdirs_p4 testdirs_stf patchdir =
+    testdirs_p4 testdirs_stf patchdirs =
   let excludes_by_subdir = Test.collect_excludes_by_subdir excludes_p4 in
   let excludes_p4 = excludes_p4 |> Test.collect_excludes in
   let filename_pairs =
-    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+    Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
   in
   let total = List.length filename_pairs in
   let stat = empty_stat in
@@ -299,7 +299,7 @@ let sim_command =
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"stf test directories"
-     and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
+     and patchdirs = flag "-p" (listed string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and mode =
@@ -314,7 +314,7 @@ let sim_command =
      in
      fun () ->
        run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
-         testdirs_p4 testdirs_stf patchdir)
+         testdirs_p4 testdirs_stf patchdirs)
 
 (* Entry point *)
 
