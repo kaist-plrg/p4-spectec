@@ -1,4 +1,3 @@
-open Lang
 open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
@@ -43,50 +42,6 @@ struct
         let action = transform_action action in
         SetDefault (name, action)
     | _ -> stmt
-
-  (* Mode *)
-
-  let mode : Sim.mode ref = ref (Sim.Empty_mode : Sim.mode)
-  let init_mode (mode_ : Sim.mode) : unit = mode := mode_
-
-  (* Call entry points *)
-
-  let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
-    match !mode with
-    | IL_mode -> (
-        let rel_result_il = Interp_IL.eval_rel relname values_input in
-        match rel_result_il with
-        | Pass values_output -> values_output
-        | Fail (at, msg) -> error at msg)
-    | SL_mode -> (
-        let rel_result_sl = Interp_SL.eval_rel relname values_input in
-        match rel_result_sl with
-        | Pass values_output -> values_output
-        | Fail (at, msg) -> error at msg)
-    | Empty_mode -> assert false
-
-  let init_call_rel () = Spec.Rel.register call_rel
-
-  let call_func (funcname : string) (typs_input : Sl.typ list)
-      (values_input : Value.t list) : Value.t =
-    match !mode with
-    | IL_mode -> (
-        let func_result_il =
-          Interp_IL.eval_func funcname typs_input values_input
-        in
-        match func_result_il with
-        | Pass value_output -> value_output
-        | Fail (at, msg) -> error at msg)
-    | SL_mode -> (
-        let func_result_sl =
-          Interp_SL.eval_func funcname typs_input values_input
-        in
-        match func_result_sl with
-        | Pass value_output -> value_output
-        | Fail (at, msg) -> error at msg)
-    | Empty_mode -> assert false
-
-  let init_call_func () = Spec.Func.register call_func
 
   (* Extern objects *)
 
@@ -256,81 +211,6 @@ struct
     in
     [ value_ctx; value_arch; value_callResult ]
 
-  (* Match-action table interface *)
-
-  let find_table (value_arch : Value.t) (value_tableName : Value.t) : Value.t =
-    let find_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified = wrap_text_v table_name_unqualified in
-      Spec.Func.find_object_unqualified_e value_arch value_tableName_unqualified
-      |> Option.get
-    in
-    let table_name = unwrap_text_v value_tableName in
-    match String.split_on_char '.' table_name with
-    | [] -> assert false
-    | [ table_name_unqualified ] ->
-        find_table_unqualified table_name_unqualified
-    | names -> (
-        let values_name = List.map wrap_text_v names in
-        let value_objectId = wrap_list_v "nameIR" values_name in
-        match Spec.Func.find_object_qualified_e value_arch value_objectId with
-        | Some value_table -> value_table
-        | None ->
-            let table_name_unqualified = names |> List.rev |> List.hd in
-            find_table_unqualified table_name_unqualified)
-
-  let update_table (value_arch : Value.t) (value_tableName : Value.t)
-      (value_tableObject : Value.t) : Value.t =
-    let update_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified = wrap_text_v table_name_unqualified in
-      Spec.Func.update_object_unqualified_e value_arch
-        value_tableName_unqualified value_tableObject
-    in
-    let table_name = unwrap_text_v value_tableName in
-    match String.split_on_char '.' table_name with
-    | [] -> assert false
-    | [ table_name_unqualified ] ->
-        update_table_unqualified table_name_unqualified
-    | names ->
-        let values_name = List.map wrap_text_v names in
-        let value_objectId = wrap_list_v "nameIR" values_name in
-        if
-          Spec.Func.find_object_qualified_e value_arch value_objectId
-          |> Option.is_some
-        then
-          Spec.Func.update_object_qualified_e value_arch value_objectId
-            value_tableObject
-        else
-          let table_name_unqualified = names |> List.rev |> List.hd in
-          update_table_unqualified table_name_unqualified
-
-  let table_add_entry (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableEntryPriorityInterface : Value.t)
-      (value_tableKeysetInterface : Value.t)
-      (value_tableActionInterface : Value.t) : Value.t =
-    (* Lookup table object *)
-    let value_tableObject = find_table value_arch value_tableName in
-    (* Add entry to table object *)
-    let value_tableObject =
-      Spec.Func.tableObject_add_entry value_ctx value_tableObject
-        value_tableEntryPriorityInterface value_tableKeysetInterface
-        value_tableActionInterface
-    in
-    (* Update arch with modified table object *)
-    update_table value_arch value_tableName value_tableObject
-
-  let table_add_default_action (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
-      Value.t =
-    (* Lookup table object *)
-    let value_tableObject = find_table value_arch value_tableName in
-    (* Add entry to table object *)
-    let value_tableObject =
-      Spec.Func.tableObject_add_default_action value_ctx value_tableObject
-        value_tableActionInterface
-    in
-    (* Update arch with modified table object *)
-    update_table value_arch value_tableName value_tableObject
-
   (* Mirror session interface *)
 
   let add_mirror_session _session _port =
@@ -368,10 +248,10 @@ struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
-      Value.t * Value.t =
+  let init_pipe (mode : Sim.mode) (includes_p4 : string list)
+      (filename_p4 : string) : Value.t * Value.t =
     let program_result =
-      match !mode with
+      match mode with
       | IL_mode -> Interp_IL.eval_program "EBPF_init" includes_p4 filename_p4
       | SL_mode -> Interp_SL.eval_program "EBPF_init" includes_p4 filename_p4
       | Empty_mode -> assert false
@@ -433,11 +313,4 @@ struct
       let accept = unpack_p4_bool value_accept in
       if accept then (value_ctx, value_arch, [ rx ])
       else (value_ctx, value_arch, [])
-
-  (* Initializer *)
-
-  let init (mode_ : Sim.mode) : unit =
-    init_mode mode_;
-    init_call_rel ();
-    init_call_func ()
 end

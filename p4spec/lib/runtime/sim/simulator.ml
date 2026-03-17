@@ -39,34 +39,6 @@ module type ARCH = sig
 
   val init_arch_state : Value.t
 
-  (* Match-action table interface *)
-
-  val table_add_entry :
-    Value.t ->
-    (* context *)
-    Value.t ->
-    (* store *)
-    Value.t ->
-    (* table name *)
-    Value.t ->
-    (* table entry priority *)
-    Value.t ->
-    (* table entry keysets *)
-    Value.t ->
-    (* table entry action *)
-    Value.t (* store *)
-
-  val table_add_default_action :
-    Value.t ->
-    (* context *)
-    Value.t ->
-    (* store *)
-    Value.t ->
-    (* table name *)
-    Value.t ->
-    (* table entry action *)
-    Value.t (* store *)
-
   (* Mirror session interface *)
 
   val add_mirror_session : Value.t -> int -> int -> Value.t
@@ -86,12 +58,8 @@ module type ARCH = sig
 
   (* Pipeline evaluation *)
 
-  val init_pipe : string list -> string -> Value.t * Value.t
+  val init_pipe : mode -> string list -> string -> Value.t * Value.t
   val drive_pipe : Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
-
-  (* Initialization *)
-
-  val init : mode -> unit
 end
 
 module type INTERP_IL = sig

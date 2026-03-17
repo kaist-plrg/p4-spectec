@@ -18,18 +18,60 @@ module Make
   (* Initialization *)
 
   let spec : spec ref = ref Empty
+  let mode : mode ref = ref Empty_mode
+  let init_mode (mode_ : mode) : unit = mode := mode_
+
+  let call_rel (relname : string) (values_input : Il.value list) : Il.value list
+      =
+    match !mode with
+    | IL_mode -> (
+        let rel_result_il = Interp_IL.eval_rel relname values_input in
+        match rel_result_il with
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
+    | SL_mode -> (
+        let rel_result_sl = Interp_SL.eval_rel relname values_input in
+        match rel_result_sl with
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
+    | Empty_mode -> assert false
+
+  let init_call_rel () = Spec.Rel.register call_rel
+
+  let call_func (funcname : string) (typs_input : Sl.typ list)
+      (values_input : Il.value list) : Il.value =
+    match !mode with
+    | IL_mode -> (
+        let func_result_il =
+          Interp_IL.eval_func funcname typs_input values_input
+        in
+        match func_result_il with
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
+    | SL_mode -> (
+        let func_result_sl =
+          Interp_SL.eval_func funcname typs_input values_input
+        in
+        match func_result_sl with
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
+    | Empty_mode -> assert false
+
+  let init_call_func () = Spec.Func.register call_func
 
   let init ?(cache = true) ?(det = false) (spec_ : spec) : unit =
-    match spec_ with
+    (match spec_ with
     | IL spec_il ->
         spec := IL spec_il;
-        Arch.init IL_mode;
+        init_mode IL_mode;
         Interp_IL.init ~cache ~det spec_il
     | SL spec_sl ->
         spec := SL spec_sl;
-        Arch.init SL_mode;
+        init_mode SL_mode;
         Interp_SL.init ~cache ~det spec_sl
-    | Empty -> assert false
+    | Empty -> assert false);
+    init_call_rel ();
+    init_call_func ()
 
   (* Logger *)
 
@@ -231,7 +273,7 @@ module Make
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =
-          Arch.table_add_entry value_ctx value_arch value_tableName
+          Table.add_entry value_ctx value_arch value_tableName
             value_tableEntryPriorityInterface value_tableKeysetInterface
             value_tableActionInterface
         in
@@ -258,7 +300,7 @@ module Make
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =
-          Arch.table_add_default_action value_ctx value_arch value_tableName
+          Table.add_default_action value_ctx value_arch value_tableName
             value_tableActionInterface
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
@@ -341,7 +383,9 @@ module Make
   let run_stf_test (includes_p4 : string list) (filename_p4 : string)
       (filename_stf : string) : stf_result =
     try
-      let value_ctx, value_arch = Arch.init_pipe includes_p4 filename_p4 in
+      let value_ctx, value_arch =
+        Arch.init_pipe !mode includes_p4 filename_p4
+      in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
       run_stf_stmts value_ctx value_arch stf_stmts;
       Pass
