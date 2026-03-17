@@ -62,7 +62,7 @@ let key_interface_of_tableObject (value_tableObject : Value.t) :
 let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
     (value_tableEntryPriorityInterface : Value.t)
     (value_tableKeysetInterface : Value.t)
-    (value_tableActionInterface : Value.t) : Value.t =
+    (value_tableActionInterface : Value.t) : Value.t option =
   !call "tableObject_add_entry" []
     [
       value_ctx;
@@ -71,6 +71,7 @@ let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
       value_tableKeysetInterface;
       value_tableActionInterface;
     ]
+  |> unwrap_opt_v
 
 (* tableObject_add_default_action *)
 

@@ -56,35 +56,42 @@ let add_entry (value_ctx : Value.t) (value_arch : Value.t)
   let value_tableObject = find_table value_arch value_tableName in
   (* Add entry to table object *)
   let value_tableObject =
-    try
+    match
       Spec.Func.tableObject_add_entry value_ctx value_tableObject
         value_tableEntryPriorityInterface value_tableKeysetInterface
         value_tableActionInterface
-    with _ ->
-      (* Replace the key names of the keyset interface with those of the table,
-         assuming key fields are given in order *)
-      let values_nameIR_key =
-        Spec.Func.key_interface_of_tableObject value_tableObject
-        |> List.filter_map
-             (fun (value_nameIR_key, value_nameIR_matchKind, _value_typeIR) ->
-               if unwrap_text_v value_nameIR_matchKind = "selector" then None
-               else Some value_nameIR_key)
-      in
-      let values_tableKeyInterface = unwrap_list_v value_tableKeysetInterface in
-      let values_tableKeyValueInterface =
-        values_tableKeyInterface |> List.map unwrap_tuple_v_two |> List.map snd
-      in
-      let value_tableKeysetInterface =
-        List.map2
-          (fun value_nameIR_key value_tableKeyValueInterface ->
-            [ value_nameIR_key; value_tableKeyValueInterface ])
-          values_nameIR_key values_tableKeyValueInterface
-        |> List.map (wrap_tuple_v "tableKeyInterface")
-        |> wrap_list_v "tableKeyInterface"
-      in
-      Spec.Func.tableObject_add_entry value_ctx value_tableObject
-        value_tableEntryPriorityInterface value_tableKeysetInterface
-        value_tableActionInterface
+    with
+    | Some value_tableObject -> value_tableObject
+    | None ->
+        (* Replace the key names of the keyset interface with those of the table,
+           assuming key fields are given in order *)
+        let values_nameIR_key =
+          Spec.Func.key_interface_of_tableObject value_tableObject
+          |> List.filter_map
+               (fun (value_nameIR_key, value_nameIR_matchKind, _value_typeIR) ->
+                 if unwrap_text_v value_nameIR_matchKind = "selector" then None
+                 else Some value_nameIR_key)
+        in
+        let values_tableKeyInterface =
+          unwrap_list_v value_tableKeysetInterface
+        in
+        let values_tableKeyValueInterface =
+          values_tableKeyInterface
+          |> List.map unwrap_tuple_v_two
+          |> List.map snd
+        in
+        let value_tableKeysetInterface =
+          List.map2
+            (fun value_nameIR_key value_tableKeyValueInterface ->
+              [ value_nameIR_key; value_tableKeyValueInterface ])
+            values_nameIR_key values_tableKeyValueInterface
+          |> List.map (wrap_tuple_v "tableKeyInterface")
+          |> wrap_list_v "tableKeyInterface"
+        in
+        Spec.Func.tableObject_add_entry value_ctx value_tableObject
+          value_tableEntryPriorityInterface value_tableKeysetInterface
+          value_tableActionInterface
+        |> Option.get
   in
   (* Update arch with modified table object *)
   update_table value_arch value_tableName value_tableObject
