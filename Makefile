@@ -1,14 +1,16 @@
 SPEC = p4spectec
 STAT = p4stat
 PERF = p4perf
+SPECTEST = p4spectec-test
 
 # Compile
 
-.PHONY: build stat perf
+.PHONY: build stat perf spec-test
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 EXESTAT = p4spec/_build/default/bin/stat.exe
 EXEPERF = p4spec/_build/default/bin/perf.exe
+EXESPECTEST = p4spec/_build/default/bin/test.exe
 
 build:
 	rm -f ./$(SPEC)
@@ -26,6 +28,11 @@ perf:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/perf.exe && echo
 	ln -f $(EXEPERF) ./$(PERF)
+
+spec-test:
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/test.exe && echo
+	ln -f $(EXESPECTEST) ./$(SPECTEST)
 
 release:
 	rm -f ./$(SPEC)
