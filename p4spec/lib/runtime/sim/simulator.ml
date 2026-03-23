@@ -58,7 +58,7 @@ module type ARCH = sig
 
   (* Pipeline evaluation *)
 
-  val init_pipe : mode -> string list -> string -> Value.t * Value.t
+  val init_pipe : string list -> string -> Value.t * Value.t
   val drive_pipe : Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
 end
 

@@ -441,18 +441,9 @@ struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (mode : Sim.mode) (includes_p4 : string list)
-      (filename_p4 : string) : Value.t * Value.t =
-    let program_result =
-      match mode with
-      | IL_mode -> Interp_IL.eval_program "V1Model_init" includes_p4 filename_p4
-      | SL_mode -> Interp_SL.eval_program "V1Model_init" includes_p4 filename_p4
-      | Empty_mode -> assert false
-    in
-    match program_result with
-    | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
-    | Pass _ -> error_no_region "unexpected return from V1Model_init"
-    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) -> error at msg
+  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
+      Value.t * Value.t =
+    Spec.Pgm.v1model_init includes_p4 filename_p4
 
   (* Pipeline driver *)
 

@@ -96,8 +96,8 @@ struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (_mode : Sim.mode) (_includes_p4 : string list)
-      (_filename_p4 : string) : Value.t * Value.t =
+  let init_pipe (_includes_p4 : string list) (_filename_p4 : string) :
+      Value.t * Value.t =
     error_no_region "init_pipe not implemented for the placeholder simulator"
 
   (* Pipeline driver *)
