@@ -1054,6 +1054,19 @@ xref:unroll_aliasType[``typeIR`` with aliases unrolled]
 . Otherwise:
  .. Return ``typeIR``.
 
+xref:width_of_integerTypeIR[Width of integer type ``integerTypeIR``]
+
+
+. If let ``intTypeIR`` be ``integerTypeIR``:
+ .. Return ``·``.
+. Else if let ``+INT+`` ``+<+`` ``n`` ``+>+`` be ``integerTypeIR``:
+ .. Return ``n``.
+. Else if let ``+BIT+`` ``+<+`` ``n`` ``+>+`` be ``integerTypeIR``:
+ .. Return ``n``.
+. Else:
+ .. Let ``+VARBIT+`` ``+<+`` ``n`` ``+>+`` be ``integerTypeIR``.
+ .. Return ``n``.
+
 xref:is_defaultable_typeIR[``typeIR''`` can be default-initialized]:
 [cols="2", options="header"]
 |===
@@ -4171,6 +4184,12 @@ xref:flatten_objectInitializerOptIR[The list of object declarations in ``objectI
 . If let ``+=+`` ``+{+`` ``objectDeclarationListIR`` ``+}+`` be ``objectInitializerOptIR``:
  .. Return ``objectDeclarationListIR``.
 
+xref:tableEntryPriorityOptIR_of_tableEntryIR[The priority of ``tableEntryIR``]
+
+
+. Let ``++_++`` ``tableEntryPriorityOptIR`` ``++_++`` ``+:+`` ``++_++`` ``++_++`` ``+;+`` be ``tableEntryIR``.
+. Return ``tableEntryPriorityOptIR``.
+
 xref:partition_parameterListIR[$partition_parameterListIR(parameterIR^{asterisk}^, nameIR^{asterisk}^, nameIR'^{asterisk}^)]
 
 
@@ -4996,7 +5015,7 @@ xref:find_local_return_type_t[The expected return type in ``TC``]
 xref:empty_tableContext[$empty_tableContext]
 
 
-. Let ``matchPriority`` be +{++VALUES+ ``·``, +INIT+ ``false``, +DELTA+ ``1``, +LARGEST_WINS+ ``true``+}+.
+. Let ``matchPriority`` be +{++DELTA+ ``1``, +LARGEST_WINS+ ``true``+}+.
 . Let ``matchEntries`` be +{++SIZE+ ``0``, +CONST+ ``true``+}+.
 . Return +{++KEYS+ ``·``, +ACTIONS+ ``·``, +PRIORITIES+ ``matchPriority``, +ENTRIES+ ``matchEntries``, +MODE+ ``+NOPRI+``+}+.
 
@@ -5012,52 +5031,62 @@ xref:add_action_tbl[``TBLC`` with match action ``prefixedNameIR`` ``+(+`` ``para
 . Let ``matchAction`` be ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+@+`` ``argumentListIR`` ``+)+``.
 . Return ``TBLC`` with ``+ACTIONS+`` set to ``TBLC.+ACTIONS+`` ``{pp}`` ``matchAction``.
 
-xref:add_table_priority[$add_table_priority(TBLC, n)]
+xref:is_lpm_key[Match kind of table key ``++_++`` ``+#+`` ``++_++`` ``+:+`` ``nameIR`` ``++_++`` ``+;+`` is lpm]
 
 
-. Return ``TBLC`` with ``+PRIORITIES+.+VALUES+`` set to ``TBLC.+PRIORITIES+.+VALUES+`` ``{pp}`` ``n``.
+. Return ``xref:is_lpm_key'[$is_lpm_key'(nameIR)]``.
 
-xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``text`` of type ``typeIR``]
+xref:is_lpm_key'[$is_lpm_key'(text)]
 
 
-. If ``text`` is equal to ``"lpm"``:
- .. If let ``+INT+`` ``+<+`` ``n`` ``+>+`` be ``typeIR``:
-  ... Check that ``TBLC.+MODE+`` is ``NOPRI``.
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
- .. Else if let ``+BIT+`` ``+<+`` ``n`` ``+>+`` be ``typeIR``:
-  ... Check that ``TBLC.+MODE+`` is ``NOPRI``.
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
- .. Else if let ``+VARBIT+`` ``+<+`` ``n`` ``+>+`` be ``typeIR``:
-  ... Check that ``TBLC.+MODE+`` is ``NOPRI``.
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
- .. Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR'`` be ``typeIR``:
-  ... Return xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``"lpm"`` of type ``typeIR'``].
- .. Else:
-  ... Let ``+TYPE+`` ``++_++`` ``typeIR'`` be ``typeIR``.
-  ... Return xref:update_mode_tbl[``TBLC`` with match mode updated based on key ``"lpm"`` of type ``typeIR'``].
- .. If ``typeIR`` does not have type ``aliasTypeIR``:
-  ... Check that ``TBLC.+MODE+`` is ``PRI``.
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
-. Else if ``text`` is equal to ``"range"``:
- .. If ``TBLC.+MODE+`` is ``NOPRI``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRI+``.
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
-. Else if ``text`` is equal to ``"ternary"``:
- .. If ``TBLC.+MODE+`` is ``NOPRI``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRI+``.
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
+. If ``text`` is equal to ``"lpm"``: return ``true``.
+. Otherwise: return ``false``.
+
+xref:requires_priority[Match kind of table key ``++_++`` ``+#+`` ``++_++`` ``+:+`` ``nameIR`` ``++_++`` ``+;+`` requires a priority]
+
+
+. Return ``xref:requires_priority'[$requires_priority'(nameIR)]``.
+
+xref:requires_priority'[$requires_priority'(text)]
+
+
+. If ``text`` is equal to ``"range"``: return ``true``.
+. Else if ``text`` is equal to ``"ternary"``: return ``true``.
+. Else: return ``true``.
+. Otherwise: return ``false``.
+
+xref:update_mode_tbl[``TBLC`` with match mode updated based on keys ``tableKeyIR^{asterisk}^``]
+
+
+. Let ``b~pri~^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``b~pri~`` be xref:requires_priority[match kind of table key ``tableKeyIR`` requires a priority].
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+. If xref:exists_[some of ``b~pri~^{asterisk}^`` is true]:
+ .. Return ``TBLC`` with ``+MODE+`` set to ``+PRI+``.
 . Else:
- .. If ``TBLC.+MODE+`` is ``NOPRI``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRI+``.
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+PRILPM+``.
-. Otherwise:
- .. Return ``TBLC``.
+ .. Let ``b~lpm~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``b~lpm~`` be xref:is_lpm_key[match kind of table key ``tableKeyIR`` is lpm].
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+ .. Let ``tableKeyIR'^{asterisk}^`` be xref:filter_[``tableKeyIR^{asterisk}^`` filtered by ``b~lpm~^{asterisk}^``].
+ .. If let ``tableKeyIR~lpm~`` be ``tableKeyIR'^{asterisk}^``:
+  ... Let ``typedExpressionIR`` ``+#+`` ``++_++`` ``+:+`` ``text`` ``++_++`` ``+;+`` be ``tableKeyIR~lpm~``.
+  ... Check that ``text`` is equal to ``"lpm"``.
+  ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+  ... Let ``typeIR'`` be xref:unroll_aliasType[``typeIR`` with aliases unrolled].
+  ... Check that ``typeIR'`` has type ``integerTypeIR``.
+  ... Let ``integerTypeIR`` be ``typeIR'``.
+  ... Let ``n`` be xref:option_get[*!*] xref:width_of_integerTypeIR[width of integer type ``integerTypeIR``].
+  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
+ .. If xref:exists_[none of ``b~lpm~^{asterisk}^`` is true]:
+  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRI+``.
 
 xref:find_action[$find_action(TBLC, prefixedNameIR)]
 
@@ -5077,14 +5106,85 @@ xref:find_action'[$find_action'(matchAction^{asterisk}^, prefixedNameIR)]
  .. Else:
   ... Return ``xref:find_action'[$find_action'(matchAction~t~^{asterisk}^,`` ``prefixedNameIR)]``.
 
-xref:find_table_priority_last[$find_table_priority_last(TBLC)]
+xref:set_priorities_of_tableEntryListIR[$set_priorities_of_tableEntryListIR(TBLC, TBLS^{asterisk}^, tableEntryIR^{asterisk}^)]
 
 
-. Let ``n^{asterisk}^`` be ``TBLC.+PRIORITIES+.+VALUES+``.
-. Let ``int`` be ``the`` ``length`` ``of`` ``n^{asterisk}^`` ``-`` ``1``.
-. Check that ``int`` has type ``nat``.
-. Let ``n~last~`` be ``int``.
-. Return ``n^{asterisk}^[n~last~]``.
+. If ``TBLC.+MODE+`` is ``NOPRI``:
+ .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
+ .. Return ``tableEntryIR^{asterisk}^``.
+. Let ``matchMode`` be ``TBLC.+MODE+``.
+. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
+ .. Check that ``TBLS`` matches pattern ``LPM`` ``%``, for all ``TBLS`` in ``TBLS^{asterisk}^``.
+ .. Let ``n~prefix~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``+LPM+`` ``n~prefix~`` be ``TBLS``.
+--
++
+for each ``TBLS`` in ``TBLS^{asterisk}^``
+ .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
+ .. Let ``tableEntryIR~updated~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``tableEntryIR~updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR,`` ``n~prefix~)]``.
+--
++
+for each ``n~prefix~`` in ``n~prefix~^{asterisk}^`` and ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``
+ .. Return ``tableEntryIR~updated~^{asterisk}^``.
+. If ``tableEntryIR^{asterisk}^`` is an empty list:
+ .. Check that ``TBLC.+MODE+`` is ``PRI``.
+ .. Return ``·``.
+. Else:
+ .. Let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
+ .. Check that ``TBLC.+MODE+`` is ``PRI``.
+ .. If ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``]:
+  ... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~t~``], for all ``tableEntryIR~t~`` in ``tableEntryIR~t~^{asterisk}^``.
+  ... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
+  ... Let ``n~size~`` be ``TBLC.+ENTRIES+.+SIZE+``.
+  ... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
+  ... Let ``int`` be xref:ite[``n~size~`` ``-`` ``1`` ``*`` ``n~delta~`` ``+`` ``1`` if ``b~lw~`` otherwise ``1``].
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n`` be ``int``.
+  ... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
+  ... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
+  ... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+ .. If ``~TBLC.+ENTRIES+.+CONST+``:
+  ... Let ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+`` be xref:option_get[*!*] xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].
+  ... Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
+  ... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
+  ... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
+  ... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+
+xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC, n~last~, tableEntryIR^{asterisk}^)]
+
+
+. If ``tableEntryIR^{asterisk}^`` is an empty list:
+ .. Return ``·``.
+. Else:
+ .. Let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
+ .. If ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``]:
+  ... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
+  ... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
+  ... Let ``int`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n`` be ``int``.
+  ... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
+  ... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
+  ... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+ .. Let ``tableEntryPriorityOptIR`` be xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].
+ .. If let ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+`` be ``tableEntryPriorityOptIR``:
+  ... Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
+  ... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
+  ... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
+  ... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+
+xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR, n)]
+
+
+. Let ``constOptIR`` ``++_++`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+`` be ``tableEntryIR``.
+. Let ``tableEntryPriorityIR`` be ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+. Let ``tableEntryIR~updated~`` be ``constOptIR`` ``tableEntryPriorityIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
+. Return ``tableEntryIR~updated~``.
 
 xref:join_tableEntryState[$join_tableEntryState(tableEntryState, tableEntryState')]
 
@@ -8583,10 +8683,9 @@ xref:TableKey_ok[Typing ``expression`` ``+:+`` ``name~matchkind~`` ``annotationL
 . Let ``nameIR~matchkind~`` be xref:name[the name of ``name~matchkind~``].
 . Check that ``+MATCH_KIND+`` ``+.+`` ``nameIR~matchkind~`` is equal to xref:find_var_value_t[the value of variable ``nameIR~matchkind~`` from the ``+LOCAL+`` layer of ``TC``].
 . Check that xref:compat_table_key[``typeIR`` can be used with match kind ``nameIR~matchkind~``].
-. Let ``TBLC~1~`` be xref:update_mode_tbl[``TBLC~0~`` with match mode updated based on key ``nameIR~matchkind~`` of type ``typeIR``].
-. Let ``TBLC~2~`` be xref:add_key_tbl[``TBLC~1~`` with match key ``nameIR~matchkind~`` of type ``typeIR`` added].
+. Let ``TBLC~1~`` be xref:add_key_tbl[``TBLC~0~`` with match key ``nameIR~matchkind~`` of type ``typeIR`` added].
 . Let ``tableKeyIR`` be ``typedExpressionIR`` ``+#+`` ``nameIR~key~`` ``+:+`` ``nameIR~matchkind~`` ``annotationList`` ``+;+``.
-. Result in table context ``TBLC~2~`` and ``tableKeyIR``.
+. Result in table context ``TBLC~1~`` and ``tableKeyIR``.
 
 xref:TableKeys_ok[TableKeys_ok]:
 
@@ -8772,7 +8871,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
   ... Let ``TBLS`` be ``+LPM+`` ``n``.
   ... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
@@ -8780,7 +8879,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
   ... Let ``TBLS`` be ``+LPM+`` ``n``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
 
@@ -8791,7 +8890,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
   ... Let ``TBLS`` be ``+LPM+`` ``0``.
   ... Result in table entry state ``TBLS`` and ``+_+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+_+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+_+`` ``+)+``:
@@ -8799,7 +8898,7 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
   ... Let ``TBLS`` be ``+LPM+`` ``0``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+`` or ``TBLC.+MODE+`` is equal to ``+PRILPM+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
 
@@ -8837,126 +8936,57 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
 
 xref:TableEntry_priority_ok[TableEntry_priority_ok]:
 
-* Typing ``tableEntryPriority^?^``, under context ``typingContext`` and table context ``tableContext``, and table entry state ``tableEntryState``:
-* Result in table context ``tableContext`` and ``tableEntryPriorityOptIR``.
+* Typing ``tableEntryPriority^?^``, under context ``typingContext``:
+* Result in ``tableEntryPriorityOptIR``.
 
-xref:TableEntry_priority_ok[Typing ``·``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
+xref:TableEntry_priority_ok[Typing ``·``, under context ``TC``]:
 
-. If ``tableContext.+MODE+`` is ``NOPRI``:
- .. Result in table context ``tableContext`` and ``·``.
-. Let ``matchMode`` be ``tableContext.+MODE+``.
-. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
- .. Check that ``TBLS`` matches pattern ``LPM`` ``%``.
- .. Let ``+LPM+`` ``n~prefix~`` be ``TBLS``.
- .. Result in table context ``tableContext`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n~prefix~`` ``+:+``.
-. If ``tableContext.+MODE+`` is equal to ``+PRI+`` or ``tableContext.+MODE+`` is equal to ``+PRILPM+``:
- .. If ``tableContext.+PRIORITIES+.+VALUES+`` is equal to ``·``:
-  ... Let ``b~lw~`` be ``tableContext.+PRIORITIES+.+LARGEST_WINS+``.
-  ... Let ``n~size~`` be ``tableContext.+ENTRIES+.+SIZE+``.
-  ... Let ``n~delta~`` be ``tableContext.+PRIORITIES+.+DELTA+``.
-  ... Let ``int`` be xref:ite[``n~size~`` ``-`` ``1`` ``*`` ``n~delta~`` ``+`` ``1`` if ``b~lw~`` otherwise ``1``].
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
-  ... Result in table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
- .. Else:
-  ... Let ``b~lw~`` be ``tableContext.+PRIORITIES+.+LARGEST_WINS+``.
-  ... Let ``n~last~`` be ``xref:find_table_priority_last[$find_table_priority_last(tableContext)]``.
-  ... Let ``n~delta~`` be ``tableContext.+PRIORITIES+.+DELTA+``.
-  ... Let ``int`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].
-  ... Check that ``int`` has type ``nat``.
-  ... Let ``n`` be ``int``.
-  ... Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
-  ... Result in table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+. Result in ``·``.
 
-xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
+xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``, under context ``TC``]:
 
-. Check that ``tableContext.+MODE+`` is equal to ``+PRI+`` or ``tableContext.+MODE+`` is equal to ``+PRILPM+``.
-. Check that ``~tableContext.+ENTRIES+.+CONST+``.
-. If ``tableContext.+PRIORITIES+.+VALUES+`` is equal to ``·``:
- .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
- .. Let ``TBLC~1~`` be ``tableContext`` with ``+PRIORITIES+.+INIT+`` set to ``true``.
- .. Let ``TBLC~2~`` be ``xref:add_table_priority[$add_table_priority(TBLC~1~,`` ``n)]``.
- .. Result in table context ``TBLC~2~`` and ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
-. Else:
- .. Check that ``tableContext.+PRIORITIES+.+INIT+``.
- .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
- .. Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
- .. Result in table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
+. Result in ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
 
-xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression`` ``+)+`` ``+:+``, under context ``TC`` and table context ``tableContext``, and table entry state ``TBLS``]:
+xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression`` ``+)+`` ``+:+``, under context ``TC``]:
 
-. Check that ``tableContext.+MODE+`` is equal to ``+PRI+`` or ``tableContext.+MODE+`` is equal to ``+PRILPM+``.
-. Check that ``~tableContext.+ENTRIES+.+CONST+``.
-. If ``tableContext.+PRIORITIES+.+VALUES+`` is equal to ``·``:
- .. Let ``typedExpressionIR`` be
+. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
- .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] is ``LCTK``.
- .. Let ``value`` be
+. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] is ``LCTK``.
+. Let ``value`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR``, under context ``TC`` at ``+LOCAL+``].
- .. Check that ``value`` has type ``integerValue``.
- .. Let ``integerValue`` be ``value``.
- .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
- .. Let ``TBLC~1~`` be ``tableContext`` with ``+PRIORITIES+.+INIT+`` set to ``true``.
- .. Let ``TBLC~2~`` be ``xref:add_table_priority[$add_table_priority(TBLC~1~,`` ``n)]``.
- .. Result in table context ``TBLC~2~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
-. Else:
- .. Check that ``tableContext.+PRIORITIES+.+INIT+``.
- .. Let ``typedExpressionIR`` be
-* the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
- .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] is ``LCTK``.
- .. Let ``value`` be
-* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR``, under context ``TC`` at ``+LOCAL+``].
- .. Check that ``value`` has type ``integerValue``.
- .. Let ``integerValue`` be ``value``.
- .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
- .. Let ``TBLC~1~`` be ``xref:add_table_priority[$add_table_priority(tableContext,`` ``n)]``.
- .. Result in table context ``TBLC~1~`` and ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue`` be ``value``.
+. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
+. Result in ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
 
 xref:TableEntry_ok[TableEntry_ok]:
 
 * Typing ``tableEntry``, under context ``typingContext`` and table context ``tableContext``:
-* Result in table context ``tableContext`` and ``tableEntryIR``.
+* Result in table entry state ``tableEntryState`` and ``tableEntryIR``.
 
-xref:TableEntry_ok[Typing ``tableEntry``, under context ``TC`` and table context ``TBLC~0~``]:
+xref:TableEntry_ok[Typing ``tableEntry``, under context ``TC`` and table context ``TBLC``]:
 
 . If let ``constOpt`` ``tableEntryPriority`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+`` be ``tableEntry``:
  .. Let table entry state ``TBLS`` and ``keysetExpressionIR`` be
-* the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC~0~``].
+* the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``].
  .. Let ``tableActionReferenceIR`` be
-* the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC~0~``].
- .. Let table context ``TBLC~1~`` and ``tableEntryPriorityOptIR`` be
-* the result of xref:TableEntry_priority_ok[typing ``tableEntryPriority``, under context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``].
+* the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC``].
+ .. Let ``tableEntryPriorityOptIR`` be
+* the result of xref:TableEntry_priority_ok[typing ``tableEntryPriority``, under context ``TC``].
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
  .. Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
- .. Result in table context ``TBLC~1~`` and ``tableEntryIR``.
+ .. Result in table entry state ``TBLS`` and ``tableEntryIR``.
 . Else:
  .. Let ``constOpt`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+`` be ``tableEntry``.
  .. Let table entry state ``TBLS`` and ``keysetExpressionIR`` be
-* the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC~0~``].
+* the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``].
  .. Let ``tableActionReferenceIR`` be
-* the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC~0~``].
- .. Let table context ``TBLC~1~`` and ``tableEntryPriorityOptIR`` be
-* the result of xref:TableEntry_priority_ok[typing ``·``, under context ``TC`` and table context ``TBLC~0~``, and table entry state ``TBLS``].
+* the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC``].
+ .. Let ``tableEntryPriorityOptIR`` be
+* the result of xref:TableEntry_priority_ok[typing ``·``, under context ``TC``].
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
  .. Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
- .. Result in table context ``TBLC~1~`` and ``tableEntryIR``.
-
-xref:TableEntries_ok[TableEntries_ok]:
-
-* Typing ``tableEntry^{asterisk}^``, under context ``typingContext`` and table context ``tableContext``:
-* Result in table context ``tableContext`` and ``tableEntryListIR``.
-
-xref:TableEntries_ok[Typing ``tableEntry^{asterisk}^``, under context ``TC`` and table context ``tableContext``]:
-
-. If ``tableEntry^{asterisk}^`` is equal to ``·``:
- .. Result in table context ``tableContext`` and ``·``.
-. If let ``tableEntry~h~`` ``{two-colons}`` ``tableEntry~t~^{asterisk}^`` be ``tableEntry^{asterisk}^``:
- .. Let table context ``TBLC~1~`` and ``tableEntryIR~h~`` be
-* the result of xref:TableEntry_ok[typing ``tableEntry~h~``, under context ``TC`` and table context ``tableContext``].
- .. Let table context ``TBLC~2~`` and ``tableEntryIR~t~^{asterisk}^`` be
-* the result of xref:TableEntries_ok[typing ``tableEntry~t~^{asterisk}^``, under context ``TC`` and table context ``TBLC~1~``].
- .. Result in table context ``TBLC~2~`` and ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^``.
+ .. Result in table entry state ``TBLS`` and ``tableEntryIR``.
 
 xref:TableProperty_ok[TableProperty_ok]:
 
@@ -8968,7 +8998,8 @@ xref:TableProperty_ok[Typing ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyList`` ``+}+``,
 . Let ``tableKey^{asterisk}^`` be xref:flatten_tableKeyList[``tableKeyList`` flattened].
 . Let table context ``TBLC~1~`` and ``tableKeyIR^{asterisk}^`` be
 * the result of xref:TableKeys_ok[typing ``tableKey^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
-. Result in table context ``TBLC~1~`` and ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+``.
+. Let ``TBLC~2~`` be xref:update_mode_tbl[``TBLC~1~`` with match mode updated based on keys ``tableKeyIR^{asterisk}^``].
+. Result in table context ``TBLC~2~`` and ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionList`` ``+}+``, under context ``TC`` and table context ``TBLC~0~``]:
 
@@ -8984,9 +9015,16 @@ xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``+ENTRIES+`` ``+=+
 . Let ``TBLC~1~`` be ``TBLC~0~`` with ``+ENTRIES+.+SIZE+`` set to ``the`` ``length`` ``of`` ``tableEntry^{asterisk}^``.
 . Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
 . Let ``TBLC~2~`` be ``TBLC~1~`` with ``+ENTRIES+.+CONST+`` set to ``constOptIR`` ``=`` ``+CONST+``.
-. Let table context ``TBLC~3~`` and ``tableEntryIR^{asterisk}^`` be
-* the result of xref:TableEntries_ok[typing ``tableEntry^{asterisk}^``, under context ``TC`` and table context ``TBLC~2~``].
-. Result in table context ``TBLC~3~`` and ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+``.
+. Let ``TBLS^{asterisk}^`` be the list and ``tableEntryIR^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let table entry state ``TBLS`` and ``tableEntryIR`` be
+* the result of xref:TableEntry_ok[typing ``tableEntry``, under context ``TC`` and table context ``TBLC~2~``].
+--
++
+for each ``tableEntry`` in ``tableEntry^{asterisk}^``
+. Let ``tableEntryIR~pri~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR[$set_priorities_of_tableEntryListIR(TBLC~2~,`` ``TBLS^{asterisk}^,`` ``tableEntryIR^{asterisk}^)]``.
+. Result in table context ``TBLC~2~`` and ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR~pri~^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``tableCustomName`` ``initializer`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
 
