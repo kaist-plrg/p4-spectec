@@ -14,7 +14,7 @@ rule Stmt_ok/emptyStatement:
 ;;; syntax assignmentStatement = lvalue assignop expression `;
 ;;;; syntax assignop
 
-rulegroup Stmt_ok/assignmentStatement {
+rulegroup Stmt_ok/asssignmentStatement {
 
   rule Stmt_ok/eq:
     p TC f l |- lvalue `= expression `;
@@ -29,6 +29,25 @@ rulegroup Stmt_ok/assignmentStatement {
     ---- ;; check type compatibility
     ---- ;; while inserting implicit casts if necessary
     -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
+
+  rule Stmt_ok/compound:
+    p TC f l |- lvalue assignop expression `;
+              : TC f (typedLvalueIR assignop typedExpressionIR_cast `;)
+    ---- ;; convert assignop to binop
+    -- if assignop =/= `=
+    -- if binop = $assignop_as_binop(assignop)
+    ---- ;; check lvalue
+    -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
+    ---- ;; use lvalue as expression
+    -- if expression_lvalue = $lvalue_as_expression(lvalue)
+    ---- ;; check binary expression
+    -- if expression_binary = expression_lvalue binop expression
+    -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
+    ---- ;; fetch annotations
+    -- if _ `# `( typeIR_lvalue ) = typedLvalueIR
+    ---- ;; check type compatibility
+    -- if (_ binop typedExpressionIR_cast) `# _
+        = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)
 
 }
 

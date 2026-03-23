@@ -673,9 +673,29 @@ syntax emptyStatement = `;
 ;;;; Assignment statements
 ;;
 
-syntax assignop = `=
+syntax assignop =
+  | `=
+  | `+= | `-= | `|+|= | `|-|= | `*= | `/= | `%=
+  | `<<= | `>>= | `&= | `^= | `|=
 
 syntax assignmentStatement = lvalue assignop expression `;
+
+dec $assignop_as_binop(assignop) : binop?
+  hint(prose_in "the binary operator corresponding to" %0)
+def $assignop_as_binop(`+=) = `+
+def $assignop_as_binop(`-=) = `-
+def $assignop_as_binop(`|+|=) = `|+|
+def $assignop_as_binop(`|-|=) = `|-|
+def $assignop_as_binop(`*=) = `*
+def $assignop_as_binop(`/=) = `/
+def $assignop_as_binop(`%=) = `%
+def $assignop_as_binop(`<<=) = `<<
+def $assignop_as_binop(`>>=) = `>>
+def $assignop_as_binop(`&=) = `&
+def $assignop_as_binop(`^=) = `^
+def $assignop_as_binop(`|=) = `|
+def $assignop_as_binop(assignop) = eps
+  -- otherwise
 
 ;;
 ;;;; Call statements

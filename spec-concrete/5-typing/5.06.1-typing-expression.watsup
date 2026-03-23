@@ -463,6 +463,7 @@ rule Expr_ok/binaryExpression-bitwise:
 
 tbl dec $compat_concat(typeIR, typeIR) : bool
 tbl def $compat_concat =
+  | (STRING, STRING) => true
   | (INT `< _ >, INT `< _ >) => true
   | (INT `< _ >, BIT `< _ >) => true
   | (BIT `< _ >, INT `< _ >) => true
@@ -475,6 +476,7 @@ tbl def $compat_concat =
 
 dec $result_concat(typeIR, typeIR) : typeIR
 
+def $result_concat(STRING, STRING) = STRING
 def $result_concat(INT `< w_a >, INT `< w_b >) = INT `< $(w_a + w_b) >
 def $result_concat(INT `< w_a >, BIT `< w_b >) = INT `< $(w_a + w_b) >
 def $result_concat(BIT `< w_a >, INT `< w_b >) = BIT `< $(w_a + w_b) >
@@ -503,6 +505,9 @@ rule Expr_ok/binaryExpression-concat:
   -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
   -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
   -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
+  ---- ;; if concatenating two strings, the two must be local compile-time known
+  -- if (typeIR_l_reduced = STRING /\ typeIR_r_reduced = STRING)
+          => (ctk_l_reduced = LCTK /\ ctk_r_reduced = LCTK)
   ---- ;; compute the result type
   -- if typeIR_reduced
       = $result_concat(typeIR_l_reduced, typeIR_r_reduced)

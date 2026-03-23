@@ -29,10 +29,26 @@ rulegroup Stmt_eval/assignmentStatementIR {
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
+    ---- ;; if simple assignment
+    -- if assignop = `=
     ---- ;; evaluate expression
     -- Expr_eval:
         p EC_1 ARCH_1 |- typedExpressionIR
                        : EC_2 ARCH_2 abortResult
+
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-exit:
+    p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
+                   : EC_2 ARCH_2 EXIT
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                       : EC_1 ARCH_1 (`` storageReference)
+    ---- ;; if compound assignment
+    -- if assignop =/= `=
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 ARCH_1 |- typedExpressionIR
+                       : EC_2 ARCH_2 EXIT
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
     p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
@@ -41,6 +57,8 @@ rulegroup Stmt_eval/assignmentStatementIR {
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
+    ---- ;; if simple assignment
+    -- if assignop = `=
     ---- ;; evaluate expression
     -- Expr_eval:
         p EC_1 ARCH_1 |- typedExpressionIR
@@ -48,6 +66,29 @@ rulegroup Stmt_eval/assignmentStatementIR {
     ---- ;; perform assignment
     -- Lvalue_write:
         p EC_2 ARCH_2 |- storageReference -> value
+                       : EC_3
+
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-cont:
+    p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
+                   : EC_3 ARCH_2 `EMPTY
+    ---- ;; evaluate l-value
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                       : EC_1 ARCH_1 (`` storageReference)
+    ---- ;; if compound assignment
+    -- if assignop =/= `=
+    ---- ;; evaluate expression
+    -- Expr_eval:
+        p EC_1 ARCH_1 |- typedExpressionIR
+                       : EC_2 ARCH_2 (`` value)
+    ---- ;; compute new value
+    -- Lvalue_read:
+        p EC_2 ARCH_2 |- storageReference : value_lvalue
+    -- if binop = $assignop_as_binop(assignop)
+    -- if value_new = $bin_op(binop, value_lvalue, value)
+    ---- ;; perform assignment
+    -- Lvalue_write:
+        p EC_2 ARCH_2 |- storageReference -> value_new
                        : EC_3
 
 }
