@@ -49,12 +49,20 @@ let sizeof_minSizeInBits' (value_typ : Value.t) : Bigint.t =
 let sizeof_maxSizeInBits' (value_typ : Value.t) : Bigint.t =
   !call "sizeof_maxSizeInBits'" [] [ value_typ ] |> unwrap_num_v
 
+(* key_interface_of_tableObject *)
+
+let key_interface_of_tableObject (value_tableObject : Value.t) :
+    (Value.t * Value.t * Value.t) list =
+  !call "key_interface_of_tableObject" [] [ value_tableObject ]
+  |> unwrap_list_v
+  |> List.map unwrap_tuple_v_three
+
 (* tableObject_add_entry *)
 
 let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
     (value_tableEntryPriorityInterface : Value.t)
     (value_tableKeysetInterface : Value.t)
-    (value_tableActionInterface : Value.t) : Value.t =
+    (value_tableActionInterface : Value.t) : Value.t option =
   !call "tableObject_add_entry" []
     [
       value_ctx;
@@ -63,6 +71,7 @@ let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
       value_tableKeysetInterface;
       value_tableActionInterface;
     ]
+  |> unwrap_opt_v
 
 (* tableObject_add_default_action *)
 

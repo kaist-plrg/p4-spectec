@@ -345,6 +345,14 @@ def $interface_of_tableKeyIR(
   = (nameIR_key, nameIR_matchKind, typeIR)
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
 
+dec $key_interface_of_tableObject(tableObject) : (nameIR, nameIR, typeIR)*
+
+def $key_interface_of_tableObject(TABLE typeId `{ frame TBL })
+  = (nameIR_key, nameIR_matchKind, typeIR)*
+  -- if KEY `= `{ tableKeyIR* } = TBL.KEYS
+  -- if ((nameIR_key, nameIR_matchKind, typeIR)
+      = $interface_of_tableKeyIR(tableKeyIR))*
+
 dec $tableObject_create_entry_keyset(
     evalContext,
     tableKeysPropertyIR,
@@ -367,27 +375,6 @@ def $tableObject_create_entry_keyset(
   -- if simpleKeysetExpressionIR*
       = $tableObject_create_entry_keys(
           EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface*)
-
-def $tableObject_create_entry_keyset(
-    EC,
-    KEY `= `{ tableKeyIR* },
-    tableKeyInterface*)
-  = `( simpleKeysetExpressionIR* )
-  ---- ;; fetch table key interfaces
-  -- if ((nameIR_key, nameIR_matchKind, typeIR)
-      = $interface_of_tableKeyIR(tableKeyIR))*
-  -- if ((nameIR_key_update, tableKeyValueInterface_update) = tableKeyInterface)*
-  ---- ;; if key names don't match, use the given order
-  -- if nameIR_key_non_selector*
-      = $filter_<nameIR>(nameIR_key*, (nameIR_matchKind =/= "selector")*)
-  -- if ~$eq_set<nameIR>(`{ nameIR_key_non_selector* }, `{ nameIR_key_update* })
-  -- if |nameIR_key_non_selector*| = |nameIR_key_update*|
-  ---- ;; substitute update key names with table key names
-  -- if (tableKeyInterface_subst
-      = (nameIR_key_non_selector, tableKeyValueInterface_update))*
-  -- if simpleKeysetExpressionIR*
-      = $tableObject_create_entry_keys(
-          EC, (nameIR_key, nameIR_matchKind, typeIR)*, tableKeyInterface_subst*)
 
 dec $alias_to_original_lookup_map(parameterIR*) : map<nameIR, nameIR>
 def $alias_to_original_lookup_map(parameterIR*)
@@ -556,7 +543,7 @@ dec $tableObject_add_entry(
     tableEntryPriorityInterface,
     tableKeysetInterface,
     tableActionInterface)
-  : tableObject
+  : tableObject?
 
 def $tableObject_add_entry(
     EC,
@@ -585,6 +572,15 @@ def $tableObject_add_entry(
           `= `{ tableEntryIR* ++ [ tableEntryIR_update ] }
   -- if TBL_updated
       = TBL[ .ENTRIES = tableEntriesPropertyIR_updated ]
+
+def $tableObject_add_entry(
+    EC,
+    TABLE typeId `{ frame TBL },
+    tableEntryPriorityInterface,
+    tableKeysetInterface,
+    tableActionInterface)
+  = eps
+  -- otherwise
 
 ;;; Table default action creation
 
