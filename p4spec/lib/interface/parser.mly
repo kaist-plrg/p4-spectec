@@ -559,16 +559,16 @@ namedExpressionList:
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
 ;
 
-%inline sliceAccessExpression:
+%inline sliceRangeAccessExpression:
   | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpression" }
 ;
 
 %inline accessExpression:
 	| e = errorAccessExpression
 	| e = memberAccessExpression
 	| e = indexAccessExpression
-  | e = sliceAccessExpression
+  | e = sliceRangeAccessExpression
 		{ e }
 ;
 
@@ -582,16 +582,16 @@ namedExpressionList:
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
 ;
 
-%inline sliceAccessExpressionNonBrace:
+%inline sliceRangeAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
 	| e = errorAccessExpression
 	| e = memberAccessExpressionNonBrace
 	| e = indexAccessExpressionNonBrace
-  | e = sliceAccessExpressionNonBrace
+  | e = sliceRangeAccessExpressionNonBrace
 		{ e }
 ;
 

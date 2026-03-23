@@ -1063,8 +1063,8 @@ rulegroup Expr_ok/indexAccessExpression {
 
 }
 
-;;;; sliceAccessExpression
-;;;; syntax sliceAccessExpression =
+;;;; sliceRangeAccessExpression
+;;;; syntax sliceRangeAccessExpression =
 ;;;;  expression `[ expression `: expression ]
 
 tbl dec $compat_bitslice_base(typeIR) : bool
@@ -1105,7 +1105,7 @@ def $is_valid_bitslice(TYPEDEF _ typeIR, n_lo, n_hi)
 def $is_valid_bitslice(_, _, _) = false
   -- otherwise
 
-rule Expr_ok/sliceAccessExpression:
+rule Expr_ok/sliceRangeAccessExpression:
   p TC |- expression_base `[ expression_hi `: expression_lo ]
         : (typedExpressionIR_base
             `[ typedExpressionIR_hi_reduced `: typedExpressionIR_lo_reduced ])
