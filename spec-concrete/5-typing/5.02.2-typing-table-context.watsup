@@ -21,10 +21,8 @@ syntax matchMode =
   | NOPRI
   ;; does not require explicit priority and is lpm, holding the max prefix
   | NOPRILPM nat
-  ;; requires explicit priority and is not lpm
+  ;; requires explicit priority
   | PRI
-  ;; requires explicit priority and is lpm
-  | PRILPM
 
 syntax tableContext =
   { KEYS matchKey*,
@@ -121,11 +119,6 @@ def $update_mode_tbl(TBLC, "lpm", TYPEDEF _ typeIR)
 def $update_mode_tbl(TBLC, "lpm", TYPE _ typeIR)
   = $update_mode_tbl(TBLC, "lpm", typeIR)
 
-def $update_mode_tbl(TBLC, "lpm", typeIR)
-  = TBLC[ .MODE = PRILPM ]
-  -- if ~(typeIR <: aliasTypeIR)
-  -- if TBLC.MODE = PRI
-
 def $update_mode_tbl(TBLC, "range", _)
   = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRI
@@ -137,13 +130,13 @@ def $update_mode_tbl(TBLC, "optional", _)
   -- if TBLC.MODE = NOPRI
 
 def $update_mode_tbl(TBLC, "range", _)
-  = TBLC[ .MODE = PRILPM ]
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRILPM _
 def $update_mode_tbl(TBLC, "ternary", _)
-  = TBLC[ .MODE = PRILPM ]
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRILPM _
 def $update_mode_tbl(TBLC, "optional", _)
-  = TBLC[ .MODE = PRILPM ]
+  = TBLC[ .MODE = PRI ]
   -- if TBLC.MODE = NOPRILPM _
 
 def $update_mode_tbl(TBLC, _, _) = TBLC

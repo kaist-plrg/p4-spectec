@@ -588,7 +588,7 @@ rulegroup TableEntry_keyset_ok/default {
 
   rule TableEntry_keyset_ok/simple-non-noprilpm:
     TC TBLC |- DEFAULT : TBLS DEFAULT
-    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI \/ TBLC.MODE = PRILPM
+    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI
     -- if TBLS = NON_LPM
 
   rule TableEntry_keyset_ok/tuple-noprilpm:
@@ -598,7 +598,7 @@ rulegroup TableEntry_keyset_ok/default {
 
   rule TableEntry_keyset_ok/tuple-non-noprilpm:
     TC TBLC |- `( DEFAULT ) : TBLS (`( DEFAULT ))
-    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI \/ TBLC.MODE = PRILPM
+    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI
     -- if TBLS = NON_LPM
 
 }
@@ -615,7 +615,7 @@ rulegroup TableEntry_keyset_ok/dontcare {
 
   rule TableEntry_keyset_ok/simple-non-noprilpm:
     TC TBLC |- `_ : TBLS `_
-    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI \/ TBLC.MODE = PRILPM
+    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI
     -- if TBLS = NON_LPM
 
   rule TableEntry_keyset_ok/tuple-noprilpm:
@@ -625,7 +625,7 @@ rulegroup TableEntry_keyset_ok/dontcare {
 
   rule TableEntry_keyset_ok/tuple-non-noprilpm:
     TC TBLC |- `( `_ ) : TBLS (`( `_ ))
-    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI \/ TBLC.MODE = PRILPM
+    -- if TBLC.MODE = NOPRI \/ TBLC.MODE = PRI
     -- if TBLS = NON_LPM
 
 }
@@ -707,10 +707,10 @@ rulegroup TableEntry_priority_ok/none {
     -- if TBLC.MODE = NOPRILPM n
     -- if TBLS = LPM n_prefix
 
-  rule TableEntry_priority_ok/pri-prilpm-number-init:
+  rule TableEntry_priority_ok/pri-number-init:
     TC TBLC_0 TBLS |- eps : TBLC_1 (PRIORITY `= (D n) `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
     ---- ;; if largest wins
@@ -721,10 +721,10 @@ rulegroup TableEntry_priority_ok/none {
     -- if n = $ite<int>(b_lw, $((n_size - 1) * n_delta + 1), 1)
     -- if TBLC_1 = $add_table_priority(TBLC_0, n)
 
-  rule TableEntry_priority_ok/pri-prilpm-number-non-init:
+  rule TableEntry_priority_ok/pri-number-non-init:
     TC TBLC_0 TBLS |- eps : TBLC_1 (PRIORITY `= (D n) `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     ---- ;; if priority has been specified
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
     ---- ;; if largest wins
@@ -741,11 +741,11 @@ rulegroup TableEntry_priority_ok/none {
 
 rulegroup TableEntry_priority_ok/number {
 
-  rule TableEntry_priority_ok/pri-prilpm-number-init:
+  rule TableEntry_priority_ok/pri-number-init:
     TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
                     : TBLC_2 (PRIORITY `= integerLiteral `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
@@ -754,11 +754,11 @@ rulegroup TableEntry_priority_ok/number {
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
-  rule TableEntry_priority_ok/pri-prilpm-number-non-init:
+  rule TableEntry_priority_ok/pri-number-non-init:
     TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
                     : TBLC_1 (PRIORITY `= integerLiteral `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if priority has been specified
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
@@ -773,11 +773,11 @@ rulegroup TableEntry_priority_ok/number {
 
 rulegroup TableEntry_priority_ok/expression {
 
-  rule TableEntry_priority_ok/pri-prilpm-expression-init:
+  rule TableEntry_priority_ok/pri-expression-init:
     TC TBLC_0 TBLS |- PRIORITY `= `( expression ) `:
                     : TBLC_2 (PRIORITY `= (D n) `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if no priority has been specified yet
     -- if TBLC_0.PRIORITIES.VALUES = eps
@@ -789,11 +789,11 @@ rulegroup TableEntry_priority_ok/expression {
     -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
     -- if TBLC_2 = $add_table_priority(TBLC_1, n)
 
-  rule TableEntry_priority_ok/pri-prilpm-expression-non-init:
+  rule TableEntry_priority_ok/pri-expression-non-init:
     TC TBLC_0 TBLS |- PRIORITY `= `( expression ) `:
                     : TBLC_1 (PRIORITY `= (D n) `:)
     ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI \/ TBLC_0.MODE = PRILPM
+    -- if TBLC_0.MODE = PRI
     -- if ~TBLC_0.ENTRIES.CONST
     ---- ;; if priority has been specified
     -- if TBLC_0.PRIORITIES.VALUES =/= eps
