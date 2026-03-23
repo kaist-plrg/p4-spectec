@@ -40,7 +40,7 @@ def $compat_table_key(nameIR, typeIR) = false
 
 rule TableKey_ok:
   TC TBLC_0 |- expression `: name_matchkind annotationList `;
-             : TBLC_2 tableKeyIR
+             : TBLC_1 tableKeyIR
   ---- ;; check expression
   -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
@@ -57,9 +57,7 @@ rule TableKey_ok:
   -- if $compat_table_key(nameIR_matchkind, typeIR)
   ---- ;; update table context
   -- if TBLC_1
-      = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
-  -- if TBLC_2
-      = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+      = $add_key_tbl(TBLC_0, nameIR_matchkind, typeIR)
   ---- ;; create IR
   -- if tableKeyIR
       = typedExpressionIR `# nameIR_key `: nameIR_matchkind annotationList `;
@@ -884,10 +882,11 @@ rulegroup TableEntries_ok {
 
 rule TableProperty_ok/key:
   TC TBLC_0 |- KEY `= `{ tableKeyList }
-             : TBLC_1 (KEY `= `{ tableKeyIR* })
+             : TBLC_2 (KEY `= `{ tableKeyIR* })
   -- if tableKey* = $flatten_tableKeyList(tableKeyList)
   -- TableKeys_ok:
       TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*
+  -- if TBLC_2 = $update_mode_tbl(TBLC_1, tableKeyIR*)
 
 ;;; ACTIONS `= `{ tableActionList }
 

@@ -96,51 +96,67 @@ def $add_table_priority(TBLC, n)
   = TBLC[ .PRIORITIES.VALUES = TBLC.PRIORITIES.VALUES ++ [ n ] ]
 
 ;;
+;; Checkers
+
+;;; Checker for lpm keys
+
+dec $is_lpm_key(tableKeyIR) : bool
+  hint(prose_true "match kind of table key" %0 "is lpm")
+  hint(prose_false "match kind of table key" %0 "is not lpm")
+dec $is_lpm_key'(nameIR) : bool
+
+def $is_lpm_key(_ `# _ `: nameIR _ `;) = $is_lpm_key'(nameIR)
+
+def $is_lpm_key'("lpm") = true
+def $is_lpm_key'(nameIR) = false
+  -- otherwise
+
+;;; Checker for keys that require a priority
+
+dec $requires_priority(tableKeyIR) : bool
+  hint(prose_true "match kind of table key" %0 "requires a priority")
+  hint(prose_false "match kind of table key" %0 "does not require a priority")
+dec $requires_priority'(nameIR) : bool
+
+def $requires_priority(_ `# _ `: nameIR _ `;) = $requires_priority'(nameIR)
+
+def $requires_priority'("range") = true
+def $requires_priority'("ternary") = true
+def $requires_priority'("optional") = true
+def $requires_priority'(nameIR) = false
+  -- otherwise
+
+;;
 ;; Updaters
 ;;
 
 ;;; Updater for modes
 
-dec $update_mode_tbl(tableContext, id, typeIR) : tableContext
-  hint(prose_in %0 "with match mode updated based on key" %1 "of type" %2)
+dec $update_mode_tbl(tableContext, tableKeyIR*) : tableContext
+  hint(prose_in %0 "with match mode updated based on keys" %1)
 
-def $update_mode_tbl(TBLC, "lpm", INT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "lpm", BIT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "lpm", VARBIT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
+def $update_mode_tbl(TBLC, tableKeyIR*)
+  = TBLC[ .MODE = PRI]
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if $exists_(b_pri*)
 
-def $update_mode_tbl(TBLC, "lpm", TYPEDEF _ typeIR)
-  = $update_mode_tbl(TBLC, "lpm", typeIR)
-def $update_mode_tbl(TBLC, "lpm", TYPE _ typeIR)
-  = $update_mode_tbl(TBLC, "lpm", typeIR)
+def $update_mode_tbl(TBLC, tableKeyIR*)
+  = TBLC[ .MODE = NOPRILPM n]
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if ~$exists_(b_pri*)
+  -- (if b_lpm = $is_lpm_key(tableKeyIR))*
+  -- if tableKeyIR_lpm = $filter_<tableKeyIR>(tableKeyIR*, b_lpm*)
+  -- if typedExpressionIR `# _ `: "lpm" _ `; = tableKeyIR_lpm
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+  -- if integerTypeIR = $unroll_aliasType(typeIR)
+  -- if n = $width_of_integerTypeIR(integerTypeIR)
 
-def $update_mode_tbl(TBLC, "range", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "ternary", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "optional", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
-
-def $update_mode_tbl(TBLC, "range", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRILPM _
-def $update_mode_tbl(TBLC, "ternary", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRILPM _
-def $update_mode_tbl(TBLC, "optional", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRILPM _
-
-def $update_mode_tbl(TBLC, _, _) = TBLC
-  -- otherwise
+def $update_mode_tbl(TBLC, tableKeyIR*)
+  = TBLC[ .MODE = NOPRI]
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if ~$exists_(b_pri*)
+  -- (if b_lpm = $is_lpm_key(tableKeyIR))*
+  -- if ~$exists_(b_lpm*)
 
 ;;
 ;; Finders
