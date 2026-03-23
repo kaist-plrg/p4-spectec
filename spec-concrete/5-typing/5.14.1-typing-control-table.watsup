@@ -694,116 +694,24 @@ rulegroup TableEntry_action_ok {
 
 ;;;;; eps
 
-rulegroup TableEntry_priority_ok/none { 
-
-  rule TableEntry_priority_ok/nopri:
-    TC TBLC TBLS |- eps : TBLC eps
-    -- if TBLC.MODE = NOPRI
-
-  rule TableEntry_priority_ok/noprilpm:
-    TC TBLC TBLS |- eps : TBLC (PRIORITY `= (D n_prefix) `:)
-    -- if TBLC.MODE = NOPRILPM n
-    -- if TBLS = LPM n_prefix
-
-  rule TableEntry_priority_ok/pri-number-init:
-    TC TBLC_0 TBLS |- eps : TBLC_1 (PRIORITY `= (D n) `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    ---- ;; if no priority has been specified yet
-    -- if TBLC_0.PRIORITIES.VALUES = eps
-    ---- ;; if largest wins
-    -- if b_lw = TBLC_0.PRIORITIES.LARGEST_WINS
-    ---- ;; infer and initialize the priority
-    -- if n_size = TBLC_0.ENTRIES.SIZE
-    -- if n_delta = TBLC_0.PRIORITIES.DELTA
-    -- if n = $ite<int>(b_lw, $((n_size - 1) * n_delta + 1), 1)
-    -- if TBLC_1 = $add_table_priority(TBLC_0, n)
-
-  rule TableEntry_priority_ok/pri-number-non-init:
-    TC TBLC_0 TBLS |- eps : TBLC_1 (PRIORITY `= (D n) `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    ---- ;; if priority has been specified
-    -- if TBLC_0.PRIORITIES.VALUES =/= eps
-    ---- ;; if largest wins
-    -- if b_lw = TBLC_0.PRIORITIES.LARGEST_WINS
-    ---- ;; infer the priority
-    -- if n_last = $find_table_priority_last(TBLC_0)
-    -- if n_delta = TBLC_0.PRIORITIES.DELTA
-    -- if n = $ite<int>(b_lw, $(n_last - n_delta), $(n_last + n_delta))
-    -- if TBLC_1 = $add_table_priority(TBLC_0, n)
-
-}
+rule TableEntry_priority_ok/none:
+  TC |- eps : eps
 
 ;;;;; PRIORITY `= number `:
 
-rulegroup TableEntry_priority_ok/number {
-
-  rule TableEntry_priority_ok/pri-number-init:
-    TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
-                    : TBLC_2 (PRIORITY `= integerLiteral `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    -- if ~TBLC_0.ENTRIES.CONST
-    ---- ;; if no priority has been specified yet
-    -- if TBLC_0.PRIORITIES.VALUES = eps
-    ---- ;; evaluate and initialize the priority
-    -- if n = $nat_of_integerValue(integerLiteral)
-    -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
-    -- if TBLC_2 = $add_table_priority(TBLC_1, n)
-
-  rule TableEntry_priority_ok/pri-number-non-init:
-    TC TBLC_0 TBLS |- PRIORITY `= integerLiteral `:
-                    : TBLC_1 (PRIORITY `= integerLiteral `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    -- if ~TBLC_0.ENTRIES.CONST
-    ---- ;; if priority has been specified
-    -- if TBLC_0.PRIORITIES.VALUES =/= eps
-    -- if TBLC_0.PRIORITIES.INIT
-    ---- ;; evaluate and initialize the priority
-    -- if n = $nat_of_integerValue(integerLiteral)
-    -- if TBLC_1 = $add_table_priority(TBLC_0, n)
-
-}
+rule TableEntry_priority_ok/number:
+  TC |- PRIORITY `= integerLiteral `:
+      : PRIORITY `= integerLiteral `:
 
 ;;;;; PRIORITY `= `( expression ) `:
 
-rulegroup TableEntry_priority_ok/expression {
-
-  rule TableEntry_priority_ok/pri-expression-init:
-    TC TBLC_0 TBLS |- PRIORITY `= `( expression ) `:
-                    : TBLC_2 (PRIORITY `= (D n) `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    -- if ~TBLC_0.ENTRIES.CONST
-    ---- ;; if no priority has been specified yet
-    -- if TBLC_0.PRIORITIES.VALUES = eps
-    ---- ;; evaluate and initialize the priority
-    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
-    -- if n = $nat_of_integerValue(integerValue)
-    -- if TBLC_1 = TBLC_0[ .PRIORITIES.INIT = true ]
-    -- if TBLC_2 = $add_table_priority(TBLC_1, n)
-
-  rule TableEntry_priority_ok/pri-expression-non-init:
-    TC TBLC_0 TBLS |- PRIORITY `= `( expression ) `:
-                    : TBLC_1 (PRIORITY `= (D n) `:)
-    ---- ;; check match mode
-    -- if TBLC_0.MODE = PRI
-    -- if ~TBLC_0.ENTRIES.CONST
-    ---- ;; if priority has been specified
-    -- if TBLC_0.PRIORITIES.VALUES =/= eps
-    -- if TBLC_0.PRIORITIES.INIT
-    ---- ;; evaluate and initialize the priority
-    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
-    -- if n = $nat_of_integerValue(integerValue)
-    -- if TBLC_1 = $add_table_priority(TBLC_0, n)
-  
-}
+rule TableEntry_priority_ok/expression:
+  TC |- PRIORITY `= `( expression ) `:
+      : PRIORITY `= (D n) `:
+  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+  -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
+  -- if n = $nat_of_integerValue(integerValue)
 
 ;;; constOpt tableEntryPriority
 ;;;   keysetExpression `: tableActionReference annotationList `;
@@ -812,19 +720,18 @@ rulegroup TableEntry_priority_ok/expression {
 rulegroup TableEntry_ok {
 
   rule TableEntry_ok/priority:
-    TC TBLC_0 |- constOpt tableEntryPriority
+    TC TBLC |- constOpt tableEntryPriority
                   keysetExpression `: tableActionReference annotationList `;
-               : TBLC_1 tableEntryIR
+             : TBLS tableEntryIR
     ---- ;; check entry key
     -- TableEntry_keyset_ok:
-        TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
+        TC TBLC |- keysetExpression : TBLS keysetExpressionIR
     ---- ;; check entry action
     -- TableEntry_action_ok:
-        TC TBLC_0 |- tableActionReference : tableActionReferenceIR
+        TC TBLC |- tableActionReference : tableActionReferenceIR
     ---- ;; check entry priority
     -- TableEntry_priority_ok:
-        TC TBLC_0 TBLS |- tableEntryPriority
-                        : TBLC_1 tableEntryPriorityOptIR
+        TC |- tableEntryPriority : tableEntryPriorityOptIR
     ---- ;; create IR
     -- if constOptIR = $flatten_constOpt(constOpt)
     -- if tableEntryIR
@@ -832,43 +739,23 @@ rulegroup TableEntry_ok {
             keysetExpressionIR `: tableActionReferenceIR annotationList `;
 
   rule TableEntry_ok/non-priority:
-    TC TBLC_0 |- constOpt
+    TC TBLC |- constOpt
                   keysetExpression `: tableActionReference annotationList `;
-               : TBLC_1 tableEntryIR
+             : TBLS tableEntryIR
     ---- ;; check entry key
     -- TableEntry_keyset_ok:
-        TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
+        TC TBLC |- keysetExpression : TBLS keysetExpressionIR
     ---- ;; check entry action
     -- TableEntry_action_ok:
-        TC TBLC_0 |- tableActionReference : tableActionReferenceIR
+        TC TBLC |- tableActionReference : tableActionReferenceIR
     ---- ;; check entry priority
     -- TableEntry_priority_ok:
-        TC TBLC_0 TBLS |- eps
-                        : TBLC_1 tableEntryPriorityOptIR
+        TC |- eps : tableEntryPriorityOptIR
     ---- ;; create IR
     -- if constOptIR = $flatten_constOpt(constOpt)
     -- if tableEntryIR
         = constOptIR tableEntryPriorityOptIR
             keysetExpressionIR `: tableActionReferenceIR annotationList `;
-
-}
-
-;;
-;; Table entry property list typing
-;;
-;; syntax tableEntryList
-;;
-
-rulegroup TableEntries_ok {
-
-  rule TableEntries_ok/nil:
-    TC TBLC |- eps : TBLC eps
-
-  rule TableEntries_ok/cons:
-    TC TBLC_0 |- tableEntry_h :: tableEntry_t*
-               : TBLC_2 (tableEntryIR_h :: tableEntryIR_t*)
-    -- TableEntry_ok: TC TBLC_0 |- tableEntry_h : TBLC_1 tableEntryIR_h
-    -- TableEntries_ok: TC TBLC_1 |- tableEntry_t* : TBLC_2 tableEntryIR_t*
 
 }
 
@@ -901,7 +788,7 @@ rule TableProperty_ok/actions:
 
 rule TableProperty_ok/entries:
   TC TBLC_0 |- annotationList constOpt ENTRIES `= `{ tableEntryList }
-             : TBLC_3 (annotationList constOptIR ENTRIES `= `{ tableEntryIR* })
+             : TBLC_2 (annotationList constOptIR ENTRIES `= `{ tableEntryIR_pri* })
   ---- ;; if the table key is empty, then the table entries must be empty
   -- if tableEntry* = $flatten_tableEntryList(tableEntryList)
   -- if $(|TBLC_0.KEYS| = 0) => $(|tableEntry*| = 0)
@@ -911,8 +798,10 @@ rule TableProperty_ok/entries:
   -- if constOptIR = $flatten_constOpt(constOpt)
   -- if TBLC_2 = TBLC_1[ .ENTRIES.CONST = (constOptIR = CONST) ]
   ---- ;; check table entries
-  -- TableEntries_ok:
-      TC TBLC_2 |- tableEntry* : TBLC_3 tableEntryIR*
+  -- (TableEntry_ok: TC TBLC_2 |- tableEntry : TBLS tableEntryIR)*
+  ---- ;; set priorities of table entries
+  -- if tableEntryIR_pri*
+      = $set_priorities_of_tableEntryListIR(TBLC_2, TBLS*, tableEntryIR*)
 
 ;;; annotationList constOpt tableCustomName initializer `;
 
