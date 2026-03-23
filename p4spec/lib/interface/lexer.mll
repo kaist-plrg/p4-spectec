@@ -368,6 +368,8 @@ rule tokenize = parse
       { debug_token "@"; AT (info lexbuf) }
   | "++"
       { debug_token "++"; PLUSPLUS (info lexbuf) }
+  | "+:"
+      { debug_token "+:"; PLUSCOLON (info lexbuf) }
   | "&&&"
       { debug_token "&&&"; MASK (info lexbuf) }
   | "..."
