@@ -49,12 +49,20 @@ let sizeof_minSizeInBits' (value_typ : Value.t) : Bigint.t =
 let sizeof_maxSizeInBits' (value_typ : Value.t) : Bigint.t =
   !call "sizeof_maxSizeInBits'" [] [ value_typ ] |> unwrap_num_v
 
+(* key_interface_of_tableObject *)
+
+let key_interface_of_tableObject (value_tableObject : Value.t) :
+    (Value.t * Value.t * Value.t) list =
+  !call "key_interface_of_tableObject" [] [ value_tableObject ]
+  |> unwrap_list_v
+  |> List.map unwrap_tuple_v_three
+
 (* tableObject_add_entry *)
 
 let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
     (value_tableEntryPriorityInterface : Value.t)
     (value_tableKeysetInterface : Value.t)
-    (value_tableActionInterface : Value.t) : Value.t =
+    (value_tableActionInterface : Value.t) : Value.t option =
   !call "tableObject_add_entry" []
     [
       value_ctx;
@@ -63,6 +71,7 @@ let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
       value_tableKeysetInterface;
       value_tableActionInterface;
     ]
+  |> unwrap_opt_v
 
 (* tableObject_add_default_action *)
 
@@ -75,14 +84,13 @@ let tableObject_add_default_action (value_ctx : Value.t)
 (* find/update_object_qualified_e/unqualified_e *)
 
 let find_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t) :
-    Value.t =
+    Value.t option =
   !call "find_object_qualified_e" [] [ value_arch; value_objectId ]
-  |> unwrap_opt_v |> Option.get
+  |> unwrap_opt_v
 
 let find_object_unqualified_e (value_arch : Value.t) (value_id : Value.t) :
-    Value.t =
-  !call "find_object_unqualified_e" [] [ value_arch; value_id ]
-  |> unwrap_opt_v |> Option.get
+    Value.t option =
+  !call "find_object_unqualified_e" [] [ value_arch; value_id ] |> unwrap_opt_v
 
 let update_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t)
     (value_object : Value.t) : Value.t =

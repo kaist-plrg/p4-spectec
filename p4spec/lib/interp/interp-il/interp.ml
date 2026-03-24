@@ -984,6 +984,47 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Iterated premise evaluation *)
 
+  and eval_iter_prem_opt (ctx : Ctx.t) (prem : prem) (vars_bound : var list)
+      (vars_bind : var list) : Ctx.t backtrack =
+    (* Create a subcontext for the bound variable *)
+    let* ctx_sub_opt = Ctx.sub_opt ctx vars_bound in
+    match ctx_sub_opt with
+    (* If the bound variable supposed to guide the iteration is already empty,
+       then the binding variables are also empty *)
+    | None ->
+        let ctx =
+          List.fold_left
+            (fun ctx (id_binding, typ_binding, iters_binding) ->
+              let value_binding =
+                Value.make
+                  (Typ.iterate typ_binding (iters_binding @ [ Opt ])).it
+                  (OptV None)
+              in
+              Ctx.add_value ctx
+                (id_binding, iters_binding @ [ Opt ])
+                value_binding)
+            ctx vars_bind
+        in
+        Ok ctx
+    (* Otherwise, evaluate the premise for the bound values *)
+    | Some ctx_sub ->
+        let* ctx_sub = eval_prem ctx_sub prem in
+        let ctx =
+          List.fold_left
+            (fun ctx (id_binding, typ_binding, iters_binding) ->
+              let value_binding =
+                Ctx.find_value ctx_sub (id_binding, iters_binding)
+              in
+              let value_binding =
+                Value.make typ_binding.it (OptV (Some value_binding))
+              in
+              Ctx.add_value ctx
+                (id_binding, iters_binding @ [ Opt ])
+                value_binding)
+            ctx vars_bind
+        in
+        Ok ctx
+
   and eval_iter_prem_list (ctx : Ctx.t) (prem : prem) (vars_bound : var list)
       (vars_bind : var list) : Ctx.t backtrack =
     (* Create a subcontext for each batch of bound values *)
@@ -1038,7 +1079,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       Ctx.t backtrack =
     let iter, vars_bound, vars_bind = iterprem in
     match iter with
-    | Opt -> error prem.at "(TODO) eval_iter_prem"
+    | Opt -> eval_iter_prem_opt ctx prem vars_bound vars_bind
     | List -> eval_iter_prem_list ctx prem vars_bound vars_bind
 
   (* Debug premise evaluation *)

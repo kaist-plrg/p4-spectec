@@ -8022,12 +8022,14 @@ compile-time (<a href="#sec-minsizeinbits">[sec-minsizeinbits]</a>).</p>
 <pre>rulegroup Type_ok/fixedInt:
   rule Type_ok/integer:
   p TC |- INT `&lt;n&gt; : (INT `&lt;n&gt;) # eps
+ -- if n &gt; 0
   rule Type_ok/expression:
   p TC |- INT `&lt;`(expression)&gt; : (INT `&lt;n&gt;) # eps
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
  -- Expr_eval_lctk: p TC |- typedExpressionIR ~&gt; integerValue
- -- if n = $nat_of_integerValue(integerValue)</pre>
+ -- if n = $nat_of_integerValue(integerValue)
+ -- if n &gt; 0</pre>
 </div>
 </div>
 </div>
@@ -8053,6 +8055,9 @@ compile-time (<a href="#sec-minsizeinbits">[sec-minsizeinbits]</a>).</p>
 </li>
 <li>
 <p>Let <code>n</code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Check that <code>n</code> is greater than <code>0</code>.</p>
 </li>
 <li>
 <p>Result in <code>INT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and fresh type variables <code>·</code>.</p>
@@ -8095,6 +8100,9 @@ compile-time (<a href="#sec-minsizeinbits">[sec-minsizeinbits]</a>).</p>
 </li>
 <li>
 <p>Let <code>n</code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>n</code> is greater than <code>0</code>.</p>
 </li>
 <li>
 <p>Result in <code>INT</code> <code>&lt;</code> <code>n</code> <code>&gt;</code> and fresh type variables <code>·</code>.</p>
@@ -13199,7 +13207,7 @@ type definition:</p>
 <div id="actionDef" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionDef
-   : ACTION nameIR `( parameterListIR ) blockStatementIR
+   : annotationList ACTION nameIR `( parameterListIR ) blockStatementIR
    ;</code></pre>
 </div>
 </div>
@@ -18196,7 +18204,8 @@ provided or not.</p>
   p IC_0 STO_0 |- annotationList typeIR constructorTargetIR `(argumentListIR) nameIR objectInitializerOptIR ; : IC_1 STO_2 constantDeclarationIR
  -- if prefixedNameIR `&lt;typeArgumentListIR&gt; = constructorTargetIR
  -- Constructor_inst: p IC_0 |- prefixedNameIR `&lt;typeArgumentListIR&gt; `(argumentListIR) : constructorDef `&lt;typeArgumentListIR_inst&gt; `(# id_default* # id_optional*)
- -- if IC_inner = $enter_path_i(IC_0, nameIR)
+ -- if nameIR' = $name_annotation_default(annotationList, nameIR)
+ -- if IC_inner = $enter_path_i(IC_0, nameIR')
  -- Constructor_call: p IC_inner STO_0 |- constructorDef `&lt;typeArgumentListIR_inst&gt; `(argumentListIR # id_default* # id_optional*) : STO_1 object
  -- if ~(object &lt;: externObject)
  -- if objectId = IC_0.PATH ++ nameIR
@@ -18293,7 +18302,23 @@ provided or not.</p>
 </div>
 </li>
 <li>
-<p>Else:</p>
+<p>Let <code>nameIR'</code> be <code><a href="#name_annotation_default">$name_annotation_default(annotationList,</code> <code>nameIR)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>IC<sub>inner</sub></code> be <a href="#enter_path_i"><code>IC<sub>0</sub></code> with <code>nameIR'</code> added to the path</a>.</p>
+</li>
+<li>
+<p>Let store <code>STO<sub>1</sub></code> and instantiated <code>object</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Constructor_call">instantiating <code>constructorDef</code> <code>&lt;</code> <code>typeArgumentListIR<sub>inst</sub></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under context <code>IC<sub>inner</sub></code> and store <code>STO<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If <code>object</code> does not have type <code>externObject</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -18978,7 +19003,7 @@ functionDeclarationIR
   rule ActionDecl_inst:
   p IC_0 |- annotationList ACTION nameIR `(parameterListIR) blockStatementIR : IC_1
  -- if callableId = $callableId_IR(nameIR, parameterListIR)
- -- if actionDef = ACTION nameIR `(parameterListIR) blockStatementIR
+ -- if actionDef = annotationList ACTION nameIR `(parameterListIR) blockStatementIR
  -- if IC_1 = $add_callableDef_non_overload_i(p, IC_0, callableId, actionDef)</pre>
 </div>
 </div>
@@ -19000,7 +19025,7 @@ functionDeclarationIR
 <p>Let <code>callableId</code> be <a href="#callableId_IR">the callable identifier for <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
-<p>Let <code>actionDef</code> be <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code>.</p>
+<p>Let <code>actionDef</code> be <code>annotationList</code> <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code>.</p>
 </li>
 <li>
 <p>Let <code>IC<sub>1</sub></code> be <a href="#add_callableDef_non_overload_i"><code>IC<sub>0</sub></code> where <code>callableId</code> to <code>actionDef</code> is added as a non-overloaded callable to the <code>p</code> layer</a>.</p>
@@ -20572,24 +20597,24 @@ parserStateIR
 <div class="content">
 <pre>rulegroup Decl_ok/parserDeclaration:
   rule Decl_ok/parserDeclaration:
-  TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_7 parserDeclarationIR
+  TC_0 |- annotationList PARSER name typeParameterListOpt `(parameterList) constructorParameterListOpt `{parserLocalDeclarationList parserStateList} : TC_6 parserDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = PARSER]
- -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
- -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR* # typeId_impl*
- -- ParameterList_ok: BLOCK TC_3 |- parameterList : TC_4 parameterIR* # eps
- -- ParserLocalDeclList_ok: TC_4 |- parserLocalDeclarationList : TC_5 parserLocalDeclarationIR*
- -- if TC_6 = TC_5[LOCAL.KIND = PARSER_STATE]
- -- ParserStateList_ok: TC_6 |- parserStateList : parserStateIR*
+ -- if typeParameterListOpt = `EMPTY
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
+ -- ParserLocalDeclList_ok: TC_3 |- parserLocalDeclarationList : TC_4 parserLocalDeclarationIR*
+ -- if TC_5 = TC_4[LOCAL.KIND = PARSER_STATE]
+ -- ParserStateList_ok: TC_5 |- parserStateList : parserStateIR*
  -- if callableTypeDefIR = PARSER_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
+ -- CallableTypeDef_wf: $bound(BLOCK, TC_1) |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
- -- if typeDefIR_parser = PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
+ -- if typeDefIR_parser = PARSER nameIR `&lt;eps , eps&gt; `(parameterIR*)
  -- if typeIR_parser = $typeIR_of_typeDefIR(typeDefIR_parser)
- -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_parser
+ -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_parser
  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
- -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
- -- if parserDeclarationIR = annotationList PARSER nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*}</pre>
+ -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+ -- if parserDeclarationIR = annotationList PARSER nameIR `&lt;eps , eps&gt; `(parameterIR*) `(constructorParameterIR*) `{parserLocalDeclarationIR* parserStateIR*}</pre>
 </div>
 </div>
 </div>
@@ -20610,31 +20635,14 @@ parserStateIR
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>PARSER</code>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+<p>Check that <code>typeParameterListOpt</code> is <code>`EMPTY</code>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under context <code>TC<sub>1</sub></code> at <code>BLOCK</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let context <code>TC<sub>3</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under context <code>TC<sub>2</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let context <code>TC<sub>4</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>3</sub></code> at <code>BLOCK</code></a>.</p>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -20643,24 +20651,37 @@ parserStateIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>5</sub></code> and <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParserLocalDeclList_ok">typing <code>parserLocalDeclarationList</code>, under context <code>TC<sub>4</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>2</sub></code> at <code>BLOCK</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub></code> with <code>LOCAL.KIND</code> set to <code>PARSER_STATE</code>.</p>
+<p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>4</sub></code> and <code>parserLocalDeclarationIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDeclList_ok">typing <code>parserLocalDeclarationList</code>, under context <code>TC<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>PARSER_STATE</code>.</p>
 </li>
 <li>
 <p>Let <code>parserStateIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParserStateList_ok">typing <code>parserStateList</code>, under context <code>TC<sub>6</sub></code></a>.</p>
+<p>the result of <a href="#ParserStateList_ok">typing <code>parserStateList</code>, under context <code>TC<sub>5</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -20669,7 +20690,7 @@ parserStateIR
 <p>Let <code>callableTypeDefIR</code> be <code>PARSER_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
@@ -20681,13 +20702,13 @@ parserStateIR
 <p>Let <code>constructorId</code> be <a href="#constructorId">the constructor identifier for <code>name</code> <code>constructorParameterListOpt</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR<sub>parser</sub></code> be <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
+<p>Let <code>typeDefIR<sub>parser</sub></code> be <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>parser</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>parser</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>parser</sub></code>.</p>
+<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>parser</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -20696,13 +20717,13 @@ parserStateIR
 <p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>7</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>parserDeclarationIR</code> be <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>parserDeclarationIR</code> be <code>annotationList</code> <code>PARSER</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>parserLocalDeclarationIR<sup>*</sup></code> <code>parserStateIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>7</sub></code> and <code>parserDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>6</sub></code> and <code>parserDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -20834,24 +20855,24 @@ controlBodyIR = blockStatementIR</code></pre>
 <div class="content">
 <pre>rulegroup Decl_ok/controlDeclaration:
   rule Decl_ok/controlDeclaration:
-  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_7 controlDeclarationIR
+  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
- -- TypeParameterListOpt_ok: BLOCK TC_1 |- typeParameterListOpt : TC_2 typeId_expl*
- -- ConstructorParameterListOpt_ok: TC_2 |- constructorParameterListOpt : TC_3 constructorParameterIR* # typeId_impl*
- -- ParameterList_ok: BLOCK TC_3 |- parameterList : TC_4 parameterIR* # eps
- -- ControlLocalDeclList_ok: TC_4 |- controlLocalDeclarationList : TC_5 controlLocalDeclarationIR*
- -- if TC_6 = TC_5[LOCAL.KIND = CONTROL_APPLY_METHOD]
- -- Block_ok: TC_6 CONT NOLOOP |- controlBody : _ _ controlBodyIR
+ -- if typeParameterListOpt = `EMPTY
+ -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
+ -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
+ -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*
+ -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
+ -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
  -- if callableTypeDefIR = CONTROL_APPLY `(parameterIR*)
- -- CallableTypeDef_wf: $bound(BLOCK, TC_2) |- callableTypeDefIR
+ -- CallableTypeDef_wf: $bound(BLOCK, TC_1) |- callableTypeDefIR
  -- if nameIR = $name(name)
  -- if constructorId = $constructorId(name, constructorParameterListOpt)
- -- if typeDefIR_control = CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)
+ -- if typeDefIR_control = CONTROL nameIR `&lt;eps , eps&gt; `(parameterIR*)
  -- if typeIR_control = $typeIR_of_typeDefIR(typeDefIR_control)
- -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_control
+ -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_control
  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
- -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
- -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
+ -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+ -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;eps , eps&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
 </div>
 </div>
 </div>
@@ -20872,31 +20893,14 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>BLOCK.KIND</code> set to <code>CONTROL</code>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>2</sub></code> and type parameters <code>typeId<sub>expl</sub><sup>*</sup></code> be</p>
+<p>Check that <code>typeParameterListOpt</code> is <code>`EMPTY</code>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>2</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#TypeParameterListOpt_ok">typing <code>typeParameterListOpt</code>, under context <code>TC<sub>1</sub></code> at <code>BLOCK</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let context <code>TC<sub>3</sub></code>, <code>constructorParameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sub>impl</sub><sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under context <code>TC<sub>2</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let context <code>TC<sub>4</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>3</sub></code> at <code>BLOCK</code></a>.</p>
+<p>the result of <a href="#ConstructorParameterListOpt_ok">typing <code>constructorParameterListOpt</code> under context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -20905,24 +20909,37 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>5</sub></code> and <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId'<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ControlLocalDeclList_ok">typing <code>controlLocalDeclarationList</code>, under context <code>TC<sub>4</sub></code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>2</sub></code> at <code>BLOCK</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub></code> with <code>LOCAL.KIND</code> set to <code>CONTROL_APPLY_METHOD</code>.</p>
+<p>Check that <code>typeId'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>4</sub></code> and <code>controlLocalDeclarationIR<sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDeclList_ok">typing <code>controlLocalDeclarationList</code>, under context <code>TC<sub>3</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>CONTROL_APPLY_METHOD</code>.</p>
 </li>
 <li>
 <p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>controlBodyIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under context <code>TC<sub>6</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -20931,7 +20948,7 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Let <code>callableTypeDefIR</code> be <code>CONTROL_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
-<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>2</sub></code></a>.</p>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>BLOCK</code> layer of <code>TC<sub>1</sub></code></a>.</p>
 </li>
 <li>
 <p>Check that <a href="#CallableTypeDef_wf"><code>callableTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
@@ -20943,13 +20960,13 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Let <code>constructorId</code> be <a href="#constructorId">the constructor identifier for <code>name</code> <code>constructorParameterListOpt</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typeDefIR<sub>control</sub></code> be <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
+<p>Let <code>typeDefIR<sub>control</sub></code> be <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>control</sub></code> be <a href="#typeIR_of_typeDefIR">the underlying type of <code>typeDefIR<sub>control</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>control</sub></code>.</p>
+<p>Let <code>constructorTypeDefIR</code> be <code>CONSTRUCTOR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>control</sub></code>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>GLOBAL</code> layer of <code>TC<sub>0</sub></code></a>.</p>
@@ -20958,13 +20975,13 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>7</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>controlDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
+<p>Let <code>controlDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>7</sub></code> and <code>controlDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>6</sub></code> and <code>controlDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -23245,7 +23262,7 @@ typedefDeclarationIR
  -- if typeIR_package = $typeIR_of_typeDefIR(packageObjectTypeDefIR)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) : typeIR_package
  -- ConstructorTypeDef_wf: B |- constructorTypeDefIR
- -- if TC_5 = $add_constructorDef_t(TC_4, constructorId, constructorTypeDefIR)
+ -- if TC_5 = $add_constructorDef_non_overload_t(TC_4, constructorId, constructorTypeDefIR)
  -- if packageTypeDeclarationIR = annotationList PACKAGE nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(constructorParameterIR*) ;</pre>
 </div>
 </div>
@@ -23331,7 +23348,7 @@ typedefDeclarationIR
 <p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>B</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>5</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>4</sub></code></a>.</p>
+<p>Let <code>TC<sub>5</sub></code> be <a href="#add_constructorDef_non_overload_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>4</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>packageTypeDeclarationIR</code> be <code>annotationList</code> <code>PACKAGE</code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>;</code>.</p>
@@ -24885,15 +24902,18 @@ abortResult
   p EC_0 ARCH |- storageReference `[integerValue_index] : value
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = headerStackValue_base
- -- if n_idx = $nat_of_integerValue(integerValue_index)
- -- if n_idx &lt; n_size
+ -- if i_idx = $int_of_integerValue(integerValue_index)
+ -- if b_in_bounds = (i_idx &lt; n_size /\ i_idx &gt;= 0)
+ -- if b_in_bounds
+ -- if n_idx = i_idx
  -- if value = value_element*[n_idx]
   rule Lvalue_read/stack-out-of-bounds:
   p EC_0 ARCH |- storageReference `[integerValue_index] : value
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = headerStackValue_base
- -- if n_idx = $nat_of_integerValue(integerValue_index)
- -- if n_idx &gt;= n_size
+ -- if i_idx = $int_of_integerValue(integerValue_index)
+ -- if b_in_bounds = (i_idx &lt; n_size /\ i_idx &gt;= 0)
+ -- if ~b_in_bounds
  -- if HEADER typeId `{b_valid ; fieldValue*} = value_element*[0]
  -- if value = HEADER typeId `{false ; fieldValue*}</pre>
 </div>
@@ -24932,12 +24952,21 @@ abortResult
 <p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>_</code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>headerStackValue<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>n<sub>idx</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
+<p>Let <code>i<sub>idx</sub></code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>If <code>n<sub>idx</sub></code> is less than <code>n<sub>size</sub></code>:</p>
+<p>Let <code>b<sub>in_bounds</sub></code> be <code>i<sub>idx</sub></code> is less than <code>n<sub>size</sub></code> and <code>i<sub>idx</sub></code> is greater than or equal to <code>0</code>.</p>
+</li>
+<li>
+<p>If <code>b<sub>in_bounds</sub></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>i<sub>idx</sub></code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>idx</sub></code> be <code>i<sub>idx</sub></code>.</p>
+</li>
 <li>
 <p>Let <code>value''</code> be <code>value<sub>element</sub><sup>*</sup>[n<sub>idx</sub>]</code>.</p>
 </li>
@@ -24948,7 +24977,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>If <code>n<sub>idx</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -24986,8 +25015,10 @@ abortResult
   p EC_0 ARCH |- (storageReference `[integerValue_index]) -&gt; value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(n_base_idx ; n_size)] = headerStackValue_base
- -- if n_idx = $nat_of_integerValue(integerValue_index)
- -- if n_idx &lt; n_size
+ -- if i_idx = $int_of_integerValue(integerValue_index)
+ -- if b_in_bounds = (i_idx &lt; n_size /\ i_idx &gt;= 0)
+ -- if b_in_bounds
+ -- if n_idx = i_idx
  -- if value_element_update* = value_element*[[n_idx] = value]
  -- if headerStackValue_base_update = HEADER_STACK `[value_element_update* `(n_base_idx ; n_size)]
  -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerStackValue_base_update : EC_1
@@ -24995,8 +25026,9 @@ abortResult
   p EC_0 ARCH |- (storageReference `[integerValue_index]) -&gt; value : EC_0
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = headerStackValue_base
- -- if n_idx = $nat_of_integerValue(integerValue_index)
- -- if n_idx &gt;= n_size</pre>
+ -- if i_idx = $int_of_integerValue(integerValue_index)
+ -- if b_in_bounds = (i_idx &lt; n_size /\ i_idx &gt;= 0)
+ -- if ~b_in_bounds</pre>
 </div>
 </div>
 </div>
@@ -25033,12 +25065,21 @@ abortResult
 <p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>n<sub>base_idx</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>headerStackValue<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>n<sub>idx</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
+<p>Let <code>i<sub>idx</sub></code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>If <code>n<sub>idx</sub></code> is less than <code>n<sub>size</sub></code>:</p>
+<p>Let <code>b<sub>in_bounds</sub></code> be <code>i<sub>idx</sub></code> is less than <code>n<sub>size</sub></code> and <code>i<sub>idx</sub></code> is greater than or equal to <code>0</code>.</p>
+</li>
+<li>
+<p>If <code>b<sub>in_bounds</sub></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>i<sub>idx</sub></code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>idx</sub></code> be <code>i<sub>idx</sub></code>.</p>
+</li>
 <li>
 <p>Let <code>value<sub>element_update</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup></code> with <code>[n<sub>idx</sub>]</code> set to <code>value</code>.</p>
 </li>
@@ -25062,7 +25103,7 @@ abortResult
 </div>
 </li>
 <li>
-<p>If <code>n<sub>idx</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
+<p>Else:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -26005,24 +26046,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Stmt_ok/assignmentStatement:
-  rule Stmt_ok/eq:
-  p TC f l |- lvalue = expression ; : TC f (typedLvalueIR = typedExpressionIR_cast ;)
- -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
- -- Expr_ok: p TC |- expression : typedExpressionIR
- -- if typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
- -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
- -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
-  rule Stmt_ok/compound:
-  p TC f l |- lvalue assignop expression ; : TC f (typedLvalueIR assignop typedExpressionIR_cast ;)
- -- if assignop =/= =
- -- if binop = $assignop_as_binop(assignop)
- -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
- -- if expression_lvalue = $lvalue_as_expression(lvalue)
- -- if expression_binary = expression_lvalue binop expression
- -- Expr_ok: p TC |- expression_binary : typedExpressionIR_binary
- -- if _ # `(typeIR_lvalue) = typedLvalueIR
- -- if (_ binop typedExpressionIR_cast) # _ = $cast_unary(typedExpressionIR_binary, typeIR_lvalue)</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -26034,106 +26058,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>lvalue</code> <code>assignop</code> <code>expression</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>If <code>assignop</code> is <code>=</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>typedLvalueIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_ok">typing <code>lvalue</code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression</code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_typedLvalueIR">the type of lvalue <code>typedLvalueIR</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>r</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>typedLvalueIR</code> <code>=</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>binop'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#assignop_as_binop">the binary operator corresponding to <code>assignop</code></a>.</p>
-</li>
-<li>
-<p>Let <code>typedLvalueIR</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_ok">typing <code>lvalue</code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>expression<sub>lvalue</sub></code> be <a href="#lvalue_as_expression">the expression corresponding to <code>lvalue</code></a>.</p>
-</li>
-<li>
-<p>Let <code>expression<sub>binary</sub></code> be <code>expression<sub>lvalue</sub></code> <code>binop'</code> <code>expression</code>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>binary</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>binary</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>(</code> <code>typeIR<sub>lvalue</sub></code> <code>)</code> be the note of <code>typedLvalueIR</code>.</p>
-</li>
-<li>
-<p>Let <code>expressionIR</code> <code>#</code> <code>_</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>binary</sub></code> implicitly cast to <code>typeIR<sub>lvalue</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>expressionIR</code> has type <code>binaryExpressionIR</code>.</p>
-</li>
-<li>
-<p>Let <code>_</code> <code>binop''</code> <code>typedExpressionIR<sub>cast</sub></code> be <code>expressionIR</code>.</p>
-</li>
-<li>
-<p>Check that <code>binop''</code> is equal to <code>binop'</code>.</p>
-</li>
-<li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>typedLvalueIR</code> <code>assignop</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -26187,12 +26112,11 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
  -- if assignop = =
  -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult
-  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-abort:
-  p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; : EC_2 ARCH_2 abortResult
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-exit:
+  p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; : EC_2 ARCH_2 EXIT
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
  -- if assignop =/= =
- -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value_l
- -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult
+ -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 EXIT
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
   p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; : EC_3 ARCH_2 `EMPTY
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
@@ -26203,11 +26127,11 @@ operators, logical operators, concat, range, or mask operators.</p>
   p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; : EC_3 ARCH_2 `EMPTY
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
  -- if assignop =/= =
- -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value_l
- -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 (` value_r)
+ -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 (` value)
+ -- Lvalue_read: p EC_2 ARCH_2 |- storageReference : value_lvalue
  -- if binop = $assignop_as_binop(assignop)
- -- if value_update = $bin_op(binop, value_l, value_r)
- -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -&gt; value_update : EC_3</pre>
+ -- if value_new = $bin_op(binop, value_lvalue, value)
+ -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -&gt; value_new : EC_3</pre>
 </div>
 </div>
 </div>
@@ -26312,16 +26236,6 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let value <code>value<sub>l</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_read">reading from <code>storageReference'</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
 <p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult</code> be</p>
 <div class="ulist">
 <ul>
@@ -26332,34 +26246,41 @@ operators, logical operators, concat, range, or mask operators.</p>
 </div>
 </li>
 <li>
-<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<p>If let <code>exitResult</code> be <code>expressionResult</code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
 </li>
 <li>
-<p>Else:</p>
+<p>Else if let <code>value</code> be <code>expressionResult</code>:</p>
 <div class="olist upperalpha">
 <ol class="upperalpha" type="A">
 <li>
-<p>Let <code>value<sub>r</sub></code> be <code>expressionResult</code>.</p>
+<p>Let value <code>value<sub>lvalue</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference'</code>, under context <code>EC<sub>2</sub></code> and state <code>ARCH<sub>2</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p>Let <code>binop'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#assignop_as_binop">the binary operator corresponding to <code>assignop</code></a>.</p>
 </li>
 <li>
-<p>Let <code>value<sub>update</sub></code> be <a href="#bin_op"><code>value<sub>l</sub></code> <code>binop'</code> <code>value<sub>r</sub></code></a>.</p>
+<p>Let <code>value<sub>new</sub></code> be <a href="#bin_op"><code>value<sub>lvalue</sub></code> <code>binop'</code> <code>value</code></a>.</p>
 </li>
 <li>
 <p>Let context <code>EC<sub>3</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Lvalue_write">writing <code>value<sub>update</sub></code> to <code>storageReference'</code>, under context <code>EC<sub>2</sub></code> and state <code>ARCH<sub>2</sub></code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Lvalue_write">writing <code>value<sub>new</sub></code> to <code>storageReference'</code>, under context <code>EC<sub>2</sub></code> and state <code>ARCH<sub>2</sub></code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -32129,6 +32050,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <pre>rulegroup Stmt_ok/switchStatement-table:
   rule Stmt_ok/switchStatement-table:
   LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
+ -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
  -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if TABLE_ENUM typeId_table_enum `{_} = $unroll_typeIR(typeIR_switch)
@@ -32153,6 +32075,9 @@ kind of action executed, no matter whether there was a table hit or miss. The
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>Check that <code>TC.LOCAL.KIND</code> is equal to <code>CONTROL_APPLY_METHOD</code>.</p>
+</li>
 <li>
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be</p>
 <div class="ulist">
@@ -32685,21 +32610,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Stmt_eval/switchStatementIR-table:
-  rule Stmt_eval/target-abort:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_1 ARCH_1 abortResult
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 abortResult
-  rule Stmt_eval/target-cont-match:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_2 ARCH_2 statementResult
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
- -- if TABLE_ENUM _ . id_enum = value
- -- SwitchCases_table_eval: id_enum |- switchCaseIR* : blockStatementIR
- -- Stmt_eval: LOCAL EC_1 ARCH_1 |- blockStatementIR : EC_2 ARCH_2 statementResult
-  rule Stmt_eval/target-cont-no-match:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_1 ARCH_1 `EMPTY
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
- -- if TABLE_ENUM _ . id_enum = value
- -- SwitchCases_table_eval: id_enum |- switchCaseIR* : eps</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -32711,89 +32622,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Stmt_eval">Runtime evaluation of <code>SWITCH</code> <code>(</code> <code>typedExpressionIR</code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>LOCAL</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>LOCAL</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be <code>expressionResult</code>.</p>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>tableMetadataEnumValue</code>.</p>
-</li>
-<li>
-<p>Let <code>TABLE_ENUM</code> <code>_</code> <code>.</code> <code>id<sub>enum</sub></code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let the matched block <code>blockStatementIR<sup>?</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#SwitchCases_table_eval">runtime evaluation of <code>switchCaseIR<sup>*</sup></code> for invocation of table <code>id<sub>enum</sub></code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>blockStatementIR'</code> be <code>blockStatementIR<sup>?</sup></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Stmt_eval">runtime evaluation of <code>blockStatementIR'</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>LOCAL</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 <div class="paragraph">
@@ -33056,6 +32885,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <pre>rulegroup Stmt_ok/switchStatement-general:
   rule Stmt_ok/switchStatement-general:
   LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
+ -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
  -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if $compat_switch(typeIR_switch)
@@ -33079,6 +32909,9 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>Check that <code>TC.LOCAL.KIND</code> is equal to <code>CONTROL_APPLY_METHOD</code>.</p>
+</li>
 <li>
 <p>Let <code>typedExpressionIR<sub>switch</sub></code> be</p>
 <div class="ulist">
@@ -33413,19 +33246,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Stmt_eval/switchStatementIR-general:
-  rule Stmt_eval/target-abort:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_1 ARCH_1 abortResult
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 abortResult
-  rule Stmt_eval/target-cont-match:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_3 ARCH_3 statementResult
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
- -- SwitchCases_general_eval: LOCAL EC_1 ARCH_1 value |- switchCaseIR* : EC_2 ARCH_2 blockStatementIR
- -- Stmt_eval: LOCAL EC_2 ARCH_2 |- blockStatementIR : EC_3 ARCH_3 statementResult
-  rule Stmt_eval/target-cont-no-match:
-  LOCAL EC_0 ARCH_0 |- SWITCH `(typedExpressionIR) `{switchCaseIR*} : EC_2 ARCH_2 `EMPTY
- -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
- -- SwitchCases_general_eval: LOCAL EC_1 ARCH_1 value |- switchCaseIR* : EC_2 ARCH_2 eps</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -33437,83 +33258,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Stmt_eval">Runtime evaluation of <code>SWITCH</code> <code>(</code> <code>typedExpressionIR</code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>LOCAL</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>LOCAL</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value</code> be <code>expressionResult</code>.</p>
-</li>
-<li>
-<p>Let the updated evaluation context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>blockStatementIR<sup>?</sup></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#SwitchCases_general_eval">runtime evaluation of <code>switchCaseIR<sup>*</sup></code>, under evaluation context <code>LOCAL</code> and state <code>EC<sub>1</sub></code> with switch key <code>value</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>blockStatementIR'</code> be <code>blockStatementIR<sup>?</sup></code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>3</sub></code>, and <code>statementResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Stmt_eval">runtime evaluation of <code>blockStatementIR'</code>, under context <code>EC<sub>2</sub></code> and state <code>ARCH<sub>2</sub></code> at <code>LOCAL</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Result in context <code>EC<sub>3</sub></code>, state <code>ARCH<sub>3</sub></code>, and <code>statementResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and <code>`EMPTY</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 <div class="paragraph">
@@ -36555,6 +36300,9 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
  -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
  -- if ~(typeIR_r_reduced &lt;: fixedBitTypeIR)
  -- if ctk_r_reduced = LCTK
+ -- Expr_eval_lctk: p TC |- typedExpressionIR_r_reduced ~&gt; integerValue_r
+ -- if i_r = $int_of_integerValue(integerValue_r)
+ -- if i_r &gt;= 0
  -- if ctk_reduced = $join_ctk(ctk_l_reduced, ctk_r_reduced)
  -- if expressionNoteIR = `(typeIR_l_reduced ctk_reduced)</pre>
 </div>
@@ -36636,6 +36384,28 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <ol class="loweralpha" type="a">
 <li>
 <p>Check that <code>ctk<sub>r_reduced</sub></code> is <code>LCTK</code>.</p>
+</li>
+<li>
+<p>Let <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>r_reduced</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>integerValue<sub>r</sub></code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>i<sub>r</sub></code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>r</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>i<sub>r</sub></code> is greater than or equal to <code>0</code>.</p>
 </li>
 <li>
 <p>Let <code>ctk<sub>reduced</sub></code> be <a href="#join_ctk">the join of <code>ctk<sub>l_reduced</sub></code> and <code>ctk<sub>r_reduced</sub></code></a>.</p>
@@ -37467,10 +37237,6 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
   p EC_0 ARCH_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ : EC_1 ARCH_1 expressionResult
  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B false))
  -- if expressionResult = ` (`B false)
-  rule Expr_eval/land-true-abort:
-  p EC_0 ARCH_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ : EC_2 ARCH_2 abortResult
- -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B true))
- -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 abortResult
   rule Expr_eval/land-true:
   p EC_0 ARCH_0 |- (typedExpressionIR_l &amp;&amp; typedExpressionIR_r) # _ : EC_2 ARCH_2 expressionResult_r
  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B true))
@@ -37482,10 +37248,6 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
   p EC_0 ARCH_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ : EC_1 ARCH_1 expressionResult
  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B true))
  -- if expressionResult = ` (`B true)
-  rule Expr_eval/lor-false-abort:
-  p EC_0 ARCH_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ : EC_2 ARCH_2 abortResult
- -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B false))
- -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 abortResult
   rule Expr_eval/lor-false:
   p EC_0 ARCH_0 |- (typedExpressionIR_l || typedExpressionIR_r) # _ : EC_2 ARCH_2 expressionResult_r
  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` (`B false))
@@ -37600,7 +37362,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code> be</p>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult<sub>r</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -37610,17 +37372,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 </div>
 </li>
 <li>
-<p>If let <code>abortResult</code> be <code>expressionResult'</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code>.</p>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -37670,7 +37422,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <div class="olist lowerroman">
 <ol class="lowerroman" type="i">
 <li>
-<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code> be</p>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult<sub>r</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -37680,17 +37432,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 </div>
 </li>
 <li>
-<p>If let <code>abortResult</code> be <code>expressionResult'</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code>.</p>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult<sub>r</sub></code>.</p>
 </li>
 </ol>
 </div>
@@ -41758,8 +41500,9 @@ memberAccessBaseIR
   p EC_0 ARCH_0 |- (typedExpressionIR_base `[typedExpressionIR_index]) # _ : EC_1 ARCH_1 expressionResult
  -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 ARCH_1 (` ([headerStackValue_base, integerValue_index]))
  -- if HEADER_STACK `[value_elem* `(_ ; n_size)] = headerStackValue_base
- -- if n_index = $nat_of_integerValue(integerValue_index)
- -- if n_idx = $ite&lt;int&gt;(n_index &lt; n_size, n_index, n_size - 1)
+ -- if i_index = $int_of_integerValue(integerValue_index)
+ -- if b_in_bounds = (i_index &lt; n_size /\ i_index &gt;= 0)
+ -- if n_idx = $ite&lt;int&gt;(b_in_bounds, i_index, n_size - 1)
  -- if expressionResult = ` value_elem*[n_idx]</pre>
 </div>
 </div>
@@ -41849,10 +41592,13 @@ memberAccessBaseIR
 <p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>elem</sub><sup>*</sup></code> <code>(</code> <code>_</code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>headerStackValue<sub>base</sub></code>.</p>
 </li>
 <li>
-<p>Let <code>n<sub>index</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>index</sub></code></a>.</p>
+<p>Let <code>i<sub>index</sub></code> be <a href="#int_of_integerValue">the integer representation of  <code>integerValue<sub>index</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>int</code> be <a href="#ite"><code>n<sub>index</sub></code> if <code>n<sub>index</sub></code> is less than <code>n<sub>size</sub></code> otherwise <code>n<sub>size</sub></code> <code>-</code> <code>1</code></a>.</p>
+<p>Let <code>b<sub>in_bounds</sub></code> be <code>i<sub>index</sub></code> is less than <code>n<sub>size</sub></code> and <code>i<sub>index</sub></code> is greater than or equal to <code>0</code>.</p>
+</li>
+<li>
+<p>Let <code>int</code> be <a href="#ite"><code>i<sub>index</sub></code> if <code>b<sub>in_bounds</sub></code> otherwise <code>n<sub>size</sub></code> <code>-</code> <code>1</code></a>.</p>
 </li>
 <li>
 <p>Check that <code>int</code> has type <code>nat</code>.</p>
@@ -45233,8 +44979,7 @@ valueSetType
  -- Expr_inst: BLOCK IC STO_0 |- typedExpressionIR_size : STO_1 integerValue_size
  -- if n_size = $nat_of_integerValue(integerValue_size)
  -- if typeIR_subst = $subst_type_i(BLOCK, IC, typeIR)
- -- if value* = $repeat_&lt;value&gt;($default(typeIR_subst), n_size)
- -- if valueSetObject = VALUE_SET `{value* `(n_size)}
+ -- if valueSetObject = VALUE_SET `{eps `(n_size)}
  -- if objectId = IC.PATH ++ nameIR
  -- if STO_2 = $add_store(STO_1, objectId, valueSetObject)
  -- if typeIR_set = SET `&lt;typeIR&gt;
@@ -45278,13 +45023,7 @@ valueSetType
 <p>Let <code>typeIR<sub>subst</sub></code> be <a href="#subst_type_i"><code>typeIR</code> substituted by bound type variables in <code>IC<sub>0</sub></code> from the <code>BLOCK</code> layer</a>.</p>
 </li>
 <li>
-<p>Let <code>value''</code> be <a href="#default">the default value for type <code>typeIR<sub>subst</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>value'<sup>*</sup></code> be <a href="#repeat_">a list of <code>n<sub>size</sub></code> copies of <code>value''</code></a>.</p>
-</li>
-<li>
-<p>Let <code>valueSetObject</code> be <code>VALUE_SET</code> <code>{</code> <code>value'<sup>*</sup></code> <code>(</code> <code>n<sub>size</sub></code> <code>)</code> <code>}</code>.</p>
+<p>Let <code>valueSetObject</code> be <code>VALUE_SET</code> <code>{</code> <code>·</code> <code>(</code> <code>n<sub>size</sub></code> <code>)</code> <code>}</code>.</p>
 </li>
 <li>
 <p>Let <code>objectId</code> be <code>IC<sub>0</sub>.PATH</code> concatenated with <code>nameIR</code>.</p>
@@ -52115,7 +51854,7 @@ reject those cases with an error message in this case.</p>
 tableKeyListIR = tableKeyIR*
 
 tableKeyIR
-   : typedExpressionIR : nameIR annotationList ;
+   : typedExpressionIR # nameIR : nameIR annotationList ;
    ;</code></pre>
 </div>
 </div>
@@ -52270,15 +52009,16 @@ tableKeyIR
   rule TableKey_ok:
   TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_2 tableKeyIR
  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
- -- if typedExpressionIR_reduced = $reduce_serenum(typedExpressionIR)
- -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
- -- Type_wf: $bound(LOCAL, TC) |- SET `&lt;typeIR_reduced&gt;
+ -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+ -- Type_wf: $bound(LOCAL, TC) |- SET `&lt;typeIR&gt;
+ -- if nameIR_default = $strip_all_whitespace($print_&lt;expression&gt;(expression))
+ -- if nameIR_key = $name_annotation_default(annotationList, nameIR_default)
  -- if nameIR_matchkind = $name(name_matchkind)
  -- if MATCH_KIND . nameIR_matchkind = $find_var_value_t(` nameIR_matchkind, LOCAL, TC)
- -- if $compat_table_key(nameIR_matchkind, typeIR_reduced)
- -- if TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR_reduced)
- -- if TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR_reduced)
- -- if tableKeyIR = typedExpressionIR_reduced : nameIR_matchkind annotationList ;</pre>
+ -- if $compat_table_key(nameIR_matchkind, typeIR)
+ -- if TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
+ -- if TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+ -- if tableKeyIR = typedExpressionIR # nameIR_key : nameIR_matchkind annotationList ;</pre>
 </div>
 </div>
 </div>
@@ -52306,16 +52046,22 @@ tableKeyIR
 </div>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sub>reduced</sub></code> be <a href="#reduce_serenum"><code>typedExpressionIR</code> with surrounding serializable enums reduced</a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>typeIR</code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR</code></a>.</p>
 </li>
 <li>
 <p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#Type_wf"><code>SET</code> <code>&lt;</code> <code>typeIR<sub>reduced</sub></code> <code>&gt;</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+<p>Check that <a href="#Type_wf"><code>SET</code> <code>&lt;</code> <code>typeIR</code> <code>&gt;</code> is a well-formed type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Let <code>text</code> be <a href="#print_"><code>expression</code> as text</a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR<sub>default</sub></code> be <a href="#strip_all_whitespace">the text <code>text</code> with all whitespace removed</a>.</p>
+</li>
+<li>
+<p>Let <code>nameIR<sub>key</sub></code> be <code><a href="#name_annotation_default">$name_annotation_default(annotationList,</code> <code>nameIR<sub>default</sub>)</a></code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>matchkind</sub></code> be <a href="#name">the name of <code>name<sub>matchkind</sub></code></a>.</p>
@@ -52324,16 +52070,16 @@ tableKeyIR
 <p>Check that <code>MATCH_KIND</code> <code>.</code> <code>nameIR<sub>matchkind</sub></code> is equal to <a href="#find_var_value_t">the value of variable <code>nameIR<sub>matchkind</sub></code> from the <code>LOCAL</code> layer of <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Check that <a href="#compat_table_key"><code>typeIR<sub>reduced</sub></code> can be used with match kind <code>nameIR<sub>matchkind</sub></code></a>.</p>
+<p>Check that <a href="#compat_table_key"><code>typeIR</code> can be used with match kind <code>nameIR<sub>matchkind</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TBLC<sub>1</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>0</sub></code> with match mode updated based on key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR<sub>reduced</sub></code></a>.</p>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>0</sub></code> with match mode updated based on key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TBLC<sub>2</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>1</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR<sub>reduced</sub></code> added</a>.</p>
+<p>Let <code>TBLC<sub>2</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>1</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code> added</a>.</p>
 </li>
 <li>
-<p>Let <code>tableKeyIR</code> be <code>typedExpressionIR<sub>reduced</sub></code> <code>:</code> <code>nameIR<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>.</p>
+<p>Let <code>tableKeyIR</code> be <code>typedExpressionIR</code> <code>#</code> <code>nameIR<sub>key</sub></code> <code>:</code> <code>nameIR<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR</code>.</p>
@@ -52440,10 +52186,10 @@ exitResult
 <div class="content">
 <pre>rulegroup TableKey_eval:
   rule TableKey_eval/exit:
-  EC_0 ARCH_0 |- typedExpressionIR : nameIR _ ; : EC_1 ARCH_1 EXIT
+  EC_0 ARCH_0 |- typedExpressionIR # _ : nameIR _ ; : EC_1 ARCH_1 EXIT
  -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 EXIT
   rule TableKey_eval/cont:
-  EC_0 ARCH_0 |- typedExpressionIR : nameIR _ ; : EC_1 ARCH_1 (` tableKeyValue)
+  EC_0 ARCH_0 |- typedExpressionIR # _ : nameIR _ ; : EC_1 ARCH_1 (` tableKeyValue)
  -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` value)
  -- if tableKeyValue = value : nameIR</pre>
 </div>
@@ -52458,7 +52204,7 @@ exitResult
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#TableKey_eval">Evaluating <code>typedExpressionIR</code> <code>:</code> <code>nameIR</code> <code>annotationList</code> <code>;</code> under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+<p><a href="#TableKey_eval">Evaluating <code>typedExpressionIR</code> <code>#</code> <code>nameIR'</code> <code>:</code> <code>nameIR</code> <code>annotationList</code> <code>;</code> under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -52836,7 +52582,7 @@ tableActionIR
    ;
 
 tableActionReferenceIR
-   : prefixedNameIR `( argumentListIR )
+   : prefixedNameIR controlPlaneNameIR `( argumentListIR )
    ;</code></pre>
 </div>
 </div>
@@ -52996,7 +52742,7 @@ tableActionReferenceIR
  -- if annotationList_update = $add_annotationList(annotationList, annotation_name?)
  -- Call_action_partial_ok: TC |- parameterIR* @ eps : parameterIR_data* , parameterIR_control* @ eps
  -- if TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, eps)
- -- if tableActionIR = annotationList_update (prefixedNameIR `(eps)) # `(parameterIR_data* , parameterIR_control*) ;
+ -- if tableActionIR = annotationList_update (prefixedNameIR eps `(eps)) # `(parameterIR_data* , parameterIR_control*) ;
   rule TableAction_ok/prefixedNonTypeName-argumentList:
   TC TBLC_0 |- annotationList (prefixedNonTypeName `(argumentList)) ; : TBLC_1 tableActionIR
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
@@ -53006,7 +52752,7 @@ tableActionReferenceIR
  -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*
  -- Call_action_partial_ok: TC |- parameterIR* @ argumentIR* : parameterIR_data* , parameterIR_control* @ argumentIR_cast*
  -- if TBLC_1 = $add_action_tbl(TBLC_0, prefixedNameIR, parameterIR*, argumentIR_cast*)
- -- if tableActionIR = annotationList_update (prefixedNameIR `(argumentIR_cast*)) # `(parameterIR_data* , parameterIR_control*) ;</pre>
+ -- if tableActionIR = annotationList_update (prefixedNameIR eps `(argumentIR_cast*)) # `(parameterIR_data* , parameterIR_control*) ;</pre>
 </div>
 </div>
 </div>
@@ -53062,7 +52808,7 @@ tableActionReferenceIR
 <p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_action_tbl"><code>TBLC<sub>0</sub></code> with match action <code>prefixedNameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> applied using <code>·</code> added</a>.</p>
 </li>
 <li>
-<p>Let <code>tableActionIR</code> be <code>annotationList<sub>update</sub></code> <code>prefixedNameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
+<p>Let <code>tableActionIR</code> be <code>annotationList<sub>update</sub></code> <code>prefixedNameIR</code> <code>·</code> <code>(</code> <code>·</code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR</code>.</p>
@@ -53119,7 +52865,7 @@ tableActionReferenceIR
 <p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_action_tbl"><code>TBLC<sub>0</sub></code> with match action <code>prefixedNameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> applied using <code>argumentIR<sub>cast</sub><sup>*</sup></code> added</a>.</p>
 </li>
 <li>
-<p>Let <code>tableActionIR</code> be <code>annotationList<sub>update</sub></code> <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
+<p>Let <code>tableActionIR</code> be <code>annotationList<sub>update</sub></code> <code>prefixedNameIR</code> <code>·</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>#</code> <code>(</code> <code>parameterIR<sub>data</sub><sup>*</sup></code> <code>,</code> <code>parameterIR<sub>control</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
 <p>Result in table context <code>TBLC<sub>1</sub></code> and <code>tableActionIR</code>.</p>
@@ -53235,7 +52981,9 @@ relation is used:</p>
 <div class="content">
 <pre>rulegroup TableProperty_inst/tableActionsPropertyIR:
   rule TableProperty_inst/tableActionsPropertyIR:
-  IC STO |- tableActionsPropertyIR : STO tableActionsPropertyIR</pre>
+  IC STO_0 |- ACTIONS = `{tableActionListIR} : STO_1 tableActionsPropertyIR
+ -- TableActions_inst: IC STO_0 |- tableActionListIR : STO_1 tableActionListIR_inst
+ -- if tableActionsPropertyIR = ACTIONS = `{tableActionListIR_inst}</pre>
 </div>
 </div>
 </div>
@@ -53248,12 +52996,25 @@ relation is used:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#TableProperty_inst">Compile-time evaluation of <code>tableActionsPropertyIR</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
+<p><a href="#TableProperty_inst">Compile-time evaluation of <code>ACTIONS</code> <code>=</code> <code>{</code> <code>tableActionListIR</code> <code>}</code>, under context <code>IC</code>and store <code>STO</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in store <code>STO</code> and <code>tableActionsPropertyIR</code>.</p>
+<p>Let store <code>STO<sub>1</sub></code> and <code>tableActionListIR<sub>inst</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#TableActions_inst">compile-time evaluation of <code>tableActionListIR</code>, under context <code>IC</code>and store <code>STO</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>tableActionsPropertyIR</code> be <code>ACTIONS</code> <code>=</code> <code>{</code> <code>tableActionListIR<sub>inst</sub></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in store <code>STO<sub>1</sub></code> and <code>tableActionsPropertyIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -53376,7 +53137,7 @@ as:</p>
    ;
 
 tableActionReferenceIR
-   : prefixedNameIR `( argumentListIR )
+   : prefixedNameIR controlPlaneNameIR `( argumentListIR )
    ;</code></pre>
 </div>
 </div>
@@ -53422,11 +53183,11 @@ tableActionReferenceIR
 <div class="content">
 <pre>rulegroup TableDefaultAction_ok:
   rule TableDefaultAction_ok/prefixedNonTypeName:
-  TC TBLC |- = prefixedNonTypeName : prefixedNameIR `(eps)
+  TC TBLC |- = prefixedNonTypeName : prefixedNameIR eps `(eps)
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
  -- if (eps, eps) = $find_action(TBLC, prefixedNameIR)
   rule TableDefaultAction_ok/prefixedNonTypeName-argumentList:
-  TC TBLC |- = (prefixedNonTypeName `(argumentList)) : prefixedNameIR `(argumentIR_cast*)
+  TC TBLC |- = (prefixedNonTypeName `(argumentList)) : prefixedNameIR eps `(argumentIR_cast*)
  -- if prefixedNameIR = $prefixedNonTypeName(prefixedNonTypeName)
  -- if (parameterIR_action*, argumentIR_action*) = $find_action(TBLC, prefixedNameIR)
  -- ArgumentList_ok: LOCAL TC |- argumentList : argumentIR*
@@ -53461,7 +53222,7 @@ tableActionReferenceIR
 <p>Check that ( <code>·</code>, <code>·</code> ) is equal to <code><a href="#find_action">$find_action(TBLC,</code> <code>prefixedNameIR)</a></code>.</p>
 </li>
 <li>
-<p>Result in <code>prefixedNameIR</code> <code>(</code> <code>·</code> <code>)</code>.</p>
+<p>Result in <code>prefixedNameIR</code> <code>·</code> <code>(</code> <code>·</code> <code>)</code>.</p>
 </li>
 </ol>
 </div>
@@ -53518,7 +53279,7 @@ tableActionReferenceIR
 <p>Check that <code>argumentIR<sub>action_data</sub></code> is equal to <code>argumentIR<sub>cast_data</sub></code>, for all <code>argumentIR<sub>action_data</sub></code> in <code>argumentIR<sub>action_data</sub><sup>*</sup></code> and <code>argumentIR<sub>cast_data</sub></code> in <code>argumentIR<sub>cast_data</sub><sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Result in <code>prefixedNameIR</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
+<p>Result in <code>prefixedNameIR</code> <code>·</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code>.</p>
 </li>
 </ol>
 </div>
@@ -57138,7 +56899,10 @@ def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
  -- if _ # `(typeIR ctk) = typedExpressionIR
  -- Type_alpha:/ typeIR ~~ typeIR_to
  -- Cast_impl: typeIR -&gt; typeIR_to
- -- if typedExpressionIR_cast = (`(typeIR_to) typedExpressionIR) # `(typeIR_to ctk)</pre>
+ -- if typedExpressionIR_cast = (`(typeIR_to) typedExpressionIR) # `(typeIR_to ctk)
+
+def $cast_unary(typedExpressionIR, typeIR_to) = eps
+ -- otherwise</pre>
 </div>
 </div>
 </div>
@@ -57180,6 +56944,16 @@ def $cast_unary(typedExpressionIR, typeIR_to) = typedExpressionIR_cast
 </li>
 <li>
 <p>Return <code>typedExpressionIR<sub>cast</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Otherwise:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Return <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -58415,7 +58189,12 @@ def $cast_error(SET `&lt;typeIR&gt;, errorValue) = SET `{$cast_op(typeIR, errorV
 <div class="content">
 <pre>def $cast_enum(ENUM typeId `{_}, typeId . nameIR) = typeId . nameIR
 
-def $cast_enum(typeIR, _ . _ . value) = $cast_op(typeIR, value)</pre>
+def $cast_enum(ENUM typeId `&lt;_&gt; `{_}, typeId . nameIR . value) = typeId . nameIR . value
+
+def $cast_enum(SET `&lt;typeIR&gt;, enumValue) = SET `{$cast_op(typeIR, enumValue)}
+
+def $cast_enum(typeIR, _ . _ . value) = $cast_op(typeIR, value)
+ -- if ~(typeIR &lt;: serializableEnumTypeIR) /\ ~(typeIR &lt;: setTypeIR)</pre>
 </div>
 </div>
 </div>
@@ -58452,9 +58231,44 @@ def $cast_enum(typeIR, _ . _ . value) = $cast_op(typeIR, value)</pre>
 </div>
 </li>
 <li>
+<p>Else if let <code>ENUM</code> <code>typeId</code> <code>&lt;</code> <code>_</code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>enumValue</code> matches pattern <code>%</code> <code>.</code> <code>%</code> <code>.</code> <code>%</code>.</p>
+</li>
+<li>
+<p>Let <code>typeId'</code> <code>.</code> <code>nameIR</code> <code>.</code> <code>value</code> be <code>enumValue</code>.</p>
+</li>
+<li>
+<p>Check that <code>typeId</code> is equal to <code>typeId'</code>.</p>
+</li>
+<li>
+<p>Return <code>typeId</code> <code>.</code> <code>nameIR</code> <code>.</code> <code>value</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>SET</code> <code>&lt;</code> <code>typeIR'</code> <code>&gt;</code> be <code>typeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>value'</code> be <a href="#cast_op"><code>enumValue</code> casted to type <code>typeIR'</code></a>.</p>
+</li>
+<li>
+<p>Return <code>SET</code> <code>{</code> <code>value'</code> <code>}</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
 <p>If let <code>_</code> <code>.</code> <code>_</code> <code>.</code> <code>value</code> be <code>enumValue</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>typeIR</code> does not have type <code>serializableEnumTypeIR</code> and <code>typeIR</code> does not have type <code>setTypeIR</code>.</p>
+</li>
 <li>
 <p>Return <a href="#cast_op"><code>value</code> casted to type <code>typeIR</code></a>.</p>
 </li>
@@ -60362,7 +60176,7 @@ result of callee resolution is:</p>
   rule Callee_eval/actionCallee:
   p EC ARCH |- referenceExpressionIR `&lt;_&gt; `(argumentListIR) : EC ARCH (` actionCallee)
  -- if _ : (p_ref, actionDef) # id_default* # _ = $find_callableDef_overloaded_e(p, EC, referenceExpressionIR, argumentListIR)
- -- if ACTION nameIR `(parameterListIR) blockStatementIR = actionDef
+ -- if _ ACTION nameIR `(parameterListIR) blockStatementIR = actionDef
  -- if actionCallee = ACTION p_ref . nameIR `(parameterListIR # id_default*) blockStatementIR</pre>
 </div>
 </div>
@@ -60390,7 +60204,7 @@ result of callee resolution is:</p>
 <p>Let <code>(</code> <code>p<sub>ref</sub>,</code> <code>actionDef</code> <code>)</code> be <code>(cursor,</code> <code>callableDef)</code>.</p>
 </li>
 <li>
-<p>Let <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code> be <code>actionDef</code>.</p>
+<p>Let <code>_</code> <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR</code> be <code>actionDef</code>.</p>
 </li>
 <li>
 <p>Let <code>actionCallee</code> be <code>ACTION</code> <code>p<sub>ref</sub></code> <code>.</code> <code>nameIR</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>

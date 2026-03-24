@@ -24,6 +24,8 @@ xref:text_to_int[$text_to_int(text)]
 
 xref:int_to_text[$int_to_text(int)]
 
+xref:split_text[$split_text(text, text')]
+
 xref:concat_text[The concatenation of ``text^{asterisk}^``]
 
 
@@ -33,6 +35,19 @@ xref:concat_text[The concatenation of ``text^{asterisk}^``]
  .. Let ``t~h~`` ``{two-colons}`` ``t~t~^{asterisk}^`` be ``text^{asterisk}^``.
  .. Let ``text'`` be xref:concat_text[the concatenation of ``t~t~^{asterisk}^``].
  .. Return ``t~h~`` concatenated with ``text'``.
+
+xref:join_text[The result of joining ``text^{asterisk}^`` with separator ``t~sep~``]
+
+
+. If ``text^{asterisk}^`` is an empty list:
+ .. Return ``""``.
+. Else if let ``t~h~`` be ``text^{asterisk}^``:
+ .. Return ``t~h~``.
+. Else if let ``t~h1~`` ``{two-colons}`` ``text'^{asterisk}^`` be ``text^{asterisk}^``:
+ .. Check that ``text'^{asterisk}^`` is a non-empty list.
+ .. Let ``t~h2~`` ``{two-colons}`` ``t~t~^{asterisk}^`` be ``text'^{asterisk}^``.
+ .. Let ``text''`` be xref:join_text[the result of joining ``t~h2~`` ``{two-colons}`` ``t~t~^{asterisk}^`` with separator ``t~sep~``].
+ .. Return ``t~h1~`` concatenated with ``t~sep~`` concatenated with ``text''``.
 
 xref:replace_text[The text ``t`` with all occurrences of ``t~old~`` replaced by ``t~new~``]
 
@@ -4757,9 +4772,9 @@ xref:add_typeDef_t[``TC`` where ``typeId`` to ``typeDefIR`` is added to the ``cu
 
 
 . If ``cursor`` is ``GLOBAL``:
- .. Let ``typeDefEnv`` be ``TC.+BLOCK+.+TYPE+``.
+ .. Let ``typeDefEnv`` be ``TC.+GLOBAL+.+TYPE+``.
  .. Check that ``~xref:in_set[$in_set<typeId>(typeId,`` ``$dom_map<typeId,`` ``typeDefIR>(typeDefEnv))]``.
- .. Let ``typeDefEnv~update~`` be xref:add_map[``TC.+GLOBAL+.+TYPE+`` where ``typeId`` to ``typeDefIR`` is added].
+ .. Let ``typeDefEnv~update~`` be xref:add_map[``typeDefEnv`` where ``typeId`` to ``typeDefIR`` is added].
  .. Let ``TC'`` be ``TC`` with ``+GLOBAL+.+TYPE+`` set to ``typeDefEnv~update~``.
  .. Return ``TC'``.
 . Else if ``cursor`` is ``BLOCK``:
@@ -6384,6 +6399,7 @@ xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
 . If let ``+INT+`` ``+<+`` ``int`` ``+>+`` be ``baseType``:
  .. Check that ``int`` has type ``nat``.
  .. Let ``n`` be ``int``.
+ .. Check that ``n`` is greater than ``0``.
  .. Result in ``+INT+`` ``+<+`` ``n`` ``+>+`` and fresh type variables ``·``.
 . Else if let ``+INT+`` ``+<+`` ``+(+`` ``expression`` ``+)+`` ``+>+`` be ``baseType``:
  .. Let ``typedExpressionIR`` be
@@ -6394,6 +6410,7 @@ xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue`` be ``value``.
  .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
+ .. Check that ``n`` is greater than ``0``.
  .. Result in ``+INT+`` ``+<+`` ``n`` ``+>+`` and fresh type variables ``·``.
 
 xref:Type_ok[Typing ``baseType``, under context ``TC`` at ``p``]:
@@ -7280,6 +7297,12 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
  .. Result in xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 . Else:
  .. Check that ``ctk~r_reduced~`` is ``LCTK``.
+ .. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue~r~`` be ``value``.
+ .. Let ``i~r~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~r~``].
+ .. Check that ``i~r~`` is greater than or equal to ``0``.
  .. Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].
  .. Result in xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
@@ -8736,7 +8759,7 @@ xref:TableAction_ok[Typing ``annotationList`` ``tableActionReference`` ``+;+``, 
 * the result of xref:Call_action_partial_ok[typing partial action call on ``parameterIR^{asterisk}^`` with ``·``, under context ``TC``].
  .. Check that ``argumentIR^{asterisk}^`` is an empty list.
  .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``·`` added].
- .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``·`` ``+(+`` ``·`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
  .. Result in table context ``TBLC~1~`` and ``tableActionIR``.
 . Else:
  .. Let ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+`` be ``tableActionReference``.
@@ -8751,7 +8774,7 @@ xref:TableAction_ok[Typing ``annotationList`` ``tableActionReference`` ``+;+``, 
  .. Let parameters ``parameterIR~data~^{asterisk}^`` for data-plane, ``parameterIR~control~^{asterisk}^`` for control-plane, and casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_action_partial_ok[typing partial action call on ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
  .. Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC~0~`` with match action ``prefixedNameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` applied using ``argumentIR~cast~^{asterisk}^`` added].
- .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
+ .. Let ``tableActionIR`` be ``annotationList~update~`` ``prefixedNameIR`` ``·`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``parameterIR~data~^{asterisk}^`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+``.
  .. Result in table context ``TBLC~1~`` and ``tableActionIR``.
 
 xref:TableActions_ok[TableActions_ok]:
@@ -8794,7 +8817,7 @@ xref:TableDefaultAction_ok[Typing ``+=+`` ``expression``, under context ``TC`` a
 . If let ``prefixedNonTypeName`` be ``expression``:
  .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
  .. Check that ( ``·``, ``·`` ) is equal to ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
- .. Result in ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
+ .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``·`` ``+)+``.
 . Else if let ``callExpression`` be ``expression``:
  .. Check that ``callExpression`` matches pattern ``%`` ``(`` ``%`` ``)``.
  .. Let ``callTarget`` ``+(+`` ``argumentList`` ``+)+`` be ``callExpression``.
@@ -8809,7 +8832,7 @@ xref:TableDefaultAction_ok[Typing ``+=+`` ``expression``, under context ``TC`` a
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
- .. Result in ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
+ .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_keyset_ok[TableEntry_keyset_ok]:
 
@@ -8920,7 +8943,7 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
 . If let ``prefixedNonTypeName`` be ``tableActionReference``:
  .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
  .. Check that ( ``·``, ``·`` ) is equal to ``xref:find_action[$find_action(TBLC,`` ``prefixedNameIR)]``.
- .. Result in ``prefixedNameIR`` ``+(+`` ``·`` ``+)+``.
+ .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``·`` ``+)+``.
 . Else:
  .. Let ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+`` be ``tableActionReference``.
  .. Let ``prefixedNameIR`` be xref:prefixedNonTypeName[the prefixed name of  ``prefixedNonTypeName``].
@@ -8932,7 +8955,7 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
- .. Result in ``prefixedNameIR`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
+ .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_priority_ok[TableEntry_priority_ok]:
 
@@ -9112,7 +9135,7 @@ xref:Table_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC``]:
  .. Let ``TBLC~0~`` be ``xref:empty_tableContext[$empty_tableContext]``.
  .. Let table context ``TBLC~1~`` and ``tablePropertyIR^{asterisk}^`` be
 * the result of xref:TableProperties_ok[typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``TBLC~0~``].
- .. Let ``tablePropertyIR~default_action~`` be ``+`EMPTY+`` ``·`` ``+DEFAULT_ACTION+`` ``+=+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+`` ``+;+``.
+ .. Let ``tablePropertyIR~default_action~`` be ``+`EMPTY+`` ``·`` ``+DEFAULT_ACTION+`` ``+=+`` ``"NoAction"`` ``·`` ``+(+`` ``·`` ``+)+`` ``+;+``.
  .. Let ``(`` ``TBLC~2~,`` ``tablePropertyIR~updated~^{asterisk}^`` ``)`` be ``xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC~1~,`` ``tablePropertyIR^{asterisk}^)]``.
  .. Result in context ``TBLC~2~`` and ``tablePropertyIR~updated~^{asterisk}^`` concatenated with ``tablePropertyIR~default_action~``.
 . Else if the length of xref:filter_[``tableProperty^{asterisk}^`` filtered by ``$is_tableDefaultActionProperty(tableProperty)^{asterisk}^``] is equal to ``1``:
@@ -11791,7 +11814,7 @@ xref:insert_NoAction_tablePropertyIR[$insert_NoAction_tablePropertyIR(TBLC, tabl
 --
 +
 for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
-  ... Let ``tableActionReferenceIR~NoAction~`` be ``+.+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+``.
+  ... Let ``tableActionReferenceIR~NoAction~`` be ``+.+`` ``"NoAction"`` ``·`` ``+(+`` ``·`` ``+)+``.
   ... If ``tableActionReferenceIR~NoAction~`` is not in ``tableActionReferenceIR^{asterisk}^``:
    .... Let ``TBLC~1~`` be xref:add_action_tbl[``TBLC`` with match action ``+.+`` ``"NoAction"`` ``+(+`` ``·`` ``+)+`` applied using ``·`` added].
    .... Let ``tableActionIR~NoAction~`` be ``+`EMPTY+`` ``tableActionReferenceIR~NoAction~`` ``+#+`` ``+(+`` ``·`` ``+,+`` ``·`` ``+)+`` ``+;+``.
@@ -12278,7 +12301,7 @@ xref:parameterListIR_of_callableDef[$parameterListIR_of_callableDef(callableDef)
  .. Let ``methodDef`` be ``callableDef``.
  .. Return ``xref:parameterListIR_of_methodDef[$parameterListIR_of_methodDef(methodDef)]``.
 
-xref:parameterListIR_of_actionDef[$parameterListIR_of_actionDef(+ACTION+ ++_++ +(+ parameterListIR +)+ ++_++)]
+xref:parameterListIR_of_actionDef[$parameterListIR_of_actionDef(annotationList +ACTION+ ++_++ +(+ parameterListIR +)+ ++_++)]
 
 
 . Return ``parameterListIR``.
@@ -12527,6 +12550,32 @@ xref:add_callableDef_non_overload_i[``IC`` where ``callableId`` to ``callableDef
  .. Check that ``~xref:in_set[$in_set<id>(id,`` ``+{+`` ``id~k~^{asterisk}^`` ``+}+)]``.
  .. Let ``callableDefEnv`` be xref:add_map[``IC.+BLOCK+.+CALLABLE+`` where ``callableId`` to ``callableDef`` is added].
  .. Return ``IC`` with ``+BLOCK+.+CALLABLE+`` set to ``callableDefEnv``.
+
+xref:find_callableDef_non_overload_i[The non-overloaded callable definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``]
+
+
+. If let ``+.+`` ``nameIR`` be ``prefixedNameIR``:
+ .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``:
+  ... Return ``·``.
+ .. Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.
+ .. If let ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``:
+  ... Return ( ``+GLOBAL+``, ``callableId``, ``callableDef`` ).
+. If ``p`` is ``GLOBAL``:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``+.+`` ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
+. Else if ``p`` is ``BLOCK``:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.
+ .. If let ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``:
+  ... Return ( ``+BLOCK+``, ``callableId``, ``callableDef`` ).
+ .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``:
+  ... Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
+. Else:
+ .. Check that ``prefixedNameIR`` matches pattern ````` ``%``.
+ .. Let ``nameIR`` be ``prefixedNameIR``.
+ .. Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+BLOCK+`` layer of ``IC``].
 
 xref:add_constructorDef_i[Where ``callableId`` to ``constructorDef`` is added to ``IC``]
 
@@ -13208,6 +13257,55 @@ xref:ParserLocalDecls_inst[Compile-time evaluation of ``parserLocalDeclarationIR
 * the result of xref:ParserLocalDecls_inst[compile-time evaluation of ``parserLocalDeclarationIR~t~^{asterisk}^``, under context ``IC~1~`` and store ``STO~1~``].
  .. Result in context ``IC~2~``, store ``STO~2~``, and ``parserLocalDeclarationIR~h_inst~`` ``{two-colons}`` ``parserLocalDeclarationIR~t_inst~^{asterisk}^``.
 
+xref:TableAction_inst[TableAction_inst]:
+
+* Compile-time evaluation of ``tableActionIR``, under context ``instContext``and store ``store``:
+* Result in store ``store`` and ``tableActionIR``.
+
+xref:TableAction_inst[Compile-time evaluation of ``annotationList`` ``tableActionReferenceIR`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``, under context ``IC``and store ``STO``]:
+
+. Let ``prefixedNameIR`` ``++_++`` ``+(+`` ``argumentListIR`` ``+)+`` be ``tableActionReferenceIR``.
+. Let ``(`` ``cursor,`` ``++_++,`` ``callableDef`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``IC``].
+. Check that ``callableDef`` has type ``actionDef``.
+. Let ``actionDef`` be ``callableDef``.
+. Let ``annotationList~actionDef~`` ``+ACTION+`` ``nameIR`` ``+(+`` ``++_++`` ``+)+`` ``++_++`` be ``actionDef``.
+. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``.
+. If let ``nameIR~anno~`` be ``nameIR'^{asterisk}^``:
+ .. If ``xref:starts_with[$starts_with(nameIR~anno~,`` ``".")]``:
+  ... Let ``text`` be xref:strip_prefix[the text ``nameIR~anno~`` with the prefix ``"."`` removed].
+  ... Let ``controlPlaneNameIR`` be ``text``.
+  ... Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentListIR`` ``+)+``.
+  ... Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``.
+  ... Result in store ``STO`` and ``tableActionIR``.
+ .. Else:
+  ... Let ``text`` be xref:join_text[the result of joining ``IC.+PATH+`` concatenated with ``nameIR~anno~`` with separator ``"."``].
+  ... Let ``controlPlaneNameIR`` be xref:ite[``nameIR~anno~`` if ``cursor`` is equal to ``+GLOBAL+`` otherwise ``text``].
+  ... Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentListIR`` ``+)+``.
+  ... Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``.
+  ... Result in store ``STO`` and ``tableActionIR``.
+. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``:
+ .. Let ``text`` be xref:join_text[the result of joining ``IC.+PATH+`` concatenated with ``nameIR`` with separator ``"."``].
+ .. Let ``controlPlaneNameIR`` be xref:ite[``nameIR`` if ``cursor`` is equal to ``+GLOBAL+`` otherwise ``text``].
+ .. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentListIR`` ``+)+``.
+ .. Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+#+`` ``+(+`` ``parameterListIR`` ``+,+`` ``parameterListIR~control~`` ``+)+`` ``+;+``.
+ .. Result in store ``STO`` and ``tableActionIR``.
+
+xref:TableActions_inst[TableActions_inst]:
+
+* Compile-time evaluation of ``tableActionIR^{asterisk}^``, under context ``instContext``and store ``store``:
+* Result in store ``store`` and ``tableActionIR^{asterisk}^``.
+
+xref:TableActions_inst[Compile-time evaluation of ``tableActionIR^{asterisk}^``, under context ``IC``and store ``store``]:
+
+. If ``tableActionIR^{asterisk}^`` is equal to ``·``:
+ .. Result in store ``store`` and ``·``.
+. If let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``:
+ .. Let store ``STO~1~`` and ``tableActionIR~h_inst~`` be
+* the result of xref:TableAction_inst[compile-time evaluation of ``tableActionIR~h~``, under context ``IC``and store ``store``].
+ .. Let store ``STO~2~`` and ``tableActionIR~t_inst~^{asterisk}^`` be
+* the result of xref:TableActions_inst[compile-time evaluation of ``tableActionIR~t~^{asterisk}^``, under context ``IC``and store ``STO~1~``].
+ .. Result in store ``STO~1~`` and ``tableActionIR~h_inst~`` ``{two-colons}`` ``tableActionIR~t_inst~^{asterisk}^``.
+
 xref:TableProperty_inst[TableProperty_inst]:
 
 * Compile-time evaluation of ``tablePropertyIR``, under context ``instContext``and store ``store``:
@@ -13217,9 +13315,12 @@ xref:TableProperty_inst[Compile-time evaluation of ``tableKeysPropertyIR``, unde
 
 . Result in store ``STO`` and ``tableKeysPropertyIR``.
 
-xref:TableProperty_inst[Compile-time evaluation of ``tableActionsPropertyIR``, under context ``IC``and store ``STO``]:
+xref:TableProperty_inst[Compile-time evaluation of ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR`` ``+}+``, under context ``IC``and store ``STO``]:
 
-. Result in store ``STO`` and ``tableActionsPropertyIR``.
+. Let store ``STO~1~`` and ``tableActionListIR~inst~`` be
+* the result of xref:TableActions_inst[compile-time evaluation of ``tableActionListIR``, under context ``IC``and store ``STO``].
+. Let ``tableActionsPropertyIR`` be ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionListIR~inst~`` ``+}+``.
+. Result in store ``STO~1~`` and ``tableActionsPropertyIR``.
 
 xref:TableProperty_inst[Compile-time evaluation of ``tableDefaultActionPropertyIR``, under context ``IC``and store ``STO``]:
 
@@ -13401,7 +13502,7 @@ xref:ActionDecl_inst[ActionDecl_inst]:
 xref:ActionDecl_inst[Loading ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``, under context ``IC~0~`` at ``p``]:
 
 . Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+``].
-. Let ``actionDef`` be ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``.
+. Let ``actionDef`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``.
 . Let ``IC~1~`` be xref:add_callableDef_non_overload_i[``IC~0~`` where ``callableId`` to ``actionDef`` is added as a non-overloaded callable to the ``p`` layer].
 . Result in context ``IC~1~``.
 
@@ -15071,18 +15172,17 @@ xref:Stmt_eval[Runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpre
 * the result of xref:Lvalue_write[writing ``value`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
    .... Result in context ``EC~3~``, state ``ARCH~2~``, and ``+`EMPTY+``.
  .. Else:
-  ... Let value ``value~l~`` be
-* the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
   ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``abortResult`` be ``expressionResult``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
-  ... Else:
-   .... Let ``value~r~`` be ``expressionResult``.
+  ... If let ``exitResult`` be ``expressionResult``:
+   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``+EXIT+``.
+  ... Else if let ``value`` be ``expressionResult``:
+   .... Let value ``value~lvalue~`` be
+* the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
    .... Let ``binop'`` be xref:option_get[*!*] xref:assignop_as_binop[the binary operator corresponding to ``assignop``].
-   .... Let ``value~update~`` be xref:bin_op[``value~l~`` ``binop'`` ``value~r~``].
+   .... Let ``value~new~`` be xref:bin_op[``value~lvalue~`` ``binop'`` ``value``].
    .... Let context ``EC~3~`` be
-* the result of xref:Lvalue_write[writing ``value~update~`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
+* the result of xref:Lvalue_write[writing ``value~new~`` to ``storageReference'``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
    .... Result in context ``EC~3~``, state ``ARCH~2~``, and ``+`EMPTY+``.
 
 xref:Stmt_eval[Runtime evaluation of ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+``, under context ``EC`` and state ``ARCH`` at ``p``]:
@@ -15508,7 +15608,7 @@ xref:Table_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typeId`` ``TBL`` ``+:+`` ``%`` 
   ... Result in ``EC~2~``, ``ARCH~2~``, and ``+EXIT+``.
  .. Else:
   ... Let ``tableMatch^{asterisk}^`` be ``tableMatchesResult``.
-  ... Let ``prefixedNameIR`` ``+(+`` ``argumentListIR`` ``+)+`` be xref:select_action[tie-breaking among matches ``tableMatch^{asterisk}^`` for table object ``TBL``].
+  ... Let ``prefixedNameIR`` ``++_++`` ``+(+`` ``argumentListIR`` ``+)+`` be xref:select_action[tie-breaking among matches ``tableMatch^{asterisk}^`` for table object ``TBL``].
   ... Let context ``EC~3~``, state ``ARCH~3~``, and ``statementResult`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``prefixedNameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` ``+;+``, under context ``EC~2~`` and state ``ARCH~2~`` at ``+LOCAL+``].
   ... If let ``exitResult`` be ``statementResult``:
@@ -15620,7 +15720,7 @@ xref:Callee_eval[Finding callee ``referenceExpressionIR`` ``+(+`` ``argumentList
 . Let ``++_++`` ``+:+`` ``(cursor,`` ``callableDef)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``++_++^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_e[the overloaded callable definition of ``referenceExpressionIR``( ``argumentListIR`` ) in the ``p`` layer of ``EC``].
 . Check that ``(cursor,`` ``callableDef)`` has type ``(cursor,`` ``actionDef)``.
 . Let ``(`` ``p~ref~,`` ``actionDef`` ``)`` be ``(cursor,`` ``callableDef)``.
-. Let ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR`` be ``actionDef``.
+. Let ``++_++`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR`` be ``actionDef``.
 . Let ``actionCallee`` be ``+ACTION+`` ``p~ref~`` ``+.+`` ``nameIR`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+)+`` ``blockStatementIR``.
 . Result in context ``EC``, state ``ARCH``, and callee ``actionCallee``.
 
@@ -16031,9 +16131,12 @@ xref:Call_eval[Calling ``externFunctionCallee`` ``+<+`` ``typeArgumentIR^{asteri
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let context ``EC~callee_4~``, state ``ARCH~2~``, and call result ``callResult`` be
 * the result of xref:ExternFunctionCall_eval[calling an extern function ``nameIR`` ``+(+`` ``nameIR~param~^{asterisk}^`` ``+)+``, under context ``EC~callee_3~``, and state ``ARCH~1~``].
- .. Let ``EC~2~`` be
+ .. If let ``rejectTransitionResult`` be ``callResult``:
+  ... Result in context ``EC~1~``, state ``ARCH~2~``, and call result ``rejectTransitionResult``.
+ .. Else:
+  ... Let ``EC~2~`` be
 * the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_4~``, under state ``ARCH~2~`` at shared ``p~shared~``].
- .. Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
 
 xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
@@ -16214,9 +16317,12 @@ xref:Call_eval[Calling ``externMethodCallee`` ``+<+`` ``typeArgumentIR^{asterisk
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
  .. Let context ``EC~callee_6~``, state ``ARCH~2~``, and call result ``callResult`` be
 * the result of xref:ExternMethodCall_eval[calling an extern method ``nameIR`` ``+(+`` ``nameIR~param~^{asterisk}^`` ``+)+`` on object ``objectId``, under context ``EC~callee_5~``, and state ``ARCH~1~``].
- .. Let ``EC~2~`` be
+ .. If let ``rejectTransitionResult`` be ``callResult``:
+  ... Result in context ``EC~1~``, state ``ARCH~2~``, and call result ``rejectTransitionResult``.
+ .. Else:
+  ... Let ``EC~2~`` be
 * the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_6~``, under state ``ARCH~2~`` at shared ``p~shared~``].
- .. Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
 
 xref:Call_eval[Calling ``parserApplyMethodCallee`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
@@ -17180,6 +17286,32 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
 . Otherwise:
  .. Return ``·``.
 
+xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
+
+
+. Check that ``t[0`` ``:`` ``2]`` is equal to ``"0x"``.
+. Let ``n~len~`` be the length of ``t``.
+. Let ``int`` be ``n~len~`` ``-`` ``2``.
+. Check that ``int`` has type ``nat``.
+. Let ``n~len_bytes~`` be ``int``.
+. Let ``text`` be ``<<reverse_bytes_of_hex',$reverse_bytes_of_hex'(t[2`` ``:`` ``n~len_bytes~])>>``.
+. Return ``"0x"`` concatenated with ``text``.
+
+xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t)]
+
+
+. If the length of ``t`` is less than or equal to ``2``:
+ .. Return ``t``.
+. Let ``n~len~`` be the length of ``t``.
+. If ``n~len~`` is greater than ``2``:
+ .. Let ``t~byte~`` be ``t[0`` ``:`` ``2]``.
+ .. Let ``int`` be ``n~len~`` ``-`` ``2``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~len_bytes~`` be ``int``.
+ .. Let ``t~bytes~`` be ``t[2`` ``:`` ``n~len_bytes~]``.
+ .. Let ``t~bytes_rev~`` be ``xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t~bytes~)]``.
+ .. Return ``t~bytes_rev~`` concatenated with ``t~byte~``.
+
 xref:text_of_number_tableKeyValueInterface[$text_of_number_tableKeyValueInterface(tableKeyValueInterface)]
 
 
@@ -17280,7 +17412,8 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key
   ... Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
   ... Return ``simpleKeysetExpressionIR``.
  .. Else if let ``text~key_prefix_value~`` ``+`SLASH+`` ``n~key_prefix_width~`` be ``tableKeyValueInterface'``:
-  ... Let ``i~key_prefix_value~`` be ``xref:text_to_int[$text_to_int(text~key_prefix_value~)]``.
+  ... Let ``text~key_prefix_value_rev~`` be ``xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(text~key_prefix_value~)]``.
+  ... Let ``i~key_prefix_value~`` be ``xref:text_to_int[$text_to_int(text~key_prefix_value_rev~)]``.
   ... Let ``n~key_type_width~`` be ``xref:sizeof_maxSizeInBits'[$sizeof_maxSizeInBits'(typeIR)]``.
   ... Check that ``n~key_prefix_width~`` is less than or equal to ``n~key_type_width~``.
   ... Let ``int`` be ``n~key_type_width~`` ``-`` ``n~key_prefix_width~``.
@@ -17310,6 +17443,11 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key
  .. Let ``typedExpressionIR~mask_cast~`` be xref:option_get[*!*] xref:cast_control_plane[``typedExpressionIR~base~`` from control plane cast to ``typeIR`` in ``EC``].
  .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~base_cast~`` ``+&&&+`` ``typedExpressionIR~mask_cast~``.
  .. Return ``simpleKeysetExpressionIR``.
+. Else if ``text`` is equal to ``"selector"``:
+ .. Let ``typedExpressionIR~zero~`` be xref:typedExpressionIR[``+D+`` ``0`` annotated with a pair of type ``+INT+`` and compile-time known-ness ``+DYN+``].
+ .. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_control_plane[``typedExpressionIR~zero~`` from control plane cast to ``typeIR`` in ``EC``].
+ .. Let ``simpleKeysetExpressionIR`` be ``typedExpressionIR~cast~`` ``+&&&+`` ``typedExpressionIR~cast~``.
+ .. Return ``simpleKeysetExpressionIR``.
 
 xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(evalContext, (nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)]
 
@@ -17328,6 +17466,19 @@ xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +#+ name
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Return ( ``nameIR~key~``, ``nameIR~matchKind~``, ``typeIR`` ).
 
+xref:key_interface_of_tableObject[$key_interface_of_tableObject(+TABLE+ typeId +{+ frame TBL +}+)]
+
+
+. Let ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyIR^{asterisk}^`` ``+}+`` be ``TBL.+KEYS+``.
+. Let ``nameIR~key~^{asterisk}^`` be the list, ``nameIR~matchKind~^{asterisk}^`` be the list, and ``typeIR^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)`` be ``xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(tableKeyIR)]``.
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+. Return ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^``.
+
 xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC, +KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+, tableKeyInterface^{asterisk}^)]
 
 
@@ -17345,7 +17496,8 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 --
 +
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
-. Check that xref:eq_set[``+{+`` ``nameIR~key~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
+. Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
+. Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
 . Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
 . Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
@@ -17410,88 +17562,82 @@ for each ``nameIR~arg~`` in ``nameIR~arg~^{asterisk}^``
 --
 +
 for each ``nameIR^?^`` in ``nameIR^?^^{asterisk}^``
-. Let ``int^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``nameIR~param~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``int^?^`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
+ ** Let ``nameIR~param~`` be the name of ``parameterIR``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``
-. Check that ``int^?^`` is defined, for all ``int^?^`` in ``int^?^^{asterisk}^``.
+. Check that xref:sub_set[``+{+`` ``nameIR~arg_resolved~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``nameIR~param~^{asterisk}^`` ``+}+``].
 . Let ``i~aligned~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``i~aligned~`` be ``int^?^``.
+ ** Let ``i~aligned~`` be ``xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+`` ``(`` ``nameIR~arg_resolved~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR)]``.
 --
 +
-for each ``int^?^`` in ``int^?^^{asterisk}^``
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 . Return ``i~aligned~^{asterisk}^``.
 
 xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+ ( id~arg~ +:+ i~arg~ )^{asterisk}^ +}+, ++_++ ++_++ ++_++ nameIR~param~ ++_++)]
 
 
-. Return xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
+. Let ``int^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
+. If let ``i`` be ``int^?^``:
+ .. Return ``i``.
+. If ``·`` is equal to xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``]:
+ .. Return ``0``.
 
-xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{asterisk}^, nameIR)]
-
-
-. If ``tableActionIR^{asterisk}^`` is an empty list:
- .. Return ``·``.
-. Else:
- .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
- .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
- .. Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
- .. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
-  ... If ``nameIR~action~`` is equal to ``nameIR``:
-   .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
-  ... Else:
-   .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
- .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
- .. If ``nameIR~annotation~^{asterisk}^`` is not equal to ``·``:
-  ... Let ``b~hit~`` be ``nameIR`` is equal to ``nameIR~action~`` or ``nameIR`` is in ``nameIR~annotation~^{asterisk}^``.
-  ... If ``b~hit~``:
-   .... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
-  ... Else:
-   .... Return ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
-
-xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^, nameIR)]
+xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^, nameIR)]
 
 
 . If ``tableActionIR^{asterisk}^`` is an empty list:
  .. Return ``·``.
 . Else:
  .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
- .. Let ``annotationList`` ``++_++`` ``+(+`` ``++_++`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``++_++`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
- .. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
-  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
- .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
- .. Let ``nameIR~annotation~^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
- .. If ``nameIR~annotation~^{asterisk}^`` is not equal to ``·``:
-  ... Check that ``·`` is equal to xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``(`` ``$starts_with(nameIR~annotation~,`` ``".")`` ``)^{asterisk}^``].
-  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
- .. Let ``bool^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``bool`` be ``xref:starts_with[$starts_with(nameIR~annotation~,`` ``".")]``.
---
-+
-for each ``nameIR~annotation~`` in ``nameIR~annotation~^{asterisk}^``
- .. Let ``nameIR~annotation_dotPrefix~^{asterisk}^`` be xref:filter_[``nameIR~annotation~^{asterisk}^`` filtered by ``bool^{asterisk}^``].
- .. If ``nameIR~annotation_dotPrefix~^{asterisk}^`` is not equal to ``·``:
-  ... Let ``nameIR~annotation_strip~^{asterisk}^`` be ``(`` ``xref:strip_prefix[$strip_prefix(nameIR~annotation_dotPrefix~,`` ``".")]`` ``)^{asterisk}^``.
-  ... Check that ``nameIR`` is not in ``nameIR~annotation_strip~^{asterisk}^``.
-  ... Return ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
- .. Let ``nameIR~annotation_strip~^{asterisk}^`` be ``(`` ``xref:strip_prefix[$strip_prefix(nameIR~annotation_dotPrefix~,`` ``".")]`` ``)^{asterisk}^``.
- .. If ``nameIR`` is in ``nameIR~annotation_strip~^{asterisk}^``:
+ .. Let ``annotationList`` ``tableActionReferenceIR`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
+ .. Let ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` be ``tableActionReferenceIR``.
+ .. If ``nameIR`` is not equal to ``controlPlaneNameIR``:
+  ... Return ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. If ``nameIR`` is equal to ``controlPlaneNameIR``:
+  ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
+  ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
+
+xref:find_tableActionIR_unqualified[$find_tableActionIR_unqualified(tableActionIR^{asterisk}^, nameIR)]
+
+
+. Let ``nameIR~split~^{asterisk}^`` be ``xref:split_text[$split_text(nameIR,`` ``".")]``.
+. Let ``nameIR'^{asterisk}^`` be xref:rev_[the reversal of ``nameIR~split~^{asterisk}^``].
+. Let ``nameIR~action~`` be ``nameIR'^{asterisk}^[0]``.
+. Return ``xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActionIR^{asterisk}^,`` ``nameIR~action~)]``.
+
+xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActionIR^{asterisk}^, nameIR)]
+
+
+. If ``tableActionIR^{asterisk}^`` is an empty list:
+ .. Return ``·``.
+. Else:
+ .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
+ .. Let ``annotationList`` ``tableActionReferenceIR`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~h~``.
+ .. Let ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` be ``tableActionReferenceIR``.
+ .. Check that ``controlPlaneNameIR`` is defined.
+ .. Let ``nameIR~controlPlane~`` be ``controlPlaneNameIR``.
+ .. Let ``nameIR~split~^{asterisk}^`` be ``xref:split_text[$split_text(nameIR~controlPlane~,`` ``".")]``.
+ .. Let ``nameIR'^{asterisk}^`` be xref:rev_[the reversal of ``nameIR~split~^{asterisk}^``].
+ .. Check that ``nameIR'^{asterisk}^`` is a non-empty list.
+ .. Let ``nameIR~unqualified~`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``nameIR'^{asterisk}^``.
+ .. If ``nameIR`` is not equal to ``nameIR~unqualified~``:
+  ... Return ``xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActionIR~t~^{asterisk}^,`` ``nameIR)]``.
+ .. If ``nameIR`` is equal to ``nameIR~unqualified~``:
   ... Let ``nameIR~action~`` be xref:flatten_prefixedNameIR[the string form of  ``prefixedNameIR``].
   ... Return ( ``nameIR~action~``, ``tableActionIR~h~`` ).
 
 xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC, +ACTIONS+ +=+ +{+ tableActionIR^{asterisk}^ +}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
 
 
-. Let ``(nameIR,`` ``tableActionIR)^?^`` be ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
+. Let ``(nameIR,`` ``tableActionIR)^?^`` be ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
 . If let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``:
- .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
+ .. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
  .. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
  .. Let ``typeIR~param~^{asterisk}^`` be the list obtained by repeating:
 +
@@ -17523,10 +17669,10 @@ for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressio
 +
 for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
  .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
- .. Return ``nameIR~found~`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
-. If ``·`` is equal to ``xref:find_tableActionIR_by_dotPrefix[$find_tableActionIR_by_dotPrefix(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``:
- .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be xref:option_get[*!*] ``xref:find_tableActionIR_by_name[$find_tableActionIR_by_name(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
- .. Let ``annotationList`` ``prefixedNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
+ .. Return ``nameIR~found~`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
+. If ``·`` is equal to ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``:
+ .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be xref:option_get[*!*] ``xref:find_tableActionIR_unqualified[$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
+ .. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.
  .. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
  .. Let ``typeIR~param~^{asterisk}^`` be the list obtained by repeating:
 +
@@ -17558,20 +17704,22 @@ for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressio
 +
 for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
  .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
- .. Return ``nameIR~found~`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
+ .. Return ``nameIR~found~`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
 
 xref:tableObject_add_entry[$tableObject_add_entry(EC, +TABLE+ typeId +{+ frame TBL +}+, tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)]
 
 
 . Let ``tableEntryPriorityOptIR`` be ``xref:tableObject_create_entry_priority[$tableObject_create_entry_priority(tableEntryPriorityInterface)]``.
-. Check that if ``xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)]``, then ``xref:is_some_[$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)]``.
-. Let ``keysetExpressionIR`` be ``xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)]``.
-. Let ``tableActionReferenceIR`` be ``xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)]``.
-. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``+`EMPTY+`` ``+;+``.
-. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+`` be ``TBL.+ENTRIES+``.
-. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+}+``.
-. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
-. Return ``+TABLE+`` ``typeId`` ``+{+`` ``frame`` ``TBL~updated~`` ``+}+``.
+. If if ``xref:needs_priority_tableKeysPropertyIR[$needs_priority_tableKeysPropertyIR(TBL.+KEYS+)]``, then ``xref:is_some_[$is_some_<tableEntryPriorityIR>(tableEntryPriorityOptIR)]``:
+ .. Let ``keysetExpressionIR`` be ``xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC,`` ``TBL.+KEYS+,`` ``tableKeysetInterface)]``.
+ .. Let ``tableActionReferenceIR`` be ``xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC,`` ``TBL.+ACTIONS+,`` ``tableActionInterface)]``.
+ .. Let ``tableEntryIR~update~`` be ``·`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``+`EMPTY+`` ``+;+``.
+ .. Let ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``+}+`` be ``TBL.+ENTRIES+``.
+ .. Let ``tableEntriesPropertyIR~updated~`` be ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR^{asterisk}^`` ``{pp}`` ``tableEntryIR~update~`` ``+}+``.
+ .. Let ``TBL~updated~`` be ``TBL`` with ``+ENTRIES+`` set to ``tableEntriesPropertyIR~updated~``.
+ .. Return ``+TABLE+`` ``typeId`` ``+{+`` ``frame`` ``TBL~updated~`` ``+}+``.
+. Otherwise:
+ .. Return ``·``.
 
 xref:tableObject_add_default_action[$tableObject_add_default_action(EC, +TABLE+ typeId +{+ frame TBL +}+, tableActionInterface)]
 

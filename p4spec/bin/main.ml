@@ -397,7 +397,7 @@ let cover_sim_command =
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"STF test directories"
      and patchdir =
-       flag "-patch-dir" (required string) ~doc:"directory for P4/STF patches"
+       flag "-patch-dir" (listed string) ~doc:"directory for P4/STF patches"
      and filename_cov =
        flag "-cov" (required string) ~doc:"output coverage file"
      and arch = flag "-arch" (required string) ~doc:"target architecture"
@@ -416,6 +416,8 @@ let cover_sim_command =
          let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
          let filenames_p4, filenames_stf =
            Util.Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+           |> List.map (fun (filename_p4, filename_stf, _) ->
+                  (filename_p4, filename_stf))
            |> List.filter (fun (filename_p4, _) ->
                   not (List.exists (String.equal filename_p4) excludes_p4))
            |> List.split

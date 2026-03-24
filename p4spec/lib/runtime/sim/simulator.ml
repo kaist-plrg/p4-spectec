@@ -24,6 +24,10 @@ type stf_result =
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
 module type ARCH = sig
+  (* STF AST transformation *)
+
+  val transform_stf_stmt : Stf.Ast.stmt -> Stf.Ast.stmt
+
   (* Extern evaluation *)
 
   val eval_extern_init : Value.t list -> Value.t
@@ -34,34 +38,6 @@ module type ARCH = sig
   (* Architecture-specific external state *)
 
   val init_arch_state : Value.t
-
-  (* Match-action table interface *)
-
-  val table_add_entry :
-    Value.t ->
-    (* context *)
-    Value.t ->
-    (* store *)
-    Value.t ->
-    (* table name *)
-    Value.t ->
-    (* table entry priority *)
-    Value.t ->
-    (* table entry keysets *)
-    Value.t ->
-    (* table entry action *)
-    Value.t (* store *)
-
-  val table_add_default_action :
-    Value.t ->
-    (* context *)
-    Value.t ->
-    (* store *)
-    Value.t ->
-    (* table name *)
-    Value.t ->
-    (* table entry action *)
-    Value.t (* store *)
 
   (* Mirror session interface *)
 
@@ -84,10 +60,6 @@ module type ARCH = sig
 
   val init_pipe : string list -> string -> Value.t * Value.t
   val drive_pipe : Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
-
-  (* Initialization *)
-
-  val init : mode -> unit
 end
 
 module type INTERP_IL = sig
