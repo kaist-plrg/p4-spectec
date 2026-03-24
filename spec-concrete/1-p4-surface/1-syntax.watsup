@@ -351,11 +351,15 @@ syntax indexAccessExpression =
 syntax sliceRangeAccessExpression =
   expression `[ expression `: expression ]
 
+syntax sliceWidthAccessExpression =
+  expression `[ expression `+: expression ]
+
 syntax accessExpression =
   | errorAccessExpression
   | memberAccessExpression
   | indexAccessExpression
   | sliceRangeAccessExpression
+  | sliceWidthAccessExpression
 
 syntax memberAccessExpressionNonBrace =
   memberAccessBaseNonBrace `. member
@@ -366,11 +370,15 @@ syntax indexAccessExpressionNonBrace =
 syntax sliceRangeAccessExpressionNonBrace =
   expressionNonBrace `[ expression `: expression ]
 
+syntax sliceWidthAccessExpressionNonBrace =
+  expressionNonBrace `[ expression `+: expression ]
+
 syntax accessExpressionNonBrace =
   | errorAccessExpression
   | memberAccessExpressionNonBrace
   | indexAccessExpressionNonBrace
   | sliceRangeAccessExpressionNonBrace
+  | sliceWidthAccessExpressionNonBrace
 
 ;;
 ;;;; Call expressions
@@ -628,6 +636,7 @@ syntax lvalue =
   | lvalue `. member
   | lvalue `[ expression ]
   | lvalue `[ expression `: expression ]
+  | lvalue `[ expression `+: expression ]
   | `( lvalue )
 
 dec $lvalue_as_expression(lvalue) : expression
