@@ -11918,8 +11918,8 @@ syntax matchPriority = {delta nat, largest_wins bool}
 syntax matchEntries = {size nat, const bool}
 
 syntax matchMode = 
-   | nopri
-   | noprilpm nat
+   | none
+   | lpm nat
    | pri
 
 syntax tableContext = {keys matchKey*, actions matchAction*, priorities matchPriority, entries matchEntries, mode matchMode}
@@ -11934,7 +11934,7 @@ def $empty_tableContext
 
   1. (Let matchEntries be {size 0, const true})
 
-    1. Return {keys [], actions [], priorities matchPriority, entries matchEntries, mode (nopri)}
+    1. Return {keys [], actions [], priorities matchPriority, entries matchEntries, mode (none)}
 
 def $add_key_tbl(TBLC, id, typeIR)
 
@@ -12024,7 +12024,7 @@ def $update_mode_tbl(TBLC, (tableKeyIR)*)
 
                               1. (Let ?(n) be (nat)?)
 
-                                1. Return TBLC[mode = (noprilpm n)]
+                                1. Return TBLC[mode = (lpm n)]
 
                             1. Else Phantom#498
 
@@ -12036,7 +12036,7 @@ def $update_mode_tbl(TBLC, (tableKeyIR)*)
 
         2. If (~$exists_((b_lpm)*)), then
 
-          1. Return TBLC[mode = (nopri)]
+          1. Return TBLC[mode = (none)]
 
         2. Else Phantom#502
 
@@ -12070,7 +12070,7 @@ def $find_action'((matchAction)*, prefixedNameIR)
 
 def $set_priorities_of_tableEntryListIR(TBLC, (TBLS)*, (tableEntryIR)*)
 
-1. If ((TBLC.mode matches pattern `NOPRI`)), then
+1. If ((TBLC.mode matches pattern `NONE`)), then
 
   1. If ((?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR)))*, then
 
@@ -12082,7 +12082,7 @@ def $set_priorities_of_tableEntryListIR(TBLC, (TBLS)*, (tableEntryIR)*)
 
 2. (Let matchMode be TBLC.mode)
 
-  1. If ((matchMode matches pattern `NOPRILPM%`)), then
+  1. If ((matchMode matches pattern `LPM%`)), then
 
     1. If ((TBLS matches pattern `LPM%`))*, then
 
@@ -19788,9 +19788,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
       1. (Let matchMode be TBLC.mode)
 
-        1. If ((matchMode matches pattern `NOPRILPM%`)), then
+        1. If ((matchMode matches pattern `LPM%`)), then
 
-          1. (Let (noprilpm n) be matchMode)
+          1. (Let (lpm n) be matchMode)
 
             1. (Let TBLS be (lpm n))
 
@@ -19798,7 +19798,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         1. Else Phantom#1070
 
-      2. If (((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri)))), then
+      2. If (((TBLC.mode = (none)) \/ (TBLC.mode = (pri)))), then
 
         1. (Let TBLS be (non_lpm))
 
@@ -19810,9 +19810,9 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
       1. (Let matchMode be TBLC.mode)
 
-        1. If ((matchMode matches pattern `NOPRILPM%`)), then
+        1. If ((matchMode matches pattern `LPM%`)), then
 
-          1. (Let (noprilpm n) be matchMode)
+          1. (Let (lpm n) be matchMode)
 
             1. (Let TBLS be (lpm n))
 
@@ -19820,7 +19820,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         1. Else Phantom#1072
 
-      2. If (((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri)))), then
+      2. If (((TBLC.mode = (none)) \/ (TBLC.mode = (pri)))), then
 
         1. (Let TBLS be (non_lpm))
 
@@ -19838,7 +19838,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
       1. (Let matchMode be TBLC.mode)
 
-        1. If ((matchMode matches pattern `NOPRILPM%`)), then
+        1. If ((matchMode matches pattern `LPM%`)), then
 
           1. (Let TBLS be (lpm 0))
 
@@ -19846,7 +19846,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         1. Else Phantom#1075
 
-      2. If (((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri)))), then
+      2. If (((TBLC.mode = (none)) \/ (TBLC.mode = (pri)))), then
 
         1. (Let TBLS be (non_lpm))
 
@@ -19858,7 +19858,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
       1. (Let matchMode be TBLC.mode)
 
-        1. If ((matchMode matches pattern `NOPRILPM%`)), then
+        1. If ((matchMode matches pattern `LPM%`)), then
 
           1. (Let TBLS be (lpm 0))
 
@@ -19866,7 +19866,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
         1. Else Phantom#1077
 
-      2. If (((TBLC.mode = (nopri)) \/ (TBLC.mode = (pri)))), then
+      2. If (((TBLC.mode = (none)) \/ (TBLC.mode = (pri)))), then
 
         1. (Let TBLS be (non_lpm))
 
@@ -19948,59 +19948,47 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
             1. Else Phantom#1085
 
-relation TableEntry_priority_ok: TC |- (tableEntryPriority)? : %
+relation TableEntry_priority_ok: TC |- tableEntryPriority : %
 
-1. Case analysis on (tableEntryPriority)?
+1. Case analysis on tableEntryPriority
 
-  1. Case (% matches pattern ())
+  1. Case (% matches pattern `PRIORITY=%:`)
 
-    1. Group none: TC |- ?() : %
+    1. (Let (priority= integerLiteral :) be tableEntryPriority)
 
-      1. Result in: % |- % : ?()
+      1. Group number: TC |- (priority= integerLiteral :) : %
 
-  2. Case (% matches pattern (_))
+        1. Result in: % |- % : (priority= integerLiteral :)
 
-    1. (Let ?(tableEntryPriority') be (tableEntryPriority)?)
+  2. Case (% matches pattern `PRIORITY=(%):`)
 
-      1. Case analysis on tableEntryPriority'
+    1. (Let (priority=( expression ):) be tableEntryPriority)
 
-        1. Case (% matches pattern `PRIORITY=%:`)
+      1. Group expression: TC |- (priority=( expression ):) : %
 
-          1. (Let (priority= integerLiteral :) be tableEntryPriority')
+        1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
-            1. Group number: TC |- ?((priority= integerLiteral :)) : %
+          1. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
 
-              1. Result in: % |- % : ?((priority= integerLiteral :))
+            1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
 
-        2. Case (% matches pattern `PRIORITY=(%):`)
+              1. If ((value has type integerValue)), then
 
-          1. (Let (priority=( expression ):) be tableEntryPriority')
+                1. (Let integerValue be (value as integerValue))
 
-            1. Group expression: TC |- ?((priority=( expression ):)) : %
+                  1. (Let (nat)? be $nat_of_integerValue(integerValue))
 
-              1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
+                    1. If (((nat)? matches pattern (_))), then
 
-                1. If (($ctk_of_typedExpressionIR(typedExpressionIR) matches pattern `LCTK`)), then
+                      1. (Let ?(n) be (nat)?)
 
-                  1. (Expr_eval_lctk: (local) TC |- typedExpressionIR ~> value)
+                        1. Result in: % |- % : (priority= (d (n as int)) :)
 
-                    1. If ((value has type integerValue)), then
+                    1. Else Phantom#1086
 
-                      1. (Let integerValue be (value as integerValue))
+              1. Else Phantom#1087
 
-                        1. (Let (nat)? be $nat_of_integerValue(integerValue))
-
-                          1. If (((nat)? matches pattern (_))), then
-
-                            1. (Let ?(n) be (nat)?)
-
-                              1. Result in: % |- % : ?((priority= (d (n as int)) :))
-
-                          1. Else Phantom#1086
-
-                    1. Else Phantom#1087
-
-                1. Else Phantom#1088
+          1. Else Phantom#1088
 
 relation TableEntry_ok: TC TBLC |- tableEntry : % %
 
@@ -20016,11 +20004,11 @@ relation TableEntry_ok: TC TBLC |- tableEntry : % %
 
           1. (TableEntry_action_ok: TC TBLC |- tableActionReference : tableActionReferenceIR)
 
-            1. (TableEntry_priority_ok: TC |- ?(tableEntryPriority) : tableEntryPriorityOptIR)
+            1. (TableEntry_priority_ok: TC |- tableEntryPriority : tableEntryPriorityIR)
 
               1. (Let constOptIR be $flatten_constOpt(constOpt))
 
-                1. (Let tableEntryIR be (constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;))
+                1. (Let tableEntryIR be (constOptIR ?(tableEntryPriorityIR) keysetExpressionIR : tableActionReferenceIR annotationList ;))
 
                   1. Result in: % % |- % : TBLS tableEntryIR
 
@@ -20032,9 +20020,9 @@ relation TableEntry_ok: TC TBLC |- tableEntry : % %
 
           1. (TableEntry_action_ok: TC TBLC |- tableActionReference : tableActionReferenceIR)
 
-            1. (TableEntry_priority_ok: TC |- ?() : tableEntryPriorityOptIR)
+            1. (Let constOptIR be $flatten_constOpt(constOpt))
 
-              1. (Let constOptIR be $flatten_constOpt(constOpt))
+              1. (Let tableEntryPriorityOptIR be ?())
 
                 1. (Let tableEntryIR be (constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;))
 
@@ -24935,9 +24923,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
             1. (Let matchMode be TBLC.mode)
 
-              1. If ((matchMode matches pattern `NOPRILPM%`)), then
+              1. If ((matchMode matches pattern `LPM%`)), then
 
-                1. (Let (noprilpm n) be matchMode)
+                1. (Let (lpm n) be matchMode)
 
                   1. (Expr_ok: (local) TC |- expression : typedExpressionIR)
 
@@ -25025,9 +25013,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
             1. (Let matchMode be TBLC.mode)
 
-              1. If ((matchMode matches pattern `NOPRILPM%`)), then
+              1. If ((matchMode matches pattern `LPM%`)), then
 
-                1. (Let (noprilpm n) be matchMode)
+                1. (Let (lpm n) be matchMode)
 
                   1. (Expr_ok: (local) TC |- expression_l : typedExpressionIR_l)
 
@@ -25129,9 +25117,9 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
           1. (Let matchMode be TBLC.mode)
 
-            1. If ((matchMode matches pattern `NOPRILPM%`)), then
+            1. If ((matchMode matches pattern `LPM%`)), then
 
-              1. (Let (noprilpm n) be matchMode)
+              1. (Let (lpm n) be matchMode)
 
                 1. Result in: % % |- % @ % : (lpm n) (default)
 
@@ -25155,7 +25143,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- (typeIR_key : text) @ simpleKey
 
           1. (Let matchMode be TBLC.mode)
 
-            1. If ((matchMode matches pattern `NOPRILPM%`)), then
+            1. If ((matchMode matches pattern `LPM%`)), then
 
               1. Result in: % % |- % @ % : (lpm 0) (_)
 

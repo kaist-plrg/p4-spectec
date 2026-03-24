@@ -5017,7 +5017,7 @@ xref:empty_tableContext[$empty_tableContext]
 
 . Let ``matchPriority`` be +{++DELTA+ ``1``, +LARGEST_WINS+ ``true``+}+.
 . Let ``matchEntries`` be +{++SIZE+ ``0``, +CONST+ ``true``+}+.
-. Return +{++KEYS+ ``·``, +ACTIONS+ ``·``, +PRIORITIES+ ``matchPriority``, +ENTRIES+ ``matchEntries``, +MODE+ ``+NOPRI+``+}+.
+. Return +{++KEYS+ ``·``, +ACTIONS+ ``·``, +PRIORITIES+ ``matchPriority``, +ENTRIES+ ``matchEntries``, +MODE+ ``+NONE+``+}+.
 
 xref:add_key_tbl[``TBLC`` with match key ``id`` of type ``typeIR`` added]
 
@@ -5084,9 +5084,9 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
   ... Check that ``typeIR'`` has type ``integerTypeIR``.
   ... Let ``integerTypeIR`` be ``typeIR'``.
   ... Let ``n`` be xref:option_get[*!*] xref:width_of_integerTypeIR[width of integer type ``integerTypeIR``].
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRILPM+`` ``n``.
+  ... Return ``TBLC`` with ``+MODE+`` set to ``+LPM+`` ``n``.
  .. If xref:exists_[none of ``b~lpm~^{asterisk}^`` is true]:
-  ... Return ``TBLC`` with ``+MODE+`` set to ``+NOPRI+``.
+  ... Return ``TBLC`` with ``+MODE+`` set to ``+NONE+``.
 
 xref:find_action[$find_action(TBLC, prefixedNameIR)]
 
@@ -5106,14 +5106,14 @@ xref:find_action'[$find_action'(matchAction^{asterisk}^, prefixedNameIR)]
  .. Else:
   ... Return ``xref:find_action'[$find_action'(matchAction~t~^{asterisk}^,`` ``prefixedNameIR)]``.
 
-xref:set_priorities_of_tableEntryListIR[$set_priorities_of_tableEntryListIR(TBLC, TBLS^{asterisk}^, tableEntryIR^{asterisk}^)]
+xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priorities set based on table context ``TBLC`` and entry states ``TBLS^{asterisk}^``]
 
 
-. If ``TBLC.+MODE+`` is ``NOPRI``:
+. If ``TBLC.+MODE+`` is ``NONE``:
  .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
  .. Return ``tableEntryIR^{asterisk}^``.
 . Let ``matchMode`` be ``TBLC.+MODE+``.
-. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
+. If ``matchMode`` matches pattern ``LPM`` ``%``:
  .. Check that ``TBLS`` matches pattern ``LPM`` ``%``, for all ``TBLS`` in ``TBLS^{asterisk}^``.
  .. Let ``n~prefix~^{asterisk}^`` be the list obtained by repeating:
 +
@@ -8868,18 +8868,18 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
 
 . If ``keysetExpression`` is equal to ``+DEFAULT+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
+ .. If let ``+LPM+`` ``n`` be ``matchMode``:
   ... Let ``TBLS`` be ``+LPM+`` ``n``.
   ... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NONE+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If let ``+NOPRILPM+`` ``n`` be ``matchMode``:
+ .. If let ``+LPM+`` ``n`` be ``matchMode``:
   ... Let ``TBLS`` be ``+LPM+`` ``n``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NONE+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
 
@@ -8887,18 +8887,18 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
 
 . If ``keysetExpression`` is equal to ``+_+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
+ .. If ``matchMode`` matches pattern ``LPM`` ``%``:
   ... Let ``TBLS`` be ``+LPM+`` ``0``.
   ... Result in table entry state ``TBLS`` and ``+_+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NONE+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+_+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+_+`` ``+)+``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. If ``matchMode`` matches pattern ``NOPRILPM`` ``%``:
+ .. If ``matchMode`` matches pattern ``LPM`` ``%``:
   ... Let ``TBLS`` be ``+LPM+`` ``0``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
- .. If ``TBLC.+MODE+`` is equal to ``+NOPRI+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
+ .. If ``TBLC.+MODE+`` is equal to ``+NONE+`` or ``TBLC.+MODE+`` is equal to ``+PRI+``:
   ... Let ``TBLS`` be ``+NON_LPM+``.
   ... Result in table entry state ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
 
@@ -8936,12 +8936,8 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
 
 xref:TableEntry_priority_ok[TableEntry_priority_ok]:
 
-* Typing ``tableEntryPriority^?^``, under context ``typingContext``:
-* Result in ``tableEntryPriorityOptIR``.
-
-xref:TableEntry_priority_ok[Typing ``·``, under context ``TC``]:
-
-. Result in ``·``.
+* Typing ``tableEntryPriority``, under context ``typingContext``:
+* Result in ``tableEntryPriorityIR``.
 
 xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``, under context ``TC``]:
 
@@ -8971,10 +8967,10 @@ xref:TableEntry_ok[Typing ``tableEntry``, under context ``TC`` and table context
 * the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``].
  .. Let ``tableActionReferenceIR`` be
 * the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC``].
- .. Let ``tableEntryPriorityOptIR`` be
+ .. Let ``tableEntryPriorityIR`` be
 * the result of xref:TableEntry_priority_ok[typing ``tableEntryPriority``, under context ``TC``].
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
- .. Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
+ .. Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
  .. Result in table entry state ``TBLS`` and ``tableEntryIR``.
 . Else:
  .. Let ``constOpt`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+`` be ``tableEntry``.
@@ -8982,9 +8978,8 @@ xref:TableEntry_ok[Typing ``tableEntry``, under context ``TC`` and table context
 * the result of xref:TableEntry_keyset_ok[typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``].
  .. Let ``tableActionReferenceIR`` be
 * the result of xref:TableEntry_action_ok[typing ``tableActionReference``, under context ``TC`` and table context ``TBLC``].
- .. Let ``tableEntryPriorityOptIR`` be
-* the result of xref:TableEntry_priority_ok[typing ``·``, under context ``TC``].
  .. Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].
+ .. Let ``tableEntryPriorityOptIR`` be ``·``.
  .. Let ``tableEntryIR`` be ``constOptIR`` ``tableEntryPriorityOptIR`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``annotationList`` ``+;+``.
  .. Result in table entry state ``TBLS`` and ``tableEntryIR``.
 
@@ -9023,7 +9018,7 @@ xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``+ENTRIES+`` ``+=+
 --
 +
 for each ``tableEntry`` in ``tableEntry^{asterisk}^``
-. Let ``tableEntryIR~pri~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR[$set_priorities_of_tableEntryListIR(TBLC~2~,`` ``TBLS^{asterisk}^,`` ``tableEntryIR^{asterisk}^)]``.
+. Let ``tableEntryIR~pri~^{asterisk}^`` be xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priorities set based on table context ``TBLC~2~`` and entry states ``TBLS^{asterisk}^``].
 . Result in table context ``TBLC~2~`` and ``annotationList`` ``constOptIR`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryIR~pri~^{asterisk}^`` ``+}+``.
 
 xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``tableCustomName`` ``initializer`` ``+;+``, under context ``TC`` and table context ``TBLC~0~``]:
@@ -11637,8 +11632,8 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. Check that ``matchMode`` matches pattern ``NOPRILPM`` ``%``.
- .. Let ``+NOPRILPM+`` ``n`` be ``matchMode``.
+ .. Check that ``matchMode`` matches pattern ``LPM`` ``%``.
+ .. Let ``+LPM+`` ``n`` be ``matchMode``.
  .. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
@@ -11676,8 +11671,8 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. Check that ``matchMode`` matches pattern ``NOPRILPM`` ``%``.
- .. Let ``+NOPRILPM+`` ``n`` be ``matchMode``.
+ .. Check that ``matchMode`` matches pattern ``LPM`` ``%``.
+ .. Let ``+LPM+`` ``n`` be ``matchMode``.
  .. Let ``typedExpressionIR~l~`` be
 * the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typedExpressionIR~r~`` be
@@ -11709,8 +11704,8 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. Check that ``matchMode`` matches pattern ``NOPRILPM`` ``%``.
- .. Let ``+NOPRILPM+`` ``n`` be ``matchMode``.
+ .. Check that ``matchMode`` matches pattern ``LPM`` ``%``.
+ .. Let ``+LPM+`` ``n`` be ``matchMode``.
  .. Result in ``+LPM+`` ``n`` and ``+DEFAULT+``.
 . Else:
  .. Check that ``text`` is not equal to ``"exact"``.
@@ -11720,7 +11715,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
- .. Check that ``matchMode`` matches pattern ``NOPRILPM`` ``%``.
+ .. Check that ``matchMode`` matches pattern ``LPM`` ``%``.
  .. Result in ``+LPM+`` ``0`` and ``+_+``.
 . Else:
  .. Check that ``text`` is not equal to ``"exact"``.

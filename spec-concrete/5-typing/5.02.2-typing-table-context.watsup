@@ -16,9 +16,9 @@ syntax matchEntries =
 
 syntax matchMode =
   ;; does not require explicit priority and is not lpm
-  | NOPRI
-  ;; does not require explicit priority and is lpm, holding the max prefix
-  | NOPRILPM nat
+  | NONE
+  ;; is lpm, holding the max prefix
+  | LPM nat
   ;; requires explicit priority
   | PRI
 
@@ -53,7 +53,7 @@ def $empty_tableContext
         ACTIONS eps,
         PRIORITIES matchPriority,
         ENTRIES matchEntries,
-        MODE NOPRI }
+        MODE NONE }
   -- if matchPriority
       = { DELTA 1,
           LARGEST_WINS true }
@@ -125,12 +125,12 @@ dec $update_mode_tbl(tableContext, tableKeyIR*) : tableContext
   hint(prose_in %0 "with match mode updated based on keys" %1)
 
 def $update_mode_tbl(TBLC, tableKeyIR*)
-  = TBLC[ .MODE = PRI]
+  = TBLC[ .MODE = PRI ]
   -- (if b_pri = $requires_priority(tableKeyIR))*
   -- if $exists_(b_pri*)
 
 def $update_mode_tbl(TBLC, tableKeyIR*)
-  = TBLC[ .MODE = NOPRILPM n]
+  = TBLC[ .MODE = LPM n ]
   -- (if b_pri = $requires_priority(tableKeyIR))*
   -- if ~$exists_(b_pri*)
   -- (if b_lpm = $is_lpm_key(tableKeyIR))*
@@ -141,7 +141,7 @@ def $update_mode_tbl(TBLC, tableKeyIR*)
   -- if n = $width_of_integerTypeIR(integerTypeIR)
 
 def $update_mode_tbl(TBLC, tableKeyIR*)
-  = TBLC[ .MODE = NOPRI]
+  = TBLC[ .MODE = NONE ]
   -- (if b_pri = $requires_priority(tableKeyIR))*
   -- if ~$exists_(b_pri*)
   -- (if b_lpm = $is_lpm_key(tableKeyIR))*
@@ -178,6 +178,7 @@ dec $set_priorities_of_tableEntryListIR(
     tableEntryState*,
     tableEntryListIR)
   : tableEntryListIR
+  hint(prose_in %2 "with priorities set based on table context" %0 "and entry states" %1)
 dec $set_priorities_of_tableEntryListIR'(
     tableContext,
     nat,
@@ -188,16 +189,16 @@ dec $set_priority_of_tableEntryIR(tableEntryIR, nat) : tableEntryIR
 def $set_priorities_of_tableEntryListIR(TBLC, TBLS*, tableEntryIR*)
   = tableEntryIR*
   ---- ;; check match mode
-  -- if TBLC.MODE = NOPRI
-  ---- ;; if no priority is explicitly provided
+  -- if TBLC.MODE = NONE 
+  ---- ;; priority should not be explicitly provided
   -- (if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR))*
 
 def $set_priorities_of_tableEntryListIR(TBLC, TBLS*, tableEntryIR*)
   = tableEntryIR_updated*
   ---- ;; check match mode
-  -- if TBLC.MODE = NOPRILPM n
+  -- if TBLC.MODE = LPM n
   -- (if LPM n_prefix = TBLS)*
-  ---- ;; if no priority is explicitly provided
+  ---- ;; priority should not be explicitly provided
   -- (if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR))*
   -- (if tableEntryIR_updated
       = $set_priority_of_tableEntryIR(tableEntryIR, n_prefix))*
