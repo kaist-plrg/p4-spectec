@@ -237,6 +237,7 @@ atom_escape :
   | TICK_PLUS { Atom.Plus }
   | TICK_PLUS2 { Atom.Plus2 }
   | TICK_PLUS_EQ { Atom.PlusEq }
+  | TICK_PLUS_COLON { Atom.PlusColon }
   | TICK_MINUS { Atom.Minus }
   | TICK_MINUS_EQ { Atom.MinusEq }
   | TICK_STAR { Atom.Star }
