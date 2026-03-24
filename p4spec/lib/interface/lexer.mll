@@ -310,6 +310,8 @@ rule tokenize = parse
       { debug_token "!="; NE (info lexbuf) }
   | "=="
       { debug_token "=="; EQ (info lexbuf) }
+  | "+:"
+      { debug_token "+:"; PLUSCOLON (info lexbuf) }
   | "+"
       { debug_token "+"; PLUS (info lexbuf) }
   | "-"
@@ -368,8 +370,6 @@ rule tokenize = parse
       { debug_token "@"; AT (info lexbuf) }
   | "++"
       { debug_token "++"; PLUSPLUS (info lexbuf) }
-  | "+:"
-      { debug_token "+:"; PLUSCOLON (info lexbuf) }
   | "&&&"
       { debug_token "&&&"; MASK (info lexbuf) }
   | "..."

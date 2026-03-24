@@ -564,17 +564,17 @@ namedExpressionList:
     { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpression" }
 ;
 
-%inline sliceWidthAccessExpression:
+%inline sliceOffsetAccessExpression:
   | a = expression L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
-    { [ NT a; Term "["; NT l; Term "+:"; NT w; Term "]" ] #@ "sliceWidthAccessExpression" }
+    { [ NT a; Term "["; NT l; Term "+:"; NT w; Term "]" ] #@ "sliceOffsetAccessExpression" }
 ;
 
 %inline accessExpression:
-	| e = errorAccessExpression
-	| e = memberAccessExpression
-	| e = indexAccessExpression
+  | e = errorAccessExpression
+  | e = memberAccessExpression
+  | e = indexAccessExpression
   | e = sliceRangeAccessExpression
-  | e = sliceWidthAccessExpression
+  | e = sliceOffsetAccessExpression
     { e }
 ;
 
@@ -593,9 +593,9 @@ namedExpressionList:
     { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpressionNonBrace" }
 ;
 
-%inline sliceWidthAccessExpressionNonBrace:
+%inline sliceOffsetAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression PLUSCOLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term "+:"; NT l; Term "]" ] #@ "sliceWidthAccessExpressionNonBrace" }
+    { [ NT a; Term "["; NT h; Term "+:"; NT l; Term "]" ] #@ "sliceOffsetAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
@@ -603,7 +603,7 @@ namedExpressionList:
   | e = memberAccessExpressionNonBrace
   | e = indexAccessExpressionNonBrace
   | e = sliceRangeAccessExpressionNonBrace
-  | e = sliceWidthAccessExpressionNonBrace
+  | e = sliceOffsetAccessExpressionNonBrace
     { e }
 ;
 
@@ -829,6 +829,8 @@ lvalue:
 		{ [ NT lv; Term "["; NT i; Term "]" ] #@ "lvalue" }
 	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
 		{ [ NT lv; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "lvalue" }
+	| lv = lvalue L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
+		{ [ NT lv; Term "["; NT l; Term "+:"; NT w; Term "]" ] #@ "lvalue" }
 	| L_PAREN lv = lvalue R_PAREN
 		{ [ Term "("; NT lv; Term ")" ] #@ "lvalue" }
 ;
