@@ -3210,6 +3210,25 @@ def $unroll_aliasType(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
+def $width_of_integerTypeIR(integerTypeIR) : nat? =
+
+  clause 0 : (integerTypeIR) = ?()
+  -- if integerTypeIR <: intTypeIR
+  -- let intTypeIR = integerTypeIR as intTypeIR
+  -- if (intTypeIR = int)
+
+  clause 1 : (integerTypeIR) = ?(n)
+  -- if integerTypeIR <: fixedIntTypeIR
+  -- let int< n > = integerTypeIR as fixedIntTypeIR
+
+  clause 2 : (integerTypeIR) = ?(n)
+  -- if integerTypeIR <: fixedBitTypeIR
+  -- let bit< n > = integerTypeIR as fixedBitTypeIR
+
+  clause 3 : (integerTypeIR) = ?(n)
+  -- if integerTypeIR <: varBitTypeIR
+  -- let varbit< n > = integerTypeIR as varBitTypeIR
+
 tbl def $is_defaultable_typeIR(typeIR) : bool =
   row 0 :
     (signature) bool as typeIR
@@ -7472,6 +7491,11 @@ syntax tableEntryPriorityOptIR = tableEntryPriorityIR?
 syntax tableEntryIR = 
    | constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
 
+def $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR) : tableEntryPriorityOptIR =
+
+  clause 0 : (tableEntryIR) = tableEntryPriorityOptIR
+  -- let _constOptIR tableEntryPriorityOptIR _keysetExpressionIR : _tableActionReferenceIR _annotationList ; = tableEntryIR
+
 syntax tableEntryListIR = tableEntryIR*
 
 syntax tableKeysPropertyIR = 
@@ -8554,15 +8578,14 @@ syntax matchKey =
 syntax matchAction = 
    | prefixedNameIR ( parameterIR* @ argumentListIR )
 
-syntax matchPriority = {values nat*, init bool, delta nat, largest_wins bool}
+syntax matchPriority = {delta nat, largest_wins bool}
 
 syntax matchEntries = {size nat, const bool}
 
 syntax matchMode = 
-   | nopri
-   | noprilpm nat
+   | none
+   | lpm nat
    | pri
-   | prilpm
 
 syntax tableContext = {keys matchKey*, actions matchAction*, priorities matchPriority, entries matchEntries, mode matchMode}
 
@@ -8572,8 +8595,8 @@ syntax tableEntryState =
 
 def $empty_tableContext : tableContext =
 
-  clause 0 :  = {keys [], actions [], priorities matchPriority, entries matchEntries, mode nopri}
-  -- let matchPriority = {values [], init false, delta 1, largest_wins true}
+  clause 0 :  = {keys [], actions [], priorities matchPriority, entries matchEntries, mode none}
+  -- let matchPriority = {delta 1, largest_wins true}
   -- let matchEntries = {size 0, const true}
 
 def $add_key_tbl(tableContext, id, typeIR) : tableContext =
@@ -8586,76 +8609,62 @@ def $add_action_tbl(tableContext, prefixedNameIR, parameterIR*, argumentListIR) 
   clause 0 : (TBLC, prefixedNameIR, parameterIR*{parameterIR <- parameterIR*}, argumentListIR) = TBLC[actions = TBLC.actions ++ [matchAction]]
   -- let matchAction = prefixedNameIR ( parameterIR*{parameterIR <- parameterIR*} @ argumentListIR )
 
-def $add_table_priority(tableContext, nat) : tableContext =
+def $is_lpm_key(tableKeyIR) : bool =
 
-  clause 0 : (TBLC, n) = TBLC[priorities.values = TBLC.priorities.values ++ [n]]
+  clause 0 : (_typedExpressionIR # _nameIR : nameIR _annotationList ;) = $is_lpm_key'(nameIR)
 
-def $update_mode_tbl(tableContext, id, typeIR) : tableContext =
+def $is_lpm_key'(nameIR) : bool =
 
-  clause 0 : (TBLC, text, typeIR) = TBLC[mode = noprilpm n]
+  clause 0 : (text) = true
   -- if (text = "lpm")
-  -- if typeIR <: fixedIntTypeIR
-  -- let int< n > = typeIR as fixedIntTypeIR
-  -- if (TBLC.mode = nopri)
 
-  clause 1 : (TBLC, text, typeIR) = TBLC[mode = noprilpm n]
-  -- if (text = "lpm")
-  -- if typeIR <: fixedBitTypeIR
-  -- let bit< n > = typeIR as fixedBitTypeIR
-  -- if (TBLC.mode = nopri)
+  clause -1 : (nameIR) = false
 
-  clause 2 : (TBLC, text, typeIR) = TBLC[mode = noprilpm n]
-  -- if (text = "lpm")
-  -- if typeIR <: varBitTypeIR
-  -- let varbit< n > = typeIR as varBitTypeIR
-  -- if (TBLC.mode = nopri)
+def $requires_priority(tableKeyIR) : bool =
 
-  clause 3 : (TBLC, text, typeIR') = $update_mode_tbl(TBLC, "lpm", typeIR)
-  -- if (text = "lpm")
-  -- if typeIR' <: typedefTypeIR
-  -- let typedef _typeId typeIR = typeIR' as typedefTypeIR
+  clause 0 : (_typedExpressionIR # _nameIR : nameIR _annotationList ;) = $requires_priority'(nameIR)
 
-  clause 4 : (TBLC, text, typeIR') = $update_mode_tbl(TBLC, "lpm", typeIR)
-  -- if (text = "lpm")
-  -- if typeIR' <: newTypeIR
-  -- let type _typeId typeIR = typeIR' as newTypeIR
+def $requires_priority'(nameIR) : bool =
 
-  clause 5 : (TBLC, text, typeIR) = TBLC[mode = prilpm]
-  -- if (text = "lpm")
-  -- if ~typeIR <: aliasTypeIR
-  -- if (TBLC.mode = pri)
-
-  clause 6 : (TBLC, text, _typeIR) = TBLC[mode = pri]
+  clause 0 : (text) = true
   -- if (text = "range")
-  -- if (TBLC.mode = nopri)
 
-  clause 7 : (TBLC, text, _typeIR) = TBLC[mode = pri]
+  clause 1 : (text) = true
   -- if (text = "ternary")
-  -- if (TBLC.mode = nopri)
 
-  clause 8 : (TBLC, text, _typeIR) = TBLC[mode = pri]
+  clause 2 : (text) = true
   -- if (text = "optional")
-  -- if (TBLC.mode = nopri)
 
-  clause 9 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
-  -- if (text = "range")
-  -- let matchMode = TBLC.mode
-  -- if matchMode matches `NOPRILPM%`
-  -- let noprilpm _nat = matchMode
+  clause -1 : (nameIR) = false
 
-  clause 10 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
-  -- if (text = "ternary")
-  -- let matchMode = TBLC.mode
-  -- if matchMode matches `NOPRILPM%`
-  -- let noprilpm _nat = matchMode
+def $update_mode_tbl(tableContext, tableKeyIR*) : tableContext =
 
-  clause 11 : (TBLC, text, _typeIR) = TBLC[mode = prilpm]
-  -- if (text = "optional")
-  -- let matchMode = TBLC.mode
-  -- if matchMode matches `NOPRILPM%`
-  -- let noprilpm _nat = matchMode
+  clause 0 : (TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*}) = TBLC[mode = pri]
+  -- (let b_pri = $requires_priority(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_pri -> b_pri*}
+  -- if $exists_(b_pri*{b_pri <- b_pri*})
 
-  clause -1 : (TBLC, _id, _typeIR) = TBLC
+  clause 1 : (TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*}) = TBLC[mode = lpm n]
+  -- (let b_pri = $requires_priority(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_pri -> b_pri*}
+  -- if ~$exists_(b_pri*{b_pri <- b_pri*})
+  -- (let b_lpm = $is_lpm_key(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_lpm -> b_lpm*}
+  -- let tableKeyIR'*{tableKeyIR' <- tableKeyIR'*} = $filter_<tableKeyIR>(tableKeyIR*{tableKeyIR <- tableKeyIR*}, b_lpm*{b_lpm <- b_lpm*})
+  -- if tableKeyIR'*{tableKeyIR' <- tableKeyIR'*} matches [ _/1 ]
+  -- let [tableKeyIR_lpm] = tableKeyIR'*{tableKeyIR' <- tableKeyIR'*}
+  -- let typedExpressionIR # _nameIR : text _annotationList ; = tableKeyIR_lpm
+  -- if (text = "lpm")
+  -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+  -- let typeIR' = $unroll_aliasType(typeIR)
+  -- if typeIR' <: integerTypeIR
+  -- let integerTypeIR = typeIR' as integerTypeIR
+  -- let nat?{nat <- nat?} = $width_of_integerTypeIR(integerTypeIR)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n) = nat?{nat <- nat?}
+
+  clause 2 : (TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*}) = TBLC[mode = none]
+  -- (let b_pri = $requires_priority(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_pri -> b_pri*}
+  -- if ~$exists_(b_pri*{b_pri <- b_pri*})
+  -- (let b_lpm = $is_lpm_key(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_lpm -> b_lpm*}
+  -- if ~$exists_(b_lpm*{b_lpm <- b_lpm*})
 
 def $find_action(tableContext, prefixedNameIR) : (parameterIR*, argumentListIR)? =
 
@@ -8678,13 +8687,90 @@ def $find_action'(matchAction*, prefixedNameIR) : (parameterIR*, argumentListIR)
   -- let prefixedNameIR_h ( _parameterIR*{_parameterIR <- _parameterIR*} @ _argumentListIR ) = matchAction_h
   -- if (prefixedNameIR_h =/= prefixedNameIR)
 
-def $find_table_priority_last(tableContext) : nat =
+def $set_priorities_of_tableEntryListIR(tableContext, tableEntryState*, tableEntryListIR) : tableEntryListIR =
 
-  clause 0 : (TBLC) = n*{n <- n*}[n_last]
-  -- let n*{n <- n*} = TBLC.priorities.values
-  -- let int = (|n*{n <- n*}| - 1)
+  clause 0 : (TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR*{tableEntryIR <- tableEntryIR*}
+  -- if (TBLC.mode = none)
+  -- (if (?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR)))*{tableEntryIR <- tableEntryIR*}
+
+  clause 1 : (TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR_updated*{tableEntryIR_updated <- tableEntryIR_updated*}
+  -- let matchMode = TBLC.mode
+  -- if matchMode matches `LPM%`
+  -- let lpm n = matchMode
+  -- (let tableEntryState = TBLS)*{TBLS <- TBLS*, tableEntryState -> tableEntryState*}
+  -- (if tableEntryState matches `LPM%`)*{tableEntryState <- tableEntryState*}
+  -- (let lpm n_prefix = tableEntryState)*{tableEntryState <- tableEntryState*, n_prefix -> n_prefix*}
+  -- (if (?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR)))*{tableEntryIR <- tableEntryIR*}
+  -- (let tableEntryIR_updated = $set_priority_of_tableEntryIR(tableEntryIR, n_prefix))*{n_prefix <- n_prefix*, tableEntryIR <- tableEntryIR*, tableEntryIR_updated -> tableEntryIR_updated*}
+
+  clause 2 : (TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = []
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches []
+  -- if (TBLC.mode = pri)
+
+  clause 3 : (TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR_h_updated :: tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*}
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches _ :: _
+  -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
+  -- if (TBLC.mode = pri)
+  -- if (?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h))
+  -- (if (?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_t)))*{tableEntryIR_t <- tableEntryIR_t*}
+  -- let b_lw = TBLC.priorities.largest_wins
+  -- let n_size = TBLC.entries.size
+  -- let n_delta = TBLC.priorities.delta
+  -- let int = $ite<int>(b_lw, (((n_size - 1) * n_delta as int) + 1 as int), 1 as int)
   -- if int <: nat
-  -- let n_last = int as nat
+  -- let n = int as nat
+  -- let tableEntryIR_h_updated = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- let tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*} = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*})
+
+  clause 4 : (TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR_h_updated :: tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*}
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches _ :: _
+  -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
+  -- if (TBLC.mode = pri)
+  -- if ~TBLC.entries.const
+  -- let tableEntryPriorityOptIR = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  -- if tableEntryPriorityOptIR matches (_)
+  -- let ?(priority= integerLiteral :) = tableEntryPriorityOptIR
+  -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n) = nat?{nat <- nat?}
+  -- let tableEntryIR_h_updated = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- let tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*} = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*})
+
+def $set_priorities_of_tableEntryListIR'(tableContext, nat, tableEntryIR*) : tableEntryIR* =
+
+  clause 0 : (TBLC, n_last, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = []
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches []
+
+  clause 1 : (TBLC, n_last, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR_h_updated :: tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*}
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches _ :: _
+  -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
+  -- if (?() = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h))
+  -- let b_lw = TBLC.priorities.largest_wins
+  -- let n_delta = TBLC.priorities.delta
+  -- let int = $ite<int>(b_lw, (n_last - n_delta), (n_last + n_delta) as int)
+  -- if int <: nat
+  -- let n = int as nat
+  -- let tableEntryIR_h_updated = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- let tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*} = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*})
+
+  clause 2 : (TBLC, n_last, tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryIR_h_updated :: tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*}
+  -- if tableEntryIR*{tableEntryIR <- tableEntryIR*} matches _ :: _
+  -- let tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} = tableEntryIR*{tableEntryIR <- tableEntryIR*}
+  -- let tableEntryPriorityOptIR = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  -- if tableEntryPriorityOptIR matches (_)
+  -- let ?(priority= integerLiteral :) = tableEntryPriorityOptIR
+  -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n) = nat?{nat <- nat?}
+  -- let tableEntryIR_h_updated = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- let tableEntryIR_t_updated*{tableEntryIR_t_updated <- tableEntryIR_t_updated*} = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*})
+
+def $set_priority_of_tableEntryIR(tableEntryIR, nat) : tableEntryIR =
+
+  clause 0 : (tableEntryIR, n) = tableEntryIR_updated
+  -- let constOptIR _tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ; = tableEntryIR
+  -- let tableEntryPriorityIR = priority= d n as int :
+  -- let tableEntryIR_updated = constOptIR ?(tableEntryPriorityIR) keysetExpressionIR : tableActionReferenceIR annotationList ;
 
 def $join_tableEntryState(tableEntryState, tableEntryState) : tableEntryState =
 
@@ -14497,10 +14583,9 @@ relation TableKey_ok: typingContext tableContext |- tableKey : tableContext tabl
     -- let nameIR_matchkind = $name(name_matchkind)
     -- if (match_kind. nameIR_matchkind as value = $find_var_value_t(` nameIR_matchkind, local, TC))
     -- if $compat_table_key(nameIR_matchkind, typeIR)
-    -- let TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
-    -- let TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+    -- let TBLC_1 = $add_key_tbl(TBLC_0, nameIR_matchkind, typeIR)
     -- let tableKeyIR = typedExpressionIR # nameIR_key : nameIR_matchkind annotationList ;
-    -- output: % % |- % : TBLC_2 tableKeyIR
+    -- output: % % |- % : TBLC_1 tableKeyIR
 
 relation TableKeys_ok: typingContext tableContext |- tableKey* : tableContext tableKeyListIR
 
@@ -14772,28 +14857,28 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     rulepath simple-noprilpm
     -- if (keysetExpression = default as keysetExpression)
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- let TBLS = lpm n
     -- output: % % |- % : TBLS default as keysetExpressionIR
 
     rulepath simple-non-noprilpm
     -- if (keysetExpression = default as keysetExpression)
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- if ((TBLC.mode = none) \/ (TBLC.mode = pri))
     -- let TBLS = non_lpm
     -- output: % % |- % : TBLS default as keysetExpressionIR
 
     rulepath tuple-noprilpm
     -- if (keysetExpression = (default) as keysetExpression)
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- let TBLS = lpm n
     -- output: % % |- % : TBLS ( [default] ) as keysetExpressionIR
 
     rulepath tuple-non-noprilpm
     -- if (keysetExpression = (default) as keysetExpression)
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- if ((TBLC.mode = none) \/ (TBLC.mode = pri))
     -- let TBLS = non_lpm
     -- output: % % |- % : TBLS ( [default] ) as keysetExpressionIR
 
@@ -14809,28 +14894,28 @@ relation TableEntry_keyset_ok: typingContext tableContext |- keysetExpression : 
     rulepath simple-noprilpm
     -- if (keysetExpression = _ as keysetExpression)
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- let TBLS = lpm 0
     -- output: % % |- % : TBLS _ as keysetExpressionIR
 
     rulepath simple-non-noprilpm
     -- if (keysetExpression = _ as keysetExpression)
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- if ((TBLC.mode = none) \/ (TBLC.mode = pri))
     -- let TBLS = non_lpm
     -- output: % % |- % : TBLS _ as keysetExpressionIR
 
     rulepath tuple-noprilpm
     -- if (keysetExpression = (_) as keysetExpression)
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- let TBLS = lpm 0
     -- output: % % |- % : TBLS ( [_] ) as keysetExpressionIR
 
     rulepath tuple-non-noprilpm
     -- if (keysetExpression = (_) as keysetExpression)
-    -- if (((TBLC.mode = nopri) \/ (TBLC.mode = pri)) \/ (TBLC.mode = prilpm))
+    -- if ((TBLC.mode = none) \/ (TBLC.mode = pri))
     -- let TBLS = non_lpm
     -- output: % % |- % : TBLS ( [_] ) as keysetExpressionIR
 
@@ -14888,111 +14973,34 @@ relation TableEntry_action_ok: typingContext tableContext |- tableActionReferenc
     -- (if (argumentIR_action_data = argumentIR_cast_data))*{argumentIR_action_data <- argumentIR_action_data*, argumentIR_cast_data <- argumentIR_cast_data*}
     -- output: % % |- % : prefixedNameIR ?() ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- tableEntryPriority? : tableContext tableEntryPriorityOptIR
-
-  rulegroup none
-
-   match
-
-    (signature) TC tableContext TBLS |- ?() : % %
-    TC tableContext TBLS |- tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} : % %
-    -- if tableEntryPriority?{tableEntryPriority <- tableEntryPriority?} matches ()
-
-   paths
-
-    rulepath nopri
-    -- let TBLC = tableContext
-    -- if (TBLC.mode = nopri)
-    -- output: % % % |- % : TBLC ?()
-
-    rulepath noprilpm
-    -- let TBLC = tableContext
-    -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
-    -- let tableEntryState = TBLS
-    -- if tableEntryState matches `LPM%`
-    -- let lpm n_prefix = tableEntryState
-    -- output: % % % |- % : TBLC ?(priority= d n_prefix as int :)
-
-    rulepath pri-prilpm-number-init
-    -- let TBLC_0 = tableContext
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if (TBLC_0.priorities.values = [])
-    -- let b_lw = TBLC_0.priorities.largest_wins
-    -- let n_size = TBLC_0.entries.size
-    -- let n_delta = TBLC_0.priorities.delta
-    -- let int = $ite<int>(b_lw, (((n_size - 1) * n_delta as int) + 1 as int), 1 as int)
-    -- if int <: nat
-    -- let n = int as nat
-    -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
-
-    rulepath pri-prilpm-number-non-init
-    -- let TBLC_0 = tableContext
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if (TBLC_0.priorities.values =/= [])
-    -- let b_lw = TBLC_0.priorities.largest_wins
-    -- let n_last = $find_table_priority_last(TBLC_0)
-    -- let n_delta = TBLC_0.priorities.delta
-    -- let int = $ite<int>(b_lw, (n_last - n_delta), (n_last + n_delta) as int)
-    -- if int <: nat
-    -- let n = int as nat
-    -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
+relation TableEntry_priority_ok: typingContext |- tableEntryPriority : tableEntryPriorityIR
 
   rulegroup number
 
    match
 
-    (signature) TC TBLC_0 TBLS |- ?(priority= integerLiteral :) : % %
-    TC TBLC_0 TBLS |- tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?} : % %
-    -- if tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?} matches (_)
-    -- let ?(tableEntryPriority) = tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?}
+    (signature) TC |- priority= integerLiteral : : %
+    TC |- tableEntryPriority : %
     -- if tableEntryPriority matches `PRIORITY=%:`
     -- let priority= integerLiteral : = tableEntryPriority
 
    paths
 
-    rulepath pri-prilpm-number-init
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if ~TBLC_0.entries.const
-    -- if (TBLC_0.priorities.values = [])
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n) = nat?{nat <- nat?}
-    -- let TBLC_1 = TBLC_0[priorities.init = true]
-    -- let TBLC_2 = $add_table_priority(TBLC_1, n)
-    -- output: % % % |- % : TBLC_2 ?(priority= integerLiteral :)
-
-    rulepath pri-prilpm-number-non-init
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if ~TBLC_0.entries.const
-    -- if (TBLC_0.priorities.values =/= [])
-    -- if TBLC_0.priorities.init
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerLiteral as integerValue)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n) = nat?{nat <- nat?}
-    -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority= integerLiteral :)
+    rulepath number
+    -- output: % |- % : priority= integerLiteral :
 
   rulegroup expression
 
    match
 
-    (signature) TC TBLC_0 TBLS |- ?(priority=( expression ):) : % %
-    TC TBLC_0 TBLS |- tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?} : % %
-    -- if tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?} matches (_)
-    -- let ?(tableEntryPriority) = tableEntryPriority'?{tableEntryPriority' <- tableEntryPriority'?}
+    (signature) TC |- priority=( expression ): : %
+    TC |- tableEntryPriority : %
     -- if tableEntryPriority matches `PRIORITY=(%):`
     -- let priority=( expression ): = tableEntryPriority
 
    paths
 
-    rulepath pri-prilpm-expression-init
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if ~TBLC_0.entries.const
-    -- if (TBLC_0.priorities.values = [])
+    rulepath expression
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR))
     -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
@@ -15001,34 +15009,16 @@ relation TableEntry_priority_ok: typingContext tableContext tableEntryState |- t
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n) = nat?{nat <- nat?}
-    -- let TBLC_1 = TBLC_0[priorities.init = true]
-    -- let TBLC_2 = $add_table_priority(TBLC_1, n)
-    -- output: % % % |- % : TBLC_2 ?(priority= d n as int :)
+    -- output: % |- % : priority= d n as int :
 
-    rulepath pri-prilpm-expression-non-init
-    -- if ((TBLC_0.mode = pri) \/ (TBLC_0.mode = prilpm))
-    -- if ~TBLC_0.entries.const
-    -- if (TBLC_0.priorities.values =/= [])
-    -- if TBLC_0.priorities.init
-    -- Expr_ok: local TC |- expression : typedExpressionIR
-    -- if (lctk = $ctk_of_typedExpressionIR(typedExpressionIR))
-    -- Expr_eval_lctk: local TC |- typedExpressionIR ~> value
-    -- if value <: integerValue
-    -- let integerValue = value as integerValue
-    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue)
-    -- if nat?{nat <- nat?} matches (_)
-    -- let ?(n) = nat?{nat <- nat?}
-    -- let TBLC_1 = $add_table_priority(TBLC_0, n)
-    -- output: % % % |- % : TBLC_1 ?(priority= d n as int :)
-
-relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext tableEntryIR
+relation TableEntry_ok: typingContext tableContext |- tableEntry : tableEntryState tableEntryIR
 
   rulegroup 
 
    match
 
-    (signature) TC TBLC_0 |- tableEntry : % %
-    TC TBLC_0 |- tableEntry : % %
+    (signature) TC TBLC |- tableEntry : % %
+    TC TBLC |- tableEntry : % %
 
    paths
 
@@ -15036,48 +15026,23 @@ relation TableEntry_ok: typingContext tableContext |- tableEntry : tableContext 
     -- let tableEntry' = tableEntry
     -- if tableEntry' matches `%%%:%%;`
     -- let constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ; = tableEntry'
-    -- TableEntry_keyset_ok: TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
-    -- TableEntry_action_ok: TC TBLC_0 |- tableActionReference : tableActionReferenceIR
-    -- TableEntry_priority_ok: TC TBLC_0 TBLS |- ?(tableEntryPriority) : TBLC_1 tableEntryPriorityOptIR
+    -- TableEntry_keyset_ok: TC TBLC |- keysetExpression : TBLS keysetExpressionIR
+    -- TableEntry_action_ok: TC TBLC |- tableActionReference : tableActionReferenceIR
+    -- TableEntry_priority_ok: TC |- tableEntryPriority : tableEntryPriorityIR
     -- let constOptIR = $flatten_constOpt(constOpt)
-    -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
-    -- output: % % |- % : TBLC_1 tableEntryIR
+    -- let tableEntryIR = constOptIR ?(tableEntryPriorityIR) keysetExpressionIR : tableActionReferenceIR annotationList ;
+    -- output: % % |- % : TBLS tableEntryIR
 
     rulepath non-priority
     -- let tableEntry' = tableEntry
     -- if tableEntry' matches `%%:%%;`
     -- let constOpt keysetExpression : tableActionReference annotationList ; = tableEntry'
-    -- TableEntry_keyset_ok: TC TBLC_0 |- keysetExpression : TBLS keysetExpressionIR
-    -- TableEntry_action_ok: TC TBLC_0 |- tableActionReference : tableActionReferenceIR
-    -- TableEntry_priority_ok: TC TBLC_0 TBLS |- ?() : TBLC_1 tableEntryPriorityOptIR
+    -- TableEntry_keyset_ok: TC TBLC |- keysetExpression : TBLS keysetExpressionIR
+    -- TableEntry_action_ok: TC TBLC |- tableActionReference : tableActionReferenceIR
     -- let constOptIR = $flatten_constOpt(constOpt)
+    -- let tableEntryPriorityOptIR = ?()
     -- let tableEntryIR = constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;
-    -- output: % % |- % : TBLC_1 tableEntryIR
-
-relation TableEntries_ok: typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
-
-  rulegroup 
-
-   match
-
-    (signature) TC tableContext |- tableEntry*{tableEntry <- tableEntry*} : % %
-    TC tableContext |- tableEntry*{tableEntry <- tableEntry*} : % %
-
-   paths
-
-    rulepath nil
-    -- let TBLC = tableContext
-    -- if (tableEntry*{tableEntry <- tableEntry*} = [])
-    -- output: % % |- % : TBLC []
-
-    rulepath cons
-    -- let TBLC_0 = tableContext
-    -- let tableEntry'*{tableEntry' <- tableEntry'*} = tableEntry*{tableEntry <- tableEntry*}
-    -- if tableEntry'*{tableEntry' <- tableEntry'*} matches _ :: _
-    -- let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} = tableEntry'*{tableEntry' <- tableEntry'*}
-    -- TableEntry_ok: TC TBLC_0 |- tableEntry_h : TBLC_1 tableEntryIR_h
-    -- TableEntries_ok: TC TBLC_1 |- tableEntry_t*{tableEntry_t <- tableEntry_t*} : TBLC_2 tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
-    -- output: % % |- % : TBLC_2 tableEntryIR_h :: tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*}
+    -- output: % % |- % : TBLS tableEntryIR
 
 relation TableProperty_ok: typingContext tableContext |- tableProperty : tableContext tablePropertyIR
 
@@ -15095,7 +15060,8 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     rulepath key
     -- let tableKey*{tableKey <- tableKey*} = $flatten_tableKeyList(tableKeyList)
     -- TableKeys_ok: TC TBLC_0 |- tableKey*{tableKey <- tableKey*} : TBLC_1 tableKeyIR*{tableKeyIR <- tableKeyIR*}
-    -- output: % % |- % : TBLC_1 key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} } as tablePropertyIR
+    -- let TBLC_2 = $update_mode_tbl(TBLC_1, tableKeyIR*{tableKeyIR <- tableKeyIR*})
+    -- output: % % |- % : TBLC_2 key={ tableKeyIR*{tableKeyIR <- tableKeyIR*} } as tablePropertyIR
 
   rulegroup actions
 
@@ -15130,8 +15096,9 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let TBLC_1 = TBLC_0[entries.size = |tableEntry*{tableEntry <- tableEntry*}|]
     -- let constOptIR = $flatten_constOpt(constOpt)
     -- let TBLC_2 = TBLC_1[entries.const = (constOptIR = ?(const))]
-    -- TableEntries_ok: TC TBLC_2 |- tableEntry*{tableEntry <- tableEntry*} : TBLC_3 tableEntryIR*{tableEntryIR <- tableEntryIR*}
-    -- output: % % |- % : TBLC_3 annotationList constOptIR entries={ tableEntryIR*{tableEntryIR <- tableEntryIR*} } as tablePropertyIR
+    -- (TableEntry_ok: TC TBLC_2 |- tableEntry : TBLS tableEntryIR)*{tableEntry <- tableEntry*, TBLS -> TBLS*, tableEntryIR -> tableEntryIR*}
+    -- let tableEntryIR_pri*{tableEntryIR_pri <- tableEntryIR_pri*} = $set_priorities_of_tableEntryListIR(TBLC_2, TBLS*{TBLS <- TBLS*}, tableEntryIR*{tableEntryIR <- tableEntryIR*})
+    -- output: % % |- % : TBLC_2 annotationList constOptIR entries={ tableEntryIR_pri*{tableEntryIR_pri <- tableEntryIR_pri*} } as tablePropertyIR
 
   rulegroup default-action
 
@@ -18908,8 +18875,8 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     rulepath lpm
     -- if (text = "lpm")
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- Expr_ok: local TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
@@ -18962,8 +18929,8 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     rulepath lpm
     -- if (text = "lpm")
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- Expr_ok: local TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: local TC |- expression_r : typedExpressionIR_r
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_key)
@@ -19040,8 +19007,8 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     rulepath lpm
     -- if (text = "lpm")
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm n = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm n = matchMode
     -- output: % % |- % @ % : lpm n default
 
     rulepath non-lpm
@@ -19063,8 +19030,8 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey @ s
     rulepath lpm
     -- if (text = "lpm")
     -- let matchMode = TBLC.mode
-    -- if matchMode matches `NOPRILPM%`
-    -- let noprilpm _nat = matchMode
+    -- if matchMode matches `LPM%`
+    -- let lpm _nat = matchMode
     -- output: % % |- % @ % : lpm 0 _
 
     rulepath non-lpm

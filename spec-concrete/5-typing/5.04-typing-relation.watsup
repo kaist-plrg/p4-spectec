@@ -372,24 +372,16 @@ relation TableEntry_action_ok:
   hint(prose_out %3)
 
 relation TableEntry_priority_ok:
-  typingContext tableContext tableEntryState |- tableEntryPriority?
-                                              : tableContext tableEntryPriorityOptIR
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "typing" %3#", under context" %0 "and table context" %1
-             #", and table entry state" %2)
-  hint(prose_out "table context" %4 "and" %5)
+  typingContext |- tableEntryPriority : tableEntryPriorityIR
+  hint(input %0 %1)
+  hint(prose_in "typing" %1#", under context" %0)
+  hint(prose_out %2)
 
 relation TableEntry_ok:
-  typingContext tableContext |- tableEntry : tableContext tableEntryIR
+  typingContext tableContext |- tableEntry : tableEntryState tableEntryIR
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "table context" %3 "and" %4)
-
-relation TableEntries_ok:
-  typingContext tableContext |- tableEntry* : tableContext tableEntryListIR
-  hint(input %0 %1 %2)
-  hint(prose_in "typing" %2#", under context" %0 "and table context" %1)
-  hint(prose_out "table context" %3 "and" %4)
+  hint(prose_out "table entry state" %3 "and" %4)
 
 relation TableProperty_ok:
   typingContext tableContext |- tableProperty : tableContext tablePropertyIR

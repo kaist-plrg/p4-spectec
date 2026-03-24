@@ -7,9 +7,7 @@ syntax matchKey = typeIR `: nameIR
 syntax matchAction = prefixedNameIR `( parameterIR* `@ argumentListIR )
 
 syntax matchPriority =
-  { VALUES nat*,
-    INIT bool,
-    DELTA nat,
+  { DELTA nat,
     LARGEST_WINS bool }
 
 syntax matchEntries =
@@ -18,13 +16,11 @@ syntax matchEntries =
 
 syntax matchMode =
   ;; does not require explicit priority and is not lpm
-  | NOPRI
-  ;; does not require explicit priority and is lpm, holding the max prefix
-  | NOPRILPM nat
-  ;; requires explicit priority and is not lpm
+  | NONE
+  ;; is lpm, holding the max prefix
+  | LPM nat
+  ;; requires explicit priority
   | PRI
-  ;; requires explicit priority and is lpm
-  | PRILPM
 
 syntax tableContext =
   { KEYS matchKey*,
@@ -57,11 +53,9 @@ def $empty_tableContext
         ACTIONS eps,
         PRIORITIES matchPriority,
         ENTRIES matchEntries,
-        MODE NOPRI }
+        MODE NONE }
   -- if matchPriority
-      = { VALUES eps,
-          INIT false,
-          DELTA 1,
+      = { DELTA 1,
           LARGEST_WINS true }
   -- if matchEntries
       = { SIZE 0,
@@ -90,12 +84,36 @@ def $add_action_tbl(TBLC, prefixedNameIR, parameterIR*, argumentListIR)
   = TBLC[ .ACTIONS = TBLC.ACTIONS ++ [ matchAction ] ]
   -- if matchAction = prefixedNameIR `( parameterIR* `@ argumentListIR )
 
-;;; Adder for table entry priorities
+;;
+;; Checkers
 
-dec $add_table_priority(tableContext, nat) : tableContext
+;;; Checker for lpm keys
 
-def $add_table_priority(TBLC, n)
-  = TBLC[ .PRIORITIES.VALUES = TBLC.PRIORITIES.VALUES ++ [ n ] ]
+dec $is_lpm_key(tableKeyIR) : bool
+  hint(prose_true "match kind of table key" %0 "is lpm")
+  hint(prose_false "match kind of table key" %0 "is not lpm")
+dec $is_lpm_key'(nameIR) : bool
+
+def $is_lpm_key(_ `# _ `: nameIR _ `;) = $is_lpm_key'(nameIR)
+
+def $is_lpm_key'("lpm") = true
+def $is_lpm_key'(nameIR) = false
+  -- otherwise
+
+;;; Checker for keys that require a priority
+
+dec $requires_priority(tableKeyIR) : bool
+  hint(prose_true "match kind of table key" %0 "requires a priority")
+  hint(prose_false "match kind of table key" %0 "does not require a priority")
+dec $requires_priority'(nameIR) : bool
+
+def $requires_priority(_ `# _ `: nameIR _ `;) = $requires_priority'(nameIR)
+
+def $requires_priority'("range") = true
+def $requires_priority'("ternary") = true
+def $requires_priority'("optional") = true
+def $requires_priority'(nameIR) = false
+  -- otherwise
 
 ;;
 ;; Updaters
@@ -103,51 +121,31 @@ def $add_table_priority(TBLC, n)
 
 ;;; Updater for modes
 
-dec $update_mode_tbl(tableContext, id, typeIR) : tableContext
-  hint(prose_in %0 "with match mode updated based on key" %1 "of type" %2)
+dec $update_mode_tbl(tableContext, tableKeyIR*) : tableContext
+  hint(prose_in %0 "with match mode updated based on keys" %1)
 
-def $update_mode_tbl(TBLC, "lpm", INT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "lpm", BIT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "lpm", VARBIT `< n >)
-  = TBLC[ .MODE = NOPRILPM n ]
-  -- if TBLC.MODE = NOPRI
-
-def $update_mode_tbl(TBLC, "lpm", TYPEDEF _ typeIR)
-  = $update_mode_tbl(TBLC, "lpm", typeIR)
-def $update_mode_tbl(TBLC, "lpm", TYPE _ typeIR)
-  = $update_mode_tbl(TBLC, "lpm", typeIR)
-
-def $update_mode_tbl(TBLC, "lpm", typeIR)
-  = TBLC[ .MODE = PRILPM ]
-  -- if ~(typeIR <: aliasTypeIR)
-  -- if TBLC.MODE = PRI
-
-def $update_mode_tbl(TBLC, "range", _)
+def $update_mode_tbl(TBLC, tableKeyIR*)
   = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "ternary", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
-def $update_mode_tbl(TBLC, "optional", _)
-  = TBLC[ .MODE = PRI ]
-  -- if TBLC.MODE = NOPRI
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if $exists_(b_pri*)
 
-def $update_mode_tbl(TBLC, "range", _)
-  = TBLC[ .MODE = PRILPM ]
-  -- if TBLC.MODE = NOPRILPM _
-def $update_mode_tbl(TBLC, "ternary", _)
-  = TBLC[ .MODE = PRILPM ]
-  -- if TBLC.MODE = NOPRILPM _
-def $update_mode_tbl(TBLC, "optional", _)
-  = TBLC[ .MODE = PRILPM ]
-  -- if TBLC.MODE = NOPRILPM _
+def $update_mode_tbl(TBLC, tableKeyIR*)
+  = TBLC[ .MODE = LPM n ]
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if ~$exists_(b_pri*)
+  -- (if b_lpm = $is_lpm_key(tableKeyIR))*
+  -- if tableKeyIR_lpm = $filter_<tableKeyIR>(tableKeyIR*, b_lpm*)
+  -- if typedExpressionIR `# _ `: "lpm" _ `; = tableKeyIR_lpm
+  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
+  -- if integerTypeIR = $unroll_aliasType(typeIR)
+  -- if n = $width_of_integerTypeIR(integerTypeIR)
 
-def $update_mode_tbl(TBLC, _, _) = TBLC
-  -- otherwise
+def $update_mode_tbl(TBLC, tableKeyIR*)
+  = TBLC[ .MODE = NONE ]
+  -- (if b_pri = $requires_priority(tableKeyIR))*
+  -- if ~$exists_(b_pri*)
+  -- (if b_lpm = $is_lpm_key(tableKeyIR))*
+  -- if ~$exists_(b_lpm*)
 
 ;;
 ;; Finders
@@ -171,13 +169,118 @@ def $find_action'(matchAction_h :: matchAction_t*, prefixedNameIR)
   -- if prefixedNameIR_h `(  _ `@ _ ) = matchAction_h
   -- if prefixedNameIR_h =/= prefixedNameIR
 
-;;; Finder for last table priority
+;;
+;; Priority of entries
+;;
 
-dec $find_table_priority_last(tableContext) : nat
+dec $set_priorities_of_tableEntryListIR(
+    tableContext,
+    tableEntryState*,
+    tableEntryListIR)
+  : tableEntryListIR
+  hint(prose_in %2 "with priorities set based on table context" %0 "and entry states" %1)
+dec $set_priorities_of_tableEntryListIR'(
+    tableContext,
+    nat,
+    tableEntryIR*)
+  : tableEntryIR*
+dec $set_priority_of_tableEntryIR(tableEntryIR, nat) : tableEntryIR
 
-def $find_table_priority_last(TBLC) = n*[n_last]
-  -- if n* = TBLC.PRIORITIES.VALUES
-  -- if n_last = $(|n*| - 1)
+def $set_priorities_of_tableEntryListIR(TBLC, TBLS*, tableEntryIR*)
+  = tableEntryIR*
+  ---- ;; check match mode
+  -- if TBLC.MODE = NONE 
+  ---- ;; priority should not be explicitly provided
+  -- (if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR))*
+
+def $set_priorities_of_tableEntryListIR(TBLC, TBLS*, tableEntryIR*)
+  = tableEntryIR_updated*
+  ---- ;; check match mode
+  -- if TBLC.MODE = LPM n
+  -- (if LPM n_prefix = TBLS)*
+  ---- ;; priority should not be explicitly provided
+  -- (if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR))*
+  -- (if tableEntryIR_updated
+      = $set_priority_of_tableEntryIR(tableEntryIR, n_prefix))*
+
+def $set_priorities_of_tableEntryListIR(TBLC, TBLS*, eps) = eps
+  ---- ;; check match mode
+  -- if TBLC.MODE = PRI
+
+def $set_priorities_of_tableEntryListIR(
+    TBLC, TBLS*, tableEntryIR_h :: tableEntryIR_t*
+  )
+  = tableEntryIR_h_updated :: tableEntryIR_t_updated*
+  ---- ;; check match mode
+  -- if TBLC.MODE = PRI
+  ---- ;; if no priority is explicitly provided
+  -- if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  -- (if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_t))*
+  ---- ;; if largest wins
+  -- if b_lw = TBLC.PRIORITIES.LARGEST_WINS
+  ---- ;; infer and initialize the priority
+  -- if n_size = TBLC.ENTRIES.SIZE
+  -- if n_delta = TBLC.PRIORITIES.DELTA
+  -- if n = $ite<int>(b_lw, $((n_size - 1) * n_delta + 1), 1)
+  -- if tableEntryIR_h_updated
+      = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- if tableEntryIR_t_updated*
+      = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*)
+
+def $set_priorities_of_tableEntryListIR(
+    TBLC, TBLS*, tableEntryIR_h :: tableEntryIR_t*
+  ) = tableEntryIR_h_updated :: tableEntryIR_t_updated*
+  ---- ;; check match mode
+  -- if TBLC.MODE = PRI
+  -- if ~TBLC.ENTRIES.CONST
+  ---- ;; if at least one priority is explicitly provided
+  -- if PRIORITY `= integerLiteral `:
+      = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  ---- ;; evaluate and initialize the priority
+  -- if n = $nat_of_integerValue(integerLiteral)
+  -- if tableEntryIR_h_updated
+      = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- if tableEntryIR_t_updated*
+      = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*)
+
+def $set_priorities_of_tableEntryListIR'(TBLC, n_last, eps) = eps
+
+def $set_priorities_of_tableEntryListIR'(
+    TBLC, n_last, tableEntryIR_h :: tableEntryIR_t*
+  ) = tableEntryIR_h_updated :: tableEntryIR_t_updated*
+  ---- ;; if no priority is explicitly provided
+  -- if eps = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  ---- ;; if largest wins
+  -- if b_lw = TBLC.PRIORITIES.LARGEST_WINS
+  ---- ;; infer the priority
+  -- if n_delta = TBLC.PRIORITIES.DELTA
+  -- if n = $ite<int>(b_lw, $(n_last - n_delta), $(n_last + n_delta))
+  -- if tableEntryIR_h_updated
+      = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- if tableEntryIR_t_updated*
+      = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*)
+
+def $set_priorities_of_tableEntryListIR'(
+    TBLC, n_last, tableEntryIR_h :: tableEntryIR_t*
+  ) = tableEntryIR_h_updated :: tableEntryIR_t_updated*
+  ---- ;; if the priority is explicitly provided
+  -- if PRIORITY `= integerLiteral `:
+      = $tableEntryPriorityOptIR_of_tableEntryIR(tableEntryIR_h)
+  ---- ;; set the priority
+  -- if n = $nat_of_integerValue(integerLiteral)
+  -- if tableEntryIR_h_updated
+      = $set_priority_of_tableEntryIR(tableEntryIR_h, n)
+  -- if tableEntryIR_t_updated*
+      = $set_priorities_of_tableEntryListIR'(TBLC, n, tableEntryIR_t*)
+
+def $set_priority_of_tableEntryIR(tableEntryIR, n) = tableEntryIR_updated
+  -- if constOptIR _ keysetExpressionIR
+      `: tableActionReferenceIR annotationList `;
+      = tableEntryIR
+  -- if tableEntryPriorityIR = PRIORITY `= (D n) `:
+  -- if tableEntryIR_updated
+      = constOptIR tableEntryPriorityIR keysetExpressionIR
+      `: tableActionReferenceIR annotationList `;
 
 ;;
 ;; State management
