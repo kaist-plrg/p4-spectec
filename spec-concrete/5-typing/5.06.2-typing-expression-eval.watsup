@@ -274,6 +274,18 @@ rule Expr_eval_lctk/sliceRangeAccessExpressionIR:
   -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
   -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
 
+;;;;; sliceOffsetAccessExpressionIR
+;;;;; syntax sliceOffsetAccessExpressionIR =
+;;;;;   typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+
+rule Expr_eval_lctk/sliceOffsetAccessExpressionIR:
+  p TC |- (typedExpressionIR_base `[ typedExpressionIR_l `+: typedExpressionIR_w ])
+          `# _
+       ~> $bitacc_offset_op(value_base, value_l, value_w)
+  -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+  -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
+  -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
+
 ;;;; callExpressionIR
 ;;;; syntax callExpressionIR
 

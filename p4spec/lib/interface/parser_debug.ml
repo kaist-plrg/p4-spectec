@@ -107,6 +107,7 @@ let token_name token =
     | Parser.SEMICOLON _ -> "SEMICOLON"
     | Parser.AT _ -> "AT"
     | Parser.PLUSPLUS _ -> "PLUSPLUS"
+    | Parser.PLUSCOLON _ -> "PLUSCOLON"
     | Parser.DONTCARE _ -> "DONTCARE"
     | Parser.MASK _ -> "MASK"
     | Parser.DOTS _ -> "DOTS"

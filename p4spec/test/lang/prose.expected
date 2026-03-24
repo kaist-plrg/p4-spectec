@@ -391,6 +391,9 @@ xref:expressionNonBrace_as_expression[The expression corresponding to ``expressi
 . Else if let ``expressionNonBrace~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+`` be ``expressionNonBrace``:
  .. Let ``expression~base~`` be xref:expressionNonBrace_as_expression[the expression corresponding to ``expressionNonBrace~base~``].
  .. Return ``expression~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+. Else if let ``expressionNonBrace~base~`` ``+[+`` ``expression~l~`` ``++:+`` ``expression~w~`` ``+]+`` be ``expressionNonBrace``:
+ .. Let ``expression~base~`` be xref:expressionNonBrace_as_expression[the expression corresponding to ``expressionNonBrace~base~``].
+ .. Return ``expression~base~`` ``+[+`` ``expression~l~`` ``++:+`` ``expression~w~`` ``+]+``.
 . Else if let ``callExpressionNonBrace`` be ``expressionNonBrace``:
  .. If let ``callTargetNonBrace`` ``+(+`` ``argumentList`` ``+)+`` be ``callExpressionNonBrace``:
   ... If let ``expressionNonBrace'`` be ``callTargetNonBrace``:
@@ -466,6 +469,9 @@ xref:lvalue_as_expression[The expression corresponding to ``lvalue``]
 . Else if let ``lvalue~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+`` be ``lvalue``:
  .. Let ``expression~base~`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue~base~``].
  .. Return ``expression~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+. Else if let ``lvalue~base~`` ``+[+`` ``expression~hi~`` ``++:+`` ``expression~lo~`` ``+]+`` be ``lvalue``:
+ .. Let ``expression~base~`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue~base~``].
+ .. Return ``expression~base~`` ``+[+`` ``expression~hi~`` ``++:+`` ``expression~lo~`` ``+]+``.
 . Else:
  .. Let ``+(+`` ``lvalue'`` ``+)+`` be ``lvalue``.
  .. Let ``expression`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue'``].
@@ -487,6 +493,9 @@ xref:expression_as_lvalue[The l-value corresponding to ``expression``]
 . Else if let ``expression~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+`` be ``expression``:
  .. Let ``lvalue~base~`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression~base~``].
  .. Return ``lvalue~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+. Else if let ``expression~base~`` ``+[+`` ``expression~hi~`` ``++:+`` ``expression~lo~`` ``+]+`` be ``expression``:
+ .. Let ``lvalue~base~`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression~base~``].
+ .. Return ``lvalue~base~`` ``+[+`` ``expression~hi~`` ``++:+`` ``expression~lo~`` ``+]+``.
 . Else if let ``+(+`` ``expression'`` ``+)+`` be ``expression``:
  .. Let ``lvalue'`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression'``].
  .. Return ``+(+`` ``lvalue'`` ``+)+``.
@@ -3923,6 +3932,22 @@ xref:cast_set[``setValue`` casted to type ``typeIR``]
 . Let ``i`` be xref:bitacc[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~``].
 . Return ``w`` ``+W+`` ``i``.
 
+<<bitacc_offset_op,``value`` ``+[+`` ``value'`` ``+:+`` ``value''`` ``+]+``>>
+
+
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~b~`` be ``value``.
+. Check that ``value'`` has type ``integerValue``.
+. Let ``integerValue~l~`` be ``value'``.
+. Check that ``value''`` has type ``integerValue``.
+. Let ``integerValue~w~`` be ``value''``.
+. Let ``i~b~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~b~``].
+. Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].
+. Let ``w`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
+. Let ``i~h~`` be ``i~l~`` ``+`` ``w`` ``-`` ``1``.
+. Let ``i`` be xref:bitacc[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~``].
+. Return ``w`` ``+W+`` ``i``.
+
 <<bitacc_replace_op,``value`` ``+[+`` ``value'`` ``+:+`` ``value''`` ``+]+`` replaced with ``value'''``>>
 
 
@@ -3940,6 +3965,31 @@ xref:cast_set[``setValue`` casted to type ``typeIR``]
 . Let ``w`` ``+W+`` ``i~b~`` be ``integerLiteral``.
 . Let ``i~h~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~h~``].
 . Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].
+. Check that ``integerValue~r~`` has type ``integerLiteral``.
+. Let ``integerLiteral'`` be ``integerValue~r~``.
+. Check that ``integerLiteral'`` matches pattern ``%`` ``W`` ``%``.
+. Let ``++_++`` ``+W+`` ``i~r~`` be ``integerLiteral'``.
+. Let ``i`` be xref:bitacc_replace[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~`` replaced with ``i~r~``].
+. Return ``w`` ``+W+`` ``i``.
+
+<<bitacc_offset_replace_op,``value`` ``+[+`` ``value'`` ``+:+`` ``value''`` ``+]+`` replaced with ``value'''``>>
+
+
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~b~`` be ``value``.
+. Check that ``value'`` has type ``integerValue``.
+. Let ``integerValue~l~`` be ``value'``.
+. Check that ``value''`` has type ``integerValue``.
+. Let ``integerValue~w~`` be ``value''``.
+. Check that ``value'''`` has type ``integerValue``.
+. Let ``integerValue~r~`` be ``value'''``.
+. Check that ``integerValue~b~`` has type ``integerLiteral``.
+. Let ``integerLiteral`` be ``integerValue~b~``.
+. Check that ``integerLiteral`` matches pattern ``%`` ``W`` ``%``.
+. Let ``w`` ``+W+`` ``i~b~`` be ``integerLiteral``.
+. Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].
+. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
+. Let ``i~h~`` be ``i~l~`` ``+`` ``n~w~`` ``-`` ``1``.
 . Check that ``integerValue~r~`` has type ``integerLiteral``.
 . Let ``integerLiteral'`` be ``integerValue~r~``.
 . Check that ``integerLiteral'`` matches pattern ``%`` ``W`` ``%``.
@@ -4169,6 +4219,9 @@ xref:type_of_typedLvalueIR[The type of lvalue ``typedLvalueIR``]
 . Else if let ``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` be ``lvalueIR``:
  .. Let ``typedExpressionIR~base~`` be xref:option_get[*!*] xref:typedLvalueIR_as_typedExpressionIR[the expression form of ``typedLvalueIR~base~``].
  .. Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
+. Else if let ``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` be ``lvalueIR``:
+ .. Let ``typedExpressionIR~base~`` be xref:option_get[*!*] xref:typedLvalueIR_as_typedExpressionIR[the expression form of ``typedLvalueIR~base~``].
+ .. Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
 
 <<typedExpressionIR_as_typedLvalueIR,The l-value form of xref:typedExpressionIR[``expressionIR`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``++_++``]>>
 
@@ -4186,6 +4239,9 @@ xref:type_of_typedLvalueIR[The type of lvalue ``typedLvalueIR``]
 . Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` be ``expressionIR``:
  .. Let ``typedLvalueIR~base~`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
  .. Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` with note ``+(+`` ``typeIR`` ``+)+``>>.
+. Else if let ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` be ``expressionIR``:
+ .. Let ``typedLvalueIR~base~`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].
+ .. Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` with note ``+(+`` ``typeIR`` ``+)+``>>.
 . Else if let ``+(+`` ``typedExpressionIR`` ``+)+`` be ``expressionIR``:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Return xref:typedLvalueIR[``+(+`` ``typedLvalueIR'`` ``+)+`` with note ``+(+`` ``typeIR`` ``+)+``].
@@ -6270,6 +6326,16 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~lo~``, under context ``TC`` at ``p``].
 . Result in <<bitacc_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``>>.
 
+<<Expr_eval_lctk,Local compile-time evaluation of ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` annotated with ``expressionNoteIR``, under context ``TC`` at ``p``>>:
+
+. Let ``value~base~`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~base~``, under context ``TC`` at ``p``].
+. Let ``value~l~`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~l~``, under context ``TC`` at ``p``].
+. Let ``value~w~`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w~``, under context ``TC`` at ``p``].
+. Result in <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~l~`` ``+:+`` ``value~w~`` ``+]+``>>.
+
 xref:Expr_eval_lctk[Local compile-time evaluation of ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` annotated with ``expressionNoteIR``, under context ``TC`` at ``p``]:
 
 . If let ``prefixedNameIR`` be ``callableTargetIR``:
@@ -7715,8 +7781,8 @@ xref:Expr_ok[Typing ``expression~base~`` ``+.+`` ``member``, under context ``TC`
 . Let ``typedExpressionIR~base_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~base~`` until ``$compat_bitslice_base`` is satisfied].
 . Let ``typeIR~base_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base_reduced~``].
 . Let ``ctk~base_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base_reduced~``].
-. Let ``typedExpressionIR~hi_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~hi~`` until ``$compat_bitslice_index`` is satisfied].
-. Let ``typedExpressionIR~lo_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~lo~`` until ``$compat_bitslice_index`` is satisfied].
+. Let ``typedExpressionIR~hi_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~hi~`` until ``$compat_bitslice_range_index`` is satisfied].
+. Let ``typedExpressionIR~lo_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~lo~`` until ``$compat_bitslice_range_index`` is satisfied].
 . Let ``typeIR~hi_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~hi_reduced~``].
 . Let ``ctk~hi_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~hi_reduced~``].
 . Let ``typeIR~lo_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~lo_reduced~``].
@@ -7740,6 +7806,54 @@ xref:Expr_ok[Typing ``expression~base~`` ``+.+`` ``member``, under context ``TC`
 . Let ``typeIR`` be ``+BIT+`` ``+<+`` ``n~slice~`` ``+>+``.
 . Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
 . Result in <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi_reduced~`` ``+:+`` ``typedExpressionIR~lo_reduced~`` ``+]+`` annotated with ``expressionNoteIR``>>.
+
+<<Expr_ok,Typing ``expression~base~`` ``+[+`` ``expression~l~`` ``++:+`` ``expression~w~`` ``+]+``, under context ``TC`` at ``p``>>:
+
+. Let ``typedExpressionIR~base~`` be
+* the result of xref:Expr_ok[typing ``expression~base~``, under context ``TC`` at ``p``].
+. Let ``typedExpressionIR~l~`` be
+* the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
+. Let ``typedExpressionIR~w~`` be
+* the result of xref:Expr_ok[typing ``expression~w~``, under context ``TC`` at ``p``].
+. Let ``typedExpressionIR~base_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~base~`` until ``$compat_bitslice_base`` is satisfied].
+. Let ``typeIR~base_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base_reduced~``].
+. Let ``ctk~base_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base_reduced~``].
+. Let ``typedExpressionIR~l_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~l~`` until ``$compat_bitslice_offset_index`` is satisfied].
+. Let ``typedExpressionIR~w_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~w~`` until ``$compat_bitslice_offset_width`` is satisfied].
+. Let ``typeIR~l_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_reduced~``].
+. Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
+. Let ``typeIR~w_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~w_reduced~``].
+. Let ``ctk~w_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~w_reduced~``].
+. If ``ctk~l_reduced~`` is ``LCTK``:
+ .. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~l_reduced~``, under context ``TC`` at ``p``].
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue~l~`` be ``value``.
+ .. Let ``n~l~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~l~``].
+ .. Check that ``ctk~w_reduced~`` is ``LCTK``.
+ .. Let ``value'`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w_reduced~``, under context ``TC`` at ``p``].
+ .. Check that ``value'`` has type ``integerValue``.
+ .. Let ``integerValue~w~`` be ``value'``.
+ .. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
+ .. Let ``int`` be ``n~w~`` ``+`` ``n~l~`` ``-`` ``1``.
+ .. Check that ``int`` has type ``nat``.
+ .. Let ``n~h~`` be ``int``.
+ .. Check that <<is_valid_bitslice,``typeIR~base_reduced~`` ``+[+`` ``n~l~`` ``+:+`` ``n~h~`` ``+]+`` is a valid bitslice>>.
+ .. Let ``typeIR`` be ``+BIT+`` ``+<+`` ``n~w~`` ``+>+``.
+ .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
+ .. Result in <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l_reduced~`` ``++:+`` ``typedExpressionIR~w_reduced~`` ``+]+`` annotated with ``expressionNoteIR``>>.
+. Else:
+ .. Check that ``typeIR~l_reduced~`` has type ``fixedBitTypeIR``.
+ .. Check that ``ctk~w_reduced~`` is ``LCTK``.
+ .. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w_reduced~``, under context ``TC`` at ``p``].
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue~w~`` be ``value``.
+ .. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
+ .. Let ``typeIR`` be ``+BIT+`` ``+<+`` ``n~w~`` ``+>+``.
+ .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
+ .. Result in <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l_reduced~`` ``++:+`` ``typedExpressionIR~w_reduced~`` ``+]+`` annotated with ``expressionNoteIR``>>.
 
 xref:Expr_ok[Typing ``callExpression``, under context ``TC`` at ``p``]:
 
@@ -7951,8 +8065,8 @@ xref:Lvalue_ok[Typing ``lvalue~base~`` ``+.+`` ``member``, under context ``TC`` 
 * the result of xref:Expr_ok[typing ``expression~hi~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~lo~`` be
 * the result of xref:Expr_ok[typing ``expression~lo~``, under context ``TC`` at ``p``].
-. Let ``typedExpressionIR~hi_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~hi~`` until ``$compat_bitslice_index`` is satisfied].
-. Let ``typedExpressionIR~lo_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~lo~`` until ``$compat_bitslice_index`` is satisfied].
+. Let ``typedExpressionIR~hi_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~hi~`` until ``$compat_bitslice_range_index`` is satisfied].
+. Let ``typedExpressionIR~lo_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~lo~`` until ``$compat_bitslice_range_index`` is satisfied].
 . Let xref:expressionNoteIR[a pair of type ``typeIR~hi_reduced~`` and compile-time known-ness ``ctk~hi_reduced~``] be the note of ``typedExpressionIR~hi_reduced~``.
 . Let xref:expressionNoteIR[a pair of type ``typeIR~lo_reduced~`` and compile-time known-ness ``ctk~lo_reduced~``] be the note of ``typedExpressionIR~lo_reduced~``.
 . Check that ``ctk~hi_reduced~`` is ``LCTK``.
@@ -7973,6 +8087,29 @@ xref:Lvalue_ok[Typing ``lvalue~base~`` ``+.+`` ``member``, under context ``TC`` 
 . Let ``n~slice~`` be ``int``.
 . Let ``typeIR`` be ``+BIT+`` ``+<+`` ``n~slice~`` ``+>+``.
 . Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~hi_reduced~`` ``+:+`` ``typedExpressionIR~lo_reduced~`` ``+]+`` with note ``+(+`` ``typeIR`` ``+)+``>>.
+. Result in ``typedLvalueIR``.
+
+<<Lvalue_ok,Typing ``lvalue~base~`` ``+[+`` ``expression~l~`` ``++:+`` ``expression~w~`` ``+]+``, under context ``TC`` at ``p``>>:
+
+. Let ``typedLvalueIR~base~`` be
+* the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
+. Let ``+(+`` ``typeIR~base~`` ``+)+`` be the note of ``typedLvalueIR~base~``.
+. Check that xref:compat_bitslice_base[``typeIR~base~`` can be used as a bitslice base].
+. Let ``typedExpressionIR~l~`` be
+* the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
+. Let ``typedExpressionIR~w~`` be
+* the result of xref:Expr_ok[typing ``expression~w~``, under context ``TC`` at ``p``].
+. Let ``typedExpressionIR~l_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~l~`` until ``$compat_bitslice_offset_index`` is satisfied].
+. Let ``typedExpressionIR~w_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~w~`` until ``$compat_bitslice_offset_width`` is satisfied].
+. Let xref:expressionNoteIR[a pair of type ``typeIR~w_reduced~`` and compile-time known-ness ``ctk~w_reduced~``] be the note of ``typedExpressionIR~w_reduced~``.
+. Check that ``ctk~w_reduced~`` is ``LCTK``.
+. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w_reduced~``, under context ``TC`` at ``p``].
+. Check that ``value`` has type ``integerValue``.
+. Let ``integerValue~w~`` be ``value``.
+. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
+. Let ``typeIR`` be ``+BIT+`` ``+<+`` ``n~w~`` ``+>+``.
+. Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~l_reduced~`` ``++:+`` ``typedExpressionIR~w_reduced~`` ``+]+`` with note ``+(+`` ``typeIR`` ``+)+``>>.
 . Result in ``typedLvalueIR``.
 
 xref:Lvalue_ok[Typing ``+(+`` ``lvalue~base~`` ``+)+``, under context ``TC`` at ``p``]:
@@ -10770,7 +10907,7 @@ xref:compat_bitslice_base[``typeIR''`` can be used as a bitslice base]:
 
 |===
 
-xref:compat_bitslice_index[``typeIR''`` can be used as a bitslice index]:
+xref:compat_bitslice_range_index[``typeIR''`` can be used as a bitslice range index]:
 [cols="2", options="header"]
 |===
 | (``typeIR''``) | Result 
@@ -10778,7 +10915,33 @@ xref:compat_bitslice_index[``typeIR''`` can be used as a bitslice index]:
 | +INT+ | true
 | +INT+ +<+ ++_++ +>+ | true
 | +BIT+ +<+ ++_++ +>+ | true
-| +TYPEDEF+ ++_++ typeIR | xref:compat_bitslice_index[$compat_bitslice_index(typeIR)]
+| +TYPEDEF+ ++_++ typeIR | xref:compat_bitslice_range_index[$compat_bitslice_range_index(typeIR)]
+| ++_++ | false
+
+|===
+
+xref:compat_bitslice_offset_index[``typeIR''`` can be used as an bitslice offset]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result 
+
+| +INT+ | true
+| +INT+ +<+ ++_++ +>+ | true
+| +BIT+ +<+ ++_++ +>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:compat_bitslice_offset_index[$compat_bitslice_offset_index(typeIR)]
+| ++_++ | false
+
+|===
+
+xref:compat_bitslice_offset_width[``typeIR''`` can be used as an bitslice width]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result 
+
+| +INT+ | true
+| +INT+ +<+ ++_++ +>+ | true
+| +BIT+ +<+ ++_++ +>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:compat_bitslice_offset_width[$compat_bitslice_offset_width(typeIR)]
 | ++_++ | false
 
 |===
@@ -11873,6 +12036,11 @@ xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+.+`` ``
 . Check that xref:Expr_lvalue_ok[p TC +|-+ typedExpressionIR~base~].
 . Then, the relation holds.
 
+<<Expr_lvalue_ok,``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``>>:
+
+. Check that xref:Expr_lvalue_ok[p TC +|-+ typedExpressionIR~base~].
+. Then, the relation holds.
+
 xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]
 
 
@@ -12827,6 +12995,16 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+.+`` ``
 . Let store ``STO~3~`` and ``value~lo~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~lo~``, under context ``IC`` and store ``STO~2~`` at ``p``].
 . Result in store ``STO~3~`` and <<bitacc_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``>>.
+
+<<Expr_inst,Compile-time evaluation of ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``>>:
+
+. Let store ``STO~1~`` and ``value~base~`` be
+* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
+. Let store ``STO~2~`` and ``value~l~`` be
+* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~hi~``, under context ``IC`` and store ``STO~1~`` at ``p``].
+. Let store ``STO~3~`` and ``value~w~`` be
+* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~lo~``, under context ``IC`` and store ``STO~2~`` at ``p``].
+. Result in store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~l~`` ``+:+`` ``value~w~`` ``+]+``>>.
 
 xref:Expr_inst[Compile-time evaluation of ``prefixedNameIR`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``]:
 
@@ -14809,6 +14987,20 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
  .. Let ``expressionResult`` be ``value'``.
  .. Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
 
+<<Expr_eval,Evaluating ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``>>:
+
+. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be
+* the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~base~,`` ``typedExpressionIR~l~,`` ``typedExpressionIR~w~`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.
+. If let ``abortResult`` be ``expressionListResult``:
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
+. Else:
+ .. Let ``value^{asterisk}^`` be ``expressionListResult``.
+ .. Check that ``value^{asterisk}^`` is a list of length 3.
+ .. Let ``+[+`` ``value~base~,`` ``value~l~,`` ``value~w~`` ``+]+`` be ``value^{asterisk}^``.
+ .. Let ``value'`` be <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~l~`` ``+:+`` ``value~w~`` ``+]+``>>.
+ .. Let ``expressionResult`` be ``value'``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
+
 xref:Expr_eval[Evaluating ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` annotated with ``expressionNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and callee ``calleeResult`` be
@@ -14982,6 +15174,27 @@ xref:Lvalue_eval[Evaluating ``typedLvalueIR`` ``+.+`` ``nameIR`` with note ``lva
   ... Let ``storageReferenceResult'`` be ``storageReference'`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``.
   ... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult'``.
 
+<<Lvalue_eval,Evaluating ``typedLvalueIR`` ``+[+`` ``typedExpressionIR~l~`` ``++:+`` ``typedExpressionIR~w~`` ``+]+`` with note ``lvalueNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``>>:
+
+. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
+* the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].
+. If let ``abortResult`` be ``storageReferenceResult``:
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and result ``abortResult``.
+. Else:
+ .. Let ``storageReference^?^`` be ``storageReferenceResult``.
+ .. Check that ``storageReference^?^`` is defined.
+ .. Let ``storageReference'`` be ``storageReference^?^``.
+ .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionListResult`` be
+* the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~l~,`` ``typedExpressionIR~w~`` ``+]+``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``>>.
+ .. If let ``abortResult`` be ``expressionListResult``:
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and result ``abortResult``.
+ .. Else:
+  ... Let ``value^{asterisk}^`` be ``expressionListResult``.
+  ... Check that ``value^{asterisk}^`` is a list of length 2.
+  ... Let ``+[+`` ``value~l~,`` ``value~w~`` ``+]+`` be ``value^{asterisk}^``.
+  ... Let ``storageReferenceResult'`` be ``storageReference'`` ``+[+`` ``value~l~`` ``++:+`` ``value~w~`` ``+]+``.
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult'``.
+
 xref:Lvalue_eval[Evaluating ``+(+`` ``typedLvalueIR`` ``+)+`` with note ``lvalueNoteIR``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
@@ -15053,6 +15266,13 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
 . Let value ``value~base~`` be
 * the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC`` and state ``ARCH`` at ``p``].
 . Let ``value`` be <<bitacc_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``>>.
+. Result in value ``value``.
+
+<<Lvalue_read,Reading from ``storageReference'`` ``+[+`` ``value~l~`` ``++:+`` ``value~w~`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>:
+
+. Let value ``value~base~`` be
+* the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC`` and state ``ARCH`` at ``p``].
+. Let ``value`` be <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~l~`` ``+:+`` ``value~w~`` ``+]+``>>.
 . Result in value ``value``.
 
 xref:Lvalue_write[Lvalue_write]:
@@ -15138,6 +15358,15 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference'`` ``+.+`` ``nameIR``,
 . Let value ``value~base~`` be
 * the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
 . Let ``value~base_update~`` be <<bitacc_replace_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+`` replaced with ``value``>>.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value~base_update~`` to ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
+. Result in context ``EC~1~``.
+
+<<Lvalue_write,Writing ``value`` to ``storageReference'`` ``+[+`` ``value~l~`` ``++:+`` ``value~w~`` ``+]+``, under context ``EC~0~`` and state ``ARCH`` at ``p``>>:
+
+. Let value ``value~base~`` be
+* the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
+. Let ``value~base_update~`` be <<bitacc_offset_replace_op,``value~base~`` ``+[+`` ``value~l~`` ``+:+`` ``value~w~`` ``+]+`` replaced with ``value``>>.
 . Let context ``EC~1~`` be
 * the result of xref:Lvalue_write[writing ``value~base_update~`` to ``storageReference'``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
 . Result in context ``EC~1~``.

@@ -516,6 +516,11 @@ def $expressionNonBrace_as_expression(
   -- if expression_base
       = $expressionNonBrace_as_expression(expressionNonBrace_base)
 def $expressionNonBrace_as_expression(
+    expressionNonBrace_base `[ expression_l `+: expression_w ])
+  = expression_base `[ expression_l `+: expression_w ]
+  -- if expression_base
+      = $expressionNonBrace_as_expression(expressionNonBrace_base)
+def $expressionNonBrace_as_expression(
     expressionNonBrace `( argumentList ))
   = expression `( argumentList )
   -- if expression
@@ -651,6 +656,9 @@ def $lvalue_as_expression(lvalue_base `[ expression_index ])
 def $lvalue_as_expression(lvalue_base `[ expression_hi `: expression_lo ])
   = expression_base `[ expression_hi `: expression_lo ]
   -- if expression_base = $lvalue_as_expression(lvalue_base)
+def $lvalue_as_expression(lvalue_base `[ expression_hi `+: expression_lo ])
+  = expression_base `[ expression_hi `+: expression_lo ]
+  -- if expression_base = $lvalue_as_expression(lvalue_base)
 def $lvalue_as_expression(`( lvalue )) = `( expression )
   -- if expression = $lvalue_as_expression(lvalue)
 
@@ -664,6 +672,9 @@ def $expression_as_lvalue(expression_base `[ expression_index ])
   -- if lvalue_base = $expression_as_lvalue(expression_base)
 def $expression_as_lvalue(expression_base `[ expression_hi `: expression_lo ])
   = lvalue_base `[ expression_hi `: expression_lo ]
+  -- if lvalue_base = $expression_as_lvalue(expression_base)
+def $expression_as_lvalue(expression_base `[ expression_hi `+: expression_lo ])
+  = lvalue_base `[ expression_hi `+: expression_lo ]
   -- if lvalue_base = $expression_as_lvalue(expression_base)
 def $expression_as_lvalue(`( expression )) = `( lvalue )
   -- if lvalue = $expression_as_lvalue(expression)

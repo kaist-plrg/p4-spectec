@@ -268,6 +268,17 @@ rule Expr_inst/sliceRangeAccessExpressionIR:
   -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
   -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
 
+;;;;; sliceOffsetAccessExpressionIR
+;;;;; syntax sliceOffsetAccessExpressionIR =
+;;;;;   typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+
+rule Expr_inst/sliceOffsetAccessExpressionIR:
+  p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_l `: typedExpressionIR_w ]) `# _
+            : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
+  -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
+  -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l
+  -- Expr_inst: p IC STO_2 |- typedExpressionIR_w : STO_3 value_w
+
 ;;;; callExpressionIR
 ;;;; syntax callExpressionIR
 
