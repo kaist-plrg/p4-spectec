@@ -46,6 +46,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
+    | StrE exps_inner, StructV values_inner ->
+        let exps_inner = List.map snd exps_inner in
+        let values_inner = List.map snd values_inner in
+        let ctx = assign_exps ctx exps_inner values_inner in
+        List.iter
+          (fun value_inner ->
+            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
+          values_inner;
+        ctx
     | OptE exp_opt, OptV value_opt -> (
         match (exp_opt, value_opt) with
         | Some exp_inner, Some value_inner ->

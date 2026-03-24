@@ -29,6 +29,10 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
     | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
       when Il.Eq.eq_mixop mixop_template mixop ->
         populate_exps_templates uenv exps_template exps
+    | StrE atoms_exps_template, StrE atoms_exps ->
+        let exps_template = List.map snd atoms_exps_template in
+        let exps = List.map snd atoms_exps in
+        populate_exps_templates uenv exps_template exps
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
       when Il.Eq.eq_iter iter_template iter ->
@@ -87,6 +91,15 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
         let exp_template =
           CaseE (mixop_template, exps_template) $$ (at, note)
         in
+        (frees, uenv, exp_template)
+    | StrE atoms_exps_template, StrE atoms_exps ->
+        let atoms_template = List.map fst atoms_exps_template in
+        let exps_template = List.map snd atoms_exps_template in
+        let exps = List.map snd atoms_exps in
+        let frees, uenv, exps_template =
+          antiunify_exps frees uenv exps_template exps
+        in
+        let exp_template = StrE (List.combine atoms_template exps_template) $$ (at, note) in
         (frees, uenv, exp_template)
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
