@@ -2,7 +2,7 @@ ROUGE_STYLE=github
 ROUGE_CSS=style
 
 SPECTEC=p4spectec
-SPECFILES=../spec-concrete/*/*.watsup
+SPECFILES=../spec/*/*.watsup
 SPEC=P4-16-spec-new
 RELEASE=P4-16-spec-release
 DRAFT=P4-16-spec-draft
@@ -11,7 +11,7 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd .. && make release && cd docs
+	cd .. && make release && cd specdoc
 
 splice: spectec
 	rm -r sections || true

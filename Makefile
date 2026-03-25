@@ -44,14 +44,14 @@ release:
 # Spec
 
 spec-draft:
-	cd docs && make draft && cd ..
+	cd specdoc && make draft && cd ..
 spec-draft-html:
-	cd docs && make draft-html && cd ..
+	cd specdoc && make draft-html && cd ..
 
 spec-release:
-	cd docs && make release && cd ..
+	cd specdoc && make release && cd ..
 spec-release-html:
-	cd docs && make release-html && cd ..
+	cd specdoc && make release-html && cd ..
 
 # Format
 
