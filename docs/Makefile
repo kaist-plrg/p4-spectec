@@ -11,7 +11,7 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd .. && make release && cd specdoc
+	cd .. && make release && cd docs
 
 splice: spectec
 	rm -r sections || true
