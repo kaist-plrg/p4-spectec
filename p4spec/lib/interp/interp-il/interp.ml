@@ -31,9 +31,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | VarE id, _ -> Ctx.add_value ctx (id, []) value
     | TupleE exps, TupleV values -> assign_exps ctx exps values
     | CaseE (_, exps), CaseV (_, values) -> assign_exps ctx exps values
-    | StrE exps, StructV values ->
-        let exps = List.map snd exps in
-        let values = List.map snd values in
+    | StrE expfields, StructV valuefields ->
+        let exps = List.map snd expfields in
+        let values = List.map snd valuefields in
         assign_exps ctx exps values
     | OptE exp_opt, OptV value_opt -> (
         match (exp_opt, value_opt) with

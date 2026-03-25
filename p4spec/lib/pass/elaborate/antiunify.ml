@@ -11,6 +11,12 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
     (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     (IdSet.t * IdSet.t * exp) attempt =
   let at, note = (exp_template.at, exp_template.note) in
+  let fail =
+    fail exp.at
+      (Format.asprintf "cannot anti-unify expressions %s and %s"
+         (Il.Print.string_of_exp exp_template)
+         (Il.Print.string_of_exp exp))
+  in
   let overlap_exp_unequal' () : (IdSet.t * IdSet.t * exp) attempt =
     match (exp_template.it, exp.it) with
     | VarE id_template, _ when IdSet.mem id_template unifiers ->
@@ -37,20 +43,18 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
           CaseE (mixop_template, exps_template) $$ (at, note)
         in
         Ok (frees, unifiers, exp_template)
-    | StrE atoms_exps_template, StrE atoms_exps ->
-        let atoms_template = List.map fst atoms_exps_template in
-        let exps_template = List.map snd atoms_exps_template in
-        let exps = List.map snd atoms_exps in
-        let* frees, unifiers, exps_template =
-          overlap_exps tdenv frees unifiers exps_template exps
-        in
-        let exp_template = StrE (List.combine atoms_template exps_template) $$ (at, note) in
-        Ok (frees, unifiers, exp_template)
-    | _ ->
-        fail exp.at
-          (Format.asprintf "cannot anti-unify expressions %s and %s"
-             (Il.Print.string_of_exp exp_template)
-             (Il.Print.string_of_exp exp))
+    | StrE expfields_template, StrE expfields ->
+        let atoms_template, exps_template = List.split expfields_template in
+        let atoms, exps = List.split expfields in
+        if not (List.for_all2 Il.Eq.eq_atom atoms_template atoms) then fail
+        else
+          let* frees, unifiers, exps_template =
+            overlap_exps tdenv frees unifiers exps_template exps
+          in
+          let expfields_template = List.combine atoms_template exps_template in
+          let exp_template = StrE expfields_template $$ (at, note) in
+          Ok (frees, unifiers, exp_template)
+    | _ -> fail
   in
   let overlap_exp_unequal () : (IdSet.t * IdSet.t * exp) attempt =
     match overlap_exp_unequal' () with
@@ -60,11 +64,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         let plaintyp_template = typ_template |> Plaintyp.of_internal_typ in
         let plaintyp = exp.note $ exp.at |> Plaintyp.of_internal_typ in
         if not (Types.Equiv.equiv_plaintyp tdenv plaintyp_template plaintyp)
-        then
-          fail exp.at
-            (Format.asprintf "cannot anti-unify expressions %s and %s"
-               (Il.Print.string_of_exp exp_template)
-               (Il.Print.string_of_exp exp))
+        then fail
         else
           let id_fresh, typ_fresh, iter_fresh =
             Fresh.fresh_var_from_typ frees exp_template.at typ_template
@@ -149,9 +149,9 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
       when Il.Eq.eq_mixop mixop_template mixop ->
         populate_exps unifiers exps_template exps
-    | StrE atoms_exps_template, StrE atoms_exps ->
-        let exps_template = List.map snd atoms_exps_template in
-        let exps = List.map snd atoms_exps in
+    | StrE expfields_template, StrE expfields ->
+        let exps_template = List.map snd expfields_template in
+        let exps = List.map snd expfields in
         populate_exps unifiers exps_template exps
     | _ ->
         let exp_match =
