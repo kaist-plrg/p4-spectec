@@ -1,0 +1,204 @@
+;; Identifiers
+
+syntax id = text
+syntax atom = text
+syntax mixop = atom**
+
+;; Types
+
+syntax iter, targ, typfield, typcase
+
+syntax numtyp =
+  | NAT
+  | INT
+
+syntax optyp =
+  | BOOL
+  | numtyp
+  | TEXT
+
+syntax typ =
+  | optyp
+  | VAR id targ*
+  | TUP typ*
+  | ITER typ iter
+  | FUNC
+
+syntax deftyp =
+  | ALIAS typ
+  | STRUCT typfield*
+  | VARIANT typcase*
+
+syntax typfield = atom typ
+syntax typcase = mixop typ
+
+;; Iterators
+
+syntax iter = QUEST | STAR
+
+;; Variables
+
+syntax variable = id typ iter*
+
+;; Expressions
+
+syntax valfield, expfield, pattern, path, arg, iterexp
+
+syntax num =
+  | NAT nat
+  | INT int
+
+syntax boolunop =
+  | NOT
+
+syntax boolbinop =
+  | AND
+  | OR
+  | IMPL
+  | EQUIV
+
+syntax numunop =
+  | PLUS
+  | MINUS
+
+syntax numbinop =
+  | ADD
+  | SUB
+  | MUL
+  | DIV
+  | MOD
+  | POW
+
+syntax numcmpop =
+  | LT
+  | GT
+  | LE
+  | GE
+
+syntax polycmpop =
+  | EQ
+  | NE
+
+syntax unop = boolunop | numunop
+syntax binop = boolbinop | numbinop
+syntax cmpop = polycmpop | numcmpop
+
+extern syntax json
+syntax val =
+  | BOOL bool
+  | num
+  | TEXT text
+  | STR valfield*
+  | INJ mixop val
+  | TUP val*
+  | OPT val?
+  | LIST val*
+  | FUNC id
+  | EXT json
+
+syntax valfield = atom val
+
+syntax exp =
+  | BOOL bool
+  | num
+  | TEXT text
+  | VAR id
+  | UN unop exp
+  | BIN binop exp exp
+  | CMP cmpop exp exp
+  | UPCAST typ exp
+  | DOWNCAST typ exp
+  | SUB exp typ
+  | MATCH exp pattern
+  | TUP exp*
+  | INJ mixop exp
+  | STR expfield*
+  | OPT exp?
+  | LIST exp*
+  | CONS exp exp
+  | CAT exp exp
+  | MEM exp exp
+  | LEN exp
+  | DOT exp atom
+  | IDX exp exp
+  | SLICE exp exp exp
+  | UPD exp path exp
+  | CALL id targ* arg*
+  | ITER exp iterexp
+
+syntax expfield = atom exp
+syntax iterexp = iter variable*
+
+syntax listpattern =
+  | CONS
+  | FIXED nat
+  | NIL
+
+syntax optpattern =
+  | SOME
+  | NONE
+
+syntax pattern =
+  | INJ mixop
+  | listpattern
+  | optpattern
+
+syntax path =
+  | ROOT
+  | IDX path exp
+  | SLICE path exp exp
+  | DOT path atom
+
+;; Parameters
+
+syntax tparam = id
+
+syntax param =
+  | EXP typ
+  | FUN id `: tparam* param* `-> typ
+
+;; Arguments
+
+syntax targ = typ
+
+syntax arg =
+  | EXP exp
+  | FUN id
+
+;; Premises
+
+syntax iterprem
+
+syntax prem =
+  | REL id `: exp* `-> exp
+  | IF exp
+  | IFHOLD id `: exp*
+  | IFNOTHOLD id `: exp*
+  | LET exp `= exp
+  | ITER prem iterprem
+
+;; Definitions
+
+syntax rulmatch = exp* `- prem*
+syntax rulpath = id `= exp* `- prem*
+syntax rulgroup = id `: rulmatch `= rulpath*
+syntax elsgroup = id `: rulmatch `= rulpath
+
+syntax clause = arg* `= exp `- prem*
+syntax elsclause = clause
+
+syntax tblrow = arg* `= exp `- prem*
+
+syntax defn =
+  | EXTTYP id
+  | TYP id tparam* `= deftyp
+  | EXTREL id `: exp* `-> exp
+  | REL id `: typ* `-> typ* `= rulgroup* elsgroup?
+  | EXTFUNC id tparam* param* `: typ
+  | BUILTINFUNC id tparam* param* `: typ
+  | TABLEFUNC id param* `: typ `= tblrow*
+  | FUNC id tparam* param* `: typ `= clause* elsclause?
+
+;; Scripts
+
+syntax script = defn*
