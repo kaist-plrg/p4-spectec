@@ -1,0 +1,30 @@
+;; Value environment
+
+syntax venv = map<vari, val>
+
+;; Type definition environment
+
+syntax typdef =
+  | PARAM
+  | EXT
+  | DEF tparam* `-> deftyp
+
+syntax tdenv = map<id, typdef>
+
+;; Relation environment
+
+syntax reldef =
+  | EXT
+  | DEF rulgroup* elsgroup?
+
+syntax renv = map<id, reldef>
+
+;; Function environment
+
+syntax funcdef =
+  | EXT
+  | BUILTIN
+  | TABLE param* `-> tblrow*
+  | DEF tparam* `-> clause* elsclause?
+
+syntax fenv = map<id, funcdef>

@@ -1,0 +1,39 @@
+;; Result to represent backtracking in evaluation
+
+syntax res<X> = OK X | FAIL
+
+syntax valres = res<val>
+
+;; Evaluation relations
+
+relation Eval_exp:
+  ctx |- exp : res<val>
+  hint(input %0 %1)
+
+relation Eval_exps:
+  ctx |- exp* : res<val*>
+  hint(input %0 %1)
+
+relation Eval_arg:
+  ctx |- arg : res<val>
+  hint(input %0 %1)
+
+relation Eval_args:
+  ctx |- arg* : res<val*>
+  hint(input %0 %1)
+
+relation Eval_prem:
+  ctx |- prem : res<ctx>
+  hint(input %0 %1)
+
+relation Eval_prems:
+  ctx |- prem* : res<ctx>
+  hint(input %0 %1)
+
+relation Call_func:
+  ctx |- id targ* arg* : res<val>
+  hint(input %0 %1 %2 %3)
+
+relation Call_rel:
+  ctx |- id val* : res<val*>
+  hint(input %0 %1 %2)

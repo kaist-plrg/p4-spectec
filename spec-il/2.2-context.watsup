@@ -1,0 +1,27 @@
+;; Context
+
+syntax layer = { TYP tdenv, REL renv, FUNC fenv }
+syntax ctx = { GLOBAL layer, LOCAL layer }
+
+var C : ctx
+
+;; Loading context from a script
+
+dec $load(script) : ctx
+
+;; Adders and finders
+
+dec $add_val(ctx, vari, val) : ctx
+dec $find_val(ctx, vari) : val?
+
+dec $add_typ(ctx, id, typdef) : ctx
+dec $find_typ(ctx, id) : typdef?
+
+dec $add_func(ctx, id, funcdef) : ctx
+dec $find_func(ctx, id) : funcdef?
+
+dec $add_rel(ctx, id, reldef) : ctx
+dec $find_rel(ctx, id) : reldef?
+
+dec $sub_opt(ctx, vari) : ctx?
+dec $sub_list(ctx, vari*) : ctx*
