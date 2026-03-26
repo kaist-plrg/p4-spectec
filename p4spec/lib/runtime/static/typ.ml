@@ -55,6 +55,16 @@ let subst_nottyp (theta : theta) (nottyp : nottyp) : nottyp =
   let typs = subst_typs theta typs in
   (mixop, typs) $ nottyp.at
 
+let subst_typcase (theta : theta) (typcase : typcase) : typcase =
+  let nottyp, typorigin, hints = typcase in
+  let nottyp = subst_nottyp theta nottyp in
+  let typorigin =
+    let id, targs = typorigin.it in
+    let targs = subst_typs theta targs in
+    (id, targs) $ typorigin.at
+  in
+  (nottyp, typorigin, hints)
+
 let rec subst_param (theta : theta) (param : param) : param =
   match param.it with
   | ExpP typ ->

@@ -179,17 +179,13 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
               elab_typcase_plain ctx typ_il
           | VariantT typcases_il ->
               let theta = List.combine tparams targs_il |> TIdMap.of_list in
-              List.map
-                (fun typcase_il ->
-                  let nottyp_il, hints = typcase_il in
-                  let nottyp_il = Typ.subst_nottyp theta nottyp_il in
-                  (nottyp_il, hints))
-                typcases_il
+              List.map (Typ.subst_typcase theta) typcases_il
           | _ -> error typ_il.at "cannot extend a non-variant type")
       | _ -> error typ_il.at "cannot extend a non-variant type")
   | _ -> error typ_il.at "cannot extend a non-variant type"
 
-and elab_typcase (ctx : Ctx.t) (typcase : typcase) : Il.typcase list =
+and elab_typcase (ctx : Ctx.t) (typorigin_il : Il.typorigin) (typcase : typcase)
+    : Il.typcase list =
   let typ, hints = typcase in
   match typ with
   | PlainT plaintyp ->
@@ -197,13 +193,24 @@ and elab_typcase (ctx : Ctx.t) (typcase : typcase) : Il.typcase list =
       elab_typcase_plain ctx typ_il
   | NotationT _ ->
       let nottyp_il = elab_nottyp ctx typ in
-      let typcase_il = (nottyp_il, hints) in
+      let typcase_il = (nottyp_il, typorigin_il, hints) in
       [ typcase_il ]
 
-and elab_deftyp_variant (ctx : Ctx.t) (at : region) (_id : id)
+and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (typcases : typcase list) : Typdef.t * Il.deftyp =
-  let typcases_il = List.concat_map (elab_typcase ctx) typcases in
-  let mixops = typcases_il |> List.map fst |> List.map it |> List.map fst in
+  let typorigin_il =
+    let targs_il =
+      List.map (fun tparam -> Il.VarT (tparam, []) $ tparam.at) tparams
+    in
+    (id, targs_il) $ id.at
+  in
+  let typcases_il = List.concat_map (elab_typcase ctx typorigin_il) typcases in
+  let mixops =
+    typcases_il
+    |> List.map (fun (nottyp_il, _, _) ->
+           let mixop, _ = nottyp_il.it in
+           mixop)
+  in
   let mixop_groups = groupby Mixop.eq mixops in
   let mixop_duplicates =
     List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
@@ -834,7 +841,7 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
                   match deftyp_il.it with
                   | PlainT typ_il ->
                       let typ_il = Typ.subst_typ theta typ_il in
-                      elab_exp_plain ctx typ_il exp
+                      elab_exp_normal ctx typ_il exp
                   | StructT typfields_il ->
                       let typfields_il =
                         List.map
@@ -846,11 +853,7 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
                       elab_exp_struct ctx typ_il_expect typfields_il exp
                   | VariantT typcases_il ->
                       let typcases_il =
-                        List.map
-                          (fun (nottyp_il, hints) ->
-                            let nottyp_il = Typ.subst_nottyp theta nottyp_il in
-                            (nottyp_il, hints))
-                          typcases_il
+                        List.map (Typ.subst_typcase theta) typcases_il
                       in
                       elab_exp_variant ctx typ_il_expect typcases_il exp))
           | _ -> elab_exp_plain ctx typ_il_expect exp))
@@ -894,8 +897,9 @@ and elab_exp_plain' (ctx : Ctx.t) (at : region) (typ_il_expect : Il.typ)
   | IterE (exp, iter) -> elab_iter_exp ctx typ_il_expect exp iter
   | _ ->
       fail at
-        (F.asprintf "(TODO elab_exp_plain) %s"
-           (El.Print.string_of_exp (exp $ at)))
+        (F.asprintf "cannot elaborate expression %s as type %s"
+           (El.Print.string_of_exp (exp $ at))
+           (Il.Print.string_of_typ typ_il_expect))
 
 (* Elaboration of episilon expressions *)
 
@@ -1101,34 +1105,37 @@ and elab_exp_struct' (ctx : Ctx.t) (typfields_il : Il.typfield list) (exp : exp)
 and fail_elab_variant (at : region) (msg : string) : (Ctx.t * Il.exp) attempt =
   fail at ("cannot elaborate variant case because " ^ msg)
 
-and elab_exp_variant (_ctx : Ctx.t) (_typ_il_expect : Il.typ)
-    (_typcases_il : Il.typcase list) (_exp : exp) : (Ctx.t * Il.exp) attempt =
-  failwith "TODO"
-(* let ctx, exps_il = *)
-(*   List.fold_left *)
-(*     (fun (ctx, exps_il) typcase_il -> *)
-(*       let nottyp_il, _ = typcase_il in *)
-(*       elab_exp_not ctx nottyp_il exp |> function *)
-(*       | Ok (ctx, notexp_il) -> *)
-(*           let exp_il = *)
-(*             let mixop, _ = notexp_il in *)
-(*             let atoms = Mixop.atoms mixop in *)
-(*             let at = *)
-(*               match atoms with *)
-(*               | [] -> exp_list_region exps_il_inner *)
-(*               | _ -> atoms |> List.map at |> over_region *)
-(*             in *)
-(*             Il.CaseE notexp_il $$ (at, typ_il.it) *)
-(*           in *)
-(*           let+ exp_il = cast_exp ctx typ_il_expect plaintyp exp_il in *)
-(*           (ctx, exps_il @ [ exp_il ]) *)
-(*       | Fail _ -> (ctx, exps_il)) *)
-(*     (ctx, []) typcases *)
-(* in *)
-(* match exps_il with *)
-(* | [ exp_il ] -> Ok (ctx, exp_il) *)
-(* | [] -> fail_elab_variant exp.at "expression does not match any case" *)
-(* | _ -> fail_elab_variant exp.at "expression matches multiple cases" *)
+and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
+    (typcases_il : Il.typcase list) (exp : exp) : (Ctx.t * Il.exp) attempt =
+  let ctx, exps_il =
+    List.fold_left
+      (fun (ctx, exps_il) typcase_il ->
+        let nottyp_il, typorigin_il, _ = typcase_il in
+        match elab_exp_not ctx nottyp_il exp with
+        | Ok (ctx, notexp_il) ->
+            let typ_il =
+              let id, targs_il = typorigin_il.it in
+              Il.VarT (id, targs_il) $ typorigin_il.at
+            in
+            let exp_il =
+              let mixop, exps_il_inner = notexp_il in
+              let atoms = Mixop.atoms mixop in
+              let at =
+                match atoms with
+                | [] -> exp_list_region exps_il_inner
+                | _ -> atoms |> List.map at |> over_region
+              in
+              Il.CaseE notexp_il $$ (at, typ_il.it)
+            in
+            let+ exp_il = cast_exp ctx typ_il_expect typ_il exp_il in
+            (ctx, exps_il @ [ exp_il ])
+        | Fail _ -> (ctx, exps_il))
+      (ctx, []) typcases_il
+  in
+  match exps_il with
+  | [ exp_il ] -> Ok (ctx, exp_il)
+  | [] -> fail_elab_variant exp.at "expression does not match any case"
+  | _ -> fail_elab_variant exp.at "expression matches multiple cases"
 
 (* Elaboration of paths *)
 
@@ -1458,14 +1465,8 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
 (* Elaboration of rules *)
 
 type rulepath_internal = SomePath of Il.rulepath | ElsePath of Il.rulepath
-
-type rulepaths_internal =
-  | SomePaths of Il.rulepath list
-  | ElsePaths of Il.rulepath
-
-type rulegroup_internal =
-  | SomeGroup of Il.rulegroup
-  | ElseGroup of Il.elsegroup
+type rulepaths_internal = Paths of Il.rulepath list | ElsePaths of Il.rulepath
+type rulegroup_internal = Group of Il.rulegroup | ElseGroup of Il.elsegroup
 
 let is_else_rulepath_internal (rulepath_internal : rulepath_internal) : bool =
   match rulepath_internal with ElsePath _ -> true | SomePath _ -> false
@@ -1568,7 +1569,7 @@ and elab_rulepaths (at : region) (ctxs_local : Ctx.t list)
              | SomePath rulepath_il -> rulepath_il
              | _ -> assert false)
       in
-      SomePaths rulepaths_il
+      Paths rulepaths_il
   | [ ElsePath rulepath_il_else ] ->
       check
         (List.length rulepaths_internal = 1)
@@ -1622,16 +1623,16 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
       prems_group exps_il_output_group
   in
   match rulepaths_internal with
-  | SomePaths rulepaths_il ->
+  | Paths rulepaths_il ->
       let rulegroup_il = (id_rulegroup, rulematch_il, rulepaths_il) $ at in
-      SomeGroup rulegroup_il
+      Group rulegroup_il
   | ElsePaths rulepath_il ->
       let elsegroup_il = (id_rulegroup, rulematch_il, rulepath_il) $ at in
       ElseGroup elsegroup_il
 
 (* Elaboration of clauses *)
 
-type clause_internal = SomeClause of Il.clause | ElseClause of Il.clause
+type clause_internal = Clause of Il.clause | ElseClause of Il.clause
 
 let elab_clause_input_with_bind (ctx : Ctx.t) (at : region)
     (params_il : Il.param list) (args : arg list) :
@@ -1676,7 +1677,7 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let prems_il = List.filter_map externalize_prem prems_internal in
   let _ctx_local, exp_il = elab_clause_output_with_bind ctx_local typ_il exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
-  if is_else_clause then ElseClause clause_il else SomeClause clause_il
+  if is_else_clause then ElseClause clause_il else Clause clause_il
 
 (* Elaboration of definitions *)
 
@@ -1837,7 +1838,7 @@ and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (id_rulegroup : id) (rules : rule list) : Ctx.t =
   let rulegroup_internal = elab_rulegroup ctx at id_rel id_rulegroup rules in
   match rulegroup_internal with
-  | SomeGroup rulegroup_il -> Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
+  | Group rulegroup_il -> Ctx.add_defined_rulegroup ctx id_rel rulegroup_il
   | ElseGroup elsegroup_il -> Ctx.add_defined_elsegroup ctx id_rel elsegroup_il
 
 (* Elaboration of function declarations *)
@@ -1959,8 +1960,9 @@ and pattern_set_covered_by_typ (ctx : Ctx.t) (typ_il : Il.typ) :
       | Defined (_, deftyp_il) -> (
           match deftyp_il.it with
           | VariantT typcases_il ->
-              let nottyps_il = typcases_il |> List.map fst in
-              nottyps_il |> Pattern.PatternSet.of_list
+              typcases_il
+              |> List.map (fun (nottyp_il, _, _) -> nottyp_il)
+              |> Pattern.PatternSet.of_list
           | _ ->
               error typ_il.at
                 ("non-variant type not supported in patterns: "
@@ -2067,7 +2069,7 @@ and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
     (args : arg list) (exp : exp) (prems : prem list) : Ctx.t =
   let clause_internal = elab_clause ctx at id tparams args exp prems in
   match clause_internal with
-  | SomeClause clause_il -> Ctx.add_defined_func_clause ctx id clause_il
+  | Clause clause_il -> Ctx.add_defined_func_clause ctx id clause_il
   | ElseClause clause_il -> Ctx.add_defined_func_elseclause ctx id clause_il
 
 (* Elaboration of spec *)

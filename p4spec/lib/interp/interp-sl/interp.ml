@@ -472,7 +472,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             | VariantT typcases, CaseV (mixop_v, values_inner) ->
                 List.exists
                   (fun typcase ->
-                    let nottyp, _hints = typcase in
+                    let nottyp, _, _ = typcase in
                     let mixop_t, typs_inner = nottyp.it in
                     Mixop.eq mixop_t mixop_v
                     &&

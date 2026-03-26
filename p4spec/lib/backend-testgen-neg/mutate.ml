@@ -73,20 +73,18 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
               let valuefields = List.combine atoms values in
               StructV valuefields |> Option.some |> wrap_value_opt typ.it
           | VariantT typcases ->
-              let nottyps' = List.map fst typcases |> List.map it in
               let nottyps' =
-                List.map
-                  (fun (mixop, typs) ->
-                    let typs = Typ.subst_typs theta typs in
-                    (mixop, typs))
-                  nottyps'
+                typcases
+                |> List.map (fun (nottyp, _, _) ->
+                       let mixop, typs = nottyp.it in
+                       let typs = Typ.subst_typs theta typs in
+                       (mixop, typs))
               in
               let expand_nottyp' nottyp' =
                 let mixop, typs = nottyp' in
                 let* values = gen_from_typs depth tdenv texts typs in
                 CaseV (mixop, values) |> Option.some
               in
-              (* filters out failures *)
               List.map expand_nottyp' nottyps'
               |> List.filter Option.is_some |> List.map Option.get
               |> Rand.random_select |> wrap_value_opt typ.it)

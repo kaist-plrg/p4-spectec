@@ -25,12 +25,14 @@ and sub_typ' (tdenv : TDEnv.t) (typ_a : typ) (typ_b : typ) : bool =
               let theta_a = List.combine tparams_a targs_a |> TIdMap.of_list in
               let theta_b = List.combine tparams_b targs_b |> TIdMap.of_list in
               let nottyps_a =
-                typcases_a |> List.map fst
-                |> List.map (Typ.subst_nottyp theta_a)
+                typcases_a
+                |> List.map (fun (nottyp_a, _, _) ->
+                       Typ.subst_nottyp theta_a nottyp_a)
               in
               let nottyps_b =
-                typcases_b |> List.map fst
-                |> List.map (Typ.subst_nottyp theta_b)
+                typcases_b
+                |> List.map (fun (nottyp_b, _, _) ->
+                       Typ.subst_nottyp theta_b nottyp_b)
               in
               List.for_all
                 (fun nottyp_a ->
