@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+module Type = Runtime.Type
 open Runtime.Static
 open Error
 open Util.Source
@@ -16,7 +17,7 @@ let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
           match deftyp.it with
           | PlainT typ ->
               let theta = List.combine tparams targs |> TIdMap.of_list in
-              let typ = Typ.subst_typ theta typ in
+              let typ = Type.Subst.subst_typ theta typ in
               is_singleton_case dctx typ
           | StructT _ -> false
           | VariantT typcases -> List.length typcases = 1)

@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Sl
+module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
 open Error
@@ -183,7 +184,7 @@ let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
 
 let find_defined_typdef (ctx : t) (tid : TId.t) : tparam list * deftyp =
   match find_typdef ctx tid with
-  | Param | Extern -> back_undef tid.at "defined type" tid.it
+  | Param | Extern | Defining _ -> back_undef tid.at "defined type" tid.it
   | Defined (tparams, deftyp) -> (tparams, deftyp)
 
 let bound_typdef (ctx : t) (tid : TId.t) : bool =

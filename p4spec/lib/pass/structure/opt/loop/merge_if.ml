@@ -1,6 +1,6 @@
 open Lang
 open Ol.Ast
-module Typ = Runtime.Dynamic_Sl.Typ
+module Typ = Runtime.Type.Typ
 open Runtime.Dynamic_Sl.Envs
 open Overlap
 open Util.Source

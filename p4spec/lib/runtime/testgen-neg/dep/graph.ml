@@ -149,7 +149,7 @@ and reassemble_graph' (graph : t) (renamer : value VIdMap.t) (vid : vid) : value
     | FuncN id -> FuncV id
     | ExternN json -> ExternV json
   in
-  let vhash = Dynamic.Value.hash_of value in
+  let vhash = Value.hash_of value in
   value $$$ { vid; typ; vhash }
 
 let reassemble_graph_from_root (graph : t) (renamer : value VIdMap.t) : value =

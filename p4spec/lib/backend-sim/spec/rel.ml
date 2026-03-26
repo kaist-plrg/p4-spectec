@@ -1,5 +1,5 @@
 open Interface.Wrap
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 
 (* Helpers for invoking relations in the spec *)

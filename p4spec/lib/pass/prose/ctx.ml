@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-module Typdef = Runtime.Dynamic_Sl.Typdef
+module Typdef = Runtime.Type.Typdef
 open Runtime.Prose.Envs
 open Error
 open Util.Source

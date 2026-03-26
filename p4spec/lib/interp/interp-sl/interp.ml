@@ -7,6 +7,7 @@ module ICov_single = Coverage.Instr.Single
 module ICov_multi = Coverage.Instr.Multi
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
+module Type = Runtime.Type
 open Runtime.Dynamic_Sl
 open Envs
 module Sim = Runtime.Sim.Simulator
@@ -84,7 +85,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let value_sub =
-              let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
+              let typ = Type.Typ.iterate typ (iters @ [ Il.Opt ]) in
               Value.make typ.it (OptV None)
             in
             Hook.on_value value_sub;
@@ -99,7 +100,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           (fun ctx (id, typ, iters) ->
             let value_sub =
               let value = Ctx.find_value ctx (id, iters) in
-              let typ = Typ.iterate typ (iters @ [ Il.Opt ]) in
+              let typ = Type.Typ.iterate typ (iters @ [ Il.Opt ]) in
               Value.make typ.it (OptV (Some value))
             in
             Hook.on_value value_sub;
@@ -124,7 +125,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
             in
             let value_sub =
-              let typ = Typ.iterate typ (iters @ [ Il.List ]) in
+              let typ = Type.Typ.iterate typ (iters @ [ Il.List ]) in
               Value.make typ.it (ListV values)
             in
             Hook.on_value value_sub;
@@ -384,7 +385,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
-            let typ = Typ.subst_typ theta typ in
+            let typ = Type.Subst.subst_typ theta typ in
             upcast ctx typ value
         | _ -> value)
     | TupleT typs -> (
@@ -427,7 +428,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match deftyp.it with
         | PlainT typ ->
             let theta = List.combine tparams targs |> TIdMap.of_list in
-            let typ = Typ.subst_typ theta typ in
+            let typ = Type.Subst.subst_typ theta typ in
             downcast ctx typ value
         | _ -> value)
     | TupleT typs -> (
@@ -461,13 +462,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | VarT (tid, targs) -> (
         let typdef = Ctx.find_typdef ctx tid in
         match typdef with
-        | Param -> assert false
+        | Param | Defining _ -> assert false
         | Extern -> ( match value.it with ExternV _ -> true | _ -> false)
         | Defined (tparams, deftyp) -> (
             let theta = List.combine tparams targs |> TIdMap.of_list in
             match (deftyp.it, value.it) with
             | PlainT typ, _ ->
-                let typ = Typ.subst_typ theta typ in
+                let typ = Type.Subst.subst_typ theta typ in
                 subtyp ctx typ value
             | VariantT typcases, CaseV (mixop_v, values_inner) ->
                 List.exists
@@ -477,7 +478,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                     Mixop.eq mixop_t mixop_v
                     &&
                     let typs_inner =
-                      List.map (Typ.subst_typ theta) typs_inner
+                      List.map (Type.Subst.subst_typ theta) typs_inner
                     in
                     subtyps ctx typs_inner values_inner)
                   typcases
@@ -1384,7 +1385,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (fun (_id_binding, typ_binding, iters_binding) ->
                 let value_binding =
                   let typ =
-                    Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                    Type.Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                   in
                   Value.make typ.it (OptV None)
                 in
@@ -1412,7 +1413,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                 in
                 let value_binding =
                   let typ =
-                    Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                    Type.Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                   in
                   Value.make typ.it (OptV (Some value_binding))
                 in
@@ -1465,7 +1466,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.fold_left2
       (fun ctx (id_binding, typ_binding, iters_binding) values_binding ->
         let value_binding =
-          let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
+          let typ =
+            Type.Typ.iterate typ_binding (iters_binding @ [ Il.List ])
+          in
           Value.make typ.it (ListV values_binding)
         in
         Hook.on_value value_binding;
@@ -1527,7 +1530,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             List.map
               (fun (_id_binding, typ_binding, iters_binding) ->
                 let typ =
-                  Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                  Type.Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                 in
                 Value.make typ.it (OptV None))
               vars_bind
@@ -1543,7 +1546,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   Ctx.find_value ctx_sub (id_binding, iters_binding)
                 in
                 let typ =
-                  Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
+                  Type.Typ.iterate typ_binding (iters_binding @ [ Il.Opt ])
                 in
                 Value.make typ.it (OptV (Some value_binding)))
               vars_bind
@@ -1592,7 +1595,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     List.fold_left2
       (fun ctx (id_binding, typ_binding, iters_binding) values_binding ->
         let value_binding =
-          let typ = Typ.iterate typ_binding (iters_binding @ [ Il.List ]) in
+          let typ =
+            Type.Typ.iterate typ_binding (iters_binding @ [ Il.List ])
+          in
           Value.make typ.it (ListV values_binding)
         in
         Hook.on_value value_binding;
@@ -1766,12 +1771,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             TDEnv.fold
               (fun tid typdef theta ->
                 match typdef with
-                | Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
                     TIdMap.add tid typ theta
                 | _ -> theta)
               tdenv_local TIdMap.empty
           in
-          List.map (Typ.subst_typ theta) targs
+          List.map (Type.Subst.subst_typ theta) targs
     in
     let values_input = eval_args ctx args in
     invoke_func_with_values ctx id targs values_input
@@ -1896,7 +1901,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         id.at "arity mismatch in type arguments";
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          let td = Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
           TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in

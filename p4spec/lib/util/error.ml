@@ -2,6 +2,7 @@ open Source
 
 exception ParseError of region * string
 exception UnparseError of string
+exception RuntimeError of region * string
 exception ElabError of region * string
 exception StructError of region * string
 exception ProseError of region * string
@@ -27,6 +28,11 @@ let error_parse_no_region (msg : string) = raise (ParseError (no_region, msg))
 (* Unparser errors *)
 
 let error_unparse (msg : string) = raise (UnparseError msg)
+
+(* Runtime errors *)
+
+let error_runtime (at : region) (msg : string) = raise (RuntimeError (at, msg))
+let warn_runtime (at : region) (msg : string) = warn at "runtime" msg
 
 (* Elaboration errors *)
 

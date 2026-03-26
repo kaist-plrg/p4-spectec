@@ -2,7 +2,7 @@ open Domain
 open Lib
 open Lang
 open Ol.Ast
-module Typ = Runtime.Dynamic_Sl.Typ
+module Typ = Runtime.Type.Typ
 open Util.Source
 
 (* Remove redundant let and rule bindings from the code,

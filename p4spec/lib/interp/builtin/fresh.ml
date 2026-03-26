@@ -1,6 +1,6 @@
 open Lang
 open Il
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Util.Source
 
 let ctr = ref 0

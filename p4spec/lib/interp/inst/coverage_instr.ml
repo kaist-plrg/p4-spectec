@@ -1,7 +1,7 @@
 open Lang
 open Sl
 module ICov = Coverage.Instr.Single
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 
 let make () =
   (* Instruction coverage and a reader for it *)

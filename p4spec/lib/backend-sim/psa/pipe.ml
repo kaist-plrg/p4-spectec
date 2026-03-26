@@ -3,7 +3,7 @@ open Interface.Unwrap
 open Interface.Unpack
 open Interface.Pack
 open Interface.Flatten
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open State

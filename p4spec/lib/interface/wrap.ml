@@ -1,6 +1,7 @@
 open Domain.Atom
 open Lang
 open Il
+module Value = Runtime.Value
 open Util.Source
 
 (* Atom generator *)
@@ -88,8 +89,7 @@ let wrap_iter_t (i : iter) (t : typ') : typ' = IterT (t $ no_region, i)
 
 (* Value note generators *)
 
-let with_typ (typ : typ') (v : value') : value =
-  Runtime.Dynamic_Il.Value.make typ v
+let with_typ (typ : typ') (v : value') : value = Value.make typ v
 
 (* Value generators *)
 

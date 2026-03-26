@@ -2,7 +2,6 @@ open Domain.Lib
 open Lang
 open Xl
 open Il
-open Runtime.Static
 open Envs
 open Util.Source
 
@@ -27,12 +26,12 @@ and sub_typ' (tdenv : TDEnv.t) (typ_a : typ) (typ_b : typ) : bool =
               let nottyps_a =
                 typcases_a
                 |> List.map (fun (nottyp_a, _, _) ->
-                       Typ.subst_nottyp theta_a nottyp_a)
+                       Subst.subst_nottyp theta_a nottyp_a)
               in
               let nottyps_b =
                 typcases_b
                 |> List.map (fun (nottyp_b, _, _) ->
-                       Typ.subst_nottyp theta_b nottyp_b)
+                       Subst.subst_nottyp theta_b nottyp_b)
               in
               List.for_all
                 (fun nottyp_a ->

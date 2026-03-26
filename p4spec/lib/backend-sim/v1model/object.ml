@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 open Interface.Pack
 open Interface.Wrap
 open Interface.Unwrap

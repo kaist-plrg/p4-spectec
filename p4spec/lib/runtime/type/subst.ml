@@ -1,28 +1,16 @@
 open Domain.Lib
 open Lang
 open Il
-open Il.Print
 open Util.Error
 open Util.Source
 
-(* Type *)
-
-type t = typ
-
-let to_string t = string_of_typ t
-
-(* Constructor *)
-
-let rec iterate (typ : t) (iters : iter list) : t =
-  match iters with
-  | [] -> typ
-  | iter :: iters -> iterate (IterT (typ, iter) $ typ.at) iters
-
 (* Substitution of type variables *)
 
-type theta = t TIdMap.t
+type theta = Typ.t TIdMap.t
 
-let rec subst_typ_inner (theta : theta) (typ : t) : t =
+(* Types *)
+
+let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
   match typ.it with
   | BoolT | NumT _ | TextT -> typ
   | VarT (tid, targs) -> (
@@ -41,14 +29,16 @@ let rec subst_typ_inner (theta : theta) (typ : t) : t =
       IterT (typ, iter) $ typ.at
   | FuncT -> typ
 
-and subst_typs_inner (theta : theta) (typs : t list) : t list =
+and subst_typs_inner (theta : theta) (typs : typ list) : typ list =
   List.map (subst_typ_inner theta) typs
 
-let subst_typ (theta : theta) (typ : t) : t =
+let subst_typ (theta : theta) (typ : typ) : typ =
   if TIdMap.is_empty theta then typ else subst_typ_inner theta typ
 
-let subst_typs (theta : theta) (typs : t list) : t list =
+let subst_typs (theta : theta) (typs : typ list) : typ list =
   if TIdMap.is_empty theta then typs else subst_typs_inner theta typs
+
+(* Variant types *)
 
 let subst_nottyp (theta : theta) (nottyp : nottyp) : nottyp =
   let mixop, typs = nottyp.it in
@@ -64,6 +54,8 @@ let subst_typcase (theta : theta) (typcase : typcase) : typcase =
     (id, targs) $ typorigin.at
   in
   (nottyp, typorigin, hints)
+
+(* Parameters *)
 
 let rec subst_param (theta : theta) (param : param) : param =
   match param.it with

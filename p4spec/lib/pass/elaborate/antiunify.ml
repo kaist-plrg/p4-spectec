@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+module Type = Runtime.Type
 open Runtime.Static
 open Attempt
 open Util.Source
@@ -62,7 +63,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
     | Fail _ ->
         let typ_template = exp_template.note $ exp_template.at in
         let typ = exp.note $ exp.at in
-        if not (Types.Equiv.equiv_typ tdenv typ_template typ) then fail
+        if not (Type.Equiv.equiv_typ tdenv typ_template typ) then fail
         else
           let id_fresh, typ_fresh, iter_fresh =
             Fresh.fresh_var_from_typ frees exp_template.at typ_template

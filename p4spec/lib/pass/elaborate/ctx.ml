@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open El
+open Runtime.Type
 open Runtime.Static
 open Envs
 open Error

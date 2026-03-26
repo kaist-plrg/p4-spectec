@@ -2,6 +2,7 @@ open Domain
 open Lib
 open Lang
 open El
+open Runtime.Type
 open Runtime.Static
 open Attempt
 open Error
@@ -26,31 +27,31 @@ let elab_iter (iter : iter) : Il.iter =
 (* Type destructuring *)
 
 let as_text_typ (ctx : Ctx.t) (typ_il : Il.typ) : unit attempt =
-  let typ_il = Types.Expand.expand_typ ctx.tdenv typ_il in
+  let typ_il = Expand.expand_typ ctx.tdenv typ_il in
   match typ_il.it with
   | TextT -> Ok ()
   | _ -> fail typ_il.at "cannot destruct type as text"
 
 let as_iter_typ (ctx : Ctx.t) (typ_il : Il.typ) : (Il.typ * Il.iter) attempt =
-  let typ_il = Types.Expand.expand_typ ctx.tdenv typ_il in
+  let typ_il = Expand.expand_typ ctx.tdenv typ_il in
   match typ_il.it with
   | IterT (typ_il, iter) -> Ok (typ_il, iter)
   | _ -> fail typ_il.at "cannot destruct type as an iteration"
 
 let as_tuple_typ (ctx : Ctx.t) (typ_il : Il.typ) : Il.typ list attempt =
-  let typ_il = Types.Expand.expand_typ ctx.tdenv typ_il in
+  let typ_il = Expand.expand_typ ctx.tdenv typ_il in
   match typ_il.it with
   | TupleT typs_il -> Ok typs_il
   | _ -> fail typ_il.at "cannot destruct type as a tuple"
 
 let as_list_typ (ctx : Ctx.t) (typ_il : Il.typ) : Il.typ attempt =
-  let typ_il = Types.Expand.expand_typ ctx.tdenv typ_il in
+  let typ_il = Expand.expand_typ ctx.tdenv typ_il in
   match typ_il.it with
   | IterT (typ_il, List) -> Ok typ_il
   | _ -> fail typ_il.at "cannot destruct type as a list"
 
 let as_struct_typ (ctx : Ctx.t) (typ_il : Il.typ) : Il.typfield list attempt =
-  let typ_il = Types.Expand.expand_typ ctx.tdenv typ_il in
+  let typ_il = Expand.expand_typ ctx.tdenv typ_il in
   match typ_il.it with
   | VarT (tid, _) -> (
       let td_opt = Ctx.find_typdef_opt ctx tid in
@@ -175,11 +176,11 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
           match deftyp.it with
           | PlainT typ_il ->
               let theta = List.combine tparams targs_il |> TIdMap.of_list in
-              let typ_il = Typ.subst_typ theta typ_il in
+              let typ_il = Subst.subst_typ theta typ_il in
               elab_typcase_plain ctx typ_il
           | VariantT typcases_il ->
               let theta = List.combine tparams targs_il |> TIdMap.of_list in
-              List.map (Typ.subst_typcase theta) typcases_il
+              List.map (Subst.subst_typcase theta) typcases_il
           | _ -> error typ_il.at "cannot extend a non-variant type")
       | _ -> error typ_il.at "cannot extend a non-variant type")
   | _ -> error typ_il.at "cannot extend a non-variant type"
@@ -501,7 +502,7 @@ and infer_list_exp (ctx : Ctx.t) (at : region) (exps : exp list) :
   | exp :: exps ->
       let* ctx, exp_il, typ_il = infer_exp ctx exp in
       let* ctx, exps_il, typs_il = infer_exps ctx exps in
-      if List.for_all (Types.Equiv.equiv_typ ctx.tdenv typ_il) typs_il then
+      if List.for_all (Equiv.equiv_typ ctx.tdenv typ_il) typs_il then
         let exp_il = Il.ListE (exp_il :: exps_il) in
         let typ_il = Il.IterT (typ_il, List) in
         Ok (ctx, exp_il, typ_il)
@@ -670,8 +671,8 @@ and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     id.at "type arguments do not match";
   let targs_il = List.map (elab_plaintyp ctx) targs in
   let theta = List.combine tparams_il targs_il |> TIdMap.of_list in
-  let params_il = Typ.subst_params theta params_il in
-  let typ_il = Typ.subst_typ theta typ_il in
+  let params_il = Subst.subst_params theta params_il in
+  let typ_il = Subst.subst_typ theta typ_il in
   let ctx, args_il = elab_args at ctx params_il args in
   let exp_il = Il.CallE (id, targs_il, args_il) in
   Ok (ctx, exp_il, typ_il.it)
@@ -693,8 +694,8 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
   let* ctx, exp_il, typ_il_exp = infer_exp ctx exp in
   let typ_il = elab_plaintyp ctx plaintyp in
   if
-    Types.Sub.sub_typ ctx.tdenv typ_il_exp typ_il
-    || Types.Sub.sub_typ ctx.tdenv typ_il typ_il_exp
+    Sub.sub_typ ctx.tdenv typ_il_exp typ_il
+    || Sub.sub_typ ctx.tdenv typ_il typ_il_exp
   then
     let exp_il = Il.SubE (exp_il, typ_il) in
     let typ_il = Il.BoolT in
@@ -811,8 +812,8 @@ and fail_cast (at : region) (typ_il_a : Il.typ) (typ_il_b : Il.typ) =
 
 and cast_exp (ctx : Ctx.t) (typ_il_expect : Il.typ) (typ_il_infer : Il.typ)
     (exp_il : Il.exp) : Il.exp attempt =
-  if Types.Equiv.equiv_typ ctx.tdenv typ_il_expect typ_il_infer then Ok exp_il
-  else if Types.Sub.sub_typ ctx.tdenv typ_il_infer typ_il_expect then
+  if Equiv.equiv_typ ctx.tdenv typ_il_expect typ_il_infer then Ok exp_il
+  else if Sub.sub_typ ctx.tdenv typ_il_infer typ_il_expect then
     let exp_il =
       Il.UpCastE (typ_il_expect, exp_il) $$ (exp_il.at, typ_il_expect.it)
     in
@@ -840,20 +841,20 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
                   let theta = List.combine tparams targs_il |> TIdMap.of_list in
                   match deftyp_il.it with
                   | PlainT typ_il ->
-                      let typ_il = Typ.subst_typ theta typ_il in
+                      let typ_il = Subst.subst_typ theta typ_il in
                       elab_exp_normal ctx typ_il exp
                   | StructT typfields_il ->
                       let typfields_il =
                         List.map
                           (fun (atom, typ_il) ->
-                            let typ_il = Typ.subst_typ theta typ_il in
+                            let typ_il = Subst.subst_typ theta typ_il in
                             (atom, typ_il))
                           typfields_il
                       in
                       elab_exp_struct ctx typ_il_expect typfields_il exp
                   | VariantT typcases_il ->
                       let typcases_il =
-                        List.map (Typ.subst_typcase theta) typcases_il
+                        List.map (Subst.subst_typcase theta) typcases_il
                       in
                       elab_exp_variant ctx typ_il_expect typcases_il exp))
           | _ -> elab_exp_plain ctx typ_il_expect exp))
@@ -1274,8 +1275,8 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
         Ctx.find_func_signature ctx id_a
       in
       check
-        (Types.Equiv.equiv_functyp ctx.tdenv arg.at tparams_il_p params_il_p
-           typ_il_p tparams_il_a params_il_a typ_il_a)
+        (Equiv.equiv_functyp ctx.tdenv arg.at tparams_il_p params_il_p typ_il_p
+           tparams_il_a params_il_a typ_il_a)
         arg.at
         (F.asprintf
            "function argument does not match the declared function parameter %s"

@@ -10,7 +10,7 @@ type t =
   (* Type parameter *)
   | Param
   (* Extern type *)
-  | Extern 
+  | Extern
   (* Type being defined *)
   | Defining of tparam list
   (* Type that is completely defined *)

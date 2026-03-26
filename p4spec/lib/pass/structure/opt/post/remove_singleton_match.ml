@@ -1,5 +1,5 @@
 open Ol.Ast
-module Typ = Runtime.Dynamic_Sl.Typ
+module Typ = Runtime.Type.Typ
 open Runtime.Dynamic_Sl.Envs
 open Util.Source
 
@@ -17,7 +17,7 @@ let is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
   | VarT (tid, _) -> (
       let td = TDEnv.find tid tdenv in
       match td with
-      | Param | Extern -> false
+      | Param | Extern | Defining _ -> false
       | Defined (_, deftyp) -> (
           match deftyp.it with
           | VariantT typcases -> List.length typcases = 1

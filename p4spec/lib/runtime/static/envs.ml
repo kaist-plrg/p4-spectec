@@ -1,5 +1,5 @@
-open Lang
 open Domain.Lib
+open Lang
 
 (* Environments *)
 
@@ -9,11 +9,11 @@ module VEnv = MakeIdEnv (Typdim)
 
 (* Meta-variable environment *)
 
-module MEnv = MakeIdEnv (Typ)
+module MEnv = MakeIdEnv (Type.Typ)
 
 (* Type definition environment *)
 
-module TDEnv = MakeTIdEnv (Typdef)
+module TDEnv = Type.Envs.TDEnv
 
 (* Relation environment *)
 

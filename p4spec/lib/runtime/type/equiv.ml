@@ -1,9 +1,9 @@
+module Fresh_ = Fresh
 open Domain
 open Lib
 open Lang
 open Xl
 open Il
-open Runtime.Static
 open Envs
 open Error
 open Util.Source
@@ -54,7 +54,9 @@ and equiv_functyp (tdenv : TDEnv.t) (at : region) (tparams_a : tparam list)
   let tdenv, theta_a, theta_b =
     List.fold_left2
       (fun (tdenv, theta_a, theta_b) tparam_a tparam_b ->
-        let tid_fresh = "__FRESH" ^ string_of_int (Ctx.fresh ()) $ no_region in
+        let tid_fresh =
+          "__FRESH" ^ string_of_int (Fresh_.fresh ()) $ no_region
+        in
         let typ_fresh = VarT (tid_fresh, []) $ no_region in
         let tdenv = TDEnv.add tid_fresh Typdef.Param tdenv in
         let theta_a = TIdMap.add tparam_a typ_fresh theta_a in
@@ -66,9 +68,9 @@ and equiv_functyp (tdenv : TDEnv.t) (at : region) (tparams_a : tparam list)
   check
     (List.length params_a = List.length params_b)
     at "parameters do not match";
-  let params_a = Typ.subst_params theta_a params_a in
-  let params_b = Typ.subst_params theta_b params_b in
-  let typ_a = Typ.subst_typ theta_a typ_a in
-  let typ_b = Typ.subst_typ theta_b typ_b in
+  let params_a = Subst.subst_params theta_a params_a in
+  let params_b = Subst.subst_params theta_b params_b in
+  let typ_a = Subst.subst_typ theta_a typ_a in
+  let typ_b = Subst.subst_typ theta_b typ_b in
   List.for_all2 (equiv_param tdenv) params_a params_b
   && equiv_typ tdenv typ_a typ_b

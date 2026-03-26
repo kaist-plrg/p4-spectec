@@ -20,7 +20,7 @@ open Lexing
 open Context
 open Parser
 open Wrap
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 module F = Format
 
 exception Error of string

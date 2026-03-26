@@ -1,7 +1,7 @@
 open Domain
 open Lang
 open Hint
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Util.Source
 module F = Format
 

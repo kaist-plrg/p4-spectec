@@ -1,6 +1,8 @@
 open Domain
 open Lang
 open Il
+module Type = Runtime.Type
+module Value = Runtime.Value
 open Runtime.Testgen_neg
 open Envs
 open Domain.Lib
@@ -22,7 +24,7 @@ let ( let* ) = Option.bind
 (* Helpers for wrapping values *)
 
 let wrap_value (typ : typ') (value : value') : value =
-  let vhash = Runtime.Dynamic_Il.Value.hash_of value in
+  let vhash = Value.hash_of value in
   value $$$ { vid = -1; typ; vhash }
 
 let wrap_value_opt (typ : typ') (value_opt : value' option) : value option =
@@ -64,11 +66,14 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
           let theta = List.combine tparams targs |> TDEnv.of_list in
           match td.it with
           | PlainT typ ->
-              typ |> Typ.subst_typ theta |> gen_from_typ depth tdenv texts
+              typ |> Type.Subst.subst_typ theta
+              |> gen_from_typ depth tdenv texts
           | StructT typfields ->
               let atoms, typs = List.split typfields in
               let* values =
-                typs |> Typ.subst_typs theta |> gen_from_typs depth tdenv texts
+                typs
+                |> Type.Subst.subst_typs theta
+                |> gen_from_typs depth tdenv texts
               in
               let valuefields = List.combine atoms values in
               StructV valuefields |> Option.some |> wrap_value_opt typ.it
@@ -77,7 +82,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
                 typcases
                 |> List.map (fun (nottyp, _, _) ->
                        let mixop, typs = nottyp.it in
-                       let typs = Typ.subst_typs theta typs in
+                       let typs = Type.Subst.subst_typs theta typs in
                        (mixop, typs))
               in
               let expand_nottyp' nottyp' =
