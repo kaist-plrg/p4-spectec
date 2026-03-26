@@ -1,8 +1,9 @@
-open Domain
+(* open Domain *)
 open Lang
 open Il
 module Value = Runtime.Dynamic_Il.Value
-open Error
+
+(* open Error *)
 open Util.Source
 
 (* Value map *)
@@ -21,55 +22,56 @@ let rec map_update key value = function
 
 (* Conversion between meta-maps and OCaml assoc lists *)
 
-let map_of_value (value : value) : map =
-  let tuple_of_value (value : value) : value * value =
-    match value.it with
-    | CaseV ([ []; [ { it = Atom.Colon; _ } ]; [] ], [ value_key; value_value ])
-      ->
-        (value_key, value_value)
-    | _ ->
-        error no_region
-          (Format.asprintf "expected a pair, but got %s" (Value.to_string value))
-  in
-  match value.it with
-  | CaseV
-      ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ],
-        [ value_pairs ] ) ->
-      Value.get_list value_pairs |> List.map tuple_of_value
-  | _ ->
-      error no_region
-        (Format.asprintf "expected a map, but got %s" (Value.to_string value))
+let map_of_value (_value : value) : map = failwith "TODO"
+(* let tuple_of_value (value : value) : value * value = *)
+(*   match value.it with *)
+(*   | CaseV ([ []; [ { it = Atom.Colon; _ } ]; [] ], [ value_key; value_value ]) *)
+(*     -> *)
+(*       (value_key, value_value) *)
+(*   | _ -> *)
+(*       error no_region *)
+(*         (Format.asprintf "expected a pair, but got %s" (Value.to_string value)) *)
+(* in *)
+(* match value.it with *)
+(* | CaseV *)
+(*     ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ], *)
+(*       [ value_pairs ] ) -> *)
+(*     Value.get_list value_pairs |> List.map tuple_of_value *)
+(* | _ -> *)
+(*     error no_region *)
+(*       (Format.asprintf "expected a map, but got %s" (Value.to_string value)) *)
 
-let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
-    (map : map) : value =
-  let value_of_tuple ((value_key, value_value) : value * value) : value =
-    let value =
-      let typ = Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in
-      Value.make typ
-        (CaseV
-           ([ []; [ Atom.Colon $ no_region ]; [] ], [ value_key; value_value ]))
-    in
-    add value;
-    value
-  in
-  let value_pairs =
-    let typ =
-      Il.IterT
-        ( Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region,
-          Il.List )
-    in
-    Value.make typ (ListV (map |> List.map value_of_tuple))
-  in
-  add value_pairs;
-  let value =
-    let typ = Il.VarT ("map" $ no_region, [ typ_key; typ_value ]) in
-    Value.make typ
-      (CaseV
-         ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
-           [ value_pairs ] ))
-  in
-  add value;
-  value
+let value_of_map (_add : value -> unit) (_typ_key : typ) (_typ_value : typ)
+    (_map : map) : value =
+  failwith "TODO"
+(* let value_of_tuple ((value_key, value_value) : value * value) : value = *)
+(*   let value = *)
+(*     let typ = Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in *)
+(*     Value.make typ *)
+(*       (CaseV *)
+(*          ([ []; [ Atom.Colon $ no_region ]; [] ], [ value_key; value_value ])) *)
+(*   in *)
+(*   add value; *)
+(*   value *)
+(* in *)
+(* let value_pairs = *)
+(*   let typ = *)
+(*     Il.IterT *)
+(*       ( Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region, *)
+(*         Il.List ) *)
+(*   in *)
+(*   Value.make typ (ListV (map |> List.map value_of_tuple)) *)
+(* in *)
+(* add value_pairs; *)
+(* let value = *)
+(*   let typ = Il.VarT ("map" $ no_region, [ typ_key; typ_value ]) in *)
+(*   Value.make typ *)
+(*     (CaseV *)
+(*        ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ], *)
+(*          [ value_pairs ] )) *)
+(* in *)
+(* add value; *)
+(* value *)
 
 (* Built-in implementations *)
 

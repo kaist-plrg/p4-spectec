@@ -9,14 +9,14 @@ open Util.Source
 (* Binding occurrences of identifiers, singular or multiple (parallel) *)
 
 module Occ = struct
-  type t = Single of Typ.t | Multi of Typ.t
+  type t = Single of Typdim.t | Multi of Typdim.t
 
   let strip = function Single typ -> typ | Multi typ -> typ
-  let to_string t = t |> strip |> Typ.to_string
+  let to_string t = t |> strip |> Typdim.to_string
 
   let add_iter (iter : iter) = function
-    | Single typ -> Single (Typ.add_iter iter typ)
-    | Multi typ -> Multi (Typ.add_iter iter typ)
+    | Single typ -> Single (Typdim.add_iter iter typ)
+    | Multi typ -> Multi (Typdim.add_iter iter typ)
 end
 
 (* Environment for identifier bindings *)
@@ -37,7 +37,7 @@ module BEnv = struct
         | Some bind_a, Some bind_b ->
             let typ_a = Occ.strip bind_a in
             let typ_b = Occ.strip bind_b in
-            if not (Typ.equiv typ_a typ_b) then
+            if not (Typdim.equiv typ_a typ_b) then
               error id.at
                 (Format.asprintf
                    "inconsistent dimensions for multiple bindings: (left) %s, \

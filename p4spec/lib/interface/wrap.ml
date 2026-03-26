@@ -104,27 +104,26 @@ let wrap_num_v_int (i : Bigint.t) : value =
   NumV (`Int i) |> with_typ (NumT `IntT)
 
 let wrap_text_v (s : string) : value = TextV s |> with_typ TextT
-
-let wrap_case_v (vs : symbol list) : value' =
-  let rec build_mixop acc_mixop acc_terms = function
-    | [] ->
-        (* Always add the final group, even if empty *)
-        acc_mixop @ [ acc_terms ]
-    | Term s :: rest ->
-        (* Accumulate terms *)
-        build_mixop acc_mixop (acc_terms @ [ wrap_atom s ]) rest
-    | NT _ :: rest ->
-        (* When we hit a non-terminal, add accumulated terms to mixop and start new group *)
-        let new_mixop = acc_mixop @ [ acc_terms ] in
-        build_mixop new_mixop [] rest
-  in
-  let mixop = build_mixop [] [] vs in
-  let values =
-    vs
-    |> List.filter (fun v -> match v with NT _ -> true | _ -> false)
-    |> List.map (function NT v -> v | Term _ -> assert false)
-  in
-  CaseV (mixop, values)
+let wrap_case_v (_vs : symbol list) : value' = failwith "TODO"
+(* let rec build_mixop acc_mixop acc_terms = function *)
+(*   | [] -> *)
+(*       (1* Always add the final group, even if empty *1) *)
+(*       acc_mixop @ [ acc_terms ] *)
+(*   | Term s :: rest -> *)
+(*       (1* Accumulate terms *1) *)
+(*       build_mixop acc_mixop (acc_terms @ [ wrap_atom s ]) rest *)
+(*   | NT _ :: rest -> *)
+(*       (1* When we hit a non-terminal, add accumulated terms to mixop and start new group *1) *)
+(*       let new_mixop = acc_mixop @ [ acc_terms ] in *)
+(*       build_mixop new_mixop [] rest *)
+(* in *)
+(* let mixop = build_mixop [] [] vs in *)
+(* let values = *)
+(*   vs *)
+(*   |> List.filter (fun v -> match v with NT _ -> true | _ -> false) *)
+(*   |> List.map (function NT v -> v | Term _ -> assert false) *)
+(* in *)
+(* CaseV (mixop, values) *)
 
 let wrap_tuple_v (s : string) (vs : value list) : value =
   TupleV vs |> with_typ (wrap_var_t s)

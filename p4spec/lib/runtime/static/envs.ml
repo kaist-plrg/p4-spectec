@@ -5,11 +5,11 @@ open Domain.Lib
 
 (* Identifier type and dimension environment *)
 
-module VEnv = MakeIdEnv (Typ)
+module VEnv = MakeIdEnv (Typdim)
 
-(* Plain type (EL type) environment *)
+(* Meta-variable environment *)
 
-module PTEnv = MakeIdEnv (Plaintyp)
+module MEnv = MakeIdEnv (Typ)
 
 (* Type definition environment *)
 

@@ -1,4 +1,5 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
 open Xl
 open Ll.Ast
@@ -725,9 +726,7 @@ and prosify_rel_math_title (ctx : Ctx.t) (id_rel : id)
   let exps_input_pl = prosify_exps ctx exps_input in
   let exps_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_input_pl_indexed with
         | Some exp_pl -> exp_pl
         | None -> prosify_hole_exp ())
@@ -813,9 +812,7 @@ and prosify_rulegroup_math_title (ctx : Ctx.t) (_id_rel : id)
   let exps_input_pl = prosify_exps ctx exps_input in
   let epxs_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx epxs_input_pl_indexed with
         | Some exp_pl -> exp_pl
         | None -> prosify_hole_exp ())

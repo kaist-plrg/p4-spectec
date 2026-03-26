@@ -1,8 +1,9 @@
-open Domain
+(* open Domain *)
 open Lang
 open Il
 module Value = Runtime.Dynamic_Il.Value
-open Error
+
+(* open Error *)
 open Util.Source
 
 (* Value set *)
@@ -13,33 +14,34 @@ type set = VSet.t
 
 (* Conversion between meta-sets and OCaml lists *)
 
-let set_of_value (value : value) : set =
-  match value.it with
-  | CaseV
-      ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ],
-        [ value_elements ] ) ->
-      let values_element = Value.get_list value_elements in
-      VSet.of_list values_element
-  | _ ->
-      error no_region
-        (Format.asprintf "expected a set, but got %s" (Value.to_string value))
+let set_of_value (_value : value) : set = failwith "TODO"
+(* match value.it with *)
+(* | CaseV *)
+(*     ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ], *)
+(*       [ value_elements ] ) -> *)
+(*     let values_element = Value.get_list value_elements in *)
+(*     VSet.of_list values_element *)
+(* | _ -> *)
+(*     error no_region *)
+(*       (Format.asprintf "expected a set, but got %s" (Value.to_string value)) *)
 
-let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
-  let values_element = VSet.elements set in
-  let value_elements =
-    let typ = Il.IterT (typ_key, Il.List) in
-    Value.make typ (ListV values_element)
-  in
-  add value_elements;
-  let value =
-    let typ = Il.VarT ("set" $ no_region, [ typ_key ]) in
-    Value.make typ
-      (CaseV
-         ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
-           [ value_elements ] ))
-  in
-  add value;
-  value
+let value_of_set (_add : value -> unit) (_typ_key : typ) (_set : set) : value =
+  failwith "TODO"
+(* let values_element = VSet.elements set in *)
+(* let value_elements = *)
+(*   let typ = Il.IterT (typ_key, Il.List) in *)
+(*   Value.make typ (ListV values_element) *)
+(* in *)
+(* add value_elements; *)
+(* let value = *)
+(*   let typ = Il.VarT ("set" $ no_region, [ typ_key ]) in *)
+(*   Value.make typ *)
+(*     (CaseV *)
+(*        ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ], *)
+(*          [ value_elements ] )) *)
+(* in *)
+(* add value; *)
+(* value *)
 
 (* dec $intersect_set<K>(set<K>, set<K>) : set<K> *)
 

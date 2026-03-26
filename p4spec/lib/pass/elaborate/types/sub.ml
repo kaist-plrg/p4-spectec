@@ -1,42 +1,49 @@
+open Domain.Lib
 open Lang
 open Xl
-open El
+open Il
 open Runtime.Static
+open Envs
 open Util.Source
 
-let rec sub_plaintyp (tdenv : Envs.TDEnv.t) (plaintyp_a : plaintyp)
-    (plaintyp_b : plaintyp) : bool =
-  Equiv.equiv_plaintyp tdenv plaintyp_a plaintyp_b
-  || sub_plaintyp' tdenv plaintyp_a plaintyp_b
+let rec sub_typ (tdenv : TDEnv.t) (typ_a : typ) (typ_b : typ) : bool =
+  Equiv.equiv_typ tdenv typ_a typ_b || sub_typ' tdenv typ_a typ_b
 
-and sub_plaintyp' (tdenv : Envs.TDEnv.t) (plaintyp_a : plaintyp)
-    (plaintyp_b : plaintyp) : bool =
-  let plaintyp_a = Plaintyp.expand_plaintyp tdenv plaintyp_a in
-  let plaintyp_b = Plaintyp.expand_plaintyp tdenv plaintyp_b in
-  match (plaintyp_a.it, plaintyp_b.it) with
+and sub_typ' (tdenv : TDEnv.t) (typ_a : typ) (typ_b : typ) : bool =
+  let typ_a = Expand.expand_typ tdenv typ_a in
+  let typ_b = Expand.expand_typ tdenv typ_b in
+  match (typ_a.it, typ_b.it) with
   | NumT numtyp_a, NumT numtyp_b -> Num.sub numtyp_a numtyp_b
-  | VarT _, VarT _ -> (
-      let kind_a = Plaintyp.kind_plaintyp tdenv plaintyp_a in
-      let kind_b = Plaintyp.kind_plaintyp tdenv plaintyp_b in
-      match (kind_a, kind_b) with
-      | Variant typcases_a, Variant typcases_b ->
-          let nottyps_a = List.map fst typcases_a |> List.map fst in
-          let nottyps_b = List.map fst typcases_b |> List.map fst in
-          List.for_all
-            (fun nottyp_a ->
-              List.exists (Equiv.equiv_nottyp tdenv nottyp_a) nottyps_b)
-            nottyps_a
+  | VarT (tid_a, targs_a), VarT (tid_b, targs_b) -> (
+      let td_opt_a = TDEnv.find_opt tid_a tdenv in
+      let td_opt_b = TDEnv.find_opt tid_b tdenv in
+      match (td_opt_a, td_opt_b) with
+      | ( Some (Defined (tparams_a, deftyp_a)),
+          Some (Defined (tparams_b, deftyp_b)) ) -> (
+          match (deftyp_a.it, deftyp_b.it) with
+          | VariantT typcases_a, VariantT typcases_b ->
+              let theta_a = List.combine tparams_a targs_a |> TIdMap.of_list in
+              let theta_b = List.combine tparams_b targs_b |> TIdMap.of_list in
+              let nottyps_a =
+                typcases_a |> List.map fst
+                |> List.map (Typ.subst_nottyp theta_a)
+              in
+              let nottyps_b =
+                typcases_b |> List.map fst
+                |> List.map (Typ.subst_nottyp theta_b)
+              in
+              List.for_all
+                (fun nottyp_a ->
+                  List.exists (Equiv.equiv_nottyp tdenv nottyp_a) nottyps_b)
+                nottyps_a
+          | _, _ -> false)
       | _ -> false)
-  | ParenT plaintyp_a, _ -> sub_plaintyp tdenv plaintyp_a plaintyp_b
-  | _, ParenT plaintyp_b -> sub_plaintyp tdenv plaintyp_a plaintyp_b
-  | TupleT plaintyps_a, TupleT plaintyps_b ->
-      List.length plaintyps_a = List.length plaintyps_b
-      && List.for_all2 (sub_plaintyp tdenv) plaintyps_a plaintyps_b
-  | IterT (plaintyp_a, iter_a), IterT (plaintyp_b, iter_b) when iter_a = iter_b
-    ->
-      sub_plaintyp tdenv plaintyp_a plaintyp_b
-  | IterT (plaintyp_a, Opt), IterT (plaintyp_b, List) ->
-      sub_plaintyp tdenv plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, Opt) -> sub_plaintyp tdenv plaintyp_a plaintyp_b
-  | _, IterT (plaintyp_b, List) -> sub_plaintyp tdenv plaintyp_a plaintyp_b
+  | TupleT typs_a, TupleT typs_b ->
+      List.length typs_a = List.length typs_b
+      && List.for_all2 (sub_typ tdenv) typs_a typs_b
+  | IterT (typ_a, iter_a), IterT (typ_b, iter_b) when iter_a = iter_b ->
+      sub_typ tdenv typ_a typ_b
+  | IterT (typ_a, Opt), IterT (typ_b, List) -> sub_typ tdenv typ_a typ_b
+  | _, IterT (typ_b, Opt) -> sub_typ tdenv typ_a typ_b
+  | _, IterT (typ_b, List) -> sub_typ tdenv typ_a typ_b
   | _ -> false

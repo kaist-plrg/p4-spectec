@@ -136,10 +136,8 @@ let hash_of (v : value') : int =
             h := (!h * 31) + value_field.note.vhash)
           valuefields
     | CaseV (mixop, values) ->
-        List.iter
-          (fun atoms ->
-            List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it) atoms)
-          mixop;
+        mixop |> Mixop.atoms
+        |> List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it);
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
     | TupleV values ->
         h := (!h * 31) + 1001;
@@ -159,7 +157,7 @@ let hash_of (v : value') : int =
 
 (* Value constructor with precomputed hash *)
 
-let make (typ : Il.typ') (v : value') : value =
+let make (typ : typ') (v : value') : value =
   let vid = fresh () in
   let vhash = hash_of v in
   Util.Source.( $$$ ) v { vid; typ; vhash }

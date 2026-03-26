@@ -87,13 +87,11 @@ and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
 
 and pp_default_case_v (henv : HEnv.t) fmt (valuecase : Il.valuecase) : unit =
   let mixop, values = valuecase in
-  let len = List.length mixop + List.length values in
-  List.init len (fun idx ->
-      if idx mod 2 = 0 then
-        idx / 2 |> List.nth mixop |> F.asprintf "%a" pp_atoms
-      else idx / 2 |> List.nth values |> F.asprintf "%a" (pp_value henv))
-  |> List.filter (fun str -> str <> "")
-  |> String.concat " " |> F.fprintf fmt "%s"
+  let svalues = List.map (F.asprintf "%a" (pp_value henv)) values in
+  F.fprintf fmt "%s"
+    (Mixop.assemble
+       ~string_of_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
+       mixop svalues)
 
 (* OptV *)
 
