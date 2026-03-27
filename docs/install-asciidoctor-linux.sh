@@ -133,7 +133,7 @@ TIME_START=$(date +%s)
 # my own convenience):
 if [ "${ID}" = "ubuntu" ]
 then
-    sudo apt-get --yes install gnupg curl
+    sudo apt-get --yes install gnupg2 curl
 elif [ "${ID}" = "fedora" ]
 then
     sudo dnf -y update
