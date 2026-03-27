@@ -41,9 +41,8 @@ let digest (value_ctx : Value.t) (value_sto : Value.t) :
     Value.t * Value.t * Value.t =
   (* no-op *)
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -72,9 +71,8 @@ let mark_to_drop (value_ctx : Value.t) (value_sto : Value.t) :
       "mcast_grp" value_mcast_grp
   in
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -120,9 +118,8 @@ let hash (value_ctx : Value.t) (value_sto : Value.t) :
     Spec.Rel.lvalue_write_var_local value_ctx value_sto "result" result
   in
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -200,9 +197,8 @@ let do_verify_checksum ~(payload : Core.Object.PacketIn.t option)
         "checksum_error" value_checksum_error
   in
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -214,9 +210,8 @@ let verify_checksum (value_ctx : Value.t) (value_sto : Value.t) :
   if condition then do_verify_checksum ~payload:None value_ctx value_sto
   else
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      (mixop, [ value_eps ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_eps ], "returnResult")
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -229,9 +224,8 @@ let verify_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t)
     do_verify_checksum ~payload:(Some packet_in) value_ctx value_sto
   else
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      (mixop, [ value_eps ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_eps ], "returnResult")
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -303,9 +297,8 @@ let do_update_checksum ~(payload : Core.Object.PacketIn.t option)
   in
   (* Return void *)
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -318,9 +311,8 @@ let update_checksum (value_ctx : Value.t) (value_sto : Value.t) :
   if condition then do_update_checksum ~payload:None value_ctx value_sto
   else
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      (mixop, [ value_eps ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_eps ], "returnResult")
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -334,9 +326,8 @@ let update_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t)
     do_update_checksum ~payload:(Some packet_in) value_ctx value_sto
   else
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      (mixop, [ value_eps ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_eps ], "returnResult")
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -395,9 +386,8 @@ let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
   in
   let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -434,9 +424,8 @@ let recirculate_preserving_field_list (value_ctx : Value.t)
   in
   let value_arch = Spec.Func.update_archState_e value_arch value_arch_state in
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_arch, value_callResult)
 
@@ -491,9 +480,8 @@ let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
   let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
   (* Return void *)
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -577,9 +565,8 @@ let log_msg (value_ctx : Value.t) (value_sto : Value.t) :
   print_endline msg;
   (* Return void *)
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -620,8 +607,7 @@ let log_msg_format (value_ctx : Value.t) (value_sto : Value.t) :
   format_braces msg data |> print_endline;
   (* Return void *)
   let value_callResult =
-    let mixop = mixop_of "RETURN value?" in
     let value_eps = wrap_opt_v "value" None in
-    (mixop, [ value_eps ]) #@ "returnResult"
+    "RETURN value?" <-- ([ value_eps ], "returnResult")
   in
   (value_ctx, value_sto, value_callResult)

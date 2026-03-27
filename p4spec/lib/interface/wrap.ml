@@ -59,8 +59,8 @@ let wrap_list_v_typed (t : typ') (vs : value list) : value =
 let wrap_extern_v (s : string) (json : Yojson.Safe.t) : value =
   ExternV json |> with_typ (wrap_var_t s)
 
-let ( #@ ) (valuecase : valuecase) (s : string) : value =
-  wrap_case_v s valuecase
+let ( <-- ) (mixop_s : string) ((vs, type_s) : value list * string) : value =
+  wrap_case_v type_s (mixop_of mixop_s, vs)
 
 let ( #@@ ) (v : value) (s : string) : value =
   { v with note = { v.note with typ = wrap_var_t s } }

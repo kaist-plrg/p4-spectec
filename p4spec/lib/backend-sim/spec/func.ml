@@ -129,8 +129,7 @@ let find_type_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string) :
   !call "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
 
 let find_type_e_local (value_ctx : Value.t) (name : string) : Value.t =
-  let mixop = mixop_of "LOCAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "LOCAL" <-- ([], "cursor") in
   find_type_e value_cursor value_ctx name |> unwrap_opt_v |> Option.get
 
 (* find_var_value_t *)
@@ -138,20 +137,17 @@ let find_type_e_local (value_ctx : Value.t) (name : string) : Value.t =
 let find_var_value_t (value_cursor : Value.t) (value_ctx : Value.t)
     (name : string) : Value.t =
   let value_prefixedNameIR =
-    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
+    "`` nameIR" <-- ([ value_nameIR ], "prefixedNameIR")
   in
   !call "find_var_value_t" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
 let find_var_value_t_global (value_ctx : Value.t) (name : string) : Value.t =
-  let mixop = mixop_of "GLOBAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "GLOBAL" <-- ([], "cursor") in
   find_var_value_t value_cursor value_ctx name
 
 let find_var_value_t_local (value_ctx : Value.t) (name : string) : Value.t =
-  let mixop = mixop_of "LOCAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "LOCAL" <-- ([], "cursor") in
   find_var_value_t value_cursor value_ctx name
 
 (* find_var_e *)
@@ -159,20 +155,17 @@ let find_var_value_t_local (value_ctx : Value.t) (name : string) : Value.t =
 let find_var_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string) :
     Value.t =
   let value_prefixedNameIR =
-    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
+    "`` nameIR" <-- ([ value_nameIR ], "prefixedNameIR")
   in
   !call "find_var_e" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
 let find_var_e_global (value_ctx : Value.t) (name : string) : Value.t =
-  let mixop = mixop_of "GLOBAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "GLOBAL" <-- ([], "cursor") in
   find_var_e value_cursor value_ctx name
 
 let find_var_e_local (value_ctx : Value.t) (name : string) : Value.t =
-  let mixop = mixop_of "LOCAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "LOCAL" <-- ([], "cursor") in
   find_var_e value_cursor value_ctx name
 
 (* subst_type_e *)
@@ -182,6 +175,5 @@ let subst_type_e (value_cursor : Value.t) (value_ctx : Value.t)
   !call "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
 
 let subst_type_e_local (value_ctx : Value.t) (value_typ : Value.t) : Value.t =
-  let mixop = mixop_of "LOCAL" in
-  let value_cursor = (mixop, []) #@ "cursor" in
+  let value_cursor = "LOCAL" <-- ([], "cursor") in
   subst_type_e value_cursor value_ctx value_typ

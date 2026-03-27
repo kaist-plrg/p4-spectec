@@ -139,7 +139,9 @@ let assemble ~(string_of_atom : atom -> string) (mixop : t) (args : string list)
               (smixops @ [ smixop ], args))
             ([], args) mixops
         in
-        let smixop = smixops |> List.filter (fun s -> s <> "") |> String.concat " " in
+        let smixop =
+          smixops |> List.filter (fun s -> s <> "") |> String.concat " "
+        in
         (smixop, args)
   in
   let smixop, args = assemble mixop args in

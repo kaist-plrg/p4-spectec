@@ -10,17 +10,15 @@ open Wrap
 (* D int *)
 
 let pack_p4_arbitraryInt (i : Bigint.t) : Value.t =
-  let mixop = mixop_of "D int" in
   let value_i = i |> wrap_num_v_int in
-  (mixop, [ value_i ]) #@ "value"
+  "D int" <-- ([ value_i ], "value")
 
 (* nat W int *)
 
 let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
-  let mixop = mixop_of "nat W int" in
   let value_width = width |> wrap_num_v_nat in
   let value_i = i |> wrap_num_v_int in
-  (mixop, [ value_width; value_i ]) #@ "value"
+  "nat W int" <-- ([ value_width; value_i ], "value")
 
 (* nat S int *)
 (* nat `. nat V int *)
@@ -33,10 +31,9 @@ let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
 (* tid `. id *)
 
 let pack_p4_enum (type_id : string) (name : string) : Value.t =
-  let mixop = mixop_of "tid `. id" in
   let value_typeId = wrap_text_v type_id in
   let value_nameIR = wrap_text_v name in
-  (mixop, [ value_typeId; value_nameIR ]) #@ "value"
+  "tid `. id" <-- ([ value_typeId; value_nameIR ], "value")
 
 (* tid `. id `. value *)
 (* objectReferenceValue = `! oid *)

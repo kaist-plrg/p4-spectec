@@ -138,12 +138,10 @@ module PacketIn = struct
     in
     if pkt.idx + size > pkt.len then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "PacketTooShort" ]) #@ "errorValue"
+          "ERROR `. nameIR" <-- ([ wrap_text_v "PacketTooShort" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -159,9 +157,8 @@ module PacketIn = struct
       in
       (* Create call result *)
       let value_callResult =
-        let mixop = mixop_of "RETURN value?" in
         let value_eps = wrap_opt_v "value" None in
-        (mixop, [ value_eps ]) #@ "returnResult"
+        "RETURN value?" <-- ([ value_eps ], "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -202,32 +199,27 @@ module PacketIn = struct
     let size = size_min + size_varsize in
     if alignment <> 0 then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "ParserInvalidArgument" ]) #@ "errorValue"
+          "ERROR `. nameIR"
+          <-- ([ wrap_text_v "ParserInvalidArgument" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else if pkt.idx + size > pkt.len then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "PacketTooShort" ]) #@ "errorValue"
+          "ERROR `. nameIR" <-- ([ wrap_text_v "PacketTooShort" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else if size > size_max then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "HeaderTooShort" ]) #@ "errorValue"
+          "ERROR `. nameIR" <-- ([ wrap_text_v "HeaderTooShort" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -249,9 +241,8 @@ module PacketIn = struct
       in
       (* Create call result *)
       let value_callResult =
-        let mixop = mixop_of "RETURN value?" in
         let value_eps = wrap_opt_v "value" None in
-        (mixop, [ value_eps ]) #@ "returnResult"
+        "RETURN value?" <-- ([ value_eps ], "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -274,12 +265,10 @@ module PacketIn = struct
     let value_hdr = Spec.Func.default value_typ in
     if pkt.idx + size > pkt.len then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "PacketTooShort" ]) #@ "errorValue"
+          "ERROR `. nameIR" <-- ([ wrap_text_v "PacketTooShort" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -289,9 +278,8 @@ module PacketIn = struct
       let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
       (* Create call result *)
       let value_callResult =
-        let mixop = mixop_of "RETURN value?" in
         let value_hdr = wrap_opt_v "value" (Some value_hdr) in
-        (mixop, [ value_hdr ]) #@ "returnResult"
+        "RETURN value?" <-- ([ value_hdr ], "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -308,21 +296,18 @@ module PacketIn = struct
     in
     if pkt.idx + size > pkt.len then
       let value_callResult =
-        let mixop = mixop_of "REJECT errorValue" in
         let value_err =
-          let mixop = mixop_of "ERROR `. nameIR" in
-          (mixop, [ wrap_text_v "PacketTooShort" ]) #@ "errorValue"
+          "ERROR `. nameIR" <-- ([ wrap_text_v "PacketTooShort" ], "errorValue")
         in
-        (mixop, [ value_err ]) #@ "rejectTransitionResult"
+        "REJECT errorValue" <-- ([ value_err ], "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
       (* Advance cursor *)
       let pkt = { pkt with idx = pkt.idx + size } in
       let value_callResult =
-        let mixop = mixop_of "RETURN value?" in
         let value_eps = wrap_opt_v "value" None in
-        (mixop, [ value_eps ]) #@ "returnResult"
+        "RETURN value?" <-- ([ value_eps ], "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -338,9 +323,8 @@ module PacketIn = struct
       pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int length)
     in
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_length_opt = wrap_opt_v "value" (Some value_length) in
-      (mixop, [ value_length_opt ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_length_opt ], "returnResult")
     in
     (pkt, value_ctx, value_arch, value_callResult)
 end
@@ -376,9 +360,8 @@ module PacketOut = struct
     let pkt = { bits = Array.append pkt.bits bits } in
     (* Create call result *)
     let value_callResult =
-      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      (mixop, [ value_eps ]) #@ "returnResult"
+      "RETURN value?" <-- ([ value_eps ], "returnResult")
     in
     (pkt, value_ctx, value_arch, value_callResult)
 end

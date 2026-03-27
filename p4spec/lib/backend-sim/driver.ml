@@ -246,32 +246,31 @@ module Make
                    match table_key_value with
                    | Num number ->
                        if String.starts_with ~prefix:"0x" number then
-                         let mixop = mixop_of "`HEX text" in
                          let number_base_len = String.length number - 2 in
                          let number_base =
                            String.sub number 2 number_base_len
                          in
-                         (mixop, [ wrap_text_v number_base ])
-                         #@ "tableKeyValueInterface"
+                         "`HEX text"
+                         <-- ( [ wrap_text_v number_base ],
+                               "tableKeyValueInterface" )
                        else if String.starts_with ~prefix:"0b" number then
-                         let mixop = mixop_of "`BIN text" in
                          let number_base_len = String.length number - 2 in
                          let number_base =
                            String.sub number 2 number_base_len
                          in
-                         (mixop, [ wrap_text_v number_base ])
-                         #@ "tableKeyValueInterface"
+                         "`BIN text"
+                         <-- ( [ wrap_text_v number_base ],
+                               "tableKeyValueInterface" )
                        else
-                         let mixop = mixop_of "`DEC text" in
-                         (mixop, [ wrap_text_v number ])
-                         #@ "tableKeyValueInterface"
+                         "`DEC text"
+                         <-- ([ wrap_text_v number ], "tableKeyValueInterface")
                    | Slash (prefix, mask) ->
-                       let mixop = mixop_of "text `SLASH nat" in
                        let value_prefix = wrap_text_v prefix in
                        let mask = Bigint.of_int (int_of_string mask) in
                        let value_mask = wrap_num_v_nat mask in
-                       (mixop, [ value_prefix; value_mask ])
-                       #@ "tableKeyValueInterface"
+                       "text `SLASH nat"
+                       <-- ( [ value_prefix; value_mask ],
+                             "tableKeyValueInterface" )
                  in
                  wrap_tuple_v "tableKeyInterface"
                    [ value_table_key_name; value_table_key_value ])

@@ -22,7 +22,6 @@ let rec map_update key value = function
 (* Conversion between meta-maps and OCaml assoc lists *)
 
 let mixop_pair = Interface.Wrap.mixop_of "k `: v"
-
 let mixop_map = Interface.Wrap.mixop_of "`{ k }"
 
 let map_of_value (value : value) : map =
