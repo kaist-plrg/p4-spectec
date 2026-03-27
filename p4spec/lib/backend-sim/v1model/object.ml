@@ -130,8 +130,9 @@ module Counter = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -213,8 +214,9 @@ module Register = struct
       Spec.Rel.lvalue_write_var_local value_ctx value_arch "result" value
     in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 
@@ -253,8 +255,9 @@ module Register = struct
     in
     let reg = { reg with values } in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 end
@@ -353,8 +356,9 @@ module DirectCounter = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -448,8 +452,9 @@ module DirectMeter = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (meter, value_ctx, value_sto, value_callResult)
 end

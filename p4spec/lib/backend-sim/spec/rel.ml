@@ -14,8 +14,9 @@ let register f = call := f
 let lvalue_read_var (value_cursor : Value.t) (value_ctx : Value.t)
     (value_arch : Value.t) (name : string) : Value.t =
   let value_storageReference =
+    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
   in
   match
     !call "Lvalue_read"
@@ -26,19 +27,21 @@ let lvalue_read_var (value_cursor : Value.t) (value_ctx : Value.t)
 
 let lvalue_read_var_global (value_ctx : Value.t) (value_arch : Value.t)
     (name : string) : Value.t =
-  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  let mixop = mixop_of "GLOBAL" in
+  let value_cursor = (mixop, []) #@ "cursor" in
   lvalue_read_var value_cursor value_ctx value_arch name
 
 let lvalue_read_dot (value_cursor : Value.t) (value_ctx : Value.t)
     (value_arch : Value.t) (name : string) (member : string) : Value.t =
   let value_prefixedNameIR =
+    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
   in
   let value_storageReference =
+    let mixop = mixop_of "storageReference `. nameIR" in
     let value_memberIR = wrap_text_v member in
-    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]
-    #@ "storageReference"
+    (mixop, [ value_prefixedNameIR; value_memberIR ]) #@ "storageReference"
   in
   match
     !call "Lvalue_read"
@@ -49,7 +52,8 @@ let lvalue_read_dot (value_cursor : Value.t) (value_ctx : Value.t)
 
 let lvalue_read_dot_global (value_ctx : Value.t) (value_arch : Value.t)
     (name : string) (member : string) : Value.t =
-  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  let mixop = mixop_of "GLOBAL" in
+  let value_cursor = (mixop, []) #@ "cursor" in
   lvalue_read_dot value_cursor value_ctx value_arch name member
 
 (* Lvalue_write *)
@@ -57,8 +61,9 @@ let lvalue_read_dot_global (value_ctx : Value.t) (value_arch : Value.t)
 let lvalue_write_var (value_cursor : Value.t) (value_ctx : Value.t)
     (value_arch : Value.t) (name : string) (value_val : Value.t) : Value.t =
   let value_prefixedNameIR =
+    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
   in
   match
     !call "Lvalue_write"
@@ -71,13 +76,14 @@ let lvalue_write_dot (value_cursor : Value.t) (value_ctx : Value.t)
     (value_arch : Value.t) (name : string) (member : string)
     (value_val : Value.t) : Value.t =
   let value_prefixedNameIR =
+    let mixop = mixop_of "`` nameIR" in
     let value_nameIR = wrap_text_v name in
-    [ Term "`"; NT value_nameIR ] #@ "prefixedNameIR"
+    (mixop, [ value_nameIR ]) #@ "prefixedNameIR"
   in
   let value_storageReference =
+    let mixop = mixop_of "storageReference `. nameIR" in
     let value_memberIR = wrap_text_v member in
-    [ NT value_prefixedNameIR; Term "."; NT value_memberIR ]
-    #@ "storageReference"
+    (mixop, [ value_prefixedNameIR; value_memberIR ]) #@ "storageReference"
   in
   match
     !call "Lvalue_write"
@@ -88,17 +94,20 @@ let lvalue_write_dot (value_cursor : Value.t) (value_ctx : Value.t)
 
 let lvalue_write_var_local (value_ctx : Value.t) (value_arch : Value.t)
     (name : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let mixop = mixop_of "LOCAL" in
+  let value_cursor = (mixop, []) #@ "cursor" in
   lvalue_write_var value_cursor value_ctx value_arch name value_val
 
 let lvalue_write_dot_global (value_ctx : Value.t) (value_arch : Value.t)
     (name : string) (member : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "GLOBAL" ] #@ "cursor" in
+  let mixop = mixop_of "GLOBAL" in
+  let value_cursor = (mixop, []) #@ "cursor" in
   lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
 let lvalue_write_dot_local (value_ctx : Value.t) (value_arch : Value.t)
     (name : string) (member : string) (value_val : Value.t) : Value.t =
-  let value_cursor = [ Term "LOCAL" ] #@ "cursor" in
+  let mixop = mixop_of "LOCAL" in
+  let value_cursor = (mixop, []) #@ "cursor" in
   lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
 (* V1Model_init_packet_in/out *)

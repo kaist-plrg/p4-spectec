@@ -117,13 +117,19 @@ let assemble ~(string_of_atom : atom -> string) (mixop : t) (args : string list)
     | Brack (atom_l, mixop, atom_r) ->
         let smixop, args = assemble mixop args in
         let smixop =
-          string_of_atom atom_l ^ " " ^ smixop ^ " " ^ string_of_atom atom_r
+          [ string_of_atom atom_l; smixop; string_of_atom atom_r ]
+          |> List.filter (fun s -> s <> "")
+          |> String.concat " "
         in
         (smixop, args)
     | Infix (mixop_l, atom, mixop_r) ->
         let smixop_l, args = assemble mixop_l args in
         let smixop_r, args = assemble mixop_r args in
-        let smixop = smixop_l ^ " " ^ string_of_atom atom ^ " " ^ smixop_r in
+        let smixop =
+          [ smixop_l; string_of_atom atom; smixop_r ]
+          |> List.filter (fun s -> s <> "")
+          |> String.concat " "
+        in
         (smixop, args)
     | Seq mixops ->
         let smixops, args =
@@ -133,7 +139,7 @@ let assemble ~(string_of_atom : atom -> string) (mixop : t) (args : string list)
               (smixops @ [ smixop ], args))
             ([], args) mixops
         in
-        let smixop = String.concat " " smixops in
+        let smixop = smixops |> List.filter (fun s -> s <> "") |> String.concat " " in
         (smixop, args)
   in
   let smixop, args = assemble mixop args in

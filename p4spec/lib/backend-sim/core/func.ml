@@ -18,9 +18,12 @@ let verify (value_ctx : Value.t) (value_arch : Value.t) :
   let check = value_check |> unpack_p4_bool in
   let value_callResult =
     if check then
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    else [ Term "REJECT"; NT value_toSignal ] #@ "rejectTransitionResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
+    else
+      let mixop = mixop_of "REJECT errorValue" in
+      (mixop, [ value_toSignal ]) #@ "rejectResult"
   in
   (value_ctx, value_arch, value_callResult)
 

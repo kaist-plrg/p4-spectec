@@ -62,8 +62,9 @@ module CounterArray = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -89,8 +90,9 @@ module CounterArray = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 end

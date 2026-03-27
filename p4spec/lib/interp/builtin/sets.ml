@@ -13,8 +13,7 @@ type set = VSet.t
 
 (* Conversion between meta-sets and OCaml lists *)
 
-let mixop_set =
-  Mixop.(Brack (Atom.LBrace $ no_region, Arg, Atom.RBrace $ no_region))
+let mixop_set = Interface.Wrap.mixop_of "`{ k }"
 
 let set_of_value (value : value) : set =
   match value.it with

@@ -275,7 +275,7 @@ struct
     in
     let drop =
       match flatten_case_v_opt value_parse_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ _ ]) -> true
+      | Some (_, [ "REJECT" ], [ _ ]) -> true
       | Some _ -> false
       | None -> assert false
     in

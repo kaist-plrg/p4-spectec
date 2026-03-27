@@ -478,7 +478,7 @@ struct
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
+      | Some (_, [ "REJECT" ], [ value_error ]) ->
           Spec.Rel.lvalue_write_dot_global value_ctx value_arch
             "standard_metadata" "parser_error" value_error
       | Some _ -> value_ctx

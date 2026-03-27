@@ -93,8 +93,9 @@ module Counter = struct
     in
     (* Create call result *)
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -148,8 +149,9 @@ module Meter = struct
     (* NOTE: returning GREEN for now *)
     let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_color_opt = wrap_opt_v "value" (Some value_color) in
-      [ Term "RETURN"; NT value_color_opt ] #@ "returnResult"
+      (mixop, [ value_color_opt ]) #@ "returnResult"
     in
     (meter, value_ctx, value_arch, value_callResult)
 
@@ -164,8 +166,9 @@ module Meter = struct
     (* NOTE: returning GREEN for now *)
     let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_color_opt = wrap_opt_v "value" (Some value_color) in
-      [ Term "RETURN"; NT value_color_opt ] #@ "returnResult"
+      (mixop, [ value_color_opt ]) #@ "returnResult"
     in
     (meter, value_ctx, value_arch, value_callResult)
 end
@@ -232,8 +235,9 @@ module Register = struct
       else Spec.Func.default reg.typ
     in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_opt = wrap_opt_v "value" (Some value) in
-      [ Term "RETURN"; NT value_opt ] #@ "returnResult"
+      (mixop, [ value_opt ]) #@ "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 
@@ -252,8 +256,9 @@ module Register = struct
     in
     let reg = { reg with values } in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 end
@@ -306,8 +311,9 @@ module HashExtern = struct
     let value_result = pack_p4_arbitraryInt result in
     let value_result = Spec.Func.cast_op value_typ_O value_result in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_result_opt = wrap_opt_v "value" (Some value_result) in
-      [ Term "RETURN"; NT value_result_opt ] #@ "returnResult"
+      (mixop, [ value_result_opt ]) #@ "returnResult"
     in
     (hash, value_ctx, value_arch, value_callResult)
 
@@ -341,8 +347,9 @@ module HashExtern = struct
     let value_result = pack_p4_arbitraryInt result in
     let value_result = Spec.Func.cast_op value_typ_O value_result in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_result_opt = wrap_opt_v "value" (Some value_result) in
-      [ Term "RETURN"; NT value_result_opt ] #@ "returnResult"
+      (mixop, [ value_result_opt ]) #@ "returnResult"
     in
     (hash, value_ctx, value_arch, value_callResult)
 end
@@ -382,8 +389,9 @@ module InternetChecksum = struct
   let clear (value_ctx : Value.t) (value_arch : Value.t) (_checksum : t) :
       t * Value.t * Value.t * Value.t =
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (Bigint.zero, value_ctx, value_arch, value_callResult)
 
@@ -399,8 +407,9 @@ module InternetChecksum = struct
     let checksum = Hash.compute_checksum "csum16" ~value_init:checksum values in
     let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -419,8 +428,9 @@ module InternetChecksum = struct
     in
     let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -433,8 +443,9 @@ module InternetChecksum = struct
     let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
     let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
-      [ Term "RETURN"; NT value_checksum_opt ] #@ "returnResult"
+      (mixop, [ value_checksum_opt ]) #@ "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -448,8 +459,9 @@ module InternetChecksum = struct
       t * Value.t * Value.t * Value.t =
     let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
-      [ Term "RETURN"; NT value_checksum_opt ] #@ "returnResult"
+      (mixop, [ value_checksum_opt ]) #@ "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -467,8 +479,9 @@ module InternetChecksum = struct
       |> unpack_p4_fixedBit |> snd
     in
     let value_callResult =
+      let mixop = mixop_of "RETURN value?" in
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      (mixop, [ value_eps ]) #@ "returnResult"
     in
     (checksum_state, value_ctx, value_arch, value_callResult)
 end

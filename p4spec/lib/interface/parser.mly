@@ -12,7 +12,7 @@
 
   let rec declare_vars_of_il (value : value) : unit =
     match flatten_case_v_opt value with
-    | Some ("nameList", [ []; [","]; [] ], [ v_nameList; v_name ]) ->
+    | Some ("nameList", [ "," ], [ v_nameList; v_name ]) ->
         declare_vars_of_il v_nameList;
         declare_var_of_il v_name false
     | Some ("identifier", _, _)
@@ -28,9 +28,9 @@
     let id = id_of_name value in
     declare_type id b
 
-  let rec declare_types_of_il (value: value) : unit =
+  let rec declare_types_of_il (value : value) : unit =
     match flatten_case_v_opt value with
-    | Some ("typeParameterList", [ []; [ "," ]; [] ], [ v_tpList; v_name ]) ->
+    | Some ("typeParameterList", [ "," ], [ v_tpList; v_name ]) ->
         declare_types_of_il v_tpList;
         declare_type_of_il v_name false
     | Some ("identifier", _, _)
@@ -226,20 +226,27 @@ int:
 (* Misc *)
 trailingCommaOpt:
 	| (* empty *)
-    { [ Term "`EMPTY" ] #@ "trailingCommaOpt" }
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "trailingCommaOpt" }
 	| COMMA
-    { [ Term "," ] #@ "trailingCommaOpt" }
+    { let mixop = mixop_of "`," in
+      (mixop, []) #@ "trailingCommaOpt" }
 ;
 
 (* Booleans *)
 %inline booleanLiteral:
-  | TRUE { [ Term "TRUE" ] #@ "booleanLiteral" }
-  | FALSE { [ Term "FALSE" ] #@ "booleanLiteral" }
+  | TRUE
+    { let mixop = mixop_of "TRUE" in
+      (mixop, []) #@ "booleanLiteral" }
+  | FALSE
+    { let mixop = mixop_of "FALSE" in
+      (mixop, []) #@ "booleanLiteral" }
 
 (* Integers *)
 integerLiteral:
 	| int = int
-    { [ Term "D"; NT int ] #@ "integerLiteral" }
+    { let mixop = mixop_of "D int" in
+       (mixop, [ int ]) #@ "integerLiteral" }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -248,36 +255,56 @@ integerLiteral:
 (* Strings *)
 stringLiteral:
 	| text = STRING_LITERAL
-    { [ Term (Char.escaped '"'); NT text; Term (Char.escaped '"') ] #@ "stringLiteral"}
+    { let mixop = mixop_of "`\" text `\"" in
+       (mixop, [ text ]) #@ "stringLiteral" }
 ;
 
 (* Names *)
 identifier:
 	| text = NAME IDENTIFIER
-    { [ Term "`ID"; NT text ] #@ "identifier" }
+    { let mixop = mixop_of "`ID text" in
+      (mixop, [ text ]) #@ "identifier" }
 ;
 
 typeIdentifier:
 	| text = NAME TYPENAME
-    { [ Term "`TID"; NT text ] #@ "typeIdentifier" }
+    { let mixop = mixop_of "`TID text" in
+      (mixop, [ text ]) #@ "typeIdentifier" }
 ;
 
 (* >> Non-type names *)
 nonTypeName:
-	| id = identifier { id }
-	| APPLY { [ Term "APPLY" ] #@ "nonTypeName" }
-	| KEY { [ Term "KEY" ] #@ "nonTypeName" }
-	| ACTIONS { [ Term "ACTIONS" ] #@ "nonTypeName" }
-	| STATE { [ Term "STATE" ] #@ "nonTypeName" }
-	| ENTRIES { [ Term "ENTRIES" ] #@ "nonTypeName" }
-	| TYPE { [ Term "TYPE" ] #@ "nonTypeName" }
-	| PRIORITY { [ Term "PRIORITY" ] #@ "nonTypeName" }
+	| id = identifier
+    { id }
+	| APPLY
+    { let mixop = mixop_of "APPLY" in
+      (mixop, []) #@ "nonTypeName" }
+	| KEY
+    { let mixop = mixop_of "KEY" in
+      (mixop, []) #@ "nonTypeName" }
+	| ACTIONS
+    { let mixop = mixop_of "ACTIONS" in
+      (mixop, []) #@ "nonTypeName" }
+	| STATE
+    { let mixop = mixop_of "STATE" in
+      (mixop, []) #@ "nonTypeName" }
+	| ENTRIES
+    { let mixop = mixop_of "ENTRIES" in
+      (mixop, []) #@ "nonTypeName" }
+	| TYPE
+    { let mixop = mixop_of "TYPE" in
+      (mixop, []) #@ "nonTypeName" }
+	| PRIORITY
+    { let mixop = mixop_of "PRIORITY" in
+      (mixop, []) #@ "nonTypeName" }
 ;
 
 prefixedNonTypeName:
-	| n = nonTypeName { n }
+	| n = nonTypeName
+    { n }
 	| DOT go_toplevel n = nonTypeName go_local
-    { [ Term "`ID"; Term "."; NT n ] #@ "prefixedNonTypeName" }
+    { let mixop = mixop_of "`ID `. nonTypeName" in
+      (mixop, [ n ]) #@ "prefixedNonTypeName" }
 ;
 
 (* >> Type names *)
@@ -286,19 +313,31 @@ typeName:
 ;
 
 prefixedTypeName:
-	| n = typeName { n }
+	| n = typeName
+    { n }
 	| DOT go_toplevel tid = typeName go_local
-		{ [ Term "`TID"; Term "."; NT tid ] #@ "prefixedType" }
+    { let mixop = mixop_of "`TID `. typeName" in
+      (mixop, [ tid ]) #@ "prefixedTypeName" }
 ;
 
 (* >> Table custom property names *)
 tableCustomName:
-	| id = identifier { id }
-	| tid = typeIdentifier { tid }
-	| APPLY { [ Term "APPLY" ] #@ "tableCustomName" }
-	| STATE { [ Term "STATE" ] #@ "tableCustomName" }
-	| TYPE { [ Term "TYPE" ] #@ "tableCustomName" }
-	| PRIORITY { [ Term "PRIORITY" ] #@ "tableCustomName" }
+	| id = identifier
+    { id }
+	| tid = typeIdentifier
+    { tid }
+	| APPLY
+    { let mixop = mixop_of "APPLY" in
+      (mixop, []) #@ "tableCustomName" }
+	| STATE
+    { let mixop = mixop_of "STATE" in
+      (mixop, []) #@ "tableCustomName" }
+	| TYPE
+    { let mixop = mixop_of "TYPE" in
+      (mixop, []) #@ "tableCustomName" }
+	| PRIORITY
+    { let mixop = mixop_of "PRIORITY" in
+      (mixop, []) #@ "tableCustomName" }
 ;
 
 (* >> Names *)
@@ -306,14 +345,17 @@ name:
 	| n = nonTypeName
 	| n = typeName
     { n }
-	| LIST { [ Term "LIST" ] #@ "name" }
+	| LIST
+    { let mixop = mixop_of "LIST" in
+      (mixop, []) #@ "name" }
 ;
 
 nameList:
-	| n = name { n }
+	| n = name
+    { n }
 	| ns = nameList COMMA n = name
-    { [ NT ns; Term ","; NT n ]
-      #@ "nameList" }
+    { let mixop = mixop_of "nameList `, name" in
+      (mixop, [ ns; n ]) #@ "nameList" }
 ;
 
 member:
@@ -323,43 +365,66 @@ member:
 
 (* Directions *)
 direction:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "direction" }
-	| IN { [ Term "IN" ] #@ "direction" }
-	| OUT { [ Term "OUT" ] #@ "direction" }
-	| INOUT { [ Term "INOUT" ] #@ "direction" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "direction" }
+	| IN
+    { let mixop = mixop_of "IN" in
+      (mixop, []) #@ "direction" }
+	| OUT
+    { let mixop = mixop_of "OUT" in
+      (mixop, []) #@ "direction" }
+	| INOUT
+    { let mixop = mixop_of "INOUT" in
+      (mixop, []) #@ "direction" }
 ;
 
 (* Types *)
 (* >> Base types *)
 baseType:
-	| BOOL { [ Term "BOOL" ] #@ "baseType" }
-	| MATCH_KIND { [ Term "MATCH_KIND" ] #@ "baseType" }
-	| ERROR { [ Term "ERROR" ] #@ "baseType" }
-	| BIT { [ Term "BIT" ] #@ "baseType" }
-	| STRING { [ Term "STRING" ] #@ "baseType"}
+	| BOOL
+    { let mixop = mixop_of "BOOL" in
+      (mixop, []) #@ "baseType" }
+	| MATCH_KIND
+    { let mixop = mixop_of "MATCH_KIND" in
+      (mixop, []) #@ "baseType" }
+	| ERROR
+    { let mixop = mixop_of "ERROR" in
+      (mixop, []) #@ "baseType" }
+	| BIT
+    { let mixop = mixop_of "BIT" in
+      (mixop, []) #@ "baseType" }
+	| STRING
+    { let mixop = mixop_of "STRING" in
+      (mixop, []) #@ "baseType" }
 	| INT
-    { [ Term "INT" ] #@ "baseType" }
+    { let mixop = mixop_of "INT" in
+      (mixop, []) #@ "baseType" }
 	| BIT l_angle v = int r_angle
-    { [ Term "BIT"; Term "<"; NT v; Term ">" ]
-      #@ "baseType" }
+    { let mixop = mixop_of "BIT `< int >" in
+      (mixop, [ v ]) #@ "baseType" }
 	| INT l_angle v = int r_angle
-    { [ Term "INT"; Term "<"; NT v; Term ">" ]
-      #@ "baseType" }
+    { let mixop = mixop_of "INT `< int >" in
+      (mixop, [ v ]) #@ "baseType" }
 	| VARBIT l_angle v = int r_angle
-    { [ Term "VARBIT"; Term "<"; NT v; Term ">" ] #@ "baseType" }
+    { let mixop = mixop_of "VARBIT `< int >" in
+      (mixop, [ v ]) #@ "baseType" }
 	| BIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "BIT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ] #@ "baseType" }
+    { let mixop = mixop_of "BIT `< `( expression ) >" in
+      (mixop, [ e ]) #@ "baseType" }
 	| INT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "INT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ]
-      #@ "baseType" }
+    { let mixop = mixop_of "INT `< `( expression ) >" in
+      (mixop, [ e ]) #@ "baseType" }
 	| VARBIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "VARBIT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ] #@ "baseType" }
+    { let mixop = mixop_of "VARBIT `< `( expression ) >" in
+      (mixop, [ e ]) #@ "baseType" }
 ;
 
 (* >> Named types *)
 specializedType:
   | n = prefixedTypeName l_angle tal = typeArgumentList r_angle
-    { [ NT n; Term "<"; NT tal; Term ">" ] #@ "specializedType" }
+    { let mixop = mixop_of "prefixedTypeName `< typeArgumentList >" in
+      (mixop, [ n; tal ]) #@ "specializedType" }
 ;
 
 namedType:
@@ -371,19 +436,22 @@ namedType:
 (* >> Header stack types *)
 headerStackType:
   | t = namedType L_BRACKET e = expression R_BRACKET
-    { [ NT t; Term "["; NT e; Term "]" ] #@ "headerStackType" }
+    { let mixop = mixop_of "namedType `[ expression ]" in
+      (mixop, [ t; e ]) #@ "headerStackType" }
 ;
 
 (* >> List types *)
 listType:
   | LIST l_angle targ = typeArgument r_angle
-    { [ Term "LIST"; Term "<"; NT targ; Term ">" ] #@ "listType" }
+    { let mixop = mixop_of "LIST `< typeArgument >" in
+      (mixop, [ targ ]) #@ "listType" }
 ;
 
 (* >> Tuple types *)
 tupleType:
 	| TUPLE l_angle targs = typeArgumentList r_angle
-    { [ Term "TUPLE"; Term "<"; NT targs; Term ">" ] #@ "tupleType" }
+    { let mixop = mixop_of "TUPLE `< typeArgumentList >" in
+      (mixop, [ targs ]) #@ "tupleType" }
 ;
 
 (* >> Types *)
@@ -397,9 +465,13 @@ typeRef:
 ;
 
 typeOrVoid:
-	| t = typeRef { t }
-	| VOID { [ Term "VOID" ] #@ "typeOrVoid" }
-  | id = identifier { id }
+	| t = typeRef
+    { t }
+	| VOID
+    { let mixop = mixop_of "VOID" in
+      (mixop, []) #@ "typeOrVoid" }
+  | id = identifier
+    { id }
 ;
 
 (* Type parameters *)
@@ -407,51 +479,70 @@ typeParameter:
 	| n = name { n }
 
 typeParameterList:
-	| tp = typeParameter { tp }
+	| tp = typeParameter
+    { tp }
 	| tps = typeParameterList COMMA tp = typeParameter
-    { [ NT tps; Term ","; NT tp ] #@ "typeParameterList" }
+    { let mixop = mixop_of "typeParameterList `, typeParameter" in
+      (mixop, [ tps; tp ]) #@ "typeParameterList" }
 ;
 
 typeParameterListOpt:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "typeParameterListOpt" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "typeParameterListOpt" }
 	| l_angle tps = typeParameterList r_angle
     { declare_types_of_il tps;
-      [ Term "<"; NT tps; Term ">" ] #@ "typeParameterListOpt" }
+      let mixop = mixop_of "`< typeParameterList >" in
+      (mixop, [ tps ]) #@ "typeParameterListOpt" }
 ;
 
 (* Parameters *)
 parameter:
 	| al = annotationList dir = direction t = typeRef n = name i = initializerOpt
 		{ declare_var_of_il n false;
-      [ NT al; NT dir; NT t; NT n; NT i ] #@ "parameter" }
+      let mixop = mixop_of "annotationList direction type name initializerOpt" in
+      (mixop, [ al; dir; t; n; i ]) #@ "parameter" }
 ;
 
 nonEmptyParameterList:
-	| p = parameter { p }
+	| p = parameter
+    { p }
 	| ps = nonEmptyParameterList COMMA p = parameter
-    { [ NT ps; Term ","; NT p ] #@ "nonEmptyParameterList" }
+    { let mixop = mixop_of "nonEmptyParameterList `, parameter" in
+      (mixop, [ ps; p ]) #@ "nonEmptyParameterList" }
 ;
 
 parameterList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "parameterList" }
-	| ps = nonEmptyParameterList { ps }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "parameterList" }
+	| ps = nonEmptyParameterList
+    { ps }
 ;
 
 (* Constructor parameters *)
 constructorParameterListOpt:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "constructorParameterListOpt" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "constructorParameterListOpt" }
 	| L_PAREN ps = parameterList R_PAREN
-    { [ Term "("; NT ps; Term ")" ] #@ "constructorParameterListOpt" }
+    { let mixop = mixop_of "`( parameterList )" in
+      (mixop, [ ps ]) #@ "constructorParameterListOpt" }
 ;
 
 (* Expression key-value pairs *)
 namedExpression:
-	| n = name ASSIGN e = expression { [ NT n; Term "="; NT e ] #@ "namedExpression" }
+	| n = name ASSIGN e = expression
+    { let mixop = mixop_of "name `= expression" in
+      (mixop, [ n; e ]) #@ "namedExpression" }
 ;
 
 namedExpressionList:
-	| e = namedExpression { e }
-	| es = namedExpressionList COMMA e = namedExpression { [ NT es; Term ","; NT e ] #@ "namedExpressionList" }
+	| e = namedExpression
+    { e }
+	| es = namedExpressionList COMMA e = namedExpression
+    { let mixop = mixop_of "namedExpressionList `, namedExpression" in
+      (mixop, [ es; e ]) #@ "namedExpressionList" }
 ;
 
 (* Expressions *)
@@ -464,104 +555,172 @@ namedExpressionList:
 
 (* >> Reference expressions *)
 %inline referenceExpression:
-	| n = prefixedNonTypeName { n }
-	| THIS { [ Term "THIS" ] #@ "referenceExpression" }
+	| n = prefixedNonTypeName
+    { n }
+	| THIS
+    { let mixop = mixop_of "THIS" in
+      (mixop, []) #@ "referenceExpression" }
 ;
 
 (* >> Default expressions *)
 %inline defaultExpression:
-	| DOTS { [ Term "..." ] #@ "defaultExpression" }
+	| DOTS
+    { let mixop = mixop_of "`..." in
+      (mixop, []) #@ "defaultExpression" }
 ;
 
 (* >> Unary, binary, and ternary expressions *)
 %inline unop: 
-	| NOT { [ Term "!" ] #@ "unop" }
-	| COMPLEMENT { [ Term "~" ] #@ "unop" }
-	| MINUS { [ Term "-" ] #@ "unop" }
-	| PLUS { [ Term "+" ] #@ "unop" }
+	| NOT
+    { let mixop = mixop_of "`!" in
+      (mixop, []) #@ "unop" }
+	| COMPLEMENT
+    { let mixop = mixop_of "`~" in
+      (mixop, []) #@ "unop" }
+	| MINUS
+    { let mixop = mixop_of "`-" in
+      (mixop, []) #@ "unop" }
+	| PLUS
+    { let mixop = mixop_of "`+" in
+      (mixop, []) #@ "unop" }
 ;
 
 %inline unaryExpression:
 	| o = unop e = expression %prec PREFIX
-		{ [ NT o; NT e ] #@ "unaryExpression" }
+		{ let mixop = mixop_of "unop expression" in
+      (mixop, [ o; e ]) #@ "unaryExpression" }
 ;
 
 %inline binop:
-  | MUL { [ Term "*" ] #@ "binop" }
-  | DIV { [ Term "/" ] #@ "binop" }
-  | MOD { [ Term "%" ] #@ "binop" }
-  | PLUS { [ Term "+" ] #@ "binop" }
-  | PLUS_SAT { [ Term "|+|" ] #@ "binop" }
-  | MINUS { [ Term "-" ] #@ "binop" }
-  | MINUS_SAT { [ Term "|-|" ] #@ "binop" }
-  | SHL { [ Term "<<" ] #@ "binop" }
-  | r_angle R_ANGLE_SHIFT { [ Term ">>" ] #@ "binop" }
-  | LE { [ Term "<=" ] #@ "binop" }
-  | GE { [ Term ">=" ] #@ "binop" }
-  | l_angle { [ Term "<" ] #@ "binop" }
-  | r_angle { [ Term ">" ] #@ "binop" }
-  | NE { [ Term "!=" ] #@ "binop" }
-  | EQ { [ Term "==" ] #@ "binop" }
-  | BIT_AND { [ Term "&" ] #@ "binop" }
-  | BIT_XOR { [ Term "^" ] #@ "binop" }
-  | BIT_OR { [ Term "|" ] #@ "binop" }
-  | PLUSPLUS { [ Term "++" ] #@ "binop" }
-  | AND { [ Term "&&" ] #@ "binop" }
-  | OR { [ Term "||" ] #@ "binop" }
+  | MUL
+    { let mixop = mixop_of "`*" in
+      (mixop, []) #@ "binop" }
+  | DIV
+    { let mixop = mixop_of "`/" in
+      (mixop, []) #@ "binop" }
+  | MOD
+    { let mixop = mixop_of "`%" in
+      (mixop, []) #@ "binop" }
+  | PLUS
+    { let mixop = mixop_of "`+" in
+      (mixop, []) #@ "binop" }
+  | PLUS_SAT
+    { let mixop = mixop_of "`|+|" in
+      (mixop, []) #@ "binop" }
+  | MINUS
+    { let mixop = mixop_of "`-" in
+      (mixop, []) #@ "binop" }
+  | MINUS_SAT
+    { let mixop = mixop_of "`|-|" in
+      (mixop, []) #@ "binop" }
+  | SHL
+    { let mixop = mixop_of "`<<" in
+      (mixop, []) #@ "binop" }
+  | r_angle R_ANGLE_SHIFT
+    { let mixop = mixop_of "`>>" in
+      (mixop, []) #@ "binop" }
+  | LE
+    { let mixop = mixop_of "`<=" in
+      (mixop, []) #@ "binop" }
+  | GE
+    { let mixop = mixop_of "`>=" in
+      (mixop, []) #@ "binop" }
+  | l_angle
+    { let mixop = mixop_of "``<" in
+      (mixop, []) #@ "binop" }
+  | r_angle
+    { let mixop = mixop_of "``>" in
+      (mixop, []) #@ "binop" }
+  | NE
+    { let mixop = mixop_of "`!=" in
+      (mixop, []) #@ "binop" }
+  | EQ
+    { let mixop = mixop_of "`==" in
+      (mixop, []) #@ "binop" }
+  | BIT_AND
+    { let mixop = mixop_of "`&" in
+      (mixop, []) #@ "binop" }
+  | BIT_XOR
+    { let mixop = mixop_of "`^" in
+      (mixop, []) #@ "binop" }
+  | BIT_OR
+    { let mixop = mixop_of "`|" in
+      (mixop, []) #@ "binop" }
+  | PLUSPLUS
+    { let mixop = mixop_of "`++" in
+      (mixop, []) #@ "binop" }
+  | AND
+    { let mixop = mixop_of "`&&" in
+      (mixop, []) #@ "binop" }
+  | OR
+    { let mixop = mixop_of "`||" in
+      (mixop, []) #@ "binop" }
 ;
 
 %inline binaryExpression:
 	| l = expression o = binop r = expression
-		{ [ NT l; NT o; NT r ] #@ "binaryExpression" }
+		{ let mixop = mixop_of "expression binop expression" in
+      (mixop, [ l; o; r ]) #@ "binaryExpression" }
 ;
 
 %inline binaryExpressionNonBrace:
 	| l = expressionNonBrace o = binop r = expression
-		{ [ NT l; NT o; NT r ] #@ "binaryExpressionNonBrace" }
+		{ let mixop = mixop_of "expressionNonBrace binop expression" in
+      (mixop, [ l; o; r ]) #@ "binaryExpressionNonBrace" }
 ;
 
 %inline ternaryExpression:
 	| c = expression QUESTION t = expression COLON f = expression
-		{ [ NT c; Term "?"; NT t; Term ":"; NT f ] #@ "ternaryExpression" }
+		{ let mixop = mixop_of "expression `? expression `: expression" in
+      (mixop, [ c; t; f ]) #@ "ternaryExpression" }
 ;
 
 %inline ternaryExpressionNonBrace:
 	| c = expressionNonBrace QUESTION t = expression COLON f = expression
-		{ [ NT c; Term "?"; NT t; Term ":"; NT f ] #@ "ternaryExpressionNonBrace" }
+		{ let mixop = mixop_of "expressionNonBrace `? expression `: expression" in
+      (mixop, [ c; t; f ]) #@ "ternaryExpressionNonBrace" }
 ;
 
 (* >> Cast expressions *)
 %inline castExpression:
 	| L_PAREN t = typeRef R_PAREN e = expression %prec PREFIX
-    { [ Term "("; NT t; Term ")"; NT e ] #@ "castExpression" }
+    { let mixop = mixop_of "`( typeRef ) expression" in
+      (mixop, [ t; e ]) #@ "castExpression" }
 ;
 
 (* >> Data (aggregate) expressions *)
 %inline dataExpression:
-	| INVALID { [ Term "{#}" ] #@ "invalidHeaderExpression" }
+	| INVALID
+    { let mixop = mixop_of "`{#}" in
+      (mixop, []) #@ "invalidHeaderExpression" }
 	| L_BRACE e = sequenceOrRecordElementExpression c = trailingCommaOpt R_BRACE
-    { [ Term "{"; NT e; NT c; Term "}" ] #@ "sequenceOrRecordExpression" }
+    { let mixop = mixop_of "`{ sequenceOrRecordElementExpression trailingCommaOpt }" in
+      (mixop, [ e; c ]) #@ "sequenceOrRecordExpression" }
 ;
 
 (* >> Member and index access expressions *)
 %inline errorAccessExpression:
 	| ERROR DOT m = member
-		{ [ Term "ERROR"; Term "."; NT m ] #@ "errorAccessExpression" }
+		{ let mixop = mixop_of "ERROR `. member" in
+      (mixop, [ m ]) #@ "errorAccessExpression" }
 ;
 
 %inline memberAccessExpression:
 	| e = memberAccessBase DOT m = member %prec DOT
-		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpression" }
+		{ let mixop = mixop_of "memberAccessBase `. member" in
+      (mixop, [ e; m ]) #@ "memberAccessExpression" }
 ;
 
 %inline indexAccessExpression:
 	| a = expression L_BRACKET i = expression R_BRACKET
-		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
+		{ let mixop = mixop_of "expression `[ expression ]" in
+      (mixop, [ a; i ]) #@ "indexAccessExpression" }
 ;
 
 %inline sliceAccessExpression:
   | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
+    { let mixop = mixop_of "expression `[ expression `: expression ]" in
+      (mixop, [ a; h; l ]) #@ "sliceAccessExpression" }
 ;
 
 %inline accessExpression:
@@ -574,17 +733,20 @@ namedExpressionList:
 
 %inline memberAccessExpressionNonBrace:
 	| e = memberAccessBaseNonBrace DOT m = member %prec DOT
-		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpressionNonBrace" }
+		{ let mixop = mixop_of "memberAccessBaseNonBrace `. member" in
+      (mixop, [ e; m ]) #@ "memberAccessExpressionNonBrace" }
 ;
 
 %inline indexAccessExpressionNonBrace:
 	| a = expressionNonBrace L_BRACKET i = expression R_BRACKET
-		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
+		{ let mixop = mixop_of "expressionNonBrace `[ expression ]" in
+      (mixop, [ a; i ]) #@ "indexAccessExpressionNonBrace" }
 ;
 
 %inline sliceAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
+    { let mixop = mixop_of "expressionNonBrace `[ expression `: expression ]" in
+      (mixop, [ a; h; l ]) #@ "sliceAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
@@ -612,10 +774,11 @@ namedExpressionList:
 
 %inline callExpression:
 	| t = callTarget L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpression" }
+		{ let mixop = mixop_of "callTarget `( argumentList )" in
+      (mixop, [ t; args ]) #@ "callExpression" }
 	| t = callableTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "callExpression" }
+		{ let mixop = mixop_of "callTarget `< realTypeArgumentList > `( argumentList )" in
+      (mixop, [ t; targs; args ]) #@ "callExpression" } 
 ;
 
 %inline callableTargetNonBrace:
@@ -630,16 +793,18 @@ namedExpressionList:
 
 %inline callExpressionNonBrace:
 	| t = callTargetNonBrace L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpressionNonBrace" }
+		{ let mixop = mixop_of "callTargetNonBrace `( argumentList )" in
+      (mixop, [ t; args ]) #@ "callExpressionNonBrace" }
 	| t = callableTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "callExpressionNonBrace" }
+		{ let mixop = mixop_of "callTargetNonBrace `< realTypeArgumentList > `( argumentList )" in
+      (mixop, [ t; targs; args ]) #@ "callExpressionNonBrace" }
 
 (* >> Parenthesized Expressions *)
 
 %inline parenthesizedExpression:
 	| L_PAREN e = expression R_PAREN
-		{ [ Term "("; NT e; Term ")" ] #@ "parenthesizedExpression" }
+		{ let mixop = mixop_of "`( expression )" in
+      (mixop, [ e ]) #@ "parenthesizedExpression" }
 ;
 
 (* >> Expressions *)
@@ -659,10 +824,14 @@ expression:
 ;
 
 expressionList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "expressionList" }
-	| e = expression { e }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "expressionList" }
+	| e = expression
+    { e }
 	| el = expressionList COMMA e = expression
-		{ [ NT el; Term ","; NT e ] #@ "expressionList" }
+		{ let mixop = mixop_of "expressionList `, expression" in
+      (mixop, [ el; e ]) #@ "expressionList" }
 ;
 
 %inline memberAccessBase:
@@ -677,17 +846,17 @@ expressionList:
 
 %inline recordElementExpression:
   | n = name ASSIGN e = expression
-    { [ NT n; Term "="; NT e ]
-      #@ "recordElementExpression" }
+    { let mixop = mixop_of "name `= expression" in
+      (mixop, [ n; e ]) #@ "recordElementExpression" }
   | n = name ASSIGN e = expression COMMA DOTS
-    { [ NT n; Term "="; NT e; Term ","; Term "..." ]
-      #@ "recordElementExpression" }
+    { let mixop = mixop_of "name `= expression `, `..." in
+      (mixop, [ n; e ]) #@ "recordElementExpression" }
 	| n = name ASSIGN e = expression COMMA el = namedExpressionList
-    { [ NT n; Term "="; NT e; Term ","; NT el ]
-      #@ "recordElementExpression" }
+    { let mixop = mixop_of "name `= expression `, namedExpressionList" in
+      (mixop, [ n; e; el ]) #@ "recordElementExpression" }
   | n = name ASSIGN e = expression COMMA el = namedExpressionList COMMA DOTS
-    { [ NT n; Term "="; NT e; Term ","; NT el; Term ","; Term "..." ]
-      #@ "recordElementExpression" }
+    { let mixop = mixop_of "name `= expression `, namedExpressionList `, `..." in
+      (mixop, [ n; e; el ]) #@ "recordElementExpression" }
 ;
 
 %inline sequenceOrRecordElementExpression:
@@ -718,34 +887,46 @@ expressionNonBrace:
 
 (* Keyset Expressions *)
 simpleKeysetExpression:
-	| e = expression { e }
+	| e = expression
+    { e }
 	| b = expression MASK m = expression
-    { [ NT b; Term "&&&"; NT m ] #@ "simpleKeysetExpression" }
+    { let mixop = mixop_of "expression `&&& expression" in
+      (mixop, [ b; m ]) #@ "simpleKeysetExpression" }
 	| l = expression RANGE h = expression
-    { [ NT l; Term ".."; NT h ] #@ "simpleKeysetExpression" }
+    { let mixop = mixop_of "expression `.. expression" in
+      (mixop, [ l; h ]) #@ "simpleKeysetExpression" }
 	| DEFAULT
-    { [ Term "DEFAULT" ] #@ "simpleKeysetExpression" }
+    { let mixop = mixop_of "DEFAULT" in
+      (mixop, []) #@ "simpleKeysetExpression" }
 	| DONTCARE
-    { [ Term "_" ] #@ "simpleKeysetExpression" }
+    { let mixop = mixop_of "`_" in
+      (mixop, []) #@ "simpleKeysetExpression" }
 ;
 
 simpleKeysetExpressionList:
-	| e = simpleKeysetExpression { e }
+	| e = simpleKeysetExpression
+    { e }
 	| el = simpleKeysetExpressionList COMMA e = simpleKeysetExpression
-    { [ NT el; Term ","; NT e ] #@ "simpleKeysetExpressionList" }
+    { let mixop = mixop_of "simpleKeysetExpressionList `, simpleKeysetExpression" in
+      (mixop, [ el; e ]) #@ "simpleKeysetExpressionList" }
 ;
 
 tupleKeysetExpression:
 	| L_PAREN b = expression MASK m = expression R_PAREN
-		{ [ Term "("; NT b; Term "&&&"; NT m; Term ")" ] #@ "tupleKeysetExpression" }
+		{ let mixop = mixop_of "`( expression `&&& expression )" in
+      (mixop, [ b; m ]) #@ "tupleKeysetExpression" }
 	| L_PAREN l = expression RANGE h = expression R_PAREN
-		{ [ Term "("; NT l; Term ".."; NT h; Term ")" ] #@ "tupleKeysetExpression" }
+		{ let mixop = mixop_of "`( expression `.. expression )" in
+      (mixop, [ l; h ]) #@ "tupleKeysetExpression" }
 	| L_PAREN DEFAULT R_PAREN
-		{ [ Term "("; Term "DEFAULT"; Term ")" ] #@ "tupleKeysetExpression" }
+		{ let mixop = mixop_of "`( DEFAULT )" in
+      (mixop, []) #@ "tupleKeysetExpression" }
 	| L_PAREN DONTCARE R_PAREN
-		{ [ Term "("; Term "_"; Term ")" ] #@ "tupleKeysetExpression" }
+		{ let mixop = mixop_of "`( `_ )" in
+      (mixop, []) #@ "tupleKeysetExpression" }
 	| L_PAREN e = simpleKeysetExpression COMMA es = simpleKeysetExpressionList R_PAREN
-		{ [ Term "("; NT e; Term ","; NT es; Term ")" ] #@ "tupleKeysetExpression" }
+		{ let mixop = mixop_of "`( simpleKeysetExpression `, simpleKeysetExpressionList )" in
+      (mixop, [ e; es ]) #@ "tupleKeysetExpression" }
 ;
 
 keysetExpression:
@@ -756,17 +937,22 @@ keysetExpression:
 
 (* Type arguments *)
 realTypeArgument:
-	| t = typeRef { t }
+	| t = typeRef
+    { t }
 	| VOID
-    { [ Term "VOID" ] #@ "realTypeArgument" }
+    { let mixop = mixop_of "VOID" in
+      (mixop, []) #@ "realTypeArgument" }
 	| DONTCARE
-    { [ Term "_" ] #@ "realTypeArgument" }
+    { let mixop = mixop_of "`_" in
+      (mixop, []) #@ "realTypeArgument" }
 ;
 
 realTypeArgumentList:
-	| targ = realTypeArgument { targ }
+	| targ = realTypeArgument
+    { targ }
 	| targs = realTypeArgumentList COMMA targ = realTypeArgument
-    { [ NT targs; Term ","; NT targ ] #@ "realTypeArgumentList" }
+    { let mixop = mixop_of "realTypeArgumentList `, realTypeArgument" in
+      (mixop, [ targs; targ ]) #@ "realTypeArgumentList" }
 ;
 
 typeArgument:
@@ -774,151 +960,211 @@ typeArgument:
 	| t = nonTypeName 
 		{ t }
 	| VOID
-    { [ Term "VOID" ] #@ "typeArgument" }
+    { let mixop = mixop_of "VOID" in
+      (mixop, []) #@ "typeArgument" }
 	| DONTCARE
-    { [ Term "_" ] #@ "typeArgument" }
+    { let mixop = mixop_of "`_" in
+      (mixop, []) #@ "typeArgument" }
 ;
 
 typeArgumentList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "typeArgumentList" }
-	| targ = typeArgument { targ }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "typeArgumentList" }
+	| targ = typeArgument
+    { targ }
 	| targs = typeArgumentList COMMA targ = typeArgument
-    { [ NT targs; Term ","; NT targ ] #@ "typeArgumentList" }
+    { let mixop = mixop_of "typeArgumentList `, typeArgument" in
+      (mixop, [ targs; targ ]) #@ "typeArgumentList" }
 ;
 
 (* Arguments *)
 argument:
-	| e = expression { e }
+	| e = expression
+    { e }
 	| n = name ASSIGN e = expression 
-		{ [ NT n; Term "="; NT e ] #@ "argument" }
+		{ let mixop = mixop_of "name `= expression" in
+      (mixop, [ n; e ]) #@ "argument" }
 	| name = name ASSIGN DONTCARE
-		{ [ NT name; Term "="; Term "_" ] #@ "argument" }
+		{ let mixop = mixop_of "name `= `_ " in
+      (mixop, [ name ]) #@ "argument" }
 	| DONTCARE
-		{ [ Term "_" ] #@ "argument" }
+		{ let mixop = mixop_of "`_" in
+      (mixop, []) #@ "argument" }
 ;
 
 argumentListNonEmpty:
-	| arg = argument { arg }
+	| arg = argument
+    { arg }
 	| args = argumentListNonEmpty COMMA arg = argument
-    { [ NT args; Term ","; NT arg ] #@ "argumentListNonEmpty" }
+    { let mixop = mixop_of "argumentListNonEmpty `, argument" in
+      (mixop, [ args; arg ]) #@ "argumentListNonEmpty" }
 ;
 
 argumentList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "argumentList" }
-	| args = argumentListNonEmpty { args }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "argumentList" }
+	| args = argumentListNonEmpty
+    { args }
 ;
 
 (* L-values *)
 lvalue:
-	| e = referenceExpression { e }
+	| e = referenceExpression
+    { e }
 	| lv = lvalue DOT m = member %prec DOT
-		{ [ NT lv; Term "."; NT m ] #@ "lvalue" }
+		{ let mixop = mixop_of "lvalue `. member" in
+      (mixop, [ lv; m ]) #@ "lvalue" }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
-		{ [ NT lv; Term "["; NT i; Term "]" ] #@ "lvalue" }
+		{ let mixop = mixop_of "lvalue `[ expression ]" in
+      (mixop, [ lv; i ]) #@ "lvalue" }
 	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT lv; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "lvalue" }
+		{ let mixop = mixop_of "lvalue `[ expression `: expression ]" in
+      (mixop, [ lv; h; l ]) #@ "lvalue" }
 	| L_PAREN lv = lvalue R_PAREN
-		{ [ Term "("; NT lv; Term ")" ] #@ "lvalue" }
+		{ let mixop = mixop_of "`( lvalue )" in
+      (mixop, [ lv ]) #@ "lvalue" }
 ;
 
 (* Statements *)
 (* >> Empty statements *)
 emptyStatement:
-	| SEMICOLON { [ Term ";" ] #@ "emptyStatement" }
+	| SEMICOLON
+    { let mixop = mixop_of "`;" in
+      (mixop, []) #@ "emptyStatement" }
 ;
 
 (* >> Assignment statements *)
 assignop:
-	| ASSIGN { [ Term "=" ] #@ "assignop" }
-	| PLUS_ASSIGN { [ Term "+=" ] #@ "assignop" }
-	| PLUS_SAT_ASSIGN { [ Term "|+|=" ] #@ "assignop" }
-	| MINUS_ASSIGN { [ Term "-=" ] #@ "assignop" }
-	| MINUS_SAT_ASSIGN { [ Term "|-|=" ] #@ "assignop" }
-	| MUL_ASSIGN { [ Term "*=" ] #@ "assignop" }
-	| DIV_ASSIGN { [ Term "/=" ] #@ "assignop" }
-	| MOD_ASSIGN { [ Term "%=" ] #@ "assignop" }
-	| SHL_ASSIGN { [ Term "<<=" ] #@ "assignop" }
-	| SHR_ASSIGN { [ Term ">>=" ] #@ "assignop" }
-	| BIT_AND_ASSIGN { [ Term "&=" ] #@ "assignop" }
-	| BIT_XOR_ASSIGN { [ Term "^=" ] #@ "assignop" }
-	| BIT_OR_ASSIGN { [ Term "|=" ] #@ "assignop" }
+	| ASSIGN
+    { let mixop = mixop_of "`=" in
+      (mixop, []) #@ "assignop" }
+	| PLUS_ASSIGN
+    { let mixop = mixop_of "`+=" in
+      (mixop, []) #@ "assignop" }
+	| PLUS_SAT_ASSIGN
+    { let mixop = mixop_of "`|+|=" in
+      (mixop, []) #@ "assignop" }
+	| MINUS_ASSIGN
+    { let mixop = mixop_of "`-=" in
+      (mixop, []) #@ "assignop" }
+	| MINUS_SAT_ASSIGN
+    { let mixop = mixop_of "`|-|=" in
+      (mixop, []) #@ "assignop" }
+	| MUL_ASSIGN
+    { let mixop = mixop_of "`*=" in
+      (mixop, []) #@ "assignop" }
+	| DIV_ASSIGN
+    { let mixop = mixop_of "`/=" in
+      (mixop, []) #@ "assignop" }
+	| MOD_ASSIGN
+    { let mixop = mixop_of "`%=" in
+      (mixop, []) #@ "assignop" }
+	| SHL_ASSIGN
+    { let mixop = mixop_of "`<<=" in
+      (mixop, []) #@ "assignop" }
+	| SHR_ASSIGN
+    { let mixop = mixop_of "`>>=" in
+      (mixop, []) #@ "assignop" }
+	| BIT_AND_ASSIGN
+    { let mixop = mixop_of "`&=" in
+      (mixop, []) #@ "assignop" }
+	| BIT_XOR_ASSIGN
+    { let mixop = mixop_of "`^=" in
+      (mixop, []) #@ "assignop" }
+	| BIT_OR_ASSIGN
+    { let mixop = mixop_of "`|=" in
+      (mixop, []) #@ "assignop" }
 ;
 
 assignmentStatement:
 	| lv = lvalue o = assignop e = expression SEMICOLON
-		{ [ NT lv; NT o; NT e; Term ";" ] #@ "assignmentStatement" }
+		{ let mixop = mixop_of "lvalue assignop expression `;" in
+      (mixop, [ lv; o; e ]) #@ "assignmentStatement" }
 ;
 
 (* >> Call statements *)
 callStatement:
 	| lv = lvalue L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ [ NT lv; Term "("; NT args; Term ")"; Term ";" ] #@ "callStatement" }
+		{ let mixop = mixop_of "lvalue `( argumentList ) `;" in
+      (mixop, [ lv; args ]) #@ "callStatement" }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ [ NT lv; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")"; Term ";" ]
-      #@ "callStatement" }
+		{ let mixop = mixop_of "lvalue `< typeArgumentList > `( argumentList ) `;" in
+      (mixop, [ lv; targs; args ]) #@ "callStatement" }
 ;
 
 (* >> Direct application statements *)
 directApplicationStatement:
 	| t = namedType DOT APPLY L_PAREN args = argumentList R_PAREN SEMICOLON
-    { [ NT t; Term "."; Term "APPLY"; Term "("; NT args; Term ")"; Term ";" ]
-      #@ "directApplicationStatement" }
+    { let mixop = mixop_of "namedType `. APPLY `( argumentList ) `;" in
+      (mixop, [ t; args ]) #@ "directApplicationStatement" }
 ;
 
 (* >> Return statements *)
 returnStatement:
 	| RETURN SEMICOLON
-    { [ Term "RETURN"; Term ";" ] #@ "returnStatement" }
+    { let mixop = mixop_of "RETURN `;" in
+      (mixop, []) #@ "returnStatement" }
 	| RETURN e = expression SEMICOLON
-    { [ Term "RETURN"; NT e; Term ";" ] #@ "returnStatement" }
+    { let mixop = mixop_of "RETURN expression `;" in
+      (mixop, [ e ]) #@ "returnStatement" }
 ;
 
 (* >> Exit statements *)
 exitStatement:
 	| EXIT SEMICOLON
-    { [ Term "EXIT"; Term ";" ] #@ "exitStatement" }
+    { let mixop = mixop_of "EXIT `;" in
+      (mixop, []) #@ "exitStatement" }
 ;
 
 (* >> Block statements *)
 blockStatement:
 	| al = annotationList L_BRACE
-  push_scope
-  sl = blockElementStatementList R_BRACE
-  pop_scope
-		{ [ NT al; Term "{"; NT sl; Term "}" ] #@ "blockStatement" }
+    push_scope
+    sl = blockElementStatementList R_BRACE
+    pop_scope
+		{ let mixop = mixop_of "annotationList `{ blockElementStatementList }" in
+      (mixop, [ al; sl ]) #@ "blockStatement" }
 ;
 
 (* >> Conditional statements *)
 conditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = statement %prec THEN
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
-      #@ "conditionalStatement" }
+    { let mixop = mixop_of "IF `( expression ) statement" in
+      (mixop, [ c; t ]) #@ "conditionalStatement" }
 	| IF L_PAREN c = expression R_PAREN t = statement ELSE f = statement
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
-      #@ "conditionalStatement" }
+    { let mixop = mixop_of "IF `( expression ) statement ELSE statement" in
+      (mixop, [ c; t; f ]) #@ "conditionalStatement" }
 ;
 
 (* >> For statements *)
 forInitStatement:
 	| al = annotationList t = typeRef n = name i = initializerOpt
-		{ [ NT al; NT t; NT n; NT i ] #@ "forInitStatement" }
+		{ let mixop = mixop_of "annotationList type name initializerOpt" in
+      (mixop, [ al; t; n; i ]) #@ "forInitStatement" }
 	| lv = lvalue L_PAREN args = argumentList R_PAREN
-		{ [ NT lv; Term "("; NT args; Term ")" ] #@ "forInitStatement" }
+		{ let mixop = mixop_of "lvalue `( argumentList )" in
+      (mixop, [ lv; args ]) #@ "forInitStatement" }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT lv; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "forInitStatement" }
+		{ let mixop = mixop_of "lvalue `< typeArgumentList > `( argumentList )" in
+      (mixop, [ lv; targs; args ]) #@ "forInitStatement" }
 	| lv = lvalue o = assignop e = expression
-		{ [ NT lv; NT o; NT e ] #@ "forInitStatement" }
+		{ let mixop = mixop_of "lvalue assignop expression" in
+      (mixop, [ lv; o; e ]) #@ "forInitStatement" }
 ;
 
 forInitStatementListNonEmpty:
 	| s = forInitStatement { s }
 	| sl = forInitStatementListNonEmpty COMMA s = forInitStatement
-    { [ NT sl; Term ","; NT s ] #@ "forInitStatementListNonEmpty" }
+    { let mixop = mixop_of "forInitStatementListNonEmpty `, forInitStatement" in
+      (mixop, [ sl; s ]) #@ "forInitStatementListNonEmpty" }
 ;
 
 forInitStatementList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "forInitStatementList" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "forInitStatementList" }
 	| sl = forInitStatementListNonEmpty { sl }
 ;
 
@@ -929,70 +1175,83 @@ forUpdateStatement:
 forUpdateStatementListNonEmpty:
 	| s = forUpdateStatement { s }
 	| sl = forUpdateStatementListNonEmpty COMMA s = forUpdateStatement
-    { [ NT sl; Term ","; NT s ] #@ "forUpdateStatementListNonEmpty" }
+    { let mixop = mixop_of "forUpdateStatementListNonEmpty `, forUpdateStatement" in
+      (mixop, [ sl; s ]) #@ "forUpdateStatementListNonEmpty" }
 ;
 
 forUpdateStatementList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "forUpdateStatementList" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "forUpdateStatementList" }
 	| sl = forUpdateStatementListNonEmpty { sl }
 ;
 
 forCollectionExpression:
 	| e = expression { e }
 	| l = expression RANGE h = expression
-    { [ NT l; Term ".."; NT h ] #@ "forCollectionExpr" }
+    { let mixop = mixop_of "expression `.. expression" in
+      (mixop, [ l; h ]) #@ "forCollectionExpression" }
 ;
 
 forStatement:
-  | al = annotationList FOR L_PAREN il = forInitStatementList SEMICOLON c = expression SEMICOLON ul = forUpdateStatementList R_PAREN b = statement
-		{ [ NT al; Term "FOR"; Term "("; NT il; Term ";"; NT c; Term ";"; NT ul; Term ")"; NT b ]
-      #@ "forStatement" }
+  | al = annotationList FOR L_PAREN
+    il = forInitStatementList SEMICOLON c = expression SEMICOLON
+    ul = forUpdateStatementList R_PAREN b = statement
+		{ let mixop = mixop_of "annotationList FOR `( forInitStatementList `; expression `; forUpdateStatementList ) statement" in
+      (mixop, [ al; il; c; ul; b ]) #@ "forStatement" }
   | al = annotationList FOR L_PAREN
     t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { [ NT al; Term "FOR"; Term "("; NT t; NT n; Term "IN"; NT e; Term ")"; NT b ]
-      #@ "forStatement" }
+    { let mixop = mixop_of "annotationList FOR `( typeRef name IN forCollectionExpression ) statement" in
+      (mixop, [ al; t; n; e; b ]) #@ "forStatement" }
   | al = annotationList FOR L_PAREN
     al_in = annotationList t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { [ NT al; Term "FOR"; Term "("; NT al_in; NT t; NT n; Term "IN"; NT e; Term ")"; NT b ]
-      #@ "forStatement" }
+    { let mixop = mixop_of "annotationList FOR `( annotationList typeRef name IN forCollectionExpression ) statement" in
+      (mixop, [ al; al_in; t; n; e; b ]) #@ "forStatement" }
 ;
 
 (* >> Switch statements *)
 switchLabel:
   | DEFAULT
-    { [ Term "DEFAULT" ] #@ "switchLabel" }
+    { let mixop = mixop_of "DEFAULT" in
+      (mixop, []) #@ "switchLabel" }
   | e = expressionNonBrace
     { e }
 ;
 
 switchCase:
   | l = switchLabel COLON s = blockStatement
-    { [ NT l; Term ":"; NT s ] #@ "switchCase" }
+    { let mixop = mixop_of "switchLabel `: blockStatement" in
+      (mixop, [ l; s ]) #@ "switchCase" }
   | l = switchLabel COLON
-    { [ NT l; Term ":" ] #@ "switchCase" }
+    { let mixop = mixop_of "switchLabel `:" in
+      (mixop, [ l ]) #@ "switchCase" }
 ;
 
 switchCaseList:
   | (* empty *)
-    { [ Term "`EMPTY" ] #@ "switchCaseList" }
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "switchCaseList" }
   | cs = switchCaseList c = switchCase
-    { [ NT cs; NT c ] #@ "switchCaseList" }
+    { let mixop = mixop_of "switchCaseList switchCase" in
+      (mixop, [ cs; c ]) #@ "switchCaseList" }
 ;
 
 switchStatement:
   | SWITCH L_PAREN e = expression R_PAREN L_BRACE cs = switchCaseList R_BRACE
-    { [ Term "SWITCH"; Term "("; NT e; Term ")"; Term "{"; NT cs; Term "}" ]
-      #@ "switchStatement" }
+    { let mixop = mixop_of "SWITCH `( expression ) `{ switchCaseList }" in
+      (mixop, [ e; cs ]) #@ "switchStatement" }
 
 (* >> Break and continue statements *)
 breakStatement:
   | BREAK SEMICOLON
-    { [ Term "BREAK"; Term ";" ] #@ "breakStatement" }
+    { let mixop = mixop_of "BREAK `;" in
+      (mixop, []) #@ "breakStatement" }
 ;
 
 continueStatement:
   | CONTINUE SEMICOLON
-    { [ Term "CONTINUE"; Term ";" ] #@ "continueStatement" }
+    { let mixop = mixop_of "CONTINUE `;" in
+      (mixop, []) #@ "continueStatement" }
 ;
 
 (* >> Statements *)
@@ -1018,24 +1277,28 @@ statement:
 (* initializer -> initialValue due to reserved word in OCaml *)
 initialValue:
 	| ASSIGN e = expression
-		{ [ Term "="; NT e ] #@ "initializer" }
+		{ let mixop = mixop_of "`= expression" in
+      (mixop, [ e ]) #@ "initializer" }
 ;
 
 constantDeclaration:
   | al = annotationList CONST t = typeRef n = name i = initialValue SEMICOLON
-    { [ NT al; Term "CONST"; NT t; NT n; NT i; Term ";" ] #@ "constantDeclaration" }
+    { let mixop = mixop_of "annotationList CONST typeRef name initializer `;" in
+      (mixop, [ al; t; n; i ]) #@ "constantDeclaration" }
 ;
 
 initializerOpt:
 	| (* empty *)
-		{ [ Term "`EMPTY" ] #@ "initializerOpt" }
+		{ let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "initializerOpt" }
 	| i = initialValue { i }
 ;
 
 variableDeclaration:
   | al = annotationList t = typeRef n = name i = initializerOpt SEMICOLON
     { declare_var_of_il n false;
-      [ NT al; NT t; NT n; NT i; Term ";" ] #@ "variableDeclaration" }
+      let mixop = mixop_of "annotationList typeRef name initializerOpt `;" in
+      (mixop, [ al; t; n; i ]) #@ "variableDeclaration" }
 ;
 
 blockElementStatement:
@@ -1047,45 +1310,50 @@ blockElementStatement:
 
 blockElementStatementList:
   | (* empty *)
-    { [ Term "`EMPTY" ] #@ "blockElementStatementList" }
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "blockElementStatementList" }
   | sl = blockElementStatementList s = blockElementStatement
-    { [ NT sl; NT s ] #@ "blockElementStatementList" }
+    { let mixop = mixop_of "blockElementStatementList blockElementStatement" in
+      (mixop, [ sl; s ]) #@ "blockElementStatementList" }
 ;
 
 (* >> Function declarations *)
 functionPrototype:
 	| t = typeOrVoid n = name push_scope
-  tpl = typeParameterListOpt
-  L_PAREN pl = parameterList R_PAREN
-    { [ NT t; NT n; NT tpl; Term "("; NT pl; Term ")" ]
-      #@ "functionPrototype" }
+    tpl = typeParameterListOpt
+    L_PAREN pl = parameterList R_PAREN
+    { let mixop = mixop_of "typeOrVoid name typeParameterListOpt `( parameterList )" in
+      (mixop, [ t; n; tpl; pl ]) #@ "functionPrototype" }
 ;
 
 functionDeclaration:
 	| al = annotationList p = functionPrototype b = blockStatement pop_scope
-    { [ NT al; NT p; NT b ] #@ "functionDeclaration" }
+    { let mixop = mixop_of "annotationList functionPrototype blockStatement" in
+      (mixop, [ al; p; b ]) #@ "functionDeclaration" }
 ;
 
 (* >> Action declarations *)
 actionDeclaration: 
   | al = annotationList ACTION n = name L_PAREN pl = parameterList R_PAREN s = blockStatement
-    { [ NT al; Term "ACTION"; NT n; Term "("; NT pl; Term ")"; NT s ]
-      #@ "actionDeclaration" }
+    { let mixop = mixop_of "annotationList ACTION name `( parameterList ) blockStatement" in
+      (mixop, [ al; n; pl; s ]) #@ "actionDeclaration" }
 ;
 
 (* >> Instantiations *)
 objectInitializer:
 	| ASSIGN L_BRACE ds = objectDeclarationList R_BRACE
-    { [ Term "="; Term "{"; NT ds; Term "}" ] #@ "objectInitializer" }
+    { let mixop = mixop_of "`= `{ objectDeclarationList }" in
+      (mixop, [ ds ]) #@ "objectInitializer" }
 ;
 
 instantiation:
 	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name SEMICOLON
-    { [ NT al; NT t; Term "("; NT args; Term ")"; NT n; Term ";" ]
-      #@ "instantiation" }
-	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name i = objectInitializer SEMICOLON
-    { [ NT al; NT t; Term "("; NT args; Term ")"; NT n; NT i; Term ";" ]
-      #@ "instantiation" }
+    { let mixop = mixop_of "annotationList typeRef `( argumentList ) name `;" in
+      (mixop, [ al; t; args; n ]) #@ "instantiation" }
+	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name
+    i = objectInitializer SEMICOLON
+    { let mixop = mixop_of "annotationList typeRef `( argumentList ) name objectInitializer `;" in
+      (mixop, [ al; t; args; n; i ]) #@ "instantiation" } 
 ;
 
 objectDeclaration:
@@ -1095,23 +1363,28 @@ objectDeclaration:
 ;
 
 objectDeclarationList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "objectDeclarationList" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "objectDeclarationList" }
 	| ds = objectDeclarationList d = objectDeclaration
-    { [ NT ds; NT d ] #@ "objectDeclarationList" }
+    { let mixop = mixop_of "objectDeclarationList objectDeclaration" in
+      (mixop, [ ds; d ]) #@ "objectDeclarationList" }
 ;
 
 (* >> Error declarations *)
 errorDeclaration:
 	| ERROR L_BRACE nl = nameList R_BRACE
     { declare_vars_of_il nl;
-      [ Term "ERROR"; Term "{"; NT nl; Term "}" ] #@ "errorDeclaration" }
+      let mixop = mixop_of "ERROR `{ nameList }" in
+      (mixop, [ nl ]) #@ "errorDeclaration" }
 ;
 
 (* >> Match kind declarations *)
 matchKindDeclaration:
 	| MATCH_KIND L_BRACE nl = nameList c = trailingCommaOpt R_BRACE
     { declare_vars_of_il nl;
-      [ Term "MATCH_KIND"; Term "{"; NT nl; NT c; Term "}" ] #@ "matchKindDeclaration" }
+      let mixop = mixop_of "MATCH_KIND `{ nameList trailingCommaOpt }" in
+      (mixop, [ nl; c ]) #@ "matchKindDeclaration" } 
 ;
 
 (* >> Derived type declarations *)
@@ -1119,45 +1392,49 @@ matchKindDeclaration:
 enumTypeDeclaration:
   | al = annotationList ENUM n = name L_BRACE
     nl = nameList c = trailingCommaOpt R_BRACE
-    { [ NT al; Term "ENUM"; NT n; Term "{"; NT nl; NT c; Term "}" ]
-      #@ "enumTypeDeclaration" }
+    { let mixop = mixop_of "annotationList ENUM name `{ nameList trailingCommaOpt }" in
+      (mixop, [ al; n; nl; c ]) #@ "enumTypeDeclaration" }
   | al = annotationList ENUM t = typeRef n = name L_BRACE
     el = namedExpressionList c = trailingCommaOpt R_BRACE
-    { [ NT al; Term "ENUM"; NT t; NT n; Term "{"; NT el; NT c; Term "}" ]
-      #@ "enumTypeDeclaration" }
+    { let mixop = mixop_of "annotationList ENUM typeRef name `{ namedExpressionList trailingCommaOpt }" in
+      (mixop, [ al; t; n; el; c ]) #@ "enumTypeDeclaration" }
 ;
 
 (* >>>>>> Struct, header, and union type declarations *)
 typeField:
   | al = annotationList t = typeRef n = name SEMICOLON
-    { [ NT al; NT t; NT n; Term ";" ] #@ "typeField" }
+    { let mixop = mixop_of "annotationList typeRef name `;" in
+      (mixop, [ al; t; n ]) #@ "typeField" }
 ;
 
 typeFieldList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "typeFieldList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "typeFieldList" }
   | fl = typeFieldList f = typeField
-    { [ NT fl; NT f ] #@ "typeFieldList" }
+    { let mixop = mixop_of "typeFieldList typeField" in
+      (mixop, [ fl; f ]) #@ "typeFieldList" }
 ;
 
 structTypeDeclaration:
   | al = annotationList STRUCT n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "STRUCT"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "structTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { let mixop = mixop_of "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }" in
+      (mixop, [ al; n; tpl; fl ]) #@ "structTypeDeclaration" }
 ;
 
 headerTypeDeclaration:
   | al = annotationList HEADER n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "HEADER"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "headerTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { let mixop = mixop_of "annotationList HEADER name typeParameterListOpt `{ typeFieldList }" in
+      (mixop, [ al; n; tpl; fl ]) #@ "headerTypeDeclaration" }
 ;
 
 headerUnionTypeDeclaration:
   | al = annotationList HEADER_UNION n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "HEADER_UNION"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "headerUnionTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { let mixop = mixop_of "annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }" in
+      (mixop, [ al; n; tpl; fl ]) #@ "headerUnionTypeDeclaration" }
 ;
 
 derivedTypeDeclaration:
@@ -1177,31 +1454,34 @@ typedef:
 
 typedefDeclaration:
 	| al = annotationList TYPEDEF t = typedef n = name SEMICOLON
-    { [ NT al; Term "TYPEDEF"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
+    { let mixop = mixop_of "annotationList TYPEDEF typedef name `;" in
+      (mixop, [ al; t; n ]) #@ "typedefDeclaration" }
 	| al = annotationList TYPE t = typeRef n = name SEMICOLON
-    { [ NT al; Term "TYPE"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
+    { let mixop = mixop_of "annotationList TYPE typeRef name `;" in
+      (mixop, [ al; t; n ]) #@ "typedefDeclaration" }
 ;
 
 (* >> Extern declarations *)
 externFunctionDeclaration:
 	| al = annotationList EXTERN p = functionPrototype pop_scope SEMICOLON
-		{ let decl =
-        [ NT al; Term "EXTERN"; NT p; Term ";" ] #@ "externFunctionDeclaration"
-      in
-      declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
-      decl }
+		{ declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      let mixop = mixop_of "annotationList EXTERN functionPrototype `;" in
+      (mixop, [ al; p ]) #@ "externFunctionDeclaration" }
 ;
 
 %inline externConstructorPrototype:
 	| al = annotationList tid = typeIdentifier L_PAREN pl = parameterList R_PAREN SEMICOLON
-    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "externConstructorPrototype" }
+    { let mixop = mixop_of "annotationList typeIdentifier `( parameterList ) `;" in
+      (mixop, [ al; tid; pl ]) #@ "externConstructorPrototype" }
 
 %inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { let mixop = mixop_of "annotationList functionPrototype `;" in
+      (mixop, [ al; p ]) #@ "externMethodPrototype" }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { let mixop = mixop_of "annotationList ABSTRACT functionPrototype `;" in
+      (mixop, [ al; p ]) #@ "externMethodPrototype" }
 ;
 
 externConstructorOrMethodPrototype:
@@ -1211,18 +1491,19 @@ externConstructorOrMethodPrototype:
 ;
 
 externConstructorOrMethodPrototypeList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "externConstructorOrMethodPrototypeList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "externConstructorOrMethodPrototypeList" }
   | pl = externConstructorOrMethodPrototypeList p = externConstructorOrMethodPrototype
-    { [ NT pl; NT p ] #@ "externConstructorOrMethodPrototypeList" }
+    { let mixop = mixop_of "externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype" in
+       (mixop, [ pl; p ]) #@ "externConstructorOrMethodPrototypeList" }
 ;
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
     L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
-    { let decl =
-        [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
-          #@ "externObjectDeclaration"
-      in
+    { let mixop = mixop_of "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList }" in
+      let decl = (mixop, [ al; n; tpl; pl ]) #@ "externObjectDeclaration" in
       declare_type_of_il n (has_type_params_declaration decl);
       decl }
 ;
@@ -1237,33 +1518,41 @@ externDeclaration:
 (* >>>> Select expressions *)
 selectCase:
   | k = keysetExpression COLON n = name SEMICOLON
-    { [ NT k; Term ":"; NT n; Term ";" ] #@ "selectCase" }
+    { let mixop = mixop_of "keysetExpression `: name `;" in
+      (mixop, [ k; n ]) #@ "selectCase" }
 ;
 
 selectCaseList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "selectCaseList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+       (mixop, []) #@ "selectCaseList" }
   | cl = selectCaseList c = selectCase
-    { [ NT cl; NT c ] #@ "selectCaseList" }
+    { let mixop = mixop_of "selectCaseList selectCase" in
+       (mixop, [ cl; c ]) #@ "selectCaseList" }
 ;
 
 selectExpression:
   | SELECT L_PAREN el = expressionList R_PAREN L_BRACE cl = selectCaseList R_BRACE
-    { [ Term "SELECT"; Term "("; NT el; Term ")"; Term "{"; NT cl; Term "}" ]
-      #@ "selectExpression" }
+    { let mixop = mixop_of "SELECT `( expressionList ) `{ selectCaseList }" in
+       (mixop, [ el; cl ]) #@ "selectExpression" }
 ;
 
 (* >>>> Transition statements *)
 stateExpression:
   | n = name SEMICOLON
-    { [ NT n; Term ";" ] #@ "stateExpression" }
+    { let mixop = mixop_of "name `;" in
+       (mixop, [ n ]) #@ "stateExpression" }
   | e = selectExpression
     { e }
 ;
 
 transitionStatement:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "transitionStatement" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+       (mixop, []) #@ "transitionStatement" }
   | TRANSITION e = stateExpression
-    { [ Term "TRANSITION"; NT e ] #@ "transitionStatement" }
+    { let mixop = mixop_of "TRANSITION stateExpression" in
+       (mixop, [ e ]) #@ "transitionStatement" }
 ;
 
 (* >>>> Value set declarations *)
@@ -1277,31 +1566,32 @@ valueSetType:
 valueSetDeclaration:
 	| al = annotationList VALUE_SET l_angle t = valueSetType r_angle
     L_PAREN s = expression R_PAREN n = name SEMICOLON
-    { [ NT al; Term "VALUE_SET"; Term "<"; NT t; Term ">"; Term "("; NT s; Term ")"; NT n; Term ";" ]
-       #@ "valueSetDeclaration" }
+    { let mixop = mixop_of "annotationList VALUE_SET `< valueSetType > `( expression ) name `;" in
+      (mixop, [ al; t; s; n ]) #@ "valueSetDeclaration" }
 ;
 
 (* >>>> Parser type declarations *)
 parserTypeDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
       L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "PARSER"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "parserTypeDeclaration" }
+    { let mixop = mixop_of "annotationList PARSER name typeParameterListOpt `( parameterList ) `;" in
+      (mixop, [ al; n; tpl; pl ]) #@ "parserTypeDeclaration" }
 ;
 
 (* >>>> Parser declarations *)
 parserBlockStatement:
   | al = annotationList L_BRACE sl = parserStatementList R_BRACE
-    { [ NT al; Term "{"; NT sl; Term "}" ] #@ "parserBlockStatement" }
+    { let mixop = mixop_of "annotationList `{ parserStatementList }" in
+       (mixop, [ al; sl ]) #@ "parserBlockStatement" }
 ;
 
 parserConditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
-      #@ "parserConditionalStatement" }
+    { let mixop = mixop_of "IF `( expression ) parserStatement" in
+      (mixop, [ c; t ]) #@ "parserConditionalStatement" }
 	| IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
-      #@ "parserConditionalStatement" }
+    { let mixop = mixop_of "IF `( expression ) parserStatement ELSE parserStatement" in
+      (mixop, [ c; t; f ]) #@ "parserConditionalStatement" }
 ;
 
 parserStatement:
@@ -1317,21 +1607,26 @@ parserStatement:
 ;
 
 parserStatementList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "parserStatementList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "parserStatementList" }
   | sl = parserStatementList s = parserStatement
-    { [ NT sl; NT s ] #@ "parserStatementList" }
+    { let mixop = mixop_of "parserStatementList parserStatement" in
+      (mixop, [ sl; s ]) #@ "parserStatementList" }
 ;
 
 parserState:
   | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE
-    { [ NT al; Term "STATE"; NT n; Term "{"; NT sl; NT t; Term "}" ]
-      #@ "parserState" }
+    { let mixop = mixop_of "annotationList STATE name `{ parserStatementList transitionStatement }" in
+      (mixop, [ al; n; sl; t ]) #@ "parserState" }
 ;
 
 parserStateList:
-  | s = parserState { s }
+  | s = parserState
+    { s }
   | sl = parserStateList s = parserState
-    { [ NT sl; NT s ] #@ "parserStateList" }
+    { let mixop = mixop_of "parserStateList parserState" in
+      (mixop, [ sl; s ]) #@ "parserStateList" }
 ;
 
 parserLocalDeclaration:
@@ -1343,36 +1638,47 @@ parserLocalDeclaration:
 ;
 
 parserLocalDeclarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "parserLocalDeclarationList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+       (mixop, []) #@ "parserLocalDeclarationList" }
   | dl = parserLocalDeclarationList d = parserLocalDeclaration
-    { [ NT dl; NT d ] #@ "parserLocalDeclarationList" }
+    { let mixop = mixop_of "parserLocalDeclarationList parserLocalDeclaration" in
+      (mixop, [ dl; d ]) #@ "parserLocalDeclarationList" }
 ;
 
 parserDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = parserLocalDeclarationList sl = parserStateList R_BRACE pop_scope
-		{ [ NT al; Term "PARSER"; NT n; NT tpl; Term "("; NT pl; Term ")"; NT cpl;
-      Term "{"; NT dl; NT sl; Term "}" ] #@ "parserDeclaration" }
+		{ let mixop = mixop_of "annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }" in
+      (mixop, [ al; n; tpl; pl; cpl; dl; sl ]) #@ "parserDeclaration" }
 ;
 
 (* >> Control statements and declarations *)
 (* >>>> Table declarations *)
 constOpt:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "constOpt" }
-  | CONST { [ Term "CONST" ] #@ "constOpt" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "constOpt" }
+  | CONST
+    { let mixop = mixop_of "CONST" in
+      (mixop, []) #@ "constOpt" }
 ;
 
 (* >>>>>> Table key property *)
 tableKey:
   | e = expression COLON n = name al = annotationList SEMICOLON
-    { [ NT e; Term ":"; NT n; NT al; Term ";" ] #@ "tableKey" }
+    { let mixop = mixop_of "expression `: name annotationList `;" in
+      (mixop, [ e; n; al ]) #@ "tableKey" }
 ;
 
 tableKeyList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableKeyList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "tableKeyList" }
   | kl = tableKeyList k = tableKey
-    { [ NT kl; NT k ] #@ "tableKeyList" }
+    { let mixop = mixop_of "tableKeyList tableKey" in
+      (mixop, [ kl; k ]) #@ "tableKeyList" }
 ;
 
 (* >>>>>> Table actions property *)
@@ -1380,69 +1686,90 @@ tableActionReference:
   | n = prefixedNonTypeName
     { n }
   | n = prefixedNonTypeName L_PAREN al = argumentList R_PAREN
-    { [ NT n; Term "("; NT al; Term ")" ] #@ "tableActionReference" }
+    { let mixop = mixop_of "prefixedNonTypeName `( argumentList )" in
+      (mixop, [ n; al ]) #@ "tableActionReference" }
 ;
 
 tableAction:
   | al = annotationList ac = tableActionReference SEMICOLON
-    { [ NT al; NT ac; Term ";" ] #@ "tableAction" }
+    { let mixop = mixop_of "annotationList tableActionReference `;" in
+      (mixop, [ al; ac ]) #@ "tableAction" }
 ;
 
 tableActionList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableActionList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "tableActionList" }
   | acl = tableActionList ac = tableAction
-    { [ NT acl; NT ac ] #@ "tableActionList" }
+    { let mixop = mixop_of "tableActionList tableAction" in
+      (mixop, [ acl; ac ]) #@ "tableActionList" }
 ;
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
   | PRIORITY ASSIGN int = integerLiteral COLON
-    { [ Term "PRIORITY"; Term "="; NT int; Term ":" ] #@ "tableEntryPriority" }
+    { let mixop = mixop_of "PRIORITY `= integerLiteral `:" in
+      (mixop, [ int ]) #@ "tableEntryPriority" }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
-    { [ Term "PRIORITY"; Term "="; Term "("; NT e; Term ")"; Term ":" ] #@ "tableEntryPriority" }
+    { let mixop = mixop_of "PRIORITY `= `( expression ) `:" in
+      (mixop, [ e ]) #@ "tableEntryPriority" }
 ;
 
 tableEntry:
-  | c = constOpt p = tableEntryPriority k = keysetExpression COLON ac = tableActionReference al = annotationList SEMICOLON
-    { [ NT c; NT p; NT k; Term ":"; NT ac; NT al; Term ";" ] #@ "tableEntry" }
+  | c = constOpt p = tableEntryPriority k = keysetExpression COLON ac = tableActionReference
+    al = annotationList SEMICOLON
+    { let mixop = mixop_of "constOpt tableEntryPriority keysetExpression `: tableActionReference annotationList `;" in
+      (mixop, [ c; p; k; ac; al ]) #@ "tableEntry" }
   | c = constOpt k = keysetExpression COLON ac = tableActionReference al = annotationList SEMICOLON
-    { [ NT c; NT k; Term ":"; NT ac; NT al; Term ";" ] #@ "tableEntry" }
+    { let mixop = mixop_of "constOpt keysetExpression `: tableActionReference annotationList `;" in
+      (mixop, [ c; k; ac; al ]) #@ "tableEntry" }
 ;
 
 tableEntryList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableEntryList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "tableEntryList" }
   | el = tableEntryList e = tableEntry
-    { [ NT el; NT e ] #@ "tableEntryList" }
+    { let mixop = mixop_of "tableEntryList tableEntry" in
+      (mixop, [ el; e ]) #@ "tableEntryList" }
 ;
 
 (* >>>>>> Table properties *)
 tableProperty:
   | KEY ASSIGN L_BRACE kl = tableKeyList R_BRACE
-    { [ Term "KEY"; Term "="; Term "{"; NT kl; Term "}" ] #@ "tableProperty" }
+    { let mixop = mixop_of "KEY `= `{ tableKeyList }" in
+      (mixop, [ kl ]) #@ "tableProperty" }
   | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
-    { [ Term "ACTIONS"; Term "="; Term "{"; NT acl; Term "}" ] #@ "tableProperty" }
+    { let mixop = mixop_of "ACTIONS `= `{ tableActionList }" in
+      (mixop, [ acl ]) #@ "tableProperty" }
   | al = annotationList c = constOpt ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
-    { [ NT al; NT c; Term "ENTRIES"; Term "="; Term "{"; NT el; Term "}" ] #@ "tableProperty" }
+    { let mixop = mixop_of "annotationList constOpt ENTRIES `= `{ tableEntryList }" in
+      (mixop, [ al; c; el ]) #@ "tableProperty" }
   | al = annotationList c = constOpt n = tableCustomName i = initialValue SEMICOLON
-    { [ NT al; NT c; NT n; NT i; Term ";" ] #@ "tableProperty" }
+    { let mixop = mixop_of "annotationList constOpt tableCustomName initializer `;" in
+      (mixop, [ al; c; n; i ]) #@ "tableProperty" }
 ;
 
 tablePropertyList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tablePropertyList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "tablePropertyList" }
   | pl = tablePropertyList p = tableProperty
-    { [ NT pl; NT p ] #@ "tablePropertyList" }
+    { let mixop = mixop_of "tablePropertyList tableProperty" in
+      (mixop, [ pl; p ]) #@ "tablePropertyList" }
 ;
 
 tableDeclaration:
   | al = annotationList TABLE n = name L_BRACE pl = tablePropertyList R_BRACE
-    { [ NT al; Term "TABLE"; NT n; Term "{"; NT pl; Term "}" ] #@ "tableDeclaration" }
+    { let mixop = mixop_of "annotationList TABLE name `{ tablePropertyList }" in
+      (mixop, [ al; n; pl ]) #@ "tableDeclaration" }
 
 (* >>>> Control type declarations *)
 controlTypeDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "CONTROL"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "controlTypeDeclaration" }
+    { let mixop = mixop_of "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;" in
+      (mixop, [ al; n; tpl; pl ]) #@ "controlTypeDeclaration" }
 ;
 
 (* >>>> Control declarations *)
@@ -1462,25 +1789,28 @@ controlLocalDeclaration:
 ;
 
 controlLocalDeclarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "controlLocalDeclarationList" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "controlLocalDeclarationList" }
   | dl = controlLocalDeclarationList d = controlLocalDeclaration
-    { [ NT dl; NT d ] #@ "controlLocalDeclarationList" }
+    { let mixop = mixop_of "controlLocalDeclarationList controlLocalDeclaration" in
+      (mixop, [ dl; d ]) #@ "controlLocalDeclarationList" }
 ;
 
 controlDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = controlLocalDeclarationList APPLY b = controlBody R_BRACE pop_scope
-    { [ NT al; Term "CONTROL"; NT n; NT tpl; Term "("; NT pl; Term ")"; NT cpl;
-      Term "{"; NT dl; Term "APPLY"; NT b; Term "}" ] #@ "controlDeclaration" }
+    { let mixop = mixop_of "annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }" in
+    (mixop, [ al; n; tpl; pl; cpl; dl; b ]) #@ "controlDeclaration" }
 ;
 
 (* >> Package type declarations *)
 packageTypeDeclaration:
   | al = annotationList PACKAGE n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "PACKAGE"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "packageTypeDeclaration" }
+    { let mixop = mixop_of "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;" in
+      (mixop, [ al; n; tpl; pl ]) #@ "packageTypeDeclaration" }
 ;
 
 (* >> Type declarations *)
@@ -1521,105 +1851,155 @@ declaration:
 (* Annotations *)
 annotationToken:
 	| UNEXPECTED_TOKEN
-    { [ Term "UNEXPECTED_TOKEN" ] #@ "annotationToken" }
+    { let mixop = mixop_of "UNEXPECTED_TOKEN" in
+      (mixop, []) #@ "annotationToken" }
 	| ABSTRACT
-    { [ Term "ABSTRACT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ABSTRACT" in
+      (mixop, []) #@ "annotationToken" }
 	| ACTION
-    { [ Term "ACTION" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ACTION" in
+      (mixop, []) #@ "annotationToken" }
 	| ACTIONS
-    { [ Term "ACTIONS" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ACTIONS" in
+      (mixop, []) #@ "annotationToken" }
 	| APPLY
-    { [ Term "APPLY" ] #@ "annotationToken" }
+    { let mixop = mixop_of "APPLY" in
+      (mixop, []) #@ "annotationToken" }
 	| BOOL
-    { [ Term "BOOL" ] #@ "annotationToken" }
+    { let mixop = mixop_of "BOOL" in
+      (mixop, []) #@ "annotationToken" }
 	| BIT
-    { [ Term "BIT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "BIT" in
+      (mixop, []) #@ "annotationToken" }
 	| BREAK
-    { [ Term "BREAK" ] #@ "annotationToken" }
+    { let mixop = mixop_of "BREAK" in
+      (mixop, []) #@ "annotationToken" }
 	| CONST
-    { [ Term "CONST" ] #@ "annotationToken" }
+    { let mixop = mixop_of "CONST" in
+      (mixop, []) #@ "annotationToken" }
 	| CONTINUE
-    { [ Term "CONTINUE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "CONTINUE" in
+      (mixop, []) #@ "annotationToken" }
 	| CONTROL
-    { [ Term "CONTROL" ] #@ "annotationToken" }
+    { let mixop = mixop_of "CONTROL" in
+      (mixop, []) #@ "annotationToken" }
 	| DEFAULT
-    { [ Term "DEFAULT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "DEFAULT" in
+      (mixop, []) #@ "annotationToken" }
 	| ELSE
-    { [ Term "ELSE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ELSE" in
+      (mixop, []) #@ "annotationToken" }
 	| ENTRIES
-    { [ Term "ENTRIES" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ENTRIES" in
+      (mixop, []) #@ "annotationToken" }
 	| ENUM
-    { [ Term "ENUM" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ENUM" in
+      (mixop, []) #@ "annotationToken" }
 	| ERROR
-    { [ Term "ERROR" ] #@ "annotationToken" }
+    { let mixop = mixop_of "ERROR" in
+      (mixop, []) #@ "annotationToken" }
 	| EXIT
-    { [ Term "EXIT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "EXIT" in
+      (mixop, []) #@ "annotationToken" }
 	| EXTERN
-    { [ Term "EXTERN" ] #@ "annotationToken" }
+    { let mixop = mixop_of "EXTERN" in
+      (mixop, []) #@ "annotationToken" }
 	| FALSE
-    { [ Term "FALSE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "FALSE" in
+      (mixop, []) #@ "annotationToken" }
 	| FOR
-    { [ Term "FOR" ] #@ "annotationToken" }
+    { let mixop = mixop_of "FOR" in
+      (mixop, []) #@ "annotationToken" }
 	| HEADER
-    { [ Term "HEADER" ] #@ "annotationToken" }
+    { let mixop = mixop_of "HEADER" in
+      (mixop, []) #@ "annotationToken" }
 	| HEADER_UNION
-    { [ Term "HEADER_UNION" ] #@ "annotationToken" }
+    { let mixop = mixop_of "HEADER_UNION" in
+      (mixop, []) #@ "annotationToken" }
 	| IF
-    { [ Term "IF" ] #@ "annotationToken" }
+    { let mixop = mixop_of "IF" in
+      (mixop, []) #@ "annotationToken" }
 	| IN
-    { [ Term "IN" ] #@ "annotationToken" }
+    { let mixop = mixop_of "IN" in
+      (mixop, []) #@ "annotationToken" }
 	| INOUT
-    { [ Term "INOUT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "INOUT" in
+      (mixop, []) #@ "annotationToken" }
 	| INT
-    { [ Term "INT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "INT" in
+      (mixop, []) #@ "annotationToken" }
 	| KEY
-    { [ Term "KEY" ] #@ "annotationToken" }
+    { let mixop = mixop_of "KEY" in
+      (mixop, []) #@ "annotationToken" }
 	| MATCH_KIND
-    { [ Term "MATCH_KIND" ] #@ "annotationToken" }
+    { let mixop = mixop_of "MATCH_KIND" in
+      (mixop, []) #@ "annotationToken" }
 	| TYPE
-    { [ Term "TYPE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TYPE" in
+      (mixop, []) #@ "annotationToken" }
 	| OUT
-    { [ Term "OUT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "OUT" in
+      (mixop, []) #@ "annotationToken" }
 	| PARSER
-    { [ Term "PARSER" ] #@ "annotationToken" }
+    { let mixop = mixop_of "PARSER" in
+      (mixop, []) #@ "annotationToken" }
 	| PACKAGE
-    { [ Term "PACKAGE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "PACKAGE" in
+      (mixop, []) #@ "annotationToken" }
 	| PRAGMA
-    { [ Term "PRAGMA" ] #@ "annotationToken" }
+    { let mixop = mixop_of "PRAGMA" in
+      (mixop, []) #@ "annotationToken" }
 	| RETURN
-    { [ Term "RETURN" ] #@ "annotationToken" }
+    { let mixop = mixop_of "RETURN" in
+      (mixop, []) #@ "annotationToken" }
 	| SELECT
-    { [ Term "SELECT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "SELECT" in
+      (mixop, []) #@ "annotationToken" }
 	| STATE
-    { [ Term "STATE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "STATE" in
+      (mixop, []) #@ "annotationToken" }
 	| STRING
-    { [ Term "STRING" ] #@ "annotationToken" }
+    { let mixop = mixop_of "STRING" in
+      (mixop, []) #@ "annotationToken" }
 	| STRUCT
-    { [ Term "STRUCT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "STRUCT" in
+      (mixop, []) #@ "annotationToken" }
 	| SWITCH
-    { [ Term "SWITCH" ] #@ "annotationToken" }
+    { let mixop = mixop_of "SWITCH" in
+      (mixop, []) #@ "annotationToken" }
 	| TABLE
-    { [ Term "TABLE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TABLE" in
+      (mixop, []) #@ "annotationToken" }
 	| THIS
-    { [ Term "THIS" ] #@ "annotationToken" }
+    { let mixop = mixop_of "THIS" in
+      (mixop, []) #@ "annotationToken" }
 	| TRANSITION
-    { [ Term "TRANSITION" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TRANSITION" in
+      (mixop, []) #@ "annotationToken" }
 	| TRUE
-    { [ Term "TRUE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TRUE" in
+      (mixop, []) #@ "annotationToken" }
 	| TUPLE
-    { [ Term "TUPLE" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TUPLE" in
+      (mixop, []) #@ "annotationToken" }
 	| TYPEDEF
-    { [ Term "TYPEDEF" ] #@ "annotationToken" }
+    { let mixop = mixop_of "TYPEDEF" in
+      (mixop, []) #@ "annotationToken" }
 	| VARBIT
-    { [ Term "VARBIT" ] #@ "annotationToken" }
+    { let mixop = mixop_of "VARBIT" in
+      (mixop, []) #@ "annotationToken" }
 	| VALUE_SET
-    { [ Term "VALUE_SET" ] #@ "annotationToken" }
+    { let mixop = mixop_of "VALUE_SET" in
+      (mixop, []) #@ "annotationToken" }
 	| LIST
-    { [ Term "LIST" ] #@ "annotationToken" }
+    { let mixop = mixop_of "LIST" in
+      (mixop, []) #@ "annotationToken" }
 	| VOID
-    { [ Term "VOID" ] #@ "annotationToken" }
+    { let mixop = mixop_of "VOID" in
+      (mixop, []) #@ "annotationToken" }
 	| DONTCARE
-    { [ Term "_" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`_" in
+      (mixop, []) #@ "annotationToken" }
 	| id = identifier
     { id }
 	| tid = typeIdentifier
@@ -1629,121 +2009,174 @@ annotationToken:
 	| int = integerLiteral
     { int }
 	| MASK
-    { [ Term "&&&" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`&&&" in
+      (mixop, []) #@ "annotationToken" }
   (* TODO: missing DOTS "..." in spec *)
 	| RANGE
-    { [ Term ".." ] #@ "annotationToken" }
+    { let mixop = mixop_of "`.." in
+      (mixop, []) #@ "annotationToken" }
 	| SHL
-    { [ Term "<<" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`<<" in
+      (mixop, []) #@ "annotationToken" }
 	| AND
-    { [ Term "&&" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`&&" in
+      (mixop, []) #@ "annotationToken" }
 	| OR
-    { [ Term "||" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`||" in
+      (mixop, []) #@ "annotationToken" }
 	| EQ
-    { [ Term "==" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`==" in
+      (mixop, []) #@ "annotationToken" }
 	| NE
-    { [ Term "!=" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`!=" in
+      (mixop, []) #@ "annotationToken" }
 	| GE
-    { [ Term ">=" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`>=" in
+      (mixop, []) #@ "annotationToken" }
 	| LE
-    { [ Term "<=" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`<=" in
+      (mixop, []) #@ "annotationToken" }
 	| PLUSPLUS
-    { [ Term "++" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`++" in
+      (mixop, []) #@ "annotationToken" }
 	| PLUS
-    { [ Term "+" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`+" in
+      (mixop, []) #@ "annotationToken" }
 	| PLUS_SAT
-    { [ Term "|+|" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`|+|" in
+      (mixop, []) #@ "annotationToken" }
 	| MINUS
-    { [ Term "-" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`-" in
+      (mixop, []) #@ "annotationToken" }
 	| MINUS_SAT
-    { [ Term "|-|" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`|-|" in
+      (mixop, []) #@ "annotationToken" }
 	| MUL
-    { [ Term "*" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`*" in
+      (mixop, []) #@ "annotationToken" }
 	| DIV
-    { [ Term "/" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`/" in
+      (mixop, []) #@ "annotationToken" }
 	| MOD
-    { [ Term "%" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`%" in
+      (mixop, []) #@ "annotationToken" }
 	| BIT_OR
-    { [ Term "|" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`|" in
+      (mixop, []) #@ "annotationToken" }
 	| BIT_AND
-    { [ Term "&" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`&" in
+      (mixop, []) #@ "annotationToken" }
 	| BIT_XOR
-    { [ Term "^" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`^" in
+      (mixop, []) #@ "annotationToken" }
 	| COMPLEMENT
-    { [ Term "~" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`~" in
+      (mixop, []) #@ "annotationToken" }
 	| L_BRACKET
-    { [ Term "[" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``[" in
+      (mixop, []) #@ "annotationToken" }
 	| R_BRACKET
-    { [ Term "]" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``]" in
+      (mixop, []) #@ "annotationToken" }
 	| L_BRACE
-    { [ Term "{" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``{" in
+      (mixop, []) #@ "annotationToken" }
 	| R_BRACE
-    { [ Term "}" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``}" in
+      (mixop, []) #@ "annotationToken" }
 	| L_ANGLE
-    { [ Term "<" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``<" in
+      (mixop, []) #@ "annotationToken" }
 	| R_ANGLE
-    { [ Term ">" ] #@ "annotationToken" }
+    { let mixop = mixop_of "``>" in
+      (mixop, []) #@ "annotationToken" }
 	| NOT
-    { [ Term "!" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`!" in
+      (mixop, []) #@ "annotationToken" }
 	| COLON
-    { [ Term ":" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`:" in
+      (mixop, []) #@ "annotationToken" }
 	| COMMA
-    { [ Term "," ] #@ "annotationToken" }
+    { let mixop = mixop_of "`," in
+      (mixop, []) #@ "annotationToken" }
 	| QUESTION
-    { [ Term "?" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`?" in
+      (mixop, []) #@ "annotationToken" }
 	| DOT
-    { [ Term "." ] #@ "annotationToken" }
+    { let mixop = mixop_of "`." in
+      (mixop, []) #@ "annotationToken" }
 	| ASSIGN
-    { [ Term "=" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`=" in
+      (mixop, []) #@ "annotationToken" }
 	| SEMICOLON
-    { [ Term ";" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`;" in
+      (mixop, []) #@ "annotationToken" }
 	| AT
-    { [ Term "@" ] #@ "annotationToken" }
+    { let mixop = mixop_of "`@" in
+      (mixop, []) #@ "annotationToken" }
 ;
 
 annotationBody:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "annotationBody" }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "annotationBody" }
 	| ab = annotationBody L_PAREN ab_in = annotationBody R_PAREN
-    { [ NT ab; Term "("; NT ab_in; Term ")" ] #@ "annotationBody" }
+    { let mixop = mixop_of "annotationBody `( annotationBody )" in
+      (mixop, [ ab; ab_in ]) #@ "annotationBody" }
 	| ab = annotationBody at = annotationToken
-    { [ NT ab; NT at ] #@ "annotationBody" }
+    { let mixop = mixop_of "annotationBody annotationToken" in
+      (mixop, [ ab; at ]) #@ "annotationBody" }
 ;
 
 structuredAnnotationBody:
 	| e = sequenceOrRecordElementExpression c = trailingCommaOpt
-    { [ NT e; NT c ] #@ "structuredAnnotationBody" }
+    { let mixop = mixop_of "sequenceOrRecordElementExpression trailingCommaOpt" in
+      (mixop, [ e; c ]) #@ "structuredAnnotationBody" }
 ;
 
 annotation:
 	| AT name = name
-    { [ Term "@"; NT name ] #@ "annotation" }
+    { let mixop = mixop_of "`@ name" in
+      (mixop, [ name ]) #@ "annotation" }
 	| AT name = name L_PAREN body = annotationBody R_PAREN
-    { [ Term "@"; NT name; Term "("; NT body; Term ")" ] #@ "annotation" }
+    { let mixop = mixop_of "`@ name `( annotationBody )" in
+      (mixop, [ name; body ]) #@ "annotation" }
 	| AT name = name L_BRACKET body = structuredAnnotationBody R_BRACKET
-    { [ Term "@"; NT name; Term "["; NT body; Term "]" ] #@ "annotation" }
+    { let mixop = mixop_of "`@ name `[ structuredAnnotationBody ]" in
+      (mixop, [ name; body ]) #@ "annotation" }
 (* From Petr4: PRAGMA not in Spec, but in Petr4/p4c *)
 	| PRAGMA name = name body = annotationBody PRAGMA_END
-    { [ Term "@"; Term "PRAGMA"; NT name; NT body; ] #@ "annotation" }
+    { let mixop = mixop_of "`@ PRAGMA name annotationBody" in
+      (mixop, [ name; body ]) #@ "annotation" }
 ;
 
 annotationListNonEmpty:
-	| a = annotation { a }
+	| a = annotation
+    { a }
 	| al = annotationListNonEmpty a = annotation
-		{ [ NT al; NT a ] #@ "annotationListNonEmpty" }
+		{ let mixop = mixop_of "annotationListNonEmpty annotation" in
+      (mixop, [ al; a ]) #@ "annotationListNonEmpty" }
 ;
 
 %inline annotationList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "annotationList" }
-	| al = annotationListNonEmpty { al }
+	| (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "annotationList" }
+	| al = annotationListNonEmpty
+    { al }
 ;
 
 (******** P4 program ********)
 declarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "p4program" }
+  | (* empty *)
+    { let mixop = mixop_of "`EMPTY" in
+      (mixop, []) #@ "declarationList" }
   | ds = declarationList d = declaration
-    { [ NT ds; NT d ] #@ "p4program" }
+    { let mixop = mixop_of "declarationList declaration" in
+      (mixop, [ ds; d ]) #@ "declarationList" }
   | ds = declarationList SEMICOLON
-    { [ NT ds; Term ";" ] #@ "p4program" }
+    { let mixop = mixop_of "declarationList `;" in
+      (mixop, [ ds ]) #@ "declarationList" }
 ;
 
 p4program:
