@@ -123,7 +123,7 @@ let parse_width_int s n _info =
         let value_int =
           NumV (`Int i) |> with_typ (NumT `IntT)
         in
-        "nat S int" <-- ([ value_width; value_int], "integerLiteral")
+        "nat S int" <| [ value_width; value_int] <<| "integerLiteral"
     | "w" ->
       let value_width =
         NumV (`Nat w) |> with_typ (NumT `NatT)
@@ -131,7 +131,7 @@ let parse_width_int s n _info =
       let value_int =
         NumV (`Int i) |> with_typ (NumT `IntT)
       in
-      "nat W int" <-- ([ value_width; value_int], "integerLiteral")
+      "nat W int" <| [ value_width; value_int] <<| "integerLiteral"
     | _ ->
       raise (Error "Illegal integer constant")
 }

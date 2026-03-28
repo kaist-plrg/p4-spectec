@@ -19,8 +19,8 @@ let verify (value_ctx : Value.t) (value_arch : Value.t) :
   let value_callResult =
     if check then
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
-    else "REJECT errorValue" <-- ([ value_toSignal ], "rejectResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
+    else "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult"
   in
   (value_ctx, value_arch, value_callResult)
 

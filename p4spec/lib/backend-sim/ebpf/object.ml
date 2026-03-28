@@ -63,7 +63,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -90,7 +90,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 end

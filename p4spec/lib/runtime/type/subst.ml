@@ -1,7 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
-open Util.Error
+open Error
 open Util.Source
 
 (* Substitution of type variables *)
@@ -16,7 +16,7 @@ let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
   | VarT (tid, targs) -> (
       match TIdMap.find_opt tid theta with
       | Some _ when targs <> [] ->
-          error_elab typ.at "higher-order substitution is disallowed"
+          error typ.at "higher-order substitution is disallowed"
       | Some typ -> typ
       | None ->
           let targs = subst_typs_inner theta targs in

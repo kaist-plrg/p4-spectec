@@ -94,7 +94,7 @@ module Counter = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -149,7 +149,7 @@ module Meter = struct
     let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
     let value_callResult =
       let value_color_opt = wrap_opt_v "value" (Some value_color) in
-      "RETURN value?" <-- ([ value_color_opt ], "returnResult")
+      "RETURN value?" <| [ value_color_opt ] <<| "returnResult"
     in
     (meter, value_ctx, value_arch, value_callResult)
 
@@ -165,7 +165,7 @@ module Meter = struct
     let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
     let value_callResult =
       let value_color_opt = wrap_opt_v "value" (Some value_color) in
-      "RETURN value?" <-- ([ value_color_opt ], "returnResult")
+      "RETURN value?" <| [ value_color_opt ] <<| "returnResult"
     in
     (meter, value_ctx, value_arch, value_callResult)
 end
@@ -233,7 +233,7 @@ module Register = struct
     in
     let value_callResult =
       let value_opt = wrap_opt_v "value" (Some value) in
-      "RETURN value?" <-- ([ value_opt ], "returnResult")
+      "RETURN value?" <| [ value_opt ] <<| "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 
@@ -253,7 +253,7 @@ module Register = struct
     let reg = { reg with values } in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 end
@@ -307,7 +307,7 @@ module HashExtern = struct
     let value_result = Spec.Func.cast_op value_typ_O value_result in
     let value_callResult =
       let value_result_opt = wrap_opt_v "value" (Some value_result) in
-      "RETURN value?" <-- ([ value_result_opt ], "returnResult")
+      "RETURN value?" <| [ value_result_opt ] <<| "returnResult"
     in
     (hash, value_ctx, value_arch, value_callResult)
 
@@ -342,7 +342,7 @@ module HashExtern = struct
     let value_result = Spec.Func.cast_op value_typ_O value_result in
     let value_callResult =
       let value_result_opt = wrap_opt_v "value" (Some value_result) in
-      "RETURN value?" <-- ([ value_result_opt ], "returnResult")
+      "RETURN value?" <| [ value_result_opt ] <<| "returnResult"
     in
     (hash, value_ctx, value_arch, value_callResult)
 end
@@ -383,7 +383,7 @@ module InternetChecksum = struct
       t * Value.t * Value.t * Value.t =
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (Bigint.zero, value_ctx, value_arch, value_callResult)
 
@@ -400,7 +400,7 @@ module InternetChecksum = struct
     let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -420,7 +420,7 @@ module InternetChecksum = struct
     let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -434,7 +434,7 @@ module InternetChecksum = struct
     let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
     let value_callResult =
       let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
-      "RETURN value?" <-- ([ value_checksum_opt ], "returnResult")
+      "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -449,7 +449,7 @@ module InternetChecksum = struct
     let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
     let value_callResult =
       let value_checksum_opt = wrap_opt_v "value" (Some value_checksum) in
-      "RETURN value?" <-- ([ value_checksum_opt ], "returnResult")
+      "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult"
     in
     (checksum, value_ctx, value_arch, value_callResult)
 
@@ -468,7 +468,7 @@ module InternetChecksum = struct
     in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <-- ([ value_eps ], "returnResult")
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (checksum_state, value_ctx, value_arch, value_callResult)
 end

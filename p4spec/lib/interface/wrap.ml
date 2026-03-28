@@ -6,7 +6,15 @@ open Util.Source
 
 (* Mixop generator *)
 
-let mixop_of (s : string) : Mixop.t = Pass.Frontend.Parse.parse_mixop s
+let mixop_cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
+
+let mixop_of (s : string) : Mixop.t =
+  match Hashtbl.find_opt mixop_cache s with
+  | Some m -> m
+  | None ->
+      let m = Pass.Frontend.Parse.parse_mixop s in
+      Hashtbl.add mixop_cache s m;
+      m
 
 (* Type generators *)
 
@@ -18,15 +26,6 @@ let wrap_iter_t (i : iter) (t : typ') : typ' = IterT (t $ no_region, i)
 let with_typ (typ : typ') (v : value') : value = Value.make typ v
 
 (* Value generators *)
-
-type symbol = NT of value | Term of string
-
-type symb =
-  | Arg of value
-  | Atom of string
-  | Brack of string * symb * string
-  | Infix of symb * string * symb
-  | Seq of symb list
 
 let wrap_bool_v (b : bool) : value = BoolV b |> with_typ BoolT
 
@@ -59,8 +58,11 @@ let wrap_list_v_typed (t : typ') (vs : value list) : value =
 let wrap_extern_v (s : string) (json : Yojson.Safe.t) : value =
   ExternV json |> with_typ (wrap_var_t s)
 
-let ( <-- ) (mixop_s : string) ((vs, type_s) : value list * string) : value =
-  wrap_case_v type_s (mixop_of mixop_s, vs)
+let ( <| ) (s_mixop : string) (vs : value list) : string * value list =
+  (s_mixop, vs)
+
+let ( <<| ) ((s_mixop, vs) : string * value list) (s : string) : value =
+  wrap_case_v s (mixop_of s_mixop, vs)
 
 let ( #@@ ) (v : value) (s : string) : value =
   { v with note = { v.note with typ = wrap_var_t s } }
