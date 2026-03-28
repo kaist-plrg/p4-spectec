@@ -203,3 +203,160 @@ def $free_callableTypeDefIR(callableTypeDefIR)
   -- if callableTypeIR
       = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
   -- if B_base = $free_callableTypeIR(callableTypeIR)
+
+;;
+;;;; Unresolved type variable checks (for non-local type inference validation)
+;;
+
+dec $has_unresolved_typeVars(typeIR) : bool
+  hint(prose_in "whether" %0 "has unresolved type variables")
+
+def $has_unresolved_typeVars(typeIR)
+  = ~$is_empty_set<typeId>($free_typeIR(typeIR))
+
+dec $free_typedExpressionIR(typedExpressionIR) : bound
+  hint(prose_in "free type identifiers in" %0)
+
+def $free_typedExpressionIR(expressionIR `# `( typeIR _ ))
+  = $union_set<typeId>($free_typeIR(typeIR), $free_expressionIR(expressionIR))
+
+dec $free_expressionIR(expressionIR) : bound
+  hint(prose_in "free type identifiers in" %0)
+
+;;; Literal, reference, default expressions (no type content)
+
+def $free_expressionIR(literalExpressionIR) = `{ eps }
+def $free_expressionIR(referenceExpressionIR) = `{ eps }
+def $free_expressionIR(defaultExpressionIR) = `{ eps }
+
+;;; Unary expressions
+
+def $free_expressionIR(unop typedExpressionIR)
+  = $free_typedExpressionIR(typedExpressionIR)
+
+;;; Binary expressions
+
+def $free_expressionIR(typedExpressionIR_l binop typedExpressionIR_r)
+  = $union_set<typeId>(
+      $free_typedExpressionIR(typedExpressionIR_l),
+      $free_typedExpressionIR(typedExpressionIR_r))
+
+;;; Ternary expressions
+
+def $free_expressionIR(
+    typedExpressionIR_c `? typedExpressionIR_t `: typedExpressionIR_e)
+  = $unions_set<typeId>(
+      $free_typedExpressionIR(typedExpressionIR_c)
+      $free_typedExpressionIR(typedExpressionIR_t)
+      $free_typedExpressionIR(typedExpressionIR_e))
+
+;;; Cast expressions
+
+def $free_expressionIR(`( typeIR ) typedExpressionIR)
+  = $union_set<typeId>(
+      $free_typeIR(typeIR),
+      $free_typedExpressionIR(typedExpressionIR))
+
+;;; Data expressions — invalid header (no type content)
+
+def $free_expressionIR(invalidHeaderExpressionIR) = `{ eps }
+
+;;; Data expressions — sequence
+
+def $free_expressionIR(SEQ `{ typedExpressionIR* })
+  = $unions_set<typeId>($free_typedExpressionIR(typedExpressionIR)*)
+
+def $free_expressionIR(SEQ `{ typedExpressionIR* `, `... })
+  = $unions_set<typeId>($free_typedExpressionIR(typedExpressionIR)*)
+
+;;; Data expressions — record
+
+def $free_expressionIR(RECORD `{ (_ `= typedExpressionIR)* })
+  = $unions_set<typeId>($free_typedExpressionIR(typedExpressionIR)*)
+
+def $free_expressionIR(RECORD `{ (_ `= typedExpressionIR)* `, `... })
+  = $unions_set<typeId>($free_typedExpressionIR(typedExpressionIR)*)
+
+;;; Access expressions — error access (no type content)
+
+def $free_expressionIR(ERROR `. _) = `{ eps }
+
+;;; Access expressions — member access
+
+def $free_expressionIR((TYPE _) `. _) = `{ eps }
+
+def $free_expressionIR(typedExpressionIR `. _)
+  = $free_typedExpressionIR(typedExpressionIR)
+
+;;; Access expressions — index access
+
+def $free_expressionIR(typedExpressionIR_base `[ typedExpressionIR_index ])
+  = $union_set<typeId>(
+      $free_typedExpressionIR(typedExpressionIR_base),
+      $free_typedExpressionIR(typedExpressionIR_index))
+
+;;; Access expressions — slice access
+
+def $free_expressionIR(
+    typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
+  = $unions_set<typeId>(
+      $free_typedExpressionIR(typedExpressionIR_base)
+      $free_typedExpressionIR(typedExpressionIR_hi)
+      $free_typedExpressionIR(typedExpressionIR_lo))
+
+;;; Call expressions — constructor call
+
+def $free_expressionIR(
+    (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* ))
+  = $union_set<typeId>(
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*),
+      $unions_set<typeId>($free_argumentIR(argumentIR)*))
+
+;;; Call expressions — callable call
+
+def $free_expressionIR(
+    callableTargetIR `< typeArgumentIR* > `( argumentIR* ))
+  = $unions_set<typeId>(
+      $free_callableTargetIR(callableTargetIR)
+      $unions_set<typeId>($free_typeIR(typeArgumentIR)*)
+      $unions_set<typeId>($free_argumentIR(argumentIR)*))
+
+;;; Parenthesized expressions
+
+def $free_expressionIR(`( typedExpressionIR ))
+  = $free_typedExpressionIR(typedExpressionIR)
+
+;;
+;;;; Free type variables in arguments
+;;
+
+dec $free_argumentIR(argumentIR) : bound
+  hint(prose_in "free type identifiers in" %0)
+
+def $free_argumentIR(typedExpressionIR)
+  = $free_typedExpressionIR(typedExpressionIR)
+
+def $free_argumentIR(_ `= typedExpressionIR)
+  = $free_typedExpressionIR(typedExpressionIR)
+
+def $free_argumentIR(_ `= `_) = `{ eps }
+
+def $free_argumentIR(`_) = `{ eps }
+
+;;
+;;;; Free type variables in callable targets
+;;
+
+dec $free_callableTargetIR(callableTargetIR) : bound
+  hint(prose_in "free type identifiers in" %0)
+
+;; referenceExpressionIR (prefixedNameIR) contains no type arguments at this stage.
+def $free_callableTargetIR(referenceExpressionIR) = `{ eps }
+
+def $free_callableTargetIR(typedExpressionIR `. _)
+  = $free_typedExpressionIR(typedExpressionIR)
+
+def $free_callableTargetIR(TYPE _ `. _) = `{ eps }
+
+def $free_callableTargetIR(`( callableTargetIR ))
+  = $free_callableTargetIR(callableTargetIR)

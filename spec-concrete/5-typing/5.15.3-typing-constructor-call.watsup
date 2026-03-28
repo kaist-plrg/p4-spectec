@@ -146,24 +146,30 @@ rule Inst_ok/package:
   ---- ;; align parameters with arguments
   -- if GIVEN parameterIR_aligned* DEFAULT _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
-  ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
+  ---- ;; perform type inference (non-local: returns local + propagated maps)
+  -- if (theta_local, theta_propagated)
+      = $infer_nonlocal(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if theta_final
+      = $closure_theta($union_map<typeId, typeIR>(theta_local, theta_propagated))
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(theta_local, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
-  ---- ;; substitute inferred types
+  ---- ;; substitute inferred types into parameters
   -- if (parameterIR_aligned_inferred
-      = $subst_parameterIR(inference, parameterIR_aligned))*
+      = $subst_parameterIR(theta_local, parameterIR_aligned))*
   -- if typeIR_object_inferred
-      = $subst_typeIR(inference, typeIR_object)
+      = $subst_typeIR(theta_local, typeIR_object)
+  ---- ;; deep-substitute into arguments (resolves inner type variables)
+  -- if (argumentIR_resolved
+      = $subst_argumentIR(theta_final, argumentIR))*
   ---- ;; check that the substituted constructor is still well-formed
   -- if constructorTypeIR_inferred
       = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
   -- ConstructorType_wf: $bound(GLOBAL, TC) |- constructorTypeIR_inferred
   ---- ;; check instantiation site
   -- if $instantiable(GLOBAL, TC, instctxt, typeIR_object_inferred)
-  ---- ;; check call convention
+  ---- ;; check call convention (uses RESOLVED arguments)
   -- Call_convention_ok:
-      BLOCK TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+      BLOCK TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR_resolved*
                          : argumentIR_cast*
 
 ;;; Instantiation of a non-package
@@ -181,22 +187,28 @@ rule Inst_ok/non-package:
   ---- ;; align parameters with arguments
   -- if GIVEN parameterIR_aligned* DEFAULT _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
-  ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
+  ---- ;; perform type inference (non-local: returns local + propagated maps)
+  -- if (theta_local, theta_propagated)
+      = $infer_nonlocal(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if theta_final
+      = $closure_theta($union_map<typeId, typeIR>(theta_local, theta_propagated))
+  -- if (typeIR_inferred = $find_map<typeId, typeIR>(theta_local, typeId_infer))*
   -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
-  ---- ;; substitute inferred types
+  ---- ;; substitute inferred types into parameters
   -- if (parameterIR_aligned_inferred
-      = $subst_parameterIR(inference, parameterIR_aligned))*
+      = $subst_parameterIR(theta_local, parameterIR_aligned))*
   -- if typeIR_object_inferred
-      = $subst_typeIR(inference, typeIR_object)
+      = $subst_typeIR(theta_local, typeIR_object)
+  ---- ;; deep-substitute into arguments (resolves inner type variables)
+  -- if (argumentIR_resolved
+      = $subst_argumentIR(theta_final, argumentIR))*
   ---- ;; check that the substituted constructor is still well-formed
   -- if constructorTypeIR_inferred
       = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
   -- ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred
   ---- ;; check instantiation site
   -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
-  ---- ;; check call convention
+  ---- ;; check call convention (uses RESOLVED arguments)
   -- Call_convention_ok:
-      p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+      p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR_resolved*
                      : argumentIR_cast*

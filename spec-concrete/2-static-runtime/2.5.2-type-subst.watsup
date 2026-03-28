@@ -422,3 +422,220 @@ def $subst_constructorTypeIR'(
   -- if (constructorParameterIR_subst
       = $subst_parameterIR'(theta, constructorParameterIR))*
   -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
+
+;;
+;;;; Typed expression substitutions (for non-local type inference)
+;;
+
+dec $subst_typedExpressionIR(theta, typedExpressionIR) : typedExpressionIR
+  hint(prose_in %1 "substituted by" %0)
+
+def $subst_typedExpressionIR(`{ eps }, typedExpressionIR) = typedExpressionIR
+def $subst_typedExpressionIR(theta, expressionIR `# `( typeIR ctk ))
+  = expressionIR_subst `# `( typeIR_subst ctk )
+  -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
+  -- if expressionIR_subst = $subst_expressionIR(theta, expressionIR)
+
+;;
+;;;; Expression substitutions (total over all expressionIR constructors)
+;;
+
+dec $subst_expressionIR(theta, expressionIR) : expressionIR
+  hint(prose_in %1 "substituted by" %0)
+
+;;; Literal expressions (no type content)
+
+def $subst_expressionIR(theta, literalExpressionIR) = literalExpressionIR
+
+;;; Reference expressions (no type content)
+
+def $subst_expressionIR(theta, referenceExpressionIR) = referenceExpressionIR
+
+;;; Default expressions (no type content)
+
+def $subst_expressionIR(theta, defaultExpressionIR) = defaultExpressionIR
+
+;;; Unary expressions
+
+def $subst_expressionIR(theta, unop typedExpressionIR)
+  = unop typedExpressionIR_subst
+  -- if typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Binary expressions
+
+def $subst_expressionIR(theta, typedExpressionIR_l binop typedExpressionIR_r)
+  = typedExpressionIR_l_subst binop typedExpressionIR_r_subst
+  -- if typedExpressionIR_l_subst = $subst_typedExpressionIR(theta, typedExpressionIR_l)
+  -- if typedExpressionIR_r_subst = $subst_typedExpressionIR(theta, typedExpressionIR_r)
+
+;;; Ternary expressions
+
+def $subst_expressionIR(
+    theta,
+    typedExpressionIR_cond `? typedExpressionIR_then `: typedExpressionIR_else)
+  = typedExpressionIR_cond_subst `? typedExpressionIR_then_subst `: typedExpressionIR_else_subst
+  -- if typedExpressionIR_cond_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_cond)
+  -- if typedExpressionIR_then_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_then)
+  -- if typedExpressionIR_else_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_else)
+
+;;; Cast expressions
+
+def $subst_expressionIR(theta, `( typeIR ) typedExpressionIR)
+  = `( typeIR_subst ) typedExpressionIR_subst
+  -- if typeIR_subst = $subst_typeIR'(theta, typeIR)
+  -- if typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Data expressions — invalid header (no type content)
+
+def $subst_expressionIR(theta, invalidHeaderExpressionIR) = invalidHeaderExpressionIR
+
+;;; Data expressions — sequence
+
+def $subst_expressionIR(theta, SEQ `{ typedExpressionIR* })
+  = SEQ `{ typedExpressionIR_subst* }
+  -- if (typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR))*
+
+def $subst_expressionIR(theta, SEQ `{ typedExpressionIR* `, `... })
+  = SEQ `{ typedExpressionIR_subst* `, `... }
+  -- if (typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR))*
+
+;;; Data expressions — record
+
+def $subst_expressionIR(theta, RECORD `{ (nameIR `= typedExpressionIR)* })
+  = RECORD `{ (nameIR `= typedExpressionIR_subst)* }
+  -- if (typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR))*
+
+def $subst_expressionIR(theta, RECORD `{ (nameIR `= typedExpressionIR)* `, `... })
+  = RECORD `{ (nameIR `= typedExpressionIR_subst)* `, `... }
+  -- if (typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR))*
+
+;;; Access expressions — error access (no type content)
+
+def $subst_expressionIR(theta, ERROR `. nameIR) = ERROR `. nameIR
+
+;;; Access expressions — member access (type member)
+
+def $subst_expressionIR(theta, (TYPE prefixedNameIR) `. nameIR)
+  = (TYPE prefixedNameIR) `. nameIR
+
+;;; Access expressions — member access (expression member)
+
+def $subst_expressionIR(theta, typedExpressionIR `. nameIR)
+  = typedExpressionIR_subst `. nameIR
+  -- if typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Access expressions — index access
+
+def $subst_expressionIR(theta, typedExpressionIR_base `[ typedExpressionIR_index ])
+  = typedExpressionIR_base_subst `[ typedExpressionIR_index_subst ]
+  -- if typedExpressionIR_base_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_base)
+  -- if typedExpressionIR_index_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_index)
+
+;;; Access expressions — slice access
+
+def $subst_expressionIR(
+    theta,
+    typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
+  = typedExpressionIR_base_subst `[ typedExpressionIR_hi_subst `: typedExpressionIR_lo_subst ]
+  -- if typedExpressionIR_base_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_base)
+  -- if typedExpressionIR_hi_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_hi)
+  -- if typedExpressionIR_lo_subst
+      = $subst_typedExpressionIR(theta, typedExpressionIR_lo)
+
+;;; Call expressions — constructor call
+
+def $subst_expressionIR(theta, constructorTargetIR `( argumentIR* ))
+  = constructorTargetIR_subst `( argumentIR_subst* )
+  -- if constructorTargetIR_subst
+      = $subst_constructorTargetIR(theta, constructorTargetIR)
+  -- if (argumentIR_subst = $subst_argumentIR(theta, argumentIR))*
+
+;;; Call expressions — callable call
+
+def $subst_expressionIR(
+    theta,
+    callableTargetIR `< typeArgumentIR* > `( argumentIR* ))
+  = callableTargetIR_subst `< typeArgumentIR_subst* > `( argumentIR_subst* )
+  -- if callableTargetIR_subst
+      = $subst_callableTargetIR(theta, callableTargetIR)
+  -- if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*
+  -- if (argumentIR_subst = $subst_argumentIR(theta, argumentIR))*
+
+;;; Parenthesized expressions
+
+def $subst_expressionIR(theta, `( typedExpressionIR ))
+  = `( typedExpressionIR_subst )
+  -- if typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;
+;;;; Argument substitutions
+;;
+
+dec $subst_argumentIR(theta, argumentIR) : argumentIR
+  hint(prose_in %1 "substituted by" %0)
+
+;;; Expression argument
+
+def $subst_argumentIR(theta, typedExpressionIR)
+  = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Named expression argument
+
+def $subst_argumentIR(theta, nameIR `= typedExpressionIR)
+  = nameIR `= $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Named don't-care argument
+
+def $subst_argumentIR(theta, nameIR `= `_) = nameIR `= `_
+
+;;; Don't-care argument
+
+def $subst_argumentIR(theta, `_) = `_
+
+;;
+;;;; Constructor target substitutions
+;;
+
+dec $subst_constructorTargetIR(theta, constructorTargetIR) : constructorTargetIR
+  hint(prose_in %1 "substituted by" %0)
+
+def $subst_constructorTargetIR(theta, prefixedNameIR `< typeArgumentIR* >)
+  = prefixedNameIR `< typeArgumentIR_subst* >
+  -- if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR))*
+
+;;
+;;;; Callable target substitutions
+;;
+
+dec $subst_callableTargetIR(theta, callableTargetIR) : callableTargetIR
+  hint(prose_in %1 "substituted by" %0)
+
+;;; Reference target
+;; referenceExpressionIR (prefixedNameIR) contains no type arguments at this stage;
+;; type resolution and specialization have already been applied before substitution.
+
+def $subst_callableTargetIR(theta, referenceExpressionIR) = referenceExpressionIR
+
+;;; Member access target
+
+def $subst_callableTargetIR(theta, typedExpressionIR `. nameIR)
+  = typedExpressionIR_subst `. nameIR
+  -- if typedExpressionIR_subst = $subst_typedExpressionIR(theta, typedExpressionIR)
+
+;;; Type member access target (no expression type content)
+
+def $subst_callableTargetIR(theta, TYPE prefixedNameIR `. nameIR)
+  = TYPE prefixedNameIR `. nameIR
+
+;;; Parenthesized target
+
+def $subst_callableTargetIR(theta, `( callableTargetIR ))
+  = `( callableTargetIR_subst )
+  -- if callableTargetIR_subst = $subst_callableTargetIR(theta, callableTargetIR)

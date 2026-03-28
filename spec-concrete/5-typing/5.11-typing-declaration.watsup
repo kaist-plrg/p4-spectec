@@ -117,6 +117,10 @@ rule InstDecl_non_objectInitializer_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
                         `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; validate: no unresolved type variables after inference
+  -- if $is_empty_set<typeId>($free_typeIR(typeIR_object))
+  -- if ($is_empty_set<typeId>($free_typeIR(typeArgumentIR_inferred)))*
+  -- if ($is_empty_set<typeId>($free_argumentIR(argumentIR_cast)))*
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
   -- if TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK eps)
@@ -318,6 +322,10 @@ rule InstDecl_objectInitializer_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
                         `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+  ---- ;; validate: no unresolved type variables after inference
+  -- if $is_empty_set<typeId>($free_typeIR(typeIR_object))
+  -- if ($is_empty_set<typeId>($free_typeIR(typeArgumentIR_inferred)))*
+  -- if ($is_empty_set<typeId>($free_argumentIR(argumentIR_cast)))*
   ---- ;; object initializer can be specified for an extern object
   -- if EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_extern
       = $unroll_typeIR(typeIR_object)
@@ -335,6 +343,8 @@ rule InstDecl_objectInitializer_ok:
       = EXTERN typeId_extern `< typeIR_arg* > externMethodTypeDefEnv_init_subst
   ---- ;; constructed object may not contain an abstract method
   -- if $is_concrete_extern_object(typeIR_object_init)
+  ---- ;; validate: final object type has no unresolved type variables
+  -- if $is_empty_set<typeId>($free_typeIR(typeIR_object_init))
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
   -- if TC_2 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object_init CTK eps)

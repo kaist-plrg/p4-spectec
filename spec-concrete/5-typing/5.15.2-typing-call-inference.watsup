@@ -263,9 +263,255 @@ def $merge_constraints(
       = $merge_constraints(constraint_pre_1, constraint_post_t*)
 
 ;;
+;;;; Non-local constraint merging (augmented with propagated bindings)
+;;
+
+dec $merge_constraint_nonlocal(constraint, constraint)
+  : (constraint, theta)
+dec $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post, typeId*, constraint, theta)
+  : (constraint, theta)
+dec $merge_constraints_nonlocal(constraint, constraint*)
+  : (constraint, theta)
+
+;; Safe theta update: rejects conflicting bindings for the same type variable.
+;; - Key not present → add
+;; - Key present with identical type → keep (idempotent)
+;; - Key present with different type → no matching case → premise FAILS
+;; Constraints are equality-like, not subtyping — widening is NOT allowed.
+dec $safe_update_theta(theta, typeId, typeIR) : theta
+
+;; Key not present → add binding
+def $safe_update_theta(theta, typeId, typeIR)
+  = $update_map<typeId, typeIR>(theta, typeId, typeIR)
+  -- if ~$in_set<typeId>(typeId, $dom_map<typeId, typeIR>(theta))
+
+;; Key present with identical type → no change (consistent)
+def $safe_update_theta(theta, typeId, typeIR)
+  = theta
+  -- if $in_set<typeId>(typeId, $dom_map<typeId, typeIR>(theta))
+  -- if typeIR = $find_map<typeId, typeIR>(theta, typeId)
+
+;; No matching case for different types → rule premise FAILS
+;; (e.g., T → bit<8> conflicting with T → bit<16>)
+
+;; Safe merge of two thetas: checks each binding from theta_b against theta_a
+dec $safe_merge_theta(theta, theta) : theta
+dec $safe_merge_theta'(theta, (typeId typeIR)*) : theta
+
+def $safe_merge_theta(theta_a, theta_b)
+  = $safe_merge_theta'(theta_a, (typeId typeIR)*)
+  -- if `{ (typeId `: typeIR)* } = theta_b
+
+def $safe_merge_theta'(theta, eps) = theta
+def $safe_merge_theta'(theta, (typeId_h typeIR_h) :: (typeId_t typeIR_t)*)
+  = $safe_merge_theta'(theta_updated, (typeId_t typeIR_t)*)
+  -- if theta_updated = $safe_update_theta(theta, typeId_h, typeIR_h)
+
+def $merge_constraint_nonlocal(constraint_pre, constraint_post)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_pre*, `{ eps }, $empty_theta)
+  -- if `{ typeId_pre* } = $dom_map<typeId, infer>(constraint_pre)
+  -- if `{ typeId_post* } = $dom_map<typeId, infer>(constraint_post)
+  -- if $eq_set<typeId>(`{ typeId_pre* }, `{ typeId_post* })
+
+;; Case 1: UNKNOWN / UNKNOWN → keep UNKNOWN, pass theta through
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta)
+  -- if UNKNOWN = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if UNKNOWN = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, UNKNOWN)
+
+;; Case 2: UNKNOWN / KNOWN → take post, pass theta through
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta)
+  -- if UNKNOWN = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
+
+;; Case 3: KNOWN / UNKNOWN → take pre, pass theta through
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta)
+  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if UNKNOWN = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
+
+;; Case 4: KNOWN / KNOWN, pre castable to post → take post
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta)
+  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if ~(typeIR_pre <: nameTypeIR)
+  -- if ~(typeIR_post <: nameTypeIR)
+  -- Cast_impl: typeIR_pre -> typeIR_post
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
+
+;; Case 5: KNOWN / KNOWN, only post castable to pre → take pre
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta)
+  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if ~(typeIR_pre <: nameTypeIR)
+  -- if ~(typeIR_post <: nameTypeIR)
+  -- Cast_impl:/ typeIR_pre -> typeIR_post
+  -- Cast_impl: typeIR_post -> typeIR_pre
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
+
+;; Case 6: KNOWN(concrete) / KNOWN(nameTypeIR) → take concrete, propagate binding
+;; The nameTypeIR must be a free variable from an outer scope
+;; (not in either constraint domain).
+;; Uses $safe_update_theta to reject conflicting bindings.
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta_updated)
+  -- if KNOWN AS typeIR_pre = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if KNOWN AS (`` typeId_free) = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if ~(typeIR_pre <: nameTypeIR)
+  -- if ~$in_set<typeId>(typeId_free, $dom_map<typeId, infer>(constraint_pre))
+  -- if ~$in_set<typeId>(typeId_free, $dom_map<typeId, infer>(constraint_post))
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
+  -- if theta_updated = $safe_update_theta(theta, typeId_free, typeIR_pre)
+
+;; Case 7: KNOWN(nameTypeIR) / KNOWN(concrete) → take concrete, propagate binding
+;; Mirror of Case 6 with pre/post swapped.
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post,
+    typeId_h :: typeId_t*,
+    constraint, theta)
+  = $merge_constraint_nonlocal'(
+      constraint_pre, constraint_post, typeId_t*, constraint_updated, theta_updated)
+  -- if KNOWN AS (`` typeId_free) = $find_map<typeId, infer>(constraint_pre, typeId_h)
+  -- if KNOWN AS typeIR_post = $find_map<typeId, infer>(constraint_post, typeId_h)
+  -- if ~(typeIR_post <: nameTypeIR)
+  -- if ~$in_set<typeId>(typeId_free, $dom_map<typeId, infer>(constraint_pre))
+  -- if ~$in_set<typeId>(typeId_free, $dom_map<typeId, infer>(constraint_post))
+  -- if constraint_updated
+      = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
+  -- if theta_updated = $safe_update_theta(theta, typeId_free, typeIR_post)
+
+;; Base case: no more type IDs to process
+
+def $merge_constraint_nonlocal'(
+    constraint_pre, constraint_post, eps, constraint, theta)
+  = (constraint, theta)
+
+;; Non-local merge over multiple constraints
+
+def $merge_constraints_nonlocal(constraint_pre, eps) = (constraint_pre, $empty_theta)
+
+def $merge_constraints_nonlocal(
+    constraint_pre_0,
+    constraint_post_h :: constraint_post_t*)
+  = (constraint_pre_2, theta_merged)
+  -- if (constraint_pre_1, theta_1)
+      = $merge_constraint_nonlocal(constraint_pre_0, constraint_post_h)
+  -- if (constraint_pre_2, theta_2)
+      = $merge_constraints_nonlocal(constraint_pre_1, constraint_post_t*)
+  -- if theta_merged = $safe_merge_theta(theta_1, theta_2)
+
+;;
 ;;;; Constraint resolution
 ;;
 
 def $resolve_constraint(`{ (typeId `: infer)* })
   = `{ (typeId `: typeIR)* }
   -- if (KNOWN AS typeIR = infer)*
+
+;;
+;;;; Non-local type inference (stub — delegates to existing $infer)
+;;
+
+dec $infer_nonlocal(typeId*, parameterIR*, argumentIR*) : (inference, theta)
+  hint(prose_in "$infer_nonlocal infers type arguments for" %0 "from" %1 "and" %2)
+
+;; No type parameters to infer → empty inference, no propagation
+def $infer_nonlocal(eps, parameterIR*, argumentIR*)
+  = ($empty_map<typeId, typeIR>, $empty_theta)
+
+;; Non-local inference: allows partial results (UNKNOWN → nameTypeIR)
+;; and collects propagated bindings from inner-scope free variables.
+def $infer_nonlocal(typeId_infer*, parameterIR*, argumentIR*)
+  = (inference_resolved, theta_propagated)
+  -- if typeId_infer* =/= eps
+  ---- ;; create constraints
+  -- if constraint_init = $empty_constraint(typeId_infer*)
+  -- if (constraint_pair
+      = $infer'(constraint_init, parameterIR, argumentIR))*
+  ---- ;; merge constraints (non-local: captures propagated bindings)
+  -- if (constraint_inferred, theta_propagated)
+      = $merge_constraints_nonlocal(constraint_init, constraint_pair*)
+  ---- ;; resolve: KNOWN → typeIR, UNKNOWN → nameTypeIR (partial)
+  -- if inference = $resolve_constraint_nonlocal(constraint_inferred)
+  ---- ;; resolve synthesized types
+  -- if inference_resolved = $resolve_inference(inference)
+
+;;
+;;;; Non-local constraint resolution
+;;
+
+dec $resolve_constraint_nonlocal(constraint) : inference
+  hint(prose_in "non-locally resolving" %0)
+
+;; For KNOWN entries: extract the typeIR
+;; For UNKNOWN entries: map typeId -> nameTypeIR (``typeId) — partial inference
+def $resolve_constraint_nonlocal(`{ (typeId `: infer)* })
+  = `{ (typeId `: typeIR)* }
+  -- if (typeIR = $resolve_infer_nonlocal(typeId, infer))*
+
+dec $resolve_infer_nonlocal(typeId, infer) : typeIR
+
+def $resolve_infer_nonlocal(typeId, KNOWN AS typeIR) = typeIR
+def $resolve_infer_nonlocal(typeId, UNKNOWN) = `` typeId
+
+;;
+;;;; Transitive closure of substitution (stub — identity for now)
+;;
+
+dec $closure_theta(theta) : theta
+  hint(prose_in "transitive closure of" %0)
+
+;; Stub: applies one round of self-substitution.
+;; For full non-local inference (Phase 2), this must reach a fixpoint:
+;;   theta_closed is the smallest theta' such that
+;;   for all (typeId ↦ typeIR) in theta': typeIR = $subst_typeIR(theta', typeIR)
+;; Since P4 type parameters are non-recursive, one pass suffices in practice.
+def $closure_theta(theta) = theta_closed
+  -- if `{ (typeId `: typeIR)* } = theta
+  -- if (typeIR_closed = $subst_typeIR(theta, typeIR))*
+  -- if theta_closed = `{ (typeId `: typeIR_closed)* }
