@@ -40,7 +40,7 @@ module type HANDLER = sig
   (* SL events *)
 
   val on_instr : Sl.instr -> unit
-  val on_instr_dangling : bool -> PId.t -> Value.t -> unit
+  val on_instr_dangling : bool -> IId.t -> Value.t -> unit
 end
 
 (* Default handler *)

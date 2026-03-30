@@ -105,10 +105,10 @@ let on_instr (instr : Sl.instr) : unit =
   | [] -> ()
   | _ -> List.iter (fun (module H : HANDLER) -> H.on_instr instr) !handlers
 
-let on_instr_dangling (cond : bool) (pid : PId.t) (value : Value.t) : unit =
+let on_instr_dangling (cond : bool) (iid : IId.t) (value : Value.t) : unit =
   match !handlers with
   | [] -> ()
   | _ ->
       List.iter
-        (fun (module H : HANDLER) -> H.on_instr_dangling cond pid value)
+        (fun (module H : HANDLER) -> H.on_instr_dangling cond iid value)
         !handlers

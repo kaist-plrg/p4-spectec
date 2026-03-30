@@ -323,12 +323,11 @@ and iterate_bind (instr : Pl.instr) (iterinstrs : iterinstr list) =
 and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.block =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, block, _phantom_opt) ->
+  | IfI (exp_cond, iterexps, block, _) ->
       prosify_if_instr at ctx exp_cond iterexps block
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       prosify_hold_instr at ctx id_rel notexp iterexps holdcase
-  | CaseI (exp, cases, phantom_opt) ->
-      prosify_case_instr at ctx exp cases phantom_opt
+  | CaseI (exp, cases, dangle) -> prosify_case_instr at ctx exp cases dangle
   | OtherwiseI block -> prosify_otherwise_instr at ctx block
   | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterinstrs) ->
@@ -531,8 +530,8 @@ and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
       |> List.concat
 
 and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
-    (cases : case list) (phantom_opt : phantom option) : Pl.block =
-  let total = Option.is_none phantom_opt in
+    (cases : case list) (dangle : dangle) : Pl.block =
+  let total = not dangle in
   prosify_cases ~total at ctx exp cases
 
 (* Otherwise instruction prosification *)

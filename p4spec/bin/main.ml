@@ -464,7 +464,7 @@ let run_testgen_command =
          ~doc:"randomize AST selection when no derivations exist"
      and strict =
        flag "-strict" no_arg
-         ~doc:"cover a new phantom only if it was intended by a mutation"
+         ~doc:"cover a new dangling only if it was intended by a mutation"
      in
      fun () ->
        try
@@ -515,12 +515,12 @@ let run_testgen_debug_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and debugdir =
        flag "-debug" (required string) ~doc:"directory for debug files"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
+     and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
        try
          let spec_sl = structure filenames_spec in
-         Backend_testgen_neg.Derive.debug_phantom spec_sl relname includes_p4
-           filename_p4 debugdir pid
+         Backend_testgen_neg.Derive.debug_dangling spec_sl relname includes_p4
+           filename_p4 debugdir iid
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -539,7 +539,7 @@ let interesting_command =
          ~doc:"'interesting' if well-typed (default: ill-typed)"
      and check_close_miss =
        flag "-close" no_arg ~doc:"'interesting' if close-miss (default: hit)"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to test"
+     and iid = flag "-iid" (required int) ~doc:"dangling id to test"
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
@@ -552,7 +552,7 @@ let interesting_command =
          match result with
          | Pass _ ->
              if check_well_typed then (
-               let branch = Coverage.Dangling.Single.Cover.find pid cover in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -574,7 +574,7 @@ let interesting_command =
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch = Coverage.Dangling.Single.Cover.find pid cover in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";

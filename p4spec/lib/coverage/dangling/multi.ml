@@ -3,7 +3,7 @@ open Lang
 open Sl
 open Util.Source
 
-(* Phantom branch *)
+(* Dangling branch *)
 
 module Branch = struct
   (* Enclosing relation or function id *)
@@ -38,13 +38,13 @@ module Branch = struct
     | Miss _ -> "M" ^ branch.origin.it
 end
 
-(* Phantom coverage map:
+(* Dangling coverage map:
 
    Note that its domain must be set-up initially,
-   and no new pid is added during the analysis *)
+   and no new dangling branch is added during the analysis *)
 
 module Cover = struct
-  include MakePIdEnv (Branch)
+  include MakeIIdEnv (Branch)
 
   (* Constructor *)
 
@@ -52,45 +52,42 @@ module Cover = struct
     Hints.Flag.init hints "testgen_ignore"
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
+    let iid = instr.note.iid in
     match instr.it with
-    | IfI (_, _, block_then, phantom_opt) -> (
+    | IfI (_, _, block_then, dangle) ->
         let cover = init_block cover id block_then in
-        match phantom_opt with
-        | Some pid ->
-            let branch = Branch.init id in
-            add pid branch cover
-        | None -> cover)
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
     | HoldI (_, _, _, holdcase) -> (
         match holdcase with
         | BothH (block_hold, block_nothold) ->
             let cover = init_block cover id block_hold in
             init_block cover id block_nothold
-        | HoldH (block_hold, phantom_opt) -> (
+        | HoldH (block_hold, dangle) ->
             let cover = init_block cover id block_hold in
-            match phantom_opt with
-            | Some pid ->
-                let branch = Branch.init id in
-                add pid branch cover
-            | None -> cover)
-        | NotHoldH (block_nothold, phantom_opt) -> (
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover
+        | NotHoldH (block_nothold, dangle) ->
             let cover = init_block cover id block_nothold in
-            match phantom_opt with
-            | Some pid ->
-                let branch = Branch.init id in
-                add pid branch cover
-            | None -> cover))
-    | CaseI (_, cases, phantom_opt) -> (
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover)
+    | CaseI (_, cases, dangle) ->
         let blocks = cases |> List.split |> snd in
         let cover =
           List.fold_left
             (fun cover block -> init_block cover id block)
             cover blocks
         in
-        match phantom_opt with
-        | Some pid ->
-            let branch = Branch.init id in
-            add pid branch cover
-        | None -> cover)
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
     | GroupI (_, _, _, block_group) -> init_block cover id block_group
     | LetI (_, _, _, block) -> init_block cover id block
     | RuleI (_, _, _, _, block) -> init_block cover id block
@@ -130,11 +127,11 @@ module Cover = struct
 
   (* Load from file *)
 
-  let load_line (line : string) : pid * Branch.t =
+  let load_line (line : string) : iid * Branch.t =
     let data = String.split_on_char ' ' line in
     match data with
-    | pid :: status :: origin :: filenames ->
-        let pid = int_of_string pid in
+    | iid :: status :: origin :: filenames ->
+        let iid = int_of_string iid in
         let status =
           match status with
           | "Hit_likely" -> Branch.Hit (true, filenames)
@@ -149,7 +146,7 @@ module Cover = struct
         in
         let origin = origin $ no_region in
         let branch = Branch.{ origin; status } in
-        (pid, branch)
+        (iid, branch)
     | _ -> assert false
 
   let rec load_lines (cover : t) (ic : in_channel) : t =
@@ -157,8 +154,8 @@ module Cover = struct
       let line = input_line ic in
       if String.starts_with ~prefix:"#" line then load_lines cover ic
       else
-        let pid, branch = load_line line in
-        let cover = add pid branch cover in
+        let iid, branch = load_line line in
+        let cover = add iid branch cover in
         load_lines cover ic
     with End_of_file -> cover
 
@@ -171,16 +168,16 @@ type t = Cover.t
 
 (* Querying coverage *)
 
-let is_hit (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_hit (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with Hit _ -> true | Miss _ -> false
 
-let is_miss (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with Hit _ -> false | Miss _ -> true
 
-let is_close_miss (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_close_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with
   | Hit _ -> false
   | Miss filenames -> List.length filenames > 0
@@ -207,8 +204,8 @@ let measure_coverage (cover : t) : int * int * float =
 let extend (cover : t) (filename_p4 : string) (wellformed : bool)
     (welltyped : bool) (cover_single : Single.t) : t =
   Cover.mapi
-    (fun (pid : pid) (branch : Branch.t) ->
-      let branch_single = Single.Cover.find pid cover_single in
+    (fun (iid : iid) (branch : Branch.t) ->
+      let branch_single = Single.Cover.find iid cover_single in
       match branch.status with
       | Hit (likely, filenames_p4) -> (
           match branch_single.status with
@@ -243,12 +240,12 @@ let log ~(filename_cov_opt : string option) (cover : t) : unit =
   (* Collect covers by origin *)
   let covers_origin =
     Cover.fold
-      (fun (pid : pid) (branch : Branch.t) (covers_origin : t IdMap.t) ->
+      (fun (iid : iid) (branch : Branch.t) (covers_origin : t IdMap.t) ->
         let origin = branch.origin in
         let cover_origin =
           match IdMap.find_opt origin covers_origin with
-          | Some cover_origin -> Cover.add pid branch cover_origin
-          | None -> Cover.add pid branch Cover.empty
+          | Some cover_origin -> Cover.add iid branch cover_origin
+          | None -> Cover.add iid branch Cover.empty
         in
         IdMap.add origin cover_origin covers_origin)
       cover IdMap.empty
@@ -260,20 +257,20 @@ let log ~(filename_cov_opt : string option) (cover : t) : unit =
         coverage
       |> output oc_opt;
       Cover.iter
-        (fun (pid : pid) (branch : Branch.t) ->
+        (fun (iid : iid) (branch : Branch.t) ->
           let origin = branch.origin in
           match branch.status with
           | Hit (likely, filenames) ->
               let filenames = String.concat " " filenames in
-              Format.asprintf "%d Hit_%s %s %s\n" pid
+              Format.asprintf "%d Hit_%s %s %s\n" iid
                 (if likely then "likely" else "unlikely")
                 origin.it filenames
               |> output oc_opt
           | Miss [] ->
-              Format.asprintf "%d Miss %s\n" pid origin.it |> output oc_opt
+              Format.asprintf "%d Miss %s\n" iid origin.it |> output oc_opt
           | Miss filenames ->
               let filenames = String.concat " " filenames in
-              Format.asprintf "%d Miss %s %s\n" pid origin.it filenames
+              Format.asprintf "%d Miss %s %s\n" iid origin.it filenames
               |> output oc_opt)
         cover_origin)
     covers_origin;

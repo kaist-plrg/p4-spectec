@@ -11,7 +11,7 @@ module Sim = Runtime.Sim.Simulator
 
 (* Hyperparameters for the fuzzing loop *)
 
-(* Max number of seeds per phantom *)
+(* Max number of seeds per dangle *)
 let samples_close_miss = 3
 
 (* Max number of related vids to derive from per seed *)
@@ -179,13 +179,13 @@ let init (randseed : int option) (modes : Modes.t) (specenv : specenv)
 (* Seed updater *)
 
 let update_hit_seed (config : t) (filename_p4 : string) (welltyped : bool)
-    (pids_hit : PIdSet.t) : unit =
+    (iids_hit : IIdSet.t) : unit =
   let cover_seed = config.seed.cover in
   let cover_seed =
-    PIdSet.fold
-      (fun pid_hit cover_seed ->
+    IIdSet.fold
+      (fun iid_hit cover_seed ->
         let branch : DCov_multi.Branch.t =
-          DCov_multi.Cover.find pid_hit cover_seed
+          DCov_multi.Cover.find iid_hit cover_seed
         in
         let branch =
           match branch.status with
@@ -200,22 +200,22 @@ let update_hit_seed (config : t) (filename_p4 : string) (welltyped : bool)
               DCov_multi.Branch.
                 { branch with status = Hit (likely, filenames_p4) }
         in
-        DCov_multi.Cover.add pid_hit branch cover_seed)
-      pids_hit cover_seed
+        DCov_multi.Cover.add iid_hit branch cover_seed)
+      iids_hit cover_seed
   in
   config.seed.cover <- cover_seed
 
 let update_close_miss_seed (config : t) (filename_p4 : string)
-    (pids_close_miss : PIdSet.t) : unit =
+    (iids_close_miss : IIdSet.t) : unit =
   let cover_seed = config.seed.cover in
   let cover_seed =
-    PIdSet.fold
-      (fun pid_close_miss cover_seed ->
-        let branch = DCov_multi.Cover.find pid_close_miss cover_seed in
+    IIdSet.fold
+      (fun iid_close_miss cover_seed ->
+        let branch = DCov_multi.Cover.find iid_close_miss cover_seed in
         let branch =
           DCov_multi.Branch.{ branch with status = Miss [ filename_p4 ] }
         in
-        DCov_multi.Cover.add pid_close_miss branch cover_seed)
-      pids_close_miss cover_seed
+        DCov_multi.Cover.add iid_close_miss branch cover_seed)
+      iids_close_miss cover_seed
   in
   config.seed.cover <- cover_seed

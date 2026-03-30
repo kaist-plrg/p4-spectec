@@ -98,13 +98,6 @@ module IIdSet = VIdSet
 module IIdMap = VIdMap
 module IIdTbl = VIdTbl
 
-(* Phantom identifiers *)
-
-module PId = VId
-module PIdSet = VIdSet
-module PIdMap = VIdMap
-module PIdTbl = VIdTbl
-
 (* String-based identifiers *)
 
 (* Variable identifiers *)
@@ -360,8 +353,6 @@ end) =
 
 module MakeIIdEnv = MakeVIdEnv
 module MakeIIdTbl = MakeVIdTbl
-module MakePIdEnv = MakeVIdEnv
-module MakePIdTbl = MakeVIdTbl
 
 (* String-based *)
 

@@ -74,33 +74,19 @@ let eq_targ (targ_a : targ) (targ_b : targ) : bool = Il.Eq.eq_targ targ_a targ_b
 let eq_targs (targs_a : targ list) (targs_b : targ list) : bool =
   Il.Eq.eq_targs targs_a targs_b
 
-(* Path conditions *)
-
-let rec eq_phantom (phantom_a : phantom) (phantom_b : phantom) : bool =
-  phantom_a = phantom_b
-
-and eq_phantom_opt (phantom_opt_a : phantom option)
-    (phantom_opt_b : phantom option) : bool =
-  match (phantom_opt_a, phantom_opt_b) with
-  | Some phantom_a, Some phantom_b -> eq_phantom phantom_a phantom_b
-  | None, None -> true
-  | _ -> false
-
 (* Holding case analysis *)
 
-and eq_holdcase (holdcase_a : holdcase) (holdcase_b : holdcase) : bool =
+let rec eq_holdcase (holdcase_a : holdcase) (holdcase_b : holdcase) : bool =
   match (holdcase_a, holdcase_b) with
   | BothH (block_hold_a, block_nothold_a), BothH (block_hold_b, block_nothold_b)
     ->
       eq_block block_hold_a block_hold_b
       && eq_block block_nothold_a block_nothold_b
-  | HoldH (block_hold_a, phantom_opt_a), HoldH (block_hold_b, phantom_opt_b) ->
-      eq_block block_hold_a block_hold_b
-      && eq_phantom_opt phantom_opt_a phantom_opt_b
-  | ( NotHoldH (block_nothold_a, phantom_opt_a),
-      NotHoldH (block_nothold_b, phantom_opt_b) ) ->
-      eq_block block_nothold_a block_nothold_b
-      && eq_phantom_opt phantom_opt_a phantom_opt_b
+  | HoldH (block_hold_a, dangle_a), HoldH (block_hold_b, dangle_b) ->
+      eq_block block_hold_a block_hold_b && dangle_a = dangle_b
+  | NotHoldH (block_nothold_a, dangle_a), NotHoldH (block_nothold_b, dangle_b)
+    ->
+      eq_block block_nothold_a block_nothold_b && dangle_a = dangle_b
   | _ -> false
 
 (* Case analysis *)
@@ -127,21 +113,19 @@ and eq_guard (guard_a : guard) (guard_b : guard) : bool =
 
 and eq_instr (instr_a : instr) (instr_b : instr) : bool =
   match (instr_a.it, instr_b.it) with
-  | ( IfI (exp_cond_a, iterexps_a, block_then_a, phantom_opt_a),
-      IfI (exp_cond_b, iterexps_b, block_then_b, phantom_opt_b) ) ->
+  | ( IfI (exp_cond_a, iterexps_a, block_then_a, dangle_a),
+      IfI (exp_cond_b, iterexps_b, block_then_b, dangle_b) ) ->
       eq_exp exp_cond_a exp_cond_b
       && eq_iterexps iterexps_a iterexps_b
       && eq_block block_then_a block_then_b
-      && eq_phantom_opt phantom_opt_a phantom_opt_b
+      && dangle_a = dangle_b
   | ( HoldI (id_a, (mixop_a, exps_a), iterexps_a, holdcase_a),
       HoldI (id_b, (mixop_b, exps_b), iterexps_b, holdcase_b) ) ->
       eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
       && eq_iterexps iterexps_a iterexps_b
       && eq_holdcase holdcase_a holdcase_b
-  | CaseI (exp_a, cases_a, phantom_opt_a), CaseI (exp_b, cases_b, phantom_opt_b)
-    ->
-      eq_exp exp_a exp_b && eq_cases cases_a cases_b
-      && eq_phantom_opt phantom_opt_a phantom_opt_b
+  | CaseI (exp_a, cases_a, dangle_a), CaseI (exp_b, cases_b, dangle_b) ->
+      eq_exp exp_a exp_b && eq_cases cases_a cases_b && dangle_a = dangle_b
   | ( GroupI (id_group_a, rel_signature_a, exps_group_a, block_a),
       GroupI (id_group_b, rel_signature_b, exps_group_b, block_b) ) ->
       eq_id id_group_a id_group_b

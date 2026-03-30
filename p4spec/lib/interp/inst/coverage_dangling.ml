@@ -20,10 +20,10 @@ let make () =
       coverage := !coverage_backup;
       coverage_backup := DCov.empty
 
-    let on_instr_dangling (hit : bool) (pid : PId.t) (value_cond : Value.t) :
+    let on_instr_dangling (hit : bool) (iid : IId.t) (value_cond : Value.t) :
         unit =
-      if hit then coverage := DCov.hit !coverage pid
-      else coverage := DCov.miss !coverage pid value_cond.note.vid
+      if hit then coverage := DCov.hit !coverage iid
+      else coverage := DCov.miss !coverage iid value_cond.note.vid
   end in
   (* Return the handler and the reader *)
   ((module H : Handler.HANDLER), read)

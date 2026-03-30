@@ -1036,13 +1036,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
            (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
+    let iid = instr.note.iid in
     match instr.it with
-    | IfI (exp_cond, iterexps, block_then, phantom_opt) ->
-        eval_if_instr ctx exp_cond iterexps block_then phantom_opt
+    | IfI (exp_cond, iterexps, block_then, dangle) ->
+        eval_if_instr iid ctx exp_cond iterexps block_then dangle
     | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr ctx id notexp iterexps holdcase
-    | CaseI (exp, cases, phantom_opt) ->
-        eval_case_instr ctx exp cases phantom_opt
+        eval_hold_instr iid ctx id notexp iterexps holdcase
+    | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
     | GroupI (id_group, rel_signature, exps_group, block) ->
         eval_group_instr ctx id_group rel_signature exps_group block
     | LetI (exp_l, exp_r, iterinstrs, block) ->
@@ -1181,13 +1181,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterexps = List.rev iterexps in
     eval_if_cond_iter' ctx exp_cond iterexps
 
-  and eval_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-      (block_then : block) (phantom_opt : phantom option) : Flow.t =
-    (* Evaluate the if condition and mark phantom *)
+  and eval_if_instr (iid : iid) (ctx : Ctx.t) (exp_cond : exp)
+      (iterexps : iterexp list) (block_then : block) (dangle : dangle) : Flow.t
+      =
+    (* Evaluate the if condition and mark dangle *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
-    (match phantom_opt with
-    | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
-    | None -> ());
+    if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_block ctx block_then else Cont []
 
@@ -1285,7 +1284,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterexps = List.rev iterexps in
     eval_hold_cond_iter' ctx id notexp iterexps
 
-  and eval_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
+  and eval_hold_instr (iid : iid) (ctx : Ctx.t) (id : id) (notexp : notexp)
       (iterexps : iterexp list) (holdcase : holdcase) : Flow.t =
     (* Backup in case of failure *)
     Hook.backup ();
@@ -1299,16 +1298,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         else (
           Hook.restore ();
           eval_block ctx block_not_hold)
-    | HoldH (block_hold, phantom_opt) ->
-        (match phantom_opt with
-        | Some pid -> Hook.on_instr_dangling (not cond) pid value_cond
-        | None -> ());
+    | HoldH (block_hold, dangle) ->
+        if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
         if cond then eval_block ctx block_hold else Cont []
-    | NotHoldH (block_not_hold, phantom_opt) ->
+    | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
-        (match phantom_opt with
-        | Some pid -> Hook.on_instr_dangling cond pid value_cond
-        | None -> ());
+        if dangle then Hook.on_instr_dangling cond iid value_cond;
         if not cond then eval_block ctx block_not_hold else Cont []
 
   (* Case analysis instruction evaluation *)
@@ -1346,15 +1341,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Hook.on_value value_cond;
     (block_match, value_cond)
 
-  and eval_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (phantom_opt : phantom option) : Flow.t =
-    (* Evaluate the matching case and mark phantom *)
+  and eval_case_instr (iid : iid) (ctx : Ctx.t) (exp : exp) (cases : case list)
+      (dangle : dangle) : Flow.t =
+    (* Evaluate the matching case and mark dangle *)
     let block_opt, value_cond = eval_cases ctx exp cases in
-    (match phantom_opt with
-    | Some pid ->
-        let matched = Option.is_some block_opt in
-        Hook.on_instr_dangling (not matched) pid value_cond
-    | None -> ());
+    (if dangle then
+       let matched = Option.is_some block_opt in
+       Hook.on_instr_dangling (not matched) iid value_cond);
     (* Evaluate the matching case if any *)
     match block_opt with Some block -> eval_block ctx block | None -> Cont []
 

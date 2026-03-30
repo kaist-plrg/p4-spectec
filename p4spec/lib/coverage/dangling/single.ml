@@ -3,7 +3,7 @@ open Lang
 open Sl
 open Util.Source
 
-(* Phantom branch *)
+(* Dangling branch *)
 
 module Branch = struct
   (* Enclosing relation or function id *)
@@ -36,10 +36,10 @@ module Branch = struct
     | Miss _ -> "M" ^ branch.origin.it
 end
 
-(* Phantom coverage map:
+(* Dangling coverage map:
 
    Note that its domain must be set-up initially,
-   and no new pid is added during the analysis *)
+   and no new iid is added during the analysis *)
 
 module Cover = struct
   include MakeVIdEnv (Branch)
@@ -50,45 +50,42 @@ module Cover = struct
     Hints.Flag.init hints "testgen_ignore"
 
   let rec init_instr (cover : t) (id : id) (instr : instr) : t =
+    let iid = instr.note.iid in
     match instr.it with
-    | IfI (_, _, block_then, phantom_opt) -> (
+    | IfI (_, _, block_then, dangle) ->
         let cover = init_block cover id block_then in
-        match phantom_opt with
-        | Some pid ->
-            let branch = Branch.init id in
-            add pid branch cover
-        | None -> cover)
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
     | HoldI (_, _, _, holdcase) -> (
         match holdcase with
         | BothH (block_hold, block_nothold) ->
             let cover = init_block cover id block_hold in
             init_block cover id block_nothold
-        | HoldH (block_hold, phantom_opt) -> (
+        | HoldH (block_hold, dangle) ->
             let cover = init_block cover id block_hold in
-            match phantom_opt with
-            | Some pid ->
-                let branch = Branch.init id in
-                add pid branch cover
-            | None -> cover)
-        | NotHoldH (block_nothold, phantom_opt) -> (
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover
+        | NotHoldH (block_nothold, dangle) ->
             let cover = init_block cover id block_nothold in
-            match phantom_opt with
-            | Some pid ->
-                let branch = Branch.init id in
-                add pid branch cover
-            | None -> cover))
-    | CaseI (_, cases, phantom_opt) -> (
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover)
+    | CaseI (_, cases, dangle) ->
         let blocks = cases |> List.split |> snd in
         let cover =
           List.fold_left
             (fun cover block -> init_block cover id block)
             cover blocks
         in
-        match phantom_opt with
-        | Some pid ->
-            let branch = Branch.init id in
-            add pid branch cover
-        | None -> cover)
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
     | GroupI (_, _, _, block_group) -> init_block cover id block_group
     | LetI (_, _, _, block) -> init_block cover id block
     | RuleI (_, _, _, _, block) -> init_block cover id block
@@ -133,71 +130,71 @@ type t = Cover.t
 
 (* Querying coverage *)
 
-let is_hit (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_hit (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with Hit -> true | Miss _ -> false
 
-let is_miss (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with Hit -> false | Miss _ -> true
 
-let is_close_miss (cover : t) (pid : pid) : bool =
-  let branch = Cover.find pid cover in
+let is_close_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
   match branch.status with Hit -> false | Miss vids -> List.length vids > 0
 
 (* Hit and miss *)
 
-let hit (cover : t) (pid : pid) : t =
-  match Cover.find_opt pid cover with
+let hit (cover : t) (iid : iid) : t =
+  match Cover.find_opt iid cover with
   | Some branch ->
       let branch = { branch with status = Hit } in
-      Cover.add pid branch cover
+      Cover.add iid branch cover
   | None -> cover
 
-let miss (cover : t) (pid : pid) (vid : vid) : t =
-  match Cover.find_opt pid cover with
+let miss (cover : t) (iid : iid) (vid : vid) : t =
+  match Cover.find_opt iid cover with
   | Some branch -> (
       match branch.status with
       | Hit -> cover
       | Miss vids ->
           let branch = { branch with status = Miss (vid :: vids) } in
-          Cover.add pid branch cover)
+          Cover.add iid branch cover)
   | None -> cover
 
 (* Extending coverage *)
 
 let extend (cover : t) (cover_extend : t) : t =
   Cover.fold
-    (fun (pid : pid) (branch_extend : Branch.t) (cover : t) ->
-      match Cover.find_opt pid cover with
+    (fun (iid : iid) (branch_extend : Branch.t) (cover : t) ->
+      match Cover.find_opt iid cover with
       | Some branch -> (
           match (branch.status, branch_extend.status) with
           | Hit, _ -> cover
           | Miss _, Hit ->
               let branch = { branch with status = Hit } in
-              Cover.add pid branch cover
+              Cover.add iid branch cover
           | Miss vids, Miss vids_extend ->
               let vids = vids @ vids_extend in
               let branch = { branch with status = Miss vids } in
-              Cover.add pid branch cover)
+              Cover.add iid branch cover)
       | None -> cover)
     cover_extend cover
 
 (* Collector *)
 
-let collect_hit (cover : t) : pid list =
+let collect_hit (cover : t) : iid list =
   Cover.fold
-    (fun (pid : pid) (branch : Branch.t) (hits : pid list) ->
-      match branch.status with Hit -> pid :: hits | Miss _ -> hits)
+    (fun (iid : iid) (branch : Branch.t) (hits : iid list) ->
+      match branch.status with Hit -> iid :: hits | Miss _ -> hits)
     cover []
   |> List.rev
 
-let collect_miss (cover : t) : (pid * vid list) list =
+let collect_miss (cover : t) : (iid * vid list) list =
   Cover.fold
-    (fun (pid : pid) (branch : Branch.t) (misses : (pid * vid list) list) ->
+    (fun (iid : iid) (branch : Branch.t) (misses : (iid * vid list) list) ->
       match branch.status with
       | Hit -> misses
-      | Miss vids -> (pid, vids) :: misses)
+      | Miss vids -> (iid, vids) :: misses)
     cover []
   |> List.rev
 
