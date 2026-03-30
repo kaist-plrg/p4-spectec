@@ -2,7 +2,7 @@ ROUGE_STYLE=github
 ROUGE_CSS=style
 
 SPECTEC=p4spectec
-SPECFILES=../spec-concrete/*/*.watsup
+SPECFILES=../spec/*/*.watsup
 SPEC=P4-16-spec-new
 RELEASE=P4-16-spec-release
 DRAFT=P4-16-spec-draft

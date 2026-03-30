@@ -371,17 +371,29 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   let args_input, paths, path_else_opt =
     Antiunify.antiunify_clauses clauses elseclause_opt
   in
-  let block = paths |> List.map struct_clause_path |> Merge.merge_blocks in
-  let elseblock_opt = Option.map struct_elseclause_path path_else_opt in
-  let block, elseblock_opt =
-    Optimize.optimize_with_else tdenv block elseblock_opt
+  let params, block, elseblock_opt =
+    match (paths, path_else_opt) with
+    | [], None ->
+        let params = struct_params params in
+        (params, [], None)
+    | _ ->
+        let block =
+          paths |> List.map struct_clause_path |> Merge.merge_blocks
+        in
+        let elseblock_opt = Option.map struct_elseclause_path path_else_opt in
+        let block, elseblock_opt =
+          Optimize.optimize_with_else tdenv block elseblock_opt
+        in
+        let block, elseblock_opt =
+          Totalize.totalize tdenv block elseblock_opt
+        in
+        let args_input, block, elseblock_opt =
+          Prettify.pretty_func args_input block elseblock_opt
+        in
+        let params = struct_params_from_args params args_input in
+        let block, elseblock_opt = Instrument.instrument block elseblock_opt in
+        (params, block, elseblock_opt)
   in
-  let block, elseblock_opt = Totalize.totalize tdenv block elseblock_opt in
-  let args_input, block, elseblock_opt =
-    Prettify.pretty_func args_input block elseblock_opt
-  in
-  let params = struct_params_from_args params args_input in
-  let block, elseblock_opt = Instrument.instrument block elseblock_opt in
   let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in
   Sl.FuncDecD func $ at
 

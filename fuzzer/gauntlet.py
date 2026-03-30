@@ -26,7 +26,7 @@ class GauntletRunner:
         self.project_root = Path(project_root)
         self.p4c_build_dir = self.project_root / "p4c" / "build"
         self.gauntlet_dir = self.project_root / "gauntlet"
-        self.spec_dir = self.project_root / "spec-concrete"
+        self.spec_dir = self.project_root / "spec"
         self.relname = "Program_ok"
         self.p4include_dir = self.project_root / "p4c" / "p4include"
         self.p4spectec_binary = self.project_root / "p4spectec"

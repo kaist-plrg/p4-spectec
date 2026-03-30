@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+open Error
 open Util.Source
 
 (* Unification environment: a map from original id to its unified id *)
@@ -29,6 +30,10 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
     | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
       when Il.Eq.eq_mixop mixop_template mixop ->
         populate_exps_templates uenv exps_template exps
+    | StrE expfields_template, StrE expfields ->
+        let exps_template = List.map snd expfields_template in
+        let exps = List.map snd expfields in
+        populate_exps_templates uenv exps_template exps
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
       when Il.Eq.eq_iter iter_template iter ->
@@ -55,6 +60,12 @@ and populate_exps_templates (uenv : UEnv.t) (exps_template : exp list)
 
 let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
     (exp : exp) : IdSet.t * UEnv.t * exp =
+  let fail () =
+    error exp.at
+      (Format.asprintf "cannot anti-unify expressions %s and %s"
+         (Il.Print.string_of_exp exp_template)
+         (Il.Print.string_of_exp exp))
+  in
   let antiunify_exp_unequal () =
     let at, note = (exp_template.at, exp_template.note) in
     match (exp_template.it, exp.it) with
@@ -88,6 +99,16 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
           CaseE (mixop_template, exps_template) $$ (at, note)
         in
         (frees, uenv, exp_template)
+    | StrE expfields_template, StrE expfields ->
+        let atoms_template, exps_template = List.split expfields_template in
+        let atoms, exps = List.split expfields in
+        if not (List.for_all2 Il.Eq.eq_atom atoms_template atoms) then fail ();
+        let frees, uenv, exps_template =
+          antiunify_exps frees uenv exps_template exps
+        in
+        let expfields_template = List.combine atoms_template exps_template in
+        let exp_template = StrE expfields_template $$ (at, note) in
+        (frees, uenv, exp_template)
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
       when Il.Eq.eq_iter iter_template iter ->
@@ -111,11 +132,7 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
           IterE (exp_template, (iter_template, vars_template)) $$ (at, note)
         in
         (frees, uenv, exp_template)
-    | _ ->
-        Format.asprintf "cannot anti-unify expressions %s and %s"
-          (Il.Print.string_of_exp exp_template)
-          (Il.Print.string_of_exp exp)
-        |> failwith
+    | _ -> fail ()
   in
   if Il.Eq.eq_exp exp_template exp then (frees, uenv, exp_template)
   else antiunify_exp_unequal ()
