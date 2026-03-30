@@ -1310,6 +1310,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
       block option * value =
+    let value_exp = eval_exp ctx exp in
+    let id_tmp = "~case" $ no_region in
+    let ctx = Ctx.add_value ctx (id_tmp, []) value_exp in
+    let exp = Il.VarE id_tmp $$ (exp.at, exp.note) in
     let block_match, values_cond_rev =
       List.fold_left
         (fun (block_match, values_cond_rev) (guard, block) ->
