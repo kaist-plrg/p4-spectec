@@ -1,0 +1,259 @@
+dec $nat_sub(nat, nat) : nat
+def $nat_sub(nat_l, nat_r) = $nat_sub(nat'_l, nat'_r)
+    -- if nat'_l = $(nat_l - 1)
+    -- if nat'_r = $(nat_r - 1)
+def $nat_sub(nat_l, 0) = nat_l
+
+dec $binop_number(binop, num, num) : val
+def $binop_number(ADD, NAT nat_l, NAT nat_r) = NAT $(nat_l + nat_r)
+def $binop_number(ADD, INT int_l, INT int_r) = INT $(int_l + int_r)
+def $binop_number(SUB, NAT nat_l, NAT nat_r) = NAT $nat_sub(nat_l, nat_r)
+    -- if $(nat_l >= nat_r) = true
+def $binop_number(SUB, INT int_l, INT int_r) = INT $(int_l - int_r)
+def $binop_number(MUL, NAT nat_l, NAT nat_r) = NAT $(nat_l * nat_r)
+def $binop_number(MUL, INT int_l, INT int_r) = INT $(int_l * int_r)
+def $binop_number(DIV, NAT nat_l, NAT nat_r) = NAT $(nat_l / nat_r)
+def $binop_number(DIV, INT int_l, INT int_r) = INT $(int_l / int_r)
+def $binop_number(MOD, NAT nat_l, NAT nat_r) = NAT $(nat_l \ nat_r)
+def $binop_number(MOD, INT int_l, INT int_r) = INT $(int_l \ int_r)
+def $binop_number(POW, NAT nat_l, NAT nat_r) = NAT $(nat_l ^ nat_r)
+def $binop_number(POW, INT int_l, INT int_r) = INT $(int_l ^ int_r)
+
+dec $cmpop_number(cmpop, num, num) : bool
+def $cmpop_number(LT, NAT nat_l, NAT nat_r) = $(nat_l < nat_r)
+def $cmpop_number(LT, INT int_l, INT int_r) = $(int_l < int_r)
+def $cmpop_number(GT, NAT nat_l, NAT nat_r) = $(nat_l > nat_r)
+def $cmpop_number(GT, INT int_l, INT int_r) = $(int_l > int_r)
+def $cmpop_number(LE, NAT nat_l, NAT nat_r) = $(nat_l <= nat_r)
+def $cmpop_number(LE, INT int_l, INT int_r) = $(int_l <= int_r)
+def $cmpop_number(GE, NAT nat_l, NAT nat_r) = $(nat_l >= nat_r)
+def $cmpop_number(GE, INT int_l, INT int_r) = $(int_l >= int_r)
+
+dec $int_to_nat(int) : nat
+def $int_to_nat(0) = 0
+def $int_to_nat(int) = $int_to_nat($(int - 1))
+
+;;
+
+syntax theta = map<id, typ>
+
+dec $subst_typ_inner(theta, typ) : typ
+def $subst_typ_inner(theta, NAT) = NAT
+def $subst_typ_inner(theta, INT) = INT
+def $subst_typ_inner(theta, TEXT) = TEXT
+def $subst_typ_inner(theta, BOOL) = BOOL
+def $subst_typ_inner(theta, VAR id eps) = typ
+    -- if $find_map<id, typ>(theta, id) = typ
+def $subst_typ_inner(theta, VAR id targ*) = VAR id ($subst_typ_inner(theta, targ))*
+    -- if $find_map<id, typ>(theta, id) = eps
+def $subst_typ_inner(theta, TUP typ*) = TUP ($subst_typ_inner(theta, typ))*
+def $subst_typ_inner(theta, ITER typ iter) = ITER $subst_typ_inner(theta, typ) iter
+def $subst_typ_inner(theta, FUNC) = FUNC
+
+dec $subst_typ(theta, typ) : typ
+def $subst_typ(theta, typ) = typ
+    -- if theta = `{ eps }
+def $subst_typ(theta, typ) = $subst_typ_inner(theta, typ)
+    -- if theta =/= `{ eps }
+
+dec $generate_map<K, V>(K*, V*) : map<K, V>
+def $generate_map<K, V>(K*, V*) = $adds_map<K, V>($empty_map<K, V>, K*, V*)
+
+dec $upcast(ctx, typ, val) : val
+def $upcast(C, INT, INT int) = INT int
+def $upcast(C, INT, NAT nat) = NAT nat
+def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
+    -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+    -- if typ' = $subst_typ($generate_map<id, typ>(tparam*, targ*), typ)
+def $upcast(C, TUP typ*, TUP val*) = TUP ($upcast(C, typ, val))*
+
+dec $downcast(ctx, typ, val) : val
+def $downcast(C, NAT, NAT nat) = NAT nat
+def $downcast(C, NAT, INT int) = NAT ($int_to_nat(int))
+    -- if $(int >= 0) = true
+def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
+    -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+    -- if typ' = $subst_typ($generate_map<id, typ>(tparam*, targ*), typ)
+def $downcast(C, TUP typ*, TUP val*) = TUP ($downcast(C, typ, val))*
+
+;;
+
+dec $is_inj(val) : bool
+def $is_inj(INJ mixop val) = true
+def $is_inj(val) = false
+    -- otherwise
+
+dec $is_list(val) : bool
+def $is_list(LIST val*) = true
+def $is_list(val) = false
+    -- otherwise
+
+dec $is_opt(val) : bool
+def $is_opt(OPT val?) = true
+def $is_opt(val) = false
+    -- otherwise
+
+dec $to_int(num) : int
+def $to_int(NAT nat) = nat
+def $to_int(INT int) = int
+
+;;
+
+dec $subtyp(ctx, typ, val) : bool
+dec $subtyps(ctx, typ*, val*) : bool
+
+def $subtyps(C, typ*, val*) = $forall_($subtyp(C, typ, val)*)
+    -- if $(|typ*| = |val*|) = true
+def $subtyps(C, typ*, val*) = $forall_($subtyp(C, typ, val)*)
+    -- if $(|typ*| = |val*|) = true
+def $subtyps(C, typ*, val*) = false
+
+def $subtyp(C, BOOL, BOOL b) = b
+def $subtyp(C, NAT, NAT nat) = true
+def $subtyp(C, NAT, INT int) = true
+    -- if $(int >= 0) = true
+def $subtyp(C, INT, num) = true
+def $subtyp(C, TEXT, TEXT text) = true
+def $subtyp(C, VAR id targ*, EXT json) = true
+    -- if $find_typ(C, id) = EXT
+def $subtyp(C, VAR id targ*, val) = $subtyp(C, typ_new, val)
+    -- if $find_typ(C, id) = DEF tparam* `-> deftyp
+    -- if theta = $generate_map<id, typ>(tparam*, targ*)
+    -- if deftyp = ALIAS typ
+    -- if typ_new = $subst_typ(theta, typ)
+def $subtyp(C, VAR id targ*, INJ mixop val) = $exists_(bool*)
+    -- if $find_typ(C, id) = DEF tparam* `-> deftyp
+    -- if theta = $generate_map<id, typ>(tparam*, targ*)
+    -- if deftyp = VARIANT typcase*
+    -- (if mixop_typcase typ_typcase = typcase)*
+    -- (if bool = $($(mixop = mixop_typcase) /\ $subtyps(C, ($subst_typ(theta, typ_typcase))*, val)))*
+def $subtyp(C, VAR id targ*, val) = true
+    -- if $find_typ(C, id) = DEF tparam* `-> deftyp
+    -- if theta = $generate_map<id, typ>(tparam*, targ*)
+    -- if deftyp = VARIANT typcase*
+    -- if $is_inj(val) = false
+def $subtyp(C, VAR id targ*, val) = true
+    -- if $find_typ(C, id) = DEF tparam* `-> deftyp
+        -- if theta = $generate_map<id, typ>(tparam*, targ*)
+    -- if deftyp = STRUCT typfield*
+def $subtyp(C, TUP typ*, TUP val*) = $forall_($subtyp(C, typ, val)*)
+    -- if $(|typ*| = |val*|) = true
+def $subtyp(C, ITER typ iter, OPT val) = $subtyp(C, typ, val)
+def $subtyp(C, ITER typ iter, OPT eps) = true 
+def $subtyp(C, ITER typ iter, LIST val*) = $forall_($subtyp(C, typ, val)*)
+def $subtyp(C, typ, val) = false
+    -- otherwise
+
+;;
+
+dec $access_path(ctx, val, path) : res<val>
+def $access_path(C, val_b, ROOT) = OK val_b
+def $access_path(C, val_b, IDX path exp_i) = OK (TEXT text[nat_i])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
+def $access_path(C, val_b, IDX path exp_i) = OK (val*[nat_i])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
+def $access_path(C, val_b, SLICE path exp_i exp_n) = OK (TEXT text[nat_i : nat_n])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
+    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+def $access_path(C, val_b, SLICE path exp_i exp_n) = OK (LIST val*[nat_i : nat_n])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
+    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+def $access_path(C, val_b, DOT path atom) = OK val
+    -- if OK (STR valfield*) = $access_path(C, val_b, path)
+    -- (if atom_field val_field = valfield)*
+    -- if val = $find_map<atom, val>($generate_map<atom, val>(atom_field*, val_field*), atom)
+def $access_path(C, val, path) = FAIL
+-- otherwise
+
+dec $update_path(ctx, val, path, val) : val
+def $update_path(C, val_b, ROOT, val_n) = val_n
+def $update_path(C, val_b, IDX path exp_i, val_n) = $update_path(C, val_b, path, TEXT text[[nat_target] = text_n])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_target)
+    -- if TEXT text_n = val_n
+    -- if $(|text_n| = 1) = true
+def $update_path(C, val_b, IDX path exp_i, val_n) = $update_path(C, val_b, path, (LIST val*[[nat_target] = val_n]))
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_target)
+def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_b, path, TEXT text[[nat_l : nat_n] = text'])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_l)
+    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+    -- Eval_exp: C |- exp_n : OK val'_n 
+    -- if val'_n = TEXT text'
+    -- if $(|text'| = nat_n) = true
+def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_b, path, LIST val*[[nat_l : nat_n] = val'*])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT nat_l)
+    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+    -- Eval_exp: C |- exp_n : OK val'_n 
+    -- if val'_n = LIST val'*
+    -- if $(|val'*| = nat_n) = true
+def $update_path(C, val_b, DOT path atom_path, val_n) = $update_path(C, val_b, path, STR valfield_new*)
+    -- if OK (STR valfield*) = $access_path(C, val_b, path)
+    -- (if atom_field val_field = valfield)*
+    -- (if valfield_new = atom_field $ite<val>($(atom_path = atom_field), val_n, val_field))*
+
+;;
+
+dec $assign_arg(ctx, ctx, arg, val) : ctx
+
+dec $assign_args(ctx, ctx, arg*, val*) : ctx
+
+;;
+
+syntax matchres = ctx arg* prem* exp 
+
+dec $match_clause(ctx, ctx, clause, val*) : matchres
+def $match_clause(C_caller, C_callee, clause, val*) = C arg* prem* exp
+    -- if clause = arg* `= exp `- prem*
+    -- if |arg*| = |val*|
+    -- if $assign_args(C_caller, C_callee, arg*, val*) = C
+
+dec $do_backtrack_clause(ctx, ctx, val*, clause) : res<val> 
+def $do_backtrack_clause(C, ctx_local, val*, clause) = OK val_output
+    -- if $match_clause(C, ctx_local, clause, val*) = ctx'_local arg_input* prem* exp_output
+    -- Eval_prems: ctx'_local |- prem* : OK ctx'
+    -- Eval_exp : ctx'_local |- exp_output : OK val_output
+def $do_backtrack_clause(C_1, C_2, val*, clause) = FAIL
+    -- otherwise
+
+dec $do_backtrack_func(ctx, ctx, val*, clause*) : res<val>
+def $do_backtrack_func(ctx, ctx_local, val*, eps) = FAIL
+def $do_backtrack_func(ctx, ctx_local, val*, clause_cur :: clause*) = OK val_res
+    -- if $do_backtrack_func(ctx, ctx_local, val*, clause*) = OK val_res
+def $do_backtrack_func(ctx, ctx_local, val*, clause_cur :: clause*) = $do_backtrack_clause(ctx, ctx_local, val*, clause_cur)
+    -- if $do_backtrack_func(ctx, ctx_local, val*, clause*) = FAIL
+
+dec $concat_layer(layer, layer) : layer
+def $concat_layer(layer_1, layer_2) = {TYP $extend_map<id, typdef>(layer_1.TYP, layer_2.TYP), REL $extend_map<id, reldef>(layer_1.REL, layer_2.REL), FUNC $extend_map<id, funcdef>(layer_1.FUNC, layer_2.FUNC)}
+
+dec $invoke_defined_func(ctx, id, tparam*, clause*, elsclause?, targ*, val*) : res<val>
+def $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*) = $do_backtrack_func(C, ctx_local, val*, clause*)
+    -- if $(|targ*| = |tparam*|) = true
+    -- if tdenv = $generate_map<id, typdef>(tparam*, (DEF eps `-> (ALIAS targ))*)
+    -- if ctx_local = {GLOBAL {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>}, LOCAL $concat_layer(C.LOCAL, {TYP tdenv, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>})}
+
+dec $invoke_func_with_values(ctx, id, targ*, val*) : res<val>
+;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_extern_func(id, targ*, val*)
+;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_builtin_func(id, targ*, val*)
+;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_table_func(id, targ*, val*)
+def $invoke_func_with_values(C, id, targ*, val*) = $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*)
+    -- if $find_func(C, id) = DEF tparam* `-> clause* elsclause?
+
+dec $invoke_func_aux(map<id, typdef>) : theta
+def $invoke_func_aux(`{ eps }) = $empty_map<id, typ>
+def $invoke_func_aux(`{ (id_head `: typdef_head) :: (id `: typdef)* }) = $add_map<id, typ>($invoke_func_aux(`{ (id `: typdef)* }), id_head, typ)
+    -- if typdef_head = DEF eps `-> (ALIAS typ)
+def $invoke_func_aux(`{ (id_head `: typdef_head) :: (id `: typdef)* }) = $invoke_func_aux(`{ (id `: typdef)* })
+    -- if typdef_head = PARAM \/ typdef_head = EXT
+
+dec $invoke_func(ctx, id, targ*, arg*) : res<val>
+def $invoke_func(C, id, targ*, arg*) = $invoke_func_with_values(C, id, targ_new*, val_input*)
+    -- if theta = $invoke_func_aux(C.LOCAL.TYP)
+    -- if targ_new* = $subst_typ(theta, targ)*
+    -- Eval_args: C |- arg* : OK val_input*
