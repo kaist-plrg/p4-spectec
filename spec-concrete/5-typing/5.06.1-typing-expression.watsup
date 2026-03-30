@@ -1063,9 +1063,9 @@ rulegroup Expr_ok/indexAccessExpression {
 
 }
 
-;;;; sliceRangeAccessExpression
-;;;; syntax sliceRangeAccessExpression =
-;;;;  expression `[ expression `: expression ]
+;;;; sliceAccessExpression
+;;;; syntax sliceAccessExpression
+;;;;; expression `[ expression `: expression ]
 
 tbl dec $compat_bitslice_base(typeIR) : bool
   hint(prose_true %0 "can be used as a bitslice base")
@@ -1127,7 +1127,7 @@ def $is_valid_bitslice(TYPEDEF _ typeIR, n_lo, n_hi)
 def $is_valid_bitslice(_, _, _) = false
   -- otherwise
 
-rule Expr_ok/sliceRangeAccessExpression:
+rule Expr_ok/sliceAccessExpression-range:
   p TC |- expression_base `[ expression_hi `: expression_lo ]
         : (typedExpressionIR_base
             `[ typedExpressionIR_hi_reduced `: typedExpressionIR_lo_reduced ])
@@ -1174,13 +1174,11 @@ rule Expr_ok/sliceRangeAccessExpression:
   -- if typeIR = BIT `< n_slice >
   -- if expressionNoteIR = `( typeIR ctk_base_reduced )
 
-;;;; sliceOffsetAccessExpression
-;;;; syntax sliceOffsetAccessExpression =
-;;;;   expression `[ expression `+: expression ]
+;;;;; expression `[ expression `+: expression ]
 
-rulegroup Expr_ok/sliceOffsetAccessExpression {
+rulegroup Expr_ok/sliceAccessExpression-offset {
 
-  rule Expr_ok/sliceOffsetAccessExpression-lo-lctk:
+  rule Expr_ok/lo-lctk:
     p TC |- expression_base `[ expression_l `+: expression_w ]
           : (typedExpressionIR_base
               `[ typedExpressionIR_l_reduced `+: typedExpressionIR_w_reduced ])
@@ -1227,7 +1225,7 @@ rulegroup Expr_ok/sliceOffsetAccessExpression {
     -- if typeIR = BIT `< n_w >
     -- if expressionNoteIR = `( typeIR ctk_base_reduced )
 
-  rule Expr_ok/sliceOffsetAccessExpression:
+  rule Expr_ok/lo-non-lctk:
     p TC |- expression_base `[ expression_l `+: expression_w ]
           : (typedExpressionIR_base
               `[ typedExpressionIR_l_reduced `+: typedExpressionIR_w_reduced ])

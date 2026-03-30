@@ -348,18 +348,15 @@ syntax memberAccessExpression =
 syntax indexAccessExpression =
   expression `[ expression ]
 
-syntax sliceRangeAccessExpression =
-  expression `[ expression `: expression ]
-
-syntax sliceOffsetAccessExpression =
-  expression `[ expression `+: expression ]
+syntax sliceAccessExpression =
+  | expression `[ expression `: expression ]
+  | expression `[ expression `+: expression ]
 
 syntax accessExpression =
   | errorAccessExpression
   | memberAccessExpression
   | indexAccessExpression
-  | sliceRangeAccessExpression
-  | sliceOffsetAccessExpression
+  | sliceAccessExpression
 
 syntax memberAccessExpressionNonBrace =
   memberAccessBaseNonBrace `. member
@@ -367,18 +364,15 @@ syntax memberAccessExpressionNonBrace =
 syntax indexAccessExpressionNonBrace =
   expressionNonBrace `[ expression ]
 
-syntax sliceRangeAccessExpressionNonBrace =
-  expressionNonBrace `[ expression `: expression ]
-
-syntax sliceOffsetAccessExpressionNonBrace =
-  expressionNonBrace `[ expression `+: expression ]
+syntax sliceAccessExpressionNonBrace =
+  | expressionNonBrace `[ expression `: expression ]
+  | expressionNonBrace `[ expression `+: expression ]
 
 syntax accessExpressionNonBrace =
   | errorAccessExpression
   | memberAccessExpressionNonBrace
   | indexAccessExpressionNonBrace
-  | sliceRangeAccessExpressionNonBrace
-  | sliceOffsetAccessExpressionNonBrace
+  | sliceAccessExpressionNonBrace
 
 ;;
 ;;;; Call expressions

@@ -262,29 +262,28 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
 
 }
 
-;;;;; sliceRangeAccessExpressionIR
-;;;;; syntax sliceRangeAccessExpressionIR =
-;;;;;   typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+;;;;; sliceAccessExpressionIR
+;;;;; syntax sliceAccessExpressionIR =
+;;;;;;  typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+;;;;;;  typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
 
-rule Expr_eval_lctk/sliceRangeAccessExpressionIR:
-  p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
-          `# _
-       ~> $bitacc_op(value_base, value_hi, value_lo)
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
+rulegroup Expr_eval_lctk/sliceAccessExpressionIR {
 
-;;;;; sliceOffsetAccessExpressionIR
-;;;;; syntax sliceOffsetAccessExpressionIR =
-;;;;;   typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+  rule Expr_eval_lctk/range:
+    p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+         ~> $bitacc_range_op(value_base, value_hi, value_lo)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
 
-rule Expr_eval_lctk/sliceOffsetAccessExpressionIR:
-  p TC |- (typedExpressionIR_base `[ typedExpressionIR_l `+: typedExpressionIR_w ])
-          `# _
-       ~> $bitacc_offset_op(value_base, value_l, value_w)
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
+  rule Expr_eval_lctk/offset:
+    p TC |- (typedExpressionIR_base `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
+         ~> $bitacc_offset_op(value_base, value_l, value_w)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
+
+}
 
 ;;;; callExpressionIR
 ;;;; syntax callExpressionIR

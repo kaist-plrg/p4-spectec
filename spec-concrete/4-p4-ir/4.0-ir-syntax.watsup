@@ -133,18 +133,15 @@ syntax memberAccessExpressionIR =
 syntax indexAccessExpressionIR =
   typedExpressionIR `[ typedExpressionIR ]
 
-syntax sliceRangeAccessExpressionIR =
-  typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
-
-syntax sliceOffsetAccessExpressionIR =
-  typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+syntax sliceAccessExpressionIR =
+  | typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+  | typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
 
 syntax accessExpressionIR =
   | errorAccessExpressionIR
   | memberAccessExpressionIR
   | indexAccessExpressionIR
-  | sliceRangeAccessExpressionIR
-  | sliceOffsetAccessExpressionIR
+  | sliceAccessExpressionIR
 
 ;;
 ;;;; Call expressions

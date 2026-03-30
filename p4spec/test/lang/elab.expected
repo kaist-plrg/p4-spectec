@@ -657,10 +657,8 @@ syntax memberAccessExpression =
 syntax indexAccessExpression = 
    | expression [ expression ]
 
-syntax sliceRangeAccessExpression = 
+syntax sliceAccessExpression = 
    | expression [ expression : expression ]
-
-syntax sliceOffsetAccessExpression = 
    | expression [ expression +: expression ]
 
 syntax accessExpression = 
@@ -676,10 +674,8 @@ syntax memberAccessExpressionNonBrace =
 syntax indexAccessExpressionNonBrace = 
    | expressionNonBrace [ expression ]
 
-syntax sliceRangeAccessExpressionNonBrace = 
+syntax sliceAccessExpressionNonBrace = 
    | expressionNonBrace [ expression : expression ]
-
-syntax sliceOffsetAccessExpressionNonBrace = 
    | expressionNonBrace [ expression +: expression ]
 
 syntax accessExpressionNonBrace = 
@@ -1051,13 +1047,17 @@ def $expressionNonBrace_as_expression(expressionNonBrace) : expression =
   -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
   clause 10 : (expressionNonBrace) = expression_base [ expression_hi : expression_lo ] as expression
-  -- if expressionNonBrace <: sliceRangeAccessExpressionNonBrace
-  -- let expressionNonBrace_base [ expression_hi : expression_lo ] = expressionNonBrace as sliceRangeAccessExpressionNonBrace
+  -- if expressionNonBrace <: sliceAccessExpressionNonBrace
+  -- let sliceAccessExpressionNonBrace = expressionNonBrace as sliceAccessExpressionNonBrace
+  -- if sliceAccessExpressionNonBrace matches `%[%:%]`
+  -- let expressionNonBrace_base [ expression_hi : expression_lo ] = sliceAccessExpressionNonBrace
   -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
   clause 11 : (expressionNonBrace) = expression_base [ expression_l +: expression_w ] as expression
-  -- if expressionNonBrace <: sliceOffsetAccessExpressionNonBrace
-  -- let expressionNonBrace_base [ expression_l +: expression_w ] = expressionNonBrace as sliceOffsetAccessExpressionNonBrace
+  -- if expressionNonBrace <: sliceAccessExpressionNonBrace
+  -- let sliceAccessExpressionNonBrace = expressionNonBrace as sliceAccessExpressionNonBrace
+  -- if sliceAccessExpressionNonBrace matches `%[%+:%]`
+  -- let expressionNonBrace_base [ expression_l +: expression_w ] = sliceAccessExpressionNonBrace
   -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
   clause 12 : (expressionNonBrace') = expression as callTarget ( argumentList ) as expression
@@ -1549,15 +1549,19 @@ def $expression_as_lvalue(expression) : lvalue? =
   -- let ?(lvalue_base) = lvalue?{lvalue <- lvalue?}
 
   clause 3 : (expression) = ?(lvalue_base [ expression_hi : expression_lo ])
-  -- if expression <: sliceRangeAccessExpression
-  -- let expression_base [ expression_hi : expression_lo ] = expression as sliceRangeAccessExpression
+  -- if expression <: sliceAccessExpression
+  -- let sliceAccessExpression = expression as sliceAccessExpression
+  -- if sliceAccessExpression matches `%[%:%]`
+  -- let expression_base [ expression_hi : expression_lo ] = sliceAccessExpression
   -- let lvalue?{lvalue <- lvalue?} = $expression_as_lvalue(expression_base)
   -- if lvalue?{lvalue <- lvalue?} matches (_)
   -- let ?(lvalue_base) = lvalue?{lvalue <- lvalue?}
 
   clause 4 : (expression) = ?(lvalue_base [ expression_hi +: expression_lo ])
-  -- if expression <: sliceOffsetAccessExpression
-  -- let expression_base [ expression_hi +: expression_lo ] = expression as sliceOffsetAccessExpression
+  -- if expression <: sliceAccessExpression
+  -- let sliceAccessExpression = expression as sliceAccessExpression
+  -- if sliceAccessExpression matches `%[%+:%]`
+  -- let expression_base [ expression_hi +: expression_lo ] = sliceAccessExpression
   -- let lvalue?{lvalue <- lvalue?} = $expression_as_lvalue(expression_base)
   -- if lvalue?{lvalue <- lvalue?} matches (_)
   -- let ?(lvalue_base) = lvalue?{lvalue <- lvalue?}
@@ -6740,7 +6744,7 @@ def $cast_set(typeIR, setValue) : value =
   -- let value_l_cast = $cast_op(typeIR, value_l)
   -- let value_u_cast = $cast_op(typeIR, value_u)
 
-def $bitacc_op(value, value, value) : value =
+def $bitacc_range_op(value, value, value) : value =
 
   clause 0 : (value, value', value'') = w w i as value
   -- if value <: integerValue
@@ -6774,7 +6778,7 @@ def $bitacc_offset_op(value, value, value) : value =
   -- let i_h = ((i_l + w as int) - 1 as int)
   -- let i = $bitacc(i_b, i_h, i_l)
 
-def $bitacc_replace_op(value, value, value, value) : value =
+def $bitacc_range_replace_op(value, value, value, value) : value =
 
   clause 0 : (value, value', value'', value''') = w w i as value
   -- if value <: integerValue
@@ -7057,10 +7061,8 @@ syntax memberAccessExpressionIR =
 syntax indexAccessExpressionIR = 
    | typedExpressionIR [ typedExpressionIR ]
 
-syntax sliceRangeAccessExpressionIR = 
+syntax sliceAccessExpressionIR = 
    | typedExpressionIR [ typedExpressionIR : typedExpressionIR ]
-
-syntax sliceOffsetAccessExpressionIR = 
    | typedExpressionIR [ typedExpressionIR +: typedExpressionIR ]
 
 syntax accessExpressionIR = 
@@ -7254,15 +7256,19 @@ def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR) : typedLvalueIR? =
   -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
 
   clause 3 : (expressionIR # ( typeIR _ctk )) = ?(typedLvalueIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] # ( typeIR ))
-  -- if expressionIR <: sliceRangeAccessExpressionIR
-  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+  -- if expressionIR <: sliceAccessExpressionIR
+  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+  -- if sliceAccessExpressionIR matches `%[%:%]`
+  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
   -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
   -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
   -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
 
   clause 4 : (expressionIR # ( typeIR _ctk )) = ?(typedLvalueIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] # ( typeIR ))
-  -- if expressionIR <: sliceOffsetAccessExpressionIR
-  -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = expressionIR as sliceOffsetAccessExpressionIR
+  -- if expressionIR <: sliceAccessExpressionIR
+  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+  -- if sliceAccessExpressionIR matches `%[%+:%]`
+  -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
   -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
   -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
   -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
@@ -8124,8 +8130,10 @@ def $subexpressions_of_expressionIR(expressionIR) : typedExpressionListIR =
   -- let typedExpressionIR_base [ typedExpressionIR_index ] = expressionIR as indexAccessExpressionIR
 
   clause 10 : (expressionIR) = $subexpressions_of_typedExpressionIR(typedExpressionIR_base) ++ $subexpressions_of_typedExpressionIR(typedExpressionIR_hi) ++ $subexpressions_of_typedExpressionIR(typedExpressionIR_lo)
-  -- if expressionIR <: sliceRangeAccessExpressionIR
-  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+  -- if expressionIR <: sliceAccessExpressionIR
+  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+  -- if sliceAccessExpressionIR matches `%[%:%]`
+  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
 
   clause 11 : (expressionIR) = $subexpressions_of_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
   -- if expressionIR <: callExpressionIR
@@ -10992,35 +11000,30 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
 
-  rulegroup sliceRangeAccessExpressionIR
+  rulegroup sliceAccessExpressionIR
 
    match
 
-    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # _expressionNoteIR ~> %
+    (signature) p TC |- sliceAccessExpressionIR as expressionIR # _expressionNoteIR ~> %
     p TC |- expressionIR # _expressionNoteIR ~> %
-    -- if expressionIR <: sliceRangeAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
 
    paths
 
-    rulepath sliceRangeAccessExpressionIR
+    rulepath range
+    -- let sliceAccessExpressionIR' = sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR' matches `%[%:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR'
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
-    -- output: % % |- % ~> $bitacc_op(value_base, value_hi, value_lo)
+    -- output: % % |- % ~> $bitacc_range_op(value_base, value_hi, value_lo)
 
-  rulegroup sliceOffsetAccessExpressionIR
-
-   match
-
-    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # _expressionNoteIR ~> %
-    p TC |- expressionIR # _expressionNoteIR ~> %
-    -- if expressionIR <: sliceOffsetAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = expressionIR as sliceOffsetAccessExpressionIR
-
-   paths
-
-    rulepath sliceOffsetAccessExpressionIR
+    rulepath offset
+    -- let sliceAccessExpressionIR' = sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR' matches `%[%+:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR'
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
@@ -13229,18 +13232,20 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
 
-  rulegroup sliceRangeAccessExpression
+  rulegroup sliceAccessExpression-range
 
    match
 
     (signature) p TC |- expression_base [ expression_hi : expression_lo ] as expression : %
     p TC |- expression : %
-    -- if expression <: sliceRangeAccessExpression
-    -- let expression_base [ expression_hi : expression_lo ] = expression as sliceRangeAccessExpression
+    -- if expression <: sliceAccessExpression
+    -- let sliceAccessExpression = expression as sliceAccessExpression
+    -- if sliceAccessExpression matches `%[%:%]`
+    -- let expression_base [ expression_hi : expression_lo ] = sliceAccessExpression
 
    paths
 
-    rulepath sliceRangeAccessExpression
+    rulepath sliceAccessExpression-range
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
@@ -13281,18 +13286,20 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] as expressionIR # expressionNoteIR
 
-  rulegroup sliceOffsetAccessExpression
+  rulegroup sliceAccessExpression-offset
 
    match
 
     (signature) p TC |- expression_base [ expression_l +: expression_w ] as expression : %
     p TC |- expression : %
-    -- if expression <: sliceOffsetAccessExpression
-    -- let expression_base [ expression_l +: expression_w ] = expression as sliceOffsetAccessExpression
+    -- if expression <: sliceAccessExpression
+    -- let sliceAccessExpression = expression as sliceAccessExpression
+    -- if sliceAccessExpression matches `%[%+:%]`
+    -- let expression_base [ expression_l +: expression_w ] = sliceAccessExpression
 
    paths
 
-    rulepath sliceOffsetAccessExpression-lo-lctk
+    rulepath lo-lctk
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
@@ -13333,7 +13340,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_l_reduced +: typedExpressionIR_w_reduced ] as expressionIR # expressionNoteIR
 
-    rulepath sliceOffsetAccessExpression
+    rulepath lo-non-lctk
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
@@ -13703,7 +13710,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
 
-  rulegroup sliceRangeAccess
+  rulegroup sliceAccess-range
 
    match
 
@@ -13714,7 +13721,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
 
    paths
 
-    rulepath sliceRangeAccess
+    rulepath sliceAccess-range
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- if $compat_bitslice_base(typeIR_base)
@@ -13750,7 +13757,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
 
-  rulegroup sliceOffsetAccess
+  rulegroup sliceAccess-offset
 
    match
 
@@ -13761,7 +13768,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
 
    paths
 
-    rulepath sliceOffsetAccess
+    rulepath sliceAccess-offset
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- if $compat_bitslice_base(typeIR_base)
@@ -19530,33 +19537,37 @@ relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
     -- the relation holds
 
-  rulegroup accessExpressionIR-sliceRangeAccessExpressionIR
+  rulegroup accessExpressionIR-sliceAccessExpressionIR-range
 
    match
 
     (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # ( _typeIR _ctk )
     p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: sliceRangeAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR matches `%[%:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
 
    paths
 
-    rulepath accessExpressionIR-sliceRangeAccessExpressionIR
+    rulepath accessExpressionIR-sliceAccessExpressionIR-range
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
     -- the relation holds
 
-  rulegroup accessExpressionIR-sliceOffsetAccessExpressionIR
+  rulegroup accessExpressionIR-sliceAccessExpressionIR-offset
 
    match
 
     (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # ( _typeIR _ctk )
     p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: sliceOffsetAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = expressionIR as sliceOffsetAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR matches `%[%+:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
 
    paths
 
-    rulepath accessExpressionIR-sliceOffsetAccessExpressionIR
+    rulepath accessExpressionIR-sliceAccessExpressionIR-offset
     -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
     -- the relation holds
 
@@ -20977,35 +20988,30 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % % |- % : STO_2 value
 
-  rulegroup sliceRangeAccessExpressionIR
+  rulegroup sliceAccessExpressionIR
 
    match
 
-    (signature) p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # _expressionNoteIR : % %
+    (signature) p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR : typedExpressionIR' ] as expressionIR # _expressionNoteIR : % %
     p IC STO_0 |- expressionIR # _expressionNoteIR : % %
-    -- if expressionIR <: sliceRangeAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR matches `%[%:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR : typedExpressionIR' ] = sliceAccessExpressionIR
 
    paths
 
-    rulepath sliceRangeAccessExpressionIR
+    rulepath range
+    -- let typedExpressionIR_hi = typedExpressionIR
+    -- let typedExpressionIR_lo = typedExpressionIR'
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
-    -- output: % % % |- % : STO_3 $bitacc_op(value_base, value_hi, value_lo)
+    -- output: % % % |- % : STO_3 $bitacc_range_op(value_base, value_hi, value_lo)
 
-  rulegroup sliceOffsetAccessExpressionIR
-
-   match
-
-    (signature) p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR_l : typedExpressionIR_w ] as expressionIR # _expressionNoteIR : % %
-    p IC STO_0 |- expressionIR # _expressionNoteIR : % %
-    -- if expressionIR <: sliceRangeAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_l : typedExpressionIR_w ] = expressionIR as sliceRangeAccessExpressionIR
-
-   paths
-
-    rulepath sliceOffsetAccessExpressionIR
+    rulepath offset
+    -- let typedExpressionIR_l = typedExpressionIR
+    -- let typedExpressionIR_w = typedExpressionIR'
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_w : STO_3 value_w
@@ -24228,14 +24234,16 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  rulegroup sliceRangeAccessExpressionIR
+  rulegroup sliceAccessExpressionIR-range
 
    match
 
     (signature) p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # _expressionNoteIR : % % %
     p EC_0 ARCH_0 |- expressionIR # _expressionNoteIR : % % %
-    -- if expressionIR <: sliceRangeAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = expressionIR as sliceRangeAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR matches `%[%:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
 
    paths
 
@@ -24251,17 +24259,19 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
     -- if value*{value <- value*} matches [ _/3 ]
     -- let [value_base, value_hi, value_lo] = value*{value <- value*}
-    -- let expressionResult = ` $bitacc_op(value_base, value_hi, value_lo) as expressionResult
+    -- let expressionResult = ` $bitacc_range_op(value_base, value_hi, value_lo) as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  rulegroup sliceOffsetAccessExpressionIR
+  rulegroup sliceOffsetAccessExpressionIR-offset
 
    match
 
     (signature) p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # _expressionNoteIR : % % %
     p EC_0 ARCH_0 |- expressionIR # _expressionNoteIR : % % %
-    -- if expressionIR <: sliceOffsetAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = expressionIR as sliceOffsetAccessExpressionIR
+    -- if expressionIR <: sliceAccessExpressionIR
+    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- if sliceAccessExpressionIR matches `%[%+:%]`
+    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
 
    paths
 
@@ -24634,7 +24644,7 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- let storageReferenceResult = ` ?(storageReference [ integerValue_index as value ]) as storageReferenceResult
     -- output: % % % |- % : EC_2 ARCH_2 storageReferenceResult
 
-  rulegroup sliceRangeAccess
+  rulegroup sliceAccess-range
 
    match
 
@@ -24676,7 +24686,7 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- let storageReferenceResult = ` ?(storageReference [ value_hi : value_lo ]) as storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-  rulegroup sliceOffsetAccess
+  rulegroup sliceAccess-offset
 
    match
 
@@ -24857,7 +24867,7 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- let value = header typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
     -- output: % % % |- % : value
 
-  rulegroup sliceRangeAccess
+  rulegroup sliceAccess-range
 
    match
 
@@ -24868,12 +24878,12 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
    paths
 
-    rulepath sliceRangeAccess
+    rulepath sliceAccess-range
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
-    -- let value = $bitacc_op(value_base, value_hi, value_lo)
+    -- let value = $bitacc_range_op(value_base, value_hi, value_lo)
     -- output: % % % |- % : value
 
-  rulegroup sliceOffsetAccess
+  rulegroup sliceAccess-offset
 
    match
 
@@ -24884,7 +24894,7 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
    paths
 
-    rulepath sliceOffsetAccess
+    rulepath sliceAccess-offset
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value = $bitacc_offset_op(value_base, value_l, value_w)
     -- output: % % % |- % : value
@@ -25032,7 +25042,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if ~b_in_bounds
     -- output: % % % |- % -> % : EC_0
 
-  rulegroup sliceRangeAccess
+  rulegroup sliceAccess-range
 
    match
 
@@ -25043,13 +25053,13 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
 
    paths
 
-    rulepath sliceRangeAccess
+    rulepath sliceAccess-range
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
-    -- let value_base_update = $bitacc_replace_op(value_base, value_hi, value_lo, value)
+    -- let value_base_update = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  rulegroup sliceOffsetAccess
+  rulegroup sliceAccess-offset
 
    match
 
@@ -25060,7 +25070,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
 
    paths
 
-    rulepath sliceOffsetAccess
+    rulepath sliceAccess-offset
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value_base_update = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
