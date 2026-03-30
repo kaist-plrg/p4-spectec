@@ -20,7 +20,7 @@ open Lexing
 open Context
 open Parser
 open Wrap
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 module F = Format
 
 exception Error of string
@@ -123,8 +123,7 @@ let parse_width_int s n _info =
         let value_int =
           NumV (`Int i) |> with_typ (NumT `IntT)
         in
-        [ NT value_width; Term "S"; NT value_int ]
-        |> wrap_case_v |> with_typ (wrap_var_t "integerLiteral")
+        "nat S int" <| [ value_width; value_int] <<| "integerLiteral"
     | "w" ->
       let value_width =
         NumV (`Nat w) |> with_typ (NumT `NatT)
@@ -132,8 +131,7 @@ let parse_width_int s n _info =
       let value_int =
         NumV (`Int i) |> with_typ (NumT `IntT)
       in
-      [ NT value_width; Term "W"; NT value_int ]
-      |> wrap_case_v |> with_typ (wrap_var_t "integerLiteral")
+      "nat W int" <| [ value_width; value_int] <<| "integerLiteral"
     | _ ->
       raise (Error "Illegal integer constant")
 }

@@ -2,7 +2,7 @@ open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
 open Interface.Flatten
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error
@@ -275,7 +275,7 @@ struct
     in
     let drop =
       match flatten_case_v_opt value_parse_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ _ ]) -> true
+      | Some (_, [ "REJECT" ], [ _ ]) -> true
       | Some _ -> false
       | None -> assert false
     in

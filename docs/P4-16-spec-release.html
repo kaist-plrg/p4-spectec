@@ -32381,7 +32381,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>`</code> <code>%</code>.</p>
+<p>Check that <code>prefixedNameIR</code> matches pattern <code>%</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
@@ -51803,9 +51803,10 @@ reject those cases with an error message in this case.</p>
 <div class="content">
 <pre>rulegroup TableProperty_ok/key:
   rule TableProperty_ok/key:
-  TC TBLC_0 |- KEY = `{tableKeyList} : TBLC_1 (KEY = `{tableKeyIR*})
+  TC TBLC_0 |- KEY = `{tableKeyList} : TBLC_2 (KEY = `{tableKeyIR*})
  -- if tableKey* = $flatten_tableKeyList(tableKeyList)
- -- TableKeys_ok: TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*</pre>
+ -- TableKeys_ok: TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*
+ -- if TBLC_2 = $update_mode_tbl(TBLC_1, tableKeyIR*)</pre>
 </div>
 </div>
 </div>
@@ -51836,7 +51837,10 @@ reject those cases with an error message in this case.</p>
 </div>
 </li>
 <li>
-<p>Result in table context <code>TBLC<sub>1</sub></code> and <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyIR<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>TBLC<sub>2</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>1</sub></code> with match mode updated based on keys <code>tableKeyIR<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Result in table context <code>TBLC<sub>2</sub></code> and <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 </ol>
 </div>
@@ -52007,7 +52011,7 @@ tableKeyIR
 <div class="content">
 <pre>rulegroup TableKey_ok:
   rule TableKey_ok:
-  TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_2 tableKeyIR
+  TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_1 tableKeyIR
  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
  -- Type_wf: $bound(LOCAL, TC) |- SET `&lt;typeIR&gt;
@@ -52016,8 +52020,7 @@ tableKeyIR
  -- if nameIR_matchkind = $name(name_matchkind)
  -- if MATCH_KIND . nameIR_matchkind = $find_var_value_t(` nameIR_matchkind, LOCAL, TC)
  -- if $compat_table_key(nameIR_matchkind, typeIR)
- -- if TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
- -- if TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+ -- if TBLC_1 = $add_key_tbl(TBLC_0, nameIR_matchkind, typeIR)
  -- if tableKeyIR = typedExpressionIR # nameIR_key : nameIR_matchkind annotationList ;</pre>
 </div>
 </div>
@@ -52073,16 +52076,13 @@ tableKeyIR
 <p>Check that <a href="#compat_table_key"><code>typeIR</code> can be used with match kind <code>nameIR<sub>matchkind</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TBLC<sub>1</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>0</sub></code> with match mode updated based on key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Let <code>TBLC<sub>2</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>1</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code> added</a>.</p>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>0</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code> added</a>.</p>
 </li>
 <li>
 <p>Let <code>tableKeyIR</code> be <code>typedExpressionIR</code> <code>#</code> <code>nameIR<sub>key</sub></code> <code>:</code> <code>nameIR<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR</code>.</p>
+<p>Result in table context <code>TBLC<sub>1</sub></code> and <code>tableKeyIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -54221,7 +54221,7 @@ invocation:</p>
 <p>Let <code>typeId'</code> <code>::</code> <code>_<sup>*</sup></code> be <code>typeId<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <a href="#Table_eval">EC<sub>callee_1</sub> ARCH<sub>0</sub> |- typeId' TBL : EC<sub>callee_2</sub> ARCH<sub>1</sub> tableResult</a>.</p>
+<p>Let <a href="#Table_eval"><code>EC<sub>callee_1</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId'</code> <code>TBL</code> <code>:</code> <code>EC<sub>callee_2</sub></code> <code>ARCH<sub>1</sub></code> <code>tableResult</code></a>.</p>
 </li>
 <li>
 <p>If let <code>exitResult</code> be <code>tableResult</code>:</p>
@@ -62508,7 +62508,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>|+|</code>:</p>
+<p>Else if <code>binop</code> is <code>||+</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -62588,7 +62588,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>&#8656;</code>:</p>
+<p>Else if <code>binop</code> is <code>&lt;=</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -62696,7 +62696,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>++</code>:</p>
+<p>Else if <code>binop</code> is <code></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>

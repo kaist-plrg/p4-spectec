@@ -143,19 +143,16 @@ let render_varid (ctx : context) (id_var : Sl.id) =
 let code_of_atom atom =
   match atom.it with
   | Atom.Tick -> ""
-  | _ -> "+" ^ (atom.it |> Atom.string_of_atom) ^ "+"
+  | _ -> "+" ^ Atom.string_of_atom atom.it ^ "+"
 
 let code_of_atoms atoms = atoms |> List.map code_of_atom |> String.concat " "
 
 (* Mixfix operators *)
 
 let code_of_mixop mixop =
-  let mixop = List.map (List.map it) mixop in
-  String.concat " % "
-    (List.map
-       (fun atoms -> String.concat " " (List.map Atom.string_of_atom atoms))
-       mixop)
-  |> String.trim
+  let arity = Mixop.arity mixop in
+  let placeholders = List.init arity (fun _ -> "%") in
+  Mixop.assemble ~string_of_atom:code_of_atom mixop placeholders |> String.trim
 
 (* Iterators *)
 
@@ -260,7 +257,7 @@ let rec render_rel_call (ctx : context) (rel_call : rel_call) : string =
         F.asprintf "%s be\n%sthe result of %s" prose_out
           (adoc_unordered_bullet 0) prose_in
   | MathRelCall (id_rel, mixop, exps) ->
-      code_of_notexp (in_link |> code) (mixop, exps)
+      code_of_notexp ctx (mixop, exps)
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
 
 (* Expressions *)
@@ -311,7 +308,7 @@ and render_exp ctx exp : string =
       F.asprintf "%s has type %s"
         (render_exp_as_code ctx exp)
         (code_of_typ ctx typ)
-  | MatchE (exp, Il.CaseP mixop) when List.length mixop = 1 ->
+  | MatchE (exp, Il.CaseP mixop) when Mixop.arity mixop = 0 ->
       F.asprintf "%s is %s" (render_exp ctx exp)
         (code_of_pattern (Il.CaseP mixop) |> adoc_as_code ctx)
   | MatchE (exp, Il.ListP `Nil) ->
@@ -425,13 +422,8 @@ and render_exps ctx ?sep:sep_opt exps =
 
 and code_of_notexp ctx notexp =
   let mixop, exps = notexp in
-  assert (List.length mixop - List.length exps = 1);
-  let len = List.length mixop + List.length exps in
-  List.init len (fun idx ->
-      if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> code_of_atoms
-      else idx / 2 |> List.nth exps |> render_exp in_code)
-  |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " " |> adoc_as_code ctx
+  let sexps = List.map (render_exp in_code) exps in
+  Mixop.assemble ~string_of_atom:code_of_atom mixop sexps |> adoc_as_code ctx
 
 (* Patterns *)
 

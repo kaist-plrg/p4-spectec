@@ -1,7 +1,7 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Util.Source
 
 (* Conversion between meta-numerics and OCaml numerics *)

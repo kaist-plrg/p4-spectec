@@ -101,8 +101,9 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %left PLUS MINUS PLUS2 
 %left STAR SLASH BACKSLASH
 
-%start spec check_atom
+%start spec check_typ check_atom
 %type<El.spec> spec
+%type<El.typ> check_typ
 %type<bool> check_atom
 
 %%
@@ -366,6 +367,9 @@ typ_rel_ :
     }
 
 typ : typ_rel { $1 }
+
+check_typ :
+  | typ EOF { $1 }
 
 (* Type definitions *)
 

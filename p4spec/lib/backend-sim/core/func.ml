@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 open Interface.Wrap
 open Interface.Unpack
 open Error
@@ -19,8 +19,8 @@ let verify (value_ctx : Value.t) (value_arch : Value.t) :
   let value_callResult =
     if check then
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
-    else [ Term "REJECT"; NT value_toSignal ] #@ "rejectTransitionResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
+    else "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult"
   in
   (value_ctx, value_arch, value_callResult)
 

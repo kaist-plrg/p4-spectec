@@ -1,3 +1,4 @@
+open Domain
 open Lang
 open Xl
 open Sl
@@ -54,16 +55,8 @@ let dot_of_mirror (mirror : mirror) : string =
                   (Print.string_of_vid vid))
               nodefields))
   | CaseN (mixop, vids) ->
-      let atoms_h, mixop_t = (List.hd mixop, List.tl mixop) in
-      Format.asprintf "(%s%s)"
-        (Il.Print.string_of_atoms atoms_h)
-        (String.concat ""
-           (List.map2
-              (fun vid atoms ->
-                Format.asprintf "%s%s"
-                  (Sl.Print.string_of_vid vid)
-                  (Sl.Print.string_of_atoms atoms))
-              vids mixop_t))
+      let svids = List.map Sl.Print.string_of_vid vids in
+      Mixop.assemble ~string_of_atom:Il.Print.string_of_atom mixop svids
   | TupleN vids ->
       Format.asprintf "(%s)"
         (String.concat ", " (vids |> List.map Sl.Print.string_of_vid))

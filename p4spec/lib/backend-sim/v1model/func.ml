@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 open Interface.Wrap
 open Interface.Pack
 open Interface.Unpack
@@ -42,7 +42,7 @@ let digest (value_ctx : Value.t) (value_sto : Value.t) :
   (* no-op *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -72,7 +72,7 @@ let mark_to_drop (value_ctx : Value.t) (value_sto : Value.t) :
   in
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -119,7 +119,7 @@ let hash (value_ctx : Value.t) (value_sto : Value.t) :
   in
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -198,7 +198,7 @@ let do_verify_checksum ~(payload : Core.Object.PacketIn.t option)
   in
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -211,7 +211,7 @@ let verify_checksum (value_ctx : Value.t) (value_sto : Value.t) :
   else
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -225,7 +225,7 @@ let verify_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t)
   else
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -298,7 +298,7 @@ let do_update_checksum ~(payload : Core.Object.PacketIn.t option)
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -312,7 +312,7 @@ let update_checksum (value_ctx : Value.t) (value_sto : Value.t) :
   else
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -327,7 +327,7 @@ let update_checksum_with_payload (value_ctx : Value.t) (value_sto : Value.t)
   else
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (value_ctx, value_sto, value_callResult)
 
@@ -387,7 +387,7 @@ let resubmit_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
   let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -425,7 +425,7 @@ let recirculate_preserving_field_list (value_ctx : Value.t)
   let value_arch = Spec.Func.update_archState_e value_arch value_arch_state in
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_arch, value_callResult)
 
@@ -481,7 +481,7 @@ let clone_preserving_field_list (value_ctx : Value.t) (value_sto : Value.t) :
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -566,7 +566,7 @@ let log_msg (value_ctx : Value.t) (value_sto : Value.t) :
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)
 
@@ -608,6 +608,6 @@ let log_msg_format (value_ctx : Value.t) (value_sto : Value.t) :
   (* Return void *)
   let value_callResult =
     let value_eps = wrap_opt_v "value" None in
-    [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+    "RETURN value?" <| [ value_eps ] <<| "returnResult"
   in
   (value_ctx, value_sto, value_callResult)

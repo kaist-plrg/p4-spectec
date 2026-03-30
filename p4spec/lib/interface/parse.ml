@@ -1,5 +1,5 @@
 open Lang
-module Value = Runtime.Dynamic_Sl.Value
+module Value = Runtime.Value
 open Util.Error
 
 let error = error_parse

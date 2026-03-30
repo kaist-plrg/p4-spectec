@@ -4,6 +4,7 @@ open Lang
 open Sl
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
+module Type = Runtime.Type
 open Runtime.Testgen_neg
 open Envs
 module Sim = Runtime.Sim.Simulator
@@ -71,7 +72,7 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
   | TypD (id, _, deftyp, _) -> (
       match deftyp.it with
       | VariantT typcases ->
-          let nottyps = List.map fst typcases in
+          let nottyps = List.map (fun (nottyp, _, _) -> nottyp) typcases in
           let insert_into_groups (typed_groups : (typ list * MixIdSet.t) list)
               (nottyp : nottyp) : (typ list * MixIdSet.t) list =
             let mixop, typs = nottyp.it in
@@ -117,10 +118,10 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
 let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
   match def.it with
   | ExternTypD (id, _) ->
-      let td = Typdef.Extern in
+      let td = Type.Typdef.Extern in
       TDEnv.add id td tdenv
   | TypD (id, tparams, deftyp, _) ->
-      let td = Typdef.Defined (tparams, deftyp) in
+      let td = Type.Typdef.Defined (tparams, deftyp) in
       TDEnv.add id td tdenv
   | _ -> tdenv
 

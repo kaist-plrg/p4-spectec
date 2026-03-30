@@ -1,4 +1,4 @@
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Flatten
 open Unwrap
 
@@ -10,7 +10,7 @@ let first fs x = List.find_map (fun f -> f x) fs
 
 let unpack_p4_bool (value : Value.t) : bool =
   match flatten_case_v_opt value with
-  | Some (_, [ [ "`B" ]; [] ], [ value_bool ]) -> unwrap_bool_v value_bool
+  | Some (_, [ "`B" ], [ value_bool ]) -> unwrap_bool_v value_bool
   | _ -> assert false
 
 (* errorValue = ERROR `. id *)
@@ -19,8 +19,7 @@ let unpack_p4_bool (value : Value.t) : bool =
 
 let unpack_p4_string (value : Value.t) : string =
   match flatten_case_v_opt value with
-  | Some (_, [ [ "\"" ]; [ "\"" ] ], [ value_string ]) ->
-      unwrap_text_v value_string
+  | Some (_, [ "\""; "\"" ], [ value_string ]) -> unwrap_text_v value_string
   | _ -> assert false
 
 (* D int *)
@@ -29,7 +28,7 @@ let unpack_p4_string (value : Value.t) : string =
 
 let unpack_p4_fixedBit_opt (value : Value.t) : (Bigint.t * Bigint.t) option =
   match flatten_case_v_opt value with
-  | Some (_, [ []; [ "W" ]; [] ], [ value_width; value_int ]) ->
+  | Some (_, [ "W" ], [ value_width; value_int ]) ->
       Some (unwrap_num_v value_width, unwrap_num_v value_int)
   | _ -> None
 
@@ -40,7 +39,7 @@ let unpack_p4_fixedBit (value : Value.t) : Bigint.t * Bigint.t =
 
 let unpack_p4_fixedInt_opt (value : Value.t) : (Bigint.t * Bigint.t) option =
   match flatten_case_v_opt value with
-  | Some (_, [ []; [ "S" ]; [] ], [ value_width; value_int ]) ->
+  | Some (_, [ "S" ], [ value_width; value_int ]) ->
       Some (unwrap_num_v value_width, unwrap_num_v value_int)
   | _ -> None
 
@@ -52,10 +51,7 @@ let unpack_p4_fixedInt (value : Value.t) : Bigint.t * Bigint.t =
 let unpack_p4_variableBit_opt (value : Value.t) :
     (Bigint.t * Bigint.t * Bigint.t) option =
   match flatten_case_v_opt value with
-  | Some
-      ( _,
-        [ []; [ "." ]; [ "V" ]; [] ],
-        [ value_width_max; value_width; value_int ] ) ->
+  | Some (_, [ "."; "V" ], [ value_width_max; value_width; value_int ]) ->
       Some
         ( unwrap_num_v value_width_max,
           unwrap_num_v value_width,
@@ -87,7 +83,7 @@ let unpack_p4_precision_numberValue (value : Value.t) : Bigint.t * Bigint.t =
 
 let unpack_p4_tuple (value : Value.t) : Value.t list =
   match flatten_case_v_opt value with
-  | Some (_, [ [ "TUPLE"; "(" ]; [ ")" ] ], [ values ]) -> unwrap_list_v values
+  | Some (_, [ "TUPLE"; "("; ")" ], [ values ]) -> unwrap_list_v values
   | _ -> assert false
 
 (* headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ] *)
@@ -99,7 +95,7 @@ let unpack_p4_tuple (value : Value.t) : Value.t list =
 
 let unpack_p4_enum (value : Value.t) : string * string =
   match flatten_case_v_opt value with
-  | Some (_, [ []; [ "." ]; [] ], [ value_tid; value_id ]) ->
+  | Some (_, [ "." ], [ value_tid; value_id ]) ->
       (unwrap_text_v value_tid, unwrap_text_v value_id)
   | _ -> assert false
 
@@ -112,7 +108,7 @@ let unpack_p4_enum (value : Value.t) : string * string =
 
 let unpack_p4_sequence (value : Value.t) : Value.t list =
   match flatten_case_v_opt value with
-  | Some (_, [ [ "SEQ"; "(" ]; [ ")" ] ], [ values ]) -> unwrap_list_v values
+  | Some (_, [ "SEQ"; "("; ")" ], [ values ]) -> unwrap_list_v values
   | _ -> assert false
 
 (* SEQ `( value* `, `... ) *)

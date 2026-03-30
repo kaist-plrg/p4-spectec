@@ -1,6 +1,6 @@
 open Interface.Wrap
 open Interface.Unwrap
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 
 (* Match-action table interface *)
 

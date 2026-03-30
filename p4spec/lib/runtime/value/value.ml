@@ -4,6 +4,7 @@ open Xl
 open Il
 open Il.Print
 open Util.Source
+open Error
 
 (* Ticker for node identifier tracking *)
 
@@ -88,36 +89,38 @@ let eq (value_l : t) (value_r : t) : bool = compare value_l value_r = 0
 (* Boolean *)
 
 let get_bool (value : t) =
-  match value.it with BoolV b -> b | _ -> failwith "get_bool"
+  match value.it with BoolV b -> b | _ -> error no_region "get_bool"
 
 (* Number *)
 
 let get_num (value : t) =
-  match value.it with NumV n -> n | _ -> failwith "get_num"
+  match value.it with NumV n -> n | _ -> error no_region "get_num"
 
 (* Text *)
 
 let get_text (value : t) =
-  match value.it with TextV s -> s | _ -> failwith "get_text"
+  match value.it with TextV s -> s | _ -> error no_region "get_text"
 
 (* List *)
 
 let to_list (values : t list) = ListV values
 
 let get_list (value : t) =
-  match value.it with ListV values -> values | _ -> failwith "unseq"
+  match value.it with ListV values -> values | _ -> error no_region "get_list"
 
 (* Option *)
 
 let to_opt (value : t option) = OptV value
 
 let get_opt (value : t) =
-  match value.it with OptV value -> value | _ -> failwith "get_opt"
+  match value.it with OptV value -> value | _ -> error no_region "get_opt"
 
 (* Struct *)
 
 let get_struct (value : t) =
-  match value.it with StructV fields -> fields | _ -> failwith "get_struct"
+  match value.it with
+  | StructV fields -> fields
+  | _ -> error no_region "get_struct"
 
 (* Hash computation *)
 
@@ -136,10 +139,8 @@ let hash_of (v : value') : int =
             h := (!h * 31) + value_field.note.vhash)
           valuefields
     | CaseV (mixop, values) ->
-        List.iter
-          (fun atoms ->
-            List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it) atoms)
-          mixop;
+        mixop |> Mixop.atoms
+        |> List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it);
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
     | TupleV values ->
         h := (!h * 31) + 1001;
@@ -159,7 +160,7 @@ let hash_of (v : value') : int =
 
 (* Value constructor with precomputed hash *)
 
-let make (typ : Il.typ') (v : value') : value =
+let make (typ : typ') (v : value') : value =
   let vid = fresh () in
   let vhash = hash_of v in
   Util.Source.( $$$ ) v { vid; typ; vhash }

@@ -4,7 +4,7 @@ open Lang
 open Xl
 open Ol.Ast
 open Ol.Eq
-module Typ = Runtime.Dynamic_Sl.Typ
+module Typ = Runtime.Type.Typ
 open Runtime.Dynamic_Sl.Envs
 open Util.Source
 
@@ -53,12 +53,15 @@ let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
   | VarT (tid, _) -> (
       let td = TDEnv.find tid tdenv in
       match td with
-      | Param | Extern -> None
+      | Param | Extern | Defining _ -> None
       | Defined (_, deftyp) -> (
           match deftyp.it with
           | VariantT typcases ->
               let mixops =
-                typcases |> List.map fst |> List.map it |> List.map fst
+                typcases
+                |> List.map (fun (nottyp, _, _) ->
+                       let mixop, _ = nottyp.it in
+                       mixop)
               in
               Some mixops
           | _ -> None))

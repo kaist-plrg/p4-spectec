@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 
 (* Resubmit exception:
 

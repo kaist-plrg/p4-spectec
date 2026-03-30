@@ -1,7 +1,7 @@
 open Domain
 open Lang
 open Il
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Error
 open Util.Source
 
@@ -13,11 +13,11 @@ type set = VSet.t
 
 (* Conversion between meta-sets and OCaml lists *)
 
+let mixop_set = Interface.Wrap.mixop_of "`{ k }"
+
 let set_of_value (value : value) : set =
   match value.it with
-  | CaseV
-      ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ],
-        [ value_elements ] ) ->
+  | CaseV (mixop, [ value_elements ]) when Mixop.eq mixop mixop_set ->
       let values_element = Value.get_list value_elements in
       VSet.of_list values_element
   | _ ->
@@ -33,10 +33,7 @@ let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
   add value_elements;
   let value =
     let typ = Il.VarT ("set" $ no_region, [ typ_key ]) in
-    Value.make typ
-      (CaseV
-         ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
-           [ value_elements ] ))
+    Value.make typ (CaseV (mixop_set, [ value_elements ]))
   in
   add value;
   value

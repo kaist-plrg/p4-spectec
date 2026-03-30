@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 open Interface.Wrap
 open Interface.Unwrap
 open Interface.Unpack
@@ -63,7 +63,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -90,7 +90,7 @@ module CounterArray = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 end

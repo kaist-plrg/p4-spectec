@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
 open Error

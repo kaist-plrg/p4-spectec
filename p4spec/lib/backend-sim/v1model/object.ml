@@ -1,4 +1,4 @@
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 open Interface.Pack
 open Interface.Wrap
 open Interface.Unwrap
@@ -131,7 +131,7 @@ module Counter = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -214,7 +214,7 @@ module Register = struct
     in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 
@@ -254,7 +254,7 @@ module Register = struct
     let reg = { reg with values } in
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (reg, value_ctx, value_arch, value_callResult)
 end
@@ -354,7 +354,7 @@ module DirectCounter = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -449,7 +449,7 @@ module DirectMeter = struct
     (* Create call result *)
     let value_callResult =
       let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      "RETURN value?" <| [ value_eps ] <<| "returnResult"
     in
     (meter, value_ctx, value_sto, value_callResult)
 end

@@ -1,3 +1,4 @@
+open Domain
 open Ast
 open Util.Source
 
@@ -19,7 +20,7 @@ let string_of_defid defid = Il.Print.string_of_defid defid
 
 (* Atoms *)
 
-let string_of_atom ?(lower = true) atom = Il.Print.string_of_atom ~lower atom
+let string_of_atom atom = Il.Print.string_of_atom atom
 let string_of_atoms atoms = atoms |> List.map string_of_atom |> String.concat ""
 
 (* Mixfix operators *)
@@ -134,12 +135,8 @@ and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
   let mixop, exps = notexp in
-  let len = List.length mixop + List.length exps in
-  List.init len (fun idx ->
-      if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> string_of_atoms
-      else idx / 2 |> List.nth exps |> string_of_exp)
-  |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " "
+  let sexps = List.map string_of_exp exps in
+  Mixop.assemble ~string_of_atom mixop sexps
 
 (* Patterns *)
 
@@ -387,37 +384,30 @@ and string_of_relinput rel_signature exps_input =
   let nottyp, inputs = rel_signature in
   let mixop, _ = nottyp.it in
   let exps_input = List.combine inputs exps_input in
-  let exps =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+  let sexps =
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_input with
-        | Some exp_input -> exp_input
-        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
+        | Some exp_input -> string_of_exp exp_input
+        | None -> "%")
   in
-  let notexp = (mixop, exps) in
-  string_of_notexp notexp
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_reloutput rel_signature exps_output =
   let nottyp, inputs = rel_signature in
   let mixop, _ = nottyp.it in
   let outputs =
-    List.init
-      (List.length mixop - 1)
-      (fun idx -> if List.mem idx inputs then None else Some idx)
+    List.init (Mixop.arity mixop) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
     |> List.filter_map Fun.id
   in
   let exps_output = List.combine outputs exps_output in
-  let exps =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+  let sexps =
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_output with
-        | Some exp_output -> exp_output
-        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
+        | Some exp_output -> string_of_exp exp_output
+        | None -> "%")
   in
-  let notexp = (mixop, exps) in
-  string_of_notexp notexp
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_extern_rel externrel =
   let relid, rel_signature, exps_match, _hints = externrel in

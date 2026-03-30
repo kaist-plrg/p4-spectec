@@ -1,5 +1,8 @@
+open Domain
+open Lang
 open Error
 module Source = Util.Source
+open Source
 
 let with_lexbuf name lexbuf start =
   let open Lexing in
@@ -7,6 +10,28 @@ let with_lexbuf name lexbuf start =
   try start Lexer.token lexbuf
   with Parser.Error ->
     error (Lexer.region lexbuf) "syntax error: unexpected token"
+
+let parse_mixop str =
+  let rec mixop_of_nottyp (nottyp : El.nottyp) =
+    match nottyp.it with
+    | AtomT atom -> Mixop.Atom atom
+    | SeqT typs ->
+        let mixops = List.map mixop_of_typ typs in
+        Mixop.Seq mixops
+    | InfixT (typ_l, atom, typ_r) ->
+        let mixop_l = mixop_of_typ typ_l in
+        let mixop_r = mixop_of_typ typ_r in
+        Mixop.Infix (mixop_l, atom, mixop_r)
+    | BrackT (atom_l, typ, atom_r) ->
+        let mixop = mixop_of_typ typ in
+        Mixop.Brack (atom_l, mixop, atom_r)
+  and mixop_of_typ (typ : El.typ) =
+    match typ with
+    | PlainT _ -> Mixop.Arg
+    | NotationT nottyp -> mixop_of_nottyp nottyp
+  in
+  let typ = Parser.check_typ Lexer.token (Lexing.from_string str) in
+  mixop_of_typ typ
 
 let parse_file file =
   let ic = open_in file in

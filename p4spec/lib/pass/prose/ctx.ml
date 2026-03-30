@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-module Typdef = Runtime.Dynamic_Sl.Typdef
+module Typdef = Runtime.Type.Typdef
 open Runtime.Prose.Envs
 open Error
 open Util.Source
@@ -54,7 +54,7 @@ let load_hints (key : HEnv.key) (henv : HEnv.t) (hints : El.hint list) : HEnv.t
 let load_typcases (tid : TId.t) (henv : HEnv.t) (typcases : Sl.typcase list) :
     HEnv.t =
   List.fold_left
-    (fun henv (nottyp, hints) ->
+    (fun henv (nottyp, _, hints) ->
       let mixop, _ = nottyp.it in
       let cid = (tid, mixop) in
       load_hints (`Typ cid) henv hints)

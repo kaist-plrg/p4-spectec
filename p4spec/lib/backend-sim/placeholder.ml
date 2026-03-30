@@ -1,6 +1,6 @@
 open Interface.Wrap
 open Interface.Unwrap
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error

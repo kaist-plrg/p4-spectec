@@ -1,5 +1,5 @@
 open Domain.Lib
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 open Util
 
 module Stat = struct

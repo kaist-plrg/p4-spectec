@@ -1,6 +1,6 @@
 open Domain.Lib
 module DCov = Coverage.Dangling.Single
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 
 let make () =
   (* Dangling coverage and a reader for it *)
