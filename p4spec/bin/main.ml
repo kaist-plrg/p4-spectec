@@ -130,8 +130,8 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
         let wellformed, welltyped =
           match program_result with
           | Pass _ -> (true, true)
-          | Fail (`Syntax _) -> (true, false)
-          | Fail (`Runtime _) -> (false, false)
+          | Fail (`Syntax _) -> (false, false)
+          | Fail (`Runtime _) -> (true, false)
         in
         Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
           welltyped cover_single)
