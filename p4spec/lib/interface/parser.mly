@@ -53,7 +53,7 @@
 %token<Source.info> BIT_OR BIT_AND BIT_XOR COMPLEMENT
 %token<Source.info> L_BRACKET R_BRACKET L_BRACE R_BRACE L_ANGLE L_ANGLE_ARGS R_ANGLE R_ANGLE_SHIFT L_PAREN R_PAREN
 %token<Source.info> ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
-%token<Source.info> AT PLUSPLUS
+%token<Source.info> AT PLUSPLUS PLUSCOLON
 %token<Source.info> DONTCARE
 %token<Source.info> MASK DOTS RANGE
 %token<Source.info> TRUE FALSE
@@ -628,14 +628,16 @@ namedExpressionList:
 %inline sliceAccessExpression:
   | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
     { "expression `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpression" }
+  | a = expression L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
+    { "expression `[ expression `+: expression ]" <| [ a; l; w ] <<| "sliceAccessExpression" }
 ;
 
 %inline accessExpression:
-	| e = errorAccessExpression
-	| e = memberAccessExpression
-	| e = indexAccessExpression
+  | e = errorAccessExpression
+  | e = memberAccessExpression
+  | e = indexAccessExpression
   | e = sliceAccessExpression
-		{ e }
+    { e }
 ;
 
 %inline memberAccessExpressionNonBrace:
@@ -651,14 +653,16 @@ namedExpressionList:
 %inline sliceAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
     { "expressionNonBrace `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
+  | a = expressionNonBrace L_BRACKET h = expression PLUSCOLON l = expression R_BRACKET
+    { "expressionNonBrace `[ expression `+: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
-	| e = errorAccessExpression
-	| e = memberAccessExpressionNonBrace
-	| e = indexAccessExpressionNonBrace
+  | e = errorAccessExpression
+  | e = memberAccessExpressionNonBrace
+  | e = indexAccessExpressionNonBrace
   | e = sliceAccessExpressionNonBrace
-		{ e }
+    { e }
 ;
 
 (* >> Call expressions *)
@@ -890,6 +894,8 @@ lvalue:
 		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" }
 	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
 		{ "lvalue `[ expression `: expression ]" <| [ lv; h; l ] <<| "lvalue" }
+	| lv = lvalue L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
+    { "lvalue `[ expression `+: expression ]" <| [ lv; l; w ] <<| "lvalue" }
 	| L_PAREN lv = lvalue R_PAREN
 		{ "`( lvalue )" <| [ lv ] <<| "lvalue" }
 ;

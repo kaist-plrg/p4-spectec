@@ -187,7 +187,7 @@ module PacketIn = struct
       Spec.Func.find_var_e_local value_ctx "variableFieldSizeInBits"
     in
     let alignment =
-      Spec.Func.bitacc_op value_variableFieldSizeInBits
+      Spec.Func.bitacc_range_op value_variableFieldSizeInBits
         (pack_p4_arbitraryInt (Bigint.of_int 2))
         (pack_p4_arbitraryInt (Bigint.of_int 0))
       |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn

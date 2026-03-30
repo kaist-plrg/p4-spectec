@@ -282,7 +282,7 @@ let run_command =
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -333,7 +333,7 @@ let sim_command =
          Inst.Hook.finish ();
          match result with
          | Pass -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg

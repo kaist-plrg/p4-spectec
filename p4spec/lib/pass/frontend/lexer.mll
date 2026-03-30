@@ -190,6 +190,7 @@ and token = parse
   | "`+" { TICK_PLUS }
   | "`++" { TICK_PLUS2 }
   | "`+=" { TICK_PLUS_EQ }
+  | "`+:" { TICK_PLUS_COLON }
   | "`-" { TICK_MINUS }
   | "`-=" { TICK_MINUS_EQ }
   | "`*" { TICK_STAR }
