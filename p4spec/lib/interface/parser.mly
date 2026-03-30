@@ -53,7 +53,7 @@
 %token<Source.info> BIT_OR BIT_AND BIT_XOR COMPLEMENT
 %token<Source.info> L_BRACKET R_BRACKET L_BRACE R_BRACE L_ANGLE L_ANGLE_ARGS R_ANGLE R_ANGLE_SHIFT L_PAREN R_PAREN
 %token<Source.info> ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
-%token<Source.info> AT PLUSPLUS
+%token<Source.info> AT PLUSPLUS PLUSCOLON
 %token<Source.info> DONTCARE
 %token<Source.info> MASK DOTS RANGE
 %token<Source.info> TRUE FALSE
@@ -559,17 +559,23 @@ namedExpressionList:
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
 ;
 
-%inline sliceAccessExpression:
+%inline sliceRangeAccessExpression:
   | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpression" }
+;
+
+%inline sliceOffsetAccessExpression:
+  | a = expression L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
+    { [ NT a; Term "["; NT l; Term "+:"; NT w; Term "]" ] #@ "sliceOffsetAccessExpression" }
 ;
 
 %inline accessExpression:
-	| e = errorAccessExpression
-	| e = memberAccessExpression
-	| e = indexAccessExpression
-  | e = sliceAccessExpression
-		{ e }
+  | e = errorAccessExpression
+  | e = memberAccessExpression
+  | e = indexAccessExpression
+  | e = sliceRangeAccessExpression
+  | e = sliceOffsetAccessExpression
+    { e }
 ;
 
 %inline memberAccessExpressionNonBrace:
@@ -582,17 +588,23 @@ namedExpressionList:
 		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
 ;
 
-%inline sliceAccessExpressionNonBrace:
+%inline sliceRangeAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
+    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceRangeAccessExpressionNonBrace" }
+;
+
+%inline sliceOffsetAccessExpressionNonBrace:
+  | a = expressionNonBrace L_BRACKET h = expression PLUSCOLON l = expression R_BRACKET
+    { [ NT a; Term "["; NT h; Term "+:"; NT l; Term "]" ] #@ "sliceOffsetAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
-	| e = errorAccessExpression
-	| e = memberAccessExpressionNonBrace
-	| e = indexAccessExpressionNonBrace
-  | e = sliceAccessExpressionNonBrace
-		{ e }
+  | e = errorAccessExpression
+  | e = memberAccessExpressionNonBrace
+  | e = indexAccessExpressionNonBrace
+  | e = sliceRangeAccessExpressionNonBrace
+  | e = sliceOffsetAccessExpressionNonBrace
+    { e }
 ;
 
 (* >> Call expressions *)
@@ -817,6 +829,8 @@ lvalue:
 		{ [ NT lv; Term "["; NT i; Term "]" ] #@ "lvalue" }
 	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
 		{ [ NT lv; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "lvalue" }
+	| lv = lvalue L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
+		{ [ NT lv; Term "["; NT l; Term "+:"; NT w; Term "]" ] #@ "lvalue" }
 	| L_PAREN lv = lvalue R_PAREN
 		{ [ Term "("; NT lv; Term ")" ] #@ "lvalue" }
 ;

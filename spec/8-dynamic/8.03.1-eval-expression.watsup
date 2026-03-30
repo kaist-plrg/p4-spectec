@@ -485,28 +485,57 @@ rulegroup Expr_eval/indexAccessExpressionIR {
 
 ;;;;; sliceAccessExpressionIR
 ;;;;; syntax sliceAccessExpressionIR =
-;;;;;  typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+;;;;;; typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
 
-rulegroup Expr_eval/sliceAccessExpressionIR {
+rulegroup Expr_eval/sliceAccessExpressionIR-range {
 
   rule Expr_eval/abort:
-    p EC_0 ARCH_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
-                                             `: typedExpressionIR_lo ]) `# _
+    p EC_0 ARCH_0 |- (typedExpressionIR_base
+                      `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
                    : EC_1 ARCH_1 abortResult
     -- Exprs_eval:
-        p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_hi,
-                          typedExpressionIR_lo ]
+        p EC_0 ARCH_0 |- [ typedExpressionIR_base,
+                           typedExpressionIR_hi,
+                           typedExpressionIR_lo ]
                        : EC_1 ARCH_1 abortResult
 
   rule Expr_eval/cont:
-    p EC_0 ARCH_0 |- (typedExpressionIR_base `[ typedExpressionIR_hi
-                                             `: typedExpressionIR_lo ]) `# _
+    p EC_0 ARCH_0 |- (typedExpressionIR_base
+                      `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
                    : EC_1 ARCH_1 expressionResult
     -- Exprs_eval:
-        p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_hi,
-                          typedExpressionIR_lo ]
+        p EC_0 ARCH_0 |- [ typedExpressionIR_base,
+                           typedExpressionIR_hi,
+                           typedExpressionIR_lo ]
                       : EC_1 ARCH_1 (`` ([ value_base, value_hi, value_lo ]))
-    -- if expressionResult = `` $bitacc_op(value_base, value_hi, value_lo)
+    -- if expressionResult = `` $bitacc_range_op(value_base, value_hi, value_lo)
+
+}
+
+;;;;;; typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+
+rulegroup Expr_eval/sliceOffsetAccessExpressionIR-offset {
+
+  rule Expr_eval/abort:
+    p EC_0 ARCH_0 |- (typedExpressionIR_base
+                      `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
+                   : EC_1 ARCH_1 abortResult
+    -- Exprs_eval:
+        p EC_0 ARCH_0 |- [ typedExpressionIR_base,
+                           typedExpressionIR_l,
+                           typedExpressionIR_w ]
+                       : EC_1 ARCH_1 abortResult
+
+  rule Expr_eval/cont:
+    p EC_0 ARCH_0 |- (typedExpressionIR_base
+                      `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
+                   : EC_1 ARCH_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 ARCH_0 |- [ typedExpressionIR_base,
+                           typedExpressionIR_l,
+                           typedExpressionIR_w ]
+                       : EC_1 ARCH_1 (`` ([ value_base, value_l, value_w ]))
+    -- if expressionResult = `` $bitacc_offset_op(value_base, value_l, value_w)
 
 }
 

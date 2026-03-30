@@ -1064,8 +1064,8 @@ rulegroup Expr_ok/indexAccessExpression {
 }
 
 ;;;; sliceAccessExpression
-;;;; syntax sliceAccessExpression =
-;;;;  expression `[ expression `: expression ]
+;;;; syntax sliceAccessExpression
+;;;;; expression `[ expression `: expression ]
 
 tbl dec $compat_bitslice_base(typeIR) : bool
   hint(prose_true %0 "can be used as a bitslice base")
@@ -1078,15 +1078,37 @@ tbl def $compat_bitslice_base =
       => $compat_bitslice_base(typeIR)
   | _ => false
 
-tbl dec $compat_bitslice_index(typeIR) : bool
-  hint(prose_true %0 "can be used as a bitslice index")
-  hint(prose_false %0 "cannot be used as a bitslice index")
-tbl def $compat_bitslice_index =
+tbl dec $compat_bitslice_range_index(typeIR) : bool
+  hint(prose_true %0 "can be used as a bitslice range index")
+  hint(prose_false %0 "cannot be used as a bitslice range index")
+tbl def $compat_bitslice_range_index =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
   | TYPEDEF _ typeIR
-      => $compat_bitslice_index(typeIR)
+      => $compat_bitslice_range_index(typeIR)
+  | _ => false
+
+tbl dec $compat_bitslice_offset_index(typeIR) : bool
+  hint(prose_true %0 "can be used as an bitslice offset")
+  hint(prose_false %0 "cannot be used as an bitslice offset")
+tbl def $compat_bitslice_offset_index =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR
+      => $compat_bitslice_offset_index(typeIR)
+  | _ => false
+
+tbl dec $compat_bitslice_offset_width(typeIR) : bool
+  hint(prose_true %0 "can be used as an bitslice width")
+  hint(prose_false %0 "cannot be used as an bitslice width")
+tbl def $compat_bitslice_offset_width =
+  | INT => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | TYPEDEF _ typeIR
+      => $compat_bitslice_offset_width(typeIR)
   | _ => false
 
 dec $is_valid_bitslice(typeIR, nat, nat) : bool
@@ -1105,7 +1127,7 @@ def $is_valid_bitslice(TYPEDEF _ typeIR, n_lo, n_hi)
 def $is_valid_bitslice(_, _, _) = false
   -- otherwise
 
-rule Expr_ok/sliceAccessExpression:
+rule Expr_ok/sliceAccessExpression-range:
   p TC |- expression_base `[ expression_hi `: expression_lo ]
         : (typedExpressionIR_base
             `[ typedExpressionIR_hi_reduced `: typedExpressionIR_lo_reduced ])
@@ -1128,11 +1150,11 @@ rule Expr_ok/sliceAccessExpression:
   -- if typedExpressionIR_hi_reduced
       = $reduce_serenum_unary(
           typedExpressionIR_hi,
-          def $compat_bitslice_index)
+          def $compat_bitslice_range_index)
   -- if typedExpressionIR_lo_reduced
       = $reduce_serenum_unary(
           typedExpressionIR_lo,
-          def $compat_bitslice_index)
+          def $compat_bitslice_range_index)
   ---- ;; fetch index annotations
   -- if typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced)
   -- if ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced)
@@ -1152,6 +1174,102 @@ rule Expr_ok/sliceAccessExpression:
   -- if typeIR = BIT `< n_slice >
   -- if expressionNoteIR = `( typeIR ctk_base_reduced )
 
+;;;;; expression `[ expression `+: expression ]
+
+rulegroup Expr_ok/sliceAccessExpression-offset {
+
+  rule Expr_ok/lo-lctk:
+    p TC |- expression_base `[ expression_l `+: expression_w ]
+          : (typedExpressionIR_base
+              `[ typedExpressionIR_l_reduced `+: typedExpressionIR_w_reduced ])
+              `# expressionNoteIR
+    ---- ;; check expressions
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
+    -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
+    ---- ;; check that the base expression is compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_base_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_base,
+            def $compat_bitslice_base)
+    ---- ;; fetch base annotation
+    -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
+    -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
+    ---- ;; check that index and width are compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_l_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_l,
+            def $compat_bitslice_offset_index)
+    -- if typedExpressionIR_w_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_w,
+            def $compat_bitslice_offset_width)
+    ---- ;; fetch annotations
+    -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_w_reduced = $type_of_typedExpressionIR(typedExpressionIR_w_reduced)
+    -- if ctk_w_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_w_reduced)
+    ---- ;; if offset is local compile-time known, it must be non-negative
+    -- if ctk_l_reduced = LCTK
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_l_reduced ~> integerValue_l
+    -- if n_l = $nat_of_integerValue(integerValue_l)
+    ---- ;; check that the width is local compile-time known
+    -- if ctk_w_reduced = LCTK
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
+    -- if n_w = $nat_of_integerValue(integerValue_w)
+    -- if n_h = $(n_w + n_l - 1)
+    -- if $is_valid_bitslice(typeIR_base_reduced, n_l, n_h)
+    ---- ;; create typed expression
+    -- if typeIR = BIT `< n_w >
+    -- if expressionNoteIR = `( typeIR ctk_base_reduced )
+
+  rule Expr_ok/lo-non-lctk:
+    p TC |- expression_base `[ expression_l `+: expression_w ]
+          : (typedExpressionIR_base
+              `[ typedExpressionIR_l_reduced `+: typedExpressionIR_w_reduced ])
+              `# expressionNoteIR
+    ---- ;; check expressions
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
+    -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
+    ---- ;; check that the base expression is compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_base_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_base,
+            def $compat_bitslice_base)
+    ---- ;; fetch base annotation
+    -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
+    -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
+    ---- ;; check that index and width are compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_l_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_l,
+            def $compat_bitslice_offset_index)
+    -- if typedExpressionIR_w_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_w,
+            def $compat_bitslice_offset_width)
+    ---- ;; fetch annotations
+    -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
+    -- if typeIR_w_reduced = $type_of_typedExpressionIR(typedExpressionIR_w_reduced)
+    -- if ctk_w_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_w_reduced)
+    ---- ;; if offset is not local compile-time known, it must be a bit type
+    -- if ctk_l_reduced =/= LCTK
+    -- if BIT `< _ > = typeIR_l_reduced
+    ---- ;; check that the width is local compile-time known
+    -- if ctk_w_reduced = LCTK
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
+    -- if n_w = $nat_of_integerValue(integerValue_w)
+    ---- ;; create typed expression
+    -- if typeIR = BIT `< n_w >
+    -- if expressionNoteIR = `( typeIR ctk_base_reduced )
+
+}
 ;;; callExpression
 ;;; syntax callExpression
 

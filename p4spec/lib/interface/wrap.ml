@@ -52,6 +52,7 @@ let wrap_atom (s : string) : atom =
   | "+" -> Plus $ no_region
   | "++" -> Plus2 $ no_region
   | "+=" -> PlusEq $ no_region
+  | "+:" -> PlusColon $ no_region
   | "-" -> Minus $ no_region
   | "-=" -> MinusEq $ no_region
   | "*" -> Star $ no_region
