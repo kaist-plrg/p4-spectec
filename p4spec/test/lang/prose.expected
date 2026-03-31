@@ -4737,7 +4737,7 @@ xref:empty_typingContext[An empty typing context]
 . Let ``globalTypingLayer`` be +{++CONSTRUCTOR+ ``xref:empty_constructorTypeDefEnv[$empty_constructorTypeDefEnv]``, +TYPE+ ``xref:empty_typeDefEnv[$empty_typeDefEnv]``, +CALLABLE+ ``xref:empty_callableTypeDefEnv[$empty_callableTypeDefEnv]``, +FRAME+ ``xref:empty_typeFrame[$empty_typeFrame]``+}+.
 . Let ``blockTypingLayer`` be +{++KIND+ ``+`EMPTY+``, +TYPE+ ``xref:empty_typeDefEnv[$empty_typeDefEnv]``, +CALLABLE+ ``xref:empty_callableTypeDefEnv[$empty_callableTypeDefEnv]``, +FRAME+ ``xref:empty_typeFrame[$empty_typeFrame]``+}+.
 . Let ``localTypingLayer`` be +{++KIND+ ``+`EMPTY+``, +TYPE+ ``xref:empty_typeDefEnv[$empty_typeDefEnv]``, +FRAMES+ ``xref:empty_typeFrame[$empty_typeFrame]``+}+.
-. Let ``TC`` be +{++GLOBAL+ ``globalTypingLayer``, +BLOCK+ ``blockTypingLayer``, +LOCAL+ ``localTypingLayer``+}+.
+. Let ``TC`` be +{++CONTROL+ ``+CONT+``, +LOOP+ ``+OUT+``, +GLOBAL+ ``globalTypingLayer``, +BLOCK+ ``blockTypingLayer``, +LOCAL+ ``localTypingLayer``+}+.
 . Return ``TC``.
 
 xref:bound[Bound type variables from the ``cursor`` layer of ``TC``]
@@ -4764,6 +4764,26 @@ xref:exit_t[``TC`` with the innermost frame removed]
 . Check that ``typeFrame^{asterisk}^`` is a non-empty list.
 . Let ``typeFrame~h~`` ``{two-colons}`` ``typeFrame~t~^{asterisk}^`` be ``typeFrame^{asterisk}^``.
 . Return ``TC`` with ``+LOCAL+.+FRAMES+`` set to ``typeFrame~t~^{asterisk}^``.
+
+xref:join_control_t[The join of control flows in ``TC~a~`` and ``TC~b~``]
+
+
+. Return xref:join_flow[the merged control flow of ``TC~a~.+CONTROL+`` and ``TC~b~.+CONTROL+``].
+
+xref:set_control_t[``TC`` with control flow set to ``flow``]
+
+
+. Return ``TC`` with ``+CONTROL+`` set to ``flow``.
+
+xref:enter_loop_t[``TC`` within a loop]
+
+
+. Return ``TC`` with ``+LOOP+`` set to ``+IN+``.
+
+xref:set_loop_t[``TC`` with loop status set to ``loop``]
+
+
+. Return ``TC`` with ``+LOOP+`` set to ``loop``.
 
 xref:add_var_t[``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer]
 
@@ -8123,14 +8143,14 @@ xref:Lvalue_ok[Typing ``+(+`` ``lvalue~base~`` ``+)+``, under context ``TC`` at 
 
 xref:Stmt_ok[Stmt_ok]:
 
-* Typing ``statement``, under context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt`` at ``cursor``:
-* Result in context ``typingContext``, abstract control flow ``flow``, and ``statementIR``.
+* Typing ``statement``, under context ``typingContext`` at ``cursor``:
+* Result in context ``typingContext`` and ``statementIR``.
 
-xref:Stmt_ok[Typing ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``+;+``, under context ``TC`` at ``p``]:
 
-. Result in context ``TC``, abstract control flow ``f``, and ``+;+``.
+. Result in context ``TC`` and ``+;+``.
 
-xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under context ``TC`` at ``p``]:
 
 . If ``assignop`` is ``+=+``:
  .. Let ``typedLvalueIR`` be
@@ -8140,7 +8160,7 @@ xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under contex
  .. Let ``typeIR~l~`` be xref:type_of_typedLvalueIR[the type of lvalue ``typedLvalueIR``].
  .. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~l~``].
- .. Result in context ``TC``, abstract control flow ``f``, and ``typedLvalueIR`` ``+=+`` ``typedExpressionIR~cast~`` ``+;+``.
+ .. Result in context ``TC`` and ``typedLvalueIR`` ``+=+`` ``typedExpressionIR~cast~`` ``+;+``.
 . Else:
  .. Let ``binop'`` be xref:option_get[*!*] xref:assignop_as_binop[the binary operator corresponding to ``assignop``].
  .. Let ``typedLvalueIR`` be
@@ -8154,9 +8174,9 @@ xref:Stmt_ok[Typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under contex
  .. Check that ``expressionIR`` has type ``binaryExpressionIR``.
  .. Let ``++_++`` ``binop''`` ``typedExpressionIR~cast~`` be ``expressionIR``.
  .. Check that ``binop''`` is equal to ``binop'``.
- .. Result in context ``TC``, abstract control flow ``f``, and ``typedLvalueIR`` ``assignop`` ``typedExpressionIR~cast~`` ``+;+``.
+ .. Result in context ``TC`` and ``typedLvalueIR`` ``assignop`` ``typedExpressionIR~cast~`` ``+;+``.
 
-xref:Stmt_ok[Typing ``callStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``callStatement``, under context ``TC`` at ``p``]:
 
 . If let ``lvalue~callable~`` ``+(+`` ``argumentList`` ``+)+`` ``+;+`` be ``callStatement``:
  .. Let typed callable target ``callableTargetIR`` be
@@ -8174,10 +8194,10 @@ xref:Stmt_ok[Typing ``callStatement``, under context ``TC``, abstract control fl
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``callExpressionIR`` annotated with ``expressionNoteIR``, under context ``TC`` at ``p``].
   ... Check that ``value`` is equal to ``+`B+`` ``true``.
   ... Let ``emptyStatementIR`` be ``+;+``.
-  ... Result in context ``TC``, abstract control flow ``f``, and ``emptyStatementIR``.
+  ... Result in context ``TC`` and ``emptyStatementIR``.
  .. Else:
   ... Let ``callStatementIR`` be ``callableTargetIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+;+``.
-  ... Result in context ``TC``, abstract control flow ``f``, and ``callStatementIR``.
+  ... Result in context ``TC`` and ``callStatementIR``.
 . Else:
  .. Let ``lvalue~callable~`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+`` be ``callStatement``.
  .. Let typed callable target ``callableTargetIR`` be
@@ -8192,9 +8212,9 @@ xref:Stmt_ok[Typing ``callStatement``, under context ``TC``, abstract control fl
  .. Let return type ``typeIR~ret~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
  .. Let ``callStatementIR`` be ``callableTargetIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+;+``.
- .. Result in context ``TC``, abstract control flow ``f``, and ``callStatementIR``.
+ .. Result in context ``TC`` and ``callStatementIR``.
 
-xref:Stmt_ok[Typing ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC`` at ``p``]:
 
 . Let ``expressionIR`` annotated with a pair of type ``typeIR~object~`` and compile-time known-ness ``++_++`` be
 * the result of xref:Expr_ok[typing ``namedType`` ``+(+`` ``+`EMPTY+`` ``+)+``, under context ``TC`` at ``p``].
@@ -8209,8 +8229,8 @@ xref:Stmt_ok[Typing ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` `
 . Let ``nameIR~object~`` be ``"__direct_application"``.
 . Let ``TC~1~`` be xref:add_var_t[``TC`` where ``nameIR~object~`` to ``+`EMPTY+`` ``typeIR~object~`` ``+CTK+`` ``·`` is added to the ``p`` layer].
 . Let ``lvalue`` be ``+`ID+`` ``nameIR~object~`` ``+.+`` ``+`ID+`` ``"apply"``.
-. Let context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``lvalue`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC~1~``, abstract control flow ``f``, and loop context ``l`` at ``p``].
+. Let context ``++_++`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``lvalue`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC~1~`` at ``p``].
 . Check that ``statementIR`` has type ``callStatementIR``.
 . Let ``callStatementIR`` be ``statementIR``.
 . Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+;+`` be ``callStatementIR``.
@@ -8221,40 +8241,45 @@ xref:Stmt_ok[Typing ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` `
 . Check that xref:typedExpressionIR[``nameIR~object~`` annotated with a pair of type ``typeIR~object~`` and compile-time known-ness ``+CTK+``] is equal to ``typedExpressionIR~base~``.
 . Check that ``constructorTargetIR`` is equal to ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+``.
 . Let ``directApplicationStatementIR`` be ``constructorTargetIR`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+;+``.
-. Result in context ``TC``, abstract control flow ``f``, and ``directApplicationStatementIR``.
+. Result in context ``TC`` and ``directApplicationStatementIR``.
 
-xref:Stmt_ok[Typing ``+EXIT+`` ``+;+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``+EXIT+`` ``+;+``, under context ``TC`` at ``p``]:
 
-. Result in context ``TC``, abstract control flow ``f``, and ``+EXIT+`` ``+;+``.
+. Result in context ``TC`` and ``+EXIT+`` ``+;+``.
 
-xref:Stmt_ok[Typing ``conditionalStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``]:
+xref:Stmt_ok[Typing ``conditionalStatement``, under context ``TC`` at ``p``]:
 
 . If let ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``statement~then~`` be ``conditionalStatement``:
  .. Let ``typedExpressionIR~cond~`` be
 * the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC`` at ``p``].
  .. Let ``typeIR~cond~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~cond~``].
  .. Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR~cond~`` with typedefs unrolled].
- .. Let context ``TC~then~``, abstract control flow ``f~then~``, and ``statementIR~then~`` be
-* the result of xref:Stmt_ok[typing ``statement~then~``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``].
- .. Result in context ``TC``, abstract control flow ``f``, and ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~``.
+ .. Let context ``TC~then~`` and ``statementIR~then~`` be
+* the result of xref:Stmt_ok[typing ``statement~then~``, under context ``TC`` at ``p``].
+ .. Let ``TC~post~`` be xref:set_control_t[``TC~then~`` with control flow set to ``TC.+CONTROL+``].
+ .. Let ``conditionalStatementIR`` be ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~``.
+ .. Result in context ``TC~post~`` and ``conditionalStatementIR``.
 . Else:
  .. Let ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``statement~then~`` ``+ELSE+`` ``statement~else~`` be ``conditionalStatement``.
  .. Let ``typedExpressionIR~cond~`` be
 * the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC`` at ``p``].
  .. Let ``typeIR~cond~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~cond~``].
  .. Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR~cond~`` with typedefs unrolled].
- .. Let context ``TC~then~``, abstract control flow ``f~then~``, and ``statementIR~then~`` be
-* the result of xref:Stmt_ok[typing ``statement~then~``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``].
- .. Let context ``TC~else~``, abstract control flow ``f~else~``, and ``statementIR~else~`` be
-* the result of xref:Stmt_ok[typing ``statement~else~``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``p``].
- .. Let ``f~post~`` be xref:join_flow[the merged control flow of ``f~then~`` and ``f~else~``].
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~`` ``+ELSE+`` ``statementIR~else~``.
+ .. Let context ``TC~then~`` and ``statementIR~then~`` be
+* the result of xref:Stmt_ok[typing ``statement~then~``, under context ``TC`` at ``p``].
+ .. Let context ``TC~else~`` and ``statementIR~else~`` be
+* the result of xref:Stmt_ok[typing ``statement~else~``, under context ``TC`` at ``p``].
+ .. Let ``f~post~`` be xref:join_control_t[the join of control flows in ``TC~then~`` and ``TC~else~``].
+ .. Let ``TC~post~`` be xref:set_control_t[``TC`` with control flow set to ``f~post~``].
+ .. Let ``conditionalStatementIR`` be ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~`` ``+ELSE+`` ``statementIR~else~``.
+ .. Result in context ``TC~post~`` and ``conditionalStatementIR``.
 
-xref:Stmt_ok[Typing ``returnStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
+xref:Stmt_ok[Typing ``returnStatement``, under context ``TC`` at ``+LOCAL+``]:
 
 . If ``returnStatement`` is ``+RETURN+`` ``+;+``:
  .. Check that ``+VOID+`` is equal to xref:find_local_return_type_t[the expected return type in ``TC``].
- .. Result in context ``TC``, abstract control flow ``+RET+``, and ``+RETURN+`` ``+;+``.
+ .. Let ``TC~1~`` be xref:set_control_t[``TC`` with control flow set to ``+RET+``].
+ .. Result in context ``TC~1~`` and ``+RETURN+`` ``+;+``.
 . Else:
  .. Let ``+RETURN+`` ``expression`` ``+;+`` be ``returnStatement``.
  .. Let ``typedExpressionIR`` be
@@ -8262,17 +8287,18 @@ xref:Stmt_ok[Typing ``returnStatement``, under context ``TC``, abstract control 
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``typeIR~ret~`` be xref:option_get[*!*] xref:find_local_return_type_t[the expected return type in ``TC``].
  .. Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~ret~``].
- .. Result in context ``TC``, abstract control flow ``+RET+``, and ``+RETURN+`` ``typedExpressionIR~cast~`` ``+;+``.
+ .. Let ``TC~1~`` be xref:set_control_t[``TC`` with control flow set to ``+RET+``].
+ .. Result in context ``TC~1~`` and ``+RETURN+`` ``typedExpressionIR~cast~`` ``+;+``.
 
-xref:Stmt_ok[Typing ``blockStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
+xref:Stmt_ok[Typing ``blockStatement``, under context ``TC`` at ``+LOCAL+``]:
 
 . Let ``TC~1~`` be xref:enter_t[``TC`` with a new local frame].
-. Let context ``TC~2~``, abstract control flow ``f~1~``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC~1~``, abstract control flow ``f``, and loop context ``l``].
+. Let context ``TC~2~`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~1~``].
 . Let ``TC~3~`` be xref:exit_t[``TC~2~`` with the innermost frame removed].
-. Result in context ``TC~3~``, abstract control flow ``f~1~``, and ``blockStatementIR``.
+. Result in context ``TC~3~`` and ``blockStatementIR``.
 
-xref:Stmt_ok[Typing ``annotationList`` ``+FOR+`` ``+(+`` ``forInitStatementList`` ``+;+`` ``expression`` ``+;+`` ``forUpdateStatementList`` ``+)+`` ``statement'``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
+xref:Stmt_ok[Typing ``annotationList`` ``+FOR+`` ``+(+`` ``forInitStatementList`` ``+;+`` ``expression`` ``+;+`` ``forUpdateStatementList`` ``+)+`` ``statement'``, under context ``TC`` at ``+LOCAL+``]:
 
 . Let ``TC~1~`` be xref:enter_t[``TC`` with a new local frame].
 . Let context ``TC~2~`` and ``forInitStatementIR^{asterisk}^`` be
@@ -8283,13 +8309,15 @@ xref:Stmt_ok[Typing ``annotationList`` ``+FOR+`` ``+(+`` ``forInitStatementList`
 . Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
 . Let ``forUpdateStatementIR^{asterisk}^`` be
 * the result of xref:ForUpdateStmtList_ok[typing ``forUpdateStatementList`` under context ``TC~2~``].
-. Let context ``TC~3~``, abstract control flow ``f~post~``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``statement'``, under context ``TC~2~``, abstract control flow ``f``, and loop context ``+LOOP+`` at ``+LOCAL+``].
-. Let ``TC~4~`` be xref:exit_t[``TC~3~`` with the innermost frame removed].
+. Let ``TC~3~`` be xref:enter_loop_t[``TC~2~`` within a loop].
+. Let context ``TC~4~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``statement'``, under context ``TC~3~`` at ``+LOCAL+``].
+. Let ``TC~5~`` be xref:exit_t[``TC~4~`` with the innermost frame removed].
+. Let ``TC~6~`` be xref:set_loop_t[``TC~5~`` with loop status set to ``TC~3~.+LOOP+``].
 . Let ``forStatementIR`` be ``annotationList`` ``+FOR+`` ``+(+`` ``forInitStatementIR^{asterisk}^`` ``+;+`` ``typedExpressionIR`` ``+;+`` ``forUpdateStatementIR^{asterisk}^`` ``+)+`` ``statementIR``.
-. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR``.
+. Result in context ``TC~6~`` and ``forStatementIR``.
 
-xref:Stmt_ok[Typing ``forStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
+xref:Stmt_ok[Typing ``forStatement``, under context ``TC`` at ``+LOCAL+``]:
 
 . If let ``annotationList`` ``+FOR+`` ``+(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'`` be ``forStatement``:
  .. Let ``typeIR`` and fresh type variables ``typeId^{asterisk}^`` be
@@ -8303,19 +8331,31 @@ xref:Stmt_ok[Typing ``forStatement``, under context ``TC``, abstract control flo
  .. Let ``TC~1~`` be xref:enter_t[``TC`` with a new local frame].
  .. Let ``nameIR`` be xref:name[the name of ``name``].
  .. Let ``TC~2~`` be xref:add_var_t[``TC~1~`` where ``nameIR`` to ``+INOUT+`` ``typeIR`` ``+DYN+`` ``·`` is added to the ``+LOCAL+`` layer].
- .. Let context ``TC~3~``, abstract control flow ``f~post~``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``statement'``, under context ``TC~2~``, abstract control flow ``f``, and loop context ``+LOOP+`` at ``+LOCAL+``].
- .. Let ``TC~4~`` be xref:exit_t[``TC~3~`` with the innermost frame removed].
+ .. Let ``TC~3~`` be xref:enter_loop_t[``TC~2~`` within a loop].
+ .. Let context ``TC~4~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``statement'``, under context ``TC~3~`` at ``+LOCAL+``].
+ .. Let ``TC~5~`` be xref:exit_t[``TC~4~`` with the innermost frame removed].
+ .. Let ``TC~6~`` be xref:set_loop_t[``TC~5~`` with loop status set to ``TC~3~.+LOOP+``].
  .. Let ``forStatementIR`` be ``annotationList`` ``+FOR+`` ``+(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR``.
+ .. Result in context ``TC~6~`` and ``forStatementIR``.
 . Else if let ``annotationList`` ``+FOR+`` ``+(+`` ``annotationListNonEmpty`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'`` be ``forStatement``:
- .. Let context ``TC~1~``, abstract control flow ``f~post~``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``annotationList`` ``+FOR+`` ``+(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``].
+ .. Let context ``TC~1~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``annotationList`` ``+FOR+`` ``+(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement'``, under context ``TC`` at ``+LOCAL+``].
  .. Check that ``statementIR`` has type ``forStatementIR``.
  .. Let ``forStatementIR`` be ``statementIR``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``forStatementIR``.
+ .. Result in context ``TC~1~`` and ``forStatementIR``.
 
-xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under context ``TC``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``]:
+xref:Stmt_ok[Typing ``breakStatement``, under context ``TC`` at ``+LOCAL+``]:
+
+. Check that ``TC.+LOOP+`` is ``+IN+``.
+. Result in context ``TC`` and ``breakStatement``.
+
+xref:Stmt_ok[Typing ``continueStatement``, under context ``TC`` at ``+LOCAL+``]:
+
+. Check that ``TC.+LOOP+`` is ``+IN+``.
+. Result in context ``TC`` and ``continueStatement``.
+
+xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``, under context ``TC`` at ``+LOCAL+``]:
 
 . Check that ``TC.+LOCAL+.+KIND+`` is equal to ``+CONTROL_APPLY_METHOD+``.
 . Let ``typedExpressionIR~switch~`` be
@@ -8323,8 +8363,8 @@ xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` 
 . Let ``typeIR~switch~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~switch~``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~switch~`` with typedefs unrolled].
 . If let ``+TABLE_ENUM+`` ``typeId~table_enum~`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Let abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^`` be
-* the result of xref:Switch_table_ok[typing ``+SWITCH+`` ``+(+`` ``typeId~table_enum~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC`` with abstract control flow ``f`` and loop context ``l``].
+ .. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:Switch_table_ok[typing ``+SWITCH+`` ``+(+`` ``typeId~table_enum~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC``].
  .. Let ``switchLabelIR^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -8335,10 +8375,10 @@ for each ``switchCaseIR`` in ``switchCaseIR^{asterisk}^``
  .. Check that xref:check_switchLabelIR_default[default label is only in the last position of ``switchLabelIR^{asterisk}^``].
  .. Check that xref:distinct_[the elements of ``switchLabelIR^{asterisk}^`` are distinct].
  .. Let ``switchStatementIR`` be ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``switchStatementIR``.
+ .. Result in context ``TC~1~`` and ``switchStatementIR``.
 . If ``xref:unroll_typeIR[$unroll_typeIR(typeIR~switch~)]`` does not have type ``tableMetadataEnumTypeIR``:
- .. Let abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^`` be
-* the result of xref:Switch_general_ok[typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC`` with abstract control flow ``f`` and loop context ``l``].
+ .. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:Switch_general_ok[typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC``].
  .. Let ``switchLabelIR^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -8349,60 +8389,52 @@ for each ``switchCaseIR`` in ``switchCaseIR^{asterisk}^``
  .. Check that xref:check_switchLabelIR_default[default label is only in the last position of ``switchLabelIR^{asterisk}^``].
  .. Check that xref:distinct_[the elements of ``switchLabelIR^{asterisk}^`` are distinct].
  .. Let ``switchStatementIR`` be ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseIR^{asterisk}^`` ``+}+``.
- .. Result in context ``TC``, abstract control flow ``f~post~``, and ``switchStatementIR``.
-
-xref:Stmt_ok[Typing ``breakStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``+LOOP+`` at ``+LOCAL+``]:
-
-. Result in context ``TC``, abstract control flow ``f``, and ``breakStatement``.
-
-xref:Stmt_ok[Typing ``continueStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``+LOOP+`` at ``+LOCAL+``]:
-
-. Result in context ``TC``, abstract control flow ``f``, and ``continueStatement``.
+ .. Result in context ``TC~1~`` and ``switchStatementIR``.
 
 xref:BlockElementStmt_ok[BlockElementStmt_ok]:
 
-* Typing ``blockElementStatement``, under context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
-* Result in context ``typingContext``, abstract control flow ``flow``, and ``blockElementStatementIR``.
+* Typing ``blockElementStatement`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``blockElementStatementIR``.
 
-xref:BlockElementStmt_ok[Typing ``blockElementStatement``, under context ``TC~0~``, abstract control flow ``f``, and loop context ``l``]:
+xref:BlockElementStmt_ok[Typing ``blockElementStatement`` under context ``TC~0~``]:
 
 . If let ``constantDeclaration`` be ``blockElementStatement``:
  .. Let context ``TC~1~`` and ``constantDeclarationIR`` be
 * the result of xref:ConstDecl_ok[typing ``constantDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
- .. Result in context ``TC~1~``, abstract control flow ``f``, and ``constantDeclarationIR``.
+ .. Result in context ``TC~1~`` and ``constantDeclarationIR``.
 . Else if let ``variableDeclaration`` be ``blockElementStatement``:
  .. Let context ``TC~1~`` and ``variableDeclarationIR`` be
 * the result of xref:VarDecl_ok[typing ``variableDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
- .. Result in context ``TC~1~``, abstract control flow ``f``, and ``variableDeclarationIR``.
+ .. Result in context ``TC~1~`` and ``variableDeclarationIR``.
 . Else:
  .. Let ``statement`` be ``blockElementStatement``.
- .. Let context ``TC~1~``, abstract control flow ``f~post~``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``statement``, under context ``TC~0~``, abstract control flow ``f``, and loop context ``l`` at ``+LOCAL+``].
- .. Result in context ``TC~1~``, abstract control flow ``f~post~``, and ``statementIR``.
+ .. Let context ``TC~1~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``statement``, under context ``TC~0~`` at ``+LOCAL+``].
+ .. Result in context ``TC~1~`` and ``statementIR``.
 
 xref:BlockElementStmtList_ok[BlockElementStmtList_ok]:
 
-* Typing ``blockElementStatementList``, under context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
-* Result in context ``typingContext``, abstract control flow ``flow``, and ``blockElementStatementIR^{asterisk}^``.
+* Typing ``blockElementStatementList`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``blockElementStatementIR^{asterisk}^``.
 
-xref:BlockElementStmtList_ok[Typing ``blockElementStatementList``, under context ``TC~0~``, abstract control flow ``f``, and loop context ``l``]:
+xref:BlockElementStmtList_ok[Typing ``blockElementStatementList`` under context ``TC~0~``]:
 
 . Let ``blockElementStatement^{asterisk}^`` be xref:flatten_blockElementStatementList[``blockElementStatementList`` flattened].
-. Let context ``TC~1~``, abstract control flow ``f~post~``, and ``blockElementStatementIR^{asterisk}^`` be
-* the result of xref:BlockElementStmts_ok[typing ``blockElementStatement^{asterisk}^`` under context ``TC~0~`` with abstract control flow ``f`` and loop context ``l``].
-. Result in context ``TC~1~``, abstract control flow ``f~post~``, and ``blockElementStatementIR^{asterisk}^``.
+. Let context ``TC~1~`` and ``blockElementStatementIR^{asterisk}^`` be
+* the result of xref:BlockElementStmts_ok[typing ``blockElementStatement^{asterisk}^`` under context ``TC~0~``].
+. Result in context ``TC~1~`` and ``blockElementStatementIR^{asterisk}^``.
 
 xref:Block_ok[Block_ok]:
 
-* Typing ``blockStatement``, under context ``typingContext``, abstract control flow ``flow``, and loop context ``loopctxt``:
-* Result in context ``typingContext``, abstract control flow ``flow``, and ``blockStatementIR``.
+* Typing ``blockStatement`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``blockStatementIR``.
 
-xref:Block_ok[Typing ``annotationList`` ``+{+`` ``blockElementStatementList`` ``+}+``, under context ``TC~0~``, abstract control flow ``f``, and loop context ``l``]:
+xref:Block_ok[Typing ``annotationList`` ``+{+`` ``blockElementStatementList`` ``+}+`` under context ``TC~0~``]:
 
-. Let context ``TC~1~``, abstract control flow ``f~post~``, and ``blockElementStatementIR^{asterisk}^`` be
-* the result of xref:BlockElementStmtList_ok[typing ``blockElementStatementList``, under context ``TC~0~``, abstract control flow ``f``, and loop context ``l``].
+. Let context ``TC~1~`` and ``blockElementStatementIR^{asterisk}^`` be
+* the result of xref:BlockElementStmtList_ok[typing ``blockElementStatementList`` under context ``TC~0~``].
 . Let ``blockStatementIR`` be ``annotationList`` ``+{+`` ``blockElementStatementIR^{asterisk}^`` ``+}+``.
-. Result in context ``TC~1~``, abstract control flow ``f~post~``, and ``blockStatementIR``.
+. Result in context ``TC~1~`` and ``blockStatementIR``.
 
 xref:Parameter_ok[Parameter_ok]:
 
@@ -8646,37 +8678,33 @@ xref:ParserStmt_ok[Typing ``variableDeclaration``, under context ``TC~0~``]:
 
 xref:ParserStmt_ok[Typing ``emptyStatement``, under context ``TC~0~``]:
 
-. Let context ``typingContext``, abstract control flow ``flow``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``emptyStatement``, under context ``TC~0~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
+. Let context ``typingContext`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``emptyStatement``, under context ``TC~0~`` at ``+LOCAL+``].
 . Check that ``typingContext`` is equal to ``TC~0~``.
-. Check that ``flow`` is ``+CONT+``.
 . Check that ``statementIR`` has type ``emptyStatementIR``.
 . Let ``emptyStatementIR`` be ``statementIR``.
 . Result in context ``TC~0~`` and typed parser statement ``emptyStatementIR``.
 
 xref:ParserStmt_ok[Typing ``assignmentStatement``, under context ``TC~0~``]:
 
-. Let context ``TC~1~``, abstract control flow ``flow``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``assignmentStatement``, under context ``TC~0~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
-. Check that ``flow`` is ``+CONT+``.
+. Let context ``TC~1~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``assignmentStatement``, under context ``TC~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``assignmentStatementIR``.
 . Let ``assignmentStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``assignmentStatementIR``.
 
 xref:ParserStmt_ok[Typing ``callStatement``, under context ``TC~0~``]:
 
-. Let context ``TC~1~``, abstract control flow ``flow``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``callStatement``, under context ``TC~0~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
-. Check that ``flow`` is ``+CONT+``.
+. Let context ``TC~1~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``callStatement``, under context ``TC~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``callStatementIR``.
 . Let ``callStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``callStatementIR``.
 
 xref:ParserStmt_ok[Typing ``directApplicationStatement``, under context ``TC~0~``]:
 
-. Let context ``TC~1~``, abstract control flow ``flow``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``directApplicationStatement``, under context ``TC~0~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
-. Check that ``flow`` is ``+CONT+``.
+. Let context ``TC~1~`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``directApplicationStatement``, under context ``TC~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``directApplicationStatementIR``.
 . Let ``directApplicationStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``directApplicationStatementIR``.
@@ -9478,17 +9506,18 @@ xref:FuncDecl_ok[Typing ``annotationList`` ``typeOrVoid`` ``name`` ``typeParamet
 . Let context ``TC~2~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~impl~^{asterisk}^`` be
 * the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~1~`` at ``+LOCAL+``].
 . Let ``TC~3~`` be ``TC~2~`` with ``+LOCAL+.+KIND+`` set to ``+FUNCTION+`` ``+:+`` ``typeIR~ret~``.
-. Let context ``++_++``, abstract control flow ``f``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC~3~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
-. Check that ``f`` is equal to ``+RET+`` or ``typeIR~ret~`` is equal to ``+VOID+``.
+. Let ``TC~4~`` be ``TC~3~[+CONTROL+`` ``=`` ``+CONT+]`` with ``+LOOP+`` set to ``+OUT+``.
+. Let context ``TC~5~`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~4~``].
+. Check that ``TC~5~.+CONTROL+`` is equal to ``+RET+`` or ``typeIR~ret~`` is equal to ``+VOID+``.
 . Let ``callableId`` be xref:callableId[the callable identifier for ``name`` ``+(+`` ``parameterList`` ``+)+``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``definedFunctionTypeDefIR`` be ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
 . Check that xref:CallableTypeDef_wf[``definedFunctionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
-. Let ``TC~4~`` be xref:add_callableDef_overload_t[``TC~0~`` where ``callableId`` to ``definedFunctionTypeDefIR`` is added as an overloaded callable to the ``p`` layer].
+. Let ``TC~6~`` be xref:add_callableDef_overload_t[``TC~0~`` where ``callableId`` to ``definedFunctionTypeDefIR`` is added as an overloaded callable to the ``p`` layer].
 . Let ``functionDeclarationIR`` be ``annotationList`` ``typeIR~ret~`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``blockStatementIR``.
-. Result in context ``TC~4~`` and ``functionDeclarationIR``.
+. Result in context ``TC~6~`` and ``functionDeclarationIR``.
 
 xref:ActionDecl_ok[ActionDecl_ok]:
 
@@ -9498,19 +9527,20 @@ xref:ActionDecl_ok[ActionDecl_ok]:
 xref:ActionDecl_ok[Typing ``annotationList`` ``+ACTION+`` ``name`` ``+(+`` ``parameterList`` ``+)+`` ``blockStatement``, under context ``TC~0~`` at ``p``]:
 
 . Let ``TC~1~`` be ``TC~0~`` with ``+LOCAL+.+KIND+`` set to ``+ACTION+``.
-. Let context ``TC~2~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
-* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~1~`` at ``+LOCAL+``].
+. Let ``TC~2~`` be ``TC~1~[+CONTROL+`` ``=`` ``+CONT+]`` with ``+LOOP+`` set to ``+OUT+``.
+. Let context ``TC~3~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId^{asterisk}^`` be
+* the result of xref:ParameterList_ok[typing ``parameterList``, under context ``TC~2~`` at ``+LOCAL+``].
 . Check that ``typeId^{asterisk}^`` is an empty list.
-. Let context ``++_++``, abstract control flow ``++_++``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC~2~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
+. Let context ``++_++`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~3~``].
 . Let ``callableId`` be xref:callableId[the callable identifier for ``name`` ``+(+`` ``parameterList`` ``+)+``].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``actionTypeDefIR`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
 . Check that xref:CallableTypeDef_wf[``actionTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
-. Let ``TC~3~`` be xref:add_callableDef_non_overload_t[``TC~0~`` where ``callableId`` to ``actionTypeDefIR`` is added as a non-overloaded callable to the ``p`` layer].
+. Let ``TC~4~`` be xref:add_callableDef_non_overload_t[``TC~0~`` where ``callableId`` to ``actionTypeDefIR`` is added as a non-overloaded callable to the ``p`` layer].
 . Let ``actionDeclarationIR`` be ``annotationList`` ``+ACTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``blockStatementIR``.
-. Result in context ``TC~3~`` and ``actionDeclarationIR``.
+. Result in context ``TC~4~`` and ``actionDeclarationIR``.
 
 xref:Decl_ok[Decl_ok]:
 
@@ -9726,8 +9756,9 @@ xref:Decl_ok[Typing ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterLis
 . Let context ``TC~4~`` and ``controlLocalDeclarationIR^{asterisk}^`` be
 * the result of xref:ControlLocalDeclList_ok[typing ``controlLocalDeclarationList``, under context ``TC~3~``].
 . Let ``TC~5~`` be ``TC~4~`` with ``+LOCAL+.+KIND+`` set to ``+CONTROL_APPLY_METHOD+``.
-. Let context ``++_++``, abstract control flow ``++_++``, and ``controlBodyIR`` be
-* the result of xref:Block_ok[typing ``controlBody``, under context ``TC~5~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
+. Let ``TC~6~`` be ``TC~5~[+CONTROL+`` ``=`` ``+CONT+]`` with ``+LOOP+`` set to ``+OUT+``.
+. Let context ``++_++`` and ``controlBodyIR`` be
+* the result of xref:Block_ok[typing ``controlBody`` under context ``TC~6~``].
 . Let ``callableTypeDefIR`` be ``+CONTROL_APPLY+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+BLOCK+`` layer of ``TC~1~``].
 . Check that xref:CallableTypeDef_wf[``callableTypeDefIR`` is a well-formed callable type definition, with bound type variables ``bound``].
@@ -9738,9 +9769,9 @@ xref:Decl_ok[Typing ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterLis
 . Let ``constructorTypeDefIR`` be ``+CONSTRUCTOR+`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~control~``.
 . Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC~0~``].
 . Check that xref:ConstructorTypeDef_wf[``constructorTypeDefIR`` is a well-formed constructor type definition, with bound type variables ``bound``].
-. Let ``TC~6~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
+. Let ``TC~7~`` be xref:add_constructorDef_t[where ``constructorId`` to ``constructorTypeDefIR`` is added to ``TC~0~``].
 . Let ``controlDeclarationIR`` be ``annotationList`` ``+CONTROL+`` ``nameIR`` ``+<+`` ``·`` ``+,+`` ``·`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``controlLocalDeclarationIR^{asterisk}^`` ``+APPLY+`` ``controlBodyIR`` ``+}+``.
-. Result in context ``TC~6~`` and ``controlDeclarationIR``.
+. Result in context ``TC~7~`` and ``controlDeclarationIR``.
 
 xref:Decl_ok[Typing ``annotationList`` ``+ENUM+`` ``name`` ``+{+`` ``nameList~field~`` ``++_++`` ``+}+`` under context ``TC~0~``]:
 
@@ -11015,21 +11046,21 @@ xref:ForUpdateStmt_ok[ForUpdateStmt_ok]:
 xref:ForUpdateStmt_ok[Typing ``forUpdateStatement`` under context ``TC``]:
 
 . If let ``lvalue~callable~`` ``+(+`` ``argumentList`` ``+)+`` be ``forUpdateStatement``:
- .. Let context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``lvalue~callable~`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
+ .. Let context ``++_++`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``lvalue~callable~`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC`` at ``+LOCAL+``].
  .. Check that ``statementIR`` has type ``callStatementIR``.
  .. Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+`` be ``statementIR``.
  .. Result in ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
 . Else if let ``lvalue~callable~`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` be ``forUpdateStatement``:
- .. Let context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``lvalue~callable~`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
+ .. Let context ``++_++`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``lvalue~callable~`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``, under context ``TC`` at ``+LOCAL+``].
  .. Check that ``statementIR`` has type ``callStatementIR``.
  .. Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` ``+;+`` be ``statementIR``.
  .. Result in ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``.
 . Else:
  .. Let ``lvalue`` ``assignop`` ``expression`` be ``forUpdateStatement``.
- .. Let context ``++_++``, abstract control flow ``++_++``, and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under context ``TC``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+`` at ``+LOCAL+``].
+ .. Let context ``++_++`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``lvalue`` ``assignop`` ``expression`` ``+;+``, under context ``TC`` at ``+LOCAL+``].
  .. Check that ``statementIR`` has type ``assignmentStatementIR``.
  .. Let ``typedLvalueIR`` ``assignop'`` ``typedExpressionIR`` ``+;+`` be ``statementIR``.
  .. Check that ``assignop'`` is equal to ``assignop``.
@@ -11199,65 +11230,65 @@ xref:SwitchLabel_table_ok[Typing ``switchLabel`` for table ``typeId~table~``, un
 
 xref:SwitchCase_table_ok[SwitchCase_table_ok]:
 
-* Typing ``switchCase`` for table ``typeId``, under context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in abstract control flow ``flow``.
+* Typing ``switchCase`` for table ``typeId`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``switchCaseIR``.
 
-xref:SwitchCase_table_ok[Typing ``switchCase`` for table ``typeId~table~``, under context ``TC`` with abstract control flow ``f`` and loop context ``l``]:
+xref:SwitchCase_table_ok[Typing ``switchCase`` for table ``typeId~table~`` under context ``TC~0~``]:
 
 . If let ``switchLabel`` ``+:+`` ``blockStatement`` be ``switchCase``:
  .. Let ``switchLabelIR`` be
-* the result of xref:SwitchLabel_table_ok[typing ``switchLabel`` for table ``typeId~table~``, under context ``TC``].
- .. Let context ``TC~post~``, abstract control flow ``f~post~``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l``].
+* the result of xref:SwitchLabel_table_ok[typing ``switchLabel`` for table ``typeId~table~``, under context ``TC~0~``].
+ .. Let context ``TC~1~`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~0~``].
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``+:+`` ``blockStatementIR``.
- .. Result in abstract control flow ``f~post~``.
+ .. Result in context ``TC~1~`` and ``switchCaseIR``.
 . Else:
  .. Let ``switchLabel`` ``+:+`` be ``switchCase``.
  .. Let ``switchLabelIR`` be
-* the result of xref:SwitchLabel_table_ok[typing ``switchLabel`` for table ``typeId~table~``, under context ``TC``].
+* the result of xref:SwitchLabel_table_ok[typing ``switchLabel`` for table ``typeId~table~``, under context ``TC~0~``].
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``+:+``.
- .. Result in abstract control flow ``f``.
+ .. Result in context ``TC~0~`` and ``switchCaseIR``.
 
 xref:SwitchCases_table_ok[SwitchCases_table_ok]:
 
-* Typing ``switchCase^{asterisk}^`` for table ``typeId``, under context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in abstract control flow ``flow``.
+* Typing ``switchCase^{asterisk}^`` for table ``typeId`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``switchCaseListIR``.
 
-xref:SwitchCases_table_ok[Typing ``switchCase^{asterisk}^`` for table ``typeId~table~``, under context ``TC`` with abstract control flow ``f`` and loop context ``l``]:
+xref:SwitchCases_table_ok[Typing ``switchCase^{asterisk}^`` for table ``typeId~table~`` under context ``typingContext``]:
 
 . If ``switchCase^{asterisk}^`` is equal to ``·``:
- .. Result in abstract control flow ``f``.
+ .. Result in context ``typingContext`` and ``·``.
 . If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
- .. Let abstract control flow ``f~h~`` be
-* the result of xref:SwitchCase_table_ok[typing ``switchCase~h~`` for table ``typeId~table~``, under context ``TC`` with abstract control flow ``f`` and loop context ``l``].
- .. Let abstract control flow ``f~t~`` be
-* the result of xref:SwitchCases_table_ok[typing ``switchCase~t~^{asterisk}^`` for table ``typeId~table~``, under context ``TC`` with abstract control flow ``f~h~`` and loop context ``l``].
- .. Result in abstract control flow ``f~t~``.
+ .. Let context ``TC~1~`` and ``switchCaseIR~h~`` be
+* the result of xref:SwitchCase_table_ok[typing ``switchCase~h~`` for table ``typeId~table~`` under context ``typingContext``].
+ .. Let context ``TC~2~`` and ``switchCaseIR~t~^{asterisk}^`` be
+* the result of xref:SwitchCases_table_ok[typing ``switchCase~t~^{asterisk}^`` for table ``typeId~table~`` under context ``TC~1~``].
+ .. Result in context ``TC~2~`` and ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``.
 
 xref:SwitchCaseList_table_ok[SwitchCaseList_table_ok]:
 
-* Typing ``switchCaseList`` for table ``typeId``, under context ``typingContext``, abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in abstract control flow ``flow`` and ``switchCaseListIR``.
+* Typing ``switchCaseList`` for table ``typeId`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``switchCaseListIR``.
 
-xref:SwitchCaseList_table_ok[Typing ``switchCaseList`` for table ``typeId~table~``, under context ``TC``, abstract control flow ``f`` and loop context ``l``]:
+xref:SwitchCaseList_table_ok[Typing ``switchCaseList`` for table ``typeId~table~`` under context ``TC~0~``]:
 
 . Let ``switchCase^{asterisk}^`` be xref:flatten_switchCaseList[``switchCaseList`` flattened].
-. Let abstract control flow ``f~post~`` be
-* the result of xref:SwitchCases_table_ok[typing ``switchCase^{asterisk}^`` for table ``typeId~table~``, under context ``TC`` with abstract control flow ``f`` and loop context ``l``].
-. Result in abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^``.
+. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:SwitchCases_table_ok[typing ``switchCase^{asterisk}^`` for table ``typeId~table~`` under context ``TC~0~``].
+. Result in context ``TC~1~`` and ``switchCaseIR^{asterisk}^``.
 
 xref:Switch_table_ok[Switch_table_ok]:
 
-* Typing ``+SWITCH+`` ``+(+`` ``id`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in abstract control flow ``flow`` and ``switchCaseIR^{asterisk}^``.
+* Typing ``+SWITCH+`` ``+(+`` ``id`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``switchCaseIR^{asterisk}^``.
 
-xref:Switch_table_ok[Typing ``+SWITCH+`` ``+(+`` ``typeId~table_enum~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC`` with abstract control flow ``f`` and loop context ``l``]:
+xref:Switch_table_ok[Typing ``+SWITCH+`` ``+(+`` ``typeId~table_enum~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC~0~``]:
 
 . Let ``text`` be xref:strip_suffix[the text ``typeId~table_enum~`` with the suffix ``")"`` removed].
 . Let ``typeId~table~`` be xref:strip_prefix[the text ``text`` with the prefix ``"action_list("`` removed].
-. Let abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^`` be
-* the result of xref:SwitchCaseList_table_ok[typing ``switchCaseList`` for table ``typeId~table~``, under context ``TC``, abstract control flow ``f`` and loop context ``l``].
-. Result in abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^``.
+. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:SwitchCaseList_table_ok[typing ``switchCaseList`` for table ``typeId~table~`` under context ``TC~0~``].
+. Result in context ``TC~1~`` and ``switchCaseIR^{asterisk}^``.
 
 xref:SwitchLabel_general_ok[SwitchLabel_general_ok]:
 
@@ -11280,52 +11311,52 @@ xref:SwitchLabel_general_ok[Typing ``switchLabel`` under context ``TC`` with swi
 
 xref:SwitchCase_general_ok[SwitchCase_general_ok]:
 
-* Typing ``switchCase`` under context ``typingContext`` with abstract control flow ``flow``, loop context ``loopctxt``, and switch key type ``typeIR``:
-* Result in abstract control flow ``flow`` and label ``switchCaseIR``.
+* Typing ``switchCase`` under context ``typingContext`` with switch key type ``typeIR``:
+* Result in context ``typingContext`` and ``switchCaseIR``.
 
-xref:SwitchCase_general_ok[Typing ``switchCase`` under context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``]:
+xref:SwitchCase_general_ok[Typing ``switchCase`` under context ``TC~0~`` with switch key type ``typeIR~switch~``]:
 
 . If let ``switchLabel`` ``+:+`` ``blockStatement`` be ``switchCase``:
  .. Let ``switchLabelIR`` be
-* the result of xref:SwitchLabel_general_ok[typing ``switchLabel`` under context ``TC`` with switch key type ``typeIR~switch~``].
- .. Let context ``TC~post~``, abstract control flow ``f~post~``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC``, abstract control flow ``f``, and loop context ``l``].
+* the result of xref:SwitchLabel_general_ok[typing ``switchLabel`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
+ .. Let context ``TC~1~`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~0~``].
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``+:+`` ``blockStatementIR``.
- .. Result in abstract control flow ``f~post~`` and label ``switchCaseIR``.
+ .. Result in context ``TC~1~`` and ``switchCaseIR``.
 . Else:
  .. Let ``switchLabel`` ``+:+`` be ``switchCase``.
  .. Let ``switchLabelIR`` be
-* the result of xref:SwitchLabel_general_ok[typing ``switchLabel`` under context ``TC`` with switch key type ``typeIR~switch~``].
+* the result of xref:SwitchLabel_general_ok[typing ``switchLabel`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
  .. Let ``switchCaseIR`` be ``switchLabelIR`` ``+:+``.
- .. Result in abstract control flow ``f`` and label ``switchCaseIR``.
+ .. Result in context ``TC~0~`` and ``switchCaseIR``.
 
 xref:SwitchCases_general_ok[SwitchCases_general_ok]:
 
-* Typing ``switchCase^{asterisk}^`` under context ``typingContext`` with abstract control flow ``flow``, loop context ``loopctxt``, and switch key type ``typeIR``:
-* Result in abstract control flow ``flow`` and label ``switchCaseListIR``.
+* Typing ``switchCase^{asterisk}^`` under context ``typingContext`` with switch key type ``typeIR``:
+* Result in context ``typingContext`` and ``switchCaseListIR``.
 
-xref:SwitchCases_general_ok[Typing ``switchCase^{asterisk}^`` under context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``]:
+xref:SwitchCases_general_ok[Typing ``switchCase^{asterisk}^`` under context ``TC~0~`` with switch key type ``typeIR~switch~``]:
 
 . If ``switchCase^{asterisk}^`` is equal to ``·``:
- .. Result in abstract control flow ``f`` and label ``·``.
+ .. Result in context ``TC~0~`` and ``·``.
 . If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
- .. Let abstract control flow ``f~h~`` and label ``switchCaseIR~h~`` be
-* the result of xref:SwitchCase_general_ok[typing ``switchCase~h~`` under context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``].
- .. Let abstract control flow ``f~t~`` and label ``switchCaseIR~t~^{asterisk}^`` be
-* the result of xref:SwitchCases_general_ok[typing ``switchCase~t~^{asterisk}^`` under context ``TC`` with abstract control flow ``f~h~``, loop context ``l``, and switch key type ``typeIR~switch~``].
- .. Result in abstract control flow ``f~t~`` and label ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``.
+ .. Let context ``TC~1~`` and ``switchCaseIR~h~`` be
+* the result of xref:SwitchCase_general_ok[typing ``switchCase~h~`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
+ .. Let context ``TC~2~`` and ``switchCaseIR~t~^{asterisk}^`` be
+* the result of xref:SwitchCases_general_ok[typing ``switchCase~t~^{asterisk}^`` under context ``TC~1~`` with switch key type ``typeIR~switch~``].
+ .. Result in context ``TC~2~`` and ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^``.
 
 xref:SwitchCaseList_general_ok[SwitchCaseList_general_ok]:
 
-* Typing ``switchCaseList`` under context ``typingContext`` with abstract control flow ``flow``, loop context ``loopctxt`` , and switch key type ``typeIR``:
-* Result in abstract control flow ``flow``.
+* Typing ``switchCaseList`` under context ``typingContext`` with switch key type ``typeIR``:
+* Result in context ``typingContext`` and ``switchCaseListIR``.
 
-xref:SwitchCaseList_general_ok[Typing ``switchCaseList`` under context ``TC`` with abstract control flow ``f``, loop context ``l`` , and switch key type ``typeIR~switch~``]:
+xref:SwitchCaseList_general_ok[Typing ``switchCaseList`` under context ``TC~0~`` with switch key type ``typeIR~switch~``]:
 
 . Let ``switchCase^{asterisk}^`` be xref:flatten_switchCaseList[``switchCaseList`` flattened].
-. Let abstract control flow ``f~post~`` and label ``switchCaseIR^{asterisk}^`` be
-* the result of xref:SwitchCases_general_ok[typing ``switchCase^{asterisk}^`` under context ``TC`` with abstract control flow ``f``, loop context ``l``, and switch key type ``typeIR~switch~``].
-. Result in abstract control flow ``f~post~``.
+. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:SwitchCases_general_ok[typing ``switchCase^{asterisk}^`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
+. Result in context ``TC~1~`` and ``switchCaseIR^{asterisk}^``.
 
 xref:compat_switch[``typeIR''`` is a valid switch key type]:
 [cols="2", options="header"]
@@ -11343,32 +11374,32 @@ xref:compat_switch[``typeIR''`` is a valid switch key type]:
 
 xref:Switch_general_ok[Switch_general_ok]:
 
-* Typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in abstract control flow ``flow`` and ``switchCaseIR^{asterisk}^``.
+* Typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``switchCaseIR^{asterisk}^``.
 
-xref:Switch_general_ok[Typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC`` with abstract control flow ``f`` and loop context ``l``]:
+xref:Switch_general_ok[Typing ``+SWITCH+`` ``+(+`` ``typedExpressionIR~switch~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC~0~``]:
 
 . Let ``typeIR~switch~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~switch~``].
 . Check that xref:compat_switch[``typeIR~switch~`` is a valid switch key type].
-. Let abstract control flow ``f~post~`` be
-* the result of xref:SwitchCaseList_general_ok[typing ``switchCaseList`` under context ``TC`` with abstract control flow ``f``, loop context ``l`` , and switch key type ``typeIR~switch~``].
-. Result in abstract control flow ``f~post~`` and ``switchCaseIR^{asterisk}^``.
+. Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
+* the result of xref:SwitchCaseList_general_ok[typing ``switchCaseList`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
+. Result in context ``TC~1~`` and ``switchCaseIR^{asterisk}^``.
 
 xref:BlockElementStmts_ok[BlockElementStmts_ok]:
 
-* Typing ``blockElementStatement^{asterisk}^`` under context ``typingContext`` with abstract control flow ``flow`` and loop context ``loopctxt``:
-* Result in context ``typingContext``, abstract control flow ``flow``, and ``blockElementStatementIR^{asterisk}^``.
+* Typing ``blockElementStatement^{asterisk}^`` under context ``typingContext``:
+* Result in context ``typingContext`` and ``blockElementStatementIR^{asterisk}^``.
 
-xref:BlockElementStmts_ok[Typing ``blockElementStatement^{asterisk}^`` under context ``typingContext`` with abstract control flow ``flow`` and loop context ``l``]:
+xref:BlockElementStmts_ok[Typing ``blockElementStatement^{asterisk}^`` under context ``typingContext``]:
 
 . If ``blockElementStatement^{asterisk}^`` is equal to ``·``:
- .. Result in context ``typingContext``, abstract control flow ``flow``, and ``·``.
+ .. Result in context ``typingContext`` and ``·``.
 . If let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``:
- .. Let context ``TC~1~``, abstract control flow ``f~1~``, and ``blockElementStatementIR~h~`` be
-* the result of xref:BlockElementStmt_ok[typing ``blockElementStatement~h~``, under context ``typingContext``, abstract control flow ``flow``, and loop context ``l``].
- .. Let context ``TC~2~``, abstract control flow ``f~2~``, and ``blockElementStatementIR~t~^{asterisk}^`` be
-* the result of xref:BlockElementStmts_ok[typing ``blockElementStatement~t~^{asterisk}^`` under context ``TC~1~`` with abstract control flow ``f~1~`` and loop context ``l``].
- .. Result in context ``TC~2~``, abstract control flow ``f~2~``, and ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^``.
+ .. Let context ``TC~1~`` and ``blockElementStatementIR~h~`` be
+* the result of xref:BlockElementStmt_ok[typing ``blockElementStatement~h~`` under context ``typingContext``].
+ .. Let context ``TC~2~`` and ``blockElementStatementIR~t~^{asterisk}^`` be
+* the result of xref:BlockElementStmts_ok[typing ``blockElementStatement~t~^{asterisk}^`` under context ``TC~1~``].
+ .. Result in context ``TC~2~`` and ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^``.
 
 xref:InstDecl_non_objectInitializer_ok[InstDecl_non_objectInitializer_ok]:
 
@@ -11420,9 +11451,10 @@ xref:ObjectDecl_ok[Typing ``objectDeclaration`` under context ``TC~0~`` with ``t
 * the result of xref:Type_ok[typing ``typeOrVoid``, under context ``TC~3~`` at ``+LOCAL+``].
  .. Check that ``typeId^{asterisk}^`` is an empty list.
  .. Let ``TC~5~`` be ``TC~4~`` with ``+LOCAL+.+KIND+`` set to ``+EXTERN_METHOD+`` ``+:+`` ``typeIR~ret~``.
- .. Let context ``++_++``, abstract control flow ``f``, and ``blockStatementIR`` be
-* the result of xref:Block_ok[typing ``blockStatement``, under context ``TC~5~``, abstract control flow ``+CONT+``, and loop context ``+NOLOOP+``].
- .. Check that ``f`` is equal to ``+RET+`` or ``typeIR~ret~`` is equal to ``+VOID+``.
+ .. Let ``TC~6~`` be ``TC~5~[+CONTROL+`` ``=`` ``+CONT+]`` with ``+LOOP+`` set to ``+OUT+``.
+ .. Let context ``TC~7~`` and ``blockStatementIR`` be
+* the result of xref:Block_ok[typing ``blockStatement`` under context ``TC~6~``].
+ .. Check that ``TC~7~.+CONTROL+`` is equal to ``+RET+`` or ``typeIR~ret~`` is equal to ``+VOID+``.
  .. Let ``callableId`` be xref:callableId[the callable identifier for ``name`` ``+(+`` ``parameterList`` ``+)+``].
  .. Let ``nameIR`` be xref:name[the name of ``name``].
  .. Let ``externMethodTypeDefIR`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.

@@ -121,51 +121,35 @@ relation Lvalue_ok:
 ;;;; Statement typing
 ;;
 
-syntax loopctxt = LOOP | NOLOOP
-
-var l : loopctxt
-
 relation Stmt_ok:
-  cursor typingContext flow loopctxt |- statement
-                                      : typingContext flow statementIR
-  hint(input %0 %1 %2 %3 %4)
+  cursor typingContext |- statement
+                        : typingContext statementIR
+  hint(input %0 %1 %2)
   hint(prose_in
-        "typing" %4#", under context"%1#", abstract control flow" %2#", and loop context" %3
-        "at" %0)
+        "typing" %2#", under context" %1 "at" %0)
   hint(prose_out
-        "context" %5#", abstract control flow" %6#", and" %7)
+        "context" %3 "and" %4)
 
 relation BlockElementStmt_ok:
-  typingContext flow loopctxt |- blockElementStatement
-                               : typingContext flow blockElementStatementIR
-  hint(input %0 %1 %2 %3)
-  hint(prose_in
-        "typing" %3#", under context"
-        %0#", abstract control flow" %1#", and loop context" %2)
-  hint(prose_out
-        "context" %4#", abstract control flow" %5#
-        ", and" %6)
+  typingContext |- blockElementStatement
+                 : typingContext blockElementStatementIR
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 relation BlockElementStmtList_ok:
-  typingContext flow loopctxt |- blockElementStatementList
-                               : typingContext flow blockElementStatementIR*
-  hint(input %0 %1 %2 %3)
-  hint(prose_in
-        "typing" %3#", under context"
-        %0#", abstract control flow" %1#", and loop context" %2)
-  hint(prose_out
-        "context" %4#", abstract control flow" %5#", and" %6)
+  typingContext |- blockElementStatementList
+                 : typingContext blockElementStatementIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 relation Block_ok:
-  typingContext flow loopctxt |- blockStatement
-                               : typingContext flow blockStatementIR
-  hint(input %0 %1 %2 %3)
-  hint(prose_in
-        "typing" %3#", under context"
-        %0#", abstract control flow" %1#", and loop context" %2)
-  hint(prose_out
-        "context" %4#", abstract control flow"
-        %5#", and" %6)
+  typingContext |- blockStatement
+                 : typingContext blockStatementIR
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 ;;
 ;;;; Parameter typing

@@ -615,7 +615,12 @@ let splice_command =
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | SpliceError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | ProseError (at, msg)
+       | SpliceError (at, msg) ->
+           Format.eprintf "%s\n" (string_of_error at msg);
            Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =

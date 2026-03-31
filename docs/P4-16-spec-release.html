@@ -5126,6 +5126,8 @@ localTypingLayer = {
 }
 
 typingContext = {
+  CONTROL flow,
+  LOOP loop,
   GLOBAL globalTypingLayer,
   BLOCK blockTypingLayer,
   LOCAL localTypingLayer
@@ -17296,8 +17298,9 @@ methods.</p>
  -- ParameterList_ok: LOCAL TC_3 |- parameterList : TC_4 parameterIR* # typeId_impl*
  -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # eps
  -- if TC_5 = TC_4[LOCAL.KIND = (EXTERN_METHOD : typeIR_ret)]
- -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
- -- if f = RET \/ typeIR_ret = VOID
+ -- if TC_6 = TC_5[CONTROL = CONT][LOOP = OUT]
+ -- Block_ok: TC_6 |- blockStatement : TC_7 blockStatementIR
+ -- if TC_7.CONTROL = RET \/ typeIR_ret = VOID
  -- if callableId = $callableId(name, parameterList)
  -- if nameIR = $name(name)
  -- if externMethodTypeDefIR = EXTERN_METHOD nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
@@ -17399,17 +17402,20 @@ methods.</p>
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>EXTERN_METHOD</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>f</code>, and <code>blockStatementIR</code> be</p>
+<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub>[CONTROL</code> <code>=</code> <code>CONT]</code> with <code>LOOP</code> set to <code>OUT</code>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>7</sub></code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>6</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Check that <code>f</code> is equal to <code>RET</code> or <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>.</p>
+<p>Check that <code>TC<sub>7</sub>.CONTROL</code> is equal to <code>RET</code> or <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>.</p>
 </li>
 <li>
 <p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
@@ -18502,18 +18508,19 @@ functionDeclarationIR
 <div class="content">
 <pre>rulegroup FuncDecl_ok:
   rule FuncDecl_ok:
-  p TC_0 |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : TC_4 functionDeclarationIR
+  p TC_0 |- annotationList (typeOrVoid name typeParameterListOpt `(parameterList)) blockStatement : TC_6 functionDeclarationIR
  -- TypeParameterListOpt_ok: LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
  -- Type_ok: LOCAL TC_1 |- typeOrVoid : typeIR_ret # eps
  -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR* # typeId_impl*
  -- if TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret]
- -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
- -- if f = RET \/ typeIR_ret = VOID
+ -- if TC_4 = TC_3[CONTROL = CONT][LOOP = OUT]
+ -- Block_ok: TC_4 |- blockStatement : TC_5 blockStatementIR
+ -- if TC_5.CONTROL = RET \/ typeIR_ret = VOID
  -- if callableId = $callableId(name, parameterList)
  -- if nameIR = $name(name)
  -- if definedFunctionTypeDefIR = FUNCTION nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*) : typeIR_ret
  -- CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR
- -- if TC_4 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR)
+ -- if TC_6 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR)
  -- if functionDeclarationIR = annotationList (typeIR_ret nameIR `&lt;typeId_expl* , typeId_impl*&gt; `(parameterIR*)) blockStatementIR</pre>
 </div>
 </div>
@@ -18568,17 +18575,20 @@ functionDeclarationIR
 <p>Let <code>TC<sub>3</sub></code> be <code>TC<sub>2</sub></code> with <code>LOCAL.KIND</code> set to <code>FUNCTION</code> <code>:</code> <code>typeIR<sub>ret</sub></code>.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>f</code>, and <code>blockStatementIR</code> be</p>
+<p>Let <code>TC<sub>4</sub></code> be <code>TC<sub>3</sub>[CONTROL</code> <code>=</code> <code>CONT]</code> with <code>LOOP</code> set to <code>OUT</code>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>5</sub></code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC<sub>3</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>4</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Check that <code>f</code> is equal to <code>RET</code> or <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>.</p>
+<p>Check that <code>TC<sub>5</sub>.CONTROL</code> is equal to <code>RET</code> or <code>typeIR<sub>ret</sub></code> is equal to <code>VOID</code>.</p>
 </li>
 <li>
 <p>Let <code>callableId</code> be <a href="#callableId">the callable identifier for <code>name</code> <code>(</code> <code>parameterList</code> <code>)</code></a>.</p>
@@ -18596,13 +18606,13 @@ functionDeclarationIR
 <p>Check that <a href="#CallableTypeDef_wf"><code>definedFunctionTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>definedFunctionTypeDefIR</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#add_callableDef_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>definedFunctionTypeDefIR</code> is added as an overloaded callable to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>functionDeclarationIR</code> be <code>annotationList</code> <code>typeIR<sub>ret</sub></code> <code>nameIR</code> <code>&lt;</code> <code>typeId<sub>expl</sub><sup>*</sup></code> <code>,</code> <code>typeId<sub>impl</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>4</sub></code> and <code>functionDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>6</sub></code> and <code>functionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -18860,15 +18870,16 @@ functionDeclarationIR
 <div class="content">
 <pre>rulegroup ActionDecl_ok:
   rule ActionDecl_ok:
-  p TC_0 |- annotationList ACTION name `(parameterList) blockStatement : TC_3 actionDeclarationIR
+  p TC_0 |- annotationList ACTION name `(parameterList) blockStatement : TC_4 actionDeclarationIR
  -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
- -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR* # eps
- -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
+ -- if TC_2 = TC_1[CONTROL = CONT][LOOP = OUT]
+ -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR* # eps
+ -- Block_ok: TC_3 |- blockStatement : _ blockStatementIR
  -- if callableId = $callableId(name, parameterList)
  -- if nameIR = $name(name)
  -- if actionTypeDefIR = annotationList ACTION nameIR `(parameterIR*)
  -- CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR
- -- if TC_3 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR)
+ -- if TC_4 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR)
  -- if actionDeclarationIR = annotationList ACTION nameIR `(parameterIR*) blockStatementIR</pre>
 </div>
 </div>
@@ -18890,11 +18901,14 @@ functionDeclarationIR
 <p>Let <code>TC<sub>1</sub></code> be <code>TC<sub>0</sub></code> with <code>LOCAL.KIND</code> set to <code>ACTION</code>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>2</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
+<p>Let <code>TC<sub>2</sub></code> be <code>TC<sub>1</sub>[CONTROL</code> <code>=</code> <code>CONT]</code> with <code>LOOP</code> set to <code>OUT</code>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>3</sub></code>, <code>parameterIR<sup>*</sup></code>, and fresh type variables <code>typeId<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>1</sub></code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#ParameterList_ok">typing <code>parameterList</code>, under context <code>TC<sub>2</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18903,11 +18917,11 @@ functionDeclarationIR
 <p>Check that <code>typeId<sup>*</sup></code> is an empty list.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>blockStatementIR</code> be</p>
+<p>Let context <code>_</code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC<sub>2</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>3</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -18928,13 +18942,13 @@ functionDeclarationIR
 <p>Check that <a href="#CallableTypeDef_wf"><code>actionTypeDefIR</code> is a well-formed callable type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>3</sub></code> be <a href="#add_callableDef_non_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>actionTypeDefIR</code> is added as a non-overloaded callable to the <code>p</code> layer</a>.</p>
+<p>Let <code>TC<sub>4</sub></code> be <a href="#add_callableDef_non_overload_t"><code>TC<sub>0</sub></code> where <code>callableId</code> to <code>actionTypeDefIR</code> is added as a non-overloaded callable to the <code>p</code> layer</a>.</p>
 </li>
 <li>
 <p>Let <code>actionDeclarationIR</code> be <code>annotationList</code> <code>ACTION</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>3</sub></code> and <code>actionDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>4</sub></code> and <code>actionDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -20887,14 +20901,15 @@ controlBodyIR = blockStatementIR</code></pre>
 <div class="content">
 <pre>rulegroup Decl_ok/controlDeclaration:
   rule Decl_ok/controlDeclaration:
-  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_6 controlDeclarationIR
+  TC_0 |- annotationList CONTROL name typeParameterListOpt `(parameterList) constructorParameterListOpt `{controlLocalDeclarationList APPLY controlBody} : TC_7 controlDeclarationIR
  -- if TC_1 = TC_0[BLOCK.KIND = CONTROL]
  -- if typeParameterListOpt = `EMPTY
  -- ConstructorParameterListOpt_ok: TC_1 |- constructorParameterListOpt : TC_2 constructorParameterIR* # eps
  -- ParameterList_ok: BLOCK TC_2 |- parameterList : TC_3 parameterIR* # eps
  -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*
  -- if TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD]
- -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
+ -- if TC_6 = TC_5[CONTROL = CONT][LOOP = OUT]
+ -- Block_ok: TC_6 |- controlBody : _ controlBodyIR
  -- if callableTypeDefIR = CONTROL_APPLY `(parameterIR*)
  -- CallableTypeDef_wf: $bound(BLOCK, TC_1) |- callableTypeDefIR
  -- if nameIR = $name(name)
@@ -20903,7 +20918,7 @@ controlBodyIR = blockStatementIR</code></pre>
  -- if typeIR_control = $typeIR_of_typeDefIR(typeDefIR_control)
  -- if constructorTypeDefIR = CONSTRUCTOR `&lt;eps , eps&gt; `(constructorParameterIR*) : typeIR_control
  -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
- -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+ -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
  -- if controlDeclarationIR = annotationList CONTROL nameIR `&lt;eps , eps&gt; `(parameterIR*) `(constructorParameterIR*) `{controlLocalDeclarationIR* APPLY controlBodyIR}</pre>
 </div>
 </div>
@@ -20967,11 +20982,14 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Let <code>TC<sub>5</sub></code> be <code>TC<sub>4</sub></code> with <code>LOCAL.KIND</code> set to <code>CONTROL_APPLY_METHOD</code>.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>controlBodyIR</code> be</p>
+<p>Let <code>TC<sub>6</sub></code> be <code>TC<sub>5</sub>[CONTROL</code> <code>=</code> <code>CONT]</code> with <code>LOOP</code> set to <code>OUT</code>.</p>
+</li>
+<li>
+<p>Let context <code>_</code> and <code>controlBodyIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>controlBody</code>, under context <code>TC<sub>5</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>controlBody</code> under context <code>TC<sub>6</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -21007,13 +21025,13 @@ controlBodyIR = blockStatementIR</code></pre>
 <p>Check that <a href="#ConstructorTypeDef_wf"><code>constructorTypeDefIR</code> is a well-formed constructor type definition, with bound type variables <code>bound</code></a>.</p>
 </li>
 <li>
-<p>Let <code>TC<sub>6</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
+<p>Let <code>TC<sub>7</sub></code> be <a href="#add_constructorDef_t">where <code>constructorId</code> to <code>constructorTypeDefIR</code> is added to <code>TC<sub>0</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>controlDeclarationIR</code> be <code>annotationList</code> <code>CONTROL</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>,</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>(</code> <code>constructorParameterIR<sup>*</sup></code> <code>)</code> <code>{</code> <code>controlLocalDeclarationIR<sup>*</sup></code> <code>APPLY</code> <code>controlBodyIR</code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>6</sub></code> and <code>controlDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>7</sub></code> and <code>controlDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -25865,7 +25883,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContext flow statementIR</pre>
+<pre>relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR</pre>
 </div>
 </div>
 </div>
@@ -25883,10 +25901,10 @@ abortResult
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>statement</code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code> at <code>cursor</code>:</p>
+<p>Typing <code>statement</code>, under context <code>typingContext</code> at <code>cursor</code>:</p>
 </li>
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>statementIR</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>statementIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -25930,12 +25948,9 @@ control flow is used:</p>
 <p>As a marker of whether a statement is nested inside a loop, the following
 indicator is used:</p>
 </div>
-<div id="loopctxt" class="listingblock">
+<div class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">loopctxt
-   : LOOP
-   | NOLOOP
-   ;</code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison"></code></pre>
 </div>
 </div>
 </div>
@@ -26109,7 +26124,7 @@ forContinueResult
 <div class="content">
 <pre>rulegroup Stmt_ok/emptyStatement:
   rule Stmt_ok/emptyStatement:
-  p TC f l |- ; : TC f ;</pre>
+  p TC |- ; : TC ;</pre>
 </div>
 </div>
 </div>
@@ -26122,12 +26137,12 @@ forContinueResult
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>;</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>;</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>;</code>.</p>
+<p>Result in context <code>TC</code> and <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -26265,14 +26280,14 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/assignmentStatement:
   rule Stmt_ok/eq:
-  p TC f l |- lvalue = expression ; : TC f (typedLvalueIR = typedExpressionIR_cast ;)
+  p TC |- lvalue = expression ; : TC (typedLvalueIR = typedExpressionIR_cast ;)
  -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
  -- Expr_ok: p TC |- expression : typedExpressionIR
  -- if typeIR_l = $type_of_typedLvalueIR(typedLvalueIR)
  -- if typeIR_r = $type_of_typedExpressionIR(typedExpressionIR)
  -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_l)
   rule Stmt_ok/compound:
-  p TC f l |- lvalue assignop expression ; : TC f (typedLvalueIR assignop typedExpressionIR_cast ;)
+  p TC |- lvalue assignop expression ; : TC (typedLvalueIR assignop typedExpressionIR_cast ;)
  -- if assignop =/= =
  -- if binop = $assignop_as_binop(assignop)
  -- Lvalue_ok: p TC |- lvalue : typedLvalueIR
@@ -26293,7 +26308,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>lvalue</code> <code>assignop</code> <code>expression</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>lvalue</code> <code>assignop</code> <code>expression</code> <code>;</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -26331,7 +26346,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>l</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>typedLvalueIR</code> <code>=</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
+<p>Result in context <code>TC</code> and <code>typedLvalueIR</code> <code>=</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -26385,7 +26400,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <p>Check that <code>binop''</code> is equal to <code>binop'</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>typedLvalueIR</code> <code>assignop</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
+<p>Result in context <code>TC</code> and <code>typedLvalueIR</code> <code>assignop</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -26678,7 +26693,7 @@ callableTargetIR
 <div class="content">
 <pre>rulegroup Stmt_ok/callStatement:
   rule Stmt_ok/callStatement-no-typeArgumentList-static_assert:
-  p TC f l |- lvalue_callable `(argumentList) ; : TC f emptyStatementIR
+  p TC |- lvalue_callable `(argumentList) ; : TC emptyStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
@@ -26689,7 +26704,7 @@ callableTargetIR
  -- Expr_eval_lctk: p TC |- (callExpressionIR # expressionNoteIR) ~&gt; (`B true)
  -- if emptyStatementIR = ;
   rule Stmt_ok/callStatement-no-typeArgumentList:
-  p TC f l |- lvalue_callable `(argumentList) ; : TC f callStatementIR
+  p TC |- lvalue_callable `(argumentList) ; : TC callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
  -- CallableType_ok: p TC |- callableTargetIR `&lt;eps&gt; `(argumentIR*) : callableTypeIR `&lt;# typeId_impl*&gt; `(# id_default* # id_optional*)
@@ -26697,7 +26712,7 @@ callableTargetIR
  -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
  -- if callStatementIR = callableTargetIR `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*) ;
   rule Stmt_ok/callStatement-typeArgumentList:
-  p TC f l |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : TC f callStatementIR
+  p TC |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : TC callStatementIR
  -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
  -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR* # typeId_impl*
  -- ArgumentList_ok: p TC |- argumentList : argumentIR*
@@ -26717,7 +26732,7 @@ callableTargetIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>callStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>callStatement</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -26792,7 +26807,7 @@ callableTargetIR
 <p>Let <code>emptyStatementIR</code> be <code>;</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>emptyStatementIR</code>.</p>
+<p>Result in context <code>TC</code> and <code>emptyStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -26805,7 +26820,7 @@ callableTargetIR
 <p>Let <code>callStatementIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>callStatementIR</code>.</p>
+<p>Result in context <code>TC</code> and <code>callStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -26877,7 +26892,7 @@ callableTargetIR
 <p>Let <code>callStatementIR</code> be <code>callableTargetIR</code> <code>&lt;</code> <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>callStatementIR</code>.</p>
+<p>Result in context <code>TC</code> and <code>callStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -27124,7 +27139,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <div class="content">
 <pre>rulegroup Stmt_ok/directApplicationStatement:
   rule Stmt_ok/directApplicationStatement:
-  p TC_0 f l |- namedType . APPLY `(argumentList) ; : TC_0 f directApplicationStatementIR
+  p TC_0 |- namedType . APPLY `(argumentList) ; : TC_0 directApplicationStatementIR
  -- Expr_ok: p TC_0 |- namedType `(`EMPTY) : (constructorTargetIR `(eps)) # `(typeIR_object _)
  -- if prefixedNameIR `&lt;typeArgumentIR*&gt; = constructorTargetIR
  -- if typeIR_object_unroll = $unroll_typeIR(typeIR_object)
@@ -27132,7 +27147,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
  -- if nameIR_object = "__direct_application"
  -- if TC_1 = $add_var_t(p, TC_0, nameIR_object, `EMPTY typeIR_object CTK eps)
  -- if lvalue = (`ID nameIR_object) . (`ID "apply")
- -- Stmt_ok: p TC_1 f l |- lvalue `(argumentList) ; : _ _ callStatementIR
+ -- Stmt_ok: p TC_1 |- lvalue `(argumentList) ; : _ callStatementIR
  -- if (typedExpressionIR_base . "apply") `&lt;eps&gt; `(argumentIR_cast*) ; = callStatementIR
  -- if (` nameIR_object) # `(typeIR_object CTK) = typedExpressionIR_base
  -- if constructorTargetIR = prefixedNameIR `&lt;typeArgumentIR*&gt;
@@ -27149,7 +27164,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>namedType</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>namedType</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -27197,11 +27212,11 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <p>Let <code>lvalue</code> be <code>`ID</code> <code>nameIR<sub>object</sub></code> <code>.</code> <code>`ID</code> <code>"apply"</code>.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>_</code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>lvalue</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>lvalue</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC<sub>1</sub></code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -27237,7 +27252,7 @@ constructor arguments. These need to be instantiated before they are invoked.</p
 <p>Let <code>directApplicationStatementIR</code> be <code>constructorTargetIR</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>argumentIR<sub>cast</sub><sup>*</sup></code> <code>)</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>directApplicationStatementIR</code>.</p>
+<p>Result in context <code>TC</code> and <code>directApplicationStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -27477,14 +27492,16 @@ See <a href="#sec-call-convention">Section 19.4</a> for details on copy-out beha
 <div class="content">
 <pre>rulegroup Stmt_ok/returnStatement:
   rule Stmt_ok/non-expression:
-  LOCAL TC f l |- RETURN ; : TC RET (RETURN ;)
- -- if VOID = $find_local_return_type_t(TC)
+  LOCAL TC_0 |- RETURN ; : TC_1 (RETURN ;)
+ -- if VOID = $find_local_return_type_t(TC_0)
+ -- if TC_1 = $set_control_t(TC_0, RET)
   rule Stmt_ok/expression:
-  LOCAL TC f l |- RETURN expression ; : TC RET (RETURN typedExpressionIR_cast ;)
- -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+  LOCAL TC_0 |- RETURN expression ; : TC_1 (RETURN typedExpressionIR_cast ;)
+ -- Expr_ok: LOCAL TC_0 |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
- -- if typeIR_ret = $find_local_return_type_t(TC)
- -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)</pre>
+ -- if typeIR_ret = $find_local_return_type_t(TC_0)
+ -- if typedExpressionIR_cast = $cast_unary(typedExpressionIR, typeIR_ret)
+ -- if TC_1 = $set_control_t(TC_0, RET)</pre>
 </div>
 </div>
 </div>
@@ -27497,7 +27514,7 @@ See <a href="#sec-call-convention">Section 19.4</a> for details on copy-out beha
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>returnStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>returnStatement</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -27509,7 +27526,10 @@ See <a href="#sec-call-convention">Section 19.4</a> for details on copy-out beha
 <p>Check that <code>VOID</code> is equal to <a href="#find_local_return_type_t">the expected return type in <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>RET</code>, and <code>RETURN</code> <code>;</code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#set_control_t"><code>TC</code> with control flow set to <code>RET</code></a>.</p>
+</li>
+<li>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>RETURN</code> <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -27541,7 +27561,10 @@ See <a href="#sec-call-convention">Section 19.4</a> for details on copy-out beha
 <p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>ret</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>RET</code>, and <code>RETURN</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
+<p>Let <code>TC<sub>1</sub></code> be <a href="#set_control_t"><code>TC</code> with control flow set to <code>RET</code></a>.</p>
+</li>
+<li>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>RETURN</code> <code>typedExpressionIR<sub>cast</sub></code> <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -27801,7 +27824,7 @@ call, then the function/method call does not occur.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/exitStatement:
   rule Stmt_ok/exitStatement:
-  p TC f l |- EXIT ; : TC f (EXIT ;)</pre>
+  p TC |- EXIT ; : TC (EXIT ;)</pre>
 </div>
 </div>
 </div>
@@ -27814,12 +27837,12 @@ call, then the function/method call does not occur.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>EXIT</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>EXIT</code> <code>;</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>EXIT</code> <code>;</code>.</p>
+<p>Result in context <code>TC</code> and <code>EXIT</code> <code>;</code>.</p>
 </li>
 </ol>
 </div>
@@ -27948,9 +27971,9 @@ blockElementStatementIR
 <div class="content">
 <pre>rulegroup Stmt_ok/blockStatement:
   rule Stmt_ok/blockStatement:
-  LOCAL TC_0 f_0 l |- blockStatement : TC_3 f_1 blockStatementIR
+  LOCAL TC_0 |- blockStatement : TC_3 blockStatementIR
  -- if TC_1 = $enter_t(TC_0)
- -- Block_ok: TC_1 f_0 l |- blockStatement : TC_2 f_1 blockStatementIR
+ -- Block_ok: TC_1 |- blockStatement : TC_2 blockStatementIR
  -- if TC_3 = $exit_t(TC_2)</pre>
 </div>
 </div>
@@ -27964,7 +27987,7 @@ blockElementStatementIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>blockStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>blockStatement</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -27972,11 +27995,11 @@ blockElementStatementIR
 <p>Let <code>TC<sub>1</sub></code> be <a href="#enter_t"><code>TC</code> with a new local frame</a>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>2</sub></code>, abstract control flow <code>f<sub>1</sub></code>, and <code>blockStatementIR</code> be</p>
+<p>Let context <code>TC<sub>2</sub></code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -27985,7 +28008,7 @@ blockElementStatementIR
 <p>Let <code>TC<sub>3</sub></code> be <a href="#exit_t"><code>TC<sub>2</sub></code> with the innermost frame removed</a>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>3</sub></code>, abstract control flow <code>f<sub>1</sub></code>, and <code>blockStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>3</sub></code> and <code>blockStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -27999,7 +28022,7 @@ blockElementStatementIR
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Block_ok: typingContext flow loopctxt |- blockStatement : typingContext flow blockStatementIR</pre>
+<pre>relation Block_ok: typingContext |- blockStatement : typingContext blockStatementIR</pre>
 </div>
 </div>
 </div>
@@ -28017,10 +28040,10 @@ blockElementStatementIR
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>blockStatement</code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>blockStatement</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>blockStatementIR</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>blockStatementIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -28033,8 +28056,8 @@ blockElementStatementIR
 <div class="content">
 <pre>rulegroup Block_ok:
   rule Block_ok:
-  TC_0 f l |- annotationList `{blockElementStatementList} : TC_1 f_post blockStatementIR
- -- BlockElementStmtList_ok: TC_0 f l |- blockElementStatementList : TC_1 f_post blockElementStatementIR*
+  TC_0 |- annotationList `{blockElementStatementList} : TC_1 blockStatementIR
+ -- BlockElementStmtList_ok: TC_0 |- blockElementStatementList : TC_1 blockElementStatementIR*
  -- if blockStatementIR = annotationList `{blockElementStatementIR*}</pre>
 </div>
 </div>
@@ -28048,16 +28071,16 @@ blockElementStatementIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Block_ok">Typing <code>annotationList</code> <code>{</code> <code>blockElementStatementList</code> <code>}</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>:</p>
+<p><a href="#Block_ok">Typing <code>annotationList</code> <code>{</code> <code>blockElementStatementList</code> <code>}</code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>blockElementStatementIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#BlockElementStmtList_ok">typing <code>blockElementStatementList</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#BlockElementStmtList_ok">typing <code>blockElementStatementList</code> under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -28066,7 +28089,7 @@ blockElementStatementIR
 <p>Let <code>blockStatementIR</code> be <code>annotationList</code> <code>{</code> <code>blockElementStatementIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>blockStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -28081,7 +28104,7 @@ relation:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation BlockElementStmt_ok: typingContext flow loopctxt |- blockElementStatement : typingContext flow blockElementStatementIR</pre>
+<pre>relation BlockElementStmt_ok: typingContext |- blockElementStatement : typingContext blockElementStatementIR</pre>
 </div>
 </div>
 </div>
@@ -28099,10 +28122,10 @@ relation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>blockElementStatement</code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>blockElementStatement</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>blockElementStatementIR</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>blockElementStatementIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -28115,14 +28138,14 @@ relation:</p>
 <div class="content">
 <pre>rulegroup BlockElementStmt_ok:
   rule BlockElementStmt_ok/constantDeclaration:
-  TC_0 f l |- constantDeclaration : TC_1 f constantDeclarationIR
+  TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
  -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
   rule BlockElementStmt_ok/variableDeclaration:
-  TC_0 f l |- variableDeclaration : TC_1 f variableDeclarationIR
+  TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
  -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
   rule BlockElementStmt_ok/statement:
-  TC_0 f l |- statement : TC_1 f_post statementIR
- -- Stmt_ok: LOCAL TC_0 f l |- statement : TC_1 f_post statementIR</pre>
+  TC_0 |- statement : TC_1 statementIR
+ -- Stmt_ok: LOCAL TC_0 |- statement : TC_1 statementIR</pre>
 </div>
 </div>
 </div>
@@ -28135,7 +28158,7 @@ relation:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#BlockElementStmt_ok">Typing <code>blockElementStatement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>:</p>
+<p><a href="#BlockElementStmt_ok">Typing <code>blockElementStatement</code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -28154,7 +28177,7 @@ relation:</p>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and <code>constantDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>constantDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -28174,7 +28197,7 @@ relation:</p>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f</code>, and <code>variableDeclarationIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>variableDeclarationIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -28187,17 +28210,17 @@ relation:</p>
 <p>Let <code>statement</code> be <code>blockElementStatement</code>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>statementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement</code>, under context <code>TC<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>statementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>statementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -28214,7 +28237,7 @@ relation:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation BlockElementStmtList_ok: typingContext flow loopctxt |- blockElementStatementList : typingContext flow blockElementStatementIR*</pre>
+<pre>relation BlockElementStmtList_ok: typingContext |- blockElementStatementList : typingContext blockElementStatementIR*</pre>
 </div>
 </div>
 </div>
@@ -28232,10 +28255,10 @@ relation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>blockElementStatementList</code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>blockElementStatementList</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>blockElementStatementIR<sup>*</sup></code>.</p>
+<p>Result in context <code>typingContext</code> and <code>blockElementStatementIR<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -28248,9 +28271,9 @@ relation:</p>
 <div class="content">
 <pre>rulegroup BlockElementStmtList_ok:
   rule BlockElementStmtList_ok:
-  TC_0 f l |- blockElementStatementList : TC_1 f_post blockElementStatementIR*
+  TC_0 |- blockElementStatementList : TC_1 blockElementStatementIR*
  -- if blockElementStatement* = $flatten_blockElementStatementList(blockElementStatementList)
- -- BlockElementStmts_ok: TC_0 f l |- blockElementStatement* : TC_1 f_post blockElementStatementIR*</pre>
+ -- BlockElementStmts_ok: TC_0 |- blockElementStatement* : TC_1 blockElementStatementIR*</pre>
 </div>
 </div>
 </div>
@@ -28263,7 +28286,7 @@ relation:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#BlockElementStmtList_ok">Typing <code>blockElementStatementList</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>:</p>
+<p><a href="#BlockElementStmtList_ok">Typing <code>blockElementStatementList</code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -28271,17 +28294,17 @@ relation:</p>
 <p>Let <code>blockElementStatement<sup>*</sup></code> be <a href="#flatten_blockElementStatementList"><code>blockElementStatementList</code> flattened</a>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>blockElementStatementIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#BlockElementStmts_ok">typing <code>blockElementStatement<sup>*</sup></code> under context <code>TC<sub>0</sub></code> with abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#BlockElementStmts_ok">typing <code>blockElementStatement<sup>*</sup></code> under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockElementStatementIR<sup>*</sup></code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>blockElementStatementIR<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -28292,7 +28315,7 @@ relation:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*</pre>
+<pre>relation BlockElementStmts_ok: typingContext |- blockElementStatement* : typingContext blockElementStatementIR*</pre>
 </div>
 </div>
 </div>
@@ -28310,10 +28333,10 @@ relation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>blockElementStatement<sup>*</sup></code> under context <code>typingContext</code> with abstract control flow <code>flow</code> and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>blockElementStatement<sup>*</sup></code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>blockElementStatementIR<sup>*</sup></code>.</p>
+<p>Result in context <code>typingContext</code> and <code>blockElementStatementIR<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -28326,11 +28349,11 @@ relation:</p>
 <div class="content">
 <pre>rulegroup BlockElementStmts_ok:
   rule BlockElementStmts_ok/nil:
-  TC f l |- eps : TC f eps
+  TC |- eps : TC eps
   rule BlockElementStmts_ok/cons:
-  TC_0 f_0 l |- blockElementStatement_h :: blockElementStatement_t* : TC_2 f_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
- -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h
- -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t* : TC_2 f_2 blockElementStatementIR_t*</pre>
+  TC_0 |- blockElementStatement_h :: blockElementStatement_t* : TC_2 (blockElementStatementIR_h :: blockElementStatementIR_t*)
+ -- BlockElementStmt_ok: TC_0 |- blockElementStatement_h : TC_1 blockElementStatementIR_h
+ -- BlockElementStmts_ok: TC_1 |- blockElementStatement_t* : TC_2 blockElementStatementIR_t*</pre>
 </div>
 </div>
 </div>
@@ -28343,7 +28366,7 @@ relation:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#BlockElementStmts_ok">Typing <code>blockElementStatement<sup>*</sup></code> under context <code>typingContext</code> with abstract control flow <code>flow</code> and loop context <code>l</code></a>:</p>
+<p><a href="#BlockElementStmts_ok">Typing <code>blockElementStatement<sup>*</sup></code> under context <code>typingContext</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -28352,7 +28375,7 @@ relation:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>·</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -28362,27 +28385,27 @@ relation:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>1</sub></code>, and <code>blockElementStatementIR<sub>h</sub></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>blockElementStatementIR<sub>h</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#BlockElementStmt_ok">typing <code>blockElementStatement<sub>h</sub></code>, under context <code>typingContext</code>, abstract control flow <code>flow</code>, and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#BlockElementStmt_ok">typing <code>blockElementStatement<sub>h</sub></code> under context <code>typingContext</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let context <code>TC<sub>2</sub></code>, abstract control flow <code>f<sub>2</sub></code>, and <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>2</sub></code> and <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#BlockElementStmts_ok">typing <code>blockElementStatement<sub>t</sub><sup>*</sup></code> under context <code>TC<sub>1</sub></code> with abstract control flow <code>f<sub>1</sub></code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#BlockElementStmts_ok">typing <code>blockElementStatement<sub>t</sub><sup>*</sup></code> under context <code>TC<sub>1</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC<sub>2</sub></code>, abstract control flow <code>f<sub>2</sub></code>, and <code>blockElementStatementIR<sub>h</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code>.</p>
+<p>Result in context <code>TC<sub>2</sub></code> and <code>blockElementStatementIR<sub>h</sub></code> <code>::</code> <code>blockElementStatementIR<sub>t</sub><sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -29185,19 +29208,23 @@ programming languages.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/conditionalStatement:
   rule Stmt_ok/non-else:
-  p TC f l |- IF `(expression_cond) statement_then : TC f (IF `(typedExpressionIR_cond) statementIR_then)
+  p TC |- IF `(expression_cond) statement_then : TC_post conditionalStatementIR
  -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
  -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
  -- if BOOL = $unroll_typeIR(typeIR_cond)
- -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
+ -- Stmt_ok: p TC |- statement_then : TC_then statementIR_then
+ -- if TC_post = $set_control_t(TC_then, TC.CONTROL)
+ -- if conditionalStatementIR = IF `(typedExpressionIR_cond) statementIR_then
   rule Stmt_ok/else:
-  p TC f l |- IF `(expression_cond) statement_then ELSE statement_else : TC f_post (IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else)
+  p TC |- IF `(expression_cond) statement_then ELSE statement_else : TC_post conditionalStatementIR
  -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
  -- if typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
  -- if BOOL = $unroll_typeIR(typeIR_cond)
- -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
- -- Stmt_ok: p TC f l |- statement_else : TC_else f_else statementIR_else
- -- if f_post = $join_flow(f_then, f_else)</pre>
+ -- Stmt_ok: p TC |- statement_then : TC_then statementIR_then
+ -- Stmt_ok: p TC |- statement_else : TC_else statementIR_else
+ -- if f_post = $join_control_t(TC_then, TC_else)
+ -- if TC_post = $set_control_t(TC, f_post)
+ -- if conditionalStatementIR = IF `(typedExpressionIR_cond) statementIR_then ELSE statementIR_else</pre>
 </div>
 </div>
 </div>
@@ -29210,7 +29237,7 @@ programming languages.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>conditionalStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>conditionalStatement</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -29235,17 +29262,23 @@ programming languages.</p>
 <p>Check that <code>BOOL</code> is equal to <a href="#unroll_typeIR"><code>typeIR<sub>cond</sub></code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>then</sub></code>, abstract control flow <code>f<sub>then</sub></code>, and <code>statementIR<sub>then</sub></code> be</p>
+<p>Let context <code>TC<sub>then</sub></code> and <code>statementIR<sub>then</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>IF</code> <code>(</code> <code>typedExpressionIR<sub>cond</sub></code> <code>)</code> <code>statementIR<sub>then</sub></code>.</p>
+<p>Let <code>TC<sub>post</sub></code> be <a href="#set_control_t"><code>TC<sub>then</sub></code> with control flow set to <code>TC.CONTROL</code></a>.</p>
+</li>
+<li>
+<p>Let <code>conditionalStatementIR</code> be <code>IF</code> <code>(</code> <code>typedExpressionIR<sub>cond</sub></code> <code>)</code> <code>statementIR<sub>then</sub></code>.</p>
+</li>
+<li>
+<p>Result in context <code>TC<sub>post</sub></code> and <code>conditionalStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -29274,30 +29307,36 @@ programming languages.</p>
 <p>Check that <code>BOOL</code> is equal to <a href="#unroll_typeIR"><code>typeIR<sub>cond</sub></code> with typedefs unrolled</a>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>then</sub></code>, abstract control flow <code>f<sub>then</sub></code>, and <code>statementIR<sub>then</sub></code> be</p>
+<p>Let context <code>TC<sub>then</sub></code> and <code>statementIR<sub>then</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>then</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let context <code>TC<sub>else</sub></code>, abstract control flow <code>f<sub>else</sub></code>, and <code>statementIR<sub>else</sub></code> be</p>
+<p>Let context <code>TC<sub>else</sub></code> and <code>statementIR<sub>else</sub></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>else</sub></code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement<sub>else</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>f<sub>post</sub></code> be <a href="#join_flow">the merged control flow of <code>f<sub>then</sub></code> and <code>f<sub>else</sub></code></a>.</p>
+<p>Let <code>f<sub>post</sub></code> be <a href="#join_control_t">the join of control flows in <code>TC<sub>then</sub></code> and <code>TC<sub>else</sub></code></a>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>IF</code> <code>(</code> <code>typedExpressionIR<sub>cond</sub></code> <code>)</code> <code>statementIR<sub>then</sub></code> <code>ELSE</code> <code>statementIR<sub>else</sub></code>.</p>
+<p>Let <code>TC<sub>post</sub></code> be <a href="#set_control_t"><code>TC</code> with control flow set to <code>f<sub>post</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>conditionalStatementIR</code> be <code>IF</code> <code>(</code> <code>typedExpressionIR<sub>cond</sub></code> <code>)</code> <code>statementIR<sub>then</sub></code> <code>ELSE</code> <code>statementIR<sub>else</sub></code>.</p>
+</li>
+<li>
+<p>Result in context <code>TC<sub>post</sub></code> and <code>conditionalStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -29723,15 +29762,17 @@ forUpdateStatementIR
 <div class="content">
 <pre>rulegroup Stmt_ok/forStatement-three-clause:
   rule Stmt_ok/forStatement-three-clause:
-  LOCAL TC_0 f l |- annotationList FOR `(forInitStatementList ; expression ; forUpdateStatementList) statement : TC_0 f_post forStatementIR
+  LOCAL TC_0 |- annotationList FOR `(forInitStatementList ; expression ; forUpdateStatementList) statement : TC_6 forStatementIR
  -- if TC_1 = $enter_t(TC_0)
  -- ForInitStmtList_ok: TC_1 |- forInitStatementList : TC_2 forInitStatementIR*
  -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
  -- if BOOL = $unroll_typeIR(typeIR)
  -- ForUpdateStmtList_ok: TC_2 |- forUpdateStatementList : forUpdateStatementIR*
- -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
- -- if TC_4 = $exit_t(TC_3)
+ -- if TC_3 = $enter_loop_t(TC_2)
+ -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
+ -- if TC_5 = $exit_t(TC_4)
+ -- if TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
  -- if forStatementIR = annotationList FOR `(forInitStatementIR* ; typedExpressionIR ; forUpdateStatementIR*) statementIR</pre>
 </div>
 </div>
@@ -29745,7 +29786,7 @@ forUpdateStatementIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>annotationList</code> <code>FOR</code> <code>(</code> <code>forInitStatementList</code> <code>;</code> <code>expression</code> <code>;</code> <code>forUpdateStatementList</code> <code>)</code> <code>statement'</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>annotationList</code> <code>FOR</code> <code>(</code> <code>forInitStatementList</code> <code>;</code> <code>expression</code> <code>;</code> <code>forUpdateStatementList</code> <code>)</code> <code>statement'</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -29789,23 +29830,29 @@ forUpdateStatementIR
 </div>
 </li>
 <li>
-<p>Let context <code>TC<sub>3</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>statementIR</code> be</p>
+<p>Let <code>TC<sub>3</sub></code> be <a href="#enter_loop_t"><code>TC<sub>2</sub></code> within a loop</a>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>4</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement'</code>, under context <code>TC<sub>2</sub></code>, abstract control flow <code>f</code>, and loop context <code>LOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement'</code>, under context <code>TC<sub>3</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#exit_t"><code>TC<sub>3</sub></code> with the innermost frame removed</a>.</p>
+<p>Let <code>TC<sub>5</sub></code> be <a href="#exit_t"><code>TC<sub>4</sub></code> with the innermost frame removed</a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#set_loop_t"><code>TC<sub>5</sub></code> with loop status set to <code>TC<sub>3</sub>.LOOP</code></a>.</p>
 </li>
 <li>
 <p>Let <code>forStatementIR</code> be <code>annotationList</code> <code>FOR</code> <code>(</code> <code>forInitStatementIR<sup>*</sup></code> <code>;</code> <code>typedExpressionIR</code> <code>;</code> <code>forUpdateStatementIR<sup>*</sup></code> <code>)</code> <code>statementIR</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>forStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>6</sub></code> and <code>forStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -30276,13 +30323,13 @@ forUpdateStatementIR
 <pre>rulegroup ForUpdateStmt_ok:
   rule ForUpdateStmt_ok/call-no-typeArgumentList:
   TC |- lvalue_callable `(argumentList) : callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*)
- -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue_callable `(argumentList) ; : _ _ (callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) ;)
+ -- Stmt_ok: LOCAL TC |- lvalue_callable `(argumentList) ; : _ (callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) ;)
   rule ForUpdateStmt_ok/call-typeArgumentList:
   TC |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) : callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*)
- -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : _ _ (callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) ;)
+ -- Stmt_ok: LOCAL TC |- lvalue_callable `&lt;typeArgumentList&gt; `(argumentList) ; : _ (callableTargetIR `&lt;typeArgumentIR*&gt; `(argumentIR*) ;)
   rule ForUpdateStmt_ok/assign:
   TC |- lvalue assignop expression : typedLvalueIR assignop typedExpressionIR
- -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue assignop expression ; : _ _ (typedLvalueIR assignop typedExpressionIR ;)</pre>
+ -- Stmt_ok: LOCAL TC |- lvalue assignop expression ; : _ (typedLvalueIR assignop typedExpressionIR ;)</pre>
 </div>
 </div>
 </div>
@@ -30304,11 +30351,11 @@ forUpdateStatementIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>_</code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>lvalue<sub>callable</sub></code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>lvalue<sub>callable</sub></code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -30330,11 +30377,11 @@ forUpdateStatementIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>_</code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>lvalue<sub>callable</sub></code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>lvalue<sub>callable</sub></code> <code>&lt;</code> <code>typeArgumentList</code> <code>&gt;</code> <code>(</code> <code>argumentList</code> <code>)</code> <code>;</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -30359,11 +30406,11 @@ forUpdateStatementIR
 <p>Let <code>lvalue</code> <code>assignop</code> <code>expression</code> be <code>forUpdateStatement</code>.</p>
 </li>
 <li>
-<p>Let context <code>_</code>, abstract control flow <code>_</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>_</code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>lvalue</code> <code>assignop</code> <code>expression</code> <code>;</code>, under context <code>TC</code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>lvalue</code> <code>assignop</code> <code>expression</code> <code>;</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -31486,7 +31533,7 @@ forCollectionExpressionIR
 <div class="content">
 <pre>rulegroup Stmt_ok/forStatement-in:
   rule Stmt_ok/no-annotations:
-  LOCAL TC_0 f l |- annotationList FOR `(type name IN forCollectionExpression) statement : TC_0 f_post forStatementIR
+  LOCAL TC_0 |- annotationList FOR `(type name IN forCollectionExpression) statement : TC_6 forStatementIR
  -- Type_ok: LOCAL TC_0 |- type : typeIR # eps
  -- Type_wf: $bound(LOCAL, TC_0) |- typeIR
  -- if $is_assignable_typeIR(typeIR)
@@ -31494,12 +31541,14 @@ forCollectionExpressionIR
  -- if TC_1 = $enter_t(TC_0)
  -- if nameIR = $name(name)
  -- if TC_2 = $add_var_t(LOCAL, TC_1, nameIR, INOUT typeIR DYN eps)
- -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
- -- if TC_4 = $exit_t(TC_3)
+ -- if TC_3 = $enter_loop_t(TC_2)
+ -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
+ -- if TC_5 = $exit_t(TC_4)
+ -- if TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
  -- if forStatementIR = annotationList FOR `(typeIR nameIR IN forCollectionExpressionIR) statementIR
   rule Stmt_ok/annotations:
-  LOCAL TC_0 f l |- annotationList FOR `(annotationListNonEmpty type name IN forCollectionExpression) statement : TC_0 f_post forStatementIR
- -- Stmt_ok: LOCAL TC_0 f l |- annotationList FOR `(type name IN forCollectionExpression) statement : TC_1 f_post forStatementIR</pre>
+  LOCAL TC_0 |- annotationList FOR `(annotationListNonEmpty type name IN forCollectionExpression) statement : TC_1 forStatementIR
+ -- Stmt_ok: LOCAL TC_0 |- annotationList FOR `(type name IN forCollectionExpression) statement : TC_1 forStatementIR</pre>
 </div>
 </div>
 </div>
@@ -31512,7 +31561,7 @@ forCollectionExpressionIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>forStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>forStatement</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -31562,23 +31611,29 @@ forCollectionExpressionIR
 <p>Let <code>TC<sub>2</sub></code> be <a href="#add_var_t"><code>TC<sub>1</sub></code> where <code>nameIR</code> to <code>INOUT</code> <code>typeIR</code> <code>DYN</code> <code>·</code> is added to the <code>LOCAL</code> layer</a>.</p>
 </li>
 <li>
-<p>Let context <code>TC<sub>3</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>statementIR</code> be</p>
+<p>Let <code>TC<sub>3</sub></code> be <a href="#enter_loop_t"><code>TC<sub>2</sub></code> within a loop</a>.</p>
+</li>
+<li>
+<p>Let context <code>TC<sub>4</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>statement'</code>, under context <code>TC<sub>2</sub></code>, abstract control flow <code>f</code>, and loop context <code>LOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>statement'</code>, under context <code>TC<sub>3</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let <code>TC<sub>4</sub></code> be <a href="#exit_t"><code>TC<sub>3</sub></code> with the innermost frame removed</a>.</p>
+<p>Let <code>TC<sub>5</sub></code> be <a href="#exit_t"><code>TC<sub>4</sub></code> with the innermost frame removed</a>.</p>
+</li>
+<li>
+<p>Let <code>TC<sub>6</sub></code> be <a href="#set_loop_t"><code>TC<sub>5</sub></code> with loop status set to <code>TC<sub>3</sub>.LOOP</code></a>.</p>
 </li>
 <li>
 <p>Let <code>forStatementIR</code> be <code>annotationList</code> <code>FOR</code> <code>(</code> <code>typeIR</code> <code>nameIR</code> <code>IN</code> <code>forCollectionExpressionIR</code> <code>)</code> <code>statementIR</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>forStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>6</sub></code> and <code>forStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -31588,11 +31643,11 @@ forCollectionExpressionIR
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>statementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>annotationList</code> <code>FOR</code> <code>(</code> <code>type</code> <code>name</code> <code>IN</code> <code>forCollectionExpression</code> <code>)</code> <code>statement'</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>annotationList</code> <code>FOR</code> <code>(</code> <code>type</code> <code>name</code> <code>IN</code> <code>forCollectionExpression</code> <code>)</code> <code>statement'</code>, under context <code>TC</code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -31604,7 +31659,7 @@ forCollectionExpressionIR
 <p>Let <code>forStatementIR</code> be <code>statementIR</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>forStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>forStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -32403,7 +32458,8 @@ forCollectionExpressionIR
 <div class="content">
 <pre>rulegroup Stmt_ok/breakStatement:
   rule Stmt_ok/breakStatement:
-  LOCAL TC f LOOP |- breakStatement : TC f breakStatement</pre>
+  LOCAL TC |- breakStatement : TC breakStatement
+ -- if TC.LOOP = IN</pre>
 </div>
 </div>
 </div>
@@ -32416,12 +32472,15 @@ forCollectionExpressionIR
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>breakStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>LOOP</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>breakStatement</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>breakStatement</code>.</p>
+<p>Check that <code>TC.LOOP</code> is <code>IN</code>.</p>
+</li>
+<li>
+<p>Result in context <code>TC</code> and <code>breakStatement</code>.</p>
 </li>
 </ol>
 </div>
@@ -32537,7 +32596,8 @@ loop.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/continueStatement:
   rule Stmt_ok/continueStatement:
-  LOCAL TC f LOOP |- continueStatement : TC f continueStatement</pre>
+  LOCAL TC |- continueStatement : TC continueStatement
+ -- if TC.LOOP = IN</pre>
 </div>
 </div>
 </div>
@@ -32550,12 +32610,15 @@ loop.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>continueStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>LOOP</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>continueStatement</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f</code>, and <code>continueStatement</code>.</p>
+<p>Check that <code>TC.LOOP</code> is <code>IN</code>.</p>
+</li>
+<li>
+<p>Result in context <code>TC</code> and <code>continueStatement</code>.</p>
 </li>
 </ol>
 </div>
@@ -32756,7 +32819,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Switch_table_ok: typingContext flow loopctxt |- SWITCH `(id) `{switchCaseList} : flow switchCaseIR*</pre>
+<pre>relation Switch_table_ok: typingContext |- SWITCH `(id) `{switchCaseList} : typingContext switchCaseIR*</pre>
 </div>
 </div>
 </div>
@@ -32774,10 +32837,10 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>SWITCH</code> <code>(</code> <code>id</code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>typingContext</code> with abstract control flow <code>flow</code> and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>SWITCH</code> <code>(</code> <code>id</code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code> and <code>switchCaseIR<sup>*</sup></code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseIR<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -32790,9 +32853,9 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <pre>rulegroup Switch_table_ok:
   rule Switch_table_ok:
-  TC f l |- SWITCH `(typeId_table_enum) `{switchCaseList} : f_post switchCaseIR*
+  TC_0 |- SWITCH `(typeId_table_enum) `{switchCaseList} : TC_1 switchCaseIR*
  -- if typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
- -- SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : f_post switchCaseIR*</pre>
+ -- SwitchCaseList_table_ok: TC_0 typeId_table |- switchCaseList : TC_1 switchCaseIR*</pre>
 </div>
 </div>
 </div>
@@ -32805,7 +32868,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Switch_table_ok">Typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>:</p>
+<p><a href="#Switch_table_ok">Typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -32816,17 +32879,17 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>typeId<sub>table</sub></code> be <a href="#strip_prefix">the text <code>text</code> with the prefix <code>"action_list("</code> removed</a>.</p>
 </li>
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchCaseList_table_ok">typing <code>switchCaseList</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC</code>, abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#SwitchCaseList_table_ok">typing <code>switchCaseList</code> for table <code>typeId<sub>table</sub></code> under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -32840,7 +32903,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation SwitchCaseList_table_ok: typingContext flow loopctxt typeId |- switchCaseList : flow switchCaseListIR</pre>
+<pre>relation SwitchCaseList_table_ok: typingContext typeId |- switchCaseList : typingContext switchCaseListIR</pre>
 </div>
 </div>
 </div>
@@ -32858,10 +32921,10 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>switchCaseList</code> for table <code>typeId</code>, under context <code>typingContext</code>, abstract control flow <code>flow</code> and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>switchCaseList</code> for table <code>typeId</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code> and <code>switchCaseListIR</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseListIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -32875,7 +32938,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase : flow switchCaseIR</pre>
+<pre>relation SwitchCase_table_ok: typingContext typeId |- switchCase : typingContext switchCaseIR</pre>
 </div>
 </div>
 </div>
@@ -32893,10 +32956,10 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>switchCase</code> for table <code>typeId</code>, under context <code>typingContext</code> with abstract control flow <code>flow</code> and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>switchCase</code> for table <code>typeId</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -32909,13 +32972,13 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="content">
 <pre>rulegroup SwitchCase_table_ok:
   rule SwitchCase_table_ok/blockStatement:
-  TC f l typeId_table |- switchLabel : blockStatement : f_post switchCaseIR
- -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
- -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
+  TC_0 typeId_table |- switchLabel : blockStatement : TC_1 switchCaseIR
+ -- SwitchLabel_table_ok: TC_0 typeId_table |- switchLabel : switchLabelIR
+ -- Block_ok: TC_0 |- blockStatement : TC_1 blockStatementIR
  -- if switchCaseIR = switchLabelIR : blockStatementIR
   rule SwitchCase_table_ok/non-blockStatement:
-  TC f l typeId_table |- switchLabel : : f switchCaseIR
- -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
+  TC_0 typeId_table |- switchLabel : : TC_0 switchCaseIR
+ -- SwitchLabel_table_ok: TC_0 typeId_table |- switchLabel : switchLabelIR
  -- if switchCaseIR = switchLabelIR :</pre>
 </div>
 </div>
@@ -32929,7 +32992,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#SwitchCase_table_ok">Typing <code>switchCase</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>:</p>
+<p><a href="#SwitchCase_table_ok">Typing <code>switchCase</code> for table <code>typeId<sub>table</sub></code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -32942,17 +33005,17 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchLabel_table_ok">typing <code>switchLabel</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC</code></a>.</p>
+<p>the result of <a href="#SwitchLabel_table_ok">typing <code>switchLabel</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let context <code>TC<sub>post</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockStatementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -32961,7 +33024,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>switchCaseIR</code> be <code>switchLabelIR</code> <code>:</code> <code>blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>f<sub>post</sub></code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchCaseIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -32978,7 +33041,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchLabel_table_ok">typing <code>switchLabel</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC</code></a>.</p>
+<p>the result of <a href="#SwitchLabel_table_ok">typing <code>switchLabel</code> for table <code>typeId<sub>table</sub></code>, under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -32987,7 +33050,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>switchCaseIR</code> be <code>switchLabelIR</code> <code>:</code>.</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>f</code>.</p>
+<p>Result in context <code>TC<sub>0</sub></code> and <code>switchCaseIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -33475,7 +33538,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Switch_general_ok: typingContext flow loopctxt |- SWITCH `(typedExpressionIR) `{switchCaseList} : flow switchCaseIR*</pre>
+<pre>relation Switch_general_ok: typingContext |- SWITCH `(typedExpressionIR) `{switchCaseList} : typingContext switchCaseIR*</pre>
 </div>
 </div>
 </div>
@@ -33493,10 +33556,10 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR</code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>typingContext</code> with abstract control flow <code>flow</code> and loop context <code>loopctxt</code>:</p>
+<p>Typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR</code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>typingContext</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code> and <code>switchCaseIR<sup>*</sup></code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseIR<sup>*</sup></code>.</p>
 </li>
 </ul>
 </div>
@@ -33509,10 +33572,10 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <pre>rulegroup Switch_general_ok:
   rule Switch_general_ok:
-  TC f l |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : f_post switchCaseIR*
+  TC_0 |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : TC_1 switchCaseIR*
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if $compat_switch(typeIR_switch)
- -- SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : f_post switchCaseIR*</pre>
+ -- SwitchCaseList_general_ok: TC_0 typeIR_switch |- switchCaseList : TC_1 switchCaseIR*</pre>
 </div>
 </div>
 </div>
@@ -33525,7 +33588,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Switch_general_ok">Typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>:</p>
+<p><a href="#Switch_general_ok">Typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC<sub>0</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -33536,17 +33599,17 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Check that <a href="#compat_switch"><code>typeIR<sub>switch</sub></code> is a valid switch key type</a>.</p>
 </li>
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchCaseList_general_ok">typing <code>switchCaseList</code> under context <code>TC</code> with abstract control flow <code>f</code>, loop context <code>l</code> , and switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
+<p>the result of <a href="#SwitchCaseList_general_ok">typing <code>switchCaseList</code> under context <code>TC<sub>0</sub></code> with switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code>.</p>
 </li>
 </ol>
 </div>
@@ -33560,7 +33623,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation SwitchCaseList_general_ok: typingContext flow loopctxt typeIR |- switchCaseList : flow switchCaseListIR</pre>
+<pre>relation SwitchCaseList_general_ok: typingContext typeIR |- switchCaseList : typingContext switchCaseListIR</pre>
 </div>
 </div>
 </div>
@@ -33578,10 +33641,10 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>switchCaseList</code> under context <code>typingContext</code> with abstract control flow <code>flow</code>, loop context <code>loopctxt</code> , and switch key type <code>typeIR</code>:</p>
+<p>Typing <code>switchCaseList</code> under context <code>typingContext</code> with switch key type <code>typeIR</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseListIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -33595,7 +33658,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase : flow switchCaseIR</pre>
+<pre>relation SwitchCase_general_ok: typingContext typeIR |- switchCase : typingContext switchCaseIR</pre>
 </div>
 </div>
 </div>
@@ -33613,10 +33676,10 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Typing <code>switchCase</code> under context <code>typingContext</code> with abstract control flow <code>flow</code>, loop context <code>loopctxt</code>, and switch key type <code>typeIR</code>:</p>
+<p>Typing <code>switchCase</code> under context <code>typingContext</code> with switch key type <code>typeIR</code>:</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>flow</code> and label <code>switchCaseIR</code>.</p>
+<p>Result in context <code>typingContext</code> and <code>switchCaseIR</code>.</p>
 </li>
 </ul>
 </div>
@@ -33629,13 +33692,13 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <pre>rulegroup SwitchCase_general_ok:
   rule SwitchCase_general_ok/blockStatement:
-  TC f l typeIR_switch |- switchLabel : blockStatement : f_post switchCaseIR
- -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
- -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
+  TC_0 typeIR_switch |- switchLabel : blockStatement : TC_1 switchCaseIR
+ -- SwitchLabel_general_ok: TC_0 typeIR_switch |- switchLabel : switchLabelIR
+ -- Block_ok: TC_0 |- blockStatement : TC_1 blockStatementIR
  -- if switchCaseIR = switchLabelIR : blockStatementIR
   rule SwitchCase_general_ok/non-blockStatement:
-  TC f l typeIR_switch |- switchLabel : : f switchCaseIR
- -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
+  TC_0 typeIR_switch |- switchLabel : : TC_0 switchCaseIR
+ -- SwitchLabel_general_ok: TC_0 typeIR_switch |- switchLabel : switchLabelIR
  -- if switchCaseIR = switchLabelIR :</pre>
 </div>
 </div>
@@ -33649,7 +33712,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#SwitchCase_general_ok">Typing <code>switchCase</code> under context <code>TC</code> with abstract control flow <code>f</code>, loop context <code>l</code>, and switch key type <code>typeIR<sub>switch</sub></code></a>:</p>
+<p><a href="#SwitchCase_general_ok">Typing <code>switchCase</code> under context <code>TC<sub>0</sub></code> with switch key type <code>typeIR<sub>switch</sub></code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -33662,17 +33725,17 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchLabel_general_ok">typing <code>switchLabel</code> under context <code>TC</code> with switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
+<p>the result of <a href="#SwitchLabel_general_ok">typing <code>switchLabel</code> under context <code>TC<sub>0</sub></code> with switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Let context <code>TC<sub>post</sub></code>, abstract control flow <code>f<sub>post</sub></code>, and <code>blockStatementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>blockStatementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Block_ok">typing <code>blockStatement</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Block_ok">typing <code>blockStatement</code> under context <code>TC<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -33681,7 +33744,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchCaseIR</code> be <code>switchLabelIR</code> <code>:</code> <code>blockStatementIR</code>.</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>f<sub>post</sub></code> and label <code>switchCaseIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchCaseIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -33698,7 +33761,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#SwitchLabel_general_ok">typing <code>switchLabel</code> under context <code>TC</code> with switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
+<p>the result of <a href="#SwitchLabel_general_ok">typing <code>switchLabel</code> under context <code>TC<sub>0</sub></code> with switch key type <code>typeIR<sub>switch</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -33707,7 +33770,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchCaseIR</code> be <code>switchLabelIR</code> <code>:</code>.</p>
 </li>
 <li>
-<p>Result in abstract control flow <code>f</code> and label <code>switchCaseIR</code>.</p>
+<p>Result in context <code>TC<sub>0</sub></code> and <code>switchCaseIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -34348,23 +34411,23 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/switchStatement:
   rule Stmt_ok/table:
-  LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
- -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
- -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+  LOCAL TC_0 |- SWITCH `(expression_switch) `{switchCaseList} : TC_1 switchStatementIR
+ -- if TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD
+ -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if TABLE_ENUM typeId_table_enum `{_} = $unroll_typeIR(typeIR_switch)
- -- Switch_table_ok: TC f l |- SWITCH `(typeId_table_enum) `{switchCaseList} : f_post switchCaseIR*
+ -- Switch_table_ok: TC_0 |- SWITCH `(typeId_table_enum) `{switchCaseList} : TC_1 switchCaseIR*
  -- (if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR)))*
  -- if $check_switchLabelIR_default(switchLabelIR*)
  -- if $distinct_&lt;switchLabelIR&gt;(switchLabelIR*)
  -- if switchStatementIR = SWITCH `(typedExpressionIR_switch) `{switchCaseIR*}
   rule Stmt_ok/general:
-  LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
- -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
- -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+  LOCAL TC_0 |- SWITCH `(expression_switch) `{switchCaseList} : TC_1 switchStatementIR
+ -- if TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD
+ -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if ~($unroll_typeIR(typeIR_switch) &lt;: tableMetadataEnumTypeIR)
- -- Switch_general_ok: TC f l |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : f_post switchCaseIR*
+ -- Switch_general_ok: TC_0 |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : TC_1 switchCaseIR*
  -- (if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR)))*
  -- if $check_switchLabelIR_default(switchLabelIR*)
  -- if $distinct_&lt;switchLabelIR&gt;(switchLabelIR*)
@@ -34381,7 +34444,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>SWITCH</code> <code>(</code> <code>expression<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>SWITCH</code> <code>(</code> <code>expression<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -34409,11 +34472,11 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Switch_table_ok">typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Switch_table_ok">typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -34445,7 +34508,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchStatementIR</code> be <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>switchStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -34455,11 +34518,11 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Switch_general_ok">typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Switch_general_ok">typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -34491,7 +34554,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchStatementIR</code> be <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>switchStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -34695,23 +34758,23 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="content">
 <pre>rulegroup Stmt_ok/switchStatement:
   rule Stmt_ok/table:
-  LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
- -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
- -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+  LOCAL TC_0 |- SWITCH `(expression_switch) `{switchCaseList} : TC_1 switchStatementIR
+ -- if TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD
+ -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if TABLE_ENUM typeId_table_enum `{_} = $unroll_typeIR(typeIR_switch)
- -- Switch_table_ok: TC f l |- SWITCH `(typeId_table_enum) `{switchCaseList} : f_post switchCaseIR*
+ -- Switch_table_ok: TC_0 |- SWITCH `(typeId_table_enum) `{switchCaseList} : TC_1 switchCaseIR*
  -- (if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR)))*
  -- if $check_switchLabelIR_default(switchLabelIR*)
  -- if $distinct_&lt;switchLabelIR&gt;(switchLabelIR*)
  -- if switchStatementIR = SWITCH `(typedExpressionIR_switch) `{switchCaseIR*}
   rule Stmt_ok/general:
-  LOCAL TC f l |- SWITCH `(expression_switch) `{switchCaseList} : TC f_post switchStatementIR
- -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
- -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+  LOCAL TC_0 |- SWITCH `(expression_switch) `{switchCaseList} : TC_1 switchStatementIR
+ -- if TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD
+ -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
  -- if ~($unroll_typeIR(typeIR_switch) &lt;: tableMetadataEnumTypeIR)
- -- Switch_general_ok: TC f l |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : f_post switchCaseIR*
+ -- Switch_general_ok: TC_0 |- SWITCH `(typedExpressionIR_switch) `{switchCaseList} : TC_1 switchCaseIR*
  -- (if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR)))*
  -- if $check_switchLabelIR_default(switchLabelIR*)
  -- if $distinct_&lt;switchLabelIR&gt;(switchLabelIR*)
@@ -34728,7 +34791,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Stmt_ok">Typing <code>SWITCH</code> <code>(</code> <code>expression<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code>, under context <code>TC</code>, abstract control flow <code>f</code>, and loop context <code>l</code> at <code>LOCAL</code></a>:</p>
+<p><a href="#Stmt_ok">Typing <code>SWITCH</code> <code>(</code> <code>expression<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code>, under context <code>TC</code> at <code>LOCAL</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -34756,11 +34819,11 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Switch_table_ok">typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Switch_table_ok">typing <code>SWITCH</code> <code>(</code> <code>typeId<sub>table_enum</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -34792,7 +34855,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchStatementIR</code> be <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>switchStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -34802,11 +34865,11 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Let abstract control flow <code>f<sub>post</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>switchCaseIR<sup>*</sup></code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Switch_general_ok">typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code> with abstract control flow <code>f</code> and loop context <code>l</code></a>.</p>
+<p>the result of <a href="#Switch_general_ok">typing <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseList</code> <code>}</code> under context <code>TC</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -34838,7 +34901,7 @@ character <code>{</code>, to avoid ambiguity with a block statement.</p>
 <p>Let <code>switchStatementIR</code> be <code>SWITCH</code> <code>(</code> <code>typedExpressionIR<sub>switch</sub></code> <code>)</code> <code>{</code> <code>switchCaseIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 <li>
-<p>Result in context <code>TC</code>, abstract control flow <code>f<sub>post</sub></code>, and <code>switchStatementIR</code>.</p>
+<p>Result in context <code>TC<sub>1</sub></code> and <code>switchStatementIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -49254,7 +49317,7 @@ declarations.</p>
 <pre>rulegroup ParserStmt_ok/emptyStatement:
   rule ParserStmt_ok/emptyStatement:
   TC |- emptyStatement : TC emptyStatementIR
- -- Stmt_ok: LOCAL TC CONT NOLOOP |- emptyStatement : TC CONT emptyStatementIR</pre>
+ -- Stmt_ok: LOCAL TC |- emptyStatement : TC emptyStatementIR</pre>
 </div>
 </div>
 </div>
@@ -49272,20 +49335,17 @@ declarations.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let context <code>typingContext</code>, abstract control flow <code>flow</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>typingContext</code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>emptyStatement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>emptyStatement</code>, under context <code>TC<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
 <p>Check that <code>typingContext</code> is equal to <code>TC<sub>0</sub></code>.</p>
-</li>
-<li>
-<p>Check that <code>flow</code> is <code>CONT</code>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>emptyStatementIR</code>.</p>
@@ -49420,7 +49480,7 @@ statements.</p>
 <pre>rulegroup ParserStmt_ok/assignmentStatement:
   rule ParserStmt_ok/assignmentStatement:
   TC_0 |- assignmentStatement : TC_1 assignmentStatementIR
- -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- assignmentStatement : TC_1 CONT assignmentStatementIR</pre>
+ -- Stmt_ok: LOCAL TC_0 |- assignmentStatement : TC_1 assignmentStatementIR</pre>
 </div>
 </div>
 </div>
@@ -49438,17 +49498,14 @@ statements.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>flow</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>assignmentStatement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>assignmentStatement</code>, under context <code>TC<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Check that <code>flow</code> is <code>CONT</code>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>assignmentStatementIR</code>.</p>
@@ -49596,7 +49653,7 @@ statements.</p>
 <pre>rulegroup ParserStmt_ok/callStatement:
   rule ParserStmt_ok/callStatement:
   TC_0 |- callStatement : TC_1 callStatementIR
- -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- callStatement : TC_1 CONT callStatementIR</pre>
+ -- Stmt_ok: LOCAL TC_0 |- callStatement : TC_1 callStatementIR</pre>
 </div>
 </div>
 </div>
@@ -49614,17 +49671,14 @@ statements.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>flow</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>callStatement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>callStatement</code>, under context <code>TC<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Check that <code>flow</code> is <code>CONT</code>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>callStatementIR</code>.</p>
@@ -49773,7 +49827,7 @@ invocations.</p>
 <pre>rulegroup ParserStmt_ok/directApplicationStatement:
   rule ParserStmt_ok/directApplicationStatement:
   TC_0 |- directApplicationStatement : TC_1 directApplicationStatementIR
- -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- directApplicationStatement : TC_1 CONT directApplicationStatementIR</pre>
+ -- Stmt_ok: LOCAL TC_0 |- directApplicationStatement : TC_1 directApplicationStatementIR</pre>
 </div>
 </div>
 </div>
@@ -49791,17 +49845,14 @@ invocations.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Let context <code>TC<sub>1</sub></code>, abstract control flow <code>flow</code>, and <code>statementIR</code> be</p>
+<p>Let context <code>TC<sub>1</sub></code> and <code>statementIR</code> be</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Stmt_ok">typing <code>directApplicationStatement</code>, under context <code>TC<sub>0</sub></code>, abstract control flow <code>CONT</code>, and loop context <code>NOLOOP</code> at <code>LOCAL</code></a>.</p>
+<p>the result of <a href="#Stmt_ok">typing <code>directApplicationStatement</code>, under context <code>TC<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p>Check that <code>flow</code> is <code>CONT</code>.</p>
 </li>
 <li>
 <p>Check that <code>statementIR</code> has type <code>directApplicationStatementIR</code>.</p>

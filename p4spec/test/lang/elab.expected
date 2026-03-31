@@ -8169,6 +8169,10 @@ def $join_flow(flow, flow) : flow =
 
   clause -1 : (f_a, f_b) = CONT
 
+syntax loop = 
+   | IN (from loop) 
+   | OUT (from loop) 
+
 syntax varTypeIR = 
    | direction typeIR ctk value? (from varTypeIR)  hint(prose_fields "direction" "type" "compile-time known-ness" "default value")
 
@@ -8244,7 +8248,7 @@ syntax localKind =
 
 syntax localTypingLayer = {KIND localKind, TYPE typeDefEnv, FRAMES typeFrame*}
 
-syntax typingContext = {GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}
+syntax typingContext = {CONTROL flow, LOOP loop, GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}
 
 def $empty_typingContext : typingContext =
 
@@ -8252,7 +8256,7 @@ def $empty_typingContext : typingContext =
   -- let globalTypingLayer = {CONSTRUCTOR $empty_constructorTypeDefEnv, TYPE $empty_typeDefEnv, CALLABLE $empty_callableTypeDefEnv, FRAME $empty_typeFrame}
   -- let blockTypingLayer = {KIND `EMPTY, TYPE $empty_typeDefEnv, CALLABLE $empty_callableTypeDefEnv, FRAME $empty_typeFrame}
   -- let localTypingLayer = {KIND `EMPTY, TYPE $empty_typeDefEnv, FRAMES [$empty_typeFrame]}
-  -- let TC = {GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}
+  -- let TC = {CONTROL CONT, LOOP OUT, GLOBAL globalTypingLayer, BLOCK blockTypingLayer, LOCAL localTypingLayer}
 
 def $bound(cursor, typingContext) : bound =
 
@@ -8277,6 +8281,22 @@ def $exit_t(typingContext) : typingContext =
   -- let typeFrame*{typeFrame <- typeFrame*} = TC.LOCAL.FRAMES
   -- if typeFrame*{typeFrame <- typeFrame*} matches _ :: _
   -- let typeFrame_h :: typeFrame_t*{typeFrame_t <- typeFrame_t*} = typeFrame*{typeFrame <- typeFrame*}
+
+def $join_control_t(typingContext, typingContext) : flow =
+
+  clause 0 : (TC_a, TC_b) = $join_flow(TC_a.CONTROL, TC_b.CONTROL)
+
+def $set_control_t(typingContext, flow) : typingContext =
+
+  clause 0 : (TC, flow) = TC[CONTROL = flow]
+
+def $enter_loop_t(typingContext) : typingContext =
+
+  clause 0 : (TC) = TC[LOOP = IN]
+
+def $set_loop_t(typingContext, loop) : typingContext =
+
+  clause 0 : (TC, loop) = TC[LOOP = loop]
 
 def $add_var_t(cursor, typingContext, id, varTypeIR) : typingContext =
 
@@ -13727,18 +13747,14 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = ( typedLvalueIR_base ) # ( typeIR_base )
     -- output: % % |- % : typedLvalueIR
 
-syntax loopctxt = 
-   | LOOP (from loopctxt) 
-   | NOLOOP (from loopctxt) 
-
-relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContext flow statementIR
+relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
 
   rulegroup emptyStatement
 
    match
 
-    (signature) p TC f l |- ; as statement : % % %
-    p TC f l |- statement : % % %
+    (signature) p TC |- ; as statement : % %
+    p TC |- statement : % %
     -- if statement <: emptyStatement
     -- let emptyStatement = statement as emptyStatement
     -- if (emptyStatement = ;)
@@ -13746,14 +13762,14 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath emptyStatement
-    -- output: % % % % |- % : TC f ; as statementIR
+    -- output: % % |- % : TC ; as statementIR
 
   rulegroup assignmentStatement
 
    match
 
-    (signature) p TC f l |- lvalue assignop' expression ; as statement : % % %
-    p TC f l |- statement : % % %
+    (signature) p TC |- lvalue assignop' expression ; as statement : % %
+    p TC |- statement : % %
     -- if statement <: assignmentStatement
     -- let lvalue assignop' expression ; = statement as assignmentStatement
 
@@ -13768,7 +13784,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_l)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % % % |- % : TC f typedLvalueIR = typedExpressionIR_cast ; as statementIR
+    -- output: % % |- % : TC typedLvalueIR = typedExpressionIR_cast ; as statementIR
 
     rulepath compound
     -- let assignop = assignop'
@@ -13787,14 +13803,14 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- if expressionIR <: binaryExpressionIR
     -- let _typedExpressionIR binop'' typedExpressionIR_cast = expressionIR as binaryExpressionIR
     -- if (binop'' = binop)
-    -- output: % % % % |- % : TC f typedLvalueIR assignop typedExpressionIR_cast ; as statementIR
+    -- output: % % |- % : TC typedLvalueIR assignop typedExpressionIR_cast ; as statementIR
 
   rulegroup callStatement
 
    match
 
-    (signature) p TC f l |- callStatement as statement : % % %
-    p TC f l |- statement : % % %
+    (signature) p TC |- callStatement as statement : % %
+    p TC |- statement : % %
     -- if statement <: callStatement
     -- let callStatement = statement as callStatement
 
@@ -13814,7 +13830,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Expr_eval_lctk: p TC |- callExpressionIR as expressionIR # expressionNoteIR ~> value
     -- if (value = `B true as value)
     -- let emptyStatementIR = ;
-    -- output: % % % % |- % : TC f emptyStatementIR as statementIR
+    -- output: % % |- % : TC emptyStatementIR as statementIR
 
     rulepath callStatement-no-typeArgumentList
     -- let callStatement' = callStatement
@@ -13826,7 +13842,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Call_ok: p TC |- callableTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ;
-    -- output: % % % % |- % : TC f callStatementIR as statementIR
+    -- output: % % |- % : TC callStatementIR as statementIR
 
     rulepath callStatement-typeArgumentList
     -- let callStatement' = callStatement
@@ -13839,14 +13855,14 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
     -- Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ;
-    -- output: % % % % |- % : TC f callStatementIR as statementIR
+    -- output: % % |- % : TC callStatementIR as statementIR
 
   rulegroup directApplicationStatement
 
    match
 
-    (signature) p TC_0 f l |- namedType . APPLY ( argumentList ) ; as statement : % % %
-    p TC_0 f l |- statement : % % %
+    (signature) p TC_0 |- namedType . APPLY ( argumentList ) ; as statement : % %
+    p TC_0 |- statement : % %
     -- if statement <: directApplicationStatement
     -- let namedType . APPLY ( argumentList ) ; = statement as directApplicationStatement
 
@@ -13865,7 +13881,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let nameIR_object = "__direct_application"
     -- let TC_1 = $add_var_t(p, TC_0, nameIR_object, `EMPTY typeIR_object CTK ?())
     -- let lvalue = `ID nameIR_object as lvalue . `ID "apply" as name
-    -- Stmt_ok: p TC_1 f l |- lvalue ( argumentList ) ; as statement : _typingContext _flow statementIR
+    -- Stmt_ok: p TC_1 |- lvalue ( argumentList ) ; as statement : _typingContext statementIR
     -- if statementIR <: callStatementIR
     -- let callStatementIR = statementIR as callStatementIR
     -- let callableTargetIR < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ; = callStatementIR
@@ -13876,14 +13892,14 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- if (` nameIR_object as expressionIR # ( typeIR_object CTK ) = typedExpressionIR_base)
     -- if (constructorTargetIR = prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >)
     -- let directApplicationStatementIR = constructorTargetIR . APPLY ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ;
-    -- output: % % % % |- % : TC_0 f directApplicationStatementIR as statementIR
+    -- output: % % |- % : TC_0 directApplicationStatementIR as statementIR
 
   rulegroup returnStatement
 
    match
 
-    (signature) LOCAL TC f l |- returnStatement as statement : % % %
-    cursor TC f l |- statement : % % %
+    (signature) LOCAL TC_0 |- returnStatement as statement : % %
+    cursor TC_0 |- statement : % %
     -- if cursor matches `LOCAL`
     -- if statement <: returnStatement
     -- let returnStatement = statement as returnStatement
@@ -13892,29 +13908,31 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
 
     rulepath non-expression
     -- if (returnStatement = RETURN ;)
-    -- if (?(VOID as typeIR) = $find_local_return_type_t(TC))
-    -- output: % % % % |- % : TC RET RETURN ; as statementIR
+    -- if (?(VOID as typeIR) = $find_local_return_type_t(TC_0))
+    -- let TC_1 = $set_control_t(TC_0, RET)
+    -- output: % % |- % : TC_1 RETURN ; as statementIR
 
     rulepath expression
     -- let returnStatement' = returnStatement
     -- if returnStatement' matches `RETURN % ;`
     -- let RETURN expression ; = returnStatement'
-    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- Expr_ok: LOCAL TC_0 |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-    -- let typeIR'?{typeIR' <- typeIR'?} = $find_local_return_type_t(TC)
+    -- let typeIR'?{typeIR' <- typeIR'?} = $find_local_return_type_t(TC_0)
     -- if typeIR'?{typeIR' <- typeIR'?} matches (_)
     -- let ?(typeIR_ret) = typeIR'?{typeIR' <- typeIR'?}
     -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR, typeIR_ret)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
     -- let ?(typedExpressionIR_cast) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- output: % % % % |- % : TC RET RETURN typedExpressionIR_cast ; as statementIR
+    -- let TC_1 = $set_control_t(TC_0, RET)
+    -- output: % % |- % : TC_1 RETURN typedExpressionIR_cast ; as statementIR
 
   rulegroup exitStatement
 
    match
 
-    (signature) p TC f l |- EXIT ; as statement : % % %
-    p TC f l |- statement : % % %
+    (signature) p TC |- EXIT ; as statement : % %
+    p TC |- statement : % %
     -- if statement <: exitStatement
     -- let exitStatement = statement as exitStatement
     -- if (exitStatement = EXIT ;)
@@ -13922,14 +13940,14 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath exitStatement
-    -- output: % % % % |- % : TC f EXIT ; as statementIR
+    -- output: % % |- % : TC EXIT ; as statementIR
 
   rulegroup blockStatement
 
    match
 
-    (signature) LOCAL TC_0 f_0 l |- blockStatement as statement : % % %
-    cursor TC_0 f_0 l |- statement : % % %
+    (signature) LOCAL TC_0 |- blockStatement as statement : % %
+    cursor TC_0 |- statement : % %
     -- if cursor matches `LOCAL`
     -- if statement <: blockStatement
     -- let blockStatement = statement as blockStatement
@@ -13938,16 +13956,16 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
 
     rulepath blockStatement
     -- let TC_1 = $enter_t(TC_0)
-    -- Block_ok: TC_1 f_0 l |- blockStatement : TC_2 f_1 blockStatementIR
+    -- Block_ok: TC_1 |- blockStatement : TC_2 blockStatementIR
     -- let TC_3 = $exit_t(TC_2)
-    -- output: % % % % |- % : TC_3 f_1 blockStatementIR as statementIR
+    -- output: % % |- % : TC_3 blockStatementIR as statementIR
 
   rulegroup conditionalStatement
 
    match
 
-    (signature) p TC f l |- conditionalStatement as statement : % % %
-    p TC f l |- statement : % % %
+    (signature) p TC |- conditionalStatement as statement : % %
+    p TC |- statement : % %
     -- if statement <: conditionalStatement
     -- let conditionalStatement = statement as conditionalStatement
 
@@ -13960,8 +13978,10 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if (BOOL as typeIR = $unroll_typeIR(typeIR_cond))
-    -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
-    -- output: % % % % |- % : TC f IF ( typedExpressionIR_cond ) statementIR_then as statementIR
+    -- Stmt_ok: p TC |- statement_then : TC_then statementIR_then
+    -- let TC_post = $set_control_t(TC_then, TC.CONTROL)
+    -- let conditionalStatementIR = IF ( typedExpressionIR_cond ) statementIR_then
+    -- output: % % |- % : TC_post conditionalStatementIR as statementIR
 
     rulepath else
     -- let conditionalStatement' = conditionalStatement
@@ -13970,17 +13990,19 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- Expr_ok: p TC |- expression_cond : typedExpressionIR_cond
     -- let typeIR_cond = $type_of_typedExpressionIR(typedExpressionIR_cond)
     -- if (BOOL as typeIR = $unroll_typeIR(typeIR_cond))
-    -- Stmt_ok: p TC f l |- statement_then : TC_then f_then statementIR_then
-    -- Stmt_ok: p TC f l |- statement_else : TC_else f_else statementIR_else
-    -- let f_post = $join_flow(f_then, f_else)
-    -- output: % % % % |- % : TC f_post IF ( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else as statementIR
+    -- Stmt_ok: p TC |- statement_then : TC_then statementIR_then
+    -- Stmt_ok: p TC |- statement_else : TC_else statementIR_else
+    -- let f_post = $join_control_t(TC_then, TC_else)
+    -- let TC_post = $set_control_t(TC, f_post)
+    -- let conditionalStatementIR = IF ( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else
+    -- output: % % |- % : TC_post conditionalStatementIR as statementIR
 
   rulegroup forStatement-three-clause
 
    match
 
-    (signature) LOCAL TC_0 f l |- annotationList FOR ( forInitStatementList ; expression ; forUpdateStatementList ) statement as statement : % % %
-    cursor TC_0 f l |- statement' : % % %
+    (signature) LOCAL TC_0 |- annotationList FOR ( forInitStatementList ; expression ; forUpdateStatementList ) statement as statement : % %
+    cursor TC_0 |- statement' : % %
     -- if cursor matches `LOCAL`
     -- if statement' <: forStatement
     -- let forStatement = statement' as forStatement
@@ -13996,17 +14018,19 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- if (BOOL as typeIR = $unroll_typeIR(typeIR))
     -- ForUpdateStmtList_ok: TC_2 |- forUpdateStatementList : forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*}
-    -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
-    -- let TC_4 = $exit_t(TC_3)
+    -- let TC_3 = $enter_loop_t(TC_2)
+    -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
+    -- let TC_5 = $exit_t(TC_4)
+    -- let TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
     -- let forStatementIR = annotationList FOR ( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} ; typedExpressionIR ; forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} ) statementIR
-    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+    -- output: % % |- % : TC_6 forStatementIR as statementIR
 
   rulegroup forStatement-in
 
    match
 
-    (signature) LOCAL TC_0 f l |- forStatement as statement : % % %
-    cursor TC_0 f l |- statement' : % % %
+    (signature) LOCAL TC_0 |- forStatement as statement : % %
+    cursor TC_0 |- statement' : % %
     -- if cursor matches `LOCAL`
     -- if statement' <: forStatement
     -- let forStatement = statement' as forStatement
@@ -14025,58 +14049,60 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     -- let TC_1 = $enter_t(TC_0)
     -- let nameIR = $name(name)
     -- let TC_2 = $add_var_t(LOCAL, TC_1, nameIR, INOUT typeIR DYN ?())
-    -- Stmt_ok: LOCAL TC_2 f LOOP |- statement : TC_3 f_post statementIR
-    -- let TC_4 = $exit_t(TC_3)
+    -- let TC_3 = $enter_loop_t(TC_2)
+    -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
+    -- let TC_5 = $exit_t(TC_4)
+    -- let TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
     -- let forStatementIR = annotationList FOR ( typeIR nameIR IN forCollectionExpressionIR ) statementIR
-    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+    -- output: % % |- % : TC_6 forStatementIR as statementIR
 
     rulepath annotations
     -- let forStatement' = forStatement
     -- if forStatement' matches `% FOR (% % % IN %) %`
     -- let annotationList FOR ( annotationListNonEmpty type name IN forCollectionExpression ) statement = forStatement'
-    -- Stmt_ok: LOCAL TC_0 f l |- annotationList FOR ( type name IN forCollectionExpression ) statement as statement : TC_1 f_post statementIR'
+    -- Stmt_ok: LOCAL TC_0 |- annotationList FOR ( type name IN forCollectionExpression ) statement as statement : TC_1 statementIR'
     -- if statementIR' <: forStatementIR
     -- let forStatementIR = statementIR' as forStatementIR
-    -- output: % % % % |- % : TC_0 f_post forStatementIR as statementIR
+    -- output: % % |- % : TC_1 forStatementIR as statementIR
 
   rulegroup breakStatement
 
    match
 
-    (signature) LOCAL TC f LOOP |- breakStatement as statement : % % %
-    cursor TC f loopctxt |- statement : % % %
+    (signature) LOCAL TC |- breakStatement as statement : % %
+    cursor TC |- statement : % %
     -- if cursor matches `LOCAL`
-    -- if loopctxt matches `LOOP`
     -- if statement <: breakStatement
     -- let breakStatement = statement as breakStatement
 
    paths
 
     rulepath breakStatement
-    -- output: % % % % |- % : TC f breakStatement as statementIR
+    -- if (TC.LOOP = IN)
+    -- output: % % |- % : TC breakStatement as statementIR
 
   rulegroup continueStatement
 
    match
 
-    (signature) LOCAL TC f LOOP |- continueStatement as statement : % % %
-    cursor TC f loopctxt |- statement : % % %
+    (signature) LOCAL TC |- continueStatement as statement : % %
+    cursor TC |- statement : % %
     -- if cursor matches `LOCAL`
-    -- if loopctxt matches `LOOP`
     -- if statement <: continueStatement
     -- let continueStatement = statement as continueStatement
 
    paths
 
     rulepath continueStatement
-    -- output: % % % % |- % : TC f continueStatement as statementIR
+    -- if (TC.LOOP = IN)
+    -- output: % % |- % : TC continueStatement as statementIR
 
   rulegroup switchStatement
 
    match
 
-    (signature) LOCAL TC f l |- SWITCH ( expression_switch ) { switchCaseList } as statement : % % %
-    cursor TC f l |- statement : % % %
+    (signature) LOCAL TC_0 |- SWITCH ( expression_switch ) { switchCaseList } as statement : % %
+    cursor TC_0 |- statement : % %
     -- if cursor matches `LOCAL`
     -- if statement <: switchStatement
     -- let SWITCH ( expression_switch ) { switchCaseList } = statement as switchStatement
@@ -14084,39 +14110,39 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
    paths
 
     rulepath table
-    -- if (TC.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
-    -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+    -- if (TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
+    -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- let typeIR = $unroll_typeIR(typeIR_switch)
     -- if typeIR <: tableMetadataEnumTypeIR
     -- let TABLE_ENUM typeId_table_enum { _nameIR*{_nameIR <- _nameIR*} } = typeIR as tableMetadataEnumTypeIR
-    -- Switch_table_ok: TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- Switch_table_ok: TC_0 |- SWITCH ( typeId_table_enum ) { switchCaseList } : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
     -- (let switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*{switchCaseIR <- switchCaseIR*, switchLabelIR -> switchLabelIR*}
     -- if $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- if $distinct_<switchLabelIR>(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- let switchStatementIR = SWITCH ( typedExpressionIR_switch ) { switchCaseIR*{switchCaseIR <- switchCaseIR*} }
-    -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
+    -- output: % % |- % : TC_1 switchStatementIR as statementIR
 
     rulepath general
-    -- if (TC.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
-    -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+    -- if (TC_0.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
+    -- Expr_ok: LOCAL TC_0 |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if ~$unroll_typeIR(typeIR_switch) <: tableMetadataEnumTypeIR
-    -- Switch_general_ok: TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- Switch_general_ok: TC_0 |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
     -- (let switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*{switchCaseIR <- switchCaseIR*, switchLabelIR -> switchLabelIR*}
     -- if $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- if $distinct_<switchLabelIR>(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- let switchStatementIR = SWITCH ( typedExpressionIR_switch ) { switchCaseIR*{switchCaseIR <- switchCaseIR*} }
-    -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
+    -- output: % % |- % : TC_1 switchStatementIR as statementIR
 
-relation BlockElementStmt_ok: typingContext flow loopctxt |- blockElementStatement : typingContext flow blockElementStatementIR
+relation BlockElementStmt_ok: typingContext |- blockElementStatement : typingContext blockElementStatementIR
 
   rulegroup 
 
    match
 
-    (signature) TC_0 f l |- blockElementStatement : % % %
-    TC_0 f l |- blockElementStatement : % % %
+    (signature) TC_0 |- blockElementStatement : % %
+    TC_0 |- blockElementStatement : % %
 
    paths
 
@@ -14125,53 +14151,53 @@ relation BlockElementStmt_ok: typingContext flow loopctxt |- blockElementStateme
     -- if blockElementStatement' <: constantDeclaration
     -- let constantDeclaration = blockElementStatement' as constantDeclaration
     -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
-    -- output: % % % |- % : TC_1 f constantDeclarationIR as blockElementStatementIR
+    -- output: % |- % : TC_1 constantDeclarationIR as blockElementStatementIR
 
     rulepath variableDeclaration
     -- let blockElementStatement' = blockElementStatement
     -- if blockElementStatement' <: variableDeclaration
     -- let variableDeclaration = blockElementStatement' as variableDeclaration
     -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
-    -- output: % % % |- % : TC_1 f variableDeclarationIR as blockElementStatementIR
+    -- output: % |- % : TC_1 variableDeclarationIR as blockElementStatementIR
 
     rulepath statement
     -- let blockElementStatement' = blockElementStatement
     -- if blockElementStatement' <: statement
     -- let statement = blockElementStatement' as statement
-    -- Stmt_ok: LOCAL TC_0 f l |- statement : TC_1 f_post statementIR
-    -- output: % % % |- % : TC_1 f_post statementIR as blockElementStatementIR
+    -- Stmt_ok: LOCAL TC_0 |- statement : TC_1 statementIR
+    -- output: % |- % : TC_1 statementIR as blockElementStatementIR
 
-relation BlockElementStmtList_ok: typingContext flow loopctxt |- blockElementStatementList : typingContext flow blockElementStatementIR*
+relation BlockElementStmtList_ok: typingContext |- blockElementStatementList : typingContext blockElementStatementIR*
 
   rulegroup 
 
    match
 
-    (signature) TC_0 f l |- blockElementStatementList : % % %
-    TC_0 f l |- blockElementStatementList : % % %
+    (signature) TC_0 |- blockElementStatementList : % %
+    TC_0 |- blockElementStatementList : % %
 
    paths
 
     rulepath 
     -- let blockElementStatement*{blockElementStatement <- blockElementStatement*} = $flatten_blockElementStatementList(blockElementStatementList)
-    -- BlockElementStmts_ok: TC_0 f l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
-    -- output: % % % |- % : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+    -- BlockElementStmts_ok: TC_0 |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : TC_1 blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+    -- output: % |- % : TC_1 blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
 
-relation Block_ok: typingContext flow loopctxt |- blockStatement : typingContext flow blockStatementIR
+relation Block_ok: typingContext |- blockStatement : typingContext blockStatementIR
 
   rulegroup 
 
    match
 
-    (signature) TC_0 f l |- annotationList { blockElementStatementList } : % % %
-    TC_0 f l |- annotationList { blockElementStatementList } : % % %
+    (signature) TC_0 |- annotationList { blockElementStatementList } : % %
+    TC_0 |- annotationList { blockElementStatementList } : % %
 
    paths
 
     rulepath 
-    -- BlockElementStmtList_ok: TC_0 f l |- blockElementStatementList : TC_1 f_post blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+    -- BlockElementStmtList_ok: TC_0 |- blockElementStatementList : TC_1 blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
     -- let blockStatementIR = annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }
-    -- output: % % % |- % : TC_1 f_post blockStatementIR
+    -- output: % |- % : TC_1 blockStatementIR
 
 relation Parameter_ok: cursor typingContext |- parameter : typingContext parameterIR # typeId*
 
@@ -14465,9 +14491,8 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath emptyStatement
-    -- Stmt_ok: LOCAL TC CONT NOLOOP |- emptyStatement as statement : typingContext flow statementIR
+    -- Stmt_ok: LOCAL TC |- emptyStatement as statement : typingContext statementIR
     -- if (typingContext = TC)
-    -- if flow matches `CONT`
     -- if statementIR <: emptyStatementIR
     -- let emptyStatementIR = statementIR as emptyStatementIR
     -- output: % |- % : TC emptyStatementIR as parserStatementIR
@@ -14484,8 +14509,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath assignmentStatement
-    -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- assignmentStatement as statement : TC_1 flow statementIR
-    -- if flow matches `CONT`
+    -- Stmt_ok: LOCAL TC_0 |- assignmentStatement as statement : TC_1 statementIR
     -- if statementIR <: assignmentStatementIR
     -- let assignmentStatementIR = statementIR as assignmentStatementIR
     -- output: % |- % : TC_1 assignmentStatementIR as parserStatementIR
@@ -14502,8 +14526,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath callStatement
-    -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- callStatement as statement : TC_1 flow statementIR
-    -- if flow matches `CONT`
+    -- Stmt_ok: LOCAL TC_0 |- callStatement as statement : TC_1 statementIR
     -- if statementIR <: callStatementIR
     -- let callStatementIR = statementIR as callStatementIR
     -- output: % |- % : TC_1 callStatementIR as parserStatementIR
@@ -14520,8 +14543,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
    paths
 
     rulepath directApplicationStatement
-    -- Stmt_ok: LOCAL TC_0 CONT NOLOOP |- directApplicationStatement as statement : TC_1 flow statementIR
-    -- if flow matches `CONT`
+    -- Stmt_ok: LOCAL TC_0 |- directApplicationStatement as statement : TC_1 statementIR
     -- if statementIR <: directApplicationStatementIR
     -- let directApplicationStatementIR = statementIR as directApplicationStatementIR
     -- output: % |- % : TC_1 directApplicationStatementIR as parserStatementIR
@@ -15658,15 +15680,16 @@ relation FuncDecl_ok: cursor typingContext |- functionDeclaration : typingContex
     -- if typeId*{typeId <- typeId*} matches []
     -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR*{parameterIR <- parameterIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
     -- let TC_3 = TC_2[LOCAL.KIND = FUNCTION : typeIR_ret as localKind]
-    -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _typingContext f blockStatementIR
-    -- if ((f = RET) \/ (typeIR_ret = VOID as typeIR))
+    -- let TC_4 = TC_3[CONTROL = CONT][LOOP = OUT]
+    -- Block_ok: TC_4 |- blockStatement : TC_5 blockStatementIR
+    -- if ((TC_5.CONTROL = RET) \/ (typeIR_ret = VOID as typeIR))
     -- let callableId = $callableId(name, parameterList)
     -- let nameIR = $name(name)
     -- let definedFunctionTypeDefIR = FUNCTION nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret
     -- if CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR as callableTypeDefIR holds
-    -- let TC_4 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR as callableTypeDefIR)
+    -- let TC_6 = $add_callableDef_overload_t(p, TC_0, callableId, definedFunctionTypeDefIR as callableTypeDefIR)
     -- let functionDeclarationIR = annotationList typeIR_ret nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR
-    -- output: % % |- % : TC_4 functionDeclarationIR
+    -- output: % % |- % : TC_6 functionDeclarationIR
 
 relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContext actionDeclarationIR
 
@@ -15681,16 +15704,17 @@ relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContex
 
     rulepath 
     -- let TC_1 = TC_0[LOCAL.KIND = ACTION as localKind]
-    -- ParameterList_ok: LOCAL TC_1 |- parameterList : TC_2 parameterIR*{parameterIR <- parameterIR*} # typeId*{typeId <- typeId*}
+    -- let TC_2 = TC_1[CONTROL = CONT][LOOP = OUT]
+    -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
-    -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _typingContext _flow blockStatementIR
+    -- Block_ok: TC_3 |- blockStatement : _typingContext blockStatementIR
     -- let callableId = $callableId(name, parameterList)
     -- let nameIR = $name(name)
     -- let actionTypeDefIR = annotationList ACTION nameIR ( parameterIR*{parameterIR <- parameterIR*} )
     -- if CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR as callableTypeDefIR holds
-    -- let TC_3 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR as callableTypeDefIR)
+    -- let TC_4 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR as callableTypeDefIR)
     -- let actionDeclarationIR = annotationList ACTION nameIR ( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR
-    -- output: % % |- % : TC_3 actionDeclarationIR
+    -- output: % % |- % : TC_4 actionDeclarationIR
 
 relation Decl_ok: typingContext |- declaration : typingContext declarationIR
 
@@ -15906,7 +15930,8 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if typeId'*{typeId' <- typeId'*} matches []
     -- ControlLocalDeclList_ok: TC_3 |- controlLocalDeclarationList : TC_4 controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
     -- let TC_5 = TC_4[LOCAL.KIND = CONTROL_APPLY_METHOD as localKind]
-    -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _typingContext _flow controlBodyIR
+    -- let TC_6 = TC_5[CONTROL = CONT][LOOP = OUT]
+    -- Block_ok: TC_6 |- controlBody : _typingContext controlBodyIR
     -- let callableTypeDefIR = CONTROL_APPLY ( parameterIR*{parameterIR <- parameterIR*} ) as callableTypeDefIR
     -- if CallableTypeDef_wf: $bound(BLOCK, TC_1) |- callableTypeDefIR holds
     -- let nameIR = $name(name)
@@ -15915,9 +15940,9 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let typeIR_control = $typeIR_of_typeDefIR(typeDefIR_control)
     -- let constructorTypeDefIR = CONSTRUCTOR < [] , [] > ( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) : typeIR_control
     -- if ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR holds
-    -- let TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+    -- let TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
     -- let controlDeclarationIR = annotationList CONTROL nameIR < [] , [] > ( parameterIR*{parameterIR <- parameterIR*} ) ( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) { controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} APPLY controlBodyIR }
-    -- output: % |- % : TC_6 controlDeclarationIR as declarationIR
+    -- output: % |- % : TC_7 controlDeclarationIR as declarationIR
 
   rulegroup enumTypeDeclaration-non-serializable
 
@@ -17820,7 +17845,7 @@ relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatem
     -- let forUpdateStatement' = forUpdateStatement
     -- if forUpdateStatement' matches `% (%)`
     -- let lvalue_callable ( argumentList ) = forUpdateStatement'
-    -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue_callable ( argumentList ) ; as statement : _typingContext _flow statementIR
+    -- Stmt_ok: LOCAL TC |- lvalue_callable ( argumentList ) ; as statement : _typingContext statementIR
     -- if statementIR <: callStatementIR
     -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) ; = statementIR as callStatementIR
     -- output: % |- % : callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} )
@@ -17829,7 +17854,7 @@ relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatem
     -- let forUpdateStatement' = forUpdateStatement
     -- if forUpdateStatement' matches `% <%> (%)`
     -- let lvalue_callable < typeArgumentList > ( argumentList ) = forUpdateStatement'
-    -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue_callable < typeArgumentList > ( argumentList ) ; as statement : _typingContext _flow statementIR
+    -- Stmt_ok: LOCAL TC |- lvalue_callable < typeArgumentList > ( argumentList ) ; as statement : _typingContext statementIR
     -- if statementIR <: callStatementIR
     -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) ; = statementIR as callStatementIR
     -- output: % |- % : callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} )
@@ -17838,7 +17863,7 @@ relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatem
     -- let forUpdateStatement' = forUpdateStatement
     -- if forUpdateStatement' matches `% % %`
     -- let lvalue assignop expression = forUpdateStatement'
-    -- Stmt_ok: LOCAL TC CONT NOLOOP |- lvalue assignop expression ; as statement : _typingContext _flow statementIR
+    -- Stmt_ok: LOCAL TC |- lvalue assignop expression ; as statement : _typingContext statementIR
     -- if statementIR <: assignmentStatementIR
     -- let typedLvalueIR assignop' typedExpressionIR ; = statementIR as assignmentStatementIR
     -- if (assignop' = assignop)
@@ -18091,14 +18116,14 @@ relation SwitchLabel_table_ok: typingContext typeId |- switchLabel : switchLabel
     -- let typedExpressionIR_label = ` nameIR_label as expressionIR # ( typeIR_label ctk_label )
     -- output: % % |- % : typedExpressionIR_label as switchLabelIR
 
-relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase : flow switchCaseIR
+relation SwitchCase_table_ok: typingContext typeId |- switchCase : typingContext switchCaseIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCase : % %
-    TC f l typeId_table |- switchCase : % %
+    (signature) TC_0 typeId_table |- switchCase : % %
+    TC_0 typeId_table |- switchCase : % %
 
    paths
 
@@ -18106,73 +18131,75 @@ relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase :
     -- let switchCase' = switchCase
     -- if switchCase' matches `% : %`
     -- let switchLabel : blockStatement = switchCase'
-    -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
-    -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
+    -- SwitchLabel_table_ok: TC_0 typeId_table |- switchLabel : switchLabelIR
+    -- Block_ok: TC_0 |- blockStatement : TC_1 blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR
+    -- output: % % |- % : TC_1 switchCaseIR
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
     -- if switchCase' matches `% :`
     -- let switchLabel : = switchCase'
-    -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
+    -- SwitchLabel_table_ok: TC_0 typeId_table |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR
+    -- output: % % |- % : TC_0 switchCaseIR
 
-relation SwitchCases_table_ok: typingContext flow loopctxt typeId |- switchCase* : flow switchCaseListIR
+relation SwitchCases_table_ok: typingContext typeId |- switchCase* : typingContext switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % %
-    TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % %
+    (signature) typingContext typeId_table |- switchCase*{switchCase <- switchCase*} : % %
+    typingContext typeId_table |- switchCase*{switchCase <- switchCase*} : % %
 
    paths
 
     rulepath nil
+    -- let TC = typingContext
     -- if (switchCase*{switchCase <- switchCase*} = [])
-    -- output: % % % % |- % : f []
+    -- output: % % |- % : TC []
 
     rulepath cons
+    -- let TC_0 = typingContext
     -- let switchCase'*{switchCase' <- switchCase'*} = switchCase*{switchCase <- switchCase*}
     -- if switchCase'*{switchCase' <- switchCase'*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase'*{switchCase' <- switchCase'*}
-    -- SwitchCase_table_ok: TC f l typeId_table |- switchCase_h : f_h switchCaseIR_h
-    -- SwitchCases_table_ok: TC f_h l typeId_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
-    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- SwitchCase_table_ok: TC_0 typeId_table |- switchCase_h : TC_1 switchCaseIR_h
+    -- SwitchCases_table_ok: TC_1 typeId_table |- switchCase_t*{switchCase_t <- switchCase_t*} : TC_2 switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- output: % % |- % : TC_2 switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
 
-relation SwitchCaseList_table_ok: typingContext flow loopctxt typeId |- switchCaseList : flow switchCaseListIR
+relation SwitchCaseList_table_ok: typingContext typeId |- switchCaseList : typingContext switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCaseList : % %
-    TC f l typeId_table |- switchCaseList : % %
+    (signature) TC_0 typeId_table |- switchCaseList : % %
+    TC_0 typeId_table |- switchCaseList : % %
 
    paths
 
     rulepath 
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_table_ok: TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
-    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- SwitchCases_table_ok: TC_0 typeId_table |- switchCase*{switchCase <- switchCase*} : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % |- % : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
-relation Switch_table_ok: typingContext flow loopctxt |- SWITCH ( id ) { switchCaseList } : flow switchCaseIR*
+relation Switch_table_ok: typingContext |- SWITCH ( id ) { switchCaseList } : typingContext switchCaseIR*
 
   rulegroup 
 
    match
 
-    (signature) TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
-    TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
+    (signature) TC_0 |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
+    TC_0 |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
 
    paths
 
     rulepath 
     -- let typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
-    -- SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
-    -- output: % % % |- SWITCH ( % ) { % } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- SwitchCaseList_table_ok: TC_0 typeId_table |- switchCaseList : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % |- SWITCH ( % ) { % } : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
 relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLabelIR
 
@@ -18204,14 +18231,14 @@ relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLab
     -- if ctk matches `LCTK`
     -- output: % % |- % : typedExpressionIR_label_cast as switchLabelIR
 
-relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase : flow switchCaseIR
+relation SwitchCase_general_ok: typingContext typeIR |- switchCase : typingContext switchCaseIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCase : % %
-    TC f l typeIR_switch |- switchCase : % %
+    (signature) TC_0 typeIR_switch |- switchCase : % %
+    TC_0 typeIR_switch |- switchCase : % %
 
    paths
 
@@ -18219,57 +18246,57 @@ relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase
     -- let switchCase' = switchCase
     -- if switchCase' matches `% : %`
     -- let switchLabel : blockStatement = switchCase'
-    -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
-    -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
+    -- SwitchLabel_general_ok: TC_0 typeIR_switch |- switchLabel : switchLabelIR
+    -- Block_ok: TC_0 |- blockStatement : TC_1 blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR
+    -- output: % % |- % : TC_1 switchCaseIR
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
     -- if switchCase' matches `% :`
     -- let switchLabel : = switchCase'
-    -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
+    -- SwitchLabel_general_ok: TC_0 typeIR_switch |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR
+    -- output: % % |- % : TC_0 switchCaseIR
 
-relation SwitchCases_general_ok: typingContext flow loopctxt typeIR |- switchCase* : flow switchCaseListIR
+relation SwitchCases_general_ok: typingContext typeIR |- switchCase* : typingContext switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
-    TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
+    (signature) TC_0 typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
+    TC_0 typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
 
    paths
 
     rulepath nil
     -- if (switchCase*{switchCase <- switchCase*} = [])
-    -- output: % % % % |- % : f []
+    -- output: % % |- % : TC_0 []
 
     rulepath cons
     -- let switchCase'*{switchCase' <- switchCase'*} = switchCase*{switchCase <- switchCase*}
     -- if switchCase'*{switchCase' <- switchCase'*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase'*{switchCase' <- switchCase'*}
-    -- SwitchCase_general_ok: TC f l typeIR_switch |- switchCase_h : f_h switchCaseIR_h
-    -- SwitchCases_general_ok: TC f_h l typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
-    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- SwitchCase_general_ok: TC_0 typeIR_switch |- switchCase_h : TC_1 switchCaseIR_h
+    -- SwitchCases_general_ok: TC_1 typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : TC_2 switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- output: % % |- % : TC_2 switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
 
-relation SwitchCaseList_general_ok: typingContext flow loopctxt typeIR |- switchCaseList : flow switchCaseListIR
+relation SwitchCaseList_general_ok: typingContext typeIR |- switchCaseList : typingContext switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCaseList : % %
-    TC f l typeIR_switch |- switchCaseList : % %
+    (signature) TC_0 typeIR_switch |- switchCaseList : % %
+    TC_0 typeIR_switch |- switchCaseList : % %
 
    paths
 
     rulepath 
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
-    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- SwitchCases_general_ok: TC_0 typeIR_switch |- switchCase*{switchCase <- switchCase*} : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % |- % : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
 tbl def $compat_switch(typeIR) : bool =
   row 0 :
@@ -18302,49 +18329,47 @@ tbl def $compat_switch(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-relation Switch_general_ok: typingContext flow loopctxt |- SWITCH ( typedExpressionIR ) { switchCaseList } : flow switchCaseIR*
+relation Switch_general_ok: typingContext |- SWITCH ( typedExpressionIR ) { switchCaseList } : typingContext switchCaseIR*
 
   rulegroup 
 
    match
 
-    (signature) TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
-    TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
+    (signature) TC_0 |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
+    TC_0 |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
 
    paths
 
     rulepath 
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- if $compat_switch(typeIR_switch)
-    -- SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
-    -- output: % % % |- SWITCH ( % ) { % } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- SwitchCaseList_general_ok: TC_0 typeIR_switch |- switchCaseList : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % |- SWITCH ( % ) { % } : TC_1 switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
-relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*
+relation BlockElementStmts_ok: typingContext |- blockElementStatement* : typingContext blockElementStatementIR*
 
   rulegroup 
 
    match
 
-    (signature) typingContext flow l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
-    typingContext flow l |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % % %
+    (signature) typingContext |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % %
+    typingContext |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % %
 
    paths
 
     rulepath nil
     -- let TC = typingContext
-    -- let f = flow
     -- if (blockElementStatement*{blockElementStatement <- blockElementStatement*} = [])
-    -- output: % % % |- % : TC f []
+    -- output: % |- % : TC []
 
     rulepath cons
     -- let TC_0 = typingContext
-    -- let f_0 = flow
     -- let blockElementStatement'*{blockElementStatement' <- blockElementStatement'*} = blockElementStatement*{blockElementStatement <- blockElementStatement*}
     -- if blockElementStatement'*{blockElementStatement' <- blockElementStatement'*} matches _ :: _
     -- let blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} = blockElementStatement'*{blockElementStatement' <- blockElementStatement'*}
-    -- BlockElementStmt_ok: TC_0 f_0 l |- blockElementStatement_h : TC_1 f_1 blockElementStatementIR_h
-    -- BlockElementStmts_ok: TC_1 f_1 l |- blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : TC_2 f_2 blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
-    -- output: % % % |- % : TC_2 f_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
+    -- BlockElementStmt_ok: TC_0 |- blockElementStatement_h : TC_1 blockElementStatementIR_h
+    -- BlockElementStmts_ok: TC_1 |- blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} : TC_2 blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
+    -- output: % |- % : TC_2 blockElementStatementIR_h :: blockElementStatementIR_t*{blockElementStatementIR_t <- blockElementStatementIR_t*}
 
 relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationList prefixedTypeName < typeArgumentList > ( argumentList ) name ; : typingContext instantiationIR
 
@@ -18405,8 +18430,9 @@ relation ObjectDecl_ok: cursor typingContext typeFrame externMethodTypeDefEnv |-
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret # typeId*{typeId <- typeId*}
     -- if typeId*{typeId <- typeId*} matches []
     -- let TC_5 = TC_4[LOCAL.KIND = EXTERN_METHOD : typeIR_ret as localKind]
-    -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _typingContext f blockStatementIR
-    -- if ((f = RET) \/ (typeIR_ret = VOID as typeIR))
+    -- let TC_6 = TC_5[CONTROL = CONT][LOOP = OUT]
+    -- Block_ok: TC_6 |- blockStatement : TC_7 blockStatementIR
+    -- if ((TC_7.CONTROL = RET) \/ (typeIR_ret = VOID as typeIR))
     -- let callableId = $callableId(name, parameterList)
     -- let nameIR = $name(name)
     -- let externMethodTypeDefIR = EXTERN_METHOD nameIR < typeId_expl*{typeId_expl <- typeId_expl*} , typeId_impl*{typeId_impl <- typeId_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret
