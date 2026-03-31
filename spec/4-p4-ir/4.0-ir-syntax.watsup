@@ -134,8 +134,7 @@ syntax indexAccessExpressionIR =
   typedExpressionIR `[ typedExpressionIR ]
 
 syntax sliceAccessExpressionIR =
-  | typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
-  | typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
+  typedExpressionIR `[ typedExpressionIR sliceop typedExpressionIR ]
 
 syntax accessExpressionIR =
   | errorAccessExpressionIR
@@ -266,8 +265,7 @@ syntax lvalueIR =
   | referenceExpressionIR
   | typedLvalueIR `. nameIR
   | typedLvalueIR `[ typedExpressionIR ]
-  | typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
-  | typedLvalueIR `[ typedExpressionIR `+: typedExpressionIR ]
+  | typedLvalueIR `[ typedExpressionIR sliceop typedExpressionIR ]
   | `( typedLvalueIR )
 
 syntax lvalueNoteIR = `( typeIR )
@@ -449,6 +447,11 @@ syntax switchLabelIR =
 syntax switchCaseIR =
   | switchLabelIR `: blockStatementIR
   | switchLabelIR `: 
+
+dec $switchLabelIR_of_switchCaseIR(switchCaseIR) : switchLabelIR
+  hint(prose_in "the label of" %0)
+def $switchLabelIR_of_switchCaseIR(switchLabelIR `: _) = switchLabelIR
+def $switchLabelIR_of_switchCaseIR(switchLabelIR `:) = switchLabelIR
 
 syntax switchCaseListIR = switchCaseIR*
 

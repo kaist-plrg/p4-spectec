@@ -103,11 +103,11 @@ rulegroup Lvalue_eval/indexAccess {
 
 ;;;; typedLvalueIR `[ typedExpressionIR `: typedExpressionIR ]
 
-rulegroup Lvalue_eval/sliceAccess-range {
+rulegroup Lvalue_eval/sliceAccess {
 
   rule Lvalue_eval/abort:
-    p EC_0 ARCH_0 |- (typedLvalueIR `[ typedExpressionIR_hi 
-                                   `: typedExpressionIR_lo ]) `# _
+    p EC_0 ARCH_0 |- (typedLvalueIR
+                      `[ typedExpressionIR_l sliceop typedExpressionIR_r ]) `# _
                    : EC_1 ARCH_1 abortResult
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
@@ -115,65 +115,27 @@ rulegroup Lvalue_eval/sliceAccess-range {
 
   rule Lvalue_eval/cont-abort:
     p EC_0 ARCH_0 |- (typedLvalueIR
-                      `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                      `[ typedExpressionIR_l sliceop typedExpressionIR_r ]) `# _
                    : EC_2 ARCH_2 abortResult
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
     -- Exprs_eval:
-        p EC_1 ARCH_1 |- [ typedExpressionIR_hi, typedExpressionIR_lo ]
+        p EC_1 ARCH_1 |- [ typedExpressionIR_l, typedExpressionIR_r ]
                        : EC_2 ARCH_2 abortResult
 
-  rule Lvalue_eval/cont:
+  rule Lvalue_eval/cont-index:
     p EC_0 ARCH_0 |- (typedLvalueIR
-                      `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+                      `[ typedExpressionIR_l sliceop typedExpressionIR_r ]) `# _
                    : EC_1 ARCH_1 storageReferenceResult
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (`` storageReference)
     -- Exprs_eval:
-        p EC_1 ARCH_1 |- [ typedExpressionIR_hi, typedExpressionIR_lo ]
-                       : EC_2 ARCH_2 (`` ([ value_hi, value_lo ]))
+        p EC_1 ARCH_1 |- [ typedExpressionIR_l, typedExpressionIR_r ]
+                       : EC_2 ARCH_2 (`` ([ value_l, value_r ]))
     -- if storageReferenceResult
-        = `` (storageReference `[ value_hi `: value_lo ])
-
-}
-
-;;;; typedLvalueIR `[ typedExpressionIR `+: typedExpressionIR ]
-
-rulegroup Lvalue_eval/sliceAccess-offset {
-
-  rule Lvalue_eval/abort:
-    p EC_0 ARCH_0 |- (typedLvalueIR `[ typedExpressionIR_l 
-                                   `+: typedExpressionIR_w ]) `# _
-                   : EC_1 ARCH_1 abortResult
-    -- Lvalue_eval:
-        p EC_0 ARCH_0 |- typedLvalueIR
-                       : EC_1 ARCH_1 abortResult
-
-  rule Lvalue_eval/cont-abort:
-    p EC_0 ARCH_0 |- (typedLvalueIR
-                      `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
-                   : EC_2 ARCH_2 abortResult
-    -- Lvalue_eval:
-        p EC_0 ARCH_0 |- typedLvalueIR
-                       : EC_1 ARCH_1 (`` storageReference)
-    -- Exprs_eval:
-        p EC_1 ARCH_1 |- [ typedExpressionIR_l, typedExpressionIR_w ]
-                       : EC_2 ARCH_2 abortResult
-
-  rule Lvalue_eval/cont:
-    p EC_0 ARCH_0 |- (typedLvalueIR
-                      `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
-                   : EC_1 ARCH_1 storageReferenceResult
-    -- Lvalue_eval:
-        p EC_0 ARCH_0 |- typedLvalueIR
-                       : EC_1 ARCH_1 (`` storageReference)
-    -- Exprs_eval:
-        p EC_1 ARCH_1 |- [ typedExpressionIR_l, typedExpressionIR_w ]
-                       : EC_2 ARCH_2 (`` ([ value_l, value_w ]))
-    -- if storageReferenceResult
-        = `` (storageReference `[ value_l `+: value_w ])
+        = `` (storageReference `[ value_l sliceop value_r ])
 
 }
 
@@ -296,21 +258,23 @@ rulegroup Lvalue_read/indexAccess {
 
 }
 
-;;; storageReference `[ value `: value ]
+;;; storageReference `[ value sliceop value ]
 
-rule Lvalue_read/sliceAccess-range:
-  p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) : value
-  -- Lvalue_read:
-      p EC_0 ARCH |- storageReference : value_base
-  -- if value = $bitacc_range_op(value_base, value_hi, value_lo)
+rulegroup Lvalue_read/sliceAccess {
 
-;;; storageReference `[ value `+: value ]
+  rule Lvalue_read/range:
+    p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) : value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : value_base
+    -- if value = $bitacc_range_op(value_base, value_hi, value_lo)
 
-rule Lvalue_read/sliceAccess-offset:
-  p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) : value
-  -- Lvalue_read:
-      p EC_0 ARCH |- storageReference : value_base
-  -- if value = $bitacc_offset_op(value_base, value_l, value_w)
+  rule Lvalue_read/offset:
+    p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) : value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : value_base
+    -- if value = $bitacc_offset_op(value_base, value_l, value_w)
+
+}
 
 ;;
 ;; L-value write to storage reference
@@ -462,20 +426,24 @@ rulegroup Lvalue_write/indexAccess {
 
 }
 
-rule Lvalue_write/sliceAccess-range:
-  p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) -> value : EC_1
-  -- Lvalue_read:
-      p EC_0 ARCH |- storageReference : value_base
-  -- if value_base_update
-      = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
-  -- Lvalue_write:
-      p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+rulegroup Lvalue_write/sliceAccess {
 
-rule Lvalue_write/sliceAccess-offset:
-  p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) -> value : EC_1
-  -- Lvalue_read:
-      p EC_0 ARCH |- storageReference : value_base
-  -- if value_base_update
-      = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
-  -- Lvalue_write:
-      p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+  rule Lvalue_write/range:
+    p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) -> value : EC_1
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : value_base
+    -- if value_base_update
+        = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
+    -- Lvalue_write:
+        p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+
+  rule Lvalue_write/offset:
+    p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) -> value : EC_1
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : value_base
+    -- if value_base_update
+        = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
+    -- Lvalue_write:
+        p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+
+}

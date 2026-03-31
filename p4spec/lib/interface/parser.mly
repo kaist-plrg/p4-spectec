@@ -625,11 +625,15 @@ namedExpressionList:
 		{ "expression `[ expression ]" <| [ a; i ] <<| "indexAccessExpression" }
 ;
 
+%inline sliceop:
+  | COLON
+    { "`:" <| [] <<| "sliceop" }
+  | PLUSCOLON
+    { "`+:" <| [] <<| "sliceop" }
+
 %inline sliceAccessExpression:
-  | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { "expression `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpression" }
-  | a = expression L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
-    { "expression `[ expression `+: expression ]" <| [ a; l; w ] <<| "sliceAccessExpression" }
+  | a = expression L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "expression `[ expression sliceop expression ]" <| [ a; l; s; r ] <<| "sliceAccessExpression" }
 ;
 
 %inline accessExpression:
@@ -651,10 +655,8 @@ namedExpressionList:
 ;
 
 %inline sliceAccessExpressionNonBrace:
-  | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { "expressionNonBrace `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
-  | a = expressionNonBrace L_BRACKET h = expression PLUSCOLON l = expression R_BRACKET
-    { "expressionNonBrace `[ expression `+: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
+  | a = expressionNonBrace L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "expressionNonBrace `[ expression sliceop expression ]" <| [ a; l; s; r ] <<| "sliceAccessExpressionNonBrace" }
 ;
 
 %inline accessExpressionNonBrace:
@@ -892,10 +894,8 @@ lvalue:
 		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
 		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" }
-	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ "lvalue `[ expression `: expression ]" <| [ lv; h; l ] <<| "lvalue" }
-	| lv = lvalue L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
-    { "lvalue `[ expression `+: expression ]" <| [ lv; l; w ] <<| "lvalue" }
+	| lv = lvalue L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "lvalue `[ expression sliceop expression ]" <| [ lv; l; s; r ] <<| "lvalue" }
 	| L_PAREN lv = lvalue R_PAREN
 		{ "`( lvalue )" <| [ lv ] <<| "lvalue" }
 ;

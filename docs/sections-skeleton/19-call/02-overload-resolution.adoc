@@ -1,0 +1,74 @@
+[#sec-overload-resolution]
+=== Overload resolution
+
+// Added
+As explained in <<sec-overloading>>, functions, methods, and constructors can
+be overloaded. Overload should be resolved at compile time based on the number
+of arguments or the names of the arguments. Additionally, arguments may be
+omitted when the corresponding parameters have default values or are declared
+as optional.
+
+// Added
+The following algorithm is used to resolve overloads and omitted arguments:
+
+// Added
+${func-title-source: find_overloaded}
+${func-title-prose: find_overloaded}
+
+// Added
+The result of this algorithm is a matched overload item with the default and
+optional parameter names, or an empty result if no match is found.
+
+${syntax: callResolution}
+
+// Added
+The algorithm takes as input the key for overload resolution, which is the
+call target name and the argument names (if specified).
+
+// Added
+${syntax: callTargetKey}
+
+// Added
+Based on whether the arguments are positional or named, the key is refined to either:
+
+// Added
+${syntax: namedCallTargetKey unnamedCallTargetKey}
+
+// Added
+For each item in the overloaded set, the key is compared to determine if it is a match:
+
+// Added
+${syntax: callTargetMatch}
+
+// Added
+The algorithm is as follows:
+
+// Added
+${func-source: find_overloaded}
+${func-prose: find_overloaded}
+
+==== Positional arguments
+
+// Added
+The following algorithm is used when arguments are positional:
+
+// Added
+${func-title-source: find_overloadeds_unnamed}
+${func-title-prose: find_overloadeds_unnamed}
+
+// Added
+${func-source: find_overloadeds_unnamed}
+${func-prose: find_overloadeds_unnamed}
+
+==== Named arguments
+
+// Added
+The following algorithm is used when arguments are named:
+
+// Added
+${func-title-source: find_overloadeds_named}
+${func-title-prose: find_overloadeds_named}
+
+// Added
+${func-source: find_overloadeds_named}
+${func-prose: find_overloadeds_named}

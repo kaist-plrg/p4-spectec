@@ -348,9 +348,10 @@ syntax memberAccessExpression =
 syntax indexAccessExpression =
   expression `[ expression ]
 
+syntax sliceop = `: | `+:
+
 syntax sliceAccessExpression =
-  | expression `[ expression `: expression ]
-  | expression `[ expression `+: expression ]
+  expression `[ expression sliceop expression ]
 
 syntax accessExpression =
   | errorAccessExpression
@@ -365,8 +366,7 @@ syntax indexAccessExpressionNonBrace =
   expressionNonBrace `[ expression ]
 
 syntax sliceAccessExpressionNonBrace =
-  | expressionNonBrace `[ expression `: expression ]
-  | expressionNonBrace `[ expression `+: expression ]
+  expressionNonBrace `[ expression sliceop expression ]
 
 syntax accessExpressionNonBrace =
   | errorAccessExpression
@@ -634,8 +634,7 @@ syntax lvalue =
   | referenceExpression
   | lvalue `. member
   | lvalue `[ expression ]
-  | lvalue `[ expression `: expression ]
-  | lvalue `[ expression `+: expression ]
+  | lvalue `[ expression sliceop expression ]
   | `( lvalue )
 
 dec $lvalue_as_expression(lvalue) : expression

@@ -1,0 +1,126 @@
+[#sec-match-action-table-invocation]
+==== Match-action table invocation
+
+// 988
+The semantics of a table invocation statement:
+
+// 989 - Modified
+[source,p4]
+----
+t.apply();
+----
+
+// 990
+is given by the following pseudocode (see also <<fig-maudataflow>>):
+
+// 991
+[source,p4pseudo]
+----
+apply_result(m) m.apply() {
+    apply_result(m) result;
+
+    var lookupKey = m.buildKey(m.key); // using key block
+    action RA = m.table.lookup(lookupKey);
+    if (RA == null) {      // miss in lookup table
+       result.hit = false;
+       RA = m.default_action;  // use default action
+    }
+    else {
+       result.hit = true;
+    }
+    result.miss = !result.hit;
+    result.action_run = action_type(RA);
+    evaluate_and_copy_in_RA_args(RA);
+    execute(RA);
+    copy_out_RA_args(RA);
+    return result;
+}
+----
+
+// 992
+The behavior of the `buildKey` call in the pseudocode above is to evaluate each
+key expression in the order they appear in the table key definition. The
+behavior must be the same as if the result of evaluating each key expression is
+assigned to a fresh temporary variable, before starting the evaluation of the
+following key expression. For example, this P4 table definition and apply call:
+
+// 993
+[source,p4]
+----
+bit<8> f1 (in bit<8> a, inout bit<8> b) {
+    b = a + 5;
+    return a >> 1;
+}
+bit<8> x;
+bit<8> y;
+table t1 {
+    key = {
+        y & 0x7  : exact @name("masked_y");
+        f1(x, y) : exact @name("f1");
+        y        : exact;
+    }
+    // ... rest of table properties defined here, not relevant to example
+}
+apply {
+    // assign values to x and y here, not relevant to example
+    t1.apply();
+}
+----
+
+// 994
+is equivalent in behavior to the following table definition and apply call:
+
+// 995
+[source,p4]
+----
+// same definition of f1, x, and y as before, so they are not repeated here
+bit<8> tmp_1;
+bit<8> tmp_2;
+bit<8> tmp_3;
+table t1 {
+    key = {
+        tmp_1 : exact @name("masked_y");
+        tmp_2 : exact @name("f1");
+        tmp_3 : exact @name("y");
+    }
+    // ... rest of table properties defined here, not relevant to example
+}
+apply {
+    // assign values to x and y here, not relevant to example
+    tmp_1 = y & 0x7;
+    tmp_2 = f1(x, y);
+    tmp_3 = y;
+    t1.apply();
+}
+----
+
+// 996
+Note that the second code example above is given in order to specify
+the behavior of the first one. An implementation is free to choose
+any technique that achieves this behavior.footnote:MostP4ProgramsDontDoThis[
+Most existing P4~16~ programs today do not use function or method calls in
+table key expressions, and the order of evaluation of these key expressions
+makes no difference in the resulting lookup key value. In this overwhelmingly
+common case, if an implementation chooses to insert extra assignment statements
+to implement side-effecting key expressions, but does not insert them when
+there are no side-effecting key expressions, then in typical programs they will
+almost never be inserted.]
+
+// Added
+The following algorithm describes the evaluation of a table apply method
+invocation:
+
+// Added
+${rulegroup-source: Call_eval/tableApplyMethodCallee}
+${rulegroup-prose: Call_eval/tableApplyMethodCallee}
+
+// Added
+The table match-action is implemented as:
+
+// Added
+${relation-title-source: Table_eval}
+${relation-title-prose: Table_eval}
+
+// Added
+${rulegroup-title-source: Table_eval}
+${rulegroup-title-prose: Table_eval}

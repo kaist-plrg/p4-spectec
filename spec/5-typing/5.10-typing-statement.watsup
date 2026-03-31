@@ -14,7 +14,7 @@ rule Stmt_ok/emptyStatement:
 ;;; syntax assignmentStatement = lvalue assignop expression `;
 ;;;; syntax assignop
 
-rulegroup Stmt_ok/asssignmentStatement {
+rulegroup Stmt_ok/assignmentStatement {
 
   rule Stmt_ok/eq:
     p TC f l |- lvalue `= expression `;
@@ -363,6 +363,8 @@ rulegroup ForInitStmt_ok {
 relation ForInitStmts_ok:
   typingContext |- forInitStatement* : typingContext forInitStatementIR*
   hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 rulegroup ForInitStmts_ok {
 
@@ -534,17 +536,17 @@ rule Stmt_ok/continueStatement:
 ;;; switchStatement
 ;;; syntax switchStatement = SWITCH `( expression ) `{ switchCaseList }
 
-dec $check_switchLabel_default(switchLabel*) : bool
+dec $check_switchLabelIR_default(switchLabelIR*) : bool
   hint(prose_true "default label is only in the last position of" %0)
   hint(prose_false "default label is not in the last position of" %0)
 
-def $check_switchLabel_default(eps) = true
-def $check_switchLabel_default(switchLabel_h :: switchLabel_t*)
-  = (switchLabel_t* = eps)
-  -- if switchLabel_h = DEFAULT
-def $check_switchLabel_default(switchLabel_h :: switchLabel_t*)
-  = $check_switchLabel_default(switchLabel_t*)
-  -- if switchLabel_h =/= DEFAULT
+def $check_switchLabelIR_default(eps) = true
+def $check_switchLabelIR_default(switchLabelIR_h :: switchLabelIR_t*)
+  = (switchLabelIR_t* = eps)
+  -- if switchLabelIR_h = DEFAULT
+def $check_switchLabelIR_default(switchLabelIR_h :: switchLabelIR_t*)
+  = $check_switchLabelIR_default(switchLabelIR_t*)
+  -- if switchLabelIR_h =/= DEFAULT
 
 ;;;; Switch on table apply method result
 
@@ -585,11 +587,11 @@ rulegroup SwitchLabel_table_ok {
 
 relation SwitchCase_table_ok:
   typingContext flow loopctxt typeId |- switchCase
-                                      : flow switchCaseIR `# switchLabel
+                                      : flow switchCaseIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "typing" %4 "for table" %3#", under context" %0
                 "with abstract control flow" %1 "and loop context" %2)
-  hint(prose_out "abstract control flow" %5 "and label" %6)
+  hint(prose_out "abstract control flow" %5)
 
 ;;;;;; switchLabel `: blockStatement
 ;;;;;; switchLabel `: 
@@ -598,7 +600,7 @@ rulegroup SwitchCase_table_ok {
 
   rule SwitchCase_table_ok/blockStatement:
     TC f l typeId_table |- switchLabel `: blockStatement
-                         : f_post switchCaseIR `# switchLabel
+                         : f_post switchCaseIR
     ---- ;; check switch label
     -- SwitchLabel_table_ok:
         TC typeId_table |- switchLabel : switchLabelIR
@@ -610,7 +612,7 @@ rulegroup SwitchCase_table_ok {
 
   rule SwitchCase_table_ok/non-blockStatement:
     TC f l typeId_table |- switchLabel `:
-                         : f switchCaseIR `# switchLabel
+                         : f switchCaseIR
     ---- ;; check switch label
     -- SwitchLabel_table_ok:
         TC typeId_table |- switchLabel : switchLabelIR
@@ -623,65 +625,62 @@ rulegroup SwitchCase_table_ok {
 
 relation SwitchCases_table_ok:
   typingContext flow loopctxt typeId |- switchCase*
-                                      : flow switchCaseListIR `# switchLabel*
+                                      : flow switchCaseListIR
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" %4 "for table" %3#", under context" %0
+                "with abstract control flow" %1 "and loop context" %2)
+  hint(prose_out "abstract control flow" %5)
 
 rulegroup SwitchCases_table_ok {
 
   rule SwitchCases_table_ok/nil:
-    TC f l typeId_table |- eps : f eps `# eps
+    TC f l typeId_table |- eps : f eps
 
   rule SwitchCases_table_ok/cons:
     TC f l typeId_table |- switchCase_h :: switchCase_t*
-                      : f_t (switchCaseIR_h :: switchCaseIR_t*) `# (switchLabel_h :: switchLabel_t*)
+                         : f_t (switchCaseIR_h :: switchCaseIR_t*)
     -- SwitchCase_table_ok:
-        TC f l typeId_table |- switchCase_h : f_h switchCaseIR_h `# switchLabel_h
+        TC f l typeId_table |- switchCase_h : f_h switchCaseIR_h
     -- SwitchCases_table_ok:
-        TC f_h l typeId_table |- switchCase_t* : f_t switchCaseIR_t* `# switchLabel_t*
+        TC f_h l typeId_table |- switchCase_t* : f_t switchCaseIR_t*
 
 }
 
 relation SwitchCaseList_table_ok:
   typingContext flow loopctxt typeId |- switchCaseList
-                                      : flow switchCaseListIR `# switchLabel*
+                                      : flow switchCaseListIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "typing" %4 "for table" %3#", under context" %0#
                 ", abstract control flow" %1 "and loop context" %2)
-  hint(prose_out "abstract control flow" %5#", " %6#", and labels" %7)
+  hint(prose_out "abstract control flow" %5 "and" %6)
 
 rule SwitchCaseList_table_ok:
   TC f l typeId_table |- switchCaseList
-                       : f_post switchCaseIR* `# switchLabel*
+                       : f_post switchCaseIR*
   ---- ;; check switch cases
   -- if switchCase* = $flatten_switchCaseList(switchCaseList)
   -- SwitchCases_table_ok:
       TC f l typeId_table |- switchCase*
-                           : f_post switchCaseIR* `# switchLabel*
+                           : f_post switchCaseIR*
 
-rule Stmt_ok/switchStatement-table:
-  LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
-                : TC f_post switchStatementIR
-  ---- ;; switch statements can only be used in a control apply block
-  -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
-  ---- ;; check expression
-  -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
-  -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
-  ---- ;; if the expression is the result of table apply method
-  -- if TABLE_ENUM typeId_table_enum `{ _ }
-      = $unroll_typeIR(typeIR_switch)
+relation Switch_table_ok:
+  typingContext flow loopctxt |- SWITCH `( id ) `{ switchCaseList }
+                               : flow switchCaseIR*
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" SWITCH `( %3 ) `{ %4 } "under context" %0
+                "with abstract control flow" %1 "and loop context" %2)
+  hint(prose_out "abstract control flow" %5 "and" %6)
+
+rule Switch_table_ok:
+  TC f l |- SWITCH `( typeId_table_enum ) `{ switchCaseList }
+          : f_post switchCaseIR*
+  ----
   -- if typeId_table
       = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
   ---- ;; check switch cases
   -- SwitchCaseList_table_ok:
       TC f l typeId_table |- switchCaseList
-                           : f_post switchCaseIR* `# switchLabel*
-  ---- ;; if default case is present, it must be the last
-  -- if $check_switchLabel_default(switchLabel*)
-  ---- ;; switch labels must be unique
-  -- if $distinct_<switchLabel>(switchLabel*)
-  ---- ;; create typed statement
-  -- if switchStatementIR
-      = SWITCH `( typedExpressionIR_switch ) `{ switchCaseIR* }
+                           : f_post switchCaseIR*
 
 ;;;; Switch on error, numeric or enumerated type expression
 
@@ -719,7 +718,7 @@ rulegroup SwitchLabel_general_ok {
 
 relation SwitchCase_general_ok:
   typingContext flow loopctxt typeIR |- switchCase
-                                      : flow switchCaseIR `# switchLabel
+                                      : flow switchCaseIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "typing" %4 "under context" %0
                 "with abstract control flow" %1# ", loop context" %2#
@@ -733,7 +732,7 @@ rulegroup SwitchCase_general_ok {
 
   rule SwitchCase_general_ok/blockStatement:
     TC f l typeIR_switch |- switchLabel `: blockStatement
-                          : f_post switchCaseIR `# switchLabel
+                          : f_post switchCaseIR
     ---- ;; check switch label
     -- SwitchLabel_general_ok:
         TC typeIR_switch |- switchLabel : switchLabelIR
@@ -745,7 +744,7 @@ rulegroup SwitchCase_general_ok {
 
   rule SwitchCase_general_ok/non-blockStatement:
     TC f l typeIR_switch |- switchLabel `:
-                          : f switchCaseIR `# switchLabel
+                          : f switchCaseIR
     ---- ;; check switch label
     -- SwitchLabel_general_ok:
         TC typeIR_switch |- switchLabel : switchLabelIR
@@ -758,43 +757,46 @@ rulegroup SwitchCase_general_ok {
 
 relation SwitchCases_general_ok:
   typingContext flow loopctxt typeIR |- switchCase*
-                                      : flow switchCaseListIR `# switchLabel*
+                                      : flow switchCaseListIR
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" %4 "under context" %0
+                "with abstract control flow" %1# ", loop context" %2#
+                ", and switch key type" %3)
+  hint(prose_out "abstract control flow" %5 "and label" %6)
 
 rulegroup SwitchCases_general_ok {
 
   rule SwitchCases_general_ok/nil:
-    TC f l typeIR_switch |- eps : f eps `# eps
+    TC f l typeIR_switch |- eps : f eps
 
   rule SwitchCases_general_ok/cons:
     TC f l typeIR_switch |- switchCase_h :: switchCase_t*
                           : f_t (switchCaseIR_h :: switchCaseIR_t*)
-                              `# (switchLabel_h :: switchLabel_t*)
     -- SwitchCase_general_ok:
         TC f l typeIR_switch |- switchCase_h
-                              : f_h switchCaseIR_h `# switchLabel_h
+                              : f_h switchCaseIR_h
     -- SwitchCases_general_ok:
         TC f_h l typeIR_switch |- switchCase_t*
-                                : f_t switchCaseIR_t* `# switchLabel_t*
+                                : f_t switchCaseIR_t*
 
 }
 
 relation SwitchCaseList_general_ok:
   typingContext flow loopctxt typeIR |- switchCaseList
-                                      : flow switchCaseListIR `# switchLabel*
+                                      : flow switchCaseListIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "typing" %4 "under context" %0
                 "with abstract control flow" %1#", loop context" %2
                 ", and switch key type" %3)
-  hint(prose_out "abstract control flow" %5 "and labels" %6)
+  hint(prose_out "abstract control flow" %5)
 
 rule SwitchCaseList_general_ok:
   TC f l typeIR_switch |- switchCaseList
-                        : f_post switchCaseIR* `# switchLabel*
+                        : f_post switchCaseIR*
   -- if switchCase* = $flatten_switchCaseList(switchCaseList)
   -- SwitchCases_general_ok:
       TC f l typeIR_switch |- switchCase*
-                            : f_post switchCaseIR* `# switchLabel*
+                            : f_post switchCaseIR*
 
 tbl dec $compat_switch(typeIR) : bool
   hint(prose_true %0 "is a valid switch key type")
@@ -807,27 +809,74 @@ tbl def $compat_switch =
   | enumTypeIR => true
   | _ => false
 
-rule Stmt_ok/switchStatement-general:
-  LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
-                : TC f_post switchStatementIR
-  ---- ;; switch statements can only be used in a control apply block
-  -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
-  ---- ;; check expression
-  -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+relation Switch_general_ok:
+  typingContext flow loopctxt |- SWITCH `( typedExpressionIR ) `{ switchCaseList }
+                               : flow switchCaseIR*
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" SWITCH `( %3 ) `{ %4 } "under context" %0
+                "with abstract control flow" %1 "and loop context" %2)
+  hint(prose_out "abstract control flow" %5 "and" %6)
+
+rule Switch_general_ok:
+  TC f l |- SWITCH `( typedExpressionIR_switch ) `{ switchCaseList }
+          : f_post switchCaseIR*
+  ----
   -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
   ---- ;; if the expression is error, numeric or enumerated type
   -- if $compat_switch(typeIR_switch)
   ---- ;; check switch cases
   -- SwitchCaseList_general_ok:
       TC f l typeIR_switch |- switchCaseList
-                            : f_post switchCaseIR* `# switchLabel*
-  ---- ;; if default case is present, it must be the last
-  -- if $check_switchLabel_default(switchLabel*)
-  ---- ;; switch labels must be unique
-  -- if $distinct_<switchLabel>(switchLabel*)
-  ---- ;; create typed statement
-  -- if switchStatementIR
-      = SWITCH `( typedExpressionIR_switch ) `{ switchCaseIR* }
+                            : f_post switchCaseIR*
+
+rulegroup Stmt_ok/switchStatement {
+
+  rule Stmt_ok/table:
+    LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
+                  : TC f_post switchStatementIR
+    ---- ;; switch statements can only be used in a control apply block
+    -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+    -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
+    ---- ;; if the expression is the result of table apply method
+    -- if TABLE_ENUM typeId_table_enum `{ _ }
+        = $unroll_typeIR(typeIR_switch)
+    -- Switch_table_ok:
+        TC f l |- SWITCH `( typeId_table_enum ) `{ switchCaseList }
+                : f_post switchCaseIR*
+    -- if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*
+    ---- ;; if default case is present, it must be the last
+    -- if $check_switchLabelIR_default(switchLabelIR*)
+    ---- ;; switch labels must be unique
+    -- if $distinct_<switchLabelIR>(switchLabelIR*)
+    ---- ;; create typed statement
+    -- if switchStatementIR
+        = SWITCH `( typedExpressionIR_switch ) `{ switchCaseIR* }
+
+  rule Stmt_ok/general:
+    LOCAL TC f l |- SWITCH `( expression_switch ) `{ switchCaseList }
+                  : TC f_post switchStatementIR
+    ---- ;; switch statements can only be used in a control apply block
+    -- if TC.LOCAL.KIND = CONTROL_APPLY_METHOD
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
+    -- if typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
+    ---- ;; if the expression is not the result of table apply method
+    -- if ~($unroll_typeIR(typeIR_switch) <: tableMetadataEnumTypeIR)
+    -- Switch_general_ok:
+        TC f l |- SWITCH `( typedExpressionIR_switch ) `{ switchCaseList }
+                : f_post switchCaseIR*
+    -- if (switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*
+    ---- ;; if default case is present, it must be the last
+    -- if $check_switchLabelIR_default(switchLabelIR*)
+    ---- ;; switch labels must be unique
+    -- if $distinct_<switchLabelIR>(switchLabelIR*)
+    ---- ;; create typed statement
+    -- if switchStatementIR
+        = SWITCH `( typedExpressionIR_switch ) `{ switchCaseIR* }
+
+}
 
 ;;
 ;; syntax blockElementStatement

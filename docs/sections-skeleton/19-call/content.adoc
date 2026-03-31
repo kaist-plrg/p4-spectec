@@ -1,0 +1,68 @@
+[#sec-call]
+== Calls
+
+// Added
+Calls can be made in several different contexts:
+
+// Added
+* From call expressions (<<sec-call-expression>>), to invoke a callable or a
+  constructor.
+* From call statements (<<sec-call-statement>>), to invoke a callable.
+* From a direct type invocation (<<sec-direct-type-invocation>>), which is a
+  syntactic sugar for invoking a constructor and then immediately calling an
+  apply method on the resulting instance.
+* From an instantiation declaration (<<sec-instantiation-declaration>>), to
+  invoke a constructor.
+
+// 608 - Modified
+A callable invocation can optionally specify for each argument the
+corresponding parameter name. It is illegal to use names only for some
+arguments: either all or no arguments must specify the parameter name. Calalble
+arguments are evaluated in the order they appear, left to right, before the
+function invocation takes place.
+
+// 609
+[source,p4]
+----
+extern void f(in bit<32> x, out bit<16> y);
+bit<32> xa = 0;
+bit<16> ya;
+f(xa, ya);  // match arguments by position
+f(x = xa, y = ya);  // match arguments by name
+f(y = ya, x = xa);  // match arguments by name in any order
+//f(x = xa);  -- error: enough arguments
+//f(x = xa, x = ya);  -- error: argument specified twice
+//f(x = xa, ya);  -- error: some arguments specified by name
+//f(z = xa, w = yz);  -- error: no parameter named z or w
+//f(x = xa, y = 0);  -- error: y must be a left-value
+----
+
+// 610 - Modified
+The calling convention is copy-in/copy-out (<<sec-call-convention-overview>>).
+For generic callables and constructors the type arguments can be explicitly
+specified in the call. The compiler only inserts implicit casts for direction
+`in` or directionless arguments to methods, functions, or constructors as
+described in <<sec-casts>>. The types for all other arguments must match the
+parameter types exactly.
+
+// 611
+The result returned by a call is discarded when the function call is used as a
+statement.
+
+// 612 - Modified
+The "don't care" identifier (`_`) can only be used for an `out` function/method
+argument, when the value of returned in that argument is ignored by subsequent
+computations. When used in generic callables, the compiler may reject the
+program if it is unable to infer a type for the don't care argument.
+
+// Added
+This section describes the semantics of calls in detail. In particular, it
+explains how the call target is found (also with overload resolution), how the
+call convention is checked, and how the call is evaluated at runtime.
+
+include::01-call-target.adoc[]
+include::02-overload-resolution.adoc[]
+include::03-callee-resolution.adoc[]
+include::04-call-convention.adoc[]
+include::05-constructor-call-evaluation.adoc[]
+include::06-callable-call-evaluation.adoc[]

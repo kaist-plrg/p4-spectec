@@ -657,16 +657,18 @@ syntax memberAccessExpression =
 syntax indexAccessExpression = 
    | expression [ expression ] (from indexAccessExpression) 
 
+syntax sliceop = 
+   | : (from sliceop) 
+   | +: (from sliceop) 
+
 syntax sliceAccessExpression = 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
 
 syntax accessExpression = 
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
 
 syntax memberAccessExpressionNonBrace = 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
@@ -675,15 +677,13 @@ syntax indexAccessExpressionNonBrace =
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
 
 syntax sliceAccessExpressionNonBrace = 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
 
 syntax accessExpressionNonBrace = 
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
 
 syntax callExpression = 
    | callTarget ( argumentList ) (from callExpression) 
@@ -723,8 +723,7 @@ syntax expression =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -757,8 +756,7 @@ syntax expressionList =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -806,8 +804,7 @@ syntax memberAccessBase =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -848,8 +845,7 @@ syntax sequenceOrRecordElementExpression =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -890,8 +886,7 @@ syntax callTarget =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -923,8 +918,7 @@ syntax expressionNonBrace =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
    | callTargetNonBrace ( argumentList ) (from callExpressionNonBrace) 
    | callableTargetNonBrace < realTypeArgumentList > ( argumentList ) (from callExpressionNonBrace) 
    | ( expression ) (from parenthesizedExpression) 
@@ -955,8 +949,7 @@ syntax memberAccessBaseNonBrace =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
    | callTargetNonBrace ( argumentList ) (from callExpressionNonBrace) 
    | callableTargetNonBrace < realTypeArgumentList > ( argumentList ) (from callExpressionNonBrace) 
    | ( expression ) (from parenthesizedExpression) 
@@ -987,8 +980,7 @@ syntax callTargetNonBrace =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
    | callTargetNonBrace ( argumentList ) (from callExpressionNonBrace) 
    | callableTargetNonBrace < realTypeArgumentList > ( argumentList ) (from callExpressionNonBrace) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1048,16 +1040,14 @@ def $expressionNonBrace_as_expression(expressionNonBrace) : expression =
 
   clause 10 : (expressionNonBrace) = expression_base [ expression_hi : expression_lo ] as expression
   -- if expressionNonBrace <: sliceAccessExpressionNonBrace
-  -- let sliceAccessExpressionNonBrace = expressionNonBrace as sliceAccessExpressionNonBrace
-  -- if sliceAccessExpressionNonBrace matches `% [% : %]`
-  -- let expressionNonBrace_base [ expression_hi : expression_lo ] = sliceAccessExpressionNonBrace
+  -- let expressionNonBrace_base [ expression_hi sliceop expression_lo ] = expressionNonBrace as sliceAccessExpressionNonBrace
+  -- if sliceop matches `:`
   -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
   clause 11 : (expressionNonBrace) = expression_base [ expression_l +: expression_w ] as expression
   -- if expressionNonBrace <: sliceAccessExpressionNonBrace
-  -- let sliceAccessExpressionNonBrace = expressionNonBrace as sliceAccessExpressionNonBrace
-  -- if sliceAccessExpressionNonBrace matches `% [% +: %]`
-  -- let expressionNonBrace_base [ expression_l +: expression_w ] = sliceAccessExpressionNonBrace
+  -- let expressionNonBrace_base [ expression_l sliceop expression_w ] = expressionNonBrace as sliceAccessExpressionNonBrace
+  -- if sliceop matches `+:`
   -- let expression_base = $expressionNonBrace_as_expression(expressionNonBrace_base)
 
   clause 12 : (expressionNonBrace') = expression as callTarget ( argumentList ) as expression
@@ -1115,8 +1105,7 @@ syntax simpleKeysetExpression =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1152,8 +1141,7 @@ syntax simpleKeysetExpressionList =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1207,8 +1195,7 @@ syntax keysetExpression =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1379,8 +1366,7 @@ syntax argument =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1415,8 +1401,7 @@ syntax argumentListNonEmpty =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1453,8 +1438,7 @@ syntax argumentList =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1491,8 +1475,7 @@ syntax lvalue =
    | THIS (from referenceExpression) 
    | lvalue . member (from lvalue) 
    | lvalue [ expression ] (from lvalue) 
-   | lvalue [ expression : expression ] (from lvalue) 
-   | lvalue [ expression +: expression ] (from lvalue) 
+   | lvalue [ expression sliceop expression ] (from lvalue) 
    | ( lvalue ) (from lvalue) 
 
 def $lvalue_as_expression(lvalue) : expression =
@@ -1512,13 +1495,15 @@ def $lvalue_as_expression(lvalue) : expression =
   -- let expression_base = $lvalue_as_expression(lvalue_base)
 
   clause 3 : (lvalue) = expression_base [ expression_hi : expression_lo ] as expression
-  -- if lvalue matches `% [% : %]`
-  -- let lvalue_base [ expression_hi : expression_lo ] = lvalue
+  -- if lvalue matches `% [% % %]`
+  -- let lvalue_base [ expression_hi sliceop expression_lo ] = lvalue
+  -- if sliceop matches `:`
   -- let expression_base = $lvalue_as_expression(lvalue_base)
 
   clause 4 : (lvalue) = expression_base [ expression_hi +: expression_lo ] as expression
-  -- if lvalue matches `% [% +: %]`
-  -- let lvalue_base [ expression_hi +: expression_lo ] = lvalue
+  -- if lvalue matches `% [% % %]`
+  -- let lvalue_base [ expression_hi sliceop expression_lo ] = lvalue
+  -- if sliceop matches `+:`
   -- let expression_base = $lvalue_as_expression(lvalue_base)
 
   clause 5 : (lvalue') = ( expression ) as expression
@@ -1550,18 +1535,16 @@ def $expression_as_lvalue(expression) : lvalue? =
 
   clause 3 : (expression) = ?(lvalue_base [ expression_hi : expression_lo ])
   -- if expression <: sliceAccessExpression
-  -- let sliceAccessExpression = expression as sliceAccessExpression
-  -- if sliceAccessExpression matches `% [% : %]`
-  -- let expression_base [ expression_hi : expression_lo ] = sliceAccessExpression
+  -- let expression_base [ expression_hi sliceop expression_lo ] = expression as sliceAccessExpression
+  -- if sliceop matches `:`
   -- let lvalue?{lvalue <- lvalue?} = $expression_as_lvalue(expression_base)
   -- if lvalue?{lvalue <- lvalue?} matches (_)
   -- let ?(lvalue_base) = lvalue?{lvalue <- lvalue?}
 
   clause 4 : (expression) = ?(lvalue_base [ expression_hi +: expression_lo ])
   -- if expression <: sliceAccessExpression
-  -- let sliceAccessExpression = expression as sliceAccessExpression
-  -- if sliceAccessExpression matches `% [% +: %]`
-  -- let expression_base [ expression_hi +: expression_lo ] = sliceAccessExpression
+  -- let expression_base [ expression_hi sliceop expression_lo ] = expression as sliceAccessExpression
+  -- if sliceop matches `+:`
   -- let lvalue?{lvalue <- lvalue?} = $expression_as_lvalue(expression_base)
   -- if lvalue?{lvalue <- lvalue?} matches (_)
   -- let ?(lvalue_base) = lvalue?{lvalue <- lvalue?}
@@ -1751,8 +1734,7 @@ syntax forCollectionExpression =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBase . member (from memberAccessExpression) 
    | expression [ expression ] (from indexAccessExpression) 
-   | expression [ expression : expression ] (from sliceAccessExpression) 
-   | expression [ expression +: expression ] (from sliceAccessExpression) 
+   | expression [ expression sliceop expression ] (from sliceAccessExpression) 
    | callTarget ( argumentList ) (from callExpression) 
    | callableTarget < realTypeArgumentList > ( argumentList ) (from callExpression) 
    | ( expression ) (from parenthesizedExpression) 
@@ -1788,8 +1770,7 @@ syntax switchLabel =
    | ERROR . member (from errorAccessExpression) 
    | memberAccessBaseNonBrace . member (from memberAccessExpressionNonBrace) 
    | expressionNonBrace [ expression ] (from indexAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression : expression ] (from sliceAccessExpressionNonBrace) 
-   | expressionNonBrace [ expression +: expression ] (from sliceAccessExpressionNonBrace) 
+   | expressionNonBrace [ expression sliceop expression ] (from sliceAccessExpressionNonBrace) 
    | callTargetNonBrace ( argumentList ) (from callExpressionNonBrace) 
    | callableTargetNonBrace < realTypeArgumentList > ( argumentList ) (from callExpressionNonBrace) 
    | ( expression ) (from parenthesizedExpression) 
@@ -7064,15 +7045,13 @@ syntax indexAccessExpressionIR =
    | typedExpressionIR [ typedExpressionIR ] (from indexAccessExpressionIR) 
 
 syntax sliceAccessExpressionIR = 
-   | typedExpressionIR [ typedExpressionIR : typedExpressionIR ] (from sliceAccessExpressionIR) 
-   | typedExpressionIR [ typedExpressionIR +: typedExpressionIR ] (from sliceAccessExpressionIR) 
+   | typedExpressionIR [ typedExpressionIR sliceop typedExpressionIR ] (from sliceAccessExpressionIR) 
 
 syntax accessExpressionIR = 
    | ERROR . nameIR (from errorAccessExpressionIR) 
    | memberAccessBaseIR . nameIR (from memberAccessExpressionIR) 
    | typedExpressionIR [ typedExpressionIR ] (from indexAccessExpressionIR) 
-   | typedExpressionIR [ typedExpressionIR : typedExpressionIR ] (from sliceAccessExpressionIR) 
-   | typedExpressionIR [ typedExpressionIR +: typedExpressionIR ] (from sliceAccessExpressionIR) 
+   | typedExpressionIR [ typedExpressionIR sliceop typedExpressionIR ] (from sliceAccessExpressionIR) 
 
 syntax callableTargetIR = 
    | ` nameIR (from prefixedNameIR)  hint(print %0)
@@ -7113,8 +7092,7 @@ syntax expressionIR =
    | ERROR . nameIR (from errorAccessExpressionIR) 
    | memberAccessBaseIR . nameIR (from memberAccessExpressionIR) 
    | typedExpressionIR [ typedExpressionIR ] (from indexAccessExpressionIR) 
-   | typedExpressionIR [ typedExpressionIR : typedExpressionIR ] (from sliceAccessExpressionIR) 
-   | typedExpressionIR [ typedExpressionIR +: typedExpressionIR ] (from sliceAccessExpressionIR) 
+   | typedExpressionIR [ typedExpressionIR sliceop typedExpressionIR ] (from sliceAccessExpressionIR) 
    | constructorTargetIR ( argumentListIR ) (from callExpressionIR) 
    | callableTargetIR < typeArgumentListIR > ( argumentListIR ) (from callExpressionIR) 
    | ( typedExpressionIR ) (from parenthesizedExpressionIR) 
@@ -7186,8 +7164,7 @@ syntax lvalueIR =
    | . nameIR (from prefixedNameIR) 
    | typedLvalueIR . nameIR (from lvalueIR) 
    | typedLvalueIR [ typedExpressionIR ] (from lvalueIR) 
-   | typedLvalueIR [ typedExpressionIR : typedExpressionIR ] (from lvalueIR) 
-   | typedLvalueIR [ typedExpressionIR +: typedExpressionIR ] (from lvalueIR) 
+   | typedLvalueIR [ typedExpressionIR sliceop typedExpressionIR ] (from lvalueIR) 
    | ( typedLvalueIR ) (from lvalueIR) 
 
 syntax lvalueNoteIR = 
@@ -7222,15 +7199,17 @@ def $typedLvalueIR_as_typedExpressionIR(typedLvalueIR) : typedExpressionIR? =
   -- let ?(typedExpressionIR_base) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
 
   clause 3 : (lvalueIR # ( typeIR )) = ?(typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # ( typeIR DYN ))
-  -- if lvalueIR matches `% [% : %]`
-  -- let typedLvalueIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = lvalueIR
+  -- if lvalueIR matches `% [% % %]`
+  -- let typedLvalueIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = lvalueIR
+  -- if sliceop matches `:`
   -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR_base)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
 
   clause 4 : (lvalueIR # ( typeIR )) = ?(typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # ( typeIR DYN ))
-  -- if lvalueIR matches `% [% +: %]`
-  -- let typedLvalueIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = lvalueIR
+  -- if lvalueIR matches `% [% % %]`
+  -- let typedLvalueIR_base [ typedExpressionIR_l sliceop typedExpressionIR_w ] = lvalueIR
+  -- if sliceop matches `+:`
   -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $typedLvalueIR_as_typedExpressionIR(typedLvalueIR_base)
   -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
   -- let ?(typedExpressionIR_base) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
@@ -7259,18 +7238,16 @@ def $typedExpressionIR_as_typedLvalueIR(typedExpressionIR) : typedLvalueIR? =
 
   clause 3 : (expressionIR # ( typeIR _ctk )) = ?(typedLvalueIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] # ( typeIR ))
   -- if expressionIR <: sliceAccessExpressionIR
-  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-  -- if sliceAccessExpressionIR matches `% [% : %]`
-  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
+  -- let typedExpressionIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
+  -- if sliceop matches `:`
   -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
   -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
   -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
 
   clause 4 : (expressionIR # ( typeIR _ctk )) = ?(typedLvalueIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] # ( typeIR ))
   -- if expressionIR <: sliceAccessExpressionIR
-  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-  -- if sliceAccessExpressionIR matches `% [% +: %]`
-  -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
+  -- let typedExpressionIR_base [ typedExpressionIR_l sliceop typedExpressionIR_w ] = expressionIR as sliceAccessExpressionIR
+  -- if sliceop matches `+:`
   -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base)
   -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
   -- let ?(typedLvalueIR_base) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
@@ -7335,6 +7312,16 @@ syntax switchLabelIR =
 syntax switchCaseIR = 
    | switchLabelIR : blockStatementIR (from switchCaseIR) 
    | switchLabelIR : (from switchCaseIR) 
+
+def $switchLabelIR_of_switchCaseIR(switchCaseIR) : switchLabelIR =
+
+  clause 0 : (switchCaseIR) = switchLabelIR
+  -- if switchCaseIR matches `% : %`
+  -- let switchLabelIR : _blockStatementIR = switchCaseIR
+
+  clause 1 : (switchCaseIR) = switchLabelIR
+  -- if switchCaseIR matches `% :`
+  -- let switchLabelIR : = switchCaseIR
 
 syntax switchCaseListIR = switchCaseIR*
 
@@ -8133,9 +8120,8 @@ def $subexpressions_of_expressionIR(expressionIR) : typedExpressionListIR =
 
   clause 10 : (expressionIR) = $subexpressions_of_typedExpressionIR(typedExpressionIR_base) ++ $subexpressions_of_typedExpressionIR(typedExpressionIR_hi) ++ $subexpressions_of_typedExpressionIR(typedExpressionIR_lo)
   -- if expressionIR <: sliceAccessExpressionIR
-  -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-  -- if sliceAccessExpressionIR matches `% [% : %]`
-  -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
+  -- let typedExpressionIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
+  -- if sliceop matches `:`
 
   clause 11 : (expressionIR) = $subexpressions_of_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
   -- if expressionIR <: callExpressionIR
@@ -11006,26 +10992,26 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
    match
 
-    (signature) p TC |- sliceAccessExpressionIR as expressionIR # _expressionNoteIR ~> %
+    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR sliceop typedExpressionIR' ] as expressionIR # _expressionNoteIR ~> %
     p TC |- expressionIR # _expressionNoteIR ~> %
     -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR sliceop typedExpressionIR' ] = expressionIR as sliceAccessExpressionIR
 
    paths
 
     rulepath range
-    -- let sliceAccessExpressionIR' = sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR' matches `% [% : %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR'
+    -- let typedExpressionIR_hi = typedExpressionIR
+    -- if (sliceop = :)
+    -- let typedExpressionIR_lo = typedExpressionIR'
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
     -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
     -- output: % % |- % ~> $bitacc_range_op(value_base, value_hi, value_lo)
 
     rulepath offset
-    -- let sliceAccessExpressionIR' = sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR' matches `% [% +: %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR'
+    -- let typedExpressionIR_l = typedExpressionIR
+    -- if (sliceop = +:)
+    -- let typedExpressionIR_w = typedExpressionIR'
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
@@ -11142,33 +11128,26 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
 relation Argument_eval_lctk: cursor typingContext |- argumentIR ~> value
 
-  rulegroup typedExpressionIR
+  rulegroup 
 
    match
 
-    (signature) p TC |- typedExpressionIR as argumentIR ~> %
+    (signature) p TC |- argumentIR ~> %
     p TC |- argumentIR ~> %
-    -- if argumentIR <: typedExpressionIR
-    -- let typedExpressionIR = argumentIR as typedExpressionIR
 
    paths
 
     rulepath typedExpressionIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR' as typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> value
 
-  rulegroup namedArgumentIR
-
-   match
-
-    (signature) p TC |- nameIR = typedExpressionIR ~> %
-    p TC |- argumentIR ~> %
-    -- if argumentIR matches `% = %`
-    -- let nameIR = typedExpressionIR = argumentIR
-
-   paths
-
     rulepath namedArgumentIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = %`
+    -- let nameIR = typedExpressionIR = argumentIR'
     -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
     -- output: % % |- % ~> value
 
@@ -11501,64 +11480,35 @@ relation TypeParameterListOpt_ok: cursor typingContext |- typeParameterListOpt :
 
 relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR # typeId*
 
-  rulegroup type
+  rulegroup 
 
    match
 
-    (signature) p TC |- type as typeArgument : % # %
+    (signature) p TC |- typeArgument : % # %
     p TC |- typeArgument : % # %
-    -- if typeArgument <: type
-    -- let type = typeArgument as type
 
    paths
 
     rulepath type
+    -- let typeArgument' = typeArgument
+    -- if typeArgument' <: type
+    -- let type = typeArgument' as type
     -- Type_ok: p TC |- type as typeOrVoid : typeIR # typeId_impl*{typeId_impl <- typeId_impl*}
     -- output: % % |- % : typeIR # typeId_impl*{typeId_impl <- typeId_impl*}
 
-  rulegroup void
-
-   match
-
-    (signature) p TC |- VOID as typeArgument : % # %
-    p TC |- typeArgument : % # %
-    -- if typeArgument <: realTypeArgument
-    -- let realTypeArgument = typeArgument as realTypeArgument
-    -- if realTypeArgument matches `VOID`
-
-   paths
-
     rulepath void
+    -- if (typeArgument = VOID as typeArgument)
     -- output: % % |- % : VOID as typeIR # []
 
-  rulegroup dontcare
-
-   match
-
-    (signature) p TC |- _ as typeArgument : % # %
-    p TC |- typeArgument : % # %
-    -- if typeArgument <: realTypeArgument
-    -- let realTypeArgument = typeArgument as realTypeArgument
-    -- if realTypeArgument matches `_`
-
-   paths
-
     rulepath dontcare
+    -- if (typeArgument = _ as typeArgument)
     -- let typeId_impl = $fresh_typeId
     -- output: % % |- % : ` typeId_impl as typeIR # [typeId_impl]
 
-  rulegroup nonTypeName
-
-   match
-
-    (signature) p TC |- nonTypeName as typeArgument : % # %
-    p TC |- typeArgument : % # %
-    -- if typeArgument <: nonTypeName
-    -- let nonTypeName = typeArgument as nonTypeName
-
-   paths
-
     rulepath nonTypeName
+    -- let typeArgument' = typeArgument
+    -- if typeArgument' <: nonTypeName
+    -- let nonTypeName = typeArgument' as nonTypeName
     -- let typeId = $name(nonTypeName as name)
     -- output: % % |- % : ` typeId as typeIR # []
 
@@ -13234,20 +13184,21 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
 
-  rulegroup sliceAccessExpression-range
+  rulegroup sliceAccessExpression
 
    match
 
-    (signature) p TC |- expression_base [ expression_hi : expression_lo ] as expression : %
-    p TC |- expression : %
-    -- if expression <: sliceAccessExpression
-    -- let sliceAccessExpression = expression as sliceAccessExpression
-    -- if sliceAccessExpression matches `% [% : %]`
-    -- let expression_base [ expression_hi : expression_lo ] = sliceAccessExpression
+    (signature) p TC |- expression_base [ expression sliceop expression' ] as expression : %
+    p TC |- expression'' : %
+    -- if expression'' <: sliceAccessExpression
+    -- let expression_base [ expression sliceop expression' ] = expression'' as sliceAccessExpression
 
    paths
 
-    rulepath sliceAccessExpression-range
+    rulepath range
+    -- let expression_hi = expression
+    -- if (sliceop = :)
+    -- let expression_lo = expression'
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
@@ -13288,20 +13239,10 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] as expressionIR # expressionNoteIR
 
-  rulegroup sliceAccessExpression-offset
-
-   match
-
-    (signature) p TC |- expression_base [ expression_l +: expression_w ] as expression : %
-    p TC |- expression : %
-    -- if expression <: sliceAccessExpression
-    -- let sliceAccessExpression = expression as sliceAccessExpression
-    -- if sliceAccessExpression matches `% [% +: %]`
-    -- let expression_base [ expression_l +: expression_w ] = sliceAccessExpression
-
-   paths
-
-    rulepath lo-lctk
+    rulepath offset-lo-lctk
+    -- let expression_l = expression
+    -- if (sliceop = +:)
+    -- let expression_w = expression'
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
@@ -13342,7 +13283,10 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let expressionNoteIR = ( typeIR ctk_base_reduced )
     -- output: % % |- % : typedExpressionIR_base [ typedExpressionIR_l_reduced +: typedExpressionIR_w_reduced ] as expressionIR # expressionNoteIR
 
-    rulepath lo-non-lctk
+    rulepath offset-lo-non-lctk
+    -- let expression_l = expression
+    -- if (sliceop = +:)
+    -- let expression_w = expression'
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
@@ -13504,63 +13448,39 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
 
 relation Argument_ok: cursor typingContext |- argument : argumentIR
 
-  rulegroup expression
+  rulegroup 
 
    match
 
-    (signature) p TC |- expression as argument : %
+    (signature) p TC |- argument : %
     p TC |- argument : %
-    -- if argument <: expression
-    -- let expression = argument as expression
 
    paths
 
     rulepath expression
+    -- let argument' = argument
+    -- if argument' <: expression
+    -- let expression = argument' as expression
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- output: % % |- % : typedExpressionIR as argumentIR
 
-  rulegroup name-expression
-
-   match
-
-    (signature) p TC |- name = expression : %
-    p TC |- argument : %
-    -- if argument matches `% = %`
-    -- let name = expression = argument
-
-   paths
-
     rulepath name-expression
+    -- let argument' = argument
+    -- if argument' matches `% = %`
+    -- let name = expression = argument'
     -- let nameIR = $name(name)
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- output: % % |- % : nameIR = typedExpressionIR
 
-  rulegroup name-dontcare
-
-   match
-
-    (signature) p TC |- name = _ : %
-    p TC |- argument : %
-    -- if argument matches `% = _`
-    -- let name = _ = argument
-
-   paths
-
     rulepath name-dontcare
+    -- let argument' = argument
+    -- if argument' matches `% = _`
+    -- let name = _ = argument'
     -- let nameIR = $name(name)
     -- output: % % |- % : nameIR = _
 
-  rulegroup dontcare
-
-   match
-
-    (signature) p TC |- _ : %
-    p TC |- argument : %
-    -- if argument matches `_`
-
-   paths
-
     rulepath dontcare
+    -- if (argument = _)
     -- output: % % |- % : _
 
 relation ArgumentList_ok: cursor typingContext |- argumentList : argumentListIR
@@ -13712,18 +13632,21 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
 
-  rulegroup sliceAccess-range
+  rulegroup sliceAccess
 
    match
 
-    (signature) p TC |- lvalue_base [ expression_hi : expression_lo ] : %
+    (signature) p TC |- lvalue_base [ expression sliceop expression' ] : %
     p TC |- lvalue : %
-    -- if lvalue matches `% [% : %]`
-    -- let lvalue_base [ expression_hi : expression_lo ] = lvalue
+    -- if lvalue matches `% [% % %]`
+    -- let lvalue_base [ expression sliceop expression' ] = lvalue
 
    paths
 
-    rulepath sliceAccess-range
+    rulepath range
+    -- let expression_hi = expression
+    -- if (sliceop = :)
+    -- let expression_lo = expression'
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- if $compat_bitslice_base(typeIR_base)
@@ -13759,18 +13682,10 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced ] # ( typeIR )
     -- output: % % |- % : typedLvalueIR
 
-  rulegroup sliceAccess-offset
-
-   match
-
-    (signature) p TC |- lvalue_base [ expression_l +: expression_w ] : %
-    p TC |- lvalue : %
-    -- if lvalue matches `% [% +: %]`
-    -- let lvalue_base [ expression_l +: expression_w ] = lvalue
-
-   paths
-
-    rulepath sliceAccess-offset
+    rulepath offset
+    -- let expression_l = expression
+    -- if (sliceop = +:)
+    -- let expression_w = expression'
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
     -- if $compat_bitslice_base(typeIR_base)
@@ -13833,7 +13748,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     rulepath emptyStatement
     -- output: % % % % |- % : TC f ; as statementIR
 
-  rulegroup asssignmentStatement
+  rulegroup assignmentStatement
 
    match
 
@@ -14156,7 +14071,7 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
     rulepath continueStatement
     -- output: % % % % |- % : TC f continueStatement as statementIR
 
-  rulegroup switchStatement-table
+  rulegroup switchStatement
 
    match
 
@@ -14168,40 +14083,29 @@ relation Stmt_ok: cursor typingContext flow loopctxt |- statement : typingContex
 
    paths
 
-    rulepath switchStatement-table
+    rulepath table
     -- if (TC.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
     -- let typeIR = $unroll_typeIR(typeIR_switch)
     -- if typeIR <: tableMetadataEnumTypeIR
     -- let TABLE_ENUM typeId_table_enum { _nameIR*{_nameIR <- _nameIR*} } = typeIR as tableMetadataEnumTypeIR
-    -- let typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
-    -- SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
-    -- if $check_switchLabel_default(switchLabel*{switchLabel <- switchLabel*})
-    -- if $distinct_<switchLabel>(switchLabel*{switchLabel <- switchLabel*})
+    -- Switch_table_ok: TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- (let switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*{switchCaseIR <- switchCaseIR*, switchLabelIR -> switchLabelIR*}
+    -- if $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*})
+    -- if $distinct_<switchLabelIR>(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- let switchStatementIR = SWITCH ( typedExpressionIR_switch ) { switchCaseIR*{switchCaseIR <- switchCaseIR*} }
     -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
 
-  rulegroup switchStatement-general
-
-   match
-
-    (signature) LOCAL TC f l |- SWITCH ( expression_switch ) { switchCaseList } as statement : % % %
-    cursor TC f l |- statement : % % %
-    -- if cursor matches `LOCAL`
-    -- if statement <: switchStatement
-    -- let SWITCH ( expression_switch ) { switchCaseList } = statement as switchStatement
-
-   paths
-
-    rulepath switchStatement-general
+    rulepath general
     -- if (TC.LOCAL.KIND = CONTROL_APPLY_METHOD as localKind)
     -- Expr_ok: LOCAL TC |- expression_switch : typedExpressionIR_switch
     -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
-    -- if $compat_switch(typeIR_switch)
-    -- SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
-    -- if $check_switchLabel_default(switchLabel*{switchLabel <- switchLabel*})
-    -- if $distinct_<switchLabel>(switchLabel*{switchLabel <- switchLabel*})
+    -- if ~$unroll_typeIR(typeIR_switch) <: tableMetadataEnumTypeIR
+    -- Switch_general_ok: TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- (let switchLabelIR = $switchLabelIR_of_switchCaseIR(switchCaseIR))*{switchCaseIR <- switchCaseIR*, switchLabelIR -> switchLabelIR*}
+    -- if $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*})
+    -- if $distinct_<switchLabelIR>(switchLabelIR*{switchLabelIR <- switchLabelIR*})
     -- let switchStatementIR = SWITCH ( typedExpressionIR_switch ) { switchCaseIR*{switchCaseIR <- switchCaseIR*} }
     -- output: % % % % |- % : TC f_post switchStatementIR as statementIR
 
@@ -18139,20 +18043,20 @@ tbl def $compat_range(typeIR, typeIR) : bool =
     (signature) _typeIR, _typeIR'
     (_typeIR, _typeIR') -> false
 
-def $check_switchLabel_default(switchLabel*) : bool =
+def $check_switchLabelIR_default(switchLabelIR*) : bool =
 
-  clause 0 : (switchLabel*{switchLabel <- switchLabel*}) = true
-  -- if switchLabel*{switchLabel <- switchLabel*} matches []
+  clause 0 : (switchLabelIR*{switchLabelIR <- switchLabelIR*}) = true
+  -- if switchLabelIR*{switchLabelIR <- switchLabelIR*} matches []
 
-  clause 1 : (switchLabel*{switchLabel <- switchLabel*}) = (switchLabel_t*{switchLabel_t <- switchLabel_t*} = [])
-  -- if switchLabel*{switchLabel <- switchLabel*} matches _ :: _
-  -- let switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*} = switchLabel*{switchLabel <- switchLabel*}
-  -- if (switchLabel_h = DEFAULT)
+  clause 1 : (switchLabelIR*{switchLabelIR <- switchLabelIR*}) = (switchLabelIR_t*{switchLabelIR_t <- switchLabelIR_t*} = [])
+  -- if switchLabelIR*{switchLabelIR <- switchLabelIR*} matches _ :: _
+  -- let switchLabelIR_h :: switchLabelIR_t*{switchLabelIR_t <- switchLabelIR_t*} = switchLabelIR*{switchLabelIR <- switchLabelIR*}
+  -- if (switchLabelIR_h = DEFAULT)
 
-  clause 2 : (switchLabel*{switchLabel <- switchLabel*}) = $check_switchLabel_default(switchLabel_t*{switchLabel_t <- switchLabel_t*})
-  -- if switchLabel*{switchLabel <- switchLabel*} matches _ :: _
-  -- let switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*} = switchLabel*{switchLabel <- switchLabel*}
-  -- if (switchLabel_h =/= DEFAULT)
+  clause 2 : (switchLabelIR*{switchLabelIR <- switchLabelIR*}) = $check_switchLabelIR_default(switchLabelIR_t*{switchLabelIR_t <- switchLabelIR_t*})
+  -- if switchLabelIR*{switchLabelIR <- switchLabelIR*} matches _ :: _
+  -- let switchLabelIR_h :: switchLabelIR_t*{switchLabelIR_t <- switchLabelIR_t*} = switchLabelIR*{switchLabelIR <- switchLabelIR*}
+  -- if (switchLabelIR_h =/= DEFAULT)
 
 relation SwitchLabel_table_ok: typingContext typeId |- switchLabel : switchLabelIR
 
@@ -18187,14 +18091,14 @@ relation SwitchLabel_table_ok: typingContext typeId |- switchLabel : switchLabel
     -- let typedExpressionIR_label = ` nameIR_label as expressionIR # ( typeIR_label ctk_label )
     -- output: % % |- % : typedExpressionIR_label as switchLabelIR
 
-relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase : flow switchCaseIR # switchLabel
+relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase : flow switchCaseIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCase : % % # %
-    TC f l typeId_table |- switchCase : % % # %
+    (signature) TC f l typeId_table |- switchCase : % %
+    TC f l typeId_table |- switchCase : % %
 
    paths
 
@@ -18205,7 +18109,7 @@ relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase :
     -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
     -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR # switchLabel
+    -- output: % % % % |- % : f_post switchCaseIR
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
@@ -18213,46 +18117,62 @@ relation SwitchCase_table_ok: typingContext flow loopctxt typeId |- switchCase :
     -- let switchLabel : = switchCase'
     -- SwitchLabel_table_ok: TC typeId_table |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR # switchLabel
+    -- output: % % % % |- % : f switchCaseIR
 
-relation SwitchCases_table_ok: typingContext flow loopctxt typeId |- switchCase* : flow switchCaseListIR # switchLabel*
+relation SwitchCases_table_ok: typingContext flow loopctxt typeId |- switchCase* : flow switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % % # %
-    TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % %
+    TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : % %
 
    paths
 
     rulepath nil
     -- if (switchCase*{switchCase <- switchCase*} = [])
-    -- output: % % % % |- % : f [] # []
+    -- output: % % % % |- % : f []
 
     rulepath cons
     -- let switchCase'*{switchCase' <- switchCase'*} = switchCase*{switchCase <- switchCase*}
     -- if switchCase'*{switchCase' <- switchCase'*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase'*{switchCase' <- switchCase'*}
-    -- SwitchCase_table_ok: TC f l typeId_table |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
-    -- SwitchCases_table_ok: TC f_h l typeId_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
-    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- SwitchCase_table_ok: TC f l typeId_table |- switchCase_h : f_h switchCaseIR_h
+    -- SwitchCases_table_ok: TC f_h l typeId_table |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
 
-relation SwitchCaseList_table_ok: typingContext flow loopctxt typeId |- switchCaseList : flow switchCaseListIR # switchLabel*
+relation SwitchCaseList_table_ok: typingContext flow loopctxt typeId |- switchCaseList : flow switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeId_table |- switchCaseList : % % # %
-    TC f l typeId_table |- switchCaseList : % % # %
+    (signature) TC f l typeId_table |- switchCaseList : % %
+    TC f l typeId_table |- switchCaseList : % %
 
    paths
 
     rulepath 
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_table_ok: TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
-    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
+    -- SwitchCases_table_ok: TC f l typeId_table |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+
+relation Switch_table_ok: typingContext flow loopctxt |- SWITCH ( id ) { switchCaseList } : flow switchCaseIR*
+
+  rulegroup 
+
+   match
+
+    (signature) TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
+    TC f l |- SWITCH ( typeId_table_enum ) { switchCaseList } : % %
+
+   paths
+
+    rulepath 
+    -- let typeId_table = $strip_prefix($strip_suffix(typeId_table_enum, ")"), "action_list(")
+    -- SwitchCaseList_table_ok: TC f l typeId_table |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % % |- SWITCH ( % ) { % } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
 relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLabelIR
 
@@ -18284,14 +18204,14 @@ relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLab
     -- if ctk matches `LCTK`
     -- output: % % |- % : typedExpressionIR_label_cast as switchLabelIR
 
-relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase : flow switchCaseIR # switchLabel
+relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase : flow switchCaseIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCase : % % # %
-    TC f l typeIR_switch |- switchCase : % % # %
+    (signature) TC f l typeIR_switch |- switchCase : % %
+    TC f l typeIR_switch |- switchCase : % %
 
    paths
 
@@ -18302,7 +18222,7 @@ relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase
     -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
     -- Block_ok: TC f l |- blockStatement : TC_post f_post blockStatementIR
     -- let switchCaseIR = switchLabelIR : blockStatementIR
-    -- output: % % % % |- % : f_post switchCaseIR # switchLabel
+    -- output: % % % % |- % : f_post switchCaseIR
 
     rulepath non-blockStatement
     -- let switchCase' = switchCase
@@ -18310,46 +18230,46 @@ relation SwitchCase_general_ok: typingContext flow loopctxt typeIR |- switchCase
     -- let switchLabel : = switchCase'
     -- SwitchLabel_general_ok: TC typeIR_switch |- switchLabel : switchLabelIR
     -- let switchCaseIR = switchLabelIR :
-    -- output: % % % % |- % : f switchCaseIR # switchLabel
+    -- output: % % % % |- % : f switchCaseIR
 
-relation SwitchCases_general_ok: typingContext flow loopctxt typeIR |- switchCase* : flow switchCaseListIR # switchLabel*
+relation SwitchCases_general_ok: typingContext flow loopctxt typeIR |- switchCase* : flow switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
-    TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % % # %
+    (signature) TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
+    TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
 
    paths
 
     rulepath nil
     -- if (switchCase*{switchCase <- switchCase*} = [])
-    -- output: % % % % |- % : f [] # []
+    -- output: % % % % |- % : f []
 
     rulepath cons
     -- let switchCase'*{switchCase' <- switchCase'*} = switchCase*{switchCase <- switchCase*}
     -- if switchCase'*{switchCase' <- switchCase'*} matches _ :: _
     -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase'*{switchCase' <- switchCase'*}
-    -- SwitchCase_general_ok: TC f l typeIR_switch |- switchCase_h : f_h switchCaseIR_h # switchLabel_h
-    -- SwitchCases_general_ok: TC f_h l typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_t*{switchLabel_t <- switchLabel_t*}
-    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} # switchLabel_h :: switchLabel_t*{switchLabel_t <- switchLabel_t*}
+    -- SwitchCase_general_ok: TC f l typeIR_switch |- switchCase_h : f_h switchCaseIR_h
+    -- SwitchCases_general_ok: TC f_h l typeIR_switch |- switchCase_t*{switchCase_t <- switchCase_t*} : f_t switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
+    -- output: % % % % |- % : f_t switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}
 
-relation SwitchCaseList_general_ok: typingContext flow loopctxt typeIR |- switchCaseList : flow switchCaseListIR # switchLabel*
+relation SwitchCaseList_general_ok: typingContext flow loopctxt typeIR |- switchCaseList : flow switchCaseListIR
 
   rulegroup 
 
    match
 
-    (signature) TC f l typeIR_switch |- switchCaseList : % % # %
-    TC f l typeIR_switch |- switchCaseList : % % # %
+    (signature) TC f l typeIR_switch |- switchCaseList : % %
+    TC f l typeIR_switch |- switchCaseList : % %
 
    paths
 
     rulepath 
     -- let switchCase*{switchCase <- switchCase*} = $flatten_switchCaseList(switchCaseList)
-    -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
-    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*} # switchLabel*{switchLabel <- switchLabel*}
+    -- SwitchCases_general_ok: TC f l typeIR_switch |- switchCase*{switchCase <- switchCase*} : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % % % |- % : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
 tbl def $compat_switch(typeIR) : bool =
   row 0 :
@@ -18381,6 +18301,23 @@ tbl def $compat_switch(typeIR) : bool =
   row 5 :
     (signature) _typeIR
     (_typeIR) -> false
+
+relation Switch_general_ok: typingContext flow loopctxt |- SWITCH ( typedExpressionIR ) { switchCaseList } : flow switchCaseIR*
+
+  rulegroup 
+
+   match
+
+    (signature) TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
+    TC f l |- SWITCH ( typedExpressionIR_switch ) { switchCaseList } : % %
+
+   paths
+
+    rulepath 
+    -- let typeIR_switch = $type_of_typedExpressionIR(typedExpressionIR_switch)
+    -- if $compat_switch(typeIR_switch)
+    -- SwitchCaseList_general_ok: TC f l typeIR_switch |- switchCaseList : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
+    -- output: % % % |- SWITCH ( % ) { % } : f_post switchCaseIR*{switchCaseIR <- switchCaseIR*}
 
 relation BlockElementStmts_ok: typingContext flow loopctxt |- blockElementStatement* : typingContext flow blockElementStatementIR*
 
@@ -19546,9 +19483,8 @@ relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
     (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # ( _typeIR _ctk )
     p TC |- expressionIR # ( _typeIR _ctk )
     -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR matches `% [% : %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
+    -- if sliceop matches `:`
 
    paths
 
@@ -19563,9 +19499,8 @@ relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
     (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # ( _typeIR _ctk )
     p TC |- expressionIR # ( _typeIR _ctk )
     -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR matches `% [% +: %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR_l sliceop typedExpressionIR_w ] = expressionIR as sliceAccessExpressionIR
+    -- if sliceop matches `+:`
 
    paths
 
@@ -20062,8 +19997,7 @@ syntax storageReference =
    | . nameIR (from prefixedNameIR) 
    | storageReference . nameIR (from storageReference) 
    | storageReference [ value ] (from storageReference) 
-   | storageReference [ value : value ] (from storageReference) 
-   | storageReference [ value +: value ] (from storageReference) 
+   | storageReference [ value sliceop value ] (from storageReference) 
 
 syntax actionDef = 
    | annotationList ACTION nameIR ( parameterListIR ) blockStatementIR (from actionDef) 
@@ -20997,9 +20931,8 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     (signature) p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR : typedExpressionIR' ] as expressionIR # _expressionNoteIR : % %
     p IC STO_0 |- expressionIR # _expressionNoteIR : % %
     -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR matches `% [% : %]`
-    -- let typedExpressionIR_base [ typedExpressionIR : typedExpressionIR' ] = sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR sliceop typedExpressionIR' ] = expressionIR as sliceAccessExpressionIR
+    -- if sliceop matches `:`
 
    paths
 
@@ -21146,33 +21079,26 @@ relation Exprs_inst: cursor instContext store |- typedExpressionIR* : store valu
 
 relation Argument_inst: cursor instContext store |- argumentIR : store value
 
-  rulegroup typedExpressionIR
+  rulegroup 
 
    match
 
-    (signature) p IC STO_0 |- typedExpressionIR as argumentIR : % %
+    (signature) p IC STO_0 |- argumentIR : % %
     p IC STO_0 |- argumentIR : % %
-    -- if argumentIR <: typedExpressionIR
-    -- let typedExpressionIR = argumentIR as typedExpressionIR
 
    paths
 
     rulepath typedExpressionIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR' as typedExpressionIR
     -- Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value
     -- output: % % % |- % : STO_1 value
 
-  rulegroup nameIR-typedExpressionIR
-
-   match
-
-    (signature) p IC STO_0 |- nameIR = typedExpressionIR : % %
-    p IC STO_0 |- argumentIR : % %
-    -- if argumentIR matches `% = %`
-    -- let nameIR = typedExpressionIR = argumentIR
-
-   paths
-
     rulepath nameIR-typedExpressionIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = %`
+    -- let nameIR = typedExpressionIR = argumentIR'
     -- Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value
     -- output: % % % |- % : STO_1 value
 
@@ -24236,26 +24162,30 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  rulegroup sliceAccessExpressionIR-range
+  rulegroup sliceAccessExpressionIR
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # _expressionNoteIR : % % %
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR sliceop' typedExpressionIR' ] as expressionIR # _expressionNoteIR : % % %
     p EC_0 ARCH_0 |- expressionIR # _expressionNoteIR : % % %
     -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR matches `% [% : %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] = sliceAccessExpressionIR
+    -- let typedExpressionIR_base [ typedExpressionIR sliceop' typedExpressionIR' ] = expressionIR as sliceAccessExpressionIR
 
    paths
 
     rulepath abort
+    -- let typedExpressionIR_hi = typedExpressionIR
+    -- let sliceop = sliceop'
+    -- let typedExpressionIR_lo = typedExpressionIR'
     -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 ARCH_1 expressionListResult
     -- if expressionListResult <: abortResult
     -- let abortResult = expressionListResult as abortResult
     -- output: % % % |- % : EC_1 ARCH_1 abortResult as expressionResult
 
-    rulepath cont
+    rulepath cont-range
+    -- let typedExpressionIR_hi = typedExpressionIR
+    -- if (sliceop' = :)
+    -- let typedExpressionIR_lo = typedExpressionIR'
     -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 ARCH_1 expressionListResult
     -- if expressionListResult <: continueResult<value*>
     -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
@@ -24264,26 +24194,10 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let expressionResult = ` $bitacc_range_op(value_base, value_hi, value_lo) as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  rulegroup sliceOffsetAccessExpressionIR-offset
-
-   match
-
-    (signature) p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # _expressionNoteIR : % % %
-    p EC_0 ARCH_0 |- expressionIR # _expressionNoteIR : % % %
-    -- if expressionIR <: sliceAccessExpressionIR
-    -- let sliceAccessExpressionIR = expressionIR as sliceAccessExpressionIR
-    -- if sliceAccessExpressionIR matches `% [% +: %]`
-    -- let typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] = sliceAccessExpressionIR
-
-   paths
-
-    rulepath abort
-    -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_l, typedExpressionIR_w] : EC_1 ARCH_1 expressionListResult
-    -- if expressionListResult <: abortResult
-    -- let abortResult = expressionListResult as abortResult
-    -- output: % % % |- % : EC_1 ARCH_1 abortResult as expressionResult
-
-    rulepath cont
+    rulepath cont-offset
+    -- let typedExpressionIR_l = typedExpressionIR
+    -- if (sliceop' = +:)
+    -- let typedExpressionIR_w = typedExpressionIR'
     -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_l, typedExpressionIR_w] : EC_1 ARCH_1 expressionListResult
     -- if expressionListResult <: continueResult<value*>
     -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
@@ -24430,33 +24344,26 @@ relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext 
 
 relation Argument_eval: cursor evalContext arch |- argumentIR : evalContext arch expressionResult
 
-  rulegroup typedExpressionIR
+  rulegroup 
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedExpressionIR as argumentIR : % % %
+    (signature) p EC_0 ARCH_0 |- argumentIR : % % %
     p EC_0 ARCH_0 |- argumentIR : % % %
-    -- if argumentIR <: typedExpressionIR
-    -- let typedExpressionIR = argumentIR as typedExpressionIR
 
    paths
 
     rulepath typedExpressionIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR' as typedExpressionIR
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  rulegroup nameIR-typedExpressionIR
-
-   match
-
-    (signature) p EC_0 ARCH_0 |- nameIR = typedExpressionIR : % % %
-    p EC_0 ARCH_0 |- argumentIR : % % %
-    -- if argumentIR matches `% = %`
-    -- let nameIR = typedExpressionIR = argumentIR
-
-   paths
-
     rulepath nameIR-typedExpressionIR
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = %`
+    -- let nameIR = typedExpressionIR = argumentIR'
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
@@ -24467,67 +24374,51 @@ syntax storageReferenceResult =
 
 relation Argument_eval_lvalue: cursor evalContext arch |- argumentIR : evalContext arch storageReferenceResult
 
-  rulegroup typedExpressionIR
+  rulegroup 
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedExpressionIR as argumentIR : % % %
-    p EC_0 ARCH_0 |- argumentIR : % % %
-    -- if argumentIR <: typedExpressionIR
-    -- let typedExpressionIR = argumentIR as typedExpressionIR
+    (signature) p evalContext arch |- argumentIR : % % %
+    p evalContext arch |- argumentIR : % % %
 
    paths
 
     rulepath typedExpressionIR
+    -- let EC_0 = evalContext
+    -- let ARCH_0 = arch
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR' as typedExpressionIR
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
     -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
-
-  rulegroup nameIR-typedExpressionIR
-
-   match
-
-    (signature) p EC_0 ARCH_0 |- nameIR = typedExpressionIR : % % %
-    p EC_0 ARCH_0 |- argumentIR : % % %
-    -- if argumentIR matches `% = %`
-    -- let nameIR = typedExpressionIR = argumentIR
-
-   paths
 
     rulepath nameIR-typedExpressionIR
+    -- let EC_0 = evalContext
+    -- let ARCH_0 = arch
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = %`
+    -- let nameIR = typedExpressionIR = argumentIR'
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
     -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-  rulegroup nameIR-dontcare
-
-   match
-
-    (signature) p EC ARCH |- nameIR = _ : % % %
-    p EC ARCH |- argumentIR : % % %
-    -- if argumentIR matches `% = _`
-    -- let nameIR = _ = argumentIR
-
-   paths
-
     rulepath nameIR-dontcare
+    -- let EC = evalContext
+    -- let ARCH = arch
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = _`
+    -- let nameIR = _ = argumentIR'
     -- output: % % % |- % : EC ARCH ` ?() as storageReferenceResult
 
-  rulegroup dontcare
-
-   match
-
-    (signature) p EC ARCH |- _ : % % %
-    p EC ARCH |- argumentIR : % % %
-    -- if argumentIR matches `_`
-
-   paths
-
     rulepath dontcare
+    -- let EC = evalContext
+    -- let ARCH = arch
+    -- if (argumentIR = _)
     -- output: % % % |- % : EC ARCH ` ?() as storageReferenceResult
 
 relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arch storageReferenceResult
@@ -24646,14 +24537,14 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- let storageReferenceResult = ` ?(storageReference [ integerValue_index as value ]) as storageReferenceResult
     -- output: % % % |- % : EC_2 ARCH_2 storageReferenceResult
 
-  rulegroup sliceAccess-range
+  rulegroup sliceAccess
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ] # _lvalueNoteIR : % % %
+    (signature) p EC_0 ARCH_0 |- typedLvalueIR [ typedExpressionIR_l sliceop typedExpressionIR_r ] # _lvalueNoteIR : % % %
     p EC_0 ARCH_0 |- lvalueIR # _lvalueNoteIR : % % %
-    -- if lvalueIR matches `% [% : %]`
-    -- let typedLvalueIR [ typedExpressionIR_hi : typedExpressionIR_lo ] = lvalueIR
+    -- if lvalueIR matches `% [% % %]`
+    -- let typedLvalueIR [ typedExpressionIR_l sliceop typedExpressionIR_r ] = lvalueIR
 
    paths
 
@@ -24669,65 +24560,23 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 ARCH_2 expressionListResult
+    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_l, typedExpressionIR_r] : EC_2 ARCH_2 expressionListResult
     -- if expressionListResult <: abortResult
     -- let abortResult = expressionListResult as abortResult
     -- output: % % % |- % : EC_2 ARCH_2 abortResult as storageReferenceResult
 
-    rulepath cont
+    rulepath cont-index
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
     -- if storageReferenceResult' <: continueResult<storageReference?>
     -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 ARCH_2 expressionListResult
+    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_l, typedExpressionIR_r] : EC_2 ARCH_2 expressionListResult
     -- if expressionListResult <: continueResult<value*>
     -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
     -- if value*{value <- value*} matches [ _/2 ]
-    -- let [value_hi, value_lo] = value*{value <- value*}
-    -- let storageReferenceResult = ` ?(storageReference [ value_hi : value_lo ]) as storageReferenceResult
-    -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
-
-  rulegroup sliceAccess-offset
-
-   match
-
-    (signature) p EC_0 ARCH_0 |- typedLvalueIR [ typedExpressionIR_l +: typedExpressionIR_w ] # _lvalueNoteIR : % % %
-    p EC_0 ARCH_0 |- lvalueIR # _lvalueNoteIR : % % %
-    -- if lvalueIR matches `% [% +: %]`
-    -- let typedLvalueIR [ typedExpressionIR_l +: typedExpressionIR_w ] = lvalueIR
-
-   paths
-
-    rulepath abort
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
-    -- if storageReferenceResult' <: abortResult
-    -- let abortResult = storageReferenceResult' as abortResult
-    -- output: % % % |- % : EC_1 ARCH_1 abortResult as storageReferenceResult
-
-    rulepath cont-abort
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
-    -- if storageReferenceResult' <: continueResult<storageReference?>
-    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
-    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
-    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_l, typedExpressionIR_w] : EC_2 ARCH_2 expressionListResult
-    -- if expressionListResult <: abortResult
-    -- let abortResult = expressionListResult as abortResult
-    -- output: % % % |- % : EC_2 ARCH_2 abortResult as storageReferenceResult
-
-    rulepath cont
-    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
-    -- if storageReferenceResult' <: continueResult<storageReference?>
-    -- let ` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
-    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
-    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_l, typedExpressionIR_w] : EC_2 ARCH_2 expressionListResult
-    -- if expressionListResult <: continueResult<value*>
-    -- let ` value*{value <- value*} = expressionListResult as continueResult<value*>
-    -- if value*{value <- value*} matches [ _/2 ]
-    -- let [value_l, value_w] = value*{value <- value*}
-    -- let storageReferenceResult = ` ?(storageReference [ value_l +: value_w ]) as storageReferenceResult
+    -- let [value_l, value_r] = value*{value <- value*}
+    -- let storageReferenceResult = ` ?(storageReference [ value_l sliceop value_r ]) as storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
   rulegroup parenthesized
@@ -24869,34 +24718,29 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- let value = HEADER typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
     -- output: % % % |- % : value
 
-  rulegroup sliceAccess-range
+  rulegroup sliceAccess
 
    match
 
-    (signature) p EC_0 ARCH |- storageReference [ value_hi : value_lo ] : %
+    (signature) p EC_0 ARCH |- storageReference [ value' sliceop value'' ] : %
     p EC_0 ARCH |- storageReference' : %
-    -- if storageReference' matches `% [% : %]`
-    -- let storageReference [ value_hi : value_lo ] = storageReference'
+    -- if storageReference' matches `% [% % %]`
+    -- let storageReference [ value' sliceop value'' ] = storageReference'
 
    paths
 
-    rulepath sliceAccess-range
+    rulepath range
+    -- let value_hi = value'
+    -- if (sliceop = :)
+    -- let value_lo = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value = $bitacc_range_op(value_base, value_hi, value_lo)
     -- output: % % % |- % : value
 
-  rulegroup sliceAccess-offset
-
-   match
-
-    (signature) p EC_0 ARCH |- storageReference [ value_l +: value_w ] : %
-    p EC_0 ARCH |- storageReference' : %
-    -- if storageReference' matches `% [% +: %]`
-    -- let storageReference [ value_l +: value_w ] = storageReference'
-
-   paths
-
-    rulepath sliceAccess-offset
+    rulepath offset
+    -- let value_l = value'
+    -- if (sliceop = +:)
+    -- let value_w = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value = $bitacc_offset_op(value_base, value_l, value_w)
     -- output: % % % |- % : value
@@ -25044,35 +24888,30 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if ~b_in_bounds
     -- output: % % % |- % -> % : EC_0
 
-  rulegroup sliceAccess-range
+  rulegroup sliceAccess
 
    match
 
-    (signature) p EC_0 ARCH |- storageReference [ value_hi : value_lo ] -> value : %
+    (signature) p EC_0 ARCH |- storageReference [ value' sliceop value'' ] -> value : %
     p EC_0 ARCH |- storageReference' -> value : %
-    -- if storageReference' matches `% [% : %]`
-    -- let storageReference [ value_hi : value_lo ] = storageReference'
+    -- if storageReference' matches `% [% % %]`
+    -- let storageReference [ value' sliceop value'' ] = storageReference'
 
    paths
 
-    rulepath sliceAccess-range
+    rulepath range
+    -- let value_hi = value'
+    -- if (sliceop = :)
+    -- let value_lo = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value_base_update = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
     -- output: % % % |- % -> % : EC_1
 
-  rulegroup sliceAccess-offset
-
-   match
-
-    (signature) p EC_0 ARCH |- storageReference [ value_l +: value_w ] -> value : %
-    p EC_0 ARCH |- storageReference' -> value : %
-    -- if storageReference' matches `% [% +: %]`
-    -- let storageReference [ value_l +: value_w ] = storageReference'
-
-   paths
-
-    rulepath sliceAccess-offset
+    rulepath offset
+    -- let value_l = value'
+    -- if (sliceop = +:)
+    -- let value_w = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value_base_update = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1

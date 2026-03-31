@@ -1,0 +1,255 @@
+[#sec-select-expression]
+=== Parser select expression
+
+// 781
+A `select` expression evaluates to a state. The syntax for a `select`
+expression is as follows:
+
+// 782 - Modified
+${syntax: selectExpression selectCaseList selectCase}
+
+// 783 - Modified
+Each expression in the `expressionList` must have a set type, or a type that
+can be nested in a set type.
+
+// 785
+In terms of the `ParserModel`, the meaning of a select expression:
+
+// 786
+[source,p4]
+----
+select(e) {
+    ks[0]: s[0];
+    ks[1]: s[1];
+    /* more labels omitted */
+    ks[n-2]: s[n-1];
+    _ : sd;  // ks[n-1] is default
+}
+----
+
+// 787
+is defined in pseudo-code as:
+
+// 788
+[source,p4pseudo]
+----
+key = eval(e);
+for (int i=0; i < n; i++) {
+    keyset = eval(ks[i]);
+    if (keyset.contains(key)) return s[i];
+}
+verify(false, error.NoMatch);
+----
+
+// 789
+Some targets may require that all keyset expressions in a select expression be
+compile-time known values. Keysets are evaluated in order, from top to bottom
+as implied by the pseudo-code above; the first keyset that includes the value
+in the `select` argument provides the result state. If no label matches, the
+execution triggers a runtime error with the standard error code
+`error.NoMatch`.
+
+// Added
+ifndef::release[]
+NOTE: P4-SpecTec does not require that all keyset expressions be compile-time known.
+endif::[]
+
+// 790
+Note that this implies that all cases after a `default` or `_` label are
+unreachable; the compiler should emit a warning if it detects unreachable
+cases. This constitutes an important difference between `select` expressions
+and the `switch` statements found in many programming languages since the
+keysets of a `select` expression may "overlap".
+
+// 791
+The typical way to use a `select` expression is to compare the value of a
+recently-extracted header field against a set of values, as in the following
+example:
+
+// 792
+[source,p4]
+----
+header IPv4_h { bit<8> protocol; /* more fields omitted */ }
+struct P { IPv4_h ipv4; /* more fields omitted */ }
+P headers;
+select (headers.ipv4.protocol) {
+    8w6  : parse_tcp;
+    8w17 : parse_udp;
+    _    : accept;
+}
+----
+
+// 793
+For example, to detect TCP reserved ports (< 1024) one could write:
+
+// 794
+[source,p4]
+----
+select (p.tcp.port) {
+    16w0 &&& 16w0xFC00: well_known_port;
+    _: other_port;
+}
+----
+
+// 795
+The expression `16w0 &&& 16w0xFC00` describes the set of 16-bit values whose
+most significant six bits are zero.
+
+// 796
+Some targets may support parser value sets; see <<sec-value-set-object>>. Given
+a type `T` for the type parameter of the value set, the type of the value set
+is `set<T>`. The type of the value set must match to the type of all other
+``keysetExpression``s in the same `select` expression. If there is a mismatch,
+the compiler must raise an error. The type of the values in the set must be
+either bit<>, int<>, tuple, struct, or serializable `enum`.
+
+// 797
+For example, to allow the control plane API to specify TCP reserved ports at
+runtime, one could write:
+
+// 798
+[source,p4]
+----
+struct vsk_t {
+    @match(ternary)
+    bit<16> port;
+}
+value_set<vsk_t>(4) pvs;
+select (p.tcp.port) {
+    pvs: runtime_defined_port;
+    _: other_port;
+}
+----
+
+// 799
+The above example allows the runtime API to populate up to 4 different
+``keysetExpression``s in the `value_set`. If the `value_set` takes a struct as
+type parameter, the runtime API can use the struct field names to name the
+objects in the value set. The match type of the struct field is specified with
+the `@match` annotation. If the `@match` annotation is not specified on a
+struct field, by default it is assumed to be `@match(exact)`. A single
+non-exact field must be placed into a struct by itself, with the desired
+`@match` annotation.
+
+// Added
+ifndef::release[]
+NOTE: P4-SpecTec only supports `@match(exact)` for value sets at this time.
+endif::[]
+
+==== Type checking
+
+// Added
+A select expression is type checked as follows:
+
+// Added
+${relation-title-source: ParserSelect_ok}
+${relation-title-prose: ParserSelect_ok}
+
+// Added
+${rulegroup-source: ParserSelect_ok}
+${rulegroup-prose: ParserSelect_ok}
+
+// Added
+The type checking of a select case visits its keyset expressions, and each
+simple keyset expression is visited in turn.
+
+// Added
+${relation-title-source: SelectCase_ok}
+${relation-title-prose: SelectCase_ok}
+
+// Added
+${rulegroup-source: SelectCase_ok}
+${rulegroup-prose: SelectCase_ok}
+
+// Added
+A keyset expression is type checked with the relation:
+
+// Added
+${syntax: keysetExpression}
+
+// Added
+${relation-title-source: SelectCase_keyset_ok}
+${relation-title-prose: SelectCase_keyset_ok}
+
+// Added
+A simple keyset expression is type checked as follows:
+
+// Added
+${syntax: simpleKeysetExpression}
+
+// Added
+${relation-title-source: SelectCase_keyset_simple_ok}
+${relation-title-prose: SelectCase_keyset_simple_ok}
+
+[discrete]
+====== Expression keys
+
+// Added
+${rulegroup-source: SelectCase_keyset_simple_ok/expression}
+${rulegroup-prose: SelectCase_keyset_simple_ok/expression}
+
+[discrete]
+====== Mask keys
+
+// Added
+${rulegroup-source: SelectCase_keyset_simple_ok/mask}
+${rulegroup-prose: SelectCase_keyset_simple_ok/mask}
+
+[discrete]
+====== Range keys
+
+// Added
+${rulegroup-source: SelectCase_keyset_simple_ok/range}
+${rulegroup-prose: SelectCase_keyset_simple_ok/range}
+
+[discrete]
+====== Default and don't care keys
+
+// Added
+${rulegroup-source: SelectCase_keyset_simple_ok/default}
+${rulegroup-prose: SelectCase_keyset_simple_ok/default}
+
+// Added
+${rulegroup-source: SelectCase_keyset_simple_ok/dontcare}
+${rulegroup-prose: SelectCase_keyset_simple_ok/dontcare}
+
+==== Runtime evaluation
+
+// Added
+The runtime evaluation of a select expression is defined as follows:
+
+// Added
+${relation-title-source: ParserSelect_eval}
+${relation-title-prose: ParserSelect_eval}
+
+// Added
+${rulegroup-source: ParserSelect_eval}
+${rulegroup-prose: ParserSelect_eval}
+
+// Added
+Matching against select cases is defined as follows:
+
+// Added
+${relation-title-source: SelectCases_match}
+${relation-title-prose: SelectCases_match}
+
+// Added
+The result of matching a select case is defined as follows:
+
+// Added
+${syntax: selectCaseMatchResult}
+
+// Added
+${rulegroup-source: SelectCases_match}
+${rulegroup-prose: SelectCases_match}
+
+// Added
+The matching of a select case is defined as follows:
+
+// Added
+${relation-title-source: SelectCase_match}
+${relation-title-prose: SelectCase_match}
+
+// Added
+${rulegroup-source: SelectCase_match}
+${rulegroup-prose: SelectCase_match}

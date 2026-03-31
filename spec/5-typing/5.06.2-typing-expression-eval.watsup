@@ -383,18 +383,18 @@ rule Expr_eval_lctk/parenthesizedExpressionIR:
 ;; syntax argumentIR
 ;;
 
-;;; typedExpressionIR
 
-rule Argument_eval_lctk/typedExpressionIR:
-  p TC |- typedExpressionIR ~> value
-  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+rulegroup Argument_eval_lctk {
 
-;;; nameIR `= typedExpressionIR
+  rule Argument_eval_lctk/typedExpressionIR:
+    p TC |- typedExpressionIR ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
 
-rule Argument_eval_lctk/namedArgumentIR:
-  p TC |- nameIR `= typedExpressionIR ~> value
-  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+  rule Argument_eval_lctk/namedArgumentIR:
+    p TC |- nameIR `= typedExpressionIR ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
 
-;;; nameIR `= `_
-;;; `_
+}
+
+;;; nameIR `= `_ and `_
 ;;; don't care arguments are not evaluated statically

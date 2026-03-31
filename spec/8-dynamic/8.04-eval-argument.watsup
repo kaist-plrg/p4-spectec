@@ -4,24 +4,23 @@
 ;; syntax argumentIR
 ;;
 
-;;; typedExpressionIR
+rulegroup Argument_eval {
 
-rule Argument_eval/typedExpressionIR:
-  p EC_0 ARCH_0 |- typedExpressionIR
-                : EC_1 ARCH_1 expressionResult
-  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR
-                              : EC_1 ARCH_1 expressionResult
+  rule Argument_eval/typedExpressionIR:
+    p EC_0 ARCH_0 |- typedExpressionIR
+                  : EC_1 ARCH_1 expressionResult
+    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR
+                                : EC_1 ARCH_1 expressionResult
 
-;;; nameIR `= typedExpressionIR
+  rule Argument_eval/nameIR-typedExpressionIR:
+    p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
+                  : EC_1 ARCH_1 expressionResult
+    -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR
+                                : EC_1 ARCH_1 expressionResult
 
-rule Argument_eval/nameIR-typedExpressionIR:
-  p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
-                : EC_1 ARCH_1 expressionResult
-  -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR
-                              : EC_1 ARCH_1 expressionResult
+}
 
-;;; nameIR `= `_
-;;; `_
+;;; nameIR `= `_ and `_
 ;;; should not evaluate don't care arguments down to values
 
 ;;
@@ -30,34 +29,30 @@ rule Argument_eval/nameIR-typedExpressionIR:
 ;; syntax argumentIR
 ;;
 
-;;; typedExpressionIR
+rulegroup Argument_eval_lvalue {
 
-rule Argument_eval_lvalue/typedExpressionIR:
-  p EC_0 ARCH_0 |- typedExpressionIR
-                : EC_1 ARCH_1 storageReferenceResult
-  -- if typedLvalueIR
-      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
-  -- Lvalue_eval:
-      p EC_0 ARCH_0 |- typedLvalueIR
-                    : EC_1 ARCH_1 storageReferenceResult
+  rule Argument_eval_lvalue/typedExpressionIR:
+    p EC_0 ARCH_0 |- typedExpressionIR
+                  : EC_1 ARCH_1 storageReferenceResult
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                      : EC_1 ARCH_1 storageReferenceResult
 
-;;; nameIR `= typedExpressionIR
+  rule Argument_eval_lvalue/nameIR-typedExpressionIR:
+    p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
+                  : EC_1 ARCH_1 storageReferenceResult
+    -- if typedLvalueIR
+        = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                      : EC_1 ARCH_1 storageReferenceResult
 
-rule Argument_eval_lvalue/nameIR-typedExpressionIR:
-  p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
-                : EC_1 ARCH_1 storageReferenceResult
-  -- if typedLvalueIR
-      = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
-  -- Lvalue_eval:
-      p EC_0 ARCH_0 |- typedLvalueIR
-                    : EC_1 ARCH_1 storageReferenceResult
+  rule Argument_eval_lvalue/nameIR-dontcare:
+    p EC ARCH |- nameIR `= `_ : EC ARCH (`` eps)
 
-;;; nameIR `= `_
+  rule Argument_eval_lvalue/dontcare:
+    p EC ARCH |- `_ : EC ARCH (`` eps)
 
-rule Argument_eval_lvalue/nameIR-dontcare:
-  p EC ARCH |- nameIR `= `_ : EC ARCH (`` eps)
-
-;;; `_
-
-rule Argument_eval_lvalue/dontcare:
-  p EC ARCH |- `_ : EC ARCH (`` eps)
+}
