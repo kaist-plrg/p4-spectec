@@ -1715,8 +1715,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let anon = cursor = Ctx.Local in
       let value_output =
         match func with
-        | Func.Extern -> invoke_extern_func ~anon id targs values_input
-        | Func.Builtin -> invoke_builtin_func ~anon id targs values_input
+        | Func.Extern _ -> invoke_extern_func ~anon id targs values_input
+        | Func.Builtin _ -> invoke_builtin_func ~anon id targs values_input
         | Func.Table (params, tablerows) ->
             invoke_table_func ~anon ctx id params tablerows values_input
         | Func.Defined (tparams, params, block, elseblock_opt) ->
@@ -1919,6 +1919,39 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : Sim.func_result =
     clear ();
     try
+      (* Check the type of the values *)
+      let ctx = Ctx.empty () in
+      let id = funcname $ no_region in
+      let _, func = Ctx.find_func ctx id in
+      let tparams, params =
+        match func with
+        | Func.Extern (tparams, params) -> (tparams, params)
+        | Func.Builtin (tparams, params) -> (tparams, params)
+        | Func.Table (params, _) -> ([], params)
+        | Func.Defined (tparams, params, _, _) -> (tparams, params)
+      in
+      let tdenv_local =
+        check
+          (List.length targs = List.length tparams)
+          no_region "arity mismatch in type arguments";
+        List.fold_left2
+          (fun tdenv_local tparam targ ->
+            let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+            TDEnv.add tparam td tdenv_local)
+          TDEnv.empty tparams targs
+      in
+      let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
+      let typs =
+        List.map
+          (fun param ->
+            match param.it with
+            | ExpP (typ, _) -> typ
+            | DefP _ -> error no_region "DefP in eval_func not implemented")
+          params
+      in
+      check
+        (Value.Match.subs (Ctx.find_typdef ctx_local) typs values_input)
+        no_region "function argument does not match the parameter type";
       let value_output = do_eval_func funcname targs values_input in
       Sim.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->

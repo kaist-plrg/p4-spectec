@@ -111,11 +111,11 @@ let load_def (def : def) : unit =
   | RelD (id, _, exps_match, block, elseblock_opt, _) ->
       let rel = Rel.Defined (exps_match, block, elseblock_opt) in
       add_rel_global id rel
-  | ExternDecD (id, _, _, _, _) ->
-      let func = Func.Extern in
+  | ExternDecD (id, tparams, params, _, _) ->
+      let func = Func.Extern (tparams, params) in
       add_func_global id func
-  | BuiltinDecD (id, _, _, _, _) ->
-      let func = Func.Builtin in
+  | BuiltinDecD (id, tparams, params, _, _) ->
+      let func = Func.Builtin (tparams, params) in
       add_func_global id func
   | TableDecD (id, params, _typ, tablerows, _) ->
       let func = Func.Table (params, tablerows) in
