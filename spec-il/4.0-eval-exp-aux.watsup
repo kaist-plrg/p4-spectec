@@ -25,6 +25,33 @@ def $cmpop_number(GE, INT i_l, INT i_r) = $(i_l >= i_r)
 
 ;;
 
+dec $is_num(val) : bool
+def $is_num(num) = true
+def $is_num(val) = false
+    -- otherwise
+
+dec $is_tup(val) : bool
+def $is_tup(TUP val*) = true
+def $is_tup(val) = false
+    -- otherwise
+
+dec $is_inj(val) : bool
+def $is_inj(INJ mixop val) = true
+def $is_inj(val) = false
+    -- otherwise
+
+dec $is_list(val) : bool
+def $is_list(LIST val*) = true
+def $is_list(val) = false
+    -- otherwise
+
+dec $is_opt(val) : bool
+def $is_opt(OPT val?) = true
+def $is_opt(val) = false
+    -- otherwise
+
+;;
+
 syntax theta = map<id, typ>
 
 dec $subst_typ_inner(theta, typ) : typ
@@ -45,80 +72,85 @@ def $subst_typ(`{ eps }, typ) = typ
 def $subst_typ(theta, typ) = $subst_typ_inner(theta, typ)
     -- otherwise
 
-dec $upcast(ctx, typ, val) : val
-def $upcast(C, INT, INT i) = INT i
-def $upcast(C, INT, NAT n) = NAT n
+dec $upcast(ctx, typ, val) : res<val>
+def $upcast(C, INT, INT i) = OK (INT i)
+def $upcast(C, INT, NAT n) = OK (INT n)
+def $upcast(C, INT, val) = FAIL
+    -- if ~$is_num(val)
 def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
     -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
     -- if typ' = $subst_typ(`{ (tparam `: targ)* }, typ)
-def $upcast(C, TUP typ*, TUP val*) = TUP ($upcast(C, typ, val))*
+def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
+    -- if (OK val_upcast = $upcast(C, typ, val))*
+def $upcast(C, TUP typ*, val) = FAIL
+    -- if ~$is_tup(val)
+def $upcast(C, typ, val) = OK val
+    -- otherwise
 
-dec $downcast(ctx, typ, val) : val
-def $downcast(C, NAT, NAT n) = NAT n
-def $downcast(C, NAT, INT i) = NAT n
+dec $downcast(ctx, typ, val) : res<val>
+def $downcast(C, NAT, NAT n) = OK (NAT n)
+def $downcast(C, NAT, INT i) = OK (NAT n)
     -- if n = i
+def $downcast(C, NAT, val) = FAIL
+    -- if ~$is_num(val)
 def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
     -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
     -- if typ' = $subst_typ(`{ (tparam `: targ)* }, typ)
-def $downcast(C, TUP typ*, TUP val*) = TUP ($downcast(C, typ, val))*
-
+def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_downcast*)
+    -- (if OK val_downcast = $downcast(C, typ, val))*
+def $downcast(C, TUP typ*, val) = FAIL
+    -- if ~$is_tup(val)
+def $downcast(C, typ, val) = OK val
+    -- otherwise
 ;;
 
-dec $is_inj(val) : bool
-def $is_inj(INJ mixop val) = true
-def $is_inj(val) = false
-    -- otherwise
+dec $subtyp(ctx, typ, val) : res<bool>
+dec $subtyps(ctx, typ*, val*) : res<bool>
 
-dec $is_list(val) : bool
-def $is_list(LIST val*) = true
-def $is_list(val) = false
-    -- otherwise
-
-dec $is_opt(val) : bool
-def $is_opt(OPT val?) = true
-def $is_opt(val) = false
-    -- otherwise
-
-;;
-
-dec $subtyp(ctx, typ, val) : bool
-dec $subtyps(ctx, typ*, val*) : bool
-
-def $subtyps(C, typ*, val*) = $forall_($subtyp(C, typ, val)*)
+def $subtyps(C, typ*, val*) = OK ($forall_(b*))
     -- if |typ*| = |val*|
-def $subtyps(C, typ*, val*) = false
+    -- (if OK b = $subtyp(C, typ, val))*
+def $subtyps(C, typ*, val*) = OK false
+    -- if |typ*| =/= |val*|
+def $subtyps(C, typ*, val*) = FAIL
     -- otherwise
 
-def $subtyp(C, BOOL, BOOL b) = b
-def $subtyp(C, NAT, NAT n) = true
-def $subtyp(C, NAT, INT i) = true
+def $subtyp(C, BOOL, BOOL b) = OK true
+def $subtyp(C, NAT, NAT n) = OK true
+def $subtyp(C, NAT, INT i) = OK true
     -- if $(i >= 0)
-def $subtyp(C, INT, num) = true
-def $subtyp(C, TEXT, TEXT text) = true
-def $subtyp(C, VAR id targ*, EXT json) = true
+def $subtyp(C, INT, num) = OK true
+def $subtyp(C, TEXT, TEXT text) = OK true
+def $subtyp(C, VAR id targ*, EXT json) = FAIL
+    -- if PARAM = $find_typ(C, id)
+def $subtyp(C, VAR id targ*, EXT json) = OK true
     -- if EXT = $find_typ(C, id)
 def $subtyp(C, VAR id targ*, val) = $subtyp(C, typ_new, val)
     -- if DEF tparam* `-> (ALIAS typ) = $find_typ(C, id)
-    -- if theta = `{ (tparam `: targ)* }
-    -- if typ_new = $subst_typ(theta, typ)
-def $subtyp(C, VAR id targ*, INJ mixop val) = $exists_(bool*)
+    -- if typ_new = $subst_typ(`{ (tparam `: targ)* }, typ)
+def $subtyp(C, VAR id targ*, INJ mixop val) = OK $exists_(b*)
     -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
     -- if theta = `{ (tparam `: targ)* }
     -- (if mixop_typcase typ_typcase = typcase)*
-    -- (if bool = ((mixop = mixop_typcase) /\ $subtyps(C, ($subst_typ(theta, typ_typcase))*, val)))*
-def $subtyp(C, VAR id targ*, val) = true
+    -- (if b = ((mixop = mixop_typcase) /\ (OK true = $subtyps(C, ($subst_typ(theta, typ_typcase))*, val))))*
+def $subtyp(C, VAR id targ*, val) = OK true
     -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
-    -- if theta = `{ (tparam `: targ)* }
     -- if ~$is_inj(val)
-def $subtyp(C, VAR id targ*, val) = true
+def $subtyp(C, VAR id targ*, val) = OK true
     -- if DEF tparam* `-> (STRUCT typfield*) = $find_typ(C, id)
-    -- if theta = `{ (tparam `: targ)* }
-def $subtyp(C, TUP typ*, TUP val*) = $forall_($subtyp(C, typ, val)*)
+def $subtyp(C, TUP typ*, TUP val*) = OK $forall_(b'*)
     -- if |typ*| = |val*|
+    -- (if OK b' = $subtyp(C, typ, val))*
+def $subtyp(C, TUP typ*, TUP val*) = FAIL
+    -- if |typ*| = |val*|
+    -- if $exists_((FAIL = $subtyp(C, typ, val))*)
 def $subtyp(C, ITER typ iter, OPT val) = $subtyp(C, typ, val)
-def $subtyp(C, ITER typ iter, OPT eps) = true 
-def $subtyp(C, ITER typ iter, LIST val*) = $forall_($subtyp(C, typ, val)*)
-def $subtyp(C, typ, val) = false
+def $subtyp(C, ITER typ iter, OPT eps) = OK true 
+def $subtyp(C, ITER typ iter, LIST val*) = OK ($forall_(b*))
+    -- if (OK b = $subtyp(C, typ, val))*
+def $subtyp(C, ITER typ iter, LIST val*) = FAIL
+    -- if $exists_((FAIL = $subtyp(C, typ, val))*)
+def $subtyp(C, typ, val) = OK false
     -- otherwise
 
 ;;
@@ -159,13 +191,13 @@ def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_
     -- if OK (TEXT text) = $access_path(C, val_b, path)
     -- Eval_exp: C |- exp_i : OK (NAT n_l)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- Eval_exp: C |- exp_n : OK (TEXT text')
+    -- if TEXT text' = val_n
     -- if |text'| = n_n
 def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_b, path, LIST val*[[n_l : n_n] = val'*])
     -- if OK (LIST val*) = $access_path(C, val_b, path)
     -- Eval_exp: C |- exp_i : OK (NAT n_l)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
-    -- Eval_exp: C |- exp_n : OK (LIST val'*)
+    -- if LIST val'* = val_n
     -- if |val'*| = n_n
 def $update_path(C, val_b, DOT path atom_path, val_n) = $update_path(C, val_b, path, STR valfield_new*)
     -- if OK (STR valfield*) = $access_path(C, val_b, path)

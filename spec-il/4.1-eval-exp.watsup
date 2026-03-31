@@ -33,26 +33,31 @@ rule Eval_exp/binary_number:
 
 rulegroup Eval_exp/compare_boolean {
   rule Eval_exp/compare_boolean_eq:
-  C |- CMP EQ (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l = b_r))
+    C |- CMP EQ exp_l exp_r : OK (BOOL (val_l = val_r))
+    -- Eval_exp: C |- exp_l : OK val_l 
+    -- Eval_exp: C |- exp_r : OK val_r 
   
   rule Eval_exp/compare_boolean_neq:
-  C |- CMP NE (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l =/= b_r))
+    C |- CMP NE exp_l exp_r : OK (BOOL (val_l =/= val_r))
+    -- Eval_exp: C |- exp_l : OK val_l 
+    -- Eval_exp: C |- exp_r : OK val_r 
 }
 
 rule Eval_exp/compare_number:
   C |- CMP cmpop num_l num_r : OK (BOOL $cmpop_number(cmpop, num_l, num_r))
 
 rule Eval_exp/upcast:
-  C |- UPCAST typ exp : OK $upcast(C, typ, val)
+  C |- UPCAST typ exp : $upcast(C, typ, val)
   -- Eval_exp: C |- exp : OK val
 
 rule Eval_exp/downcast:
-  C |- DOWNCAST typ exp : OK $downcast(C, typ, val)
+  C |- DOWNCAST typ exp : $downcast(C, typ, val)
   -- Eval_exp: C |- exp : OK val
 
 rule Eval_exp/subtype:
-  C |- SUB exp typ : OK (BOOL $subtyp(C, typ, val))
+  C |- SUB exp typ : OK (BOOL b)
   -- Eval_exp: C |- exp : OK val
+  -- if OK b = $subtyp(C, typ, val)
 
 rulegroup Eval_exp/match {
   rule Eval_exp/match_inj:
@@ -203,7 +208,7 @@ rulegroup Eval_exp/iter {
 
   rule Eval_exp/iter_opt_none:
     C |- ITER exp (QUEST vari) : OK (OPT eps)
-    -- if $sub_opt(C, vari) = eps
+    -- if eps = $sub_opt(C, vari)
     
   rule Eval_exp/iter_list:
     C |- ITER exp (STAR vari*) : OK (LIST val*)
