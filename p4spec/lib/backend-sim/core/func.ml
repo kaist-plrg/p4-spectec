@@ -1,7 +1,8 @@
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Interface.Wrap
 open Interface.Unpack
 open Error
+open Util.Source
 
 (* Check a predicate @check in the parser; if the predicate is true do nothing,
    otherwise set the parser error to @toSignal, and transition to the `reject` state.
@@ -18,9 +19,11 @@ let verify (value_ctx : Value.t) (value_arch : Value.t) :
   let check = value_check |> unpack_p4_bool in
   let value_callResult =
     if check then
-      let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <| [ value_eps ] <<| "returnResult"
-    else "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult"
+      let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+      let value_eps = Value.Make.opt typ None in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+    else
+      Value.Make.("REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult")
   in
   (value_ctx, value_arch, value_callResult)
 

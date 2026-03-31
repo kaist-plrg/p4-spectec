@@ -3,7 +3,7 @@
   open Il
   open Context
   open Extract
-  open Wrap
+  open Value.Make
   open Flatten
 
   let declare_var_of_il (value : value) (b : bool) : unit =

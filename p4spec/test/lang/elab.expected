@@ -2711,7 +2711,9 @@ builtin def $bitstr_to_int(int, int) : int
 
 builtin def $int_to_bitstr(int, int) : int
 
-syntax bits = bool*
+syntax bit = bool
+
+syntax bits = bit*
 
 builtin def $bits_to_int_unsigned(bits) : int
 
@@ -26831,10 +26833,8 @@ relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor eva
     -- let ` storageReference_h?{storageReference_h <- storageReference_h?} = copyInArgumentResult as continueResult<storageReference?>
     -- Copy_in: p_shared ARCH_1 |- p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} @ p_callee EC_callee_1 argumentIR_t*{argumentIR_t <- argumentIR_t*} ~> ARCH_2 EC_caller_2 EC_callee_2 # copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
-    -- let ` storageReference'?{storageReference' <- storageReference'?}*{storageReference'? <- storageReference'?*} = copyInResult as continueResult<storageReference?*>
-    -- if storageReference'?{storageReference' <- storageReference'?}*{storageReference'? <- storageReference'?*} <: storageReference*
-    -- let storageReference_t*{storageReference_t <- storageReference_t*} = storageReference'?{storageReference' <- storageReference'?}*{storageReference'? <- storageReference'?*} as storageReference*
-    -- let storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = storageReference_h?{storageReference_h <- storageReference_h?} :: storageReference_t*{storageReference_t <- storageReference_t*} as storageReference?*
+    -- let ` storageReference_t?{storageReference_t <- storageReference_t?}*{storageReference_t? <- storageReference_t?*} = copyInResult as continueResult<storageReference?*>
+    -- let storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = storageReference_h?{storageReference_h <- storageReference_h?} :: storageReference_t?{storageReference_t <- storageReference_t?}*{storageReference_t? <- storageReference_t?*}
     -- output: % % |- % % % @ % % % ~> ARCH_2 EC_caller_2 EC_callee_2 # ` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
 
 relation Copy_in_default: parameterListIR @ cursor evalContext ~> evalContext

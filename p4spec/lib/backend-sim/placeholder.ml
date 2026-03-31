@@ -1,9 +1,9 @@
-open Interface.Wrap
-open Interface.Unwrap
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open Error
+open Util.Source
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
@@ -13,10 +13,12 @@ struct
 
   type arch_state = unit [@@deriving yojson]
 
-  let init_arch_state = () |> arch_state_to_yojson |> wrap_extern_v "archState"
+  let init_arch_state =
+    () |> arch_state_to_yojson
+    |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
   let eval_extern_init (_values_input : Value.t list) : Value.t =
-    wrap_extern_v "objectState" `Null
+    Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -28,9 +30,9 @@ struct
             "unexpected number of arguments to local compile-time known extern \
              function call"
     in
-    let name_func = unwrap_text_v value_name_func in
+    let name_func = Value.Get.text value_name_func in
     let names_param =
-      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
     in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->

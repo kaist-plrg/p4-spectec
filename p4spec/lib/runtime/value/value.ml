@@ -1,25 +1,17 @@
+module Fresh_ = Fresh
+module Match = Match
 open Domain
 open Lang
 open Xl
 open Il
 open Il.Print
-open Util.Source
+module Typ = Type.Typ
 open Error
-
-(* Ticker for node identifier tracking *)
-
-let tick = ref 0
-let refresh () = tick := 0
-
-let fresh () =
-  let id = !tick in
-  tick := id + 1;
-  id
+open Util.Source
 
 (* Value *)
 
 type t = value [@@deriving yojson]
-type id = vid
 
 (* Stringifier *)
 
@@ -86,42 +78,6 @@ and compares (values_l : t list) (values_r : t list) : int =
 
 let eq (value_l : t) (value_r : t) : bool = compare value_l value_r = 0
 
-(* Boolean *)
-
-let get_bool (value : t) =
-  match value.it with BoolV b -> b | _ -> error no_region "get_bool"
-
-(* Number *)
-
-let get_num (value : t) =
-  match value.it with NumV n -> n | _ -> error no_region "get_num"
-
-(* Text *)
-
-let get_text (value : t) =
-  match value.it with TextV s -> s | _ -> error no_region "get_text"
-
-(* List *)
-
-let to_list (values : t list) = ListV values
-
-let get_list (value : t) =
-  match value.it with ListV values -> values | _ -> error no_region "get_list"
-
-(* Option *)
-
-let to_opt (value : t option) = OptV value
-
-let get_opt (value : t) =
-  match value.it with OptV value -> value | _ -> error no_region "get_opt"
-
-(* Struct *)
-
-let get_struct (value : t) =
-  match value.it with
-  | StructV fields -> fields
-  | _ -> error no_region "get_struct"
-
 (* Hash computation *)
 
 let hash_of (v : value') : int =
@@ -158,9 +114,111 @@ let hash_of (v : value') : int =
   go v;
   !h land 0x7FFFFFFF
 
-(* Value constructor with precomputed hash *)
+(* Constructors *)
 
-let make (typ : typ') (v : value') : value =
-  let vid = fresh () in
-  let vhash = hash_of v in
-  Util.Source.( $$$ ) v { vid; typ; vhash }
+module Make = struct
+  (* Mixop generator *)
+
+  let mixop_cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
+
+  let mixop_of (s : string) : Mixop.t =
+    match Hashtbl.find_opt mixop_cache s with
+    | Some m -> m
+    | None ->
+        let m = Frontend.Parse.parse_mixop s in
+        Hashtbl.add mixop_cache s m;
+        m
+
+  (* Constructors *)
+
+  let mk (typ : typ') (value : value') : value =
+    let vid = Fresh_.fresh () in
+    let vhash = hash_of value in
+    Util.Source.( $$$ ) value { vid; typ; vhash }
+
+  let with_typ (typ : typ) (value : value') : value = mk typ.it value
+  let bool (b : bool) : value = BoolV b |> with_typ Typ.Make.bool
+  let nat (n : Bigint.t) : value = NumV (`Nat n) |> with_typ Typ.Make.nat
+  let int (i : Bigint.t) : value = NumV (`Int i) |> with_typ Typ.Make.int
+  let num (n : Num.t) : value = match n with `Nat n -> nat n | `Int i -> int i
+  let text (s : string) : value = TextV s |> with_typ Typ.Make.text
+
+  let str (typ : typ) (valuefields : valuefield list) : value =
+    StructV valuefields |> with_typ typ
+
+  let case (typ : typ) (valuecase : valuecase) : value =
+    CaseV valuecase |> with_typ typ
+
+  let tuple (typ : typ) (values : value list) : value =
+    TupleV values |> with_typ typ
+
+  let opt (typ : typ) (value_opt : value option) : value =
+    OptV value_opt |> with_typ typ
+
+  let list (typ : typ) (values : value list) : value =
+    ListV values |> with_typ typ
+
+  let func (id : id) : value = FuncV id |> with_typ Typ.Make.func
+
+  let extern (typ : typ) (json : Yojson.Safe.t) : value =
+    ExternV json |> with_typ typ
+
+  (* Operators *)
+
+  let ( <| ) (s_mixop : string) (values : value list) : string * value list =
+    (s_mixop, values)
+
+  let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
+    let typ = Typ.Make.var (s $ no_region) [] in
+    let valuecase = (mixop_of s_mixop, values) in
+    case typ valuecase
+
+  let ( #@@ ) (value : value) (s : string) : value =
+    { value with note = { value.note with typ = VarT (s $ no_region, []) } }
+end
+
+(* Getters *)
+
+module Get = struct
+  let bool (value : t) =
+    match value.it with BoolV b -> b | _ -> error no_region "not a bool"
+
+  let num (value : t) =
+    match value.it with NumV n -> n | _ -> error no_region "not a num"
+
+  let text (value : t) =
+    match value.it with TextV s -> s | _ -> error no_region "not a text"
+
+  let str (value : t) =
+    match value.it with
+    | StructV valuefields -> valuefields
+    | _ -> error no_region "not a struct"
+
+  let case (value : t) =
+    match value.it with
+    | CaseV valuecase -> valuecase
+    | _ -> error no_region "not a case"
+
+  let tuple (value : t) =
+    match value.it with
+    | TupleV values -> values
+    | _ -> error no_region "not a tuple"
+
+  let opt (value : t) =
+    match value.it with
+    | OptV value -> value
+    | _ -> error no_region "not an option"
+
+  let list (value : t) =
+    match value.it with
+    | ListV values -> values
+    | _ -> error no_region "not a list"
+
+  let func (value : t) =
+    match value.it with FuncV id -> id | _ -> error no_region "not a function"
+
+  let extern (value : t) =
+    match value.it with
+    | ExternV json -> json
+    | _ -> error no_region "not an extern"
+end

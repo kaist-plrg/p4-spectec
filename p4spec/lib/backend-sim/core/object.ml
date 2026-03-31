@@ -1,8 +1,8 @@
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Interface.Wrap
-open Interface.Unwrap
 open Interface.Pack
 open Interface.Unpack
+open Util.Source
 
 (* Bit manipulation *)
 
@@ -139,9 +139,11 @@ module PacketIn = struct
     if pkt.idx + size > pkt.len then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR" <| [ wrap_text_v "PacketTooShort" ] <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -157,8 +159,9 @@ module PacketIn = struct
       in
       (* Create call result *)
       let value_callResult =
-        let value_eps = wrap_opt_v "value" None in
-        "RETURN value?" <| [ value_eps ] <<| "returnResult"
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_eps = Value.Make.opt typ None in
+        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -193,34 +196,42 @@ module PacketIn = struct
       |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
     let size_varsize =
-      value_variableFieldSizeInBits |> unwrap_case_v |> snd |> fun values ->
-      List.nth values 1 |> unwrap_num_v |> Bigint.to_int_exn
+      value_variableFieldSizeInBits |> Value.Get.case |> snd |> fun values ->
+      List.nth values 1 |> Value.Get.num
+      |> (function `Nat n -> n | `Int i -> i)
+      |> Bigint.to_int_exn
     in
     let size = size_min + size_varsize in
     if alignment <> 0 then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR"
-          <| [ wrap_text_v "ParserInvalidArgument" ]
-          <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR"
+            <| [ text "ParserInvalidArgument" ]
+            <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else if pkt.idx + size > pkt.len then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR" <| [ wrap_text_v "PacketTooShort" ] <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else if size > size_max then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR" <| [ wrap_text_v "HeaderTooShort" ] <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -242,8 +253,9 @@ module PacketIn = struct
       in
       (* Create call result *)
       let value_callResult =
-        let value_eps = wrap_opt_v "value" None in
-        "RETURN value?" <| [ value_eps ] <<| "returnResult"
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_eps = Value.Make.opt typ None in
+        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -267,9 +279,11 @@ module PacketIn = struct
     if pkt.idx + size > pkt.len then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR" <| [ wrap_text_v "PacketTooShort" ] <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
@@ -279,8 +293,9 @@ module PacketIn = struct
       let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
       (* Create call result *)
       let value_callResult =
-        let value_hdr = wrap_opt_v "value" (Some value_hdr) in
-        "RETURN value?" <| [ value_hdr ] <<| "returnResult"
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_hdr = Value.Make.opt typ (Some value_hdr) in
+        Value.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -298,17 +313,20 @@ module PacketIn = struct
     if pkt.idx + size > pkt.len then
       let value_callResult =
         let value_err =
-          "ERROR `. nameIR" <| [ wrap_text_v "PacketTooShort" ] <<| "errorValue"
+          Value.Make.(
+            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
         in
-        "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult"
+        Value.Make.(
+          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
     else
       (* Advance cursor *)
       let pkt = { pkt with idx = pkt.idx + size } in
       let value_callResult =
-        let value_eps = wrap_opt_v "value" None in
-        "RETURN value?" <| [ value_eps ] <<| "returnResult"
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_eps = Value.Make.opt typ None in
+        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
 
@@ -324,8 +342,9 @@ module PacketIn = struct
       pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int length)
     in
     let value_callResult =
-      let value_length_opt = wrap_opt_v "value" (Some value_length) in
-      "RETURN value?" <| [ value_length_opt ] <<| "returnResult"
+      let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+      let value_length_opt = Value.Make.opt typ (Some value_length) in
+      Value.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
     in
     (pkt, value_ctx, value_arch, value_callResult)
 end
@@ -356,13 +375,14 @@ module PacketOut = struct
     (* Get bits of "hdr" *)
     let bits =
       Spec.Func.write_bits_from_value value_hdr
-      |> unwrap_list_v |> List.map unwrap_bool_v |> Array.of_list
+      |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
     in
     let pkt = { bits = Array.append pkt.bits bits } in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      "RETURN value?" <| [ value_eps ] <<| "returnResult"
+      let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+      let value_eps = Value.Make.opt typ None in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (pkt, value_ctx, value_arch, value_callResult)
 end

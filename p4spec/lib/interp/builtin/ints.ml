@@ -7,10 +7,10 @@ open Util.Source
 (* Conversion between meta-numerics and OCaml numerics *)
 
 let bigint_of_value (value : value) : Bigint.t =
-  value |> Value.get_num |> Num.to_int
+  value |> Value.Get.num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
+  let value = Value.Make.int i in
   add value;
   value
 
@@ -20,7 +20,7 @@ let sum_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
+    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
   in
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
   value_of_bigint add sum
@@ -31,7 +31,7 @@ let max_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
+    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
   in
   let max =
     match values with
@@ -46,7 +46,7 @@ let min_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.get_list |> List.map bigint_of_value
+    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
   in
   let min =
     match values with

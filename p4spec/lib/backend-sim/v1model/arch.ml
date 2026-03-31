@@ -1,6 +1,6 @@
-open Interface.Wrap
-open Interface.Unwrap
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+open Util.Source
 
 type t = {
   queue : Scheduler.t;
@@ -24,8 +24,11 @@ let reset (t : t) = { t with action = Packet.empty_action }
 
 (* Value conversion *)
 
-let to_value (t : t) = t |> to_yojson |> wrap_extern_v "archState"
-let of_value (v : Value.t) = v |> unwrap_extern_v |> of_yojson |> Result.get_ok
+let to_value (t : t) =
+  let typ = Typ.Make.var ("archState" $ no_region) [] in
+  t |> to_yojson |> Value.Make.extern typ
+
+let of_value (v : Value.t) = v |> Value.Get.extern |> of_yojson |> Result.get_ok
 
 (* Queue and mirror table setters *)
 

@@ -319,7 +319,7 @@ let sub_opt (ctx : t) (vars : var list) : t option =
   let values =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ Il.Opt ]) |> Value.get_opt)
+        find_value ctx (id, iters @ [ Il.Opt ]) |> Value.Get.opt)
       vars
   in
   (* Iteration is valid when all variables agree on their optionality *)
@@ -341,7 +341,7 @@ let sub_list (ctx : t) (vars : var list) : t list =
   let values_batch =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ Il.List ]) |> Value.get_list)
+        find_value ctx (id, iters @ [ Il.List ]) |> Value.Get.list)
       vars
     |> transpose
   in

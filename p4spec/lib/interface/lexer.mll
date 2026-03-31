@@ -14,13 +14,11 @@
 *)
 
 {
-open Lang
-open Il
 open Lexing
 open Context
 open Parser
-open Wrap
 module Value = Runtime.Value
+open Value.Make
 module F = Format
 
 exception Error of string
@@ -104,7 +102,7 @@ let strip_prefix s =
 
 let parse_int n _info =
   let i = Bigint.of_string (sanitize n) in
-  NumV (`Int i) |> with_typ (NumT `IntT)
+  Value.Make.int i
 
 let parse_width_int s n _info =
   let l_s = String.length s in
@@ -117,20 +115,12 @@ let parse_width_int s n _info =
       if (int_of_string width < 2)
       then raise (Error "signed integers must have width at least 2")
       else 
-        let value_width =
-          NumV (`Nat w) |> with_typ (NumT `NatT)
-        in
-        let value_int =
-          NumV (`Int i) |> with_typ (NumT `IntT)
-        in
+        let value_width = Value.Make.nat w in
+        let value_int = Value.Make.int i in
         "nat S int" <| [ value_width; value_int] <<| "integerLiteral"
     | "w" ->
-      let value_width =
-        NumV (`Nat w) |> with_typ (NumT `NatT)
-      in
-      let value_int =
-        NumV (`Int i) |> with_typ (NumT `IntT)
-      in
+      let value_width = Value.Make.nat w in
+      let value_int = Value.Make.int i in
       "nat W int" <| [ value_width; value_int] <<| "integerLiteral"
     | _ ->
       raise (Error "Illegal integer constant")
@@ -160,7 +150,7 @@ rule tokenize = parse
       { let str, end_info = (string lexbuf) in
         debug_token ("\"" ^ str ^ "\"");
         end_info |> ignore;
-        let value = Value.make TextT (TextV str) in
+        let value = Value.Make.text str in
         STRING_LITERAL value
       }
   | whitespace
@@ -292,7 +282,7 @@ rule tokenize = parse
   | name
       { let text = Lexing.lexeme lexbuf in
         debug_token text;
-        let value = Value.make Il.TextT (TextV text) in
+        let value = Value.Make.text text in
         NAME value }
   | "<="
       { debug_token "<="; LE (info lexbuf) }
@@ -403,7 +393,7 @@ rule tokenize = parse
   | _
       { let text = lexeme lexbuf in
         debug_token text;
-        let value = Value.make Il.TextT (TextV text) in
+        let value = Value.Make.text text in
         UNEXPECTED_TOKEN value }
       
 and string = parse
@@ -501,7 +491,7 @@ let rec lexer (lexbuf:lexbuf): token =
         lexer_state := SRegular;
         lexer lexbuf
       | NAME value as token ->
-        let text = Value.get_text value in
+        let text = Value.Get.text value in
         lexer_state := SIdent (text, SRegular);
         token          
       | token -> 
@@ -511,7 +501,7 @@ let rec lexer (lexbuf:lexbuf): token =
     | SRegular ->
       begin match tokenize lexbuf with
       | NAME value as token ->
-        let text = Value.get_text value in
+        let text = Value.Get.text value in
         lexer_state := SIdent (text, SRegular);
         token
       | PRAGMA _ as token ->
@@ -530,7 +520,7 @@ let rec lexer (lexbuf:lexbuf): token =
       begin match tokenize lexbuf with
       | L_ANGLE info -> L_ANGLE_ARGS info
       | NAME value as token ->
-        let text = Value.get_text value in
+        let text = Value.Get.text value in
         lexer_state := SIdent (text, SRegular);
         token
       | PRAGMA _ as token ->
@@ -550,7 +540,7 @@ let rec lexer (lexbuf:lexbuf): token =
          lexer_state := SRegular;
          token
       | NAME value as token ->
-         let text = Value.get_text value in
+         let text = Value.Get.text value in
          lexer_state := SIdent(text, SPragma);
          token
       | token -> token

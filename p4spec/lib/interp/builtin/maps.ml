@@ -1,6 +1,7 @@
 open Domain
 open Lang
 open Il
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Error
 open Util.Source
@@ -21,8 +22,8 @@ let rec map_update key value = function
 
 (* Conversion between meta-maps and OCaml assoc lists *)
 
-let mixop_pair = Interface.Wrap.mixop_of "k `: v"
-let mixop_map = Interface.Wrap.mixop_of "`{ k }"
+let mixop_pair = Value.Make.mixop_of "k `: v"
+let mixop_map = Value.Make.mixop_of "`{ k }"
 
 let map_of_value (value : value) : map =
   let tuple_of_value (value : value) : value * value =
@@ -36,7 +37,7 @@ let map_of_value (value : value) : map =
   in
   match value.it with
   | CaseV (mixop, [ value_pairs ]) when Mixop.eq mixop mixop_map ->
-      value_pairs |> Value.get_list |> List.map tuple_of_value
+      value_pairs |> Value.Get.list |> List.map tuple_of_value
   | _ ->
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
@@ -45,24 +46,25 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
     (map : map) : value =
   let value_of_tuple ((value_key, value_value) : value * value) : value =
     let value =
-      let typ = Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) in
-      Value.make typ (CaseV (mixop_pair, [ value_key; value_value ]))
+      let typ = Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] in
+      let valuecase = (mixop_pair, [ value_key; value_value ]) in
+      Value.Make.case typ valuecase
     in
     add value;
     value
   in
   let value_pairs =
     let typ =
-      Il.IterT
-        ( Il.VarT ("pair" $ no_region, [ typ_key; typ_value ]) $ no_region,
-          Il.List )
+      Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] |> Typ.Make.list
     in
-    Value.make typ (ListV (map |> List.map value_of_tuple))
+    let values = map |> List.map value_of_tuple in
+    Value.Make.list typ values
   in
   add value_pairs;
   let value =
-    let typ = Il.VarT ("map" $ no_region, [ typ_key; typ_value ]) in
-    Value.make typ (CaseV (mixop_map, [ value_pairs ]))
+    let typ = Typ.Make.var ("map" $ no_region) [ typ_key; typ_value ] in
+    let valuecase = (mixop_map, [ value_pairs ]) in
+    Value.Make.case typ valuecase
   in
   add value;
   value
@@ -76,11 +78,9 @@ let find_map (add : value -> unit) (at : region) (targs : targ list)
   let _typ_key, typ_value = Extract.two at targs in
   let value_map, value_key = Extract.two at values_input in
   let map = map_of_value value_map in
+  let typ_opt = Typ.Make.opt typ_value in
   let value_opt = map_find_opt value_key map in
-  let value =
-    let typ = Il.IterT (typ_value, Il.Opt) in
-    Value.make typ (OptV value_opt)
-  in
+  let value = Value.Make.opt typ_opt value_opt in
   add value;
   value
 
@@ -90,7 +90,8 @@ let find_maps (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let _typ_key, typ_value = Extract.two at targs in
   let value_maps, value_key = Extract.two at values_input in
-  let maps = value_maps |> Value.get_list |> List.map map_of_value in
+  let maps = value_maps |> Value.Get.list |> List.map map_of_value in
+  let typ_opt = Typ.Make.opt typ_value in
   let value_opt =
     List.fold_left
       (fun value_opt map ->
@@ -99,10 +100,7 @@ let find_maps (add : value -> unit) (at : region) (targs : targ list)
         | None -> map_find_opt value_key map)
       None maps
   in
-  let value =
-    let typ = Il.IterT (typ_value, Il.Opt) in
-    Value.make typ (OptV value_opt)
-  in
+  let value = Value.Make.opt typ_opt value_opt in
   add value;
   value
 
@@ -123,8 +121,8 @@ let adds_map (add : value -> unit) (at : region) (targs : targ list)
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_keys, value_values = Extract.three at values_input in
   let map = map_of_value value_map in
-  let values_key = value_keys |> Value.get_list in
-  let values_value = value_values |> Value.get_list in
+  let values_key = value_keys |> Value.Get.list in
+  let values_value = value_values |> Value.Get.list in
   List.fold_left2
     (fun map value_key value_value -> map_update value_key value_value map)
     map values_key values_value
