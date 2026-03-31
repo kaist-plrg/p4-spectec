@@ -770,15 +770,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             error path.at
               (F.asprintf "indexing expects either a text or a list, but got %s"
                  (Sl.Print.string_of_value ~short:true value)))
-    | SliceP (path, exp_i, exp_n) -> (
+    | SliceP (path, exp_i, exp_m) -> (
         let* value = eval_access_path ctx value_b path in
         let* value_i = eval_exp ctx exp_i in
         let idx_l =
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let* value_n = eval_exp ctx exp_n in
+        let* value_m = eval_exp ctx exp_m in
         let idx_n =
-          value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+          value_m |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
         let idx_h = idx_l + idx_n in
         match value.it with
