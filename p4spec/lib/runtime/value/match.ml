@@ -7,8 +7,8 @@ open Util.Source
 
 (* Whether a value belongs to a type (including subtyping) *)
 
-let rec sub_flat (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) :
-    bool =
+let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
+    =
   match typ.it with
   | BoolT -> ( match value.it with BoolV _ -> true | _ -> false)
   | NumT `NatT -> (
@@ -69,15 +69,6 @@ let rec sub_flat (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) :
       | ListV values -> List.for_all (sub finder typ_inner) values
       | _ -> false)
   | _ -> false
-
-and sub_opt (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
-    =
-  match value.it with
-  | OptV (Some value_inner) -> sub_flat finder typ value_inner
-  | _ -> false
-
-and sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool =
-  if sub_flat finder typ value then true else sub_opt finder typ value
 
 and subs (finder : TId.t -> Type.Typdef.t) (typs : typ list)
     (values : value list) : bool =
