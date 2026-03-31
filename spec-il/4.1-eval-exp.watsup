@@ -12,33 +12,31 @@ rule Eval_exp/variable:
   -- if val = $find_val(C, id eps)
 
 rule Eval_exp/unary_boolean:
-  C |- UN NOT (BOOL b) : OK (BOOL $(~b))
+  C |- UN NOT (BOOL b) : OK (BOOL (~b))
 
-rulegroup Eval_exp/binary_boolean
-{
+rulegroup Eval_exp/binary_boolean {
   rule Eval_exp/binary_boolean_and:
-    C |- BIN AND (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l /\ b_r))
+    C |- BIN AND (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l /\ b_r))
   
   rule Eval_exp/binary_boolean_or:
-    C |- BIN OR (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l \/ b_r))
+    C |- BIN OR (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l \/ b_r))
   
   rule Eval_exp/binary_boolean_impl:
-    C |- BIN IMPL (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l => b_r))
+    C |- BIN IMPL (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l => b_r))
   
   rule Eval_exp/binary_boolean_equiv:
-    C |- BIN EQUIV (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l <=> b_r))  
+    C |- BIN EQUIV (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l <=> b_r))  
 }
 
 rule Eval_exp/binary_number:
   C |- BIN binop num_l num_r : OK $binop_number(binop, num_l, num_r)
 
-rulegroup Eval_exp/compare_boolean
-{
+rulegroup Eval_exp/compare_boolean {
   rule Eval_exp/compare_boolean_eq:
-  C |- CMP EQ (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l = b_r))
+  C |- CMP EQ (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l = b_r))
   
   rule Eval_exp/compare_boolean_neq:
-  C |- CMP NE (BOOL b_l) (BOOL b_r) : OK (BOOL $(b_l =/= b_r))
+  C |- CMP NE (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l =/= b_r))
 }
 
 rule Eval_exp/compare_number:
@@ -56,10 +54,9 @@ rule Eval_exp/subtype:
   C |- SUB exp typ : OK (BOOL $subtyp(C, typ, val))
   -- Eval_exp: C |- exp : OK val
 
-rulegroup Eval_exp/match
-{
+rulegroup Eval_exp/match {
   rule Eval_exp/match_inj:
-    C |- MATCH exp (INJ mixop_p) : OK (BOOL $(mixop_p = mixop_v))
+    C |- MATCH exp (INJ mixop_p) : OK (BOOL (mixop_p = mixop_v))
     -- Eval_exp: C |- exp : OK (INJ mixop_v val_v)
 
   rule Eval_exp/match_list_cons:
@@ -67,11 +64,11 @@ rulegroup Eval_exp/match
     -- Eval_exp: C |- exp : OK (LIST val*)
 
   rule Eval_exp/match_list_fixed:
-    C |- MATCH exp (FIXED nat) : OK (BOOL $(|val*| = nat))
+    C |- MATCH exp (FIXED n) : OK (BOOL (|val*| = n))
     -- Eval_exp: C |- exp : OK (LIST val*)
 
   rule Eval_exp/match_list_nil:
-    C |- MATCH exp NIL : OK (BOOL $(|val*| = 0))
+    C |- MATCH exp NIL : OK (BOOL (|val*| = 0))
     -- Eval_exp: C |- exp : OK (LIST val*)
 
   rule Eval_exp/match_opt_some:
@@ -85,17 +82,17 @@ rulegroup Eval_exp/match
   rule Eval_exp/match_inj_else:
     C |- MATCH exp (INJ mixop_p) : OK (BOOL false)
     -- Eval_exp: C |- exp : OK val
-    -- if $is_inj(val) = false
+    -- if ~$is_inj(val)
 
   rule Eval_exp/match_list_else:
     C |- MATCH exp listpattern : OK (BOOL false)
     -- Eval_exp: C |- exp : OK val
-    -- if $is_list(val) = false
+    -- if ~$is_list(val)
 
   rule Eval_exp/match_opt_else:
     C |- MATCH exp optpattern : OK (BOOL false)
     -- Eval_exp: C |- exp : OK val
-    -- if $is_opt(val) = false
+    -- if ~$is_opt(val)
 }
 
 rule Eval_exp/tuple:
@@ -112,8 +109,7 @@ rule Eval_exp/struct:
   -- Eval_exps: C |- exp* : OK val*
   -- (if valfield = atom val)*
 
-rulegroup Eval_exp/opt 
-{
+rulegroup Eval_exp/opt {
   rule Eval_exp/opt_some:
     C |- OPT exp : OK (OPT val)
     -- Eval_exp : C |- exp : OK val
@@ -131,10 +127,9 @@ rule Eval_exp/cons:
   -- Eval_exp: C |- exp_h : OK val_h
   -- Eval_exp: C |- exp_t : OK (LIST val_t*)
 
-rulegroup Eval_exp/concat 
-{
+rulegroup Eval_exp/concat {
   rule Eval_exp/concat_text:
-  C |- CAT exp_l exp_r : OK (TEXT $(text_l ++ text_r))
+  C |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
   -- Eval_exp: C |- exp_l : OK (TEXT text_l)
   -- Eval_exp: C |- exp_r : OK (TEXT text_r)
 
@@ -145,18 +140,17 @@ rulegroup Eval_exp/concat
 }
 
 rule Eval_exp/mem:
-  C |- MEM exp_e exp_s : OK (BOOL $exists_($(val_e = val)*))
+  C |- MEM exp_e exp_s : OK (BOOL $exists_((val_e = val)*))
   -- Eval_exp: C |- exp_e : OK val_e
   -- Eval_exp: C |- exp_s : OK (LIST val*)
 
-rulegroup Eval_exp/len
-{
+rulegroup Eval_exp/len {
   rule Eval_exp/len_text:
-    C |- LEN exp : OK (NAT $(|text|))
+    C |- LEN exp : OK (NAT (|text|))
     -- Eval_exp: C |- exp : OK (TEXT text)
 
   rule Eval_exp/len_list:
-    C |- LEN exp : OK (NAT $(|val*|))
+    C |- LEN exp : OK (NAT (|val*|))
     -- Eval_exp: C |- exp : OK (LIST val*)
 }
 
@@ -164,49 +158,47 @@ rule Eval_exp/dot:
   C |- DOT exp atom : OK val_res
   -- Eval_exp: C |- exp : OK (STR valfield*)
   -- (if atom_field val_field = valfield)*
-  -- if val_res = $find_map<atom, val>($generate_map<atom, val>(atom_field*, val_field*), atom)
+  -- if val_res = $find_map<atom, val>(`{ (atom_field `: val_field)* }, atom)
 
-rulegroup Eval_exp/idx
-{ 
+rulegroup Eval_exp/idx { 
   rule Eval_exp/idx_text:
-    C |- IDX exp_b exp_i : OK (TEXT text[nat])
+    C |- IDX exp_b exp_i : OK (TEXT text[n])
     -- Eval_exp: C |- exp_b : OK (TEXT text)
-    -- Eval_exp: C |- exp_i : OK (NAT nat)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
 
   rule Eval_exp/idx_list:
-    C |- IDX exp_b exp_i : OK (val*[nat])
+    C |- IDX exp_b exp_i : OK (val*[n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT nat)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
 }
 
-rulegroup Eval_exp/slice 
-{
+rulegroup Eval_exp/slice {
   rule Eval_exp/slice_text:
-  C |- SLICE exp_b exp_i exp_n : OK (TEXT text[nat_i : nat_n])
+  C |- SLICE exp_b exp_i exp_n : OK (TEXT text[n_i : n_n])
     -- Eval_exp: C |- exp_b : OK (TEXT text)
-    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
-    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
 
   rule Eval_exp/slice_list:
-    C |- SLICE exp_b exp_i exp_n : OK (LIST val*[nat_i : nat_n])
+    C |- SLICE exp_b exp_i exp_n : OK (LIST val*[n_i : n_n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT nat_i)
-    -- Eval_exp: C |- exp_n : OK (NAT nat_n)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
 }
 
 rule Eval_exp/upd:
-  C |- UPD exp_b path exp_f : OK $update_path(C, val_b, path, val_f)
+  C |- UPD exp_b path exp_f : $update_path(C, val_b, path, val_f)
   -- Eval_exp: C |- exp_b : OK val_b
   -- Eval_exp: C |- exp_f : OK val_f
 
 rule Eval_exp/call:
-  C |- CALL id targ* arg* : $invoke_func(C, id, targ*, arg*)
+  C |- CALL id targ* arg* : valres
+  -- Call_func: C |- id targ* arg* : valres
 
-rulegroup Eval_exp/iter
-{
+rulegroup Eval_exp/iter {
   rule Eval_exp/iter_opt_some:
     C |- ITER exp (QUEST vari) : OK (OPT val)
-    -- if $sub_opt(C, vari) = C_sub
+    -- if C_sub = $sub_opt(C, vari)
     -- Eval_exp: C_sub |- exp : OK val
 
   rule Eval_exp/iter_opt_none:
@@ -225,6 +217,22 @@ rule Eval_exp/fail:
 
 ;;
 
-rule Eval_exps:
+rule Eval_exps/ok:
   C |- exp* : OK val*
   -- (Eval_exp: C |- exp : OK val)*
+
+rule Eval_exps/fail:
+  C |- exp* : FAIL
+  -- otherwise
+
+;;
+
+rule Call_func/ok:
+  C |- id targ* arg* : $invoke_func_with_values(C, id, targ_new*, val_input*)
+  -- if theta = $invoke_func_aux(C.LOCAL.TYP)
+  -- if (targ_new = $subst_typ(theta, targ))*
+  -- Eval_args: C |- arg* : OK val_input*
+
+rule Call_func/fail:
+  C |- id targ* arg* : FAIL
+  -- otherwise
