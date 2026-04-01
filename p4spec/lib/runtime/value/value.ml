@@ -158,7 +158,9 @@ module Make = struct
   let list (typ : typ) (values : value list) : value =
     ListV values |> with_typ typ
 
-  let func (id : id) : value = FuncV id |> with_typ Typ.Make.func
+  let func (id : id) (tparams : tparam list) (typs_param : typ list) (typ : typ)
+      : value =
+    FuncV id |> with_typ (Typ.Make.func tparams typs_param typ)
 
   let extern (typ : typ) (json : Yojson.Safe.t) : value =
     ExternV json |> with_typ typ

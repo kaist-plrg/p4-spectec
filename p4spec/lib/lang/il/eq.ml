@@ -68,7 +68,7 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
   | TupleT typs_a, TupleT typs_b -> eq_typs typs_a typs_b
   | IterT (typ_a, iter_a), IterT (typ_b, iter_b) ->
       eq_typ typ_a typ_b && eq_iter iter_a iter_b
-  | FuncT, FuncT -> true
+  | FuncT _, FuncT _ -> true
   | _ -> false
 
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =

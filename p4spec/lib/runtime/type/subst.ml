@@ -27,7 +27,10 @@ let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
   | IterT (typ, iter) ->
       let typ = subst_typ_inner theta typ in
       IterT (typ, iter) $ typ.at
-  | FuncT -> typ
+  | FuncT (tparams, typs_param, typ_ret) ->
+      let typs_param = subst_typs_inner theta typs_param in
+      let typ_ret = subst_typ_inner theta typ_ret in
+      FuncT (tparams, typs_param, typ_ret) $ typ.at
 
 and subst_typs_inner (theta : theta) (typs : typ list) : typ list =
   List.map (subst_typ_inner theta) typs

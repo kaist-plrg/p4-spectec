@@ -1,13 +1,15 @@
 open Lang
 open Sl
+open Error
+open Util.Source
 
 (* Function *)
 
 type t =
-  | Extern of tparam list * param list
-  | Builtin of tparam list * param list
-  | Table of param list * tablerow list
-  | Defined of tparam list * param list * block * elseblock option
+  | Extern of tparam list * param list * typ
+  | Builtin of tparam list * param list * typ
+  | Table of param list * typ * tablerow list
+  | Defined of tparam list * param list * typ * block * elseblock option
 
 let to_string = function
   | Extern _ -> "extern function"
@@ -15,14 +17,17 @@ let to_string = function
   | Table _ -> "table function"
   | Defined _ -> "defined function"
 
-let get_tparams = function
-  | Extern (tparams, _) -> tparams
-  | Builtin (tparams, _) -> tparams
-  | Table _ -> []
-  | Defined (tparams, _, _, _) -> tparams
-
-let get_params = function
-  | Extern (_, params) -> params
-  | Builtin (_, params) -> params
-  | Table (params, _) -> params
-  | Defined (_, params, _, _) -> params
+let get_signature =
+  let typ_of_param (param : param) : typ =
+    match param.it with
+    | ExpP (typ, _) -> typ
+    | DefP _ -> error no_region "typ of DefP parameter not implemented"
+  in
+  let typs_of_params (params : param list) : typ list =
+    List.map typ_of_param params
+  in
+  function
+  | Extern (tparams, params, typ) -> (tparams, typs_of_params params, typ)
+  | Builtin (tparams, params, typ) -> (tparams, typs_of_params params, typ)
+  | Table (params, typ, _) -> ([], typs_of_params params, typ)
+  | Defined (tparams, params, typ, _, _) -> (tparams, typs_of_params params, typ)

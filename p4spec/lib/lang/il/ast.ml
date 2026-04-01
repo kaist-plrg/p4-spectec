@@ -41,13 +41,13 @@ type var = id * typ * iter list
 
 and typ = typ' phrase
 and typ' =
-  | BoolT                   (* `bool` *)
-  | NumT of Num.typ         (* numtyp *)
-  | TextT                   (* `text` *)
-  | VarT of id * targ list  (* id (`<` list(targ, `,`) `>`)? *)
-  | TupleT of typ list      (* `(` list(typ, `,`) `)` *)
-  | IterT of typ * iter     (* typ iter *)
-  | FuncT                   (* `func` *)
+  | BoolT                                 (* `bool` *)
+  | NumT of Num.typ                       (* numtyp *)
+  | TextT                                 (* `text` *)
+  | VarT of id * targ list                (* id (`<` list(targ, `,`) `>`)? *)
+  | TupleT of typ list                    (* `(` list(typ, `,`) `)` *)
+  | IterT of typ * iter                   (* typ iter *)
+  | FuncT of tparam list * typ list * typ (* `func` *)
 [@@deriving yojson]
 
 and nottyp = nottyp' phrase

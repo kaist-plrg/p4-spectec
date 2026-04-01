@@ -846,7 +846,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
-        let value_res = Value.Make.func id in
+        let _, func = Ctx.find_func ctx id in
+        let tparams, typs_param, typ = Func.get_signature func in
+        let value_res = Value.Make.func id tparams typs_param typ in
         Ok value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =
@@ -1222,9 +1224,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       match func with
       | Func.Extern _ -> invoke_extern_func ~anon id targs values_input
       | Func.Builtin _ -> invoke_builtin_func ~anon id targs values_input
-      | Func.Table (_, tablerows) ->
+      | Func.Table (_, _, tablerows) ->
           invoke_table_func ~anon ctx id tablerows values_input
-      | Func.Defined (tparams, _, clauses, elseclause_opt) ->
+      | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
           invoke_defined_func ~anon ctx id tparams clauses elseclause_opt targs
             values_input
     in
@@ -1436,15 +1438,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let check_func_inputs (funcname : string) (targs : targ list)
       (values_input : value list) : unit =
-    let typ_of_param (param : param) =
-      match param.it with
-      | ExpP typ -> typ
-      | DefP _ -> error no_region "typ of DefP parameter not implemented"
-    in
     let ctx = Ctx.empty in
     let id = funcname $ no_region in
     let _, func = Ctx.find_func ctx id in
-    let tparams = Func.get_tparams func in
+    let tparams, typs_params, _ = Func.get_signature func in
     let ctx_local = Ctx.localize ctx in
     check
       (List.length targs = List.length tparams)
@@ -1456,9 +1453,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           Ctx.add_typdef ctx_local tparam td)
         ctx_local tparams targs
     in
-    let typs = func |> Func.get_params |> List.map typ_of_param in
     check
-      (Value.Match.subs (Ctx.find_typdef ctx_local) typs values_input)
+      (Value.Match.subs (Ctx.find_typdef ctx_local) typs_params values_input)
       no_region "function argument does not match the parameter type"
 
   let do_eval_rel (relname : string) (values_input : value list) :

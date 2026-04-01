@@ -111,17 +111,17 @@ let load_def (def : def) : unit =
   | RelD (id, rel_signature, exps_match, block, elseblock_opt, _) ->
       let rel = Rel.Defined (rel_signature, exps_match, block, elseblock_opt) in
       add_rel_global id rel
-  | ExternDecD (id, tparams, params, _, _) ->
-      let func = Func.Extern (tparams, params) in
+  | ExternDecD (id, tparams, params, typ, _) ->
+      let func = Func.Extern (tparams, params, typ) in
       add_func_global id func
-  | BuiltinDecD (id, tparams, params, _, _) ->
-      let func = Func.Builtin (tparams, params) in
+  | BuiltinDecD (id, tparams, params, typ, _) ->
+      let func = Func.Builtin (tparams, params, typ) in
       add_func_global id func
-  | TableDecD (id, params, _typ, tablerows, _) ->
-      let func = Func.Table (params, tablerows) in
+  | TableDecD (id, params, typ, tablerows, _) ->
+      let func = Func.Table (params, typ, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, params, _typ, block, elseblock_opt, _) ->
-      let func = Func.Defined (tparams, params, block, elseblock_opt) in
+  | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
+      let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
       add_func_global id func
 
 let init ~(det : bool) (spec : spec) : unit =
