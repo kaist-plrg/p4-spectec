@@ -14,3 +14,15 @@ let to_string = function
   | Builtin _ -> "builtin function"
   | Table _ -> "table function"
   | Defined _ -> "defined function"
+
+let get_tparams = function
+  | Extern (tparams, _) -> tparams
+  | Builtin (tparams, _) -> tparams
+  | Table _ -> []
+  | Defined (tparams, _, _, _) -> tparams
+
+let get_params = function
+  | Extern (_, params) -> params
+  | Builtin (_, params) -> params
+  | Table (params, _) -> params
+  | Defined (_, params, _, _) -> params

@@ -1610,8 +1610,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       value list =
     let rel = Ctx.find_rel ctx id in
     match rel with
-    | Rel.Extern -> invoke_extern_rel id values_input
-    | Rel.Defined (exps_input, block, elseblock_opt) ->
+    | Rel.Extern _ -> invoke_extern_rel id values_input
+    | Rel.Defined (_, exps_input, block, elseblock_opt) ->
         invoke_defined_rel ctx id exps_input block elseblock_opt values_input
 
   and invoke_extern_rel (id : id) (values_input : value list) : value list =
@@ -1871,6 +1871,43 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Cache.Cache.reset !func_cache;
     Cache.Cache.reset !rel_cache
 
+  let check_rel_inputs (relname : string) (values_input : value list) : unit =
+    let ctx = Ctx.empty () in
+    let id = relname $ no_region in
+    let nottyp, inputs = Ctx.find_rel ctx id |> Rel.get_signature in
+    let typs = snd nottyp.it in
+    let typs = List.map (fun i -> List.nth typs i) inputs in
+    check
+      (Value.Match.subs (Ctx.find_typdef ctx) typs values_input)
+      no_region "relation input does not match the expected type"
+
+  let check_func_inputs (funcname : string) (targs : targ list)
+      (values_input : value list) : unit =
+    let typ_of_param (param : param) =
+      match param.it with
+      | ExpP (typ, _) -> typ
+      | DefP _ -> error no_region "typ of DefP parameter not implemented"
+    in
+    let ctx = Ctx.empty () in
+    let id = funcname $ no_region in
+    let _, func = Ctx.find_func ctx id in
+    let tparams = Func.get_tparams func in
+    let tdenv_local =
+      check
+        (List.length targs = List.length tparams)
+        no_region "arity mismatch in type arguments";
+      List.fold_left2
+        (fun tdenv_local tparam targ ->
+          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+          TDEnv.add tparam td tdenv_local)
+        TDEnv.empty tparams targs
+    in
+    let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
+    let typs = func |> Func.get_params |> List.map typ_of_param in
+    check
+      (Value.Match.subs (Ctx.find_typdef ctx_local) typs values_input)
+      no_region "function argument does not match the parameter type"
+
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
       let ctx = Ctx.empty () in
@@ -1899,6 +1936,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     clear ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
+      check_rel_inputs relname [ value_program ];
       Hook.on_program value_program;
       let values_output = do_eval_rel relname [ value_program ] in
       Sim.Pass values_output
@@ -1910,6 +1948,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
     clear ();
     try
+      check_rel_inputs relname values_input;
       let values_output = do_eval_rel relname values_input in
       Sim.Pass values_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
@@ -1919,39 +1958,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : Sim.func_result =
     clear ();
     try
-      (* Check the type of the values *)
-      let ctx = Ctx.empty () in
-      let id = funcname $ no_region in
-      let _, func = Ctx.find_func ctx id in
-      let tparams, params =
-        match func with
-        | Func.Extern (tparams, params) -> (tparams, params)
-        | Func.Builtin (tparams, params) -> (tparams, params)
-        | Func.Table (params, _) -> ([], params)
-        | Func.Defined (tparams, params, _, _) -> (tparams, params)
-      in
-      let tdenv_local =
-        check
-          (List.length targs = List.length tparams)
-          no_region "arity mismatch in type arguments";
-        List.fold_left2
-          (fun tdenv_local tparam targ ->
-            let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
-            TDEnv.add tparam td tdenv_local)
-          TDEnv.empty tparams targs
-      in
-      let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
-      let typs =
-        List.map
-          (fun param ->
-            match param.it with
-            | ExpP (typ, _) -> typ
-            | DefP _ -> error no_region "DefP in eval_func not implemented")
-          params
-      in
-      check
-        (Value.Match.subs (Ctx.find_typdef ctx_local) typs values_input)
-        no_region "function argument does not match the parameter type";
+      check_func_inputs funcname targs values_input;
       let value_output = do_eval_func funcname targs values_input in
       Sim.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->

@@ -105,11 +105,11 @@ let load_def (def : def) : unit =
   | TypD (id, tparams, deftyp, _) ->
       let td = Typdef.Defined (tparams, deftyp) in
       add_typdef_global id td
-  | ExternRelD (id, _, _, _) ->
-      let rel = Rel.Extern in
+  | ExternRelD (id, rel_signature, _, _) ->
+      let rel = Rel.Extern rel_signature in
       add_rel_global id rel
-  | RelD (id, _, exps_match, block, elseblock_opt, _) ->
-      let rel = Rel.Defined (exps_match, block, elseblock_opt) in
+  | RelD (id, rel_signature, exps_match, block, elseblock_opt, _) ->
+      let rel = Rel.Defined (rel_signature, exps_match, block, elseblock_opt) in
       add_rel_global id rel
   | ExternDecD (id, tparams, params, _, _) ->
       let func = Func.Extern (tparams, params) in
