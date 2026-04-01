@@ -20,38 +20,40 @@ let to_string t = string_of_value t
 (* Comparison *)
 
 let rec compare (value_l : t) (value_r : t) =
-  let tag (value : t) =
-    match value.it with
-    | BoolV _ -> 0
-    | NumV _ -> 1
-    | TextV _ -> 2
-    | StructV _ -> 3
-    | CaseV _ -> 4
-    | TupleV _ -> 5
-    | OptV None -> 6
-    | OptV _ -> 7
-    | ListV _ -> 8
-    | FuncV _ -> 9
-    | ExternV _ -> 10
-  in
-  match (value_l.it, value_r.it) with
-  | BoolV b_l, BoolV b_r -> Stdlib.compare b_l b_r
-  | NumV n_l, NumV n_r -> Num.compare n_l n_r
-  | TextV s_l, TextV s_r -> String.compare s_l s_r
-  | StructV fields_l, StructV fields_r -> compare_fields fields_l fields_r
-  | CaseV (mixop_l, values_l), CaseV (mixop_r, values_r) ->
-      let cmp_mixop = Mixop.compare mixop_l mixop_r in
-      if cmp_mixop <> 0 then cmp_mixop else compares values_l values_r
-  | TupleV values_l, TupleV values_r -> compares values_l values_r
-  | OptV value_opt_l, OptV value_opt_r -> (
-      match (value_opt_l, value_opt_r) with
-      | Some value_l, Some value_r -> compare value_l value_r
-      | Some _, None -> 1
-      | None, Some _ -> -1
-      | None, None -> 0)
-  | ListV values_l, ListV values_r -> compares values_l values_r
-  | ExternV json_l, ExternV json_r -> Stdlib.compare json_l json_r
-  | _ -> Int.compare (tag value_l) (tag value_r)
+  if value_l == value_r then 0
+  else
+    let tag (value : t) =
+      match value.it with
+      | BoolV _ -> 0
+      | NumV _ -> 1
+      | TextV _ -> 2
+      | StructV _ -> 3
+      | CaseV _ -> 4
+      | TupleV _ -> 5
+      | OptV None -> 6
+      | OptV _ -> 7
+      | ListV _ -> 8
+      | FuncV _ -> 9
+      | ExternV _ -> 10
+    in
+    match (value_l.it, value_r.it) with
+    | BoolV b_l, BoolV b_r -> Stdlib.compare b_l b_r
+    | NumV n_l, NumV n_r -> Num.compare n_l n_r
+    | TextV s_l, TextV s_r -> String.compare s_l s_r
+    | StructV fields_l, StructV fields_r -> compare_fields fields_l fields_r
+    | CaseV (mixop_l, values_l), CaseV (mixop_r, values_r) ->
+        let cmp_mixop = Mixop.compare mixop_l mixop_r in
+        if cmp_mixop <> 0 then cmp_mixop else compares values_l values_r
+    | TupleV values_l, TupleV values_r -> compares values_l values_r
+    | OptV value_opt_l, OptV value_opt_r -> (
+        match (value_opt_l, value_opt_r) with
+        | Some value_l, Some value_r -> compare value_l value_r
+        | Some _, None -> 1
+        | None, Some _ -> -1
+        | None, None -> 0)
+    | ListV values_l, ListV values_r -> compares values_l values_r
+    | ExternV json_l, ExternV json_r -> Stdlib.compare json_l json_r
+    | _ -> Int.compare (tag value_l) (tag value_r)
 
 and compare_fields fields_l fields_r =
   match (fields_l, fields_r) with

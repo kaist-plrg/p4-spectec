@@ -16,32 +16,35 @@ let compare_atom (atom_a : atom) (atom_b : atom) =
   Atom.compare atom_a.it atom_b.it
 
 let rec compare (mixop_a : t) (mixop_b : t) =
-  let tag (mixop : t) =
-    match mixop with
-    | Arg -> 0
-    | Atom _ -> 1
-    | Brack _ -> 2
-    | Infix _ -> 3
-    | Seq _ -> 4
-  in
-  match (mixop_a, mixop_b) with
-  | Arg, Arg -> 0
-  | Atom atom_a, Atom atom_b -> compare_atom atom_a atom_b
-  | Brack (atom_a_l, mixop_a, atom_a_r), Brack (atom_b_l, mixop_b, atom_b_r) ->
-      let c = compare_atom atom_a_l atom_b_l in
-      if c <> 0 then c
-      else
-        let c = compare mixop_a mixop_b in
-        if c <> 0 then c else compare_atom atom_a_r atom_b_r
-  | Infix (mixop_a_l, atom_a, mixop_a_r), Infix (mixop_b_l, atom_b, mixop_b_r)
-    ->
-      let c = compare mixop_a_l mixop_b_l in
-      if c <> 0 then c
-      else
-        let c = compare_atom atom_a atom_b in
-        if c <> 0 then c else compare mixop_a_r mixop_b_r
-  | Seq mixops_a, Seq mixops_b -> compare_mixops mixops_a mixops_b
-  | mixop_a, mixop_b -> Int.compare (tag mixop_a) (tag mixop_b)
+  if mixop_a == mixop_b then 0
+  else
+    let tag (mixop : t) =
+      match mixop with
+      | Arg -> 0
+      | Atom _ -> 1
+      | Brack _ -> 2
+      | Infix _ -> 3
+      | Seq _ -> 4
+    in
+    match (mixop_a, mixop_b) with
+    | Arg, Arg -> 0
+    | Atom atom_a, Atom atom_b -> compare_atom atom_a atom_b
+    | Brack (atom_a_l, mixop_a, atom_a_r), Brack (atom_b_l, mixop_b, atom_b_r)
+      ->
+        let c = compare_atom atom_a_l atom_b_l in
+        if c <> 0 then c
+        else
+          let c = compare mixop_a mixop_b in
+          if c <> 0 then c else compare_atom atom_a_r atom_b_r
+    | Infix (mixop_a_l, atom_a, mixop_a_r), Infix (mixop_b_l, atom_b, mixop_b_r)
+      ->
+        let c = compare mixop_a_l mixop_b_l in
+        if c <> 0 then c
+        else
+          let c = compare_atom atom_a atom_b in
+          if c <> 0 then c else compare mixop_a_r mixop_b_r
+    | Seq mixops_a, Seq mixops_b -> compare_mixops mixops_a mixops_b
+    | mixop_a, mixop_b -> Int.compare (tag mixop_a) (tag mixop_b)
 
 and compare_mixops (mixops_a : t list) (mixops_b : t list) =
   match (mixops_a, mixops_b) with
