@@ -150,7 +150,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (value : value) : Ctx.t =
     match param.it with
     | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
-    | DefP id -> assign_param_def ctx_caller ctx_callee id value
+    | DefP (id, _tparams, _params, _typ) ->
+        assign_param_def ctx_caller ctx_callee id value
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
