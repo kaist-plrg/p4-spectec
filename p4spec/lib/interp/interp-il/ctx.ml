@@ -86,23 +86,23 @@ let load_def (def : def) : unit =
   | TypD (id, tparams, deftyp, _) ->
       let td = Typdef.Defined (tparams, deftyp) in
       add_typdef_global id td
-  | ExternRelD (id, _, _, _) ->
-      let rel = Rel.Extern in
+  | ExternRelD (id, nottyp, inputs, _) ->
+      let rel = Rel.Extern (nottyp, inputs) in
       add_rel_global id rel
-  | RelD (id, _, _, rulegroups, elsegroup_opt, _) ->
-      let rel = Rel.Defined (rulegroups, elsegroup_opt) in
+  | RelD (id, nottyp, input, rulegroups, elsegroup_opt, _) ->
+      let rel = Rel.Defined (nottyp, input, rulegroups, elsegroup_opt) in
       add_rel_global id rel
-  | ExternDecD (id, _, _, _, _) ->
-      let func = Func.Extern in
+  | ExternDecD (id, tparams, params, _, _) ->
+      let func = Func.Extern (tparams, params) in
       add_func_global id func
-  | BuiltinDecD (id, _, _, _, _) ->
-      let func = Func.Builtin in
+  | BuiltinDecD (id, tparams, params, _, _) ->
+      let func = Func.Builtin (tparams, params) in
       add_func_global id func
   | TableDecD (id, params, _, tablerows, _) ->
       let func = Func.Table (params, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, _, _, clauses, elseclause_opt, _) ->
-      let func = Func.Defined (tparams, clauses, elseclause_opt) in
+  | FuncDecD (id, tparams, params, _, clauses, elseclause_opt, _) ->
+      let func = Func.Defined (tparams, params, clauses, elseclause_opt) in
       add_func_global id func
 
 let init ~(det : bool) (spec : spec) : unit =
