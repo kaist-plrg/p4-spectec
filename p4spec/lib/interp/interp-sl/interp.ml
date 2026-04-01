@@ -876,30 +876,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             back_err path.at
               (F.asprintf "indexing expects either a text or a list, but got %s"
                  (Sl.Print.string_of_value ~short:true value)))
-    | SliceP (path, exp_i, exp_n) -> (
+    | SliceP (path, exp_i, exp_m) -> (
         let value = eval_access_path ctx value_b path in
         let value_i = eval_exp ctx exp_i in
         let idx_l =
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let value_n = eval_exp ctx exp_n in
-        let idx_n =
-          value_n |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        let value_m = eval_exp ctx exp_m in
+        let idx_m =
+          value_m |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let idx_h = idx_l + idx_n in
+        let idx_h = idx_l + idx_m in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
-            back_err exp_n.at
+            back_err exp_m.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (String.length s))
         | TextV s ->
             let s_n = Value.get_text value_n in
-            if String.length s_n <> idx_n then
-              back_err exp_n.at
+            if String.length s_n <> idx_m then
+              back_err exp_m.at
                 (F.asprintf
                    "updating a slice of length %d requires a text of length \
                     %d, but got %s"
-                   idx_n (String.length s_n)
+                   idx_m (String.length s_n)
                    (Sl.Print.string_of_value ~short:true value_n))
             else
               let s_updated =
@@ -910,17 +910,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
-            back_err exp_n.at
+            back_err exp_m.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (List.length values))
         | ListV values ->
             let values_n = Value.get_list value_n in
-            if List.length values_n <> idx_n then
+            if List.length values_n <> idx_m then
               back_err exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a list of length \
                     %d, but got %s"
-                   idx_n (List.length values_n)
+                   idx_m (List.length values_n)
                    (Sl.Print.string_of_value ~short:true value_n))
             else
               let values_updated =

@@ -777,10 +777,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           value_i |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
         let* value_m = eval_exp ctx exp_m in
-        let idx_n =
+        let idx_m =
           value_m |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
         in
-        let idx_h = idx_l + idx_n in
+        let idx_h = idx_l + idx_m in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
             error exp_n.at
@@ -788,12 +788,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                  (String.length s))
         | TextV s ->
             let s_n = Value.get_text value_n in
-            if String.length s_n <> idx_n then
+            if String.length s_n <> idx_m then
               error exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a text of length \
                     %d, but got %s"
-                   idx_n (String.length s_n)
+                   idx_m (String.length s_n)
                    (Il.Print.string_of_value ~short:true value_n))
             else
               let s_updated =
@@ -808,12 +808,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                  (List.length values))
         | ListV values ->
             let values_n = Value.get_list value_n in
-            if List.length values_n <> idx_n then
+            if List.length values_n <> idx_m then
               error exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a list of length \
                     %d, but got %s"
-                   idx_n (List.length values_n)
+                   idx_m (List.length values_n)
                    (Il.Print.string_of_value ~short:true value_n))
             else
               let values_updated =
