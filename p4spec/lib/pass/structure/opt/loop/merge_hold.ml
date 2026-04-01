@@ -1,6 +1,6 @@
 open Lang
 open Ol.Ast
-module Typ = Runtime.Dynamic_Sl.Typ
+module Typ = Runtime.Type.Typ
 open Util.Source
 
 (* Merge consecutive hold statements with the same holding condition *)

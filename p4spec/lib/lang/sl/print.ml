@@ -1,3 +1,4 @@
+open Domain
 open Ast
 open Util.Source
 
@@ -19,7 +20,7 @@ let string_of_defid defid = Il.Print.string_of_defid defid
 
 (* Atoms *)
 
-let string_of_atom ?(lower = true) atom = Il.Print.string_of_atom ~lower atom
+let string_of_atom atom = Il.Print.string_of_atom atom
 let string_of_atoms atoms = atoms |> List.map string_of_atom |> String.concat ""
 
 (* Mixfix operators *)
@@ -134,12 +135,8 @@ and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
   let mixop, exps = notexp in
-  let len = List.length mixop + List.length exps in
-  List.init len (fun idx ->
-      if idx mod 2 = 0 then idx / 2 |> List.nth mixop |> string_of_atoms
-      else idx / 2 |> List.nth exps |> string_of_exp)
-  |> List.filter_map (fun str -> if str = "" then None else Some str)
-  |> String.concat " "
+  let sexps = List.map string_of_exp exps in
+  Mixop.assemble ~string_of_atom mixop sexps
 
 (* Patterns *)
 
@@ -191,10 +188,9 @@ and string_of_args args =
 and string_of_targ targ = Il.Print.string_of_targ targ
 and string_of_targs targs = Il.Print.string_of_targs targs
 
-(* Path conditions *)
+(* Danglings *)
 
-and string_of_pid pid = Format.asprintf "Phantom#%d" pid
-and string_of_phantom phantom = string_of_pid phantom
+and string_of_dangle iid = Format.asprintf "Dangling#%d" iid
 
 (* Case analysis *)
 
@@ -225,16 +221,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
-  | IfI (exp_cond, iterexps, block_then, None) ->
-      let s_short =
-        Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
-          (string_of_iterexps iterexps)
-      in
-      if short then s_short
-      else
-        Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block ~level:(level + 1) block_then)
-  | IfI (exp_cond, iterexps, block, Some phantom) ->
+  | IfI (exp_cond, iterexps, block, dangle) ->
       let s_short =
         Format.asprintf "If (%s)%s, then" (string_of_exp exp_cond)
           (string_of_iterexps iterexps)
@@ -243,7 +230,9 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       else
         Format.asprintf "%s%s\n\n%s%s" order s_short
           (string_of_block ~level:(level + 1) block)
-          ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
+          (if dangle then
+             "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.note.iid
+           else "")
   | HoldI (id, notexp, iterexps, holdcase) -> (
       match holdcase with
       | BothH (block_hold, block_nothold) ->
@@ -258,17 +247,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
               (string_of_block ~level:(level + 1) block_hold)
               order
               (string_of_block ~level:(level + 1) block_nothold)
-      | HoldH (block_hold, None) ->
-          let s_short =
-            Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
-              (string_of_notexp notexp)
-              (string_of_iterexps iterexps)
-          in
-          if short then s_short
-          else
-            Format.asprintf "%s%s\n\n%s" order s_short
-              (string_of_block ~level:(level + 1) block_hold)
-      | HoldH (block_hold, Some phantom) ->
+      | HoldH (block_hold, dangle) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
               (string_of_notexp notexp)
@@ -278,18 +257,10 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
               (string_of_block ~level:(level + 1) block_hold)
-              ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
-      | NotHoldH (block_nothold, None) ->
-          let s_short =
-            Format.asprintf "If (%s: %s)%s does not hold, then"
-              (string_of_relid id) (string_of_notexp notexp)
-              (string_of_iterexps iterexps)
-          in
-          if short then s_short
-          else
-            Format.asprintf "%s%s\n\n%s" order s_short
-              (string_of_block ~level:(level + 1) block_nothold)
-      | NotHoldH (block_nothold, Some phantom) ->
+              (if dangle then
+                 "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.note.iid
+               else "")
+      | NotHoldH (block_nothold, dangle) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s does not hold, then"
               (string_of_relid id) (string_of_notexp notexp)
@@ -299,20 +270,18 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
               (string_of_block ~level:(level + 1) block_nothold)
-              ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom))
-  | CaseI (exp, cases, None) ->
-      let s_short = Format.asprintf "Case analysis on %s" (string_of_exp exp) in
-      if short then s_short
-      else
-        Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_cases ~level:(level + 1) cases)
-  | CaseI (exp, cases, Some phantom) ->
+              (if dangle then
+                 "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.note.iid
+               else ""))
+  | CaseI (exp, cases, dangle) ->
       let s_short = Format.asprintf "Case analysis on %s" (string_of_exp exp) in
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s%s" order s_short
           (string_of_cases ~level:(level + 1) cases)
-          ("\n\n" ^ order ^ "Else " ^ string_of_phantom phantom)
+          (if dangle then
+             "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.note.iid
+           else "")
   | GroupI (id_group, rel_signature, exps_group, block) ->
       let s_short =
         Format.asprintf "Group %s: %s" (string_of_relid id_group)
@@ -387,37 +356,30 @@ and string_of_relinput rel_signature exps_input =
   let nottyp, inputs = rel_signature in
   let mixop, _ = nottyp.it in
   let exps_input = List.combine inputs exps_input in
-  let exps =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+  let sexps =
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_input with
-        | Some exp_input -> exp_input
-        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
+        | Some exp_input -> string_of_exp exp_input
+        | None -> "%")
   in
-  let notexp = (mixop, exps) in
-  string_of_notexp notexp
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_reloutput rel_signature exps_output =
   let nottyp, inputs = rel_signature in
   let mixop, _ = nottyp.it in
   let outputs =
-    List.init
-      (List.length mixop - 1)
-      (fun idx -> if List.mem idx inputs then None else Some idx)
+    List.init (Mixop.arity mixop) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
     |> List.filter_map Fun.id
   in
   let exps_output = List.combine outputs exps_output in
-  let exps =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+  let sexps =
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_output with
-        | Some exp_output -> exp_output
-        | None -> Il.VarE ("%" $ no_region) $$ (no_region, Il.TextT))
+        | Some exp_output -> string_of_exp exp_output
+        | None -> "%")
   in
-  let notexp = (mixop, exps) in
-  string_of_notexp notexp
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_extern_rel externrel =
   let relid, rel_signature, exps_match, _hints = externrel in

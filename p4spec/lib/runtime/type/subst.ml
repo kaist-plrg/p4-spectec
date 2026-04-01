@@ -1,0 +1,72 @@
+open Domain.Lib
+open Lang
+open Il
+open Error
+open Util.Source
+
+(* Substitution of type variables *)
+
+type theta = Typ.t TIdMap.t
+
+(* Types *)
+
+let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
+  match typ.it with
+  | BoolT | NumT _ | TextT -> typ
+  | VarT (tid, targs) -> (
+      match TIdMap.find_opt tid theta with
+      | Some _ when targs <> [] ->
+          error typ.at "higher-order substitution is disallowed"
+      | Some typ -> typ
+      | None ->
+          let targs = subst_typs_inner theta targs in
+          VarT (tid, targs) $ typ.at)
+  | TupleT typs ->
+      let typs = subst_typs_inner theta typs in
+      TupleT typs $ typ.at
+  | IterT (typ, iter) ->
+      let typ = subst_typ_inner theta typ in
+      IterT (typ, iter) $ typ.at
+  | FuncT -> typ
+
+and subst_typs_inner (theta : theta) (typs : typ list) : typ list =
+  List.map (subst_typ_inner theta) typs
+
+let subst_typ (theta : theta) (typ : typ) : typ =
+  if TIdMap.is_empty theta then typ else subst_typ_inner theta typ
+
+let subst_typs (theta : theta) (typs : typ list) : typ list =
+  if TIdMap.is_empty theta then typs else subst_typs_inner theta typs
+
+(* Variant types *)
+
+let subst_nottyp (theta : theta) (nottyp : nottyp) : nottyp =
+  let mixop, typs = nottyp.it in
+  let typs = subst_typs theta typs in
+  (mixop, typs) $ nottyp.at
+
+let subst_typcase (theta : theta) (typcase : typcase) : typcase =
+  let nottyp, typorigin, hints = typcase in
+  let nottyp = subst_nottyp theta nottyp in
+  let typorigin =
+    let id, targs = typorigin.it in
+    let targs = subst_typs theta targs in
+    (id, targs) $ typorigin.at
+  in
+  (nottyp, typorigin, hints)
+
+(* Parameters *)
+
+let rec subst_param (theta : theta) (param : param) : param =
+  match param.it with
+  | ExpP typ ->
+      let typ = subst_typ theta typ in
+      ExpP typ $ param.at
+  (* (TODO) Capture-avoiding substitution *)
+  | DefP (id, tparams, params, typ) ->
+      let params = subst_params theta params in
+      let typ = subst_typ theta typ in
+      DefP (id, tparams, params, typ) $ param.at
+
+and subst_params (theta : theta) (params : param list) : param list =
+  List.map (subst_param theta) params

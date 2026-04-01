@@ -49,6 +49,7 @@ type t =
   | Plus                 (* ``+` *)
   | Plus2                (* ``++` *)
   | PlusEq               (* ``+=` *)
+  | PlusColon            (* ``+:` *)
   | Minus                (* ``-` *)
   | MinusEq              (* ``-=` *)
   | Star                 (* ``*` *)
@@ -128,6 +129,7 @@ let string_of_atom = function
   | Plus -> "+"
   | Plus2 -> "++"
   | PlusEq -> "+="
+  | PlusColon -> "+:"
   | Minus -> "-"
   | MinusEq -> "-="
   | Star -> "*"
@@ -203,6 +205,7 @@ let render_atom = function
   | Plus -> "+"
   | Plus2 -> "++"
   | PlusEq -> "+="
+  | PlusColon -> "+:"
   | Minus -> "-"
   | MinusEq -> "-="
   | Star -> "*"

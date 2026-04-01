@@ -8,9 +8,9 @@ open Util.Source
 type instr = (instr', inote) note_phrase
 
 and instr' =
-  | IfI of exp * iterexp list * block * phantom option
+  | IfI of exp * iterexp list * block * dangle
   | HoldI of id * notexp * iterexp list * holdcase
-  | CaseI of exp * case list * phantom option
+  | CaseI of exp * case list * dangle
   | OtherwiseI of block
   | GroupI of id * rel_signature * exp list * block
   | LetI of exp * exp * iterinstr list
@@ -22,7 +22,7 @@ and block = instr list
 
 and holdcase =
   | BothH of block * block
-  | HoldH of block * phantom option
-  | NotHoldH of block * phantom option
+  | HoldH of block * dangle
+  | NotHoldH of block * dangle
 
 and case = guard * block

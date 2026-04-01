@@ -36,8 +36,8 @@ let run_programs_with_dangling (module Driver : Sim.DRIVER) (spec : Sim.spec)
       let wellformed, welltyped =
         match program_result with
         | Pass _ -> (true, true)
-        | Fail (`Syntax _) -> (true, false)
-        | Fail (`Runtime _) -> (false, false)
+        | Fail (`Syntax _) -> (false, false)
+        | Fail (`Runtime _) -> (true, false)
       in
       DCov_multi.extend cover_multi filename_p4 wellformed welltyped
         cover_single)

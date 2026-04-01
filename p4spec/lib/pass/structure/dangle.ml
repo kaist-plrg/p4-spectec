@@ -2,11 +2,7 @@ open Lang
 open Ol.Ast
 open Util.Source
 
-(* Insert phantom instructions at dangling else branches,
-   with the path condition necessary to reach the else branch
-
-   Note that this does not take fall-through into account,
-   so the path condition is not precise
+(* Insert dangle flag at dangling else branches
 
    Fall-through may happen due to the heuristic-driven syntactic optimization of SL,
 
@@ -19,10 +15,10 @@ open Util.Source
 
    if i >= 0 then
      if j >= 0 then ...
-     else Phantom: i >= 0 && j < 0
+     else Dangle
    else
      if j >= 0 then ...
-     else Phantom: i < 0 && j < 0
+     else Dangle
 
    (ii) Bad case
 
@@ -33,15 +29,15 @@ open Util.Source
 
    if j >= 0 then
      if i >= 0 then ...
-     else Phantom: j >= 0 && i < 0
-   else Phantom: j < 0
+     else Dangle
+   else Dangle
 
    ... if i = -1, j = 3 is given as input, it falls through
 
    if i < 0 then
       if j >= 0 then ...
-      else Phantom: i < 0 && j < 0
-   else Phantom: i >= 0 *)
+      else Dangle
+   else Dangle *)
 
 (* Instruction id generator *)
 
@@ -52,42 +48,27 @@ let iid () : Sl.iid =
   tick_iid := !tick_iid + 1;
   iid
 
-(* Phantom id generator *)
+(* Dalgne insertion *)
 
-let tick_pid = ref 0
+let rec insert_dangle (block : block) : Sl.block = List.map insert_dangle' block
 
-let pid () : Sl.pid =
-  let pid = !tick_pid in
-  tick_pid := !tick_pid + 1;
-  pid
-
-(* Phantom insertion *)
-
-let rec insert_phantom (block : block) : Sl.block =
-  List.map insert_phantom' block
-
-and insert_phantom' (instr : instr) : Sl.instr =
+and insert_dangle' (instr : instr) : Sl.instr =
   let iid = iid () in
-  insert_phantom'' instr $$ (instr.at, { iid })
+  insert_dangle'' instr $$ (instr.at, { iid })
 
-and insert_phantom'' (instr : instr) : Sl.instr' =
+and insert_dangle'' (instr : instr) : Sl.instr' =
   match instr.it with
   | IfI (exp_cond, iterexps, block_then) ->
-      let block_then = insert_phantom block_then in
-      let phantom_opt = Some (pid ()) in
-      Sl.IfI (exp_cond, iterexps, block_then, phantom_opt)
+      let block_then = insert_dangle block_then in
+      Sl.IfI (exp_cond, iterexps, block_then, true)
   | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
-      let block_hold = insert_phantom block_hold in
-      let block_nothold = insert_phantom block_nothold in
+      let block_hold = insert_dangle block_hold in
+      let block_nothold = insert_dangle block_nothold in
       let holdcase =
         match (block_hold, block_nothold) with
         | [], [] -> assert false
-        | block_hold, [] ->
-            let phantom_opt = Some (pid ()) in
-            Sl.HoldH (block_hold, phantom_opt)
-        | [], block_nothold ->
-            let phantom_opt = Some (pid ()) in
-            Sl.NotHoldH (block_nothold, phantom_opt)
+        | block_hold, [] -> Sl.HoldH (block_hold, true)
+        | [], block_nothold -> Sl.NotHoldH (block_nothold, true)
         | block_hold, block_nothold -> Sl.BothH (block_hold, block_nothold)
       in
       Sl.HoldI (id, notexp, iterexps, holdcase)
@@ -104,19 +85,18 @@ and insert_phantom'' (instr : instr) : Sl.instr' =
               | MemG exp -> Sl.MemG exp)
             guards
         in
-        let blocks = List.map insert_phantom blocks in
+        let blocks = List.map insert_dangle blocks in
         List.combine guards blocks
       in
-      let phantom_opt = if total then None else Some (pid ()) in
-      Sl.CaseI (exp, cases, phantom_opt)
+      Sl.CaseI (exp, cases, not total)
   | GroupI (id_group, rel_signature, exps_group, block) ->
-      let block = insert_phantom block in
+      let block = insert_dangle block in
       Sl.GroupI (id_group, rel_signature, exps_group, block)
   | LetI (exp_l, exp_r, iterinstrs, block) ->
-      let block = insert_phantom block in
+      let block = insert_dangle block in
       Sl.LetI (exp_l, exp_r, iterinstrs, block)
   | RuleI (id, notexp, inputs, iterinstrs, block) ->
-      let block = insert_phantom block in
+      let block = insert_dangle block in
       Sl.RuleI (id, notexp, inputs, iterinstrs, block)
   | ResultI (rel_signature, exps) -> Sl.ResultI (rel_signature, exps)
   | ReturnI exp -> Sl.ReturnI exp
@@ -135,15 +115,15 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
   match instr.it with
   | IfI (exp_cond, iterexps, block_then) ->
       let block_then = insert_nothing block_then in
-      Sl.IfI (exp_cond, iterexps, block_then, None)
+      Sl.IfI (exp_cond, iterexps, block_then, false)
   | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
       let block_hold = insert_nothing block_hold in
       let block_nothold = insert_nothing block_nothold in
       let holdcase =
         match (block_hold, block_nothold) with
         | [], [] -> assert false
-        | block_hold, [] -> Sl.HoldH (block_hold, None)
-        | [], block_nothold -> Sl.NotHoldH (block_nothold, None)
+        | block_hold, [] -> Sl.HoldH (block_hold, false)
+        | [], block_nothold -> Sl.NotHoldH (block_nothold, false)
         | block_hold, block_nothold -> Sl.BothH (block_hold, block_nothold)
       in
       Sl.HoldI (id, notexp, iterexps, holdcase)
@@ -163,7 +143,7 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
         let blocks = List.map insert_nothing blocks in
         List.combine guards blocks
       in
-      Sl.CaseI (exp, cases, None)
+      Sl.CaseI (exp, cases, false)
   | GroupI (id_group, rel_signature, exps_group, block) ->
       let block = insert_nothing block in
       Sl.GroupI (id_group, rel_signature, exps_group, block)
@@ -187,7 +167,7 @@ let instrument (block : block) (elseblock_opt : elseblock option) :
       let elseblock = insert_nothing elseblock in
       (block, Some elseblock)
   | None ->
-      let block = insert_phantom block in
+      let block = insert_dangle block in
       (block, None)
 
 let instrument_without_else (block : block) : Sl.block = insert_nothing block

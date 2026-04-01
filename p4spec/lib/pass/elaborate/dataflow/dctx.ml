@@ -28,7 +28,7 @@ let promote (ctx : Ctx.t) (dctx : t) (venv : VEnv.t) : Ctx.t =
   let venv =
     VEnv.union
       (fun _ typ_a typ_b ->
-        if not (Typ.equiv typ_a typ_b) then assert false;
+        if not (Typdim.equiv typ_a typ_b) then assert false;
         Some typ_a)
       ctx.venv venv
   in

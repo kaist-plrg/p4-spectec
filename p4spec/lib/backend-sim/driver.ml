@@ -1,8 +1,9 @@
 open Lang
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Runtime.Sim.Io
 open Runtime.Sim.Simulator
 open Error
-open Interface.Wrap
 open Util.Source
 
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
@@ -225,15 +226,19 @@ module Make
           table_entry_action,
           _ ) ->
         (* Encode name *)
-        let value_tableName = table_name |> String.escaped |> wrap_text_v in
+        let value_tableName = table_name |> String.escaped |> Value.Make.text in
         (* Encode priority *)
         let value_tableEntryPriorityInterface =
           table_entry_priority_opt
           |> Option.map (fun table_entry_priority ->
-                 table_entry_priority |> Bigint.of_int |> wrap_num_v_int)
-          |> wrap_opt_v_typed (Il.NumT `IntT)
+                 table_entry_priority |> Bigint.of_int |> Value.Make.int)
+          |> Value.Make.opt (Typ.Make.opt Typ.Make.int)
         in
         (* Encode keys *)
+        let typ_tableKeyInterface =
+          Typ.Make.var ("tableKeyInterface" $ no_region) []
+        in
+        let typ_tableKeysetInterface = Typ.Make.list typ_tableKeyInterface in
         let value_tableKeysetInterface =
           table_entry_keys
           |> List.map (fun (table_entry_key : Stf.Ast.mtch) ->
@@ -241,58 +246,71 @@ module Make
                  let table_key_name =
                    Stf.Print.convert_dollar_to_brackets table_key_name
                  in
-                 let value_table_key_name = wrap_text_v table_key_name in
+                 let value_table_key_name = Value.Make.text table_key_name in
                  let value_table_key_value =
                    match table_key_value with
                    | Num number ->
-                       let value_number =
-                         if String.starts_with ~prefix:"0x" number then
-                           let number_base_len = String.length number - 2 in
-                           let number_base =
-                             String.sub number 2 number_base_len
-                           in
-                           wrap_case_v
-                             [ Term "`HEX"; NT (wrap_text_v number_base) ]
-                         else if String.starts_with ~prefix:"0b" number then
-                           let number_base_len = String.length number - 2 in
-                           let number_base =
-                             String.sub number 2 number_base_len
-                           in
-                           wrap_case_v
-                             [ Term "`BIN"; NT (wrap_text_v number_base) ]
-                         else
-                           wrap_case_v [ Term "`DEC"; NT (wrap_text_v number) ]
-                       in
-                       value_number
-                       |> with_typ (wrap_var_t "tableKeyValueInterface")
+                       if String.starts_with ~prefix:"0x" number then
+                         let number_base_len = String.length number - 2 in
+                         let number_base =
+                           String.sub number 2 number_base_len
+                         in
+                         Value.Make.(
+                           "`HEX text"
+                           <| [ text number_base ]
+                           <<| "tableKeyValueInterface")
+                       else if String.starts_with ~prefix:"0b" number then
+                         let number_base_len = String.length number - 2 in
+                         let number_base =
+                           String.sub number 2 number_base_len
+                         in
+                         Value.Make.(
+                           "`BIN text"
+                           <| [ text number_base ]
+                           <<| "tableKeyValueInterface")
+                       else
+                         Value.Make.(
+                           "`DEC text"
+                           <| [ text number ]
+                           <<| "tableKeyValueInterface")
                    | Slash (prefix, mask) ->
-                       let value_prefix = wrap_text_v prefix in
+                       let value_prefix = Value.Make.text prefix in
                        let mask = Bigint.of_int (int_of_string mask) in
-                       let value_mask = wrap_num_v_nat mask in
-                       wrap_case_v
-                         [ NT value_prefix; Term "`SLASH"; NT value_mask ]
-                       |> with_typ (wrap_var_t "tableKeyValueInterface")
+                       let value_mask = Value.Make.nat mask in
+                       Value.Make.(
+                         "text `SLASH nat"
+                         <| [ value_prefix; value_mask ]
+                         <<| "tableKeyValueInterface")
                  in
-                 wrap_tuple_v "tableKeyInterface"
+                 Value.Make.tuple typ_tableKeyInterface
                    [ value_table_key_name; value_table_key_value ])
-          |> wrap_list_v "tableKeyInterface"
+          |> Value.Make.list typ_tableKeysetInterface
         in
         (* Encode action *)
         let value_tableActionInterface =
           let table_action_name, table_action_args = table_entry_action in
-          let value_table_action_name = wrap_text_v table_action_name in
+          let typ_tableActionInterface =
+            Typ.Make.var ("tableActionInterface" $ no_region) []
+          in
+          let typ_tableActionArgumentInterface =
+            Typ.Make.var ("tableActionArgumentInterface" $ no_region) []
+          in
+          let typ_tableActionArgumentInterfaceList =
+            Typ.Make.list typ_tableActionArgumentInterface
+          in
+          let value_table_action_name = Value.Make.text table_action_name in
           let value_tableActionArgumentInterfaces =
             table_action_args
             |> List.map (fun (name, number) ->
-                   let value_name = wrap_text_v name in
+                   let value_name = Value.Make.text name in
                    let value_number =
-                     number |> int_of_string |> Bigint.of_int |> wrap_num_v_int
+                     number |> int_of_string |> Bigint.of_int |> Value.Make.int
                    in
-                   wrap_tuple_v "tableActionArgumentInterface"
+                   Value.Make.tuple typ_tableActionArgumentInterface
                      [ value_name; value_number ])
-            |> wrap_list_v "tableActionArgumentInterface"
+            |> Value.Make.list typ_tableActionArgumentInterfaceList
           in
-          wrap_tuple_v "tableActionInterface"
+          Value.Make.tuple typ_tableActionInterface
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =
@@ -303,23 +321,32 @@ module Make
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.SetDefault (table_name, table_entry_action) ->
         (* Encode name *)
-        let value_tableName = wrap_text_v table_name in
+        let value_tableName = Value.Make.text table_name in
         (* Encode action *)
         let value_tableActionInterface =
           let table_action_name, table_action_args = table_entry_action in
-          let value_table_action_name = wrap_text_v table_action_name in
+          let typ_tableActionInterface =
+            Typ.Make.var ("tableActionInterface" $ no_region) []
+          in
+          let typ_tableActionArgumentInterface =
+            Typ.Make.var ("tableActionArgumentInterface" $ no_region) []
+          in
+          let typ_tableActionArgumentInterfaceList =
+            Typ.Make.list typ_tableActionArgumentInterface
+          in
+          let value_table_action_name = Value.Make.text table_action_name in
           let value_tableActionArgumentInterfaces =
             table_action_args
             |> List.map (fun (name, number) ->
-                   let value_name = wrap_text_v name in
+                   let value_name = Value.Make.text name in
                    let value_number =
-                     number |> int_of_string |> Bigint.of_int |> wrap_num_v_int
+                     number |> int_of_string |> Bigint.of_int |> Value.Make.int
                    in
-                   wrap_tuple_v "tableActionArgumentInterface"
+                   Value.Make.tuple typ_tableActionArgumentInterface
                      [ value_name; value_number ])
-            |> wrap_list_v "tableActionArgumentInterface"
+            |> Value.Make.list typ_tableActionArgumentInterfaceList
           in
-          wrap_tuple_v "tableActionInterface"
+          Value.Make.tuple typ_tableActionInterface
             [ value_table_action_name; value_tableActionArgumentInterfaces ]
         in
         let value_arch =

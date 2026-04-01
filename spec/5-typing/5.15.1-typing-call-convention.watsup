@@ -53,9 +53,14 @@ rule Expr_lvalue_ok/accessExpressionIR-indexAccessExpressionIR:
   p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# `( _ _ )
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
 
-rule Expr_lvalue_ok/accessExpressionIR-sliceAccessExpressionIR:
-  p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi
-                                    `: typedExpressionIR_lo ]) `# `( _ _ )
+rule Expr_lvalue_ok/accessExpressionIR-sliceAccessExpressionIR-range:
+  p TC |- (typedExpressionIR_base
+            `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# `( _ _ )
+  -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
+
+rule Expr_lvalue_ok/accessExpressionIR-sliceAccessExpressionIR-offset:
+  p TC |- (typedExpressionIR_base
+            `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# `( _ _ )
   -- Expr_lvalue_ok: p TC |- typedExpressionIR_base
 
 rule Call_convention_expr_ok/out-inout:

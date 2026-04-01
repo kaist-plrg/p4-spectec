@@ -1,5 +1,5 @@
 open Lang
-module Value = Runtime.Dynamic_Sl.Value
+module Value = Runtime.Value
 open Util.Error
 
 let error = error_parse
@@ -43,5 +43,5 @@ let parse_file (includes : string list) (filename : string) : Il.value =
   parse_string filename program
 
 let parse_file_fresh (includes : string list) (filename : string) : Il.value =
-  Value.refresh ();
+  Value.Fresh_.refresh ();
   parse_file includes filename

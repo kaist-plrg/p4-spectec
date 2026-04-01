@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
 open Error
@@ -314,7 +315,7 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
   let exps_match_unified, block, elseblock_opt =
     Prettify.pretty_rel exps_match_unified block elseblock_opt
   in
-  let block, elseblock_opt = Instrument.instrument block elseblock_opt in
+  let block, elseblock_opt = Dangle.instrument block elseblock_opt in
   Sl.RelD
     (id_rel, rel_signature, exps_match_unified, block, elseblock_opt, hints)
   $ at
@@ -351,7 +352,7 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
     |> List.map struct_tablerow_path
     |> List.map (Optimize.optimize_without_else tdenv)
     |> List.map (Totalize.totalize_without_else tdenv)
-    |> List.map Instrument.instrument_without_else
+    |> List.map Dangle.instrument_without_else
   in
   let exp_output_group = paths |> List.split |> snd in
   let tablerows =
@@ -391,7 +392,7 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
           Prettify.pretty_func args_input block elseblock_opt
         in
         let params = struct_params_from_args params args_input in
-        let block, elseblock_opt = Instrument.instrument block elseblock_opt in
+        let block, elseblock_opt = Dangle.instrument block elseblock_opt in
         (params, block, elseblock_opt)
   in
   let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in

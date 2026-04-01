@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Il
+module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Il
 open Envs
 open Error
@@ -146,7 +147,7 @@ let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
 
 let find_defined_typdef (ctx : t) (tid : TId.t) : tparam list * deftyp =
   match find_typdef ctx tid with
-  | Param | Extern -> error_undef tid.at "defined type" tid.it
+  | Param | Extern | Defining _ -> error_undef tid.at "defined type" tid.it
   | Defined (tparams, deftyp) -> (tparams, deftyp)
 
 let bound_typdef (ctx : t) (tid : TId.t) : bool =
@@ -239,7 +240,7 @@ let sub_opt (ctx : t) (vars : var list) : t option backtrack =
   let values =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ Opt ]) |> Value.get_opt)
+        find_value ctx (id, iters @ [ Opt ]) |> Value.Get.opt)
       vars
   in
   (* Iteration is valid when all variables agree on their optionality *)
@@ -261,7 +262,7 @@ let sub_list (ctx : t) (vars : var list) : t list backtrack =
   let* values_batch =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ List ]) |> Value.get_list)
+        find_value ctx (id, iters @ [ List ]) |> Value.Get.list)
       vars
     |> transpose
   in

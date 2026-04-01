@@ -1,5 +1,4 @@
-module Value = Runtime.Dynamic_Il.Value
-open Wrap
+module Value = Runtime.Value
 
 (* Packs an IL value representing a P4 value from an OCaml type *)
 
@@ -10,20 +9,15 @@ open Wrap
 (* D int *)
 
 let pack_p4_arbitraryInt (i : Bigint.t) : Value.t =
-  let value_i = i |> wrap_num_v_int in
-  [ Term "D"; NT value_i ] #@ "value"
+  let value_int = Value.Make.int i in
+  Value.Make.("D int" <| [ value_int ] <<| "value")
 
 (* nat W int *)
 
 let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
-  let value_width = width |> wrap_num_v_nat in
-  let value_i = i |> wrap_num_v_int in
-  [ NT value_width; Term "W"; NT value_i ] #@ "value"
-
-let pack_p4_enum (type_id : string) (name : string) : Value.t =
-  let value_typeId = wrap_text_v type_id in
-  let value_nameIR = wrap_text_v name in
-  [ NT value_typeId; Term "."; NT value_nameIR ] #@ "enumValue"
+  let value_nat = Value.Make.nat width in
+  let value_int = Value.Make.int i in
+  Value.Make.("nat W int" <| [ value_nat; value_int ] <<| "value")
 
 (* nat S int *)
 (* nat `. nat V int *)
@@ -34,6 +28,12 @@ let pack_p4_enum (type_id : string) (name : string) : Value.t =
 (* headerValue = HEADER tid `{ bool `; fieldValue* } *)
 (* headerUnionValue = HEADER_UNION tid `{ fieldValue* } *)
 (* tid `. id *)
+
+let pack_p4_enum (type_id : string) (name : string) : Value.t =
+  let value_tid = Value.Make.text type_id in
+  let value_id = Value.Make.text name in
+  Value.Make.("tid `. id" <| [ value_tid; value_id ] <<| "value")
+
 (* tid `. id `. value *)
 (* objectReferenceValue = `! oid *)
 (* defaultValue = DEFAULT *)

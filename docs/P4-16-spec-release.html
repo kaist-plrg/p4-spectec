@@ -23455,6 +23455,7 @@ expressions are legal l-values:</p>
    | lvalue . member
    | lvalue `[ expression ]
    | lvalue `[ expression : expression ]
+   | lvalue `[ expression +: expression ]
    | `( lvalue )
    ;</code></pre>
 </div>
@@ -23499,6 +23500,7 @@ lvalueIR
    | typedLvalueIR . nameIR
    | typedLvalueIR `[ typedExpressionIR ]
    | typedLvalueIR `[ typedExpressionIR : typedExpressionIR ]
+   | typedLvalueIR `[ typedExpressionIR +: typedExpressionIR ]
    | `( typedLvalueIR )
    ;
 
@@ -23592,6 +23594,7 @@ checked according to the relation:</p>
    | storageReference . nameIR
    | storageReference `[ value ]
    | storageReference `[ value : value ]
+   | storageReference `[ value +: value ]
    ;</code></pre>
 </div>
 </div>
@@ -25127,28 +25130,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Lvalue_ok/sliceAccess:
-  rule Lvalue_ok/sliceAccess:
-  p TC |- lvalue_base `[expression_hi : expression_lo] : typedLvalueIR
- -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
- -- if _ # `(typeIR_base) = typedLvalueIR_base
- -- if $compat_bitslice_base(typeIR_base)
- -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
- -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
- -- if typedExpressionIR_hi_reduced = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_index)
- -- if typedExpressionIR_lo_reduced = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_index)
- -- if _ # `(typeIR_hi_reduced ctk_hi_reduced) = typedExpressionIR_hi_reduced
- -- if _ # `(typeIR_lo_reduced ctk_lo_reduced) = typedExpressionIR_lo_reduced
- -- if ctk_hi_reduced = LCTK
- -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; integerValue_hi
- -- if n_hi = $nat_of_integerValue(integerValue_hi)
- -- if ctk_lo_reduced = LCTK
- -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; integerValue_lo
- -- if n_lo = $nat_of_integerValue(integerValue_lo)
- -- if $is_valid_bitslice(typeIR_base, n_lo, n_hi)
- -- if n_slice = n_hi - n_lo + 1
- -- if typeIR = BIT `&lt;n_slice&gt;
- -- if typedLvalueIR = (typedLvalueIR_base `[typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced]) # `(typeIR)</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -25160,126 +25142,7 @@ abortResult
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Lvalue_ok">Typing <code>lvalue<sub>base</sub></code> <code>[</code> <code>expression<sub>hi</sub></code> <code>:</code> <code>expression<sub>lo</sub></code> <code>]</code>, under context <code>TC</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typedLvalueIR<sub>base</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_ok">typing <code>lvalue<sub>base</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>(</code> <code>typeIR<sub>base</sub></code> <code>)</code> be the note of <code>typedLvalueIR<sub>base</sub></code>.</p>
-</li>
-<li>
-<p>Check that <a href="#compat_bitslice_base"><code>typeIR<sub>base</sub></code> can be used as a bitslice base</a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>hi</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>hi</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>lo</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until <code>$compat_bitslice_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
-</li>
-<li>
-<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>lo_reduced</sub></code> and compile-time known-ness <code>ctk<sub>lo_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>lo_reduced</sub></code>.</p>
-</li>
-<li>
-<p>Check that <code>ctk<sub>hi_reduced</sub></code> is <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>hi_reduced</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>hi</sub></code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>hi</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>ctk<sub>lo_reduced</sub></code> is <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value'</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>lo_reduced</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Check that <code>value'</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>lo</sub></code> be <code>value'</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>lo</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#is_valid_bitslice"><code>typeIR<sub>base</sub></code> <code>[</code> <code>n<sub>lo</sub></code> <code>:</code> <code>n<sub>hi</sub></code> <code>]</code> is a valid bitslice</a>.</p>
-</li>
-<li>
-<p>Let <code>int</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>slice</sub></code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <code>BIT</code> <code>&lt;</code> <code>n<sub>slice</sub></code> <code>&gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>typedLvalueIR</code> be <a href="#typedLvalueIR"><code>typedLvalueIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi_reduced</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo_reduced</sub></code> <code>]</code> with note <code>(</code> <code>typeIR</code> <code>)</code></a>.</p>
-</li>
-<li>
-<p>Result in <code>typedLvalueIR</code>.</p>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -25290,19 +25153,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Lvalue_eval/sliceAccess:
-  rule Lvalue_eval/abort:
-  p EC_0 ARCH_0 |- (typedLvalueIR `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : EC_1 ARCH_1 abortResult
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
-  rule Lvalue_eval/cont-abort:
-  p EC_0 ARCH_0 |- (typedLvalueIR `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : EC_2 ARCH_2 abortResult
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 ARCH_2 abortResult
-  rule Lvalue_eval/cont:
-  p EC_0 ARCH_0 |- (typedLvalueIR `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : EC_1 ARCH_1 storageReferenceResult
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_hi, typedExpressionIR_lo] : EC_2 ARCH_2 (` ([value_hi, value_lo]))
- -- if storageReferenceResult = ` (storageReference `[value_hi : value_lo])</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -25314,91 +25165,7 @@ abortResult
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Lvalue_eval">Evaluating <code>typedLvalueIR</code> <code>[</code> <code>typedExpressionIR<sub>hi</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code> with note <code>lvalueNoteIR</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_eval">evaluating <code>typedLvalueIR</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>abortResult</code> be <code>storageReferenceResult</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>storageReference<sup>?</sup></code> be <code>storageReferenceResult</code>.</p>
-</li>
-<li>
-<p>Check that <code>storageReference<sup>?</sup></code> is defined.</p>
-</li>
-<li>
-<p>Let <code>storageReference'</code> be <code>storageReference<sup>?</sup></code>.</p>
-</li>
-<li>
-<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionListResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Exprs_eval">evaluating <code>[</code> <code>typedExpressionIR<sub>hi</sub>,</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>abortResult</code> be <code>expressionListResult</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>value<sup>*</sup></code> be <code>expressionListResult</code>.</p>
-</li>
-<li>
-<p>Check that <code>value<sup>*</sup></code> is a list of length 2.</p>
-</li>
-<li>
-<p>Let <code>[</code> <code>value<sub>hi</sub>,</code> <code>value<sub>lo</sub></code> <code>]</code> be <code>value<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Let <code>storageReferenceResult'</code> be <code>storageReference'</code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code>.</p>
-</li>
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult'</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -25409,11 +25176,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Lvalue_read/sliceAccess:
-  rule Lvalue_read/sliceAccess:
-  p EC_0 ARCH |- (storageReference `[value_hi : value_lo]) : value
- -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
- -- if value = $bitacc_op(value_base, value_hi, value_lo)</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -25425,29 +25188,7 @@ abortResult
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Lvalue_read">Reading from <code>storageReference'</code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let value <code>value<sub>base</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_read">reading from <code>storageReference'</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>value</code> be <a href="#bitacc_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
-</li>
-<li>
-<p>Result in value <code>value</code>.</p>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -25458,12 +25199,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Lvalue_write/sliceAccess:
-  rule Lvalue_write/sliceAccess:
-  p EC_0 ARCH |- (storageReference `[value_hi : value_lo]) -&gt; value : EC_1
- -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
- -- if value_base_update = $bitacc_replace_op(value_base, value_hi, value_lo, value)
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value_base_update : EC_1</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -25475,39 +25211,7 @@ abortResult
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Lvalue_write">Writing <code>value</code> to <code>storageReference'</code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let value <code>value<sub>base</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_read">reading from <code>storageReference'</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>value<sub>base_update</sub></code> be <a href="#bitacc_replace_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code> replaced with <code>value</code></a>.</p>
-</li>
-<li>
-<p>Let context <code>EC<sub>1</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Lvalue_write">writing <code>value<sub>base_update</sub></code> to <code>storageReference'</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>.</p>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -32381,7 +32085,7 @@ kind of action executed, no matter whether there was a table hit or miss. The
 <p>Let <code>prefixedNameIR</code> be <a href="#prefixedNonTypeName">the prefixed name of  <code>prefixedNonTypeName</code></a>.</p>
 </li>
 <li>
-<p>Check that <code>prefixedNameIR</code> matches pattern <code>`</code> <code>%</code>.</p>
+<p>Check that <code>prefixedNameIR</code> matches pattern <code>%</code>.</p>
 </li>
 <li>
 <p>Let <code>nameIR<sub>label</sub></code> be <code>prefixedNameIR</code>.</p>
@@ -41635,6 +41339,7 @@ follows:</p>
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sliceAccessExpression
    : expression `[ expression : expression ]
+   | expression `[ expression +: expression ]
    ;</code></pre>
 </div>
 </div>
@@ -41647,6 +41352,7 @@ follows:</p>
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">sliceAccessExpressionIR
    : typedExpressionIR `[ typedExpressionIR : typedExpressionIR ]
+   | typedExpressionIR `[ typedExpressionIR +: typedExpressionIR ]
    ;</code></pre>
 </div>
 </div>
@@ -41655,31 +41361,7 @@ follows:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Expr_ok/sliceAccessExpression:
-  rule Expr_ok/sliceAccessExpression:
-  p TC |- expression_base `[expression_hi : expression_lo] : (typedExpressionIR_base `[typedExpressionIR_hi_reduced : typedExpressionIR_lo_reduced]) # expressionNoteIR
- -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
- -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
- -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
- -- if typedExpressionIR_base_reduced = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base)
- -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
- -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
- -- if typedExpressionIR_hi_reduced = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_index)
- -- if typedExpressionIR_lo_reduced = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_index)
- -- if typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced)
- -- if ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced)
- -- if typeIR_lo_reduced = $type_of_typedExpressionIR(typedExpressionIR_lo_reduced)
- -- if ctk_lo_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_lo_reduced)
- -- if ctk_hi_reduced = LCTK
- -- Expr_eval_lctk: p TC |- typedExpressionIR_hi_reduced ~&gt; integerValue_hi
- -- if n_hi = $nat_of_integerValue(integerValue_hi)
- -- if ctk_lo_reduced = LCTK
- -- Expr_eval_lctk: p TC |- typedExpressionIR_lo_reduced ~&gt; integerValue_lo
- -- if n_lo = $nat_of_integerValue(integerValue_lo)
- -- if $is_valid_bitslice(typeIR_base_reduced, n_lo, n_hi)
- -- if n_slice = n_hi - n_lo + 1
- -- if typeIR = BIT `&lt;n_slice&gt;
- -- if expressionNoteIR = `(typeIR ctk_base_reduced)</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -41691,135 +41373,7 @@ follows:</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Expr_ok">Typing <code>expression<sub>base</sub></code> <code>[</code> <code>expression<sub>hi</sub></code> <code>:</code> <code>expression<sub>lo</sub></code> <code>]</code>, under context <code>TC</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let <code>typedExpressionIR<sub>base</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>base</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>hi</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>hi</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>lo</sub></code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_ok">typing <code>expression<sub>lo</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>base_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>base</sub></code> until <code>$compat_bitslice_base</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>base_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until <code>$compat_bitslice_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>hi_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>ctk<sub>hi_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>hi_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR<sub>lo_reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>ctk<sub>lo_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>lo_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>ctk<sub>hi_reduced</sub></code> is <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>hi_reduced</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Check that <code>value</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>hi</sub></code> be <code>value</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>hi</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>hi</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <code>ctk<sub>lo_reduced</sub></code> is <code>LCTK</code>.</p>
-</li>
-<li>
-<p>Let <code>value'</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>lo_reduced</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Check that <code>value'</code> has type <code>integerValue</code>.</p>
-</li>
-<li>
-<p>Let <code>integerValue<sub>lo</sub></code> be <code>value'</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>lo</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>lo</sub></code></a>.</p>
-</li>
-<li>
-<p>Check that <a href="#is_valid_bitslice"><code>typeIR<sub>base_reduced</sub></code> <code>[</code> <code>n<sub>lo</sub></code> <code>:</code> <code>n<sub>hi</sub></code> <code>]</code> is a valid bitslice</a>.</p>
-</li>
-<li>
-<p>Let <code>int</code> be <code>n<sub>hi</sub></code> <code>-</code> <code>n<sub>lo</sub></code> <code>+</code> <code>1</code>.</p>
-</li>
-<li>
-<p>Check that <code>int</code> has type <code>nat</code>.</p>
-</li>
-<li>
-<p>Let <code>n<sub>slice</sub></code> be <code>int</code>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <code>BIT</code> <code>&lt;</code> <code>n<sub>slice</sub></code> <code>&gt;</code>.</p>
-</li>
-<li>
-<p>Let <code>expressionNoteIR</code> be <a href="#expressionNoteIR">a pair of type <code>typeIR</code> and compile-time known-ness <code>ctk<sub>base_reduced</sub></code></a>.</p>
-</li>
-<li>
-<p>Result in <a href="#typedExpressionIR"><code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi_reduced</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo_reduced</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code></a>.</p>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -41831,11 +41385,16 @@ follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup Expr_eval_lctk/sliceAccessExpressionIR:
-  rule Expr_eval_lctk/sliceAccessExpressionIR:
-  p TC |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ ~&gt; $bitacc_op(value_base, value_hi, value_lo)
+  rule Expr_eval_lctk/range:
+  p TC |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ ~&gt; $bitacc_range_op(value_base, value_hi, value_lo)
  -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~&gt; value_base
  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~&gt; value_hi
- -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~&gt; value_lo</pre>
+ -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~&gt; value_lo
+  rule Expr_eval_lctk/offset:
+  p TC |- (typedExpressionIR_base `[typedExpressionIR_l +: typedExpressionIR_w]) # _ ~&gt; $bitacc_offset_op(value_base, value_l, value_w)
+ -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~&gt; value_base
+ -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~&gt; value_l
+ -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~&gt; value_w</pre>
 </div>
 </div>
 </div>
@@ -41848,10 +41407,14 @@ follows:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Expr_eval_lctk">Local compile-time evaluation of <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code>, under context <code>TC</code> at <code>p</code></a>:</p>
+<p><a href="#Expr_eval_lctk">Local compile-time evaluation of <code>sliceAccessExpressionIR</code> annotated with <code>expressionNoteIR</code>, under context <code>TC</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
+<li>
+<p>If let <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code> be <code>sliceAccessExpressionIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>value<sub>base</sub></code> be</p>
 <div class="ulist">
@@ -41883,7 +41446,53 @@ follows:</p>
 </div>
 </li>
 <li>
-<p>Result in <a href="#bitacc_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
+<p>Result in <a href="#bitacc_range_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>l</sub></code> <code>+:</code> <code>typedExpressionIR<sub>w</sub></code> <code>]</code> be <code>sliceAccessExpressionIR</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>base</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>base</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>value<sub>l</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>l</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>value<sub>w</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval_lctk">local compile-time evaluation of <code>typedExpressionIR<sub>w</sub></code>, under context <code>TC</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in <a href="#bitacc_offset_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>l</sub></code> <code>+:</code> <code>value<sub>w</sub></code> <code>]</code></a>.</p>
+</li>
+</ol>
+</div>
 </li>
 </ol>
 </div>
@@ -41898,11 +41507,16 @@ follows:</p>
 <div class="listingblock">
 <div class="content">
 <pre>rulegroup Expr_inst/sliceAccessExpressionIR:
-  rule Expr_inst/sliceAccessExpressionIR:
-  p IC STO_0 |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : STO_3 $bitacc_op(value_base, value_hi, value_lo)
+  rule Expr_inst/range:
+  p IC STO_0 |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : STO_3 $bitacc_range_op(value_base, value_hi, value_lo)
  -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
  -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
- -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo</pre>
+ -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
+  rule Expr_inst/offset:
+  p IC STO_0 |- (typedExpressionIR_base `[typedExpressionIR_l : typedExpressionIR_w]) # _ : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
+ -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
+ -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l
+ -- Expr_inst: p IC STO_2 |- typedExpressionIR_w : STO_3 value_w</pre>
 </div>
 </div>
 </div>
@@ -41915,7 +41529,7 @@ follows:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Expr_inst">Compile-time evaluation of <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code>, under context <code>IC</code> and store <code>STO</code> at <code>p</code></a>:</p>
+<p><a href="#Expr_inst">Compile-time evaluation of <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR</code> <code>:</code> <code>typedExpressionIR'</code> <code>]</code> annotated with <code>expressionNoteIR</code>, under context <code>IC</code> and store <code>STO</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -41934,7 +41548,7 @@ follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR<sub>hi</sub></code>, under context <code>IC</code> and store <code>STO<sub>1</sub></code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR</code>, under context <code>IC</code> and store <code>STO<sub>1</sub></code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
@@ -41944,13 +41558,16 @@ follows:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR<sub>lo</sub></code>, under context <code>IC</code> and store <code>STO<sub>2</sub></code> at <code>p</code></a>.</p>
+<p>the result of <a href="#Expr_inst">compile-time evaluation of <code>typedExpressionIR'</code>, under context <code>IC</code> and store <code>STO<sub>2</sub></code> at <code>p</code></a>.</p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Result in store <code>STO<sub>3</sub></code> and <a href="#bitacc_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
+<p>Result in store <code>STO<sub>3</sub></code> and <a href="#bitacc_range_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
+</li>
+<li>
+<p>Result in store <code>STO<sub>3</sub></code> and <a href="#bitacc_offset_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>+:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
 </li>
 </ol>
 </div>
@@ -41964,14 +41581,7 @@ follows:</p>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Expr_eval/sliceAccessExpressionIR:
-  rule Expr_eval/abort:
-  p EC_0 ARCH_0 |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : EC_1 ARCH_1 abortResult
- -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 ARCH_1 abortResult
-  rule Expr_eval/cont:
-  p EC_0 ARCH_0 |- (typedExpressionIR_base `[typedExpressionIR_hi : typedExpressionIR_lo]) # _ : EC_1 ARCH_1 expressionResult
- -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_hi, typedExpressionIR_lo] : EC_1 ARCH_1 (` ([value_base, value_hi, value_lo]))
- -- if expressionResult = ` $bitacc_op(value_base, value_hi, value_lo)</pre>
+<pre></pre>
 </div>
 </div>
 </div>
@@ -41983,58 +41593,7 @@ follows:</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
-<div class="paragraph">
-<p><a href="#Expr_eval">Evaluating <code>typedExpressionIR<sub>base</sub></code> <code>[</code> <code>typedExpressionIR<sub>hi</sub></code> <code>:</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code> annotated with <code>expressionNoteIR</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionListResult</code> be</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the result of <a href="#Exprs_eval">evaluating <code>[</code> <code>typedExpressionIR<sub>base</sub>,</code> <code>typedExpressionIR<sub>hi</sub>,</code> <code>typedExpressionIR<sub>lo</sub></code> <code>]</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>If let <code>abortResult</code> be <code>expressionListResult</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>abortResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>Let <code>value<sup>*</sup></code> be <code>expressionListResult</code>.</p>
-</li>
-<li>
-<p>Check that <code>value<sup>*</sup></code> is a list of length 3.</p>
-</li>
-<li>
-<p>Let <code>[</code> <code>value<sub>base</sub>,</code> <code>value<sub>hi</sub>,</code> <code>value<sub>lo</sub></code> <code>]</code> be <code>value<sup>*</sup></code>.</p>
-</li>
-<li>
-<p>Let <code>value'</code> be <a href="#bitacc_op"><code>value<sub>base</sub></code> <code>[</code> <code>value<sub>hi</sub></code> <code>:</code> <code>value<sub>lo</sub></code> <code>]</code></a>.</p>
-</li>
-<li>
-<p>Let <code>expressionResult</code> be <code>value'</code>.</p>
-</li>
-<li>
-<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
+
 </div>
 </div>
 </div>
@@ -51803,9 +51362,10 @@ reject those cases with an error message in this case.</p>
 <div class="content">
 <pre>rulegroup TableProperty_ok/key:
   rule TableProperty_ok/key:
-  TC TBLC_0 |- KEY = `{tableKeyList} : TBLC_1 (KEY = `{tableKeyIR*})
+  TC TBLC_0 |- KEY = `{tableKeyList} : TBLC_2 (KEY = `{tableKeyIR*})
  -- if tableKey* = $flatten_tableKeyList(tableKeyList)
- -- TableKeys_ok: TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*</pre>
+ -- TableKeys_ok: TC TBLC_0 |- tableKey* : TBLC_1 tableKeyIR*
+ -- if TBLC_2 = $update_mode_tbl(TBLC_1, tableKeyIR*)</pre>
 </div>
 </div>
 </div>
@@ -51836,7 +51396,10 @@ reject those cases with an error message in this case.</p>
 </div>
 </li>
 <li>
-<p>Result in table context <code>TBLC<sub>1</sub></code> and <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyIR<sup>*</sup></code> <code>}</code>.</p>
+<p>Let <code>TBLC<sub>2</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>1</sub></code> with match mode updated based on keys <code>tableKeyIR<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Result in table context <code>TBLC<sub>2</sub></code> and <code>KEY</code> <code>=</code> <code>{</code> <code>tableKeyIR<sup>*</sup></code> <code>}</code>.</p>
 </li>
 </ol>
 </div>
@@ -52007,7 +51570,7 @@ tableKeyIR
 <div class="content">
 <pre>rulegroup TableKey_ok:
   rule TableKey_ok:
-  TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_2 tableKeyIR
+  TC TBLC_0 |- expression : name_matchkind annotationList ; : TBLC_1 tableKeyIR
  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
  -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
  -- Type_wf: $bound(LOCAL, TC) |- SET `&lt;typeIR&gt;
@@ -52016,8 +51579,7 @@ tableKeyIR
  -- if nameIR_matchkind = $name(name_matchkind)
  -- if MATCH_KIND . nameIR_matchkind = $find_var_value_t(` nameIR_matchkind, LOCAL, TC)
  -- if $compat_table_key(nameIR_matchkind, typeIR)
- -- if TBLC_1 = $update_mode_tbl(TBLC_0, nameIR_matchkind, typeIR)
- -- if TBLC_2 = $add_key_tbl(TBLC_1, nameIR_matchkind, typeIR)
+ -- if TBLC_1 = $add_key_tbl(TBLC_0, nameIR_matchkind, typeIR)
  -- if tableKeyIR = typedExpressionIR # nameIR_key : nameIR_matchkind annotationList ;</pre>
 </div>
 </div>
@@ -52073,16 +51635,13 @@ tableKeyIR
 <p>Check that <a href="#compat_table_key"><code>typeIR</code> can be used with match kind <code>nameIR<sub>matchkind</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>TBLC<sub>1</sub></code> be <a href="#update_mode_tbl"><code>TBLC<sub>0</sub></code> with match mode updated based on key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code></a>.</p>
-</li>
-<li>
-<p>Let <code>TBLC<sub>2</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>1</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code> added</a>.</p>
+<p>Let <code>TBLC<sub>1</sub></code> be <a href="#add_key_tbl"><code>TBLC<sub>0</sub></code> with match key <code>nameIR<sub>matchkind</sub></code> of type <code>typeIR</code> added</a>.</p>
 </li>
 <li>
 <p>Let <code>tableKeyIR</code> be <code>typedExpressionIR</code> <code>#</code> <code>nameIR<sub>key</sub></code> <code>:</code> <code>nameIR<sub>matchkind</sub></code> <code>annotationList</code> <code>;</code>.</p>
 </li>
 <li>
-<p>Result in table context <code>TBLC<sub>2</sub></code> and <code>tableKeyIR</code>.</p>
+<p>Result in table context <code>TBLC<sub>1</sub></code> and <code>tableKeyIR</code>.</p>
 </li>
 </ol>
 </div>
@@ -54221,7 +53780,7 @@ invocation:</p>
 <p>Let <code>typeId'</code> <code>::</code> <code>_<sup>*</sup></code> be <code>typeId<sup>*</sup></code>.</p>
 </li>
 <li>
-<p>Let <a href="#Table_eval">EC<sub>callee_1</sub> ARCH<sub>0</sub> |- typeId' TBL : EC<sub>callee_2</sub> ARCH<sub>1</sub> tableResult</a>.</p>
+<p>Let <a href="#Table_eval"><code>EC<sub>callee_1</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId'</code> <code>TBL</code> <code>:</code> <code>EC<sub>callee_2</sub></code> <code>ARCH<sub>1</sub></code> <code>tableResult</code></a>.</p>
 </li>
 <li>
 <p>If let <code>exitResult</code> be <code>tableResult</code>:</p>
@@ -58935,6 +58494,7 @@ constructorTarget = namedType</code></pre>
    | lvalue . member
    | lvalue `[ expression ]
    | lvalue `[ expression : expression ]
+   | lvalue `[ expression +: expression ]
    | `( lvalue )
    ;
 
@@ -62508,7 +62068,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>|+|</code>:</p>
+<p>Else if <code>binop</code> is <code>||+</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -62588,7 +62148,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>&#8656;</code>:</p>
+<p>Else if <code>binop</code> is <code>&lt;=</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -62696,7 +62256,7 @@ def $bin_op(++, value_l, value_r) = $bin_concat(value_l, value_r)</pre>
 </div>
 </li>
 <li>
-<p>Else if <code>binop</code> is <code>++</code>:</p>
+<p>Else if <code>binop</code> is <code></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
@@ -67729,6 +67289,7 @@ indexAccessExpression
 
 sliceAccessExpression
    : expression `[ expression : expression ]
+   | expression `[ expression +: expression ]
    ;
 
 accessExpression
@@ -67748,6 +67309,7 @@ indexAccessExpressionNonBrace
 
 sliceAccessExpressionNonBrace
    : expressionNonBrace `[ expression : expression ]
+   | expressionNonBrace `[ expression +: expression ]
    ;
 
 accessExpressionNonBrace
@@ -67913,6 +67475,7 @@ lvalue
    | lvalue . member
    | lvalue `[ expression ]
    | lvalue `[ expression : expression ]
+   | lvalue `[ expression +: expression ]
    | `( lvalue )
    ;
 

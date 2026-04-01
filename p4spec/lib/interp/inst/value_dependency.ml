@@ -1,4 +1,4 @@
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 module Dep = Runtime.Testgen_neg.Dep
 
 let make_deriving () =

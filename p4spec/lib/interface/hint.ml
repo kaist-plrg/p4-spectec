@@ -12,7 +12,7 @@ let hintid = "print"
 
 let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
     HEnv.t =
-  let nottyp, hints = typcase in
+  let nottyp, _, hints = typcase in
   let hint_opt =
     List.find_opt (fun hint -> El.(hint.hintid.it = hintid)) hints
     |> Option.map (fun hint -> El.(hint.hintexp))

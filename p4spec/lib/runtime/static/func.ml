@@ -1,40 +1,28 @@
 open Lang
-open El
-open El.Print
+open Il
+open Il.Print
 
 (* Function *)
 
 type t =
-  | Extern of tparam list * param list * plaintyp
-  | Builtin of tparam list * param list * plaintyp
-  | Table of param list * plaintyp * Il.tablerow list
-  | Defined of
-      tparam list
-      * param list
-      * plaintyp
-      * Il.clause list
-      * Il.elseclause option
+  | Extern of tparam list * param list * typ
+  | Builtin of tparam list * param list * typ
+  | Table of param list * typ * tablerow list
+  | Defined of tparam list * param list * typ * clause list * elseclause option
 
 let to_string = function
-  | Extern (tparams, params, plaintyp) ->
+  | Extern (tparams, params, typ) ->
       "extern def " ^ string_of_tparams tparams ^ string_of_params params
-      ^ " : "
-      ^ string_of_plaintyp plaintyp
-  | Builtin (tparams, params, plaintyp) ->
+      ^ " : " ^ string_of_typ typ
+  | Builtin (tparams, params, typ) ->
       "builtin def " ^ string_of_tparams tparams ^ string_of_params params
-      ^ " : "
-      ^ string_of_plaintyp plaintyp
-  | Table (params, plaintyp, tablerows) ->
-      "table def " ^ string_of_params params ^ " : "
-      ^ string_of_plaintyp plaintyp
+      ^ " : " ^ string_of_typ typ
+  | Table (params, typ, tablerows) ->
+      "table def " ^ string_of_params params ^ " : " ^ string_of_typ typ
       ^ " =\n"
       ^ String.concat "\n"
-          (List.map
-             (fun clause -> Il.Print.string_of_tablerow clause)
-             tablerows)
-  | Defined (tparams, params, plaintyp, clauses, elseclause_opt) ->
+          (List.map (fun clause -> string_of_tablerow clause) tablerows)
+  | Defined (tparams, params, typ, clauses, elseclause_opt) ->
       "def " ^ string_of_tparams tparams ^ string_of_params params ^ " : "
-      ^ string_of_plaintyp plaintyp
-      ^ " =\n"
-      ^ Il.Print.string_of_clauses clauses
-      ^ Il.Print.string_of_elseclause_opt elseclause_opt
+      ^ string_of_typ typ ^ " =\n" ^ string_of_clauses clauses
+      ^ string_of_elseclause_opt elseclause_opt
