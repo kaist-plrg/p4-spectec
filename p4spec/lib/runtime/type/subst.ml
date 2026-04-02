@@ -1,4 +1,5 @@
 module Fresh_ = Fresh
+module Typ_ = Typ
 open Domain.Lib
 open Lang
 open Il
@@ -7,7 +8,7 @@ open Util.Source
 
 (* Substitution of type variables *)
 
-type theta = Typ.t TIdMap.t
+type theta = Typ_.t TIdMap.t
 
 let freshen_tparams (tparams : tparam list) : tparam list * theta =
   List.fold_left

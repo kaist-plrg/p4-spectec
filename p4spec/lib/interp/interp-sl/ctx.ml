@@ -362,3 +362,13 @@ let sub_list (ctx : t) (vars : var list) : t list =
           add_value ctx_sub (id, iters) value)
         ctx vars value_batch)
     values_batch
+
+(* Get typedef environment *)
+
+let get_tdenv (ctx : t) : TDEnv.t =
+  let tdenv_global = ctx.global.tdtbl |> TDTbl.T.to_seq |> TDEnv.of_seq in
+  match ctx.local with
+  | Empty | Rel _ -> tdenv_global
+  | Func { fid = _; values_input = _; tdenv = tdenv_local; fenv = _; venv = _ }
+    ->
+      TDEnv.union (fun _tid _td_g td_l -> Some td_l) tdenv_global tdenv_local

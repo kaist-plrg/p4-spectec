@@ -1274,9 +1274,11 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
       let tparams_il_a, params_il_a, typ_il_a =
         Ctx.find_func_signature ctx id_a
       in
+      let typs_params_il_p = Il.Typ.typs_of_params params_il_p in
+      let typs_params_il_a = Il.Typ.typs_of_params params_il_a in
       check
-        (Equiv.equiv_functyp ctx.tdenv arg.at tparams_il_p params_il_p typ_il_p
-           tparams_il_a params_il_a typ_il_a)
+        (Equiv.equiv_functyp ctx.tdenv arg.at tparams_il_p typs_params_il_p
+           typ_il_p tparams_il_a typs_params_il_a typ_il_a)
         arg.at
         (F.asprintf
            "function argument does not match the declared function parameter %s"

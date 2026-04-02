@@ -36,18 +36,9 @@ and equiv_nottyp (tdenv : TDEnv.t) (nottyp_a : nottyp) (nottyp_b : nottyp) :
   && List.length typs_a = List.length typs_b
   && List.for_all2 (equiv_typ tdenv) typs_a typs_b
 
-and equiv_param (tdenv : TDEnv.t) (param_a : param) (param_b : param) : bool =
-  match (param_a.it, param_b.it) with
-  | ExpP typ_a, ExpP typ_b -> equiv_typ tdenv typ_a typ_b
-  | DefP (_, tparams_a, params_a, typ_a), DefP (_, tparams_b, params_b, typ_b)
-    ->
-      equiv_functyp tdenv param_a.at tparams_a params_a typ_a tparams_b params_b
-        typ_b
-  | _ -> false
-
 and equiv_functyp (tdenv : TDEnv.t) (at : region) (tparams_a : tparam list)
-    (params_a : param list) (typ_a : typ) (tparams_b : tparam list)
-    (params_b : param list) (typ_b : typ) : bool =
+    (typs_params_a : typ list) (typ_a : typ) (tparams_b : tparam list)
+    (typs_params_b : typ list) (typ_b : typ) : bool =
   check
     (List.length tparams_a = List.length tparams_b)
     no_region "type parameters do not match";
@@ -66,11 +57,11 @@ and equiv_functyp (tdenv : TDEnv.t) (at : region) (tparams_a : tparam list)
       tparams_a tparams_b
   in
   check
-    (List.length params_a = List.length params_b)
+    (List.length typs_params_a = List.length typs_params_b)
     at "parameters do not match";
-  let params_a = Subst.subst_params theta_a params_a in
-  let params_b = Subst.subst_params theta_b params_b in
+  let typs_params_a = Subst.subst_typs theta_a typs_params_a in
+  let typs_params_b = Subst.subst_typs theta_b typs_params_b in
   let typ_a = Subst.subst_typ theta_a typ_a in
   let typ_b = Subst.subst_typ theta_b typ_b in
-  List.for_all2 (equiv_param tdenv) params_a params_b
+  List.for_all2 (equiv_typ tdenv) typs_params_a typs_params_b
   && equiv_typ tdenv typ_a typ_b

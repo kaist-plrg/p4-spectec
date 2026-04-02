@@ -289,3 +289,9 @@ let sub_list (ctx : t) (vars : var list) : t list backtrack =
       [] values_batch
   in
   Ok ctxs_sub
+
+(* Get typedef environment *)
+
+let get_tdenv (ctx : t) : TDEnv.t =
+  let tdenv_global = ctx.global.tdtbl |> TDTbl.T.to_seq |> TDEnv.of_seq in
+  TDEnv.union (fun _tid _td_g td_l -> Some td_l) tdenv_global ctx.local.tdenv

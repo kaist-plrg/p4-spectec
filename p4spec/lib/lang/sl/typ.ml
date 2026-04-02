@@ -1,5 +1,4 @@
-open Lang
-open Sl
+open Ast
 open Util.Source
 
 let rec typ_of_param (param : param) : typ =
