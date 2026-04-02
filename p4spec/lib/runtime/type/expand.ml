@@ -6,10 +6,10 @@ open Util.Source
 
 (* Type expansion *)
 
-let rec expand_typ (tdenv : Typdef.t TIdMap.t) (typ : typ) : typ =
+let rec expand_typ (finder : TId.t -> Typdef.t option) (typ : typ) : typ =
   match typ.it with
   | VarT (tid, targs) -> (
-      let td_opt = TIdMap.find_opt tid tdenv in
+      let td_opt = finder tid in
       match td_opt with
       | Some (Defined (tparams, deftyp)) -> (
           match deftyp.it with
@@ -18,7 +18,7 @@ let rec expand_typ (tdenv : Typdef.t TIdMap.t) (typ : typ) : typ =
           | PlainT typ ->
               let theta = List.combine tparams targs |> TIdMap.of_list in
               let typ = Subst.subst_typ theta typ in
-              expand_typ tdenv typ
+              expand_typ finder typ
           | _ -> typ)
       | Some _ -> typ
       | None -> error typ.at ("type variable " ^ tid.it ^ " is not defined"))

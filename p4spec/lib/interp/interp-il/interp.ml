@@ -377,7 +377,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       value backtrack =
     let* value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub (Ctx.get_tdenv ctx) (Ctx.find_typdef ctx)
+      Value.Match.sub (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
         typ value
     in
@@ -1437,7 +1437,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let typs = snd nottyp.it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
-      (Value.Match.subs (Ctx.get_tdenv ctx) (Ctx.find_typdef ctx)
+      (Value.Match.subs (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
          typs values_input)
       no_region "relation input does not match the expected type"
@@ -1460,9 +1460,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         ctx_local tparams targs
     in
     check
-      (Value.Match.subs (Ctx.get_tdenv ctx)
-         (Ctx.find_typdef ctx_local)
-         (Ctx.find_func_signature ctx)
+      (Value.Match.subs
+         (Ctx.find_typdef_opt ctx_local)
+         (Ctx.find_func_signature ctx_local)
          typs_params values_input)
       no_region "function argument does not match the parameter type"
 
