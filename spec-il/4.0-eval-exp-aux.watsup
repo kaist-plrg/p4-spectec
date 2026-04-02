@@ -50,6 +50,11 @@ def $is_opt(OPT val?) = true
 def $is_opt(val) = false
     -- otherwise
 
+dec $is_fun(val) : bool
+def $is_fun(FUNC id) = true
+def $is_fun(val) = false
+    -- otherwise
+
 ;;
 
 syntax theta = map<id, typ>
@@ -208,23 +213,85 @@ def $update_path(C, val_b, path, val_n) = FAIL
 
 ;;
 
-dec $assign_arg(ctx, ctx, arg, val) : ctx
+dec $assign_exp_aux1(ctx, vari*, val) : ctx
+def $assign_exp_aux1(ctx, eps, val) = ctx
+def $assign_exp_aux1(ctx, (id iter*) :: vari*, val) = $assign_exp_aux1(ctx', vari*, val)
+    -- if ctx' = $add_val(ctx, (id (iter* ++ [ QUEST ])), val)
 
-dec $assign_args(ctx, ctx, arg*, val*) : ctx
+dec $assign_exp_aux2(ctx, vari*) : res<ctx>
+def $assign_exp_aux2(ctx, eps) = OK ctx
+def $assign_exp_aux2(ctx, (id iter*) :: vari*) = $assign_exp_aux2(ctx', vari*)
+    -- if val = $find_val(ctx, id iter*)
+    -- if ctx' = $add_val(ctx, id iter*, val)
+def $assign_exp_aux2(ctx, vari*) = FAIL
+    -- otherwise
+
+dec $assign_exp_aux3(ctx, vari*, ctx*) : res<ctx> 
+def $assign_exp_aux3(ctx_iter, eps, ctx*) = OK ctx_iter
+def $assign_exp_aux3(ctx_iter, (id iter*) :: vari*, ctx*) = $assign_exp_aux3(ctx_iter', vari*, ctx*)
+    -- (if val = $find_val(ctx, id iter*))*
+    -- if ctx_iter' = $add_val(ctx_iter, id (iter* ++ [ STAR ]), LIST val*)
+def $assign_exp_aux3(ctx_iter, vari*, ctx*) = FAIL
+    -- otherwise
+
+dec $assign_exps(ctx, exp*, val*) : res<ctx>
+dec $assign_exp(ctx, exp, val) : res<ctx>
+def $assign_exp(ctx, VAR id, val) = OK ($add_val(ctx, id eps, val))
+def $assign_exp(ctx, TUP exp*, TUP val*) = $assign_exps(ctx, exp*, val*)
+def $assign_exp(ctx, INJ mixop exp, INJ mixop' val) = $assign_exp(ctx, exp, val)
+def $assign_exp(ctx, STR expfield*, STR valfield*)  = $assign_exps(ctx, exp*, val*)
+    -- (if atom exp = expfield)*
+    -- (if atom' val = valfield)*
+def $assign_exp(ctx, OPT exp, OPT val) = $assign_exp(ctx, exp, val)
+def $assign_exp(ctx, OPT eps, OPT eps) = OK ctx
+def $assign_exp(ctx, LIST exp*, LIST val*) = $assign_exps(ctx, exp*, val*)
+def $assign_exp(ctx, CONS exp_h exp_t, LIST (val_h :: val*)) = $assign_exp(ctx', exp_t, LIST val*)
+    -- if OK ctx' = $assign_exp(ctx, exp_h, val_h)
+def $assign_exp(ctx, ITER exp (QUEST vari*), OPT eps) = OK $assign_exp_aux1(ctx, vari*, OPT eps)
+def $assign_exp(ctx, ITER exp (QUEST vari*), OPT val) = $assign_exp_aux2(ctx', vari*)
+    -- if OK ctx' = $assign_exp(ctx, exp, val)
+def $assign_exp(ctx, ITER exp (STAR vari*), LIST val*) = $assign_exp_aux3(ctx, vari*, ctx'*)
+    -- (if OK ctx' = $assign_exp(ctx[ .LOCAL.VAL = $empty_map<vari, val>], exp, val))*
+def $assign_exp(ctx, exp, val) = FAIL
+    -- otherwise
+
+def $assign_exps(ctx, eps, eps) = OK ctx
+def $assign_exps(ctx, exp_cur :: exp*, val_cur :: val*) = $assign_exps(ctx', exp*, val*)
+    -- if |exp*| = |val*|
+    -- if OK ctx' = $assign_exp(ctx, exp_cur, val_cur)
+def $assign_exps(ctx, exp*, val*) = FAIL
+    -- otherwise
+
+dec $assign_arg(ctx, ctx, arg, val) : res<ctx>
+def $assign_arg(C_caller, C_callee, EXP exp, val) = $assign_exp(C_callee, exp, val)
+def $assign_arg(C_caller, C_callee, FUN id, FUNC id') = OK ($add_func(C_callee, id, funcdef))
+    -- if funcdef = $find_func(C_caller, id')
+def $assign_arg(C_caller, C_callee, arg, val) = FAIL
+    -- otherwise
+
+dec $assign_args(ctx, ctx, arg*, val*) : res<ctx>
+def $assign_args(C_caller, C_callee, eps, eps) = OK C_callee
+def $assign_args(C_caller, C_callee, arg_cur :: arg*, val_cur :: val*) = $assign_args(C_caller, C_next, arg*, val*)
+    -- if OK C_next = $assign_arg(C_caller, C_callee, arg_cur, val_cur)
+def $assign_args(C_caller, C_callee, arg*, val*) = FAIL
+    -- otherwise
 
 ;;
 
 syntax matchres = ctx arg* prem* exp 
 
-dec $match_clause(ctx, ctx, clause, val*) : matchres
-def $match_clause(C_caller, C_callee, clause, val*) = C arg* prem* exp
+dec $match_clause(ctx, ctx, clause, val*) : res<matchres>
+def $match_clause(C_caller, C_callee, clause, val*) = OK (C arg* prem* exp)
     -- if arg* `= exp `- prem* = clause
     -- if |arg*| = |val*|
-    -- if C = $assign_args(C_caller, C_callee, arg*, val*)
+    -- if OK C = $assign_args(C_caller, C_callee, arg*, val*)
+def $match_clause(C_caller, C_callee, clause, val*) = FAIL
+    -- otherwise
+
 
 dec $do_backtrack_clause(ctx, ctx, val*, clause) : res<val> 
 def $do_backtrack_clause(C, ctx_local, val*, clause) = OK val_output
-    -- if ctx'_local arg_input* prem* exp_output = $match_clause(C, ctx_local, clause, val*)
+    -- if OK (ctx'_local arg_input* prem* exp_output) = $match_clause(C, ctx_local, clause, val*)
     -- Eval_prems: ctx'_local |- prem* : OK ctx'
     -- Eval_exp : ctx'_local |- exp_output : OK val_output
 def $do_backtrack_clause(C_1, C_2, val*, clause) = FAIL
@@ -238,13 +305,13 @@ def $do_backtrack_func(ctx, ctx_local, val*, clause_cur :: clause*) = $do_backtr
     -- if FAIL = $do_backtrack_clause(ctx, ctx_local, val*, clause_cur)
 
 dec $concat_layer(layer, layer) : layer
-def $concat_layer(layer_1, layer_2) = {TYP $extend_map<id, typdef>(layer_1.TYP, layer_2.TYP), REL $extend_map<id, reldef>(layer_1.REL, layer_2.REL), FUNC $extend_map<id, funcdef>(layer_1.FUNC, layer_2.FUNC)}
+def $concat_layer(layer_1, layer_2) = {TYP $extend_map<id, typdef>(layer_1.TYP, layer_2.TYP), REL $extend_map<id, reldef>(layer_1.REL, layer_2.REL), FUNC $extend_map<id, funcdef>(layer_1.FUNC, layer_2.FUNC), VAL $extend_map<vari, val>(layer_1.VAL, layer_2.VAL) }
 
 dec $invoke_defined_func(ctx, id, tparam*, clause*, elsclause?, targ*, val*) : res<val>
 def $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*) = $do_backtrack_func(C, ctx_local, val*, clause* ++ $opt_as_seq_<clause>(elsclause?))
     -- if |targ*| = |tparam*|
     -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS targ)))* }
-    -- if ctx_local = {GLOBAL {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>}, LOCAL $concat_layer(C.LOCAL, {TYP tdenv, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>})}
+    -- if ctx_local = {GLOBAL {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>, VAL $empty_map<vari, val>}, LOCAL $concat_layer(C.LOCAL, {TYP tdenv, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>, VAL $empty_map<vari, val>}),}
 def $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*) = FAIL
     -- otherwise
 
