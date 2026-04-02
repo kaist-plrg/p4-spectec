@@ -851,8 +851,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
         let _, func = Ctx.find_func ctx id in
-        let tparams, typs_param, typ = Func.get_signature func in
-        let value_res = Value.Make.func id tparams typs_param typ in
+        let tparams, typs_params, typ = Func.get_signature func in
+        let value_res = Value.Make.func id tparams typs_params typ in
         Ok value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =

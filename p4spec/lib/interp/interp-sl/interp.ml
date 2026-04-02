@@ -966,8 +966,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
         let _, func = Ctx.find_func ctx id in
-        let tparams, typs_param, typ = Func.get_signature func in
-        let value_res = Value.Make.func id tparams typs_param typ in
+        let tparams, typs_params, typ = Func.get_signature func in
+        let value_res = Value.Make.func id tparams typs_params typ in
         Hook.on_value value_res;
         value_res
 
@@ -1895,7 +1895,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx = Ctx.empty () in
     let id = funcname $ no_region in
     let _, func = Ctx.find_func ctx id in
-    let tparams, typs_param, _ = Func.get_signature func in
+    let tparams, typs_params, _ = Func.get_signature func in
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1911,7 +1911,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (Value.Match.subs (Ctx.get_tdenv ctx)
          (Ctx.find_typdef ctx_local)
          (Ctx.find_func_signature ctx)
-         typs_param values_input)
+         typs_params values_input)
       no_region "function argument does not match the parameter type"
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =

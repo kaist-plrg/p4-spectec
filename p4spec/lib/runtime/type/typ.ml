@@ -29,6 +29,6 @@ module Make = struct
   let opt (typ : t) : t = iter typ Opt
   let list (typ : t) : t = iter typ List
 
-  let func (tparams : tparam list) (typs_param : typ list) (typ : typ) : t =
-    FuncT (tparams, typs_param, typ) $ no_region
+  let func (tparams : tparam list) (typs_params : typ list) (typ : typ) : t =
+    FuncT (tparams, typs_params, typ) $ no_region
 end
