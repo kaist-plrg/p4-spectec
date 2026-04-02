@@ -1,3 +1,20 @@
 rule Eval_arg/exp:
   C |- EXP exp : valres
   -- Eval_exp: C |- exp : valres
+
+rule Eval_arg/fun:
+  C |- FUN id : OK (FUNC id)
+
+;; 
+
+rule Eval_args/empty:
+  C |- eps : (OK eps)
+
+rule Eval_args/list:
+  C |- (arg_cur :: arg*) : OK (val_cur :: val*)
+  -- Eval_arg: C |- arg_cur : OK val_cur
+  -- Eval_args: C |- arg* : OK val*
+
+rule Eval_args/fail:
+  C |- arg* : FAIL
+  -- otherwise
