@@ -315,15 +315,6 @@ def $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*) = $do
 def $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*) = FAIL
     -- otherwise
 
-dec $invoke_func_with_values(ctx, id, targ*, val*) : res<val>
-;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_extern_func(id, targ*, val*)
-;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_builtin_func(id, targ*, val*)
-;; def $invoke_func_with_values(C, id, targ*, val*) = $invoke_table_func(id, targ*, val*)
-def $invoke_func_with_values(C, id, targ*, val*) = $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ*, val*)
-    -- if DEF tparam* `-> clause* elsclause? = $find_func(C, id)
-def $invoke_func_with_values(C, id, targ*, val*) = FAIL
-    -- otherwise
-
 dec $invoke_func_aux(map<id, typdef>) : theta
 def $invoke_func_aux(`{ eps }) = $empty_map<id, typ>
 def $invoke_func_aux(`{ (id_head `: typdef_head) :: (id `: typdef)* }) = $add_map<id, typ>($invoke_func_aux(`{ (id `: typdef)* }), id_head, typ)

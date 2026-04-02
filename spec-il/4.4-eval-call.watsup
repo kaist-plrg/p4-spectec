@@ -1,3 +1,50 @@
 ;; Call_func
 
+rulegroup Call_func/ok {
+
+    rule Call_func/defined:
+      C |- id targ* arg* : $invoke_defined_func(C, id, tparam*, clause*, elsclause?, targ_new*, val_input*)
+      -- if theta = $invoke_func_aux(C.LOCAL.TYP)
+      -- if (targ_new = $subst_typ(theta, targ))*
+      -- Eval_args: C |- arg* : OK val_input*
+      -- if DEF tparam* `-> clause* elsclause? = $find_func(C, id)
+
+    ;; rule Call_func/extern: $invoke_extern_func(id, targ*, val*)
+    ;; rule Call_func/builtin: $invoke_builtin_func(id, targ*, val*)
+    ;; rule Call_func/table: $invoke_table_func(id, targ*, val*)
+
+}
+
+
+rule Call_func/fail:
+  C |- id targ* arg* : FAIL
+  -- otherwise
+
 ;; Call_rel
+
+rule Call_rel/ext:
+  C |- id val* : $invoke_extern_rel(id, val*)
+  -- if EXT = $find_rel(C, id)
+
+rulegroup Call_rel/defined {
+    
+    rule Call_rel/defined_eps:
+      C |- id val* : $do_backtrack_rulepath(C, id_els, rulmatch_els, rulpath_els, val*)
+      -- if DEF rulgroup* elsgroup = $find_rel(C, id)
+      -- (if id `: rulmatch `= rulpath* = rulgroup)*
+      -- if resvals* = $concat_<resvals>($do_backtrack_rulepath(C, id, rulmatch, rulpath, val*)**)
+      -- if eps = $search_resvals(resvals*)
+      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
+
+    rule Call_rel/defined_list:
+      C |- id val* : OK val_output*
+      -- if DEF rulgroup* elsgroup? = $find_rel(C, id)
+      -- (if id `: rulmatch `= rulpath* = rulgroup)*
+      -- if resvals* = $concat_<resvals>($do_backtrack_rulepath(C, id, rulmatch, rulpath, val*)**)
+      -- if eps =/= $search_resvals(resvals*)
+      -- if val_output* = $search_resvals(resvals*)
+}
+
+rule Call_rel/fail:
+  C |- id val* : FAIL
+  -- otherwise
