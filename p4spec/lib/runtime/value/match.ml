@@ -7,8 +7,10 @@ open Util.Source
 
 (* Whether a value belongs to a type (including subtyping) *)
 
-let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
-    =
+type func_signature = tparam list * typ list * typ
+
+let rec sub (type_finder : TId.t -> Type.Typdef.t)
+    (func_finder : FId.t -> func_signature) (typ : typ) (value : value) : bool =
   match typ.it with
   | BoolT -> ( match value.it with BoolV _ -> true | _ -> false)
   | NumT `NatT -> (
@@ -19,7 +21,7 @@ let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
   | NumT `IntT -> ( match value.it with NumV _ -> true | _ -> false)
   | TextT -> ( match value.it with TextV _ -> true | _ -> false)
   | VarT (tid, targs) -> (
-      let td = finder tid in
+      let td = type_finder tid in
       match td with
       | Param | Defining _ -> error typ.at "unexpected type variable"
       | Extern -> ( match value.it with ExternV _ -> true | _ -> false)
@@ -28,7 +30,7 @@ let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
           match (deftyp.it, value.it) with
           | PlainT typ, _ ->
               let typ = Type.Subst.subst_typ theta typ in
-              sub finder typ value
+              sub type_finder func_finder typ value
           | StructT typfields, StructV valuefields
             when List.length typfields = List.length valuefields ->
               List.for_all2
@@ -36,7 +38,7 @@ let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
                   Atom.eq atom_t.it atom_v.it
                   &&
                   let typ = Type.Subst.subst_typ theta typ in
-                  sub finder typ value)
+                  sub type_finder func_finder typ value)
                 typfields valuefields
           | VariantT typcases, CaseV (mixop_v, values_inner) ->
               List.exists
@@ -48,29 +50,37 @@ let rec sub (finder : TId.t -> Type.Typdef.t) (typ : typ) (value : value) : bool
                   let typs_inner =
                     List.map (Type.Subst.subst_typ theta) typs_inner
                   in
-                  subs finder typs_inner values_inner)
+                  subs type_finder func_finder typs_inner values_inner)
                 typcases
           | _ -> false))
   | TupleT typs -> (
       match value.it with
       | TupleV values ->
           List.length typs = List.length values
-          && List.for_all2 (sub finder) typs values
+          && List.for_all2 (sub type_finder func_finder) typs values
       | _ -> false)
   | IterT (typ_inner, Opt) -> (
       match value.it with
       | OptV value_opt -> (
           match value_opt with
-          | Some value_inner -> sub finder typ_inner value_inner
+          | Some value_inner ->
+              sub type_finder func_finder typ_inner value_inner
           | None -> true)
       | _ -> true)
   | IterT (typ_inner, List) -> (
       match value.it with
-      | ListV values -> List.for_all (sub finder typ_inner) values
+      | ListV values ->
+          List.for_all (sub type_finder func_finder typ_inner) values
       | _ -> false)
-  | _ -> false
+  | FuncT (_tparams_t, _typs_param_t, _typ_ret_t) -> (
+      match value.it with
+      | FuncV fid ->
+          let _tparams_v, _typs_param_v, _typ_ret_v = func_finder fid in
+          true
+      | _ -> false)
 
-and subs (finder : TId.t -> Type.Typdef.t) (typs : typ list)
+and subs (type_finder : TId.t -> Type.Typdef.t)
+    (func_finder : FId.t -> func_signature) (typs : typ list)
     (values : value list) : bool =
   List.length typs = List.length values
-  && List.for_all2 (sub finder) typs values
+  && List.for_all2 (sub type_finder func_finder) typs values

@@ -222,6 +222,15 @@ let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   | Some (cursor, func) -> (cursor, func)
   | None -> back_undef fid.at "function" fid.it
 
+let find_func_signature_opt (ctx : t) (fid : FId.t) :
+    (tparam list * typ list * typ) option =
+  find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+
+let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ =
+  match find_func_signature_opt ctx fid with
+  | Some (tparams, typs, typ) -> (tparams, typs, typ)
+  | None -> back_undef fid.at "function" fid.it
+
 let bound_func (ctx : t) (fid : FId.t) : bool =
   find_func_opt ctx fid |> Option.is_some
 

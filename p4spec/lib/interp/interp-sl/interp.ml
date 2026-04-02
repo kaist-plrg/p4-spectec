@@ -447,7 +447,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
       value =
     let value = eval_exp ctx exp in
-    let sub = Value.Match.sub (Ctx.find_typdef ctx) typ value in
+    let sub =
+      Value.Match.sub (Ctx.find_typdef ctx)
+        (Ctx.find_func_signature ctx)
+        typ value
+    in
     let value_res = Value.Make.bool sub in
     Hook.on_value value_res;
     Hook.on_value_dependency value_res value (Dep.Edges.Op (SubOp typ));
@@ -1881,7 +1885,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let typs = snd nottyp.it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
-      (Value.Match.subs (Ctx.find_typdef ctx) typs values_input)
+      (Value.Match.subs (Ctx.find_typdef ctx)
+         (Ctx.find_func_signature ctx)
+         typs values_input)
       no_region "relation input does not match the expected type"
 
   let check_func_inputs (funcname : string) (targs : targ list)
@@ -1902,7 +1908,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     check
-      (Value.Match.subs (Ctx.find_typdef ctx_local) typs_param values_input)
+      (Value.Match.subs
+         (Ctx.find_typdef ctx_local)
+         (Ctx.find_func_signature ctx)
+         typs_param values_input)
       no_region "function argument does not match the parameter type"
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
