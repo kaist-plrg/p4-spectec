@@ -1,3 +1,8 @@
+rule Eval_prem/rel:
+  C |- REL id `: exp* `-> exp_output* : $assign_exps(C, exp_output*, val_output*)
+  -- Eval_exps: C |- exp* : OK val*
+  -- if OK val_output* = $invoke_rel(C, id, val*)
+
 rulegroup Eval_prem/ifpr {
 
   rule Eval_prem/fail:
@@ -13,3 +18,105 @@ rulegroup Eval_prem/ifpr {
     -- Eval_exp: C |- exp : OK (BOOL false)
 
 }
+
+rule Eval_prem/ifholdpr:
+  C |- IFHOLD id `: exp* : OK C
+  -- Eval_exps: C |- exp* : OK val_input*
+  -- if OK val* = $invoke_rel(C, id, val_input*)
+
+rule Eval_prem/ifnotholdpr:
+  C |- IFNOTHOLD id `: exp* : OK C
+  -- Eval_exps: C |- exp* : OK val_input*
+  -- if FAIL = $invoke_rel(C, id, val_input*)
+
+rule Eval_prem/let:
+  C |- LET exp_l `= exp_r : $assign_exp(C, exp_l, val)
+  -- Eval_exp : C |- exp_r : OK val
+
+dec $eval_prem_opt_none_aux(ctx, vari) : ctx
+def $eval_prem_opt_none_aux(C, id iter*) = $add_val(C, id (iter* ++ [ QUEST ]), OPT eps)
+
+dec $eval_prem_opt_some_aux(ctx, ctx, vari*) : res<ctx>
+def $eval_prem_opt_some_aux(C, C_sub, eps) = OK C
+def $eval_prem_opt_some_aux(C, C_sub, (id iter*) :: vari*) = $eval_prem_opt_some_aux(C', C_sub, vari*)
+  -- if val_bind = $find_val(C, id iter*)
+  -- if C' = $add_val(C, id (iter* ++ [QUEST]), OPT val_bind)
+def $eval_prem_opt_some_aux(C, C_sub, vari*) = FAIL
+  -- otherwise
+
+syntax ctxval = ctx val**
+
+dec $eval_prem_list_list_aux(ctxval, ctx*, vari*, prem) : res<ctxval>
+def $eval_prem_list_list_aux(ctxval, eps, vari_bind*, prem) = OK ctxval
+def $eval_prem_list_list_aux(ctxval, C_sub :: ctx*, vari_bind*, prem) = $eval_prem_list_list_aux(ctx' val_final**, ctx*, vari_bind*, prem)
+  -- if (ctx' val**) = ctxval
+  -- Eval_prem: C_sub |- prem : OK ctx_sub
+  -- (if val_bindingbatch = $find_val(ctx_sub, vari_bind))*
+  -- if val_final** = val** ++ [ val_bindingbatch* ]
+def $eval_prem_list_list_aux(ctxval, ctx*, vari_bind*, prem) = FAIL
+  -- otherwise
+
+dec $eval_prem_list_aux(ctx, vari*, val*) : ctx
+def $eval_prem_list_aux(ctx, eps, val*) = ctx
+def $eval_prem_list_aux(ctx, (id iter*) :: vari*, val*) = $add_val(ctx, id (iter* ++ [ STAR ]), LIST val*)
+
+syntax transposevalres = val* val**
+
+dec $transposeval_aux(val*, val**, val**) : transposevalres
+def $transposeval_aux(val_head*, val_tail**, eps) = val_head* val_tail**
+def $transposeval_aux(val_head*, val_tail**, val* :: val_left**) = $transposeval_aux(val_head* ++ [ val_lefthead ], val_tail** ++ [ val_lefttail* ], val_left**)
+  -- if val_lefthead :: val_lefttail* = val*
+
+dec $transposeval(val**, val**) : val**
+def $transposeval(eps, val_ans**) = val_ans**
+def $transposeval(val**, val_ans**) = $transposeval(val_tail**, val_ans** ++ [ val_head* ])
+  -- if eps =/= val**
+  -- if val_head* val_tail** = $transposeval_aux(eps, eps, val**)
+
+rulegroup Eval_prem/iter {
+
+  rule Eval_prem/opt_none:
+    C |- ITER prem iterprem : OK $fold<ctx, vari>(C, vari_bind*, def $eval_prem_opt_none_aux)
+    -- if QUEST vari_bound vari_bind* = iterprem
+    -- if eps = $sub_opt(C, vari_bound)
+
+  rule Eval_prem/opt_some:
+    C |- ITER prem iterprem : $eval_prem_opt_some_aux(C, C_sub, vari_bind*)
+    -- if QUEST vari_bound vari_bind* = iterprem
+    -- if C_sub = $sub_opt(C, vari_bound)
+  
+  rule Eval_prem/list_empty:
+    C |- ITER prem iterprem : OK $eval_prem_list_aux(C, vari_bind*, val*)
+    -- if STAR vari_bound* vari_bind* = iterprem
+    -- (if ctx_sub = $sub_list(C, vari_bound))*
+    -- if ctx_sub* = eps
+    -- (if id iter* = vari_bound)*
+    -- (if val = $ite<val>(true, LIST eps, FUNC id))* ;; FUNC id is dummy value to make the length same with vari_bound
+
+  rule Eval_prem/list_list:
+    C |- ITER prem iterprem : OK $eval_prem_list_aux(ctx, vari_bind*, val_final*)
+    -- if STAR vari_bound* vari_bind* = iterprem
+    -- (if ctx_sub = $sub_list(C, vari_bound))*
+    -- if ctx_sub* =/= eps
+    -- if OK (ctx val_trans**) = $eval_prem_list_list_aux(C eps, ctx_sub*, vari_bind*, prem)
+    -- if val** = $transposeval(val_trans**, eps)
+    -- (if val_final = LIST val*)*
+}
+
+rule Eval_prem/fail:
+  C |- prem : FAIL
+  -- otherwise
+
+;;
+
+rule Eval_prems/empty:
+  C |- eps : OK C
+
+rule Eval_prems/list:
+  C |- (prem_cur :: prem*) : OK C''
+  -- Eval_prem: C |- prem_cur : OK C'
+  -- Eval_prems: C' |- prem* : OK C''
+
+rule Eval_prems/fail:
+  C |- prem* : FAIL
+  -- otherwise
