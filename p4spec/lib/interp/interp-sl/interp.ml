@@ -1722,8 +1722,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       let anon = cursor = Ctx.Local in
       let value_output =
         match func with
-        | Func.Extern _ -> invoke_extern_func ~anon id targs values_input
-        | Func.Builtin _ -> invoke_builtin_func ~anon id targs values_input
+        | Func.Extern (tparams, _, typ) ->
+            invoke_extern_func ~anon ctx id tparams targs values_input typ
+        | Func.Builtin (tparams, _, typ) ->
+            invoke_builtin_func ~anon ctx id tparams targs values_input typ
         | Func.Table (params, _, tablerows) ->
             invoke_table_func ~anon ctx id params tablerows values_input
         | Func.Defined (tparams, params, _, block, elseblock_opt) ->
@@ -1736,8 +1738,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Hook.on_func_exit id;
       back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
 
-  and invoke_extern_func ~(anon : bool) (id : id) (targs : targ list)
-      (values_input : value list) : value =
+  and invoke_extern_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (tparams : tparam list) (targs : targ list) (values_input : value list)
+      (typ_output : typ) : value =
     anon |> ignore;
     let invoke_extern_func' (id : id) (_targs : targ list)
         (values_input : value list) : value =
@@ -1748,6 +1751,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | _ ->
             back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
       in
+      let theta = List.combine tparams targs |> TIdMap.of_list in
+      let typ_output = Type.Subst.subst_typ theta typ_output in
+      check
+        (Value.Match.sub (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typ_output value_output)
+        id.at
+        (F.sprintf
+           "output of extern function %s does not match the expected type" id.it);
       List.iteri
         (fun idx_arg value_input ->
           Hook.on_value_dependency value_output value_input
@@ -1758,8 +1770,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try invoke_extern_func' id targs values_input
     with Util.Error.ArchError (at, msg) -> back_unmatch at msg
 
-  and invoke_builtin_func ~(anon : bool) (id : id) (targs : targ list)
-      (values_input : value list) : value =
+  and invoke_builtin_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (tparams : tparam list) (targs : targ list) (values_input : value list)
+      (typ_output : typ) : value =
     let invoke_builtin_func' () =
       let value_output =
         try
@@ -1768,6 +1781,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             id targs values_input
         with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
       in
+      let theta = List.combine tparams targs |> TIdMap.of_list in
+      let typ_output = Type.Subst.subst_typ theta typ_output in
+      check
+        (Value.Match.sub (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typ_output value_output)
+        id.at
+        (F.sprintf
+           "output of builtin function %s does not match the expected type"
+           id.it);
       List.iteri
         (fun idx_arg value_input ->
           Hook.on_value_dependency value_output value_input

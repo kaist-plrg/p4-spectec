@@ -1226,8 +1226,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (* Invoke the function *)
     let result =
       match func with
-      | Func.Extern _ -> invoke_extern_func ~anon id targs values_input
-      | Func.Builtin _ -> invoke_builtin_func ~anon id targs values_input
+      | Func.Extern (tparams, _, typ) ->
+          invoke_extern_func ~anon ctx id tparams targs values_input typ
+      | Func.Builtin (tparams, _, typ) ->
+          invoke_builtin_func ~anon ctx id tparams targs values_input typ
       | Func.Table (_, _, tablerows) ->
           invoke_table_func ~anon ctx id tablerows values_input
       | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
@@ -1237,26 +1239,51 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Hook.on_func_exit id;
     result
 
-  and invoke_extern_func ~(anon : bool) (id : id) (_targs : targ list)
-      (values_input : value list) : value backtrack =
+  and invoke_extern_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (tparams : tparam list) (targs : targ list) (values_input : value list)
+      (typ_output : typ) : value backtrack =
     anon |> ignore;
-    match id.it with
-    | "init_objectState" ->
-        let value_output = Arch.eval_extern_init values_input in
-        Ok value_output
-    | "init_archState" ->
-        let value_output = Arch.init_arch_state in
-        Ok value_output
-    | _ -> back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
+    let* value_output =
+      match id.it with
+      | "init_objectState" ->
+          let value_output = Arch.eval_extern_init values_input in
+          Ok value_output
+      | "init_archState" ->
+          let value_output = Arch.init_arch_state in
+          Ok value_output
+      | _ ->
+          back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
+    in
+    let theta = List.combine tparams targs |> TIdMap.of_list in
+    let typ_output = Type.Subst.subst_typ theta typ_output in
+    check
+      (Value.Match.sub (Ctx.find_typdef_opt ctx)
+         (Ctx.find_func_signature ctx)
+         typ_output value_output)
+      id.at
+      (F.sprintf "output of extern function %s does not match the expected type"
+         id.it);
+    Ok value_output
 
-  and invoke_builtin_func ~(anon : bool) (id : id) (targs : targ list)
-      (values_input : value list) : value backtrack =
+  and invoke_builtin_func ~(anon : bool) (ctx : Ctx.t) (id : id)
+      (tparams : tparam list) (targs : targ list) (values_input : value list)
+      (typ_output : typ) : value backtrack =
     (* Invoke builtin function *)
     let invoke_func_builtin' () =
       try
         let value_output =
           Builtin.Call.invoke (fun _ -> ()) id targs values_input
         in
+        let theta = List.combine tparams targs |> TIdMap.of_list in
+        let typ_output = Type.Subst.subst_typ theta typ_output in
+        check
+          (Value.Match.sub (Ctx.find_typdef_opt ctx)
+             (Ctx.find_func_signature ctx)
+             typ_output value_output)
+          id.at
+          (F.sprintf
+             "output of builtin function %s does not match the expected type"
+             id.it);
         Ok value_output
       with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
