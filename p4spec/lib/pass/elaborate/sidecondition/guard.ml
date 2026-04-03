@@ -179,13 +179,11 @@ let collector : Result.t Walk.Collect.collector =
 
 (* Entry point *)
 
-let insert_exp_input (exp : exp) : Result.must =
+let must_exp_input (exp : exp) : Result.must =
   Result.lift exp.at (Walk.Collect.collect_exp collector exp)
 
-let insert_exps_input (exps : exp list) : Result.must =
-  List.fold_left
-    (fun prems_must exp -> prems_must @ insert_exp_input exp)
-    [] exps
+let must_exps_input (exps : exp list) : Result.must =
+  List.fold_left (fun prems_must exp -> prems_must @ must_exp_input exp) [] exps
 
 let insert_exp_output (prems_must : prem list) (exp : exp) : Result.insert =
   Result.lift exp.at (Walk.Collect.collect_exp collector exp)
@@ -195,13 +193,11 @@ let insert_exps_output (prems_must : prem list) (exps : exp list) :
     Result.insert =
   exps |> List.map (insert_exp_output prems_must) |> List.flatten
 
-let insert_arg_input (arg : arg) : Result.must =
+let must_arg_input (arg : arg) : Result.must =
   Result.lift arg.at (Walk.Collect.collect_arg collector arg)
 
-let insert_args_input (args : arg list) : Result.must =
-  List.fold_left
-    (fun prems_must arg -> prems_must @ insert_arg_input arg)
-    [] args
+let must_args_input (args : arg list) : Result.must =
+  List.fold_left (fun prems_must arg -> prems_must @ must_arg_input arg) [] args
 
 let insert_prem (prems_must_prev : prem list) (prem : prem) : Result.t =
   let prems_must, prems_insert = Walk.Collect.collect_prem collector prem in
@@ -221,7 +217,7 @@ let insert_rulegroup (rulegroup : rulegroup) : rulegroup =
   let id_rulegroup, rulematch, rulepaths = rulegroup.it in
   let prems_must, rulematch =
     let exps_signature, exps_input, prems = rulematch in
-    let prems_must = insert_exps_input exps_input in
+    let prems_must = must_exps_input exps_input in
     let prems_must, prems = insert_prems prems_must prems in
     (prems_must, (exps_signature, exps_input, prems))
   in
@@ -239,7 +235,7 @@ let insert_elsegroup (elsegroup : elsegroup) : elsegroup =
   let id_rulegroup, rulematch, rulepath = elsegroup.it in
   let prems_must, rulematch =
     let exps_signature, exps_input, prems = rulematch in
-    let prems_must = insert_exps_input exps_input in
+    let prems_must = must_exps_input exps_input in
     let prems_must, prems = insert_prems prems_must prems in
     (prems_must, (exps_signature, exps_input, prems))
   in
@@ -253,7 +249,7 @@ let insert_elsegroup (elsegroup : elsegroup) : elsegroup =
 
 let insert_clause (clause : clause) : clause =
   let args, exp, prems = clause.it in
-  let prems_must = insert_args_input args in
+  let prems_must = must_args_input args in
   let prems_must, prems = insert_prems prems_must prems in
   let prems_exp = insert_exp_output prems_must exp in
   (args, exp, prems @ prems_exp) $ clause.at
