@@ -12,7 +12,7 @@ open Util.Source
 
    Must-premises are generated from the binding sites, e.g.
 
-    - (let (x, y) = z){x -> x*, y -> y*, z <- z*} generates a must-premise |x*| = |y*|
+    - (let (x, y) = z){x -> x*, y -> y*, z <- z*} generates must-premises (|x*| = |y*|) /\ (|y*| = |z*|);
     - this optimizes away redundant guard conditions *)
 
 (* Equivalence class for equality filtering,
@@ -253,7 +253,7 @@ let collector : Result.t Walk.Collect.collector =
   let collect_iterprem (_ : Result.t collector) (iterprem : iterprem) : Result.t
       =
     let iter, vars_in, vars_out = iterprem in
-    let prems_must = gen_iter_guard (iter, vars_out) in
+    let prems_must = gen_iter_guard (iter, vars_in @ vars_out) in
     let prems_insert = gen_iter_guard (iter, vars_in) in
     (prems_must, prems_insert)
   in
@@ -266,7 +266,9 @@ let collector : Result.t Walk.Collect.collector =
     | IterPr (prem_inner, iterprem) ->
         let iter, vars_in, vars_out = iterprem in
         let result = c.collect_prem c prem_inner in
-        let result = Result.iterate (iter, vars_out) (iter, vars_in) result in
+        let result =
+          Result.iterate (iter, vars_in @ vars_out) (iter, vars_in) result
+        in
         Result.compose result (c.collect_iterprem c iterprem)
     | _ -> default_collect_prem c prem
   in
