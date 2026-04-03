@@ -2,33 +2,55 @@ open Domain.Lib
 open Lang
 open Il
 module Typ = Runtime.Type.Typ
+open Error
 open Util.Source
 
 (* Insert explicit guard side conditions for:
     - array access a[n] to n < |a|
     - joint iteration e*{x <- x*, y <- y*, z <- z*} to (|x*| = |y*|) /\ (|y*| = |z*| *)
 
-let default = []
-let compose = ( @ )
+module Result = struct
+  (* Premises that must hold, and premises that must be inserted *)
 
-let iterate_wrap (iterexp : iterexp) (prem : prem) : prem option =
-  let iter, vars = iterexp in
-  let frees = Free.free_prem prem in
-  let vars_iter =
+  type must = prem list
+  type insert = prem list
+  type t = prem list * prem list
+
+  let default : t = ([], [])
+
+  let compose (prems_must_a, prems_insert_a) (prems_must_b, prems_insert_b) : t
+      =
+    (prems_must_a @ prems_must_b, prems_insert_a @ prems_insert_b)
+
+  let filter (prems_must : prem list) (prems_insert : prem list) : prem list =
     List.filter
-      (fun (id, _, _) -> IdSet.find_opt id frees |> Option.is_some)
-      vars
-  in
-  match vars_iter with
-  | [] -> None
-  | _ ->
-      let iterprem = (iter, vars_iter, []) in
-      Some (IterPr (prem, iterprem) $ prem.at)
+      (fun prem_insert -> not (List.exists (Eq.eq_prem prem_insert) prems_must))
+      prems_insert
 
-let iterate_wraps (iterexp : iterexp) (prems : prem list) : prem list =
-  prems
-  |> List.map (fun prem -> iterate_wrap iterexp prem)
-  |> List.filter_map Fun.id
+  let iterate_prem (iterexp : iterexp) (prem : prem) : prem option =
+    let iter, vars = iterexp in
+    let frees = Free.free_prem prem in
+    let vars_iter =
+      List.filter
+        (fun (id, _, _) -> IdSet.find_opt id frees |> Option.is_some)
+        vars
+    in
+    match vars_iter with
+    | [] -> None
+    | _ ->
+        let iterprem = (iter, vars_iter, []) in
+        Some (IterPr (prem, iterprem) $ prem.at)
+
+  let iterate_must (iterexp : iterexp) (t : t) : t =
+    let prems_must, prems_insert = t in
+    let prems_must = prems_must |> List.filter_map (iterate_prem iterexp) in
+    (prems_must, prems_insert)
+
+  let iterate_insert (iterexp : iterexp) (t : t) : t =
+    let prems_must, prems_insert = t in
+    let prems_insert = prems_insert |> List.filter_map (iterate_prem iterexp) in
+    (prems_must, prems_insert)
+end
 
 let gen_index_guard (exp : exp) (exp_b : exp) (exp_i : exp) : prem list =
   let exp_l = LenE exp_b $$ (exp.at, Typ.Make.nat') in
@@ -53,8 +75,7 @@ let gen_iterexp_guard (iterexp : iterexp) : prem list =
   in
   let iter, vars = iterexp in
   match vars with
-  | [] | [ _ ] -> default
-  | var_a :: var_b :: vars ->
+  | var_a :: var_b :: vars when iter = List ->
       let exp_a =
         let id_a, typ_a, iters_a = var_a in
         let exp_a = iterate_exp id_a typ_a (iters_a @ [ iter ]) in
@@ -88,90 +109,146 @@ let gen_iterexp_guard (iterexp : iterexp) : prem list =
           (exp_b, exp_if) vars
       in
       [ IfPr exp_if $ no_region ]
+  | _ -> []
 
-let collector =
+let collector : Result.t Walk.Collect.collector =
   let open Walk.Collect in
-  let base = make_base ~default ~compose in
-  let collect_exp (c : prem list collector) (exp : exp) : prem list =
+  let base = make_base ~default:Result.default ~compose:Result.compose in
+  let collect_exp (c : Result.t collector) (exp : exp) : Result.t =
     match exp.it with
     | IdxE (exp_b, exp_i) ->
-        gen_index_guard exp exp_b exp_i @ default_collect_exp c exp
+        let prems_insert = gen_index_guard exp exp_b exp_i in
+        let result_b = c.collect_exp c exp_b in
+        let result_i = c.collect_exp c exp_i in
+        Result.compose ([], prems_insert) (Result.compose result_b result_i)
     | IterE (exp_inner, iterexp) ->
-        let children = c.collect_exp c exp_inner in
-        let children = iterate_wraps iterexp children in
-        compose children (c.collect_iterexp c iterexp)
+        let result = c.collect_exp c exp_inner in
+        let result = Result.iterate_insert iterexp result in
+        Result.compose result (c.collect_iterexp c iterexp)
     | _ -> default_collect_exp c exp
   in
-  let collect_iterexp (_c : prem list collector) (iterexp : iterexp) : prem list
+  let collect_iterexp (_ : Result.t collector) (iterexp : iterexp) : Result.t =
+    let prems_insert = gen_iterexp_guard iterexp in
+    ([], prems_insert)
+  in
+  let collect_iterprem (_ : Result.t collector) (iterprem : iterprem) : Result.t
       =
-    gen_iterexp_guard iterexp
+    let iter, vars_in, vars_out = iterprem in
+    let prems_must = gen_iterexp_guard (iter, vars_out) in
+    let prems_insert = gen_iterexp_guard (iter, vars_in) in
+    (prems_must, prems_insert)
   in
-  let collect_iterprem (_c : prem list collector) (iterprem : iterprem) :
-      prem list =
-    let iter, vars_in, _ = iterprem in
-    gen_iterexp_guard (iter, vars_in)
-  in
-  let collect_prem (c : prem list collector) (prem : prem) : prem list =
+  let collect_prem (c : Result.t collector) (prem : prem) : Result.t =
     match prem.it with
-    | LetPr (_exp_l, exp_r) -> c.collect_exp c exp_r
-    | IterPr (inner_prem, iterprem) ->
-        let children = c.collect_prem c inner_prem in
-        let children =
-          let iter, vars_in, _ = iterprem in
-          iterate_wraps (iter, vars_in) children
+    | LetPr (exp_l, exp_r) ->
+        let result_exp_l = c.collect_exp c exp_l in
+        let prems_must_l =
+          let prems_must_l, prems_insert_l = result_exp_l in
+          prems_must_l @ prems_insert_l
         in
-        compose children (c.collect_iterprem c iterprem)
+        let result_exp_r = c.collect_exp c exp_r in
+        let prems_insert_r =
+          match result_exp_r with
+          | [], prems_insert_r -> prems_insert_r
+          | _ ->
+              error exp_r.at
+                "unexpected premises generated from let-binding right-hand side"
+        in
+        (prems_must_l, prems_insert_r)
+    | IterPr (prem_inner, iterprem) ->
+        let iter, vars_in, vars_out = iterprem in
+        let result = c.collect_prem c prem_inner in
+        let result = Result.iterate_must (iter, vars_out) result in
+        let result = Result.iterate_insert (iter, vars_in) result in
+        Result.compose result (c.collect_iterprem c iterprem)
     | _ -> default_collect_prem c prem
   in
   { base with collect_exp; collect_iterexp; collect_iterprem; collect_prem }
 
 (* Entry point *)
 
-let insert_exp (exp : exp) : prem list = Walk.Collect.collect_exp collector exp
+let insert_exp_input (exp : exp) : Result.must =
+  let prems_must, prems_insert = Walk.Collect.collect_exp collector exp in
+  prems_must @ prems_insert
 
-let insert_exps (exps : exp list) : prem list =
-  exps |> List.map insert_exp |> List.flatten
+let insert_exps_input (exps : exp list) : Result.must =
+  List.fold_left
+    (fun prems_must exp -> prems_must @ insert_exp_input exp)
+    [] exps
 
-let insert_prem (prem : prem) : prem list =
-  Walk.Collect.collect_prem collector prem
+let insert_exp_output (prems_must_prev : prem list) (exp : exp) : Result.insert
+    =
+  let prems_must, prems_insert = Walk.Collect.collect_exp collector exp in
+  match prems_must with
+  | [] -> Result.filter prems_must_prev prems_insert
+  | _ -> error exp.at "unexpected premises generated from an expression"
 
-let insert_prems (prems : prem list) : prem list =
-  prems |> List.concat_map (fun prem -> insert_prem prem @ [ prem ])
+let insert_exps_output (prems_must_prev : prem list) (exps : exp list) :
+    Result.insert =
+  exps |> List.map (insert_exp_output prems_must_prev) |> List.flatten
+
+let insert_arg_input (arg : arg) : Result.must =
+  let prems_must, prems_insert = Walk.Collect.collect_arg collector arg in
+  prems_must @ prems_insert
+
+let insert_args_input (args : arg list) : Result.must =
+  List.fold_left
+    (fun prems_must arg -> prems_must @ insert_arg_input arg)
+    [] args
+
+let insert_prem (prems_must_prev : prem list) (prem : prem) : Result.t =
+  let prems_must, prems_insert = Walk.Collect.collect_prem collector prem in
+  let prems_insert = Result.filter prems_must_prev prems_insert in
+  let prems_must = prems_must_prev @ prems_must in
+  let prems_insert = prems_insert @ [ prem ] in
+  (prems_must, prems_insert)
+
+let insert_prems (prems_must_prev : prem list) (prems : prem list) : Result.t =
+  List.fold_left
+    (fun (prems_must_prev, prems_prev) prem ->
+      let prems_must, prems = insert_prem prems_must_prev prem in
+      (prems_must, prems_prev @ prems))
+    (prems_must_prev, []) prems
 
 let insert_rulegroup (rulegroup : rulegroup) : rulegroup =
   let id_rulegroup, rulematch, rulepaths = rulegroup.it in
-  let rulematch =
+  let prems_must, rulematch =
     let exps_signature, exps_input, prems = rulematch in
-    let prems = insert_prems prems in
-    (exps_signature, exps_input, prems)
+    let prems_must = insert_exps_input exps_input in
+    let prems_must, prems = insert_prems prems_must prems in
+    let rulematch = (exps_signature, exps_input, prems) in
+    (prems_must, rulematch)
   in
   let rulepaths =
     List.map
       (fun (id_rulepath, prems, exps_output) ->
-        let prems = insert_prems prems in
-        let prems_exps = insert_exps exps_output in
-        (id_rulepath, prems @ prems_exps, exps_output))
+        let _, prems = insert_prems prems_must prems in
+        let prems_insert_exps = insert_exps_output prems_must exps_output in
+        (id_rulepath, prems @ prems_insert_exps, exps_output))
       rulepaths
   in
   (id_rulegroup, rulematch, rulepaths) $ rulegroup.at
 
 let insert_elsegroup (elsegroup : elsegroup) : elsegroup =
   let id_rulegroup, rulematch, rulepath = elsegroup.it in
-  let rulematch =
+  let prems_must, rulematch =
     let exps_signature, exps_input, prems = rulematch in
-    let prems = insert_prems prems in
-    (exps_signature, exps_input, prems)
+    let prems_must = insert_exps_input exps_input in
+    let prems_must, prems = insert_prems prems_must prems in
+    let rulematch = (exps_signature, exps_input, prems) in
+    (prems_must, rulematch)
   in
   let rulepath =
     let id_rulepath, prems, exps_output = rulepath in
-    let prems = insert_prems prems in
-    let prems_exps = insert_exps exps_output in
-    (id_rulepath, prems @ prems_exps, exps_output)
+    let _, prems = insert_prems prems_must prems in
+    let prems_insert_exps = insert_exps_output prems_must exps_output in
+    (id_rulepath, prems @ prems_insert_exps, exps_output)
   in
   (id_rulegroup, rulematch, rulepath) $ elsegroup.at
 
 let insert_clause (clause : clause) : clause =
   let args, exp, prems = clause.it in
-  let prems = insert_prems prems in
-  let prems_exp = insert_exp exp in
-  (args, exp, prems @ prems_exp) $ clause.at
+  let prems_must = insert_args_input args in
+  let prems_must, prems = insert_prems prems_must prems in
+  let prems_insert_exp = insert_exp_output prems_must exp in
+  (args, exp, prems @ prems_insert_exp) $ clause.at

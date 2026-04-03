@@ -272,9 +272,7 @@ xref:update_map[The map ``map<K,`` ``V>`` with the value for ``K`` is updated to
 xref:extend_map[$extend_map<K, V>(+{+ ( K~a~ +:+ V~a~ )^{asterisk}^ +}+, +{+ ( K~b~ +:+ V~b~ )^{asterisk}^ +}+)]
 
 
-. Check that the length of ``K~a~^{asterisk}^`` is equal to the length of ``V~a~^{asterisk}^``.
 . Let ``+{+`` ``(`` ``K~c~`` ``+:+`` ``V~c~`` ``)^{asterisk}^`` ``+}+`` be xref:adds_map[``+{+`` ``(`` ``K~a~`` ``+:+`` ``V~a~`` ``)^{asterisk}^`` ``+}+`` where each of ``K~b~^{asterisk}^`` to ``V~b~^{asterisk}^`` are added].
-. Check that the length of ``K~c~^{asterisk}^`` is equal to the length of ``V~c~^{asterisk}^``.
 . Return ``+{+`` ``(`` ``K~c~`` ``+:+`` ``V~c~`` ``)^{asterisk}^`` ``+}+``.
 
 xref:modulo[``n~a~`` mod ``n~b~``]
@@ -1209,7 +1207,6 @@ xref:typeIR_of_typeDefIR[The underlying type of ``typeDefIR``]
  .. Return ``enumTypeDefIR``.
 . Else if let ``+EXTERN+`` ``typeId`` ``+<+`` ``typeParameterIR~expl~^{asterisk}^`` ``+,+`` ``typeParameterIR~impl~^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``callableId`` ``+:+`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``+}+`` be ``typeDefIR``:
  .. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
- .. Check that the length of ``callableId^{asterisk}^`` is equal to the length of ``externMethodTypeDefIR^{asterisk}^``.
  .. Return ``+EXTERN+`` ``typeId`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``callableId`` ``+:+`` ``externMethodTypeDefIR`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+PARSER+`` ``typeId`` ``+<+`` ``typeParameterIR~expl~^{asterisk}^`` ``+,+`` ``typeParameterIR~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``typeDefIR``:
  .. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
@@ -2416,7 +2413,6 @@ xref:Type_alpha[``typeIR`` and ``typeIR'`` are the same type when]:
  .. Check that ``typeIR'`` has type ``serializableEnumTypeIR``.
  .. Let ``+ENUM+`` ``typeId'`` ``+<+`` ``typeIR~b~`` ``+>+`` ``+{+`` ``valueFieldIR^{asterisk}^`` ``+}+`` be ``typeIR'``.
  .. Check that ``typeId'`` is equal to ``typeId``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Check that ``valueFieldIR^{asterisk}^`` is equal to ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
  .. Then, the relation holds.
@@ -3626,7 +3622,6 @@ for each ``typeIR~f~`` in ``typeIR~f~^{asterisk}^``
  .. Return ``typeId`` ``+.+`` ``id~f_h~``.
 . Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Let ``value~zero~`` be xref:cast_int[``+D+`` ``0`` casted to type ``typeIR'``].
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``id^?^`` be xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].
  .. If let ``id~zero~`` be ``id^?^``:
   ... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
@@ -3796,7 +3791,6 @@ xref:cast_struct[``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field~`` ``nameIR
 . Check that ``typeIR`` has type ``structTypeIR``.
 . Let ``+STRUCT+`` ``typeId'`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``.
 . Check that ``typeId'`` is equal to ``typeId'``.
-. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
 . Return ``+STRUCT+`` ``typeId'`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_header[``+HEADER+`` ``typeId`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` casted to type ``typeIR``]
@@ -3805,7 +3799,6 @@ xref:cast_header[``+HEADER+`` ``typeId`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~fie
 . Check that ``typeIR`` has type ``headerTypeIR``.
 . Let ``+HEADER+`` ``typeId'`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``.
 . Check that ``typeId'`` is equal to ``typeId'``.
-. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
 . Return ``+HEADER+`` ``typeId'`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_enum[``enumValue`` casted to type ``typeIR``]
@@ -4375,24 +4368,18 @@ xref:align_parameterListIR_given[$align_parameterListIR_given(+{+ ( id +:+ param
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. If ``argumentIR~h~`` has type ``typedExpressionIR``:
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~aligned~^{asterisk}^`` be ``xref:align_parameterListIR_given[$align_parameterListIR_given(+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR~t~^{asterisk}^,`` ``argumentIR~t~^{asterisk}^)]``.
   ... Return ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~aligned~^{asterisk}^``.
  .. Else if ``argumentIR~h~`` is ``+_+``:
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~aligned~^{asterisk}^`` be ``xref:align_parameterListIR_given[$align_parameterListIR_given(+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR~t~^{asterisk}^,`` ``argumentIR~t~^{asterisk}^)]``.
   ... Return ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~aligned~^{asterisk}^``.
  .. Else if let ``nameIR`` ``+=+`` ``++_++`` be ``argumentIR~h~``:
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~match~`` be xref:option_get[*!*] xref:find_map[the value of ``nameIR`` in map ``+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+``].
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~aligned~^{asterisk}^`` be ``xref:align_parameterListIR_given[$align_parameterListIR_given(+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR~t~^{asterisk}^,`` ``argumentIR~t~^{asterisk}^)]``.
   ... Return ``parameterIR~match~`` ``{two-colons}`` ``parameterIR~aligned~^{asterisk}^``.
  .. Else:
   ... Let ``nameIR`` ``+=+`` ``+_+`` be ``argumentIR~h~``.
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~match~`` be xref:option_get[*!*] xref:find_map[the value of ``nameIR`` in map ``+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+``].
-  ... Check that the length of ``id^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
   ... Let ``parameterIR~aligned~^{asterisk}^`` be ``xref:align_parameterListIR_given[$align_parameterListIR_given(+{+`` ``(`` ``id`` ``+:+`` ``parameterIR`` ``)^{asterisk}^`` ``+}+,`` ``parameterIR~t~^{asterisk}^,`` ``argumentIR~t~^{asterisk}^)]``.
   ... Return ``parameterIR~match~`` ``{two-colons}`` ``parameterIR~aligned~^{asterisk}^``.
 
@@ -4526,11 +4513,9 @@ xref:find_overloadeds_named[Finding all items in ``set<pair<callableId,`` ``V>>`
 . Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.
 . If let ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``:
  .. If xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callTargetId~t~^{asterisk}^``.
   ... Return xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. Let ``callTargetMatch`` be xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. If let ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callTargetId~t~^{asterisk}^``.
   ... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
   ... Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
 
@@ -4542,11 +4527,9 @@ xref:find_overloadeds_unnamed[Finding all items in ``set<pair<callableId,`` ``V>
 . Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.
 . If let ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``:
  .. If xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callTargetId~t~^{asterisk}^``.
   ... Return xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. Let ``callTargetMatch`` be xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. If let ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callTargetId~t~^{asterisk}^``.
   ... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
   ... Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
 
@@ -4562,14 +4545,12 @@ xref:find_overloaded[Finding the item in ``+{+`` ``(`` ``callableId`` ``+:+`` ``
 --
 +
 for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
- .. Check that the length of ``V^{asterisk}^`` is equal to the length of ``callableId^{asterisk}^``.
  .. If ``·`` is equal to xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]:
   ... Return ``·``.
  .. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. If let ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``:
   ... Return ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
 . If ``id~arg~^?^`` is none, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
- .. Check that the length of ``V^{asterisk}^`` is equal to the length of ``callableId^{asterisk}^``.
  .. If ``·`` is equal to xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]:
   ... Return ``·``.
  .. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
@@ -4579,10 +4560,8 @@ for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
 xref:find_non_overloaded[$find_non_overloaded<V>(+{+ ( callableId +:+ V )^{asterisk}^ +}+, nameIR~f~)]
 
 
-. If the length of ``V^{asterisk}^`` is equal to the length of ``callableId^{asterisk}^``:
- .. Let ``(callableId,`` ``V)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
- .. Check that ``(callableId,`` ``V)^{asterisk}^`` is a list of length 1.
- .. Let ``(`` ``callableId~found~,`` ``V~found~`` ``)`` be ``(callableId,`` ``V)^{asterisk}^``.
+. Let ``(callableId,`` ``V)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
+. If let ``(`` ``callableId~found~,`` ``V~found~`` ``)`` be ``(callableId,`` ``V)^{asterisk}^``:
  .. Return ( ``callableId~found~``, ``V~found~`` ).
 . Otherwise:
  .. Return ``·``.
@@ -4596,14 +4575,10 @@ xref:find_non_overloadeds[$find_non_overloadeds<V>(set<pair<callableId, V>>, nam
 . If let ``callableId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``:
  .. Let ``nameIR`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId~h~``.
  .. If ``nameIR`` is equal to ``nameIR~f~``:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callableId~t~^{asterisk}^``.
   ... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
-  ... Check that the length of ``V~t_found~^{asterisk}^`` is equal to the length of ``callableId~t_found~^{asterisk}^``.
   ... Return ``(`` ``callableId~h~,`` ``V~h~`` ``)`` ``{two-colons}`` ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
  .. Else:
-  ... Check that the length of ``V~t~^{asterisk}^`` is equal to the length of ``callableId~t~^{asterisk}^``.
   ... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
-  ... Check that the length of ``V~t_found~^{asterisk}^`` is equal to the length of ``callableId~t_found~^{asterisk}^``.
   ... Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
 
 xref:name_annotation[$name_annotation(annotationList)]
@@ -6368,7 +6343,6 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``+TYPE+`` ``prefixedNameIR
  .. Check that ``nameIR`` is in ``nameIR~field~^{asterisk}^``.
  .. Result in ``typeId`` ``+.+`` ``nameIR``.
 . Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR'`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
 
@@ -6383,17 +6357,14 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~base~``, under context ``TC`` at ``p``].
 . If let ``structValue`` be ``value``:
  .. Let ``+STRUCT+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``structValue``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in ``value''``.
 . Else if let ``headerValue`` be ``value``:
  .. Let ``+HEADER+`` ``++_++`` ``+{+`` ``++_++`` ``+;+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerValue``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in ``value''``.
 . Else if let ``headerUnionValue`` be ``value``:
  .. Let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerUnionValue``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in ``value''``.
 
@@ -9947,7 +9918,6 @@ for each ``namedValueIR~field~`` in ``namedValueIR~field~^{asterisk}^``
 --
 +
 for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
-. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
 . Let ``enumTypeDefIR`` be ``+ENUM+`` ``nameIR`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Let ``varTypeIR^{asterisk}^`` be the list obtained by repeating:
 +
@@ -10397,7 +10367,6 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 . Check that ``typeIR`` has type ``externObjectTypeIR``.
 . Let ``+EXTERN+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``callableId~extern~`` ``+:+`` ``externMethodTypeDefIR~extern~`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``.
 . Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
-. Check that the length of ``callableId~extern~^{asterisk}^`` is equal to the length of ``externMethodTypeDefIR~extern~^{asterisk}^``.
 . Let ``++_++`` ``+:+`` ``externMethodTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``+{+`` ``(`` ``callableId~extern~`` ``+:+`` ``externMethodTypeDefIR~extern~`` ``)^{asterisk}^`` ``+}+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodTypeDefIR``].
 . Let ``(callableTypeIR,`` ``typeId*)`` be xref:specialize_callableTypeDefIR[``externMethodTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``].
 . Check that ``(callableTypeIR,`` ``typeId*)`` has type ``(externMethodTypeIR,`` ``typeId*)``.
@@ -11582,7 +11551,6 @@ xref:subst_externMethodTypeDefEnv[Substitution of abstract methods in ``externMe
  .. Let ``externMethodTypeDefIR~concrete~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.
  .. Check that xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~concrete~`` and ``externMethodTypeDefIR~init_h~`` are the same type].
  .. Let ``externMethodTypeDefEnv~extern_subst~`` be xref:update_map[the map ``externMethodTypeDefEnv~extern~`` with the value for ``callableId`` is updated to ``externMethodTypeDefIR~concrete~``].
- .. Check that the length of ``callableId~init_t~^{asterisk}^`` is equal to the length of ``externMethodTypeDefIR~init_t~^{asterisk}^``.
  .. Return xref:subst_externMethodTypeDefEnv[substitution of abstract methods in ``externMethodTypeDefEnv~extern_subst~`` by implementations in ``+{+`` ``(`` ``callableId~init_t~`` ``+:+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` ``+}+``].
 
 xref:InstDecl_objectInitializer_ok[InstDecl_objectInitializer_ok]:
@@ -13106,7 +13074,6 @@ xref:Expr_inst[Compile-time evaluation of ``+TYPE+`` ``prefixedNameIR`` ``+.+`` 
 . If let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
  .. Result in store ``STO`` and ``typeId`` ``+.+`` ``nameIR``.
 . Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``id~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
- .. Check that the length of ``id~member~^{asterisk}^`` is equal to the length of ``value~member~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~member~,`` ``value~member~`` ``)^{asterisk}^``].
  .. Result in store ``STO`` and ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
 
@@ -13121,17 +13088,14 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+.+`` ``
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
 . If let ``structValue`` be ``value``:
  .. Let ``+STRUCT+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``structValue``.
- .. Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in store ``STO~1~`` and ``value''``.
 . Else if let ``headerValue`` be ``value``:
  .. Let ``+HEADER+`` ``++_++`` ``+{+`` ``++_++`` ``+;+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerValue``.
- .. Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in store ``STO~1~`` and ``value''``.
 . Else if let ``headerUnionValue`` be ``value``:
  .. Let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerUnionValue``.
- .. Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value''`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in store ``STO~1~`` and ``value''``.
 
@@ -14020,7 +13984,6 @@ xref:Decl_inst[Loading ``annotationList`` ``+ENUM+`` ``typeIR`` ``nameIR`` ``+{+
 --
 +
 for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
-. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
 . Let ``value~serenum_field~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -14029,7 +13992,6 @@ for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``
 +
 for each ``nameIR~field~`` in ``nameIR~field~^{asterisk}^`` and ``value~field~`` in ``value~field~^{asterisk}^``
 . Let ``IC~1~`` be xref:add_vars_i[``IC~0~`` where each of ``nameIR~serenum_field~^{asterisk}^`` to each of ``value~serenum_field~^{asterisk}^`` are added to the ``+GLOBAL+`` layer].
-. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
 . Let ``enumTypeDefIR`` be ``+ENUM+`` ``nameIR`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~2~`` be xref:add_typeDef_i[``IC~1~`` where ``nameIR`` to ``enumTypeDefIR`` is added to the ``+GLOBAL+`` layer].
 . Result in context ``IC~2~`` and store ``STO``.
@@ -14043,7 +14005,6 @@ xref:Decl_inst[Loading ``annotationList`` ``+STRUCT+`` ``nameIR`` ``+<+`` ``type
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Check that the length of ``annotationList~field~^{asterisk}^`` is equal to the length of ``nameIR~field~^{asterisk}^`` and the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``typeIR~field~^{asterisk}^``.
 . Let ``structTypeDefIR`` be ``+STRUCT+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+{+`` ``(`` ``annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~1~`` be xref:add_typeDef_i[``IC~0~`` where ``nameIR`` to ``structTypeDefIR`` is added to the ``+GLOBAL+`` layer].
 . Result in context ``IC~1~`` and store ``STO``.
@@ -14057,7 +14018,6 @@ xref:Decl_inst[Loading ``annotationList`` ``+HEADER+`` ``nameIR`` ``+<+`` ``type
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Check that the length of ``annotationList~field~^{asterisk}^`` is equal to the length of ``nameIR~field~^{asterisk}^`` and the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``typeIR~field~^{asterisk}^``.
 . Let ``headerTypeDefIR`` be ``+HEADER+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+{+`` ``(`` ``annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~1~`` be xref:add_typeDef_i[``IC~0~`` where ``nameIR`` to ``headerTypeDefIR`` is added to the ``+GLOBAL+`` layer].
 . Result in context ``IC~1~`` and store ``STO``.
@@ -14071,7 +14031,6 @@ xref:Decl_inst[Loading ``annotationList`` ``+HEADER_UNION+`` ``nameIR`` ``+<+`` 
 --
 +
 for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
-. Check that the length of ``annotationList~field~^{asterisk}^`` is equal to the length of ``nameIR~field~^{asterisk}^`` and the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``typeIR~field~^{asterisk}^``.
 . Let ``headerUnionTypeDefIR`` be ``+HEADER_UNION+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+{+`` ``(`` ``annotationList~field~`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~1~`` be xref:add_typeDef_i[``IC~0~`` where ``nameIR`` to ``headerUnionTypeDefIR`` is added to the ``+GLOBAL+`` layer].
 . Result in context ``IC~1~`` and store ``STO``.
@@ -14460,7 +14419,6 @@ xref:merge_externMethodDefEnvs[The merged extern method definition environment o
  .. Let ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR`` be ``callableDef~h~``.
  .. Let ``externMethodDef~h~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``.
  .. Let ``externMethodDefEnv~post~`` be xref:update_map[the map ``externMethodDefEnv`` with the value for ``callableId~h~`` is updated to ``externMethodDef~h~``].
- .. Check that the length of ``callableDef~t~^{asterisk}^`` is equal to the length of ``callableId~t~^{asterisk}^``.
  .. Return xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv~post~`` and ``+{+`` ``(`` ``callableId~t~`` ``+:+`` ``callableDef~t~`` ``)^{asterisk}^`` ``+}+``].
 
 xref:ObjectDecl_inst[ObjectDecl_inst]:
@@ -14809,18 +14767,16 @@ xref:find_object_unqualified_e[$find_object_unqualified_e(ARCH, id)]
 
 
 . Let ``+{+`` ``(`` ``objectId`` ``+:+`` ``object`` ``)^{asterisk}^`` ``+}+`` be ``ARCH.+STORE+``.
-. If the length of ``object^{asterisk}^`` is equal to the length of ``objectId^{asterisk}^``:
- .. Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
- .. Let ``object~id~^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
+. Let ``object~id~^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``object~id~^?^`` be xref:ite[``object`` if ``bool`` otherwise ``·``].
+ ** Let ``object~id~^?^`` be xref:ite[``object`` if ``bool`` otherwise ``·``].
 --
 +
 for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{asterisk}^``
- .. Let ``object'^?^^{asterisk}^`` be xref:filter_[``object~id~^?^^{asterisk}^`` filtered by ``(`` ``object~id~^?^`` ``=/=`` ``·`` ``)^{asterisk}^``].
- .. Check that ``object'^?^^{asterisk}^`` is a list of length 1.
- .. Let ``object''^?^`` be ``object'^?^^{asterisk}^``.
+. Let ``object'^?^^{asterisk}^`` be xref:filter_[``object~id~^?^^{asterisk}^`` filtered by ``(`` ``object~id~^?^`` ``=/=`` ``·`` ``)^{asterisk}^``].
+. If let ``object''^?^`` be ``object'^?^^{asterisk}^``:
  .. Check that ``object''^?^`` is defined.
  .. Let ``object~id_found~`` be ``object''^?^``.
  .. Return ``object~id_found~``.
@@ -15056,7 +15012,6 @@ xref:Expr_eval[Evaluating ``+TYPE+`` ``prefixedNameIR`` ``+.+`` ``nameIR`` annot
  .. Let ``expressionResult`` be ``typeId`` ``+.+`` ``nameIR``.
  .. Result in context ``EC``, state ``ARCH`` and ``expressionResult``.
 . Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``(`` ``nameIR~member~`` ``+=+`` ``value~member~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeDefIR'``:
- .. Check that the length of ``nameIR~member~^{asterisk}^`` is equal to the length of ``value~member~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~member~,`` ``value~member~`` ``)^{asterisk}^``].
  .. Let ``expressionResult`` be ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value'``.
  .. Result in context ``EC``, state ``ARCH`` and ``expressionResult``.
@@ -15097,19 +15052,16 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
    .... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. Else if let ``structValue~base~`` be ``value``:
   ... Let ``+STRUCT+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``structValue~base~``.
-  ... Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
   ... Let ``value~member~`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
   ... Let ``expressionResult'`` be ``value~member~``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. Else if let ``headerValue~base~`` be ``value``:
   ... Let ``+HEADER+`` ``++_++`` ``+{+`` ``++_++`` ``+;+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerValue~base~``.
-  ... Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
   ... Let ``value~member~`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
   ... Let ``expressionResult'`` be ``value~member~``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
  .. Else if let ``headerUnionValue~base~`` be ``value``:
   ... Let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerUnionValue~base~``.
-  ... Check that the length of ``id~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
   ... Let ``value~member~`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``id~field~,`` ``value~field~`` ``)^{asterisk}^``].
   ... Let ``expressionResult'`` be ``value~member~``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
@@ -15417,17 +15369,14 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
  .. Result in value ``value``.
 . Else if let ``structValue~base~`` be ``value~base~``:
  .. Let ``+STRUCT+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``structValue~base~``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in value ``value'``.
 . Else if let ``headerValue~base~`` be ``value~base~``:
  .. Let ``+HEADER+`` ``++_++`` ``+{+`` ``++_++`` ``+;+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerValue~base~``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in value ``value'``.
 . Else if let ``headerUnionValue~base~`` be ``value~base~``:
  .. Let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``headerUnionValue~base~``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value'`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Result in value ``value'``.
 
@@ -15507,7 +15456,6 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference'`` ``+.+`` ``nameIR``,
 . Else if let ``headerUnionValue~base~`` be ``value'``:
  .. Let ``+HEADER_UNION+`` ``typeId`` ``+{+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerUnionValue~base~``.
  .. Let ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` be ``fieldValue^{asterisk}^``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field~^{asterisk}^``.
  .. Let ``value~old~`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
  .. Check that ``value~old~`` has type ``headerValue``.
  .. Let ``+HEADER+`` ``++_++`` ``+{+`` ``b~valid_old~`` ``+;+`` ``++_++^{asterisk}^`` ``+}+`` be ``value~old~``.
@@ -16785,7 +16733,6 @@ xref:Call_eval[Calling ``controlApplyMethodCallee`` ``+<+`` ``typeArgumentListIR
 . Let ``+CONTROL+`` ``++_++`` ``+.+`` ``+APPLY+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``controlLocalDeclarationListIR`` ``+;+`` ``actionDefEnv`` ``+;+`` ``controlBodyIR`` ``+}+`` be ``controlApplyMethodCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Let ``+{+`` ``(`` ``callableId`` ``+:+`` ``actionDef`` ``)^{asterisk}^`` ``+}+`` be ``actionDefEnv``.
-. Check that the length of ``actionDef^{asterisk}^`` is equal to the length of ``callableId^{asterisk}^``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~[+BLOCK+.+TYPE+`` ``=`` ``theta][+BLOCK+.+FRAME+`` ``=`` ``frame]`` with ``+BLOCK+.+CALLABLE+`` set to ``+{+`` ``(`` ``callableId`` ``+:+`` ``actionDef`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
@@ -17884,7 +17831,6 @@ xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(evalContext, (
 . Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
 . If let ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``:
  .. Let ``simpleKeysetExpressionIR~h~`` be ``xref:tableObject_create_entry_key[$tableObject_create_entry_key(evalContext,`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)]``.
- .. Check that the length of ``nameIR~key_t~^{asterisk}^`` is equal to the length of ``nameIR~matchKind_t~^{asterisk}^`` and the length of ``nameIR~matchKind_t~^{asterisk}^`` is equal to the length of ``typeIR~t~^{asterisk}^``.
  .. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(evalContext,`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
  .. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
 
@@ -17905,7 +17851,6 @@ xref:key_interface_of_tableObject[$key_interface_of_tableObject(+TABLE+ typeId +
 --
 +
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
-. Check that the length of ``nameIR~key~^{asterisk}^`` is equal to the length of ``nameIR~matchKind~^{asterisk}^`` and the length of ``nameIR~matchKind~^{asterisk}^`` is equal to the length of ``typeIR^{asterisk}^``.
 . Return ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^``.
 
 xref:tableObject_create_entry_keyset[$tableObject_create_entry_keyset(EC, +KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+, tableKeyInterface^{asterisk}^)]
@@ -17927,7 +17872,6 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
 for each ``tableKeyInterface`` in ``tableKeyInterface^{asterisk}^``
 . Let ``nameIR~key_non_selector~^{asterisk}^`` be xref:filter_[``nameIR~key~^{asterisk}^`` filtered by ``(`` ``nameIR~matchKind~`` ``=/=`` ``"selector"`` ``)^{asterisk}^``].
 . Check that xref:eq_set[``+{+`` ``nameIR~key_non_selector~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``nameIR~key_update~^{asterisk}^`` ``+}+``].
-. Check that the length of ``nameIR~key~^{asterisk}^`` is equal to the length of ``nameIR~matchKind~^{asterisk}^`` and the length of ``nameIR~matchKind~^{asterisk}^`` is equal to the length of ``typeIR^{asterisk}^``.
 . Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key~,`` ``nameIR~matchKind~,`` ``typeIR`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
 . Return ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
@@ -18015,7 +17959,6 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+ ( id~arg~ +:+ i~arg~ )^{asterisk}^ +}+, ++_++ ++_++ ++_++ nameIR~param~ ++_++)]
 
 
-. Check that the length of ``i~arg~^{asterisk}^`` is equal to the length of ``id~arg~^{asterisk}^``.
 . Let ``int^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
 . If let ``i`` be ``int^?^``:
  .. Return ``i``.
