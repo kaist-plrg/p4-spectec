@@ -15,6 +15,96 @@ open Util.Source
     - (let (x, y) = z){x -> x*, y -> y*, z <- z*} generates a must-premise |x*| = |y*|
     - this optimizes away redundant guard conditions *)
 
+(* Equivalence class for equality filtering,
+   so that transitively-derivable guards can be filtered out. *)
+
+module Equiv = struct
+  (* Symmetric binary operator used as the key for separate equivalence classes *)
+
+  type op = Cmp of cmpop | Bin of binop
+
+  (* A set of disjoint equivalence classes, each a list of equal expressions *)
+
+  type partition = exp list list
+
+  (* Maps each operator to its equivalence partition over expressions *)
+
+  type table = (op * partition) list
+
+  (* Look up the equivalence partition for a given operator *)
+
+  let find_partition (tbl : table) (op : op) : partition =
+    Option.value ~default:[] (List.assoc_opt op tbl)
+
+  (* Replace the partition for op *)
+
+  let set_partition (tbl : table) (op : op) (partition : partition) : table =
+    (op, partition) :: List.filter (fun (op_, _) -> op_ <> op) tbl
+
+  (* Find the equivalence class containing exp *)
+
+  let find (partition : partition) (exp : exp) : exp list option =
+    List.find_opt (List.exists (Eq.eq_exp exp)) partition
+
+  (* Merge the classes of exp_a and exp_b; no-op if they are already in the same class *)
+
+  let union (partition : partition) (exp_a : exp) (exp_b : exp) : partition =
+    match (find partition exp_a, find partition exp_b) with
+    | Some exps_a, Some exps_b when exps_a == exps_b -> partition
+    | Some exps_a, Some exps_b ->
+        (exps_a @ exps_b)
+        :: List.filter (fun exps -> exps != exps_a && exps != exps_b) partition
+    | Some exps_a, None ->
+        (exp_b :: exps_a) :: List.filter (fun exps -> exps != exps_a) partition
+    | None, Some exps_b ->
+        (exp_a :: exps_b) :: List.filter (fun exps -> exps != exps_b) partition
+    | None, None -> [ exp_a; exp_b ] :: partition
+
+  (* Flatten a conjunction of symmetric binary constraints into (op, lhs, rhs) triples *)
+
+  let rec of_if_exp (exp : exp) : (op * exp * exp) list =
+    match exp.it with
+    | CmpE ((`EqOp as op), _, exp_l, exp_r) -> [ (Cmp op, exp_l, exp_r) ]
+    | BinE ((`EquivOp as op), _, exp_l, exp_r) -> [ (Bin op, exp_l, exp_r) ]
+    | BinE (`AndOp, _, exp_l, exp_r) -> of_if_exp exp_l @ of_if_exp exp_r
+    | _ -> []
+
+  (* Build a table from a list of must-premises by unioning all equality *)
+
+  let of_prems (prems : prem list) : table =
+    List.fold_left
+      (fun tbl prem ->
+        match prem.it with
+        | IfPr exp ->
+            List.fold_left
+              (fun tbl (op, exp_l, exp_r) ->
+                set_partition tbl op (union (find_partition tbl op) exp_l exp_r))
+              tbl (of_if_exp exp)
+        | _ -> tbl)
+      [] prems
+
+  (* True iff exp_a and exp_b are in the same equivalence class (or are syntactically equal) *)
+
+  let mem (partition : partition) (exp_a : exp) (exp_b : exp) : bool =
+    Eq.eq_exp exp_a exp_b
+    ||
+    match find partition exp_a with
+    | Some exps -> List.exists (Eq.eq_exp exp_b) exps
+    | None -> false
+
+  (* True iff every equality constraint in prem is already entailed by the table *)
+
+  let implies (tbl : table) (prem : prem) : bool =
+    match prem.it with
+    | IfPr exp ->
+        let constraints = of_if_exp exp in
+        constraints <> []
+        && List.for_all
+             (fun (op, exp_l, exp_r) -> mem (find_partition tbl op) exp_l exp_r)
+             constraints
+    | _ -> false
+end
+
 module Result = struct
   type must = prem list
   type insert = prem list
@@ -26,12 +116,17 @@ module Result = struct
     (must_a @ must_b, insert_a @ insert_b)
 
   let filter (must : must) (insert : insert) : insert =
-    List.filter (fun prem -> not (List.exists (Eq.eq_prem prem) must)) insert
+    let equiv = Equiv.of_prems must in
+    List.filter
+      (fun prem ->
+        (not (Equiv.implies equiv prem))
+        && not (List.exists (Eq.eq_prem prem) must))
+      insert
 
   let lift (at : region) ((must, inserts) : t) : prem list =
     match must with
     | [] -> inserts
-    | _ -> error at "expression produced must-premises"
+    | _ -> error at "should not produce must-premises"
 
   let iterate_prem (iterexp : iterexp) (prem : prem) : prem option =
     let iter, vars = iterexp in
