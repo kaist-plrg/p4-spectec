@@ -767,9 +767,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         |> snd
 
   and eval_update_path (ctx : Ctx.t) (value_b : value) (path : path)
-      (value_n : value) : value =
+      (value_upd : value) : value =
     match path.it with
-    | RootP -> value_n
+    | RootP -> value_upd
     | IdxP (path, exp_i) -> (
         let typ = path.note $ path.at in
         let value = eval_access_path ctx value_b path in
@@ -783,13 +783,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               (F.asprintf "index %d out of bounds [0, %d)" idx_target
                  (String.length s))
         | TextV s ->
-            let s_n = Value.Get.text value_n in
+            let s_n = Value.Get.text value_upd in
             if String.length s_n <> 1 then
               back_err exp_i.at
                 (F.asprintf
                    "updating a character requires a single-character text, but \
                     got %s"
-                   (Sl.Print.string_of_value ~short:true value_n))
+                   (Sl.Print.string_of_value ~short:true value_upd))
             else
               let s_updated =
                 String.sub s 0 idx_target ^ s_n
@@ -807,7 +807,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | ListV values ->
             let values_updated =
               List.mapi
-                (fun idx value -> if idx = idx_target then value_n else value)
+                (fun idx value -> if idx = idx_target then value_upd else value)
                 values
             in
             let value = Value.Make.list typ values_updated in
@@ -817,62 +817,63 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             back_err path.at
               (F.asprintf "indexing expects either a text or a list, but got %s"
                  (Sl.Print.string_of_value ~short:true value)))
-    | SliceP (path, exp_i, exp_m) -> (
+    | SliceP (path, exp_i, exp_n) -> (
+        let typ = path.note $ path.at in
         let value = eval_access_path ctx value_b path in
         let value_i = eval_exp ctx exp_i in
         let idx_l =
           value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn
         in
-        let value_m = eval_exp ctx exp_m in
-        let idx_m =
-          value_m |> Value.get_num |> Num.to_int |> Bigint.to_int_exn
+        let value_n = eval_exp ctx exp_n in
+        let idx_n =
+          value_n |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn
         in
-        let idx_h = idx_l + idx_m in
+        let idx_h = idx_l + idx_n in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
-            back_err exp_m.at
+            back_err exp_n.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (String.length s))
         | TextV s ->
-            let s_n = Value.get_text value_n in
-            if String.length s_n <> idx_m then
-              back_err exp_m.at
+            let s_upd = Value.Get.text value_upd in
+            if String.length s_upd <> idx_n then
+              back_err exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a text of length \
                     %d, but got %s"
-                   idx_m (String.length s_n)
-                   (Sl.Print.string_of_value ~short:true value_n))
+                   idx_n (String.length s_upd)
+                   (Sl.Print.string_of_value ~short:true value_upd))
             else
-              let s_updated =
-                String.sub s 0 idx_l ^ s_n
+              let s_upd =
+                String.sub s 0 idx_l ^ s_upd
                 ^ String.sub s idx_h (String.length s - idx_h)
               in
-              let value = Value.Make.text s_updated in
+              let value = Value.Make.text s_upd in
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
-            back_err exp_m.at
+            back_err exp_n.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (List.length values))
         | ListV values ->
-            let values_n = Value.get_list value_n in
-            if List.length values_n <> idx_m then
+            let values_upd = Value.Get.list value_upd in
+            if List.length values_upd <> idx_n then
               back_err exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a list of length \
                     %d, but got %s"
-                   idx_m (List.length values_n)
-                   (Sl.Print.string_of_value ~short:true value_n))
+                   idx_n (List.length values_upd)
+                   (Sl.Print.string_of_value ~short:true value_upd))
             else
-              let values_updated =
+              let values_upd =
                 List.mapi
                   (fun idx value ->
                     if idx_l <= idx && idx < idx_h then
-                      List.nth values_n (idx - idx_l)
+                      List.nth values_upd (idx - idx_l)
                     else value)
                   values
               in
-              let value = Value.Make.list typ values_updated in
+              let value = Value.Make.list typ values_upd in
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | _ ->
@@ -886,7 +887,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let valuefields =
           List.map
             (fun (atom_f, value_f) ->
-              if Atom.eq atom_f.it atom.it then (atom_f, value_n)
+              if Atom.eq atom_f.it atom.it then (atom_f, value_upd)
               else (atom_f, value_f))
             valuefields
         in
