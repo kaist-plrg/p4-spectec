@@ -9,6 +9,41 @@ var C : ctx
 
 dec $load(script) : ctx
 
+dec $add_typ_global(ctx, id, typdef) : ctx
+def $add_typ_global(C, id, typdef) = C[.GLOBAL.TYP = $add_map<id, typdef>(C.GLOBAL.TYP, id, typdef)]
+
+dec $add_rel_global(ctx, id, reldef) : ctx
+def $add_rel_global(C, id, reldef) = C[.GLOBAL.REL = $add_map<id, reldef>(C.GLOBAL.REL, id, reldef)]
+
+dec $add_func_global(ctx, id, funcdef) : ctx
+def $add_func_global(C, id, funcdef) = C[.GLOBAL.FUNC = $add_map<id, funcdef>(C.GLOBAL.FUNC, id, funcdef)]
+
+def $load(eps) = { GLOBAL {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>, VAL $empty_map<vari, val>}, LOCAL {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>, VAL $empty_map<vari, val>}}
+def $load(defn_h :: defn*) = $add_typ_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTTYP id = defn_h
+def $load(defn_h :: defn*) = $add_typ_global(ctx, id, DEF tparam* `-> deftyp)
+    -- if ctx = $load(defn*)
+    -- if TYP id tparam* `= deftyp = defn_h
+def $load(defn_h :: defn*) = $add_rel_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTREL id `: exp* `-> exp_ret = defn_h
+def $load(defn_h :: defn*) = $add_rel_global(ctx, id, DEF rulgroup* elsgroup?)
+    -- if ctx = $load(defn*)
+    -- if REL id `: typ_param* `-> typ* `= rulgroup* elsgroup? = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTFUNC id tparam* param* `: typ = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, BUILTIN)
+    -- if ctx = $load(defn*)
+    -- if BUILTINFUNC id tparam* param* `: typ = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, TABLE param* `-> tblrow*)
+    -- if ctx = $load(defn*)
+    -- if TABLEFUNC id param* `: typ `= tblrow* = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, DEF tparam* `-> clause* elsclause?)
+    -- if ctx = $load(defn*)
+    -- if FUNC id tparam* param* `: typ `= clause* elsclause? = defn_h
+
 ;; Adders and finders
 
 dec $add_val(ctx, vari, val) : ctx
@@ -25,3 +60,40 @@ dec $find_rel(ctx, id) : reldef?
 
 dec $sub_opt(ctx, vari) : ctx?
 dec $sub_list(ctx, vari*) : ctx*
+
+def $add_val(C, vari, val) = C[.LOCAL.VAL = $add_map<vari, val>(C.LOCAL.VAL, vari, val)]
+
+def $find_val(C, vari) = $find_map<vari, val>(C.LOCAL.VAL, vari)
+
+def $add_typ(C, id, typdef) = C[.LOCAL.TYP = $add_map<id, typdef>(C.LOCAL.TYP, id, typdef)]
+
+def $find_typ(C, id) = $find_map<id, typdef>(C.LOCAL.TYP, id)
+
+def $add_func(C, id, funcdef) = C[.LOCAL.FUNC = $add_map<id, funcdef>(C.LOCAL.FUNC, id, funcdef)]
+
+def $find_func(C, id) = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+
+def $add_rel(C, id, reldef) = C[.LOCAL.REL = $add_map<id, reldef>(C.LOCAL.REL, id, reldef)]
+
+def $find_rel(C, id) = $find_map<id, reldef>(C.LOCAL.REL, id)
+
+def $sub_opt(C, vari) = $add_val(C, vari, val)
+    -- if id iter* = vari
+    -- if (OPT val) = $find_val(C, id (iter* ++ [ QUEST ]))
+
+def $sub_opt(C, vari) = eps
+    -- if id iter* = vari
+    -- if OPT eps = $find_val(C, id (iter* ++ [ QUEST ]))
+
+dec $transposeval(val**, val**) : val**
+
+dec $sub_list_aux(ctx, vari*, val*) : ctx
+def $sub_list_aux(C, eps, eps) = C 
+def $sub_list_aux(C, vari_h :: vari*, val_h :: val*) = $sub_list_aux(C', vari*, val*)
+    -- if C' = $add_val(C, vari_h, val_h)
+
+def $sub_list(C, vari*) = ctx*
+    -- (if id iter* = vari)*
+    -- (if LIST val* = $find_val(C, id (iter* ++ [ STAR ])))*
+    -- if val_trans** = $transposeval(val**, eps)
+    -- (if ctx = $sub_list_aux(C, vari*, val_trans*))*

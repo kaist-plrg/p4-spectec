@@ -29,3 +29,15 @@ dec $fold<X, Y>(X, Y*, def $iter(X, Y) : X) : X
 def $fold<X, Y>(X, eps, def $iter) = X 
 def $fold<X, Y>(X, Y_head :: Y*, def $iter) = $fold<X, Y>(X', Y*, def $iter)
   -- if X' = $iter(X, Y_head)
+
+syntax transposevalres = val* val**
+
+dec $transposeval_aux(val*, val**, val**) : transposevalres
+def $transposeval_aux(val_head*, val_tail**, eps) = val_head* val_tail**
+def $transposeval_aux(val_head*, val_tail**, val* :: val_left**) = $transposeval_aux(val_head* ++ [ val_lefthead ], val_tail** ++ [ val_lefttail* ], val_left**)
+  -- if val_lefthead :: val_lefttail* = val*
+
+def $transposeval(eps, val_ans**) = val_ans**
+def $transposeval(val**, val_ans**) = $transposeval(val_tail**, val_ans** ++ [ val_head* ])
+  -- if eps =/= val**
+  -- if val_head* val_tail** = $transposeval_aux(eps, eps, val**)
