@@ -83,7 +83,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
-    let theta = List.combine tparams targs |> TIdMap.of_list in
+    let theta = TIdMap.of_lists tparams targs in
     let typ_output = Type.Subst.subst_typ theta typ_output in
     check
       (Value.Match.sub (Ctx.find_typdef_opt ctx)
@@ -378,7 +378,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | _ -> assert false)
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
-        let theta = List.combine tparams targs |> TIdMap.of_list in
+        let theta = TIdMap.of_lists tparams targs in
         match deftyp.it with
         | PlainT typ ->
             let typ = Type.Subst.subst_typ theta typ in
@@ -415,7 +415,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         | _ -> assert false)
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
-        let theta = List.combine tparams targs |> TIdMap.of_list in
+        let theta = TIdMap.of_lists tparams targs in
         match deftyp.it with
         | PlainT typ ->
             let typ = Type.Subst.subst_typ theta typ in

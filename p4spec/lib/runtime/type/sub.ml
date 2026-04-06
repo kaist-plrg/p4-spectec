@@ -23,8 +23,8 @@ and sub_typ' (find_typedef_opt : TId.t -> Typdef.t option) (typ_a : typ)
           Some (Defined (tparams_b, deftyp_b)) ) -> (
           match (deftyp_a.it, deftyp_b.it) with
           | VariantT typcases_a, VariantT typcases_b ->
-              let theta_a = List.combine tparams_a targs_a |> TIdMap.of_list in
-              let theta_b = List.combine tparams_b targs_b |> TIdMap.of_list in
+              let theta_a = TIdMap.of_lists tparams_a targs_a in
+              let theta_b = TIdMap.of_lists tparams_b targs_b in
               let nottyps_a =
                 typcases_a
                 |> List.map (fun (nottyp_a, _, _) ->

@@ -167,6 +167,7 @@ and elab_deftyp_struct (ctx : Ctx.t) (at : region) (tparams : tparam list)
 (* Elaboration of variant type definitions *)
 
 and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
+  let typ_il = Expand.expand_typ (Ctx.find_typdef_opt ctx) typ_il in
   match typ_il.it with
   | VarT (tid, targs_il) -> (
       let td = Ctx.find_typdef ctx tid in
@@ -174,12 +175,8 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
       | Defining _ -> error typ_il.at "cannot extend an incomplete type"
       | Defined (tparams, deftyp) -> (
           match deftyp.it with
-          | PlainT typ_il ->
-              let theta = List.combine tparams targs_il |> TIdMap.of_list in
-              let typ_il = Subst.subst_typ theta typ_il in
-              elab_typcase_plain ctx typ_il
           | VariantT typcases_il ->
-              let theta = List.combine tparams targs_il |> TIdMap.of_list in
+              let theta = TIdMap.of_lists tparams targs_il in
               List.map (Subst.subst_typcase theta) typcases_il
           | _ -> error typ_il.at "cannot extend a non-variant type")
       | _ -> error typ_il.at "cannot extend a non-variant type")
@@ -671,7 +668,7 @@ and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (List.length targs = List.length tparams_il)
     id.at "type arguments do not match";
   let targs_il = List.map (elab_plaintyp ctx) targs in
-  let theta = List.combine tparams_il targs_il |> TIdMap.of_list in
+  let theta = TIdMap.of_lists tparams_il targs_il in
   let params_il = Subst.subst_params theta params_il in
   let typ_il = Subst.subst_typ theta typ_il in
   let ctx, args_il = elab_args at ctx params_il args in
@@ -840,7 +837,7 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
               | Param | Extern | Defining _ ->
                   elab_exp_plain ctx typ_il_expect exp
               | Defined (tparams, deftyp_il) -> (
-                  let theta = List.combine tparams targs_il |> TIdMap.of_list in
+                  let theta = TIdMap.of_lists tparams targs_il in
                   match deftyp_il.it with
                   | PlainT typ_il ->
                       let typ_il = Subst.subst_typ theta typ_il in

@@ -84,6 +84,9 @@ module VIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module VIdTbl (V : sig
@@ -161,6 +164,9 @@ module IdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module IdTbl (V : sig
@@ -252,6 +258,9 @@ module MixIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module MixIdTbl (V : sig
@@ -318,6 +327,9 @@ module CaseIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module CaseIdTbl (V : sig

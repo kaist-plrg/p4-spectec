@@ -26,7 +26,7 @@ let rec sub (find_typdef_opt : TId.t -> Type.Typdef.t option)
       | Param | Defining _ -> error typ.at "unexpected type variable"
       | Extern -> ( match value.it with ExternV _ -> true | _ -> false)
       | Defined (tparams, deftyp) -> (
-          let theta = List.combine tparams targs |> TIdMap.of_list in
+          let theta = TIdMap.of_lists tparams targs in
           match (deftyp.it, value.it) with
           | PlainT typ, _ ->
               let typ = Type.Subst.subst_typ theta typ in

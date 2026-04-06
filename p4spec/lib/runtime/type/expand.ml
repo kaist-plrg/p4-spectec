@@ -17,7 +17,7 @@ let rec expand_typ (find_typdef_opt : TId.t -> Typdef.t option) (typ : typ) :
           | PlainT _ when List.length targs <> List.length tparams ->
               error typ.at "type arguments do not match"
           | PlainT typ ->
-              let theta = List.combine tparams targs |> TIdMap.of_list in
+              let theta = TIdMap.of_lists tparams targs in
               let typ = Subst.subst_typ theta typ in
               expand_typ find_typdef_opt typ
           | _ -> typ)

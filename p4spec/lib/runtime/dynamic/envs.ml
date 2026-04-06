@@ -40,7 +40,7 @@ module TDEnv = struct
         match td with
         | Param | Extern | Defining _ -> typ
         | Defined (tparams, deftyp) -> (
-            let theta = List.combine tparams targs |> TIdMap.of_list in
+            let theta = TIdMap.of_lists tparams targs in
             match deftyp.it with
             | PlainT typ ->
                 let typ = Type.Subst.subst_typ theta typ in
