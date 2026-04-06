@@ -1,3 +1,4 @@
+module Equiv = Type.Equiv
 open Domain
 open Lib
 open Lang
@@ -5,37 +6,11 @@ open Il
 open Error
 open Util.Source
 
-(* Whether a value belongs to a type (including subtyping)
-
-   Using type annotations on values is used to short-circuit the subtyping check,
-   but may be unsound if the type annotations are incorrect
-   Short-circuiting is used as a compromise to avoid expensive subtyping checks
-   at the cost of potentially unsound behavior *)
-
-let rec sub_short_circuit (typ_a : typ') (typ_b : typ') : bool =
-  match (typ_a, typ_b) with
-  | BoolT, BoolT | TextT, TextT -> true
-  | NumT numtyp_a, NumT numtyp_b -> numtyp_a = numtyp_b
-  | VarT (id_a, targs_a), VarT (id_b, targs_b) ->
-      id_a.it = id_b.it
-      && List.compare_lengths targs_a targs_b = 0
-      && List.for_all2
-           (fun typ_a typ_b -> sub_short_circuit typ_a.it typ_b.it)
-           targs_a targs_b
-  | TupleT typs_a, TupleT typs_b ->
-      List.compare_lengths typs_a typs_b = 0
-      && List.for_all2
-           (fun typ_a typ_b -> sub_short_circuit typ_a.it typ_b.it)
-           typs_a typs_b
-  | IterT (typ_a, iter_a), IterT (typ_b, iter_b) ->
-      iter_a = iter_b && sub_short_circuit typ_a.it typ_b.it
-  | _ -> false
+(* Whether a value belongs to a type (including subtyping) *)
 
 let rec sub (find_typdef_opt : TId.t -> Type.Typdef.t option)
     (find_func : FId.t -> tparam list * typ list * typ) (typ : typ)
     (value : value) : bool =
-  sub_short_circuit value.note.typ typ.it
-  ||
   match typ.it with
   | BoolT -> ( match value.it with BoolV _ -> true | _ -> false)
   | NumT `NatT -> (
@@ -101,8 +76,8 @@ let rec sub (find_typdef_opt : TId.t -> Type.Typdef.t option)
       match value.it with
       | FuncV fid ->
           let tparams_v, typs_params_v, typ_ret_v = find_func fid in
-          Type.Equiv.equiv_functyp find_typdef_opt typ.at tparams_t
-            typs_params_t typ_ret_t tparams_v typs_params_v typ_ret_v
+          Equiv.equiv_functyp find_typdef_opt typ.at tparams_t typs_params_t
+            typ_ret_t tparams_v typs_params_v typ_ret_v
       | _ -> false)
 
 and subs (find_typdef_opt : TId.t -> Type.Typdef.t option)
