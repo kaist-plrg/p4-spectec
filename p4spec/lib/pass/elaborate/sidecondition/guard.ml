@@ -9,6 +9,7 @@ open Util.Source
 
     - array access a[n] to n < |a|
     - joint iteration e*{x <- x*, y <- y*, z <- z*} to (|x*| = |y*|) /\ (|y*| = |z*|
+    - joint iteration e?{x <- x?, y <- y?} to (x? = eps) <=> (y? = eps)
 
    Must-premises are generated from the binding sites, e.g.
 
