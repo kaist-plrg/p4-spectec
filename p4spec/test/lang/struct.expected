@@ -10777,7 +10777,7 @@ def $callTargetKey'(argumentIR)
 
     1. Return ?()
 
-def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $get_parameterListIR)
+def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $get_parameterListIR(V) : parameterListIR)
 
 1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
@@ -10815,7 +10815,7 @@ def $match_overloaded_named<V>((callTargetId : V), (nameIR_f ( (id_arg)* )), $ge
 
   1. Return (NOMATCH)
 
-def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR)
+def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_parameterListIR(V) : parameterListIR)
 
 1. (Let (nameIR ( (id_param)* )) be callTargetId)
 
@@ -10857,7 +10857,7 @@ def $match_overloaded_unnamed<V>((callTargetId : V), (nameIR_f ( n_arg )), $get_
 
   1. Return (NOMATCH)
 
-def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR)
+def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )), $get_parameterListIR(V) : parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
 
@@ -10889,7 +10889,7 @@ def $find_overloadeds_named<V>(set<pair<callableId, V>>, (nameIR_f ( (id_arg)* )
 
   1. Else Dangling#2641
 
-def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR)
+def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $get_parameterListIR(V) : parameterListIR)
 
 1. If ((set<pair<callableId, V>> = ({ [] }))), then
 
@@ -10921,7 +10921,7 @@ def $find_overloadeds_unnamed<V>(set<pair<callableId, V>>, (nameIR_f ( nat )), $
 
   1. Else Dangling#2652
 
-def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), $get_parameterListIR)
+def $find_overloaded<V>(({ ((callableId : V))* }), (nameIR_f ( ((id_arg)?)* )), $get_parameterListIR(V) : parameterListIR)
 
 1. If ((|((id_arg)?)*| > 0)), then
 
@@ -22899,7 +22899,7 @@ def $reduce_serenum(typedExpressionIR)
 
   1. Return typedExpressionIR
 
-def $reduce_serenum_unary(typedExpressionIR, $check)
+def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool)
 
 1. (Let (_expressionIR # (( typeIR ctk ))) be typedExpressionIR)
 
@@ -22925,7 +22925,7 @@ def $reduce_serenum_unary(typedExpressionIR, $check)
 
   1. Return ?()
 
-def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check)
+def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(typeIR, typeIR') : bool)
 
 1. (Let (_expressionIR # (( typeIR_l _ctk ))) be typedExpressionIR_l)
 

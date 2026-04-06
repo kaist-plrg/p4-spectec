@@ -28,5 +28,27 @@ module Make = struct
   let iter (typ : t) (iter : iter) : t = IterT (typ, iter) $ no_region
   let opt (typ : t) : t = iter typ Opt
   let list (typ : t) : t = iter typ List
-  let func : t = FuncT $ no_region
+
+  let func (tparams : tparam list) (typs_params : typ list) (typ : typ) : t =
+    FuncT (tparams, typs_params, typ) $ no_region
+
+  let rec of_param_il (param : Il.param) : t =
+    match param.it with
+    | ExpP typ -> typ
+    | DefP (_, tparams, params, typ) ->
+        let typs_params = of_params_il params in
+        func tparams typs_params typ
+
+  and of_params_il (params : Il.param list) : t list =
+    List.map of_param_il params
+
+  let rec of_param_sl (param : Sl.param) : t =
+    match param.it with
+    | ExpP (typ, _) -> typ
+    | DefP (_, tparams, params, typ) ->
+        let typs_params = of_params_sl params in
+        func tparams typs_params typ
+
+  and of_params_sl (params : Sl.param list) : t list =
+    List.map of_param_sl params
 end
