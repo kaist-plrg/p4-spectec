@@ -83,18 +83,18 @@ type pattern = Il.pattern
 type path = Il.path [@@deriving yojson]
 type path' = Il.path'
 
+(* Type parameters *)
+
+type tparam = Il.tparam [@@deriving yojson]
+type tparam' = Il.tparam'
+
 (* Parameters *)
 
 type param = param' phrase [@@deriving yojson]
 and param' =
   | ExpP of typ * exp
-  | DefP of id
+  | DefP of id * tparam list * param list * typ
   [@@deriving yojson]
-
-(* Type parameters *)
-
-type tparam = Il.tparam [@@deriving yojson]
-type tparam' = Il.tparam'
 
 (* Arguments *)
 

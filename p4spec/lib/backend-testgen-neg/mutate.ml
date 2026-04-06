@@ -119,7 +119,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
         List.init len (fun _ -> typ_inner) |> gen_from_typs depth tdenv texts
       in
       ListV values_inner |> Option.some |> wrap_value_opt typ.it
-  | FuncT -> None
+  | FuncT _ -> None
 
 and gen_from_typs (depth : int) (tdenv : TDEnv.t) (texts : value' list)
     (typs : typ list) : value list option =

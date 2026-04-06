@@ -159,7 +159,9 @@ and string_of_path path =
 and string_of_param param =
   match param.it with
   | ExpP (_typ, exp) -> string_of_exp exp
-  | DefP id -> string_of_defid id
+  | DefP (defid, tparams, params, typ) ->
+      string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
 
 and string_of_params params =
   match params with

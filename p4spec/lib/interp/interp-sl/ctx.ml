@@ -105,23 +105,23 @@ let load_def (def : def) : unit =
   | TypD (id, tparams, deftyp, _) ->
       let td = Typdef.Defined (tparams, deftyp) in
       add_typdef_global id td
-  | ExternRelD (id, _, _, _) ->
-      let rel = Rel.Extern in
+  | ExternRelD (id, rel_signature, _, _) ->
+      let rel = Rel.Extern rel_signature in
       add_rel_global id rel
-  | RelD (id, _, exps_match, block, elseblock_opt, _) ->
-      let rel = Rel.Defined (exps_match, block, elseblock_opt) in
+  | RelD (id, rel_signature, exps_match, block, elseblock_opt, _) ->
+      let rel = Rel.Defined (rel_signature, exps_match, block, elseblock_opt) in
       add_rel_global id rel
-  | ExternDecD (id, _, _, _, _) ->
-      let func = Func.Extern in
+  | ExternDecD (id, tparams, params, typ, _) ->
+      let func = Func.Extern (tparams, params, typ) in
       add_func_global id func
-  | BuiltinDecD (id, _, _, _, _) ->
-      let func = Func.Builtin in
+  | BuiltinDecD (id, tparams, params, typ, _) ->
+      let func = Func.Builtin (tparams, params, typ) in
       add_func_global id func
-  | TableDecD (id, params, _typ, tablerows, _) ->
-      let func = Func.Table (params, tablerows) in
+  | TableDecD (id, params, typ, tablerows, _) ->
+      let func = Func.Table (params, typ, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, params, _typ, block, elseblock_opt, _) ->
-      let func = Func.Defined (tparams, params, block, elseblock_opt) in
+  | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
+      let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
       add_func_global id func
 
 let init ~(det : bool) (spec : spec) : unit =
@@ -200,6 +200,15 @@ let find_rel (ctx : t) (rid : RId.t) : Rel.t =
   | Some rel -> rel
   | None -> back_undef rid.at "relation" rid.it
 
+let find_rel_signature_opt (ctx : t) (rid : RId.t) :
+    (nottyp * Hints.Input.t) option =
+  find_rel_opt ctx rid |> Option.map Rel.get_signature
+
+let find_rel_signature (ctx : t) (rid : RId.t) : nottyp * Hints.Input.t =
+  match find_rel_signature_opt ctx rid with
+  | Some (nottyp, inputs) -> (nottyp, inputs)
+  | None -> back_undef rid.at "relation" rid.it
+
 let bound_rel (ctx : t) (rid : RId.t) : bool =
   find_rel_opt ctx rid |> Option.is_some
 
@@ -220,6 +229,15 @@ let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
 let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
   match find_func_opt ctx fid with
   | Some (cursor, func) -> (cursor, func)
+  | None -> back_undef fid.at "function" fid.it
+
+let find_func_signature_opt (ctx : t) (fid : FId.t) :
+    (tparam list * typ list * typ) option =
+  find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+
+let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ =
+  match find_func_signature_opt ctx fid with
+  | Some (tparams, typs, typ) -> (tparams, typs, typ)
   | None -> back_undef fid.at "function" fid.it
 
 let bound_func (ctx : t) (fid : FId.t) : bool =

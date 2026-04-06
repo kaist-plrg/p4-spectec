@@ -9,18 +9,19 @@ open Util.Source
 
 (* Structuring parameters *)
 
-let struct_param (frees : IdSet.t) (param : param) : IdSet.t * Sl.param =
+let rec struct_param (frees : IdSet.t) (param : param) : IdSet.t * Sl.param =
   let at = param.at in
   match param.it with
   | ExpP typ ->
       let exp_input, frees = Fresh.fresh_exp_from_typ frees typ in
       let param = Sl.ExpP (typ, exp_input) $ at in
       (frees, param)
-  | DefP (id_def, _, _, _) ->
-      let param = Sl.DefP id_def $ at in
+  | DefP (id_def, tparams, params, typ) ->
+      let params = struct_params params in
+      let param = Sl.DefP (id_def, tparams, params, typ) $ at in
       (frees, param)
 
-let struct_params (params : param list) : Sl.param list =
+and struct_params (params : param list) : Sl.param list =
   params
   |> List.fold_left
        (fun (frees, params) param ->
@@ -36,8 +37,9 @@ let struct_params_from_args (params : param list) (args_input : arg list) :
       let at = param.at in
       match (param.it, arg_input.it) with
       | ExpP typ, ExpA exp -> Sl.ExpP (typ, exp) $ at
-      | DefP (id_def, _, _, _), DefA id_def_arg when Id.eq id_def id_def_arg ->
-          Sl.DefP id_def $ at
+      | DefP (id_def, tparams, params, typ), DefA id_def_arg
+        when Id.eq id_def id_def_arg ->
+          Sl.DefP (id_def, tparams, struct_params params, typ) $ at
       | _ -> assert false)
     params args_input
 

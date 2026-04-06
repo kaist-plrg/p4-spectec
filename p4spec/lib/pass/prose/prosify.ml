@@ -279,7 +279,7 @@ and prosify_param (ctx : Ctx.t) (param : param) : Pl.param =
   | ExpP (typ, exp) ->
       let exp_pl = prosify_exp ctx exp in
       Pl.ExpP (typ, exp_pl) $ param.at
-  | DefP id -> Pl.DefP id $ param.at
+  | DefP (id, _, _, _) -> Pl.DefP id $ param.at
 
 and prosify_params (ctx : Ctx.t) (params : param list) =
   List.map (prosify_param ctx) params

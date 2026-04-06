@@ -1,3 +1,4 @@
+module Fresh_ = Fresh
 open Domain.Lib
 open Lang
 open Il
@@ -7,6 +8,15 @@ open Util.Source
 (* Substitution of type variables *)
 
 type theta = Typ.t TIdMap.t
+
+let freshen_tparams (tparams : tparam list) : theta * tparam list =
+  List.fold_left
+    (fun (theta, tids_fresh) tparam ->
+      let tid_fresh = "__FRESH" ^ string_of_int (Fresh_.fresh ()) $ no_region in
+      let typ_fresh = VarT (tid_fresh, []) $ no_region in
+      let theta = TIdMap.add tparam typ_fresh theta in
+      (theta, tids_fresh @ [ tid_fresh ]))
+    (TIdMap.empty, []) tparams
 
 (* Types *)
 
@@ -27,7 +37,15 @@ let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
   | IterT (typ, iter) ->
       let typ = subst_typ_inner theta typ in
       IterT (typ, iter) $ typ.at
-  | FuncT -> typ
+  | FuncT (tparams, typs_params, typ_ret) ->
+      let theta_fresh, tparams = freshen_tparams tparams in
+      let typs_params =
+        typs_params |> subst_typs_inner theta_fresh |> subst_typs_inner theta
+      in
+      let typ_ret =
+        typ_ret |> subst_typ_inner theta_fresh |> subst_typ_inner theta
+      in
+      FuncT (tparams, typs_params, typ_ret) $ typ.at
 
 and subst_typs_inner (theta : theta) (typs : typ list) : typ list =
   List.map (subst_typ_inner theta) typs
@@ -62,10 +80,10 @@ let rec subst_param (theta : theta) (param : param) : param =
   | ExpP typ ->
       let typ = subst_typ theta typ in
       ExpP typ $ param.at
-  (* (TODO) Capture-avoiding substitution *)
   | DefP (id, tparams, params, typ) ->
-      let params = subst_params theta params in
-      let typ = subst_typ theta typ in
+      let theta_fresh, tparams = freshen_tparams tparams in
+      let params = params |> subst_params theta_fresh |> subst_params theta in
+      let typ = typ |> subst_typ theta_fresh |> subst_typ theta in
       DefP (id, tparams, params, typ) $ param.at
 
 and subst_params (theta : theta) (params : param list) : param list =

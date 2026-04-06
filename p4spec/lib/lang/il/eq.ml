@@ -68,7 +68,9 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
   | TupleT typs_a, TupleT typs_b -> eq_typs typs_a typs_b
   | IterT (typ_a, iter_a), IterT (typ_b, iter_b) ->
       eq_typ typ_a typ_b && eq_iter iter_a iter_b
-  | FuncT, FuncT -> true
+  | FuncT (tparams_a, typs_a, typ_a), FuncT (tparams_b, typs_b, typ_b) ->
+      eq_tparams tparams_a tparams_b
+      && eq_typs typs_a typs_b && eq_typ typ_a typ_b
   | _ -> false
 
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
@@ -209,6 +211,15 @@ and eq_path (path_a : path) (path_b : path) : bool =
   | DotP (path_a, atom_a), DotP (path_b, atom_b) ->
       eq_path path_a path_b && eq_atom atom_a atom_b
   | _ -> false
+
+(* Type parameters *)
+
+and eq_tparam (tparam_a : tparam) (tparam_b : tparam) : bool =
+  eq_id tparam_a tparam_b
+
+and eq_tparams (tparams_a : tparam list) (tparams_b : tparam list) : bool =
+  List.length tparams_a = List.length tparams_b
+  && List.for_all2 eq_id tparams_a tparams_b
 
 (* Arguments *)
 
