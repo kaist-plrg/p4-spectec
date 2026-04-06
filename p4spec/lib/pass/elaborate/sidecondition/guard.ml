@@ -15,95 +15,113 @@ open Util.Source
     - (let (x, y) = z){x -> x*, y -> y*, z <- z*} generates must-premises (|x*| = |y*|) /\ (|y*| = |z*|);
     - this optimizes away redundant guard conditions *)
 
-(* Equivalence class for equality filtering,
+(* An atomic condition appearing in an if-premise *)
+
+module Cond = struct
+  type t = exp
+
+  let eq = Eq.eq_exp
+end
+
+(* An equivalence class of conditions *)
+
+module Cls = struct
+  type t = Equals of Cond.t list | Equiv of Cond.t list | Singleton of Cond.t
+end
+
+(* Equivalence table for equality filtering,
    so that transitively-derivable guards can be filtered out. *)
 
 module Equiv = struct
-  (* Symmetric binary operator used as the key for separate equivalence classes *)
+  (* A flat list of equivalence classes *)
+  type table = Cls.t list
 
-  type op = Cmp of cmpop | Bin of binop
+  (* Merge the classes of cond_a and cond_b within *)
 
-  (* A set of disjoint equivalence classes, each a list of equal expressions *)
+  let union_kind (extract : Cls.t -> Cond.t list option)
+      (wrap : Cond.t list -> Cls.t) (tbl : table) (cond_a : Cond.t)
+      (cond_b : Cond.t) : table =
+    let find cond =
+      List.find_map
+        (fun cls ->
+          match extract cls with
+          | Some cs when List.exists (Cond.eq cond) cs -> Some cs
+          | _ -> None)
+        tbl
+    in
+    let drop cs =
+      List.filter (fun cls ->
+          match extract cls with Some cs' -> cs' != cs | None -> true)
+    in
+    match (find cond_a, find cond_b) with
+    | Some cs_a, Some cs_b when cs_a == cs_b -> tbl
+    | Some cs_a, Some cs_b ->
+        wrap (cs_a @ cs_b) :: (tbl |> drop cs_a |> drop cs_b)
+    | Some cs_a, None -> wrap (cond_b :: cs_a) :: drop cs_a tbl
+    | None, Some cs_b -> wrap (cond_a :: cs_b) :: drop cs_b tbl
+    | None, None -> wrap [ cond_a; cond_b ] :: tbl
 
-  type partition = exp list list
+  let union_eq =
+    union_kind
+      (function Cls.Equals cs -> Some cs | _ -> None)
+      (fun cs -> Cls.Equals cs)
 
-  (* Maps each operator to its equivalence partition over expressions *)
+  let union_equiv =
+    union_kind
+      (function Cls.Equiv cs -> Some cs | _ -> None)
+      (fun cs -> Cls.Equiv cs)
 
-  type table = (op * partition) list
+  (* Update the table with the constraints from an if-expression *)
 
-  (* Look up the equivalence partition for a given operator *)
-
-  let find_partition (tbl : table) (op : op) : partition =
-    Option.value ~default:[] (List.assoc_opt op tbl)
-
-  (* Replace the partition for op *)
-
-  let set_partition (tbl : table) (op : op) (partition : partition) : table =
-    (op, partition) :: List.filter (fun (op_, _) -> op_ <> op) tbl
-
-  (* Find the equivalence class containing exp *)
-
-  let find (partition : partition) (exp : exp) : exp list option =
-    List.find_opt (List.exists (Eq.eq_exp exp)) partition
-
-  (* Merge the classes of exp_a and exp_b; no-op if they are already in the same class *)
-
-  let union (partition : partition) (exp_a : exp) (exp_b : exp) : partition =
-    match (find partition exp_a, find partition exp_b) with
-    | Some exps_a, Some exps_b when exps_a == exps_b -> partition
-    | Some exps_a, Some exps_b ->
-        (exps_a @ exps_b)
-        :: List.filter (fun exps -> exps != exps_a && exps != exps_b) partition
-    | Some exps_a, None ->
-        (exp_b :: exps_a) :: List.filter (fun exps -> exps != exps_a) partition
-    | None, Some exps_b ->
-        (exp_a :: exps_b) :: List.filter (fun exps -> exps != exps_b) partition
-    | None, None -> [ exp_a; exp_b ] :: partition
-
-  (* Flatten a conjunction of symmetric binary constraints into (op, lhs, rhs) triples *)
-
-  let rec of_if_exp (exp : exp) : (op * exp * exp) list =
+  let rec of_if_exp (tbl : table) (exp : exp) : table =
     match exp.it with
-    | CmpE ((`EqOp as op), _, exp_l, exp_r) -> [ (Cmp op, exp_l, exp_r) ]
-    | BinE ((`EquivOp as op), _, exp_l, exp_r) -> [ (Bin op, exp_l, exp_r) ]
-    | BinE (`AndOp, _, exp_l, exp_r) -> of_if_exp exp_l @ of_if_exp exp_r
-    | _ -> []
+    | CmpE (`EqOp, _, exp_l, exp_r) -> union_eq tbl exp_l exp_r
+    | BinE (`EquivOp, _, exp_l, exp_r) -> union_equiv tbl exp_l exp_r
+    | BinE (`AndOp, _, exp_l, exp_r) -> of_if_exp (of_if_exp tbl exp_l) exp_r
+    | _ -> Cls.Singleton exp :: tbl
 
-  (* Build a table from a list of must-premises by unioning all equality *)
+  (* Build a table from a list of must-premises. *)
 
   let of_prems (prems : prem list) : table =
     List.fold_left
       (fun tbl prem ->
-        match prem.it with
-        | IfPr exp ->
-            List.fold_left
-              (fun tbl (op, exp_l, exp_r) ->
-                set_partition tbl op (union (find_partition tbl op) exp_l exp_r))
-              tbl (of_if_exp exp)
-        | _ -> tbl)
+        match prem.it with IfPr exp -> of_if_exp tbl exp | _ -> tbl)
       [] prems
 
-  (* True iff exp_a and exp_b are in the same equivalence class (or are syntactically equal) *)
+  (* True iff cond_a and cond_b belong to the same class of the given kind. *)
 
-  let mem (partition : partition) (exp_a : exp) (exp_b : exp) : bool =
-    Eq.eq_exp exp_a exp_b
-    ||
-    match find partition exp_a with
-    | Some exps -> List.exists (Eq.eq_exp exp_b) exps
-    | None -> false
+  let mem_kind (extract : Cls.t -> Cond.t list option) (tbl : table)
+      (cond_a : Cond.t) (cond_b : Cond.t) : bool =
+    Cond.eq cond_a cond_b
+    || List.find_map
+         (fun cls ->
+           match extract cls with
+           | Some cs when List.exists (Cond.eq cond_a) cs -> Some cs
+           | _ -> None)
+         tbl
+       |> Option.fold ~none:false ~some:(List.exists (Cond.eq cond_b))
 
-  (* True iff every equality constraint in prem is already entailed by the table *)
+  let mem_eq = mem_kind (function Cls.Equals cs -> Some cs | _ -> None)
+  let mem_equiv = mem_kind (function Cls.Equiv cs -> Some cs | _ -> None)
+
+  (* True iff exp/prem is already entailed by the table *)
+
+  let rec implies_exp (tbl : table) (exp : exp) : bool =
+    match exp.it with
+    | CmpE (`EqOp, _, exp_l, exp_r) -> mem_eq tbl exp_l exp_r
+    | BinE (`EquivOp, _, exp_l, exp_r) -> mem_equiv tbl exp_l exp_r
+    | BinE (`AndOp, _, exp_l, exp_r) ->
+        implies_exp tbl exp_l && implies_exp tbl exp_r
+    | _ ->
+        List.exists
+          (function Cls.Singleton c -> Cond.eq exp c | _ -> false)
+          tbl
 
   let implies (tbl : table) (prem : prem) : bool =
-    match prem.it with
-    | IfPr exp ->
-        let constraints = of_if_exp exp in
-        constraints <> []
-        && List.for_all
-             (fun (op, exp_l, exp_r) -> mem (find_partition tbl op) exp_l exp_r)
-             constraints
-    | _ -> false
+    match prem.it with IfPr exp -> implies_exp tbl exp | _ -> false
 end
+
+(* Result of collecting must-premises and insert-premises from an expression or premise *)
 
 module Result = struct
   type must = prem list
@@ -299,7 +317,7 @@ let must_args_input (args : arg list) : Result.must =
 let insert_prem (prems_must_prev : prem list) (prem : prem) : Result.t =
   let prems_must, prems_insert = Walk.Collect.collect_prem collector prem in
   let prems_insert = Result.filter prems_must_prev prems_insert in
-  let prems_must = prems_must_prev @ prems_must in
+  let prems_must = prems_must_prev @ prems_must @ prems_insert in
   let prems_insert = prems_insert @ [ prem ] in
   (prems_must, prems_insert)
 
