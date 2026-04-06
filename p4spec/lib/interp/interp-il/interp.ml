@@ -25,17 +25,18 @@ let rel_cache = ref (Cache.Cache.create ~size:10000)
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   (* Checkers *)
 
-  let check_rel_inputs (id_rel : string) (values_input : value list) : unit =
-    let ctx = Ctx.empty in
-    let nottyp, inputs = Ctx.find_rel_signature ctx (id_rel $ no_region) in
+  let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
+      unit =
+    let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
     let _, typs = nottyp |> it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
          typs values_input)
-      no_region
-      (F.sprintf "relation input of %s does not match the expected type" id_rel)
+      id_rel.at
+      (F.sprintf "relation input of %s does not match the expected type"
+         id_rel.it)
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
@@ -54,17 +55,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (F.sprintf "relation output of %s does not match the expected type"
          id_rel.it)
 
-  let check_func_inputs (id_func : string) (targs : targ list)
+  let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
       (values_input : value list) : unit =
-    let ctx = Ctx.empty in
-    let tparams, typs_params, _ =
-      Ctx.find_func_signature ctx (id_func $ no_region)
-    in
+    let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
     let ctx_local = Ctx.localize ctx in
     check
       (List.length targs = List.length tparams)
-      no_region
-      (F.sprintf "arity mismatch in type arguments of %s" id_func);
+      id_func.at
+      (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
     let ctx_local =
       List.fold_left2
         (fun ctx_local tparam targ ->
@@ -77,9 +75,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
          (Ctx.find_typdef_opt ctx_local)
          (Ctx.find_func_signature ctx_local)
          typs_params values_input)
-      no_region
+      id_func.at
       (F.sprintf "function argument of %s does not match the parameter type"
-         id_func)
+         id_func.it)
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
@@ -1119,6 +1117,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   (* Invoke a relation *)
 
+  and is_extern_rel (rel : Rel.t) : bool =
+    match rel with Rel.Extern _ -> true | Rel.Defined _ -> false
+
   and match_rule (ctx : Ctx.t) (at : region) (rulematch : rulematch)
       (values_input : value list) : Ctx.t * prem list =
     let _, exps_input, prems_input = rulematch in
@@ -1128,22 +1129,39 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx = assign_exps ctx exps_input values_input in
     (ctx, prems_input)
 
-  and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list backtrack =
+  and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (values_input : value list) : value list backtrack =
     Hook.on_rel_enter id values_input;
-    let backtrack = invoke_rel' ctx id values_input in
+    let backtrack = invoke_rel' ~internal ctx id values_input in
     Hook.on_rel_exit id;
     backtrack
     |> back_nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
-  and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list backtrack =
+  and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
+      (values_input : value list) : value list backtrack =
     let rel = Ctx.find_rel ctx id in
-    match rel with
-    | Rel.Extern (nottyp, inputs) ->
-        invoke_extern_rel ctx id nottyp inputs values_input
-    | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
-        invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
+    let invoke_rel'' () =
+      match rel with
+      | Rel.Extern (nottyp, inputs) ->
+          invoke_extern_rel ctx id nottyp inputs values_input
+      | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
+          invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
+    in
+    if Hook.is_cache_on () && not (is_extern_rel rel) then (
+      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
+      match cache_result with
+      | Some values_output -> Ok values_output
+      | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let* values_output = invoke_rel'' () in
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the relation does not create a side-effect *)
+          if builtin_ctr_after = builtin_ctr_before then
+            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+          Ok values_output)
+    else (
+      if not internal then check_rel_inputs ctx id values_input;
+      invoke_rel'' ())
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_input : value list) :
@@ -1208,52 +1226,38 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let id_rulegroup, rulematch, rulepath = elsegroup.it in
       (do_backtrack_rulepath ctx id_rulegroup rulematch rulepath) ()
     in
-    (* Backtrack a relation *)
-    let backtrack_relation (ctx : Ctx.t) : value list backtrack =
-      let ids_path =
-        rulegroups
-        |> List.concat_map (fun rulegroup ->
-               let id_rulegroup, _, rulepaths = rulegroup.it in
-               rulepaths
-               |> List.map (fun rulepath ->
-                      let id_rulepath, _, _ = rulepath in
-                      F.asprintf "%s/%s" id_rulegroup.it id_rulepath.it))
-      in
-      let backtracks_path =
-        rulegroups |> List.concat_map (do_backtrack_rulegroup ctx)
-      in
-      let backtrack_det =
-        if !Ctx.is_det then backtracks_path |> choose_deterministic ids_path
-        else backtracks_path |> choose_sequential |> as_det
-      in
-      match backtrack_det with
-      | Ok_det values_output -> Ok values_output
-      | Err_det failtraces -> Err failtraces
-      | Unmatch_det failtraces -> (
-          match elsegroup_opt with
-          | Some elsegroup -> do_backtrack_elsegroup ctx elsegroup
-          | None -> Unmatch failtraces)
-      | Nondet_det (id_path_a, id_path_b) ->
-          back_err id.at
-            (F.asprintf "non-deterministic application of relation %s: %s, %s"
-               id.it id_path_a id_path_b)
+    let ids_path =
+      rulegroups
+      |> List.concat_map (fun rulegroup ->
+             let id_rulegroup, _, rulepaths = rulegroup.it in
+             rulepaths
+             |> List.map (fun rulepath ->
+                    let id_rulepath, _, _ = rulepath in
+                    F.asprintf "%s/%s" id_rulegroup.it id_rulepath.it))
     in
-    (* Start backtrack *)
-    if Hook.is_cache_on () && Cache.is_cached_rel id.it then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
-      match cache_result with
-      | Some values_output -> Ok values_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let* values_output = backtrack_relation ctx in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the relation does not create a side-effect *)
-          if builtin_ctr_after = builtin_ctr_before then
-            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-          Ok values_output)
-    else backtrack_relation ctx
+    let backtracks_path =
+      rulegroups |> List.concat_map (do_backtrack_rulegroup ctx)
+    in
+    let backtrack_det =
+      if !Ctx.is_det then backtracks_path |> choose_deterministic ids_path
+      else backtracks_path |> choose_sequential |> as_det
+    in
+    match backtrack_det with
+    | Ok_det values_output -> Ok values_output
+    | Err_det failtraces -> Err failtraces
+    | Unmatch_det failtraces -> (
+        match elsegroup_opt with
+        | Some elsegroup -> do_backtrack_elsegroup ctx elsegroup
+        | None -> Unmatch failtraces)
+    | Nondet_det (id_path_a, id_path_b) ->
+        back_err id.at
+          (F.asprintf "non-deterministic application of relation %s: %s, %s"
+             id.it id_path_a id_path_b)
 
   (* Invoke a function *)
+
+  and is_extern_func (func : Func.t) : bool =
+    match func with Func.Extern _ -> true | _ -> false
 
   and is_high_order_func (values_input : value list) : bool =
     List.exists
@@ -1293,32 +1297,52 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     (* Invoke the function *)
     invoke_func_with_values ctx id targs values_input
 
-  and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value backtrack =
+  and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
     (* Find the function *)
     let cursor, func = Ctx.find_func ctx id in
     let anon = cursor = Ctx.Local in
     (* Invoke the function *)
-    let result =
+    let invoke_func_with_values' () =
       match func with
       | Func.Extern (tparams, _, typ) ->
-          invoke_extern_func ~anon ctx id tparams targs values_input typ
+          invoke_extern_func ctx id tparams targs values_input typ
       | Func.Builtin (tparams, _, typ) ->
-          invoke_builtin_func ~anon ctx id tparams targs values_input typ
+          invoke_builtin_func ctx id tparams targs values_input typ
       | Func.Table (_, _, tablerows) ->
-          invoke_table_func ~anon ctx id tablerows values_input
+          invoke_table_func ctx id tablerows values_input
       | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
-          invoke_defined_func ~anon ctx id tparams clauses elseclause_opt targs
+          invoke_defined_func ctx id tparams clauses elseclause_opt targs
             values_input
+    in
+    let result =
+      if
+        Hook.is_cache_on () && (not anon)
+        && (not (is_extern_func func))
+        && not (is_high_order_func values_input)
+      then (
+        let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
+        match cache_result with
+        | Some value_output -> Ok value_output
+        | None ->
+            let builtin_ctr_before = !Builtin.Fresh.ctr in
+            let* value_output = invoke_func_with_values' () in
+            let builtin_ctr_after = !Builtin.Fresh.ctr in
+            (* Cache if the function does not create a side-effect *)
+            if builtin_ctr_after = builtin_ctr_before then
+              Cache.Cache.add !func_cache (id.it, values_input) value_output;
+            Ok value_output)
+      else (
+        if not internal then check_func_inputs ctx id targs values_input;
+        invoke_func_with_values' ())
     in
     Hook.on_func_exit id;
     result
 
-  and invoke_extern_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (targs : targ list) (values_input : value list)
-      (typ_output : typ) : value backtrack =
-    anon |> ignore;
+  and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (targs : targ list) (values_input : value list) (typ_output : typ) :
+      value backtrack =
     let* value_output =
       match id.it with
       | "init_objectState" ->
@@ -1333,37 +1357,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     check_func_output ctx id tparams typ_output targs value_output;
     Ok value_output
 
-  and invoke_builtin_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (targs : targ list) (values_input : value list)
-      (typ_output : typ) : value backtrack =
-    (* Invoke builtin function *)
-    let invoke_func_builtin' () =
-      try
-        let value_output =
-          Builtin.Call.invoke (fun _ -> ()) id targs values_input
-        in
-        check_func_output ctx id tparams typ_output targs value_output;
-        Ok value_output
-      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
-    in
-    if
-      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
-      && not (is_high_order_func values_input)
-    then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> Ok value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let* value_output = invoke_func_builtin' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the function does not create a side-effect *)
-          if builtin_ctr_after = builtin_ctr_before then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          Ok value_output)
-    else
-      let* value_output = invoke_func_builtin' () in
+  and invoke_builtin_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (targs : targ list) (values_input : value list) (typ_output : typ) :
+      value backtrack =
+    try
+      let value_output =
+        Builtin.Call.invoke (fun _ -> ()) id targs values_input
+      in
+      check_func_output ctx id tparams typ_output targs value_output;
       Ok value_output
+    with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
 
   and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (tablerow : tablerow) (values_input : value list) :
@@ -1375,47 +1378,31 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx = assign_args ctx_caller ctx_callee args_input values_input in
     (ctx, args_input, prems, exp_output)
 
-  and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tablerows : tablerow list) (values_input : value list) : value backtrack
-      =
-    let backtrack_tablerows () =
-      let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
-          (exp_output : exp) : value backtrack =
-        let* ctx_local = eval_prems ctx_local prems in
-        let* value_output = eval_exp ctx_local exp_output in
-        Ok value_output
-      in
-      tablerows
-      |> List.mapi (fun _idx_row tablerow ->
-             let backtrack_tablerow () : value backtrack =
-               (* Create a subtrace for the table row *)
-               let ctx_local = Ctx.localize ctx in
-               (* Try to match the table row *)
-               let ctx_local, args_input, prems, exp_output =
-                 match_tablerow ctx ctx_local tablerow values_input
-               in
-               (* Try evaluating the row *)
-               backtrack_tablerow' ctx_local prems exp_output
-               |> back_nest id.at
-                    (F.asprintf "application of table row %s%s failed" id.it
-                       (Il.Print.string_of_args args_input))
-             in
-             backtrack_tablerow)
-      |> choose_sequential
+  and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
+      (values_input : value list) : value backtrack =
+    let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
+        (exp_output : exp) : value backtrack =
+      let* ctx_local = eval_prems ctx_local prems in
+      let* value_output = eval_exp ctx_local exp_output in
+      Ok value_output
     in
-    if Hook.is_cache_on () && Cache.is_cached_func id.it && not anon then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> Ok value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let* value_output = backtrack_tablerows () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the function does not create a side-effect *)
-          if builtin_ctr_after = builtin_ctr_before then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          Ok value_output)
-    else backtrack_tablerows ()
+    tablerows
+    |> List.mapi (fun _idx_row tablerow ->
+           let backtrack_tablerow () : value backtrack =
+             (* Create a subtrace for the table row *)
+             let ctx_local = Ctx.localize ctx in
+             (* Try to match the table row *)
+             let ctx_local, args_input, prems, exp_output =
+               match_tablerow ctx ctx_local tablerow values_input
+             in
+             (* Try evaluating the row *)
+             backtrack_tablerow' ctx_local prems exp_output
+             |> back_nest id.at
+                  (F.asprintf "application of table row %s%s failed" id.it
+                     (Il.Print.string_of_args args_input))
+           in
+           backtrack_tablerow)
+    |> choose_sequential
 
   and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
       (values_input : value list) : Ctx.t * arg list * prem list * exp =
@@ -1426,10 +1413,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx = assign_args ctx_caller ctx_callee args_input values_input in
     (ctx, args_input, prems, exp_output)
 
-  and invoke_defined_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (clauses : clause list)
-      (elseclause_opt : elseclause option) (targs : targ list)
-      (values_input : value list) : value backtrack =
+  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (clauses : clause list) (elseclause_opt : elseclause option)
+      (targs : targ list) (values_input : value list) : value backtrack =
     (* Backtrack a clause *)
     let do_backtrack_clause_inner (ctx : Ctx.t) (_idx_clause : int)
         (clause : clause) : unit -> value backtrack =
@@ -1467,47 +1453,26 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
                  (let args_input, _, _ = clause.it in
                   args_input)))
     in
-    (* Backtrack a function *)
-    let backtrack_func (ctx : Ctx.t) =
-      let idxs_clause = clauses |> List.mapi (fun idx _ -> idx) in
-      let backtracks_clause =
-        clauses
-        |> List.mapi (fun idx clause -> do_backtrack_clause ctx idx clause)
-      in
-      let backtrack_det =
-        if !Ctx.is_det then
-          backtracks_clause |> choose_deterministic idxs_clause
-        else backtracks_clause |> choose_sequential |> as_det
-      in
-      match backtrack_det with
-      | Ok_det value_output -> Ok value_output
-      | Err_det failtraces -> Err failtraces
-      | Unmatch_det failtraces -> (
-          match elseclause_opt with
-          | Some elseclause -> do_backtrack_clause ctx (-1) elseclause ()
-          | None -> Unmatch failtraces)
-      | Nondet_det (idx_clause_a, idx_clause_b) ->
-          back_err id.at
-            (F.asprintf "non-deterministic application of function %s: %d, %d"
-               id.it idx_clause_a idx_clause_b)
+    let idxs_clause = clauses |> List.mapi (fun idx _ -> idx) in
+    let backtracks_clause =
+      clauses
+      |> List.mapi (fun idx clause -> do_backtrack_clause ctx idx clause)
     in
-    (* Start backtrack *)
-    if
-      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
-      && not (is_high_order_func values_input)
-    then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> Ok value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let* value_output = backtrack_func ctx in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the function does not create a side-effect *)
-          if builtin_ctr_after = builtin_ctr_before then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          Ok value_output)
-    else backtrack_func ctx
+    let backtrack_det =
+      if !Ctx.is_det then backtracks_clause |> choose_deterministic idxs_clause
+      else backtracks_clause |> choose_sequential |> as_det
+    in
+    match backtrack_det with
+    | Ok_det value_output -> Ok value_output
+    | Err_det failtraces -> Err failtraces
+    | Unmatch_det failtraces -> (
+        match elseclause_opt with
+        | Some elseclause -> do_backtrack_clause ctx (-1) elseclause ()
+        | None -> Unmatch failtraces)
+    | Nondet_det (idx_clause_a, idx_clause_b) ->
+        back_err id.at
+          (F.asprintf "non-deterministic application of function %s: %d, %d"
+             id.it idx_clause_a idx_clause_b)
 
   (* Entry points for evaluation *)
 
@@ -1519,19 +1484,19 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let do_eval_rel (relname : string) (values_input : value list) :
       value list backtrack =
     let ctx = Ctx.empty in
-    invoke_rel ctx (relname $ no_region) values_input
+    invoke_rel ~internal:false ctx (relname $ no_region) values_input
 
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value backtrack =
     let ctx = Ctx.empty in
-    invoke_func_with_values ctx (funcname $ no_region) targs values_input
+    invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
+      values_input
 
   let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Sim.program_result =
     clear ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      check_rel_inputs relname [ value_program ];
       let+ values_output = do_eval_rel relname [ value_program ] in
       (Sim.Pass values_output : Sim.program_result)
     with
@@ -1541,7 +1506,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
     clear ();
     try
-      check_rel_inputs relname values_input;
       let+ values_output = do_eval_rel relname values_input in
       (Sim.Pass values_output : Sim.rel_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)
@@ -1550,7 +1514,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (values_input : value list) : Sim.func_result =
     clear ();
     try
-      check_func_inputs funcname targs values_input;
       let+ value_output = do_eval_func funcname targs values_input in
       (Sim.Pass value_output : Sim.func_result)
     with Util.Error.InterpError (at, msg) -> Sim.Fail (at, msg)

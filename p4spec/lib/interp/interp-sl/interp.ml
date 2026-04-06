@@ -28,17 +28,18 @@ let rel_cache = ref (Cache.Cache.create ~size:10000)
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Checkers *)
 
-  let check_rel_inputs (id_rel : string) (values_input : value list) : unit =
-    let ctx = Ctx.empty () in
-    let nottyp, inputs = Ctx.find_rel_signature ctx (id_rel $ no_region) in
+  let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
+      unit =
+    let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
     let _, typs = nottyp |> it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
          typs values_input)
-      no_region
-      (F.sprintf "relation input of %s does not match the expected type" id_rel)
+      id_rel.at
+      (F.sprintf "relation input of %s does not match the expected type"
+         id_rel.it)
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
@@ -57,16 +58,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (F.sprintf "relation output of %s does not match the expected type"
          id_rel.it)
 
-  let check_func_inputs (id_func : string) (targs : targ list)
+  let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
       (values_input : value list) : unit =
-    let ctx = Ctx.empty () in
-    let tparams, typs_params, _ =
-      Ctx.find_func_signature ctx (id_func $ no_region)
-    in
+    let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
     check
       (List.length targs = List.length tparams)
-      no_region
-      (F.sprintf "arity mismatch in type arguments of %s" id_func);
+      id_func.at
+      (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
     let tdenv_local =
       List.fold_left2
         (fun tdenv_local tparam targ ->
@@ -74,17 +72,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
-    let ctx_local =
-      Ctx.localize_func ctx (id_func $ no_region) values_input tdenv_local
-    in
+    let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
     check
       (Value.Match.subs
          (Ctx.find_typdef_opt ctx_local)
          (Ctx.find_func_signature ctx_local)
          typs_params values_input)
-      no_region
+      id_func.at
       (F.sprintf "function argument of %s does not match the parameter type"
-         id_func)
+         id_func.it)
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
@@ -1672,30 +1668,50 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Invoke a relation *)
 
-  and invoke_rel (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list =
+  and is_extern_rel (rel : Rel.t) : bool =
+    match rel with Rel.Extern _ -> true | Rel.Defined _ -> false
+
+  and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (values_input : value list) : value list =
     try
       Hook.on_rel_enter id values_input;
-      let values_output = invoke_rel' ctx id values_input in
+      let values_output = invoke_rel' ~internal ctx id values_input in
       Hook.on_rel_exit id;
       values_output
     with Backtrace backtrace ->
       Hook.on_rel_exit id;
       back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
 
-  and invoke_rel' (ctx : Ctx.t) (id : id) (values_input : value list) :
-      value list =
+  and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
+      (values_input : value list) : value list =
     let rel = Ctx.find_rel ctx id in
-    match rel with
-    | Rel.Extern (nottyp, inputs) ->
-        invoke_extern_rel ctx nottyp inputs id values_input
-    | Rel.Defined (_, exps_input, block, elseblock_opt) ->
-        invoke_defined_rel ctx id exps_input block elseblock_opt values_input
+    let invoke_rel'' () =
+      match rel with
+      | Rel.Extern (nottyp, inputs) ->
+          invoke_extern_rel ctx nottyp inputs id values_input
+      | Rel.Defined (_, exps_input, block, elseblock_opt) ->
+          invoke_defined_rel ctx id exps_input block elseblock_opt values_input
+    in
+    if Hook.is_cache_on () && not (is_extern_rel rel) then (
+      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
+      match cache_result with
+      | Some values_output -> values_output
+      | None ->
+          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let values_output = invoke_rel'' () in
+          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          (* Cache if the relation does not create a side-effect *)
+          if builtin_ctr_before = builtin_ctr_after then
+            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+          values_output)
+    else (
+      if not internal then check_rel_inputs ctx id values_input;
+      invoke_rel'' ())
 
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
-    let invoke_extern_rel' () : value list =
-      let values_output =
+    let values_output =
+      try
         match id.it with
         | "ExternFunctionCall_eval_lctk" ->
             Arch.eval_extern_func_lctk_call values_input
@@ -1703,58 +1719,44 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
         | _ ->
             back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
-      in
-      check_rel_outputs ctx id nottyp inputs values_output;
-      List.iteri
-        (fun idx_arg value_input ->
-          List.iter
-            (fun value_output ->
-              Hook.on_value_dependency value_output value_input
-                (Dep.Edges.Rel (id, idx_arg)))
-            values_output)
-        values_input;
-      values_output
+      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
     in
-    try invoke_extern_rel' ()
-    with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+    check_rel_outputs ctx id nottyp inputs values_output;
+    List.iteri
+      (fun idx_arg value_input ->
+        List.iter
+          (fun value_output ->
+            Hook.on_value_dependency value_output value_input
+              (Dep.Edges.Rel (id, idx_arg)))
+          values_output)
+      values_input;
+    values_output
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (block : block) (elseblock_opt : elseblock option)
       (values_input : value list) : value list =
-    let invoke_defined_rel' () =
-      let ctx_local = Ctx.localize_rule ctx id values_input in
-      let ctx_local = assign_exps ctx_local exps_input values_input in
-      let flow = eval_block ctx_local block in
-      let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
-      match flow with
-      | Res values_output ->
-          List.iteri
-            (fun idx_arg value_input ->
-              List.iter
-                (fun value_output ->
-                  Hook.on_value_dependency value_output value_input
-                    (Dep.Edges.Rel (id, idx_arg)))
-                values_output)
-            values_input;
-          values_output
-      | Ret _ -> back_err id.at "relation cannot return a value"
-      | Cont traces -> Unmatch traces |> back
-    in
-    if Hook.is_cache_on () && Cache.is_cached_rel id.it then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
-      match cache_result with
-      | Some values_output -> values_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let values_output = invoke_defined_rel' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the relation does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-          values_output)
-    else invoke_defined_rel' ()
+    let ctx_local = Ctx.localize_rule ctx id values_input in
+    let ctx_local = assign_exps ctx_local exps_input values_input in
+    let flow = eval_block ctx_local block in
+    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    match flow with
+    | Res values_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            List.iter
+              (fun value_output ->
+                Hook.on_value_dependency value_output value_input
+                  (Dep.Edges.Rel (id, idx_arg)))
+              values_output)
+          values_input;
+        values_output
+    | Ret _ -> back_err id.at "relation cannot return a value"
+    | Cont traces -> Unmatch traces |> back
 
   (* Invoke a function *)
+
+  and is_extern_func (func : Func.t) : bool =
+    match func with Func.Extern _ -> true | _ -> false
 
   and is_high_order_func (values_input : value list) : bool =
     List.exists
@@ -1787,23 +1789,46 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let values_input = eval_args ctx args in
     invoke_func_with_values ctx id targs values_input
 
-  and invoke_func_with_values (ctx : Ctx.t) (id : id) (targs : targ list)
-      (values_input : value list) : value =
+  and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (targs : targ list) (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
       let cursor, func = Ctx.find_func ctx id in
       let anon = cursor = Ctx.Local in
-      let value_output =
+      let invoke_func_with_values' () =
         match func with
         | Func.Extern (tparams, _, typ) ->
-            invoke_extern_func ~anon ctx id tparams targs values_input typ
+            invoke_extern_func ctx id tparams targs values_input typ
         | Func.Builtin (tparams, _, typ) ->
-            invoke_builtin_func ~anon ctx id tparams targs values_input typ
+            invoke_builtin_func ctx id tparams targs values_input typ
         | Func.Table (params, _, tablerows) ->
-            invoke_table_func ~anon ctx id params tablerows values_input
+            invoke_table_func ctx id params tablerows values_input
         | Func.Defined (tparams, params, _, block, elseblock_opt) ->
-            invoke_defined_func ~anon ctx id tparams params block elseblock_opt
-              targs values_input
+            invoke_defined_func ctx id tparams params block elseblock_opt targs
+              values_input
+      in
+      let value_output =
+        if
+          Hook.is_cache_on () && (not anon)
+          && (not (is_extern_func func))
+          && not (is_high_order_func values_input)
+        then (
+          let cache_result =
+            Cache.Cache.find !func_cache (id.it, values_input)
+          in
+          match cache_result with
+          | Some value_output -> value_output
+          | None ->
+              let builtin_ctr_before = !Builtin.Fresh.ctr in
+              let value_output = invoke_func_with_values' () in
+              let builtin_ctr_after = !Builtin.Fresh.ctr in
+              (* Cache if the builtin function does not create a side-effect *)
+              if builtin_ctr_before = builtin_ctr_after then
+                Cache.Cache.add !func_cache (id.it, values_input) value_output;
+              value_output)
+        else (
+          if not internal then check_func_inputs ctx id targs values_input;
+          invoke_func_with_values' ())
       in
       Hook.on_func_exit id;
       value_output
@@ -1811,102 +1836,63 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Hook.on_func_exit id;
       back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
 
-  and invoke_extern_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (targs : targ list) (values_input : value list)
-      (typ_output : typ) : value =
-    anon |> ignore;
-    let invoke_extern_func' (id : id) (_targs : targ list)
-        (values_input : value list) : value =
-      let value_output =
+  and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (targs : targ list) (values_input : value list) (typ_output : typ) : value
+      =
+    let value_output =
+      try
         match id.it with
         | "init_objectState" -> Arch.eval_extern_init values_input
         | "init_archState" -> Arch.init_arch_state
         | _ ->
             back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
-      in
-      check_func_output ctx id tparams typ_output targs value_output;
-      List.iteri
-        (fun idx_arg value_input ->
-          Hook.on_value_dependency value_output value_input
-            (Dep.Edges.Func (id, idx_arg)))
-        values_input;
-      value_output
+      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
     in
-    try invoke_extern_func' id targs values_input
-    with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+    check_func_output ctx id tparams typ_output targs value_output;
+    List.iteri
+      (fun idx_arg value_input ->
+        Hook.on_value_dependency value_output value_input
+          (Dep.Edges.Func (id, idx_arg)))
+      values_input;
+    value_output
 
-  and invoke_builtin_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (targs : targ list) (values_input : value list)
-      (typ_output : typ) : value =
-    let invoke_builtin_func' () =
-      let value_output =
-        try
-          Builtin.Call.invoke
-            (fun value -> Hook.on_value value)
-            id targs values_input
-        with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
-      in
-      check_func_output ctx id tparams typ_output targs value_output;
-      List.iteri
-        (fun idx_arg value_input ->
-          Hook.on_value_dependency value_output value_input
-            (Dep.Edges.Func (id, idx_arg)))
-        values_input;
-      value_output
+  and invoke_builtin_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (targs : targ list) (values_input : value list) (typ_output : typ) : value
+      =
+    let value_output =
+      try
+        Builtin.Call.invoke
+          (fun value -> Hook.on_value value)
+          id targs values_input
+      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
-    if
-      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
-      && not (is_high_order_func values_input)
-    then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let value_output = invoke_builtin_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the builtin function does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          value_output)
-    else invoke_builtin_func' ()
+    check_func_output ctx id tparams typ_output targs value_output;
+    List.iteri
+      (fun idx_arg value_input ->
+        Hook.on_value_dependency value_output value_input
+          (Dep.Edges.Func (id, idx_arg)))
+      values_input;
+    value_output
 
-  and invoke_table_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (params : param list) (tablerows : tablerow list)
-      (values_input : value list) : value =
-    let invoke_table_func' () =
-      let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
-      let ctx_local = assign_params ctx ctx_local params values_input in
-      let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-      let flow = eval_block_sequential ctx_local instrs in
-      match flow with
-      | Ret value_output ->
-          List.iteri
-            (fun idx_arg value_input ->
-              Hook.on_value_dependency value_output value_input
-                (Dep.Edges.Func (id, idx_arg)))
-            values_input;
-          value_output
-      | _ -> back_err id.at "table did not return a value"
-    in
-    if Hook.is_cache_on () && Cache.is_cached_func id.it && not anon then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let value_output = invoke_table_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the table function does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          value_output)
-    else invoke_table_func' ()
+  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
+      (tablerows : tablerow list) (values_input : value list) : value =
+    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
+    let ctx_local = assign_params ctx ctx_local params values_input in
+    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
+    let flow = eval_block_sequential ctx_local instrs in
+    match flow with
+    | Ret value_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            Hook.on_value_dependency value_output value_input
+              (Dep.Edges.Func (id, idx_arg)))
+          values_input;
+        value_output
+    | _ -> back_err id.at "table did not return a value"
 
-  and invoke_defined_func ~(anon : bool) (ctx : Ctx.t) (id : id)
-      (tparams : tparam list) (params : param list) (block : block)
-      (elseblock_opt : elseblock option) (targs : targ list)
-      (values_input : value list) : value =
+  and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
+      (params : param list) (block : block) (elseblock_opt : elseblock option)
+      (targs : targ list) (values_input : value list) : value =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1918,37 +1904,19 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
-    let invoke_defined_func' () =
-      let ctx_local = assign_params ctx ctx_local params values_input in
-      let flow = eval_block ctx_local block in
-      let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
-      match flow with
-      | Ret value_output ->
-          List.iteri
-            (fun idx_arg value_input ->
-              Hook.on_value_dependency value_output value_input
-                (Dep.Edges.Func (id, idx_arg)))
-            values_input;
-          value_output
-      | Res _ -> back_err id.at "relation cannot return a value"
-      | Cont traces -> Unmatch traces |> back
-    in
-    if
-      Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
-      && not (is_high_order_func values_input)
-    then (
-      let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
-      match cache_result with
-      | Some value_output -> value_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let value_output = invoke_defined_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the function does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !func_cache (id.it, values_input) value_output;
-          value_output)
-    else invoke_defined_func' ()
+    let ctx_local = assign_params ctx ctx_local params values_input in
+    let flow = eval_block ctx_local block in
+    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    match flow with
+    | Ret value_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            Hook.on_value_dependency value_output value_input
+              (Dep.Edges.Func (id, idx_arg)))
+          values_input;
+        value_output
+    | Res _ -> back_err id.at "relation cannot return a value"
+    | Cont traces -> Unmatch traces |> back
 
   (* Entry points for evaluation *)
 
@@ -1960,7 +1928,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
       let ctx = Ctx.empty () in
-      let values_ouput = invoke_rel ctx (relname $ no_region) values_input in
+      let values_ouput =
+        invoke_rel ~internal:false ctx (relname $ no_region) values_input
+      in
       values_ouput
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
@@ -1972,7 +1942,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let ctx = Ctx.empty () in
       let value_output =
-        invoke_func_with_values ctx (funcname $ no_region) targs values_input
+        invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
+          values_input
       in
       value_output
     with Backtrace backtrace ->
@@ -1985,7 +1956,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     clear ();
     try
       let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      check_rel_inputs relname [ value_program ];
       Hook.on_program value_program;
       let values_output = do_eval_rel relname [ value_program ] in
       Sim.Pass values_output
@@ -1997,7 +1967,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
     clear ();
     try
-      check_rel_inputs relname values_input;
       let values_output = do_eval_rel relname values_input in
       Sim.Pass values_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
@@ -2007,7 +1976,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : Sim.func_result =
     clear ();
     try
-      check_func_inputs funcname targs values_input;
       let value_output = do_eval_func funcname targs values_input in
       Sim.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
