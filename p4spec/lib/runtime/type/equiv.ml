@@ -9,10 +9,10 @@ open Util.Source
 
 (* Type equivalence and subtyping *)
 
-let rec equiv_typ (find_typedef_opt : TId.t -> Typdef.t option) (typ_a : typ)
+let rec equiv_typ (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
     (typ_b : typ) : bool =
-  let typ_a = Expand.expand_typ find_typedef_opt typ_a in
-  let typ_b = Expand.expand_typ find_typedef_opt typ_b in
+  let typ_a = Expand.expand_typ find_typdef_opt typ_a in
+  let typ_b = Expand.expand_typ find_typdef_opt typ_b in
   match (typ_a.it, typ_b.it) with
   | BoolT, BoolT -> true
   | NumT numtyp_a, NumT numtyp_b -> Num.equiv numtyp_a numtyp_b
@@ -20,23 +20,23 @@ let rec equiv_typ (find_typedef_opt : TId.t -> Typdef.t option) (typ_a : typ)
   | VarT (tid_a, targs_a), VarT (tid_b, targs_b) ->
       tid_a.it = tid_b.it
       && List.length targs_a = List.length targs_b
-      && List.for_all2 (equiv_typ find_typedef_opt) targs_a targs_b
+      && List.for_all2 (equiv_typ find_typdef_opt) targs_a targs_b
   | TupleT typs_a, TupleT typs_b ->
       List.length typs_a = List.length typs_b
-      && List.for_all2 (equiv_typ find_typedef_opt) typs_a typs_b
+      && List.for_all2 (equiv_typ find_typdef_opt) typs_a typs_b
   | IterT (typ_a, iter_a), IterT (typ_b, iter_b) ->
-      equiv_typ find_typedef_opt typ_a typ_b && iter_a = iter_b
+      equiv_typ find_typdef_opt typ_a typ_b && iter_a = iter_b
   | _ -> false
 
-and equiv_nottyp (find_typedef_opt : TId.t -> Typdef.t option)
+and equiv_nottyp (find_typdef_opt : TId.t -> Typdef.t option)
     (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
   let mixop_a, typs_a = nottyp_a.it in
   let mixop_b, typs_b = nottyp_b.it in
   Mixop.eq mixop_a mixop_b
   && List.length typs_a = List.length typs_b
-  && List.for_all2 (equiv_typ find_typedef_opt) typs_a typs_b
+  && List.for_all2 (equiv_typ find_typdef_opt) typs_a typs_b
 
-and equiv_functyp (find_typedef_opt : TId.t -> Typdef.t option) (at : region)
+and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
     (tparams_a : tparam list) (typs_params_a : typ list) (typ_a : typ)
     (tparams_b : tparam list) (typs_params_b : typ list) (typ_b : typ) : bool =
   check
@@ -56,9 +56,8 @@ and equiv_functyp (find_typedef_opt : TId.t -> Typdef.t option) (at : region)
       (TIdSet.empty, TIdMap.empty, TIdMap.empty)
       tparams_a tparams_b
   in
-  let find_typedef_opt tid =
-    if TIdSet.mem tid tids_fresh then Some Typdef.Param
-    else find_typedef_opt tid
+  let find_typdef_opt tid =
+    if TIdSet.mem tid tids_fresh then Some Typdef.Param else find_typdef_opt tid
   in
   check
     (List.length typs_params_a = List.length typs_params_b)
@@ -67,5 +66,5 @@ and equiv_functyp (find_typedef_opt : TId.t -> Typdef.t option) (at : region)
   let typs_params_b = Subst.subst_typs theta_b typs_params_b in
   let typ_a = Subst.subst_typ theta_a typ_a in
   let typ_b = Subst.subst_typ theta_b typ_b in
-  List.for_all2 (equiv_typ find_typedef_opt) typs_params_a typs_params_b
-  && equiv_typ find_typedef_opt typ_a typ_b
+  List.for_all2 (equiv_typ find_typdef_opt) typs_params_a typs_params_b
+  && equiv_typ find_typdef_opt typ_a typ_b
