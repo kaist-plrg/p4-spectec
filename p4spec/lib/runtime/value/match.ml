@@ -8,8 +8,8 @@ open Util.Source
 
 (* Whether a value belongs to a type (including subtyping) *)
 
-let rec sub (type_finder : TId.t -> Type.Typdef.t option)
-    (func_finder : FId.t -> tparam list * typ list * typ) (typ : typ)
+let rec sub (find_typdef_opt : TId.t -> Type.Typdef.t option)
+    (find_func : FId.t -> tparam list * typ list * typ) (typ : typ)
     (value : value) : bool =
   match typ.it with
   | BoolT -> ( match value.it with BoolV _ -> true | _ -> false)
@@ -21,7 +21,7 @@ let rec sub (type_finder : TId.t -> Type.Typdef.t option)
   | NumT `IntT -> ( match value.it with NumV _ -> true | _ -> false)
   | TextT -> ( match value.it with TextV _ -> true | _ -> false)
   | VarT (tid, targs) -> (
-      let td = type_finder tid |> Option.get in
+      let td = find_typdef_opt tid |> Option.get in
       match td with
       | Param | Defining _ -> error typ.at "unexpected type variable"
       | Extern -> ( match value.it with ExternV _ -> true | _ -> false)
@@ -30,7 +30,7 @@ let rec sub (type_finder : TId.t -> Type.Typdef.t option)
           match (deftyp.it, value.it) with
           | PlainT typ, _ ->
               let typ = Type.Subst.subst_typ theta typ in
-              sub type_finder func_finder typ value
+              sub find_typdef_opt find_func typ value
           | StructT typfields, StructV valuefields
             when List.length typfields = List.length valuefields ->
               List.for_all2
@@ -38,7 +38,7 @@ let rec sub (type_finder : TId.t -> Type.Typdef.t option)
                   Atom.eq atom_t.it atom_v.it
                   &&
                   let typ = Type.Subst.subst_typ theta typ in
-                  sub type_finder func_finder typ value)
+                  sub find_typdef_opt find_func typ value)
                 typfields valuefields
           | VariantT typcases, CaseV (mixop_v, values_inner) ->
               List.exists
@@ -50,38 +50,38 @@ let rec sub (type_finder : TId.t -> Type.Typdef.t option)
                   let typs_inner =
                     List.map (Type.Subst.subst_typ theta) typs_inner
                   in
-                  subs type_finder func_finder typs_inner values_inner)
+                  subs find_typdef_opt find_func typs_inner values_inner)
                 typcases
           | _ -> false))
   | TupleT typs -> (
       match value.it with
       | TupleV values ->
           List.length typs = List.length values
-          && List.for_all2 (sub type_finder func_finder) typs values
+          && List.for_all2 (sub find_typdef_opt find_func) typs values
       | _ -> false)
   | IterT (typ_inner, Opt) -> (
       match value.it with
       | OptV value_opt -> (
           match value_opt with
           | Some value_inner ->
-              sub type_finder func_finder typ_inner value_inner
+              sub find_typdef_opt find_func typ_inner value_inner
           | None -> true)
       | _ -> true)
   | IterT (typ_inner, List) -> (
       match value.it with
       | ListV values ->
-          List.for_all (sub type_finder func_finder typ_inner) values
+          List.for_all (sub find_typdef_opt find_func typ_inner) values
       | _ -> false)
   | FuncT (tparams_t, typs_params_t, typ_ret_t) -> (
       match value.it with
       | FuncV fid ->
-          let tparams_v, typs_params_v, typ_ret_v = func_finder fid in
-          Equiv.equiv_functyp type_finder typ.at tparams_t typs_params_t
+          let tparams_v, typs_params_v, typ_ret_v = find_func fid in
+          Equiv.equiv_functyp find_typdef_opt typ.at tparams_t typs_params_t
             typ_ret_t tparams_v typs_params_v typ_ret_v
       | _ -> false)
 
-and subs (type_finder : TId.t -> Type.Typdef.t option)
-    (func_finder : FId.t -> tparam list * typ list * typ) (typs : typ list)
+and subs (find_typdef_opt : TId.t -> Type.Typdef.t option)
+    (find_func : FId.t -> tparam list * typ list * typ) (typs : typ list)
     (values : value list) : bool =
   List.length typs = List.length values
-  && List.for_all2 (sub type_finder func_finder) typs values
+  && List.for_all2 (sub find_typdef_opt find_func) typs values

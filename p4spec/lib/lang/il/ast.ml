@@ -47,7 +47,7 @@ and typ' =
   | VarT of id * targ list                (* id (`<` list(targ, `,`) `>`)? *)
   | TupleT of typ list                    (* `(` list(typ, `,`) `)` *)
   | IterT of typ * iter                   (* typ iter *)
-  | FuncT of tparam list * typ list * typ (* `func` *)
+  | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
 and nottyp = nottyp' phrase

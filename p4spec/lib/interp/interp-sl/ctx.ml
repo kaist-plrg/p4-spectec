@@ -200,6 +200,15 @@ let find_rel (ctx : t) (rid : RId.t) : Rel.t =
   | Some rel -> rel
   | None -> back_undef rid.at "relation" rid.it
 
+let find_rel_signature_opt (ctx : t) (rid : RId.t) :
+    (nottyp * Hints.Input.t) option =
+  find_rel_opt ctx rid |> Option.map Rel.get_signature
+
+let find_rel_signature (ctx : t) (rid : RId.t) : nottyp * Hints.Input.t =
+  match find_rel_signature_opt ctx rid with
+  | Some (nottyp, inputs) -> (nottyp, inputs)
+  | None -> back_undef rid.at "relation" rid.it
+
 let bound_rel (ctx : t) (rid : RId.t) : bool =
   find_rel_opt ctx rid |> Option.is_some
 

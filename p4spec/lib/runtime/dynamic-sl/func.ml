@@ -15,9 +15,12 @@ let to_string = function
   | Table _ -> "table function"
   | Defined _ -> "defined function"
 
-let get_signature = function
-  | Extern (tparams, params, typ) -> (tparams, Typ.typs_of_params params, typ)
-  | Builtin (tparams, params, typ) -> (tparams, Typ.typs_of_params params, typ)
-  | Table (params, typ, _) -> ([], Typ.typs_of_params params, typ)
+let get_signature (func : t) : tparam list * typ list * typ =
+  match func with
+  | Extern (tparams, params, typ) ->
+      (tparams, Type.Typ.Make.of_params_sl params, typ)
+  | Builtin (tparams, params, typ) ->
+      (tparams, Type.Typ.Make.of_params_sl params, typ)
+  | Table (params, typ, _) -> ([], Type.Typ.Make.of_params_sl params, typ)
   | Defined (tparams, params, typ, _, _) ->
-      (tparams, Typ.typs_of_params params, typ)
+      (tparams, Type.Typ.Make.of_params_sl params, typ)

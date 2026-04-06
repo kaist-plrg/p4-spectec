@@ -17,7 +17,8 @@ let rec struct_param (frees : IdSet.t) (param : param) : IdSet.t * Sl.param =
       let param = Sl.ExpP (typ, exp_input) $ at in
       (frees, param)
   | DefP (id_def, tparams, params, typ) ->
-      let param = Sl.DefP (id_def, tparams, struct_params params, typ) $ at in
+      let params = struct_params params in
+      let param = Sl.DefP (id_def, tparams, params, typ) $ at in
       (frees, param)
 
 and struct_params (params : param list) : Sl.param list =

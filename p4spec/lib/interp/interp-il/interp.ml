@@ -23,6 +23,76 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
+  (* Checkers *)
+
+  let check_rel_inputs (id_rel : string) (values_input : value list) : unit =
+    let ctx = Ctx.empty in
+    let nottyp, inputs = Ctx.find_rel_signature ctx (id_rel $ no_region) in
+    let _, typs = nottyp |> it in
+    let typs = List.map (fun i -> List.nth typs i) inputs in
+    check
+      (Value.Match.subs (Ctx.find_typdef_opt ctx)
+         (Ctx.find_func_signature ctx)
+         typs values_input)
+      no_region
+      (F.sprintf "relation input of %s does not match the expected type" id_rel)
+
+  let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
+      (inputs : Hints.Input.t) (values_output : value list) : unit =
+    let _, typs = nottyp |> it in
+    let typs =
+      typs
+      |> List.mapi (fun idx typ ->
+             if List.mem idx inputs then None else Some typ)
+      |> List.filter_map Fun.id
+    in
+    check
+      (Value.Match.subs (Ctx.find_typdef_opt ctx)
+         (Ctx.find_func_signature ctx)
+         typs values_output)
+      id_rel.at
+      (F.sprintf "relation output of %s does not match the expected type"
+         id_rel.it)
+
+  let check_func_inputs (id_func : string) (targs : targ list)
+      (values_input : value list) : unit =
+    let ctx = Ctx.empty in
+    let tparams, typs_params, _ =
+      Ctx.find_func_signature ctx (id_func $ no_region)
+    in
+    let ctx_local = Ctx.localize ctx in
+    check
+      (List.length targs = List.length tparams)
+      no_region
+      (F.sprintf "arity mismatch in type arguments of %s" id_func);
+    let ctx_local =
+      List.fold_left2
+        (fun ctx_local tparam targ ->
+          let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
+          Ctx.add_typdef ctx_local tparam td)
+        ctx_local tparams targs
+    in
+    check
+      (Value.Match.subs
+         (Ctx.find_typdef_opt ctx_local)
+         (Ctx.find_func_signature ctx_local)
+         typs_params values_input)
+      no_region
+      (F.sprintf "function argument of %s does not match the parameter type"
+         id_func)
+
+  let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
+      (typ_output : typ) (targs : targ list) (value_output : value) : unit =
+    let theta = List.combine tparams targs |> TIdMap.of_list in
+    let typ_output = Type.Subst.subst_typ theta typ_output in
+    check
+      (Value.Match.sub (Ctx.find_typdef_opt ctx)
+         (Ctx.find_func_signature ctx)
+         typ_output value_output)
+      id_func.at
+      (F.sprintf "return value of function %s does not match the expected type"
+         id_func.it)
+
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -850,9 +920,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
-        let _, func = Ctx.find_func ctx id in
-        let tparams, typs_params, typ = Func.get_signature func in
-        let value_res = Value.Make.func id tparams typs_params typ in
+        let tparams, typs, typ = Ctx.find_func_signature ctx id in
+        let value_res = Value.Make.func id tparams typs typ in
         Ok value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =
@@ -1071,23 +1140,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       value list backtrack =
     let rel = Ctx.find_rel ctx id in
     match rel with
-    | Rel.Extern _ -> invoke_extern_rel id values_input
+    | Rel.Extern (nottyp, inputs) ->
+        invoke_extern_rel ctx id nottyp inputs values_input
     | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
         invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
 
-  and invoke_extern_rel (id : id) (values_input : value list) :
+  and invoke_extern_rel (ctx : Ctx.t) (id : id) (nottyp : nottyp)
+      (inputs : Hints.Input.t) (values_input : value list) :
       value list backtrack =
-    match id.it with
-    | "ExternFunctionCall_eval_lctk" ->
-        let values_output = Arch.eval_extern_func_lctk_call values_input in
-        Ok values_output
-    | "ExternFunctionCall_eval" ->
-        let values_output = Arch.eval_extern_func_call values_input in
-        Ok values_output
-    | "ExternMethodCall_eval" ->
-        let values_output = Arch.eval_extern_method_call values_input in
-        Ok values_output
-    | _ -> back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    let* values_ouptut =
+      match id.it with
+      | "ExternFunctionCall_eval_lctk" ->
+          let values_output = Arch.eval_extern_func_lctk_call values_input in
+          Ok values_output
+      | "ExternFunctionCall_eval" ->
+          let values_output = Arch.eval_extern_func_call values_input in
+          Ok values_output
+      | "ExternMethodCall_eval" ->
+          let values_output = Arch.eval_extern_method_call values_input in
+          Ok values_output
+      | _ ->
+          back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    in
+    check_rel_outputs ctx id nottyp inputs values_ouptut;
+    Ok values_ouptut
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
       (elsegroup_opt : elsegroup option) (values_input : value list) :
@@ -1254,15 +1330,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       | _ ->
           back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
     in
-    let theta = List.combine tparams targs |> TIdMap.of_list in
-    let typ_output = Type.Subst.subst_typ theta typ_output in
-    check
-      (Value.Match.sub (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typ_output value_output)
-      id.at
-      (F.sprintf "output of extern function %s does not match the expected type"
-         id.it);
+    check_func_output ctx id tparams typ_output targs value_output;
     Ok value_output
 
   and invoke_builtin_func ~(anon : bool) (ctx : Ctx.t) (id : id)
@@ -1274,16 +1342,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         let value_output =
           Builtin.Call.invoke (fun _ -> ()) id targs values_input
         in
-        let theta = List.combine tparams targs |> TIdMap.of_list in
-        let typ_output = Type.Subst.subst_typ theta typ_output in
-        check
-          (Value.Match.sub (Ctx.find_typdef_opt ctx)
-             (Ctx.find_func_signature ctx)
-             typ_output value_output)
-          id.at
-          (F.sprintf
-             "output of builtin function %s does not match the expected type"
-             id.it);
+        check_func_output ctx id tparams typ_output targs value_output;
         Ok value_output
       with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
@@ -1456,42 +1515,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     Value.Fresh_.refresh ();
     Cache.Cache.reset !func_cache;
     Cache.Cache.reset !rel_cache
-
-  let check_rel_inputs (relname : string) (values_input : value list) : unit =
-    let ctx = Ctx.empty in
-    let id = relname $ no_region in
-    let nottyp, inputs = Ctx.find_rel ctx id |> Rel.get_signature in
-    let typs = snd nottyp.it in
-    let typs = List.map (fun i -> List.nth typs i) inputs in
-    check
-      (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typs values_input)
-      no_region "relation input does not match the expected type"
-
-  let check_func_inputs (funcname : string) (targs : targ list)
-      (values_input : value list) : unit =
-    let ctx = Ctx.empty in
-    let id = funcname $ no_region in
-    let _, func = Ctx.find_func ctx id in
-    let tparams, typs_params, _ = Func.get_signature func in
-    let ctx_local = Ctx.localize ctx in
-    check
-      (List.length targs = List.length tparams)
-      id.at "arity mismatch in type arguments";
-    let ctx_local =
-      List.fold_left2
-        (fun ctx_local tparam targ ->
-          let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
-          Ctx.add_typdef ctx_local tparam td)
-        ctx_local tparams targs
-    in
-    check
-      (Value.Match.subs
-         (Ctx.find_typdef_opt ctx_local)
-         (Ctx.find_func_signature ctx_local)
-         typs_params values_input)
-      no_region "function argument does not match the parameter type"
 
   let do_eval_rel (relname : string) (values_input : value list) :
       value list backtrack =
