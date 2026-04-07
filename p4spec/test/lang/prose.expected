@@ -60,6 +60,7 @@ xref:replace_text'[$replace_text'(n~len~, n~len'~, t, t~old~, t~new~)]
 . If ``n~len~`` is equal to ``n~len'~``:
  .. Return ``t``.
 . If ``n~len~`` is less than ``n~len'~``:
+ .. Check that ``n~len~`` is less than the length of ``t``.
  .. Let ``t~replaced~`` be <<ite,``t`` with ``[n~len~]`` set to ``t~new~`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t``>>.
  .. Return ``xref:replace_text'[$replace_text'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.
 
@@ -74,6 +75,7 @@ xref:replace_text_except'[$replace_text_except'(n~len~, n~len'~, t, t~old~, t~ne
 . If ``n~len~`` is equal to ``n~len'~``:
  .. Return ``t``.
 . If ``n~len~`` is less than ``n~len'~``:
+ .. Check that ``n~len~`` is less than the length of ``t``.
  .. Let ``t~replaced~`` be <<ite,``t`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t`` with ``[n~len~]`` set to ``t~new~``>>.
  .. Return ``xref:replace_text_except'[$replace_text_except'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.
 
@@ -130,6 +132,7 @@ xref:contains'[$contains'(n~len~, n~len'~, t, t~c~)]
 
 . If ``n~len~`` is equal to ``n~len'~``: return ``false``.
 . If ``n~len~`` is less than ``n~len'~``:
+ .. Check that ``n~len~`` is less than the length of ``t``.
  .. If ``t[n~len~]`` is equal to ``t~c~``: return ``true``.
  .. Else:
   ... Return ``xref:contains'[$contains'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t,`` ``t~c~)]``.
@@ -2278,6 +2281,7 @@ xref:specialize_callableTypeDefIR[``callableTypeDefIR~base~`` specialized by ``t
 --
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
+ .. Check that the length of ``typeArgumentIR~impl~^{asterisk}^`` is equal to the length of ``typeParameterIR~impl~^{asterisk}^``.
  .. Let ``theta`` be ``+{+`` ``(`` ``typeParameterIR~expl~`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``typeParameterIR~impl~`` ``+:+`` ``typeArgumentIR~impl~`` ``)^{asterisk}^`` ``+}+``.
  .. Let ``callableTypeIR~base~`` be xref:callableTypeIR_of_callableTypeDefIR[the underlying type of ``callableTypeDefIR~base~``].
  .. Let ``callableTypeIR~spec~`` be xref:subst_callableTypeIR[``callableTypeIR~base~`` substituted by ``theta``].
@@ -2291,6 +2295,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 --
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
+ .. Check that the length of ``typeArgumentIR~fresh~^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
  .. Let ``theta`` be ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR~fresh~`` ``)^{asterisk}^`` ``+}+``.
  .. Let ``callableTypeIR~base~`` be xref:callableTypeIR_of_callableTypeDefIR[the underlying type of ``callableTypeDefIR~base~``].
  .. Let ``callableTypeIR~spec~`` be xref:subst_callableTypeIR[``callableTypeIR~base~`` substituted by ``theta``].
@@ -2309,6 +2314,7 @@ xref:specialize_constructorTypeDefIR[``+CONSTRUCTOR+`` ``+<+`` ``typeParameterIR
 --
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
+ .. Check that the length of ``typeArgumentIR~impl~^{asterisk}^`` is equal to the length of ``typeParameterIR~impl~^{asterisk}^``.
  .. Let ``theta`` be ``+{+`` ``(`` ``typeParameterIR~expl~`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``{pp}`` ``(`` ``typeParameterIR~impl~`` ``+:+`` ``typeArgumentIR~impl~`` ``)^{asterisk}^`` ``+}+``.
  .. Let ``constructorTypeIR~spec~`` be xref:subst_constructorTypeIR[``+CONSTRUCTOR+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR`` substituted by ``theta``].
  .. Return ( ``constructorTypeIR~spec~``, ``typeId~fresh~^{asterisk}^`` ).
@@ -2321,6 +2327,7 @@ for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
 --
 +
 for each ``typeId~fresh~`` in ``typeId~fresh~^{asterisk}^``
+ .. Check that the length of ``typeArgumentIR~fresh~^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
  .. Let ``theta`` be ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR~fresh~`` ``)^{asterisk}^`` ``+}+``.
  .. Let ``constructorTypeIR~spec~`` be xref:subst_constructorTypeIR[``+CONSTRUCTOR+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR`` substituted by ``theta``].
  .. Return ( ``constructorTypeIR~spec~``, ``typeId~fresh~^{asterisk}^`` ).
@@ -2359,6 +2366,7 @@ xref:Type_alpha[``+LIST+`` ``+<+`` ``typeIR~a~`` ``+>+`` and ``+LIST+`` ``+<+`` 
 
 xref:Type_alpha[``+TUPLE+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` and ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` are the same type when]:
 
+. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
@@ -2369,16 +2377,19 @@ xref:Type_alpha[``+TUPLE+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` and ``+TUP
 
 xref:Type_alpha[``+STRUCT+`` ``typeId`` ``+<+`` ``typeArgumentIR~a~^{asterisk}^`` ``+>+`` ``+{+`` ``fieldTypeIR^{asterisk}^`` ``+}+`` and ``+STRUCT+`` ``typeId`` ``+<+`` ``typeArgumentIR~b~^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` are the same type when]:
 
+. Check that the length of ``typeArgumentIR~a~^{asterisk}^`` is equal to the length of ``typeArgumentIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type], for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
 xref:Type_alpha[``+HEADER+`` ``typeId`` ``+<+`` ``typeArgumentIR~a~^{asterisk}^`` ``+>+`` ``+{+`` ``fieldTypeIR^{asterisk}^`` ``+}+`` and ``+HEADER+`` ``typeId`` ``+<+`` ``typeArgumentIR~b~^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` are the same type when]:
 
+. Check that the length of ``typeArgumentIR~a~^{asterisk}^`` is equal to the length of ``typeArgumentIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type], for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
 xref:Type_alpha[``+HEADER_UNION+`` ``typeId`` ``+<+`` ``typeArgumentIR~a~^{asterisk}^`` ``+>+`` ``+{+`` ``fieldTypeIR^{asterisk}^`` ``+}+`` and ``+HEADER_UNION+`` ``typeId`` ``+<+`` ``typeArgumentIR~b~^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` are the same type when]:
 
+. Check that the length of ``typeArgumentIR~a~^{asterisk}^`` is equal to the length of ``typeArgumentIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type], for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
@@ -2397,21 +2408,25 @@ xref:Type_alpha[``typeIR`` and ``typeIR'`` are the same type when]:
 
 xref:Type_alpha[``+EXTERN+`` ``typeId`` ``+<+`` ``typeArgumentIR~a~^{asterisk}^`` ``+>+`` ``externMethodTypeDefEnv`` and ``+EXTERN+`` ``typeId`` ``+<+`` ``typeArgumentIR~b~^{asterisk}^`` ``+>+`` ``++_++`` are the same type when]:
 
+. Check that the length of ``typeArgumentIR~a~^{asterisk}^`` is equal to the length of ``typeArgumentIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeArgumentIR~a~`` and ``typeArgumentIR~b~`` are the same type], for all ``typeArgumentIR~a~`` in ``typeArgumentIR~a~^{asterisk}^`` and ``typeArgumentIR~b~`` in ``typeArgumentIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
 xref:Type_alpha[``+PARSER+`` ``typeId`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR~a~^{asterisk}^`` ``+)+`` and ``+PARSER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR~b~^{asterisk}^`` ``+)+`` are the same type when]:
 
+. Check that the length of ``parameterIR~a~^{asterisk}^`` is equal to the length of ``parameterIR~b~^{asterisk}^``.
 . Check that xref:ParameterType_alpha[``parameterIR~a~`` and ``parameterIR~b~`` are the same type], for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
 xref:Type_alpha[``+CONTROL+`` ``typeId`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR~a~^{asterisk}^`` ``+)+`` and ``+CONTROL+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR~b~^{asterisk}^`` ``+)+`` are the same type when]:
 
+. Check that the length of ``parameterIR~a~^{asterisk}^`` is equal to the length of ``parameterIR~b~^{asterisk}^``.
 . Check that xref:ParameterType_alpha[``parameterIR~a~`` and ``parameterIR~b~`` are the same type], for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
 xref:Type_alpha[``+PACKAGE+`` ``typeId`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+{+`` ``typeIR~a~^{asterisk}^`` ``+}+`` and ``+PACKAGE+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``typeIR~b~^{asterisk}^`` ``+}+`` are the same type when]:
 
+. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
 . Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
 . Then, the relation holds.
 
@@ -2432,12 +2447,14 @@ xref:Type_alpha[``sequenceTypeIR`` and ``sequenceTypeIR'`` are the same type whe
 . If let ``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` be ``sequenceTypeIR``:
  .. Check that ``sequenceTypeIR'`` matches pattern ``+SEQ+`` ``+<+`` ``%`` ``+>+``.
  .. Let ``+SEQ+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``sequenceTypeIR'``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else:
  .. Let ``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` be ``sequenceTypeIR``.
  .. Check that ``sequenceTypeIR'`` matches pattern ``+SEQ+`` ``+<+`` ``%`` ``+,+`` ``+...+`` ``+>+``.
  .. Let ``+SEQ+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+,+`` ``+...+`` ``+>+`` be ``sequenceTypeIR'``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. Then, the relation holds.
 
@@ -2446,6 +2463,7 @@ xref:Type_alpha[``recordTypeIR`` and ``recordTypeIR'`` are the same type when]:
 . If let ``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordTypeIR``:
  .. Check that ``recordTypeIR'`` matches pattern ``+RECORD+`` ``+{+`` ``%`` ``+}+``.
  .. Let ``+RECORD+`` ``+{+`` ``(`` ``annotationList'`` ``typeIR~field_b~`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``recordTypeIR'``.
+ .. Check that the length of ``annotationList^{asterisk}^`` is equal to the length of ``annotationList'^{asterisk}^``.
  .. Check that ``annotationList'`` is equal to ``annotationList``, for all ``annotationList`` in ``annotationList^{asterisk}^`` and ``annotationList'`` in ``annotationList'^{asterisk}^``.
  .. Check that ``nameIR`` is equal to ``nameIR~field~``, for all ``nameIR`` in ``nameIR^{asterisk}^`` and ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~field_a~`` and ``typeIR~field_b~`` are the same type], for all ``typeIR~field_a~`` in ``typeIR~field_a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
@@ -2454,6 +2472,7 @@ xref:Type_alpha[``recordTypeIR`` and ``recordTypeIR'`` are the same type when]:
  .. Let ``+RECORD+`` ``+{+`` ``(`` ``annotationList`` ``typeIR~field_a~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordTypeIR``.
  .. Check that ``recordTypeIR'`` matches pattern ``+RECORD+`` ``+{+`` ``%`` ``+,+`` ``+...+`` ``+}+``.
  .. Let ``+RECORD+`` ``+{+`` ``(`` ``annotationList'`` ``typeIR~field_b~`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordTypeIR'``.
+ .. Check that the length of ``annotationList^{asterisk}^`` is equal to the length of ``annotationList'^{asterisk}^``.
  .. Check that ``annotationList'`` is equal to ``annotationList``, for all ``annotationList`` in ``annotationList^{asterisk}^`` and ``annotationList'`` in ``annotationList'^{asterisk}^``.
  .. Check that ``nameIR`` is equal to ``nameIR~field~``, for all ``nameIR`` in ``nameIR^{asterisk}^`` and ``nameIR~field~`` in ``nameIR~field~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~field_a~`` and ``typeIR~field_b~`` are the same type], for all ``typeIR~field_a~`` in ``typeIR~field_a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
@@ -2487,6 +2506,7 @@ xref:ExternMethodType_alpha[``externMethodTypeIR`` and ``externMethodTypeIR'`` a
  .. Check that ``externMethodTypeIR'`` matches pattern ``+EXTERN_METHOD+`` ``%`` ``+(+`` ``%`` ``+)+`` ``+:+`` ``%``.
  .. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+(+`` ``parameterIR~b~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~b~`` be ``externMethodTypeIR'``.
  .. Check that ``nameIR'`` is equal to ``nameIR``.
+ .. Check that the length of ``parameterIR~a~^{asterisk}^`` is equal to the length of ``parameterIR~b~^{asterisk}^``.
  .. Check that xref:ParameterType_alpha[``parameterIR~a~`` and ``parameterIR~b~`` are the same type], for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
  .. Then, the relation holds.
@@ -2495,6 +2515,7 @@ xref:ExternMethodType_alpha[``externMethodTypeIR`` and ``externMethodTypeIR'`` a
  .. Check that ``externMethodTypeIR'`` matches pattern ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``%`` ``+(+`` ``%`` ``+)+`` ``+:+`` ``%``.
  .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR'`` ``+(+`` ``parameterIR~b~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~b~`` be ``externMethodTypeIR'``.
  .. Check that ``nameIR'`` is equal to ``nameIR``.
+ .. Check that the length of ``parameterIR~a~^{asterisk}^`` is equal to the length of ``parameterIR~b~^{asterisk}^``.
  .. Check that xref:ParameterType_alpha[``parameterIR~a~`` and ``parameterIR~b~`` are the same type], for all ``parameterIR~a~`` in ``parameterIR~a~^{asterisk}^`` and ``parameterIR~b~`` in ``parameterIR~b~^{asterisk}^``.
  .. Check that xref:Type_alpha[``typeIR~a~`` and ``typeIR~b~`` are the same type].
  .. Then, the relation holds.
@@ -2511,6 +2532,7 @@ xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~a~`` and ``externMethodTy
 . Check that the length of ``typeParameterIR~impl_a~^{asterisk}^`` is equal to the length of ``typeParameterIR~impl_b~^{asterisk}^``.
 . Let ``typeParameterIR~fresh~^{asterisk}^`` be xref:fresh_typeIds[the length of ``typeParameterIR~expl_a~^{asterisk}^`` concatenated with ``typeParameterIR~impl_a~^{asterisk}^`` fresh type variables].
 . Let ``typeParameterIR~a~^{asterisk}^`` be ``typeParameterIR~expl_a~^{asterisk}^`` concatenated with ``typeParameterIR~impl_a~^{asterisk}^``.
+. Check that the length of ``typeParameterIR~a~^{asterisk}^`` is equal to the length of ``typeParameterIR~fresh~^{asterisk}^``.
 . Let ``theta~a~`` be ``+{+`` ``(`` ``typeParameterIR~a~`` ``+:+`` ``typeParameterIR~fresh~`` ``)^{asterisk}^`` ``+}+``.
 . Let ``callableTypeIR`` be xref:callableTypeIR_of_callableTypeDefIR[the underlying type of ``externMethodTypeDefIR~a~``].
 . Check that ``callableTypeIR`` has type ``externMethodTypeIR``.
@@ -2519,6 +2541,7 @@ xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~a~`` and ``externMethodTy
 . Check that ``callableTypeIR'`` has type ``externMethodTypeIR``.
 . Let ``externMethodTypeIR~a_subst~`` be ``callableTypeIR'``.
 . Let ``typeParameterIR~b~^{asterisk}^`` be ``typeParameterIR~expl_b~^{asterisk}^`` concatenated with ``typeParameterIR~impl_b~^{asterisk}^``.
+. Check that the length of ``typeParameterIR~b~^{asterisk}^`` is equal to the length of ``typeParameterIR~fresh~^{asterisk}^``.
 . Let ``theta~b~`` be ``+{+`` ``(`` ``typeParameterIR~b~`` ``+:+`` ``typeParameterIR~fresh~`` ``)^{asterisk}^`` ``+}+``.
 . Let ``callableTypeIR''`` be xref:callableTypeIR_of_callableTypeDefIR[the underlying type of ``externMethodTypeDefIR~b~``].
 . Check that ``callableTypeIR''`` has type ``externMethodTypeIR``.
@@ -3194,6 +3217,7 @@ xref:bin_eq[``value`` ``+==+`` ``value'``]
 . Else if let ``+LIST+`` ``+[+`` ``value~a~^{asterisk}^`` ``+]+`` be ``value``:
  .. Check that ``value'`` has type ``listValue``.
  .. Let ``+LIST+`` ``+[+`` ``value~b~^{asterisk}^`` ``+]+`` be ``value'``.
+ .. Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3206,6 +3230,7 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
 . Else if let ``+TUPLE+`` ``+(+`` ``value~a~^{asterisk}^`` ``+)+`` be ``value``:
  .. Check that ``value'`` has type ``tupleValue``.
  .. Let ``+TUPLE+`` ``+(+`` ``value~b~^{asterisk}^`` ``+)+`` be ``value'``.
+ .. Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3218,6 +3243,7 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
 . Else if let ``+HEADER_STACK+`` ``+[+`` ``value~a~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_a~`` ``+)+`` ``+]+`` be ``value``:
  .. Check that ``value'`` has type ``headerStackValue``.
  .. Let ``+HEADER_STACK+`` ``+[+`` ``value~b~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_b~`` ``+)+`` ``+]+`` be ``value'``.
+ .. Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3244,6 +3270,8 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``
 --
 +
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``
+ .. Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.
+ .. Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3271,6 +3299,8 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``
 --
 +
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``
+ .. Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.
+ .. Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3298,6 +3328,8 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``
 --
 +
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``
+ .. Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.
+ .. Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.
  .. Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3788,6 +3820,7 @@ for each ``value`` in ``value^{asterisk}^``
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR'^{asterisk}^`` ``+>+`` be ``typeIR``:
  .. Check that ``sequenceValue`` matches pattern ``+SEQ+`` ``+(+`` ``%`` ``+)+``.
  .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
+ .. Check that the length of ``typeIR'^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
  .. Let ``value'^{asterisk}^`` be the list and ``value'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3811,6 +3844,7 @@ for each ``value`` in ``value^{asterisk}^``
 . Else if let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that ``sequenceValue`` matches pattern ``+SEQ+`` ``+(+`` ``%`` ``+)+``.
  .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
+ .. Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
  .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3822,6 +3856,7 @@ for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^`` and ``value`` in ``v
 . Else if let ``+HEADER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that ``sequenceValue`` matches pattern ``+SEQ+`` ``+(+`` ``%`` ``+)+``.
  .. Let ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
+ .. Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
  .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3859,6 +3894,7 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+ .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
  .. Return ``+STRUCT+`` ``typeId`` ``+{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
  .. Check that ``recordValue`` matches pattern ``+RECORD+`` ``+{+`` ``%`` ``+}+``.
@@ -3885,6 +3921,7 @@ for each ``value^?^`` in ``value^?^^{asterisk}^``
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``
+ .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
  .. Return ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_default[``defaultValue`` casted to type ``typeIR``]
@@ -4362,6 +4399,7 @@ xref:match_overloaded_named[Matching ``callTargetId`` ``+:+`` ``V`` against name
 . Let ``nameIR`` ``+(+`` ``id~param~^{asterisk}^`` ``+)+`` be ``callTargetId``.
 . If ``nameIR`` is equal to ``nameIR~f~``:
  .. Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
+ .. Check that the length of ``id~param~^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
  .. Check that ``id~param~`` is equal to xref:id_of_parameterIR[the identifier of ``parameterIR``], for all ``id~param~`` in ``id~param~^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. If the length of ``id~param~^{asterisk}^`` is equal to the length of ``id~arg~^{asterisk}^``:
   ... Let ``bool`` be xref:eq_set[``+{+`` ``id~param~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].
@@ -5229,6 +5267,7 @@ xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priori
 +
 for each ``TBLS`` in ``TBLS^{asterisk}^``
  .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
+ .. Check that the length of ``n~prefix~^{asterisk}^`` is equal to the length of ``tableEntryIR^{asterisk}^``.
  .. Let ``tableEntryIR~updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -6343,10 +6382,12 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
 . If let ``+TUPLE+`` ``+(+`` ``value~e~^{asterisk}^`` ``+)+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
 . Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value'``.
@@ -6406,6 +6447,7 @@ for each ``argumentIR`` in ``argumentIR^{asterisk}^``
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
+ .. Check that the length of ``direction~param_aligned~^{asterisk}^`` is equal to the length of ``typeIR~param_aligned~^{asterisk}^`` and the length of ``typeIR~param_aligned~^{asterisk}^`` is equal to the length of ``value~argument~^{asterisk}^``.
  .. Let ``varTypeIR^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -6756,6 +6798,7 @@ xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be ex
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
@@ -6763,9 +6806,11 @@ xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be ex
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. Then, the relation holds.
 
@@ -6774,6 +6819,7 @@ xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+``
 . If let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. Then, the relation holds.
@@ -6785,12 +6831,14 @@ xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+``
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. Then, the relation holds.
@@ -6799,6 +6847,7 @@ xref:Cast_expl_neq[``+RECORD+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -6833,6 +6882,7 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -6870,6 +6920,7 @@ xref:Cast_expl_neq[``+RECORD+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -6921,6 +6972,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -7019,6 +7071,7 @@ xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be im
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
@@ -7026,14 +7079,17 @@ xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be im
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``sequenceTypeIR'`` be ``typeIR'``:
  .. Check that ``sequenceTypeIR'`` matches pattern ``+SEQ+`` ``+<+`` ``%`` ``+>+``.
  .. Let ``+SEQ+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``sequenceTypeIR'``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``.
  .. Then, the relation holds.
 
@@ -7042,6 +7098,7 @@ xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+``
 . If let ``+TUPLE+`` ``+<+`` ``typeIR~b~^{asterisk}^`` ``+>+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
  .. Then, the relation holds.
@@ -7053,12 +7110,14 @@ xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+,+`` ``+...+``
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``.
  .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
  .. Then, the relation holds.
@@ -7067,6 +7126,7 @@ xref:Cast_impl_neq[``+RECORD+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -7101,6 +7161,7 @@ for each ``typeIR'''^?^`` in ``typeIR'''^?^^{asterisk}^``
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:eq_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -7138,6 +7199,7 @@ xref:Cast_impl_neq[``+RECORD+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id
 
 . If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -7189,6 +7251,7 @@ for each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``
  .. Then, the relation holds.
 . Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Check that xref:sub_set[``+{+`` ``id~field_a~^{asterisk}^`` ``+}+`` is a subset of ``+{+`` ``id~field_b~^{asterisk}^`` ``+}+``].
+ .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. Let ``typeIR''^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -7640,6 +7703,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 --
 +
 for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
+ .. Check that the length of ``nameIR~f~^{asterisk}^`` is equal to the length of ``typeIR~f~^{asterisk}^``.
  .. Let ``typeIR`` be ``+RECORD+`` ``+{+`` ``(`` ``+`EMPTY+`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
  .. Let ``ctk`` be xref:joins_ctk[the join of ``ctk~f~^{asterisk}^``].
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``].
@@ -7678,6 +7742,7 @@ for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
 --
 +
 for each ``typedExpressionIR~f~`` in ``typedExpressionIR~f~^{asterisk}^``
+ .. Check that the length of ``nameIR~f~^{asterisk}^`` is equal to the length of ``typeIR~f~^{asterisk}^``.
  .. Let ``typeIR`` be ``+RECORD+`` ``+{+`` ``(`` ``+`EMPTY+`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+``.
  .. Let ``ctk`` be xref:joins_ctk[the join of ``ctk~f~^{asterisk}^``].
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``].
@@ -7780,6 +7845,7 @@ xref:Expr_ok[Typing ``expression~base~`` ``+.+`` ``member``, under context ``TC`
  .. Check that ``value`` has type ``integerValue``.
  .. Let ``integerValue~index~`` be ``value``.
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+ .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``typeIR~e~^{asterisk}^``.
  .. Let ``expressionNoteIR`` be <<expressionNoteIR,a pair of type ``typeIR~e~^{asterisk}^[n~index~]`` and compile-time known-ness ``ctk~base~``>>.
  .. Result in <<typedExpressionIR,``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~index_reduced~`` ``+]+`` annotated with ``expressionNoteIR``>>.
@@ -9001,6 +9067,7 @@ xref:TableDefaultAction_ok[Typing ``+=+`` ``expression``, under context ``TC`` a
 * the result of xref:Call_action_default_ok[typing action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Check that the length of ``argumentIR~action_data~^{asterisk}^`` is equal to the length of ``argumentIR~cast_data~^{asterisk}^``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
  .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
@@ -9012,7 +9079,8 @@ xref:TableEntry_keyset_ok[TableEntry_keyset_ok]:
 xref:TableEntry_keyset_ok[Typing ``expression``, under context ``TC`` and table context ``TBLC``]:
 
 . Check that the length of ``TBLC.+KEYS+`` is equal to ``1``.
-. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``expression`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``expression`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
 . Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
 . Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
 . Result in table entry state ``TBLS`` and ``simpleKeysetExpressionIR'``.
@@ -9023,7 +9091,8 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. Check that ``simpleKeysetExpression`` matches pattern ``%`` ``+&&&+`` ``%``.
  .. Let ``expression~l~`` ``+&&&+`` ``expression~r~`` be ``simpleKeysetExpression``.
  .. Check that the length of ``TBLC.+KEYS+`` is equal to ``1``.
- .. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+ .. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``expression~l~`` ``+&&&+`` ``expression~r~`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
  .. Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
  .. Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
  .. Result in table entry state ``TBLS`` and ``simpleKeysetExpressionIR'``.
@@ -9032,7 +9101,8 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. Check that ``tupleKeysetExpression`` matches pattern ``+(+`` ``%`` ``+&&&+`` ``%`` ``+)+``.
  .. Let ``+(+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+)+`` be ``tupleKeysetExpression``.
  .. Check that the length of ``TBLC.+KEYS+`` is equal to ``1``.
- .. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+ .. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``expression~l~`` ``+&&&+`` ``expression~r~`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
  .. Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
  .. Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
  .. Result in table entry state ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
@@ -9043,7 +9113,8 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. Check that ``simpleKeysetExpression`` matches pattern ``%`` ``+..+`` ``%``.
  .. Let ``expression~l~`` ``+..+`` ``expression~r~`` be ``simpleKeysetExpression``.
  .. Check that the length of ``TBLC.+KEYS+`` is equal to ``1``.
- .. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+ .. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``expression~l~`` ``+..+`` ``expression~r~`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
  .. Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
  .. Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
  .. Result in table entry state ``TBLS`` and ``simpleKeysetExpressionIR'``.
@@ -9052,7 +9123,8 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
  .. Check that ``tupleKeysetExpression`` matches pattern ``+(+`` ``%`` ``+..+`` ``%`` ``+)+``.
  .. Let ``+(+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+)+`` be ``tupleKeysetExpression``.
  .. Check that the length of ``TBLC.+KEYS+`` is equal to ``1``.
- .. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+ .. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``expression~l~`` ``+..+`` ``expression~r~`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
  .. Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a list of length 1.
  .. Let ``simpleKeysetExpressionIR'`` be ``simpleKeysetExpressionIR^{asterisk}^``.
  .. Result in table entry state ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR'`` ``+)+``.
@@ -9100,7 +9172,8 @@ xref:TableEntry_keyset_ok[Typing ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` `
 . Let ``simpleKeysetExpression~t~^{asterisk}^`` be xref:flatten_simpleKeysetExpressionList[``simpleKeysetExpressionList~t~`` flattened].
 . Let ``simpleKeysetExpression^{asterisk}^`` be ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^``.
 . Check that the length of ``TBLC.+KEYS+`` is equal to the length of ``simpleKeysetExpression^{asterisk}^``.
-. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``+NON_LPM+`` ``+|-+`` ``TBLC.+KEYS+`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``TBLS`` ``simpleKeysetExpressionIR^{asterisk}^``].
+. Let table entry state ``TBLS`` and ``simpleKeysetExpressionIR^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``TBLC.+KEYS+`` against ``simpleKeysetExpression^{asterisk}^`` under context ``TC``, table context ``TBLC``, and table entry state ``+NON_LPM+``].
 . Result in table entry state ``TBLS`` and ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+``.
 
 xref:TableEntry_action_ok[TableEntry_action_ok]:
@@ -9124,6 +9197,7 @@ xref:TableEntry_action_ok[Typing ``tableActionReference``, under context ``TC`` 
 * the result of xref:Call_action_default_ok[typing action call on ``parameterIR~action~^{asterisk}^`` with ``argumentIR^{asterisk}^``, under context ``TC``].
  .. Let ``argumentIR~action_data~^{asterisk}^`` be ``argumentIR~action~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
  .. Let ``argumentIR~cast_data~^{asterisk}^`` be ``argumentIR~cast~^{asterisk}^[0`` ``:`` ``the`` ``length`` ``of`` ``parameterIR~action_data~^{asterisk}^]``.
+ .. Check that the length of ``argumentIR~action_data~^{asterisk}^`` is equal to the length of ``argumentIR~cast_data~^{asterisk}^``.
  .. Check that ``argumentIR~action_data~`` is equal to ``argumentIR~cast_data~``, for all ``argumentIR~action_data~`` in ``argumentIR~action_data~^{asterisk}^`` and ``argumentIR~cast_data~`` in ``argumentIR~cast_data~^{asterisk}^``.
  .. Result in ``prefixedNameIR`` ``·`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
 
@@ -9132,21 +9206,21 @@ xref:TableEntry_priority_ok[TableEntry_priority_ok]:
 * Typing ``tableEntryPriority``, under context ``typingContext``:
 * Result in ``tableEntryPriorityIR``.
 
-xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``, under context ``TC``]:
+xref:TableEntry_priority_ok[Typing ``tableEntryPriority``, under context ``TC``]:
 
-. Result in ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
-
-xref:TableEntry_priority_ok[Typing ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression`` ``+)+`` ``+:+``, under context ``TC``]:
-
-. Let ``typedExpressionIR`` be
+. If let ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+`` be ``tableEntryPriority``:
+ .. Result in ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
+. Else:
+ .. Let ``+PRIORITY+`` ``+=+`` ``+(+`` ``expression`` ``+)+`` ``+:+`` be ``tableEntryPriority``.
+ .. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
-. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] is ``+LCTK+``.
-. Let ``value`` be
+ .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] is ``+LCTK+``.
+ .. Let ``value`` be
 * the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR``, under context ``TC`` at ``+LOCAL+``].
-. Check that ``value`` has type ``integerValue``.
-. Let ``integerValue`` be ``value``.
-. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
-. Result in ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
+ .. Check that ``value`` has type ``integerValue``.
+ .. Let ``integerValue`` be ``value``.
+ .. Let ``n`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue``].
+ .. Result in ``+PRIORITY+`` ``+=+`` ``+D+`` ``n`` ``+:+``.
 
 xref:TableEntry_ok[TableEntry_ok]:
 
@@ -11890,9 +11964,12 @@ xref:is_table_application[``typedExpressionIR`` is a table application expressio
 . Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
 . Return ``typeIR~unroll~`` has type ``tableMetadataStructTypeIR``.
 
-xref:TableEntry_keyset_simple_ok[TableEntry_keyset_simple_ok: ``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``simpleKeysetExpression`` ``+:+`` ``%`` ``%``]
+xref:TableEntry_keyset_simple_ok[TableEntry_keyset_simple_ok]:
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``expression`` ``+:+`` ``%`` ``%``]:
+* Typing ``matchKey`` against ``simpleKeysetExpression`` under context ``typingContext`` and table context ``tableContext``:
+* Result in table entry state ``tableEntryState`` and ``simpleKeysetExpressionIR``.
+
+xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+:+`` ``text`` against ``expression`` under context ``TC`` and table context ``TBLC``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11905,7 +11982,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
  .. Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
  .. Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
  .. Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
- .. Result in ``+LPM+`` ``n`` and ``typedExpressionIR~set~``.
+ .. Result in table entry state ``+LPM+`` ``n`` and ``typedExpressionIR~set~``.
 . Else:
  .. If xref:is_singleton_list_expression[``expression`` is a singleton list expression]:
   ... Check that ``expression`` has type ``sequenceOrRecordExpression``.
@@ -11920,7 +11997,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
   ... Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
   ... Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
   ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
-  ... Result in ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+  ... Result in table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
  .. Else:
   ... Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
@@ -11929,9 +12006,9 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
   ... Check that xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``].
   ... Let ``typeIR~set~`` be ``+SET+`` ``+<+`` ``typeIR~key~`` ``+>+``.
   ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+(+`` ``typeIR~set~`` ``+)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
-  ... Result in ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+  ... Result in table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``expression~l~`` ``+&&&+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+:+`` ``text`` against ``expression~l~`` ``+&&&+`` ``expression~r~`` under context ``TC`` and table context ``TBLC``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
@@ -11953,7 +12030,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
  .. Let ``n~r~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~r~``].
  .. Let ``int`` be xref:int_to_bitstr[the bitstring of width ``n`` representing the integer ``n~r~``].
  .. Let ``n~prefix~`` be ``xref:tableEntry_lpm_prefix[$tableEntry_lpm_prefix(n`` ``+W+`` ``int)]``.
- .. Result in ``+LPM+`` ``n~prefix~`` and ``typedExpressionIR~l_reduced~`` ``+&&&+`` ``typedExpressionIR~r_reduced~``.
+ .. Result in table entry state ``+LPM+`` ``n~prefix~`` and ``typedExpressionIR~l_reduced~`` ``+&&&+`` ``typedExpressionIR~r_reduced~``.
 . Else if ``text`` is equal to ``"ternary"``:
  .. Let ``typedExpressionIR~l~`` be
 * the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
@@ -11962,30 +12039,30 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
  .. Let ``typedExpressionIR~l_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``].
  .. Let ``typedExpressionIR~r_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
  .. Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be xref:option_get[*!*] xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_mask`` is satisfied].
- .. Result in ``+NON_LPM+`` and ``typedExpressionIR~l_reduced~`` ``+&&&+`` ``typedExpressionIR~r_reduced~``.
+ .. Result in table entry state ``+NON_LPM+`` and ``typedExpressionIR~l_reduced~`` ``+&&&+`` ``typedExpressionIR~r_reduced~``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``+DEFAULT+`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+:+`` ``text`` against ``+DEFAULT+`` under context ``TC`` and table context ``TBLC``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.
  .. Let ``+LPM+`` ``n`` be ``matchMode``.
- .. Result in ``+LPM+`` ``n`` and ``+DEFAULT+``.
+ .. Result in table entry state ``+LPM+`` ``n`` and ``+DEFAULT+``.
 . Else:
  .. Check that ``text`` is not equal to ``"exact"``.
- .. Result in ``+NON_LPM+`` and ``+DEFAULT+``.
+ .. Result in table entry state ``+NON_LPM+`` and ``+DEFAULT+``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``text`` ``+@+`` ``+_+`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+:+`` ``text`` against ``+_+`` under context ``TC`` and table context ``TBLC``]:
 
 . If ``text`` is equal to ``"lpm"``:
  .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.
- .. Result in ``+LPM+`` ``0`` and ``+_+``.
+ .. Result in table entry state ``+LPM+`` ``0`` and ``+_+``.
 . Else:
  .. Check that ``text`` is not equal to ``"exact"``.
- .. Result in ``+NON_LPM+`` and ``+_+``.
+ .. Result in table entry state ``+NON_LPM+`` and ``+_+``.
 
-xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`` ``"range"`` ``+@+`` ``expression~l~`` ``+..+`` ``expression~r~`` ``+:+`` ``%`` ``%``]:
+xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+:+`` ``"range"`` against ``expression~l~`` ``+..+`` ``expression~r~`` under context ``TC`` and table context ``TBLC``]:
 
 . Let ``typedExpressionIR~l~`` be
 * the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
@@ -11994,7 +12071,7 @@ xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``typeIR~key~`` ``+:+`
 . Let ``typedExpressionIR~l_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~key~``].
 . Let ``typedExpressionIR~r_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~key~``].
 . Let ``(`` ``typedExpressionIR~l_reduced~,`` ``typedExpressionIR~r_reduced~`` ``)`` be xref:option_get[*!*] xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r_cast~`` until ``$compat_range`` is satisfied].
-. Result in ``+NON_LPM+`` and ``typedExpressionIR~l_reduced~`` ``+..+`` ``typedExpressionIR~r_reduced~``.
+. Result in table entry state ``+NON_LPM+`` and ``typedExpressionIR~l_reduced~`` ``+..+`` ``typedExpressionIR~r_reduced~``.
 
 xref:is_singleton_list_expression[``expression`` is a singleton list expression]
 
@@ -12005,20 +12082,25 @@ xref:is_singleton_list_expression[``expression`` is a singleton list expression]
  .. Return ``true``.
 . Otherwise: return ``false``.
 
-xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok: ``TC`` ``TBLC`` ``tableEntryState`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]
+xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok]:
 
-xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``tableEntryState`` ``+|-+`` ``matchKey^{asterisk}^`` ``+@+`` ``simpleKeysetExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]:
+* Typing ``matchKey^{asterisk}^`` against ``simpleKeysetExpression^{asterisk}^`` under context ``typingContext``, table context ``tableContext``, and table entry state ``tableEntryState``:
+* Result in table entry state ``tableEntryState`` and ``simpleKeysetExpressionIR^{asterisk}^``.
+
+xref:TableEntry_keysets_simple_ok[Typing ``matchKey^{asterisk}^`` against ``simpleKeysetExpression^{asterisk}^`` under context ``TC``, table context ``TBLC``, and table entry state ``tableEntryState``]:
 
 . If ``matchKey^{asterisk}^`` is equal to ``·``:
  .. Check that ``simpleKeysetExpression^{asterisk}^`` is equal to ``·``.
- .. Result in ``tableEntryState`` and ``·``.
+ .. Result in table entry state ``tableEntryState`` and ``·``.
 . If let ``matchKey~h~`` ``{two-colons}`` ``matchKey~t~^{asterisk}^`` be ``matchKey^{asterisk}^``:
  .. Check that ``simpleKeysetExpression^{asterisk}^`` is a non-empty list.
  .. Let ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` be ``simpleKeysetExpression^{asterisk}^``.
- .. Let xref:TableEntry_keyset_simple_ok[``TC`` ``TBLC`` ``+|-+`` ``matchKey~h~`` ``+@+`` ``simpleKeysetExpression~h~`` ``+:+`` ``TBLS~1~`` ``simpleKeysetExpressionIR~h~``].
+ .. Let table entry state ``TBLS~1~`` and ``simpleKeysetExpressionIR~h~`` be
+* the result of xref:TableEntry_keyset_simple_ok[typing ``matchKey~h~`` against ``simpleKeysetExpression~h~`` under context ``TC`` and table context ``TBLC``].
  .. Let ``TBLS~2~`` be ``xref:join_tableEntryState[$join_tableEntryState(tableEntryState,`` ``TBLS~1~)]``.
- .. Let xref:TableEntry_keysets_simple_ok[``TC`` ``TBLC`` ``TBLS~2~`` ``+|-+`` ``matchKey~t~^{asterisk}^`` ``+@+`` ``simpleKeysetExpression~t~^{asterisk}^`` ``+:+`` ``TBLS~3~`` ``simpleKeysetExpressionIR~t~^{asterisk}^``].
- .. Result in ``TBLS~3~`` and ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
+ .. Let table entry state ``TBLS~3~`` and ``simpleKeysetExpressionIR~t~^{asterisk}^`` be
+* the result of xref:TableEntry_keysets_simple_ok[typing ``matchKey~t~^{asterisk}^`` against ``simpleKeysetExpression~t~^{asterisk}^`` under context ``TC``, table context ``TBLC``, and table entry state ``TBLS~2~``].
+ .. Result in table entry state ``TBLS~3~`` and ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^``.
 
 xref:is_tableKeysProperty[$is_tableKeysProperty(tableProperty)]
 
@@ -12131,6 +12213,7 @@ xref:infer[$infer(typeId^{asterisk}^, parameterIR^{asterisk}^, argumentIR^{aster
  .. Return xref:empty_map[an empty map].
 . If ``typeId^{asterisk}^`` is not equal to ``·``:
  .. Let ``constraint~init~`` be ``xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]``.
+ .. Check that the length of ``argumentIR^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
  .. Let ``constraint~pair~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -12246,6 +12329,7 @@ for each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``
 --
 +
 for each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``
+ .. Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.
  .. Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.
  .. Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg'~^{asterisk}^)]``.
 . Else if let ``+CONTROL+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR~param~^{asterisk}^`` ``+)+`` be ``typeIR``:
@@ -12265,6 +12349,7 @@ for each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``
 --
 +
 for each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``
+ .. Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.
  .. Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.
  .. Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg'~^{asterisk}^)]``.
 . Else:
@@ -12282,6 +12367,7 @@ for each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``
 xref:gen_constraints[$gen_constraints(constraint, typeIR~param~^{asterisk}^, typeIR~arg~^{asterisk}^)]
 
 
+. Check that the length of ``typeIR~arg~^{asterisk}^`` is equal to the length of ``typeIR~param~^{asterisk}^``.
 . Let ``constraint~pair~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -13001,11 +13087,13 @@ xref:Expr_inst[Compile-time evaluation of ``recordExpressionIR`` annotated with 
 . If let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+}+`` be ``recordExpressionIR``:
  .. Let store ``STO~1~`` and ``value^{asterisk}^`` be
 * the result of xref:Exprs_inst[compile-time evaluation of ``typedExpressionIR^{asterisk}^``, under context ``IC`` and store ``STO`` at ``p``].
+ .. Check that the length of ``nameIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
  .. Result in store ``STO~1~`` and ``+RECORD+`` ``+{+`` ``(`` ``value`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
 . Else:
  .. Let ``+RECORD+`` ``+{+`` ``(`` ``nameIR`` ``+=+`` ``typedExpressionIR`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordExpressionIR``.
  .. Let store ``STO~1~`` and ``value^{asterisk}^`` be
 * the result of xref:Exprs_inst[compile-time evaluation of ``typedExpressionIR^{asterisk}^``, under context ``IC`` and store ``STO`` at ``p``].
+ .. Check that the length of ``nameIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
  .. Result in store ``STO~1~`` and ``+RECORD+`` ``+{+`` ``(`` ``value`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+``.
 
 xref:Expr_inst[Compile-time evaluation of ``+ERROR+`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``]:
@@ -13056,10 +13144,12 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+.+`` ``
 . If let ``+TUPLE+`` ``+(+`` ``value~e~^{asterisk}^`` ``+)+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in store ``STO~2~`` and ``value'``.
 . Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value'`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in store ``STO~2~`` and ``value'``.
@@ -14163,6 +14253,7 @@ xref:Constructor_call[Instantiating ``externObjectConstructorDef`` ``+<+`` ``typ
 . Let ``+EXTERN+`` ``nameIR`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``externMethodPrototypeIR^{asterisk}^`` ``+}+`` be ``externObjectConstructorDef``.
 . Let ``p~callee~`` be ``+BLOCK+``.
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC`` up to the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta`` be ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
 . Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
@@ -14222,6 +14313,7 @@ xref:Constructor_call[Instantiating ``parserObjectConstructorDef`` ``+<+`` ``typ
 . Let ``+PARSER+`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``parserLocalDeclarationIR^{asterisk}^`` ``parserStateIR^{asterisk}^`` ``+}+`` be ``parserObjectConstructorDef``.
 . Let ``p~callee~`` be ``+BLOCK+``.
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC`` up to the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta~parser~`` be ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta~parser~``.
 . Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
@@ -14250,6 +14342,7 @@ xref:Constructor_call[Instantiating ``controlObjectConstructorDef`` ``+<+`` ``ty
 . Let ``+CONTROL+`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` ``+{+`` ``controlLocalDeclarationIR^{asterisk}^`` ``+APPLY+`` ``controlBodyIR`` ``+}+`` be ``controlObjectConstructorDef``.
 . Let ``p~callee~`` be ``+BLOCK+``.
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC`` up to the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta~control~`` be ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta~control~``.
 . Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
@@ -14286,6 +14379,7 @@ xref:Constructor_call[Instantiating ``packageObjectConstructorDef`` ``+<+`` ``ty
 . Let ``+PACKAGE+`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``constructorParameterIR^{asterisk}^`` ``+)+`` be ``packageObjectConstructorDef``.
 . Let ``p~callee~`` be ``+BLOCK+``.
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC`` up to the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``id~aligned~^{asterisk}^`` be the list obtained by repeating:
@@ -14917,6 +15011,7 @@ xref:Expr_eval[Evaluating ``recordExpressionIR`` annotated with ``expressionNote
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
+  ... Check that the length of ``nameIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
   ... Let ``expressionResult`` be ``+RECORD+`` ``+{+`` ``(`` ``value`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+}+``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
 . Else:
@@ -14927,6 +15022,7 @@ xref:Expr_eval[Evaluating ``recordExpressionIR`` annotated with ``expressionNote
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
  .. Else:
   ... Let ``value^{asterisk}^`` be ``expressionListResult``.
+  ... Check that the length of ``nameIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
   ... Let ``expressionResult`` be ``+RECORD+`` ``+{+`` ``(`` ``value`` ``nameIR`` ``+;+`` ``)^{asterisk}^`` ``+,+`` ``+...+`` ``+}+``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
 
@@ -14970,6 +15066,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
     ..... Let ``int`` be ``++_++`` ``-`` ``1``.
     ..... Check that ``int`` has type ``nat``.
     ..... Let ``n~idx_last~`` be ``int``.
+    ..... Check that ``n~idx_last~`` is less than the length of ``++_++^{asterisk}^``.
     ..... Let ``value~last~`` be ``++_++^{asterisk}^[n~idx_last~]``.
     ..... Let ``expressionResult'`` be ``value~last~``.
     ..... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult'``.
@@ -15027,6 +15124,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Let ``integerValue~index~`` be ``value``.
   ... Let ``+TUPLE+`` ``+(+`` ``value~elem~^{asterisk}^`` ``+)+`` be ``tupleValue~base~``.
   ... Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+  ... Check that ``n~index~`` is less than the length of ``value~elem~^{asterisk}^``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~index~]``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
  .. Else if let ``headerStackValue~base~`` be ``value'``:
@@ -15038,6 +15136,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Let ``int`` be xref:ite[``i~index~`` if ``b~in_bounds~`` otherwise ``n~size~`` ``-`` ``1``].
   ... Check that ``int`` has type ``nat``.
   ... Let ``n~idx~`` be ``int``.
+  ... Check that ``n~idx~`` is less than the length of ``value~elem~^{asterisk}^``.
   ... Let ``expressionResult`` be ``value~elem~^{asterisk}^[n~idx~]``.
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
 
@@ -15265,6 +15364,7 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
  .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
  .. Check that ``nameIR`` is equal to ``"next"``.
  .. Check that ``n~idx~`` is less than ``n~size~``.
+ .. Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
  .. Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in value ``value``.
 . Else if let ``structValue~base~`` be ``value~base~``:
@@ -15292,9 +15392,11 @@ xref:Lvalue_read[Reading from ``storageReference'`` ``+.+`` ``nameIR``, under co
 . If ``b~in_bounds~``:
  .. Check that ``i~idx~`` has type ``nat``.
  .. Let ``n~idx~`` be ``i~idx~``.
+ .. Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
  .. Let ``value''`` be ``value~element~^{asterisk}^[n~idx~]``.
  .. Result in value ``value''``.
 . Else:
+ .. Check that ``0`` is less than the length of ``value~element~^{asterisk}^``.
  .. Let ``value''`` be ``value~element~^{asterisk}^[0]``.
  .. Check that ``value''`` has type ``headerValue``.
  .. Let ``+HEADER+`` ``typeId`` ``+{+`` ``b~valid~`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``value''``.
@@ -16356,6 +16458,7 @@ xref:Call_eval[Calling ``definedFunctionCallee`` ``+<+`` ``typeArgumentIR^{aster
 
 . Let ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+#+`` ``id~default~^{asterisk}^`` ``+)+`` ``blockStatementIR`` be ``definedFunctionCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
@@ -16376,6 +16479,7 @@ xref:Call_eval[Calling ``externFunctionCallee`` ``+<+`` ``typeArgumentIR^{asteri
 
 . Let ``+EXTERN_FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` be ``externFunctionCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
@@ -16562,6 +16666,7 @@ xref:Call_eval[Calling ``externMethodCallee`` ``+<+`` ``typeArgumentIR^{asterisk
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
 . Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
+. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
@@ -17527,6 +17632,7 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
   ... Let ``intTypeIR`` be ``typeIR``.
   ... Let ``+{+`` ``value~frame~^{asterisk}^`` ``+}+`` be xref:codom_map[the codomain of the map ``EC.+GLOBAL+.+FRAME+``].
   ... Let ``value~error~^{asterisk}^`` be xref:filter_[``value~frame~^{asterisk}^`` filtered by ``(`` ``value~frame~`` ``has`` ``type`` ``errorValue`` ``)^{asterisk}^``].
+  ... Check that ``n`` is less than the length of ``value~error~^{asterisk}^``.
   ... Let ``value`` be ``value~error~^{asterisk}^[n]``.
   ... Check that ``value`` has type ``errorValue``.
   ... Let ``+ERROR+`` ``+.+`` ``nameIR~error~`` be ``value``.
@@ -17805,7 +17911,9 @@ for each ``nameIR~names_opt~^?^`` in ``nameIR~names_opt~^?^^{asterisk}^`` and ``
 +
 for each ``nameIR~names_seq~^{asterisk}^^{asterisk}^`` in ``nameIR~names_seq~^{asterisk}^^{asterisk}^^{asterisk}^``
 . Let ``(`` ``nameIR~original~,`` ``nameIR~aliases~^{asterisk}^`` ``)^{asterisk}^`` be xref:filter_[``(`` ``id,`` ``nameIR~names~^{asterisk}^`` ``)^{asterisk}^`` filtered by ``(`` ``the`` ``length`` ``of`` ``nameIR~names~^{asterisk}^`` ``>`` ``0`` ``)^{asterisk}^``].
+. Check that ``0`` is less than the length of ``nameIR~aliases~^{asterisk}^``, for all ``nameIR~aliases~^{asterisk}^`` in ``nameIR~aliases~^{asterisk}^^{asterisk}^``.
 . Let ``nameIR~alias~^{asterisk}^`` be ``nameIR~aliases~^{asterisk}^[0]^{asterisk}^``.
+. Check that the length of ``nameIR~alias~^{asterisk}^`` is equal to the length of ``nameIR~original~^{asterisk}^``.
 . Return ``xref:extend_map[$extend_map<nameIR,`` ``nameIR>(+{+`` ``(`` ``nameIR~alias~`` ``+:+`` ``nameIR~original~`` ``)^{asterisk}^`` ``+}+,`` ``+{+`` ``(`` ``id`` ``+:+`` ``id`` ``)^{asterisk}^`` ``+}+)]``.
 
 xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR^{asterisk}^, ( nameIR~arg~, i~arg~ )^{asterisk}^)]
@@ -17872,6 +17980,7 @@ xref:find_tableActionIR_unqualified[$find_tableActionIR_unqualified(tableActionI
 
 
 . Let ``nameIR~split~^{asterisk}^`` be ``xref:split_text[$split_text(nameIR,`` ``".")]``.
+. Check that ``0`` is less than the length of xref:rev_[the reversal of ``nameIR~split~^{asterisk}^``].
 . Let ``nameIR'^{asterisk}^`` be xref:rev_[the reversal of ``nameIR~split~^{asterisk}^``].
 . Let ``nameIR~action~`` be ``nameIR'^{asterisk}^[0]``.
 . Return ``xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActionIR^{asterisk}^,`` ``nameIR~action~)]``.
@@ -17918,6 +18027,7 @@ for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
 --
 +
 for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
+ .. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
  .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -17953,6 +18063,7 @@ for each ``parameterIR~control~`` in ``parameterIR~control~^{asterisk}^``
 --
 +
 for each ``i~arg_aligned~`` in ``i~arg_aligned~^{asterisk}^``
+ .. Check that the length of ``typeIR~param~^{asterisk}^`` is equal to the length of ``typedExpressionIR~arg~^{asterisk}^``.
  .. Let ``typedExpressionIR^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --

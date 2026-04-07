@@ -9,8 +9,16 @@ exception CommandError of string
 
 (* Operations *)
 
+let expand_spec filenames =
+  List.concat_map
+    (fun filename ->
+      if Sys_unix.is_directory_exn filename then
+        Util.Filesys.collect_files ~suffix:".watsup" filename
+      else [ filename ])
+    filenames
+
 let frontend filenames_spec =
-  filenames_spec |> List.concat_map Frontend.Parse.parse_file
+  filenames_spec |> expand_spec |> List.concat_map Frontend.Parse.parse_file
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
@@ -254,6 +262,15 @@ let run_command =
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
      and mode =
        Command.Param.choose_one
          [
@@ -275,6 +292,15 @@ let run_command =
              let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
              [ (module PH : Inst.Handler.HANDLER) ]
            else []
+         in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
@@ -303,6 +329,15 @@ let sim_command =
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
      and mode =
        Command.Param.choose_one
          [
@@ -324,6 +359,15 @@ let sim_command =
              let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
              [ (module PH : Inst.Handler.HANDLER) ]
            else []
+         in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;

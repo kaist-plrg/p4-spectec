@@ -53,7 +53,9 @@ let rec string_of_typ typ =
   | VarT (typid, targs) -> string_of_typid typid ^ string_of_targs targs
   | TupleT typs -> "(" ^ string_of_typs ", " typs ^ ")"
   | IterT (typ, iter) -> string_of_typ typ ^ string_of_iter iter
-  | FuncT -> "func"
+  | FuncT (tparams, typs, typ) ->
+      string_of_tparams tparams ^ "(" ^ string_of_typs ", " typs ^ ") : "
+      ^ string_of_typ typ
 
 and string_of_typs sep typs = String.concat sep (List.map string_of_typ typs)
 
