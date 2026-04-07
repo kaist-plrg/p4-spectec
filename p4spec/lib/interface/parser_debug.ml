@@ -4,7 +4,6 @@
  *   Debugs parser stack state and token consumption
  *)
 
-module MI = MenhirLib.General
 module I = Parser.Incremental
 module Engine = Parser.MenhirInterpreter
 module P = Printf
