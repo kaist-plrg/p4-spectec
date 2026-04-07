@@ -1627,9 +1627,11 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
   match rulepaths_internal with
   | Paths rulepaths_il ->
       let rulegroup_il = (id_rulegroup, rulematch_il, rulepaths_il) $ at in
+      let rulegroup_il = Sidecondition.Guard.insert_rulegroup rulegroup_il in
       Group rulegroup_il
   | ElsePaths rulepath_il ->
       let elsegroup_il = (id_rulegroup, rulematch_il, rulepath_il) $ at in
+      let elsegroup_il = Sidecondition.Guard.insert_elsegroup elsegroup_il in
       ElseGroup elsegroup_il
 
 (* Elaboration of clauses *)
@@ -1679,6 +1681,7 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let prems_il = List.filter_map externalize_prem prems_internal in
   let _ctx_local, exp_il = elab_clause_output_with_bind ctx_local typ_il exp in
   let clause_il = (args_il, exp_il, prems_il) $ at in
+  let clause_il = Sidecondition.Guard.insert_clause clause_il in
   if is_else_clause then ElseClause clause_il else Clause clause_il
 
 (* Elaboration of definitions *)

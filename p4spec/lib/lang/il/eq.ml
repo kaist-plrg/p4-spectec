@@ -242,6 +242,25 @@ and eq_targs (targs_a : targ list) (targs_b : targ list) : bool =
 
 (* Premises *)
 
+and eq_prem (prem_a : prem) (prem_b : prem) : bool =
+  match (prem_a.it, prem_b.it) with
+  | ( RulePr (id_a, (mixop_a, exps_a), inputs_a),
+      RulePr (id_b, (mixop_b, exps_b), inputs_b) ) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+      && Hints.Input.eq inputs_a inputs_b
+  | IfPr exp_a, IfPr exp_b -> eq_exp exp_a exp_b
+  | IfHoldPr (id_a, (mixop_a, exps_a)), IfHoldPr (id_b, (mixop_b, exps_b)) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | IfNotHoldPr (id_a, (mixop_a, exps_a)), IfNotHoldPr (id_b, (mixop_b, exps_b))
+    ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | LetPr (exp_l_a, exp_r_a), LetPr (exp_l_b, exp_r_b) ->
+      eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
+  | IterPr (prem_a, iterprem_a), IterPr (prem_b, iterprem_b) ->
+      eq_prem prem_a prem_b && eq_iterprem iterprem_a iterprem_b
+  | DebugPr exp_a, DebugPr exp_b -> eq_exp exp_a exp_b
+  | _ -> false
+
 and eq_iterprem (iterprem_a : iterprem) (iterprem_b : iterprem) : bool =
   let iter_a, vars_bound_a, vars_bind_a = iterprem_a in
   let iter_b, vars_bound_b, vars_bind_b = iterprem_b in
