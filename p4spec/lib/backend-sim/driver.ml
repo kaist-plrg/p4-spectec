@@ -34,7 +34,7 @@ module Make
   (* Logger *)
 
   let verbose = ref true
-  let log (msg : string) : unit = if !verbose then print_endline msg
+  let log fmt (msg : string) : unit = if !verbose then Format.fprintf fmt "%s\n" msg
 
   (* Relation runner *)
 
@@ -77,7 +77,7 @@ module Make
     in
     extract_matching_expect [] expect_queue
 
-  let on_tx_output (txs : IO.tx list) (tx_output_queue : IO.tx list)
+  let on_tx_output fmt (txs : IO.tx list) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * IO.expect list =
     match txs with
     (* Packet was dropped *)
@@ -91,7 +91,7 @@ module Make
             (tx_output_queue, expect_queue)
         | Some (expect, expect_queue) ->
             let tx, _ = expect in
-            Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx) |> log;
+            Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx) |> log fmt;
             (tx_output_queue @ tx_t, expect_queue))
 
   let extract_matching_output (expect : IO.expect)
@@ -113,7 +113,7 @@ module Make
     in
     extract_matching_output [] tx_output_queue
 
-  let on_tx_expect (expect : IO.expect) (tx_output_queue : IO.tx list)
+  let on_tx_expect fmt (expect : IO.expect) (tx_output_queue : IO.tx list)
       (expect_queue : IO.expect list) : IO.tx list * expect list =
     match extract_matching_output expect tx_output_queue with
     | None ->
@@ -121,10 +121,10 @@ module Make
         let expect_queue = expect_queue @ [ expect ] in
         (tx_output_queue, expect_queue)
     | Some (tx_output, tx_output_queue) ->
-        Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log;
+        Format.asprintf "[PASS] Transmitted %s" (string_of_tx tx_output) |> log fmt;
         (tx_output_queue, expect_queue)
 
-  let run_stf_stmt (value_ctx : Il.value) (value_arch : Il.value)
+  let run_stf_stmt ~(fmt : Format.formatter) (value_ctx : Il.value) (value_arch : Il.value)
       (tx_output_queue : IO.tx list) (expect_queue : IO.expect list)
       (stmt_stf : Stf.Ast.stmt) :
       Il.value * Il.value * IO.tx list * IO.expect list =
@@ -138,7 +138,7 @@ module Make
           Arch.drive_pipe value_ctx value_arch rx
         in
         let tx_output_queue, expect_queue =
-          on_tx_output tx_outputs tx_output_queue expect_queue
+          on_tx_output fmt tx_outputs tx_output_queue expect_queue
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     | Stf.Ast.Expect (port_expect, packet_expect_opt, exact) ->
@@ -147,7 +147,7 @@ module Make
         let packet_expect = String.uppercase_ascii packet_expect in
         let expect = ((port_expect, packet_expect), exact) in
         let tx_output_queue, expect_queue =
-          on_tx_expect expect tx_output_queue expect_queue
+          on_tx_expect fmt expect tx_output_queue expect_queue
         in
         (value_ctx, value_arch, tx_output_queue, expect_queue)
     (* Match-action table updates *)
@@ -286,12 +286,12 @@ module Make
         error_stf
           (Format.asprintf "not yet supported: %a" Stf.Print.print_stmt stmt_stf)
 
-  let run_stf_stmts (value_ctx : Il.value) (value_arch : Il.value)
+  let run_stf_stmts ~(fmt : Format.formatter) (value_ctx : Il.value) (value_arch : Il.value)
       (stmts_stf : Stf.Ast.stmt list) : unit =
     let _, _, tx_output_queue, expect_queue =
       List.fold_left
         (fun (value_ctx, value_arch, tx_output_queue, expect_queue) stmt_stf ->
-          run_stf_stmt value_ctx value_arch tx_output_queue expect_queue
+          run_stf_stmt ~fmt value_ctx value_arch tx_output_queue expect_queue
             stmt_stf)
         (value_ctx, value_arch, [], [])
         stmts_stf
@@ -315,12 +315,12 @@ module Make
         in
         error_stf (msg_output ^ msg_expect)
 
-  let run_stf_test (includes_p4 : string list) (filename_p4 : string)
+  let run_stf_test (fmt : Format.formatter) (includes_p4 : string list) (filename_p4 : string)
       (filename_stf : string) : stf_result =
     try
       let value_ctx, value_arch = Arch.init_pipe includes_p4 filename_p4 in
       let stf_stmts = Stf.Parse.parse_file filename_stf in
-      run_stf_stmts value_ctx value_arch stf_stmts;
+      run_stf_stmts ~fmt value_ctx value_arch stf_stmts;
       Pass
     with
     | Util.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))

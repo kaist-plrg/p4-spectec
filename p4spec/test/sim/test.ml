@@ -6,10 +6,10 @@ module Filesys = Util.Filesys
 
 (* Simulator test *)
 
-let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
+let run_sim ~fmt (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
   let time_start = start () in
   try
-    (match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
+    (match Driver.run_stf_test fmt includes_p4 filename_p4 filename_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -18,52 +18,60 @@ let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
   | TestRunErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
+let run_sim_test ~fmt (module Driver : Sim.DRIVER) stat includes_p4 excludes
     filename_p4 filename_stf =
-  if Test.should_exclude_pair filename_p4 filename_stf excludes then (
-    let log = Format.asprintf "Excluding file: %s" filename_stf in
-    log |> print_endline;
-    {
-      stat with
-      durations = 0.0 :: stat.durations;
-      exclude_run = stat.exclude_run + 1;
-    })
+  if Test.should_exclude_pair filename_p4 filename_stf excludes then
+    let log = Format.asprintf "Excluding file: %s\n" filename_stf in
+    (* let log = Format.asprintf "Excluding file: %s" filename_stf in *)
+    (* log |> print_endline; *)
+
+    ( {
+        stat with
+        durations = 0.0 :: stat.durations;
+        exclude_run = stat.exclude_run + 1;
+      },
+      log )
   else
     try
       let time_start =
-        run_sim (module Driver) includes_p4 filename_p4 filename_stf
+        run_sim ~fmt (module Driver) includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
-      let log = Format.asprintf "Run success: %s" filename_stf in
-      log |> print_endline;
-      Format.eprintf "%s\n" log;
-      Format.eprintf ">>> took %.6f seconds\n" duration;
-      { stat with durations = duration :: stat.durations }
+      let log = Format.asprintf "Run success: %s\n" filename_stf in
+      (* let log = Format.asprintf "Run success: %s" filename_stf in *)
+      (* log |> print_endline; *)
+      (* Format.eprintf "%s\n" log; *)
+      (* Format.eprintf ">>> took %.6f seconds\n" duration; *)
+      ({ stat with durations = duration :: stat.durations }, log)
     with
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s" filename_stf |> print_endline;
-        Format.eprintf "Error on run: %s\n%s\n" filename_stf
-          (string_of_error at msg);
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
+        let log = Format.asprintf "Error on run: %s\n%s\n" filename_stf (string_of_error at msg) in
+        (* Format.asprintf "Error on run: %s" filename_stf |> print_endline; *)
+        (* Format.eprintf "Error on run: %s\n%s\n" filename_stf *)
+        (*   (string_of_error at msg); *)
+        (* Format.eprintf ">>> took %.6f seconds\n" duration; *)
+        ( {
+            stat with
+            durations = duration :: stat.durations;
+            fail_run = stat.fail_run + 1;
+          },
+          log )
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s (unknown)" filename_stf
-        |> print_endline;
-        Format.eprintf "Error on run: %s (unknown)\n" filename_stf;
-        Format.eprintf ">>> took %.6f seconds\n" duration;
-        {
-          stat with
-          durations = duration :: stat.durations;
-          fail_run = stat.fail_run + 1;
-        }
+        let log = Format.asprintf "Error on run: %s (unknown)\n" filename_stf in
+        (* Format.asprintf "Error on run: %s (unknown)" filename_stf *)
+        (* |> print_endline; *)
+        (* Format.eprintf "Error on run: %s (unknown)\n" filename_stf; *)
+        (* Format.eprintf ">>> took %.6f seconds\n" duration; *)
+        ( {
+            stat with
+            durations = duration :: stat.durations;
+            fail_run = stat.fail_run + 1;
+          },
+          log )
 
-let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+let run_sim_test_driver pool mode det arch specdir includes_p4 excludes_p4
     testdirs_p4 testdirs_stf patchdir =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
@@ -72,24 +80,37 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
   let filename_pairs =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
   in
+  let pairs_array = Array.of_list filename_pairs in
   let total = List.length filename_pairs in
-  let stat = empty_stat in
+  let _stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
   let _spec_sim, (module Driver) = driver ~det ~arch mode specdir in
-  let stat =
-    List.fold_left
-      (fun stat (filename_p4, filename_stf) ->
-        Format.asprintf
-          "\n>>> Running simulation test (%s) on %s with packet input %s" arch
-          filename_p4 filename_stf
-        |> print_endline;
-        run_sim_test
-          (module Driver : Sim.DRIVER)
-          stat includes_p4 excludes_p4 filename_p4 filename_stf)
-      stat filename_pairs
+
+  let (stat, log) = 
+    Domainslib.Task.parallel_for_reduce
+      ~start:0
+      ~finish:(total - 1)
+      ~body:(fun i ->
+        let (filename_p4, filename_stf) = pairs_array.(i) in
+        let buf = Buffer.create 512 in
+        let fmt = Format.formatter_of_buffer buf in
+        let (stat, log) = run_sim_test ~fmt (module Driver : Sim.DRIVER)
+          empty_stat includes_p4 excludes_p4 filename_p4 filename_stf
+        in
+        Format.pp_print_flush fmt ();
+        (stat, (Format.asprintf
+          ">>> Running simulation test (%s) on %s with packet input %s\n" arch
+          filename_p4 filename_stf) ^ Buffer.contents buf ^ log)
+      )
+      pool
+      merge_stat
+      (empty_stat, "")
   in
-  log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
+
+  print_endline log;
+
+  log_stat (Format.asprintf "Running simulation test (%s)" arch) stat total
 
 let sim_command =
   Core.Command.basic ~summary:"run simulation test"
@@ -104,6 +125,7 @@ let sim_command =
      and patchdir = flag "-p" (required string) ~doc:"p4 patch directory"
      and arch = flag "-arch" (required string) ~doc:"architecture name"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and cores = flag "-j" (optional_with_default 1 int) ~doc:"number of jobs (cores)"
      and mode =
        Command.Param.choose_one
          [
@@ -115,8 +137,14 @@ let sim_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
-         testdirs_p4 testdirs_stf patchdir)
+       let num_domains = cores - 1 in
+       let pool = Domainslib.Task.setup_pool ~num_domains () in
+       Core.Exn.protect
+         ~f:(fun () ->
+           Domainslib.Task.run pool (fun () ->
+               run_sim_test_driver pool mode det arch specdir includes_p4
+                 excludes_p4 testdirs_p4 testdirs_stf patchdir))
+         ~finally:(fun () -> Domainslib.Task.teardown_pool pool))
 
 (* Coverage test *)
 

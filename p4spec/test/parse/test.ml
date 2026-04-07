@@ -132,11 +132,12 @@ let parser_command_ =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     and cores = flag "-j" (optional_with_default 1 int) ~doc:"number of jobs (cores)"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
      fun () ->
-       let num_domains = Stdlib.Domain.recommended_domain_count () - 1 in
+       let num_domains = cores - 1 in
        let pool = Domainslib.Task.setup_pool ~num_domains () in
        Core.Exn.protect
          ~f:(fun () ->

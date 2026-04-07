@@ -80,7 +80,7 @@ let parse_int n _info =
   let i = Bigint.of_string (sanitize n) in
   NumV (`Int i) |> with_typ (NumT `IntT)
 
-let parse_width_int s n info =
+let parse_width_int s n _info =
   let l_s = String.length s in
   let width = String.sub s 0 (l_s - 1) in
   let sign = String.sub s (l_s - 1) 1 in

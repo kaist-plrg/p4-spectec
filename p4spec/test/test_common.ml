@@ -112,7 +112,7 @@ let sim_with_instr (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
   in
   Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  let result = Driver.run_stf_test Format.std_formatter includes_p4 filename_p4 filename_stf in
   Inst.Hook.finish ();
   let cover = read_coverage_instr () in
   (result, cover)
@@ -124,7 +124,7 @@ let sim_with_dangling (module Driver : Runtime.Sim.Simulator.DRIVER) spec_sim
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Driver.run_stf_test includes_p4 filename_p4 filename_stf in
+  let result = Driver.run_stf_test Format.std_formatter includes_p4 filename_p4 filename_stf in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)

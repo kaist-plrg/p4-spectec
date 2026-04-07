@@ -7,7 +7,7 @@ open Util.Source
 (* Initializer *)
 
 let init (printer : value -> string) : unit =
-  Fresh_.ctr := 0;
+  Fresh_.reset ();
   Printer.printer := printer
 
 (* Builtin calls *)

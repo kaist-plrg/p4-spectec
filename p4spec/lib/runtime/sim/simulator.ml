@@ -111,7 +111,7 @@ module type DRIVER = sig
 
   (* Run a P4 program against the spec and a STF test *)
 
-  val run_stf_test : string list -> string -> string -> stf_result
+  val run_stf_test : Format.formatter -> string list -> string -> string -> stf_result
 
   (* Initialization *)
 

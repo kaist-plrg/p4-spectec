@@ -18,10 +18,37 @@ open Nondet
 module F = Format
 open Util.Source
 
-(* Cache *)
+(* Cache - domain-local using hash table keyed by domain ID *)
 
-let func_cache = ref (Cache.Cache.create ~size:10000)
-let rel_cache = ref (Cache.Cache.create ~size:10000)
+let func_caches : (int, (value Cache.Cache.Table.t) ref) Hashtbl.t = Hashtbl.create 16
+let rel_caches : (int, (value list Cache.Cache.Table.t) ref) Hashtbl.t = Hashtbl.create 16
+let cache_lock = Mutex.create ()
+
+let get_func_cache () =
+  let id : int = (Stdlib.Domain.self () :> int) in
+  Mutex.lock cache_lock;
+  let cache =
+    try Hashtbl.find func_caches id
+    with Not_found ->
+      let new_cache = ref (Cache.Cache.create ~size:10000) in
+      Hashtbl.add func_caches id new_cache;
+      new_cache
+  in
+  Mutex.unlock cache_lock;
+  cache
+
+let get_rel_cache () =
+  let id : int = (Stdlib.Domain.self () :> int) in
+  Mutex.lock cache_lock;
+  let cache =
+    try Hashtbl.find rel_caches id
+    with Not_found ->
+      let new_cache = ref (Cache.Cache.create ~size:10000) in
+      Hashtbl.add rel_caches id new_cache;
+      new_cache
+  in
+  Mutex.unlock cache_lock;
+  cache
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assignments *)
@@ -1649,13 +1676,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | Cont traces -> Unmatch traces |> back
     in
     if Hook.is_cache_on () && Cache.is_cached_rel id.it then (
+      let rel_cache = get_rel_cache () in
       let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> values_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let builtin_ctr_before = Builtin.Fresh.get_count () in
           let values_output = invoke_defined_rel' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          let builtin_ctr_after = Builtin.Fresh.get_count () in
           (* Cache if the relation does not create a side-effect *)
           if builtin_ctr_before = builtin_ctr_after then
             Cache.Cache.add !rel_cache (id.it, values_input) values_output;
@@ -1760,13 +1788,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
       && not (is_high_order_func values_input)
     then (
+      let func_cache = get_func_cache () in
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let builtin_ctr_before = Builtin.Fresh.get_count () in
           let value_output = invoke_builtin_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          let builtin_ctr_after = Builtin.Fresh.get_count () in
           (* Cache if the builtin function does not create a side-effect *)
           if builtin_ctr_before = builtin_ctr_after then
             Cache.Cache.add !func_cache (id.it, values_input) value_output;
@@ -1792,13 +1821,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | _ -> back_err id.at "table did not return a value"
     in
     if Hook.is_cache_on () && Cache.is_cached_func id.it && not anon then (
+      let func_cache = get_func_cache () in
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let builtin_ctr_before = Builtin.Fresh.get_count () in
           let value_output = invoke_table_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          let builtin_ctr_after = Builtin.Fresh.get_count () in
           (* Cache if the table function does not create a side-effect *)
           if builtin_ctr_before = builtin_ctr_after then
             Cache.Cache.add !func_cache (id.it, values_input) value_output;
@@ -1839,13 +1869,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       Hook.is_cache_on () && Cache.is_cached_func id.it && (not anon)
       && not (is_high_order_func values_input)
     then (
+      let func_cache = get_func_cache () in
       let cache_result = Cache.Cache.find !func_cache (id.it, values_input) in
       match cache_result with
       | Some value_output -> value_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let builtin_ctr_before = Builtin.Fresh.get_count () in
           let value_output = invoke_defined_func' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          let builtin_ctr_after = Builtin.Fresh.get_count () in
           (* Cache if the function does not create a side-effect *)
           if builtin_ctr_before = builtin_ctr_after then
             Cache.Cache.add !func_cache (id.it, values_input) value_output;
@@ -1856,6 +1887,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let clear () : unit =
     Value.refresh ();
+    let func_cache = get_func_cache () in
+    let rel_cache = get_rel_cache () in
     Cache.Cache.reset !func_cache;
     Cache.Cache.reset !rel_cache
 

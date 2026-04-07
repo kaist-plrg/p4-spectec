@@ -5,12 +5,30 @@ open Il
 open Il.Print
 open Util.Source
 
-(* Ticker for node identifier tracking *)
+(* Ticker for node identifier tracking - domain-local to avoid contention *)
 
-let tick = ref 0
-let refresh () = tick := 0
+let tick_table : (int, int ref) Hashtbl.t = Hashtbl.create 16
+let tick_lock = Mutex.create ()
+
+let get_tick () =
+  let id : int = (Stdlib.Domain.self () :> int) in
+  Mutex.lock tick_lock;
+  let counter =
+    try Hashtbl.find tick_table id
+    with Not_found ->
+      let new_tick = ref 0 in
+      Hashtbl.add tick_table id new_tick;
+      new_tick
+  in
+  Mutex.unlock tick_lock;
+  counter
+
+let refresh () =
+  let tick = get_tick () in
+  tick := 0
 
 let fresh () =
+  let tick = get_tick () in
   let id = !tick in
   tick := id + 1;
   id
