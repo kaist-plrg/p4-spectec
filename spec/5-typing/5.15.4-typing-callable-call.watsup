@@ -252,7 +252,7 @@ def $callable_action(LOCAL, TC)
   = (localKind = ACTION) \/ (localKind = CONTROL_APPLY_METHOD)
   -- if localKind = TC.LOCAL.KIND
 
-rule Call_ok/action:
+rule Call_ok/actionTypeIR:
   p TC |- actionTypeIR `< eps `# eps >
             `( argumentIR* `# id_default* `# id_optional* )
         : VOID `< eps > `( argumentIR_cast* )
@@ -375,12 +375,6 @@ rule Call_ok/externFunctionTypeIR:
 ;;;; syntax builtinMethodTypeIR =
 ;;;;  BUILTIN_METHOD nameIR `( parameterIR* ) `: typeIR
 
-dec $callable_builtinMethod(cursor, typingContext) : bool
-
-def $callable_builtinMethod(GLOBAL, TC) = true
-def $callable_builtinMethod(BLOCK, TC) = true
-def $callable_builtinMethod(LOCAL, TC) = true
-
 rule Call_ok/builtinMethodTypeIR:
   p TC |- builtinMethodTypeIR `< typeArgumentIR* `# eps >
             `( argumentIR* `# id_default* `# id_optional* )
@@ -390,8 +384,6 @@ rule Call_ok/builtinMethodTypeIR:
   ---- ;; align parameters with arguments
   -- if GIVEN parameterIR_aligned* DEFAULT _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
-  ---- ;; check call site
-  -- if $callable_builtinMethod(p, TC)
   ---- ;; check call convention
   -- Call_convention_ok:
       p TC NOACTION |- parameterIR_aligned* `@ argumentIR*
@@ -401,6 +393,7 @@ rule Call_ok/builtinMethodTypeIR:
 ;;;; syntax externMethodTypeIR
 
 ;;;;; EXTERN_METHOD `( parameterIR* ) `: typeIR
+;;;;; EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR
 
 dec $callable_externMethod(cursor, typingContext) : bool
 
@@ -410,74 +403,68 @@ def $callable_externMethod(BLOCK, TC)
   -- if blockKind = TC.BLOCK.KIND
 def $callable_externMethod(LOCAL, TC) = true
 
-rule Call_ok/externMethodTypeIR-non-abstract:
-  p TC |- externMethodTypeIR `< typeArgumentIR* `# typeId_infer* >
-            `( argumentIR* `# id_default* `# id_optional* )
-        : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-  -- if EXTERN_METHOD nameIR `( parameterIR* ) `: typeIR_ret
-      = externMethodTypeIR
-  ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
-      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
-  ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
-  -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
-  ---- ;; substitute inferred types
-  -- if (parameterIR_aligned_inferred
-        = $subst_parameterIR(inference, parameterIR_aligned))*
-  -- if typeIR_ret_inferred
-      = $subst_typeIR(inference, typeIR_ret)
-  ---- ;; check that the substituted method is still well-formed
-  -- if externMethodTypeIR_inferred
-      = EXTERN_METHOD nameIR `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
-  -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
-  ---- ;; check call site
-  -- if $callable_externMethod(p, TC)
-  ---- ;; check call convention
-  -- Call_convention_ok:
-      p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
-                     : argumentIR_cast*
+rulegroup Call_ok/externMethodTypeIR {
 
-;;;;; EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR
+  rule Call_ok/non-abstract:
+    p TC |- externMethodTypeIR `< typeArgumentIR* `# typeId_infer* >
+              `( argumentIR* `# id_default* `# id_optional* )
+          : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if EXTERN_METHOD nameIR `( parameterIR* ) `: typeIR_ret
+        = externMethodTypeIR
+    ---- ;; align parameters with arguments
+    -- if GIVEN parameterIR_aligned* DEFAULT _
+        = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+    ---- ;; perform type inference
+    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
+    -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+    ---- ;; substitute inferred types
+    -- if (parameterIR_aligned_inferred
+          = $subst_parameterIR(inference, parameterIR_aligned))*
+    -- if typeIR_ret_inferred
+        = $subst_typeIR(inference, typeIR_ret)
+    ---- ;; check that the substituted method is still well-formed
+    -- if externMethodTypeIR_inferred
+        = EXTERN_METHOD nameIR `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
+    -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
+    ---- ;; check call site
+    -- if $callable_externMethod(p, TC)
+    ---- ;; check call convention
+    -- Call_convention_ok:
+        p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+                       : argumentIR_cast*
 
-dec $callable_externAbstractMethod(cursor, typingContext) : bool
+  rule Call_ok/abstract:
+    p TC |- externMethodTypeIR `< typeArgumentIR* `# typeId_infer* >
+              `( argumentIR* `# id_default* `# id_optional* )
+          : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
+    -- if EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR_ret
+        = externMethodTypeIR
+    ---- ;; align parameters with arguments
+    -- if GIVEN parameterIR_aligned* DEFAULT _
+        = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+    ---- ;; perform type inference
+    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
+    -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+    ---- ;; substitute inferred types
+    -- if (parameterIR_aligned_inferred
+          = $subst_parameterIR(inference, parameterIR_aligned))*
+    -- if typeIR_ret_inferred
+        = $subst_typeIR(inference, typeIR_ret)
+    ---- ;; check that the substituted method is still well-formed
+    -- if externMethodTypeIR_inferred
+        = EXTERN_METHOD ABSTRACT nameIR
+            `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
+    -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
+    ---- ;; check call site
+    -- if $callable_externMethod(p, TC)
+    ---- ;; check call convention
+    -- Call_convention_ok:
+        p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+                       : argumentIR_cast*
 
-def $callable_externAbstractMethod(GLOBAL, TC) = false
-def $callable_externAbstractMethod(BLOCK, TC)
-  = (blockKind = PARSER) \/ (blockKind = CONTROL)
-  -- if blockKind = TC.BLOCK.KIND
-def $callable_externAbstractMethod(LOCAL, TC) = true
-
-rule Call_ok/externMethodTypeIR-abstract:
-  p TC |- externMethodTypeIR `< typeArgumentIR* `# typeId_infer* >
-            `( argumentIR* `# id_default* `# id_optional* )
-        : typeIR_ret_inferred `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-  -- if EXTERN_METHOD ABSTRACT nameIR `( parameterIR* ) `: typeIR_ret
-      = externMethodTypeIR
-  ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
-      = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
-  ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-  -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
-  -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
-  ---- ;; substitute inferred types
-  -- if (parameterIR_aligned_inferred
-        = $subst_parameterIR(inference, parameterIR_aligned))*
-  -- if typeIR_ret_inferred
-      = $subst_typeIR(inference, typeIR_ret)
-  ---- ;; check that the substituted method is still well-formed
-  -- if externMethodTypeIR_inferred
-      = EXTERN_METHOD ABSTRACT nameIR
-          `( parameterIR_aligned_inferred* ) `: typeIR_ret_inferred
-  -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
-  ---- ;; check call site
-  -- if $callable_externAbstractMethod(p, TC)
-  ---- ;; check call convention
-  -- Call_convention_ok:
-      p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
-                     : argumentIR_cast*
+}
 
 ;;;; parserApplyMethodTypeIR
 ;;;; syntax parserApplyMethodTypeIR =

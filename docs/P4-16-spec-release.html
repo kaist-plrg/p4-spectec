@@ -2177,15 +2177,56 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#_runtime_evaluation_of_constructor_calls">19.5. Runtime evaluation of constructor calls</a></li>
-<li><a href="#_runtime_evaluation_of_callable_calls">19.6. Runtime evaluation of callable calls</a>
+<li><a href="#_callable_calls">19.6. Callable calls</a>
 <ul class="sectlevel3">
-<li><a href="#sec-call-action">19.6.1. Actions</a></li>
-<li><a href="#_functions_2">19.6.2. Functions</a></li>
-<li><a href="#_built_in_methods_3">19.6.3. Built-in methods</a></li>
-<li><a href="#_extern_methods_2">19.6.4. Extern methods</a></li>
-<li><a href="#_parser_apply_methods_3">19.6.5. Parser apply methods</a></li>
-<li><a href="#_control_apply_methods_3">19.6.6. Control apply  methods</a></li>
-<li><a href="#_table_apply_methods_3">19.6.7. Table apply methods</a></li>
+<li><a href="#sec-call-action">19.6.1. Actions</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_122">19.6.1.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_56">19.6.1.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-function">19.6.2. Functions</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_123">19.6.2.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_57">19.6.2.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-extern-function">19.6.3. Extern functions</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_124">19.6.3.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_58">19.6.3.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-builtin">19.6.4. Built-in methods</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_125">19.6.4.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_59">19.6.4.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-extern-method">19.6.5. Extern methods</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_126">19.6.5.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_60">19.6.5.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-parser-apply-method">19.6.6. Parser apply methods</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_127">19.6.6.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_61">19.6.6.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-control-apply">19.6.7. Control apply  methods</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_128">19.6.7.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_62">19.6.7.2. Runtime evaluation</a></li>
+</ul>
+</li>
+<li><a href="#sec-call-table-apply">19.6.8. Table apply methods</a>
+<ul class="sectlevel4">
+<li><a href="#_type_checking_129">19.6.8.1. Type checking</a></li>
+<li><a href="#_runtime_evaluation_63">19.6.8.2. Runtime evaluation</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -68895,7 +68936,42 @@ or <code>inout</code> parameters.</p>
 
 </div>
 <div class="sect2">
-<h3 id="_runtime_evaluation_of_callable_calls">19.6. Runtime evaluation of callable calls</h3>
+<h3 id="_callable_calls">19.6. Callable calls</h3>
+<div class="paragraph">
+<p>Callable calls are type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Call_ok: cursor typingContext |- callableTypeIR `&lt;typeArgumentListIR # typeId*&gt; `(argumentListIR # id* # id*) : typeIR `&lt;typeArgumentListIR&gt; `(argumentListIR)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Call_ok" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Call_ok</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Typing invocation <code>callableTypeIR</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code> with omitted type arguments <code>typeId<sup>*</sup></code>, defaults <code>id<sup>*</sup></code> and optionals <code>id<sup>*</sup></code>, under cursor <code>cursor</code> and context <code>typingContext</code>:</p>
+</li>
+<li>
+<p>Result in return type <code>typeIR</code> with inferred <code>typeArgumentListIR</code> and casted <code>argumentListIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 <div class="paragraph">
 <p>At runtime, callable callees are evaluated as follows:</p>
 </div>
@@ -68932,11 +69008,73 @@ or <code>inout</code> parameters.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The following subsections describe the evaluation of callable calls for
-different types of callees.</p>
+<p>The following subsections describe the type checking and evaluation of callable
+calls for different types of callees.</p>
 </div>
 <div class="sect3">
 <h4 id="sec-call-action">19.6.1. Actions</h4>
+<div class="sect4">
+<h5 id="_type_checking_122">19.6.1.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to an action is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/actionTypeIR:
+  rule Call_ok/actionTypeIR:
+  p TC |- actionTypeIR `&lt;eps # eps&gt; `(argumentIR* # id_default* # id_optional*) : VOID `&lt;eps&gt; `(argumentIR_cast*)
+ -- if _ ACTION _ `(parameterIR*) = actionTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if $callable_action(p, TC)
+ -- Call_convention_ok: p TC ACTION |- parameterIR_aligned* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>actionTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>_</code> <code>ACTION</code> <code>_</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>actionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_action">$callable_action(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>ACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>VOID</code> with inferred <code>·</code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_56">19.6.1.2. Runtime evaluation</h5>
 <div class="paragraph">
 <p>An action call is evaluated as follows:</p>
 </div>
@@ -69030,7 +69168,7 @@ different types of callees.</p>
 </div>
 </li>
 <li>
-<p>Let the updated context <code>EC<sub>callee_3</sub></code>, state <code>ARCH<sub>2</sub></code> and result <code>actionResult</code> be</p>
+<p>Let context <code>EC<sub>callee_3</sub></code>, state <code>ARCH<sub>2</sub></code> and result <code>actionResult</code> be</p>
 <div class="ulist">
 <ul>
 <li>
@@ -69115,7 +69253,7 @@ different types of callees.</p>
 <p>Evaluating action body <code>blockStatementIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
 </li>
 <li>
-<p>Result in the updated context <code>evalContext</code>, state <code>arch</code> and result <code>actionResult</code>.</p>
+<p>Result in context <code>evalContext</code>, state <code>arch</code> and result <code>actionResult</code>.</p>
 </li>
 </ul>
 </div>
@@ -69173,7 +69311,7 @@ different types of callees.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -69183,7 +69321,7 @@ different types of callees.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>EXIT</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>EXIT</code>.</p>
 </li>
 </ol>
 </div>
@@ -69193,7 +69331,7 @@ different types of callees.</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Result in the updated context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
 </li>
 </ol>
 </div>
@@ -69203,29 +69341,2719 @@ different types of callees.</p>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_functions_2">19.6.2. Functions</h4>
-
 </div>
 <div class="sect3">
-<h4 id="_built_in_methods_3">19.6.3. Built-in methods</h4>
+<h4 id="sec-call-function">19.6.2. Functions</h4>
+<div class="sect4">
+<h5 id="_type_checking_123">19.6.2.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to a function is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/definedFunctionTypeIR:
+  rule Call_ok/definedFunctionTypeIR:
+  p TC |- definedFunctionTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret_inferred `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if FUNCTION nameIR `(parameterIR*) : typeIR_ret = definedFunctionTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+ -- (if (typeIR_inferred = $find_map&lt;typeId, typeIR&gt;(inference, typeId_infer)))*
+ -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+ -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*
+ -- if typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
+ -- if functionTypeIR_inferred = FUNCTION nameIR `(parameterIR_aligned_inferred*) : typeIR_ret_inferred
+ -- CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred
+ -- if $callable_definedFunction(p, TC)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
 </div>
-<div class="sect3">
-<h4 id="_extern_methods_2">19.6.4. Extern methods</h4>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>definedFunctionTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>FUNCTION</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code> be <code>definedFunctionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>inference</code> be <code><a href="#infer">$infer(typeId<sup>*</sup>,</code> <code>parameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sup>?</sup><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sup>?</sup></code> be <a href="#find_map">the value of <code>typeId</code> in map <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeId</code> in <code>typeId<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Check that <code>typeIR<sup>?</sup></code> is defined, for all <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> be <code>typeArgumentIR<sup>*</sup></code> concatenated with <code>typeIR<sub>inferred</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub></code> be <a href="#subst_parameterIR"><code>parameterIR<sub>aligned</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR<sub>aligned</sub></code> in <code>parameterIR<sub>aligned</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeIR<sub>ret_inferred</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>ret</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+<li>
+<p>Let <code>functionTypeIR<sub>inferred</sub></code> be <code>FUNCTION</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret_inferred</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableType_wf"><code>functionTypeIR<sub>inferred</sub></code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_definedFunction">$callable_definedFunction(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>typeIR<sub>ret_inferred</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_57">19.6.2.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A function call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/definedFunctionCallee:
+  rule Call_eval/definedFunctionCallee-copyin-abort:
+  p EC_0 ARCH_0 |- definedFunctionCallee @ `&lt;typeArgumentIR*&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+ -- if FUNCTION nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default*) blockStatementIR = definedFunctionCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # abortResult
+  rule Call_eval/definedFunctionCallee-cont:
+  p EC_0 ARCH_0 |- definedFunctionCallee @ `&lt;typeArgumentIR*&gt; `(argumentListIR) : EC_2 ARCH_2 definedFunctionResult
+ -- if FUNCTION nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default*) blockStatementIR = definedFunctionCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_2 ~&gt; EC_callee_3
+ -- DefinedFunctionBody_eval: EC_callee_3 ARCH_1 |- blockStatementIR : EC_callee_4 ARCH_2 definedFunctionResult
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ LOCAL EC_callee_4 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
 </div>
-<div class="sect3">
-<h4 id="_parser_apply_methods_3">19.6.5. Parser apply methods</h4>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>definedFunctionCallee</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>blockStatementIR</code> be <code>definedFunctionCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeArgumentIR<sup>*</sup></code> is equal to the length of <code>typeParameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub></code> with <code>LOCAL.TYPE</code> set to <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentListIR</code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>·</code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let state <code>ARCH<sub>1</sub></code>,  caller&#8217;s context <code>EC<sub>1</sub></code>,  callee&#8217;s context <code>EC<sub>callee_2</sub></code>,  and copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentListIR</code> at <code>LOCAL</code> of <code>EC<sub>callee_1</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> at <code>EC<sub>0</sub></code>, under state <code>ARCH<sub>0</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>LOCAL</code> and context <code>EC<sub>callee_2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_4</sub></code>, state <code>ARCH<sub>2</sub></code> and result <code>definedFunctionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#DefinedFunctionBody_eval">evaluating function body <code>blockStatementIR</code>, under context <code>EC<sub>callee_3</sub></code> and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>LOCAL</code> of <code>EC<sub>callee_4</sub></code>, under state <code>ARCH<sub>2</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>definedFunctionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A function body is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation DefinedFunctionBody_eval: evalContext arch |- blockStatementIR : evalContext arch definedFunctionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
 </div>
-<div class="sect3">
-<h4 id="_control_apply_methods_3">19.6.6. Control apply  methods</h4>
+</div>
+<div id="DefinedFunctionBody_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#DefinedFunctionBody_eval">DefinedFunctionBody_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating function body <code>blockStatementIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in context <code>evalContext</code>, state <code>arch</code> and result <code>definedFunctionResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating an function body is either an <code>exit</code> or a <code>return</code>.</p>
+</div>
+<div class="paragraph">
+<p>${sytnax: definedFunctionResult}</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup DefinedFunctionBody_eval:
+  rule DefinedFunctionBody_eval/cont:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 (RETURN eps)
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 `EMPTY
+  rule DefinedFunctionBody_eval/exit:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 EXIT
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 EXIT
+  rule DefinedFunctionBody_eval/return-void:
+  EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 returnResult
+ -- Block_eval: EC_0 ARCH_0 |- blockStatementIR : EC_1 ARCH_1 returnResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
 </div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#DefinedFunctionBody_eval">Evaluating function body <code>blockStatementIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Block_eval">runtime evaluation of <code>blockStatementIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>continueEmptyResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>exitResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>returnResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="sect3">
-<h4 id="_table_apply_methods_3">19.6.7. Table apply methods</h4>
+<h4 id="sec-call-extern-function">19.6.3. Extern functions</h4>
+<div class="sect4">
+<h5 id="_type_checking_124">19.6.3.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to an extern function is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/externFunctionTypeIR:
+  rule Call_ok/externFunctionTypeIR:
+  p TC |- externFunctionTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret_inferred `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if EXTERN_FUNCTION nameIR `(parameterIR*) : typeIR_ret = externFunctionTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+ -- (if (typeIR_inferred = $find_map&lt;typeId, typeIR&gt;(inference, typeId_infer)))*
+ -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+ -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*
+ -- if typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
+ -- if functionTypeIR_inferred = EXTERN_FUNCTION nameIR `(parameterIR_aligned_inferred*) : typeIR_ret_inferred
+ -- CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred
+ -- if $callable_externFunction(p, TC, nameIR)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
 
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>externFunctionTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code> be <code>externFunctionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>inference</code> be <code><a href="#infer">$infer(typeId<sup>*</sup>,</code> <code>parameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sup>?</sup><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sup>?</sup></code> be <a href="#find_map">the value of <code>typeId</code> in map <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeId</code> in <code>typeId<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Check that <code>typeIR<sup>?</sup></code> is defined, for all <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> be <code>typeArgumentIR<sup>*</sup></code> concatenated with <code>typeIR<sub>inferred</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub></code> be <a href="#subst_parameterIR"><code>parameterIR<sub>aligned</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR<sub>aligned</sub></code> in <code>parameterIR<sub>aligned</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeIR<sub>ret_inferred</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>ret</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+<li>
+<p>Let <code>functionTypeIR<sub>inferred</sub></code> be <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret_inferred</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableType_wf"><code>functionTypeIR<sub>inferred</sub></code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_externFunction">$callable_externFunction(p,</code> <code>TC,</code> <code>nameIR)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>typeIR<sub>ret_inferred</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_58">19.6.3.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>An extern function call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/externFunctionCallee:
+  rule Call_eval/externFunctionCallee-copyin-abort:
+  p EC_0 ARCH_0 |- externFunctionCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_1 ARCH_1 abortResult
+ -- if EXTERN_FUNCTION nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) = externFunctionCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_1 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_2 # abortResult
+  rule Call_eval/externFunctionCallee-copyin-cont-call-reject:
+  p EC_0 ARCH_0 |- externFunctionCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_1 ARCH_2 rejectTransitionResult
+ -- if EXTERN_FUNCTION nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) = externFunctionCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_1 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_2 ~&gt; EC_callee_3
+ -- (if (_ _ _ nameIR_param _ = parameterIR))*
+ -- ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR `(nameIR_param*) : EC_callee_4 ARCH_2 rejectTransitionResult
+  rule Call_eval/externFunctionCallee-copyin-cont-call-non-reject:
+  p EC_0 ARCH_0 |- externFunctionCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_2 ARCH_2 callResult
+ -- if EXTERN_FUNCTION nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) = externFunctionCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_1 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_2 ~&gt; EC_callee_3
+ -- (if (_ _ _ nameIR_param _ = parameterIR))*
+ -- ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR `(nameIR_param*) : EC_callee_4 ARCH_2 callResult
+ -- if ~(callResult &lt;: rejectTransitionResult)
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ LOCAL EC_callee_4 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>externFunctionCallee</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>EXTERN_FUNCTION</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code> be <code>externFunctionCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeArgumentIR<sup>*</sup></code> is equal to the length of <code>typeParameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub></code> with <code>LOCAL.TYPE</code> set to <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let state <code>ARCH<sub>1</sub></code>,  caller&#8217;s context <code>EC<sub>1</sub></code>,  callee&#8217;s context <code>EC<sub>callee_2</sub></code>,  and copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentIR<sup>*</sup></code> at <code>LOCAL</code> of <code>EC<sub>callee_1</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> at <code>EC<sub>0</sub></code>, under state <code>ARCH<sub>0</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>LOCAL</code> and context <code>EC<sub>callee_2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>nameIR<sub>param</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>nameIR<sub>param</sub></code> be the name of <code>parameterIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_4</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>callResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ExternFunctionCall_eval">calling an extern function <code>nameIR</code> <code>(</code> <code>nameIR<sub>param</sub><sup>*</sup></code> <code>)</code>, under context <code>EC<sub>callee_3</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>callResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>LOCAL</code> of <code>EC<sub>callee_4</sub></code>, under state <code>ARCH<sub>2</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>callResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-call-builtin">19.6.4. Built-in methods</h4>
+<div class="sect4">
+<h5 id="_type_checking_125">19.6.4.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to a built-in method is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/builtinMethodTypeIR:
+  rule Call_ok/builtinMethodTypeIR:
+  p TC |- builtinMethodTypeIR `&lt;typeArgumentIR* # eps&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret `&lt;typeArgumentIR*&gt; `(argumentIR_cast*)
+ -- if BUILTIN_METHOD nameIR `(parameterIR*) : typeIR_ret = builtinMethodTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>builtinMethodTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code> be <code>builtinMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>typeIR<sub>ret</sub></code> with inferred <code>typeArgumentIR<sup>*</sup></code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_59">19.6.4.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A built-in method call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee:
+  rule Call_eval/header-stack-push_front-abort:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_1 ARCH_1 abortResult
+ -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
+  rule Call_eval/header-stack-push_front-cont:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &lt; n_size
+ -- if value_front* = value_element*[0 : n_count]
+ -- (if (value_front_invalidated = $invalidate_value(value_front)))*
+ -- if n_back = $max_int([0, n_size - n_count])
+ -- if value_back* = value_element*[0 : n_back]
+ -- if value_element_updated* = value_front_invalidated* ++ value_back*
+ -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+  rule Call_eval/header-stack-push_front-cont-overflow:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &gt;= n_size
+ -- (if (value_element_updated = $invalidate_value(value_element)))*
+ -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+  rule Call_eval/header-stack-pop_front-abort:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_1 ARCH_1 abortResult
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
+  rule Call_eval/header-stack-pop_front-cont:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &lt; n_size
+ -- if n_front = $max_int([0, n_size - n_count])
+ -- if value_front* = value_element*[n_count : n_front]
+ -- if value_back* = value_element*[0 : n_count]
+ -- (if (value_back_invalidated = $invalidate_value(value_back)))*
+ -- if value_element_updated* = value_front* ++ value_back_invalidated*
+ -- if n_idx_updated = n_front
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+  rule Call_eval/header-stack-pop_front-cont-overflow:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &gt;= n_size
+ -- (if (value_element_updated = $invalidate_value(value_element)))*
+ -- if n_idx_updated = $max_int([0, n_size - n_count])
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+  rule Call_eval/header-isValid:
+  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC ARCH |- storageReference : headerValue
+ -- if HEADER _ `{b_valid ; _} = headerValue
+ -- if returnResult = RETURN (`B b_valid)
+  rule Call_eval/header-union-isValid:
+  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC ARCH |- storageReference : headerUnionValue
+ -- if HEADER_UNION typeId `{fieldValue*} = headerUnionValue
+ -- if fieldValue_valid* = $filter_&lt;fieldValue&gt;(fieldValue*, $isValid_fieldValue(fieldValue)*)
+ -- if b_valid = (fieldValue_valid* = eps)
+ -- if returnResult = RETURN (`B b_valid)
+  rule Call_eval/header-setValid:
+  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "setValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
+ -- if HEADER typeId `{_ ; fieldValue*} = headerValue
+ -- if value = HEADER typeId `{true ; fieldValue*}
+ -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- if returnResult = RETURN eps
+  rule Call_eval/header-setInvalid:
+  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "setInvalid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
+ -- if HEADER typeId `{_ ; fieldValue*} = headerValue
+ -- if value = HEADER typeId `{false ; fieldValue*}
+ -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- if returnResult = RETURN eps</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>argumentIR</code> be <code>argumentListIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
+</li>
+<li>
+<p>If <code>text</code> is equal to <code>"push_front"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterListIR</code> is a list of length 1.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>headerStackValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>n<sub>idx</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>headerStackValue</code>.</p>
+</li>
+<li>
+<p>Let <a href="#Argument_eval"><code>p</code> <code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>argumentIR</code> <code>:</code> <code>EC<sub>1</sub></code> <code>ARCH<sub>1</sub></code> <code>expressionResult</code></a>.</p>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>value'</code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Check that <code>value'</code> has type <code>integerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>integerValue<sub>count</sub></code> be <code>value'</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>count</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>count</sub></code></a>.</p>
+</li>
+<li>
+<p>If <code>n<sub>count</sub></code> is less than <code>n<sub>size</sub></code>:</p>
+<div class="olist upperroman">
+<ol class="upperroman" type="I">
+<li>
+<p>Let <code>value<sub>front</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup>[0</code> <code>:</code> <code>n<sub>count</sub>]</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>front_invalidated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>value<sub>front_invalidated</sub></code> be <code><a href="#invalidate_value">$invalidate_value(value<sub>front</sub>)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>value<sub>front</sub></code> in <code>value<sub>front</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>int</code> be <a href="#max_int">max<code>(</code> <code>[</code> <code>0,</code> <code>n<sub>size</sub></code> <code>-</code> <code>n<sub>count</sub></code> <code>]</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>back</sub></code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>back</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup>[0</code> <code>:</code> <code>n<sub>back</sub>]</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be <code>value<sub>front_invalidated</sub><sup>*</sup></code> concatenated with <code>value<sub>back</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>idx_updated</sub></code> be <a href="#min_nat">min<code>(</code> <code>[</code> <code>n<sub>size</sub>,</code> <code>n<sub>idx</sub></code> <code>`` ``n~count~`` ``]`` ``)+</code></a>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue<sub>updated</sub></code> be <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element_updated</sub><sup>*</sup></code> <code>(</code> <code>n<sub>idx_updated</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>headerStackValue<sub>updated</sub></code> to <code>storageReference</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>n<sub>count</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
+<div class="olist upperroman">
+<ol class="upperroman" type="I">
+<li>
+<p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>value<sub>element_updated</sub></code> be <code><a href="#invalidate_value">$invalidate_value(value<sub>element</sub>)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>value<sub>element</sub></code> in <code>value<sub>element</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>n<sub>idx_updated</sub></code> be <a href="#min_nat">min<code>(</code> <code>[</code> <code>n<sub>size</sub>,</code> <code>n<sub>idx</sub></code> <code>`` ``n~count~`` ``]`` ``)+</code></a>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue<sub>updated</sub></code> be <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element_updated</sub><sup>*</sup></code> <code>(</code> <code>n<sub>idx_updated</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>headerStackValue<sub>updated</sub></code> to <code>storageReference</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>text</code> is equal to <code>"pop_front"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterListIR</code> is a list of length 1.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>headerStackValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element</sub><sup>*</sup></code> <code>(</code> <code>n<sub>idx</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code> be <code>headerStackValue</code>.</p>
+</li>
+<li>
+<p>Let <a href="#Argument_eval"><code>p</code> <code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>argumentIR</code> <code>:</code> <code>EC<sub>1</sub></code> <code>ARCH<sub>1</sub></code> <code>expressionResult</code></a>.</p>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>value'</code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Check that <code>value'</code> has type <code>integerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>integerValue<sub>count</sub></code> be <code>value'</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>count</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#nat_of_integerValue">the natural number representation of  <code>integerValue<sub>count</sub></code></a>.</p>
+</li>
+<li>
+<p>If <code>n<sub>count</sub></code> is less than <code>n<sub>size</sub></code>:</p>
+<div class="olist upperroman">
+<ol class="upperroman" type="I">
+<li>
+<p>Let <code>int</code> be <a href="#max_int">max<code>(</code> <code>[</code> <code>0,</code> <code>n<sub>size</sub></code> <code>-</code> <code>n<sub>count</sub></code> <code>]</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>front</sub></code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>front</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup>[n<sub>count</sub></code> <code>:</code> <code>n<sub>front</sub>]</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>back</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup>[0</code> <code>:</code> <code>n<sub>count</sub>]</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>back_invalidated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>value<sub>back_invalidated</sub></code> be <code><a href="#invalidate_value">$invalidate_value(value<sub>back</sub>)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>value<sub>back</sub></code> in <code>value<sub>back</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be <code>value<sub>front</sub><sup>*</sup></code> concatenated with <code>value<sub>back_invalidated</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue<sub>updated</sub></code> be <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element_updated</sub><sup>*</sup></code> <code>(</code> <code>n<sub>front</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>headerStackValue<sub>updated</sub></code> to <code>storageReference</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>n<sub>count</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
+<div class="olist upperroman">
+<ol class="upperroman" type="I">
+<li>
+<p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>value<sub>element_updated</sub></code> be <code><a href="#invalidate_value">$invalidate_value(value<sub>element</sub>)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>value<sub>element</sub></code> in <code>value<sub>element</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>int</code> be <a href="#max_int">max<code>(</code> <code>[</code> <code>0,</code> <code>n<sub>size</sub></code> <code>-</code> <code>n<sub>count</sub></code> <code>]</code> <code>)</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>int</code> has type <code>nat</code>.</p>
+</li>
+<li>
+<p>Let <code>n<sub>idx_updated</sub></code> be <code>int</code>.</p>
+</li>
+<li>
+<p>Let <code>headerStackValue<sub>updated</sub></code> be <code>HEADER_STACK</code> <code>[</code> <code>value<sub>element_updated</sub><sup>*</sup></code> <code>(</code> <code>n<sub>idx_updated</sub></code> <code>;</code> <code>n<sub>size</sub></code> <code>)</code> <code>]</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>headerStackValue<sub>updated</sub></code> to <code>storageReference</code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>argumentListIR</code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
+</li>
+<li>
+<p>If <code>text</code> is equal to <code>"isValid"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterIR<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>headerValue</code> be <code>value</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>HEADER</code> <code>_</code> <code>{</code> <code>b<sub>valid</sub></code> <code>;</code> <code>_<sup>*</sup></code> <code>}</code> be <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>`B</code> <code>b<sub>valid</sub></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>headerUnionValue</code> be <code>value</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>HEADER_UNION</code> <code>typeId</code> <code>{</code> <code>fieldValue<sup>*</sup></code> <code>}</code> be <code>headerUnionValue</code>.</p>
+</li>
+<li>
+<p>Let <code>bool<sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool</code> be <code><a href="#isValid_fieldValue">$isValid_fieldValue(fieldValue)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>fieldValue</code> in <code>fieldValue<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>fieldValue<sub>valid</sub><sup>*</sup></code> be <a href="#filter_"><code>fieldValue<sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>b<sub>valid</sub></code> be <code>fieldValue<sub>valid</sub><sup>*</sup></code> is equal to <code>·</code>.</p>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>`B</code> <code>b<sub>valid</sub></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>text</code> is equal to <code>"setValid"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterIR<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>HEADER</code> <code>typeId</code> <code>{</code> <code>_</code> <code>;</code> <code>fieldValue<sup>*</sup></code> <code>}</code> be <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>value'</code> be <code>HEADER</code> <code>typeId</code> <code>{</code> <code>true</code> <code>;</code> <code>fieldValue<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>value'</code> to <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>·</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>text</code> is equal to <code>"setInvalid"</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterIR<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>HEADER</code> <code>typeId</code> <code>{</code> <code>_</code> <code>;</code> <code>fieldValue<sup>*</sup></code> <code>}</code> be <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>value'</code> be <code>HEADER</code> <code>typeId</code> <code>{</code> <code>false</code> <code>;</code> <code>fieldValue<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>1</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_write">writing <code>value'</code> to <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>·</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-call-extern-method">19.6.5. Extern methods</h4>
+<div class="sect4">
+<h5 id="_type_checking_126">19.6.5.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to an extern method is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/externMethodTypeIR:
+  rule Call_ok/non-abstract:
+  p TC |- externMethodTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret_inferred `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if EXTERN_METHOD nameIR `(parameterIR*) : typeIR_ret = externMethodTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+ -- (if (typeIR_inferred = $find_map&lt;typeId, typeIR&gt;(inference, typeId_infer)))*
+ -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+ -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*
+ -- if typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
+ -- if externMethodTypeIR_inferred = EXTERN_METHOD nameIR `(parameterIR_aligned_inferred*) : typeIR_ret_inferred
+ -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
+ -- if $callable_externMethod(p, TC)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred* @ argumentIR* : argumentIR_cast*
+  rule Call_ok/abstract:
+  p TC |- externMethodTypeIR `&lt;typeArgumentIR* # typeId_infer*&gt; `(argumentIR* # id_default* # id_optional*) : typeIR_ret_inferred `&lt;typeArgumentIR_inferred*&gt; `(argumentIR_cast*)
+ -- if EXTERN_METHOD ABSTRACT nameIR `(parameterIR*) : typeIR_ret = externMethodTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+ -- (if (typeIR_inferred = $find_map&lt;typeId, typeIR&gt;(inference, typeId_infer)))*
+ -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+ -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*
+ -- if typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
+ -- if externMethodTypeIR_inferred = EXTERN_METHOD ABSTRACT nameIR `(parameterIR_aligned_inferred*) : typeIR_ret_inferred
+ -- CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred
+ -- if $callable_externMethod(p, TC)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>externMethodTypeIR</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>typeId<sup>*</sup></code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>EXTERN_METHOD</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code> be <code>externMethodTypeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>inference</code> be <code><a href="#infer">$infer(typeId<sup>*</sup>,</code> <code>parameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sup>?</sup><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sup>?</sup></code> be <a href="#find_map">the value of <code>typeId</code> in map <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeId</code> in <code>typeId<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Check that <code>typeIR<sup>?</sup></code> is defined, for all <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> be <code>typeArgumentIR<sup>*</sup></code> concatenated with <code>typeIR<sub>inferred</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub></code> be <a href="#subst_parameterIR"><code>parameterIR<sub>aligned</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR<sub>aligned</sub></code> in <code>parameterIR<sub>aligned</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeIR<sub>ret_inferred</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>ret</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>inferred</sub></code> be <code>EXTERN_METHOD</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret_inferred</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableType_wf"><code>externMethodTypeIR<sub>inferred</sub></code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_externMethod">$callable_externMethod(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>typeIR<sub>ret_inferred</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret</sub></code> be <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>inference</code> be <code><a href="#infer">$infer(typeId<sup>*</sup>,</code> <code>parameterIR<sub>aligned</sub><sup>*</sup>,</code> <code>argumentIR<sup>*</sup>)</a></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sup>?</sup><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sup>?</sup></code> be <a href="#find_map">the value of <code>typeId</code> in map <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeId</code> in <code>typeId<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Check that <code>typeIR<sup>?</sup></code> is defined, for all <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>typeIR<sub>inferred</sub></code> be <code>typeIR<sup>?</sup></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>typeIR<sup>?</sup></code> in <code>typeIR<sup>?</sup><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> be <code>typeArgumentIR<sup>*</sup></code> concatenated with <code>typeIR<sub>inferred</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>parameterIR<sub>aligned_inferred</sub></code> be <a href="#subst_parameterIR"><code>parameterIR<sub>aligned</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR<sub>aligned</sub></code> in <code>parameterIR<sub>aligned</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>typeIR<sub>ret_inferred</sub></code> be <a href="#subst_typeIR"><code>typeIR<sub>ret</sub></code> substituted by <code>inference</code></a>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>inferred</sub></code> be <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>ret_inferred</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>bound</code> be <a href="#bound">bound type variables from the <code>p</code> layer of <code>TC</code></a>.</p>
+</li>
+<li>
+<p>Check that <a href="#CallableType_wf"><code>externMethodTypeIR<sub>inferred</sub></code> is a well-formed callable type, with bound type variables <code>bound</code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_externMethod">$callable_externMethod(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned_inferred</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>typeIR<sub>ret_inferred</sub></code> with inferred <code>typeArgumentIR<sub>inferred</sub><sup>*</sup></code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_60">19.6.5.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>An extern method call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/externMethodCallee:
+  rule Call_eval/copyin-abort:
+  p EC_0 ARCH_0 |- externMethodCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_1 ARCH_1 abortResult
+ -- if EXTERN_METHOD objectId . nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) `{theta ; frame ; eps} = externMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta]
+ -- if EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
+ -- if EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_3 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_4 # abortResult
+  rule Call_eval/copyin-cont-non-abstract-reject:
+  p EC_0 ARCH_0 |- externMethodCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_1 ARCH_2 rejectTransitionResult
+ -- if EXTERN_METHOD objectId . nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) `{theta ; frame ; eps} = externMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta]
+ -- if EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
+ -- if EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_3 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_4 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_4 ~&gt; EC_callee_5
+ -- (if (_ _ _ nameIR_param _ = parameterIR))*
+ -- ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId . nameIR `(nameIR_param*) : EC_callee_6 ARCH_2 rejectTransitionResult
+  rule Call_eval/copyin-cont-non-abstract-non-reject:
+  p EC_0 ARCH_0 |- externMethodCallee @ `&lt;typeArgumentIR*&gt; `(argumentIR*) : EC_2 ARCH_2 callResult
+ -- if EXTERN_METHOD objectId . nameIR `&lt;typeParameterIR*&gt; `(parameterIR* # id_default* # id_optional*) `{theta ; frame ; eps} = externMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta]
+ -- if EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
+ -- if EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{(typeParameterIR : typeArgumentIR)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ LOCAL EC_callee_3 argumentIR* ~&gt; ARCH_1 EC_1 EC_callee_4 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ LOCAL EC_callee_4 ~&gt; EC_callee_5
+ -- (if (_ _ _ nameIR_param _ = parameterIR))*
+ -- ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId . nameIR `(nameIR_param*) : EC_callee_6 ARCH_2 callResult
+ -- if ~(callResult &lt;: rejectTransitionResult)
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ LOCAL EC_callee_6 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>externMethodCallee</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>EXTERN_METHOD</code> <code>objectId</code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>blockStatementIR<sup>?</sup></code> <code>}</code> be <code>externMethodCallee</code>.</p>
+</li>
+<li>
+<p>Check that <code>blockStatementIR<sup>?</sup></code> is none.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub></code> with <code>BLOCK.TYPE</code> set to <code>theta</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_2</sub></code> be <code>EC<sub>callee_1</sub></code> with <code>BLOCK.FRAME</code> set to <code>frame</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeArgumentIR<sup>*</sup></code> is equal to the length of <code>typeParameterIR<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be <code>EC<sub>callee_2</sub></code> with <code>LOCAL.TYPE</code> set to <code>{</code> <code>(</code> <code>typeParameterIR</code> <code>:</code> <code>typeArgumentIR</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let state <code>ARCH<sub>1</sub></code>,  caller&#8217;s context <code>EC<sub>1</sub></code>,  callee&#8217;s context <code>EC<sub>callee_4</sub></code>,  and copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentIR<sup>*</sup></code> at <code>LOCAL</code> of <code>EC<sub>callee_3</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> at <code>EC<sub>0</sub></code>, under state <code>ARCH<sub>0</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_5</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>LOCAL</code> and context <code>EC<sub>callee_4</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let <code>nameIR<sub>param</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>nameIR<sub>param</sub></code> be the name of <code>parameterIR</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>parameterIR</code> in <code>parameterIR<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_6</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>callResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ExternMethodCall_eval">calling an extern method <code>nameIR</code> <code>(</code> <code>nameIR<sub>param</sub><sup>*</sup></code> <code>)</code> on object <code>objectId</code>, under context <code>EC<sub>callee_5</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>callResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>LOCAL</code> of <code>EC<sub>callee_6</sub></code>, under state <code>ARCH<sub>2</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>callResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-call-parser-apply-method">19.6.6. Parser apply methods</h4>
+<div class="sect4">
+<h5 id="_type_checking_127">19.6.6.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to a parser apply method is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/parserApplyMethodTypeIR:
+  rule Call_ok/parserApplyMethodTypeIR:
+  p TC |- parserApplyMethodTypeIR `&lt;eps # eps&gt; `(argumentIR* # id_default* # id_optional*) : VOID `&lt;eps&gt; `(argumentIR_cast*)
+ -- if PARSER_APPLY `(parameterIR*) = parserApplyMethodTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if $callable_parserApplyMethod(p, TC)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>parserApplyMethodTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>PARSER_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>parserApplyMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_parserApplyMethod">$callable_parserApplyMethod(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>VOID</code> with inferred <code>·</code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_61">19.6.6.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A parser apply method call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/parserApplyMethodCallee:
+  rule Call_eval/copyin-reject:
+  p EC_0 ARCH_0 |- parserApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 rejectTransitionResult
+ -- if PARSER _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; parserLocalDeclarationListIR ; stateEnv} = parserApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # rejectTransitionResult
+  rule Call_eval/copyin-cont-parserLocalDeclarationListIR-reject:
+  p EC_0 ARCH_0 |- parserApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_2 rejectTransitionResult
+ -- if PARSER _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; parserLocalDeclarationListIR ; stateEnv} = parserApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ParserLocalDecls_eval: EC_callee_3 ARCH_1 |- parserLocalDeclarationListIR : EC_callee_4 ARCH_2 rejectTransitionResult
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_4 storageReference?* ~&gt; EC_2
+  rule Call_eval/copyin-cont-parserLocalDeclarationListIR-cont-transition-reject:
+  p EC_0 ARCH_0 |- parserApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 rejectTransitionResult
+ -- if PARSER _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; parserLocalDeclarationListIR ; stateEnv} = parserApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ParserLocalDecls_eval: EC_callee_3 ARCH_1 |- parserLocalDeclarationListIR : EC_callee_4 ARCH_2 continueEmptyResult
+ -- ParserState_trans: EC_callee_4 ARCH_2 |- TRANSITION "start" : EC_callee_5 ARCH_3 rejectTransitionResult
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2
+  rule Call_eval/parserLocalDeclarationListIR-cont-transition-accept:
+  p EC_0 ARCH_0 |- parserApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 (RETURN eps)
+ -- if PARSER _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; parserLocalDeclarationListIR ; stateEnv} = parserApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ParserLocalDecls_eval: EC_callee_3 ARCH_1 |- parserLocalDeclarationListIR : EC_callee_4 ARCH_2 continueEmptyResult
+ -- ParserState_trans: EC_callee_4 ARCH_2 |- TRANSITION "start" : EC_callee_5 ARCH_3 ACCEPT
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>parserApplyMethodCallee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>PARSER</code> <code>_</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>parserLocalDeclarationListIR</code> <code>;</code> <code>stateEnv</code> <code>}</code> be <code>parserApplyMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub>[BLOCK.TYPE</code> <code>=</code> <code>theta][BLOCK.FRAME</code> <code>=</code> <code>frame]</code> with <code>BLOCK.STATE</code> set to <code>stateEnv</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterListIR</code> with <code>argumentListIR</code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>·</code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let state <code>ARCH<sub>1</sub></code>,  caller&#8217;s context <code>EC<sub>1</sub></code>,  callee&#8217;s context <code>EC<sub>callee_2</sub></code>,  and copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentListIR</code> at <code>BLOCK</code> of <code>EC<sub>callee_1</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> at <code>EC<sub>0</sub></code>, under state <code>ARCH<sub>0</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>BLOCK</code> and context <code>EC<sub>callee_2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_4</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>parserDeclarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserLocalDecls_eval">evaluating parser local declarations <code>parserLocalDeclarationListIR</code>, under context <code>EC<sub>callee_3</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>parserDeclarationResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_4</sub></code>, under state <code>ARCH<sub>2</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let context <code>EC<sub>callee_5</sub></code>, state <code>ARCH<sub>3</sub></code>, and <code>transitionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ParserState_trans">runtime evaluation of parser transition <code>"start"</code>, under context <code>EC<sub>callee_4</sub></code> and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>rejectTransitionResult</code> be <code>transitionResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_5</sub></code>, under state <code>ARCH<sub>3</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>rejectTransitionResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>acceptTransitionResult</code> be <code>transitionResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_5</sub></code>, under state <code>ARCH<sub>3</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-call-control-apply">19.6.7. Control apply  methods</h4>
+<div class="sect4">
+<h5 id="_type_checking_128">19.6.7.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to a control apply method is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/controlApplyMethodTypeIR:
+  rule Call_ok/controlApplyMethodTypeIR:
+  p TC |- controlApplyMethodTypeIR `&lt;eps # eps&gt; `(argumentIR* # id_default* # id_optional*) : VOID `&lt;eps&gt; `(argumentIR_cast*)
+ -- if CONTROL_APPLY `(parameterIR*) = controlApplyMethodTypeIR
+ -- if GIVEN parameterIR_aligned* DEFAULT _ = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
+ -- if $callable_controlApplyMethod(p, TC)
+ -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned* @ argumentIR* : argumentIR_cast*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>controlApplyMethodTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code> with omitted type arguments <code>·</code>, defaults <code>id<sub>default</sub><sup>*</sup></code> and optionals <code>id<sub>optional</sub><sup>*</sup></code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>CONTROL_APPLY</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>controlApplyMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>_<sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterIR<sup>*</sup></code> with <code>argumentIR<sup>*</sup></code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>id<sub>optional</sub><sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_controlApplyMethod">$callable_controlApplyMethod(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Let casted <code>argumentIR<sub>cast</sub><sup>*</sup></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Call_convention_ok">checking calling convention of <code>argumentIR<sup>*</sup></code> applied on <code>parameterIR<sub>aligned</sub><sup>*</sup></code>, under context <code>TC</code> and action context <code>NOACTION</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in return type <code>VOID</code> with inferred <code>·</code> and casted <code>argumentIR<sub>cast</sub><sup>*</sup></code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_62">19.6.7.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A control apply method call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/controlApplyMethodCallee:
+  rule Call_eval/controlApplyMethodCallee-copyin-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # EXIT
+  rule Call_eval/controlApplyMethodCallee-localDecl-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_2 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 EXIT
+ -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_4 storageReference?* ~&gt; EC_2
+  rule Call_eval/controlApplyMethodCallee-controlBodyIR-exit:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 EXIT
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 `EMPTY
+ -- ControlBody_eval: EC_callee_4 ARCH_2 |- controlBodyIR : EC_callee_5 ARCH_3 EXIT
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2
+  rule Call_eval/controlApplyMethodCallee-cont:
+  p EC_0 ARCH_0 |- controlApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_2 ARCH_3 (RETURN eps)
+ -- if CONTROL _ . APPLY `(parameterListIR # id_default*) `{theta ; frame ; controlLocalDeclarationListIR ; actionDefEnv ; controlBodyIR} = controlApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+ -- if `{(callableId : actionDef)*} = actionDefEnv
+ -- if EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{(callableId : actionDef)*}]
+ -- if GIVEN parameterIR_aligned* DEFAULT parameterIR_default* = $align_parameterListIR(parameterListIR, argumentListIR, id_default*, eps)
+ -- if p_shared = GLOBAL
+ -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned* @ BLOCK EC_callee_1 argumentListIR ~&gt; ARCH_1 EC_1 EC_callee_2 # (` storageReference?*)
+ -- Copy_in_default: parameterIR_default* @ BLOCK EC_callee_2 ~&gt; EC_callee_3
+ -- ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 `EMPTY
+ -- ControlBody_eval: EC_callee_4 ARCH_2 |- controlBodyIR : EC_callee_5 ARCH_3 (RETURN eps)
+ -- Copy_out: p_shared ARCH_3 |- p EC_1 parameterIR_aligned* @ BLOCK EC_callee_5 storageReference?* ~&gt; EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>controlApplyMethodCallee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>CONTROL</code> <code>_</code> <code>.</code> <code>APPLY</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>controlLocalDeclarationListIR</code> <code>;</code> <code>actionDefEnv</code> <code>;</code> <code>controlBodyIR</code> <code>}</code> be <code>controlApplyMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>GLOBAL</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code> be <code>actionDefEnv</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub>[BLOCK.TYPE</code> <code>=</code> <code>theta][BLOCK.FRAME</code> <code>=</code> <code>frame]</code> with <code>BLOCK.CALLABLE</code> set to <code>{</code> <code>(</code> <code>callableId</code> <code>:</code> <code>actionDef</code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>GIVEN</code> <code>parameterIR<sub>aligned</sub><sup>*</sup></code> <code>DEFAULT</code> <code>parameterIR<sub>default</sub><sup>*</sup></code> be <a href="#align_parameterListIR">aligning <code>parameterListIR</code> with <code>argumentListIR</code> where defaults are <code>id<sub>default</sub><sup>*</sup></code> and optionals are <code>·</code></a>.</p>
+</li>
+<li>
+<p>Let <code>p<sub>shared</sub></code> be <code>GLOBAL</code>.</p>
+</li>
+<li>
+<p>Let state <code>ARCH<sub>1</sub></code>,  caller&#8217;s context <code>EC<sub>1</sub></code>,  callee&#8217;s context <code>EC<sub>callee_2</sub></code>,  and copy-in result <code>copyInResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in">copy-in from <code>argumentListIR</code> at <code>BLOCK</code> of <code>EC<sub>callee_1</sub></code> to <code>parameterIR<sub>aligned</sub><sup>*</sup></code> in <code>p</code> at <code>EC<sub>0</sub></code>, under state <code>ARCH<sub>0</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>storageReference<sup>?</sup><sup>*</sup></code> be <code>copyInResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>callee_3</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_in_default">copying defaults for <code>parameterIR<sub>default</sub><sup>*</sup></code>, under context <code>BLOCK</code> and context <code>EC<sub>callee_2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_4</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>controlLocalDeclarationResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlLocalDecls_eval">evaluating <code>controlLocalDeclarationListIR</code>, under context <code>EC<sub>callee_3</sub></code>, and state <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>controlLocalDeclarationResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_4</sub></code>, under state <code>ARCH<sub>2</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>continueEmptyResult</code> be <code>controlLocalDeclarationResult</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>callee_5</sub></code>, state <code>ARCH<sub>3</sub></code>, and result <code>controlBodyResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#ControlBody_eval">evaluating <code>controlBodyIR</code>, under context <code>EC<sub>callee_4</sub></code>, and state <code>ARCH<sub>2</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>controlBodyResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_5</sub></code>, under state <code>ARCH<sub>3</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>controlBodyResult</code> is equal to <code>RETURN</code> <code>·</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>EC<sub>2</sub></code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Copy_out">copy-out from <code>parameterIR<sub>aligned</sub><sup>*</sup></code> at <code>p</code> of <code>EC<sub>1</sub></code> to <code>storageReference<sup>?</sup><sup>*</sup></code> at <code>BLOCK</code> of <code>EC<sub>callee_5</sub></code>, under state <code>ARCH<sub>3</sub></code> at shared <code>p<sub>shared</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>3</sub></code>, and call result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A control apply method body is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ControlBody_eval: evalContext arch |- controlBodyIR : evalContext arch controlBodyResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ControlBody_eval" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlBody_eval">ControlBody_eval</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>controlBodyIR</code>, under context <code>evalContext</code>, and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in context <code>evalContext</code>, state <code>arch</code>, and result <code>controlBodyResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ControlBody_eval:
+  rule ControlBody_eval/cont:
+  EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 (RETURN eps)
+ -- Block_eval: EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 `EMPTY
+  rule ControlBody_eval/exit:
+  EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 EXIT
+ -- Block_eval: EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 EXIT
+  rule ControlBody_eval/return:
+  EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 (RETURN eps)
+ -- Block_eval: EC_0 ARCH_0 |- controlBodyIR : EC_1 ARCH_1 (RETURN eps)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ControlBody_eval">Evaluating <code>controlBodyIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and <code>statementResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Block_eval">runtime evaluation of <code>controlBodyIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>continueEmptyResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>exitResult</code> be <code>statementResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>statementResult</code> is equal to <code>RETURN</code> <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>RETURN</code> <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="sec-call-table-apply">19.6.8. Table apply methods</h4>
+<div class="sect4">
+<h5 id="_type_checking_129">19.6.8.1. Type checking</h5>
+<div class="paragraph">
+<p>A call to a table apply method is type checked as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_ok/tableApplyMethodTypeIR:
+  rule Call_ok/tableApplyMethodTypeIR:
+  p TC |- tableApplyMethodTypeIR `&lt;eps # eps&gt; `(eps # eps # eps) : tableMetadataStructTypeIR `&lt;eps&gt; `(eps)
+ -- if TABLE_APPLY : tableMetadataStructTypeIR = tableApplyMethodTypeIR
+ -- if $callable_tableApplyMethod(p, TC)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_ok">Typing invocation <code>tableApplyMethodTypeIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code> with omitted type arguments <code>·</code>, defaults <code>·</code> and optionals <code>·</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>TABLE_APPLY</code> <code>:</code> <code>tableMetadataStructTypeIR</code> be <code>tableApplyMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Check that <code><a href="#callable_tableApplyMethod">$callable_tableApplyMethod(p,</code> <code>TC)</a></code>.</p>
+</li>
+<li>
+<p>Result in return type <code>tableMetadataStructTypeIR</code> with inferred <code>·</code> and casted <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_evaluation_63">19.6.8.2. Runtime evaluation</h5>
+<div class="paragraph">
+<p>A table apply method call is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/tableApplyMethodCallee:
+  rule Call_eval/tableApplyMethodCallee-exit:
+  p EC_0 ARCH_0 |- tableApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 EXIT
+ -- if TABLE objectId . APPLY `{frame ; TBL} = tableApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.FRAMES = [frame]]
+ -- if typeId :: _ = $rev_&lt;id&gt;(objectId)
+ -- Table_eval: EC_callee_1 ARCH_0 |- typeId TBL : EC_callee_2 ARCH_1 EXIT
+ -- if EC_1 = $copy_e(BLOCK, EC_callee_2, EC_0)
+  rule Call_eval/tableApplyMethodCallee-return:
+  p EC_0 ARCH_0 |- tableApplyMethodCallee @ `&lt;typeArgumentListIR&gt; `(argumentListIR) : EC_1 ARCH_1 returnResult
+ -- if TABLE objectId . APPLY `{frame ; TBL} = tableApplyMethodCallee
+ -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+ -- if EC_callee_1 = EC_callee_0[LOCAL.FRAMES = [frame]]
+ -- if typeId :: _ = $rev_&lt;id&gt;(objectId)
+ -- Table_eval: EC_callee_1 ARCH_0 |- typeId TBL : EC_callee_2 ARCH_1 returnResult
+ -- if EC_1 = $copy_e(BLOCK, EC_callee_2, EC_0)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>tableApplyMethodCallee</code> <code>&lt;</code> <code>typeArgumentListIR</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>TABLE</code> <code>objectId</code> <code>.</code> <code>APPLY</code> <code>{</code> <code>frame</code> <code>;</code> <code>TBL</code> <code>}</code> be <code>tableApplyMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_0</sub></code> be <a href="#inherit_e">copy of <code>EC<sub>0</sub></code> from the <code>BLOCK</code> layer</a>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>callee_1</sub></code> be <code>EC<sub>callee_0</sub></code> with <code>LOCAL.FRAMES</code> set to <code>frame</code>.</p>
+</li>
+<li>
+<p>Let <code>typeId<sup>*</sup></code> be <a href="#rev_">the reversal of <code>objectId</code></a>.</p>
+</li>
+<li>
+<p>Check that <code>typeId<sup>*</sup></code> is a non-empty list.</p>
+</li>
+<li>
+<p>Let <code>typeId'</code> <code>::</code> <code>_<sup>*</sup></code> be <code>typeId<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <a href="#Table_eval"><code>EC<sub>callee_1</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>typeId'</code> <code>TBL</code> <code>:</code> <code>EC<sub>callee_2</sub></code> <code>ARCH<sub>1</sub></code> <code>tableResult</code></a>.</p>
+</li>
+<li>
+<p>If let <code>exitResult</code> be <code>tableResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <code><a href="#copy_e">$copy_e(BLOCK,</code> <code>EC<sub>callee_2</sub>,</code> <code>EC<sub>0</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>EXIT</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>returnResult</code> be <code>tableResult</code>.</p>
+</li>
+<li>
+<p>Let <code>EC<sub>1</sub></code> be <code><a href="#copy_e">$copy_e(BLOCK,</code> <code>EC<sub>callee_2</sub>,</code> <code>EC<sub>0</sub>)</a></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
