@@ -100,11 +100,12 @@ let strip_prefix s =
   assert (length > 2);
   String.sub s 2 (length - 2)
 
-let parse_int n _info =
+let parse_int n info =
   let i = Bigint.of_string (sanitize n) in
-  Value.Make.int i
+    Value.Make.int ~at:(Source.to_region info) i
 
-let parse_width_int s n _info =
+let parse_width_int s n info =
+  let at = Source.to_region info in
   let l_s = String.length s in
   let width = String.sub s 0 (l_s - 1) in
   let sign = String.sub s (l_s - 1) 1 in
@@ -115,13 +116,15 @@ let parse_width_int s n _info =
       if (int_of_string width < 2)
       then raise (Error "signed integers must have width at least 2")
       else 
-        let value_width = Value.Make.nat w in
-        let value_int = Value.Make.int i in
-        "nat S int" <| [ value_width; value_int] <<| "integerLiteral"
+        let value_width = Value.Make.nat ~at w in
+        let value_int = Value.Make.int ~at i in
+        Value.Make.with_at at
+            ("nat S int" <| [ value_width; value_int] <<| "integerLiteral")
     | "w" ->
-      let value_width = Value.Make.nat w in
-      let value_int = Value.Make.int i in
-      "nat W int" <| [ value_width; value_int] <<| "integerLiteral"
+      let value_width = Value.Make.nat ~at w in
+      let value_int = Value.Make.int ~at i in
+      Value.Make.with_at at
+          ("nat W int" <| [ value_width; value_int] <<| "integerLiteral")
     | _ ->
       raise (Error "Illegal integer constant")
 }
@@ -147,10 +150,11 @@ rule tokenize = parse
   | '\n'
       { debug_token "⏎\n"; newline lexbuf; PRAGMA_END (info lexbuf) }
   | '"'
-      { let str, end_info = (string lexbuf) in
+      { let start_info = info lexbuf in
+        let str, end_info = (string lexbuf) in
+        let token_info = Source.merge start_info end_info in
         debug_token ("\"" ^ str ^ "\"");
-        end_info |> ignore;
-        let value = Value.Make.text str in
+        let value = Value.Make.text ~at:(Source.to_region token_info) str in
         STRING_LITERAL value
       }
   | whitespace
@@ -282,7 +286,7 @@ rule tokenize = parse
   | name
       { let text = Lexing.lexeme lexbuf in
         debug_token text;
-        let value = Value.Make.text text in
+        let value = Value.Make.text ~at:(Source.to_region (info lexbuf)) text in
         NAME value }
   | "<="
       { debug_token "<="; LE (info lexbuf) }
@@ -393,7 +397,7 @@ rule tokenize = parse
   | _
       { let text = lexeme lexbuf in
         debug_token text;
-        let value = Value.Make.text text in
+        let value = Value.Make.text ~at:(Source.to_region (info lexbuf)) text in
         UNEXPECTED_TOKEN value }
       
 and string = parse

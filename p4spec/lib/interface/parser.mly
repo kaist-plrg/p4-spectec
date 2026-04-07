@@ -41,6 +41,32 @@
         failwith
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
+
+  (* Position handling *)
+
+  let region_of_positions (sp : Lexing.position) (ep : Lexing.position) :
+      Util.Source.region =
+    let left =
+      {
+        Util.Source.file = sp.pos_fname;
+        line = sp.pos_lnum;
+        column = sp.pos_cnum - sp.pos_bol;
+      }
+    in
+    let right =
+      {
+        Util.Source.file = ep.pos_fname;
+        line = ep.pos_lnum;
+        column = ep.pos_cnum - ep.pos_bol;
+      }
+    in
+    { Util.Source.left; right }
+
+  let mk_empty (sp : Lexing.position) (ep : Lexing.position)
+      (s_mixop : string) (s : string) : value =
+    if s_mixop = "`EMPTY" then s_mixop <| [] <<| s
+    else
+      Value.Make.with_at (region_of_positions sp ep) (s_mixop <| [] <<| s)
 %}
 
 (**************************** TOKENS ******************************)
@@ -226,22 +252,22 @@ int:
 (* Misc *)
 trailingCommaOpt:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "trailingCommaOpt" }
+    { mk_empty $startpos $endpos "`EMPTY" "trailingCommaOpt" }
 	| COMMA
-    { "`," <| [] <<| "trailingCommaOpt" }
+    { mk_empty $startpos $endpos "`," "trailingCommaOpt" }
 ;
 
 (* Booleans *)
 %inline booleanLiteral:
   | TRUE
-    { "TRUE" <| [] <<| "booleanLiteral" }
+    { mk_empty $startpos $endpos "TRUE" "booleanLiteral" }
   | FALSE
-    { "FALSE" <| [] <<| "booleanLiteral" }
+    { mk_empty $startpos $endpos "FALSE" "booleanLiteral" }
 
 (* Integers *)
 integerLiteral:
 	| int = int
-    { "D int" <| [ int ] <<| "integerLiteral" }
+    { "D int" <| [ int ] <<| "integerLiteral" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -250,18 +276,18 @@ integerLiteral:
 (* Strings *)
 stringLiteral:
 	| text = STRING_LITERAL
-    { "`\" text `\"" <| [ text ] <<| "stringLiteral" }
+    { "`\" text `\"" <| [ text ] <<| "stringLiteral" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Names *)
 identifier:
 	| text = NAME IDENTIFIER
-    { "`ID text" <| [ text ] <<| "identifier" }
+    { "`ID text" <| [ text ] <<| "identifier" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 typeIdentifier:
 	| text = NAME TYPENAME
-    { "`TID text" <| [ text ] <<| "typeIdentifier" }
+    { "`TID text" <| [ text ] <<| "typeIdentifier" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Non-type names *)
@@ -269,26 +295,26 @@ nonTypeName:
 	| id = identifier
     { id }
 	| APPLY
-    { "APPLY" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "APPLY" "nonTypeName" }
 	| KEY
-    { "KEY" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "KEY" "nonTypeName" }
 	| ACTIONS
-    { "ACTIONS" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "ACTIONS" "nonTypeName" }
 	| STATE
-    { "STATE" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "STATE" "nonTypeName" }
 	| ENTRIES
-    { "ENTRIES" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "ENTRIES" "nonTypeName" }
 	| TYPE
-    { "TYPE" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "TYPE" "nonTypeName" }
 	| PRIORITY
-    { "PRIORITY" <| [] <<| "nonTypeName" }
+    { mk_empty $startpos $endpos "PRIORITY" "nonTypeName" }
 ;
 
 prefixedNonTypeName:
 	| n = nonTypeName
     { n }
 	| DOT go_toplevel n = nonTypeName go_local
-    { "`ID `. nonTypeName" <| [ n ] <<| "prefixedNonTypeName" }
+    { "`ID `. nonTypeName" <| [ n ] <<| "prefixedNonTypeName" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Type names *)
@@ -300,7 +326,7 @@ prefixedTypeName:
 	| n = typeName
     { n }
 	| DOT go_toplevel tid = typeName go_local
-    { "`TID `. typeName" <| [ tid ] <<| "prefixedTypeName" }
+    { "`TID `. typeName" <| [ tid ] <<| "prefixedTypeName" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Table custom property names *)
@@ -310,13 +336,13 @@ tableCustomName:
 	| tid = typeIdentifier
     { tid }
 	| APPLY
-    { "APPLY" <| [] <<| "tableCustomName" }
+    { mk_empty $startpos $endpos "APPLY" "tableCustomName" }
 	| STATE
-    { "STATE" <| [] <<| "tableCustomName" }
+    { mk_empty $startpos $endpos "STATE" "tableCustomName" }
 	| TYPE
-    { "TYPE" <| [] <<| "tableCustomName" }
+    { mk_empty $startpos $endpos "TYPE" "tableCustomName" }
 	| PRIORITY
-    { "PRIORITY" <| [] <<| "tableCustomName" }
+    { mk_empty $startpos $endpos "PRIORITY" "tableCustomName" }
 ;
 
 (* >> Names *)
@@ -325,14 +351,14 @@ name:
 	| n = typeName
     { n }
 	| LIST
-    { "LIST" <| [] <<| "name" }
+    { mk_empty $startpos $endpos "LIST" "name" }
 ;
 
 nameList:
 	| n = name
     { n }
 	| ns = nameList COMMA n = name
-    { "nameList `, name" <| [ ns; n ] <<| "nameList" }
+    { "nameList `, name" <| [ ns; n ] <<| "nameList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 member:
@@ -343,48 +369,48 @@ member:
 (* Directions *)
 direction:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "direction" }
+    { mk_empty $startpos $endpos "`EMPTY" "direction" }
 	| IN
-    { "IN" <| [] <<| "direction" }
+    { mk_empty $startpos $endpos "IN" "direction" }
 	| OUT
-    { "OUT" <| [] <<| "direction" }
+    { mk_empty $startpos $endpos "OUT" "direction" }
 	| INOUT
-    { "INOUT" <| [] <<| "direction" }
+    { mk_empty $startpos $endpos "INOUT" "direction" }
 ;
 
 (* Types *)
 (* >> Base types *)
 baseType:
 	| BOOL
-    { "BOOL" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "BOOL" "baseType" }
 	| MATCH_KIND
-    { "MATCH_KIND" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "MATCH_KIND" "baseType" }
 	| ERROR
-    { "ERROR" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "ERROR" "baseType" }
 	| BIT
-    { "BIT" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "BIT" "baseType" }
 	| STRING
-    { "STRING" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "STRING" "baseType" }
 	| INT
-    { "INT" <| [] <<| "baseType" }
+    { mk_empty $startpos $endpos "INT" "baseType" }
 	| BIT l_angle v = int r_angle
-    { "BIT `< int >" <| [ v ] <<| "baseType" }
+    { "BIT `< int >" <| [ v ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| INT l_angle v = int r_angle
-    { "INT `< int >" <| [ v ] <<| "baseType" }
+    { "INT `< int >" <| [ v ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| VARBIT l_angle v = int r_angle
-    { "VARBIT `< int >" <| [ v ] <<| "baseType" }
+    { "VARBIT `< int >" <| [ v ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| BIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { "BIT `< `( expression ) >" <| [ e ] <<| "baseType" }
+    { "BIT `< `( expression ) >" <| [ e ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| INT l_angle L_PAREN e = expression R_PAREN r_angle
-    { "INT `< `( expression ) >" <| [ e ] <<| "baseType" }
+    { "INT `< `( expression ) >" <| [ e ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| VARBIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { "VARBIT `< `( expression ) >" <| [ e ] <<| "baseType" }
+    { "VARBIT `< `( expression ) >" <| [ e ] <<| "baseType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Named types *)
 specializedType:
   | n = prefixedTypeName l_angle tal = typeArgumentList r_angle
-    { "prefixedTypeName `< typeArgumentList >" <| [ n; tal ] <<| "specializedType" }
+    { "prefixedTypeName `< typeArgumentList >" <| [ n; tal ] <<| "specializedType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 namedType:
@@ -396,19 +422,19 @@ namedType:
 (* >> Header stack types *)
 headerStackType:
   | t = namedType L_BRACKET e = expression R_BRACKET
-    { "namedType `[ expression ]" <| [ t; e ] <<| "headerStackType" }
+    { "namedType `[ expression ]" <| [ t; e ] <<| "headerStackType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> List types *)
 listType:
   | LIST l_angle targ = typeArgument r_angle
-    { "LIST `< typeArgument >" <| [ targ ] <<| "listType" }
+    { "LIST `< typeArgument >" <| [ targ ] <<| "listType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Tuple types *)
 tupleType:
 	| TUPLE l_angle targs = typeArgumentList r_angle
-    { "TUPLE `< typeArgumentList >" <| [ targs ] <<| "tupleType" }
+    { "TUPLE `< typeArgumentList >" <| [ targs ] <<| "tupleType" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Types *)
@@ -425,7 +451,7 @@ typeOrVoid:
 	| t = typeRef
     { t }
 	| VOID
-    { "VOID" <| [] <<| "typeOrVoid" }
+    { mk_empty $startpos $endpos "VOID" "typeOrVoid" }
   | id = identifier
     { id }
 ;
@@ -438,34 +464,34 @@ typeParameterList:
 	| tp = typeParameter
     { tp }
 	| tps = typeParameterList COMMA tp = typeParameter
-    { "typeParameterList `, typeParameter" <| [ tps; tp ] <<| "typeParameterList" }
+    { "typeParameterList `, typeParameter" <| [ tps; tp ] <<| "typeParameterList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 typeParameterListOpt:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "typeParameterListOpt" }
+    { mk_empty $startpos $endpos "`EMPTY" "typeParameterListOpt" }
 	| l_angle tps = typeParameterList r_angle
     { declare_types_of_il tps;
-      "`< typeParameterList >" <| [ tps ] <<| "typeParameterListOpt" }
+      "`< typeParameterList >" <| [ tps ] <<| "typeParameterListOpt" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Parameters *)
 parameter:
 	| al = annotationList dir = direction t = typeRef n = name i = initializerOpt
 		{ declare_var_of_il n false;
-      "annotationList direction type name initializerOpt" <| [ al; dir; t; n; i ] <<| "parameter" }
+      "annotationList direction type name initializerOpt" <| [ al; dir; t; n; i ] <<| "parameter" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 nonEmptyParameterList:
 	| p = parameter
     { p }
 	| ps = nonEmptyParameterList COMMA p = parameter
-    { "nonEmptyParameterList `, parameter" <| [ ps; p ] <<| "nonEmptyParameterList" }
+    { "nonEmptyParameterList `, parameter" <| [ ps; p ] <<| "nonEmptyParameterList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parameterList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "parameterList" }
+    { mk_empty $startpos $endpos "`EMPTY" "parameterList" }
 	| ps = nonEmptyParameterList
     { ps }
 ;
@@ -473,22 +499,22 @@ parameterList:
 (* Constructor parameters *)
 constructorParameterListOpt:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "constructorParameterListOpt" }
+    { mk_empty $startpos $endpos "`EMPTY" "constructorParameterListOpt" }
 	| L_PAREN ps = parameterList R_PAREN
-    { "`( parameterList )" <| [ ps ] <<| "constructorParameterListOpt" }
+    { "`( parameterList )" <| [ ps ] <<| "constructorParameterListOpt" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Expression key-value pairs *)
 namedExpression:
 	| n = name ASSIGN e = expression
-    { "name `= expression" <| [ n; e ] <<| "namedExpression" }
+    { "name `= expression" <| [ n; e ] <<| "namedExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 namedExpressionList:
 	| e = namedExpression
     { e }
 	| es = namedExpressionList COMMA e = namedExpression
-    { "namedExpressionList `, namedExpression" <| [ es; e ] <<| "namedExpressionList" }
+    { "namedExpressionList `, namedExpression" <| [ es; e ] <<| "namedExpressionList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Expressions *)
@@ -504,132 +530,132 @@ namedExpressionList:
 	| n = prefixedNonTypeName
     { n }
 	| THIS
-    { "THIS" <| [] <<| "referenceExpression" }
+    { mk_empty $startpos $endpos "THIS" "referenceExpression" }
 ;
 
 (* >> Default expressions *)
 %inline defaultExpression:
 	| DOTS
-    { "`..." <| [] <<| "defaultExpression" }
+    { mk_empty $startpos $endpos "`..." "defaultExpression" }
 ;
 
 (* >> Unary, binary, and ternary expressions *)
 %inline unop: 
 	| NOT
-    { "`!" <| [] <<| "unop" }
+    { mk_empty $startpos $endpos "`!" "unop" }
 	| COMPLEMENT
-    { "`~" <| [] <<| "unop" }
+    { mk_empty $startpos $endpos "`~" "unop" }
 	| MINUS
-    { "`-" <| [] <<| "unop" }
+    { mk_empty $startpos $endpos "`-" "unop" }
 	| PLUS
-    { "`+" <| [] <<| "unop" }
+    { mk_empty $startpos $endpos "`+" "unop" }
 ;
 
 %inline unaryExpression:
 	| o = unop e = expression %prec PREFIX
-		{ "unop expression" <| [ o; e ] <<| "unaryExpression" }
+		{ "unop expression" <| [ o; e ] <<| "unaryExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline binop:
   | MUL
-    { "`*" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`*" "binop" }
   | DIV
-    { "`/" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`/" "binop" }
   | MOD
-    { "`%" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`%" "binop" }
   | PLUS
-    { "`+" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`+" "binop" }
   | PLUS_SAT
-    { "`|+|" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`|+|" "binop" }
   | MINUS
-    { "`-" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`-" "binop" }
   | MINUS_SAT
-    { "`|-|" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`|-|" "binop" }
   | SHL
-    { "`<<" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`<<" "binop" }
   | r_angle R_ANGLE_SHIFT
-    { "`>>" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`>>" "binop" }
   | LE
-    { "`<=" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`<=" "binop" }
   | GE
-    { "`>=" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`>=" "binop" }
   | l_angle
-    { "``<" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "``<" "binop" }
   | r_angle
-    { "``>" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "``>" "binop" }
   | NE
-    { "`!=" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`!=" "binop" }
   | EQ
-    { "`==" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`==" "binop" }
   | BIT_AND
-    { "`&" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`&" "binop" }
   | BIT_XOR
-    { "`^" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`^" "binop" }
   | BIT_OR
-    { "`|" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`|" "binop" }
   | PLUSPLUS
-    { "`++" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`++" "binop" }
   | AND
-    { "`&&" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`&&" "binop" }
   | OR
-    { "`||" <| [] <<| "binop" }
+    { mk_empty $startpos $endpos "`||" "binop" }
 ;
 
 %inline binaryExpression:
 	| l = expression o = binop r = expression
-		{ "expression binop expression" <| [ l; o; r ] <<| "binaryExpression" }
+		{ "expression binop expression" <| [ l; o; r ] <<| "binaryExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline binaryExpressionNonBrace:
 	| l = expressionNonBrace o = binop r = expression
-		{ "expressionNonBrace binop expression" <| [ l; o; r ] <<| "binaryExpressionNonBrace" }
+		{ "expressionNonBrace binop expression" <| [ l; o; r ] <<| "binaryExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline ternaryExpression:
 	| c = expression QUESTION t = expression COLON f = expression
-		{ "expression `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpression" }
+		{ "expression `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline ternaryExpressionNonBrace:
 	| c = expressionNonBrace QUESTION t = expression COLON f = expression
-		{ "expressionNonBrace `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpressionNonBrace" }
+		{ "expressionNonBrace `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Cast expressions *)
 %inline castExpression:
 	| L_PAREN t = typeRef R_PAREN e = expression %prec PREFIX
-    { "`( typeRef ) expression" <| [ t; e ] <<| "castExpression" }
+    { "`( typeRef ) expression" <| [ t; e ] <<| "castExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Data (aggregate) expressions *)
 %inline dataExpression:
 	| INVALID
-    { "`{#}" <| [] <<| "invalidHeaderExpression" }
+    { mk_empty $startpos $endpos "`{#}" "invalidHeaderExpression" }
 	| L_BRACE e = sequenceOrRecordElementExpression c = trailingCommaOpt R_BRACE
-    { "`{ sequenceOrRecordElementExpression trailingCommaOpt }" <| [ e; c ] <<| "sequenceOrRecordExpression" }
+    { "`{ sequenceOrRecordElementExpression trailingCommaOpt }" <| [ e; c ] <<| "sequenceOrRecordExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Member and index access expressions *)
 %inline errorAccessExpression:
 	| ERROR DOT m = member
-		{ "ERROR `. member" <| [ m ] <<| "errorAccessExpression" }
+		{ "ERROR `. member" <| [ m ] <<| "errorAccessExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline memberAccessExpression:
 	| e = memberAccessBase DOT m = member %prec DOT
-		{ "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" }
+		{ "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline indexAccessExpression:
 	| a = expression L_BRACKET i = expression R_BRACKET
-		{ "expression `[ expression ]" <| [ a; i ] <<| "indexAccessExpression" }
+		{ "expression `[ expression ]" <| [ a; i ] <<| "indexAccessExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline sliceAccessExpression:
   | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { "expression `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpression" }
+    { "expression `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | a = expression L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
-    { "expression `[ expression `+: expression ]" <| [ a; l; w ] <<| "sliceAccessExpression" }
+    { "expression `[ expression `+: expression ]" <| [ a; l; w ] <<| "sliceAccessExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline accessExpression:
@@ -642,19 +668,19 @@ namedExpressionList:
 
 %inline memberAccessExpressionNonBrace:
 	| e = memberAccessBaseNonBrace DOT m = member %prec DOT
-		{ "memberAccessBaseNonBrace `. member" <| [ e; m ] <<| "memberAccessExpressionNonBrace" }
+		{ "memberAccessBaseNonBrace `. member" <| [ e; m ] <<| "memberAccessExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline indexAccessExpressionNonBrace:
 	| a = expressionNonBrace L_BRACKET i = expression R_BRACKET
-		{ "expressionNonBrace `[ expression ]" <| [ a; i ] <<| "indexAccessExpressionNonBrace" }
+		{ "expressionNonBrace `[ expression ]" <| [ a; i ] <<| "indexAccessExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline sliceAccessExpressionNonBrace:
   | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { "expressionNonBrace `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
+    { "expressionNonBrace `[ expression `: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | a = expressionNonBrace L_BRACKET h = expression PLUSCOLON l = expression R_BRACKET
-    { "expressionNonBrace `[ expression `+: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" }
+    { "expressionNonBrace `[ expression `+: expression ]" <| [ a; h; l ] <<| "sliceAccessExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline accessExpressionNonBrace:
@@ -682,9 +708,9 @@ namedExpressionList:
 
 %inline callExpression:
 	| t = callTarget L_PAREN args = argumentList R_PAREN
-		{ "callTarget `( argumentList )" <| [ t; args ] <<| "callExpression" }
+		{ "callTarget `( argumentList )" <| [ t; args ] <<| "callExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| t = callableTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ "callTarget `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpression" } 
+		{ "callTarget `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) } 
 ;
 
 %inline callableTargetNonBrace:
@@ -699,15 +725,15 @@ namedExpressionList:
 
 %inline callExpressionNonBrace:
 	| t = callTargetNonBrace L_PAREN args = argumentList R_PAREN
-		{ "callTargetNonBrace `( argumentList )" <| [ t; args ] <<| "callExpressionNonBrace" }
+		{ "callTargetNonBrace `( argumentList )" <| [ t; args ] <<| "callExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| t = callableTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ "callTargetNonBrace `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpressionNonBrace" }
+		{ "callTargetNonBrace `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpressionNonBrace" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 
 (* >> Parenthesized Expressions *)
 
 %inline parenthesizedExpression:
 	| L_PAREN e = expression R_PAREN
-		{ "`( expression )" <| [ e ] <<| "parenthesizedExpression" }
+		{ "`( expression )" <| [ e ] <<| "parenthesizedExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Expressions *)
@@ -728,11 +754,11 @@ expression:
 
 expressionList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "expressionList" }
+    { mk_empty $startpos $endpos "`EMPTY" "expressionList" }
 	| e = expression
     { e }
 	| el = expressionList COMMA e = expression
-		{ "expressionList `, expression" <| [ el; e ] <<| "expressionList" }
+		{ "expressionList `, expression" <| [ el; e ] <<| "expressionList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline memberAccessBase:
@@ -747,13 +773,13 @@ expressionList:
 
 %inline recordElementExpression:
   | n = name ASSIGN e = expression
-    { "name `= expression" <| [ n; e ] <<| "recordElementExpression" }
+    { "name `= expression" <| [ n; e ] <<| "recordElementExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | n = name ASSIGN e = expression COMMA DOTS
-    { "name `= expression `, `..." <| [ n; e ] <<| "recordElementExpression" }
+    { "name `= expression `, `..." <| [ n; e ] <<| "recordElementExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| n = name ASSIGN e = expression COMMA el = namedExpressionList
-    { "name `= expression `, namedExpressionList" <| [ n; e; el ] <<| "recordElementExpression" }
+    { "name `= expression `, namedExpressionList" <| [ n; e; el ] <<| "recordElementExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | n = name ASSIGN e = expression COMMA el = namedExpressionList COMMA DOTS
-    { "name `= expression `, namedExpressionList `, `..." <| [ n; e; el ] <<| "recordElementExpression" }
+    { "name `= expression `, namedExpressionList `, `..." <| [ n; e; el ] <<| "recordElementExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline sequenceOrRecordElementExpression:
@@ -787,33 +813,33 @@ simpleKeysetExpression:
 	| e = expression
     { e }
 	| b = expression MASK m = expression
-    { "expression `&&& expression" <| [ b; m ] <<| "simpleKeysetExpression" }
+    { "expression `&&& expression" <| [ b; m ] <<| "simpleKeysetExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| l = expression RANGE h = expression
-    { "expression `.. expression" <| [ l; h ] <<| "simpleKeysetExpression" }
+    { "expression `.. expression" <| [ l; h ] <<| "simpleKeysetExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| DEFAULT
-    { "DEFAULT" <| [] <<| "simpleKeysetExpression" }
+    { mk_empty $startpos $endpos "DEFAULT" "simpleKeysetExpression" }
 	| DONTCARE
-    { "`_" <| [] <<| "simpleKeysetExpression" }
+    { mk_empty $startpos $endpos "`_" "simpleKeysetExpression" }
 ;
 
 simpleKeysetExpressionList:
 	| e = simpleKeysetExpression
     { e }
 	| el = simpleKeysetExpressionList COMMA e = simpleKeysetExpression
-    { "simpleKeysetExpressionList `, simpleKeysetExpression" <| [ el; e ] <<| "simpleKeysetExpressionList" }
+    { "simpleKeysetExpressionList `, simpleKeysetExpression" <| [ el; e ] <<| "simpleKeysetExpressionList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tupleKeysetExpression:
 	| L_PAREN b = expression MASK m = expression R_PAREN
-		{ "`( expression `&&& expression )" <| [ b; m ] <<| "tupleKeysetExpression" }
+		{ "`( expression `&&& expression )" <| [ b; m ] <<| "tupleKeysetExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| L_PAREN l = expression RANGE h = expression R_PAREN
-		{ "`( expression `.. expression )" <| [ l; h ] <<| "tupleKeysetExpression" }
+		{ "`( expression `.. expression )" <| [ l; h ] <<| "tupleKeysetExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| L_PAREN DEFAULT R_PAREN
-		{ "`( DEFAULT )" <| [] <<| "tupleKeysetExpression" }
+		{ mk_empty $startpos $endpos "`( DEFAULT )" "tupleKeysetExpression" }
 	| L_PAREN DONTCARE R_PAREN
-		{ "`( `_ )" <| [] <<| "tupleKeysetExpression" }
+		{ mk_empty $startpos $endpos "`( `_ )" "tupleKeysetExpression" }
 	| L_PAREN e = simpleKeysetExpression COMMA es = simpleKeysetExpressionList R_PAREN
-		{ "`( simpleKeysetExpression `, simpleKeysetExpressionList )" <| [ e; es ] <<| "tupleKeysetExpression" }
+		{ "`( simpleKeysetExpression `, simpleKeysetExpressionList )" <| [ e; es ] <<| "tupleKeysetExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 keysetExpression:
@@ -827,16 +853,16 @@ realTypeArgument:
 	| t = typeRef
     { t }
 	| VOID
-    { "VOID" <| [] <<| "realTypeArgument" }
+    { mk_empty $startpos $endpos "VOID" "realTypeArgument" }
 	| DONTCARE
-    { "`_" <| [] <<| "realTypeArgument" }
+    { mk_empty $startpos $endpos "`_" "realTypeArgument" }
 ;
 
 realTypeArgumentList:
 	| targ = realTypeArgument
     { targ }
 	| targs = realTypeArgumentList COMMA targ = realTypeArgument
-    { "realTypeArgumentList `, realTypeArgument" <| [ targs; targ ] <<| "realTypeArgumentList" }
+    { "realTypeArgumentList `, realTypeArgument" <| [ targs; targ ] <<| "realTypeArgumentList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 typeArgument:
@@ -844,18 +870,18 @@ typeArgument:
 	| t = nonTypeName 
 		{ t }
 	| VOID
-    { "VOID" <| [] <<| "typeArgument" }
+    { mk_empty $startpos $endpos "VOID" "typeArgument" }
 	| DONTCARE
-    { "`_" <| [] <<| "typeArgument" }
+    { mk_empty $startpos $endpos "`_" "typeArgument" }
 ;
 
 typeArgumentList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "typeArgumentList" }
+    { mk_empty $startpos $endpos "`EMPTY" "typeArgumentList" }
 	| targ = typeArgument
     { targ }
 	| targs = typeArgumentList COMMA targ = typeArgument
-    { "typeArgumentList `, typeArgument" <| [ targs; targ ] <<| "typeArgumentList" }
+    { "typeArgumentList `, typeArgument" <| [ targs; targ ] <<| "typeArgumentList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Arguments *)
@@ -863,23 +889,23 @@ argument:
 	| e = expression
     { e }
 	| n = name ASSIGN e = expression 
-		{ "name `= expression" <| [ n; e ] <<| "argument" }
+		{ "name `= expression" <| [ n; e ] <<| "argument" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| name = name ASSIGN DONTCARE
-		{ "name `= `_ " <| [ name ] <<| "argument" }
+		{ "name `= `_ " <| [ name ] <<| "argument" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| DONTCARE
-		{ "`_" <| [] <<| "argument" }
+		{ mk_empty $startpos $endpos "`_" "argument" }
 ;
 
 argumentListNonEmpty:
 	| arg = argument
     { arg }
 	| args = argumentListNonEmpty COMMA arg = argument
-    { "argumentListNonEmpty `, argument" <| [ args; arg ] <<| "argumentListNonEmpty" }
+    { "argumentListNonEmpty `, argument" <| [ args; arg ] <<| "argumentListNonEmpty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 argumentList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "argumentList" }
+    { mk_empty $startpos $endpos "`EMPTY" "argumentList" }
 	| args = argumentListNonEmpty
     { args }
 ;
@@ -889,85 +915,85 @@ lvalue:
 	| e = referenceExpression
     { e }
 	| lv = lvalue DOT m = member %prec DOT
-		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" }
+		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
-		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" }
+		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ "lvalue `[ expression `: expression ]" <| [ lv; h; l ] <<| "lvalue" }
+		{ "lvalue `[ expression `: expression ]" <| [ lv; h; l ] <<| "lvalue" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue L_BRACKET l = expression PLUSCOLON w = expression R_BRACKET
-    { "lvalue `[ expression `+: expression ]" <| [ lv; l; w ] <<| "lvalue" }
+    { "lvalue `[ expression `+: expression ]" <| [ lv; l; w ] <<| "lvalue" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| L_PAREN lv = lvalue R_PAREN
-		{ "`( lvalue )" <| [ lv ] <<| "lvalue" }
+		{ "`( lvalue )" <| [ lv ] <<| "lvalue" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* Statements *)
 (* >> Empty statements *)
 emptyStatement:
 	| SEMICOLON
-    { "`;" <| [] <<| "emptyStatement" }
+    { mk_empty $startpos $endpos "`;" "emptyStatement" }
 ;
 
 (* >> Assignment statements *)
 assignop:
 	| ASSIGN
-    { "`=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`=" "assignop" }
 	| PLUS_ASSIGN
-    { "`+=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`+=" "assignop" }
 	| PLUS_SAT_ASSIGN
-    { "`|+|=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`|+|=" "assignop" }
 	| MINUS_ASSIGN
-    { "`-=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`-=" "assignop" }
 	| MINUS_SAT_ASSIGN
-    { "`|-|=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`|-|=" "assignop" }
 	| MUL_ASSIGN
-    { "`*=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`*=" "assignop" }
 	| DIV_ASSIGN
-    { "`/=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`/=" "assignop" }
 	| MOD_ASSIGN
-    { "`%=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`%=" "assignop" }
 	| SHL_ASSIGN
-    { "`<<=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`<<=" "assignop" }
 	| SHR_ASSIGN
-    { "`>>=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`>>=" "assignop" }
 	| BIT_AND_ASSIGN
-    { "`&=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`&=" "assignop" }
 	| BIT_XOR_ASSIGN
-    { "`^=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`^=" "assignop" }
 	| BIT_OR_ASSIGN
-    { "`|=" <| [] <<| "assignop" }
+    { mk_empty $startpos $endpos "`|=" "assignop" }
 ;
 
 assignmentStatement:
 	| lv = lvalue o = assignop e = expression SEMICOLON
-		{ "lvalue assignop expression `;" <| [ lv; o; e ] <<| "assignmentStatement" }
+		{ "lvalue assignop expression `;" <| [ lv; o; e ] <<| "assignmentStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Call statements *)
 callStatement:
 	| lv = lvalue L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ "lvalue `( argumentList ) `;" <| [ lv; args ] <<| "callStatement" }
+		{ "lvalue `( argumentList ) `;" <| [ lv; args ] <<| "callStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ "lvalue `< typeArgumentList > `( argumentList ) `;" <| [ lv; targs; args ] <<| "callStatement" }
+		{ "lvalue `< typeArgumentList > `( argumentList ) `;" <| [ lv; targs; args ] <<| "callStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Direct application statements *)
 directApplicationStatement:
 	| t = namedType DOT APPLY L_PAREN args = argumentList R_PAREN SEMICOLON
-    { "namedType `. APPLY `( argumentList ) `;" <| [ t; args ] <<| "directApplicationStatement" }
+    { "namedType `. APPLY `( argumentList ) `;" <| [ t; args ] <<| "directApplicationStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Return statements *)
 returnStatement:
 	| RETURN SEMICOLON
-    { "RETURN `;" <| [] <<| "returnStatement" }
+    { mk_empty $startpos $endpos "RETURN `;" "returnStatement" }
 	| RETURN e = expression SEMICOLON
-    { "RETURN expression `;" <| [ e ] <<| "returnStatement" }
+    { "RETURN expression `;" <| [ e ] <<| "returnStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Exit statements *)
 exitStatement:
 	| EXIT SEMICOLON
-    { "EXIT `;" <| [] <<| "exitStatement" }
+    { mk_empty $startpos $endpos "EXIT `;" "exitStatement" }
 ;
 
 (* >> Block statements *)
@@ -976,38 +1002,38 @@ blockStatement:
     push_scope
     sl = blockElementStatementList R_BRACE
     pop_scope
-		{ "annotationList `{ blockElementStatementList }" <| [ al; sl ] <<| "blockStatement" }
+		{ "annotationList `{ blockElementStatementList }" <| [ al; sl ] <<| "blockStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Conditional statements *)
 conditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = statement %prec THEN
-    { "IF `( expression ) statement" <| [ c; t ] <<| "conditionalStatement" }
+    { "IF `( expression ) statement" <| [ c; t ] <<| "conditionalStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| IF L_PAREN c = expression R_PAREN t = statement ELSE f = statement
-    { "IF `( expression ) statement ELSE statement" <| [ c; t; f ] <<| "conditionalStatement" }
+    { "IF `( expression ) statement ELSE statement" <| [ c; t; f ] <<| "conditionalStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> For statements *)
 forInitStatement:
 	| al = annotationList t = typeRef n = name i = initializerOpt
-		{ "annotationList type name initializerOpt" <| [ al; t; n; i ] <<| "forInitStatement" }
+		{ "annotationList type name initializerOpt" <| [ al; t; n; i ] <<| "forInitStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue L_PAREN args = argumentList R_PAREN
-		{ "lvalue `( argumentList )" <| [ lv; args ] <<| "forInitStatement" }
+		{ "lvalue `( argumentList )" <| [ lv; args ] <<| "forInitStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ "lvalue `< typeArgumentList > `( argumentList )" <| [ lv; targs; args ] <<| "forInitStatement" }
+		{ "lvalue `< typeArgumentList > `( argumentList )" <| [ lv; targs; args ] <<| "forInitStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| lv = lvalue o = assignop e = expression
-		{ "lvalue assignop expression" <| [ lv; o; e ] <<| "forInitStatement" }
+		{ "lvalue assignop expression" <| [ lv; o; e ] <<| "forInitStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 forInitStatementListNonEmpty:
 	| s = forInitStatement { s }
 	| sl = forInitStatementListNonEmpty COMMA s = forInitStatement
-    { "forInitStatementListNonEmpty `, forInitStatement" <| [ sl; s ] <<| "forInitStatementListNonEmpty" }
+    { "forInitStatementListNonEmpty `, forInitStatement" <| [ sl; s ] <<| "forInitStatementListNonEmpty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 forInitStatementList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "forInitStatementList" }
+    { mk_empty $startpos $endpos "`EMPTY" "forInitStatementList" }
 	| sl = forInitStatementListNonEmpty { sl }
 ;
 
@@ -1018,69 +1044,69 @@ forUpdateStatement:
 forUpdateStatementListNonEmpty:
 	| s = forUpdateStatement { s }
 	| sl = forUpdateStatementListNonEmpty COMMA s = forUpdateStatement
-    { "forUpdateStatementListNonEmpty `, forUpdateStatement" <| [ sl; s ] <<| "forUpdateStatementListNonEmpty" }
+    { "forUpdateStatementListNonEmpty `, forUpdateStatement" <| [ sl; s ] <<| "forUpdateStatementListNonEmpty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 forUpdateStatementList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "forUpdateStatementList" }
+    { mk_empty $startpos $endpos "`EMPTY" "forUpdateStatementList" }
 	| sl = forUpdateStatementListNonEmpty { sl }
 ;
 
 forCollectionExpression:
 	| e = expression { e }
 	| l = expression RANGE h = expression
-    { "expression `.. expression" <| [ l; h ] <<| "forCollectionExpression" }
+    { "expression `.. expression" <| [ l; h ] <<| "forCollectionExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 forStatement:
   | al = annotationList FOR L_PAREN
     il = forInitStatementList SEMICOLON c = expression SEMICOLON
     ul = forUpdateStatementList R_PAREN b = statement
-		{ "annotationList FOR `( forInitStatementList `; expression `; forUpdateStatementList ) statement" <| [ al; il; c; ul; b ] <<| "forStatement" }
+		{ "annotationList FOR `( forInitStatementList `; expression `; forUpdateStatementList ) statement" <| [ al; il; c; ul; b ] <<| "forStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | al = annotationList FOR L_PAREN
     t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { "annotationList FOR `( typeRef name IN forCollectionExpression ) statement" <| [ al; t; n; e; b ] <<| "forStatement" }
+    { "annotationList FOR `( typeRef name IN forCollectionExpression ) statement" <| [ al; t; n; e; b ] <<| "forStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | al = annotationList FOR L_PAREN
     al_in = annotationList t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { "annotationList FOR `( annotationList typeRef name IN forCollectionExpression ) statement" <| [ al; al_in; t; n; e; b ] <<| "forStatement" }
+    { "annotationList FOR `( annotationList typeRef name IN forCollectionExpression ) statement" <| [ al; al_in; t; n; e; b ] <<| "forStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Switch statements *)
 switchLabel:
   | DEFAULT
-    { "DEFAULT" <| [] <<| "switchLabel" }
+    { mk_empty $startpos $endpos "DEFAULT" "switchLabel" }
   | e = expressionNonBrace
     { e }
 ;
 
 switchCase:
   | l = switchLabel COLON s = blockStatement
-    { "switchLabel `: blockStatement" <| [ l; s ] <<| "switchCase" }
+    { "switchLabel `: blockStatement" <| [ l; s ] <<| "switchCase" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | l = switchLabel COLON
-    { "switchLabel `:" <| [ l ] <<| "switchCase" }
+    { "switchLabel `:" <| [ l ] <<| "switchCase" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 switchCaseList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "switchCaseList" }
+    { mk_empty $startpos $endpos "`EMPTY" "switchCaseList" }
   | cs = switchCaseList c = switchCase
-    { "switchCaseList switchCase" <| [ cs; c ] <<| "switchCaseList" }
+    { "switchCaseList switchCase" <| [ cs; c ] <<| "switchCaseList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 switchStatement:
   | SWITCH L_PAREN e = expression R_PAREN L_BRACE cs = switchCaseList R_BRACE
-    { "SWITCH `( expression ) `{ switchCaseList }" <| [ e; cs ] <<| "switchStatement" }
+    { "SWITCH `( expression ) `{ switchCaseList }" <| [ e; cs ] <<| "switchStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 
 (* >> Break and continue statements *)
 breakStatement:
   | BREAK SEMICOLON
-    { "BREAK `;" <| [] <<| "breakStatement" }
+    { mk_empty $startpos $endpos "BREAK `;" "breakStatement" }
 ;
 
 continueStatement:
   | CONTINUE SEMICOLON
-    { "CONTINUE `;" <| [] <<| "continueStatement" }
+    { mk_empty $startpos $endpos "CONTINUE `;" "continueStatement" }
 ;
 
 (* >> Statements *)
@@ -1106,24 +1132,24 @@ statement:
 (* initializer -> initialValue due to reserved word in OCaml *)
 initialValue:
 	| ASSIGN e = expression
-		{ "`= expression" <| [ e ] <<| "initializer" }
+		{ "`= expression" <| [ e ] <<| "initializer" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 constantDeclaration:
   | al = annotationList CONST t = typeRef n = name i = initialValue SEMICOLON
-    { "annotationList CONST typeRef name initializer `;" <| [ al; t; n; i ] <<| "constantDeclaration" }
+    { "annotationList CONST typeRef name initializer `;" <| [ al; t; n; i ] <<| "constantDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 initializerOpt:
 	| (* empty *)
-		{ "`EMPTY" <| [] <<| "initializerOpt" }
+		{ mk_empty $startpos $endpos "`EMPTY" "initializerOpt" }
 	| i = initialValue { i }
 ;
 
 variableDeclaration:
   | al = annotationList t = typeRef n = name i = initializerOpt SEMICOLON
     { declare_var_of_il n false;
-      "annotationList typeRef name initializerOpt `;" <| [ al; t; n; i ] <<| "variableDeclaration" }
+      "annotationList typeRef name initializerOpt `;" <| [ al; t; n; i ] <<| "variableDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 blockElementStatement:
@@ -1135,9 +1161,9 @@ blockElementStatement:
 
 blockElementStatementList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "blockElementStatementList" }
+    { mk_empty $startpos $endpos "`EMPTY" "blockElementStatementList" }
   | sl = blockElementStatementList s = blockElementStatement
-    { "blockElementStatementList blockElementStatement" <| [ sl; s ] <<| "blockElementStatementList" }
+    { "blockElementStatementList blockElementStatement" <| [ sl; s ] <<| "blockElementStatementList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Function declarations *)
@@ -1145,32 +1171,32 @@ functionPrototype:
 	| t = typeOrVoid n = name push_scope
     tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN
-    { "typeOrVoid name typeParameterListOpt `( parameterList )" <| [ t; n; tpl; pl ] <<| "functionPrototype" }
+    { "typeOrVoid name typeParameterListOpt `( parameterList )" <| [ t; n; tpl; pl ] <<| "functionPrototype" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 functionDeclaration:
 	| al = annotationList p = functionPrototype b = blockStatement pop_scope
-    { "annotationList functionPrototype blockStatement" <| [ al; p; b ] <<| "functionDeclaration" }
+    { "annotationList functionPrototype blockStatement" <| [ al; p; b ] <<| "functionDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Action declarations *)
 actionDeclaration: 
   | al = annotationList ACTION n = name L_PAREN pl = parameterList R_PAREN s = blockStatement
-    { "annotationList ACTION name `( parameterList ) blockStatement" <| [ al; n; pl; s ] <<| "actionDeclaration" }
+    { "annotationList ACTION name `( parameterList ) blockStatement" <| [ al; n; pl; s ] <<| "actionDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Instantiations *)
 objectInitializer:
 	| ASSIGN L_BRACE ds = objectDeclarationList R_BRACE
-    { "`= `{ objectDeclarationList }" <| [ ds ] <<| "objectInitializer" }
+    { "`= `{ objectDeclarationList }" <| [ ds ] <<| "objectInitializer" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 instantiation:
 	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name SEMICOLON
-    { "annotationList typeRef `( argumentList ) name `;" <| [ al; t; args; n ] <<| "instantiation" }
+    { "annotationList typeRef `( argumentList ) name `;" <| [ al; t; args; n ] <<| "instantiation" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name
     i = objectInitializer SEMICOLON
-    { "annotationList typeRef `( argumentList ) name objectInitializer `;" <| [ al; t; args; n; i ] <<| "instantiation" } 
+    { "annotationList typeRef `( argumentList ) name objectInitializer `;" <| [ al; t; args; n; i ] <<| "instantiation" |> Value.Make.with_at (region_of_positions $startpos $endpos) } 
 ;
 
 objectDeclaration:
@@ -1181,23 +1207,23 @@ objectDeclaration:
 
 objectDeclarationList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "objectDeclarationList" }
+    { mk_empty $startpos $endpos "`EMPTY" "objectDeclarationList" }
 	| ds = objectDeclarationList d = objectDeclaration
-    { "objectDeclarationList objectDeclaration" <| [ ds; d ] <<| "objectDeclarationList" }
+    { "objectDeclarationList objectDeclaration" <| [ ds; d ] <<| "objectDeclarationList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Error declarations *)
 errorDeclaration:
 	| ERROR L_BRACE nl = nameList R_BRACE
     { declare_vars_of_il nl;
-      "ERROR `{ nameList }" <| [ nl ] <<| "errorDeclaration" }
+      "ERROR `{ nameList }" <| [ nl ] <<| "errorDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Match kind declarations *)
 matchKindDeclaration:
 	| MATCH_KIND L_BRACE nl = nameList c = trailingCommaOpt R_BRACE
     { declare_vars_of_il nl;
-      "MATCH_KIND `{ nameList trailingCommaOpt }" <| [ nl; c ] <<| "matchKindDeclaration" } 
+      "MATCH_KIND `{ nameList trailingCommaOpt }" <| [ nl; c ] <<| "matchKindDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) } 
 ;
 
 (* >> Derived type declarations *)
@@ -1205,41 +1231,41 @@ matchKindDeclaration:
 enumTypeDeclaration:
   | al = annotationList ENUM n = name L_BRACE
     nl = nameList c = trailingCommaOpt R_BRACE
-    { "annotationList ENUM name `{ nameList trailingCommaOpt }" <| [ al; n; nl; c ] <<| "enumTypeDeclaration" }
+    { "annotationList ENUM name `{ nameList trailingCommaOpt }" <| [ al; n; nl; c ] <<| "enumTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | al = annotationList ENUM t = typeRef n = name L_BRACE
     el = namedExpressionList c = trailingCommaOpt R_BRACE
-    { "annotationList ENUM typeRef name `{ namedExpressionList trailingCommaOpt }" <| [ al; t; n; el; c ] <<| "enumTypeDeclaration" }
+    { "annotationList ENUM typeRef name `{ namedExpressionList trailingCommaOpt }" <| [ al; t; n; el; c ] <<| "enumTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>>>> Struct, header, and union type declarations *)
 typeField:
   | al = annotationList t = typeRef n = name SEMICOLON
-    { "annotationList typeRef name `;" <| [ al; t; n ] <<| "typeField" }
+    { "annotationList typeRef name `;" <| [ al; t; n ] <<| "typeField" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 typeFieldList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "typeFieldList" }
+    { mk_empty $startpos $endpos "`EMPTY" "typeFieldList" }
   | fl = typeFieldList f = typeField
-    { "typeFieldList typeField" <| [ fl; f ] <<| "typeFieldList" }
+    { "typeFieldList typeField" <| [ fl; f ] <<| "typeFieldList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 structTypeDeclaration:
   | al = annotationList STRUCT n = name tpl = typeParameterListOpt
     L_BRACE fl = typeFieldList R_BRACE
-    { "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "structTypeDeclaration" }
+    { "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "structTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 headerTypeDeclaration:
   | al = annotationList HEADER n = name tpl = typeParameterListOpt
     L_BRACE fl = typeFieldList R_BRACE
-    { "annotationList HEADER name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerTypeDeclaration" }
+    { "annotationList HEADER name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 headerUnionTypeDeclaration:
   | al = annotationList HEADER_UNION n = name tpl = typeParameterListOpt
     L_BRACE fl = typeFieldList R_BRACE
-    { "annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerUnionTypeDeclaration" }
+    { "annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerUnionTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 derivedTypeDeclaration:
@@ -1259,28 +1285,28 @@ typedef:
 
 typedefDeclaration:
 	| al = annotationList TYPEDEF t = typedef n = name SEMICOLON
-    { "annotationList TYPEDEF typedef name `;" <| [ al; t; n ] <<| "typedefDeclaration" }
+    { "annotationList TYPEDEF typedef name `;" <| [ al; t; n ] <<| "typedefDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| al = annotationList TYPE t = typeRef n = name SEMICOLON
-    { "annotationList TYPE typeRef name `;" <| [ al; t; n ] <<| "typedefDeclaration" }
+    { "annotationList TYPE typeRef name `;" <| [ al; t; n ] <<| "typedefDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Extern declarations *)
 externFunctionDeclaration:
 	| al = annotationList EXTERN p = functionPrototype pop_scope SEMICOLON
 		{ declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
-      "annotationList EXTERN functionPrototype `;" <| [ al; p ] <<| "externFunctionDeclaration" }
+      "annotationList EXTERN functionPrototype `;" <| [ al; p ] <<| "externFunctionDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline externConstructorPrototype:
 	| al = annotationList tid = typeIdentifier L_PAREN pl = parameterList R_PAREN SEMICOLON
-    { "annotationList typeIdentifier `( parameterList ) `;" <| [ al; tid; pl ] <<| "externConstructorPrototype" }
+    { "annotationList typeIdentifier `( parameterList ) `;" <| [ al; tid; pl ] <<| "externConstructorPrototype" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 
 %inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { "annotationList functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" }
+    { "annotationList functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { "annotationList ABSTRACT functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" }
+    { "annotationList ABSTRACT functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 externConstructorOrMethodPrototype:
@@ -1291,15 +1317,15 @@ externConstructorOrMethodPrototype:
 
 externConstructorOrMethodPrototypeList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "externConstructorOrMethodPrototypeList" }
+    { mk_empty $startpos $endpos "`EMPTY" "externConstructorOrMethodPrototypeList" }
   | pl = externConstructorOrMethodPrototypeList p = externConstructorOrMethodPrototype
-    { "externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype" <| [ pl; p ] <<| "externConstructorOrMethodPrototypeList" }
+    { "externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype" <| [ pl; p ] <<| "externConstructorOrMethodPrototypeList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
     L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
-    { let decl = "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList }" <| [ al; n; tpl; pl ] <<| "externObjectDeclaration" in
+    { let decl = "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList }" <| [ al; n; tpl; pl ] <<| "externObjectDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) in
       declare_type_of_il n (has_type_params_declaration decl);
       decl }
 ;
@@ -1314,34 +1340,34 @@ externDeclaration:
 (* >>>> Select expressions *)
 selectCase:
   | k = keysetExpression COLON n = name SEMICOLON
-    { "keysetExpression `: name `;" <| [ k; n ] <<| "selectCase" }
+    { "keysetExpression `: name `;" <| [ k; n ] <<| "selectCase" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 selectCaseList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "selectCaseList" }
+    { mk_empty $startpos $endpos "`EMPTY" "selectCaseList" }
   | cl = selectCaseList c = selectCase
-    { "selectCaseList selectCase" <| [ cl; c ] <<| "selectCaseList" }
+    { "selectCaseList selectCase" <| [ cl; c ] <<| "selectCaseList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 selectExpression:
   | SELECT L_PAREN el = expressionList R_PAREN L_BRACE cl = selectCaseList R_BRACE
-    { "SELECT `( expressionList ) `{ selectCaseList }" <| [ el; cl ] <<| "selectExpression" }
+    { "SELECT `( expressionList ) `{ selectCaseList }" <| [ el; cl ] <<| "selectExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>> Transition statements *)
 stateExpression:
   | n = name SEMICOLON
-    { "name `;" <| [ n ] <<| "stateExpression" }
+    { "name `;" <| [ n ] <<| "stateExpression" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | e = selectExpression
     { e }
 ;
 
 transitionStatement:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "transitionStatement" }
+    { mk_empty $startpos $endpos "`EMPTY" "transitionStatement" }
   | TRANSITION e = stateExpression
-    { "TRANSITION stateExpression" <| [ e ] <<| "transitionStatement" }
+    { "TRANSITION stateExpression" <| [ e ] <<| "transitionStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>> Value set declarations *)
@@ -1355,27 +1381,27 @@ valueSetType:
 valueSetDeclaration:
 	| al = annotationList VALUE_SET l_angle t = valueSetType r_angle
     L_PAREN s = expression R_PAREN n = name SEMICOLON
-    { "annotationList VALUE_SET `< valueSetType > `( expression ) name `;" <| [ al; t; s; n ] <<| "valueSetDeclaration" }
+    { "annotationList VALUE_SET `< valueSetType > `( expression ) name `;" <| [ al; t; s; n ] <<| "valueSetDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>> Parser type declarations *)
 parserTypeDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
       L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "annotationList PARSER name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "parserTypeDeclaration" }
+    { "annotationList PARSER name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "parserTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>> Parser declarations *)
 parserBlockStatement:
   | al = annotationList L_BRACE sl = parserStatementList R_BRACE
-    { "annotationList `{ parserStatementList }" <| [ al; sl ] <<| "parserBlockStatement" }
+    { "annotationList `{ parserStatementList }" <| [ al; sl ] <<| "parserBlockStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserConditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
-    { "IF `( expression ) parserStatement" <| [ c; t ] <<| "parserConditionalStatement" }
+    { "IF `( expression ) parserStatement" <| [ c; t ] <<| "parserConditionalStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
-    { "IF `( expression ) parserStatement ELSE parserStatement" <| [ c; t; f ] <<| "parserConditionalStatement" }
+    { "IF `( expression ) parserStatement ELSE parserStatement" <| [ c; t; f ] <<| "parserConditionalStatement" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserStatement:
@@ -1392,21 +1418,21 @@ parserStatement:
 
 parserStatementList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "parserStatementList" }
+    { mk_empty $startpos $endpos "`EMPTY" "parserStatementList" }
   | sl = parserStatementList s = parserStatement
-    { "parserStatementList parserStatement" <| [ sl; s ] <<| "parserStatementList" }
+    { "parserStatementList parserStatement" <| [ sl; s ] <<| "parserStatementList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserState:
   | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE
-    { "annotationList STATE name `{ parserStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" }
+    { "annotationList STATE name `{ parserStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserStateList:
   | s = parserState
     { s }
   | sl = parserStateList s = parserState
-    { "parserStateList parserState" <| [ sl; s ] <<| "parserStateList" }
+    { "parserStateList parserState" <| [ sl; s ] <<| "parserStateList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserLocalDeclaration:
@@ -1419,38 +1445,38 @@ parserLocalDeclaration:
 
 parserLocalDeclarationList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "parserLocalDeclarationList" }
+    { mk_empty $startpos $endpos "`EMPTY" "parserLocalDeclarationList" }
   | dl = parserLocalDeclarationList d = parserLocalDeclaration
-    { "parserLocalDeclarationList parserLocalDeclaration" <| [ dl; d ] <<| "parserLocalDeclarationList" }
+    { "parserLocalDeclarationList parserLocalDeclaration" <| [ dl; d ] <<| "parserLocalDeclarationList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 parserDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = parserLocalDeclarationList sl = parserStateList R_BRACE pop_scope
-		{ "annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }" <| [ al; n; tpl; pl; cpl; dl; sl ] <<| "parserDeclaration" }
+		{ "annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }" <| [ al; n; tpl; pl; cpl; dl; sl ] <<| "parserDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Control statements and declarations *)
 (* >>>> Table declarations *)
 constOpt:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "constOpt" }
+    { mk_empty $startpos $endpos "`EMPTY" "constOpt" }
   | CONST
-    { "CONST" <| [] <<| "constOpt" }
+    { mk_empty $startpos $endpos "CONST" "constOpt" }
 ;
 
 (* >>>>>> Table key property *)
 tableKey:
   | e = expression COLON n = name al = annotationList SEMICOLON
-    { "expression `: name annotationList `;" <| [ e; n; al ] <<| "tableKey" }
+    { "expression `: name annotationList `;" <| [ e; n; al ] <<| "tableKey" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableKeyList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "tableKeyList" }
+    { mk_empty $startpos $endpos "`EMPTY" "tableKeyList" }
   | kl = tableKeyList k = tableKey
-    { "tableKeyList tableKey" <| [ kl; k ] <<| "tableKeyList" }
+    { "tableKeyList tableKey" <| [ kl; k ] <<| "tableKeyList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>>>> Table actions property *)
@@ -1458,72 +1484,72 @@ tableActionReference:
   | n = prefixedNonTypeName
     { n }
   | n = prefixedNonTypeName L_PAREN al = argumentList R_PAREN
-    { "prefixedNonTypeName `( argumentList )" <| [ n; al ] <<| "tableActionReference" }
+    { "prefixedNonTypeName `( argumentList )" <| [ n; al ] <<| "tableActionReference" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableAction:
   | al = annotationList ac = tableActionReference SEMICOLON
-    { "annotationList tableActionReference `;" <| [ al; ac ] <<| "tableAction" }
+    { "annotationList tableActionReference `;" <| [ al; ac ] <<| "tableAction" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableActionList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "tableActionList" }
+    { mk_empty $startpos $endpos "`EMPTY" "tableActionList" }
   | acl = tableActionList ac = tableAction
-    { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" }
+    { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
   | PRIORITY ASSIGN int = integerLiteral COLON
-    { "PRIORITY `= integerLiteral `:" <| [ int ] <<| "tableEntryPriority" }
+    { "PRIORITY `= integerLiteral `:" <| [ int ] <<| "tableEntryPriority" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
-    { "PRIORITY `= `( expression ) `:" <| [ e ] <<| "tableEntryPriority" }
+    { "PRIORITY `= `( expression ) `:" <| [ e ] <<| "tableEntryPriority" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableEntry:
   | c = constOpt p = tableEntryPriority k = keysetExpression COLON ac = tableActionReference
     al = annotationList SEMICOLON
-    { "constOpt tableEntryPriority keysetExpression `: tableActionReference annotationList `;" <| [ c; p; k; ac; al ] <<| "tableEntry" }
+    { "constOpt tableEntryPriority keysetExpression `: tableActionReference annotationList `;" <| [ c; p; k; ac; al ] <<| "tableEntry" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | c = constOpt k = keysetExpression COLON ac = tableActionReference al = annotationList SEMICOLON
-    { "constOpt keysetExpression `: tableActionReference annotationList `;" <| [ c; k; ac; al ] <<| "tableEntry" }
+    { "constOpt keysetExpression `: tableActionReference annotationList `;" <| [ c; k; ac; al ] <<| "tableEntry" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableEntryList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "tableEntryList" }
+    { mk_empty $startpos $endpos "`EMPTY" "tableEntryList" }
   | el = tableEntryList e = tableEntry
-    { "tableEntryList tableEntry" <| [ el; e ] <<| "tableEntryList" }
+    { "tableEntryList tableEntry" <| [ el; e ] <<| "tableEntryList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>>>> Table properties *)
 tableProperty:
   | KEY ASSIGN L_BRACE kl = tableKeyList R_BRACE
-    { "KEY `= `{ tableKeyList }" <| [ kl ] <<| "tableProperty" }
+    { "KEY `= `{ tableKeyList }" <| [ kl ] <<| "tableProperty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
-    { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableProperty" }
+    { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableProperty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | al = annotationList c = constOpt ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
-    { "annotationList constOpt ENTRIES `= `{ tableEntryList }" <| [ al; c; el ] <<| "tableProperty" }
+    { "annotationList constOpt ENTRIES `= `{ tableEntryList }" <| [ al; c; el ] <<| "tableProperty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | al = annotationList c = constOpt n = tableCustomName i = initialValue SEMICOLON
-    { "annotationList constOpt tableCustomName initializer `;" <| [ al; c; n; i ] <<| "tableProperty" }
+    { "annotationList constOpt tableCustomName initializer `;" <| [ al; c; n; i ] <<| "tableProperty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tablePropertyList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "tablePropertyList" }
+    { mk_empty $startpos $endpos "`EMPTY" "tablePropertyList" }
   | pl = tablePropertyList p = tableProperty
-    { "tablePropertyList tableProperty" <| [ pl; p ] <<| "tablePropertyList" }
+    { "tablePropertyList tableProperty" <| [ pl; p ] <<| "tablePropertyList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 tableDeclaration:
   | al = annotationList TABLE n = name L_BRACE pl = tablePropertyList R_BRACE
-    { "annotationList TABLE name `{ tablePropertyList }" <| [ al; n; pl ] <<| "tableDeclaration" }
+    { "annotationList TABLE name `{ tablePropertyList }" <| [ al; n; pl ] <<| "tableDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 
 (* >>>> Control type declarations *)
 controlTypeDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "controlTypeDeclaration" }
+    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "controlTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >>>> Control declarations *)
@@ -1544,23 +1570,23 @@ controlLocalDeclaration:
 
 controlLocalDeclarationList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "controlLocalDeclarationList" }
+    { mk_empty $startpos $endpos "`EMPTY" "controlLocalDeclarationList" }
   | dl = controlLocalDeclarationList d = controlLocalDeclaration
-    { "controlLocalDeclarationList controlLocalDeclaration" <| [ dl; d ] <<| "controlLocalDeclarationList" }
+    { "controlLocalDeclarationList controlLocalDeclaration" <| [ dl; d ] <<| "controlLocalDeclarationList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 controlDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = controlLocalDeclarationList APPLY b = controlBody R_BRACE pop_scope
-    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }" <| [ al; n; tpl; pl; cpl; dl; b ] <<| "controlDeclaration" }
+    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }" <| [ al; n; tpl; pl; cpl; dl; b ] <<| "controlDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Package type declarations *)
 packageTypeDeclaration:
   | al = annotationList PACKAGE n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "packageTypeDeclaration" }
+    { "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "packageTypeDeclaration" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 (* >> Type declarations *)
@@ -1601,105 +1627,105 @@ declaration:
 (* Annotations *)
 annotationToken:
 	| UNEXPECTED_TOKEN
-    { "UNEXPECTED_TOKEN" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "UNEXPECTED_TOKEN" "annotationToken" }
 	| ABSTRACT
-    { "ABSTRACT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ABSTRACT" "annotationToken" }
 	| ACTION
-    { "ACTION" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ACTION" "annotationToken" }
 	| ACTIONS
-    { "ACTIONS" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ACTIONS" "annotationToken" }
 	| APPLY
-    { "APPLY" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "APPLY" "annotationToken" }
 	| BOOL
-    { "BOOL" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "BOOL" "annotationToken" }
 	| BIT
-    { "BIT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "BIT" "annotationToken" }
 	| BREAK
-    { "BREAK" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "BREAK" "annotationToken" }
 	| CONST
-    { "CONST" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "CONST" "annotationToken" }
 	| CONTINUE
-    { "CONTINUE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "CONTINUE" "annotationToken" }
 	| CONTROL
-    { "CONTROL" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "CONTROL" "annotationToken" }
 	| DEFAULT
-    { "DEFAULT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "DEFAULT" "annotationToken" }
 	| ELSE
-    { "ELSE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ELSE" "annotationToken" }
 	| ENTRIES
-    { "ENTRIES" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ENTRIES" "annotationToken" }
 	| ENUM
-    { "ENUM" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ENUM" "annotationToken" }
 	| ERROR
-    { "ERROR" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "ERROR" "annotationToken" }
 	| EXIT
-    { "EXIT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "EXIT" "annotationToken" }
 	| EXTERN
-    { "EXTERN" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "EXTERN" "annotationToken" }
 	| FALSE
-    { "FALSE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "FALSE" "annotationToken" }
 	| FOR
-    { "FOR" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "FOR" "annotationToken" }
 	| HEADER
-    { "HEADER" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "HEADER" "annotationToken" }
 	| HEADER_UNION
-    { "HEADER_UNION" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "HEADER_UNION" "annotationToken" }
 	| IF
-    { "IF" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "IF" "annotationToken" }
 	| IN
-    { "IN" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "IN" "annotationToken" }
 	| INOUT
-    { "INOUT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "INOUT" "annotationToken" }
 	| INT
-    { "INT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "INT" "annotationToken" }
 	| KEY
-    { "KEY" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "KEY" "annotationToken" }
 	| MATCH_KIND
-    { "MATCH_KIND" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "MATCH_KIND" "annotationToken" }
 	| TYPE
-    { "TYPE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TYPE" "annotationToken" }
 	| OUT
-    { "OUT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "OUT" "annotationToken" }
 	| PARSER
-    { "PARSER" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "PARSER" "annotationToken" }
 	| PACKAGE
-    { "PACKAGE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "PACKAGE" "annotationToken" }
 	| PRAGMA
-    { "PRAGMA" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "PRAGMA" "annotationToken" }
 	| RETURN
-    { "RETURN" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "RETURN" "annotationToken" }
 	| SELECT
-    { "SELECT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "SELECT" "annotationToken" }
 	| STATE
-    { "STATE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "STATE" "annotationToken" }
 	| STRING
-    { "STRING" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "STRING" "annotationToken" }
 	| STRUCT
-    { "STRUCT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "STRUCT" "annotationToken" }
 	| SWITCH
-    { "SWITCH" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "SWITCH" "annotationToken" }
 	| TABLE
-    { "TABLE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TABLE" "annotationToken" }
 	| THIS
-    { "THIS" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "THIS" "annotationToken" }
 	| TRANSITION
-    { "TRANSITION" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TRANSITION" "annotationToken" }
 	| TRUE
-    { "TRUE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TRUE" "annotationToken" }
 	| TUPLE
-    { "TUPLE" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TUPLE" "annotationToken" }
 	| TYPEDEF
-    { "TYPEDEF" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "TYPEDEF" "annotationToken" }
 	| VARBIT
-    { "VARBIT" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "VARBIT" "annotationToken" }
 	| VALUE_SET
-    { "VALUE_SET" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "VALUE_SET" "annotationToken" }
 	| LIST
-    { "LIST" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "LIST" "annotationToken" }
 	| VOID
-    { "VOID" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "VOID" "annotationToken" }
 	| DONTCARE
-    { "`_" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`_" "annotationToken" }
 	| id = identifier
     { id }
 	| tid = typeIdentifier
@@ -1709,114 +1735,114 @@ annotationToken:
 	| int = integerLiteral
     { int }
 	| MASK
-    { "`&&&" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`&&&" "annotationToken" }
   (* TODO: missing DOTS "..." in spec *)
 	| RANGE
-    { "`.." <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`.." "annotationToken" }
 	| SHL
-    { "`<<" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`<<" "annotationToken" }
 	| AND
-    { "`&&" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`&&" "annotationToken" }
 	| OR
-    { "`||" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`||" "annotationToken" }
 	| EQ
-    { "`==" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`==" "annotationToken" }
 	| NE
-    { "`!=" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`!=" "annotationToken" }
 	| GE
-    { "`>=" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`>=" "annotationToken" }
 	| LE
-    { "`<=" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`<=" "annotationToken" }
 	| PLUSPLUS
-    { "`++" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`++" "annotationToken" }
 	| PLUS
-    { "`+" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`+" "annotationToken" }
 	| PLUS_SAT
-    { "`|+|" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`|+|" "annotationToken" }
 	| MINUS
-    { "`-" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`-" "annotationToken" }
 	| MINUS_SAT
-    { "`|-|" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`|-|" "annotationToken" }
 	| MUL
-    { "`*" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`*" "annotationToken" }
 	| DIV
-    { "`/" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`/" "annotationToken" }
 	| MOD
-    { "`%" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`%" "annotationToken" }
 	| BIT_OR
-    { "`|" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`|" "annotationToken" }
 	| BIT_AND
-    { "`&" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`&" "annotationToken" }
 	| BIT_XOR
-    { "`^" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`^" "annotationToken" }
 	| COMPLEMENT
-    { "`~" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`~" "annotationToken" }
 	| L_BRACKET
-    { "``[" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``[" "annotationToken" }
 	| R_BRACKET
-    { "``]" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``]" "annotationToken" }
 	| L_BRACE
-    { "``{" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``{" "annotationToken" }
 	| R_BRACE
-    { "``}" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``}" "annotationToken" }
 	| L_ANGLE
-    { "``<" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``<" "annotationToken" }
 	| R_ANGLE
-    { "``>" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "``>" "annotationToken" }
 	| NOT
-    { "`!" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`!" "annotationToken" }
 	| COLON
-    { "`:" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`:" "annotationToken" }
 	| COMMA
-    { "`," <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`," "annotationToken" }
 	| QUESTION
-    { "`?" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`?" "annotationToken" }
 	| DOT
-    { "`." <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`." "annotationToken" }
 	| ASSIGN
-    { "`=" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`=" "annotationToken" }
 	| SEMICOLON
-    { "`;" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`;" "annotationToken" }
 	| AT
-    { "`@" <| [] <<| "annotationToken" }
+    { mk_empty $startpos $endpos "`@" "annotationToken" }
 ;
 
 annotationBody:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "annotationBody" }
+    { mk_empty $startpos $endpos "`EMPTY" "annotationBody" }
 	| ab = annotationBody L_PAREN ab_in = annotationBody R_PAREN
-    { "annotationBody `( annotationBody )" <| [ ab; ab_in ] <<| "annotationBody" }
+    { "annotationBody `( annotationBody )" <| [ ab; ab_in ] <<| "annotationBody" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| ab = annotationBody at = annotationToken
-    { "annotationBody annotationToken" <| [ ab; at ] <<| "annotationBody" }
+    { "annotationBody annotationToken" <| [ ab; at ] <<| "annotationBody" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 structuredAnnotationBody:
 	| e = sequenceOrRecordElementExpression c = trailingCommaOpt
-    { "sequenceOrRecordElementExpression trailingCommaOpt" <| [ e; c ] <<| "structuredAnnotationBody" }
+    { "sequenceOrRecordElementExpression trailingCommaOpt" <| [ e; c ] <<| "structuredAnnotationBody" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 annotation:
 	| AT name = name
-    { "`@ name" <| [ name ] <<| "annotation" }
+    { "`@ name" <| [ name ] <<| "annotation" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| AT name = name L_PAREN body = annotationBody R_PAREN
-    { "`@ name `( annotationBody )" <| [ name; body ] <<| "annotation" }
+    { "`@ name `( annotationBody )" <| [ name; body ] <<| "annotation" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 	| AT name = name L_BRACKET body = structuredAnnotationBody R_BRACKET
-    { "`@ name `[ structuredAnnotationBody ]" <| [ name; body ] <<| "annotation" }
+    { "`@ name `[ structuredAnnotationBody ]" <| [ name; body ] <<| "annotation" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 (* From Petr4: PRAGMA not in Spec, but in Petr4/p4c *)
 	| PRAGMA name = name body = annotationBody PRAGMA_END
-    { "`@ PRAGMA name annotationBody" <| [ name; body ] <<| "annotation" }
+    { "`@ PRAGMA name annotationBody" <| [ name; body ] <<| "annotation" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 annotationListNonEmpty:
 	| a = annotation
     { a }
 	| al = annotationListNonEmpty a = annotation
-		{ "annotationListNonEmpty annotation" <| [ al; a ] <<| "annotationListNonEmpty" }
+		{ "annotationListNonEmpty annotation" <| [ al; a ] <<| "annotationListNonEmpty" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 %inline annotationList:
 	| (* empty *)
-    { "`EMPTY" <| [] <<| "annotationList" }
+    { mk_empty $startpos $endpos "`EMPTY" "annotationList" }
 	| al = annotationListNonEmpty
     { al }
 ;
@@ -1824,11 +1850,11 @@ annotationListNonEmpty:
 (******** P4 program ********)
 declarationList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "declarationList" }
+    { mk_empty $startpos $endpos "`EMPTY" "declarationList" }
   | ds = declarationList d = declaration
-    { "declarationList declaration" <| [ ds; d ] <<| "declarationList" }
+    { "declarationList declaration" <| [ ds; d ] <<| "declarationList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
   | ds = declarationList SEMICOLON
-    { "declarationList `;" <| [ ds ] <<| "declarationList" }
+    { "declarationList `;" <| [ ds ] <<| "declarationList" |> Value.Make.with_at (region_of_positions $startpos $endpos) }
 ;
 
 p4program:

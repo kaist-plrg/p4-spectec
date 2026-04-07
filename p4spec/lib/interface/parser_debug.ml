@@ -163,11 +163,10 @@ let debug_parse lexer lexbuf =
     | _ -> ());
     match checkpoint with
     | Engine.InputNeeded _env ->
-        let token, _, _ = supplier () in
+        let token, leftp, rightp = supplier () in
         if Debug_config.debug_enabled debug_level Verbose then
           Printf.printf "\n|-> Consuming token: %s\n\n" (token_name token);
-        loop
-          (Engine.offer checkpoint (token, Lexing.dummy_pos, Lexing.dummy_pos))
+        loop (Engine.offer checkpoint (token, leftp, rightp))
     | Engine.Shifting _ | Engine.AboutToReduce _ ->
         loop (Engine.resume checkpoint)
     | Engine.HandlingError _env ->

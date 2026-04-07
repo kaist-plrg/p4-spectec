@@ -150,7 +150,7 @@ and reassemble_graph' (graph : t) (renamer : value VIdMap.t) (vid : vid) : value
     | ExternN json -> ExternV json
   in
   let vhash = Value.hash_of value in
-  value $$$ { vid; typ; vhash }
+  value $$ (no_region, { vid; typ; vhash })
 
 let reassemble_graph_from_root (graph : t) (renamer : value VIdMap.t) : value =
   reassemble_graph graph renamer graph.root
