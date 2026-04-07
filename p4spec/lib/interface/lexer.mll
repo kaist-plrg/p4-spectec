@@ -140,13 +140,11 @@ let parse_width_int at s n =
     else 
       let value_width = Value.Make.nat ~at w in
       let value_int = Value.Make.int ~at i in
-      Value.Make.with_at at
-        ("nat S int" <| [ value_width; value_int] <<| "integerLiteral")
+      "nat S int" <| [ value_width; value_int ] <<| "integerLiteral" <<<| at
   | "w" ->
     let value_width = Value.Make.nat ~at w in
     let value_int = Value.Make.int ~at i in
-    Value.Make.with_at at
-      ("nat W int" <| [ value_width; value_int] <<| "integerLiteral")
+    "nat W int" <| [ value_width; value_int ] <<| "integerLiteral" <<<| at
   | _ ->
     raise (Error "Illegal integer constant")
 }

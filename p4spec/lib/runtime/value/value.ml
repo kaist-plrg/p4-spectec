@@ -133,63 +133,51 @@ module Make = struct
 
   (* Constructors *)
 
-  let with_at (at : region) (value : value) : value = { value with at }
-
-  let merged_region (values : value list) : region =
-    values
-    |> List.fold_left
-         (fun regions value ->
-           if value.at = no_region then regions else value.at :: regions)
-         []
-    |> function
-    | [] -> no_region
-    | regions -> over_region regions
-
-  let mk ?(at = no_region) (typ : typ') (value : value') : value =
+  let mk (at : region) (typ : typ') (value : value') : value =
     let vid = Fresh_.fresh () in
     let vhash = hash_of value in
-    Util.Source.( $$ ) value (at, { vid; typ; vhash })
+    value $$ (at, { vid; typ; vhash })
 
-  let with_typ ?(at = no_region) (typ : typ) (value : value') : value =
-    mk ~at typ.it value
+  let with_at_typ (at : region) (typ : typ) (value : value') : value =
+    mk at typ.it value
 
   let bool ?(at = no_region) (b : bool) : value =
-    BoolV b |> with_typ ~at Typ.Make.bool
+    BoolV b |> with_at_typ at Typ.Make.bool
 
   let nat ?(at = no_region) (n : Bigint.t) : value =
-    NumV (`Nat n) |> with_typ ~at Typ.Make.nat
+    NumV (`Nat n) |> with_at_typ at Typ.Make.nat
 
   let int ?(at = no_region) (i : Bigint.t) : value =
-    NumV (`Int i) |> with_typ ~at Typ.Make.int
+    NumV (`Int i) |> with_at_typ at Typ.Make.int
 
   let num ?(at = no_region) (n : Num.t) : value =
     match n with `Nat n -> nat ~at n | `Int i -> int ~at i
 
   let text ?(at = no_region) (s : string) : value =
-    TextV s |> with_typ ~at Typ.Make.text
+    TextV s |> with_at_typ at Typ.Make.text
 
   let str ?(at = no_region) (typ : typ) (valuefields : valuefield list) : value
       =
-    StructV valuefields |> with_typ ~at typ
+    StructV valuefields |> with_at_typ at typ
 
   let case ?(at = no_region) (typ : typ) (valuecase : valuecase) : value =
-    CaseV valuecase |> with_typ ~at typ
+    CaseV valuecase |> with_at_typ at typ
 
   let tuple ?(at = no_region) (typ : typ) (values : value list) : value =
-    TupleV values |> with_typ ~at typ
+    TupleV values |> with_at_typ at typ
 
   let opt ?(at = no_region) (typ : typ) (value_opt : value option) : value =
-    OptV value_opt |> with_typ ~at typ
+    OptV value_opt |> with_at_typ at typ
 
   let list ?(at = no_region) (typ : typ) (values : value list) : value =
-    ListV values |> with_typ ~at typ
+    ListV values |> with_at_typ at typ
 
   let func ?(at = no_region) (id : id) (tparams : tparam list)
       (typs_params : typ list) (typ : typ) : value =
-    FuncV id |> with_typ ~at (Typ.Make.func tparams typs_params typ)
+    FuncV id |> with_at_typ at (Typ.Make.func tparams typs_params typ)
 
   let extern ?(at = no_region) (typ : typ) (json : Yojson.Safe.t) : value =
-    ExternV json |> with_typ ~at typ
+    ExternV json |> with_at_typ at typ
 
   (* Operators *)
 
@@ -199,7 +187,14 @@ module Make = struct
   let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
     let typ = Typ.Make.var (s $ no_region) [] in
     let valuecase = (mixop_of s_mixop, values) in
-    case ~at:(merged_region values) typ valuecase
+    let at =
+      values |> List.map at
+      |> List.filter (fun region -> region <> no_region)
+      |> over_region
+    in
+    case ~at typ valuecase
+
+  let ( <<<| ) (value : value) (at : region) : value = { value with at }
 
   let ( #@@ ) (value : value) (s : string) : value =
     { value with note = { value.note with typ = VarT (s $ no_region, []) } }
