@@ -128,17 +128,17 @@ The specification is processed in multiple stages: parsing, elaboration, structu
 * Elaboration: The parsed spec files are type checked, and auxiliary information is annotated on the spec.
   At this stage, the spec is called IL (internal language).
   ```shell
-  $ ./p4spectec elab spec/*/*.watsup
+  $ ./p4spectec elab spec
   ```
 * Structuring: The elaborated spec is *structured*, where structured control flow is introduced.
   At this stage, the spec is called SL (structured language).
   ```shell
-  $ ./p4spectec struct spec/*/*.watsup
+  $ ./p4spectec struct spec
   ```
 * Prose generation: The structured spec is converted to a human-readable format, in AsciiDoc format.
   At this stage, the spec is called PL (prose language).
   ```shell
-  $ ./p4spectec prose spec/*/*.watsup
+  $ ./p4spectec prose spec
   ```
 
 ### Generating the specification document
@@ -161,9 +161,9 @@ Given a P4 program, below command runs a particular relation on it.
 
 ```shell
 # To run the IL
-$ ./p4spectec run spec/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
+$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
 # To run the SL
-$ ./p4spectec run spec/*/*.watsup -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
+$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
 ```
 
 e.g., `$ ./p4spectec run spec/*/*.watsup -rel Program_ok -i
@@ -178,9 +178,9 @@ We currently support the V1Model and eBPF architectures, and the STF format for 
 
 ```shell
 # To run the IL
-$ ./p4spectec sim spec/*/*.watsup -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
+$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
 # To run the SL
-$ ./p4spectec sim spec/*/*.watsup -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
+$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
 ```
 
 e.g., `$ ./p4spectec sim spec/*/*.watsup -arch v1model -i
@@ -197,7 +197,7 @@ i.e., it can generate various ill-typed P4 programs that should be rejected by t
 
 ```shell
 $ mkdir [GEN_DIR]
-$ ./p4spectec testgen spec/*/*.watsup -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-dir [BOOT_DIR]
+$ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-dir [BOOT_DIR]
 ```
 
 This will generate P4 programs in the directory `[GEN_DIR]` using the seed
@@ -212,7 +212,7 @@ query files for mutations `query.log` and an initial coverage file `boot.coverag
 In later runs with the same boot directory, you can use warm boot to skip the initial coverage collection phase, and directly start with the fuzz loop.
 
 ```shell
-$ ./p4spectec testgen spec/*/*.watsup -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-file [BOOT_FILE].coverage
+$ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-file [BOOT_FILE].coverage
 ```
 
 ## Contributing
