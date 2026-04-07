@@ -1110,9 +1110,10 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t backtrack =
     let* value = eval_exp ctx exp in
-    print_endline
-    @@ F.sprintf "%s: %s" (string_of_region exp.at) (Il.Print.string_of_exp exp);
-    print_endline @@ Il.Print.string_of_value value;
+    string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp |> print_endline;
+    let region = string_of_region value.at in
+    (if region = "" then "" else region ^ ": ") ^ Il.Print.string_of_value value
+    |> print_endline;
     Ok ctx
 
   (* Invoke a relation *)
