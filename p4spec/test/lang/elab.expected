@@ -4489,7 +4489,6 @@ def $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR =
   -- let (typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}, typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}) = $typeParameterListIR_of_typeDefIR(typeDefIR_base)
   -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
   -- if (|typeParameterIR*{typeParameterIR <- typeParameterIR*}| = |typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}|)
-  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
   -- let theta = { typeParameterIR : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }
   -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
   -- let typeIR_spec = $subst_typeIR(theta, typeIR_base)
@@ -4502,7 +4501,6 @@ def $specialize_callableTypeDefIR(callableTypeDefIR, typeIR*) : (callableTypeIR,
   -- if (|typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}| = |typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}|)
   -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = $fresh_typeIds(|typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|)
   -- (let typeArgumentIR_impl = ` typeId_fresh as typeIR)*{typeId_fresh <- typeId_fresh*, typeArgumentIR_impl -> typeArgumentIR_impl*}
-  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}|)
   -- if (|typeArgumentIR_impl*{typeArgumentIR_impl <- typeArgumentIR_impl*}| = |typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|)
   -- let theta = { typeParameterIR_expl : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl : typeArgumentIR_impl*{typeArgumentIR_impl <- typeArgumentIR_impl*, typeParameterIR_impl <- typeParameterIR_impl*} }
   -- let callableTypeIR_base = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR_base)
@@ -4526,7 +4524,6 @@ def $specialize_constructorTypeDefIR(constructorTypeDefIR, typeIR*) : (construct
   -- if (|typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}| = |typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}|)
   -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = $fresh_typeIds(|typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|)
   -- (let typeArgumentIR_impl = ` typeId_fresh as typeIR)*{typeId_fresh <- typeId_fresh*, typeArgumentIR_impl -> typeArgumentIR_impl*}
-  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*}|)
   -- if (|typeArgumentIR_impl*{typeArgumentIR_impl <- typeArgumentIR_impl*}| = |typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}|)
   -- let theta = { typeParameterIR_expl : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl : typeArgumentIR_impl*{typeArgumentIR_impl <- typeArgumentIR_impl*, typeParameterIR_impl <- typeParameterIR_impl*} }
   -- let constructorTypeIR_spec = $subst_constructorTypeIR(theta, CONSTRUCTOR ( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) : typeIR)
@@ -19054,7 +19051,6 @@ relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keyse
     -- let simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList_t)
     -- let simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} = simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*}
     -- if (|typeIR_key*{typeIR_key <- typeIR_key*}| = |simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}|)
-    -- if (|simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}| = |typeIR_key*{typeIR_key <- typeIR_key*}|)
     -- (SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : simpleKeysetExpressionIR)*{simpleKeysetExpression <- simpleKeysetExpression*, typeIR_key <- typeIR_key*, simpleKeysetExpressionIR -> simpleKeysetExpressionIR*}
     -- output: % % |- % : ( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} ) as keysetExpressionIR
 

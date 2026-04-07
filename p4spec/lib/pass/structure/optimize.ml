@@ -4,7 +4,7 @@ open Runtime.Dynamic_Sl.Envs
 (* Apply optimizations until it reaches a fixed point *)
 
 let optimize_pre (block : block) : block =
-  block |> Opt.Pre.Remove_alias_let.apply
+  block |> Opt.Pre.Remove_let_alias.apply
   |> Opt.Pre.Matchify_if_eq_terminal.apply
 
 let rec optimize_loop (tdenv : TDEnv.t) (block : block) : block =
@@ -18,8 +18,8 @@ let rec optimize_loop (tdenv : TDEnv.t) (block : block) : block =
   else optimize_loop tdenv block_optimized
 
 let optimize_post (tdenv : TDEnv.t) (block : block) : block =
-  block |> Opt.Post.Remove_dead_let.apply
-  |> Opt.Post.Remove_singleton_match.apply tdenv
+  block |> Opt.Post.Remove_let_dead.apply
+  |> Opt.Post.Remove_match_singleton.apply tdenv
 
 let optimize (tdenv : TDEnv.t) (block : block) : block =
   block |> optimize_pre |> optimize_loop tdenv |> optimize_post tdenv

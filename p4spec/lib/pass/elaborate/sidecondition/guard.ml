@@ -102,8 +102,10 @@ module Equiv = struct
          tbl
        |> Option.fold ~none:false ~some:(List.exists (Cond.eq cond_b))
 
-  let mem_eq = mem_kind (function Cls.Equals cs -> Some cs | _ -> None)
-  let mem_equiv = mem_kind (function Cls.Equiv cs -> Some cs | _ -> None)
+  let mem_eq = mem_kind (function Cls.Equals conds -> Some conds | _ -> None)
+
+  let mem_equiv =
+    mem_kind (function Cls.Equiv conds -> Some conds | _ -> None)
 
   (* True iff exp/prem is already entailed by the table *)
 
@@ -115,7 +117,7 @@ module Equiv = struct
         implies_exp tbl exp_l && implies_exp tbl exp_r
     | _ ->
         List.exists
-          (function Cls.Singleton c -> Cond.eq exp c | _ -> false)
+          (function Cls.Singleton cond -> Cond.eq exp cond | _ -> false)
           tbl
 
   let implies (tbl : table) (prem : prem) : bool =
@@ -318,8 +320,8 @@ let must_args_input (args : arg list) : Result.must =
 let insert_prem (prems_must_prev : prem list) (prem : prem) : Result.t =
   let prems_must, prems_insert = Walk.Collect.collect_prem collector prem in
   let prems_insert = Result.filter prems_must_prev prems_insert in
-  let prems_must = prems_must_prev @ prems_must @ prems_insert in
   let prems_insert = prems_insert @ [ prem ] in
+  let prems_must = prems_must_prev @ prems_must @ prems_insert in
   (prems_must, prems_insert)
 
 let insert_prems (prems_must_prev : prem list) (prems : prem list) : Result.t =
