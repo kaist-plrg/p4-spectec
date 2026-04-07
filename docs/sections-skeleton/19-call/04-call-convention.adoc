@@ -1,2 +1,196 @@
 [#sec-call-convention]
 === Call convention
+
+// Added
+Calls in P4 are executed using copy-in/copy-out semantics. For a high-level
+description of copy-in/copy-out semantics, see
+<<sec-call-convention-overview>>.
+
+==== Type checking
+
+// Added
+Calling conventions are checked by the type system with:
+
+// Added
+${relation-title-source: Call_convention_ok}
+${relation-title-prose: Call_convention_ok}
+
+// Added
+${rulegroup-source: Call_convention_ok}
+${rulegroup-prose: Call_convention_ok}
+
+// Added
+Each argument-parameter pair is checked by:
+
+// Added
+${relation-title-source: Call_convention_arg_ok}
+${relation-title-prose: Call_convention_arg_ok}
+
+// Added
+Expression arguments are checked, depending on the parameter's direction:
+
+// Added
+${relation-title-source: Call_convention_expr_ok}
+${relation-title-prose: Call_convention_expr_ok}
+
+===== `in`
+
+// Added
+${rulegroup-source: Call_convention_expr_ok/in}
+${rulegroup-prose: Call_convention_expr_ok/in}
+
+===== `out` and `inout`
+
+// Added
+${rulegroup-source: Call_convention_expr_ok/out-inout}
+${rulegroup-prose: Call_convention_expr_ok/out-inout}
+
+===== Directionless
+
+// Added
+${rulegroup-source: Call_convention_expr_ok/directionless}
+${rulegroup-prose: Call_convention_expr_ok/directionless}
+
+==== Runtime evaluation of copy-in
+
+// Added
+The copy-in phase of a call is evaluated by:
+
+// Added
+${relation-title-source: Copy_in}
+${relation-title-prose: Copy_in}
+
+// Added
+The result of copy-in evaluation is:
+
+// Added
+${syntax: copyInResult}
+
+// Added
+${rulegroup-source: Copy_in}
+${rulegroup-prose: Copy_in}
+
+// Added
+Default arguments are copied in by:
+
+// Added
+${relation-title-source: Copy_in_default}
+${relation-title-prose: Copy_in_default}
+
+// Added
+${rulegroup-source: Copy_in_default}
+${rulegroup-prose: Copy_in_default}
+
+// Added
+Otherwise, each argument-parameter pair is evaluated by:
+
+// Added
+${relation-title-source: Copy_in_arg}
+${relation-title-prose: Copy_in_arg}
+
+// Added
+Its result is:
+
+// Added
+${syntax: copyInArgumentResult}
+
+===== `in` and directionless
+
+// Added
+${rulegroup-source: Copy_in_arg/directionless-in}
+${rulegroup-prose: Copy_in_arg/directionless-in}
+
+===== `inout`
+
+// Added
+${rulegroup-source: Copy_in_arg/inout}
+${rulegroup-prose: Copy_in_arg/inout}
+
+===== `out`
+
+// Added
+${rulegroup-source: Copy_in_arg/out}
+${rulegroup-prose: Copy_in_arg/out}
+
+==== Compile-time evaluation of copy-in
+
+// Added
+The copy-in phase of a call is evaluated at compile time by:
+
+// Added
+${relation-title-source: Copy_in_inst}
+${relation-title-prose: Copy_in_inst}
+
+// Added
+${rulegroup-source: Copy_in_inst}
+${rulegroup-prose: Copy_in_inst}
+
+// Added
+Each argument-parameter pair is evaluated by:
+
+// Added
+${relation-title-source: Copy_in_arg_inst}
+${relation-title-prose: Copy_in_arg_inst}
+
+// Added
+${rulegroup-source: Copy_in_arg_inst}
+${rulegroup-prose: Copy_in_arg_inst}
+
+// Added
+For default arguments, the argument is copied in by:
+
+// Added
+${relation-title-source: Copy_in_inst_default}
+${relation-title-prose: Copy_in_inst_default}
+
+// Added
+${rulegroup-source: Copy_in_inst_default}
+${rulegroup-prose: Copy_in_inst_default}
+
+// Added
+${relation-title-source: Copy_in_arg_inst_default}
+${relation-title-prose: Copy_in_arg_inst_default}
+
+// Added
+${rulegroup-source: Copy_in_arg_inst_default}
+${rulegroup-prose: Copy_in_arg_inst_default}
+
+// Added
+Copy-out is unnecessary at compile time, because constructors do not have `out`
+or `inout` parameters.
+
+==== Runtime evaluation of copy-out
+
+// Added
+The copy-out phase of a call is evaluated by:
+
+// Added
+${relation-title-source: Copy_out}
+${relation-title-prose: Copy_out}
+
+// Added
+${rulegroup-source: Copy_out}
+${rulegroup-prose: Copy_out}
+
+// Added
+It internally invokes:
+
+// Added
+${relation-title-source: Copy_out_inner}
+${relation-title-prose: Copy_out_inner}
+
+// Added
+${rulegroup-source: Copy_out_inner}
+${rulegroup-prose: Copy_out_inner}
+
+===== `in` and directionless
+
+// Added
+${rulegroup-source: Copy_out_argument/in-directionless}
+${rulegroup-prose: Copy_out_argument/in-directionless}
+
+===== `out` and `inout`
+
+// Added
+${rulegroup-source: Copy_out_argument/out-inout}
+${rulegroup-prose: Copy_out_argument/out-inout}

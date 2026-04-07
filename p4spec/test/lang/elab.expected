@@ -1082,6 +1082,90 @@ def $expressionNonBrace_as_expression(expressionNonBrace) : expression =
   -- if expressionNonBrace <: parenthesizedExpression
   -- let parenthesizedExpression = expressionNonBrace as parenthesizedExpression
 
+def $expression_as_expressionNonBrace(expression) : expressionNonBrace =
+
+  clause 0 : (expression) = literalExpression as expressionNonBrace
+  -- if expression <: literalExpression
+  -- let literalExpression = expression as literalExpression
+
+  clause 1 : (expression) = referenceExpression as expressionNonBrace
+  -- if expression <: referenceExpression
+  -- let referenceExpression = expression as referenceExpression
+
+  clause 2 : (expression) = unaryExpression as expressionNonBrace
+  -- if expression <: unaryExpression
+  -- let unaryExpression = expression as unaryExpression
+
+  clause 3 : (expression) = expressionNonBrace_l binop expression_r as expressionNonBrace
+  -- if expression <: binaryExpression
+  -- let expression_l binop expression_r = expression as binaryExpression
+  -- let expressionNonBrace_l = $expression_as_expressionNonBrace(expression_l)
+
+  clause 4 : (expression) = expressionNonBrace_cond ? expression_true : expression_false as expressionNonBrace
+  -- if expression <: ternaryExpression
+  -- let expression_cond ? expression_true : expression_false = expression as ternaryExpression
+  -- let expressionNonBrace_cond = $expression_as_expressionNonBrace(expression_cond)
+
+  clause 5 : (expression) = castExpression as expressionNonBrace
+  -- if expression <: castExpression
+  -- let castExpression = expression as castExpression
+
+  clause 6 : (expression) = errorAccessExpression as expressionNonBrace
+  -- if expression <: errorAccessExpression
+  -- let errorAccessExpression = expression as errorAccessExpression
+
+  clause 7 : (expression) = prefixedTypeName as memberAccessBaseNonBrace . member as expressionNonBrace
+  -- if expression <: memberAccessExpression
+  -- let memberAccessBase . member = expression as memberAccessExpression
+  -- if memberAccessBase <: prefixedTypeName
+  -- let prefixedTypeName = memberAccessBase as prefixedTypeName
+
+  clause 8 : (expression) = expressionNonBrace_base as memberAccessBaseNonBrace . member as expressionNonBrace
+  -- if expression <: memberAccessExpression
+  -- let memberAccessBase . member = expression as memberAccessExpression
+  -- if memberAccessBase <: expression
+  -- let expression_base = memberAccessBase as expression
+  -- let expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+
+  clause 9 : (expression) = expressionNonBrace_base [ expression_index ] as expressionNonBrace
+  -- if expression <: indexAccessExpression
+  -- let expression_base [ expression_index ] = expression as indexAccessExpression
+  -- let expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+
+  clause 10 : (expression) = expressionNonBrace_base [ expression_hi : expression_lo ] as expressionNonBrace
+  -- if expression <: sliceAccessExpression
+  -- let expression_base [ expression_hi sliceop expression_lo ] = expression as sliceAccessExpression
+  -- if sliceop matches `:`
+  -- let expressionNonBrace_base = $expression_as_expressionNonBrace(expression_base)
+
+  clause 11 : (expression') = expressionNonBrace as callTargetNonBrace ( argumentList ) as expressionNonBrace
+  -- if expression' <: callExpression
+  -- let callExpression = expression' as callExpression
+  -- if callExpression matches `% (%)`
+  -- let callTarget ( argumentList ) = callExpression
+  -- if callTarget <: expression
+  -- let expression = callTarget as expression
+  -- let expressionNonBrace = $expression_as_expressionNonBrace(expression)
+
+  clause 12 : (expression) = constructorTarget as callTargetNonBrace ( argumentList ) as expressionNonBrace
+  -- if expression <: callExpression
+  -- let callExpression = expression as callExpression
+  -- if callExpression matches `% (%)`
+  -- let callTarget ( argumentList ) = callExpression
+  -- if callTarget <: constructorTarget
+  -- let constructorTarget = callTarget as constructorTarget
+
+  clause 13 : (expression') = expressionNonBrace < realTypeArgumentList > ( argumentList ) as expressionNonBrace
+  -- if expression' <: callExpression
+  -- let callExpression = expression' as callExpression
+  -- if callExpression matches `% <%> (%)`
+  -- let expression < realTypeArgumentList > ( argumentList ) = callExpression
+  -- let expressionNonBrace = $expression_as_expressionNonBrace(expression)
+
+  clause 14 : (expression) = parenthesizedExpression as expressionNonBrace
+  -- if expression <: parenthesizedExpression
+  -- let parenthesizedExpression = expression as parenthesizedExpression
+
 syntax simpleKeysetExpression = 
    | TRUE (from booleanLiteral) 
    | FALSE (from booleanLiteral) 
@@ -8196,6 +8280,2182 @@ def $subexpressions_of_argumentIR(argumentIR) : typedExpressionListIR =
 def $subexpressions_of_argumentListIR(argumentListIR) : typedExpressionListIR =
 
   clause 0 : (argumentIR*{argumentIR <- argumentIR*}) = $concat_<typedExpressionIR>($subexpressions_of_argumentIR(argumentIR)*{argumentIR <- argumentIR*})
+
+def $sink<T> : T =
+
+def $lift_nameIR_as_identifier(nameIR) : identifier =
+
+  clause 0 : (nameIR) = `ID nameIR
+
+def $lift_nameIR_as_typeIdentifier(nameIR) : typeIdentifier =
+
+  clause 0 : (nameIR) = `TID nameIR
+
+def $lift_nameIR_as_nonTypeName(nameIR) : nonTypeName =
+
+  clause 0 : (text) = APPLY
+  -- if (text = "apply")
+
+  clause 1 : (text) = KEY
+  -- if (text = "key")
+
+  clause 2 : (text) = ACTIONS
+  -- if (text = "actions")
+
+  clause 3 : (text) = STATE
+  -- if (text = "state")
+
+  clause 4 : (text) = ENTRIES
+  -- if (text = "entries")
+
+  clause 5 : (text) = TYPE
+  -- if (text = "type")
+
+  clause 6 : (text) = PRIORITY
+  -- if (text = "priority")
+
+  clause -1 : (nameIR) = `ID nameIR as nonTypeName
+
+def $lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR) : prefixedNonTypeName =
+
+  clause 0 : (prefixedNameIR) = $lift_nameIR_as_nonTypeName(nameIR) as prefixedNonTypeName
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+
+  clause 1 : (prefixedNameIR) = `ID . $lift_nameIR_as_nonTypeName(nameIR)
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+
+def $lift_nameIR_as_typeName(nameIR) : typeName =
+
+  clause 0 : (nameIR) = $lift_nameIR_as_typeIdentifier(nameIR)
+
+def $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR) : prefixedTypeName =
+
+  clause 0 : (prefixedNameIR) = $lift_nameIR_as_typeName(nameIR) as prefixedTypeName
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+
+  clause 1 : (prefixedNameIR) = `TID . $lift_nameIR_as_typeName(nameIR)
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+
+def $lift_nameIR_as_tableCustomName(nameIR) : tableCustomName =
+
+  clause 0 : (text) = APPLY
+  -- if (text = "apply")
+
+  clause 1 : (text) = STATE
+  -- if (text = "state")
+
+  clause 2 : (text) = TYPE
+  -- if (text = "type")
+
+  clause 3 : (text) = PRIORITY
+  -- if (text = "priority")
+
+  clause -1 : (nameIR) = $lift_nameIR_as_identifier(nameIR) as tableCustomName
+
+def $lift_nameListIR_as_nonTypeNameList(nameIR*) : nameList =
+
+  clause 0 : (nameIR*{nameIR <- nameIR*}) = nameList
+  -- (let name = $lift_nameIR_as_nonTypeName(nameIR) as name)*{nameIR <- nameIR*, name -> name*}
+  -- let nameList = $unflatten_nameList(name*{name <- name*})
+
+def $unflatten_nameList(name*) : nameList =
+
+  clause 0 : (name*{name <- name*}) = $unflatten_nameList'(name_h as nameList, name_t*{name_t <- name_t*})
+  -- if name*{name <- name*} matches _ :: _
+  -- let name_h :: name_t*{name_t <- name_t*} = name*{name <- name*}
+
+def $unflatten_nameList'(nameList, name*) : nameList =
+
+  clause 0 : (nameList, name*{name <- name*}) = nameList
+  -- if name*{name <- name*} matches []
+
+  clause 1 : (nameList, name*{name <- name*}) = $unflatten_nameList'(nameList , name_h, name_t*{name_t <- name_t*})
+  -- if name*{name <- name*} matches _ :: _
+  -- let name_h :: name_t*{name_t <- name_t*} = name*{name <- name*}
+
+def $lift_nameIR_as_member(nameIR) : member =
+
+  clause 0 : (nameIR) = $lift_nameIR_as_nonTypeName(nameIR) as member
+
+def $lift_value(value) : expression =
+
+  clause -1 : (value) = $sink<expression>
+  -- debug value
+
+def $lift_typeIR(typeIR) : type =
+
+  clause 0 : (typeIR) = $lift_baseTypeIR(baseTypeIR) as type
+  -- if typeIR <: baseTypeIR
+  -- let baseTypeIR = typeIR as baseTypeIR
+
+  clause 1 : (typeIR) = $lift_nameTypeIR(nameTypeIR) as type
+  -- if typeIR <: nameTypeIR
+  -- let nameTypeIR = typeIR as nameTypeIR
+
+  clause 2 : (typeIR) = $lift_aliasTypeIR(aliasTypeIR)
+  -- if typeIR <: aliasTypeIR
+  -- let aliasTypeIR = typeIR as aliasTypeIR
+
+  clause 3 : (typeIR) = $lift_dataTypeIR(dataTypeIR)
+  -- if typeIR <: dataTypeIR
+  -- let dataTypeIR = typeIR as dataTypeIR
+
+  clause -1 : (typeIR) = $sink<type>
+  -- debug typeIR
+
+def $lift_baseTypeIR(baseTypeIR) : baseType =
+
+  clause 0 : (baseTypeIR) = BOOL
+  -- if baseTypeIR <: boolTypeIR
+  -- let boolTypeIR = baseTypeIR as boolTypeIR
+  -- if (boolTypeIR = BOOL)
+
+  clause 1 : (baseTypeIR) = ERROR
+  -- if baseTypeIR <: errorTypeIR
+  -- let errorTypeIR = baseTypeIR as errorTypeIR
+  -- if (errorTypeIR = ERROR)
+
+  clause 2 : (baseTypeIR) = ERROR
+  -- if baseTypeIR <: errorTypeIR
+  -- let errorTypeIR = baseTypeIR as errorTypeIR
+  -- if (errorTypeIR = ERROR)
+
+  clause 3 : (baseTypeIR) = MATCH_KIND
+  -- if baseTypeIR <: matchKindTypeIR
+  -- let matchKindTypeIR = baseTypeIR as matchKindTypeIR
+  -- if (matchKindTypeIR = MATCH_KIND)
+
+  clause 4 : (baseTypeIR) = STRING
+  -- if baseTypeIR <: stringTypeIR
+  -- let stringTypeIR = baseTypeIR as stringTypeIR
+  -- if (stringTypeIR = STRING)
+
+  clause 5 : (baseTypeIR) = INT
+  -- if baseTypeIR <: intTypeIR
+  -- let intTypeIR = baseTypeIR as intTypeIR
+  -- if (intTypeIR = INT)
+
+  clause 6 : (baseTypeIR) = INT < w as int >
+  -- if baseTypeIR <: fixedIntTypeIR
+  -- let INT < w > = baseTypeIR as fixedIntTypeIR
+
+  clause 7 : (baseTypeIR) = BIT < w as int >
+  -- if baseTypeIR <: fixedBitTypeIR
+  -- let BIT < w > = baseTypeIR as fixedBitTypeIR
+
+  clause 8 : (baseTypeIR) = VARBIT < w as int >
+  -- if baseTypeIR <: varBitTypeIR
+  -- let VARBIT < w > = baseTypeIR as varBitTypeIR
+
+def $lift_typeDefIR_as_typeName(typeDefIR) : typeName =
+
+  clause 0 : (typeDefIR) = typeName
+  -- if typeDefIR <: nameTypeIR
+  -- let ` typeId = typeDefIR as nameTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 1 : (typeDefIR) = typeName
+  -- if typeDefIR <: typedefTypeIR
+  -- let TYPEDEF typeId _typeIR = typeDefIR as typedefTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 2 : (typeDefIR) = typeName
+  -- if typeDefIR <: newTypeIR
+  -- let TYPE typeId _typeIR = typeDefIR as newTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 3 : (typeDefIR) = typeName
+  -- if typeDefIR <: structTypeDefIR
+  -- let STRUCT typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as structTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 4 : (typeDefIR) = typeName
+  -- if typeDefIR <: headerTypeDefIR
+  -- let HEADER typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 5 : (typeDefIR) = typeName
+  -- if typeDefIR <: headerUnionTypeDefIR
+  -- let HEADER_UNION typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeDefIR as headerUnionTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 6 : (typeDefIR) = typeName
+  -- if typeDefIR <: simpleEnumTypeIR
+  -- let ENUM typeId { _nameIR*{_nameIR <- _nameIR*} } = typeDefIR as simpleEnumTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 7 : (typeDefIR) = typeName
+  -- if typeDefIR <: serializableEnumTypeIR
+  -- let ENUM typeId < _typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeDefIR as serializableEnumTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 8 : (typeDefIR) = typeName
+  -- if typeDefIR <: externObjectTypeDefIR
+  -- let EXTERN typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} > _externMethodTypeDefEnv = typeDefIR as externObjectTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 9 : (typeDefIR) = typeName
+  -- if typeDefIR <: parserObjectTypeDefIR
+  -- let PARSER typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} > ( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeDefIR as parserObjectTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 10 : (typeDefIR) = typeName
+  -- if typeDefIR <: controlObjectTypeDefIR
+  -- let CONTROL typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} > ( _parameterIR*{_parameterIR <- _parameterIR*} ) = typeDefIR as controlObjectTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 11 : (typeDefIR) = typeName
+  -- if typeDefIR <: packageObjectTypeDefIR
+  -- let PACKAGE typeId < _typeParameterIR*{_typeParameterIR <- _typeParameterIR*} , _typeParameterIR'*{_typeParameterIR' <- _typeParameterIR'*} > { _typeIR*{_typeIR <- _typeIR*} } = typeDefIR as packageObjectTypeDefIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 12 : (typeDefIR) = typeName
+  -- if typeDefIR <: tableObjectTypeIR
+  -- let TABLE typeId { _tableMetadataStructTypeIR } = typeDefIR as tableObjectTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause -1 : (typeDefIR) = $sink<typeName>
+  -- debug typeDefIR
+
+def $lift_typeArgumentListIR(typeArgumentIR*) : typeArgumentList =
+
+  clause 0 : (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = typeArgumentList
+  -- (let typeArgument = $lift_typeArgumentIR(typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgument -> typeArgument*}
+  -- let typeArgumentList = $unflatten_typeArgumentList(typeArgument*{typeArgument <- typeArgument*})
+
+def $lift_nameTypeIR(nameTypeIR) : namedType =
+
+  clause 0 : (` typeId) = typeName as namedType
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+def $lift_aliasTypeIR(aliasTypeIR) : type =
+
+  clause 0 : (aliasTypeIR) = typeName as type
+  -- if aliasTypeIR <: typedefTypeIR
+  -- let TYPEDEF typeId _typeIR = aliasTypeIR as typedefTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 1 : (aliasTypeIR) = typeName as type
+  -- if aliasTypeIR <: newTypeIR
+  -- let TYPE typeId _typeIR = aliasTypeIR as newTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+def $lift_typeArgumentIR(typeArgumentIR) : typeArgument =
+
+  clause 0 : (typeIR) = $lift_typeArgumentIR_as_realTypeArgument(typeIR) as typeArgument
+
+def $lift_dataTypeIR(dataTypeIR) : type =
+
+  clause 0 : (dataTypeIR) = LIST < typeArgument > as type
+  -- if dataTypeIR <: listTypeIR
+  -- let LIST < typeIR > = dataTypeIR as listTypeIR
+  -- let typeArgument = $lift_typeArgumentIR(typeIR)
+
+  clause 1 : (dataTypeIR) = TUPLE < typeArgumentList > as type
+  -- if dataTypeIR <: tupleTypeIR
+  -- let TUPLE < typeIR*{typeIR <- typeIR*} > = dataTypeIR as tupleTypeIR
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeIR*{typeIR <- typeIR*})
+
+  clause 2 : (dataTypeIR) = namedType [ D n as int as expression ] as type
+  -- if dataTypeIR <: headerStackTypeIR
+  -- let typeIR [ n ] = dataTypeIR as headerStackTypeIR
+  -- let type = $lift_typeIR(typeIR)
+  -- if type <: namedType
+  -- let namedType = type as namedType
+
+  clause 3 : (dataTypeIR) = typeName as type
+  -- if dataTypeIR <: simpleEnumTypeIR
+  -- let ENUM typeId { _nameIR*{_nameIR <- _nameIR*} } = dataTypeIR as simpleEnumTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+
+  clause 4 : (dataTypeIR) = typeName as prefixedTypeName < typeArgument as typeArgumentList > as type
+  -- if dataTypeIR <: serializableEnumTypeIR
+  -- let ENUM typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = dataTypeIR as serializableEnumTypeIR
+  -- let typeName = $lift_nameIR_as_typeName(typeId)
+  -- let typeArgument = $lift_typeArgumentIR(typeIR)
+
+def $lift_typeIR_as_typeOrVoid(typeIR) : typeOrVoid =
+
+  clause 0 : (typeIR) = VOID
+  -- if typeIR <: voidTypeIR
+  -- let voidTypeIR = typeIR as voidTypeIR
+  -- if (voidTypeIR = VOID)
+
+  clause 1 : (typeIR) = $lift_typeIR(typeIR) as typeOrVoid
+  -- if (typeIR =/= VOID as typeIR)
+
+def $lift_typeParameterIR(typeParameterIR) : typeParameter =
+
+  clause 0 : (typeId) = typeParameter
+  -- let typeParameter = $lift_nameIR_as_typeName(typeId) as typeParameter
+
+def $lift_typeParameterListIR(typeParameterIR*) : typeParameterListOpt =
+
+  clause 0 : (typeParameterIR*{typeParameterIR <- typeParameterIR*}) = typeParameterListOpt
+  -- (let typeParameter = $lift_typeParameterIR(typeParameterIR))*{typeParameterIR <- typeParameterIR*, typeParameter -> typeParameter*}
+  -- let typeParameterListOpt = $unflatten_typeParameterListOpt(typeParameter*{typeParameter <- typeParameter*})
+
+def $unflatten_typeParameterListOpt(typeParameter*) : typeParameterListOpt =
+
+  clause 0 : (typeParameter*{typeParameter <- typeParameter*}) = `EMPTY
+  -- if typeParameter*{typeParameter <- typeParameter*} matches []
+
+  clause 1 : (typeParameter*{typeParameter <- typeParameter*}) = < $unflatten_typeParameterList(typeParameter_h :: typeParameter_t*{typeParameter_t <- typeParameter_t*}) >
+  -- if typeParameter*{typeParameter <- typeParameter*} matches _ :: _
+  -- let typeParameter_h :: typeParameter_t*{typeParameter_t <- typeParameter_t*} = typeParameter*{typeParameter <- typeParameter*}
+
+def $unflatten_typeParameterList(typeParameter*) : typeParameterList =
+
+  clause 0 : (typeParameter*{typeParameter <- typeParameter*}) = $unflatten_typeParameterList'(typeParameter_h as typeParameterList, typeParameter_t*{typeParameter_t <- typeParameter_t*})
+  -- let typeParameter'*{typeParameter' <- typeParameter'*} = typeParameter*{typeParameter <- typeParameter*}
+  -- if typeParameter'*{typeParameter' <- typeParameter'*} matches _ :: _
+  -- let typeParameter_h :: typeParameter_t*{typeParameter_t <- typeParameter_t*} = typeParameter'*{typeParameter' <- typeParameter'*}
+
+def $unflatten_typeParameterList'(typeParameterList, typeParameter*) : typeParameterList =
+
+  clause 0 : (typeParameterList, typeParameter*{typeParameter <- typeParameter*}) = typeParameterList
+  -- if typeParameter*{typeParameter <- typeParameter*} matches []
+
+  clause 1 : (typeParameterList, typeParameter*{typeParameter <- typeParameter*}) = $unflatten_typeParameterList'(typeParameterList , typeParameter_h, typeParameter_t*{typeParameter_t <- typeParameter_t*})
+  -- if typeParameter*{typeParameter <- typeParameter*} matches _ :: _
+  -- let typeParameter_h :: typeParameter_t*{typeParameter_t <- typeParameter_t*} = typeParameter*{typeParameter <- typeParameter*}
+
+def $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR?) : initializerOpt =
+
+  clause 0 : (constantInitializerIR?{constantInitializerIR <- constantInitializerIR?}) = `EMPTY
+  -- if constantInitializerIR?{constantInitializerIR <- constantInitializerIR?} matches ()
+
+  clause 1 : (constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?}) = $lift_constantInitializerIR_as_initializer(constantInitializerIR) as initializerOpt
+  -- if constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?} matches (_)
+  -- let ?(constantInitializerIR) = constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?}
+
+def $lift_parameterIR(parameterIR) : parameter =
+
+  clause 0 : (annotationList direction typeIR nameIR parameterInitializerOptIR) = annotationList direction type name initializerOpt
+  -- if parameterInitializerOptIR <: constantInitializerIR?
+  -- let constantInitializerIR?{constantInitializerIR <- constantInitializerIR?} = parameterInitializerOptIR as constantInitializerIR?
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let initializerOpt = $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR?{constantInitializerIR <- constantInitializerIR?})
+
+def $lift_parameterListIR(parameterIR*) : parameterList =
+
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = parameterList
+  -- (let parameter = $lift_parameterIR(parameterIR))*{parameterIR <- parameterIR*, parameter -> parameter*}
+  -- let parameterList = $unflatten_parameterList(parameter*{parameter <- parameter*})
+
+def $unflatten_parameterList(parameter*) : parameterList =
+
+  clause 0 : (parameter*{parameter <- parameter*}) = `EMPTY
+  -- if parameter*{parameter <- parameter*} matches []
+
+  clause 1 : (parameter*{parameter <- parameter*}) = $unflatten_nonEmptyParameterList(parameter_h :: parameter_t*{parameter_t <- parameter_t*}) as parameterList
+  -- if parameter*{parameter <- parameter*} matches _ :: _
+  -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter*{parameter <- parameter*}
+
+def $unflatten_nonEmptyParameterList(parameter*) : nonEmptyParameterList =
+
+  clause 0 : (parameter*{parameter <- parameter*}) = $unflatten_nonEmptyParameterList'(parameter_h as nonEmptyParameterList, parameter_t*{parameter_t <- parameter_t*})
+  -- let parameter'*{parameter' <- parameter'*} = parameter*{parameter <- parameter*}
+  -- if parameter'*{parameter' <- parameter'*} matches _ :: _
+  -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter'*{parameter' <- parameter'*}
+
+def $unflatten_nonEmptyParameterList'(nonEmptyParameterList, parameter*) : nonEmptyParameterList =
+
+  clause 0 : (nonEmptyParameterList, parameter*{parameter <- parameter*}) = nonEmptyParameterList
+  -- if parameter*{parameter <- parameter*} matches []
+
+  clause 1 : (nonEmptyParameterList, parameter*{parameter <- parameter*}) = $unflatten_nonEmptyParameterList'(nonEmptyParameterList , parameter_h, parameter_t*{parameter_t <- parameter_t*})
+  -- if parameter*{parameter <- parameter*} matches _ :: _
+  -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter*{parameter <- parameter*}
+
+def $lift_constructorParameterIR(constructorParameterIR) : constructorParameter =
+
+  clause 0 : (constructorParameterIR) = $lift_parameterIR(constructorParameterIR)
+
+def $lift_constructorParameterListIR(constructorParameterIR*) : constructorParameterListOpt =
+
+  clause 0 : (constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}) = constructorParameterListOpt
+  -- (let constructorParameter = $lift_constructorParameterIR(constructorParameterIR))*{constructorParameterIR <- constructorParameterIR*, constructorParameter -> constructorParameter*}
+  -- let constructorParameterListOpt = $unflatten_constructorParameterList(constructorParameter*{constructorParameter <- constructorParameter*})
+
+def $unflatten_constructorParameterList(constructorParameter*) : constructorParameterListOpt =
+
+  clause 0 : (constructorParameter*{constructorParameter <- constructorParameter*}) = `EMPTY
+  -- if constructorParameter*{constructorParameter <- constructorParameter*} matches []
+
+  clause 1 : (constructorParameter*{constructorParameter <- constructorParameter*}) = ( $unflatten_parameterList(constructorParameter*{constructorParameter <- constructorParameter*}) )
+  -- if (constructorParameter*{constructorParameter <- constructorParameter*} =/= [])
+
+def $lift_typedExpressionIR(typedExpressionIR) : expression =
+
+  clause 0 : (expressionIR # _expressionNoteIR) = $lift_expressionIR(expressionIR)
+
+def $lift_initializerIR(initializerIR) : initializer =
+
+  clause 0 : (= typedExpressionIR) = = expression
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_initializerOptIR(initializerIR?) : initializerOpt =
+
+  clause 0 : (initializerIR?{initializerIR <- initializerIR?}) = `EMPTY
+  -- if initializerIR?{initializerIR <- initializerIR?} matches ()
+
+  clause 1 : (initializerIR'?{initializerIR' <- initializerIR'?}) = $lift_initializerIR(initializerIR) as initializerOpt
+  -- if initializerIR'?{initializerIR' <- initializerIR'?} matches (_)
+  -- let ?(initializerIR) = initializerIR'?{initializerIR' <- initializerIR'?}
+
+def $lift_constantInitializerIR_as_initializer(constantInitializerIR) : initializer =
+
+  clause 0 : (= `VALUE value) = = expression
+  -- let expression = $lift_value(value)
+
+def $lift_namedExpressionIR(namedExpressionIR) : namedExpression =
+
+  clause 0 : (nameIR = typedExpressionIR) = name = expression
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_namedExpressionListIR(namedExpressionIR*) : namedExpressionList =
+
+  clause 0 : (namedExpressionIR*{namedExpressionIR <- namedExpressionIR*}) = namedExpressionList
+  -- (let namedExpression = $lift_namedExpressionIR(namedExpressionIR))*{namedExpressionIR <- namedExpressionIR*, namedExpression -> namedExpression*}
+  -- let namedExpressionList = $unflatten_namedExpressionList(namedExpression*{namedExpression <- namedExpression*})
+
+def $unflatten_namedExpressionList(namedExpression*) : namedExpressionList =
+
+  clause 0 : (namedExpression*{namedExpression <- namedExpression*}) = $unflatten_namedExpressionList'(namedExpression_h as namedExpressionList, namedExpression_t*{namedExpression_t <- namedExpression_t*})
+  -- let namedExpression'*{namedExpression' <- namedExpression'*} = namedExpression*{namedExpression <- namedExpression*}
+  -- if namedExpression'*{namedExpression' <- namedExpression'*} matches _ :: _
+  -- let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} = namedExpression'*{namedExpression' <- namedExpression'*}
+
+def $unflatten_namedExpressionList'(namedExpressionList, namedExpression*) : namedExpressionList =
+
+  clause 0 : (namedExpressionList, namedExpression*{namedExpression <- namedExpression*}) = namedExpressionList
+  -- if namedExpression*{namedExpression <- namedExpression*} matches []
+
+  clause 1 : (namedExpressionList, namedExpression*{namedExpression <- namedExpression*}) = $unflatten_namedExpressionList'(namedExpressionList , namedExpression_h, namedExpression_t*{namedExpression_t <- namedExpression_t*})
+  -- if namedExpression*{namedExpression <- namedExpression*} matches _ :: _
+  -- let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} = namedExpression*{namedExpression <- namedExpression*}
+
+def $lift_namedValueIR(namedValueIR) : namedExpression =
+
+  clause 0 : (nameIR = value) = name = expression
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let expression = $lift_value(value)
+
+def $lift_namedValueListIR(namedValueIR*) : namedExpressionList =
+
+  clause 0 : (namedValueIR*{namedValueIR <- namedValueIR*}) = namedExpressionList
+  -- (let namedExpression = $lift_namedValueIR(namedValueIR))*{namedValueIR <- namedValueIR*, namedExpression -> namedExpression*}
+  -- let namedExpressionList = $unflatten_namedExpressionList(namedExpression*{namedExpression <- namedExpression*})
+
+def $lift_typedExpressionListIR(typedExpressionIR*) : expressionList =
+
+  clause 0 : (typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}) = expressionList
+  -- (let expression = $lift_typedExpressionIR(typedExpressionIR))*{typedExpressionIR <- typedExpressionIR*, expression -> expression*}
+  -- let expressionList = $unflatten_expressionList(expression*{expression <- expression*})
+
+def $lift_literalExpressionIR(literalExpressionIR) : literalExpression =
+
+  clause 0 : (literalExpression) = literalExpression
+
+def $lift_referenceExpressionIR(referenceExpressionIR) : referenceExpression =
+
+  clause 0 : (prefixedNameIR) = THIS
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR = "this")
+
+  clause 1 : (prefixedNameIR) = nonTypeName as referenceExpression
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 2 : (prefixedNameIR) = `ID . nonTypeName as referenceExpression
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+def $lift_defaultExpressionIR(defaultExpressionIR) : defaultExpression =
+
+  clause 0 : (defaultExpression) = ...
+  -- if (defaultExpression = ...)
+
+def $lift_unaryExpressionIR(unaryExpressionIR) : unaryExpression =
+
+  clause 0 : (unop typedExpressionIR) = unop expression
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_binaryExpressionIR(binaryExpressionIR) : binaryExpression =
+
+  clause 0 : (typedExpressionIR_l binop typedExpressionIR_r) = expression_l binop expression_r
+  -- let expression_l = $lift_typedExpressionIR(typedExpressionIR_l)
+  -- let expression_r = $lift_typedExpressionIR(typedExpressionIR_r)
+
+def $lift_ternaryExpressionIR(ternaryExpressionIR) : ternaryExpression =
+
+  clause 0 : (typedExpressionIR_cond ? typedExpressionIR_then : typedExpressionIR_else) = expression_cond ? expression_then : expression_else
+  -- let expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
+  -- let expression_then = $lift_typedExpressionIR(typedExpressionIR_then)
+  -- let expression_else = $lift_typedExpressionIR(typedExpressionIR_else)
+
+def $lift_castExpressionIR(castExpressionIR) : expression =
+
+  clause 0 : (( typeIR ) typedExpressionIR) = expression
+  -- let typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if typeIR_unroll <: setTypeIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+  clause 1 : (( typeIR ) typedExpressionIR) = ( type ) expression as expression
+  -- let typeIR_unroll = $unroll_typeIR(typeIR)
+  -- if ~typeIR_unroll <: setTypeIR
+  -- let type = $lift_typeIR(typeIR)
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $unflatten_recordElementExpression(namedExpression*) : recordElementExpression =
+
+  clause 0 : (namedExpression*{namedExpression <- namedExpression*}) = name_h = expression_h
+  -- if namedExpression*{namedExpression <- namedExpression*} matches [ _/1 ]
+  -- let [namedExpression_h] = namedExpression*{namedExpression <- namedExpression*}
+  -- let name_h = expression_h = namedExpression_h
+
+  clause 1 : (namedExpression*{namedExpression <- namedExpression*}) = name_h = expression_h , namedExpressionList
+  -- if namedExpression*{namedExpression <- namedExpression*} matches _ :: _
+  -- let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} = namedExpression*{namedExpression <- namedExpression*}
+  -- if (namedExpression_t*{namedExpression_t <- namedExpression_t*} =/= [])
+  -- let name_h = expression_h = namedExpression_h
+  -- let namedExpressionList = $unflatten_namedExpressionList(namedExpression_t*{namedExpression_t <- namedExpression_t*})
+
+def $unflatten_recordElementExpression_with_default(namedExpression*) : recordElementExpression =
+
+  clause 0 : (namedExpression*{namedExpression <- namedExpression*}) = name_h = expression_h , ...
+  -- if namedExpression*{namedExpression <- namedExpression*} matches [ _/1 ]
+  -- let [namedExpression_h] = namedExpression*{namedExpression <- namedExpression*}
+  -- let name_h = expression_h = namedExpression_h
+
+  clause 1 : (namedExpression*{namedExpression <- namedExpression*}) = name_h = expression_h , namedExpressionList , ...
+  -- if namedExpression*{namedExpression <- namedExpression*} matches _ :: _
+  -- let namedExpression_h :: namedExpression_t*{namedExpression_t <- namedExpression_t*} = namedExpression*{namedExpression <- namedExpression*}
+  -- if (namedExpression_t*{namedExpression_t <- namedExpression_t*} =/= [])
+  -- let name_h = expression_h = namedExpression_h
+  -- let namedExpressionList = $unflatten_namedExpressionList(namedExpression_t*{namedExpression_t <- namedExpression_t*})
+
+def $lift_dataExpressionIR(dataExpressionIR) : dataExpression =
+
+  clause 0 : (dataExpressionIR) = {#} as dataExpression
+  -- if dataExpressionIR <: invalidHeaderExpression
+  -- let invalidHeaderExpression = dataExpressionIR as invalidHeaderExpression
+  -- if (invalidHeaderExpression = {#})
+
+  clause 1 : (dataExpressionIR) = { expressionList as sequenceOrRecordElementExpression `EMPTY } as dataExpression
+  -- if dataExpressionIR <: sequenceExpressionIR
+  -- let sequenceExpressionIR = dataExpressionIR as sequenceExpressionIR
+  -- if sequenceExpressionIR matches `SEQ {%}`
+  -- let SEQ { typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} } = sequenceExpressionIR
+  -- let expressionList = $lift_typedExpressionListIR(typedExpressionIR*{typedExpressionIR <- typedExpressionIR*})
+
+  clause 2 : (dataExpressionIR) = { expressionList as sequenceOrRecordElementExpression `EMPTY } as dataExpression
+  -- if dataExpressionIR <: sequenceExpressionIR
+  -- let sequenceExpressionIR = dataExpressionIR as sequenceExpressionIR
+  -- if sequenceExpressionIR matches `SEQ {% , ...}`
+  -- let SEQ { typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} , ... } = sequenceExpressionIR
+  -- (let expression = $lift_typedExpressionIR(typedExpressionIR))*{typedExpressionIR <- typedExpressionIR*, expression -> expression*}
+  -- let expression_with_default*{expression_with_default <- expression_with_default*} = expression*{expression <- expression*} ++ [... as expression]
+  -- let expressionList = $lift_typedExpressionListIR(typedExpressionIR*{typedExpressionIR <- typedExpressionIR*})
+
+  clause 3 : (dataExpressionIR) = { recordElementExpression as sequenceOrRecordElementExpression `EMPTY } as dataExpression
+  -- if dataExpressionIR <: recordExpressionIR
+  -- let recordExpressionIR = dataExpressionIR as recordExpressionIR
+  -- if recordExpressionIR matches `RECORD {%}`
+  -- let RECORD { namedExpressionIR*{namedExpressionIR <- namedExpressionIR*} } = recordExpressionIR
+  -- (let namedExpression = $lift_namedExpressionIR(namedExpressionIR))*{namedExpressionIR <- namedExpressionIR*, namedExpression -> namedExpression*}
+  -- let recordElementExpression = $unflatten_recordElementExpression(namedExpression*{namedExpression <- namedExpression*})
+
+  clause 4 : (dataExpressionIR) = { recordElementExpression as sequenceOrRecordElementExpression `EMPTY } as dataExpression
+  -- if dataExpressionIR <: recordExpressionIR
+  -- let recordExpressionIR = dataExpressionIR as recordExpressionIR
+  -- if recordExpressionIR matches `RECORD {% , ...}`
+  -- let RECORD { namedExpressionIR*{namedExpressionIR <- namedExpressionIR*} , ... } = recordExpressionIR
+  -- (let namedExpression = $lift_namedExpressionIR(namedExpressionIR))*{namedExpressionIR <- namedExpressionIR*, namedExpression -> namedExpression*}
+  -- let recordElementExpression = $unflatten_recordElementExpression_with_default(namedExpression*{namedExpression <- namedExpression*})
+
+def $lift_errorAccessExpressionIR(errorAccessExpressionIR) : errorAccessExpression =
+
+  clause 0 : (ERROR . nameIR) = ERROR . member
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+def $lift_memberAccessBaseIR(memberAccessBaseIR) : memberAccessBase =
+
+  clause 0 : (memberAccessBaseIR) = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR) as memberAccessBase
+  -- if memberAccessBaseIR matches `TYPE %`
+  -- let TYPE prefixedNameIR = memberAccessBaseIR
+
+  clause 1 : (memberAccessBaseIR) = $lift_typedExpressionIR(typedExpressionIR) as memberAccessBase
+  -- if memberAccessBaseIR <: typedExpressionIR
+  -- let typedExpressionIR = memberAccessBaseIR as typedExpressionIR
+
+def $lift_memberAccessExpressionIR(memberAccessExpressionIR) : memberAccessExpression =
+
+  clause 0 : (memberAccessBaseIR . nameIR) = memberAccessBase . member
+  -- let memberAccessBase = $lift_memberAccessBaseIR(memberAccessBaseIR)
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+def $lift_indexAccessExpressionIR(indexAccessExpressionIR) : indexAccessExpression =
+
+  clause 0 : (typedExpressionIR_base [ typedExpressionIR_index ]) = expression_base [ expression_index ]
+  -- let expression_base = $lift_typedExpressionIR(typedExpressionIR_base)
+  -- let expression_index = $lift_typedExpressionIR(typedExpressionIR_index)
+
+def $lift_sliceAccessExpressionIR(sliceAccessExpressionIR) : sliceAccessExpression =
+
+  clause 0 : (typedExpressionIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ]) = expression_base [ expression_hi : expression_lo ]
+  -- if sliceop matches `:`
+  -- let expression_base = $lift_typedExpressionIR(typedExpressionIR_base)
+  -- let expression_hi = $lift_typedExpressionIR(typedExpressionIR_hi)
+  -- let expression_lo = $lift_typedExpressionIR(typedExpressionIR_lo)
+
+def $lift_accessExpressionIR(accessExpressionIR) : accessExpression =
+
+  clause 0 : (accessExpressionIR) = $lift_errorAccessExpressionIR(errorAccessExpressionIR) as accessExpression
+  -- if accessExpressionIR <: errorAccessExpressionIR
+  -- let errorAccessExpressionIR = accessExpressionIR as errorAccessExpressionIR
+
+  clause 1 : (accessExpressionIR) = $lift_memberAccessExpressionIR(memberAccessExpressionIR) as accessExpression
+  -- if accessExpressionIR <: memberAccessExpressionIR
+  -- let memberAccessExpressionIR = accessExpressionIR as memberAccessExpressionIR
+
+  clause 2 : (accessExpressionIR) = $lift_indexAccessExpressionIR(indexAccessExpressionIR) as accessExpression
+  -- if accessExpressionIR <: indexAccessExpressionIR
+  -- let indexAccessExpressionIR = accessExpressionIR as indexAccessExpressionIR
+
+  clause 3 : (accessExpressionIR) = $lift_sliceAccessExpressionIR(sliceAccessExpressionIR) as accessExpression
+  -- if accessExpressionIR <: sliceAccessExpressionIR
+  -- let sliceAccessExpressionIR = accessExpressionIR as sliceAccessExpressionIR
+
+def $lift_argumentListIR(argumentIR*) : argumentList =
+
+  clause 0 : (argumentIR*{argumentIR <- argumentIR*}) = argumentList
+  -- (let argument = $lift_argumentIR(argumentIR))*{argumentIR <- argumentIR*, argument -> argument*}
+  -- let argumentList = $unflatten_argumentList(argument*{argument <- argument*})
+
+def $lift_callableTargetIR_as_expression(callableTargetIR) : expression =
+
+  clause 0 : (callableTargetIR) = THIS as expression
+  -- if (callableTargetIR = ` "this" as callableTargetIR)
+
+  clause 1 : (callableTargetIR) = nonTypeName as expression
+  -- if callableTargetIR <: prefixedNameIR
+  -- let prefixedNameIR = callableTargetIR as prefixedNameIR
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 2 : (callableTargetIR) = `ID . nonTypeName as expression
+  -- if callableTargetIR <: prefixedNameIR
+  -- let prefixedNameIR = callableTargetIR as prefixedNameIR
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 3 : (callableTargetIR) = expression as memberAccessBase . member as expression
+  -- if callableTargetIR matches `% . %`
+  -- let typedExpressionIR . nameIR = callableTargetIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+  clause 4 : (callableTargetIR) = THIS as memberAccessBase . member as expression
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR = callableTargetIR
+  -- if (prefixedNameIR = ` "this")
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+  clause 5 : (callableTargetIR) = nonTypeName as memberAccessBase . member as expression
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR_field = callableTargetIR
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+  -- let member = $lift_nameIR_as_member(nameIR_field)
+
+  clause 6 : (callableTargetIR) = `ID . nonTypeName as memberAccessBase . member as expression
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR_field = callableTargetIR
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+  -- let member = $lift_nameIR_as_member(nameIR_field)
+
+  clause 7 : (callableTargetIR') = ( expression ) as expression
+  -- if callableTargetIR' matches `(%)`
+  -- let ( callableTargetIR ) = callableTargetIR'
+  -- let expression = $lift_callableTargetIR_as_expression(callableTargetIR)
+
+def $lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR*) : realTypeArgumentList =
+
+  clause 0 : (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}) = realTypeArgumentList
+  -- (let realTypeArgument = $lift_typeArgumentIR_as_realTypeArgument(typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, realTypeArgument -> realTypeArgument*}
+  -- let realTypeArgumentList = $unflatten_realTypeArgumentList(realTypeArgument*{realTypeArgument <- realTypeArgument*})
+
+def $lift_callExpressionIR(callExpressionIR) : callExpression =
+
+  clause 0 : (callExpressionIR) = namedType as callTarget ( argumentList )
+  -- if callExpressionIR matches `% (%)`
+  -- let constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let namedType = prefixedTypeName as namedType
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+  clause 1 : (callExpressionIR) = namedType as callTarget ( argumentList )
+  -- if callExpressionIR matches `% (%)`
+  -- let constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} =/= [])
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let namedType = prefixedTypeName < typeArgumentList > as namedType
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+  clause 2 : (callExpressionIR) = expression as callTarget ( argumentList )
+  -- if callExpressionIR matches `% <%> (%)`
+  -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let expression = $lift_callableTargetIR_as_expression(callableTargetIR)
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+  clause 3 : (callExpressionIR) = expression < realTypeArgumentList > ( argumentList )
+  -- if callExpressionIR matches `% <%> (%)`
+  -- let callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) = callExpressionIR
+  -- let expression = $lift_callableTargetIR_as_expression(callableTargetIR)
+  -- if (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} =/= [])
+  -- let realTypeArgumentList = $lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+def $lift_parenthesizedExpressionIR(parenthesizedExpressionIR) : parenthesizedExpression =
+
+  clause 0 : (( typedExpressionIR )) = ( expression )
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_expressionIR(expressionIR) : expression =
+
+  clause 0 : (expressionIR) = $lift_literalExpressionIR(literalExpressionIR) as expression
+  -- if expressionIR <: literalExpressionIR
+  -- let literalExpressionIR = expressionIR as literalExpressionIR
+
+  clause 1 : (expressionIR) = $lift_referenceExpressionIR(referenceExpressionIR) as expression
+  -- if expressionIR <: referenceExpressionIR
+  -- let referenceExpressionIR = expressionIR as referenceExpressionIR
+
+  clause 2 : (expressionIR) = $lift_defaultExpressionIR(defaultExpressionIR) as expression
+  -- if expressionIR <: defaultExpressionIR
+  -- let defaultExpressionIR = expressionIR as defaultExpressionIR
+
+  clause 3 : (expressionIR) = $lift_unaryExpressionIR(unaryExpressionIR) as expression
+  -- if expressionIR <: unaryExpressionIR
+  -- let unaryExpressionIR = expressionIR as unaryExpressionIR
+
+  clause 4 : (expressionIR) = $lift_binaryExpressionIR(binaryExpressionIR) as expression
+  -- if expressionIR <: binaryExpressionIR
+  -- let binaryExpressionIR = expressionIR as binaryExpressionIR
+
+  clause 5 : (expressionIR) = $lift_ternaryExpressionIR(ternaryExpressionIR) as expression
+  -- if expressionIR <: ternaryExpressionIR
+  -- let ternaryExpressionIR = expressionIR as ternaryExpressionIR
+
+  clause 6 : (expressionIR) = $lift_castExpressionIR(castExpressionIR)
+  -- if expressionIR <: castExpressionIR
+  -- let castExpressionIR = expressionIR as castExpressionIR
+
+  clause 7 : (expressionIR) = $lift_dataExpressionIR(dataExpressionIR) as expression
+  -- if expressionIR <: dataExpressionIR
+  -- let dataExpressionIR = expressionIR as dataExpressionIR
+
+  clause 8 : (expressionIR) = $lift_accessExpressionIR(accessExpressionIR) as expression
+  -- if expressionIR <: accessExpressionIR
+  -- let accessExpressionIR = expressionIR as accessExpressionIR
+
+  clause 9 : (expressionIR) = $lift_callExpressionIR(callExpressionIR) as expression
+  -- if expressionIR <: callExpressionIR
+  -- let callExpressionIR = expressionIR as callExpressionIR
+
+  clause 10 : (expressionIR) = $lift_parenthesizedExpressionIR(parenthesizedExpressionIR) as expression
+  -- if expressionIR <: parenthesizedExpressionIR
+  -- let parenthesizedExpressionIR = expressionIR as parenthesizedExpressionIR
+
+def $unflatten_expressionList(expression*) : expressionList =
+
+  clause 0 : (expression*{expression <- expression*}) = `EMPTY
+  -- if expression*{expression <- expression*} matches []
+
+  clause 1 : (expression*{expression <- expression*}) = $unflatten_expressionList'(expression_h as expressionList, expression_t*{expression_t <- expression_t*})
+  -- if expression*{expression <- expression*} matches _ :: _
+  -- let expression_h :: expression_t*{expression_t <- expression_t*} = expression*{expression <- expression*}
+
+def $unflatten_expressionList'(expressionList, expression*) : expressionList =
+
+  clause 0 : (expressionList, expression*{expression <- expression*}) = expressionList
+  -- if expression*{expression <- expression*} matches []
+
+  clause 1 : (expressionList, expression*{expression <- expression*}) = $unflatten_expressionList'(expressionList , expression_h, expression_t*{expression_t <- expression_t*})
+  -- if expression*{expression <- expression*} matches _ :: _
+  -- let expression_h :: expression_t*{expression_t <- expression_t*} = expression*{expression <- expression*}
+
+def $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR) : simpleKeysetExpression =
+
+  clause 0 : (simpleKeysetExpressionIR) = expression as simpleKeysetExpression
+  -- if simpleKeysetExpressionIR <: typedExpressionIR
+  -- let typedExpressionIR = simpleKeysetExpressionIR as typedExpressionIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+  clause 1 : (simpleKeysetExpressionIR) = expression_base &&& expression_mask
+  -- if simpleKeysetExpressionIR matches `% &&& %`
+  -- let typedExpressionIR_base &&& typedExpressionIR_mask = simpleKeysetExpressionIR
+  -- let expression_base = $lift_typedExpressionIR(typedExpressionIR_base)
+  -- let expression_mask = $lift_typedExpressionIR(typedExpressionIR_mask)
+
+  clause 2 : (simpleKeysetExpressionIR) = expression_lb .. expression_ub
+  -- if simpleKeysetExpressionIR matches `% .. %`
+  -- let typedExpressionIR_lb .. typedExpressionIR_ub = simpleKeysetExpressionIR
+  -- let expression_lb = $lift_typedExpressionIR(typedExpressionIR_lb)
+  -- let expression_ub = $lift_typedExpressionIR(typedExpressionIR_ub)
+
+  clause 3 : (simpleKeysetExpressionIR) = DEFAULT
+  -- if simpleKeysetExpressionIR matches `DEFAULT`
+
+  clause 4 : (simpleKeysetExpressionIR) = _
+  -- if simpleKeysetExpressionIR matches `_`
+
+def $lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR*) : simpleKeysetExpressionList =
+
+  clause 0 : (simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}) = simpleKeysetExpressionList
+  -- (let simpleKeysetExpression = $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR))*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*, simpleKeysetExpression -> simpleKeysetExpression*}
+  -- let simpleKeysetExpressionList = $unflatten_simpleKeysetExpressionList(simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*})
+
+def $unflatten_simpleKeysetExpressionList(simpleKeysetExpression*) : simpleKeysetExpressionList =
+
+  clause 0 : (simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}) = $unflatten_simpleKeysetExpressionList'(simpleKeysetExpression_h as simpleKeysetExpressionList, simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*})
+  -- let simpleKeysetExpression'*{simpleKeysetExpression' <- simpleKeysetExpression'*} = simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}
+  -- if simpleKeysetExpression'*{simpleKeysetExpression' <- simpleKeysetExpression'*} matches _ :: _
+  -- let simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = simpleKeysetExpression'*{simpleKeysetExpression' <- simpleKeysetExpression'*}
+
+def $unflatten_simpleKeysetExpressionList'(simpleKeysetExpressionList, simpleKeysetExpression*) : simpleKeysetExpressionList =
+
+  clause 0 : (simpleKeysetExpressionList, simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}) = simpleKeysetExpressionList
+  -- if simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} matches []
+
+  clause 1 : (simpleKeysetExpressionList, simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}) = $unflatten_simpleKeysetExpressionList'(simpleKeysetExpressionList , simpleKeysetExpression_h, simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*})
+  -- if simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} matches _ :: _
+  -- let simpleKeysetExpression_h :: simpleKeysetExpression_t*{simpleKeysetExpression_t <- simpleKeysetExpression_t*} = simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}
+
+def $lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR) : tupleKeysetExpression =
+
+  clause 0 : (( simpleKeysetExpressionListIR )) = ( expression_base &&& expression_mask )
+  -- if simpleKeysetExpressionListIR matches [ _/1 ]
+  -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionListIR
+  -- if simpleKeysetExpressionIR matches `% &&& %`
+  -- let typedExpressionIR_base &&& typedExpressionIR_mask = simpleKeysetExpressionIR
+  -- let expression_base = $lift_typedExpressionIR(typedExpressionIR_base)
+  -- let expression_mask = $lift_typedExpressionIR(typedExpressionIR_mask)
+
+  clause 1 : (( simpleKeysetExpressionListIR )) = ( expression_lb .. expression_ub )
+  -- if simpleKeysetExpressionListIR matches [ _/1 ]
+  -- let [simpleKeysetExpressionIR] = simpleKeysetExpressionListIR
+  -- if simpleKeysetExpressionIR matches `% .. %`
+  -- let typedExpressionIR_lb .. typedExpressionIR_ub = simpleKeysetExpressionIR
+  -- let expression_lb = $lift_typedExpressionIR(typedExpressionIR_lb)
+  -- let expression_ub = $lift_typedExpressionIR(typedExpressionIR_ub)
+
+  clause 2 : (tupleKeysetExpressionIR) = ( DEFAULT )
+  -- if (tupleKeysetExpressionIR = ( [DEFAULT] ))
+
+  clause 3 : (tupleKeysetExpressionIR) = ( _ )
+  -- if (tupleKeysetExpressionIR = ( [_] ))
+
+  clause 4 : (( simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} )) = ( simpleKeysetExpression_h , simpleKeysetExpressionList_t )
+  -- if (|simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}| > 1)
+  -- let simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} = simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
+  -- if simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*} matches _ :: _
+  -- let simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} = simpleKeysetExpressionIR'*{simpleKeysetExpressionIR' <- simpleKeysetExpressionIR'*}
+  -- let simpleKeysetExpression_h = $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR_h)
+  -- let simpleKeysetExpressionList_t = $lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*})
+
+def $lift_keysetExpressionIR(keysetExpressionIR) : keysetExpression =
+
+  clause 0 : (keysetExpressionIR) = $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR) as keysetExpression
+  -- if keysetExpressionIR <: simpleKeysetExpressionIR
+  -- let simpleKeysetExpressionIR = keysetExpressionIR as simpleKeysetExpressionIR
+
+  clause 1 : (keysetExpressionIR) = $lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR) as keysetExpression
+  -- if keysetExpressionIR <: tupleKeysetExpressionIR
+  -- let tupleKeysetExpressionIR = keysetExpressionIR as tupleKeysetExpressionIR
+
+def $lift_typeArgumentIR_as_realTypeArgument(typeArgumentIR) : realTypeArgument =
+
+  clause 0 : (typeIR) = VOID
+  -- if typeIR <: voidTypeIR
+  -- let voidTypeIR = typeIR as voidTypeIR
+  -- if (voidTypeIR = VOID)
+
+  clause -1 : (typeIR) = $lift_typeIR(typeIR) as realTypeArgument
+
+def $unflatten_realTypeArgumentList(realTypeArgument*) : realTypeArgumentList =
+
+  clause 0 : (realTypeArgument*{realTypeArgument <- realTypeArgument*}) = $unflatten_realTypeArgumentList'(realTypeArgument_h as realTypeArgumentList, realTypeArgument_t*{realTypeArgument_t <- realTypeArgument_t*})
+  -- if realTypeArgument*{realTypeArgument <- realTypeArgument*} matches _ :: _
+  -- let realTypeArgument_h :: realTypeArgument_t*{realTypeArgument_t <- realTypeArgument_t*} = realTypeArgument*{realTypeArgument <- realTypeArgument*}
+
+def $unflatten_realTypeArgumentList'(realTypeArgumentList, realTypeArgument*) : realTypeArgumentList =
+
+  clause 0 : (realTypeArgumentList, realTypeArgument*{realTypeArgument <- realTypeArgument*}) = realTypeArgumentList
+  -- if realTypeArgument*{realTypeArgument <- realTypeArgument*} matches []
+
+  clause 1 : (realTypeArgumentList, realTypeArgument*{realTypeArgument <- realTypeArgument*}) = $unflatten_realTypeArgumentList'(realTypeArgumentList , realTypeArgument_h, realTypeArgument_t*{realTypeArgument_t <- realTypeArgument_t*})
+  -- if realTypeArgument*{realTypeArgument <- realTypeArgument*} matches _ :: _
+  -- let realTypeArgument_h :: realTypeArgument_t*{realTypeArgument_t <- realTypeArgument_t*} = realTypeArgument*{realTypeArgument <- realTypeArgument*}
+
+def $unflatten_typeArgumentList(typeArgument*) : typeArgumentList =
+
+  clause 0 : (typeArgument*{typeArgument <- typeArgument*}) = `EMPTY
+  -- if typeArgument*{typeArgument <- typeArgument*} matches []
+
+  clause 1 : (typeArgument*{typeArgument <- typeArgument*}) = $unflatten_typeArgumentList'(typeArgument_h as typeArgumentList, typeArgument_t*{typeArgument_t <- typeArgument_t*})
+  -- if typeArgument*{typeArgument <- typeArgument*} matches _ :: _
+  -- let typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} = typeArgument*{typeArgument <- typeArgument*}
+
+def $unflatten_typeArgumentList'(typeArgumentList, typeArgument*) : typeArgumentList =
+
+  clause 0 : (typeArgumentList, typeArgument*{typeArgument <- typeArgument*}) = typeArgumentList
+  -- if typeArgument*{typeArgument <- typeArgument*} matches []
+
+  clause 1 : (typeArgumentList, typeArgument*{typeArgument <- typeArgument*}) = $unflatten_typeArgumentList'(typeArgumentList , typeArgument_h, typeArgument_t*{typeArgument_t <- typeArgument_t*})
+  -- if typeArgument*{typeArgument <- typeArgument*} matches _ :: _
+  -- let typeArgument_h :: typeArgument_t*{typeArgument_t <- typeArgument_t*} = typeArgument*{typeArgument <- typeArgument*}
+
+def $lift_argumentIR(argumentIR) : argument =
+
+  clause 0 : (argumentIR) = expression as argument
+  -- if argumentIR <: typedExpressionIR
+  -- let typedExpressionIR = argumentIR as typedExpressionIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+  clause 1 : (argumentIR) = name = expression
+  -- if argumentIR matches `% = %`
+  -- let nameIR = typedExpressionIR = argumentIR
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+  clause 2 : (argumentIR) = name = _
+  -- if argumentIR matches `% = _`
+  -- let nameIR = _ = argumentIR
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+  clause 3 : (argumentIR) = _
+  -- if argumentIR matches `_`
+
+def $unflatten_argumentList(argument*) : argumentList =
+
+  clause 0 : (argument*{argument <- argument*}) = `EMPTY
+  -- if argument*{argument <- argument*} matches []
+
+  clause 1 : (argument*{argument <- argument*}) = $unflatten_argumentListNonEmpty(argument_h :: argument_t*{argument_t <- argument_t*}) as argumentList
+  -- if argument*{argument <- argument*} matches _ :: _
+  -- let argument_h :: argument_t*{argument_t <- argument_t*} = argument*{argument <- argument*}
+
+def $unflatten_argumentListNonEmpty(argument*) : argumentListNonEmpty =
+
+  clause 0 : (argument*{argument <- argument*}) = $unflatten_argumentListNonEmpty'(argument_h as argumentListNonEmpty, argument_t*{argument_t <- argument_t*})
+  -- let argument'*{argument' <- argument'*} = argument*{argument <- argument*}
+  -- if argument'*{argument' <- argument'*} matches _ :: _
+  -- let argument_h :: argument_t*{argument_t <- argument_t*} = argument'*{argument' <- argument'*}
+
+def $unflatten_argumentListNonEmpty'(argumentListNonEmpty, argument*) : argumentListNonEmpty =
+
+  clause 0 : (argumentListNonEmpty, argument*{argument <- argument*}) = argumentListNonEmpty
+  -- if argument*{argument <- argument*} matches []
+
+  clause 1 : (argumentListNonEmpty, argument*{argument <- argument*}) = $unflatten_argumentListNonEmpty'(argumentListNonEmpty , argument_h, argument_t*{argument_t <- argument_t*})
+  -- if argument*{argument <- argument*} matches _ :: _
+  -- let argument_h :: argument_t*{argument_t <- argument_t*} = argument*{argument <- argument*}
+
+def $lift_statementIR(statementIR) : statement =
+
+  clause 0 : (statementIR) = $lift_emptyStatementIR(emptyStatementIR) as statement
+  -- if statementIR <: emptyStatementIR
+  -- let emptyStatementIR = statementIR as emptyStatementIR
+
+  clause 1 : (statementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as statement
+  -- if statementIR <: assignmentStatementIR
+  -- let assignmentStatementIR = statementIR as assignmentStatementIR
+
+  clause 2 : (statementIR) = $lift_callStatementIR(callStatementIR) as statement
+  -- if statementIR <: callStatementIR
+  -- let callStatementIR = statementIR as callStatementIR
+
+  clause 3 : (statementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as statement
+  -- if statementIR <: directApplicationStatementIR
+  -- let directApplicationStatementIR = statementIR as directApplicationStatementIR
+
+  clause 4 : (statementIR) = $lift_returnStatementIR(returnStatementIR) as statement
+  -- if statementIR <: returnStatementIR
+  -- let returnStatementIR = statementIR as returnStatementIR
+
+  clause 5 : (statementIR) = $lift_exitStatementIR(exitStatementIR) as statement
+  -- if statementIR <: exitStatementIR
+  -- let exitStatementIR = statementIR as exitStatementIR
+
+  clause 6 : (statementIR) = $lift_blockStatementIR(blockStatementIR) as statement
+  -- if statementIR <: blockStatementIR
+  -- let blockStatementIR = statementIR as blockStatementIR
+
+  clause 7 : (statementIR) = $lift_conditionalStatementIR(conditionalStatementIR) as statement
+  -- if statementIR <: conditionalStatementIR
+  -- let conditionalStatementIR = statementIR as conditionalStatementIR
+
+  clause 8 : (statementIR) = $lift_switchStatementIR(switchStatementIR) as statement
+  -- if statementIR <: switchStatementIR
+  -- let switchStatementIR = statementIR as switchStatementIR
+
+  clause -1 : (statementIR) = $sink<statement>
+  -- debug statementIR
+
+def $lift_emptyStatementIR(emptyStatementIR) : emptyStatement =
+
+  clause 0 : (emptyStatement) = ;
+  -- if (emptyStatement = ;)
+
+def $lift_typedLvalueIR(typedLvalueIR) : lvalue =
+
+  clause 0 : (lvalueIR # _lvalueNoteIR) = THIS as lvalue
+  -- if (lvalueIR = ` "this" as lvalueIR)
+
+  clause 1 : (lvalueIR # _lvalueNoteIR) = nonTypeName as lvalue
+  -- if lvalueIR <: prefixedNameIR
+  -- let prefixedNameIR = lvalueIR as prefixedNameIR
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 2 : (lvalueIR # _lvalueNoteIR) = `ID . nonTypeName as lvalue
+  -- if lvalueIR <: prefixedNameIR
+  -- let prefixedNameIR = lvalueIR as prefixedNameIR
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 3 : (lvalueIR # _lvalueNoteIR) = lvalue . member
+  -- if lvalueIR matches `% . %`
+  -- let typedLvalueIR . nameIR = lvalueIR
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+  clause 4 : (lvalueIR # _lvalueNoteIR) = lvalue [ expression ]
+  -- if lvalueIR matches `% [%]`
+  -- let typedLvalueIR [ typedExpressionIR ] = lvalueIR
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+  clause 5 : (lvalueIR # _lvalueNoteIR) = lvalue [ expression_hi : expression_lo ]
+  -- if lvalueIR matches `% [% % %]`
+  -- let typedLvalueIR [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = lvalueIR
+  -- if sliceop matches `:`
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+  -- let expression_hi = $lift_typedExpressionIR(typedExpressionIR_hi)
+  -- let expression_lo = $lift_typedExpressionIR(typedExpressionIR_lo)
+
+  clause 6 : (lvalueIR # _lvalueNoteIR) = ( lvalue )
+  -- if lvalueIR matches `(%)`
+  -- let ( typedLvalueIR ) = lvalueIR
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+
+def $lift_assignmentStatementIR(assignmentStatementIR) : assignmentStatement =
+
+  clause 0 : (typedLvalueIR assignop typedExpressionIR ;) = lvalue assignop expression ;
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_callableTargetIR_as_lvalue(callableTargetIR) : lvalue =
+
+  clause 0 : (callableTargetIR) = THIS as lvalue
+  -- if (callableTargetIR = ` "this" as callableTargetIR)
+
+  clause 1 : (callableTargetIR) = nonTypeName as lvalue
+  -- if callableTargetIR <: prefixedNameIR
+  -- let prefixedNameIR = callableTargetIR as prefixedNameIR
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 2 : (callableTargetIR) = `ID . nonTypeName as lvalue
+  -- if callableTargetIR <: prefixedNameIR
+  -- let prefixedNameIR = callableTargetIR as prefixedNameIR
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+
+  clause 3 : (callableTargetIR) = lvalue . member
+  -- if callableTargetIR matches `% . %`
+  -- let typedExpressionIR . nameIR = callableTargetIR
+  -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+  -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+  -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+  -- let lvalue = $lift_typedLvalueIR(typedLvalueIR)
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+  clause 4 : (callableTargetIR) = THIS as lvalue . member
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR = callableTargetIR
+  -- if (prefixedNameIR = ` "this")
+  -- let member = $lift_nameIR_as_member(nameIR)
+
+  clause 5 : (callableTargetIR) = nonTypeName as lvalue . member
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR_field = callableTargetIR
+  -- if prefixedNameIR matches `` %`
+  -- let ` nameIR = prefixedNameIR
+  -- if (nameIR =/= "this")
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+  -- let member = $lift_nameIR_as_member(nameIR_field)
+
+  clause 6 : (callableTargetIR) = `ID . nonTypeName as lvalue . member
+  -- if callableTargetIR matches `TYPE % . %`
+  -- let TYPE prefixedNameIR . nameIR_field = callableTargetIR
+  -- if prefixedNameIR matches `. %`
+  -- let . nameIR = prefixedNameIR
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+  -- let member = $lift_nameIR_as_member(nameIR_field)
+
+  clause 7 : (callableTargetIR') = ( lvalue )
+  -- if callableTargetIR' matches `(%)`
+  -- let ( callableTargetIR ) = callableTargetIR'
+  -- let lvalue = $lift_callableTargetIR_as_lvalue(callableTargetIR)
+
+def $lift_callStatementIR(callStatementIR) : callStatement =
+
+  clause 0 : (callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) ;) = lvalue ( argumentList ) ;
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let lvalue = $lift_callableTargetIR_as_lvalue(callableTargetIR)
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+  clause 1 : (callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) ;) = lvalue < typeArgumentList > ( argumentList ) ;
+  -- let lvalue = $lift_callableTargetIR_as_lvalue(callableTargetIR)
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+def $lift_directApplicationStatementIR(directApplicationStatementIR) : directApplicationStatement =
+
+  clause 0 : (constructorTargetIR . APPLY ( argumentIR*{argumentIR <- argumentIR*} ) ;) = prefixedTypeName as namedType . APPLY ( argumentList ) ;
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+  clause 1 : (constructorTargetIR . APPLY ( argumentIR*{argumentIR <- argumentIR*} ) ;) = namedType . APPLY ( argumentList ) ;
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| > 0)
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let namedType = prefixedTypeName < typeArgumentList > as namedType
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+def $lift_returnStatementIR(returnStatementIR) : returnStatement =
+
+  clause 0 : (returnStatementIR) = RETURN ;
+  -- if returnStatementIR matches `RETURN ;`
+
+  clause 1 : (returnStatementIR) = RETURN expression ;
+  -- if returnStatementIR matches `RETURN % ;`
+  -- let RETURN typedExpressionIR ; = returnStatementIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+
+def $lift_exitStatementIR(exitStatementIR) : exitStatement =
+
+  clause 0 : (exitStatement) = EXIT ;
+  -- if (exitStatement = EXIT ;)
+
+def $lift_constantDeclarationIR(constantDeclarationIR) : constantDeclaration =
+
+  clause 0 : (constantDeclarationIR) = annotationList CONST type name initializer ;
+  -- let annotationList CONST typeIR nameIR constantInitializerIR ; = constantDeclarationIR
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let initializer = $lift_constantInitializerIR_as_initializer(constantInitializerIR)
+
+def $lift_variableDeclarationIR(variableDeclarationIR) : variableDeclaration =
+
+  clause 0 : (annotationList typeIR nameIR initializerIR?{initializerIR <- initializerIR?} ;) = annotationList type name initializerOpt ;
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let initializerOpt = $lift_initializerOptIR(initializerIR?{initializerIR <- initializerIR?})
+
+def $lift_blockElementStatementIR(blockElementStatementIR) : blockElementStatement =
+
+  clause 0 : (blockElementStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as blockElementStatement
+  -- if blockElementStatementIR <: constantDeclarationIR
+  -- let constantDeclarationIR = blockElementStatementIR as constantDeclarationIR
+
+  clause 1 : (blockElementStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as blockElementStatement
+  -- if blockElementStatementIR <: variableDeclarationIR
+  -- let variableDeclarationIR = blockElementStatementIR as variableDeclarationIR
+
+  clause 2 : (blockElementStatementIR) = $lift_statementIR(statementIR) as blockElementStatement
+  -- if blockElementStatementIR <: statementIR
+  -- let statementIR = blockElementStatementIR as statementIR
+
+def $lift_blockElementStatementListIR(blockElementStatementIR*) : blockElementStatementList =
+
+  clause 0 : (blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}) = blockElementStatementList
+  -- (let blockElementStatement = $lift_blockElementStatementIR(blockElementStatementIR))*{blockElementStatementIR <- blockElementStatementIR*, blockElementStatement -> blockElementStatement*}
+  -- let blockElementStatementList = $unflatten_blockElementStatementList(blockElementStatement*{blockElementStatement <- blockElementStatement*})
+
+def $unflatten_blockElementStatementList(blockElementStatement*) : blockElementStatementList =
+
+  clause 0 : (blockElementStatement*{blockElementStatement <- blockElementStatement*}) = $unflatten_blockElementStatementList'(`EMPTY, blockElementStatement*{blockElementStatement <- blockElementStatement*})
+
+def $unflatten_blockElementStatementList'(blockElementStatementList, blockElementStatement*) : blockElementStatementList =
+
+  clause 0 : (blockElementStatementList, blockElementStatement*{blockElementStatement <- blockElementStatement*}) = blockElementStatementList
+  -- if blockElementStatement*{blockElementStatement <- blockElementStatement*} matches []
+
+  clause 1 : (blockElementStatementList, blockElementStatement*{blockElementStatement <- blockElementStatement*}) = $unflatten_blockElementStatementList'(blockElementStatementList blockElementStatement_h, blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*})
+  -- if blockElementStatement*{blockElementStatement <- blockElementStatement*} matches _ :: _
+  -- let blockElementStatement_h :: blockElementStatement_t*{blockElementStatement_t <- blockElementStatement_t*} = blockElementStatement*{blockElementStatement <- blockElementStatement*}
+
+def $lift_blockStatementIR(blockStatementIR) : blockStatement =
+
+  clause 0 : (annotationList { blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }) = annotationList { blockElementStatementList }
+  -- (let blockElementStatement = $lift_blockElementStatementIR(blockElementStatementIR))*{blockElementStatementIR <- blockElementStatementIR*, blockElementStatement -> blockElementStatement*}
+  -- let blockElementStatementList = $unflatten_blockElementStatementList(blockElementStatement*{blockElementStatement <- blockElementStatement*})
+
+def $lift_conditionalStatementIR(conditionalStatementIR) : conditionalStatement =
+
+  clause 0 : (conditionalStatementIR) = IF ( expression_cond ) statement_then
+  -- if conditionalStatementIR matches `IF (%) %`
+  -- let IF ( typedExpressionIR_cond ) statementIR_then = conditionalStatementIR
+  -- let expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
+  -- let statement_then = $lift_statementIR(statementIR_then)
+
+  clause 1 : (conditionalStatementIR) = IF ( expression_cond ) statement_then ELSE statement_else
+  -- if conditionalStatementIR matches `IF (%) % ELSE %`
+  -- let IF ( typedExpressionIR_cond ) statementIR_then ELSE statementIR_else = conditionalStatementIR
+  -- let expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
+  -- let statement_then = $lift_statementIR(statementIR_then)
+  -- let statement_else = $lift_statementIR(statementIR_else)
+
+def $lift_switchLabelIR(switchLabelIR) : switchLabel =
+
+  clause 0 : (switchLabelIR) = DEFAULT
+  -- if switchLabelIR matches `DEFAULT`
+
+  clause 1 : (switchLabelIR) = expressionNonBrace as switchLabel
+  -- if switchLabelIR <: typedExpressionIR
+  -- let typedExpressionIR = switchLabelIR as typedExpressionIR
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+  -- let expressionNonBrace = $expression_as_expressionNonBrace(expression)
+
+def $lift_switchCaseIR(switchCaseIR) : switchCase =
+
+  clause 0 : (switchCaseIR) = switchLabel : blockStatement
+  -- if switchCaseIR matches `% : %`
+  -- let switchLabelIR : blockStatementIR = switchCaseIR
+  -- let switchLabel = $lift_switchLabelIR(switchLabelIR)
+  -- let blockStatement = $lift_blockStatementIR(blockStatementIR)
+
+  clause 1 : (switchCaseIR) = switchLabel :
+  -- if switchCaseIR matches `% :`
+  -- let switchLabelIR : = switchCaseIR
+  -- let switchLabel = $lift_switchLabelIR(switchLabelIR)
+
+def $lift_switchCaseListIR(switchCaseIR*) : switchCaseList =
+
+  clause 0 : (switchCaseIR*{switchCaseIR <- switchCaseIR*}) = switchCaseList
+  -- (let switchCase = $lift_switchCaseIR(switchCaseIR))*{switchCaseIR <- switchCaseIR*, switchCase -> switchCase*}
+  -- let switchCaseList = $unflatten_switchCaseList(switchCase*{switchCase <- switchCase*})
+
+def $unflatten_switchCaseList(switchCase*) : switchCaseList =
+
+  clause 0 : (switchCase*{switchCase <- switchCase*}) = $unflatten_switchCaseList'(`EMPTY, switchCase*{switchCase <- switchCase*})
+
+def $unflatten_switchCaseList'(switchCaseList, switchCase*) : switchCaseList =
+
+  clause 0 : (switchCaseList, switchCase*{switchCase <- switchCase*}) = switchCaseList
+  -- if switchCase*{switchCase <- switchCase*} matches []
+
+  clause 1 : (switchCaseList, switchCase*{switchCase <- switchCase*}) = $unflatten_switchCaseList'(switchCaseList switchCase_h, switchCase_t*{switchCase_t <- switchCase_t*})
+  -- if switchCase*{switchCase <- switchCase*} matches _ :: _
+  -- let switchCase_h :: switchCase_t*{switchCase_t <- switchCase_t*} = switchCase*{switchCase <- switchCase*}
+
+def $lift_switchStatementIR(switchStatementIR) : switchStatement =
+
+  clause 0 : (SWITCH ( typedExpressionIR ) { switchCaseIR*{switchCaseIR <- switchCaseIR*} }) = SWITCH ( expression ) { switchCaseList }
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+  -- let switchCaseList = $lift_switchCaseListIR(switchCaseIR*{switchCaseIR <- switchCaseIR*})
+
+def $lift_breakStatementIR(breakStatementIR) : breakStatement =
+
+  clause 0 : (breakStatement) = BREAK ;
+  -- if (breakStatement = BREAK ;)
+
+def $lift_continueStatementIR(continueStatementIR) : continueStatement =
+
+  clause 0 : (continueStatement) = CONTINUE ;
+  -- if (continueStatement = CONTINUE ;)
+
+def $lift_functionPrototypeIR(functionPrototypeIR) : functionPrototype =
+
+  clause 0 : (typeIR nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} )) = typeOrVoid name typeParameterListOpt ( parameterList )
+  -- let typeOrVoid = $lift_typeIR_as_typeOrVoid(typeIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+
+def $lift_functionDeclarationIR(functionDeclarationIR) : functionDeclaration =
+
+  clause 0 : (annotationList functionPrototypeIR blockStatementIR) = annotationList functionPrototype blockStatement
+  -- let functionPrototype = $lift_functionPrototypeIR(functionPrototypeIR)
+  -- let blockStatement = $lift_blockStatementIR(blockStatementIR)
+
+def $lift_actionDeclarationIR(actionDeclarationIR) : actionDeclaration =
+
+  clause 0 : (annotationList ACTION nameIR ( parameterIR*{parameterIR <- parameterIR*} ) blockStatementIR) = annotationList ACTION name ( parameterList ) blockStatement
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+  -- let blockStatement = $lift_blockStatementIR(blockStatementIR)
+
+def $lift_objectDeclarationIR(objectDeclarationIR) : objectDeclaration =
+
+  clause 0 : (objectDeclarationIR) = $lift_functionDeclarationIR(functionDeclarationIR) as objectDeclaration
+  -- if objectDeclarationIR <: functionDeclarationIR
+  -- let functionDeclarationIR = objectDeclarationIR as functionDeclarationIR
+
+  clause 1 : (objectDeclarationIR) = $lift_instantiationIR(instantiationIR) as objectDeclaration
+  -- if objectDeclarationIR <: instantiationIR
+  -- let instantiationIR = objectDeclarationIR as instantiationIR
+
+def $lift_objectDeclarationListIR(objectDeclarationIR*) : objectDeclarationList =
+
+  clause 0 : (objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*}) = objectDeclarationList
+  -- (let objectDeclaration = $lift_objectDeclarationIR(objectDeclarationIR))*{objectDeclarationIR <- objectDeclarationIR*, objectDeclaration -> objectDeclaration*}
+  -- let objectDeclarationList = $unflatten_objectDeclarationList(objectDeclaration*{objectDeclaration <- objectDeclaration*})
+
+def $lift_instantiationIR(instantiationIR) : instantiation =
+
+  clause 0 : (annotationList typeIR constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) nameIR objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} ;) = annotationList type ( argumentList ) name ;
+  -- if objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} matches ()
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let type = prefixedTypeName as type
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+  clause 1 : (annotationList typeIR constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) nameIR objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} ;) = annotationList type ( argumentList ) name ;
+  -- if objectInitializerIR?{objectInitializerIR <- objectInitializerIR?} matches ()
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| > 0)
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let type = prefixedTypeName < typeArgumentList > as type
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+  clause 2 : (annotationList typeIR constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) nameIR objectInitializerOptIR ;) = annotationList type ( argumentList ) name = { objectDeclarationList } ;
+  -- if objectInitializerOptIR matches (_)
+  -- let ?(= { objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} }) = objectInitializerOptIR
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- let type = prefixedTypeName as type
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let objectDeclarationList = $lift_objectDeclarationListIR(objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
+
+  clause 3 : (annotationList typeIR constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) nameIR objectInitializerOptIR ;) = annotationList type ( argumentList ) name = { objectDeclarationList } ;
+  -- if objectInitializerOptIR matches (_)
+  -- let ?(= { objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} }) = objectInitializerOptIR
+  -- let prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > = constructorTargetIR
+  -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| > 0)
+  -- let prefixedTypeName = $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
+  -- if (typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} =/= [])
+  -- let typeArgumentList = $lift_typeArgumentListIR(typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
+  -- let type = prefixedTypeName < typeArgumentList > as type
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let objectDeclarationList = $lift_objectDeclarationListIR(objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
+
+def $unflatten_objectDeclarationList(objectDeclaration*) : objectDeclarationList =
+
+  clause 0 : (objectDeclaration*{objectDeclaration <- objectDeclaration*}) = $unflatten_objectDeclarationList'(`EMPTY, objectDeclaration*{objectDeclaration <- objectDeclaration*})
+
+def $unflatten_objectDeclarationList'(objectDeclarationList, objectDeclaration*) : objectDeclarationList =
+
+  clause 0 : (objectDeclarationList, objectDeclaration*{objectDeclaration <- objectDeclaration*}) = objectDeclarationList
+  -- if objectDeclaration*{objectDeclaration <- objectDeclaration*} matches []
+
+  clause 1 : (objectDeclarationList, objectDeclaration*{objectDeclaration <- objectDeclaration*}) = $unflatten_objectDeclarationList'(objectDeclarationList objectDeclaration_h, objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*})
+  -- if objectDeclaration*{objectDeclaration <- objectDeclaration*} matches _ :: _
+  -- let objectDeclaration_h :: objectDeclaration_t*{objectDeclaration_t <- objectDeclaration_t*} = objectDeclaration*{objectDeclaration <- objectDeclaration*}
+
+def $lift_errorDeclarationIR(errorDeclarationIR) : errorDeclaration =
+
+  clause 0 : (ERROR { nameIR*{nameIR <- nameIR*} }) = ERROR { nameList }
+  -- let nameList = $lift_nameListIR_as_nonTypeNameList(nameIR*{nameIR <- nameIR*})
+
+def $lift_matchKindDeclarationIR(matchKindDeclarationIR) : matchKindDeclaration =
+
+  clause 0 : (MATCH_KIND { nameIR*{nameIR <- nameIR*} }) = MATCH_KIND { nameList `EMPTY }
+  -- let nameList = $lift_nameListIR_as_nonTypeNameList(nameIR*{nameIR <- nameIR*})
+
+def $lift_enumTypeDeclarationIR(enumTypeDeclarationIR) : enumTypeDeclaration =
+
+  clause 0 : (enumTypeDeclarationIR) = annotationList ENUM name { nameList_field `EMPTY }
+  -- if enumTypeDeclarationIR matches `% ENUM % {%}`
+  -- let annotationList ENUM nameIR { nameIR_field*{nameIR_field <- nameIR_field*} } = enumTypeDeclarationIR
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+  -- let nameList_field = $lift_nameListIR_as_nonTypeNameList(nameIR_field*{nameIR_field <- nameIR_field*})
+
+  clause 1 : (enumTypeDeclarationIR) = annotationList ENUM type name { namedExpressionList `EMPTY }
+  -- if enumTypeDeclarationIR matches `% ENUM % % {%}`
+  -- let annotationList ENUM typeIR nameIR { namedValueListIR } = enumTypeDeclarationIR
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+  -- let namedExpressionList = $lift_namedValueListIR(namedValueListIR)
+
+def $lift_typeFieldIR(typeFieldIR) : typeField =
+
+  clause 0 : (annotationList typeIR nameIR ;) = annotationList type name ;
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+def $lift_typeFieldListIR(typeFieldIR*) : typeFieldList =
+
+  clause 0 : (typeFieldIR*{typeFieldIR <- typeFieldIR*}) = typeFieldList
+  -- (let typeField = $lift_typeFieldIR(typeFieldIR))*{typeFieldIR <- typeFieldIR*, typeField -> typeField*}
+  -- let typeFieldList = $unflatten_typeFieldList(typeField*{typeField <- typeField*})
+
+def $unflatten_typeFieldList(typeField*) : typeFieldList =
+
+  clause 0 : (typeField*{typeField <- typeField*}) = $unflatten_typeFieldList'(`EMPTY, typeField*{typeField <- typeField*})
+
+def $unflatten_typeFieldList'(typeFieldList, typeField*) : typeFieldList =
+
+  clause 0 : (typeFieldList, typeField*{typeField <- typeField*}) = typeFieldList
+  -- if typeField*{typeField <- typeField*} matches []
+
+  clause 1 : (typeFieldList, typeField*{typeField <- typeField*}) = $unflatten_typeFieldList'(typeFieldList typeField_h, typeField_t*{typeField_t <- typeField_t*})
+  -- if typeField*{typeField <- typeField*} matches _ :: _
+  -- let typeField_h :: typeField_t*{typeField_t <- typeField_t*} = typeField*{typeField <- typeField*}
+
+def $lift_structTypeDeclarationIR(structTypeDeclarationIR) : structTypeDeclaration =
+
+  clause 0 : (annotationList STRUCT nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} > { typeFieldIR*{typeFieldIR <- typeFieldIR*} }) = annotationList STRUCT name typeParameterListOpt { typeFieldList }
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let typeFieldList = $lift_typeFieldListIR(typeFieldIR*{typeFieldIR <- typeFieldIR*})
+
+def $lift_headerTypeDeclarationIR(headerTypeDeclarationIR) : headerTypeDeclaration =
+
+  clause 0 : (annotationList HEADER nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} > { typeFieldIR*{typeFieldIR <- typeFieldIR*} }) = annotationList HEADER name typeParameterListOpt { typeFieldList }
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let typeFieldList = $lift_typeFieldListIR(typeFieldIR*{typeFieldIR <- typeFieldIR*})
+
+def $lift_headerUnionTypeDeclarationIR(headerUnionTypeDeclarationIR) : headerUnionTypeDeclaration =
+
+  clause 0 : (annotationList HEADER_UNION nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} > { typeFieldIR*{typeFieldIR <- typeFieldIR*} }) = annotationList HEADER_UNION name typeParameterListOpt { typeFieldList }
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let typeFieldList = $lift_typeFieldListIR(typeFieldIR*{typeFieldIR <- typeFieldIR*})
+
+def $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR) : derivedTypeDeclaration =
+
+  clause 0 : (derivedTypeDeclarationIR) = $lift_enumTypeDeclarationIR(enumTypeDeclarationIR) as derivedTypeDeclaration
+  -- if derivedTypeDeclarationIR <: enumTypeDeclarationIR
+  -- let enumTypeDeclarationIR = derivedTypeDeclarationIR as enumTypeDeclarationIR
+
+  clause 1 : (derivedTypeDeclarationIR) = $lift_structTypeDeclarationIR(structTypeDeclarationIR) as derivedTypeDeclaration
+  -- if derivedTypeDeclarationIR <: structTypeDeclarationIR
+  -- let structTypeDeclarationIR = derivedTypeDeclarationIR as structTypeDeclarationIR
+
+  clause 2 : (derivedTypeDeclarationIR) = $lift_headerTypeDeclarationIR(headerTypeDeclarationIR) as derivedTypeDeclaration
+  -- if derivedTypeDeclarationIR <: headerTypeDeclarationIR
+  -- let headerTypeDeclarationIR = derivedTypeDeclarationIR as headerTypeDeclarationIR
+
+  clause 3 : (derivedTypeDeclarationIR) = $lift_headerUnionTypeDeclarationIR(headerUnionTypeDeclarationIR) as derivedTypeDeclaration
+  -- if derivedTypeDeclarationIR <: headerUnionTypeDeclarationIR
+  -- let headerUnionTypeDeclarationIR = derivedTypeDeclarationIR as headerUnionTypeDeclarationIR
+
+def $lift_typedefIR(typedefIR) : typedef =
+
+  clause 0 : (typedefIR) = $lift_typeIR(typeIR) as typedef
+  -- if typedefIR <: typeIR
+  -- let typeIR = typedefIR as typeIR
+
+  clause 1 : (typedefIR) = $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR) as typedef
+  -- if typedefIR <: derivedTypeDeclarationIR
+  -- let derivedTypeDeclarationIR = typedefIR as derivedTypeDeclarationIR
+
+def $lift_typedefDeclarationIR(typedefDeclarationIR) : typedefDeclaration =
+
+  clause 0 : (typedefDeclarationIR) = annotationList TYPEDEF type as typedef name ;
+  -- if typedefDeclarationIR matches `% TYPEDEF % % ;`
+  -- let annotationList TYPEDEF typedefIR nameIR ; = typedefDeclarationIR
+  -- if typedefIR <: typeIR
+  -- let typeIR = typedefIR as typeIR
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+
+  clause 1 : (typedefDeclarationIR) = annotationList TYPEDEF derivedTypeDeclaration as typedef name ;
+  -- if typedefDeclarationIR matches `% TYPEDEF % % ;`
+  -- let annotationList TYPEDEF typedefIR nameIR ; = typedefDeclarationIR
+  -- if typedefIR <: derivedTypeDeclarationIR
+  -- let derivedTypeDeclarationIR = typedefIR as derivedTypeDeclarationIR
+  -- let derivedTypeDeclaration = $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+
+  clause 2 : (typedefDeclarationIR) = annotationList TYPE type name ;
+  -- if typedefDeclarationIR matches `% TYPE % % ;`
+  -- let annotationList TYPE typeIR nameIR ; = typedefDeclarationIR
+  -- let type = $lift_typeIR(typeIR)
+  -- let name = $lift_nameIR_as_typeName(nameIR) as name
+
+def $lift_externFunctionDeclarationIR(externFunctionDeclarationIR) : externFunctionDeclaration =
+
+  clause 0 : (annotationList EXTERN functionPrototypeIR ;) = annotationList EXTERN functionPrototype ;
+  -- let functionPrototype = $lift_functionPrototypeIR(functionPrototypeIR)
+
+def $lift_externConstructorPrototypeIR(externConstructorPrototypeIR) : externConstructorPrototype =
+
+  clause 0 : (annotationList nameIR < , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ;) = annotationList typeIdentifier ( parameterList ) ;
+  -- let typeIdentifier = $lift_nameIR_as_typeIdentifier(nameIR)
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+
+def $lift_externMethodPrototypeIR(externMethodPrototypeIR) : externMethodPrototype =
+
+  clause 0 : (externMethodPrototypeIR) = annotationList functionPrototype ;
+  -- if externMethodPrototypeIR matches `% % ;`
+  -- let annotationList functionPrototypeIR ; = externMethodPrototypeIR
+  -- let functionPrototype = $lift_functionPrototypeIR(functionPrototypeIR)
+
+  clause 1 : (externMethodPrototypeIR) = annotationList ABSTRACT functionPrototype ;
+  -- if externMethodPrototypeIR matches `% ABSTRACT % ;`
+  -- let annotationList ABSTRACT functionPrototypeIR ; = externMethodPrototypeIR
+  -- let functionPrototype = $lift_functionPrototypeIR(functionPrototypeIR)
+
+def $unflatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototype*) : externConstructorOrMethodPrototypeList =
+
+  clause 0 : (externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*}) = $unflatten_externConstructorOrMethodPrototypeList'(`EMPTY, externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*})
+
+def $unflatten_externConstructorOrMethodPrototypeList'(externConstructorOrMethodPrototypeList, externConstructorOrMethodPrototype*) : externConstructorOrMethodPrototypeList =
+
+  clause 0 : (externConstructorOrMethodPrototypeList, externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*}) = externConstructorOrMethodPrototypeList
+  -- if externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*} matches []
+
+  clause 1 : (externConstructorOrMethodPrototypeList, externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*}) = $unflatten_externConstructorOrMethodPrototypeList'(externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype_h, externConstructorOrMethodPrototype_t*{externConstructorOrMethodPrototype_t <- externConstructorOrMethodPrototype_t*})
+  -- if externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*} matches _ :: _
+  -- let externConstructorOrMethodPrototype_h :: externConstructorOrMethodPrototype_t*{externConstructorOrMethodPrototype_t <- externConstructorOrMethodPrototype_t*} = externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*}
+
+def $lift_externObjectDeclarationIR(externObjectDeclarationIR) : externObjectDeclaration =
+
+  clause 0 : (annotationList EXTERN nameIR < typeParameterIR*{typeParameterIR <- typeParameterIR*} , > { externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} }) = annotationList EXTERN nonTypeName typeParameterListOpt { externConstructorOrMethodPrototypeList }
+  -- let nonTypeName = $lift_nameIR_as_nonTypeName(nameIR)
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- (let externConstructorPrototype = $lift_externConstructorPrototypeIR(externConstructorPrototypeIR))*{externConstructorPrototypeIR <- externConstructorPrototypeIR*, externConstructorPrototype -> externConstructorPrototype*}
+  -- (let externMethodPrototype = $lift_externMethodPrototypeIR(externMethodPrototypeIR))*{externMethodPrototypeIR <- externMethodPrototypeIR*, externMethodPrototype -> externMethodPrototype*}
+  -- let externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*} = externConstructorPrototype*{externConstructorPrototype <- externConstructorPrototype*} as externConstructorOrMethodPrototype* ++ externMethodPrototype*{externMethodPrototype <- externMethodPrototype*} as externConstructorOrMethodPrototype*
+  -- let externConstructorOrMethodPrototypeList = $unflatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*})
+
+def $lift_externDeclarationIR(externDeclarationIR) : externDeclaration =
+
+  clause 0 : (externDeclarationIR) = $lift_externFunctionDeclarationIR(externFunctionDeclarationIR) as externDeclaration
+  -- if externDeclarationIR <: externFunctionDeclarationIR
+  -- let externFunctionDeclarationIR = externDeclarationIR as externFunctionDeclarationIR
+
+  clause 1 : (externDeclarationIR) = $lift_externObjectDeclarationIR(externObjectDeclarationIR) as externDeclaration
+  -- if externDeclarationIR <: externObjectDeclarationIR
+  -- let externObjectDeclarationIR = externDeclarationIR as externObjectDeclarationIR
+
+def $lift_selectCaseIR(selectCaseIR) : selectCase =
+
+  clause 0 : (keysetExpressionIR : nameIR ;) = keysetExpression : name ;
+  -- let keysetExpression = $lift_keysetExpressionIR(keysetExpressionIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+def $lift_selectCaseListIR(selectCaseIR*) : selectCaseList =
+
+  clause 0 : (selectCaseIR*{selectCaseIR <- selectCaseIR*}) = selectCaseList
+  -- (let selectCase = $lift_selectCaseIR(selectCaseIR))*{selectCaseIR <- selectCaseIR*, selectCase -> selectCase*}
+  -- let selectCaseList = $unflatten_selectCaseList(selectCase*{selectCase <- selectCase*})
+
+def $unflatten_selectCaseList(selectCase*) : selectCaseList =
+
+  clause 0 : (selectCase*{selectCase <- selectCase*}) = $unflatten_selectCaseList'(`EMPTY, selectCase*{selectCase <- selectCase*})
+
+def $unflatten_selectCaseList'(selectCaseList, selectCase*) : selectCaseList =
+
+  clause 0 : (selectCaseList, selectCase*{selectCase <- selectCase*}) = selectCaseList
+  -- if selectCase*{selectCase <- selectCase*} matches []
+
+  clause 1 : (selectCaseList, selectCase*{selectCase <- selectCase*}) = $unflatten_selectCaseList'(selectCaseList selectCase_h, selectCase_t*{selectCase_t <- selectCase_t*})
+  -- if selectCase*{selectCase <- selectCase*} matches _ :: _
+  -- let selectCase_h :: selectCase_t*{selectCase_t <- selectCase_t*} = selectCase*{selectCase <- selectCase*}
+
+def $lift_selectExpressionIR(selectExpressionIR) : selectExpression =
+
+  clause 0 : (SELECT ( typedExpressionListIR ) { selectCaseIR*{selectCaseIR <- selectCaseIR*} }) = SELECT ( expressionList ) { selectCaseList }
+  -- let expressionList = $lift_typedExpressionListIR(typedExpressionListIR)
+  -- let selectCaseList = $lift_selectCaseListIR(selectCaseIR*{selectCaseIR <- selectCaseIR*})
+
+def $lift_stateExpressionIR(stateExpressionIR) : stateExpression =
+
+  clause 0 : (stateExpressionIR) = name ;
+  -- if stateExpressionIR matches `% ;`
+  -- let nameIR ; = stateExpressionIR
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+  clause 1 : (stateExpressionIR) = $lift_selectExpressionIR(selectExpressionIR) as stateExpression
+  -- if stateExpressionIR <: selectExpressionIR
+  -- let selectExpressionIR = stateExpressionIR as selectExpressionIR
+
+def $lift_transitionStatementIR(transitionStatementIR) : transitionStatement =
+
+  clause 0 : (TRANSITION stateExpressionIR) = TRANSITION stateExpression
+  -- let stateExpression = $lift_stateExpressionIR(stateExpressionIR)
+
+def $lift_typeIR_as_valueSetType(typeIR) : valueSetType =
+
+  clause 0 : (typeIR) = baseType as valueSetType
+  -- let type = $lift_typeIR(typeIR)
+  -- if type <: baseType
+  -- let baseType = type as baseType
+
+  clause 1 : (typeIR) = tupleType as valueSetType
+  -- let type = $lift_typeIR(typeIR)
+  -- if type <: tupleType
+  -- let tupleType = type as tupleType
+
+  clause 2 : (typeIR) = prefixedTypeName as valueSetType
+  -- let type = $lift_typeIR(typeIR)
+  -- if type <: prefixedTypeName
+  -- let prefixedTypeName = type as prefixedTypeName
+
+def $lift_valueSetDeclarationIR(valueSetDeclarationIR) : valueSetDeclaration =
+
+  clause 0 : (annotationList VALUE_SET < typeIR > ( typedExpressionIR ) nameIR ;) = annotationList VALUE_SET < valueSetType > ( expression ) name ;
+  -- let valueSetType = $lift_typeIR_as_valueSetType(typeIR)
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+def $lift_parserTypeDeclarationIR(parserTypeDeclarationIR) : parserTypeDeclaration =
+
+  clause 0 : (annotationList PARSER nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ;) = annotationList PARSER name typeParameterListOpt ( parameterList ) ;
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+
+def $lift_parserStatementIR(parserStatementIR) : parserStatement =
+
+  clause 0 : (parserStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserStatement
+  -- if parserStatementIR <: constantDeclarationIR
+  -- let constantDeclarationIR = parserStatementIR as constantDeclarationIR
+
+  clause 1 : (parserStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserStatement
+  -- if parserStatementIR <: variableDeclarationIR
+  -- let variableDeclarationIR = parserStatementIR as variableDeclarationIR
+
+  clause 2 : (parserStatementIR) = $lift_emptyStatementIR(emptyStatementIR) as parserStatement
+  -- if parserStatementIR <: emptyStatementIR
+  -- let emptyStatementIR = parserStatementIR as emptyStatementIR
+
+  clause 3 : (parserStatementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as parserStatement
+  -- if parserStatementIR <: assignmentStatementIR
+  -- let assignmentStatementIR = parserStatementIR as assignmentStatementIR
+
+  clause 4 : (parserStatementIR) = $lift_callStatementIR(callStatementIR) as parserStatement
+  -- if parserStatementIR <: callStatementIR
+  -- let callStatementIR = parserStatementIR as callStatementIR
+
+  clause 5 : (parserStatementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as parserStatement
+  -- if parserStatementIR <: directApplicationStatementIR
+  -- let directApplicationStatementIR = parserStatementIR as directApplicationStatementIR
+
+  clause 6 : (parserStatementIR) = $lift_parserBlockStatementIR(parserBlockStatementIR) as parserStatement
+  -- if parserStatementIR <: parserBlockStatementIR
+  -- let parserBlockStatementIR = parserStatementIR as parserBlockStatementIR
+
+  clause 7 : (parserStatementIR) = $lift_parserConditionalStatementIR(parserConditionalStatementIR) as parserStatement
+  -- if parserStatementIR <: parserConditionalStatementIR
+  -- let parserConditionalStatementIR = parserStatementIR as parserConditionalStatementIR
+
+def $lift_parserStatementListIR(parserStatementIR*) : parserStatementList =
+
+  clause 0 : (parserStatementIR*{parserStatementIR <- parserStatementIR*}) = parserStatementList
+  -- (let parserStatement = $lift_parserStatementIR(parserStatementIR))*{parserStatementIR <- parserStatementIR*, parserStatement -> parserStatement*}
+  -- let parserStatementList = $unflatten_parserStatementList(parserStatement*{parserStatement <- parserStatement*})
+
+def $lift_parserBlockStatementIR(parserBlockStatementIR) : parserBlockStatement =
+
+  clause 0 : (annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }) = annotationList { parserStatementList }
+  -- let parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*})
+
+def $lift_parserConditionalStatementIR(parserConditionalStatementIR) : parserConditionalStatement =
+
+  clause 0 : (parserConditionalStatementIR) = IF ( expression_cond ) parserStatement_then
+  -- if parserConditionalStatementIR matches `IF (%) %`
+  -- let IF ( typedExpressionIR_cond ) parserStatementIR_then = parserConditionalStatementIR
+  -- let expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
+  -- let parserStatement_then = $lift_parserStatementIR(parserStatementIR_then)
+
+  clause 1 : (parserConditionalStatementIR) = IF ( expression_cond ) parserStatement_then ELSE parserStatement_else
+  -- if parserConditionalStatementIR matches `IF (%) % ELSE %`
+  -- let IF ( typedExpressionIR_cond ) parserStatementIR_then ELSE parserStatementIR_else = parserConditionalStatementIR
+  -- let expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
+  -- let parserStatement_then = $lift_parserStatementIR(parserStatementIR_then)
+  -- let parserStatement_else = $lift_parserStatementIR(parserStatementIR_else)
+
+def $unflatten_parserStatementList(parserStatement*) : parserStatementList =
+
+  clause 0 : (parserStatement*{parserStatement <- parserStatement*}) = $unflatten_parserStatementList'(`EMPTY, parserStatement*{parserStatement <- parserStatement*})
+
+def $unflatten_parserStatementList'(parserStatementList, parserStatement*) : parserStatementList =
+
+  clause 0 : (parserStatementList, parserStatement*{parserStatement <- parserStatement*}) = parserStatementList
+  -- if parserStatement*{parserStatement <- parserStatement*} matches []
+
+  clause 1 : (parserStatementList, parserStatement*{parserStatement <- parserStatement*}) = $unflatten_parserStatementList'(parserStatementList parserStatement_h, parserStatement_t*{parserStatement_t <- parserStatement_t*})
+  -- if parserStatement*{parserStatement <- parserStatement*} matches _ :: _
+  -- let parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} = parserStatement*{parserStatement <- parserStatement*}
+
+def $lift_parserStateIR(parserStateIR) : parserState =
+
+  clause 0 : (annotationList STATE nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }) = annotationList STATE name { parserStatementList transitionStatement }
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*})
+  -- let transitionStatement = $lift_transitionStatementIR(transitionStatementIR)
+
+def $lift_parserStateListIR(parserStateIR*) : parserStateList =
+
+  clause 0 : (parserStateIR*{parserStateIR <- parserStateIR*}) = parserStateList
+  -- (let parserState = $lift_parserStateIR(parserStateIR))*{parserStateIR <- parserStateIR*, parserState -> parserState*}
+  -- let parserStateList = $unflatten_parserStateList(parserState*{parserState <- parserState*})
+
+def $unflatten_parserStateList(parserState*) : parserStateList =
+
+  clause 0 : (parserState*{parserState <- parserState*}) = $unflatten_parserStateList'(parserState_h as parserStateList, parserState_t*{parserState_t <- parserState_t*})
+  -- if parserState*{parserState <- parserState*} matches _ :: _
+  -- let parserState_h :: parserState_t*{parserState_t <- parserState_t*} = parserState*{parserState <- parserState*}
+
+def $unflatten_parserStateList'(parserStateList, parserState*) : parserStateList =
+
+  clause 0 : (parserStateList, parserState*{parserState <- parserState*}) = parserStateList
+  -- if parserState*{parserState <- parserState*} matches []
+
+  clause 1 : (parserStateList, parserState*{parserState <- parserState*}) = $unflatten_parserStateList'(parserStateList parserState_h, parserState_t*{parserState_t <- parserState_t*})
+  -- if parserState*{parserState <- parserState*} matches _ :: _
+  -- let parserState_h :: parserState_t*{parserState_t <- parserState_t*} = parserState*{parserState <- parserState*}
+
+def $lift_parserLocalDeclarationIR(parserLocalDeclarationIR) : parserLocalDeclaration =
+
+  clause 0 : (parserLocalDeclarationIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserLocalDeclaration
+  -- if parserLocalDeclarationIR <: constantDeclarationIR
+  -- let constantDeclarationIR = parserLocalDeclarationIR as constantDeclarationIR
+
+  clause 1 : (parserLocalDeclarationIR) = $lift_instantiationIR(instantiationIR) as parserLocalDeclaration
+  -- if parserLocalDeclarationIR <: instantiationIR
+  -- let instantiationIR = parserLocalDeclarationIR as instantiationIR
+
+  clause 2 : (parserLocalDeclarationIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserLocalDeclaration
+  -- if parserLocalDeclarationIR <: variableDeclarationIR
+  -- let variableDeclarationIR = parserLocalDeclarationIR as variableDeclarationIR
+
+  clause 3 : (parserLocalDeclarationIR) = $lift_valueSetDeclarationIR(valueSetDeclarationIR) as parserLocalDeclaration
+  -- if parserLocalDeclarationIR <: valueSetDeclarationIR
+  -- let valueSetDeclarationIR = parserLocalDeclarationIR as valueSetDeclarationIR
+
+def $lift_parserLocalDeclarationListIR(parserLocalDeclarationIR*) : parserLocalDeclarationList =
+
+  clause 0 : (parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}) = parserLocalDeclarationList
+  -- (let parserLocalDeclaration = $lift_parserLocalDeclarationIR(parserLocalDeclarationIR))*{parserLocalDeclarationIR <- parserLocalDeclarationIR*, parserLocalDeclaration -> parserLocalDeclaration*}
+  -- let parserLocalDeclarationList = $unflatten_parserLocalDeclarationList(parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*})
+
+def $unflatten_parserLocalDeclarationList(parserLocalDeclaration*) : parserLocalDeclarationList =
+
+  clause 0 : (parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}) = $unflatten_parserLocalDeclarationList'(`EMPTY, parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*})
+
+def $unflatten_parserLocalDeclarationList'(parserLocalDeclarationList, parserLocalDeclaration*) : parserLocalDeclarationList =
+
+  clause 0 : (parserLocalDeclarationList, parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}) = parserLocalDeclarationList
+  -- if parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} matches []
+
+  clause 1 : (parserLocalDeclarationList, parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}) = $unflatten_parserLocalDeclarationList'(parserLocalDeclarationList parserLocalDeclaration_h, parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*})
+  -- if parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} matches _ :: _
+  -- let parserLocalDeclaration_h :: parserLocalDeclaration_t*{parserLocalDeclaration_t <- parserLocalDeclaration_t*} = parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}
+
+def $lift_parserDeclarationIR(parserDeclarationIR) : parserDeclaration =
+
+  clause 0 : (annotationList PARSER nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) { parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} parserStateIR*{parserStateIR <- parserStateIR*} }) = annotationList PARSER name typeParameterListOpt ( parameterList ) constructorParameterListOpt { parserLocalDeclarationList parserStateList }
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+  -- let constructorParameterListOpt = $lift_constructorParameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*})
+  -- let parserLocalDeclarationList = $lift_parserLocalDeclarationListIR(parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*})
+  -- let parserStateList = $lift_parserStateListIR(parserStateIR*{parserStateIR <- parserStateIR*})
+
+def $lift_constOptIR(constOptIR) : constOpt =
+
+  clause 0 : (constIR?{constIR <- constIR?}) = `EMPTY
+  -- if constIR?{constIR <- constIR?} matches ()
+
+  clause 1 : (constOptIR) = CONST as constOpt
+  -- if constOptIR matches (_)
+
+def $lift_tableKeyIR(tableKeyIR) : tableKey =
+
+  clause 0 : (typedExpressionIR # _nameIR : nameIR annotationList ;) = expression : name annotationList ;
+  -- let expression = $lift_typedExpressionIR(typedExpressionIR)
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+
+def $lift_tableKeyListIR(tableKeyIR*) : tableKeyList =
+
+  clause 0 : (tableKeyIR*{tableKeyIR <- tableKeyIR*}) = tableKeyList
+  -- (let tableKey = $lift_tableKeyIR(tableKeyIR))*{tableKeyIR <- tableKeyIR*, tableKey -> tableKey*}
+  -- let tableKeyList = $unflatten_tableKeyList(tableKey*{tableKey <- tableKey*})
+
+def $unflatten_tableKeyList(tableKey*) : tableKeyList =
+
+  clause 0 : (tableKey*{tableKey <- tableKey*}) = $unflatten_tableKeyList'(`EMPTY, tableKey*{tableKey <- tableKey*})
+
+def $unflatten_tableKeyList'(tableKeyList, tableKey*) : tableKeyList =
+
+  clause 0 : (tableKeyList, tableKey*{tableKey <- tableKey*}) = tableKeyList
+  -- if tableKey*{tableKey <- tableKey*} matches []
+
+  clause 1 : (tableKeyList, tableKey*{tableKey <- tableKey*}) = $unflatten_tableKeyList'(tableKeyList tableKey_h, tableKey_t*{tableKey_t <- tableKey_t*})
+  -- if tableKey*{tableKey <- tableKey*} matches _ :: _
+  -- let tableKey_h :: tableKey_t*{tableKey_t <- tableKey_t*} = tableKey*{tableKey <- tableKey*}
+
+def $lift_tableActionReferenceIR(tableActionReferenceIR) : tableActionReference =
+
+  clause 0 : (prefixedNameIR _controlPlaneNameIR ( argumentIR*{argumentIR <- argumentIR*} )) = prefixedNonTypeName ( argumentList )
+  -- let prefixedNonTypeName = $lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+def $lift_tableActionReferenceIR_as_expression(tableActionReferenceIR) : expression =
+
+  clause 0 : (prefixedNameIR _controlPlaneNameIR ( argumentIR*{argumentIR <- argumentIR*} )) = prefixedNonTypeName as callTarget ( argumentList ) as expression
+  -- let prefixedNonTypeName = $lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)
+  -- let argumentList = $lift_argumentListIR(argumentIR*{argumentIR <- argumentIR*})
+
+def $lift_tableActionIR(tableActionIR) : tableAction =
+
+  clause 0 : (annotationList tableActionReferenceIR # ( _parameterListIR , _parameterListIR' ) ;) = annotationList tableActionReference ;
+  -- let tableActionReference = $lift_tableActionReferenceIR(tableActionReferenceIR)
+
+def $lift_tableActionListIR(tableActionIR*) : tableActionList =
+
+  clause 0 : (tableActionIR*{tableActionIR <- tableActionIR*}) = tableActionList
+  -- (let tableAction = $lift_tableActionIR(tableActionIR))*{tableActionIR <- tableActionIR*, tableAction -> tableAction*}
+  -- let tableActionList = $unflatten_tableActionList(tableAction*{tableAction <- tableAction*})
+
+def $unflatten_tableActionList(tableAction*) : tableActionList =
+
+  clause 0 : (tableAction*{tableAction <- tableAction*}) = $unflatten_tableActionList'(`EMPTY, tableAction*{tableAction <- tableAction*})
+
+def $unflatten_tableActionList'(tableActionList, tableAction*) : tableActionList =
+
+  clause 0 : (tableActionList, tableAction*{tableAction <- tableAction*}) = tableActionList
+  -- if tableAction*{tableAction <- tableAction*} matches []
+
+  clause 1 : (tableActionList, tableAction*{tableAction <- tableAction*}) = $unflatten_tableActionList'(tableActionList tableAction_h, tableAction_t*{tableAction_t <- tableAction_t*})
+  -- if tableAction*{tableAction <- tableAction*} matches _ :: _
+  -- let tableAction_h :: tableAction_t*{tableAction_t <- tableAction_t*} = tableAction*{tableAction <- tableAction*}
+
+def $lift_tableEntryPriorityIR(tableEntryPriorityIR) : tableEntryPriority =
+
+  clause 0 : (PRIORITY = integerLiteral :) = PRIORITY = integerLiteral :
+
+def $lift_tableEntryIR(tableEntryIR) : tableEntry =
+
+  clause 0 : (constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR annotationList ;) = constOpt keysetExpression : tableActionReference annotationList ;
+  -- if tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} matches ()
+  -- let constOpt = $lift_constOptIR(constOptIR)
+  -- let keysetExpression = $lift_keysetExpressionIR(keysetExpressionIR)
+  -- let tableActionReference = $lift_tableActionReferenceIR(tableActionReferenceIR)
+
+  clause 1 : (constOptIR tableEntryPriorityOptIR keysetExpressionIR : tableActionReferenceIR annotationList ;) = constOpt tableEntryPriority keysetExpression : tableActionReference annotationList ;
+  -- if tableEntryPriorityOptIR matches (_)
+  -- let ?(tableEntryPriorityIR) = tableEntryPriorityOptIR
+  -- let constOpt = $lift_constOptIR(constOptIR)
+  -- let tableEntryPriority = $lift_tableEntryPriorityIR(tableEntryPriorityIR)
+  -- let keysetExpression = $lift_keysetExpressionIR(keysetExpressionIR)
+  -- let tableActionReference = $lift_tableActionReferenceIR(tableActionReferenceIR)
+
+def $lift_tableEntryListIR(tableEntryIR*) : tableEntryList =
+
+  clause 0 : (tableEntryIR*{tableEntryIR <- tableEntryIR*}) = tableEntryList
+  -- (let tableEntry = $lift_tableEntryIR(tableEntryIR))*{tableEntryIR <- tableEntryIR*, tableEntry -> tableEntry*}
+  -- let tableEntryList = $unflatten_tableEntryList(tableEntry*{tableEntry <- tableEntry*})
+
+def $unflatten_tableEntryList(tableEntry*) : tableEntryList =
+
+  clause 0 : (tableEntry*{tableEntry <- tableEntry*}) = $unflatten_tableEntryList'(`EMPTY, tableEntry*{tableEntry <- tableEntry*})
+
+def $unflatten_tableEntryList'(tableEntryList, tableEntry*) : tableEntryList =
+
+  clause 0 : (tableEntryList, tableEntry*{tableEntry <- tableEntry*}) = tableEntryList
+  -- if tableEntry*{tableEntry <- tableEntry*} matches []
+
+  clause 1 : (tableEntryList, tableEntry*{tableEntry <- tableEntry*}) = $unflatten_tableEntryList'(tableEntryList tableEntry_h, tableEntry_t*{tableEntry_t <- tableEntry_t*})
+  -- if tableEntry*{tableEntry <- tableEntry*} matches _ :: _
+  -- let tableEntry_h :: tableEntry_t*{tableEntry_t <- tableEntry_t*} = tableEntry*{tableEntry <- tableEntry*}
+
+def $lift_tableCustomPropertyIR(tableCustomPropertyIR) : tableProperty =
+
+  clause 0 : (tableCustomPropertyIR) = annotationList constOpt tableCustomName initializer ;
+  -- if tableCustomPropertyIR matches `% % CUSTOM % % ;`
+  -- let annotationList constOptIR CUSTOM nameIR initializerIR ; = tableCustomPropertyIR
+  -- let constOpt = $lift_constOptIR(constOptIR)
+  -- let tableCustomName = $lift_nameIR_as_tableCustomName(nameIR)
+  -- let initializer = $lift_initializerIR(initializerIR)
+
+def $lift_tableKeysPropertyIR(tableKeysPropertyIR) : tableProperty =
+
+  clause 0 : (KEY = { tableKeyIR*{tableKeyIR <- tableKeyIR*} }) = KEY = { tableKeyList }
+  -- let tableKeyList = $lift_tableKeyListIR(tableKeyIR*{tableKeyIR <- tableKeyIR*})
+
+def $lift_tableActionsPropertyIR(tableActionsPropertyIR) : tableProperty =
+
+  clause 0 : (ACTIONS = { tableActionIR*{tableActionIR <- tableActionIR*} }) = ACTIONS = { tableActionList }
+  -- let tableActionList = $lift_tableActionListIR(tableActionIR*{tableActionIR <- tableActionIR*})
+
+def $lift_tableDefaultActionPropertyIR(tableDefaultActionPropertyIR) : tableProperty =
+
+  clause 0 : (annotationList constOptIR DEFAULT_ACTION = tableActionReferenceIR ;) = annotationList constOpt `ID "default_action" as tableCustomName = expression ;
+  -- let constOpt = $lift_constOptIR(constOptIR)
+  -- let expression = $lift_tableActionReferenceIR_as_expression(tableActionReferenceIR)
+
+def $lift_tableEntriesPropertyIR(tableEntriesPropertyIR) : tableProperty =
+
+  clause 0 : (annotationList constOptIR ENTRIES = { tableEntryIR*{tableEntryIR <- tableEntryIR*} }) = annotationList constOpt ENTRIES = { tableEntryList }
+  -- let constOpt = $lift_constOptIR(constOptIR)
+  -- let tableEntryList = $lift_tableEntryListIR(tableEntryIR*{tableEntryIR <- tableEntryIR*})
+
+def $lift_tablePropertyIR(tablePropertyIR) : tableProperty =
+
+  clause 0 : (tablePropertyIR) = $lift_tableKeysPropertyIR(tableKeysPropertyIR)
+  -- if tablePropertyIR <: tableKeysPropertyIR
+  -- let tableKeysPropertyIR = tablePropertyIR as tableKeysPropertyIR
+
+  clause 1 : (tablePropertyIR) = $lift_tableActionsPropertyIR(tableActionsPropertyIR)
+  -- if tablePropertyIR <: tableActionsPropertyIR
+  -- let tableActionsPropertyIR = tablePropertyIR as tableActionsPropertyIR
+
+  clause 2 : (tablePropertyIR) = $lift_tableDefaultActionPropertyIR(tableDefaultActionPropertyIR)
+  -- if tablePropertyIR <: tableDefaultActionPropertyIR
+  -- let tableDefaultActionPropertyIR = tablePropertyIR as tableDefaultActionPropertyIR
+
+  clause 3 : (tablePropertyIR) = $lift_tableEntriesPropertyIR(tableEntriesPropertyIR)
+  -- if tablePropertyIR <: tableEntriesPropertyIR
+  -- let tableEntriesPropertyIR = tablePropertyIR as tableEntriesPropertyIR
+
+  clause 4 : (tablePropertyIR) = $lift_tableCustomPropertyIR(tableCustomPropertyIR)
+  -- if tablePropertyIR <: tableCustomPropertyIR
+  -- let tableCustomPropertyIR = tablePropertyIR as tableCustomPropertyIR
+
+def $lift_tablePropertyListIR(tablePropertyIR*) : tablePropertyList =
+
+  clause 0 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = tablePropertyList
+  -- (let tableProperty = $lift_tablePropertyIR(tablePropertyIR))*{tablePropertyIR <- tablePropertyIR*, tableProperty -> tableProperty*}
+  -- let tablePropertyList = $unflatten_tablePropertyList(tableProperty*{tableProperty <- tableProperty*})
+
+def $unflatten_tablePropertyList(tableProperty*) : tablePropertyList =
+
+  clause 0 : (tableProperty*{tableProperty <- tableProperty*}) = $unflatten_tablePropertyList'(`EMPTY, tableProperty*{tableProperty <- tableProperty*})
+
+def $unflatten_tablePropertyList'(tablePropertyList, tableProperty*) : tablePropertyList =
+
+  clause 0 : (tablePropertyList, tableProperty*{tableProperty <- tableProperty*}) = tablePropertyList
+  -- if tableProperty*{tableProperty <- tableProperty*} matches []
+
+  clause 1 : (tablePropertyList, tableProperty*{tableProperty <- tableProperty*}) = $unflatten_tablePropertyList'(tablePropertyList tableProperty_h, tableProperty_t*{tableProperty_t <- tableProperty_t*})
+  -- if tableProperty*{tableProperty <- tableProperty*} matches _ :: _
+  -- let tableProperty_h :: tableProperty_t*{tableProperty_t <- tableProperty_t*} = tableProperty*{tableProperty <- tableProperty*}
+
+def $lift_tableDeclarationIR(tableDeclarationIR) : tableDeclaration =
+
+  clause 0 : (annotationList TABLE typeIR nameIR { tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} }) = annotationList TABLE name { tablePropertyList }
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let tablePropertyList = $lift_tablePropertyListIR(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
+
+def $lift_controlTypeDeclarationIR(controlTypeDeclarationIR) : controlTypeDeclaration =
+
+  clause 0 : (annotationList CONTROL nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ;) = annotationList CONTROL name typeParameterListOpt ( parameterList ) ;
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+
+def $lift_controlBodyIR(controlBodyIR) : controlBody =
+
+  clause 0 : (controlBodyIR) = $lift_blockStatementIR(controlBodyIR)
+
+def $lift_controlLocalDeclarationIR(controlLocalDeclarationIR) : controlLocalDeclaration =
+
+  clause 0 : (controlLocalDeclarationIR) = $lift_constantDeclarationIR(constantDeclarationIR) as controlLocalDeclaration
+  -- if controlLocalDeclarationIR <: constantDeclarationIR
+  -- let constantDeclarationIR = controlLocalDeclarationIR as constantDeclarationIR
+
+  clause 1 : (controlLocalDeclarationIR) = $lift_instantiationIR(instantiationIR) as controlLocalDeclaration
+  -- if controlLocalDeclarationIR <: instantiationIR
+  -- let instantiationIR = controlLocalDeclarationIR as instantiationIR
+
+  clause 2 : (controlLocalDeclarationIR) = $lift_variableDeclarationIR(variableDeclarationIR) as controlLocalDeclaration
+  -- if controlLocalDeclarationIR <: variableDeclarationIR
+  -- let variableDeclarationIR = controlLocalDeclarationIR as variableDeclarationIR
+
+  clause 3 : (controlLocalDeclarationIR) = $lift_actionDeclarationIR(actionDeclarationIR) as controlLocalDeclaration
+  -- if controlLocalDeclarationIR <: actionDeclarationIR
+  -- let actionDeclarationIR = controlLocalDeclarationIR as actionDeclarationIR
+
+  clause 4 : (controlLocalDeclarationIR) = $lift_tableDeclarationIR(tableDeclarationIR) as controlLocalDeclaration
+  -- if controlLocalDeclarationIR <: tableDeclarationIR
+  -- let tableDeclarationIR = controlLocalDeclarationIR as tableDeclarationIR
+
+def $lift_controlLocalDeclarationListIR(controlLocalDeclarationIR*) : controlLocalDeclarationList =
+
+  clause 0 : (controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}) = controlLocalDeclarationList
+  -- (let controlLocalDeclaration = $lift_controlLocalDeclarationIR(controlLocalDeclarationIR))*{controlLocalDeclarationIR <- controlLocalDeclarationIR*, controlLocalDeclaration -> controlLocalDeclaration*}
+  -- let controlLocalDeclarationList = $unflatten_controlLocalDeclarationList(controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*})
+
+def $unflatten_controlLocalDeclarationList(controlLocalDeclaration*) : controlLocalDeclarationList =
+
+  clause 0 : (controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}) = $unflatten_controlLocalDeclarationList'(`EMPTY, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*})
+
+def $unflatten_controlLocalDeclarationList'(controlLocalDeclarationList, controlLocalDeclaration*) : controlLocalDeclarationList =
+
+  clause 0 : (controlLocalDeclarationList, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}) = controlLocalDeclarationList
+  -- if controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} matches []
+
+  clause 1 : (controlLocalDeclarationList, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}) = $unflatten_controlLocalDeclarationList'(controlLocalDeclarationList controlLocalDeclaration_h, controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*})
+  -- if controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} matches _ :: _
+  -- let controlLocalDeclaration_h :: controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} = controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
+
+def $lift_controlDeclarationIR(controlDeclarationIR) : controlDeclaration =
+
+  clause 0 : (annotationList CONTROL nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ( constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} ) { controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} APPLY controlBodyIR }) = annotationList CONTROL name typeParameterListOpt ( parameterList ) constructorParameterListOpt { controlLocalDeclarationList APPLY controlBody }
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+  -- let constructorParameterListOpt = $lift_constructorParameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*})
+  -- let controlLocalDeclarationList = $lift_controlLocalDeclarationListIR(controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*})
+  -- let controlBody = $lift_controlBodyIR(controlBodyIR)
+
+def $lift_packageTypeDeclarationIR(packageTypeDeclarationIR) : packageTypeDeclaration =
+
+  clause 0 : (annotationList PACKAGE nameIR < typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} , typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*} > ( parameterIR*{parameterIR <- parameterIR*} ) ;) = annotationList PACKAGE name typeParameterListOpt ( parameterList ) ;
+  -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
+  -- let typeParameterIR*{typeParameterIR <- typeParameterIR*} = typeParameterIR_expl*{typeParameterIR_expl <- typeParameterIR_expl*} ++ typeParameterIR_impl*{typeParameterIR_impl <- typeParameterIR_impl*}
+  -- let typeParameterListOpt = $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterIR*})
+  -- let parameterList = $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
+
+def $lift_typeDeclarationIR(typeDeclarationIR) : typeDeclaration =
+
+  clause 0 : (typeDeclarationIR) = $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR) as typeDeclaration
+  -- if typeDeclarationIR <: derivedTypeDeclarationIR
+  -- let derivedTypeDeclarationIR = typeDeclarationIR as derivedTypeDeclarationIR
+
+  clause 1 : (typeDeclarationIR) = $lift_typedefDeclarationIR(typedefDeclarationIR) as typeDeclaration
+  -- if typeDeclarationIR <: typedefDeclarationIR
+  -- let typedefDeclarationIR = typeDeclarationIR as typedefDeclarationIR
+
+  clause 2 : (typeDeclarationIR) = $lift_parserTypeDeclarationIR(parserTypeDeclarationIR) as typeDeclaration
+  -- if typeDeclarationIR <: parserTypeDeclarationIR
+  -- let parserTypeDeclarationIR = typeDeclarationIR as parserTypeDeclarationIR
+
+  clause 3 : (typeDeclarationIR) = $lift_controlTypeDeclarationIR(controlTypeDeclarationIR) as typeDeclaration
+  -- if typeDeclarationIR <: controlTypeDeclarationIR
+  -- let controlTypeDeclarationIR = typeDeclarationIR as controlTypeDeclarationIR
+
+  clause 4 : (typeDeclarationIR) = $lift_packageTypeDeclarationIR(packageTypeDeclarationIR) as typeDeclaration
+  -- if typeDeclarationIR <: packageTypeDeclarationIR
+  -- let packageTypeDeclarationIR = typeDeclarationIR as packageTypeDeclarationIR
+
+def $lift_declarationIR(declarationIR) : declaration =
+
+  clause 0 : (declarationIR) = $lift_constantDeclarationIR(constantDeclarationIR) as declaration
+  -- if declarationIR <: constantDeclarationIR
+  -- let constantDeclarationIR = declarationIR as constantDeclarationIR
+
+  clause 1 : (declarationIR) = $lift_instantiationIR(instantiationIR) as declaration
+  -- if declarationIR <: instantiationIR
+  -- let instantiationIR = declarationIR as instantiationIR
+
+  clause 2 : (declarationIR) = $lift_functionDeclarationIR(functionDeclarationIR) as declaration
+  -- if declarationIR <: functionDeclarationIR
+  -- let functionDeclarationIR = declarationIR as functionDeclarationIR
+
+  clause 3 : (declarationIR) = $lift_actionDeclarationIR(actionDeclarationIR) as declaration
+  -- if declarationIR <: actionDeclarationIR
+  -- let actionDeclarationIR = declarationIR as actionDeclarationIR
+
+  clause 4 : (declarationIR) = $lift_errorDeclarationIR(errorDeclarationIR) as declaration
+  -- if declarationIR <: errorDeclarationIR
+  -- let errorDeclarationIR = declarationIR as errorDeclarationIR
+
+  clause 5 : (declarationIR) = $lift_matchKindDeclarationIR(matchKindDeclarationIR) as declaration
+  -- if declarationIR <: matchKindDeclarationIR
+  -- let matchKindDeclarationIR = declarationIR as matchKindDeclarationIR
+
+  clause 6 : (declarationIR) = $lift_externDeclarationIR(externDeclarationIR) as declaration
+  -- if declarationIR <: externDeclarationIR
+  -- let externDeclarationIR = declarationIR as externDeclarationIR
+
+  clause 7 : (declarationIR) = $lift_parserDeclarationIR(parserDeclarationIR) as declaration
+  -- if declarationIR <: parserDeclarationIR
+  -- let parserDeclarationIR = declarationIR as parserDeclarationIR
+
+  clause 8 : (declarationIR) = $lift_controlDeclarationIR(controlDeclarationIR) as declaration
+  -- if declarationIR <: controlDeclarationIR
+  -- let controlDeclarationIR = declarationIR as controlDeclarationIR
+
+  clause 9 : (declarationIR) = $lift_typeDeclarationIR(typeDeclarationIR) as declaration
+  -- if declarationIR <: typeDeclarationIR
+  -- let typeDeclarationIR = declarationIR as typeDeclarationIR
+
+  clause -1 : (declarationIR) = $sink<declaration>
+  -- debug declarationIR
+
+def $lift_p4programIR(p4programIR) : p4program =
+
+  clause 0 : (declarationIR*{declarationIR <- declarationIR*} ;) = $unflatten_p4program(declaration*{declaration <- declaration*})
+  -- (let declaration = $lift_declarationIR(declarationIR))*{declarationIR <- declarationIR*, declaration -> declaration*}
+
+def $unflatten_p4program(declaration*) : p4program =
+
+  clause 0 : (declaration*{declaration <- declaration*}) = $unflatten_p4program'(`EMPTY, declaration*{declaration <- declaration*})
+
+def $unflatten_p4program'(p4program, declaration*) : p4program =
+
+  clause 0 : (p4program, declaration*{declaration <- declaration*}) = p4program
+  -- if declaration*{declaration <- declaration*} matches []
+
+  clause 1 : (p4program, declaration*{declaration <- declaration*}) = $unflatten_p4program'(p4program declaration_h, declaration_t*{declaration_t <- declaration_t*})
+  -- if declaration*{declaration <- declaration*} matches _ :: _
+  -- let declaration_h :: declaration_t*{declaration_t <- declaration_t*} = declaration*{declaration <- declaration*}
 
 syntax flow = 
    | CONT (from flow) 
@@ -16384,10 +18644,14 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
     -- if ((direction = OUT) \/ (direction = INOUT))
     -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR_arg)
     -- if Type_alpha: typeIR_param ~~ typeIR_arg holds
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_arg holds
+    -- let typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_arg)
+    -- if typedLvalueIR?{typedLvalueIR <- typedLvalueIR?} matches (_)
+    -- let ?(typedLvalueIR_arg) = typedLvalueIR?{typedLvalueIR <- typedLvalueIR?}
+    -- let lvalue_arg = $lift_typedLvalueIR(typedLvalueIR_arg)
+    -- Lvalue_ok: p TC |- lvalue_arg : _typedLvalueIR
     -- output: % % % |- % @ % : typedExpressionIR_arg
 
-  rulegroup empty
+  rulegroup directionless
 
    match
 
@@ -16412,65 +18676,41 @@ relation Call_convention_expr_ok: cursor typingContext actctxt |- parameterIR @ 
     -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR_arg))
     -- output: % % % |- % @ % : typedExpressionIR_arg_cast
 
-relation Call_convention_argument_ok: cursor typingContext actctxt |- parameterIR @ argumentIR : argumentIR
+relation Call_convention_arg_ok: cursor typingContext actctxt |- parameterIR @ argumentIR : argumentIR
 
-  rulegroup typedExpression
+  rulegroup 
 
    match
 
-    (signature) p TC actctxt |- parameterIR @ typedExpressionIR as argumentIR : %
+    (signature) p TC actctxt |- parameterIR @ argumentIR : %
     p TC actctxt |- parameterIR @ argumentIR : %
-    -- if argumentIR <: typedExpressionIR
-    -- let typedExpressionIR = argumentIR as typedExpressionIR
 
    paths
 
     rulepath typedExpression
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' <: typedExpressionIR
+    -- let typedExpressionIR = argumentIR' as typedExpressionIR
     -- Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast
     -- output: % % % |- % @ % : typedExpressionIR_cast as argumentIR
 
-  rulegroup nameIR-typedExpression
-
-   match
-
-    (signature) p TC actctxt |- parameterIR @ nameIR = typedExpressionIR : %
-    p TC actctxt |- parameterIR @ argumentIR : %
-    -- if argumentIR matches `% = %`
-    -- let nameIR = typedExpressionIR = argumentIR
-
-   paths
-
     rulepath nameIR-typedExpression
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = %`
+    -- let nameIR = typedExpressionIR = argumentIR'
     -- Call_convention_expr_ok: p TC actctxt |- parameterIR @ typedExpressionIR : typedExpressionIR_cast
     -- output: % % % |- % @ % : nameIR = typedExpressionIR_cast
 
-  rulegroup nameIR-dontcare
-
-   match
-
-    (signature) p TC actctxt |- parameterIR @ nameIR = _ : %
-    p TC actctxt |- parameterIR @ argumentIR : %
-    -- if argumentIR matches `% = _`
-    -- let nameIR = _ = argumentIR
-
-   paths
-
     rulepath nameIR-dontcare
+    -- let argumentIR' = argumentIR
+    -- if argumentIR' matches `% = _`
+    -- let nameIR = _ = argumentIR'
     -- let _annotationList direction _typeIR _id _parameterInitializerOptIR = parameterIR
     -- if direction matches `OUT`
     -- output: % % % |- % @ % : nameIR = _
 
-  rulegroup dontcare
-
-   match
-
-    (signature) p TC actctxt |- parameterIR @ _ : %
-    p TC actctxt |- parameterIR @ argumentIR : %
-    -- if argumentIR matches `_`
-
-   paths
-
     rulepath dontcare
+    -- if (argumentIR = _)
     -- let _annotationList direction _typeIR _id _parameterInitializerOptIR = parameterIR
     -- if direction matches `OUT`
     -- output: % % % |- % @ % : _
@@ -16498,7 +18738,7 @@ relation Call_convention_ok: cursor typingContext actctxt |- parameterIR* @ argu
     -- let argumentIR'*{argumentIR' <- argumentIR'*} = argumentIR*{argumentIR <- argumentIR*}
     -- if argumentIR'*{argumentIR' <- argumentIR'*} matches _ :: _
     -- let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} = argumentIR'*{argumentIR' <- argumentIR'*}
-    -- Call_convention_argument_ok: p TC actctxt |- parameterIR_h @ argumentIR_h : argumentIR_h_cast
+    -- Call_convention_arg_ok: p TC actctxt |- parameterIR_h @ argumentIR_h : argumentIR_h_cast
     -- Call_convention_ok: p TC actctxt |- parameterIR_t*{parameterIR_t <- parameterIR_t*} @ argumentIR_t*{argumentIR_t <- argumentIR_t*} : argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
     -- output: % % % |- % @ % : argumentIR_h_cast :: argumentIR_t_cast*{argumentIR_t_cast <- argumentIR_t_cast*}
 
@@ -19498,104 +21738,6 @@ relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typin
     -- ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration_h : TC_1 controlLocalDeclarationIR_h
     -- ControlLocalDecls_ok: TC_1 |- controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : TC_2 controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
     -- output: % |- % : TC_2 controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
-
-relation Expr_lvalue_ok: cursor typingContext |- typedExpressionIR
-
-  rulegroup referenceExpressionIR
-
-   match
-
-    (signature) p TC |- prefixedNameIR as expressionIR # ( _typeIR _ctk )
-    p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: prefixedNameIR
-    -- let prefixedNameIR = expressionIR as prefixedNameIR
-
-   paths
-
-    rulepath referenceExpressionIR
-    -- let varTypeIR?{varTypeIR <- varTypeIR?} = $find_var_t(prefixedNameIR, p, TC)
-    -- if varTypeIR?{varTypeIR <- varTypeIR?} matches (_)
-    -- let ?(direction _typeIR' ctk _value?{_value <- _value?}) = varTypeIR?{varTypeIR <- varTypeIR?}
-    -- if ctk matches `DYN`
-    -- if ((direction = OUT) \/ (direction = INOUT))
-    -- the relation holds
-
-  rulegroup accessExpressionIR-memberAccessExpressionIR
-
-   match
-
-    (signature) p TC |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # ( _typeIR _ctk )
-    p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: memberAccessExpressionIR
-    -- let memberAccessBaseIR . nameIR = expressionIR as memberAccessExpressionIR
-    -- if memberAccessBaseIR <: typedExpressionIR
-    -- let typedExpressionIR_base = memberAccessBaseIR as typedExpressionIR
-
-   paths
-
-    rulepath headerstack-next-last
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
-    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: headerStackTypeIR
-    -- let typeIR [ _nat ] = typeIR' as headerStackTypeIR
-    -- if ((nameIR = "next") \/ (nameIR = "last"))
-    -- if (((p = BLOCK) /\ (TC.BLOCK.KIND = PARSER)) \/ ((p = LOCAL) /\ (TC.LOCAL.KIND = PARSER_STATE as localKind)))
-    -- the relation holds
-
-    rulepath non-headerstack
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
-    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR_unroll = $unroll_typeIR(typeIR_base)
-    -- if ~typeIR_unroll <: headerStackTypeIR
-    -- the relation holds
-
-  rulegroup accessExpressionIR-indexAccessExpressionIR
-
-   match
-
-    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # ( _typeIR _ctk )
-    p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: indexAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_index ] = expressionIR as indexAccessExpressionIR
-
-   paths
-
-    rulepath accessExpressionIR-indexAccessExpressionIR
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
-    -- the relation holds
-
-  rulegroup accessExpressionIR-sliceAccessExpressionIR-range
-
-   match
-
-    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_hi : typedExpressionIR_lo ] as expressionIR # ( _typeIR _ctk )
-    p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: sliceAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_hi sliceop typedExpressionIR_lo ] = expressionIR as sliceAccessExpressionIR
-    -- if sliceop matches `:`
-
-   paths
-
-    rulepath accessExpressionIR-sliceAccessExpressionIR-range
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
-    -- the relation holds
-
-  rulegroup accessExpressionIR-sliceAccessExpressionIR-offset
-
-   match
-
-    (signature) p TC |- typedExpressionIR_base [ typedExpressionIR_l +: typedExpressionIR_w ] as expressionIR # ( _typeIR _ctk )
-    p TC |- expressionIR # ( _typeIR _ctk )
-    -- if expressionIR <: sliceAccessExpressionIR
-    -- let typedExpressionIR_base [ typedExpressionIR_l sliceop typedExpressionIR_w ] = expressionIR as sliceAccessExpressionIR
-    -- if sliceop matches `+:`
-
-   paths
-
-    rulepath accessExpressionIR-sliceAccessExpressionIR-offset
-    -- if Expr_lvalue_ok: p TC |- typedExpressionIR_base holds
-    -- the relation holds
 
 syntax infer = 
    | KNOWN AS typeIR (from infer) 

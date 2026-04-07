@@ -6,7 +6,7 @@
 ;; Argument binding
 ;;
 
-rule Copy_in_argument_inst:
+rule Copy_in_arg_inst:
   STO_0 p_caller IC_caller argumentIR
      `@ p_callee IC_callee_0 id
   ~> STO_1 IC_callee_1
@@ -27,7 +27,7 @@ rulegroup Copy_in_inst {
     STO_0 p_caller IC_caller (argumentIR_h :: argumentIR_t*)
        `@ p_callee IC_callee_0 (id_h :: id_t*)
     ~> STO_2 IC_callee_2
-    -- Copy_in_argument_inst:
+    -- Copy_in_arg_inst:
         STO_0 p_caller IC_caller argumentIR_h
            `@ p_callee IC_callee_0 id_h
         ~> STO_1 IC_callee_1
@@ -38,9 +38,9 @@ rulegroup Copy_in_inst {
 
 }
 
-rulegroup Copy_in_argument_inst_default {
+rulegroup Copy_in_arg_inst_default {
 
-  rule Copy_in_argument_inst_default/initializerIR:
+  rule Copy_in_arg_inst_default/initializerIR:
     STO_0 p_caller IC_caller
        `@ p_callee IC_callee_0 parameterIR
     ~> STO_1 IC_callee_1
@@ -51,7 +51,7 @@ rulegroup Copy_in_argument_inst_default {
                                         : STO_1 value
     -- if IC_callee_1 = $add_var_i(p_callee, IC_callee_0, id, value)
 
-  rule Copy_in_argument_inst_default/constantInitializerIR:
+  rule Copy_in_arg_inst_default/constantInitializerIR:
     STO p_caller IC_caller
      `@ p_callee IC_callee_0 parameterIR
     ~> STO IC_callee_1
@@ -71,7 +71,7 @@ rulegroup Copy_in_inst_default {
     STO_0 p_caller IC_caller
        `@ p_callee IC_callee_0 (parameterIR_h :: parameterIR_t*)
     ~> STO_2 IC_callee_2
-    -- Copy_in_argument_inst_default:
+    -- Copy_in_arg_inst_default:
         STO_0 p_caller IC_caller 
            `@ p_callee IC_callee_0 parameterIR_h
         ~> STO_1 IC_callee_1

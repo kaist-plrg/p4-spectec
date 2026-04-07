@@ -334,12 +334,19 @@ syntax copyInArgumentResult =
   | continueResult<storageReference?>
   | abortResult
 
-relation Copy_in_argument:
+relation Copy_in_arg:
   arch |-
     cursor evalContext parameterIR
     `@ cursor evalContext argumentIR
   ~> arch evalContext evalContext `# copyInArgumentResult
   hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "copy-in from" %6 "at" %4 "of" %5
+                "to" %3 "in" %1 "at" %2#
+                ", under state" %0)
+  hint(prose_out "\nstate" %7#","
+                 "\n caller's context" %8#","
+                 "\n callee's context" %9#","
+                 "\n and copy-in result" %10)
   
 syntax copyInResult =
   | continueResult<storageReference?*>
@@ -354,10 +361,10 @@ relation Copy_in:
   hint(prose_in "copy-in from" %7 "at" %5 "of" %6
                 "to" %4 "in" %2 "at" %3#
                 ", under state" %1 "at shared" %0)
-  hint(prose_out "\nstate" %8#
-                 "\n, caller's context" %9#
-                 "\n, callee's context" %10#
-                 "\n, and copy-in result" %11)
+  hint(prose_out "\nstate" %8#","
+                 "\n caller's context" %9#","
+                 "\n callee's context" %10#","
+                 "\n and copy-in result" %11)
 
 relation Copy_in_default:
   parameterListIR `@ cursor evalContext
@@ -373,6 +380,10 @@ relation Copy_out_argument:
      `@ cursor evalContext storageReference?
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
+  hint(prose_in "copy-out from" %4 "at" %2 "of" %3
+                "to" %1 "at shared" %0#
+                ", under state" %1 "at shared" %0)
+  hint(prose_out "context" %7)
 
 relation Copy_out:
   cursor arch |-

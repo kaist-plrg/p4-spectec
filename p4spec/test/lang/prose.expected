@@ -414,6 +414,54 @@ xref:expressionNonBrace_as_expression[The expression corresponding to ``expressi
  .. Let ``parenthesizedExpression`` be ``expressionNonBrace``.
  .. Return ``parenthesizedExpression``.
 
+xref:expression_as_expressionNonBrace[The non-brace expression corresponding to ``expression``]
+
+
+. If let ``literalExpression`` be ``expression``:
+ .. Return ``literalExpression``.
+. Else if let ``referenceExpression`` be ``expression``:
+ .. Return ``referenceExpression``.
+. Else if let ``unaryExpression`` be ``expression``:
+ .. Return ``unaryExpression``.
+. Else if let ``expression~l~`` ``binop`` ``expression~r~`` be ``expression``:
+ .. Let ``expressionNonBrace~l~`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression~l~``].
+ .. Return ``expressionNonBrace~l~`` ``binop`` ``expression~r~``.
+. Else if let ``expression~cond~`` ``+?+`` ``expression~true~`` ``+:+`` ``expression~false~`` be ``expression``:
+ .. Let ``expressionNonBrace~cond~`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression~cond~``].
+ .. Return ``expressionNonBrace~cond~`` ``+?+`` ``expression~true~`` ``+:+`` ``expression~false~``.
+. Else if let ``castExpression`` be ``expression``:
+ .. Return ``castExpression``.
+. Else if let ``errorAccessExpression`` be ``expression``:
+ .. Return ``errorAccessExpression``.
+. Else if let ``memberAccessBase`` ``+.+`` ``member`` be ``expression``:
+ .. If let ``prefixedTypeName`` be ``memberAccessBase``:
+  ... Return ``prefixedTypeName`` ``+.+`` ``member``.
+ .. Else:
+  ... Let ``expression~base~`` be ``memberAccessBase``.
+  ... Let ``expressionNonBrace~base~`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression~base~``].
+  ... Return ``expressionNonBrace~base~`` ``+.+`` ``member``.
+. Else if let ``expression~base~`` ``+[+`` ``expression~index~`` ``+]+`` be ``expression``:
+ .. Let ``expressionNonBrace~base~`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression~base~``].
+ .. Return ``expressionNonBrace~base~`` ``+[+`` ``expression~index~`` ``+]+``.
+. Else if let ``expression~base~`` ``+[+`` ``expression~hi~`` ``sliceop`` ``expression~lo~`` ``+]+`` be ``expression``:
+ .. Check that ``sliceop`` is ``+:+``.
+ .. Let ``expressionNonBrace~base~`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression~base~``].
+ .. Return ``expressionNonBrace~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+. Else if let ``callExpression`` be ``expression``:
+ .. If let ``callTarget`` ``+(+`` ``argumentList`` ``+)+`` be ``callExpression``:
+  ... If let ``expression'`` be ``callTarget``:
+   .... Let ``expressionNonBrace`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression'``].
+   .... Return ``expressionNonBrace`` ``+(+`` ``argumentList`` ``+)+``.
+  ... Else:
+   .... Let ``constructorTarget`` be ``callTarget``.
+   .... Return ``constructorTarget`` ``+(+`` ``argumentList`` ``+)+``.
+ .. Else:
+  ... Let ``expression'`` ``+<+`` ``realTypeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` be ``callExpression``.
+  ... Let ``expressionNonBrace`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression'``].
+  ... Return ``expressionNonBrace`` ``+<+`` ``realTypeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+``.
+. Else if let ``parenthesizedExpression`` be ``expression``:
+ .. Return ``parenthesizedExpression``.
+
 xref:flatten_simpleKeysetExpressionList[``simpleKeysetExpressionList`` flattened]
 
 
@@ -4740,6 +4788,2298 @@ xref:subexpressions_of_argumentListIR[The sub-expressions of ``argumentIR^{aster
 for each ``argumentIR`` in ``argumentIR^{asterisk}^``
 . Return ``xref:concat_[$concat_<typedExpressionIR>(typedExpressionListIR^{asterisk}^)]``.
 
+xref:sink[$sink<T>]
+
+
+
+
+xref:lift_nameIR_as_identifier[$lift_nameIR_as_identifier(nameIR)]
+
+
+. Return ``+`ID+`` ``nameIR``.
+
+xref:lift_nameIR_as_typeIdentifier[$lift_nameIR_as_typeIdentifier(nameIR)]
+
+
+. Return ``+`TID+`` ``nameIR``.
+
+xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(text)]
+
+
+. If ``text`` is equal to ``"apply"``:
+ .. Return ``+APPLY+``.
+. Else if ``text`` is equal to ``"key"``:
+ .. Return ``+KEY+``.
+. Else if ``text`` is equal to ``"actions"``:
+ .. Return ``+ACTIONS+``.
+. Else if ``text`` is equal to ``"state"``:
+ .. Return ``+STATE+``.
+. Else if ``text`` is equal to ``"entries"``:
+ .. Return ``+ENTRIES+``.
+. Else if ``text`` is equal to ``"type"``:
+ .. Return ``+TYPE+``.
+. Else:
+ .. Return ``+PRIORITY+``.
+. Otherwise:
+ .. Return ``+`ID+`` ``text``.
+
+xref:lift_prefixedNameIR_as_prefixedNonTypeName[$lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)]
+
+
+. If let ``nameIR`` be ``prefixedNameIR``:
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Return ``nonTypeName``.
+. Else:
+ .. Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Return ``+`ID+`` ``+.+`` ``nonTypeName``.
+
+xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]
+
+
+. Return ``xref:lift_nameIR_as_typeIdentifier[$lift_nameIR_as_typeIdentifier(nameIR)]``.
+
+xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]
+
+
+. If let ``nameIR`` be ``prefixedNameIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+ .. Return ``typeName``.
+. Else:
+ .. Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+ .. Return ``+`TID+`` ``+.+`` ``typeName``.
+
+xref:lift_nameIR_as_tableCustomName[$lift_nameIR_as_tableCustomName(text)]
+
+
+. If ``text`` is equal to ``"apply"``:
+ .. Return ``+APPLY+``.
+. Else if ``text`` is equal to ``"state"``:
+ .. Return ``+STATE+``.
+. Else if ``text`` is equal to ``"type"``:
+ .. Return ``+TYPE+``.
+. Else:
+ .. Return ``+PRIORITY+``.
+. Otherwise:
+ .. Let ``identifier`` be ``xref:lift_nameIR_as_identifier[$lift_nameIR_as_identifier(text)]``.
+ .. Return ``identifier``.
+
+xref:lift_nameListIR_as_nonTypeNameList[$lift_nameListIR_as_nonTypeNameList(nameIR^{asterisk}^)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``name`` be ``nonTypeName``.
+--
++
+for each ``nameIR`` in ``nameIR^{asterisk}^``
+. Let ``nameList`` be ``xref:unflatten_nameList[$unflatten_nameList(name^{asterisk}^)]``.
+. Return ``nameList``.
+
+xref:unflatten_nameList[$unflatten_nameList(name^{asterisk}^)]
+
+
+. Check that ``name^{asterisk}^`` is a non-empty list.
+. Let ``name~h~`` ``{two-colons}`` ``name~t~^{asterisk}^`` be ``name^{asterisk}^``.
+. Return ``xref:unflatten_nameList'[$unflatten_nameList'(name~h~,`` ``name~t~^{asterisk}^)]``.
+
+xref:unflatten_nameList'[$unflatten_nameList'(nameList, name^{asterisk}^)]
+
+
+. If ``name^{asterisk}^`` is an empty list:
+ .. Return ``nameList``.
+. Else:
+ .. Let ``name~h~`` ``{two-colons}`` ``name~t~^{asterisk}^`` be ``name^{asterisk}^``.
+ .. Return ``xref:unflatten_nameList'[$unflatten_nameList'(nameList`` ``+,+`` ``name~h~,`` ``name~t~^{asterisk}^)]``.
+
+xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Return ``nonTypeName``.
+
+xref:lift_value[$lift_value(value)]
+
+
+. Otherwise:
+ .. Return ``xref:sink[$sink<expression>]``.
+
+xref:lift_typeIR[$lift_typeIR(typeIR)]
+
+
+. If let ``baseTypeIR`` be ``typeIR``:
+ .. Let ``baseType`` be ``xref:lift_baseTypeIR[$lift_baseTypeIR(baseTypeIR)]``.
+ .. Return ``baseType``.
+. Else if let ``nameTypeIR`` be ``typeIR``:
+ .. Let ``namedType`` be ``xref:lift_nameTypeIR[$lift_nameTypeIR(nameTypeIR)]``.
+ .. Return ``namedType``.
+. Else if let ``aliasTypeIR`` be ``typeIR``:
+ .. Return ``xref:lift_aliasTypeIR[$lift_aliasTypeIR(aliasTypeIR)]``.
+. Else:
+ .. Let ``dataTypeIR`` be ``typeIR``.
+ .. Return ``xref:lift_dataTypeIR[$lift_dataTypeIR(dataTypeIR)]``.
+. Otherwise:
+ .. Return ``xref:sink[$sink<type>]``.
+
+xref:lift_baseTypeIR[$lift_baseTypeIR(baseTypeIR)]
+
+
+. If let ``boolTypeIR`` be ``baseTypeIR``:
+ .. Return ``+BOOL+``.
+. Else if let ``errorTypeIR`` be ``baseTypeIR``:
+ .. Return ``+ERROR+``.
+ .. Return ``+ERROR+``.
+. Else if let ``matchKindTypeIR`` be ``baseTypeIR``:
+ .. Return ``+MATCH_KIND+``.
+. Else if let ``stringTypeIR`` be ``baseTypeIR``:
+ .. Return ``+STRING+``.
+. Else if let ``intTypeIR`` be ``baseTypeIR``:
+ .. Return ``+INT+``.
+. Else if let ``+INT+`` ``+<+`` ``w`` ``+>+`` be ``baseTypeIR``:
+ .. Return ``+INT+`` ``+<+`` ``w`` ``+>+``.
+. Else if let ``+BIT+`` ``+<+`` ``w`` ``+>+`` be ``baseTypeIR``:
+ .. Return ``+BIT+`` ``+<+`` ``w`` ``+>+``.
+. Else if let ``+VARBIT+`` ``+<+`` ``w`` ``+>+`` be ``baseTypeIR``:
+ .. Return ``+VARBIT+`` ``+<+`` ``w`` ``+>+``.
+
+xref:lift_typeDefIR_as_typeName[$lift_typeDefIR_as_typeName(typeDefIR)]
+
+
+. If let ``typeId`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+TYPEDEF+`` ``typeId`` ``++_++`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+TYPE+`` ``typeId`` ``++_++`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+HEADER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+HEADER_UNION+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``++_++`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+EXTERN+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``++_++`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+PARSER+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+CONTROL+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+PACKAGE+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+,+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeDefIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else:
+ .. Let ``+TABLE+`` ``typeId`` ``+{+`` ``++_++`` ``+}+`` be ``typeDefIR``.
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Otherwise:
+ .. Return ``xref:sink[$sink<typeName>]``.
+
+xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]
+
+
+. Let ``typeArgument^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``typeArgument`` be ``xref:lift_typeArgumentIR[$lift_typeArgumentIR(typeArgumentIR)]``.
+--
++
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
+. Let ``typeArgumentList`` be ``xref:unflatten_typeArgumentList[$unflatten_typeArgumentList(typeArgument^{asterisk}^)]``.
+. Return ``typeArgumentList``.
+
+xref:lift_nameTypeIR[$lift_nameTypeIR(typeId)]
+
+
+. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+. Return ``typeName``.
+
+xref:lift_aliasTypeIR[$lift_aliasTypeIR(aliasTypeIR)]
+
+
+. If let ``+TYPEDEF+`` ``typeId`` ``++_++`` be ``aliasTypeIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else:
+ .. Let ``+TYPE+`` ``typeId`` ``++_++`` be ``aliasTypeIR``.
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+
+xref:lift_typeArgumentIR[$lift_typeArgumentIR(typeIR)]
+
+
+. Let ``realTypeArgument`` be ``xref:lift_typeArgumentIR_as_realTypeArgument[$lift_typeArgumentIR_as_realTypeArgument(typeIR)]``.
+. Return ``realTypeArgument``.
+
+xref:lift_dataTypeIR[$lift_dataTypeIR(dataTypeIR)]
+
+
+. If let ``+LIST+`` ``+<+`` ``typeIR`` ``+>+`` be ``dataTypeIR``:
+ .. Let ``typeArgument`` be ``xref:lift_typeArgumentIR[$lift_typeArgumentIR(typeIR)]``.
+ .. Return ``+LIST+`` ``+<+`` ``typeArgument`` ``+>+``.
+. Else if let ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` be ``dataTypeIR``:
+ .. Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeIR^{asterisk}^)]``.
+ .. Return ``+TUPLE+`` ``+<+`` ``typeArgumentList`` ``+>+``.
+. Else if let ``typeIR`` ``+[+`` ``n`` ``+]+`` be ``dataTypeIR``:
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Check that ``type`` has type ``namedType``.
+ .. Let ``namedType`` be ``type``.
+ .. Return ``namedType`` ``+[+`` ``+D+`` ``n`` ``+]+``.
+. Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``dataTypeIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Return ``typeName``.
+. Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``dataTypeIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+ .. Let ``typeArgument`` be ``xref:lift_typeArgumentIR[$lift_typeArgumentIR(typeIR)]``.
+ .. Return ``typeName`` ``+<+`` ``typeArgument`` ``+>+``.
+
+xref:lift_typeIR_as_typeOrVoid[$lift_typeIR_as_typeOrVoid(typeIR)]
+
+
+. If let ``voidTypeIR`` be ``typeIR``:
+ .. Return ``+VOID+``.
+. If ``typeIR`` is not equal to ``+VOID+``:
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Return ``type``.
+
+xref:lift_typeParameterIR[$lift_typeParameterIR(typeId)]
+
+
+. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
+. Let ``typeParameter`` be ``typeName``.
+. Return ``typeParameter``.
+
+xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]
+
+
+. Let ``typeParameter^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``typeParameter`` be ``xref:lift_typeParameterIR[$lift_typeParameterIR(typeParameterIR)]``.
+--
++
+for each ``typeParameterIR`` in ``typeParameterIR^{asterisk}^``
+. Let ``typeParameterListOpt`` be ``xref:unflatten_typeParameterListOpt[$unflatten_typeParameterListOpt(typeParameter^{asterisk}^)]``.
+. Return ``typeParameterListOpt``.
+
+xref:unflatten_typeParameterListOpt[$unflatten_typeParameterListOpt(typeParameter^{asterisk}^)]
+
+
+. If ``typeParameter^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``typeParameter~h~`` ``{two-colons}`` ``typeParameter~t~^{asterisk}^`` be ``typeParameter^{asterisk}^``.
+ .. Let ``typeParameterList`` be ``xref:unflatten_typeParameterList[$unflatten_typeParameterList(typeParameter~h~`` ``{two-colons}`` ``typeParameter~t~^{asterisk}^)]``.
+ .. Return ``+<+`` ``typeParameterList`` ``+>+``.
+
+xref:unflatten_typeParameterList[$unflatten_typeParameterList(typeParameter^{asterisk}^)]
+
+
+. Check that ``typeParameter^{asterisk}^`` is a non-empty list.
+. Let ``typeParameter~h~`` ``{two-colons}`` ``typeParameter~t~^{asterisk}^`` be ``typeParameter^{asterisk}^``.
+. Return ``xref:unflatten_typeParameterList'[$unflatten_typeParameterList'(typeParameter~h~,`` ``typeParameter~t~^{asterisk}^)]``.
+
+xref:unflatten_typeParameterList'[$unflatten_typeParameterList'(typeParameterList, typeParameter^{asterisk}^)]
+
+
+. If ``typeParameter^{asterisk}^`` is an empty list:
+ .. Return ``typeParameterList``.
+. Else:
+ .. Let ``typeParameter~h~`` ``{two-colons}`` ``typeParameter~t~^{asterisk}^`` be ``typeParameter^{asterisk}^``.
+ .. Return ``xref:unflatten_typeParameterList'[$unflatten_typeParameterList'(typeParameterList`` ``+,+`` ``typeParameter~h~,`` ``typeParameter~t~^{asterisk}^)]``.
+
+xref:lift_constantInitializerOptIR_as_initializerOpt[$lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR^?^)]
+
+
+. If ``constantInitializerIR^?^`` is none:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``constantInitializerIR'`` be ``constantInitializerIR^?^``.
+ .. Let ``initializer`` be ``xref:lift_constantInitializerIR_as_initializer[$lift_constantInitializerIR_as_initializer(constantInitializerIR')]``.
+ .. Return ``initializer``.
+
+xref:lift_parameterIR[$lift_parameterIR(annotationList direction typeIR nameIR parameterInitializerOptIR)]
+
+
+. Check that ``parameterInitializerOptIR`` has type ``constantInitializerIR?``.
+. Let ``constantInitializerIR^?^`` be ``parameterInitializerOptIR``.
+. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``initializerOpt`` be ``xref:lift_constantInitializerOptIR_as_initializerOpt[$lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR^?^)]``.
+. Return ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``.
+
+xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]
+
+
+. Let ``parameter^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``parameter`` be ``xref:lift_parameterIR[$lift_parameterIR(parameterIR)]``.
+--
++
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``
+. Let ``parameterList`` be ``xref:unflatten_parameterList[$unflatten_parameterList(parameter^{asterisk}^)]``.
+. Return ``parameterList``.
+
+xref:unflatten_parameterList[$unflatten_parameterList(parameter^{asterisk}^)]
+
+
+. If ``parameter^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``.
+ .. Let ``nonEmptyParameterList`` be ``xref:unflatten_nonEmptyParameterList[$unflatten_nonEmptyParameterList(parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^)]``.
+ .. Return ``nonEmptyParameterList``.
+
+xref:unflatten_nonEmptyParameterList[$unflatten_nonEmptyParameterList(parameter^{asterisk}^)]
+
+
+. Check that ``parameter^{asterisk}^`` is a non-empty list.
+. Let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``.
+. Return ``xref:unflatten_nonEmptyParameterList'[$unflatten_nonEmptyParameterList'(parameter~h~,`` ``parameter~t~^{asterisk}^)]``.
+
+xref:unflatten_nonEmptyParameterList'[$unflatten_nonEmptyParameterList'(nonEmptyParameterList, parameter^{asterisk}^)]
+
+
+. If ``parameter^{asterisk}^`` is an empty list:
+ .. Return ``nonEmptyParameterList``.
+. Else:
+ .. Let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``.
+ .. Return ``xref:unflatten_nonEmptyParameterList'[$unflatten_nonEmptyParameterList'(nonEmptyParameterList`` ``+,+`` ``parameter~h~,`` ``parameter~t~^{asterisk}^)]``.
+
+xref:lift_constructorParameterIR[$lift_constructorParameterIR(constructorParameterIR)]
+
+
+. Return ``xref:lift_parameterIR[$lift_parameterIR(constructorParameterIR)]``.
+
+xref:lift_constructorParameterListIR[$lift_constructorParameterListIR(constructorParameterIR^{asterisk}^)]
+
+
+. Let ``constructorParameter^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``constructorParameter`` be ``xref:lift_constructorParameterIR[$lift_constructorParameterIR(constructorParameterIR)]``.
+--
++
+for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``
+. Let ``constructorParameterListOpt`` be ``xref:unflatten_constructorParameterList[$unflatten_constructorParameterList(constructorParameter^{asterisk}^)]``.
+. Return ``constructorParameterListOpt``.
+
+xref:unflatten_constructorParameterList[$unflatten_constructorParameterList(constructorParameter^{asterisk}^)]
+
+
+. If ``constructorParameter^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. If ``constructorParameter^{asterisk}^`` is not equal to ``·``:
+ .. Let ``parameterList`` be ``xref:unflatten_parameterList[$unflatten_parameterList(constructorParameter^{asterisk}^)]``.
+ .. Return ``+(+`` ``parameterList`` ``+)+``.
+
+xref:lift_typedExpressionIR[$lift_typedExpressionIR(expressionIR +#+ ++_++)]
+
+
+. Return ``xref:lift_expressionIR[$lift_expressionIR(expressionIR)]``.
+
+xref:lift_initializerIR[$lift_initializerIR(+=+ typedExpressionIR)]
+
+
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Return ``+=+`` ``expression``.
+
+xref:lift_initializerOptIR[$lift_initializerOptIR(initializerIR^?^)]
+
+
+. If ``initializerIR^?^`` is none:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``initializerIR'`` be ``initializerIR^?^``.
+ .. Let ``initializer`` be ``xref:lift_initializerIR[$lift_initializerIR(initializerIR')]``.
+ .. Return ``initializer``.
+
+xref:lift_constantInitializerIR_as_initializer[$lift_constantInitializerIR_as_initializer(+=+ +`VALUE+ value)]
+
+
+. Let ``expression`` be ``xref:lift_value[$lift_value(value)]``.
+. Return ``+=+`` ``expression``.
+
+xref:lift_namedExpressionIR[$lift_namedExpressionIR(nameIR +=+ typedExpressionIR)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Return ``name`` ``+=+`` ``expression``.
+
+xref:lift_namedExpressionListIR[$lift_namedExpressionListIR(namedExpressionIR^{asterisk}^)]
+
+
+. Let ``namedExpression^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``namedExpression`` be ``xref:lift_namedExpressionIR[$lift_namedExpressionIR(namedExpressionIR)]``.
+--
++
+for each ``namedExpressionIR`` in ``namedExpressionIR^{asterisk}^``
+. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression^{asterisk}^)]``.
+. Return ``namedExpressionList``.
+
+xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression^{asterisk}^)]
+
+
+. Check that ``namedExpression^{asterisk}^`` is a non-empty list.
+. Let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``.
+. Return ``xref:unflatten_namedExpressionList'[$unflatten_namedExpressionList'(namedExpression~h~,`` ``namedExpression~t~^{asterisk}^)]``.
+
+xref:unflatten_namedExpressionList'[$unflatten_namedExpressionList'(namedExpressionList, namedExpression^{asterisk}^)]
+
+
+. If ``namedExpression^{asterisk}^`` is an empty list:
+ .. Return ``namedExpressionList``.
+. Else:
+ .. Let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``.
+ .. Return ``xref:unflatten_namedExpressionList'[$unflatten_namedExpressionList'(namedExpressionList`` ``+,+`` ``namedExpression~h~,`` ``namedExpression~t~^{asterisk}^)]``.
+
+xref:lift_namedValueIR[$lift_namedValueIR(nameIR +=+ value)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``expression`` be ``xref:lift_value[$lift_value(value)]``.
+. Return ``name`` ``+=+`` ``expression``.
+
+xref:lift_namedValueListIR[$lift_namedValueListIR(namedValueIR^{asterisk}^)]
+
+
+. Let ``namedExpression^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``namedExpression`` be ``xref:lift_namedValueIR[$lift_namedValueIR(namedValueIR)]``.
+--
++
+for each ``namedValueIR`` in ``namedValueIR^{asterisk}^``
+. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression^{asterisk}^)]``.
+. Return ``namedExpressionList``.
+
+xref:lift_typedExpressionListIR[$lift_typedExpressionListIR(typedExpressionIR^{asterisk}^)]
+
+
+. Let ``expression^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+--
++
+for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
+. Let ``expressionList`` be ``xref:unflatten_expressionList[$unflatten_expressionList(expression^{asterisk}^)]``.
+. Return ``expressionList``.
+
+xref:lift_literalExpressionIR[$lift_literalExpressionIR(literalExpression)]
+
+
+. Return ``literalExpression``.
+
+xref:lift_referenceExpressionIR[$lift_referenceExpressionIR(prefixedNameIR)]
+
+
+. If let ``nameIR`` be ``prefixedNameIR``:
+ .. If ``nameIR`` is equal to ``"this"``:
+  ... Return ``+THIS+``.
+ .. Else:
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``nonTypeName``.
+. Else:
+ .. Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Return ``+`ID+`` ``+.+`` ``nonTypeName``.
+
+xref:lift_defaultExpressionIR[$lift_defaultExpressionIR(defaultExpression)]
+
+
+. Return ``+...+``.
+
+xref:lift_unaryExpressionIR[$lift_unaryExpressionIR(unop typedExpressionIR)]
+
+
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Return ``unop`` ``expression``.
+
+xref:lift_binaryExpressionIR[$lift_binaryExpressionIR(typedExpressionIR~l~ binop typedExpressionIR~r~)]
+
+
+. Let ``expression~l~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~l~)]``.
+. Let ``expression~r~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~r~)]``.
+. Return ``expression~l~`` ``binop`` ``expression~r~``.
+
+xref:lift_ternaryExpressionIR[$lift_ternaryExpressionIR(typedExpressionIR~cond~ +?+ typedExpressionIR~then~ +:+ typedExpressionIR~else~)]
+
+
+. Let ``expression~cond~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~cond~)]``.
+. Let ``expression~then~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~then~)]``.
+. Let ``expression~else~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~else~)]``.
+. Return ``expression~cond~`` ``+?+`` ``expression~then~`` ``+:+`` ``expression~else~``.
+
+xref:lift_castExpressionIR[$lift_castExpressionIR(+(+ typeIR +)+ typedExpressionIR)]
+
+
+. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
+. If ``typeIR~unroll~`` has type ``setTypeIR``:
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``expression``.
+. Else:
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``+(+`` ``type`` ``+)+`` ``expression``.
+
+xref:unflatten_recordElementExpression[$unflatten_recordElementExpression(namedExpression^{asterisk}^)]
+
+
+. If let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``:
+ .. Let ``name~h~`` ``+=+`` ``expression~h~`` be ``namedExpression~h~``.
+ .. Return ``name~h~`` ``+=+`` ``expression~h~``.
+. Else if let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
+ .. Check that ``namedExpression~t~^{asterisk}^`` is not equal to ``·``.
+ .. Let ``name~h~`` ``+=+`` ``expression~h~`` be ``namedExpression~h~``.
+ .. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression~t~^{asterisk}^)]``.
+ .. Return ``name~h~`` ``+=+`` ``expression~h~`` ``+,+`` ``namedExpressionList``.
+
+xref:unflatten_recordElementExpression_with_default[$unflatten_recordElementExpression_with_default(namedExpression^{asterisk}^)]
+
+
+. If let ``namedExpression~h~`` be ``namedExpression^{asterisk}^``:
+ .. Let ``name~h~`` ``+=+`` ``expression~h~`` be ``namedExpression~h~``.
+ .. Return ``name~h~`` ``+=+`` ``expression~h~`` ``+,+`` ``+...+``.
+. Else if let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
+ .. Check that ``namedExpression~t~^{asterisk}^`` is not equal to ``·``.
+ .. Let ``name~h~`` ``+=+`` ``expression~h~`` be ``namedExpression~h~``.
+ .. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression~t~^{asterisk}^)]``.
+ .. Return ``name~h~`` ``+=+`` ``expression~h~`` ``+,+`` ``namedExpressionList`` ``+,+`` ``+...+``.
+
+xref:lift_dataExpressionIR[$lift_dataExpressionIR(dataExpressionIR)]
+
+
+. If let ``invalidHeaderExpression`` be ``dataExpressionIR``:
+ .. Return ``+{#}+``.
+. Else if let ``sequenceExpressionIR`` be ``dataExpressionIR``:
+ .. If let ``+SEQ+`` ``+{+`` ``typedExpressionIR^{asterisk}^`` ``+}+`` be ``sequenceExpressionIR``:
+  ... Let ``expressionList`` be ``xref:lift_typedExpressionListIR[$lift_typedExpressionListIR(typedExpressionIR^{asterisk}^)]``.
+  ... Return ``+{+`` ``expressionList`` ``+`EMPTY+`` ``+}+``.
+ .. Else:
+  ... Let ``+SEQ+`` ``+{+`` ``typedExpressionIR^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``sequenceExpressionIR``.
+  ... Let ``expression^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+--
++
+for each ``typedExpressionIR`` in ``typedExpressionIR^{asterisk}^``
+  ... Let ``expressionList`` be ``xref:lift_typedExpressionListIR[$lift_typedExpressionListIR(typedExpressionIR^{asterisk}^)]``.
+  ... Return ``+{+`` ``expressionList`` ``+`EMPTY+`` ``+}+``.
+. Else:
+ .. Let ``recordExpressionIR`` be ``dataExpressionIR``.
+ .. If let ``+RECORD+`` ``+{+`` ``namedExpressionIR^{asterisk}^`` ``+}+`` be ``recordExpressionIR``:
+  ... Let ``namedExpression^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``namedExpression`` be ``xref:lift_namedExpressionIR[$lift_namedExpressionIR(namedExpressionIR)]``.
+--
++
+for each ``namedExpressionIR`` in ``namedExpressionIR^{asterisk}^``
+  ... Let ``recordElementExpression`` be ``xref:unflatten_recordElementExpression[$unflatten_recordElementExpression(namedExpression^{asterisk}^)]``.
+  ... Return ``+{+`` ``recordElementExpression`` ``+`EMPTY+`` ``+}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+{+`` ``namedExpressionIR^{asterisk}^`` ``+,+`` ``+...+`` ``+}+`` be ``recordExpressionIR``.
+  ... Let ``namedExpression^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``namedExpression`` be ``xref:lift_namedExpressionIR[$lift_namedExpressionIR(namedExpressionIR)]``.
+--
++
+for each ``namedExpressionIR`` in ``namedExpressionIR^{asterisk}^``
+  ... Let ``recordElementExpression`` be ``xref:unflatten_recordElementExpression_with_default[$unflatten_recordElementExpression_with_default(namedExpression^{asterisk}^)]``.
+  ... Return ``+{+`` ``recordElementExpression`` ``+`EMPTY+`` ``+}+``.
+
+xref:lift_errorAccessExpressionIR[$lift_errorAccessExpressionIR(+ERROR+ +.+ nameIR)]
+
+
+. Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+. Return ``+ERROR+`` ``+.+`` ``member``.
+
+xref:lift_memberAccessBaseIR[$lift_memberAccessBaseIR(memberAccessBaseIR)]
+
+
+. If let ``+TYPE+`` ``prefixedNameIR`` be ``memberAccessBaseIR``:
+ .. Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+ .. Return ``prefixedTypeName``.
+. Else:
+ .. Let ``typedExpressionIR`` be ``memberAccessBaseIR``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``expression``.
+
+xref:lift_memberAccessExpressionIR[$lift_memberAccessExpressionIR(memberAccessBaseIR +.+ nameIR)]
+
+
+. Let ``memberAccessBase`` be ``xref:lift_memberAccessBaseIR[$lift_memberAccessBaseIR(memberAccessBaseIR)]``.
+. Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+. Return ``memberAccessBase`` ``+.+`` ``member``.
+
+<<lift_indexAccessExpressionIR,$lift_indexAccessExpressionIR(typedExpressionIR~base~ +[+ typedExpressionIR~index~ +]+)>>
+
+
+. Let ``expression~base~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~base~)]``.
+. Let ``expression~index~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~index~)]``.
+. Return ``expression~base~`` ``+[+`` ``expression~index~`` ``+]+``.
+
+<<lift_sliceAccessExpressionIR,$lift_sliceAccessExpressionIR(typedExpressionIR~base~ +[+ typedExpressionIR~hi~ sliceop typedExpressionIR~lo~ +]+)>>
+
+
+. Check that ``sliceop`` is ``+:+``.
+. Let ``expression~base~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~base~)]``.
+. Let ``expression~hi~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~hi~)]``.
+. Let ``expression~lo~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~lo~)]``.
+. Return ``expression~base~`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+
+xref:lift_accessExpressionIR[$lift_accessExpressionIR(accessExpressionIR)]
+
+
+. If let ``errorAccessExpressionIR`` be ``accessExpressionIR``:
+ .. Let ``errorAccessExpression`` be ``xref:lift_errorAccessExpressionIR[$lift_errorAccessExpressionIR(errorAccessExpressionIR)]``.
+ .. Return ``errorAccessExpression``.
+. Else if let ``memberAccessExpressionIR`` be ``accessExpressionIR``:
+ .. Let ``memberAccessExpression`` be ``xref:lift_memberAccessExpressionIR[$lift_memberAccessExpressionIR(memberAccessExpressionIR)]``.
+ .. Return ``memberAccessExpression``.
+. Else if let ``indexAccessExpressionIR`` be ``accessExpressionIR``:
+ .. Let ``indexAccessExpression`` be ``xref:lift_indexAccessExpressionIR[$lift_indexAccessExpressionIR(indexAccessExpressionIR)]``.
+ .. Return ``indexAccessExpression``.
+. Else:
+ .. Let ``sliceAccessExpressionIR`` be ``accessExpressionIR``.
+ .. Let ``sliceAccessExpression`` be ``xref:lift_sliceAccessExpressionIR[$lift_sliceAccessExpressionIR(sliceAccessExpressionIR)]``.
+ .. Return ``sliceAccessExpression``.
+
+xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]
+
+
+. Let ``argument^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``argument`` be ``xref:lift_argumentIR[$lift_argumentIR(argumentIR)]``.
+--
++
+for each ``argumentIR`` in ``argumentIR^{asterisk}^``
+. Let ``argumentList`` be ``xref:unflatten_argumentList[$unflatten_argumentList(argument^{asterisk}^)]``.
+. Return ``argumentList``.
+
+xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]
+
+
+. If ``callableTargetIR`` is equal to ``"this"``:
+ .. Return ``+THIS+``.
+. If let ``prefixedNameIR`` be ``callableTargetIR``:
+ .. If let ``nameIR`` be ``prefixedNameIR``:
+  ... Check that ``nameIR`` is not equal to ``"this"``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``nonTypeName``.
+ .. Else:
+  ... Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``+`ID+`` ``+.+`` ``nonTypeName``.
+. Else if let ``typedExpressionIR`` ``+.+`` ``nameIR`` be ``callableTargetIR``:
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+ .. Return ``expression`` ``+.+`` ``member``.
+. Else if let ``+TYPE+`` ``prefixedNameIR`` ``+.+`` ``nameIR`` be ``callableTargetIR``:
+ .. If ``prefixedNameIR`` is equal to ``"this"``:
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+  ... Return ``+THIS+`` ``+.+`` ``member``.
+ .. If let ``nameIR'`` be ``prefixedNameIR``:
+  ... Check that ``nameIR'`` is not equal to ``"this"``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR')]``.
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR')]``.
+  ... Return ``nonTypeName`` ``+.+`` ``member``.
+ .. Else:
+  ... Let ``+.+`` ``nameIR'`` be ``prefixedNameIR``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR')]``.
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR')]``.
+  ... Return ``+`ID+`` ``+.+`` ``nonTypeName`` ``+.+`` ``member``.
+. Else:
+ .. Let ``+(+`` ``callableTargetIR'`` ``+)+`` be ``callableTargetIR``.
+ .. Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR')]``.
+ .. Return ``+(+`` ``expression`` ``+)+``.
+
+xref:lift_typeArgumentListIR_as_realTypeArgumentList[$lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR^{asterisk}^)]
+
+
+. Let ``realTypeArgument^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``realTypeArgument`` be ``xref:lift_typeArgumentIR_as_realTypeArgument[$lift_typeArgumentIR_as_realTypeArgument(typeArgumentIR)]``.
+--
++
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
+. Let ``realTypeArgumentList`` be ``xref:unflatten_realTypeArgumentList[$unflatten_realTypeArgumentList(realTypeArgument^{asterisk}^)]``.
+. Return ``realTypeArgumentList``.
+
+xref:lift_callExpressionIR[$lift_callExpressionIR(callExpressionIR)]
+
+
+. If let ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``:
+ .. Let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` be ``constructorTargetIR``.
+ .. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Let ``namedType`` be ``prefixedTypeName``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Return ``namedType`` ``+(+`` ``argumentList`` ``+)+``.
+ .. If ``typeArgumentIR^{asterisk}^`` is not equal to ``·``:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
+  ... Let ``namedType`` be ``prefixedTypeName`` ``+<+`` ``typeArgumentList`` ``+>+``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Return ``namedType`` ``+(+`` ``argumentList`` ``+)+``.
+. Else:
+ .. Let ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` be ``callExpressionIR``.
+ .. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+  ... Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Return ``expression`` ``+(+`` ``argumentList`` ``+)+``.
+ .. Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.
+ .. If ``typeArgumentIR^{asterisk}^`` is not equal to ``·``:
+  ... Let ``realTypeArgumentList`` be ``xref:lift_typeArgumentListIR_as_realTypeArgumentList[$lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR^{asterisk}^)]``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Return ``expression`` ``+<+`` ``realTypeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+``.
+
+xref:lift_parenthesizedExpressionIR[$lift_parenthesizedExpressionIR(+(+ typedExpressionIR +)+)]
+
+
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Return ``+(+`` ``expression`` ``+)+``.
+
+xref:lift_expressionIR[$lift_expressionIR(expressionIR)]
+
+
+. If let ``literalExpressionIR`` be ``expressionIR``:
+ .. Let ``literalExpression`` be ``xref:lift_literalExpressionIR[$lift_literalExpressionIR(literalExpressionIR)]``.
+ .. Return ``literalExpression``.
+. Else if let ``referenceExpressionIR`` be ``expressionIR``:
+ .. Let ``referenceExpression`` be ``xref:lift_referenceExpressionIR[$lift_referenceExpressionIR(referenceExpressionIR)]``.
+ .. Return ``referenceExpression``.
+. Else if let ``defaultExpressionIR`` be ``expressionIR``:
+ .. Let ``defaultExpression`` be ``xref:lift_defaultExpressionIR[$lift_defaultExpressionIR(defaultExpressionIR)]``.
+ .. Return ``defaultExpression``.
+. Else if let ``unaryExpressionIR`` be ``expressionIR``:
+ .. Let ``unaryExpression`` be ``xref:lift_unaryExpressionIR[$lift_unaryExpressionIR(unaryExpressionIR)]``.
+ .. Return ``unaryExpression``.
+. Else if let ``binaryExpressionIR`` be ``expressionIR``:
+ .. Let ``binaryExpression`` be ``xref:lift_binaryExpressionIR[$lift_binaryExpressionIR(binaryExpressionIR)]``.
+ .. Return ``binaryExpression``.
+. Else if let ``ternaryExpressionIR`` be ``expressionIR``:
+ .. Let ``ternaryExpression`` be ``xref:lift_ternaryExpressionIR[$lift_ternaryExpressionIR(ternaryExpressionIR)]``.
+ .. Return ``ternaryExpression``.
+. Else if let ``castExpressionIR`` be ``expressionIR``:
+ .. Return ``xref:lift_castExpressionIR[$lift_castExpressionIR(castExpressionIR)]``.
+. Else if let ``dataExpressionIR`` be ``expressionIR``:
+ .. Let ``dataExpression`` be ``xref:lift_dataExpressionIR[$lift_dataExpressionIR(dataExpressionIR)]``.
+ .. Return ``dataExpression``.
+. Else if let ``accessExpressionIR`` be ``expressionIR``:
+ .. Let ``accessExpression`` be ``xref:lift_accessExpressionIR[$lift_accessExpressionIR(accessExpressionIR)]``.
+ .. Return ``accessExpression``.
+. Else if let ``callExpressionIR`` be ``expressionIR``:
+ .. Let ``callExpression`` be ``xref:lift_callExpressionIR[$lift_callExpressionIR(callExpressionIR)]``.
+ .. Return ``callExpression``.
+. Else:
+ .. Let ``parenthesizedExpressionIR`` be ``expressionIR``.
+ .. Let ``parenthesizedExpression`` be ``xref:lift_parenthesizedExpressionIR[$lift_parenthesizedExpressionIR(parenthesizedExpressionIR)]``.
+ .. Return ``parenthesizedExpression``.
+
+xref:unflatten_expressionList[$unflatten_expressionList(expression^{asterisk}^)]
+
+
+. If ``expression^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``expression~h~`` ``{two-colons}`` ``expression~t~^{asterisk}^`` be ``expression^{asterisk}^``.
+ .. Return ``xref:unflatten_expressionList'[$unflatten_expressionList'(expression~h~,`` ``expression~t~^{asterisk}^)]``.
+
+xref:unflatten_expressionList'[$unflatten_expressionList'(expressionList, expression^{asterisk}^)]
+
+
+. If ``expression^{asterisk}^`` is an empty list:
+ .. Return ``expressionList``.
+. Else:
+ .. Let ``expression~h~`` ``{two-colons}`` ``expression~t~^{asterisk}^`` be ``expression^{asterisk}^``.
+ .. Return ``xref:unflatten_expressionList'[$unflatten_expressionList'(expressionList`` ``+,+`` ``expression~h~,`` ``expression~t~^{asterisk}^)]``.
+
+xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR)]
+
+
+. If let ``typedExpressionIR`` be ``simpleKeysetExpressionIR``:
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``expression``.
+. Else if let ``typedExpressionIR~base~`` ``+&&&+`` ``typedExpressionIR~mask~`` be ``simpleKeysetExpressionIR``:
+ .. Let ``expression~base~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~base~)]``.
+ .. Let ``expression~mask~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~mask~)]``.
+ .. Return ``expression~base~`` ``+&&&+`` ``expression~mask~``.
+. Else if let ``typedExpressionIR~lb~`` ``+..+`` ``typedExpressionIR~ub~`` be ``simpleKeysetExpressionIR``:
+ .. Let ``expression~lb~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~lb~)]``.
+ .. Let ``expression~ub~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~ub~)]``.
+ .. Return ``expression~lb~`` ``+..+`` ``expression~ub~``.
+. Else if ``simpleKeysetExpressionIR`` is ``+DEFAULT+``:
+ .. Return ``+DEFAULT+``.
+. Else:
+ .. Return ``+_+``.
+
+xref:lift_simpleKeysetExpressionListIR[$lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR^{asterisk}^)]
+
+
+. Let ``simpleKeysetExpression^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``simpleKeysetExpression`` be ``xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR)]``.
+--
++
+for each ``simpleKeysetExpressionIR`` in ``simpleKeysetExpressionIR^{asterisk}^``
+. Let ``simpleKeysetExpressionList`` be ``xref:unflatten_simpleKeysetExpressionList[$unflatten_simpleKeysetExpressionList(simpleKeysetExpression^{asterisk}^)]``.
+. Return ``simpleKeysetExpressionList``.
+
+xref:unflatten_simpleKeysetExpressionList[$unflatten_simpleKeysetExpressionList(simpleKeysetExpression^{asterisk}^)]
+
+
+. Check that ``simpleKeysetExpression^{asterisk}^`` is a non-empty list.
+. Let ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` be ``simpleKeysetExpression^{asterisk}^``.
+. Return ``xref:unflatten_simpleKeysetExpressionList'[$unflatten_simpleKeysetExpressionList'(simpleKeysetExpression~h~,`` ``simpleKeysetExpression~t~^{asterisk}^)]``.
+
+xref:unflatten_simpleKeysetExpressionList'[$unflatten_simpleKeysetExpressionList'(simpleKeysetExpressionList, simpleKeysetExpression^{asterisk}^)]
+
+
+. If ``simpleKeysetExpression^{asterisk}^`` is an empty list:
+ .. Return ``simpleKeysetExpressionList``.
+. Else:
+ .. Let ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` be ``simpleKeysetExpression^{asterisk}^``.
+ .. Return ``xref:unflatten_simpleKeysetExpressionList'[$unflatten_simpleKeysetExpressionList'(simpleKeysetExpressionList`` ``+,+`` ``simpleKeysetExpression~h~,`` ``simpleKeysetExpression~t~^{asterisk}^)]``.
+
+xref:lift_tupleKeysetExpressionIR[$lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR)]
+
+
+. Let ``+(+`` ``simpleKeysetExpressionListIR`` ``+)+`` be ``tupleKeysetExpressionIR``.
+. If let ``simpleKeysetExpressionIR`` be ``simpleKeysetExpressionListIR``:
+ .. If let ``typedExpressionIR~base~`` ``+&&&+`` ``typedExpressionIR~mask~`` be ``simpleKeysetExpressionIR``:
+  ... Let ``expression~base~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~base~)]``.
+  ... Let ``expression~mask~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~mask~)]``.
+  ... Return ``+(+`` ``expression~base~`` ``+&&&+`` ``expression~mask~`` ``+)+``.
+ .. Else if let ``typedExpressionIR~lb~`` ``+..+`` ``typedExpressionIR~ub~`` be ``simpleKeysetExpressionIR``:
+  ... Let ``expression~lb~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~lb~)]``.
+  ... Let ``expression~ub~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~ub~)]``.
+  ... Return ``+(+`` ``expression~lb~`` ``+..+`` ``expression~ub~`` ``+)+``.
+. If ``tupleKeysetExpressionIR`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
+ .. Return ``+(+`` ``+DEFAULT+`` ``+)+``.
+. Else if ``tupleKeysetExpressionIR`` is equal to ``+(+`` ``+_+`` ``+)+``:
+ .. Return ``+(+`` ``+_+`` ``+)+``.
+. Let ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+`` be ``tupleKeysetExpressionIR``.
+. If the length of ``simpleKeysetExpressionIR^{asterisk}^`` is greater than ``1``:
+ .. Check that ``simpleKeysetExpressionIR^{asterisk}^`` is a non-empty list.
+ .. Let ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``.
+ .. Let ``simpleKeysetExpression~h~`` be ``xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR~h~)]``.
+ .. Let ``simpleKeysetExpressionList~t~`` be ``xref:lift_simpleKeysetExpressionListIR[$lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR~t~^{asterisk}^)]``.
+ .. Return ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` ``simpleKeysetExpressionList~t~`` ``+)+``.
+
+xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]
+
+
+. If let ``simpleKeysetExpressionIR`` be ``keysetExpressionIR``:
+ .. Let ``simpleKeysetExpression`` be ``xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR)]``.
+ .. Return ``simpleKeysetExpression``.
+. Else:
+ .. Let ``tupleKeysetExpressionIR`` be ``keysetExpressionIR``.
+ .. Let ``tupleKeysetExpression`` be ``xref:lift_tupleKeysetExpressionIR[$lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR)]``.
+ .. Return ``tupleKeysetExpression``.
+
+xref:lift_typeArgumentIR_as_realTypeArgument[$lift_typeArgumentIR_as_realTypeArgument(typeIR)]
+
+
+. If let ``voidTypeIR`` be ``typeIR``:
+ .. Return ``+VOID+``.
+. Otherwise:
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Return ``type``.
+
+xref:unflatten_realTypeArgumentList[$unflatten_realTypeArgumentList(realTypeArgument^{asterisk}^)]
+
+
+. Check that ``realTypeArgument^{asterisk}^`` is a non-empty list.
+. Let ``realTypeArgument~h~`` ``{two-colons}`` ``realTypeArgument~t~^{asterisk}^`` be ``realTypeArgument^{asterisk}^``.
+. Return ``xref:unflatten_realTypeArgumentList'[$unflatten_realTypeArgumentList'(realTypeArgument~h~,`` ``realTypeArgument~t~^{asterisk}^)]``.
+
+xref:unflatten_realTypeArgumentList'[$unflatten_realTypeArgumentList'(realTypeArgumentList, realTypeArgument^{asterisk}^)]
+
+
+. If ``realTypeArgument^{asterisk}^`` is an empty list:
+ .. Return ``realTypeArgumentList``.
+. Else:
+ .. Let ``realTypeArgument~h~`` ``{two-colons}`` ``realTypeArgument~t~^{asterisk}^`` be ``realTypeArgument^{asterisk}^``.
+ .. Return ``xref:unflatten_realTypeArgumentList'[$unflatten_realTypeArgumentList'(realTypeArgumentList`` ``+,+`` ``realTypeArgument~h~,`` ``realTypeArgument~t~^{asterisk}^)]``.
+
+xref:unflatten_typeArgumentList[$unflatten_typeArgumentList(typeArgument^{asterisk}^)]
+
+
+. If ``typeArgument^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^`` be ``typeArgument^{asterisk}^``.
+ .. Return ``xref:unflatten_typeArgumentList'[$unflatten_typeArgumentList'(typeArgument~h~,`` ``typeArgument~t~^{asterisk}^)]``.
+
+xref:unflatten_typeArgumentList'[$unflatten_typeArgumentList'(typeArgumentList, typeArgument^{asterisk}^)]
+
+
+. If ``typeArgument^{asterisk}^`` is an empty list:
+ .. Return ``typeArgumentList``.
+. Else:
+ .. Let ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^`` be ``typeArgument^{asterisk}^``.
+ .. Return ``xref:unflatten_typeArgumentList'[$unflatten_typeArgumentList'(typeArgumentList`` ``+,+`` ``typeArgument~h~,`` ``typeArgument~t~^{asterisk}^)]``.
+
+xref:lift_argumentIR[$lift_argumentIR(argumentIR)]
+
+
+. If let ``typedExpressionIR`` be ``argumentIR``:
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``expression``.
+. Else if let ``nameIR`` ``+=+`` ``typedExpressionIR`` be ``argumentIR``:
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Let ``name`` be ``nonTypeName``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``name`` ``+=+`` ``expression``.
+. Else if let ``nameIR`` ``+=+`` ``+_+`` be ``argumentIR``:
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Let ``name`` be ``nonTypeName``.
+ .. Return ``name`` ``+=+`` ``+_+``.
+. Else:
+ .. Return ``+_+``.
+
+xref:unflatten_argumentList[$unflatten_argumentList(argument^{asterisk}^)]
+
+
+. If ``argument^{asterisk}^`` is an empty list:
+ .. Return ``+`EMPTY+``.
+. Else:
+ .. Let ``argument~h~`` ``{two-colons}`` ``argument~t~^{asterisk}^`` be ``argument^{asterisk}^``.
+ .. Let ``argumentListNonEmpty`` be ``xref:unflatten_argumentListNonEmpty[$unflatten_argumentListNonEmpty(argument~h~`` ``{two-colons}`` ``argument~t~^{asterisk}^)]``.
+ .. Return ``argumentListNonEmpty``.
+
+xref:unflatten_argumentListNonEmpty[$unflatten_argumentListNonEmpty(argument^{asterisk}^)]
+
+
+. Check that ``argument^{asterisk}^`` is a non-empty list.
+. Let ``argument~h~`` ``{two-colons}`` ``argument~t~^{asterisk}^`` be ``argument^{asterisk}^``.
+. Return ``xref:unflatten_argumentListNonEmpty'[$unflatten_argumentListNonEmpty'(argument~h~,`` ``argument~t~^{asterisk}^)]``.
+
+xref:unflatten_argumentListNonEmpty'[$unflatten_argumentListNonEmpty'(argumentListNonEmpty, argument^{asterisk}^)]
+
+
+. If ``argument^{asterisk}^`` is an empty list:
+ .. Return ``argumentListNonEmpty``.
+. Else:
+ .. Let ``argument~h~`` ``{two-colons}`` ``argument~t~^{asterisk}^`` be ``argument^{asterisk}^``.
+ .. Return ``xref:unflatten_argumentListNonEmpty'[$unflatten_argumentListNonEmpty'(argumentListNonEmpty`` ``+,+`` ``argument~h~,`` ``argument~t~^{asterisk}^)]``.
+
+xref:lift_statementIR[$lift_statementIR(statementIR)]
+
+
+. If let ``emptyStatementIR`` be ``statementIR``:
+ .. Let ``emptyStatement`` be ``xref:lift_emptyStatementIR[$lift_emptyStatementIR(emptyStatementIR)]``.
+ .. Return ``emptyStatement``.
+. Else if let ``assignmentStatementIR`` be ``statementIR``:
+ .. Let ``assignmentStatement`` be ``xref:lift_assignmentStatementIR[$lift_assignmentStatementIR(assignmentStatementIR)]``.
+ .. Return ``assignmentStatement``.
+. Else if let ``callStatementIR`` be ``statementIR``:
+ .. Let ``callStatement`` be ``xref:lift_callStatementIR[$lift_callStatementIR(callStatementIR)]``.
+ .. Return ``callStatement``.
+. Else if let ``directApplicationStatementIR`` be ``statementIR``:
+ .. Let ``directApplicationStatement`` be ``xref:lift_directApplicationStatementIR[$lift_directApplicationStatementIR(directApplicationStatementIR)]``.
+ .. Return ``directApplicationStatement``.
+. Else if let ``returnStatementIR`` be ``statementIR``:
+ .. Let ``returnStatement`` be ``xref:lift_returnStatementIR[$lift_returnStatementIR(returnStatementIR)]``.
+ .. Return ``returnStatement``.
+. Else if let ``exitStatementIR`` be ``statementIR``:
+ .. Let ``exitStatement`` be ``xref:lift_exitStatementIR[$lift_exitStatementIR(exitStatementIR)]``.
+ .. Return ``exitStatement``.
+. Else if let ``blockStatementIR`` be ``statementIR``:
+ .. Let ``blockStatement`` be ``xref:lift_blockStatementIR[$lift_blockStatementIR(blockStatementIR)]``.
+ .. Return ``blockStatement``.
+. Else if let ``conditionalStatementIR`` be ``statementIR``:
+ .. Let ``conditionalStatement`` be ``xref:lift_conditionalStatementIR[$lift_conditionalStatementIR(conditionalStatementIR)]``.
+ .. Return ``conditionalStatement``.
+. Else:
+ .. Let ``switchStatementIR`` be ``statementIR``.
+ .. Let ``switchStatement`` be ``xref:lift_switchStatementIR[$lift_switchStatementIR(switchStatementIR)]``.
+ .. Return ``switchStatement``.
+. Otherwise:
+ .. Return ``xref:sink[$sink<statement>]``.
+
+xref:lift_emptyStatementIR[$lift_emptyStatementIR(emptyStatement)]
+
+
+. Return ``+;+``.
+
+xref:lift_typedLvalueIR[$lift_typedLvalueIR(lvalueIR +#+ ++_++)]
+
+
+. If ``lvalueIR`` is equal to ``"this"``:
+ .. Return ``+THIS+``.
+. If let ``prefixedNameIR`` be ``lvalueIR``:
+ .. If let ``nameIR`` be ``prefixedNameIR``:
+  ... Check that ``nameIR`` is not equal to ``"this"``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``nonTypeName``.
+ .. Else:
+  ... Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``+`ID+`` ``+.+`` ``nonTypeName``.
+. Else if let ``typedLvalueIR`` ``+.+`` ``nameIR`` be ``lvalueIR``:
+ .. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR)]``.
+ .. Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+ .. Return ``lvalue`` ``+.+`` ``member``.
+. Else if let ``typedLvalueIR`` ``+[+`` ``typedExpressionIR`` ``+]+`` be ``lvalueIR``:
+ .. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR)]``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``lvalue`` ``+[+`` ``expression`` ``+]+``.
+. Else if let ``typedLvalueIR`` ``+[+`` ``typedExpressionIR~hi~`` ``sliceop`` ``typedExpressionIR~lo~`` ``+]+`` be ``lvalueIR``:
+ .. Check that ``sliceop`` is ``+:+``.
+ .. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR)]``.
+ .. Let ``expression~hi~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~hi~)]``.
+ .. Let ``expression~lo~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~lo~)]``.
+ .. Return ``lvalue`` ``+[+`` ``expression~hi~`` ``+:+`` ``expression~lo~`` ``+]+``.
+. Else:
+ .. Let ``+(+`` ``typedLvalueIR`` ``+)+`` be ``lvalueIR``.
+ .. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR)]``.
+ .. Return ``+(+`` ``lvalue`` ``+)+``.
+
+xref:lift_assignmentStatementIR[$lift_assignmentStatementIR(typedLvalueIR assignop typedExpressionIR +;+)]
+
+
+. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR)]``.
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Return ``lvalue`` ``assignop`` ``expression`` ``+;+``.
+
+xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]
+
+
+. If ``callableTargetIR`` is equal to ``"this"``:
+ .. Return ``+THIS+``.
+. If let ``prefixedNameIR`` be ``callableTargetIR``:
+ .. If let ``nameIR`` be ``prefixedNameIR``:
+  ... Check that ``nameIR`` is not equal to ``"this"``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``nonTypeName``.
+ .. Else:
+  ... Let ``+.+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Return ``+`ID+`` ``+.+`` ``nonTypeName``.
+. Else if let ``typedExpressionIR`` ``+.+`` ``nameIR`` be ``callableTargetIR``:
+ .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+ .. Let ``lvalue`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR')]``.
+ .. Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+ .. Return ``lvalue`` ``+.+`` ``member``.
+. Else if let ``+TYPE+`` ``prefixedNameIR`` ``+.+`` ``nameIR`` be ``callableTargetIR``:
+ .. If ``prefixedNameIR`` is equal to ``"this"``:
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR)]``.
+  ... Return ``+THIS+`` ``+.+`` ``member``.
+ .. If let ``nameIR'`` be ``prefixedNameIR``:
+  ... Check that ``nameIR'`` is not equal to ``"this"``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR')]``.
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR')]``.
+  ... Return ``nonTypeName`` ``+.+`` ``member``.
+ .. Else:
+  ... Let ``+.+`` ``nameIR'`` be ``prefixedNameIR``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR')]``.
+  ... Let ``member`` be ``xref:lift_nameIR_as_member[$lift_nameIR_as_member(nameIR')]``.
+  ... Return ``+`ID+`` ``+.+`` ``nonTypeName`` ``+.+`` ``member``.
+. Else:
+ .. Let ``+(+`` ``callableTargetIR'`` ``+)+`` be ``callableTargetIR``.
+ .. Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR')]``.
+ .. Return ``+(+`` ``lvalue`` ``+)+``.
+
+xref:lift_callStatementIR[$lift_callStatementIR(callableTargetIR +<+ typeArgumentIR^{asterisk}^ +>+ +(+ argumentIR^{asterisk}^ +)+ +;+)]
+
+
+. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+ .. Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.
+ .. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+ .. Return ``lvalue`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+. Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.
+. Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
+. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+. Return ``lvalue`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+
+xref:lift_directApplicationStatementIR[$lift_directApplicationStatementIR(constructorTargetIR +.+ +APPLY+ +(+ argumentIR^{asterisk}^ +)+ +;+)]
+
+
+. Let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` be ``constructorTargetIR``.
+. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+ .. Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+ .. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+ .. Return ``prefixedTypeName`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+. If the length of ``typeArgumentIR^{asterisk}^`` is greater than ``0``:
+ .. Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+ .. Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
+ .. Let ``namedType`` be ``prefixedTypeName`` ``+<+`` ``typeArgumentList`` ``+>+``.
+ .. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+ .. Return ``namedType`` ``+.+`` ``+APPLY+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+
+xref:lift_returnStatementIR[$lift_returnStatementIR(returnStatementIR)]
+
+
+. If ``returnStatementIR`` is ``+RETURN+`` ``+;+``:
+ .. Return ``+RETURN+`` ``+;+``.
+. Else:
+ .. Let ``+RETURN+`` ``typedExpressionIR`` ``+;+`` be ``returnStatementIR``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Return ``+RETURN+`` ``expression`` ``+;+``.
+
+xref:lift_exitStatementIR[$lift_exitStatementIR(exitStatement)]
+
+
+. Return ``+EXIT+`` ``+;+``.
+
+xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]
+
+
+. Let ``annotationList`` ``+CONST+`` ``typeIR`` ``nameIR`` ``constantInitializerIR`` ``+;+`` be ``constantDeclarationIR``.
+. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``initializer`` be ``xref:lift_constantInitializerIR_as_initializer[$lift_constantInitializerIR_as_initializer(constantInitializerIR)]``.
+. Return ``annotationList`` ``+CONST+`` ``type`` ``name`` ``initializer`` ``+;+``.
+
+xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(annotationList typeIR nameIR initializerIR^?^ +;+)]
+
+
+. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``initializerOpt`` be ``xref:lift_initializerOptIR[$lift_initializerOptIR(initializerIR^?^)]``.
+. Return ``annotationList`` ``type`` ``name`` ``initializerOpt`` ``+;+``.
+
+xref:lift_blockElementStatementIR[$lift_blockElementStatementIR(blockElementStatementIR)]
+
+
+. If let ``constantDeclarationIR`` be ``blockElementStatementIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``variableDeclarationIR`` be ``blockElementStatementIR``:
+ .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
+ .. Return ``variableDeclaration``.
+. Else:
+ .. Let ``statementIR`` be ``blockElementStatementIR``.
+ .. Let ``statement`` be ``xref:lift_statementIR[$lift_statementIR(statementIR)]``.
+ .. Return ``statement``.
+
+xref:lift_blockElementStatementListIR[$lift_blockElementStatementListIR(blockElementStatementIR^{asterisk}^)]
+
+
+. Let ``blockElementStatement^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``blockElementStatement`` be ``xref:lift_blockElementStatementIR[$lift_blockElementStatementIR(blockElementStatementIR)]``.
+--
++
+for each ``blockElementStatementIR`` in ``blockElementStatementIR^{asterisk}^``
+. Let ``blockElementStatementList`` be ``xref:unflatten_blockElementStatementList[$unflatten_blockElementStatementList(blockElementStatement^{asterisk}^)]``.
+. Return ``blockElementStatementList``.
+
+xref:unflatten_blockElementStatementList[$unflatten_blockElementStatementList(blockElementStatement^{asterisk}^)]
+
+
+. Return ``xref:unflatten_blockElementStatementList'[$unflatten_blockElementStatementList'(+`EMPTY+,`` ``blockElementStatement^{asterisk}^)]``.
+
+xref:unflatten_blockElementStatementList'[$unflatten_blockElementStatementList'(blockElementStatementList, blockElementStatement^{asterisk}^)]
+
+
+. If ``blockElementStatement^{asterisk}^`` is an empty list:
+ .. Return ``blockElementStatementList``.
+. Else:
+ .. Let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``.
+ .. Return ``xref:unflatten_blockElementStatementList'[$unflatten_blockElementStatementList'(blockElementStatementList`` ``blockElementStatement~h~,`` ``blockElementStatement~t~^{asterisk}^)]``.
+
+xref:lift_blockStatementIR[$lift_blockStatementIR(annotationList +{+ blockElementStatementIR^{asterisk}^ +}+)]
+
+
+. Let ``blockElementStatement^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``blockElementStatement`` be ``xref:lift_blockElementStatementIR[$lift_blockElementStatementIR(blockElementStatementIR)]``.
+--
++
+for each ``blockElementStatementIR`` in ``blockElementStatementIR^{asterisk}^``
+. Let ``blockElementStatementList`` be ``xref:unflatten_blockElementStatementList[$unflatten_blockElementStatementList(blockElementStatement^{asterisk}^)]``.
+. Return ``annotationList`` ``+{+`` ``blockElementStatementList`` ``+}+``.
+
+xref:lift_conditionalStatementIR[$lift_conditionalStatementIR(conditionalStatementIR)]
+
+
+. If let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~`` be ``conditionalStatementIR``:
+ .. Let ``expression~cond~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~cond~)]``.
+ .. Let ``statement~then~`` be ``xref:lift_statementIR[$lift_statementIR(statementIR~then~)]``.
+ .. Return ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``statement~then~``.
+. Else:
+ .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``statementIR~then~`` ``+ELSE+`` ``statementIR~else~`` be ``conditionalStatementIR``.
+ .. Let ``expression~cond~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~cond~)]``.
+ .. Let ``statement~then~`` be ``xref:lift_statementIR[$lift_statementIR(statementIR~then~)]``.
+ .. Let ``statement~else~`` be ``xref:lift_statementIR[$lift_statementIR(statementIR~else~)]``.
+ .. Return ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``statement~then~`` ``+ELSE+`` ``statement~else~``.
+
+xref:lift_switchLabelIR[$lift_switchLabelIR(switchLabelIR)]
+
+
+. If ``switchLabelIR`` is ``+DEFAULT+``:
+ .. Return ``+DEFAULT+``.
+. Else:
+ .. Let ``typedExpressionIR`` be ``switchLabelIR``.
+ .. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+ .. Let ``expressionNonBrace`` be xref:expression_as_expressionNonBrace[the non-brace expression corresponding to ``expression``].
+ .. Return ``expressionNonBrace``.
+
+xref:lift_switchCaseIR[$lift_switchCaseIR(switchCaseIR)]
+
+
+. If let ``switchLabelIR`` ``+:+`` ``blockStatementIR`` be ``switchCaseIR``:
+ .. Let ``switchLabel`` be ``xref:lift_switchLabelIR[$lift_switchLabelIR(switchLabelIR)]``.
+ .. Let ``blockStatement`` be ``xref:lift_blockStatementIR[$lift_blockStatementIR(blockStatementIR)]``.
+ .. Return ``switchLabel`` ``+:+`` ``blockStatement``.
+. Else:
+ .. Let ``switchLabelIR`` ``+:+`` be ``switchCaseIR``.
+ .. Let ``switchLabel`` be ``xref:lift_switchLabelIR[$lift_switchLabelIR(switchLabelIR)]``.
+ .. Return ``switchLabel`` ``+:+``.
+
+xref:lift_switchCaseListIR[$lift_switchCaseListIR(switchCaseIR^{asterisk}^)]
+
+
+. Let ``switchCase^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``switchCase`` be ``xref:lift_switchCaseIR[$lift_switchCaseIR(switchCaseIR)]``.
+--
++
+for each ``switchCaseIR`` in ``switchCaseIR^{asterisk}^``
+. Let ``switchCaseList`` be ``xref:unflatten_switchCaseList[$unflatten_switchCaseList(switchCase^{asterisk}^)]``.
+. Return ``switchCaseList``.
+
+xref:unflatten_switchCaseList[$unflatten_switchCaseList(switchCase^{asterisk}^)]
+
+
+. Return ``xref:unflatten_switchCaseList'[$unflatten_switchCaseList'(+`EMPTY+,`` ``switchCase^{asterisk}^)]``.
+
+xref:unflatten_switchCaseList'[$unflatten_switchCaseList'(switchCaseList, switchCase^{asterisk}^)]
+
+
+. If ``switchCase^{asterisk}^`` is an empty list:
+ .. Return ``switchCaseList``.
+. Else:
+ .. Let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``.
+ .. Return ``xref:unflatten_switchCaseList'[$unflatten_switchCaseList'(switchCaseList`` ``switchCase~h~,`` ``switchCase~t~^{asterisk}^)]``.
+
+xref:lift_switchStatementIR[$lift_switchStatementIR(+SWITCH+ +(+ typedExpressionIR +)+ +{+ switchCaseIR^{asterisk}^ +}+)]
+
+
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Let ``switchCaseList`` be ``xref:lift_switchCaseListIR[$lift_switchCaseListIR(switchCaseIR^{asterisk}^)]``.
+. Return ``+SWITCH+`` ``+(+`` ``expression`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+``.
+
+xref:lift_breakStatementIR[$lift_breakStatementIR(breakStatement)]
+
+
+. Return ``+BREAK+`` ``+;+``.
+
+xref:lift_continueStatementIR[$lift_continueStatementIR(continueStatement)]
+
+
+. Return ``+CONTINUE+`` ``+;+``.
+
+xref:lift_functionPrototypeIR[$lift_functionPrototypeIR(typeIR nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+)]
+
+
+. Let ``typeOrVoid`` be ``xref:lift_typeIR_as_typeOrVoid[$lift_typeIR_as_typeOrVoid(typeIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Return ``typeOrVoid`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+``.
+
+xref:lift_functionDeclarationIR[$lift_functionDeclarationIR(annotationList functionPrototypeIR blockStatementIR)]
+
+
+. Let ``functionPrototype`` be ``xref:lift_functionPrototypeIR[$lift_functionPrototypeIR(functionPrototypeIR)]``.
+. Let ``blockStatement`` be ``xref:lift_blockStatementIR[$lift_blockStatementIR(blockStatementIR)]``.
+. Return ``annotationList`` ``functionPrototype`` ``blockStatement``.
+
+xref:lift_actionDeclarationIR[$lift_actionDeclarationIR(annotationList +ACTION+ nameIR +(+ parameterIR^{asterisk}^ +)+ blockStatementIR)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Let ``blockStatement`` be ``xref:lift_blockStatementIR[$lift_blockStatementIR(blockStatementIR)]``.
+. Return ``annotationList`` ``+ACTION+`` ``name`` ``+(+`` ``parameterList`` ``+)+`` ``blockStatement``.
+
+xref:lift_objectDeclarationIR[$lift_objectDeclarationIR(objectDeclarationIR)]
+
+
+. If let ``functionDeclarationIR`` be ``objectDeclarationIR``:
+ .. Let ``functionDeclaration`` be ``xref:lift_functionDeclarationIR[$lift_functionDeclarationIR(functionDeclarationIR)]``.
+ .. Return ``functionDeclaration``.
+. Else:
+ .. Let ``instantiationIR`` be ``objectDeclarationIR``.
+ .. Let ``instantiation`` be ``xref:lift_instantiationIR[$lift_instantiationIR(instantiationIR)]``.
+ .. Return ``instantiation``.
+
+xref:lift_objectDeclarationListIR[$lift_objectDeclarationListIR(objectDeclarationIR^{asterisk}^)]
+
+
+. Let ``objectDeclaration^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``objectDeclaration`` be ``xref:lift_objectDeclarationIR[$lift_objectDeclarationIR(objectDeclarationIR)]``.
+--
++
+for each ``objectDeclarationIR`` in ``objectDeclarationIR^{asterisk}^``
+. Let ``objectDeclarationList`` be ``xref:unflatten_objectDeclarationList[$unflatten_objectDeclarationList(objectDeclaration^{asterisk}^)]``.
+. Return ``objectDeclarationList``.
+
+xref:lift_instantiationIR[$lift_instantiationIR(annotationList typeIR constructorTargetIR +(+ argumentIR^{asterisk}^ +)+ nameIR objectInitializerOptIR +;+)]
+
+
+. Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.
+. If ``objectInitializerIR^?^`` is none:
+ .. Let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` be ``constructorTargetIR``.
+ .. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Let ``type`` be ``prefixedTypeName``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Let ``name`` be ``nonTypeName``.
+  ... Return ``annotationList`` ``type`` ``+(+`` ``argumentList`` ``+)+`` ``name`` ``+;+``.
+ .. If the length of ``typeArgumentIR^{asterisk}^`` is greater than ``0``:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
+  ... Let ``type`` be ``prefixedTypeName`` ``+<+`` ``typeArgumentList`` ``+>+``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Let ``name`` be ``nonTypeName``.
+  ... Return ``annotationList`` ``type`` ``+(+`` ``argumentList`` ``+)+`` ``name`` ``+;+``.
+. If let ``+=+`` ``+{+`` ``objectDeclarationIR^{asterisk}^`` ``+}+`` be ``objectInitializerOptIR``:
+ .. Let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` be ``constructorTargetIR``.
+ .. If ``typeArgumentIR^{asterisk}^`` is an empty list:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Let ``type`` be ``prefixedTypeName``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Let ``name`` be ``nonTypeName``.
+  ... Let ``objectDeclarationList`` be ``xref:lift_objectDeclarationListIR[$lift_objectDeclarationListIR(objectDeclarationIR^{asterisk}^)]``.
+  ... Return ``annotationList`` ``type`` ``+(+`` ``argumentList`` ``+)+`` ``name`` ``+=+`` ``+{+`` ``objectDeclarationList`` ``+}+`` ``+;+``.
+ .. If the length of ``typeArgumentIR^{asterisk}^`` is greater than ``0``:
+  ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
+  ... Check that ``typeArgumentIR^{asterisk}^`` is not equal to ``·``.
+  ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
+  ... Let ``type`` be ``prefixedTypeName`` ``+<+`` ``typeArgumentList`` ``+>+``.
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+  ... Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+  ... Let ``name`` be ``nonTypeName``.
+  ... Let ``objectDeclarationList`` be ``xref:lift_objectDeclarationListIR[$lift_objectDeclarationListIR(objectDeclarationIR^{asterisk}^)]``.
+  ... Return ``annotationList`` ``type`` ``+(+`` ``argumentList`` ``+)+`` ``name`` ``+=+`` ``+{+`` ``objectDeclarationList`` ``+}+`` ``+;+``.
+
+xref:unflatten_objectDeclarationList[$unflatten_objectDeclarationList(objectDeclaration^{asterisk}^)]
+
+
+. Return ``xref:unflatten_objectDeclarationList'[$unflatten_objectDeclarationList'(+`EMPTY+,`` ``objectDeclaration^{asterisk}^)]``.
+
+xref:unflatten_objectDeclarationList'[$unflatten_objectDeclarationList'(objectDeclarationList, objectDeclaration^{asterisk}^)]
+
+
+. If ``objectDeclaration^{asterisk}^`` is an empty list:
+ .. Return ``objectDeclarationList``.
+. Else:
+ .. Let ``objectDeclaration~h~`` ``{two-colons}`` ``objectDeclaration~t~^{asterisk}^`` be ``objectDeclaration^{asterisk}^``.
+ .. Return ``xref:unflatten_objectDeclarationList'[$unflatten_objectDeclarationList'(objectDeclarationList`` ``objectDeclaration~h~,`` ``objectDeclaration~t~^{asterisk}^)]``.
+
+xref:lift_errorDeclarationIR[$lift_errorDeclarationIR(+ERROR+ +{+ nameIR^{asterisk}^ +}+)]
+
+
+. Let ``nameList`` be ``xref:lift_nameListIR_as_nonTypeNameList[$lift_nameListIR_as_nonTypeNameList(nameIR^{asterisk}^)]``.
+. Return ``+ERROR+`` ``+{+`` ``nameList`` ``+}+``.
+
+xref:lift_matchKindDeclarationIR[$lift_matchKindDeclarationIR(+MATCH_KIND+ +{+ nameIR^{asterisk}^ +}+)]
+
+
+. Let ``nameList`` be ``xref:lift_nameListIR_as_nonTypeNameList[$lift_nameListIR_as_nonTypeNameList(nameIR^{asterisk}^)]``.
+. Return ``+MATCH_KIND+`` ``+{+`` ``nameList`` ``+`EMPTY+`` ``+}+``.
+
+xref:lift_enumTypeDeclarationIR[$lift_enumTypeDeclarationIR(enumTypeDeclarationIR)]
+
+
+. If let ``annotationList`` ``+ENUM+`` ``nameIR`` ``+{+`` ``nameIR~field~^{asterisk}^`` ``+}+`` be ``enumTypeDeclarationIR``:
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+ .. Let ``name`` be ``typeName``.
+ .. Let ``nameList~field~`` be ``xref:lift_nameListIR_as_nonTypeNameList[$lift_nameListIR_as_nonTypeNameList(nameIR~field~^{asterisk}^)]``.
+ .. Return ``annotationList`` ``+ENUM+`` ``name`` ``+{+`` ``nameList~field~`` ``+`EMPTY+`` ``+}+``.
+. Else:
+ .. Let ``annotationList`` ``+ENUM+`` ``typeIR`` ``nameIR`` ``+{+`` ``namedValueListIR`` ``+}+`` be ``enumTypeDeclarationIR``.
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+ .. Let ``name`` be ``typeName``.
+ .. Let ``namedExpressionList`` be ``xref:lift_namedValueListIR[$lift_namedValueListIR(namedValueListIR)]``.
+ .. Return ``annotationList`` ``+ENUM+`` ``type`` ``name`` ``+{+`` ``namedExpressionList`` ``+`EMPTY+`` ``+}+``.
+
+xref:lift_typeFieldIR[$lift_typeFieldIR(annotationList typeIR nameIR +;+)]
+
+
+. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Return ``annotationList`` ``type`` ``name`` ``+;+``.
+
+xref:lift_typeFieldListIR[$lift_typeFieldListIR(typeFieldIR^{asterisk}^)]
+
+
+. Let ``typeField^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``typeField`` be ``xref:lift_typeFieldIR[$lift_typeFieldIR(typeFieldIR)]``.
+--
++
+for each ``typeFieldIR`` in ``typeFieldIR^{asterisk}^``
+. Let ``typeFieldList`` be ``xref:unflatten_typeFieldList[$unflatten_typeFieldList(typeField^{asterisk}^)]``.
+. Return ``typeFieldList``.
+
+xref:unflatten_typeFieldList[$unflatten_typeFieldList(typeField^{asterisk}^)]
+
+
+. Return ``xref:unflatten_typeFieldList'[$unflatten_typeFieldList'(+`EMPTY+,`` ``typeField^{asterisk}^)]``.
+
+xref:unflatten_typeFieldList'[$unflatten_typeFieldList'(typeFieldList, typeField^{asterisk}^)]
+
+
+. If ``typeField^{asterisk}^`` is an empty list:
+ .. Return ``typeFieldList``.
+. Else:
+ .. Let ``typeField~h~`` ``{two-colons}`` ``typeField~t~^{asterisk}^`` be ``typeField^{asterisk}^``.
+ .. Return ``xref:unflatten_typeFieldList'[$unflatten_typeFieldList'(typeFieldList`` ``typeField~h~,`` ``typeField~t~^{asterisk}^)]``.
+
+xref:lift_structTypeDeclarationIR[$lift_structTypeDeclarationIR(annotationList +STRUCT+ nameIR +<+ typeParameterIR^{asterisk}^ +>+ +{+ typeFieldIR^{asterisk}^ +}+)]
+
+
+. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+. Let ``name`` be ``typeName``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``typeFieldList`` be ``xref:lift_typeFieldListIR[$lift_typeFieldListIR(typeFieldIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+STRUCT+`` ``name`` ``typeParameterListOpt`` ``+{+`` ``typeFieldList`` ``+}+``.
+
+xref:lift_headerTypeDeclarationIR[$lift_headerTypeDeclarationIR(annotationList +HEADER+ nameIR +<+ typeParameterIR^{asterisk}^ +>+ +{+ typeFieldIR^{asterisk}^ +}+)]
+
+
+. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+. Let ``name`` be ``typeName``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``typeFieldList`` be ``xref:lift_typeFieldListIR[$lift_typeFieldListIR(typeFieldIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+HEADER+`` ``name`` ``typeParameterListOpt`` ``+{+`` ``typeFieldList`` ``+}+``.
+
+xref:lift_headerUnionTypeDeclarationIR[$lift_headerUnionTypeDeclarationIR(annotationList +HEADER_UNION+ nameIR +<+ typeParameterIR^{asterisk}^ +>+ +{+ typeFieldIR^{asterisk}^ +}+)]
+
+
+. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+. Let ``name`` be ``typeName``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``typeFieldList`` be ``xref:lift_typeFieldListIR[$lift_typeFieldListIR(typeFieldIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+HEADER_UNION+`` ``name`` ``typeParameterListOpt`` ``+{+`` ``typeFieldList`` ``+}+``.
+
+xref:lift_derivedTypeDeclarationIR[$lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)]
+
+
+. If let ``enumTypeDeclarationIR`` be ``derivedTypeDeclarationIR``:
+ .. Let ``enumTypeDeclaration`` be ``xref:lift_enumTypeDeclarationIR[$lift_enumTypeDeclarationIR(enumTypeDeclarationIR)]``.
+ .. Return ``enumTypeDeclaration``.
+. Else if let ``structTypeDeclarationIR`` be ``derivedTypeDeclarationIR``:
+ .. Let ``structTypeDeclaration`` be ``xref:lift_structTypeDeclarationIR[$lift_structTypeDeclarationIR(structTypeDeclarationIR)]``.
+ .. Return ``structTypeDeclaration``.
+. Else if let ``headerTypeDeclarationIR`` be ``derivedTypeDeclarationIR``:
+ .. Let ``headerTypeDeclaration`` be ``xref:lift_headerTypeDeclarationIR[$lift_headerTypeDeclarationIR(headerTypeDeclarationIR)]``.
+ .. Return ``headerTypeDeclaration``.
+. Else:
+ .. Let ``headerUnionTypeDeclarationIR`` be ``derivedTypeDeclarationIR``.
+ .. Let ``headerUnionTypeDeclaration`` be ``xref:lift_headerUnionTypeDeclarationIR[$lift_headerUnionTypeDeclarationIR(headerUnionTypeDeclarationIR)]``.
+ .. Return ``headerUnionTypeDeclaration``.
+
+xref:lift_typedefIR[$lift_typedefIR(typedefIR)]
+
+
+. If let ``typeIR`` be ``typedefIR``:
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Return ``type``.
+. Else:
+ .. Let ``derivedTypeDeclarationIR`` be ``typedefIR``.
+ .. Let ``derivedTypeDeclaration`` be ``xref:lift_derivedTypeDeclarationIR[$lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)]``.
+ .. Return ``derivedTypeDeclaration``.
+
+xref:lift_typedefDeclarationIR[$lift_typedefDeclarationIR(typedefDeclarationIR)]
+
+
+. If let ``annotationList`` ``+TYPEDEF+`` ``typedefIR`` ``nameIR`` ``+;+`` be ``typedefDeclarationIR``:
+ .. If let ``typeIR`` be ``typedefIR``:
+  ... Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+  ... Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+  ... Let ``name`` be ``typeName``.
+  ... Return ``annotationList`` ``+TYPEDEF+`` ``type`` ``name`` ``+;+``.
+ .. Else:
+  ... Let ``derivedTypeDeclarationIR`` be ``typedefIR``.
+  ... Let ``derivedTypeDeclaration`` be ``xref:lift_derivedTypeDeclarationIR[$lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)]``.
+  ... Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+  ... Let ``name`` be ``typeName``.
+  ... Return ``annotationList`` ``+TYPEDEF+`` ``derivedTypeDeclaration`` ``name`` ``+;+``.
+. Else:
+ .. Let ``annotationList`` ``+TYPE+`` ``typeIR`` ``nameIR`` ``+;+`` be ``typedefDeclarationIR``.
+ .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+ .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(nameIR)]``.
+ .. Let ``name`` be ``typeName``.
+ .. Return ``annotationList`` ``+TYPE+`` ``type`` ``name`` ``+;+``.
+
+xref:lift_externFunctionDeclarationIR[$lift_externFunctionDeclarationIR(annotationList +EXTERN+ functionPrototypeIR +;+)]
+
+
+. Let ``functionPrototype`` be ``xref:lift_functionPrototypeIR[$lift_functionPrototypeIR(functionPrototypeIR)]``.
+. Return ``annotationList`` ``+EXTERN+`` ``functionPrototype`` ``+;+``.
+
+xref:lift_externConstructorPrototypeIR[$lift_externConstructorPrototypeIR(annotationList nameIR +<+ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +;+)]
+
+
+. Let ``typeIdentifier`` be ``xref:lift_nameIR_as_typeIdentifier[$lift_nameIR_as_typeIdentifier(nameIR)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Return ``annotationList`` ``typeIdentifier`` ``+(+`` ``parameterList`` ``+)+`` ``+;+``.
+
+xref:lift_externMethodPrototypeIR[$lift_externMethodPrototypeIR(externMethodPrototypeIR)]
+
+
+. If let ``annotationList`` ``functionPrototypeIR`` ``+;+`` be ``externMethodPrototypeIR``:
+ .. Let ``functionPrototype`` be ``xref:lift_functionPrototypeIR[$lift_functionPrototypeIR(functionPrototypeIR)]``.
+ .. Return ``annotationList`` ``functionPrototype`` ``+;+``.
+. Else:
+ .. Let ``annotationList`` ``+ABSTRACT+`` ``functionPrototypeIR`` ``+;+`` be ``externMethodPrototypeIR``.
+ .. Let ``functionPrototype`` be ``xref:lift_functionPrototypeIR[$lift_functionPrototypeIR(functionPrototypeIR)]``.
+ .. Return ``annotationList`` ``+ABSTRACT+`` ``functionPrototype`` ``+;+``.
+
+xref:unflatten_externConstructorOrMethodPrototypeList[$unflatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototype^{asterisk}^)]
+
+
+. Return ``xref:unflatten_externConstructorOrMethodPrototypeList'[$unflatten_externConstructorOrMethodPrototypeList'(+`EMPTY+,`` ``externConstructorOrMethodPrototype^{asterisk}^)]``.
+
+xref:unflatten_externConstructorOrMethodPrototypeList'[$unflatten_externConstructorOrMethodPrototypeList'(externConstructorOrMethodPrototypeList, externConstructorOrMethodPrototype^{asterisk}^)]
+
+
+. If ``externConstructorOrMethodPrototype^{asterisk}^`` is an empty list:
+ .. Return ``externConstructorOrMethodPrototypeList``.
+. Else:
+ .. Let ``externConstructorOrMethodPrototype~h~`` ``{two-colons}`` ``externConstructorOrMethodPrototype~t~^{asterisk}^`` be ``externConstructorOrMethodPrototype^{asterisk}^``.
+ .. Return ``xref:unflatten_externConstructorOrMethodPrototypeList'[$unflatten_externConstructorOrMethodPrototypeList'(externConstructorOrMethodPrototypeList`` ``externConstructorOrMethodPrototype~h~,`` ``externConstructorOrMethodPrototype~t~^{asterisk}^)]``.
+
+xref:lift_externObjectDeclarationIR[$lift_externObjectDeclarationIR(annotationList +EXTERN+ nameIR +<+ typeParameterIR^{asterisk}^ +,+ +>+ +{+ externConstructorPrototypeIR^{asterisk}^ externMethodPrototypeIR^{asterisk}^ +}+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``externConstructorPrototype^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``externConstructorPrototype`` be ``xref:lift_externConstructorPrototypeIR[$lift_externConstructorPrototypeIR(externConstructorPrototypeIR)]``.
+--
++
+for each ``externConstructorPrototypeIR`` in ``externConstructorPrototypeIR^{asterisk}^``
+. Let ``externMethodPrototype^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``externMethodPrototype`` be ``xref:lift_externMethodPrototypeIR[$lift_externMethodPrototypeIR(externMethodPrototypeIR)]``.
+--
++
+for each ``externMethodPrototypeIR`` in ``externMethodPrototypeIR^{asterisk}^``
+. Let ``externConstructorOrMethodPrototype^{asterisk}^`` be ``externConstructorPrototype^{asterisk}^`` concatenated with ``externMethodPrototype^{asterisk}^``.
+. Let ``externConstructorOrMethodPrototypeList`` be ``xref:unflatten_externConstructorOrMethodPrototypeList[$unflatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototype^{asterisk}^)]``.
+. Return ``annotationList`` ``+EXTERN+`` ``nonTypeName`` ``typeParameterListOpt`` ``+{+`` ``externConstructorOrMethodPrototypeList`` ``+}+``.
+
+xref:lift_externDeclarationIR[$lift_externDeclarationIR(externDeclarationIR)]
+
+
+. If let ``externFunctionDeclarationIR`` be ``externDeclarationIR``:
+ .. Let ``externFunctionDeclaration`` be ``xref:lift_externFunctionDeclarationIR[$lift_externFunctionDeclarationIR(externFunctionDeclarationIR)]``.
+ .. Return ``externFunctionDeclaration``.
+. Else:
+ .. Let ``externObjectDeclarationIR`` be ``externDeclarationIR``.
+ .. Let ``externObjectDeclaration`` be ``xref:lift_externObjectDeclarationIR[$lift_externObjectDeclarationIR(externObjectDeclarationIR)]``.
+ .. Return ``externObjectDeclaration``.
+
+xref:lift_selectCaseIR[$lift_selectCaseIR(keysetExpressionIR +:+ nameIR +;+)]
+
+
+. Let ``keysetExpression`` be ``xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Return ``keysetExpression`` ``+:+`` ``name`` ``+;+``.
+
+xref:lift_selectCaseListIR[$lift_selectCaseListIR(selectCaseIR^{asterisk}^)]
+
+
+. Let ``selectCase^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``selectCase`` be ``xref:lift_selectCaseIR[$lift_selectCaseIR(selectCaseIR)]``.
+--
++
+for each ``selectCaseIR`` in ``selectCaseIR^{asterisk}^``
+. Let ``selectCaseList`` be ``xref:unflatten_selectCaseList[$unflatten_selectCaseList(selectCase^{asterisk}^)]``.
+. Return ``selectCaseList``.
+
+xref:unflatten_selectCaseList[$unflatten_selectCaseList(selectCase^{asterisk}^)]
+
+
+. Return ``xref:unflatten_selectCaseList'[$unflatten_selectCaseList'(+`EMPTY+,`` ``selectCase^{asterisk}^)]``.
+
+xref:unflatten_selectCaseList'[$unflatten_selectCaseList'(selectCaseList, selectCase^{asterisk}^)]
+
+
+. If ``selectCase^{asterisk}^`` is an empty list:
+ .. Return ``selectCaseList``.
+. Else:
+ .. Let ``selectCase~h~`` ``{two-colons}`` ``selectCase~t~^{asterisk}^`` be ``selectCase^{asterisk}^``.
+ .. Return ``xref:unflatten_selectCaseList'[$unflatten_selectCaseList'(selectCaseList`` ``selectCase~h~,`` ``selectCase~t~^{asterisk}^)]``.
+
+xref:lift_selectExpressionIR[$lift_selectExpressionIR(+SELECT+ +(+ typedExpressionListIR +)+ +{+ selectCaseIR^{asterisk}^ +}+)]
+
+
+. Let ``expressionList`` be ``xref:lift_typedExpressionListIR[$lift_typedExpressionListIR(typedExpressionListIR)]``.
+. Let ``selectCaseList`` be ``xref:lift_selectCaseListIR[$lift_selectCaseListIR(selectCaseIR^{asterisk}^)]``.
+. Return ``+SELECT+`` ``+(+`` ``expressionList`` ``+)+`` ``+{+`` ``selectCaseList`` ``+}+``.
+
+xref:lift_stateExpressionIR[$lift_stateExpressionIR(stateExpressionIR)]
+
+
+. If let ``nameIR`` ``+;+`` be ``stateExpressionIR``:
+ .. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+ .. Let ``name`` be ``nonTypeName``.
+ .. Return ``name`` ``+;+``.
+. Else:
+ .. Let ``selectExpressionIR`` be ``stateExpressionIR``.
+ .. Let ``selectExpression`` be ``xref:lift_selectExpressionIR[$lift_selectExpressionIR(selectExpressionIR)]``.
+ .. Return ``selectExpression``.
+
+xref:lift_transitionStatementIR[$lift_transitionStatementIR(+TRANSITION+ stateExpressionIR)]
+
+
+. Let ``stateExpression`` be ``xref:lift_stateExpressionIR[$lift_stateExpressionIR(stateExpressionIR)]``.
+. Return ``+TRANSITION+`` ``stateExpression``.
+
+xref:lift_typeIR_as_valueSetType[$lift_typeIR_as_valueSetType(typeIR)]
+
+
+. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
+. If let ``baseType`` be ``type``:
+ .. Return ``baseType``.
+. Else if let ``tupleType`` be ``type``:
+ .. Return ``tupleType``.
+. Else if let ``prefixedTypeName`` be ``type``:
+ .. Return ``prefixedTypeName``.
+
+xref:lift_valueSetDeclarationIR[$lift_valueSetDeclarationIR(annotationList +VALUE_SET+ +<+ typeIR +>+ +(+ typedExpressionIR +)+ nameIR +;+)]
+
+
+. Let ``valueSetType`` be ``xref:lift_typeIR_as_valueSetType[$lift_typeIR_as_valueSetType(typeIR)]``.
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Return ``annotationList`` ``+VALUE_SET+`` ``+<+`` ``valueSetType`` ``+>+`` ``+(+`` ``expression`` ``+)+`` ``name`` ``+;+``.
+
+xref:lift_parserTypeDeclarationIR[$lift_parserTypeDeclarationIR(annotationList +PARSER+ nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +;+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+PARSER+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``+;+``.
+
+xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]
+
+
+. If let ``constantDeclarationIR`` be ``parserStatementIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``variableDeclarationIR`` be ``parserStatementIR``:
+ .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
+ .. Return ``variableDeclaration``.
+. Else if let ``emptyStatementIR`` be ``parserStatementIR``:
+ .. Let ``emptyStatement`` be ``xref:lift_emptyStatementIR[$lift_emptyStatementIR(emptyStatementIR)]``.
+ .. Return ``emptyStatement``.
+. Else if let ``assignmentStatementIR`` be ``parserStatementIR``:
+ .. Let ``assignmentStatement`` be ``xref:lift_assignmentStatementIR[$lift_assignmentStatementIR(assignmentStatementIR)]``.
+ .. Return ``assignmentStatement``.
+. Else if let ``callStatementIR`` be ``parserStatementIR``:
+ .. Let ``callStatement`` be ``xref:lift_callStatementIR[$lift_callStatementIR(callStatementIR)]``.
+ .. Return ``callStatement``.
+. Else if let ``directApplicationStatementIR`` be ``parserStatementIR``:
+ .. Let ``directApplicationStatement`` be ``xref:lift_directApplicationStatementIR[$lift_directApplicationStatementIR(directApplicationStatementIR)]``.
+ .. Return ``directApplicationStatement``.
+. Else if let ``parserBlockStatementIR`` be ``parserStatementIR``:
+ .. Let ``parserBlockStatement`` be ``xref:lift_parserBlockStatementIR[$lift_parserBlockStatementIR(parserBlockStatementIR)]``.
+ .. Return ``parserBlockStatement``.
+. Else:
+ .. Let ``parserConditionalStatementIR`` be ``parserStatementIR``.
+ .. Let ``parserConditionalStatement`` be ``xref:lift_parserConditionalStatementIR[$lift_parserConditionalStatementIR(parserConditionalStatementIR)]``.
+ .. Return ``parserConditionalStatement``.
+
+xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]
+
+
+. Let ``parserStatement^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``parserStatement`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]``.
+--
++
+for each ``parserStatementIR`` in ``parserStatementIR^{asterisk}^``
+. Let ``parserStatementList`` be ``xref:unflatten_parserStatementList[$unflatten_parserStatementList(parserStatement^{asterisk}^)]``.
+. Return ``parserStatementList``.
+
+xref:lift_parserBlockStatementIR[$lift_parserBlockStatementIR(annotationList +{+ parserStatementIR^{asterisk}^ +}+)]
+
+
+. Let ``parserStatementList`` be ``xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+{+`` ``parserStatementList`` ``+}+``.
+
+xref:lift_parserConditionalStatementIR[$lift_parserConditionalStatementIR(parserConditionalStatementIR)]
+
+
+. If let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` be ``parserConditionalStatementIR``:
+ .. Let ``expression~cond~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~cond~)]``.
+ .. Let ``parserStatement~then~`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR~then~)]``.
+ .. Return ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``parserStatement~then~``.
+. Else:
+ .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
+ .. Let ``expression~cond~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~cond~)]``.
+ .. Let ``parserStatement~then~`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR~then~)]``.
+ .. Let ``parserStatement~else~`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR~else~)]``.
+ .. Return ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``parserStatement~then~`` ``+ELSE+`` ``parserStatement~else~``.
+
+xref:unflatten_parserStatementList[$unflatten_parserStatementList(parserStatement^{asterisk}^)]
+
+
+. Return ``xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(+`EMPTY+,`` ``parserStatement^{asterisk}^)]``.
+
+xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(parserStatementList, parserStatement^{asterisk}^)]
+
+
+. If ``parserStatement^{asterisk}^`` is an empty list:
+ .. Return ``parserStatementList``.
+. Else:
+ .. Let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``.
+ .. Return ``xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(parserStatementList`` ``parserStatement~h~,`` ``parserStatement~t~^{asterisk}^)]``.
+
+xref:lift_parserStateIR[$lift_parserStateIR(annotationList +STATE+ nameIR +{+ parserStatementIR^{asterisk}^ transitionStatementIR +}+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``parserStatementList`` be ``xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]``.
+. Let ``transitionStatement`` be ``xref:lift_transitionStatementIR[$lift_transitionStatementIR(transitionStatementIR)]``.
+. Return ``annotationList`` ``+STATE+`` ``name`` ``+{+`` ``parserStatementList`` ``transitionStatement`` ``+}+``.
+
+xref:lift_parserStateListIR[$lift_parserStateListIR(parserStateIR^{asterisk}^)]
+
+
+. Let ``parserState^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``parserState`` be ``xref:lift_parserStateIR[$lift_parserStateIR(parserStateIR)]``.
+--
++
+for each ``parserStateIR`` in ``parserStateIR^{asterisk}^``
+. Let ``parserStateList`` be ``xref:unflatten_parserStateList[$unflatten_parserStateList(parserState^{asterisk}^)]``.
+. Return ``parserStateList``.
+
+xref:unflatten_parserStateList[$unflatten_parserStateList(parserState^{asterisk}^)]
+
+
+. Check that ``parserState^{asterisk}^`` is a non-empty list.
+. Let ``parserState~h~`` ``{two-colons}`` ``parserState~t~^{asterisk}^`` be ``parserState^{asterisk}^``.
+. Return ``xref:unflatten_parserStateList'[$unflatten_parserStateList'(parserState~h~,`` ``parserState~t~^{asterisk}^)]``.
+
+xref:unflatten_parserStateList'[$unflatten_parserStateList'(parserStateList, parserState^{asterisk}^)]
+
+
+. If ``parserState^{asterisk}^`` is an empty list:
+ .. Return ``parserStateList``.
+. Else:
+ .. Let ``parserState~h~`` ``{two-colons}`` ``parserState~t~^{asterisk}^`` be ``parserState^{asterisk}^``.
+ .. Return ``xref:unflatten_parserStateList'[$unflatten_parserStateList'(parserStateList`` ``parserState~h~,`` ``parserState~t~^{asterisk}^)]``.
+
+xref:lift_parserLocalDeclarationIR[$lift_parserLocalDeclarationIR(parserLocalDeclarationIR)]
+
+
+. If let ``constantDeclarationIR`` be ``parserLocalDeclarationIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``instantiationIR`` be ``parserLocalDeclarationIR``:
+ .. Let ``instantiation`` be ``xref:lift_instantiationIR[$lift_instantiationIR(instantiationIR)]``.
+ .. Return ``instantiation``.
+. Else if let ``variableDeclarationIR`` be ``parserLocalDeclarationIR``:
+ .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
+ .. Return ``variableDeclaration``.
+. Else:
+ .. Let ``valueSetDeclarationIR`` be ``parserLocalDeclarationIR``.
+ .. Let ``valueSetDeclaration`` be ``xref:lift_valueSetDeclarationIR[$lift_valueSetDeclarationIR(valueSetDeclarationIR)]``.
+ .. Return ``valueSetDeclaration``.
+
+xref:lift_parserLocalDeclarationListIR[$lift_parserLocalDeclarationListIR(parserLocalDeclarationIR^{asterisk}^)]
+
+
+. Let ``parserLocalDeclaration^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``parserLocalDeclaration`` be ``xref:lift_parserLocalDeclarationIR[$lift_parserLocalDeclarationIR(parserLocalDeclarationIR)]``.
+--
++
+for each ``parserLocalDeclarationIR`` in ``parserLocalDeclarationIR^{asterisk}^``
+. Let ``parserLocalDeclarationList`` be ``xref:unflatten_parserLocalDeclarationList[$unflatten_parserLocalDeclarationList(parserLocalDeclaration^{asterisk}^)]``.
+. Return ``parserLocalDeclarationList``.
+
+xref:unflatten_parserLocalDeclarationList[$unflatten_parserLocalDeclarationList(parserLocalDeclaration^{asterisk}^)]
+
+
+. Return ``xref:unflatten_parserLocalDeclarationList'[$unflatten_parserLocalDeclarationList'(+`EMPTY+,`` ``parserLocalDeclaration^{asterisk}^)]``.
+
+xref:unflatten_parserLocalDeclarationList'[$unflatten_parserLocalDeclarationList'(parserLocalDeclarationList, parserLocalDeclaration^{asterisk}^)]
+
+
+. If ``parserLocalDeclaration^{asterisk}^`` is an empty list:
+ .. Return ``parserLocalDeclarationList``.
+. Else:
+ .. Let ``parserLocalDeclaration~h~`` ``{two-colons}`` ``parserLocalDeclaration~t~^{asterisk}^`` be ``parserLocalDeclaration^{asterisk}^``.
+ .. Return ``xref:unflatten_parserLocalDeclarationList'[$unflatten_parserLocalDeclarationList'(parserLocalDeclarationList`` ``parserLocalDeclaration~h~,`` ``parserLocalDeclaration~t~^{asterisk}^)]``.
+
+xref:lift_parserDeclarationIR[$lift_parserDeclarationIR(annotationList +PARSER+ nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +(+ constructorParameterIR^{asterisk}^ +)+ +{+ parserLocalDeclarationIR^{asterisk}^ parserStateIR^{asterisk}^ +}+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Let ``constructorParameterListOpt`` be ``xref:lift_constructorParameterListIR[$lift_constructorParameterListIR(constructorParameterIR^{asterisk}^)]``.
+. Let ``parserLocalDeclarationList`` be ``xref:lift_parserLocalDeclarationListIR[$lift_parserLocalDeclarationListIR(parserLocalDeclarationIR^{asterisk}^)]``.
+. Let ``parserStateList`` be ``xref:lift_parserStateListIR[$lift_parserStateListIR(parserStateIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+PARSER+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``constructorParameterListOpt`` ``+{+`` ``parserLocalDeclarationList`` ``parserStateList`` ``+}+``.
+
+xref:lift_constOptIR[$lift_constOptIR(constOptIR)]
+
+
+. Let ``constIR^?^`` be ``constOptIR``.
+. If ``constIR^?^`` is none:
+ .. Return ``+`EMPTY+``.
+. If ``constOptIR`` is defined:
+ .. Return ``+CONST+``.
+
+xref:lift_tableKeyIR[$lift_tableKeyIR(typedExpressionIR +#+ ++_++ +:+ nameIR annotationList +;+)]
+
+
+. Let ``expression`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR)]``.
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Return ``expression`` ``+:+`` ``name`` ``annotationList`` ``+;+``.
+
+xref:lift_tableKeyListIR[$lift_tableKeyListIR(tableKeyIR^{asterisk}^)]
+
+
+. Let ``tableKey^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``tableKey`` be ``xref:lift_tableKeyIR[$lift_tableKeyIR(tableKeyIR)]``.
+--
++
+for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``
+. Let ``tableKeyList`` be ``xref:unflatten_tableKeyList[$unflatten_tableKeyList(tableKey^{asterisk}^)]``.
+. Return ``tableKeyList``.
+
+xref:unflatten_tableKeyList[$unflatten_tableKeyList(tableKey^{asterisk}^)]
+
+
+. Return ``xref:unflatten_tableKeyList'[$unflatten_tableKeyList'(+`EMPTY+,`` ``tableKey^{asterisk}^)]``.
+
+xref:unflatten_tableKeyList'[$unflatten_tableKeyList'(tableKeyList, tableKey^{asterisk}^)]
+
+
+. If ``tableKey^{asterisk}^`` is an empty list:
+ .. Return ``tableKeyList``.
+. Else:
+ .. Let ``tableKey~h~`` ``{two-colons}`` ``tableKey~t~^{asterisk}^`` be ``tableKey^{asterisk}^``.
+ .. Return ``xref:unflatten_tableKeyList'[$unflatten_tableKeyList'(tableKeyList`` ``tableKey~h~,`` ``tableKey~t~^{asterisk}^)]``.
+
+xref:lift_tableActionReferenceIR[$lift_tableActionReferenceIR(prefixedNameIR ++_++ +(+ argumentIR^{asterisk}^ +)+)]
+
+
+. Let ``prefixedNonTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedNonTypeName[$lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)]``.
+. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+. Return ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+``.
+
+xref:lift_tableActionReferenceIR_as_expression[$lift_tableActionReferenceIR_as_expression(prefixedNameIR ++_++ +(+ argumentIR^{asterisk}^ +)+)]
+
+
+. Let ``prefixedNonTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedNonTypeName[$lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)]``.
+. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
+. Return ``prefixedNonTypeName`` ``+(+`` ``argumentList`` ``+)+``.
+
+xref:lift_tableActionIR[$lift_tableActionIR(annotationList tableActionReferenceIR +#+ +(+ ++_++ +,+ ++_++ +)+ +;+)]
+
+
+. Let ``tableActionReference`` be ``xref:lift_tableActionReferenceIR[$lift_tableActionReferenceIR(tableActionReferenceIR)]``.
+. Return ``annotationList`` ``tableActionReference`` ``+;+``.
+
+xref:lift_tableActionListIR[$lift_tableActionListIR(tableActionIR^{asterisk}^)]
+
+
+. Let ``tableAction^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``tableAction`` be ``xref:lift_tableActionIR[$lift_tableActionIR(tableActionIR)]``.
+--
++
+for each ``tableActionIR`` in ``tableActionIR^{asterisk}^``
+. Let ``tableActionList`` be ``xref:unflatten_tableActionList[$unflatten_tableActionList(tableAction^{asterisk}^)]``.
+. Return ``tableActionList``.
+
+xref:unflatten_tableActionList[$unflatten_tableActionList(tableAction^{asterisk}^)]
+
+
+. Return ``xref:unflatten_tableActionList'[$unflatten_tableActionList'(+`EMPTY+,`` ``tableAction^{asterisk}^)]``.
+
+xref:unflatten_tableActionList'[$unflatten_tableActionList'(tableActionList, tableAction^{asterisk}^)]
+
+
+. If ``tableAction^{asterisk}^`` is an empty list:
+ .. Return ``tableActionList``.
+. Else:
+ .. Let ``tableAction~h~`` ``{two-colons}`` ``tableAction~t~^{asterisk}^`` be ``tableAction^{asterisk}^``.
+ .. Return ``xref:unflatten_tableActionList'[$unflatten_tableActionList'(tableActionList`` ``tableAction~h~,`` ``tableAction~t~^{asterisk}^)]``.
+
+xref:lift_tableEntryPriorityIR[$lift_tableEntryPriorityIR(+PRIORITY+ +=+ integerLiteral +:+)]
+
+
+. Return ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+``.
+
+xref:lift_tableEntryIR[$lift_tableEntryIR(constOptIR tableEntryPriorityOptIR keysetExpressionIR +:+ tableActionReferenceIR annotationList +;+)]
+
+
+. Let ``tableEntryPriorityIR^?^`` be ``tableEntryPriorityOptIR``.
+. If ``tableEntryPriorityIR^?^`` is none:
+ .. Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.
+ .. Let ``keysetExpression`` be ``xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]``.
+ .. Let ``tableActionReference`` be ``xref:lift_tableActionReferenceIR[$lift_tableActionReferenceIR(tableActionReferenceIR)]``.
+ .. Return ``constOpt`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+``.
+. If let ``tableEntryPriorityIR`` be ``tableEntryPriorityOptIR``:
+ .. Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.
+ .. Let ``tableEntryPriority`` be ``xref:lift_tableEntryPriorityIR[$lift_tableEntryPriorityIR(tableEntryPriorityIR)]``.
+ .. Let ``keysetExpression`` be ``xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]``.
+ .. Let ``tableActionReference`` be ``xref:lift_tableActionReferenceIR[$lift_tableActionReferenceIR(tableActionReferenceIR)]``.
+ .. Return ``constOpt`` ``tableEntryPriority`` ``keysetExpression`` ``+:+`` ``tableActionReference`` ``annotationList`` ``+;+``.
+
+xref:lift_tableEntryListIR[$lift_tableEntryListIR(tableEntryIR^{asterisk}^)]
+
+
+. Let ``tableEntry^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``tableEntry`` be ``xref:lift_tableEntryIR[$lift_tableEntryIR(tableEntryIR)]``.
+--
++
+for each ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``
+. Let ``tableEntryList`` be ``xref:unflatten_tableEntryList[$unflatten_tableEntryList(tableEntry^{asterisk}^)]``.
+. Return ``tableEntryList``.
+
+xref:unflatten_tableEntryList[$unflatten_tableEntryList(tableEntry^{asterisk}^)]
+
+
+. Return ``xref:unflatten_tableEntryList'[$unflatten_tableEntryList'(+`EMPTY+,`` ``tableEntry^{asterisk}^)]``.
+
+xref:unflatten_tableEntryList'[$unflatten_tableEntryList'(tableEntryList, tableEntry^{asterisk}^)]
+
+
+. If ``tableEntry^{asterisk}^`` is an empty list:
+ .. Return ``tableEntryList``.
+. Else:
+ .. Let ``tableEntry~h~`` ``{two-colons}`` ``tableEntry~t~^{asterisk}^`` be ``tableEntry^{asterisk}^``.
+ .. Return ``xref:unflatten_tableEntryList'[$unflatten_tableEntryList'(tableEntryList`` ``tableEntry~h~,`` ``tableEntry~t~^{asterisk}^)]``.
+
+xref:lift_tableCustomPropertyIR[$lift_tableCustomPropertyIR(tableCustomPropertyIR)]
+
+
+. Check that ``tableCustomPropertyIR`` matches pattern ``%`` ``%`` ``+CUSTOM+`` ``%`` ``%`` ``+;+``.
+. Let ``annotationList`` ``constOptIR`` ``+CUSTOM+`` ``nameIR`` ``initializerIR`` ``+;+`` be ``tableCustomPropertyIR``.
+. Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.
+. Let ``tableCustomName`` be ``xref:lift_nameIR_as_tableCustomName[$lift_nameIR_as_tableCustomName(nameIR)]``.
+. Let ``initializer`` be ``xref:lift_initializerIR[$lift_initializerIR(initializerIR)]``.
+. Return ``annotationList`` ``constOpt`` ``tableCustomName`` ``initializer`` ``+;+``.
+
+xref:lift_tableKeysPropertyIR[$lift_tableKeysPropertyIR(+KEY+ +=+ +{+ tableKeyIR^{asterisk}^ +}+)]
+
+
+. Let ``tableKeyList`` be ``xref:lift_tableKeyListIR[$lift_tableKeyListIR(tableKeyIR^{asterisk}^)]``.
+. Return ``+KEY+`` ``+=+`` ``+{+`` ``tableKeyList`` ``+}+``.
+
+xref:lift_tableActionsPropertyIR[$lift_tableActionsPropertyIR(+ACTIONS+ +=+ +{+ tableActionIR^{asterisk}^ +}+)]
+
+
+. Let ``tableActionList`` be ``xref:lift_tableActionListIR[$lift_tableActionListIR(tableActionIR^{asterisk}^)]``.
+. Return ``+ACTIONS+`` ``+=+`` ``+{+`` ``tableActionList`` ``+}+``.
+
+xref:lift_tableDefaultActionPropertyIR[$lift_tableDefaultActionPropertyIR(annotationList constOptIR +DEFAULT_ACTION+ +=+ tableActionReferenceIR +;+)]
+
+
+. Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.
+. Let ``expression`` be ``xref:lift_tableActionReferenceIR_as_expression[$lift_tableActionReferenceIR_as_expression(tableActionReferenceIR)]``.
+. Return ``annotationList`` ``constOpt`` ``+`ID+`` ``"default_action"`` ``+=+`` ``expression`` ``+;+``.
+
+xref:lift_tableEntriesPropertyIR[$lift_tableEntriesPropertyIR(annotationList constOptIR +ENTRIES+ +=+ +{+ tableEntryIR^{asterisk}^ +}+)]
+
+
+. Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.
+. Let ``tableEntryList`` be ``xref:lift_tableEntryListIR[$lift_tableEntryListIR(tableEntryIR^{asterisk}^)]``.
+. Return ``annotationList`` ``constOpt`` ``+ENTRIES+`` ``+=+`` ``+{+`` ``tableEntryList`` ``+}+``.
+
+xref:lift_tablePropertyIR[$lift_tablePropertyIR(tablePropertyIR)]
+
+
+. If let ``tableKeysPropertyIR`` be ``tablePropertyIR``:
+ .. Return ``xref:lift_tableKeysPropertyIR[$lift_tableKeysPropertyIR(tableKeysPropertyIR)]``.
+. Else if let ``tableActionsPropertyIR`` be ``tablePropertyIR``:
+ .. Return ``xref:lift_tableActionsPropertyIR[$lift_tableActionsPropertyIR(tableActionsPropertyIR)]``.
+. Else if let ``tableDefaultActionPropertyIR`` be ``tablePropertyIR``:
+ .. Return ``xref:lift_tableDefaultActionPropertyIR[$lift_tableDefaultActionPropertyIR(tableDefaultActionPropertyIR)]``.
+. Else if let ``tableEntriesPropertyIR`` be ``tablePropertyIR``:
+ .. Return ``xref:lift_tableEntriesPropertyIR[$lift_tableEntriesPropertyIR(tableEntriesPropertyIR)]``.
+. Else:
+ .. Let ``tableCustomPropertyIR`` be ``tablePropertyIR``.
+ .. Return ``xref:lift_tableCustomPropertyIR[$lift_tableCustomPropertyIR(tableCustomPropertyIR)]``.
+
+xref:lift_tablePropertyListIR[$lift_tablePropertyListIR(tablePropertyIR^{asterisk}^)]
+
+
+. Let ``tableProperty^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``tableProperty`` be ``xref:lift_tablePropertyIR[$lift_tablePropertyIR(tablePropertyIR)]``.
+--
++
+for each ``tablePropertyIR`` in ``tablePropertyIR^{asterisk}^``
+. Let ``tablePropertyList`` be ``xref:unflatten_tablePropertyList[$unflatten_tablePropertyList(tableProperty^{asterisk}^)]``.
+. Return ``tablePropertyList``.
+
+xref:unflatten_tablePropertyList[$unflatten_tablePropertyList(tableProperty^{asterisk}^)]
+
+
+. Return ``xref:unflatten_tablePropertyList'[$unflatten_tablePropertyList'(+`EMPTY+,`` ``tableProperty^{asterisk}^)]``.
+
+xref:unflatten_tablePropertyList'[$unflatten_tablePropertyList'(tablePropertyList, tableProperty^{asterisk}^)]
+
+
+. If ``tableProperty^{asterisk}^`` is an empty list:
+ .. Return ``tablePropertyList``.
+. Else:
+ .. Let ``tableProperty~h~`` ``{two-colons}`` ``tableProperty~t~^{asterisk}^`` be ``tableProperty^{asterisk}^``.
+ .. Return ``xref:unflatten_tablePropertyList'[$unflatten_tablePropertyList'(tablePropertyList`` ``tableProperty~h~,`` ``tableProperty~t~^{asterisk}^)]``.
+
+xref:lift_tableDeclarationIR[$lift_tableDeclarationIR(annotationList +TABLE+ typeIR nameIR +{+ tablePropertyIR^{asterisk}^ +}+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``tablePropertyList`` be ``xref:lift_tablePropertyListIR[$lift_tablePropertyListIR(tablePropertyIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+TABLE+`` ``name`` ``+{+`` ``tablePropertyList`` ``+}+``.
+
+xref:lift_controlTypeDeclarationIR[$lift_controlTypeDeclarationIR(annotationList +CONTROL+ nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +;+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``+;+``.
+
+xref:lift_controlBodyIR[$lift_controlBodyIR(controlBodyIR)]
+
+
+. Return ``xref:lift_blockStatementIR[$lift_blockStatementIR(controlBodyIR)]``.
+
+xref:lift_controlLocalDeclarationIR[$lift_controlLocalDeclarationIR(controlLocalDeclarationIR)]
+
+
+. If let ``constantDeclarationIR`` be ``controlLocalDeclarationIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``instantiationIR`` be ``controlLocalDeclarationIR``:
+ .. Let ``instantiation`` be ``xref:lift_instantiationIR[$lift_instantiationIR(instantiationIR)]``.
+ .. Return ``instantiation``.
+. Else if let ``variableDeclarationIR`` be ``controlLocalDeclarationIR``:
+ .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
+ .. Return ``variableDeclaration``.
+. Else if let ``actionDeclarationIR`` be ``controlLocalDeclarationIR``:
+ .. Let ``actionDeclaration`` be ``xref:lift_actionDeclarationIR[$lift_actionDeclarationIR(actionDeclarationIR)]``.
+ .. Return ``actionDeclaration``.
+. Else:
+ .. Let ``tableDeclarationIR`` be ``controlLocalDeclarationIR``.
+ .. Let ``tableDeclaration`` be ``xref:lift_tableDeclarationIR[$lift_tableDeclarationIR(tableDeclarationIR)]``.
+ .. Return ``tableDeclaration``.
+
+xref:lift_controlLocalDeclarationListIR[$lift_controlLocalDeclarationListIR(controlLocalDeclarationIR^{asterisk}^)]
+
+
+. Let ``controlLocalDeclaration^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``controlLocalDeclaration`` be ``xref:lift_controlLocalDeclarationIR[$lift_controlLocalDeclarationIR(controlLocalDeclarationIR)]``.
+--
++
+for each ``controlLocalDeclarationIR`` in ``controlLocalDeclarationIR^{asterisk}^``
+. Let ``controlLocalDeclarationList`` be ``xref:unflatten_controlLocalDeclarationList[$unflatten_controlLocalDeclarationList(controlLocalDeclaration^{asterisk}^)]``.
+. Return ``controlLocalDeclarationList``.
+
+xref:unflatten_controlLocalDeclarationList[$unflatten_controlLocalDeclarationList(controlLocalDeclaration^{asterisk}^)]
+
+
+. Return ``xref:unflatten_controlLocalDeclarationList'[$unflatten_controlLocalDeclarationList'(+`EMPTY+,`` ``controlLocalDeclaration^{asterisk}^)]``.
+
+xref:unflatten_controlLocalDeclarationList'[$unflatten_controlLocalDeclarationList'(controlLocalDeclarationList, controlLocalDeclaration^{asterisk}^)]
+
+
+. If ``controlLocalDeclaration^{asterisk}^`` is an empty list:
+ .. Return ``controlLocalDeclarationList``.
+. Else:
+ .. Let ``controlLocalDeclaration~h~`` ``{two-colons}`` ``controlLocalDeclaration~t~^{asterisk}^`` be ``controlLocalDeclaration^{asterisk}^``.
+ .. Return ``xref:unflatten_controlLocalDeclarationList'[$unflatten_controlLocalDeclarationList'(controlLocalDeclarationList`` ``controlLocalDeclaration~h~,`` ``controlLocalDeclaration~t~^{asterisk}^)]``.
+
+xref:lift_controlDeclarationIR[$lift_controlDeclarationIR(annotationList +CONTROL+ nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +(+ constructorParameterIR^{asterisk}^ +)+ +{+ controlLocalDeclarationIR^{asterisk}^ +APPLY+ controlBodyIR +}+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Let ``constructorParameterListOpt`` be ``xref:lift_constructorParameterListIR[$lift_constructorParameterListIR(constructorParameterIR^{asterisk}^)]``.
+. Let ``controlLocalDeclarationList`` be ``xref:lift_controlLocalDeclarationListIR[$lift_controlLocalDeclarationListIR(controlLocalDeclarationIR^{asterisk}^)]``.
+. Let ``controlBody`` be ``xref:lift_controlBodyIR[$lift_controlBodyIR(controlBodyIR)]``.
+. Return ``annotationList`` ``+CONTROL+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``constructorParameterListOpt`` ``+{+`` ``controlLocalDeclarationList`` ``+APPLY+`` ``controlBody`` ``+}+``.
+
+xref:lift_packageTypeDeclarationIR[$lift_packageTypeDeclarationIR(annotationList +PACKAGE+ nameIR +<+ typeParameterIR~expl~^{asterisk}^ +,+ typeParameterIR~impl~^{asterisk}^ +>+ +(+ parameterIR^{asterisk}^ +)+ +;+)]
+
+
+. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
+. Let ``name`` be ``nonTypeName``.
+. Let ``typeParameterIR^{asterisk}^`` be ``typeParameterIR~expl~^{asterisk}^`` concatenated with ``typeParameterIR~impl~^{asterisk}^``.
+. Let ``typeParameterListOpt`` be ``xref:lift_typeParameterListIR[$lift_typeParameterListIR(typeParameterIR^{asterisk}^)]``.
+. Let ``parameterList`` be ``xref:lift_parameterListIR[$lift_parameterListIR(parameterIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+PACKAGE+`` ``name`` ``typeParameterListOpt`` ``+(+`` ``parameterList`` ``+)+`` ``+;+``.
+
+xref:lift_typeDeclarationIR[$lift_typeDeclarationIR(typeDeclarationIR)]
+
+
+. If let ``derivedTypeDeclarationIR`` be ``typeDeclarationIR``:
+ .. Let ``derivedTypeDeclaration`` be ``xref:lift_derivedTypeDeclarationIR[$lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)]``.
+ .. Return ``derivedTypeDeclaration``.
+. Else if let ``typedefDeclarationIR`` be ``typeDeclarationIR``:
+ .. Let ``typedefDeclaration`` be ``xref:lift_typedefDeclarationIR[$lift_typedefDeclarationIR(typedefDeclarationIR)]``.
+ .. Return ``typedefDeclaration``.
+. Else if let ``parserTypeDeclarationIR`` be ``typeDeclarationIR``:
+ .. Let ``parserTypeDeclaration`` be ``xref:lift_parserTypeDeclarationIR[$lift_parserTypeDeclarationIR(parserTypeDeclarationIR)]``.
+ .. Return ``parserTypeDeclaration``.
+. Else if let ``controlTypeDeclarationIR`` be ``typeDeclarationIR``:
+ .. Let ``controlTypeDeclaration`` be ``xref:lift_controlTypeDeclarationIR[$lift_controlTypeDeclarationIR(controlTypeDeclarationIR)]``.
+ .. Return ``controlTypeDeclaration``.
+. Else:
+ .. Let ``packageTypeDeclarationIR`` be ``typeDeclarationIR``.
+ .. Let ``packageTypeDeclaration`` be ``xref:lift_packageTypeDeclarationIR[$lift_packageTypeDeclarationIR(packageTypeDeclarationIR)]``.
+ .. Return ``packageTypeDeclaration``.
+
+xref:lift_declarationIR[$lift_declarationIR(declarationIR)]
+
+
+. If let ``constantDeclarationIR`` be ``declarationIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``instantiationIR`` be ``declarationIR``:
+ .. Let ``instantiation`` be ``xref:lift_instantiationIR[$lift_instantiationIR(instantiationIR)]``.
+ .. Return ``instantiation``.
+. Else if let ``functionDeclarationIR`` be ``declarationIR``:
+ .. Let ``functionDeclaration`` be ``xref:lift_functionDeclarationIR[$lift_functionDeclarationIR(functionDeclarationIR)]``.
+ .. Return ``functionDeclaration``.
+. Else if let ``actionDeclarationIR`` be ``declarationIR``:
+ .. Let ``actionDeclaration`` be ``xref:lift_actionDeclarationIR[$lift_actionDeclarationIR(actionDeclarationIR)]``.
+ .. Return ``actionDeclaration``.
+. Else if let ``errorDeclarationIR`` be ``declarationIR``:
+ .. Let ``errorDeclaration`` be ``xref:lift_errorDeclarationIR[$lift_errorDeclarationIR(errorDeclarationIR)]``.
+ .. Return ``errorDeclaration``.
+. Else if let ``matchKindDeclarationIR`` be ``declarationIR``:
+ .. Let ``matchKindDeclaration`` be ``xref:lift_matchKindDeclarationIR[$lift_matchKindDeclarationIR(matchKindDeclarationIR)]``.
+ .. Return ``matchKindDeclaration``.
+. Else if let ``externDeclarationIR`` be ``declarationIR``:
+ .. Let ``externDeclaration`` be ``xref:lift_externDeclarationIR[$lift_externDeclarationIR(externDeclarationIR)]``.
+ .. Return ``externDeclaration``.
+. Else if let ``parserDeclarationIR`` be ``declarationIR``:
+ .. Let ``parserDeclaration`` be ``xref:lift_parserDeclarationIR[$lift_parserDeclarationIR(parserDeclarationIR)]``.
+ .. Return ``parserDeclaration``.
+. Else if let ``controlDeclarationIR`` be ``declarationIR``:
+ .. Let ``controlDeclaration`` be ``xref:lift_controlDeclarationIR[$lift_controlDeclarationIR(controlDeclarationIR)]``.
+ .. Return ``controlDeclaration``.
+. Else:
+ .. Let ``typeDeclarationIR`` be ``declarationIR``.
+ .. Let ``typeDeclaration`` be ``xref:lift_typeDeclarationIR[$lift_typeDeclarationIR(typeDeclarationIR)]``.
+ .. Return ``typeDeclaration``.
+. Otherwise:
+ .. Return ``xref:sink[$sink<declaration>]``.
+
+xref:lift_p4programIR[$lift_p4programIR(declarationIR^{asterisk}^ +;+)]
+
+
+. Let ``declaration^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``declaration`` be ``xref:lift_declarationIR[$lift_declarationIR(declarationIR)]``.
+--
++
+for each ``declarationIR`` in ``declarationIR^{asterisk}^``
+. Return ``xref:unflatten_p4program[$unflatten_p4program(declaration^{asterisk}^)]``.
+
+xref:unflatten_p4program[$unflatten_p4program(declaration^{asterisk}^)]
+
+
+. Return ``xref:unflatten_p4program'[$unflatten_p4program'(+`EMPTY+,`` ``declaration^{asterisk}^)]``.
+
+xref:unflatten_p4program'[$unflatten_p4program'(p4program, declaration^{asterisk}^)]
+
+
+. If ``declaration^{asterisk}^`` is an empty list:
+ .. Return ``p4program``.
+. Else:
+ .. Let ``declaration~h~`` ``{two-colons}`` ``declaration~t~^{asterisk}^`` be ``declaration^{asterisk}^``.
+ .. Return ``xref:unflatten_p4program'[$unflatten_p4program'(p4program`` ``declaration~h~,`` ``declaration~t~^{asterisk}^)]``.
+
 xref:join_flow[The merged control flow of ``flow`` and ``flow'``]
 
 
@@ -5072,7 +7412,7 @@ xref:find_typeDef_t[The type definition of ``prefixedNameIR`` from the ``p`` lay
  .. If ``·`` is equal to xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``]:
   ... Return xref:find_typeDef_t[the type definition of ``typeId`` from the ``+BLOCK+`` layer of ``TC``].
 
-xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) from the ``cursor`` layer of ``TC``]
+xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefixedNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``cursor`` layer of ``TC``]
 
 
 . If ``cursor`` is ``+GLOBAL+``:
@@ -5094,11 +7434,11 @@ xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefi
  .. If let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``:
   ... Return ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
  .. If ``·`` is equal to xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``]:
-  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``nameIR``( ``argumentIR^{asterisk}^`` ) from the ``+GLOBAL+`` layer of ``TC``].
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
  .. Let ``nameIR`` be ``prefixedNameIR``.
- .. Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``nameIR``( ``argumentIR^{asterisk}^`` ) from the ``+BLOCK+`` layer of ``TC``].
+ .. Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``+BLOCK+`` layer of ``TC``].
 
 xref:find_callableDef_non_overloaded_t[The non-overloaded callable definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``]
 
@@ -10158,54 +12498,60 @@ xref:Program_ok[Typing ``p4program``]:
 * the result of xref:Decls_ok[typing ``declaration^{asterisk}^`` under context ``TC~0~``].
 . Result in typed P4 program ``declarationIR^{asterisk}^`` ``+;+``.
 
-xref:Call_convention_expr_ok[Call_convention_expr_ok: ``p`` ``TC`` ``actctxt`` ``+|-+`` ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR`` ``+@+`` ``typedExpressionIR~arg~`` ``+:+`` ``%``]
+xref:Call_convention_expr_ok[Call_convention_expr_ok]:
+
+* Checking calling convention of ``typedExpressionIR`` applied to ``parameterIR``, under context ``typingContext`` and action context ``actctxt`` at ``cursor``:
+* Result in casted ``typedExpressionIR``.
 
 xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~arg~`` applied to ``annotationList`` ``+IN+`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
 . Let ``typedExpressionIR~arg_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
-. Result in ``typedExpressionIR~arg_cast~``.
+. Result in casted ``typedExpressionIR~arg_cast~``.
 
 xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~arg~`` applied to ``annotationList`` ``direction`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
 . Check that ``direction`` is equal to ``+OUT+`` or ``direction`` is equal to ``+INOUT+``.
 . Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~arg~``].
 . Check that xref:Type_alpha[``typeIR~param~`` and ``typeIR~arg~`` are the same type].
-. Check that xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~arg~``].
-. Result in ``typedExpressionIR~arg~``.
+. Let ``typedLvalueIR~arg~`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~arg~``].
+. Let ``lvalue~arg~`` be ``xref:lift_typedLvalueIR[$lift_typedLvalueIR(typedLvalueIR~arg~)]``.
+. Let ``++_++`` be
+* the result of xref:Lvalue_ok[typing ``lvalue~arg~``, under context ``TC`` at ``p``].
+. Result in casted ``typedExpressionIR~arg~``.
 
 xref:Call_convention_expr_ok[Checking calling convention of ``typedExpressionIR~arg~`` applied to ``annotationList`` ``+`EMPTY+`` ``typeIR~param~`` ``id`` ``parameterInitializerOptIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
 . If ``actctxt`` is ``+ACTION+``:
  .. Let ``typedExpressionIR~arg_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
- .. Result in ``typedExpressionIR~arg_cast~``.
+ .. Result in casted ``typedExpressionIR~arg_cast~``.
 . Else:
  .. Let ``typedExpressionIR~arg_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~arg~`` implicitly cast to ``typeIR~param~``].
  .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~arg~``] does not match pattern ``+DYN+``.
- .. Result in ``typedExpressionIR~arg_cast~``.
+ .. Result in casted ``typedExpressionIR~arg_cast~``.
 
-xref:Call_convention_argument_ok[Call_convention_argument_ok: ``p`` ``TC`` ``actctxt`` ``+|-+`` ``parameterIR`` ``+@+`` ``argumentIR`` ``+:+`` ``%``]
+xref:Call_convention_arg_ok[Call_convention_arg_ok]:
 
-xref:Call_convention_argument_ok[Checking calling convention of ``typedExpressionIR`` applied to parameter type ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
+* Checking calling convention of ``argumentIR`` applied to parameter type ``parameterIR``, under context ``typingContext`` and action context ``actctxt`` at ``cursor``:
+* Result in casted ``argumentIR``.
 
-. Let xref:Call_convention_expr_ok[``p`` ``TC`` ``actctxt`` ``+|-+`` ``parameterIR`` ``+@+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR~cast~``].
-. Result in ``typedExpressionIR~cast~``.
+xref:Call_convention_arg_ok[Checking calling convention of ``argumentIR`` applied to parameter type ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
-xref:Call_convention_argument_ok[Checking calling convention of ``nameIR`` ``+=+`` ``typedExpressionIR`` applied to parameter type ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
-
-. Let xref:Call_convention_expr_ok[``p`` ``TC`` ``actctxt`` ``+|-+`` ``parameterIR`` ``+@+`` ``typedExpressionIR`` ``+:+`` ``typedExpressionIR~cast~``].
-. Result in ``nameIR`` ``+=+`` ``typedExpressionIR~cast~``.
-
-xref:Call_convention_argument_ok[Checking calling convention of ``nameIR`` ``+=+`` ``+_+`` applied to parameter type ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
-
-. Let ``direction`` be the direction of ``parameterIR``.
-. Check that ``direction`` is ``+OUT+``.
-. Result in ``nameIR`` ``+=+`` ``+_+``.
-
-xref:Call_convention_argument_ok[Checking calling convention of ``+_+`` applied to parameter type ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``]:
-
-. Let ``direction`` be the direction of ``parameterIR``.
-. Check that ``direction`` is ``+OUT+``.
-. Result in ``+_+``.
+. If let ``typedExpressionIR`` be ``argumentIR``:
+ .. Let casted ``typedExpressionIR~cast~`` be
+* the result of xref:Call_convention_expr_ok[checking calling convention of ``typedExpressionIR`` applied to ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``].
+ .. Result in casted ``typedExpressionIR~cast~``.
+. Else if let ``nameIR`` ``+=+`` ``typedExpressionIR`` be ``argumentIR``:
+ .. Let casted ``typedExpressionIR~cast~`` be
+* the result of xref:Call_convention_expr_ok[checking calling convention of ``typedExpressionIR`` applied to ``parameterIR``, under context ``TC`` and action context ``actctxt`` at ``p``].
+ .. Result in casted ``nameIR`` ``+=+`` ``typedExpressionIR~cast~``.
+. Else if let ``nameIR`` ``+=+`` ``+_+`` be ``argumentIR``:
+ .. Let ``direction`` be the direction of ``parameterIR``.
+ .. Check that ``direction`` is ``+OUT+``.
+ .. Result in casted ``nameIR`` ``+=+`` ``+_+``.
+. Else:
+ .. Let ``direction`` be the direction of ``parameterIR``.
+ .. Check that ``direction`` is ``+OUT+``.
+ .. Result in casted ``+_+``.
 
 xref:Call_convention_ok[Call_convention_ok]:
 
@@ -10220,7 +12566,8 @@ xref:Call_convention_ok[Checking calling convention of ``argumentIR^{asterisk}^`
 . If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
- .. Let xref:Call_convention_argument_ok[``p`` ``TC`` ``actctxt`` ``+|-+`` ``parameterIR~h~`` ``+@+`` ``argumentIR~h~`` ``+:+`` ``argumentIR~h_cast~``].
+ .. Let casted ``argumentIR~h_cast~`` be
+* the result of xref:Call_convention_arg_ok[checking calling convention of ``argumentIR~h~`` applied to parameter type ``parameterIR~h~``, under context ``TC`` and action context ``actctxt`` at ``p``].
  .. Let casted ``argumentIR~t_cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR~t~^{asterisk}^`` applied on ``parameterIR~t~^{asterisk}^``, under context ``TC`` and action context ``actctxt`` at ``p``].
  .. Result in casted ``argumentIR~h_cast~`` ``{two-colons}`` ``argumentIR~t_cast~^{asterisk}^``.
@@ -10293,7 +12640,7 @@ xref:CallableType_ok[CallableType_ok]:
 
 xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
 
-. Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_t[the overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) from the ``p`` layer of ``TC``].
+. Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_t[the overloaded callable definition of ``prefixedNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``p`` layer of ``TC``].
 . Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
 . Let ``actionTypeIR`` be ``callableTypeDefIR``.
 . Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
@@ -10302,7 +12649,7 @@ xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``
 
 xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
 
-. Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_t[the overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) from the ``p`` layer of ``TC``].
+. Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_t[the overloaded callable definition of ``prefixedNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``p`` layer of ``TC``].
 . Check that ``callableTypeDefIR`` has type ``functionTypeDefIR``.
 . Let ``functionTypeDefIR`` be ``callableTypeDefIR``.
 . Let ``(callableTypeIR,`` ``typeId*)`` be xref:specialize_callableTypeDefIR[``functionTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``].
@@ -12164,42 +14511,6 @@ xref:ControlLocalDecls_ok[Typing ``controlLocalDeclaration^{asterisk}^``, under 
  .. Let the updated context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~t~^{asterisk}^`` be
 * the result of xref:ControlLocalDecls_ok[typing ``controlLocalDeclaration~t~^{asterisk}^``, under context ``TC~1~``].
  .. Result in the updated context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationIR~t~^{asterisk}^``.
-
-xref:Expr_lvalue_ok[Expr_lvalue_ok: ``p`` ``TC`` ``+|-+`` ``expressionIR`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``]
-
-xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``prefixedNameIR`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``]:
-
-. Let ``direction`` ``++_++`` ``ctk'`` ``++_++^?^`` be xref:option_get[*!*] xref:find_var_t[the type of variable ``prefixedNameIR`` from the ``p`` layer of ``TC``].
-. Check that ``ctk'`` is ``+DYN+``.
-. Check that ``direction`` is equal to ``+OUT+`` or ``direction`` is equal to ``+INOUT+``.
-. Then, the relation holds.
-
-xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``]:
-
-. Check that xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~``].
-. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. If ``typeIR'`` has type ``headerStackTypeIR``:
- .. Check that ``nameIR`` is equal to ``"next"`` or ``nameIR`` is equal to ``"last"``.
- .. Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.
- .. Then, the relation holds.
-. Else:
- .. Then, the relation holds.
-
-<<Expr_lvalue_ok,``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~index~`` ``+]+`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``>>:
-
-. Check that xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~``].
-. Then, the relation holds.
-
-<<Expr_lvalue_ok,``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``+:+`` ``typedExpressionIR~lo~`` ``+]+`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``>>:
-
-. Check that xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~``].
-. Then, the relation holds.
-
-<<Expr_lvalue_ok,``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~`` ``+[+`` ``typedExpressionIR~hi~`` ``++:+`` ``typedExpressionIR~lo~`` ``+]+`` ``+#+`` ``+(+`` ``typeIR`` ``ctk`` ``+)+``>>:
-
-. Check that xref:Expr_lvalue_ok[``p`` ``TC`` ``+|-+`` ``typedExpressionIR~base~``].
-. Then, the relation holds.
 
 xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]
 

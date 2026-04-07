@@ -125,10 +125,8 @@ relation Stmt_ok:
   cursor typingContext |- statement
                         : typingContext statementIR
   hint(input %0 %1 %2)
-  hint(prose_in
-        "typing" %2#", under context" %1 "at" %0)
-  hint(prose_out
-        "context" %3 "and" %4)
+  hint(prose_in "typing" %2#", under context" %1 "at" %0)
+  hint(prose_out "context" %3 "and" %4)
 
 relation BlockElementStmt_ok:
   typingContext |- blockElementStatement
@@ -478,13 +476,15 @@ relation Call_convention_expr_ok:
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking calling convention of" %4 "applied to" %3
              #", under context" %1 "and action context" %2 "at" %0)
+  hint(prose_out "casted" %5)
 
-relation Call_convention_argument_ok:
+relation Call_convention_arg_ok:
   cursor typingContext actctxt |- parameterIR `@ argumentIR
                                 : argumentIR
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "checking calling convention of" %4 "applied to parameter type" %3
              #", under context" %1 "and action context" %2 "at" %0)
+  hint(prose_out "casted" %5)
 
 relation Call_convention_ok:
   cursor typingContext actctxt |- parameterIR* `@ argumentListIR
