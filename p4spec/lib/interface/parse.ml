@@ -24,13 +24,13 @@ let parse (lexbuf : Lexing.lexbuf) =
     | _ -> Parser_debug.debug_parse Lexer.lexer lexbuf
   with
   | Lexer.Error s ->
-      let info = Lexer.info lexbuf in
+      let at = Lexer.at lexbuf in
       let msg = Format.asprintf "lexer error: %s" s in
-      error (Source.to_region info) msg
+      error at msg
   | Parser.Error ->
-      let info = Lexer.info lexbuf in
+      let at = Lexer.at lexbuf in
       let msg = Format.asprintf "syntax error" in
-      error (Source.to_region info) msg
+      error at msg
   | e -> raise e
 
 let parse_string (filename : string) (str : string) : Il.value =
