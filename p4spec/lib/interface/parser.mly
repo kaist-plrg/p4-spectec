@@ -43,22 +43,22 @@
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
 
-  (* Position handling *)
-
-  let position_to_pos position =
+  let position_to_pos (position : Lexing.position) =
     {
-      file = position.Lexing.pos_fname;
-      line = position.Lexing.pos_lnum;
-      column = position.Lexing.pos_cnum - position.Lexing.pos_bol
+      file = position.pos_fname;
+      line = position.pos_lnum;
+      column = position.pos_cnum - position.pos_bol
     }
 
-  let positions_to_region position_left position_right =
+  let positions_to_region (position_left : Lexing.position)
+      (position_right : Lexing.position) =
     {
       left = position_to_pos position_left;
       right = position_to_pos position_right
     }
 
-  let at (position_left, position_right) = positions_to_region position_left position_right
+  let at ((position_left, position_right) : Lexing.position * Lexing.position)
+    = positions_to_region position_left position_right
 %}
 
 (**************************** TOKENS ******************************)

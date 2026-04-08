@@ -20,6 +20,7 @@ open Parser
 module Value = Runtime.Value
 open Value.Make
 module F = Format
+open Util.Source
 
 exception Error of string
 
@@ -62,34 +63,26 @@ let set_start_of_line lexbuf bol =
   let position = lexbuf.lex_curr_p in
   lexbuf.lex_curr_p <- { position with pos_bol = bol }
 
-let region_of_positions (sp : Lexing.position) (ep : Lexing.position) : Util.Source.region =
-  let left =
-    {
-      Util.Source.file = sp.pos_fname;
-      line = sp.pos_lnum;
-      column = sp.pos_cnum - sp.pos_bol;
-    }
-  in
-  let right =
-    {
-      Util.Source.file = ep.pos_fname;
-      line = ep.pos_lnum;
-      column = ep.pos_cnum - ep.pos_bol;
-    }
-  in
-  { Util.Source.left; right }
+let position_to_pos position =
+  {
+    file = position.pos_fname;
+    line = position.pos_lnum;
+    column = position.pos_cnum - position.pos_bol
+  }
 
-let at lexbuf : Util.Source.region =
-  region_of_positions (Lexing.lexeme_start_p lexbuf) (Lexing.lexeme_end_p lexbuf)
+let positions_to_region position_left position_right =
+  {
+    left = position_to_pos position_left;
+    right = position_to_pos position_right
+  }
 
-let merge_region (r1 : Util.Source.region) (r2 : Util.Source.region) : Util.Source.region =
-  let left = min r1.left r2.left in
-  let right = max r1.right r2.right in
-  { Util.Source.left; right }
+let at lexbuf =
+  positions_to_region (lexeme_start_p lexbuf) (lexeme_end_p lexbuf)
 
-let follows_position (p1 : Lexing.position) (p2 : Lexing.position) : bool =
-  p1.pos_fname = p2.pos_fname && p1.pos_lnum = p2.pos_lnum
-  && p1.pos_cnum = p2.pos_cnum
+let follows_position position_left position_right : bool =
+  position_left.pos_fname = position_right.pos_fname
+  && position_left.pos_lnum = position_right.pos_lnum
+  && position_left.pos_cnum = position_right.pos_cnum
 
 let sanitize s =
   String.concat "" (String.split_on_char '_' s)
@@ -148,7 +141,7 @@ rule tokenize = parse
   | '"'
       { let start_region = at lexbuf in
         let str, end_region = (string lexbuf) in
-        let token_region = merge_region start_region end_region in
+        let token_region = over_region [ start_region; end_region ] in
         debug_token ("\"" ^ str ^ "\"");
         let value = Value.Make.text ~at:token_region str in
         STRING_LITERAL value
