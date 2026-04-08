@@ -10894,7 +10894,8 @@ xref:ParameterList_ok[ParameterList_ok]:
 xref:ParameterList_ok[Typing ``parameterList``, under context ``TC~0~`` at ``p``]:
 
 . Let ``parameter^{asterisk}^`` be xref:flatten_parameterList[``parameterList`` flattened].
-. Let xref:ParameterList_ok_inner[``p`` ``TC~0~`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``TC~1~`` ``parameterListIR`` ``+#+`` ``typeId~fresh~^{asterisk}^``].
+. Let context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of xref:Parameters_ok[typing ``parameter^{asterisk}^``, under context ``TC~0~`` at ``p``].
 . Result in context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
@@ -10905,7 +10906,8 @@ xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
 xref:ConstructorParameterListOpt_ok[Typing ``constructorParameterListOpt`` under context ``TC~0~``]:
 
 . Let ``constructorParameter^{asterisk}^`` be xref:flatten_constructorParameterListOpt[``constructorParameterListOpt`` flattened].
-. Let xref:ParameterList_ok_inner[``+BLOCK+`` ``TC~0~`` ``+|-+`` ``constructorParameter^{asterisk}^`` ``+:+`` ``TC~1~`` ``constructorParameterIR^{asterisk}^`` ``+#+`` ``typeId~fresh~^{asterisk}^``].
+. Let context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of xref:Parameters_ok[typing ``constructorParameter^{asterisk}^``, under context ``TC~0~`` at ``+BLOCK+``].
 . Result in context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:callableId_of_externMethodPrototype[Callable id of  ``externMethodPrototype``]
@@ -13005,50 +13007,9 @@ xref:Inst_ok[Inst_ok]:
 * Typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id^{asterisk}^`` and optionals ``id^{asterisk}^`` , under cursor ``cursor``, context ``typingContext``, and ``instctxt`` instantiation site context:
 * Result in constructed type ``typeIR`` with inferred ``typeArgumentListIR`` and casted ``argumentListIR``.
 
-xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``+GLOBAL+``, context ``TC``, and ``instctxt`` instantiation site context]:
+xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``instctxt`` instantiation site context]:
 
 . Let ``+CONSTRUCTOR+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object~`` be ``constructorTypeIR``.
-. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
-. Check that ``typeIR`` has type ``packageObjectTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR'^?^^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR'^?^`` be xref:find_map[the value of ``typeId~infer~`` in map ``inference``].
---
-+
-for each ``typeId~infer~`` in ``typeId~infer~^{asterisk}^``
-. Check that ``typeIR'^?^`` is defined, for all ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR~inferred~`` be ``typeIR'^?^``.
---
-+
-for each ``typeIR'^?^`` in ``typeIR'^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
-. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``parameterIR~aligned_inferred~`` be xref:subst_parameterIR[``parameterIR~aligned~`` substituted by ``inference``].
---
-+
-for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~object_inferred~`` be xref:subst_typeIR[``typeIR~object~`` substituted by ``inference``].
-. Let ``constructorTypeIR~inferred~`` be ``+CONSTRUCTOR+`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``+GLOBAL+`` layer of ``TC``].
-. Check that xref:ConstructorType_wf[``constructorTypeIR~inferred~`` is a well-formed constructor type, with bound type variables ``bound``].
-. Check that ``xref:instantiable[$instantiable(+GLOBAL+,`` ``TC,`` ``instctxt,`` ``typeIR~object_inferred~)]``.
-. Let casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``+BLOCK+``].
-. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
-
-xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``cursor``, context ``TC``, and ``instctxt`` instantiation site context]:
-
-. Let ``+CONSTRUCTOR+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object~`` be ``constructorTypeIR``.
-. Let ``typeIR~object_unroll~`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
-. Check that ``typeIR~object_unroll~`` does not have type ``packageObjectTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``inference`` be ``xref:infer[$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
 . Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
@@ -13076,12 +13037,19 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~object_inferred~`` be xref:subst_typeIR[``typeIR~object~`` substituted by ``inference``].
 . Let ``constructorTypeIR~inferred~`` be ``+CONSTRUCTOR+`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``cursor`` layer of ``TC``].
+. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
 . Check that xref:ConstructorType_wf[``constructorTypeIR~inferred~`` is a well-formed constructor type, with bound type variables ``bound``].
-. Check that ``xref:instantiable[$instantiable(cursor,`` ``TC,`` ``instctxt,`` ``typeIR~object_inferred~)]``.
-. Let casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``cursor``].
-. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
+. Check that ``xref:instantiable[$instantiable(p,`` ``TC,`` ``instctxt,`` ``typeIR~object_inferred~)]``.
+. Let ``typeIR~object_unroll~`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
+. If ``typeIR~object_unroll~`` has type ``packageObjectTypeIR``:
+ .. Check that ``p`` is ``+GLOBAL+``.
+ .. Let casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``+BLOCK+``].
+ .. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
+. Else:
+ .. Let casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
+ .. Result in constructed type ``typeIR~object_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums reduced]
 
@@ -13450,19 +13418,23 @@ xref:is_concrete_extern_object''[$is_concrete_extern_object''(externMethodTypeDe
 . If ``externMethodTypeDefIR`` matches pattern ``+EXTERN_METHOD+`` ``%`` ``+<+`` ``%`` ``+,+`` ``%`` ``+>+`` ``+(+`` ``%`` ``+)+`` ``+:+`` ``%``: return ``true``.
 . Otherwise: return ``false``.
 
-xref:ParameterList_ok_inner[ParameterList_ok_inner: ``p`` ``typingContext`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]
+xref:Parameters_ok[Parameters_ok]:
 
-xref:ParameterList_ok_inner[``p`` ``typingContext`` ``+|-+`` ``parameter^{asterisk}^`` ``+:+`` ``%`` ``%`` ``+#+`` ``%``]:
+* Typing ``parameter^{asterisk}^``, under context ``typingContext`` at ``cursor``:
+* Result in context ``typingContext``, ``parameterListIR``, and fresh type variables ``typeId^{asterisk}^``.
+
+xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``typingContext`` at ``p``]:
 
 . If ``parameter^{asterisk}^`` is equal to ``·``:
- .. Result in ``typingContext``, ``·``, and ``·``.
+ .. Result in context ``typingContext``, ``·``, and fresh type variables ``·``.
 . If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
  .. Let context ``TC~1~``, ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
 * the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``typingContext`` at ``p``].
- .. Let xref:ParameterList_ok_inner[``p`` ``TC~1~`` ``+|-+`` ``parameter~t~^{asterisk}^`` ``+:+`` ``TC~2~`` ``parameterIR~t~^{asterisk}^`` ``+#+`` ``typeId~fresh_t~^{asterisk}^``].
+ .. Let context ``TC~2~``, ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
+* the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC~1~`` at ``p``].
  .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
- .. Result in ``TC~2~``, ``parameterIR^{asterisk}^``, and ``typeId~fresh~^{asterisk}^``.
+ .. Result in context ``TC~2~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ForUpdateStmt_ok[ForUpdateStmt_ok]:
 
@@ -13581,31 +13553,31 @@ xref:ForCollectionExpr_ok[ForCollectionExpr_ok]:
 * Typing ``forCollectionExpression`` under context ``typingContext`` with iterator type ``typeIR``:
 * Result in ``forCollectionExpressionIR``.
 
-xref:ForCollectionExpr_ok[Typing ``forCollectionExpression`` under context ``TC`` with iterator type ``typeIR~var~``]:
+xref:ForCollectionExpr_ok[Typing ``expression`` under context ``TC`` with iterator type ``typeIR~var~``]:
 
-. If let ``expression`` be ``forCollectionExpression``:
- .. Let ``typedExpressionIR`` be
+. Let ``typedExpressionIR`` be
 * the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typeIR~expression~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~expression~`` with typedefs unrolled].
- .. If let ``+LIST+`` ``+<+`` ``typeIR~e~`` ``+>+`` be ``typeIR``:
-  ... Check that xref:Cast_impl[``typeIR~e~`` can be implicitly cast to ``typeIR~var~``].
-  ... Result in ``typedExpressionIR``.
- .. Else if let ``typeIR~e~`` ``+[+`` ``++_++`` ``+]+`` be ``typeIR``:
-  ... Check that xref:Type_alpha[``typeIR~e~`` and ``typeIR~var~`` are the same type].
-  ... Result in ``typedExpressionIR``.
-. Else:
- .. Let ``expression~l~`` ``+..+`` ``expression~r~`` be ``forCollectionExpression``.
- .. Let ``typedExpressionIR~l~`` be
+. Let ``typeIR~expression~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
+. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~expression~`` with typedefs unrolled].
+. If let ``+LIST+`` ``+<+`` ``typeIR~e~`` ``+>+`` be ``typeIR``:
+ .. Check that xref:Cast_impl[``typeIR~e~`` can be implicitly cast to ``typeIR~var~``].
+ .. Result in ``typedExpressionIR``.
+. Else if let ``typeIR~e~`` ``+[+`` ``++_++`` ``+]+`` be ``typeIR``:
+ .. Check that xref:Type_alpha[``typeIR~e~`` and ``typeIR~var~`` are the same type].
+ .. Result in ``typedExpressionIR``.
+
+xref:ForCollectionExpr_ok[Typing ``expression~l~`` ``+..+`` ``expression~r~`` under context ``TC`` with iterator type ``typeIR~var~``]:
+
+. Let ``typedExpressionIR~l~`` be
 * the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typedExpressionIR~r~`` be
+. Let ``typedExpressionIR~r~`` be
 * the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``+LOCAL+``].
- .. Let ``typedExpressionIR~l_casted~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``].
- .. Let ``typedExpressionIR~r_casted~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``].
- .. Let ``typeIR~l~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_casted~``].
- .. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~r_casted~``].
- .. Check that xref:compat_range[``typeIR~l~`` and ``typeIR~r~`` can be used as range bounds].
- .. Result in ``typedExpressionIR~l_casted~`` ``+..+`` ``typedExpressionIR~r_casted~``.
+. Let ``typedExpressionIR~l_casted~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~l~`` implicitly cast to ``typeIR~var~``].
+. Let ``typedExpressionIR~r_casted~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~r~`` implicitly cast to ``typeIR~var~``].
+. Let ``typeIR~l~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~l_casted~``].
+. Let ``typeIR~r~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~r_casted~``].
+. Check that xref:compat_range[``typeIR~l~`` and ``typeIR~r~`` can be used as range bounds].
+. Result in ``typedExpressionIR~l_casted~`` ``+..+`` ``typedExpressionIR~r_casted~``.
 
 xref:compat_range[``typeIR''`` and ``typeIR'''`` can be used as range bounds]:
 [cols="3", options="header"]
@@ -15699,19 +15671,19 @@ xref:Block_inst[Compile-time evaluation of ``annotationList`` ``+{+`` ``blockEle
 
 xref:ExternMethod_inst[ExternMethod_inst: ``IC~0~`` ``+|-+`` ``externMethodPrototypeIR`` ``+:+`` ``%``]
 
-xref:ExternMethod_inst[``IC~0~`` ``+|-+`` ``annotationList`` ``typeIR`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+,+`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``+;+`` ``+:+`` ``%``]:
+xref:ExternMethod_inst[``IC~0~`` ``+|-+`` ``externMethodPrototypeIR`` ``+:+`` ``%``]:
 
-. Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+``].
-. Let ``externMethodDef`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``{pp}`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``·``.
-. Let ``IC~1~`` be xref:add_callableDef_overload_i[``IC~0~`` where ``callableId`` to ``externMethodDef`` is added as an overloaded callable to the ``+BLOCK+`` layer].
-. Result in ``IC~1~``.
-
-xref:ExternMethod_inst[``IC~0~`` ``+|-+`` ``annotationList`` ``+ABSTRACT+`` ``typeIR`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+,+`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``+;+`` ``+:+`` ``%``]:
-
-. Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+``].
-. Let ``externMethodDef`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``{pp}`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+``.
-. Let ``IC~1~`` be xref:add_callableDef_overload_i[``IC~0~`` where ``callableId`` to ``externMethodDef`` is added as an overloaded callable to the ``+BLOCK+`` layer].
-. Result in ``IC~1~``.
+. If let ``annotationList`` ``typeIR`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+,+`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``+;+`` be ``externMethodPrototypeIR``:
+ .. Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+``].
+ .. Let ``externMethodDef`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``{pp}`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``·``.
+ .. Let ``IC~1~`` be xref:add_callableDef_overload_i[``IC~0~`` where ``callableId`` to ``externMethodDef`` is added as an overloaded callable to the ``+BLOCK+`` layer].
+ .. Result in ``IC~1~``.
+. Else:
+ .. Let ``annotationList`` ``+ABSTRACT+`` ``typeIR`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+,+`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``+;+`` be ``externMethodPrototypeIR``.
+ .. Let ``callableId`` be xref:callableId_IR[the callable identifier for ``nameIR`` ``+(+`` ``parameterListIR`` ``+)+``].
+ .. Let ``externMethodDef`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``{pp}`` ``typeParameterListIR~inferred~`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+``.
+ .. Let ``IC~1~`` be xref:add_callableDef_overload_i[``IC~0~`` where ``callableId`` to ``externMethodDef`` is added as an overloaded callable to the ``+BLOCK+`` layer].
+ .. Result in ``IC~1~``.
 
 xref:ExternMethods_inst[ExternMethods_inst]:
 
@@ -18617,6 +18589,12 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"apply"`` ``+(+`
  .. Let ``+TABLE+`` ``typeId`` ``+{+`` ``frame`` ``TBL`` ``+}+`` be ``object'``.
  .. Let ``tableApplyMethodCallee`` be ``+TABLE+`` ``objectId`` ``+.+`` ``+APPLY+`` ``+{+`` ``frame`` ``+;+`` ``TBL`` ``+}+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``tableApplyMethodCallee``.
+
+xref:Callee_eval[Finding callee ``+(+`` ``callableTargetIR'`` ``+)+`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Let context ``EC~1~``, state ``ARCH~1~``, and callee ``calleeResult`` be
+* the result of xref:Callee_eval[finding callee ``callableTargetIR'`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``].
+. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``calleeResult``.
 
 xref:Copy_in_arg[Copy_in_arg]:
 

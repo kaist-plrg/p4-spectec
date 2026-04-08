@@ -81,23 +81,25 @@ rulegroup Parameter_ok {
 ;; syntax parameterList
 ;;
 
-relation ParameterList_ok_inner:
+relation Parameters_ok:
   cursor typingContext |- parameter*
                         : typingContext parameterListIR `# typeId*
   hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under context" %1 "at" %0)
+  hint(prose_out "context" %3#"," %4#", and fresh type variables" %5)
 
-rulegroup ParameterList_ok_inner {
+rulegroup Parameters_ok {
 
-  rule ParameterList_ok_inner/nil:
+  rule Parameters_ok/nil:
     p TC |- eps : TC eps `# eps
 
-  rule ParameterList_ok_inner/cons:
+  rule Parameters_ok/cons:
     p TC_0 |- parameter_h :: parameter_t*
             : TC_2 parameterIR* `# typeId_fresh*
     -- Parameter_ok:
         p TC_0 |- parameter_h
                 : TC_1 parameterIR_h `# typeId_fresh_h*
-    -- ParameterList_ok_inner:
+    -- Parameters_ok:
         p TC_1 |- parameter_t*
                 : TC_2 parameterIR_t* `# typeId_fresh_t*
     -- if parameterIR* = parameterIR_h :: parameterIR_t*
@@ -109,7 +111,7 @@ rule ParameterList_ok:
   p TC_0 |- parameterList
           : TC_1 parameterListIR `# typeId_fresh*
   -- if parameter* = $flatten_parameterList(parameterList)
-  -- ParameterList_ok_inner:
+  -- Parameters_ok:
       p TC_0 |- parameter*
               : TC_1 parameterListIR `# typeId_fresh*
 
@@ -124,6 +126,6 @@ rule ConstructorParameterListOpt_ok:
         : TC_1 constructorParameterIR* `# typeId_fresh*
   -- if constructorParameter*
       = $flatten_constructorParameterListOpt(constructorParameterListOpt)
-  -- ParameterList_ok_inner:
+  -- Parameters_ok:
       BLOCK TC_0 |- constructorParameter*
                   : TC_1 constructorParameterIR* `# typeId_fresh*

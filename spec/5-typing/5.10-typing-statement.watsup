@@ -458,7 +458,7 @@ tbl def $compat_range =
   | (typeIR_l, TYPEDEF _ typeIR_r) => $compat_range(typeIR_l, typeIR_r)
   | (_, _) => false
 
-rulegroup ForCollectionExpr_ok {
+rulegroup ForCollectionExpr_ok/expression {
 
   rule ForCollectionExpr_ok/list:
     TC typeIR_var |- expression : typedExpressionIR
@@ -478,7 +478,11 @@ rulegroup ForCollectionExpr_ok {
     -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
     -- Type_alpha: typeIR_e ~~ typeIR_var
 
-  rule ForCollectionExpr_ok/range:
+}
+
+rulegroup ForCollectionExpr_ok/range {
+
+  rule ForCollectionExpr_ok:
     TC typeIR_var |- expression_l `.. expression_r
                   : typedExpressionIR_l_casted `.. typedExpressionIR_r_casted
     ---- ;; check both sides

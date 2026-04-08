@@ -371,4 +371,11 @@ rulegroup Callee_eval/tableApplyMethodCallee {
 
 ;;; TYPE prefixedNameIR `. nameIR
 
-;;; `( routineTargetIR )
+;;; `( callableTargetIR )
+
+rule Callee_eval/parenthesized:
+  p EC_0 ARCH_0 |- (`( callableTargetIR )) `< `_ > `( argumentListIR )
+                 : EC_1 ARCH_1 calleeResult
+  -- Callee_eval:
+      p EC_0 ARCH_0 |- callableTargetIR `< `_ > `( argumentListIR )
+                     : EC_1 ARCH_1 calleeResult

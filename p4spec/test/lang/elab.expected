@@ -16600,7 +16600,7 @@ relation ParameterList_ok: cursor typingContext |- parameterList : typingContext
 
     rulepath 
     -- let parameter*{parameter <- parameter*} = $flatten_parameterList(parameterList)
-    -- ParameterList_ok_inner: p TC_0 |- parameter*{parameter <- parameter*} : TC_1 parameterListIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: p TC_0 |- parameter*{parameter <- parameter*} : TC_1 parameterListIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % % |- % : TC_1 parameterListIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterListOpt : typingContext constructorParameterListIR # typeId*
@@ -16616,7 +16616,7 @@ relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterLi
 
     rulepath 
     -- let constructorParameter*{constructorParameter <- constructorParameter*} = $flatten_constructorParameterListOpt(constructorParameterListOpt)
-    -- ParameterList_ok_inner: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- output: % |- % : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 def $callableId_of_externMethodPrototype(externMethodPrototype) : callableId =
@@ -19354,36 +19354,7 @@ syntax instctxt =
 
 relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgumentListIR # typeId* > ( argumentListIR # id* # id* ) : typeIR < typeArgumentListIR > ( argumentListIR )
 
-  rulegroup package
-
-   match
-
-    (signature) GLOBAL TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : % < % > ( % )
-    cursor TC instctxt |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : % < % > ( % )
-    -- if cursor matches `GLOBAL`
-
-   paths
-
-    rulepath package
-    -- let CONSTRUCTOR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_object = constructorTypeIR
-    -- let typeIR = $unroll_typeIR(typeIR_object)
-    -- if typeIR <: packageObjectTypeIR
-    -- let PACKAGE _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _typeIR*{_typeIR <- _typeIR*} } = typeIR as packageObjectTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR'?{typeIR' <- typeIR'?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR'? -> typeIR'?*}
-    -- (if typeIR'?{typeIR' <- typeIR'?} matches (_))*{typeIR'? <- typeIR'?*}
-    -- (let ?(typeIR_inferred) = typeIR'?{typeIR' <- typeIR'?})*{typeIR'? <- typeIR'?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
-    -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
-    -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
-    -- let constructorTypeIR_inferred = CONSTRUCTOR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_object_inferred
-    -- if ConstructorType_wf: $bound(GLOBAL, TC) |- constructorTypeIR_inferred holds
-    -- if $instantiable(GLOBAL, TC, instctxt, typeIR_object_inferred)
-    -- Call_convention_ok: BLOCK TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
-    -- output: % % % |- % < % # % > ( % # % # % ) : typeIR_object_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
-
-  rulegroup non-package
+  rulegroup 
 
    match
 
@@ -19392,10 +19363,8 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
 
    paths
 
-    rulepath non-package
+    rulepath package
     -- let CONSTRUCTOR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_object = constructorTypeIR
-    -- let typeIR_object_unroll = $unroll_typeIR(typeIR_object)
-    -- if ~typeIR_object_unroll <: packageObjectTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
@@ -19407,6 +19376,27 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
     -- let constructorTypeIR_inferred = CONSTRUCTOR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_object_inferred
     -- if ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred holds
     -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
+    -- let typeIR_object_unroll = $unroll_typeIR(typeIR_object)
+    -- if typeIR_object_unroll <: packageObjectTypeIR
+    -- if (p = GLOBAL)
+    -- Call_convention_ok: BLOCK TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
+    -- output: % % % |- % < % # % > ( % # % # % ) : typeIR_object_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+
+    rulepath non-package
+    -- let CONSTRUCTOR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_object = constructorTypeIR
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
+    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
+    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
+    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
+    -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
+    -- let constructorTypeIR_inferred = CONSTRUCTOR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_object_inferred
+    -- if ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred holds
+    -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
+    -- let typeIR_object_unroll = $unroll_typeIR(typeIR_object)
+    -- if ~typeIR_object_unroll <: packageObjectTypeIR
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % % |- % < % # % > ( % # % # % ) : typeIR_object_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
@@ -20128,7 +20118,7 @@ def $is_concrete_extern_object''(externMethodTypeDefIR) : bool =
 
   clause -1 : (externMethodTypeDefIR) = false
 
-relation ParameterList_ok_inner: cursor typingContext |- parameter* : typingContext parameterListIR # typeId*
+relation Parameters_ok: cursor typingContext |- parameter* : typingContext parameterListIR # typeId*
 
   rulegroup 
 
@@ -20150,7 +20140,7 @@ relation ParameterList_ok_inner: cursor typingContext |- parameter* : typingCont
     -- if parameter'*{parameter' <- parameter'*} matches _ :: _
     -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter'*{parameter' <- parameter'*}
     -- Parameter_ok: p TC_0 |- parameter_h : TC_1 parameterIR_h # typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
-    -- ParameterList_ok_inner: p TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} # typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
+    -- Parameters_ok: p TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} # typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- let parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}
     -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- output: % % |- % : TC_2 parameterIR*{parameterIR <- parameterIR*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
@@ -20305,19 +20295,18 @@ relation ForInitStmtList_ok: typingContext |- forInitStatementList : typingConte
 
 relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression : forCollectionExpressionIR
 
-  rulegroup 
+  rulegroup expression
 
    match
 
-    (signature) TC typeIR_var |- forCollectionExpression : %
+    (signature) TC typeIR_var |- expression as forCollectionExpression : %
     TC typeIR_var |- forCollectionExpression : %
+    -- if forCollectionExpression <: expression
+    -- let expression = forCollectionExpression as expression
 
    paths
 
     rulepath list
-    -- let forCollectionExpression' = forCollectionExpression
-    -- if forCollectionExpression' <: expression
-    -- let expression = forCollectionExpression' as expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- let typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR = $unroll_typeIR(typeIR_expression)
@@ -20327,9 +20316,6 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
 
     rulepath header-stack
-    -- let forCollectionExpression' = forCollectionExpression
-    -- if forCollectionExpression' <: expression
-    -- let expression = forCollectionExpression' as expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- let typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR = $unroll_typeIR(typeIR_expression)
@@ -20338,18 +20324,26 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if Type_alpha: typeIR_e ~~ typeIR_var holds
     -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
 
-    rulepath range
-    -- let forCollectionExpression' = forCollectionExpression
-    -- if forCollectionExpression' matches `% .. %`
-    -- let expression_l .. expression_r = forCollectionExpression'
+  rulegroup range
+
+   match
+
+    (signature) TC typeIR_var |- expression_l .. expression_r : %
+    TC typeIR_var |- forCollectionExpression : %
+    -- if forCollectionExpression matches `% .. %`
+    -- let expression_l .. expression_r = forCollectionExpression
+
+   paths
+
+    rulepath 
     -- Expr_ok: LOCAL TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: LOCAL TC |- expression_r : typedExpressionIR_r
-    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_l, typeIR_var)
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_l, typeIR_var)
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- let typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} = $cast_unary(typedExpressionIR_r, typeIR_var)
     -- if typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?} matches (_)
-    -- let ?(typedExpressionIR_l_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
-    -- let typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} = $cast_unary(typedExpressionIR_r, typeIR_var)
-    -- if typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?} matches (_)
-    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR''?{typedExpressionIR'' <- typedExpressionIR''?}
+    -- let ?(typedExpressionIR_r_casted) = typedExpressionIR'?{typedExpressionIR' <- typedExpressionIR'?}
     -- let typeIR_l = $type_of_typedExpressionIR(typedExpressionIR_l_casted)
     -- let typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted)
     -- if $compat_range(typeIR_l, typeIR_r)
@@ -23671,35 +23665,28 @@ relation Block_inst: instContext store |- blockStatementIR : instContext store b
 
 relation ExternMethod_inst: instContext |- externMethodPrototypeIR : instContext
 
-  rulegroup non-abstract
+  rulegroup 
 
    match
 
-    (signature) IC_0 |- annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; : %
+    (signature) IC_0 |- externMethodPrototypeIR : %
     IC_0 |- externMethodPrototypeIR : %
-    -- if externMethodPrototypeIR matches `% % ;`
-    -- let annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; = externMethodPrototypeIR
 
    paths
 
     rulepath non-abstract
+    -- let externMethodPrototypeIR' = externMethodPrototypeIR
+    -- if externMethodPrototypeIR' matches `% % ;`
+    -- let annotationList typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; = externMethodPrototypeIR'
     -- let callableId = $callableId_IR(nameIR, parameterListIR)
     -- let externMethodDef = EXTERN_METHOD nameIR < typeParameterListIR ++ typeParameterListIR_inferred > ( parameterListIR ) ?()
     -- let IC_1 = $add_callableDef_overload_i(BLOCK, IC_0, callableId, externMethodDef as callableDef)
     -- output: % |- % : IC_1
 
-  rulegroup abstract
-
-   match
-
-    (signature) IC_0 |- annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; : %
-    IC_0 |- externMethodPrototypeIR : %
-    -- if externMethodPrototypeIR matches `% ABSTRACT % ;`
-    -- let annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; = externMethodPrototypeIR
-
-   paths
-
     rulepath abstract
+    -- let externMethodPrototypeIR' = externMethodPrototypeIR
+    -- if externMethodPrototypeIR' matches `% ABSTRACT % ;`
+    -- let annotationList ABSTRACT typeIR nameIR < typeParameterListIR , typeParameterListIR_inferred > ( parameterListIR ) ; = externMethodPrototypeIR'
     -- let callableId = $callableId_IR(nameIR, parameterListIR)
     -- let externMethodDef = EXTERN_METHOD ABSTRACT nameIR < typeParameterListIR ++ typeParameterListIR_inferred > ( parameterListIR )
     -- let IC_1 = $add_callableDef_overload_i(BLOCK, IC_0, callableId, externMethodDef as callableDef)
@@ -28854,6 +28841,21 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let tableApplyMethodCallee = TABLE objectId . APPLY { frame ; TBL }
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 ` tableApplyMethodCallee as callee as calleeResult
 
+  rulegroup parenthesized
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- ( callableTargetIR ) < _ > ( argumentListIR ) : % % %
+    p EC_0 ARCH_0 |- callableTargetIR' < _ > ( argumentListIR ) : % % %
+    -- if callableTargetIR' matches `(%)`
+    -- let ( callableTargetIR ) = callableTargetIR'
+
+   paths
+
+    rulepath parenthesized
+    -- Callee_eval: p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR ) : EC_1 ARCH_1 calleeResult
+    -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 calleeResult
+
 syntax copyInArgumentResult = 
    | ` storageReference? (from continueResult<storageReference?>) 
    | EXIT (from exitResult) 
@@ -30260,7 +30262,7 @@ relation ForThreeClauseStmt_eval: evalContext arch |- typedExpressionIR statemen
 
 relation ForCollectionExpr_eval: evalContext arch |- forCollectionExpressionIR : evalContext arch expressionListResult
 
-  rulegroup 
+  rulegroup typedExpressionIR
 
    match
 
