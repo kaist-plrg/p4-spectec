@@ -1856,6 +1856,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#_runtime_evaluation_36">14.17.4. Runtime evaluation</a></li>
 </ul>
 </li>
+<li><a href="#sec-keyset-expression">14.18. Keyset expressions</a></li>
 </ul>
 </li>
 <li><a href="#sec-argument">15. Arguments and type arguments</a>
@@ -6650,6 +6651,21 @@ runtime representation of P4 values is as follows:</p>
 <p><code>typeIR</code> is constructed from type checking the surface syntax of P4 types
 (<code>type</code>) with the following relation:</p>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
 <div id="Type_ok" class="sidebarblock sidebar-title">
 <div class="content">
 <div class="paragraph">
@@ -6674,6 +6690,21 @@ runtime representation of P4 values is as follows:</p>
 <p>The P4 type system also imposes well-formedness constraints on types, which
 enforce additional restrictions on the structure of types, such as type
 nesting.</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Type_wf: bound |- typeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
 </div>
 <div id="Type_wf" class="sidebarblock sidebar-title">
 <div class="content">
@@ -12929,6 +12960,21 @@ specialization:</p>
 <div class="paragraph">
 <p>The well-formedness rules for callable types are checked by:</p>
 </div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation CallableType_wf: bound |- callableTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
 <div id="CallableType_wf" class="sidebarblock sidebar-title">
 <div class="content">
 <div class="paragraph">
@@ -15314,6 +15360,58 @@ constructorTypeDefIR
 </li>
 </ol>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p>The well-formedness of constructor types is defined as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ConstructorType_wf: bound |- constructorTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ConstructorType_wf" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ConstructorType_wf">ConstructorType_wf</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>CONSTRUCTOR</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>object</sub></code> is a well-formed constructor type, with bound type variables <code>B</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+
 </div>
 </div>
 </div>
@@ -46366,6 +46464,644 @@ evaluation.</p>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="sec-keyset-expression">14.18. Keyset expressions</h3>
+<div class="paragraph">
+<p>Keyset expressions are used to represent a set of values to be matched in
+switch statements (<a href="#sec-switch-statement">Section 13.13</a>) and parser select expressions
+(<a href="#sec-select-expression">Section 16.6</a>).</p>
+</div>
+<div class="paragraph">
+<p>The following relation defines how keysets are evaluated:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Eval_keyset: evalContext arch |- keysetExpressionIR : evalContext arch keysetExpressionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Eval_keyset" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset">Eval_keyset</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>keysetExpressionIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in context <code>evalContext</code>, state <code>arch</code>, and result <code>keysetExpressionResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a keyset expression is:</p>
+</div>
+<div id="keysetExpressionResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">keysetExpressionResult
+   : continueResult&lt;setValue*&gt;
+   | abortResult
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The relation works as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keyset:
+  rule Eval_keyset:
+  EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+ -- if simpleKeysetExpressionListIR = $flatten_keysetExpressionIR(keysetExpressionIR)
+ -- Eval_keysets_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset">Evaluating <code>keysetExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>simpleKeysetExpressionListIR</code> be <a href="#flatten_keysetExpressionIR">the flattened keyset expression list of  <code>keysetExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>Let <a href="#Eval_keysets_simple"><code>EC<sub>0</sub></code> <code>ARCH<sub>0</sub></code> <code>|-</code> <code>simpleKeysetExpressionListIR</code> <code>:</code> <code>EC<sub>1</sub></code> <code>ARCH<sub>1</sub></code> <code>keysetExpressionResult</code></a>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>keysetExpressionResult</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>It decomposes the <code>keysetExpressionIR</code> into <code>simpleKeysetExpressionIR</code>s,
+evaluates each of those, and then combines the results into a single
+<code>keysetExpressionResult</code>.</p>
+</div>
+<div class="paragraph">
+<p>The <code>simpleKeysetExpressionIR</code>s are evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Eval_keysets_simple: evalContext arch |- simpleKeysetExpressionListIR : evalContext arch keysetExpressionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Eval_keysets_simple" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keysets_simple">Eval_keysets_simple: <code>evalContext</code> <code>arch</code> <code>|-</code> <code>simpleKeysetExpressionIR<sup>*</sup></code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a></p>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keysets_simple:
+  rule Eval_keysets_simple/nil:
+  EC ARCH |- eps : EC ARCH (` eps)
+  rule Eval_keysets_simple/cons-head-abort:
+  EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t* : EC_1 ARCH_1 abortResult
+ -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 abortResult
+  rule Eval_keysets_simple/cons-head-cont-tail-abort:
+  EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t* : EC_2 ARCH_2 abortResult
+ -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 (` setValue_h)
+ -- Eval_keysets_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t* : EC_2 ARCH_2 abortResult
+  rule Eval_keysets_simple/cons-head-cont-tail-cont:
+  EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t* : EC_2 ARCH_2 keysetExpressionResult
+ -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 (` setValue_h)
+ -- Eval_keysets_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t* : EC_2 ARCH_2 (` setValue_t*)
+ -- if keysetExpressionResult = ` (setValue_h :: setValue_t*)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keysets_simple"><code>evalContext</code> <code>arch</code> <code>|-</code> <code>simpleKeysetExpressionIR<sup>*</sup></code> <code>:</code> <code>%</code> <code>%</code> <code>%</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If <code>simpleKeysetExpressionIR<sup>*</sup></code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in <code>evalContext</code>, <code>arch</code>, and <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>simpleKeysetExpressionIR<sub>h</sub></code> <code>::</code> <code>simpleKeysetExpressionIR<sub>t</sub><sup>*</sup></code> be <code>simpleKeysetExpressionIR<sup>*</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>simpleKeysetExpressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Eval_keyset_simple">evaluating <code>simpleKeysetExpressionIR<sub>h</sub></code>, under context <code>evalContext</code> and state <code>arch</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>simpleKeysetExpressionResult</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in <code>EC<sub>1</sub></code>, <code>ARCH<sub>1</sub></code>, and <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>setValue<sub>h</sub></code> be <code>simpleKeysetExpressionResult</code>.</p>
+</li>
+<li>
+<p>Let <a href="#Eval_keysets_simple"><code>EC<sub>1</sub></code> <code>ARCH<sub>1</sub></code> <code>|-</code> <code>simpleKeysetExpressionIR<sub>t</sub><sup>*</sup></code> <code>:</code> <code>EC<sub>2</sub></code> <code>ARCH<sub>2</sub></code> <code>keysetExpressionResult</code></a>.</p>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>keysetExpressionResult</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Result in <code>EC<sub>2</sub></code>, <code>ARCH<sub>2</sub></code>, and <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>setValue<sub>t</sub><sup>*</sup></code> be <code>keysetExpressionResult</code>.</p>
+</li>
+<li>
+<p>Let <code>keysetExpressionResult'</code> be <code>setValue<sub>h</sub></code> <code>::</code> <code>setValue<sub>t</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Result in <code>EC<sub>2</sub></code>, <code>ARCH<sub>2</sub></code>, and <code>keysetExpressionResult'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>A <code>simpleKeysetExpressionIR</code> is evaluated as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR : evalContext arch simpleKeysetExpressionResult</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Eval_keyset_simple" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset_simple">Eval_keyset_simple</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Evaluating <code>simpleKeysetExpressionIR</code>, under context <code>evalContext</code> and state <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in context <code>evalContext</code>, state <code>arch</code>, and result <code>simpleKeysetExpressionResult</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a <code>simpleKeysetExpressionIR</code> is:</p>
+</div>
+<div id="simpleKeysetExpressionResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">simpleKeysetExpressionResult
+   : continueResult&lt;setValue&gt;
+   | abortResult
+   ;</code></pre>
+</div>
+</div>
+<h6 id="_expression_keys" class="discrete">Expression keys</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keyset_simple/typedExpressionIR:
+  rule Eval_keyset_simple/abort:
+  EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 abortResult
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 abortResult
+  rule Eval_keyset_simple/cont-setValue:
+  EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` setValue)
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` setValue)
+  rule Eval_keyset_simple/cont-objectReferenceValue:
+  EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` setValue)
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (` (REF objectId))
+ -- if VALUE_SET `{value* `(n_size)} = $find_object_e(ARCH_1, objectId)
+ -- if setValue = SET `{value* `(n_size)}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset_simple">Evaluating <code>typedExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>value</code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>If let <code>setValue</code> be <code>value</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>setValue</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>REF</code> <code>objectId</code> be <code>value</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>object'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_object_e">the object <code>objectId</code> in <code>ARCH<sub>1</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>object'</code> has type <code>valueSetObject</code>.</p>
+</li>
+<li>
+<p>Let <code>VALUE_SET</code> <code>{</code> <code>value'<sup>*</sup></code> <code>(</code> <code>n<sub>size</sub></code> <code>)</code> <code>}</code> be <code>object'</code>.</p>
+</li>
+<li>
+<p>Let <code>setValue</code> be <code>SET</code> <code>{</code> <code>value'<sup>*</sup></code> <code>(</code> <code>n<sub>size</sub></code> <code>)</code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>setValue</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<h6 id="_mask_keys" class="discrete">Mask keys</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keyset_simple/mask:
+  rule Eval_keyset_simple/left-abort:
+  EC_0 ARCH_0 |- typedExpressionIR_l &amp;&amp;&amp; typedExpressionIR_r : EC_1 ARCH_1 abortResult
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 abortResult
+  rule Eval_keyset_simple/left-cont-right-abort:
+  EC_0 ARCH_0 |- typedExpressionIR_l &amp;&amp;&amp; typedExpressionIR_r : EC_2 ARCH_2 abortResult
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` value_l)
+ -- Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 abortResult
+  rule Eval_keyset_simple/left-cont-right-cont:
+  EC_0 ARCH_0 |- typedExpressionIR_l &amp;&amp;&amp; typedExpressionIR_r : EC_2 ARCH_2 (` setValue)
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` value_l)
+ -- Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 (` value_r)
+ -- if setValue = SET `{value_l &amp;&amp;&amp; value_r}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset_simple">Evaluating <code>typedExpressionIR<sub>l</sub></code> <code>&amp;&amp;&amp;</code> <code>typedExpressionIR<sub>r</sub></code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>l</sub></code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>value<sub>l</sub></code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>r</sub></code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult'</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>value<sub>r</sub></code> be <code>expressionResult'</code>.</p>
+</li>
+<li>
+<p>Let <code>setValue</code> be <code>SET</code> <code>{</code> <code>value<sub>l</sub></code> <code>&amp;&amp;&amp;</code> <code>value<sub>r</sub></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>setValue</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<h6 id="_range_keys" class="discrete">Range keys</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keyset_simple/range:
+  rule Eval_keyset_simple/left-abort:
+  EC_0 ARCH_0 |- typedExpressionIR_l .. typedExpressionIR_r : EC_1 ARCH_1 abortResult
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 abortResult
+  rule Eval_keyset_simple/left-cont-right-abort:
+  EC_0 ARCH_0 |- typedExpressionIR_l .. typedExpressionIR_r : EC_2 ARCH_2 abortResult
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` value_l)
+ -- Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 abortResult
+  rule Eval_keyset_simple/left-cont-right-cont:
+  EC_0 ARCH_0 |- typedExpressionIR_l .. typedExpressionIR_r : EC_2 ARCH_2 (` setValue)
+ -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 (` value_l)
+ -- Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 (` value_r)
+ -- if setValue = SET `{value_l .. value_r}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset_simple">Evaluating <code>typedExpressionIR<sub>l</sub></code> <code>..</code> <code>typedExpressionIR<sub>r</sub></code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code> and <code>expressionResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>l</sub></code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>value<sub>l</sub></code> be <code>expressionResult</code>.</p>
+</li>
+<li>
+<p>Let context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code> and <code>expressionResult'</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Expr_eval">evaluating <code>typedExpressionIR<sub>r</sub></code>, under context <code>EC<sub>1</sub></code> and state <code>ARCH<sub>1</sub></code> at <code>LOCAL</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If let <code>abortResult</code> be <code>expressionResult'</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>value<sub>r</sub></code> be <code>expressionResult'</code>.</p>
+</li>
+<li>
+<p>Let <code>setValue</code> be <code>SET</code> <code>{</code> <code>value<sub>l</sub></code> <code>..</code> <code>value<sub>r</sub></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>2</sub></code>, state <code>ARCH<sub>2</sub></code>, and result <code>setValue</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<h6 id="_default_and_dont_care_keys" class="discrete">Default and don&#8217;t care keys</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Eval_keyset_simple/default-any:
+  rule Eval_keyset_simple/default-any:
+  EC ARCH |- simpleKeysetExpressionIR : EC ARCH (` setValue)
+ -- if simpleKeysetExpressionIR = DEFAULT \/ simpleKeysetExpressionIR = _
+ -- if setValue = SET `{...}</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Eval_keyset_simple">Evaluating <code>simpleKeysetExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <code>simpleKeysetExpressionIR</code> is equal to <code>DEFAULT</code> or <code>simpleKeysetExpressionIR</code> is equal to <code>_</code>.</p>
+</li>
+<li>
+<p>Let <code>setValue</code> be <code>SET</code> <code>{</code> <code>...</code> <code>}</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and result <code>setValue</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -53033,7 +53769,7 @@ simple keyset expression is visited in turn.</p>
 </div>
 </div>
 </div>
-<h6 id="_expression_keys" class="discrete">Expression keys</h6>
+<h6 id="_expression_keys_2" class="discrete">Expression keys</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -53155,7 +53891,7 @@ simple keyset expression is visited in turn.</p>
 </div>
 </div>
 </div>
-<h6 id="_mask_keys" class="discrete">Mask keys</h6>
+<h6 id="_mask_keys_2" class="discrete">Mask keys</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -53229,7 +53965,7 @@ simple keyset expression is visited in turn.</p>
 </div>
 </div>
 </div>
-<h6 id="_range_keys" class="discrete">Range keys</h6>
+<h6 id="_range_keys_2" class="discrete">Range keys</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -53307,7 +54043,7 @@ simple keyset expression is visited in turn.</p>
 </div>
 </div>
 </div>
-<h6 id="_default_and_dont_care_keys" class="discrete">Default and don&#8217;t care keys</h6>
+<h6 id="_default_and_dont_care_keys_2" class="discrete">Default and don&#8217;t care keys</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
@@ -53987,14 +54723,14 @@ simple keyset expression is visited in turn.</p>
 <pre>rulegroup SelectCase_match:
   rule SelectCase_match/reject:
   EC_0 ARCH_0 value_key* |- keysetExpressionIR : nameIR ; : EC_1 ARCH_1 rejectTransitionResult
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 rejectTransitionResult
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 rejectTransitionResult
   rule SelectCase_match/no-match:
   EC_0 ARCH_0 value_key* |- keysetExpressionIR : nameIR ; : EC_1 ARCH_1 (` eps)
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
  -- if ~$match_keysets(setValue*, value_key*)
   rule SelectCase_match/match:
   EC_0 ARCH_0 value_key* |- keysetExpressionIR : nameIR ; : EC_1 ARCH_1 (` nameIR)
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
  -- if $match_keysets(setValue*, value_key*)</pre>
 </div>
 </div>
@@ -54017,7 +54753,7 @@ simple keyset expression is visited in turn.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_eval_keyset">evaluating <code>keysetExpressionIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Eval_keyset">evaluating <code>keysetExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -62112,19 +62848,19 @@ invocation:</p>
   EC_0 ARCH_0 |- tableKeyValue* @ tableEntryIR : EC_1 ARCH_1 EXIT
  -- if _ tableEntryPriorityIR? keysetExpressionIR : tableActionReferenceIR _ ; = tableEntryIR
  -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 EXIT
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 EXIT
   rule TableMatch_eval/no-match:
   EC_0 ARCH_0 |- tableKeyValue* @ tableEntryIR : EC_1 ARCH_1 (` eps)
  -- if _ tableEntryPriorityIR? keysetExpressionIR : tableActionReferenceIR _ ; = tableEntryIR
  -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
  -- (if (value_key : _ = tableKeyValue))*
  -- if ~$match_keysets(setValue*, value_key*)
   rule TableMatch_eval/match:
   EC_0 ARCH_0 |- tableKeyValue* @ tableEntryIR : EC_1 ARCH_1 (` tableMatch)
  -- if _ tableEntryPriorityIR? keysetExpressionIR : tableActionReferenceIR _ ; = tableEntryIR
  -- if n_priority? = $get_tableEntryPriority(tableEntryPriorityIR?)
- -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
+ -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 (` setValue*)
  -- (if (value_key : _ = tableKeyValue))*
  -- if $match_keysets(setValue*, value_key*)
  -- if tableMatch = n_priority? : tableActionReferenceIR</pre>
@@ -62155,7 +62891,7 @@ invocation:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>the result of <a href="#Expr_eval_keyset">evaluating <code>keysetExpressionIR</code>, under context <code>EC<sub>0</sub></code>, and state <code>ARCH<sub>0</sub></code></a>.</p>
+<p>the result of <a href="#Eval_keyset">evaluating <code>keysetExpressionIR</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code></a>.</p>
 </li>
 </ul>
 </div>
@@ -73449,6 +74185,41 @@ or <code>inout</code> parameters.</p>
 </div>
 </li>
 </ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Where for each argument-parameter pair:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Copy_out_argument: arch |- cursor evalContext parameterIR @ cursor evalContext storageReference? ~&gt; evalContext</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Copy_out_argument" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Copy_out_argument">Copy_out_argument</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Copy-out from <code>cursor</code> at <code>evalContext</code> of <code>parameterIR</code> to <code>cursor</code> at shared <code>arch</code>, under state <code>cursor</code> at shared <code>arch</code>:</p>
+</li>
+<li>
+<p>Result in context <code>evalContext</code>.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
