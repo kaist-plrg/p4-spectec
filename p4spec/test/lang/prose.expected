@@ -12660,39 +12660,49 @@ xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``
 . Check that xref:CallableType_wf[``functionTypeIR`` is a well-formed callable type, with bound type variables ``bound``].
 . Result in callable type ``functionTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 
-xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under cursor ``p`` and context ``TC``]:
 
-. If ``argumentIR^{asterisk}^`` is equal to ``·``:
- .. If ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``:
-  ... Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-  ... Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-  ... Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
-  ... Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
-  ... Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+INT+``.
-  ... Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
- .. Else if ``nameIR`` is in ``"isValid"``:
-  ... Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-  ... If ``typeIR`` has type ``headerTypeIR``:
-   .... Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+BOOL+``.
-   .... Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
-  ... Else if ``typeIR`` has type ``headerUnionTypeIR``:
-   .... Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+BOOL+``.
-   .... Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
- .. Else if ``nameIR`` is in ``+[+`` ``"setValid",`` ``"setInvalid"`` ``+]+``:
-  ... Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-  ... Check that ``typeIR`` has type ``headerTypeIR``.
-  ... Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+VOID+``.
-  ... Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
-. If ``argumentIR^{asterisk}^`` is a list of length 1:
- .. Check that ``nameIR`` is in ``+[+`` ``"push_front",`` ``"pop_front"`` ``+]+``.
+. Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
+. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+. Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
+. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+INT+``.
+. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under cursor ``p`` and context ``TC``]:
+
+. If ``nameIR`` is in ``"isValid"``:
  .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
- .. Check that ``typeIR`` has type ``headerStackTypeIR``.
- .. Let ``parameterIR`` be ``+`EMPTY+`` ``+`EMPTY+`` ``+INT+`` ``"count"`` ``·``.
- .. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR`` ``+)+`` ``+:+`` ``+INT+``.
+ .. Check that ``typeIR`` has type ``headerTypeIR``.
+ .. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+BOOL+``.
  .. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+. Else if ``nameIR`` is in ``+[+`` ``"setValid",`` ``"setInvalid"`` ``+]+``:
+ .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+ .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+ .. Check that ``typeIR`` has type ``headerTypeIR``.
+ .. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+VOID+``.
+ .. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under cursor ``p`` and context ``TC``]:
+
+. Check that ``nameIR`` is in ``"isValid"``.
+. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR`` has type ``headerUnionTypeIR``.
+. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``·`` ``+)+`` ``+:+`` ``+BOOL+``.
+. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR'`` ``+)+``, under cursor ``p`` and context ``TC``]:
+
+. Check that ``nameIR`` is in ``+[+`` ``"push_front",`` ``"pop_front"`` ``+]+``.
+. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR`` has type ``headerStackTypeIR``.
+. Let ``parameterIR`` be ``+`EMPTY+`` ``+`EMPTY+`` ``+INT+`` ``"count"`` ``·``.
+. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR`` ``+)+`` ``+:+`` ``+INT+``.
+. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
 
@@ -12855,86 +12865,81 @@ xref:Call_ok[Typing invocation ``builtinMethodTypeIR`` ``+<+`` ``typeArgumentIR^
 
 . Let ``+BUILTIN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``builtinMethodTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Check that ``xref:callable_builtinMethod[$callable_builtinMethod(p,`` ``TC)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
 . Result in return type ``typeIR~ret~`` with inferred ``typeArgumentIR^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing invocation ``externMethodTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
-. Check that ``externMethodTypeIR`` matches pattern ``+EXTERN_METHOD+`` ``%`` ``+(+`` ``%`` ``+)+`` ``+:+`` ``%``.
-. Let ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+. If let ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``:
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+ .. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
---
-+
-for each ``typeId`` in ``typeId^{asterisk}^``
-. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
-. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``parameterIR~aligned_inferred~`` be xref:subst_parameterIR[``parameterIR~aligned~`` substituted by ``inference``].
---
-+
-for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
-. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
-. Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
-. Let casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
-. Result in return type ``typeIR~ret_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
-
-xref:Call_ok[Typing invocation ``externMethodTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
-
-. Check that ``externMethodTypeIR`` matches pattern ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``%`` ``+(+`` ``%`` ``+)+`` ``+:+`` ``%``.
-. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+  *** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
 --
 +
 for each ``typeId`` in ``typeId^{asterisk}^``
-. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
+ .. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
+ .. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``typeIR~inferred~`` be ``typeIR^?^``.
+  *** Let ``typeIR~inferred~`` be ``typeIR^?^``.
 --
 +
 for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
-. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
+ .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+ .. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``parameterIR~aligned_inferred~`` be xref:subst_parameterIR[``parameterIR~aligned~`` substituted by ``inference``].
+  *** Let ``parameterIR~aligned_inferred~`` be xref:subst_parameterIR[``parameterIR~aligned~`` substituted by ``inference``].
 --
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
-. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
-. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
-. Check that ``xref:callable_externAbstractMethod[$callable_externAbstractMethod(p,`` ``TC)]``.
-. Let casted ``argumentIR~cast~^{asterisk}^`` be
+ .. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
+ .. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
+ .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+ .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+ .. Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
+ .. Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
-. Result in return type ``typeIR~ret_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
+ .. Result in return type ``typeIR~ret_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
+. Else:
+ .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+ .. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+--
++
+for each ``typeId`` in ``typeId^{asterisk}^``
+ .. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
+ .. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``typeIR~inferred~`` be ``typeIR^?^``.
+--
++
+for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
+ .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+ .. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
++
+--
+  *** Let ``parameterIR~aligned_inferred~`` be xref:subst_parameterIR[``parameterIR~aligned~`` substituted by ``inference``].
+--
++
+for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
+ .. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
+ .. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
+ .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+ .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+ .. Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
+ .. Let casted ``argumentIR~cast~^{asterisk}^`` be
+* the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
+ .. Result in return type ``typeIR~ret_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing invocation ``parserApplyMethodTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
@@ -14869,23 +14874,7 @@ xref:callable_externFunction[$callable_externFunction(cursor, TC, nameIR)]
   ... Return ``localKind`` is equal to ``+PARSER_STATE+``.
  .. Else: return ``true``.
 
-xref:callable_builtinMethod[$callable_builtinMethod(cursor, TC)]
-
-
-. If ``cursor`` is ``+GLOBAL+``: return ``true``.
-. Else if ``cursor`` is ``+BLOCK+``: return ``true``.
-. Else: return ``true``.
-
 xref:callable_externMethod[$callable_externMethod(cursor, TC)]
-
-
-. If ``cursor`` is ``+GLOBAL+``: return ``false``.
-. Else if ``cursor`` is ``+BLOCK+``:
- .. Let ``blockKind`` be ``TC.+BLOCK+.+KIND+``.
- .. Return ``blockKind`` is equal to ``+PARSER+`` or ``blockKind`` is equal to ``+CONTROL+``.
-. Else: return ``true``.
-
-xref:callable_externAbstractMethod[$callable_externAbstractMethod(cursor, TC)]
 
 
 . If ``cursor`` is ``+GLOBAL+``: return ``false``.
@@ -16470,15 +16459,18 @@ xref:Program_inst[Loading ``p4program``]:
 * the result of xref:Decls_inst[loading ``declarationIR^{asterisk}^``, under context ``IC~0~``, and store ``STO~0~``].
 . Result in global instantiation layer ``IC~1~.+GLOBAL+`` and store ``STO~1~``.
 
-xref:Copy_in_argument_inst[Copy_in_argument_inst: ``STO~0~`` ``p~caller~`` ``IC~caller~`` ``argumentIR`` ``+@+`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``+~>+`` ``%`` ``%``]
+xref:Copy_in_arg_inst[Copy_in_arg_inst]:
 
-xref:Copy_in_argument_inst[``STO~0~`` ``p~caller~`` ``IC~caller~`` ``argumentIR`` ``+@+`` ``p~callee~`` ``IC~callee_0~`` ``id`` ``+~>+`` ``%`` ``%``]:
+* Copy-in from ``instContext`` at ``cursor`` with ``argumentIR`` to ``instContext`` at ``cursor`` with ``id``, under store ``store``:
+* Result in store ``store`` and context ``instContext``.
+
+xref:Copy_in_arg_inst[Copy-in from ``IC~caller~`` at ``p~caller~`` with ``argumentIR`` to ``IC~callee_0~`` at ``p~callee~`` with ``id``, under store ``STO~0~``]:
 
 . Let ``IC~caller_inner~`` be xref:enter_path_i[``IC~caller~`` with ``id`` added to the path].
 . Let store ``STO~1~`` and ``value`` be
 * the result of xref:Argument_inst[compile-time evaluation of ``argumentIR``, under context ``IC~caller_inner~`` and store ``STO~0~`` at ``p~caller~``].
 . Let ``IC~callee_1~`` be xref:add_var_i[``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer].
-. Result in ``STO~1~`` and ``IC~callee_1~``.
+. Result in store ``STO~1~`` and context ``IC~callee_1~``.
 
 xref:Copy_in_inst[Copy_in_inst]:
 
@@ -16493,14 +16485,18 @@ xref:Copy_in_inst[Copy-in from ``IC~caller~`` at ``p~caller~`` with ``argumentIR
 . If let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``:
  .. Check that ``id^{asterisk}^`` is a non-empty list.
  .. Let ``id~h~`` ``{two-colons}`` ``id~t~^{asterisk}^`` be ``id^{asterisk}^``.
- .. Let xref:Copy_in_argument_inst[``store`` ``p~caller~`` ``IC~caller~`` ``argumentIR~h~`` ``+@+`` ``p~callee~`` ``instContext`` ``id~h~`` ``+~>+`` ``STO~1~`` ``IC~callee_1~``].
+ .. Let store ``STO~1~`` and context ``IC~callee_1~`` be
+* the result of xref:Copy_in_arg_inst[copy-in from ``IC~caller~`` at ``p~caller~`` with ``argumentIR~h~`` to ``instContext`` at ``p~callee~`` with ``id~h~``, under store ``store``].
  .. Let store ``STO~2~`` and context ``IC~callee_2~`` be
 * the result of xref:Copy_in_inst[copy-in from ``IC~caller~`` at ``p~caller~`` with ``argumentIR~t~^{asterisk}^`` to ``IC~callee_1~`` at ``p~callee~`` with ``id~t~^{asterisk}^``, under store ``STO~1~``].
  .. Result in store ``STO~2~`` and context ``IC~callee_2~``.
 
-xref:Copy_in_argument_inst_default[Copy_in_argument_inst_default: ``store`` ``p~caller~`` ``IC~caller~`` ``+@+`` ``p~callee~`` ``IC~callee_0~`` ``parameterIR`` ``+~>+`` ``%`` ``%``]
+xref:Copy_in_arg_inst_default[Copy_in_arg_inst_default]:
 
-xref:Copy_in_argument_inst_default[``store`` ``p~caller~`` ``IC~caller~`` ``+@+`` ``p~callee~`` ``IC~callee_0~`` ``parameterIR`` ``+~>+`` ``%`` ``%``]:
+* Copying default ``parameterIR`` from ``cursor`` at ``instContext`` to ``instContext`` at ``cursor``, under store ``store``:
+* Result in store ``store`` and context ``instContext``.
+
+xref:Copy_in_arg_inst_default[Copying default ``parameterIR`` from ``p~caller~`` at ``IC~caller~`` to ``IC~callee_0~`` at ``p~callee~``, under store ``store``]:
 
 . Let ``id`` and ``parameterInitializerOptIR`` be the name and the default initializer of ``parameterIR``.
 . Check that ``parameterInitializerOptIR`` is defined.
@@ -16510,11 +16506,11 @@ xref:Copy_in_argument_inst_default[``store`` ``p~caller~`` ``IC~caller~`` ``+@+`
  .. Let store ``STO~1~`` and ``value`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC~caller_inner~`` and store ``store`` at ``p~caller~``].
  .. Let ``IC~callee_1~`` be xref:add_var_i[``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer].
- .. Result in ``STO~1~`` and ``IC~callee_1~``.
+ .. Result in store ``STO~1~`` and context ``IC~callee_1~``.
 . Else:
  .. Let ``+=+`` ``+`VALUE+`` ``value`` be ``parameterInitializerIR``.
  .. Let ``IC~callee_1~`` be xref:add_var_i[``IC~callee_0~`` where ``id`` to ``value`` is added to the ``p~callee~`` layer].
- .. Result in ``store`` and ``IC~callee_1~``.
+ .. Result in store ``store`` and context ``IC~callee_1~``.
 
 xref:Copy_in_inst_default[Copy_in_inst_default]:
 
@@ -16526,7 +16522,8 @@ xref:Copy_in_inst_default[Copying defaults ``parameterIR^{asterisk}^`` from ``p~
 . If ``parameterIR^{asterisk}^`` is equal to ``·``:
  .. Result in store ``store`` and context ``instContext``.
 . If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
- .. Let xref:Copy_in_argument_inst_default[``store`` ``p~caller~`` ``IC~caller~`` ``+@+`` ``p~callee~`` ``instContext`` ``parameterIR~h~`` ``+~>+`` ``STO~1~`` ``IC~callee_1~``].
+ .. Let store ``STO~1~`` and context ``IC~callee_1~`` be
+* the result of xref:Copy_in_arg_inst_default[copying default ``parameterIR~h~`` from ``p~caller~`` at ``IC~caller~`` to ``instContext`` at ``p~callee~``, under store ``store``].
  .. Let store ``STO~2~`` and context ``IC~callee_2~`` be
 * the result of xref:Copy_in_inst_default[copying defaults ``parameterIR~t~^{asterisk}^`` from ``p~caller~`` at ``IC~caller~`` to ``IC~callee_1~`` at ``p~callee~``, under store ``STO~1~``].
  .. Result in store ``STO~2~`` and context ``IC~callee_2~``.
@@ -18422,7 +18419,7 @@ xref:Callee_eval[Finding callee ``referenceExpressionIR`` ``+(+`` ``argumentList
 . Let ``definedFunctionCallee`` be ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+)+`` ``blockStatementIR``.
 . Result in context ``EC``, state ``ARCH``, and callee ``definedFunctionCallee``.
 
-xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"push_front"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . If let ``typedLvalueIR'`` be ``typedLvalueIR^?^``:
@@ -18431,8 +18428,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Check that ``storageReferenceResult`` has type ``abortResult``.
  .. Let ``abortResult`` be ``storageReferenceResult``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. If ``nameIR`` is equal to ``"push_front"``:
- .. Check that ``argumentListIR`` is a list of length 1.
+. If ``argumentListIR`` is a list of length 1:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18443,8 +18439,17 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``parameterIR`` be ``+`EMPTY+`` ``+`EMPTY+`` ``+INT+`` ``"count"`` ``·``.
  .. Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference'`` ``+.+`` ``"push_front"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``parameterIR`` ``+)+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
-. Else if ``nameIR`` is equal to ``"pop_front"``:
- .. Check that ``argumentListIR`` is a list of length 1.
+
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"pop_front"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+. If let ``typedLvalueIR'`` be ``typedLvalueIR^?^``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
+* the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
+. If ``argumentListIR`` is a list of length 1:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18455,8 +18460,17 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``parameterIR`` be ``+`EMPTY+`` ``+`EMPTY+`` ``+INT+`` ``"count"`` ``·``.
  .. Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference'`` ``+.+`` ``"pop_front"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``parameterIR`` ``+)+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
-. Else if ``nameIR`` is equal to ``"isValid"``:
- .. Check that ``argumentListIR`` is equal to ``·``.
+
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"isValid"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+. If let ``typedLvalueIR'`` be ``typedLvalueIR^?^``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
+* the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
+. If ``argumentListIR`` is equal to ``·``:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18466,8 +18480,17 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``storageReference'`` be ``storageReference^?^``.
  .. Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference'`` ``+.+`` ``"isValid"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
-. Else if ``nameIR`` is equal to ``"setValid"``:
- .. Check that ``argumentListIR`` is equal to ``·``.
+
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"setValid"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+. If let ``typedLvalueIR'`` be ``typedLvalueIR^?^``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
+* the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
+. If ``argumentListIR`` is equal to ``·``:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18477,8 +18500,17 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``storageReference'`` be ``storageReference^?^``.
  .. Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference'`` ``+.+`` ``"setValid"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
-. Else if ``nameIR`` is equal to ``"setInvalid"``:
- .. Check that ``argumentListIR`` is equal to ``·``.
+
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"setInvalid"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Let ``typedLvalueIR^?^`` be xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
+. If let ``typedLvalueIR'`` be ``typedLvalueIR^?^``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
+* the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
+ .. Check that ``storageReferenceResult`` has type ``abortResult``.
+ .. Let ``abortResult`` be ``storageReferenceResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
+. If ``argumentListIR`` is equal to ``·``:
  .. Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR'``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18489,7 +18521,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference'`` ``+.+`` ``"setInvalid"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
 
-xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``text`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let ``typedLvalueIR'`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
@@ -18507,12 +18539,12 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``nameIR`` ``+(+``
  .. Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
  .. Check that ``object'`` has type ``externObject``.
  .. Let ``+EXTERN+`` ``++_++`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object'``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentListIR`` ``+)+``].
+ .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``text`` ``+(+`` ``argumentListIR`` ``+)+``].
  .. Let ``++_++`` ``+:+`` ``externMethodDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
  .. Check that ``externMethodDef`` matches pattern ``+EXTERN_METHOD+`` ``%`` ``+<+`` ``%`` ``+>+`` ``+(+`` ``%`` ``+)+`` ``%``.
- .. Let ``+EXTERN_METHOD+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
- .. Check that ``nameIR'`` is equal to ``nameIR'``.
- .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``nameIR'`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
+ .. Let ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
+ .. Check that ``nameIR`` is equal to ``text``.
+ .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+.+`` ``text`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+{+`` ``theta`` ``+;+`` ``frame`` ``+;+`` ``blockStatementIR^?^`` ``+}+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"apply"`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
@@ -18586,24 +18618,43 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+.+`` ``"apply"`` ``+(+`
  .. Let ``tableApplyMethodCallee`` be ``+TABLE+`` ``objectId`` ``+.+`` ``+APPLY+`` ``+{+`` ``frame`` ``+;+`` ``TBL`` ``+}+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``tableApplyMethodCallee``.
 
-xref:Copy_in_argument[Copy_in_argument: ``ARCH~0~`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``+~>+`` ``%`` ``%`` ``%`` ``+#+`` ``%``]
+xref:Copy_in_arg[Copy_in_arg]:
 
-xref:Copy_in_argument[``ARCH~0~`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``+~>+`` ``%`` ``%`` ``%`` ``+#+`` ``%``]:
+* Copy-in from ``argumentIR`` at ``cursor`` of ``evalContext`` to ``parameterIR`` in ``cursor`` at ``evalContext``, under state ``arch``:
+* Result in 
+ ** state ``arch``, 
+ **  caller's context ``evalContext``, 
+ **  callee's context ``evalContext``, 
+ **  and copy-in result ``copyInArgumentResult``.
+
+xref:Copy_in_arg[Copy-in from ``argumentIR`` at ``p~callee~`` of ``EC~callee_0~`` to ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` in ``p~caller~`` at ``EC~caller_0~``, under state ``ARCH~0~``]:
 
 . Check that ``direction`` is equal to ``+`EMPTY+`` or ``direction`` is equal to ``+IN+``.
 . Let xref:Argument_eval[``p~caller~`` ``EC~caller_0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~caller_1~`` ``ARCH~1~`` ``expressionResult``].
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_0~``, 
+*  and copy-in result ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. Let ``EC~callee_1~`` be xref:add_var_e[``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer].
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``·``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_1~``, 
+*  and copy-in result ``·``.
 
-xref:Copy_in_argument[``ARCH~0~`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``+INOUT+`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``+~>+`` ``%`` ``%`` ``%`` ``+#+`` ``%``]:
+xref:Copy_in_arg[Copy-in from ``argumentIR`` at ``p~callee~`` of ``EC~callee_0~`` to ``annotationList`` ``+INOUT+`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` in ``p~caller~`` at ``EC~caller_0~``, under state ``ARCH~0~``]:
 
 . Let xref:Argument_eval_lvalue[``p~caller~`` ``EC~caller_0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~caller_1~`` ``ARCH~1~`` ``storageReferenceResult``].
 . If let ``abortResult`` be ``storageReferenceResult``:
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_0~``, 
+*  and copy-in result ``abortResult``.
 . Else:
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
  .. Check that ``storageReference^?^`` is defined.
@@ -18611,28 +18662,40 @@ xref:Copy_in_argument[``ARCH~0~`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``anno
  .. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference'``, under context ``EC~caller_1~`` and state ``ARCH~1~`` at ``p~caller~``].
  .. Let ``EC~callee_1~`` be xref:add_var_e[``EC~callee_0~`` where ``nameIR`` to ``value`` is added to the ``p~callee~`` layer].
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``storageReference'``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_1~``, 
+*  and copy-in result ``storageReference'``.
 
-xref:Copy_in_argument[``ARCH~0~`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``+OUT+`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR`` ``+~>+`` ``%`` ``%`` ``%`` ``+#+`` ``%``]:
+xref:Copy_in_arg[Copy-in from ``argumentIR`` at ``p~callee~`` of ``EC~callee_0~`` to ``annotationList`` ``+OUT+`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` in ``p~caller~`` at ``EC~caller_0~``, under state ``ARCH~0~``]:
 
 . Let xref:Argument_eval_lvalue[``p~caller~`` ``EC~caller_0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~caller_1~`` ``ARCH~1~`` ``storageReferenceResult``].
 . If let ``abortResult`` be ``storageReferenceResult``:
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_0~``, and ``abortResult``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_0~``, 
+*  and copy-in result ``abortResult``.
 . Else:
  .. Let ``storageReference^?^`` be ``storageReferenceResult``.
  .. Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC~callee_0~`` from the ``p~callee~`` layer].
  .. Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].
  .. Let ``EC~callee_1~`` be xref:add_var_e[``EC~callee_0~`` where ``nameIR`` to ``value~init~`` is added to the ``p~callee~`` layer].
- .. Result in ``ARCH~1~``, ``EC~caller_1~``, ``EC~callee_1~``, and ``storageReference^?^``.
+ .. Result in 
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_1~``, 
+*  and copy-in result ``storageReference^?^``.
 
 xref:Copy_in[Copy_in]:
 
 * Copy-in from ``argumentListIR`` at ``cursor`` of ``evalContext`` to ``parameterListIR`` in ``cursor`` at ``evalContext``, under state ``arch`` at shared ``cursor``:
 * Result in 
- ** state ``arch``
- ** , caller's context ``evalContext``
- ** , callee's context ``evalContext``
- ** , and copy-in result ``copyInResult``.
+ ** state ``arch``, 
+ **  caller's context ``evalContext``, 
+ **  callee's context ``evalContext``, 
+ **  and copy-in result ``copyInResult``.
 
 xref:Copy_in[Copy-in from ``argumentIR^{asterisk}^`` at ``p~callee~`` of ``EC~callee_0~`` to ``parameterIR^{asterisk}^`` in ``p~caller~`` at ``evalContext``, under state ``arch`` at shared ``p~shared~``]:
 
@@ -18640,38 +18703,39 @@ xref:Copy_in[Copy-in from ``argumentIR^{asterisk}^`` at ``p~callee~`` of ``EC~ca
  .. Check that ``argumentIR^{asterisk}^`` is equal to ``·``.
  .. Let ``EC~callee_1~`` be ``xref:copy_e[$copy_e(p~shared~,`` ``evalContext,`` ``EC~callee_0~)]``.
  .. Result in 
-* state ``arch``
-* , caller's context ``evalContext``
-* , callee's context ``EC~callee_1~``
-* , and copy-in result ``·``.
+* state ``arch``, 
+*  caller's context ``evalContext``, 
+*  callee's context ``EC~callee_1~``, 
+*  and copy-in result ``·``.
 . If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
- .. Let xref:Copy_in_argument[``arch`` ``+|-+`` ``p~caller~`` ``evalContext`` ``parameterIR~h~`` ``+@+`` ``p~callee~`` ``EC~callee_0~`` ``argumentIR~h~`` ``+~>+`` ``ARCH~1~`` ``EC~caller_1~`` ``EC~callee_1~`` ``+#+`` ``copyInArgumentResult``].
+ .. Let state ``ARCH~1~``,  caller's context ``EC~caller_1~``,  callee's context ``EC~callee_1~``,  and copy-in result ``copyInArgumentResult`` be
+* the result of xref:Copy_in_arg[copy-in from ``argumentIR~h~`` at ``p~callee~`` of ``EC~callee_0~`` to ``parameterIR~h~`` in ``p~caller~`` at ``evalContext``, under state ``arch``].
  .. If let ``abortResult`` be ``copyInArgumentResult``:
   ... Result in 
-* state ``ARCH~1~``
-* , caller's context ``EC~caller_1~``
-* , callee's context ``EC~callee_1~``
-* , and copy-in result ``abortResult``.
+* state ``ARCH~1~``, 
+*  caller's context ``EC~caller_1~``, 
+*  callee's context ``EC~callee_1~``, 
+*  and copy-in result ``abortResult``.
  .. Else:
   ... Let ``storageReference~h~^?^`` be ``copyInArgumentResult``.
-  ... Let state ``ARCH~2~``, caller's context ``EC~caller_2~``, callee's context ``EC~callee_2~``, and copy-in result ``copyInResult`` be
+  ... Let state ``ARCH~2~``,  caller's context ``EC~caller_2~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentIR~t~^{asterisk}^`` at ``p~callee~`` of ``EC~callee_1~`` to ``parameterIR~t~^{asterisk}^`` in ``p~caller~`` at ``EC~caller_1~``, under state ``ARCH~1~`` at shared ``p~shared~``].
   ... If let ``abortResult`` be ``copyInResult``:
    .... Result in 
-* state ``ARCH~2~``
-* , caller's context ``EC~caller_2~``
-* , callee's context ``EC~callee_2~``
-* , and copy-in result ``abortResult``.
+* state ``ARCH~2~``, 
+*  caller's context ``EC~caller_2~``, 
+*  callee's context ``EC~callee_2~``, 
+*  and copy-in result ``abortResult``.
   ... Else:
    .... Let ``storageReference~t~^?^^{asterisk}^`` be ``copyInResult``.
    .... Let ``storageReference^?^^{asterisk}^`` be ``storageReference~h~^?^`` ``{two-colons}`` ``storageReference~t~^?^^{asterisk}^``.
    .... Result in 
-* state ``ARCH~2~``
-* , caller's context ``EC~caller_2~``
-* , callee's context ``EC~callee_2~``
-* , and copy-in result ``storageReference^?^^{asterisk}^``.
+* state ``ARCH~2~``, 
+*  caller's context ``EC~caller_2~``, 
+*  callee's context ``EC~callee_2~``, 
+*  and copy-in result ``storageReference^?^^{asterisk}^``.
 
 xref:Copy_in_default[Copy_in_default]:
 
@@ -18706,25 +18770,28 @@ for each ``parameterInitializerIR`` in ``parameterInitializerIR^{asterisk}^``
 . Let ``EC~callee_1~`` be ``xref:add_vars_e[$add_vars_e(p~callee~,`` ``EC~callee_0~,`` ``nameIR^{asterisk}^,`` ``value^{asterisk}^)]``.
 . Result in ``EC~callee_1~``.
 
-xref:Copy_out_argument[Copy_out_argument: ``ARCH`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``+~>+`` ``%``]
+xref:Copy_out_argument[Copy_out_argument]:
 
-xref:Copy_out_argument[``ARCH`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``·`` ``+~>+`` ``%``]:
+* Copy-out from ``cursor`` at ``evalContext`` of ``parameterIR`` to ``cursor`` at shared ``arch``, under state ``cursor`` at shared ``arch``:
+* Result in context ``evalContext``.
+
+xref:Copy_out_argument[Copy-out from ``p~callee~`` at ``EC~caller_0~`` of ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` to ``p~caller~`` at shared ``ARCH``, under state ``p~caller~`` at shared ``ARCH``]:
 
 . Check that ``direction`` is equal to ``+IN+`` or ``direction`` is equal to ``+`EMPTY+``.
-. Result in ``EC~caller_0~``.
+. Result in context ``EC~caller_0~``.
 
-xref:Copy_out_argument[``ARCH`` ``+|-+`` ``p~caller~`` ``EC~caller_0~`` ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^`` ``+~>+`` ``%``]:
+xref:Copy_out_argument[Copy-out from ``p~callee~`` at ``EC~caller_0~`` of ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerOptIR`` to ``p~caller~`` at shared ``ARCH``, under state ``p~caller~`` at shared ``ARCH``]:
 
 . If ``storageReference^?^`` is none:
  .. Check that ``direction`` is equal to ``+OUT+`` or ``direction`` is equal to ``+INOUT+``.
- .. Result in ``EC~caller_0~``.
+ .. Result in context ``EC~caller_0~``.
 . Else:
  .. Let ``storageReference'`` be ``storageReference^?^``.
  .. Check that ``direction`` is equal to ``+OUT+`` or ``direction`` is equal to ``+INOUT+``.
  .. Let ``value`` be xref:find_var_e[the value of ``nameIR`` from the ``p~callee~`` layer of ``EC~callee~``].
  .. Let context ``EC~caller_1~`` be
 * the result of xref:Lvalue_write[writing ``value`` to ``storageReference'``, under context ``EC~caller_0~`` and state ``ARCH`` at ``p~caller~``].
- .. Result in ``EC~caller_1~``.
+ .. Result in context ``EC~caller_1~``.
 
 xref:Copy_out[Copy_out]:
 
@@ -18734,7 +18801,8 @@ xref:Copy_out[Copy_out]:
 xref:Copy_out[Copy-out from ``parameterListIR`` at ``p~caller~`` of ``EC~caller_0~`` to ``storageReference^?^^{asterisk}^`` at ``p~callee~`` of ``EC~callee~``, under state ``ARCH`` at shared ``p~shared~``]:
 
 . Let ``EC~caller_1~`` be ``xref:copy_e[$copy_e(p~shared~,`` ``EC~callee~,`` ``EC~caller_0~)]``.
-. Let xref:Copy_out_inner[``ARCH`` ``+|-+`` ``p~caller~`` ``EC~caller_1~`` ``parameterListIR`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^^{asterisk}^`` ``+~>+`` ``EC~caller_2~``].
+. Let caller's context ``EC~caller_2~`` be
+* the result of xref:Copy_out_inner[copy-in from ``storageReference^?^^{asterisk}^`` at ``p~callee~`` of ``EC~callee~`` to ``parameterListIR`` in ``p~caller~`` at ``EC~caller_1~``, under state ``ARCH``].
 . Result in ``EC~caller_2~``.
 
 xref:Call_eval[Call_eval]:
@@ -18747,14 +18815,14 @@ xref:Call_eval[Calling ``actionCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumen
 . Let ``+ACTION+`` ``p~shared~`` ``+.+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+#+`` ``id~default~^{asterisk}^`` ``+)+`` ``blockStatementIR`` be ``actionCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``p~shared~`` layer].
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_1~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_1~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+LOCAL+`` of ``EC~callee_0~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``exitResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``+EXIT+``.
 . Else if let ``storageReference^?^^{asterisk}^`` be ``copyInResult``:
  .. Let ``EC~callee_2~`` be
 * the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_1~``].
- .. Let the updated context ``EC~callee_3~``, state ``ARCH~2~`` and result ``actionResult`` be
+ .. Let context ``EC~callee_3~``, state ``ARCH~2~`` and result ``actionResult`` be
 * the result of xref:ActionBody_eval[evaluating action body ``blockStatementIR``, under context ``EC~callee_2~`` and state ``ARCH~1~``].
  .. If let ``exitResult`` be ``actionResult``:
   ... Let ``EC~2~`` be
@@ -18773,7 +18841,7 @@ xref:Call_eval[Calling ``definedFunctionCallee`` ``+<+`` ``typeArgumentIR^{aster
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_2~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+LOCAL+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
@@ -18781,7 +18849,8 @@ xref:Call_eval[Calling ``definedFunctionCallee`` ``+<+`` ``typeArgumentIR^{aster
  .. Let ``storageReference^?^^{asterisk}^`` be ``copyInResult``.
  .. Let ``EC~callee_3~`` be
 * the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_2~``].
- .. Let xref:DefinedFunctionBody_eval[``EC~callee_3~`` ``ARCH~1~`` ``+|-+`` ``blockStatementIR`` ``+:+`` ``EC~callee_4~`` ``ARCH~2~`` ``definedFunctionResult``].
+ .. Let context ``EC~callee_4~``, state ``ARCH~2~`` and result ``definedFunctionResult`` be
+* the result of xref:DefinedFunctionBody_eval[evaluating function body ``blockStatementIR``, under context ``EC~callee_3~`` and state ``ARCH~1~``].
  .. Let ``EC~2~`` be
 * the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_4~``, under state ``ARCH~2~`` at shared ``p~shared~``].
  .. Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``definedFunctionResult``.
@@ -18794,7 +18863,7 @@ xref:Call_eval[Calling ``externFunctionCallee`` ``+<+`` ``typeArgumentIR^{asteri
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_2~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
@@ -18818,157 +18887,188 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``
 * the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_4~``, under state ``ARCH~2~`` at shared ``p~shared~``].
   ... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
 
-xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
-. If let ``argumentIR`` be ``argumentListIR``:
- .. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` be ``builtinMethodCallee``.
- .. If ``text`` is equal to ``"push_front"``:
-  ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
-  ... Check that ``parameterListIR`` is a list of length 1.
-  ... Let value ``value`` be
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"push_front"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterListIR`` is a list of length 1.
+. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Check that ``value`` has type ``headerStackValue``.
-  ... Let ``headerStackValue`` be ``value``.
-  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
-  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
-  ... If let ``abortResult`` be ``expressionResult``:
-   .... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
-  ... Else:
-   .... Let ``value'`` be ``expressionResult``.
-   .... Check that ``value'`` has type ``integerValue``.
-   .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... If ``n~count~`` is less than ``n~size~``:
-    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-    ..... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
+. Check that ``value`` has type ``headerStackValue``.
+. Let ``headerStackValue`` be ``value``.
+. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
+. Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+. Else:
+ .. Let ``value'`` be ``expressionResult``.
+ .. Check that ``value'`` has type ``integerValue``.
+ .. Let ``integerValue~count~`` be ``value'``.
+ .. Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
+ .. If ``n~count~`` is less than ``n~size~``:
+  ... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+  ... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-     ****** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
+   **** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
 --
 +
 for each ``value~front~`` in ``value~front~^{asterisk}^``
-    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-    ..... Check that ``int`` has type ``nat``.
-    ..... Let ``n~back~`` be ``int``.
-    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
-    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
-    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-    ..... Let context ``EC~2~`` be
+  ... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~back~`` be ``int``.
+  ... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
+  ... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
+  ... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+  ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-   .... If ``n~count~`` is greater than or equal to ``n~size~``:
-    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
+  ... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+ .. If ``n~count~`` is greater than or equal to ``n~size~``:
+  ... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+   **** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
 --
 +
 for each ``value~element~`` in ``value~element~^{asterisk}^``
-    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
-    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-    ..... Let context ``EC~2~`` be
+  ... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.
+  ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
- .. Else if ``text`` is equal to ``"pop_front"``:
-  ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
-  ... Check that ``parameterListIR`` is a list of length 1.
-  ... Let value ``value`` be
+  ... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"pop_front"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterListIR`` is a list of length 1.
+. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Check that ``value`` has type ``headerStackValue``.
-  ... Let ``headerStackValue`` be ``value``.
-  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
-  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
-  ... If let ``abortResult`` be ``expressionResult``:
-   .... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
-  ... Else:
-   .... Let ``value'`` be ``expressionResult``.
-   .... Check that ``value'`` has type ``integerValue``.
-   .... Let ``integerValue~count~`` be ``value'``.
-   .... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
-   .... If ``n~count~`` is less than ``n~size~``:
-    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-    ..... Check that ``int`` has type ``nat``.
-    ..... Let ``n~front~`` be ``int``.
-    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
-    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
-    ..... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
+. Check that ``value`` has type ``headerStackValue``.
+. Let ``headerStackValue`` be ``value``.
+. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
+. Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
+. If let ``abortResult`` be ``expressionResult``:
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+. Else:
+ .. Let ``value'`` be ``expressionResult``.
+ .. Check that ``value'`` has type ``integerValue``.
+ .. Let ``integerValue~count~`` be ``value'``.
+ .. Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
+ .. If ``n~count~`` is less than ``n~size~``:
+  ... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~front~`` be ``int``.
+  ... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.
+  ... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.
+  ... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-     ****** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
+   **** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
 --
 +
 for each ``value~back~`` in ``value~back~^{asterisk}^``
-    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
-    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-    ..... Let context ``EC~2~`` be
+  ... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.
+  ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-   .... If ``n~count~`` is greater than or equal to ``n~size~``:
-    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
+  ... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+ .. If ``n~count~`` is greater than or equal to ``n~size~``:
+  ... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+   **** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
 --
 +
 for each ``value~element~`` in ``value~element~^{asterisk}^``
-    ..... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
-    ..... Check that ``int`` has type ``nat``.
-    ..... Let ``n~idx_updated~`` be ``int``.
-    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
-    ..... Let context ``EC~2~`` be
+  ... Let ``int`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.
+  ... Check that ``int`` has type ``nat``.
+  ... Let ``n~idx_updated~`` be ``int``.
+  ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let context ``EC~2~`` be
 * the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-. If ``argumentListIR`` is equal to ``·``:
- .. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
- .. If ``text`` is equal to ``"isValid"``:
-  ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
-  ... Check that ``parameterIR^{asterisk}^`` is an empty list.
-  ... Let value ``value`` be
+  ... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"isValid"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterIR^{asterisk}^`` is an empty list.
+. Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... If let ``headerValue`` be ``value``:
-   .... Let ``+HEADER+`` ``++_++`` ``+{+`` ``b~valid~`` ``+;+`` ``++_++^{asterisk}^`` ``+}+`` be ``headerValue``.
-   .... Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
-   .... Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
-  ... Else if let ``headerUnionValue`` be ``value``:
-   .... Let ``+HEADER_UNION+`` ``typeId`` ``+{+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerUnionValue``.
-   .... Let ``bool^{asterisk}^`` be the list obtained by repeating:
+. Check that ``value`` has type ``headerValue``.
+. Let ``headerValue`` be ``value``.
+. Let ``+HEADER+`` ``++_++`` ``+{+`` ``b~valid~`` ``+;+`` ``++_++^{asterisk}^`` ``+}+`` be ``headerValue``.
+. Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
+. Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
+
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"setValid"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterIR^{asterisk}^`` is an empty list.
+. Let value ``value`` be
+* the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
+. Check that ``value`` has type ``headerValue``.
+. Let ``headerValue`` be ``value``.
+. Let ``+HEADER+`` ``typeId`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerValue``.
+. Let ``value'`` be ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value'`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
+. Let ``returnResult`` be ``+RETURN+`` ``·``.
+. Result in context ``EC~1~``, state ``ARCH~0~``, and call result ``returnResult``.
+
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"setInvalid"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterIR^{asterisk}^`` is an empty list.
+. Let value ``value`` be
+* the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
+. Check that ``value`` has type ``headerValue``.
+. Let ``headerValue`` be ``value``.
+. Let ``+HEADER+`` ``typeId`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerValue``.
+. Let ``value'`` be ``+HEADER+`` ``typeId`` ``+{+`` ``false`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+``.
+. Let context ``EC~1~`` be
+* the result of xref:Lvalue_write[writing ``value'`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
+. Let ``returnResult`` be ``+RETURN+`` ``·``.
+. Result in context ``EC~1~``, state ``ARCH~0~``, and call result ``returnResult``.
+
+xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_METHOD+`` ``storageReference`` ``+.+`` ``text`` ``+<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` be ``builtinMethodCallee``.
+. Check that ``text`` is equal to ``"isValid"``.
+. Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
+. Check that ``parameterIR^{asterisk}^`` is an empty list.
+. Let value ``value`` be
+* the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
+. Check that ``value`` has type ``headerUnionValue``.
+. Let ``headerUnionValue`` be ``value``.
+. Let ``+HEADER_UNION+`` ``typeId`` ``+{+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerUnionValue``.
+. Let ``value~field~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``bool`` be ``xref:isValid_fieldValue[$isValid_fieldValue(fieldValue)]``.
+ ** Let ``value~field~`` ``++_++`` ``+;+`` be ``fieldValue``.
 --
 +
 for each ``fieldValue`` in ``fieldValue^{asterisk}^``
-   .... Let ``fieldValue~valid~^{asterisk}^`` be xref:filter_[``fieldValue^{asterisk}^`` filtered by ``bool^{asterisk}^``].
-   .... Let ``b~valid~`` be ``fieldValue~valid~^{asterisk}^`` is equal to ``·``.
-   .... Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
-   .... Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
- .. Else if ``text`` is equal to ``"setValid"``:
-  ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
-  ... Check that ``parameterIR^{asterisk}^`` is an empty list.
-  ... Let value ``value`` be
-* the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Check that ``value`` has type ``headerValue``.
-  ... Let ``headerValue`` be ``value``.
-  ... Let ``+HEADER+`` ``typeId`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerValue``.
-  ... Let ``value'`` be ``+HEADER+`` ``typeId`` ``+{+`` ``true`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+``.
-  ... Let context ``EC~1~`` be
-* the result of xref:Lvalue_write[writing ``value'`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Let ``returnResult`` be ``+RETURN+`` ``·``.
-  ... Result in context ``EC~1~``, state ``ARCH~0~``, and call result ``returnResult``.
- .. Else if ``text`` is equal to ``"setInvalid"``:
-  ... Check that ``typeArgumentIR'^{asterisk}^`` is an empty list.
-  ... Check that ``parameterIR^{asterisk}^`` is an empty list.
-  ... Let value ``value`` be
-* the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Check that ``value`` has type ``headerValue``.
-  ... Let ``headerValue`` be ``value``.
-  ... Let ``+HEADER+`` ``typeId`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``headerValue``.
-  ... Let ``value'`` be ``+HEADER+`` ``typeId`` ``+{+`` ``false`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+``.
-  ... Let context ``EC~1~`` be
-* the result of xref:Lvalue_write[writing ``value'`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
-  ... Let ``returnResult`` be ``+RETURN+`` ``·``.
-  ... Result in context ``EC~1~``, state ``ARCH~0~``, and call result ``returnResult``.
+. Let ``bool^{asterisk}^`` be the list obtained by repeating:
++
+--
+ ** Let ``bool`` be ``xref:isValid_header[$isValid_header(value~field~)]``.
+--
++
+for each ``value~field~`` in ``value~field~^{asterisk}^``
+. Let ``fieldValue~valid~^{asterisk}^`` be xref:filter_[``fieldValue^{asterisk}^`` filtered by ``bool^{asterisk}^``].
+. Let ``b~valid~`` be ``fieldValue~valid~^{asterisk}^`` is equal to ``·``.
+. Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
+. Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
 
 xref:Call_eval[Calling ``externMethodCallee`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
@@ -18981,7 +19081,7 @@ xref:Call_eval[Calling ``externMethodCallee`` ``+<+`` ``typeArgumentIR^{asterisk
 . Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+{+`` ``(`` ``typeParameterIR`` ``+:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_4~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``abortResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
@@ -19012,7 +19112,7 @@ xref:Call_eval[Calling ``parserApplyMethodCallee`` ``+<+`` ``typeArgumentListIR`
 . Let ``EC~callee_1~`` be ``EC~callee_0~[+BLOCK+.+TYPE+`` ``=`` ``theta][+BLOCK+.+FRAME+`` ``=`` ``frame]`` with ``+BLOCK+.+STATE+`` set to ``stateEnv``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_2~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+BLOCK+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``rejectTransitionResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``rejectTransitionResult``.
@@ -19045,7 +19145,7 @@ xref:Call_eval[Calling ``controlApplyMethodCallee`` ``+<+`` ``typeArgumentListIR
 . Let ``EC~callee_1~`` be ``EC~callee_0~[+BLOCK+.+TYPE+`` ``=`` ``theta][+BLOCK+.+FRAME+`` ``=`` ``frame]`` with ``+BLOCK+.+CALLABLE+`` set to ``+{+`` ``(`` ``callableId`` ``+:+`` ``actionDef`` ``)^{asterisk}^`` ``+}+``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``, caller's context ``EC~1~``, callee's context ``EC~callee_2~``, and copy-in result ``copyInResult`` be
+. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be
 * the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+BLOCK+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``exitResult`` be ``copyInResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``+EXIT+``.
@@ -19824,54 +19924,57 @@ for each ``nat^?^`` in ``nat^?^^{asterisk}^``
   ... Let ``tableActionReferenceIR~h~`` ``{two-colons}`` ``++_++^{asterisk}^`` be ``tableActionReferenceIR~sorted~^{asterisk}^``.
   ... Return ``tableActionReferenceIR~h~``.
 
-xref:Copy_out_inner[Copy_out_inner: ``ARCH`` ``+|-+`` ``p~caller~`` ``evalContext`` ``parameterIR^{asterisk}^`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^^{asterisk}^`` ``+~>+`` ``%``]
+xref:Copy_out_inner[Copy_out_inner]:
 
-xref:Copy_out_inner[``ARCH`` ``+|-+`` ``p~caller~`` ``evalContext`` ``parameterIR^{asterisk}^`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference^?^^{asterisk}^`` ``+~>+`` ``%``]:
+* Copy-in from ``storageReference^?^^{asterisk}^`` at ``cursor`` of ``evalContext`` to ``parameterListIR`` in ``cursor`` at ``evalContext``, under state ``arch``:
+* Result in caller's context ``evalContext``.
+
+xref:Copy_out_inner[Copy-in from ``storageReference^?^^{asterisk}^`` at ``p~callee~`` of ``EC~callee~`` to ``parameterIR^{asterisk}^`` in ``p~caller~`` at ``evalContext``, under state ``ARCH``]:
 
 . If ``parameterIR^{asterisk}^`` is equal to ``·``:
  .. Check that ``storageReference^?^^{asterisk}^`` is equal to ``·``.
- .. Result in ``evalContext``.
+ .. Result in caller's context ``evalContext``.
 . If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
  .. Let ``storageReference'^?^^{asterisk}^`` be ``storageReference^?^^{asterisk}^``.
  .. Check that ``storageReference'^?^^{asterisk}^`` is a non-empty list.
  .. Let ``storageReference~h~^?^`` ``{two-colons}`` ``storageReference~t~^?^^{asterisk}^`` be ``storageReference'^?^^{asterisk}^``.
- .. Let xref:Copy_out_argument[``ARCH`` ``+|-+`` ``p~caller~`` ``evalContext`` ``parameterIR~h~`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference~h~^?^`` ``+~>+`` ``EC~caller_1~``].
- .. Let xref:Copy_out_inner[``ARCH`` ``+|-+`` ``p~caller~`` ``EC~caller_1~`` ``parameterIR~t~^{asterisk}^`` ``+@+`` ``p~callee~`` ``EC~callee~`` ``storageReference~t~^?^^{asterisk}^`` ``+~>+`` ``EC~caller_2~``].
- .. Result in ``EC~caller_2~``.
+ .. Let context ``EC~caller_1~`` be
+* the result of xref:Copy_out_argument[copy-out from ``p~callee~`` at ``evalContext`` of ``parameterIR~h~`` to ``p~caller~`` at shared ``ARCH``, under state ``p~caller~`` at shared ``ARCH``].
+ .. Let caller's context ``EC~caller_2~`` be
+* the result of xref:Copy_out_inner[copy-in from ``storageReference~t~^?^^{asterisk}^`` at ``p~callee~`` of ``EC~callee~`` to ``parameterIR~t~^{asterisk}^`` in ``p~caller~`` at ``EC~caller_1~``, under state ``ARCH``].
+ .. Result in caller's context ``EC~caller_2~``.
 
 xref:ActionBody_eval[ActionBody_eval]:
 
 * Evaluating action body ``blockStatementIR``, under context ``evalContext`` and state ``arch``:
-* Result in the updated context ``evalContext``, state ``arch`` and result ``actionResult``.
+* Result in context ``evalContext``, state ``arch`` and result ``actionResult``.
 
 xref:ActionBody_eval[Evaluating action body ``blockStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
 * the result of xref:Block_eval[runtime evaluation of ``blockStatementIR``, under context ``EC~0~``, and state ``ARCH~0~``].
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in the updated context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
- .. Result in the updated context ``EC~1~``, state ``ARCH~1~`` and result ``+EXIT+``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``+EXIT+``.
 . If ``statementResult`` is equal to ``+RETURN+`` ``·``:
- .. Result in the updated context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
 
-xref:DefinedFunctionBody_eval[DefinedFunctionBody_eval: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``blockStatementIR`` ``+:+`` ``%`` ``%`` ``%``]
+xref:DefinedFunctionBody_eval[DefinedFunctionBody_eval]:
 
-xref:DefinedFunctionBody_eval[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``blockStatementIR`` ``+:+`` ``%`` ``%`` ``%``]:
+* Evaluating function body ``blockStatementIR``, under context ``evalContext`` and state ``arch``:
+* Result in context ``evalContext``, state ``arch`` and result ``definedFunctionResult``.
+
+xref:DefinedFunctionBody_eval[Evaluating function body ``blockStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
 * the result of xref:Block_eval[runtime evaluation of ``blockStatementIR``, under context ``EC~0~``, and state ``ARCH~0~``].
 . If let ``continueEmptyResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``+RETURN+`` ``·``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``+RETURN+`` ``·``.
 . Else if let ``exitResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``+EXIT+``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``+EXIT+``.
 . Else if let ``returnResult`` be ``statementResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``returnResult``.
-
-xref:isValid_fieldValue[$isValid_fieldValue(value id +;+)]
-
-
-. Return ``xref:isValid_header[$isValid_header(value)]``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~`` and result ``returnResult``.
 
 xref:Var_init[Var_init]:
 

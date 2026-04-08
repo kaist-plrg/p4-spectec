@@ -4875,7 +4875,7 @@ relation Type_alpha: typeIR ~~ typeIR
     -- (if ParameterType_alpha: parameterIR_a ~~ parameterIR_b holds)*{parameterIR_a <- parameterIR_a*, parameterIR_b <- parameterIR_b*}
     -- the relation holds
 
-  rulegroup packetObjectTypeIR
+  rulegroup packageObjectTypeIR
 
    match
 
@@ -4888,7 +4888,7 @@ relation Type_alpha: typeIR ~~ typeIR
 
    paths
 
-    rulepath packetObjectTypeIR
+    rulepath packageObjectTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b*{typeIR_b <- typeIR_b*}|)
     -- (if Type_alpha: typeIR_a ~~ typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
     -- the relation holds
@@ -18877,20 +18877,20 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- if CallableType_wf: bound |- functionTypeIR as callableTypeIR holds
     -- output: % % |- % < % > ( % ) : functionTypeIR as callableTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
-  rulegroup builtinMethodTypeIR
+  rulegroup builtinMethodTypeIR-size
 
    match
 
-    (signature) p TC |- typedExpressionIR_base . nameIR < [] > ( argumentIR''''*{argumentIR'''' <- argumentIR''''*} ) : % < # % > ( # % # % )
-    p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR''''*{argumentIR'''' <- argumentIR''''*} ) : % < # % > ( # % # % )
+    (signature) p TC |- typedExpressionIR_base . nameIR < [] > ( [] ) : % < # % > ( # % # % )
+    p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % < # % > ( # % # % )
     -- if callableTargetIR matches `% . %`
     -- let typedExpressionIR_base . nameIR = callableTargetIR
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
-    rulepath minmax-SizeIn-BitsBytes
-    -- if (argumentIR''''*{argumentIR'''' <- argumentIR''''*} = [])
+    rulepath builtinMethodTypeIR-size
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
@@ -18899,10 +18899,21 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let methodTypeIR = BUILTIN_METHOD nameIR ( [] ) : INT as typeIR as methodTypeIR
     -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
 
-    rulepath stack-push-pop-front
-    -- let argumentIR'''''*{argumentIR''''' <- argumentIR'''''*} = argumentIR''''*{argumentIR'''' <- argumentIR''''*}
-    -- if argumentIR'''''*{argumentIR''''' <- argumentIR'''''*} matches [ _/1 ]
-    -- let [argumentIR] = argumentIR'''''*{argumentIR''''' <- argumentIR'''''*}
+  rulegroup builtinMethodTypeIR-header-stack
+
+   match
+
+    (signature) p TC |- typedExpressionIR_base . nameIR < [] > ( [argumentIR] ) : % < # % > ( # % # % )
+    p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR'*{argumentIR' <- argumentIR'*} ) : % < # % > ( # % # % )
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR_base . nameIR = callableTargetIR
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR'*{argumentIR' <- argumentIR'*} matches [ _/1 ]
+    -- let [argumentIR] = argumentIR'*{argumentIR' <- argumentIR'*}
+
+   paths
+
+    rulepath builtinMethodTypeIR-header-stack
     -- if nameIR <- ["push_front", "pop_front"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
@@ -18912,34 +18923,57 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let methodTypeIR = BUILTIN_METHOD nameIR ( [parameterIR] ) : INT as typeIR as methodTypeIR
     -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
 
-    rulepath header-isValid
-    -- if (argumentIR''''*{argumentIR'''' <- argumentIR''''*} = [])
+  rulegroup builtinMethodTypeIR-header
+
+   match
+
+    (signature) p TC |- typedExpressionIR_base . nameIR < [] > ( [] ) : % < # % > ( # % # % )
+    p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % < # % > ( # % # % )
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR_base . nameIR = callableTargetIR
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath isValid
     -- if nameIR <- ["isValid"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: headerTypeIR
-    -- let HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR' as headerTypeIR
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: headerTypeIR
+    -- let HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerTypeIR
     -- let methodTypeIR = BUILTIN_METHOD nameIR ( [] ) : BOOL as typeIR as methodTypeIR
     -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
 
-    rulepath header-union-isValid
-    -- if (argumentIR''''*{argumentIR'''' <- argumentIR''''*} = [])
-    -- if nameIR <- ["isValid"]
-    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: headerUnionTypeIR
-    -- let HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR' as headerUnionTypeIR
-    -- let methodTypeIR = BUILTIN_METHOD nameIR ( [] ) : BOOL as typeIR as methodTypeIR
-    -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
-
-    rulepath header-set-ValidInvalid
-    -- if (argumentIR''''*{argumentIR'''' <- argumentIR''''*} = [])
+    rulepath setValidInvalid
     -- if nameIR <- ["setValid", "setInvalid"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR' = $unroll_typeIR(typeIR_base)
-    -- if typeIR' <: headerTypeIR
-    -- let HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR' as headerTypeIR
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: headerTypeIR
+    -- let HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerTypeIR
     -- let methodTypeIR = BUILTIN_METHOD nameIR ( [] ) : VOID as typeIR as methodTypeIR
+    -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
+
+  rulegroup builtinMethodTypeIR-header-union
+
+   match
+
+    (signature) p TC |- typedExpressionIR_base . nameIR < [] > ( [] ) : % < # % > ( # % # % )
+    p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % < # % > ( # % # % )
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR_base . nameIR = callableTargetIR
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath isValid
+    -- if nameIR <- ["isValid"]
+    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: headerUnionTypeIR
+    -- let HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } = typeIR as headerUnionTypeIR
+    -- let methodTypeIR = BUILTIN_METHOD nameIR ( [] ) : BOOL as typeIR as methodTypeIR
     -- output: % % |- % < % > ( % ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
 
   rulegroup externMethodTypeIR
@@ -19062,7 +19096,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
 
 relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # typeId* > ( argumentListIR # id* # id* ) : typeIR < typeArgumentListIR > ( argumentListIR )
 
-  rulegroup action
+  rulegroup actionTypeIR
 
    match
 
@@ -19075,7 +19109,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
 
    paths
 
-    rulepath action
+    rulepath actionTypeIR
     -- let _annotationList ACTION _nameIR ( parameterIR*{parameterIR <- parameterIR*} ) = actionTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- if $callable_action(p, TC)
@@ -19151,11 +19185,10 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     rulepath builtinMethodTypeIR
     -- let BUILTIN_METHOD nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = builtinMethodTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- if $callable_builtinMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  rulegroup externMethodTypeIR-non-abstract
+  rulegroup externMethodTypeIR
 
    match
 
@@ -19166,7 +19199,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
 
    paths
 
-    rulepath externMethodTypeIR-non-abstract
+    rulepath non-abstract
     -- let externMethodTypeIR' = externMethodTypeIR
     -- if externMethodTypeIR' matches `EXTERN_METHOD % (%) : %`
     -- let EXTERN_METHOD nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = externMethodTypeIR'
@@ -19184,18 +19217,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
-  rulegroup externMethodTypeIR-abstract
-
-   match
-
-    (signature) p TC |- externMethodTypeIR as callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : % < % > ( % )
-    p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : % < % > ( % )
-    -- if callableTypeIR <: externMethodTypeIR
-    -- let externMethodTypeIR = callableTypeIR as externMethodTypeIR
-
-   paths
-
-    rulepath externMethodTypeIR-abstract
+    rulepath abstract
     -- let externMethodTypeIR' = externMethodTypeIR
     -- if externMethodTypeIR' matches `EXTERN_METHOD ABSTRACT % (%) : %`
     -- let EXTERN_METHOD ABSTRACT nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = externMethodTypeIR'
@@ -19209,7 +19231,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
     -- let externMethodTypeIR_inferred = EXTERN_METHOD ABSTRACT nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred
     -- if CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred as callableTypeIR holds
-    -- if $callable_externAbstractMethod(p, TC)
+    -- if $callable_externMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
 
@@ -22151,30 +22173,7 @@ def $callable_externFunction(cursor, typingContext, nameIR) : bool =
   -- if cursor matches `LOCAL`
   -- if (nameIR =/= "verify")
 
-def $callable_builtinMethod(cursor, typingContext) : bool =
-
-  clause 0 : (cursor, TC) = true
-  -- if cursor matches `GLOBAL`
-
-  clause 1 : (cursor, TC) = true
-  -- if cursor matches `BLOCK`
-
-  clause 2 : (cursor, TC) = true
-  -- if cursor matches `LOCAL`
-
 def $callable_externMethod(cursor, typingContext) : bool =
-
-  clause 0 : (cursor, TC) = false
-  -- if cursor matches `GLOBAL`
-
-  clause 1 : (cursor, TC) = ((blockKind = PARSER) \/ (blockKind = CONTROL))
-  -- if cursor matches `BLOCK`
-  -- let blockKind = TC.BLOCK.KIND
-
-  clause 2 : (cursor, TC) = true
-  -- if cursor matches `LOCAL`
-
-def $callable_externAbstractMethod(cursor, typingContext) : bool =
 
   clause 0 : (cursor, TC) = false
   -- if cursor matches `GLOBAL`
@@ -24933,7 +24932,7 @@ relation Program_inst: |- p4program : globalInstLayer store
     -- Decls_inst: IC_0 STO_0 |- declarationIR*{declarationIR <- declarationIR*} : IC_1 STO_1
     -- output: |- % : IC_1.GLOBAL STO_1
 
-relation Copy_in_argument_inst: store cursor instContext argumentIR @ cursor instContext id ~> store instContext
+relation Copy_in_arg_inst: store cursor instContext argumentIR @ cursor instContext id ~> store instContext
 
   rulegroup 
 
@@ -24977,11 +24976,11 @@ relation Copy_in_inst: store cursor instContext argumentIR* @ cursor instContext
     -- let id'*{id' <- id'*} = id*{id <- id*}
     -- if id'*{id' <- id'*} matches _ :: _
     -- let id_h :: id_t*{id_t <- id_t*} = id'*{id' <- id'*}
-    -- Copy_in_argument_inst: STO_0 p_caller IC_caller argumentIR_h @ p_callee IC_callee_0 id_h ~> STO_1 IC_callee_1
+    -- Copy_in_arg_inst: STO_0 p_caller IC_caller argumentIR_h @ p_callee IC_callee_0 id_h ~> STO_1 IC_callee_1
     -- Copy_in_inst: STO_1 p_caller IC_caller argumentIR_t*{argumentIR_t <- argumentIR_t*} @ p_callee IC_callee_1 id_t*{id_t <- id_t*} ~> STO_2 IC_callee_2
     -- output: % % % % @ % % % ~> STO_2 IC_callee_2
 
-relation Copy_in_argument_inst_default: store cursor instContext @ cursor instContext parameterIR ~> store instContext
+relation Copy_in_arg_inst_default: store cursor instContext @ cursor instContext parameterIR ~> store instContext
 
   rulegroup 
 
@@ -25037,7 +25036,7 @@ relation Copy_in_inst_default: store cursor instContext @ cursor instContext par
     -- let parameterIR'*{parameterIR' <- parameterIR'*} = parameterIR*{parameterIR <- parameterIR*}
     -- if parameterIR'*{parameterIR' <- parameterIR'*} matches _ :: _
     -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR'*{parameterIR' <- parameterIR'*}
-    -- Copy_in_argument_inst_default: STO_0 p_caller IC_caller @ p_callee IC_callee_0 parameterIR_h ~> STO_1 IC_callee_1
+    -- Copy_in_arg_inst_default: STO_0 p_caller IC_caller @ p_callee IC_callee_0 parameterIR_h ~> STO_1 IC_callee_1
     -- Copy_in_inst_default: STO_1 p_caller IC_caller @ p_callee IC_callee_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} ~> STO_2 IC_callee_2
     -- output: % % % @ % % % ~> STO_2 IC_callee_2
 
@@ -28490,19 +28489,19 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let definedFunctionCallee = FUNCTION nameIR < typeParameterListIR > ( parameterListIR # id_default*{id_default <- id_default*} ) blockStatementIR
     -- output: % % % |- % < _ > ( % ) : EC ARCH ` definedFunctionCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee
+  rulegroup builtinMethodCallee-header-stack-push-front
 
    match
 
-    (signature) p EC_0 ARCH_0 |- typedExpressionIR . nameIR' < _ > ( argumentListIR' ) : % % %
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR . "push_front" < _ > ( argumentListIR' ) : % % %
     p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR' ) : % % %
     -- if callableTargetIR matches `% . %`
-    -- let typedExpressionIR . nameIR' = callableTargetIR
+    -- let typedExpressionIR . text = callableTargetIR
+    -- if (text = "push_front")
 
    paths
 
     rulepath abort
-    -- let nameIR = nameIR'
     -- let argumentListIR = argumentListIR'
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
@@ -28512,8 +28511,7 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let abortResult = storageReferenceResult as abortResult
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 abortResult as calleeResult
 
-    rulepath header-stack-push_front
-    -- if (nameIR' = "push_front")
+    rulepath cont
     -- let argumentListIR'' = argumentListIR'
     -- if argumentListIR'' matches [ _/1 ]
     -- let [argumentIR] = argumentListIR''
@@ -28529,8 +28527,29 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference . "push_front" < [] > ( [parameterIR] )
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 ` builtinMethodCallee as callee as calleeResult
 
-    rulepath header-stack-pop_front
-    -- if (nameIR' = "pop_front")
+  rulegroup builtinMethodCallee-header-stack-pop-front
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR . "pop_front" < _ > ( argumentListIR' ) : % % %
+    p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR' ) : % % %
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR . text = callableTargetIR
+    -- if (text = "pop_front")
+
+   paths
+
+    rulepath abort
+    -- let argumentListIR = argumentListIR'
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
+    -- if storageReferenceResult <: abortResult
+    -- let abortResult = storageReferenceResult as abortResult
+    -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 abortResult as calleeResult
+
+    rulepath cont
     -- let argumentListIR'' = argumentListIR'
     -- if argumentListIR'' matches [ _/1 ]
     -- let [argumentIR] = argumentListIR''
@@ -28546,8 +28565,29 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference . "pop_front" < [] > ( [parameterIR] )
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 ` builtinMethodCallee as callee as calleeResult
 
-    rulepath header-isValid
-    -- if (nameIR' = "isValid")
+  rulegroup builtinMethodCallee-header-isValid
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR . "isValid" < _ > ( argumentListIR' ) : % % %
+    p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR' ) : % % %
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR . text = callableTargetIR
+    -- if (text = "isValid")
+
+   paths
+
+    rulepath abort
+    -- let argumentListIR = argumentListIR'
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
+    -- if storageReferenceResult <: abortResult
+    -- let abortResult = storageReferenceResult as abortResult
+    -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 abortResult as calleeResult
+
+    rulepath cont
     -- if (argumentListIR' = [])
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
@@ -28560,8 +28600,29 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference . "isValid" < [] > ( [] )
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 ` builtinMethodCallee as callee as calleeResult
 
-    rulepath header-setValid
-    -- if (nameIR' = "setValid")
+  rulegroup builtinMethodCallee-header-setValid
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR . "setValid" < _ > ( argumentListIR' ) : % % %
+    p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR' ) : % % %
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR . text = callableTargetIR
+    -- if (text = "setValid")
+
+   paths
+
+    rulepath abort
+    -- let argumentListIR = argumentListIR'
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
+    -- if storageReferenceResult <: abortResult
+    -- let abortResult = storageReferenceResult as abortResult
+    -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 abortResult as calleeResult
+
+    rulepath cont
     -- if (argumentListIR' = [])
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
@@ -28574,8 +28635,29 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR < _ > ( argume
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference . "setValid" < [] > ( [] )
     -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 ` builtinMethodCallee as callee as calleeResult
 
-    rulepath header-setInvalid
-    -- if (nameIR' = "setInvalid")
+  rulegroup builtinMethodCallee-header-setInvalid
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- typedExpressionIR . "setInvalid" < _ > ( argumentListIR' ) : % % %
+    p EC_0 ARCH_0 |- callableTargetIR < _ > ( argumentListIR' ) : % % %
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR . text = callableTargetIR
+    -- if (text = "setInvalid")
+
+   paths
+
+    rulepath abort
+    -- let argumentListIR = argumentListIR'
+    -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+    -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
+    -- let ?(typedLvalueIR) = typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?}
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
+    -- if storageReferenceResult <: abortResult
+    -- let abortResult = storageReferenceResult as abortResult
+    -- output: % % % |- % < _ > ( % ) : EC_1 ARCH_1 abortResult as calleeResult
+
+    rulepath cont
     -- if (argumentListIR' = [])
     -- let typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
     -- if typedLvalueIR'?{typedLvalueIR' <- typedLvalueIR'?} matches (_)
@@ -28777,7 +28859,7 @@ syntax copyInArgumentResult =
    | EXIT (from exitResult) 
    | REJECT errorValue (from rejectTransitionResult) 
 
-relation Copy_in_argument: arch |- cursor evalContext parameterIR @ cursor evalContext argumentIR ~> arch evalContext evalContext # copyInArgumentResult
+relation Copy_in_arg: arch |- cursor evalContext parameterIR @ cursor evalContext argumentIR ~> arch evalContext evalContext # copyInArgumentResult
 
   rulegroup directionless-in
 
@@ -28887,7 +28969,7 @@ relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor eva
     -- let argumentIR'''*{argumentIR''' <- argumentIR'''*} = argumentIR''*{argumentIR'' <- argumentIR''*}
     -- if argumentIR'''*{argumentIR''' <- argumentIR'''*} matches _ :: _
     -- let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} = argumentIR'''*{argumentIR''' <- argumentIR'''*}
-    -- Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
+    -- Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
     -- if copyInArgumentResult <: abortResult
     -- let abortResult = copyInArgumentResult as abortResult
     -- output: % % |- % % % @ % % % ~> ARCH_1 EC_caller_1 EC_callee_1 # abortResult as copyInResult
@@ -28901,7 +28983,7 @@ relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor eva
     -- let argumentIR'''*{argumentIR''' <- argumentIR'''*} = argumentIR''*{argumentIR'' <- argumentIR''*}
     -- if argumentIR'''*{argumentIR''' <- argumentIR'''*} matches _ :: _
     -- let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} = argumentIR'''*{argumentIR''' <- argumentIR'''*}
-    -- Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
+    -- Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
     -- if copyInArgumentResult <: continueResult<storageReference?>
     -- let ` storageReference_h?{storageReference_h <- storageReference_h?} = copyInArgumentResult as continueResult<storageReference?>
     -- Copy_in: p_shared ARCH_1 |- p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} @ p_callee EC_callee_1 argumentIR_t*{argumentIR_t <- argumentIR_t*} ~> ARCH_2 EC_caller_2 EC_callee_2 # copyInResult
@@ -28918,7 +29000,7 @@ relation Copy_in: cursor arch |- cursor evalContext parameterListIR @ cursor eva
     -- let argumentIR'''*{argumentIR''' <- argumentIR'''*} = argumentIR''*{argumentIR'' <- argumentIR''*}
     -- if argumentIR'''*{argumentIR''' <- argumentIR'''*} matches _ :: _
     -- let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} = argumentIR'''*{argumentIR''' <- argumentIR'''*}
-    -- Copy_in_argument: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
+    -- Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 parameterIR_h @ p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 # copyInArgumentResult
     -- if copyInArgumentResult <: continueResult<storageReference?>
     -- let ` storageReference_h?{storageReference_h <- storageReference_h?} = copyInArgumentResult as continueResult<storageReference?>
     -- Copy_in: p_shared ARCH_1 |- p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} @ p_callee EC_callee_1 argumentIR_t*{argumentIR_t <- argumentIR_t*} ~> ARCH_2 EC_caller_2 EC_callee_2 # copyInResult
@@ -29151,58 +29233,50 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} @ LOCAL EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_2 callResult
 
-  rulegroup builtinMethodCallee
+  rulegroup builtinMethodCallee-header-stack-push-front
 
    match
 
-    (signature) p evalContext arch |- builtinMethodCallee as callee @ < [] > ( argumentListIR ) : % % %
-    p evalContext arch |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentListIR ) : % % %
+    (signature) p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : % % %
+    p EC_0 ARCH_0 |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentListIR ) : % % %
     -- if callee <: builtinMethodCallee
     -- let builtinMethodCallee = callee as builtinMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentListIR matches [ _/1 ]
+    -- let [argumentIR] = argumentListIR
 
    paths
 
-    rulepath header-stack-push_front-abort
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+    rulepath abort
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "push_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH_1 abortResult as callResult
 
-    rulepath header-stack-push_front-cont
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+    rulepath cont
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "push_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
-    -- let ` value'' = expressionResult as continueResult<value>
-    -- if value'' <: integerValue
-    -- let integerValue_count = value'' as integerValue
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: integerValue
+    -- let integerValue_count = value' as integerValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
@@ -29219,26 +29293,21 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
-    rulepath header-stack-push_front-cont-overflow
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+    rulepath cont-overflow
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "push_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
-    -- let ` value'' = expressionResult as continueResult<value>
-    -- if value'' <: integerValue
-    -- let integerValue_count = value'' as integerValue
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: integerValue
+    -- let integerValue_count = value' as integerValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
@@ -29249,46 +29318,50 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
-    rulepath header-stack-pop_front-abort
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+  rulegroup builtinMethodCallee-header-stack-pop-front
+
+   match
+
+    (signature) p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : % % %
+    p EC_0 ARCH_0 |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentListIR ) : % % %
+    -- if callee <: builtinMethodCallee
+    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentListIR matches [ _/1 ]
+    -- let [argumentIR] = argumentListIR
+
+   paths
+
+    rulepath abort
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "pop_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH_1 abortResult as callResult
 
-    rulepath header-stack-pop_front-cont
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+    rulepath cont
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "pop_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
-    -- let ` value'' = expressionResult as continueResult<value>
-    -- if value'' <: integerValue
-    -- let integerValue_count = value'' as integerValue
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: integerValue
+    -- let integerValue_count = value' as integerValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
@@ -29305,26 +29378,21 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
-    rulepath header-stack-pop_front-cont-overflow
-    -- let EC_0 = evalContext
-    -- let ARCH_0 = arch
-    -- let argumentListIR' = argumentListIR
-    -- if argumentListIR' matches [ _/1 ]
-    -- let [argumentIR] = argumentListIR'
+    rulepath cont-overflow
     -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterListIR ) = builtinMethodCallee
     -- if (text = "pop_front")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
     -- if parameterListIR matches [ _/1 ]
     -- let [parameterIR] = parameterListIR
-    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value'
-    -- if value' <: headerStackValue
-    -- let headerStackValue = value' as headerStackValue
+    -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
+    -- if value <: headerStackValue
+    -- let headerStackValue = value as headerStackValue
     -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
-    -- let ` value'' = expressionResult as continueResult<value>
-    -- if value'' <: integerValue
-    -- let integerValue_count = value'' as integerValue
+    -- let ` value' = expressionResult as continueResult<value>
+    -- if value' <: integerValue
+    -- let integerValue_count = value' as integerValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_count)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_count) = nat?{nat <- nat?}
@@ -29337,46 +29405,49 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
-    rulepath header-isValid
-    -- let EC = evalContext
-    -- let ARCH = arch
-    -- if (argumentListIR = [])
-    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR'*{parameterIR' <- parameterIR'*} ) = builtinMethodCallee
+  rulegroup builtinMethodCallee-header-isValid
+
+   match
+
+    (signature) p EC ARCH |- builtinMethodCallee as callee @ < [] > ( [] ) : % % %
+    p EC ARCH |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callee <: builtinMethodCallee
+    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath builtinMethodCallee-header-isValid
+    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
     -- if (text = "isValid")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR'*{parameterIR' <- parameterIR'*} matches []
-    -- Lvalue_read: p EC ARCH |- storageReference : value'
-    -- if value' <: headerValue
-    -- let headerValue = value' as headerValue
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    -- Lvalue_read: p EC ARCH |- storageReference : value
+    -- if value <: headerValue
+    -- let headerValue = value as headerValue
     -- let HEADER _typeId { b_valid ; _fieldValue*{_fieldValue <- _fieldValue*} } = headerValue
     -- let returnResult = RETURN ?(`B b_valid as value)
     -- output: % % % |- % @ < % > ( % ) : EC ARCH returnResult as callResult
 
-    rulepath header-union-isValid
-    -- let EC = evalContext
-    -- let ARCH = arch
-    -- if (argumentListIR = [])
-    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR'*{parameterIR' <- parameterIR'*} ) = builtinMethodCallee
-    -- if (text = "isValid")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR'*{parameterIR' <- parameterIR'*} matches []
-    -- Lvalue_read: p EC ARCH |- storageReference : value'
-    -- if value' <: headerUnionValue
-    -- let headerUnionValue = value' as headerUnionValue
-    -- let HEADER_UNION typeId { fieldValue*{fieldValue <- fieldValue*} } = headerUnionValue
-    -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $isValid_fieldValue(fieldValue)*{fieldValue <- fieldValue*})
-    -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
-    -- let returnResult = RETURN ?(`B b_valid as value)
-    -- output: % % % |- % @ < % > ( % ) : EC ARCH returnResult as callResult
+  rulegroup builtinMethodCallee-header-setValid
 
-    rulepath header-setValid
-    -- let EC_0 = evalContext
-    -- let ARCH = arch
-    -- if (argumentListIR = [])
-    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR'*{parameterIR' <- parameterIR'*} ) = builtinMethodCallee
+   match
+
+    (signature) p EC_0 ARCH |- builtinMethodCallee as callee @ < [] > ( [] ) : % % %
+    p EC_0 ARCH |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callee <: builtinMethodCallee
+    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath builtinMethodCallee-header-setValid
+    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
     -- if (text = "setValid")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR'*{parameterIR' <- parameterIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerValue
     -- let headerValue = value' as headerValue
@@ -29386,14 +29457,24 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let returnResult = RETURN ?()
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH returnResult as callResult
 
-    rulepath header-setInvalid
-    -- let EC_0 = evalContext
-    -- let ARCH = arch
-    -- if (argumentListIR = [])
-    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR'*{parameterIR' <- parameterIR'*} ) = builtinMethodCallee
+  rulegroup builtinMethodCallee-header-setInvalid
+
+   match
+
+    (signature) p EC_0 ARCH |- builtinMethodCallee as callee @ < [] > ( [] ) : % % %
+    p EC_0 ARCH |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callee <: builtinMethodCallee
+    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath builtinMethodCallee-header-setInvalid
+    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
     -- if (text = "setInvalid")
     -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR'*{parameterIR' <- parameterIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerValue
     -- let headerValue = value' as headerValue
@@ -29402,6 +29483,34 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_write: p EC_0 ARCH |- storageReference -> value : EC_1
     -- let returnResult = RETURN ?()
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH returnResult as callResult
+
+  rulegroup builtinMethodCallee-header-union-isValid
+
+   match
+
+    (signature) p EC ARCH |- builtinMethodCallee as callee @ < [] > ( [] ) : % % %
+    p EC ARCH |- callee @ < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callee <: builtinMethodCallee
+    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath builtinMethodCallee-header-union-isValid
+    -- let BUILTIN_METHOD storageReference . text < typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} > ( parameterIR*{parameterIR <- parameterIR*} ) = builtinMethodCallee
+    -- if (text = "isValid")
+    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    -- Lvalue_read: p EC ARCH |- storageReference : value
+    -- if value <: headerUnionValue
+    -- let headerUnionValue = value as headerUnionValue
+    -- let HEADER_UNION typeId { fieldValue*{fieldValue <- fieldValue*} } = headerUnionValue
+    -- (let value_field _nameIR ; = fieldValue)*{fieldValue <- fieldValue*, _nameIR -> _nameIR*, value_field -> value_field*}
+    -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $isValid_header(value_field)*{value_field <- value_field*})
+    -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
+    -- let returnResult = RETURN ?(`B b_valid as value)
+    -- output: % % % |- % @ < % > ( % ) : EC ARCH returnResult as callResult
 
   rulegroup externMethodCallee
 
@@ -31009,10 +31118,6 @@ relation DefinedFunctionBody_eval: evalContext arch |- blockStatementIR : evalCo
     -- if statementResult <: returnResult
     -- let returnResult = statementResult as returnResult
     -- output: % % |- % : EC_1 ARCH_1 returnResult as definedFunctionResult
-
-def $isValid_fieldValue(fieldValue) : bool =
-
-  clause 0 : (value id ;) = $isValid_header(value)
 
 relation Var_init: evalContext |- typeIR nameIR : evalContext
 

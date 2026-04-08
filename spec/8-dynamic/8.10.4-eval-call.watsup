@@ -359,12 +359,9 @@ rulegroup Call_eval/externFunctionCallee {
 ;;;;   BUILTIN_METHOD storageReference `. nameIR
 ;;;;     `< typeArgumentListIR > `( parameterListIR )
 
-dec $isValid_fieldValue(fieldValue) : bool
-def $isValid_fieldValue(value id `;) = $isValid_header(value)
+rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
 
-rulegroup Call_eval/builtinMethodCallee {
-
-  rule Call_eval/header-stack-push_front-abort:
+  rule Call_eval/abort:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_1 ARCH_1 abortResult
     ---- ;; unpack the builtin method callee
@@ -380,7 +377,7 @@ rulegroup Call_eval/builtinMethodCallee {
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
 
-  rule Call_eval/header-stack-push_front-cont:
+  rule Call_eval/cont:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
@@ -412,7 +409,7 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
                       : EC_2
 
-  rule Call_eval/header-stack-push_front-cont-overflow:
+  rule Call_eval/cont-overflow:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
@@ -440,7 +437,11 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
                       : EC_2
 
-  rule Call_eval/header-stack-pop_front-abort:
+}
+
+rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
+
+  rule Call_eval/abort:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_1 ARCH_1 abortResult
     ---- ;; unpack the builtin method callee
@@ -456,7 +457,7 @@ rulegroup Call_eval/builtinMethodCallee {
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
 
-  rule Call_eval/header-stack-pop_front-cont:
+  rule Call_eval/cont:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
@@ -488,7 +489,7 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
                       : EC_2
 
-  rule Call_eval/header-stack-pop_front-cont-overflow:
+  rule Call_eval/cont-overflow:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
@@ -516,71 +517,72 @@ rulegroup Call_eval/builtinMethodCallee {
         p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
                       : EC_2
 
-  rule Call_eval/header-isValid:
-    p EC ARCH |- builtinMethodCallee `@ `< eps > `( eps )
-               : EC ARCH returnResult
-    ---- ;; unpack the builtin method callee
-    -- if BUILTIN_METHOD storageReference `. "isValid"
-            `< eps > `( eps )
-        = builtinMethodCallee
-    ---- ;; read the value
-    -- Lvalue_read: 
-        p EC ARCH |- storageReference : headerValue
-    -- if HEADER _ `{ b_valid `; _ } = headerValue
-    -- if returnResult = RETURN (`B b_valid)
-
-  rule Call_eval/header-union-isValid:
-    p EC ARCH |- builtinMethodCallee `@ `< eps > `( eps )
-               : EC ARCH returnResult
-    ---- ;; unpack the builtin method callee
-    -- if BUILTIN_METHOD storageReference `. "isValid"
-            `< eps > `( eps )
-        = builtinMethodCallee
-    ---- ;; read the value
-    -- Lvalue_read: 
-        p EC ARCH |- storageReference : headerUnionValue
-    -- if HEADER_UNION typeId `{ fieldValue* } = headerUnionValue
-    -- if fieldValue_valid*
-        = $filter_<fieldValue>(
-            fieldValue*, $isValid_fieldValue(fieldValue)*)
-    -- if b_valid = (fieldValue_valid* = eps)
-    -- if returnResult = RETURN (`B b_valid)
-
-  rule Call_eval/header-setValid:
-    p EC_0 ARCH |- builtinMethodCallee `@ `< eps > `( eps )
-               : EC_1 ARCH returnResult
-    ---- ;; unpack the builtin method callee
-    -- if BUILTIN_METHOD storageReference `. "setValid"
-            `< eps > `( eps )
-        = builtinMethodCallee
-    ---- ;; read the value
-    -- Lvalue_read: 
-        p EC_0 ARCH |- storageReference : headerValue
-    -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
-    -- if value = HEADER typeId `{ true `; fieldValue* }
-    -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> value
-                      : EC_1
-    -- if returnResult = RETURN eps
-
-  rule Call_eval/header-setInvalid:
-    p EC_0 ARCH |- builtinMethodCallee `@ `< eps > `( eps )
-                 : EC_1 ARCH returnResult
-    ---- ;; unpack the builtin method callee
-    -- if BUILTIN_METHOD storageReference `. "setInvalid"
-            `< eps > `( eps )
-        = builtinMethodCallee
-    ---- ;; read the value
-    -- Lvalue_read: 
-        p EC_0 ARCH |- storageReference : headerValue
-    -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
-    -- if value = HEADER typeId `{ false `; fieldValue* }
-    -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> value
-                      : EC_1
-    -- if returnResult = RETURN eps
-
 }
+
+rule Call_eval/builtinMethodCallee-header-isValid:
+  p EC ARCH |- builtinMethodCallee `@ `< eps > `( eps )
+             : EC ARCH returnResult
+  ---- ;; unpack the builtin method callee
+  -- if BUILTIN_METHOD storageReference `. "isValid"
+          `< eps > `( eps )
+      = builtinMethodCallee
+  ---- ;; read the value
+  -- Lvalue_read: 
+      p EC ARCH |- storageReference : headerValue
+  -- if HEADER _ `{ b_valid `; _ } = headerValue
+  -- if returnResult = RETURN (`B b_valid)
+
+rule Call_eval/builtinMethodCallee-header-setValid:
+  p EC_0 ARCH |- builtinMethodCallee `@ `< eps > `( eps )
+             : EC_1 ARCH returnResult
+  ---- ;; unpack the builtin method callee
+  -- if BUILTIN_METHOD storageReference `. "setValid"
+          `< eps > `( eps )
+      = builtinMethodCallee
+  ---- ;; read the value
+  -- Lvalue_read: 
+      p EC_0 ARCH |- storageReference : headerValue
+  -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
+  -- if value = HEADER typeId `{ true `; fieldValue* }
+  -- Lvalue_write:
+      p EC_0 ARCH |- storageReference -> value
+                    : EC_1
+  -- if returnResult = RETURN eps
+
+rule Call_eval/builtinMethodCallee-header-setInvalid:
+  p EC_0 ARCH |- builtinMethodCallee `@ `< eps > `( eps )
+               : EC_1 ARCH returnResult
+  ---- ;; unpack the builtin method callee
+  -- if BUILTIN_METHOD storageReference `. "setInvalid"
+          `< eps > `( eps )
+      = builtinMethodCallee
+  ---- ;; read the value
+  -- Lvalue_read: 
+      p EC_0 ARCH |- storageReference : headerValue
+  -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
+  -- if value = HEADER typeId `{ false `; fieldValue* }
+  -- Lvalue_write:
+      p EC_0 ARCH |- storageReference -> value
+                    : EC_1
+  -- if returnResult = RETURN eps
+
+rule Call_eval/builtinMethodCallee-header-union-isValid:
+  p EC ARCH |- builtinMethodCallee `@ `< eps > `( eps )
+             : EC ARCH returnResult
+  ---- ;; unpack the builtin method callee
+  -- if BUILTIN_METHOD storageReference `. "isValid"
+          `< eps > `( eps )
+      = builtinMethodCallee
+  ---- ;; read the value
+  -- Lvalue_read: 
+      p EC ARCH |- storageReference : headerUnionValue
+  -- if HEADER_UNION typeId `{ fieldValue* } = headerUnionValue
+  -- if (value_field _ `; = fieldValue)*
+  -- if fieldValue_valid*
+      = $filter_<fieldValue>(
+          fieldValue*, $isValid_header(value_field)*)
+  -- if b_valid = (fieldValue_valid* = eps)
+  -- if returnResult = RETURN (`B b_valid)
 
 ;;;; syntax externMethodCallee =
 ;;;;   EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >

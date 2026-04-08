@@ -2124,6 +2124,48 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 </ul>
 </li>
 <li><a href="#sec-cast-operation">18.4. Performing casts</a></li>
+<li><a href="#_type_equivalence">18.5. Type equivalence</a>
+<ul class="sectlevel3">
+<li><a href="#_base_types">18.5.1. Base types</a></li>
+<li><a href="#_named_types">18.5.2. Named types</a></li>
+<li><a href="#_data_types">18.5.3. Data types</a>
+<ul class="sectlevel4">
+<li><a href="#_list_types">18.5.3.1. List types</a></li>
+<li><a href="#_tuple_types">18.5.3.2. Tuple types</a></li>
+<li><a href="#_header_stack_types">18.5.3.3. Header stack types</a></li>
+<li><a href="#_struct_types">18.5.3.4. Struct types</a></li>
+<li><a href="#_header_types">18.5.3.5. Header types</a></li>
+<li><a href="#_header_union_types">18.5.3.6. Header union types</a></li>
+<li><a href="#_enum_types">18.5.3.7. Enum types</a></li>
+</ul>
+</li>
+<li><a href="#_object_types">18.5.4. Object types</a>
+<ul class="sectlevel4">
+<li><a href="#_extern_object_types">18.5.4.1. Extern object types</a></li>
+<li><a href="#_parser_object_types">18.5.4.2. Parser object types</a></li>
+<li><a href="#_control_object_types">18.5.4.3. Control object types</a></li>
+<li><a href="#_package_object_types">18.5.4.4. Package object types</a></li>
+<li><a href="#_table_object_types_2">18.5.4.5. Table object types</a></li>
+</ul>
+</li>
+<li><a href="#_alias_types">18.5.5. Alias types</a>
+<ul class="sectlevel4">
+<li><a href="#_typedef_types">18.5.5.1. <code>typedef</code> types</a></li>
+<li><a href="#_type_types">18.5.5.2. <code>type</code> types</a></li>
+</ul>
+</li>
+<li><a href="#_synthesized_types">18.5.6. Synthesized types</a>
+<ul class="sectlevel4">
+<li><a href="#_default_types">18.5.6.1. Default types</a></li>
+<li><a href="#_invalid_header_types">18.5.6.2. Invalid header types</a></li>
+<li><a href="#_sequence_types">18.5.6.3. Sequence types</a></li>
+<li><a href="#_record_types">18.5.6.4. Record types</a></li>
+<li><a href="#_set_types">18.5.6.5. Set types</a></li>
+<li><a href="#_table_metadata_types">18.5.6.6. Table metadata types</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-call">19. Calls</a>
@@ -2142,7 +2184,13 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <ul class="sectlevel4">
 <li><a href="#_actions_2">19.3.2.1. Actions</a></li>
 <li><a href="#_functions">19.3.2.2. Functions</a></li>
-<li><a href="#_built_in_methods_2">19.3.2.3. Built-in methods</a></li>
+<li><a href="#_built_in_methods_2">19.3.2.3. Built-in methods</a>
+<ul class="sectlevel5">
+<li><a href="#_minsizeinbits_maxsizeinbits_minsizeinbytes_and_maxsizeinbytes">19.3.2.3.1. <code>minSizeInBits</code>, <code>maxSizeInBits</code>, <code>minSizeInBytes</code>, and <code>maxSizeInBytes</code></a></li>
+<li><a href="#_push_front_and_pop_front_on_header_stacks">19.3.2.3.2. <code>push_front</code> and <code>pop_front</code> on header stacks</a></li>
+<li><a href="#_isvalid_setvalid_and_setinvalid_on_headers_and_header_unions">19.3.2.3.3. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers and header unions</a></li>
+</ul>
+</li>
 <li><a href="#_extern_methods">19.3.2.4. Extern methods</a></li>
 <li><a href="#_parser_apply_methods_2">19.3.2.5. Parser apply methods</a></li>
 <li><a href="#_control_apply_methods_2">19.3.2.6. Control apply methods</a></li>
@@ -2200,7 +2248,13 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <li><a href="#sec-call-builtin">19.6.4. Built-in methods</a>
 <ul class="sectlevel4">
 <li><a href="#_type_checking_125">19.6.4.1. Type checking</a></li>
-<li><a href="#_runtime_evaluation_59">19.6.4.2. Runtime evaluation</a></li>
+<li><a href="#_runtime_evaluation_59">19.6.4.2. Runtime evaluation</a>
+<ul class="sectlevel5">
+<li><a href="#_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.1. <code>push_front</code> and <code>pop_front</code> on header stacks</a></li>
+<li><a href="#_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.2. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</a></li>
+<li><a href="#_isvalid_on_header_unions">19.6.4.2.3. <code>isValid</code> on header unions</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#sec-call-extern-method">19.6.5. Extern methods</a>
@@ -64095,6 +64149,1393 @@ def $cast_set(SET `&lt;typeIR&gt;, SET `{value_l .. value_u}) = SET `{value_l_ca
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_type_equivalence">18.5. Type equivalence</h3>
+<div class="paragraph">
+<p>P4 has generic types, thus to reason about equivalence of types,
+alpha-equivalence is used. Two types are alpha-equivalent if they are the
+same up to renaming of type variables.</p>
+</div>
+<div class="paragraph">
+<p>The following relation defines alpha-equivalence of types:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation Type_alpha: typeIR ~~ typeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="Type_alpha" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha">Type_alpha</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>typeIR</code> and <code>typeIR'</code> are the same type</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The following relation defines alpha-equivalence of parameters:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ParameterType_alpha: parameterIR ~~ parameterIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ParameterType_alpha" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParameterType_alpha">ParameterType_alpha</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>annotationList</code> <code>direction</code> <code>typeIR<sub>a</sub></code> <code>id</code> <code>parameterInitializerOptIR</code> and <code>annotationList'</code> <code>direction'</code> <code>typeIR<sub>b</sub></code> <code>id'</code> <code>parameterInitializerOptIR'</code> are the same type</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ParameterType_alpha:
+  rule ParameterType_alpha:
+  (_ direction typeIR_a _ _) ~~ (_ direction typeIR_b _ _)
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ParameterType_alpha"><code>annotationList</code> <code>direction</code> <code>typeIR<sub>a</sub></code> <code>id</code> <code>parameterInitializerOptIR</code> and <code>annotationList'</code> <code>direction</code> <code>typeIR<sub>b</sub></code> <code>id'</code> <code>parameterInitializerOptIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_base_types">18.5.1. Base types</h4>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/baseTypeIR:
+  rule Type_alpha/baseTypeIR:
+  baseTypeIR ~~ baseTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>baseTypeIR</code> and <code>baseTypeIR</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_named_types">18.5.2. Named types</h4>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/nameTypeIR:
+  rule Type_alpha/nameTypeIR:
+  (` typeId) ~~ (` typeId)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>typeId</code> and <code>typeId</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_data_types">18.5.3. Data types</h4>
+<div class="sect4">
+<h5 id="_list_types">18.5.3.1. List types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/listTypeIR:
+  rule Type_alpha/listTypeIR:
+  (LIST `&lt;typeIR_a&gt;) ~~ (LIST `&lt;typeIR_b&gt;)
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>LIST</code> <code>&lt;</code> <code>typeIR<sub>a</sub></code> <code>&gt;</code> and <code>LIST</code> <code>&lt;</code> <code>typeIR<sub>b</sub></code> <code>&gt;</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_tuple_types">18.5.3.2. Tuple types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/tupleTypeIR:
+  rule Type_alpha/tupleTypeIR:
+  (TUPLE `&lt;typeIR_a*&gt;) ~~ (TUPLE `&lt;typeIR_b*&gt;)
+ -- (Type_alpha: typeIR_a ~~ typeIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>TUPLE</code> <code>&lt;</code> <code>typeIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> and <code>TUPLE</code> <code>&lt;</code> <code>typeIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b</sub></code> in <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_header_stack_types">18.5.3.3. Header stack types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/headerStackTypeIR:
+  rule Type_alpha/headerStackTypeIR:
+  (typeIR_a `[n_size]) ~~ (typeIR_b `[n_size])
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>typeIR<sub>a</sub></code> <code>[</code> <code>n<sub>size</sub></code> <code>]</code> and <code>typeIR<sub>b</sub></code> <code>[</code> <code>n<sub>size</sub></code> <code>]</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_struct_types">18.5.3.4. Struct types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/structTypeIR:
+  rule Type_alpha/structTypeIR:
+  (STRUCT typeId `&lt;typeArgumentIR_a*&gt; `{_}) ~~ (STRUCT typeId `&lt;typeArgumentIR_b*&gt; `{_})
+ -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>STRUCT</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>fieldTypeIR<sup>*</sup></code> <code>}</code> and <code>STRUCT</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeArgumentIR<sub>a</sub></code> and <code>typeArgumentIR<sub>b</sub></code> are the same type</a>, for all <code>typeArgumentIR<sub>a</sub></code> in <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> and <code>typeArgumentIR<sub>b</sub></code> in <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_header_types">18.5.3.5. Header types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/headerTypeIR:
+  rule Type_alpha/headerTypeIR:
+  (HEADER typeId `&lt;typeArgumentIR_a*&gt; `{_}) ~~ (HEADER typeId `&lt;typeArgumentIR_b*&gt; `{_})
+ -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>HEADER</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>fieldTypeIR<sup>*</sup></code> <code>}</code> and <code>HEADER</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeArgumentIR<sub>a</sub></code> and <code>typeArgumentIR<sub>b</sub></code> are the same type</a>, for all <code>typeArgumentIR<sub>a</sub></code> in <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> and <code>typeArgumentIR<sub>b</sub></code> in <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_header_union_types">18.5.3.6. Header union types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/headerUnionTypeIR:
+  rule Type_alpha/headerUnionTypeIR:
+  (HEADER_UNION typeId `&lt;typeArgumentIR_a*&gt; `{_}) ~~ (HEADER_UNION typeId `&lt;typeArgumentIR_b*&gt; `{_})
+ -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>HEADER_UNION</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>fieldTypeIR<sup>*</sup></code> <code>}</code> and <code>HEADER_UNION</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>_<sup>*</sup></code> <code>}</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeArgumentIR<sub>a</sub></code> and <code>typeArgumentIR<sub>b</sub></code> are the same type</a>, for all <code>typeArgumentIR<sub>a</sub></code> in <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> and <code>typeArgumentIR<sub>b</sub></code> in <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_enum_types">18.5.3.7. Enum types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/enumTypeIR:
+  rule Type_alpha/non-serializable:
+  (ENUM typeId `{nameIR_field*}) ~~ (ENUM typeId `{nameIR_field*})
+  rule Type_alpha/serializable:
+  (ENUM typeId `&lt;typeIR_a&gt; `{(nameIR_field = value_field ;)*}) ~~ (ENUM typeId `&lt;typeIR_b&gt; `{(nameIR_field = value_field ;)*})
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>typeIR</code> and <code>typeIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>ENUM</code> <code>typeId</code> <code>{</code> <code>nameIR<sub>field</sub><sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>typeIR'</code> is equal to <code>ENUM</code> <code>typeId</code> <code>{</code> <code>nameIR<sub>field</sub><sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>ENUM</code> <code>typeId</code> <code>&lt;</code> <code>typeIR<sub>a</sub></code> <code>&gt;</code> <code>{</code> <code>(</code> <code>nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>typeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>typeIR'</code> has type <code>serializableEnumTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>ENUM</code> <code>typeId'</code> <code>&lt;</code> <code>typeIR<sub>b</sub></code> <code>&gt;</code> <code>{</code> <code>valueFieldIR<sup>*</sup></code> <code>}</code> be <code>typeIR'</code>.</p>
+</li>
+<li>
+<p>Check that <code>typeId'</code> is equal to <code>typeId</code>.</p>
+</li>
+<li>
+<p>Check that <code>valueFieldIR<sup>*</sup></code> is equal to <code>(</code> <code>nameIR<sub>field</sub></code> <code>=</code> <code>value<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_object_types">18.5.4. Object types</h4>
+<div class="sect4">
+<h5 id="_extern_object_types">18.5.4.1. Extern object types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/externObjectTypeIR:
+  rule Type_alpha/externObjectTypeIR:
+  (EXTERN typeId `&lt;typeArgumentIR_a*&gt; _) ~~ (EXTERN typeId `&lt;typeArgumentIR_b*&gt; _)
+ -- (Type_alpha: typeArgumentIR_a ~~ typeArgumentIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>EXTERN</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> <code>externMethodTypeDefEnv</code> and <code>EXTERN</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> <code>_</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeArgumentIR<sub>a</sub></code> and <code>typeArgumentIR<sub>b</sub></code> are the same type</a>, for all <code>typeArgumentIR<sub>a</sub></code> in <code>typeArgumentIR<sub>a</sub><sup>*</sup></code> and <code>typeArgumentIR<sub>b</sub></code> in <code>typeArgumentIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Additional equivalence rules for extern methods are defined as follows:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ExternMethodTypeDef_alpha: externMethodTypeDefIR ~~ externMethodTypeDefIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ExternMethodTypeDef_alpha" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ExternMethodTypeDef_alpha">ExternMethodTypeDef_alpha</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>externMethodTypeDefIR<sub>a</sub></code> and <code>externMethodTypeDefIR<sub>b</sub></code> are the same type</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ExternMethodTypeDef_alpha:
+  rule ExternMethodTypeDef_alpha:
+  externMethodTypeDefIR_a ~~ externMethodTypeDefIR_b
+ -- if (typeParameterIR_expl_a*, typeParameterIR_impl_a*) = $typeParameterListIR_of_callableTypeDefIR(externMethodTypeDefIR_a)
+ -- if (typeParameterIR_expl_b*, typeParameterIR_impl_b*) = $typeParameterListIR_of_callableTypeDefIR(externMethodTypeDefIR_b)
+ -- if |typeParameterIR_expl_a*| = |typeParameterIR_expl_b*|
+ -- if |typeParameterIR_impl_a*| = |typeParameterIR_impl_b*|
+ -- if typeParameterIR_fresh* = $fresh_typeIds(|typeParameterIR_expl_a* ++ typeParameterIR_impl_a*|)
+ -- if typeParameterIR_a* = typeParameterIR_expl_a* ++ typeParameterIR_impl_a*
+ -- if theta_a = `{(typeParameterIR_a : (` typeParameterIR_fresh))*}
+ -- if externMethodTypeIR_a = $callableTypeIR_of_callableTypeDefIR(externMethodTypeDefIR_a)
+ -- if externMethodTypeIR_a_subst = $subst_callableTypeIR(theta_a, externMethodTypeIR_a)
+ -- if typeParameterIR_b* = typeParameterIR_expl_b* ++ typeParameterIR_impl_b*
+ -- if theta_b = `{(typeParameterIR_b : (` typeParameterIR_fresh))*}
+ -- if externMethodTypeIR_b = $callableTypeIR_of_callableTypeDefIR(externMethodTypeDefIR_b)
+ -- if externMethodTypeIR_b_subst = $subst_callableTypeIR(theta_b, externMethodTypeIR_b)
+ -- ExternMethodType_alpha: externMethodTypeIR_a_subst ~~ externMethodTypeIR_b_subst</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ExternMethodTypeDef_alpha"><code>externMethodTypeDefIR<sub>a</sub></code> and <code>externMethodTypeDefIR<sub>b</sub></code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>(</code> <code>typeParameterIR<sub>expl_a</sub><sup>*</sup>,</code> <code>typeParameterIR<sub>impl_a</sub><sup>*</sup></code> <code>)</code> be <a href="#typeParameterListIR_of_callableTypeDefIR">the type parameters of <code>externMethodTypeDefIR<sub>a</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>(</code> <code>typeParameterIR<sub>expl_b</sub><sup>*</sup>,</code> <code>typeParameterIR<sub>impl_b</sub><sup>*</sup></code> <code>)</code> be <a href="#typeParameterListIR_of_callableTypeDefIR">the type parameters of <code>externMethodTypeDefIR<sub>b</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeParameterIR<sub>expl_a</sub><sup>*</sup></code> is equal to the length of <code>typeParameterIR<sub>expl_b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeParameterIR<sub>impl_a</sub><sup>*</sup></code> is equal to the length of <code>typeParameterIR<sub>impl_b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>typeParameterIR<sub>fresh</sub><sup>*</sup></code> be <a href="#fresh_typeIds">the length of <code>typeParameterIR<sub>expl_a</sub><sup>*</sup></code> concatenated with <code>typeParameterIR<sub>impl_a</sub><sup>*</sup></code> fresh type variables</a>.</p>
+</li>
+<li>
+<p>Let <code>typeParameterIR<sub>a</sub><sup>*</sup></code> be <code>typeParameterIR<sub>expl_a</sub><sup>*</sup></code> concatenated with <code>typeParameterIR<sub>impl_a</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeParameterIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeParameterIR<sub>fresh</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>theta<sub>a</sub></code> be <code>{</code> <code>(</code> <code>typeParameterIR<sub>a</sub></code> <code>:</code> <code>typeParameterIR<sub>fresh</sub></code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>callableTypeIR</code> be <a href="#callableTypeIR_of_callableTypeDefIR">the underlying type of <code>externMethodTypeDefIR<sub>a</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeIR</code> has type <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>a</sub></code> be <code>callableTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>callableTypeIR'</code> be <a href="#subst_callableTypeIR"><code>externMethodTypeIR<sub>a</sub></code> substituted by <code>theta<sub>a</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeIR'</code> has type <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>a_subst</sub></code> be <code>callableTypeIR'</code>.</p>
+</li>
+<li>
+<p>Let <code>typeParameterIR<sub>b</sub><sup>*</sup></code> be <code>typeParameterIR<sub>expl_b</sub><sup>*</sup></code> concatenated with <code>typeParameterIR<sub>impl_b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeParameterIR<sub>b</sub><sup>*</sup></code> is equal to the length of <code>typeParameterIR<sub>fresh</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Let <code>theta<sub>b</sub></code> be <code>{</code> <code>(</code> <code>typeParameterIR<sub>b</sub></code> <code>:</code> <code>typeParameterIR<sub>fresh</sub></code> <code>)<sup>*</sup></code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>callableTypeIR''</code> be <a href="#callableTypeIR_of_callableTypeDefIR">the underlying type of <code>externMethodTypeDefIR<sub>b</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeIR''</code> has type <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>b</sub></code> be <code>callableTypeIR''</code>.</p>
+</li>
+<li>
+<p>Let <code>callableTypeIR'''</code> be <a href="#subst_callableTypeIR"><code>externMethodTypeIR<sub>b</sub></code> substituted by <code>theta<sub>b</sub></code></a>.</p>
+</li>
+<li>
+<p>Check that <code>callableTypeIR'''</code> has type <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>externMethodTypeIR<sub>b_subst</sub></code> be <code>callableTypeIR'''</code>.</p>
+</li>
+<li>
+<p>Check that <a href="#ExternMethodType_alpha"><code>externMethodTypeIR<sub>a_subst</sub></code> and <code>externMethodTypeIR<sub>b_subst</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>relation ExternMethodType_alpha: externMethodTypeIR ~~ externMethodTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="ExternMethodType_alpha" class="sidebarblock sidebar-title">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ExternMethodType_alpha">ExternMethodType_alpha</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>externMethodTypeIR</code> and <code>externMethodTypeIR'</code> are the same type</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup ExternMethodType_alpha:
+  rule ExternMethodType_alpha/non-abstract:
+  (EXTERN_METHOD nameIR `(parameterIR_a*) : typeIR_a) ~~ (EXTERN_METHOD nameIR `(parameterIR_b*) : typeIR_b)
+ -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+ -- Type_alpha: typeIR_a ~~ typeIR_b
+  rule ExternMethodType_alpha/abstract:
+  (EXTERN_METHOD ABSTRACT nameIR `(parameterIR_a*) : typeIR_a) ~~ (EXTERN_METHOD ABSTRACT nameIR `(parameterIR_b*) : typeIR_b)
+ -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#ExternMethodType_alpha"><code>externMethodTypeIR</code> and <code>externMethodTypeIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>EXTERN_METHOD</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>a</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>a</sub></code> be <code>externMethodTypeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>externMethodTypeIR'</code> matches pattern <code>EXTERN_METHOD</code> <code>%</code> <code>(</code> <code>%</code> <code>)</code> <code>:</code> <code>%</code>.</p>
+</li>
+<li>
+<p>Let <code>EXTERN_METHOD</code> <code>nameIR'</code> <code>(</code> <code>parameterIR<sub>b</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>b</sub></code> be <code>externMethodTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that <code>nameIR'</code> is equal to <code>nameIR</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>parameterIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#ParameterType_alpha"><code>parameterIR<sub>a</sub></code> and <code>parameterIR<sub>b</sub></code> are the same type</a>, for all <code>parameterIR<sub>a</sub></code> in <code>parameterIR<sub>a</sub><sup>*</sup></code> and <code>parameterIR<sub>b</sub></code> in <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>nameIR</code> <code>(</code> <code>parameterIR<sub>a</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>a</sub></code> be <code>externMethodTypeIR</code>.</p>
+</li>
+<li>
+<p>Check that <code>externMethodTypeIR'</code> matches pattern <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>%</code> <code>(</code> <code>%</code> <code>)</code> <code>:</code> <code>%</code>.</p>
+</li>
+<li>
+<p>Let <code>EXTERN_METHOD</code> <code>ABSTRACT</code> <code>nameIR'</code> <code>(</code> <code>parameterIR<sub>b</sub><sup>*</sup></code> <code>)</code> <code>:</code> <code>typeIR<sub>b</sub></code> be <code>externMethodTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that <code>nameIR'</code> is equal to <code>nameIR</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>parameterIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#ParameterType_alpha"><code>parameterIR<sub>a</sub></code> and <code>parameterIR<sub>b</sub></code> are the same type</a>, for all <code>parameterIR<sub>a</sub></code> in <code>parameterIR<sub>a</sub><sup>*</sup></code> and <code>parameterIR<sub>b</sub></code> in <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_parser_object_types">18.5.4.2. Parser object types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/parserObjectTypeIR:
+  rule Type_alpha/parserObjectTypeIR:
+  (PARSER _ `&lt;_&gt; `(parameterIR_a*)) ~~ (PARSER _ `&lt;_&gt; `(parameterIR_b*))
+ -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>PARSER</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sub>a</sub><sup>*</sup></code> <code>)</code> and <code>PARSER</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sub>b</sub><sup>*</sup></code> <code>)</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>parameterIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#ParameterType_alpha"><code>parameterIR<sub>a</sub></code> and <code>parameterIR<sub>b</sub></code> are the same type</a>, for all <code>parameterIR<sub>a</sub></code> in <code>parameterIR<sub>a</sub><sup>*</sup></code> and <code>parameterIR<sub>b</sub></code> in <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_control_object_types">18.5.4.3. Control object types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/controlObjectTypeIR:
+  rule Type_alpha/controlObjectTypeIR:
+  (CONTROL _ `&lt;_&gt; `(parameterIR_a*)) ~~ (CONTROL _ `&lt;_&gt; `(parameterIR_b*))
+ -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>CONTROL</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sub>a</sub><sup>*</sup></code> <code>)</code> and <code>CONTROL</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sub>b</sub><sup>*</sup></code> <code>)</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>parameterIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#ParameterType_alpha"><code>parameterIR<sub>a</sub></code> and <code>parameterIR<sub>b</sub></code> are the same type</a>, for all <code>parameterIR<sub>a</sub></code> in <code>parameterIR<sub>a</sub><sup>*</sup></code> and <code>parameterIR<sub>b</sub></code> in <code>parameterIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_package_object_types">18.5.4.4. Package object types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/packageObjectTypeIR:
+  rule Type_alpha/packageObjectTypeIR:
+  (PACKAGE _ `&lt;_&gt; `{typeIR_a*}) ~~ (PACKAGE _ `&lt;_&gt; `{typeIR_b*})
+ -- (Type_alpha: typeIR_a ~~ typeIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>PACKAGE</code> <code>typeId</code> <code>&lt;</code> <code>typeArgumentIR<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>typeIR<sub>a</sub><sup>*</sup></code> <code>}</code> and <code>PACKAGE</code> <code>_</code> <code>&lt;</code> <code>_<sup>*</sup></code> <code>&gt;</code> <code>{</code> <code>typeIR<sub>b</sub><sup>*</sup></code> <code>}</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that the length of <code>typeIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b</sub></code> in <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_table_object_types_2">18.5.4.5. Table object types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/tableObjectTypeIR:
+  rule Type_alpha/tableObjectTypeIR:
+  tableObjectTypeIR ~~ tableObjectTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>tableObjectTypeIR</code> and <code>tableObjectTypeIR</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_alias_types">18.5.5. Alias types</h4>
+<div class="sect4">
+<h5 id="_typedef_types">18.5.5.1. <code>typedef</code> types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/typedefTypeIR:
+  rule Type_alpha/left:
+  (TYPEDEF _ typeIR_a) ~~ typeIR_b
+ -- Type_alpha: typeIR_a ~~ typeIR_b
+  rule Type_alpha/right:
+  typeIR_a ~~ (TYPEDEF _ typeIR_b)
+ -- if ~(typeIR_a &lt;: typedefTypeIR)
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>typeIR</code> and <code>typeIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>TYPEDEF</code> <code>_</code> <code>typeIR<sub>a</sub></code> be <code>typeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR'</code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If let <code>TYPEDEF</code> <code>_</code> <code>typeIR<sub>b</sub></code> be <code>typeIR'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>typeIR</code> does not have type <code>typedefTypeIR</code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR</code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_type_types">18.5.5.2. <code>type</code> types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/newTypeIR:
+  rule Type_alpha/newTypeIR:
+  (TYPE typeId typeIR_a) ~~ (TYPE typeId typeIR_b)
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>TYPE</code> <code>typeId</code> <code>typeIR<sub>a</sub></code> and <code>TYPE</code> <code>typeId</code> <code>typeIR<sub>b</sub></code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_synthesized_types">18.5.6. Synthesized types</h4>
+<div class="sect4">
+<h5 id="_default_types">18.5.6.1. Default types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/defaultTypeIR:
+  rule Type_alpha/defaultTypeIR:
+  DEFAULT ~~ DEFAULT</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>DEFAULT</code> and <code>DEFAULT</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_invalid_header_types">18.5.6.2. Invalid header types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/invalidHeaderTypeIR:
+  rule Type_alpha/invalidHeaderTypeIR:
+  HEADER_INVALID ~~ HEADER_INVALID</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>HEADER_INVALID</code> and <code>HEADER_INVALID</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_sequence_types">18.5.6.3. Sequence types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/sequenceTypeIR:
+  rule Type_alpha/non-default:
+  (SEQ `&lt;typeIR_a*&gt;) ~~ (SEQ `&lt;typeIR_b*&gt;)
+ -- (Type_alpha: typeIR_a ~~ typeIR_b)*
+  rule Type_alpha/default:
+  (SEQ `&lt;typeIR_a* , ...&gt;) ~~ (SEQ `&lt;typeIR_b* , ...&gt;)
+ -- (Type_alpha: typeIR_a ~~ typeIR_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>sequenceTypeIR</code> and <code>sequenceTypeIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>SEQ</code> <code>&lt;</code> <code>typeIR<sub>a</sub><sup>*</sup></code> <code>&gt;</code> be <code>sequenceTypeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>sequenceTypeIR'</code> matches pattern <code>SEQ</code> <code>&lt;</code> <code>%</code> <code>&gt;</code>.</p>
+</li>
+<li>
+<p>Let <code>SEQ</code> <code>&lt;</code> <code>typeIR<sub>b</sub><sup>*</sup></code> <code>&gt;</code> be <code>sequenceTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b</sub></code> in <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>SEQ</code> <code>&lt;</code> <code>typeIR<sub>a</sub><sup>*</sup></code> <code>,</code> <code>...</code> <code>&gt;</code> be <code>sequenceTypeIR</code>.</p>
+</li>
+<li>
+<p>Check that <code>sequenceTypeIR'</code> matches pattern <code>SEQ</code> <code>&lt;</code> <code>%</code> <code>,</code> <code>...</code> <code>&gt;</code>.</p>
+</li>
+<li>
+<p>Let <code>SEQ</code> <code>&lt;</code> <code>typeIR<sub>b</sub><sup>*</sup></code> <code>,</code> <code>...</code> <code>&gt;</code> be <code>sequenceTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>typeIR<sub>a</sub><sup>*</sup></code> is equal to the length of <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>, for all <code>typeIR<sub>a</sub></code> in <code>typeIR<sub>a</sub><sup>*</sup></code> and <code>typeIR<sub>b</sub></code> in <code>typeIR<sub>b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_record_types">18.5.6.4. Record types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/recordTypeIR:
+  rule Type_alpha/non-default:
+  (RECORD `{(annotationList typeIR_field_a nameIR_field ;)*}) ~~ (RECORD `{(annotationList typeIR_field_b nameIR_field ;)*})
+ -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*
+  rule Type_alpha/default:
+  (RECORD `{(annotationList typeIR_field_a nameIR_field ;)* , ...}) ~~ (RECORD `{(annotationList typeIR_field_b nameIR_field ;)* , ...})
+ -- (Type_alpha: typeIR_field_a ~~ typeIR_field_b)*</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>recordTypeIR</code> and <code>recordTypeIR'</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>RECORD</code> <code>{</code> <code>(</code> <code>annotationList</code> <code>typeIR<sub>field_a</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordTypeIR</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>recordTypeIR'</code> matches pattern <code>RECORD</code> <code>{</code> <code>%</code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>annotationList'</code> <code>typeIR<sub>field_b</sub></code> <code>nameIR</code> <code>;</code> <code>)<sup>*</sup></code> <code>}</code> be <code>recordTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>annotationList<sup>*</sup></code> is equal to the length of <code>annotationList'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>annotationList'</code> is equal to <code>annotationList</code>, for all <code>annotationList</code> in <code>annotationList<sup>*</sup></code> and <code>annotationList'</code> in <code>annotationList'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>nameIR</code> is equal to <code>nameIR<sub>field</sub></code>, for all <code>nameIR</code> in <code>nameIR<sup>*</sup></code> and <code>nameIR<sub>field</sub></code> in <code>nameIR<sub>field</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>field_a</sub></code> and <code>typeIR<sub>field_b</sub></code> are the same type</a>, for all <code>typeIR<sub>field_a</sub></code> in <code>typeIR<sub>field_a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b</sub></code> in <code>typeIR<sub>field_b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>annotationList</code> <code>typeIR<sub>field_a</sub></code> <code>nameIR<sub>field</sub></code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>...</code> <code>}</code> be <code>recordTypeIR</code>.</p>
+</li>
+<li>
+<p>Check that <code>recordTypeIR'</code> matches pattern <code>RECORD</code> <code>{</code> <code>%</code> <code>,</code> <code>...</code> <code>}</code>.</p>
+</li>
+<li>
+<p>Let <code>RECORD</code> <code>{</code> <code>(</code> <code>annotationList'</code> <code>typeIR<sub>field_b</sub></code> <code>nameIR</code> <code>;</code> <code>)<sup>*</sup></code> <code>,</code> <code>...</code> <code>}</code> be <code>recordTypeIR'</code>.</p>
+</li>
+<li>
+<p>Check that the length of <code>annotationList<sup>*</sup></code> is equal to the length of <code>annotationList'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>annotationList'</code> is equal to <code>annotationList</code>, for all <code>annotationList</code> in <code>annotationList<sup>*</sup></code> and <code>annotationList'</code> in <code>annotationList'<sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <code>nameIR</code> is equal to <code>nameIR<sub>field</sub></code>, for all <code>nameIR</code> in <code>nameIR<sup>*</sup></code> and <code>nameIR<sub>field</sub></code> in <code>nameIR<sub>field</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>field_a</sub></code> and <code>typeIR<sub>field_b</sub></code> are the same type</a>, for all <code>typeIR<sub>field_a</sub></code> in <code>typeIR<sub>field_a</sub><sup>*</sup></code> and <code>typeIR<sub>field_b</sub></code> in <code>typeIR<sub>field_b</sub><sup>*</sup></code>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_set_types">18.5.6.5. Set types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/setTypeIR:
+  rule Type_alpha/setTypeIR:
+  (SET `&lt;typeIR_a&gt;) ~~ (SET `&lt;typeIR_b&gt;)
+ -- Type_alpha: typeIR_a ~~ typeIR_b</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>SET</code> <code>&lt;</code> <code>typeIR<sub>a</sub></code> <code>&gt;</code> and <code>SET</code> <code>&lt;</code> <code>typeIR<sub>b</sub></code> <code>&gt;</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <a href="#Type_alpha"><code>typeIR<sub>a</sub></code> and <code>typeIR<sub>b</sub></code> are the same type</a>.</p>
+</li>
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_table_metadata_types">18.5.6.6. Table metadata types</h5>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Type_alpha/tableMetadataTypeIR:
+  rule Type_alpha/tableMetadataTypeIR:
+  tableMetadataTypeIR ~~ tableMetadataTypeIR</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Type_alpha"><code>tableMetadataTypeIR</code> and <code>tableMetadataTypeIR</code> are the same type when</a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Then, the relation holds.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -65681,7 +67122,7 @@ result of callee resolution is:</p>
 <div class="sect4">
 <h5 id="_built_in_methods_2">19.3.2.3. Built-in methods</h5>
 <div class="paragraph">
-<p>During type checking, built-in methods are resolved by:</p>
+<p>During type checking, built-in methods are resolved as:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -65690,45 +67131,36 @@ result of callee resolution is:</p>
    ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>And during runtime evaluation, built-in methods are resolved as:</p>
+</div>
+<div id="builtinMethodCallee" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinMethodCallee
+   : BUILTIN_METHOD storageReference . nameIR `&lt; typeArgumentListIR &gt;
+       `( parameterListIR )
+   ;</code></pre>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_minsizeinbits_maxsizeinbits_minsizeinbytes_and_maxsizeinbytes">19.3.2.3.1. <code>minSizeInBits</code>, <code>maxSizeInBits</code>, <code>minSizeInBytes</code>, and <code>maxSizeInBytes</code></h6>
+<div class="paragraph">
+<p>During type checking,</p>
+</div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup CallableType_ok/builtinMethodTypeIR:
-  rule CallableType_ok/minmax-SizeIn-BitsBytes:
+<pre>rulegroup CallableType_ok/builtinMethodTypeIR-size:
+  rule CallableType_ok/builtinMethodTypeIR-size:
   p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
  -- if nameIR &lt;- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
  -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
  -- if typeIR_base_unroll = $unroll_typeIR(typeIR_base)
  -- if ~(typeIR_base_unroll &lt;: objectTypeIR)
  -- if ~(typeIR_base_unroll &lt;: synthesizedTypeIR)
- -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : INT
-  rule CallableType_ok/stack-push-pop-front:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(argumentIR) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
- -- if nameIR &lt;- ["push_front", "pop_front"]
- -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
- -- if typeIR `[_] = $unroll_typeIR(typeIR_base)
- -- if parameterIR = `EMPTY `EMPTY INT "count" eps
- -- if methodTypeIR = BUILTIN_METHOD nameIR `(parameterIR) : INT
-  rule CallableType_ok/header-isValid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
- -- if nameIR &lt;- ["isValid"]
- -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
- -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
- -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL
-  rule CallableType_ok/header-union-isValid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
- -- if nameIR &lt;- ["isValid"]
- -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
- -- if HEADER_UNION _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
- -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL
-  rule CallableType_ok/header-set-ValidInvalid:
-  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
- -- if nameIR &lt;- ["setValid", "setInvalid"]
- -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
- -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
- -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : VOID</pre>
+ -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : INT</pre>
 </div>
 </div>
 </div>
@@ -65741,18 +67173,13 @@ result of callee resolution is:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#CallableType_ok">Finding type of callable call <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR<sup>*</sup></code> <code>)</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+<p><a href="#CallableType_ok">Finding type of callable call <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If <code>argumentIR<sup>*</sup></code> is equal to <code>·</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p>If <code>nameIR</code> is in <code>[</code> <code>"minSizeInBits",</code> <code>"minSizeInBytes",</code> <code>"maxSizeInBits",</code> <code>"maxSizeInBytes"</code> <code>]</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>nameIR</code> is in <code>[</code> <code>"minSizeInBits",</code> <code>"minSizeInBytes",</code> <code>"maxSizeInBits",</code> <code>"maxSizeInBytes"</code> <code>]</code>.</p>
+</li>
 <li>
 <p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
@@ -65773,75 +67200,43 @@ result of callee resolution is:</p>
 </li>
 </ol>
 </div>
-</li>
-<li>
-<p>Else if <code>nameIR</code> is in <code>"isValid"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
-</li>
-<li>
-<p>If <code>typeIR</code> has type <code>headerTypeIR</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
-</li>
-</ol>
 </div>
-</li>
-<li>
-<p>Else if <code>typeIR</code> has type <code>headerUnionTypeIR</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
-</li>
-<li>
-<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
-</li>
-</ol>
 </div>
-</li>
-</ol>
 </div>
-</li>
-<li>
-<p>Else if <code>nameIR</code> is in <code>[</code> <code>"setValid",</code> <code>"setInvalid"</code> <code>]</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
-</li>
-<li>
-<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
-</li>
-<li>
-<p>Check that <code>typeIR</code> has type <code>headerTypeIR</code>.</p>
-</li>
-<li>
-<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>VOID</code>.</p>
-</li>
-<li>
-<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
-</li>
-</ol>
+<div class="sect5">
+<h6 id="_push_front_and_pop_front_on_header_stacks">19.3.2.3.2. <code>push_front</code> and <code>pop_front</code> on header stacks</h6>
+<div class="paragraph">
+<p>During type checking,</p>
 </div>
-</li>
-</ol>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup CallableType_ok/builtinMethodTypeIR-header-stack:
+  rule CallableType_ok/builtinMethodTypeIR-header-stack:
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(argumentIR) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
+ -- if nameIR &lt;- ["push_front", "pop_front"]
+ -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+ -- if typeIR `[_] = $unroll_typeIR(typeIR_base)
+ -- if parameterIR = `EMPTY `EMPTY INT "count" eps
+ -- if methodTypeIR = BUILTIN_METHOD nameIR `(parameterIR) : INT</pre>
 </div>
-</li>
-<li>
-<p>If <code>argumentIR<sup>*</sup></code> is a list of length 1:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#CallableType_ok">Finding type of callable call <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR'</code> <code>)</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
 <p>Check that <code>nameIR</code> is in <code>[</code> <code>"push_front",</code> <code>"pop_front"</code> <code>]</code>.</p>
 </li>
@@ -65865,59 +67260,27 @@ result of callee resolution is:</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
-</div>
 </div>
 </div>
 <div class="paragraph">
-<p>During runtime evaluation, built-in methods are resolved by:</p>
-</div>
-<div id="builtinMethodCallee" class="listingblock">
-<div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">builtinMethodCallee
-   : BUILTIN_METHOD storageReference . nameIR `&lt; typeArgumentListIR &gt;
-       `( parameterListIR )
-   ;</code></pre>
-</div>
+<p>During runtime evaluation,</p>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Callee_eval/builtinMethodCallee:
+<pre>rulegroup Callee_eval/builtinMethodCallee-header-stack-push-front:
   rule Callee_eval/abort:
-  p EC_0 ARCH_0 |- (typedExpressionIR . nameIR) `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+  p EC_0 ARCH_0 |- (typedExpressionIR . "push_front") `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
  -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
-  rule Callee_eval/header-stack-push_front:
+  rule Callee_eval/cont:
   p EC_0 ARCH_0 |- (typedExpressionIR . "push_front") `&lt;_&gt; `(argumentIR) : EC_1 ARCH_1 (` builtinMethodCallee)
  -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
  -- if parameterIR = `EMPTY `EMPTY INT "count" eps
- -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR)
-  rule Callee_eval/header-stack-pop_front:
-  p EC_0 ARCH_0 |- (typedExpressionIR . "pop_front") `&lt;_&gt; `(argumentIR) : EC_1 ARCH_1 (` builtinMethodCallee)
- -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- if parameterIR = `EMPTY `EMPTY INT "count" eps
- -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR)
-  rule Callee_eval/header-isValid:
-  p EC_0 ARCH_0 |- (typedExpressionIR . "isValid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
- -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps)
-  rule Callee_eval/header-setValid:
-  p EC_0 ARCH_0 |- (typedExpressionIR . "setValid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
- -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "setValid" `&lt;eps&gt; `(eps)
-  rule Callee_eval/header-setInvalid:
-  p EC_0 ARCH_0 |- (typedExpressionIR . "setInvalid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
- -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
- -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
- -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "setInvalid" `&lt;eps&gt; `(eps)</pre>
+ -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR)</pre>
 </div>
 </div>
 </div>
@@ -65930,7 +67293,7 @@ result of callee resolution is:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>nameIR</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>"push_front"</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -65964,12 +67327,9 @@ result of callee resolution is:</p>
 </div>
 </li>
 <li>
-<p>If <code>nameIR</code> is equal to <code>"push_front"</code>:</p>
+<p>If <code>argumentListIR</code> is a list of length 1:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
-<li>
-<p>Check that <code>argumentListIR</code> is a list of length 1.</p>
-</li>
 <li>
 <p>Let <code>typedLvalueIR'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
 </li>
@@ -66007,13 +67367,75 @@ result of callee resolution is:</p>
 </ol>
 </div>
 </li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Callee_eval/builtinMethodCallee-header-stack-pop-front:
+  rule Callee_eval/abort:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "pop_front") `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
+  rule Callee_eval/cont:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "pop_front") `&lt;_&gt; `(argumentIR) : EC_1 ARCH_1 (` builtinMethodCallee)
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
+ -- if parameterIR = `EMPTY `EMPTY INT "count" eps
+ -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>"pop_front"</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>Else if <code>nameIR</code> is equal to <code>"pop_front"</code>:</p>
+<p>Let <code>typedLvalueIR<sup>?</sup></code> be <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>If let <code>typedLvalueIR'</code> be <code>typedLvalueIR<sup>?</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>argumentListIR</code> is a list of length 1.</p>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_eval">evaluating <code>typedLvalueIR'</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
 </li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>storageReferenceResult</code> has type <code>abortResult</code>.</p>
+</li>
+<li>
+<p>Let <code>abortResult</code> be <code>storageReferenceResult</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and callee <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>argumentListIR</code> is a list of length 1:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>typedLvalueIR'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
 </li>
@@ -66051,13 +67473,215 @@ result of callee resolution is:</p>
 </ol>
 </div>
 </li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_isvalid_setvalid_and_setinvalid_on_headers_and_header_unions">19.3.2.3.3. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers and header unions</h6>
+<div class="paragraph">
+<p>During type checking,</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup CallableType_ok/builtinMethodTypeIR-header:
+  rule CallableType_ok/isValid:
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
+ -- if nameIR &lt;- ["isValid"]
+ -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+ -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
+ -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL
+  rule CallableType_ok/setValidInvalid:
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
+ -- if nameIR &lt;- ["setValid", "setInvalid"]
+ -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+ -- if HEADER _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
+ -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : VOID</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#CallableType_ok">Finding type of callable call <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>Else if <code>nameIR</code> is equal to <code>"isValid"</code>:</p>
+<p>If <code>nameIR</code> is in <code>"isValid"</code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>argumentListIR</code> is equal to <code>·</code>.</p>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
 </li>
+<li>
+<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> has type <code>headerTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
+</li>
+<li>
+<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if <code>nameIR</code> is in <code>[</code> <code>"setValid",</code> <code>"setInvalid"</code> <code>]</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> has type <code>headerTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>VOID</code>.</p>
+</li>
+<li>
+<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup CallableType_ok/builtinMethodTypeIR-header-union:
+  rule CallableType_ok/isValid:
+  p TC |- (typedExpressionIR_base . nameIR) `&lt;eps&gt; `(eps) : methodTypeIR `&lt;# eps&gt; `(# eps # eps)
+ -- if nameIR &lt;- ["isValid"]
+ -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+ -- if HEADER_UNION _ `&lt;_&gt; `{_} = $unroll_typeIR(typeIR_base)
+ -- if methodTypeIR = BUILTIN_METHOD nameIR `(eps) : BOOL</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#CallableType_ok">Finding type of callable call <code>typedExpressionIR<sub>base</sub></code> <code>.</code> <code>nameIR</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under cursor <code>p</code> and context <code>TC</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <code>nameIR</code> is in <code>"isValid"</code>.</p>
+</li>
+<li>
+<p>Let <code>typeIR<sub>base</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>base</sub></code></a>.</p>
+</li>
+<li>
+<p>Let <code>typeIR</code> be <a href="#unroll_typeIR"><code>typeIR<sub>base</sub></code> with typedefs unrolled</a>.</p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> has type <code>headerUnionTypeIR</code>.</p>
+</li>
+<li>
+<p>Let <code>methodTypeIR</code> be <code>BUILTIN_METHOD</code> <code>nameIR</code> <code>(</code> <code>·</code> <code>)</code> <code>:</code> <code>BOOL</code>.</p>
+</li>
+<li>
+<p>Result in callable type <code>methodTypeIR</code> with fresh type variables <code>·</code>, defaults <code>·</code> and optionals <code>·</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>During runtime evaluation,</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Callee_eval/builtinMethodCallee-header-isValid:
+  rule Callee_eval/abort:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "isValid") `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
+  rule Callee_eval/cont:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "isValid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
+ -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>"isValid"</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>typedLvalueIR<sup>?</sup></code> be <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>If let <code>typedLvalueIR'</code> be <code>typedLvalueIR<sup>?</sup></code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_eval">evaluating <code>typedLvalueIR'</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>storageReferenceResult</code> has type <code>abortResult</code>.</p>
+</li>
+<li>
+<p>Let <code>abortResult</code> be <code>storageReferenceResult</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and callee <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>argumentListIR</code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>typedLvalueIR'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
 </li>
@@ -66092,13 +67716,74 @@ result of callee resolution is:</p>
 </ol>
 </div>
 </li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Callee_eval/builtinMethodCallee-header-setValid:
+  rule Callee_eval/abort:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "setValid") `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
+  rule Callee_eval/cont:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "setValid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
+ -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "setValid" `&lt;eps&gt; `(eps)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>"setValid"</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>Else if <code>nameIR</code> is equal to <code>"setValid"</code>:</p>
+<p>Let <code>typedLvalueIR<sup>?</sup></code> be <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>If let <code>typedLvalueIR'</code> be <code>typedLvalueIR<sup>?</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>argumentListIR</code> is equal to <code>·</code>.</p>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_eval">evaluating <code>typedLvalueIR'</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
 </li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>storageReferenceResult</code> has type <code>abortResult</code>.</p>
+</li>
+<li>
+<p>Let <code>abortResult</code> be <code>storageReferenceResult</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and callee <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>argumentListIR</code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>typedLvalueIR'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
 </li>
@@ -66133,13 +67818,74 @@ result of callee resolution is:</p>
 </ol>
 </div>
 </li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Callee_eval/builtinMethodCallee-header-setInvalid:
+  rule Callee_eval/abort:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "setInvalid") `&lt;_&gt; `(argumentListIR) : EC_1 ARCH_1 abortResult
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult
+  rule Callee_eval/cont:
+  p EC_0 ARCH_0 |- (typedExpressionIR . "setInvalid") `&lt;_&gt; `(eps) : EC_1 ARCH_1 (` builtinMethodCallee)
+ -- if typedLvalueIR = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
+ -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
+ -- if builtinMethodCallee = BUILTIN_METHOD storageReference . "setInvalid" `&lt;eps&gt; `(eps)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>"setInvalid"</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
-<p>Else if <code>nameIR</code> is equal to <code>"setInvalid"</code>:</p>
+<p>Let <code>typedLvalueIR<sup>?</sup></code> be <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
+</li>
+<li>
+<p>If let <code>typedLvalueIR'</code> be <code>typedLvalueIR<sup>?</sup></code>:</p>
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Check that <code>argumentListIR</code> is equal to <code>·</code>.</p>
+<p>Let context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and result <code>storageReferenceResult</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_eval">evaluating <code>typedLvalueIR'</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>.</p>
 </li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>storageReferenceResult</code> has type <code>abortResult</code>.</p>
+</li>
+<li>
+<p>Let <code>abortResult</code> be <code>storageReferenceResult</code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and callee <code>abortResult</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If <code>argumentListIR</code> is equal to <code>·</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>typedLvalueIR'</code> be <a href="#option_get"><strong>!</strong></a> <a href="#typedExpressionIR_as_typedLvalueIR">the l-value form of <code>typedExpressionIR</code></a>.</p>
 </li>
@@ -66175,6 +67921,7 @@ result of callee resolution is:</p>
 </div>
 </li>
 </ol>
+</div>
 </div>
 </div>
 </div>
@@ -66309,7 +68056,7 @@ result of callee resolution is:</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>nameIR</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+<p><a href="#Callee_eval">Finding callee <code>typedExpressionIR</code> <code>.</code> <code>text</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -66375,7 +68122,7 @@ result of callee resolution is:</p>
 <p>Let <code>EXTERN</code> <code>_</code> <code>&lt;</code> <code>theta</code> <code>&gt;</code> <code>{</code> <code>_</code> <code>frame</code> <code>externMethodDefEnv</code> <code>}</code> be <code>object'</code>.</p>
 </li>
 <li>
-<p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>nameIR</code> <code>(</code> <code>argumentListIR</code> <code>)</code></a>.</p>
+<p>Let <code>callTargetKey</code> be <a href="#callTargetKey">the call target key for <code>text</code> <code>(</code> <code>argumentListIR</code> <code>)</code></a>.</p>
 </li>
 <li>
 <p>Let <code>_</code> <code>:</code> <code>externMethodDef</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_overloaded">finding the item in <code>externMethodDefEnv</code> matching <code>callTargetKey</code> using parameter getter <code>$parameterListIR_of_externMethodDef</code></a>.</p>
@@ -66384,13 +68131,13 @@ result of callee resolution is:</p>
 <p>Check that <code>externMethodDef</code> matches pattern <code>EXTERN_METHOD</code> <code>%</code> <code>&lt;</code> <code>%</code> <code>&gt;</code> <code>(</code> <code>%</code> <code>)</code> <code>%</code>.</p>
 </li>
 <li>
-<p>Let <code>EXTERN_METHOD</code> <code>nameIR'</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR<sup>?</sup></code> be <code>externMethodDef</code>.</p>
+<p>Let <code>EXTERN_METHOD</code> <code>nameIR</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> <code>blockStatementIR<sup>?</sup></code> be <code>externMethodDef</code>.</p>
 </li>
 <li>
-<p>Check that <code>nameIR'</code> is equal to <code>nameIR'</code>.</p>
+<p>Check that <code>nameIR</code> is equal to <code>text</code>.</p>
 </li>
 <li>
-<p>Let <code>externMethodCallee</code> be <code>EXTERN_METHOD</code> <code>objectId</code> <code>.</code> <code>nameIR'</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>blockStatementIR<sup>?</sup></code> <code>}</code>.</p>
+<p>Let <code>externMethodCallee</code> be <code>EXTERN_METHOD</code> <code>objectId</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeParameterListIR</code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>#</code> <code>id<sub>default</sub><sup>*</sup></code> <code>#</code> <code>id<sub>optional</sub><sup>*</sup></code> <code>)</code> <code>{</code> <code>theta</code> <code>;</code> <code>frame</code> <code>;</code> <code>blockStatementIR<sup>?</sup></code> <code>}</code>.</p>
 </li>
 <li>
 <p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and callee <code>externMethodCallee</code>.</p>
@@ -70116,19 +71863,21 @@ calls for different types of callees.</p>
 <div class="paragraph">
 <p>A built-in method call is evaluated as follows:</p>
 </div>
+<div class="sect5">
+<h6 id="_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.1. <code>push_front</code> and <code>pop_front</code> on header stacks</h6>
 <details>
 <summary class="title">Click to view the specification source</summary>
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>rulegroup Call_eval/builtinMethodCallee:
-  rule Call_eval/header-stack-push_front-abort:
+<pre>rulegroup Call_eval/builtinMethodCallee-header-stack-push-front:
+  rule Call_eval/abort:
   p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_1 ARCH_1 abortResult
  -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
  -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
  -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
  -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
-  rule Call_eval/header-stack-push_front-cont:
+  rule Call_eval/cont:
   p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
  -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
  -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
@@ -70144,7 +71893,7 @@ calls for different types of callees.</p>
  -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
  -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
-  rule Call_eval/header-stack-push_front-cont-overflow:
+  rule Call_eval/cont-overflow:
   p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
  -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
  -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
@@ -70155,71 +71904,7 @@ calls for different types of callees.</p>
  -- (if (value_element_updated = $invalidate_value(value_element)))*
  -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
-  rule Call_eval/header-stack-pop_front-abort:
-  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_1 ARCH_1 abortResult
- -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
- -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
- -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
- -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
-  rule Call_eval/header-stack-pop_front-cont:
-  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
- -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
- -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
- -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
- -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
- -- if n_count = $nat_of_integerValue(integerValue_count)
- -- if n_count &lt; n_size
- -- if n_front = $max_int([0, n_size - n_count])
- -- if value_front* = value_element*[n_count : n_front]
- -- if value_back* = value_element*[0 : n_count]
- -- (if (value_back_invalidated = $invalidate_value(value_back)))*
- -- if value_element_updated* = value_front* ++ value_back_invalidated*
- -- if n_idx_updated = n_front
- -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
-  rule Call_eval/header-stack-pop_front-cont-overflow:
-  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
- -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
- -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
- -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
- -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
- -- if n_count = $nat_of_integerValue(integerValue_count)
- -- if n_count &gt;= n_size
- -- (if (value_element_updated = $invalidate_value(value_element)))*
- -- if n_idx_updated = $max_int([0, n_size - n_count])
- -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
-  rule Call_eval/header-isValid:
-  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
- -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
- -- Lvalue_read: p EC ARCH |- storageReference : headerValue
- -- if HEADER _ `{b_valid ; _} = headerValue
- -- if returnResult = RETURN (`B b_valid)
-  rule Call_eval/header-union-isValid:
-  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
- -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
- -- Lvalue_read: p EC ARCH |- storageReference : headerUnionValue
- -- if HEADER_UNION typeId `{fieldValue*} = headerUnionValue
- -- if fieldValue_valid* = $filter_&lt;fieldValue&gt;(fieldValue*, $isValid_fieldValue(fieldValue)*)
- -- if b_valid = (fieldValue_valid* = eps)
- -- if returnResult = RETURN (`B b_valid)
-  rule Call_eval/header-setValid:
-  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
- -- if BUILTIN_METHOD storageReference . "setValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
- -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
- -- if HEADER typeId `{_ ; fieldValue*} = headerValue
- -- if value = HEADER typeId `{true ; fieldValue*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
- -- if returnResult = RETURN eps
-  rule Call_eval/header-setInvalid:
-  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
- -- if BUILTIN_METHOD storageReference . "setInvalid" `&lt;eps&gt; `(eps) = builtinMethodCallee
- -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
- -- if HEADER typeId `{_ ; fieldValue*} = headerValue
- -- if value = HEADER typeId `{false ; fieldValue*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
- -- if returnResult = RETURN eps</pre>
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2</pre>
 </div>
 </div>
 </div>
@@ -70232,21 +71917,16 @@ calls for different types of callees.</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentListIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>If let <code>argumentIR</code> be <code>argumentListIR</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
 <p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
 </li>
 <li>
-<p>If <code>text</code> is equal to <code>"push_front"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>text</code> is equal to <code>"push_front"</code>.</p>
+</li>
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
@@ -70277,8 +71957,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
 </li>
@@ -70287,8 +71967,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>Else:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>value'</code> be <code>expressionResult</code>.</p>
 </li>
@@ -70303,8 +71983,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If <code>n<sub>count</sub></code> is less than <code>n<sub>size</sub></code>:</p>
-<div class="olist upperroman">
-<ol class="upperroman" type="I">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>value<sub>front</sub><sup>*</sup></code> be <code>value<sub>element</sub><sup>*</sup>[0</code> <code>:</code> <code>n<sub>count</sub>]</code>.</p>
 </li>
@@ -70364,8 +72044,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If <code>n<sub>count</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
-<div class="olist upperroman">
-<ol class="upperroman" type="I">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
 <div class="openblock">
@@ -70410,11 +72090,70 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front:
+  rule Call_eval/abort:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_1 ARCH_1 abortResult
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult
+  rule Call_eval/cont:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &lt; n_size
+ -- if n_front = $max_int([0, n_size - n_count])
+ -- if value_front* = value_element*[n_count : n_front]
+ -- if value_back* = value_element*[0 : n_count]
+ -- (if (value_back_invalidated = $invalidate_value(value_back)))*
+ -- if value_element_updated* = value_front* ++ value_back_invalidated*
+ -- if n_idx_updated = n_front
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+  rule Call_eval/cont-overflow:
+  p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
+ -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue
+ -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue
+ -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 (` integerValue_count)
+ -- if n_count = $nat_of_integerValue(integerValue_count)
+ -- if n_count &gt;= n_size
+ -- (if (value_element_updated = $invalidate_value(value_element)))*
+ -- if n_idx_updated = $max_int([0, n_size - n_count])
+ -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>argumentIR</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterListIR</code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
 </li>
 <li>
-<p>Else if <code>text</code> is equal to <code>"pop_front"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>text</code> is equal to <code>"pop_front"</code>.</p>
+</li>
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
@@ -70445,8 +72184,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If let <code>abortResult</code> be <code>expressionResult</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Result in context <code>EC<sub>1</sub></code>, state <code>ARCH<sub>1</sub></code>, and call result <code>abortResult</code>.</p>
 </li>
@@ -70455,8 +72194,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>Else:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
 <li>
 <p>Let <code>value'</code> be <code>expressionResult</code>.</p>
 </li>
@@ -70471,8 +72210,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If <code>n<sub>count</sub></code> is less than <code>n<sub>size</sub></code>:</p>
-<div class="olist upperroman">
-<ol class="upperroman" type="I">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>int</code> be <a href="#max_int">max<code>(</code> <code>[</code> <code>0,</code> <code>n<sub>size</sub></code> <code>-</code> <code>n<sub>count</sub></code> <code>]</code> <code>)</code></a>.</p>
 </li>
@@ -70529,8 +72268,8 @@ calls for different types of callees.</p>
 </li>
 <li>
 <p>If <code>n<sub>count</sub></code> is greater than or equal to <code>n<sub>size</sub></code>:</p>
-<div class="olist upperroman">
-<ol class="upperroman" type="I">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
 <li>
 <p>Let <code>value<sub>element_updated</sub><sup>*</sup></code> be the list obtained by repeating:</p>
 <div class="openblock">
@@ -70581,21 +72320,45 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
 </div>
-</li>
-<li>
-<p>If <code>argumentListIR</code> is equal to <code>·</code>:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+</div>
+</div>
+<div class="sect5">
+<h6 id="_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.2. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee-header-isValid:
+  rule Call_eval/builtinMethodCallee-header-isValid:
+  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC ARCH |- storageReference : headerValue
+ -- if HEADER _ `{b_valid ; _} = headerValue
+ -- if returnResult = RETURN (`B b_valid)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
 <p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
 </li>
 <li>
-<p>If <code>text</code> is equal to <code>"isValid"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>text</code> is equal to <code>"isValid"</code>.</p>
+</li>
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
@@ -70613,9 +72376,11 @@ calls for different types of callees.</p>
 </div>
 </li>
 <li>
-<p>If let <code>headerValue</code> be <code>value</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
+<p>Check that <code>value</code> has type <code>headerValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerValue</code> be <code>value</code>.</p>
+</li>
 <li>
 <p>Let <code>HEADER</code> <code>_</code> <code>{</code> <code>b<sub>valid</sub></code> <code>;</code> <code>_<sup>*</sup></code> <code>}</code> be <code>headerValue</code>.</p>
 </li>
@@ -70627,53 +72392,44 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
-</li>
-<li>
-<p>Else if let <code>headerUnionValue</code> be <code>value</code>:</p>
-<div class="olist upperalpha">
-<ol class="upperalpha" type="A">
-<li>
-<p>Let <code>HEADER_UNION</code> <code>typeId</code> <code>{</code> <code>fieldValue<sup>*</sup></code> <code>}</code> be <code>headerUnionValue</code>.</p>
-</li>
-<li>
-<p>Let <code>bool<sup>*</sup></code> be the list obtained by repeating:</p>
-<div class="openblock">
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
 <div class="content">
-<div class="ulist">
-<ul>
-<li>
-<p>Let <code>bool</code> be <code><a href="#isValid_fieldValue">$isValid_fieldValue(fieldValue)</a></code>.</p>
-</li>
-</ul>
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee-header-setValid:
+  rule Call_eval/builtinMethodCallee-header-setValid:
+  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "setValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
+ -- if HEADER typeId `{_ ; fieldValue*} = headerValue
+ -- if value = HEADER typeId `{true ; fieldValue*}
+ -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- if returnResult = RETURN eps</pre>
 </div>
 </div>
 </div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
 <div class="paragraph">
-<p>for each <code>fieldValue</code> in <code>fieldValue<sup>*</sup></code></p>
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
 </div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
 </li>
 <li>
-<p>Let <code>fieldValue<sub>valid</sub><sup>*</sup></code> be <a href="#filter_"><code>fieldValue<sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.</p>
+<p>Check that <code>text</code> is equal to <code>"setValid"</code>.</p>
 </li>
-<li>
-<p>Let <code>b<sub>valid</sub></code> be <code>fieldValue<sub>valid</sub><sup>*</sup></code> is equal to <code>·</code>.</p>
-</li>
-<li>
-<p>Let <code>returnResult</code> be <code>RETURN</code> <code>`B</code> <code>b<sub>valid</sub></code>.</p>
-</li>
-<li>
-<p>Result in context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>Else if <code>text</code> is equal to <code>"setValid"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
@@ -70720,11 +72476,44 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee-header-setInvalid:
+  rule Call_eval/builtinMethodCallee-header-setInvalid:
+  p EC_0 ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC_1 ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "setInvalid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
+ -- if HEADER typeId `{_ ; fieldValue*} = headerValue
+ -- if value = HEADER typeId `{false ; fieldValue*}
+ -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- if returnResult = RETURN eps</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
 </li>
 <li>
-<p>Else if <code>text</code> is equal to <code>"setInvalid"</code>:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
+<p>Check that <code>text</code> is equal to <code>"setInvalid"</code>.</p>
+</li>
 <li>
 <p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
 </li>
@@ -70771,11 +72560,121 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
+</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_isvalid_on_header_unions">19.6.4.2.3. <code>isValid</code> on header unions</h6>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre>rulegroup Call_eval/builtinMethodCallee-header-union-isValid:
+  rule Call_eval/builtinMethodCallee-header-union-isValid:
+  p EC ARCH |- builtinMethodCallee @ `&lt;eps&gt; `(eps) : EC ARCH returnResult
+ -- if BUILTIN_METHOD storageReference . "isValid" `&lt;eps&gt; `(eps) = builtinMethodCallee
+ -- Lvalue_read: p EC ARCH |- storageReference : headerUnionValue
+ -- if HEADER_UNION typeId `{fieldValue*} = headerUnionValue
+ -- (if (value_field _ ; = fieldValue))*
+ -- if fieldValue_valid* = $filter_&lt;fieldValue&gt;(fieldValue*, $isValid_header(value_field)*)
+ -- if b_valid = (fieldValue_valid* = eps)
+ -- if returnResult = RETURN (`B b_valid)</pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#Call_eval">Calling <code>builtinMethodCallee</code> <code>&lt;</code> <code>·</code> <code>&gt;</code> <code>(</code> <code>·</code> <code>)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_METHOD</code> <code>storageReference</code> <code>.</code> <code>text</code> <code>&lt;</code> <code>typeArgumentIR'<sup>*</sup></code> <code>&gt;</code> <code>(</code> <code>parameterIR<sup>*</sup></code> <code>)</code> be <code>builtinMethodCallee</code>.</p>
+</li>
+<li>
+<p>Check that <code>text</code> is equal to <code>"isValid"</code>.</p>
+</li>
+<li>
+<p>Check that <code>typeArgumentIR'<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Check that <code>parameterIR<sup>*</sup></code> is an empty list.</p>
+</li>
+<li>
+<p>Let value <code>value</code> be</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the result of <a href="#Lvalue_read">reading from <code>storageReference</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Check that <code>value</code> has type <code>headerUnionValue</code>.</p>
+</li>
+<li>
+<p>Let <code>headerUnionValue</code> be <code>value</code>.</p>
+</li>
+<li>
+<p>Let <code>HEADER_UNION</code> <code>typeId</code> <code>{</code> <code>fieldValue<sup>*</sup></code> <code>}</code> be <code>headerUnionValue</code>.</p>
+</li>
+<li>
+<p>Let <code>value<sub>field</sub><sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>value<sub>field</sub></code> <code>_</code> <code>;</code> be <code>fieldValue</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>fieldValue</code> in <code>fieldValue<sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>bool<sup>*</sup></code> be the list obtained by repeating:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool</code> be <code><a href="#isValid_header">$isValid_header(value<sub>field</sub>)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>for each <code>value<sub>field</sub></code> in <code>value<sub>field</sub><sup>*</sup></code></p>
+</div>
+</li>
+<li>
+<p>Let <code>fieldValue<sub>valid</sub><sup>*</sup></code> be <a href="#filter_"><code>fieldValue<sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.</p>
+</li>
+<li>
+<p>Let <code>b<sub>valid</sub></code> be <code>fieldValue<sub>valid</sub><sup>*</sup></code> is equal to <code>·</code>.</p>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>`B</code> <code>b<sub>valid</sub></code>.</p>
+</li>
+<li>
+<p>Result in context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
 </li>
 </ol>
 </div>
-</li>
-</ol>
 </div>
 </div>
 </div>
