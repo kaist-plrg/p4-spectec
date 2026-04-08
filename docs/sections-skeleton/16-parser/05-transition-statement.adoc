@@ -1,0 +1,80 @@
+[#sec-transition-statement]
+=== Parser transition statements
+
+// 771
+The last statement in a parser state is an optional `transition` statement,
+which transfers control to another state, possibly `accept` or `reject`. A
+`transition` statements is written using the following syntax:
+
+// 772 - Modified
+${syntax: transitionStatement stateExpression}
+
+// 773
+The execution of the transition statement causes `stateExpression` to be
+evaluated, and transfers control to the resulting state.
+
+// 774
+In terms of the `ParserModel`, the semantics of a `transition` statement can be
+formalized as follows:
+
+// 775
+[source,p4]
+----
+goto eval(stateExpression)
+----
+
+// 776
+For example, this statement:
+
+// 777
+[source,p4]
+----
+transition accept;
+----
+
+// 778
+terminates execution of the current parser and transitions immediately to
+the `accept` state.
+
+// 779
+If the body of a state block does not end with a `transition` statement, the
+implied statement is:
+
+// 780
+[source,p4]
+----
+transition reject;
+----
+
+// Added
+See <<sec-select-expression>> for description of the `select` expression that
+can be used as the `stateExpression` in a `transition` statement.
+
+==== Type checking
+
+// Added
+Parser transition statements are type-checked as follows:
+
+// Added
+${relation-title-source: ParserTransition_ok}
+${relation-title-prose: ParserTransition_ok}
+
+// Added
+${rulegroup-source: ParserTransition_ok}
+${rulegroup-prose: ParserTransition_ok}
+
+// Added
+After type checking, transition statements are represented in P4~IR~ as:
+
+// Added
+${syntax: transitionStatementIR stateExpressionIR}
+
+==== Runtime evaluation
+
+// Added
+${relation-title-source: ParserTransition_eval}
+${relation-title-prose: ParserTransition_eval}
+
+// Added
+${rulegroup-source: ParserTransition_eval}
+${rulegroup-prose: ParserTransition_eval}

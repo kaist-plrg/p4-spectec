@@ -1,0 +1,117 @@
+[#sec-match-action-table]
+=== Match-action tables
+
+// Added
+``table``s are the primary mechanism for implementing match-action behavior
+in P4 programs. A table performs a lookup based on a key computed from the
+packet header fields and other metadata, and applies an action associated
+with the matching entry in the table.
+
+// Added
+A table is declared with standard properties and target-specific custom
+properties.
+
+// 888 - Modified
+${syntax: tableDeclaration
+          tablePropertyList tableProperty}
+
+// 889 - Modified
+The standard table properties include:
+
+// 890
+* `key`: An expression that describes how the key used for look-up
+  is computed.
+* `actions`: A list of all actions that may be found in the table.
+
+// 891
+In addition, the tables may optionally define the following properties,
+
+// 892
+* `default_action`: an action to execute when the lookup in the
+  lookup table fails to find a match for the key used.
+* `size`: an integer specifying the desired size of the table.
+* `entries`: entries that are initially added to a table when the P4
+  program is loaded, some or all of which may be unchangeable by the
+  control plane software.
+* `largest_priority_wins`: Only useful for some tables with the
+  `entries` property.  See <<sec-table-entries>> for details.
+* `priority_delta`: Only useful for some tables with the `entries`
+  property.  See <<sec-table-entries>> for details.
+
+// 893
+The compiler must set the `default_action` to `NoAction` (and also insert it
+into the list of `actions`) for tables that do not define the `default_action`
+property. Hence, all tables can be thought of as having a `default_action`
+property, either implicitly or explicitly.
+
+// 894
+In addition, tables may contain architecture-specific properties (see
+<<sec-additional-table-properties>>).
+
+// 895
+A property marked as `const` cannot be changed dynamically by the control
+plane. The `key`, `actions`, and `size` properties cannot be modified so the
+`const` keyword is not needed for these.
+
+==== Semantics of match-action table properties
+
+===== Type checking
+
+// Added
+Table properties are type checked with the relation:
+
+// Added
+${relation-title-source: TableProperty_ok}
+${relation-title-prose: TableProperty_ok}
+
+// Added
+A list of table properties are type checked as:
+
+// Added
+${relation-title-source: TableProperties_ok}
+${relation-title-prose: TableProperties_ok}
+
+// Added
+${rulegroup-source: TableProperties_ok}
+${rulegroup-prose: TableProperties_ok}
+
+===== Compile-time evaluation
+
+// Added
+Table properties are compile-time evaluated with the relation:
+
+// Added
+${relation-title-source: TableProperty_inst}
+${relation-title-prose: TableProperty_inst}
+
+// Added
+After type checking, table properties are represented in P4~IR~ as:
+
+// Added
+${syntax: tablePropertyListIR tablePropertyIR}
+
+// Added
+A list of table properties are compile-time evaluated as:
+
+// Added
+${relation-title-source: TableProperties_inst}
+${relation-title-prose: TableProperties_inst}
+
+// Added
+${rulegroup-source: TableProperties_inst}
+${rulegroup-prose: TableProperties_inst}
+
+// Added
+During compile-time evaluation, local instances within table properties are
+instantiated.
+
+// Added
+The following subsections describe the standard properties of tables in more
+detail.
+
+include::03.01-match-action-table-key.adoc[]
+include::03.02-match-action-table-action.adoc[]
+include::03.03-match-action-table-default-action.adoc[]
+include::03.04-match-action-table-entries.adoc[]
+include::03.05-match-action-table-custom.adoc[]
+include::03.06-match-action-table-invocation.adoc[]

@@ -44,28 +44,30 @@ syntax simpleKeysetExpressionResult =
   | continueResult<setValue>
   | abortResult
 
-relation Expr_eval_keyset_simple:
+relation Eval_keyset_simple:
   evalContext arch |- simpleKeysetExpressionIR
                     : evalContext arch simpleKeysetExpressionResult
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2#", under context" %0 "and state" %1)
+  hint(prose_out "context" %3#", state" %4#", and result" %5)
 
 ;;; typedExpressionIR
 
-rulegroup Expr_eval_keyset_simple/typedExpressionIR {
+rulegroup Eval_keyset_simple/typedExpressionIR {
 
-  rule Expr_eval_keyset_simple/abort:
+  rule Eval_keyset_simple/abort:
     EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 abortResult
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 abortResult
 
-  rule Expr_eval_keyset_simple/cont-setValue:
+  rule Eval_keyset_simple/cont-setValue:
     EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (`` setValue)
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 (`` setValue)
 
-  rule Expr_eval_keyset_simple/cont-objectReferenceValue:
+  rule Eval_keyset_simple/cont-objectReferenceValue:
     EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 (`` setValue)
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
@@ -78,16 +80,16 @@ rulegroup Expr_eval_keyset_simple/typedExpressionIR {
 
 ;;; typedExpressionIR `&&& typedExpressionIR
 
-rulegroup Expr_eval_keyset_simple/mask {
+rulegroup Eval_keyset_simple/mask {
 
-  rule Expr_eval_keyset_simple/left-abort:
+  rule Eval_keyset_simple/left-abort:
     EC_0 ARCH_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
                  : EC_1 ARCH_1 abortResult
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR_l
                            : EC_1 ARCH_1 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-abort:
+  rule Eval_keyset_simple/left-cont-right-abort:
     EC_0 ARCH_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
                  : EC_2 ARCH_2 abortResult
     -- Expr_eval:
@@ -97,7 +99,7 @@ rulegroup Expr_eval_keyset_simple/mask {
         LOCAL EC_1 ARCH_1 |- typedExpressionIR_r
                            : EC_2 ARCH_2 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-cont:
+  rule Eval_keyset_simple/left-cont-right-cont:
     EC_0 ARCH_0 |- typedExpressionIR_l `&&& typedExpressionIR_r
                  : EC_2 ARCH_2 (`` setValue)
     -- Expr_eval:
@@ -112,16 +114,16 @@ rulegroup Expr_eval_keyset_simple/mask {
 
 ;;; typedExpressionIR `.. typedExpressionIR
 
-rulegroup Expr_eval_keyset_simple/range {
+rulegroup Eval_keyset_simple/range {
 
-  rule Expr_eval_keyset_simple/left-abort:
+  rule Eval_keyset_simple/left-abort:
     EC_0 ARCH_0 |- typedExpressionIR_l `.. typedExpressionIR_r
                  : EC_1 ARCH_1 abortResult
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR_l
                            : EC_1 ARCH_1 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-abort:
+  rule Eval_keyset_simple/left-cont-right-abort:
     EC_0 ARCH_0 |- typedExpressionIR_l `.. typedExpressionIR_r
                  : EC_2 ARCH_2 abortResult
     -- Expr_eval:
@@ -131,7 +133,7 @@ rulegroup Expr_eval_keyset_simple/range {
         LOCAL EC_1 ARCH_1 |- typedExpressionIR_r
                            : EC_2 ARCH_2 abortResult
 
-  rule Expr_eval_keyset_simple/left-cont-right-cont:
+  rule Eval_keyset_simple/left-cont-right-cont:
     EC_0 ARCH_0 |- typedExpressionIR_l `.. typedExpressionIR_r
                  : EC_2 ARCH_2 (`` setValue)
     -- Expr_eval:
@@ -146,7 +148,7 @@ rulegroup Expr_eval_keyset_simple/range {
 
 ;;; DEFAULT | `_
 
-rule Expr_eval_keyset_simple/default-any:
+rule Eval_keyset_simple/default-any:
   EC ARCH |- simpleKeysetExpressionIR : EC ARCH (`` setValue)
   -- if simpleKeysetExpressionIR
       = DEFAULT \/ simpleKeysetExpressionIR = `_
@@ -158,40 +160,40 @@ rule Expr_eval_keyset_simple/default-any:
 ;; syntax simpleKeysetExpressionListIR
 ;;
 
-relation Exprs_eval_keyset_simple:
+relation Eval_keysets_simple:
   evalContext arch |- simpleKeysetExpressionListIR
                     : evalContext arch keysetExpressionResult
   hint(input %0 %1 %2)
  
-rulegroup Exprs_eval_keyset_simple {
+rulegroup Eval_keysets_simple {
 
-  rule Exprs_eval_keyset_simple/nil:
+  rule Eval_keysets_simple/nil:
     EC ARCH |- eps : EC ARCH (`` eps)
 
-  rule Exprs_eval_keyset_simple/cons-head-abort:
+  rule Eval_keysets_simple/cons-head-abort:
     EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
                  : EC_1 ARCH_1 abortResult
-    -- Expr_eval_keyset_simple:
+    -- Eval_keyset_simple:
         EC_0 ARCH_0 |- simpleKeysetExpressionIR_h
                     : EC_1 ARCH_1 abortResult
 
-  rule Exprs_eval_keyset_simple/cons-head-cont-tail-abort:
+  rule Eval_keysets_simple/cons-head-cont-tail-abort:
     EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
                  : EC_2 ARCH_2 abortResult
-    -- Expr_eval_keyset_simple:
+    -- Eval_keyset_simple:
         EC_0 ARCH_0 |- simpleKeysetExpressionIR_h
                      : EC_1 ARCH_1 (`` setValue_h)
-    -- Exprs_eval_keyset_simple:
+    -- Eval_keysets_simple:
         EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*
                      : EC_2 ARCH_2 abortResult
 
-  rule Exprs_eval_keyset_simple/cons-head-cont-tail-cont:
+  rule Eval_keysets_simple/cons-head-cont-tail-cont:
     EC_0 ARCH_0 |- simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*
                  : EC_2 ARCH_2 keysetExpressionResult
-    -- Expr_eval_keyset_simple:
+    -- Eval_keyset_simple:
         EC_0 ARCH_0 |- simpleKeysetExpressionIR_h
                      : EC_1 ARCH_1 (`` setValue_h)
-    -- Exprs_eval_keyset_simple:
+    -- Eval_keysets_simple:
         EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*
                      : EC_2 ARCH_2 (`` setValue_t*)
     -- if keysetExpressionResult = `` (setValue_h :: setValue_t*)
@@ -204,13 +206,13 @@ rulegroup Exprs_eval_keyset_simple {
 ;; syntax keysetExpressionIR
 ;;
 
-rule Expr_eval_keyset:
+rule Eval_keyset:
   EC_0 ARCH_0 |- keysetExpressionIR
                : EC_1 ARCH_1 keysetExpressionResult
   ---- ;; flatten keyset expression
   -- if simpleKeysetExpressionListIR
       = $flatten_keysetExpressionIR(keysetExpressionIR)
   ---- ;; evaluate simple keyset expression list
-  -- Exprs_eval_keyset_simple:
+  -- Eval_keysets_simple:
       EC_0 ARCH_0 |- simpleKeysetExpressionListIR
                    : EC_1 ARCH_1 keysetExpressionResult

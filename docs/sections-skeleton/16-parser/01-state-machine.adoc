@@ -1,0 +1,145 @@
+[#sec-parser-state-machine]
+=== Parser state machine
+
+// 745
+.Parser FSM structure.
+[#fig-parserstatemachine]
+image::parserstatemachine.png[width=150,align="center"]
+
+// 746
+A P4 parser describes a state machine with one start state and two final
+states. The start state is always named `start`. The two final states are named
+`accept` (indicating successful parsing) and `reject` (indicating a parsing failure).
+The `start` state is part of the parser, while the `accept` and `reject` states
+are distinct from the states provided by the programmer and are logically
+outside of the parser. <<fig-parserstatemachine>> illustrates the general
+structure of a parser state machine.
+
+// 759
+The semantics of a P4 parser can be formulated in terms of an abstract machine
+that manipulates a `ParserModel` data structure. This section describes this
+abstract machine in pseudo-code.
+
+// 760 - Duplicated
+A parser starts execution in the `start` state and ends execution when one of
+the `reject` or `accept` states has been reached.
+
+// 761
+[source,p4pseudo]
+----
+ParserModel {
+    error       parseError;
+    onPacketArrival(packet p) {
+        ParserModel.parseError = error.NoError;
+        goto start;
+    }
+}
+----
+
+// 762 - Duplicated
+An architecture must specify the behavior when the `accept` and `reject` states
+are reached. For example, an architecture may specify that all packets reaching
+the `reject` state are dropped without further processing. Alternatively, it
+may specify that such packets are passed to the next block after the parser,
+with intrinsic metadata indicating that the parser reached the `reject` state,
+along with the error recorded.
+
+[#sec-sub-parser]
+==== Sub-parsers
+
+// 844
+P4 also allows parsers to invoke the services of other parsers, similar to
+subroutines. To invoke the services of another parser, the sub-parser must be
+first instantiated; the services of an instance are invoked by calling it using
+its `apply` method.
+
+// 845
+The following example shows a sub-parser invocation:
+
+// 846
+[source,p4]
+----
+parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
+parser caller(packet_in packet, out Headers h) {
+     callee() subparser;  // instance of callee
+     state subroutine {
+          subparser.apply(packet, h.ipv4);  // invoke sub-parser
+          transition accept;  // accept if sub-parser ends in accept state
+     }
+}
+----
+
+// 847
+The semantics of a sub-parser invocation can be described as follows:
+
+// 848
+* The state invoking the sub-parser is split into two half-states at the parser
+  invocation statement.
+* The top half includes a transition to the sub-parser `start` state.
+* The sub-parser's `accept` state is identified with the bottom half of the
+  current state
+* The sub-parser's `reject` state is identified with the reject state of the
+  current parser.
+
+// 849
+.Semantics of invoking a sub-parser:  top: original program, bottom: equivalent program.
+[#fig-subparser]
+image::subparser.png[width=400,align="center"]
+
+// 850
+<<fig-subparser>> shows a diagram of this process.
+
+// 851
+Note that since P4 requires definitions to precede uses, it is impossible to
+create recursive (or mutually recursive) parsers.
+
+// 852
+When a parser is instantiated, local instantiations of stateful objects are
+evaluated recursively. That is, each instantiation of a parser has a unique set
+of local parser value sets, extern objects, inner parser instances, etc. Thus,
+in general, invoking a parser instance twice is not the same as invoking two
+copies of the same parser instance. Note however that local variables do not
+persist across invocations of the parser. This semantics also applies to direct
+invocation (see <<sec-direct-type-invocation>>).
+
+// 853
+Architectures may impose (static or dynamic) constraints on the number of
+parser states that can be traversed for processing each packet. For example, a
+compiler for a specific target may reject parsers containing loops that cannot
+be unrolled at compilation time or that may contain cycles that do not advance
+the cursor. If a parser aborts execution dynamically because it exceeded the
+time budget allocated for parsing, the parser should transition to `reject` and
+set the standard error `error.ParserTimeout`.
+
+==== Runtime evaluation of a parser
+
+// Added
+At runtime, a parser is evaluated by invoking its `apply` method. The following
+algorithm describes the evaluation of a parser apply method invocation:
+
+// Added
+${rulegroup-source: Call_eval/parserApplyMethodCallee}
+${rulegroup-prose: Call_eval/parserApplyMethodCallee}
+
+==== Parser state transitions
+
+// Added
+At runtime, parser state transitions are defined as:
+
+// Added
+${relation-title-source: ParserState_trans}
+${relation-title-prose: ParserState_trans}
+
+// Added
+The result of a transition is:
+
+// Added
+${syntax: transitionResult
+          acceptTransitionResult rejectTransitionResult stateTransitionResult}
+
+${rulegroup-source: ParserState_trans}
+${rulegroup-prose: ParserState_trans}
+
+// Added
+The following sections describe the components of a parser state transition in
+more detail.

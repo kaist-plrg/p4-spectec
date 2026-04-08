@@ -285,6 +285,9 @@ relation TableEntry_keyset_simple_ok:
   typingContext tableContext |- matchKey `@ simpleKeysetExpression
                               : tableEntryState simpleKeysetExpressionIR
   hint(input %0 %1 %2 %3)
+  hint(prose_in "typing" %2 "against" %3 "under context"
+                %0 "and table context" %1)
+  hint(prose_out "table entry state" %4 "and" %5)
 
 ;;;;;; expression
 
@@ -482,6 +485,9 @@ relation TableEntry_keysets_simple_ok:
   |- matchKey* `@ simpleKeysetExpression*
    : tableEntryState simpleKeysetExpressionIR*
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "typing" %3 "against" %4 "under context"
+                %0#", table context" %1#", and table entry state" %2)
+  hint(prose_out "table entry state" %5 "and" %6)
 
 rulegroup TableEntry_keysets_simple_ok {
 
@@ -630,7 +636,7 @@ rulegroup TableEntry_keyset_ok/dontcare {
 
 ;;;;; `( simpleKeysetExpression `, simpleKeysetExpressionList )
 
-rule TableEntry_keyset_ok/list:
+rule TableEntry_keyset_ok/tuple:
   TC TBLC |- `( simpleKeysetExpression_h `, simpleKeysetExpressionList_t )
            : TBLS (`( simpleKeysetExpressionIR* ))
   ---- ;; check arity
@@ -693,20 +699,23 @@ rulegroup TableEntry_action_ok {
 ;;
 
 ;;;;; PRIORITY `= number `:
-
-rule TableEntry_priority_ok/number:
-  TC |- PRIORITY `= integerLiteral `:
-      : PRIORITY `= integerLiteral `:
-
 ;;;;; PRIORITY `= `( expression ) `:
 
-rule TableEntry_priority_ok/expression:
-  TC |- PRIORITY `= `( expression ) `:
-      : PRIORITY `= (D n) `:
-  -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
-  -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
-  -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
-  -- if n = $nat_of_integerValue(integerValue)
+rulegroup TableEntry_priority_ok {
+
+  rule TableEntry_priority_ok/number:
+    TC |- PRIORITY `= integerLiteral `:
+        : PRIORITY `= integerLiteral `:
+
+  rule TableEntry_priority_ok/expression:
+    TC |- PRIORITY `= `( expression ) `:
+        : PRIORITY `= (D n) `:
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- Expr_eval_lctk: LOCAL TC |- typedExpressionIR ~> integerValue
+    -- if n = $nat_of_integerValue(integerValue)
+
+}
 
 ;;; constOpt tableEntryPriority
 ;;;   keysetExpression `: tableActionReference annotationList `;

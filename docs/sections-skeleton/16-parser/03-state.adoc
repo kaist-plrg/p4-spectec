@@ -1,0 +1,95 @@
+[#sec-parser-state]
+=== Parser states
+
+// 763
+A parser state is declared with the following syntax:
+
+// 764 - Modified
+${syntax: parserState}
+
+// 765
+Each state has a name and a body. The body consists of a sequence of statements
+that describe the processing performed when the parser transitions to that
+state, including:
+
+// 766
+- Local variable declarations,
+- Assignment statements,
+- Method calls, which serve several purposes:
+  * Invoking functions (e.g., using `verify` to check the validity of data already parsed), and
+  * Invoking methods (e.g., extracting data out of packets or computing
+    checksums) and other parsers (see <<sec-sub-parser>>), and
+- Conditional statements,
+- Transitions to other states (discussed in <<sec-transition-statement>>).
+
+// 769
+Architectures may place restrictions on the expressions and statements that can
+be used in a parser--e.g., they may forbid the use of operations such as
+multiplication or place restrictions on the number of local variables that may
+be used.
+
+==== Type checking
+
+// Added
+A list of parser states is type checked with the following relation:
+
+// Added
+${relation-title-source: ParserStateList_ok}
+${relation-title-prose: ParserStateList_ok}
+
+// Added
+${rulegroup-source: ParserStateList_ok}
+${rulegroup-prose: ParserStateList_ok}
+
+// Added
+A parser state is type checked with the following relation:
+
+// Added
+${relation-title-source: ParserState_ok}
+${relation-title-prose: ParserState_ok}
+
+${rulegroup-source: ParserState_ok}
+${rulegroup-prose: ParserState_ok}
+
+==== Compile-time evaluation
+
+// Added
+A list parser states is compile-time evaluated with the following relation:
+
+// Added
+${relation-title-source: ParserStates_inst}
+${relation-title-prose: ParserStates_inst}
+
+// Added
+${rulegroup-source: ParserStates_inst}
+${rulegroup-prose: ParserStates_inst}
+
+// Added
+A parser state is compile-time evaluated with the following relation:
+
+// Added
+${relation-title-source: ParserState_inst}
+${relation-title-prose: ParserState_inst}
+
+// Added
+${rulegroup-source: ParserState_inst}
+${rulegroup-prose: ParserState_inst}
+
+==== Runtime evaluation
+
+// Added
+A parser state is runtime evaluated with the following relation:
+
+// Added
+${relation-title-source: ParserState_eval}
+${relation-title-prose: ParserState_eval}
+
+// Added
+The result of evaluation is a state transition,
+
+// Added
+${syntax: transitionResult}
+
+// Added
+${rulegroup-source: ParserState_eval}
+${rulegroup-prose: ParserState_eval}

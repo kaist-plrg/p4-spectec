@@ -1,0 +1,75 @@
+[#sec-annotation]
+== Annotations
+
+// 1149
+Annotations are a simple mechanism for extending the P4 language to some
+limited degree without changing the grammar. Annotations are attached to types,
+fields, variables, etc. using the `@` syntax (as shown explicitly in the P4
+grammar). Unstructured annotations, or just "annotations," have an optional
+body; structured annotations have a mandatory body, containing at least a pair
+of square brackets `[]`.
+
+// 1150 - Modified
+${syntax: annotationBody
+          structuredAnnotationBody
+          annotation}
+
+// 1151
+Structured annotations and unstructured annotations on any one element must not
+use the same `name`. Thus, a given `name` can only be applied to one type of
+annotation or the other for any one element. An annotation used on one element
+does not affect the annotation on another because they have different scope.
+
+// 1152
+This is legal:
+
+// 1153
+[source,p4]
+----
+@my_anno(1) table T { /* body omitted */ }
+@my_anno[2] table U { /* body omitted */ } // OK - different scope than previous
+                                           // use of my_anno
+----
+
+// 1154
+This is illegal:
+
+// 1155
+[source,p4]
+----
+@my_anno(1)
+@my_anno[2] table U { /* body omitted */ } // Error - changed type of anno
+                                           // on an element
+----
+
+// 1156
+Multiple unstructured annotations using the same `name` can appear on a given
+element; they are cumulative. Each one will be bound to that element. In
+contrast, only one structured annotation using a given `name` may appear on an
+element; multiple uses of the same `name` will produce an error.
+
+// 1157
+This is legal:
+
+// 1158
+[source,p4]
+----
+@my_anno(1)
+@my_anno(2) table U { /* body omitted */ }  // OK - unstructured annos accumulate
+----
+
+// 1159
+This is illegal:
+
+// 1160
+[source,p4]
+----
+@my_anno[1]
+@my_anno[2] table U { /* body omitted */ } // Error - reused the same structured
+                                           // anno on an element
+----
+
+include::01-unstructured-annotation.adoc[]
+include::02-structured-annotation.adoc[]
+include::03-predefined-annotation.adoc[]
+include::04-target-specific-annotation.adoc[]
