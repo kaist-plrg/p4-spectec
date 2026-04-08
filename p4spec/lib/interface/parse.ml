@@ -12,8 +12,9 @@ let preprocess (includes : string list) (filename : string) =
 let lex (filename : string) (file : string) =
   try
     let () = Lexer.reset () in
-    let () = Lexer.set_filename filename in
-    Lexing.from_string file
+    let lexbuf = Lexing.from_string file in
+    let () = Lexing.set_filename lexbuf filename in
+    lexbuf
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error_no_region
 
 let parse (lexbuf : Lexing.lexbuf) =

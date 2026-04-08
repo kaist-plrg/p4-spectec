@@ -36,10 +36,6 @@ let debug_print fmt =
 let debug_token lexeme =
   debug_print "%s" lexeme
 
-let current_line  = ref 1 
-let current_fname = ref ""
-let line_start    = ref 1
-
 type lexer_state =
   (* Nothing to recall from the previous tokens *)
   | SRegular
@@ -52,32 +48,19 @@ type lexer_state =
    * The next token will be either [IDENTIFIER] or [TYPENAME],
    * depending on what kind of identifier this is *)
   | SIdent of string * lexer_state
-    let lexer_state = ref SRegular
+let lexer_state = ref SRegular
     
 let reset () =
   Context.reset ();
-  lexer_state := SRegular;
-  current_line := 1;
-  current_fname := "";
-  line_start := 1
+  lexer_state := SRegular
 
-let line_number () = !current_line
-let filename () = !current_fname
-let start_of_line () = !line_start
+let set_line lexbuf line =
+  let position = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { position with pos_lnum = line }
 
-let set_line n =
-  current_line := n
-
-let set_start_of_line c =
-  line_start := c
-
-let set_filename s =
-  current_fname := s
-
-let set_lexer_debug_channel ch = set_debug_channel ch
-let newline lexbuf =
-  current_line := line_number() + 1 ;
-  set_start_of_line (lexeme_end lexbuf)
+let set_start_of_line lexbuf bol =
+  let position = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { position with pos_bol = bol }
 
 let region_of_positions (sp : Lexing.position) (ep : Lexing.position) : Util.Source.region =
   let left =
@@ -97,14 +80,7 @@ let region_of_positions (sp : Lexing.position) (ep : Lexing.position) : Util.Sou
   { Util.Source.left; right }
 
 let at lexbuf : Util.Source.region =
-  let f = filename () in
-  let c1 = lexeme_start lexbuf in
-  let c2 = lexeme_end lexbuf in
-  let c = start_of_line () in
-  let l = line_number () in
-  let left = { Util.Source.file = f; line = l; column = c1 - c } in
-  let right = { left with column = c2 - c } in
-  { Util.Source.left; right }
+  region_of_positions (Lexing.lexeme_start_p lexbuf) (Lexing.lexeme_end_p lexbuf)
 
 let merge_region (r1 : Util.Source.region) (r2 : Util.Source.region) : Util.Source.region =
   let left = min r1.left r2.left in
@@ -168,7 +144,7 @@ rule tokenize = parse
   | "//"
       { singleline_comment lexbuf; tokenize lexbuf }
   | '\n'
-      { debug_token "⏎\n"; newline lexbuf; PRAGMA_END }
+      { debug_token "⏎\n"; Lexing.new_line lexbuf; PRAGMA_END }
   | '"'
       { let start_region = at lexbuf in
         let str, end_region = (string lexbuf) in
@@ -446,11 +422,11 @@ and preprocessor = parse
       { preprocessor lexbuf }
   | int
       { let line = int_of_string (lexeme lexbuf) in
-        set_line line ; preprocessor lexbuf }
+        set_line lexbuf line; preprocessor lexbuf }
   | '"'
       { preprocessor_string lexbuf }
   | '\n'
-      { set_start_of_line (lexeme_end lexbuf) }
+      { set_start_of_line lexbuf (lexeme_end lexbuf) }
   | _
       { preprocessor lexbuf }
       
@@ -458,7 +434,7 @@ and preprocessor_string = parse
   | [^ '"'] * '"'
     { let filename = lexeme lexbuf in 
       let filename = String.sub filename 0 (String.length filename - 1) in
-      set_filename filename;
+      Lexing.set_filename lexbuf filename;
       preprocessor_column lexbuf }
       
 (* Once a filename has been recognized, ignore the rest of the line *)
@@ -466,7 +442,7 @@ and preprocessor_column = parse
   | ' ' 
       { preprocessor_column lexbuf }
   | '\n'
-      { set_start_of_line (lexeme_end lexbuf) }
+      { set_start_of_line lexbuf (lexeme_end lexbuf) }
   | eof
       { () }
   | _
@@ -476,12 +452,12 @@ and preprocessor_column = parse
 and multiline_comment opt = parse
   | "*/"   { opt }
   | eof    { failwith "unterminated comment" }
-  | '\n'   { newline lexbuf; multiline_comment (Some(at lexbuf)) lexbuf }
+  | '\n'   { Lexing.new_line lexbuf; multiline_comment (Some(at lexbuf)) lexbuf }
   | _      { multiline_comment opt lexbuf }
       
 (* Single-line comment terminated by a newline *)
 and singleline_comment = parse
-  | '\n'   { newline lexbuf }
+  | '\n'   { Lexing.new_line lexbuf }
   | eof    { () }
   | _      { singleline_comment lexbuf }
       
