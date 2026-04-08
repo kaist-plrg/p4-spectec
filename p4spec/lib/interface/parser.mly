@@ -229,16 +229,16 @@ int:
 ;
 
 %inline r_angle:
-	| info_r = R_ANGLE
-    { info_r }
-	| info_r = R_ANGLE_SHIFT
-    { info_r }
+	| r_angle = R_ANGLE
+    { r_angle }
+	| r_angle = R_ANGLE_SHIFT
+    { r_angle }
 ;
 %inline l_angle:
-	| info_r = L_ANGLE
-    { info_r }
-	| info_r = L_ANGLE_ARGS
-    { info_r }
+	| l_angle = L_ANGLE
+    { l_angle }
+	| l_angle = L_ANGLE_ARGS
+    { l_angle }
 ;
 
 (* Misc *)
