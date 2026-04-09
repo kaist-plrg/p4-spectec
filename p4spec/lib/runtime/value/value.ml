@@ -138,46 +138,49 @@ module Make = struct
     let vhash = hash_of value in
     value $$ (at, { vid; typ; vhash })
 
-  let with_at_typ (at : region) (typ : typ) (value : value') : value =
+  let with_typ (typ : typ) ((at, value) : region * value') : value =
     mk at typ.it value
 
+  let with_region (at : region) (value : value') : region * value' = (at, value)
+
   let bool ?(at = no_region) (b : bool) : value =
-    BoolV b |> with_at_typ at Typ.Make.bool
+    BoolV b |> with_region at |> with_typ Typ.Make.bool
 
   let nat ?(at = no_region) (n : Bigint.t) : value =
-    NumV (`Nat n) |> with_at_typ at Typ.Make.nat
+    NumV (`Nat n) |> with_region at |> with_typ Typ.Make.nat
 
   let int ?(at = no_region) (i : Bigint.t) : value =
-    NumV (`Int i) |> with_at_typ at Typ.Make.int
+    NumV (`Int i) |> with_region at |> with_typ Typ.Make.int
 
   let num ?(at = no_region) (n : Num.t) : value =
     match n with `Nat n -> nat ~at n | `Int i -> int ~at i
 
   let text ?(at = no_region) (s : string) : value =
-    TextV s |> with_at_typ at Typ.Make.text
+    TextV s |> with_region at |> with_typ Typ.Make.text
 
   let str ?(at = no_region) (typ : typ) (valuefields : valuefield list) : value
       =
-    StructV valuefields |> with_at_typ at typ
+    StructV valuefields |> with_region at |> with_typ typ
 
   let case ?(at = no_region) (typ : typ) (valuecase : valuecase) : value =
-    CaseV valuecase |> with_at_typ at typ
+    CaseV valuecase |> with_region at |> with_typ typ
 
   let tuple ?(at = no_region) (typ : typ) (values : value list) : value =
-    TupleV values |> with_at_typ at typ
+    TupleV values |> with_region at |> with_typ typ
 
   let opt ?(at = no_region) (typ : typ) (value_opt : value option) : value =
-    OptV value_opt |> with_at_typ at typ
+    OptV value_opt |> with_region at |> with_typ typ
 
   let list ?(at = no_region) (typ : typ) (values : value list) : value =
-    ListV values |> with_at_typ at typ
+    ListV values |> with_region at |> with_typ typ
 
   let func ?(at = no_region) (id : id) (tparams : tparam list)
       (typs_params : typ list) (typ : typ) : value =
-    FuncV id |> with_at_typ at (Typ.Make.func tparams typs_params typ)
+    FuncV id |> with_region at
+    |> with_typ (Typ.Make.func tparams typs_params typ)
 
   let extern ?(at = no_region) (typ : typ) (json : Yojson.Safe.t) : value =
-    ExternV json |> with_at_typ at typ
+    ExternV json |> with_region at |> with_typ typ
 
   (* Operators *)
 

@@ -26560,7 +26560,7 @@ syntax keysetExpressionResult =
    | EXIT (from exitResult) 
    | REJECT errorValue (from rejectTransitionResult) 
 
-relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext arch keysetExpressionResult
+relation Eval_keyset: evalContext arch |- keysetExpressionIR : evalContext arch keysetExpressionResult
 
   rulegroup 
 
@@ -26573,7 +26573,7 @@ relation Expr_eval_keyset: evalContext arch |- keysetExpressionIR : evalContext 
 
     rulepath 
     -- let simpleKeysetExpressionListIR = $flatten_keysetExpressionIR(keysetExpressionIR)
-    -- Exprs_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keysets_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult
     -- output: % % |- % : EC_1 ARCH_1 keysetExpressionResult
 
 relation Argument_eval: cursor evalContext arch |- argumentIR : evalContext arch expressionResult
@@ -29843,7 +29843,7 @@ syntax simpleKeysetExpressionResult =
    | EXIT (from exitResult) 
    | REJECT errorValue (from rejectTransitionResult) 
 
-relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR : evalContext arch simpleKeysetExpressionResult
+relation Eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR : evalContext arch simpleKeysetExpressionResult
 
   rulegroup typedExpressionIR
 
@@ -29970,7 +29970,7 @@ relation Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR :
     -- let setValue = SET { ... }
     -- output: % % |- % : EC ARCH ` setValue as simpleKeysetExpressionResult
 
-relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionListIR : evalContext arch keysetExpressionResult
+relation Eval_keysets_simple: evalContext arch |- simpleKeysetExpressionListIR : evalContext arch keysetExpressionResult
 
   rulegroup 
 
@@ -29993,7 +29993,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionLis
     -- let simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} = simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*}
     -- if simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} matches _ :: _
     -- let simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} = simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*}
-    -- Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
+    -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
     -- if simpleKeysetExpressionResult <: abortResult
     -- let abortResult = simpleKeysetExpressionResult as abortResult
     -- output: % % |- % : EC_1 ARCH_1 abortResult as keysetExpressionResult
@@ -30004,10 +30004,10 @@ relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionLis
     -- let simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} = simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*}
     -- if simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} matches _ :: _
     -- let simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} = simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*}
-    -- Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
+    -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
     -- if simpleKeysetExpressionResult <: continueResult<setValue>
     -- let ` setValue_h = simpleKeysetExpressionResult as continueResult<setValue>
-    -- Exprs_eval_keyset_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 ARCH_2 keysetExpressionResult'
+    -- Eval_keysets_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 ARCH_2 keysetExpressionResult'
     -- if keysetExpressionResult' <: abortResult
     -- let abortResult = keysetExpressionResult' as abortResult
     -- output: % % |- % : EC_2 ARCH_2 abortResult as keysetExpressionResult
@@ -30018,10 +30018,10 @@ relation Exprs_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionLis
     -- let simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} = simpleKeysetExpressionIR''*{simpleKeysetExpressionIR'' <- simpleKeysetExpressionIR''*}
     -- if simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*} matches _ :: _
     -- let simpleKeysetExpressionIR_h :: simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} = simpleKeysetExpressionIR'''*{simpleKeysetExpressionIR''' <- simpleKeysetExpressionIR'''*}
-    -- Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
+    -- Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult
     -- if simpleKeysetExpressionResult <: continueResult<setValue>
     -- let ` setValue_h = simpleKeysetExpressionResult as continueResult<setValue>
-    -- Exprs_eval_keyset_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 ARCH_2 keysetExpressionResult'
+    -- Eval_keysets_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 ARCH_2 keysetExpressionResult'
     -- if keysetExpressionResult' <: continueResult<setValue*>
     -- let ` setValue_t*{setValue_t <- setValue_t*} = keysetExpressionResult' as continueResult<setValue*>
     -- let keysetExpressionResult = ` setValue_h :: setValue_t*{setValue_t <- setValue_t*} as keysetExpressionResult
@@ -30676,20 +30676,20 @@ relation SelectCase_match: evalContext arch value* |- selectCaseIR : evalContext
    paths
 
     rulepath reject
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: rejectTransitionResult
     -- let rejectTransitionResult = keysetExpressionResult as rejectTransitionResult
     -- output: % % % |- % : EC_1 ARCH_1 rejectTransitionResult as selectCaseMatchResult
 
     rulepath no-match
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
     -- if ~$match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
     -- output: % % % |- % : EC_1 ARCH_1 ` ?() as selectCaseMatchResult
 
     rulepath match
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
     -- if $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
@@ -30875,7 +30875,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
     rulepath exit
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
     -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: exitResult
     -- let exitResult = keysetExpressionResult as exitResult
     -- if (exitResult = EXIT)
@@ -30884,7 +30884,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
     rulepath no-match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
     -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
     -- (let value_key : _nameIR = tableKeyValue)*{tableKeyValue <- tableKeyValue*, _nameIR -> _nameIR*, value_key -> value_key*}
@@ -30894,7 +30894,7 @@ relation TableMatch_eval: evalContext arch |- tableKeyValue* @ tableEntryIR : ev
     rulepath match
     -- let _constOptIR tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} keysetExpressionIR : tableActionReferenceIR _annotationList ; = tableEntryIR
     -- let n_priority?{n_priority <- n_priority?} = $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
-    -- Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
+    -- Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult
     -- if keysetExpressionResult <: continueResult<setValue*>
     -- let ` setValue*{setValue <- setValue*} = keysetExpressionResult as continueResult<setValue*>
     -- (let value_key : _nameIR = tableKeyValue)*{tableKeyValue <- tableKeyValue*, _nameIR -> _nameIR*, value_key -> value_key*}

@@ -35272,13 +35272,13 @@ syntax keysetExpressionResult =
    | EXIT (from exitResult) 
    | REJECT errorValue (from rejectTransitionResult) 
 
-relation Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : % % %
+relation Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : % % %
 
 1. Group : EC_0 ARCH_0 |- keysetExpressionIR : % % %
 
   1. (Let simpleKeysetExpressionListIR be $flatten_keysetExpressionIR(keysetExpressionIR))
 
-    1. (Exprs_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult)
+    1. (Eval_keysets_simple: EC_0 ARCH_0 |- simpleKeysetExpressionListIR : EC_1 ARCH_1 keysetExpressionResult)
 
       1. Result in: % % |- % : EC_1 ARCH_1 keysetExpressionResult
 
@@ -38880,7 +38880,7 @@ syntax simpleKeysetExpressionResult =
    | EXIT (from exitResult) 
    | REJECT errorValue (from rejectTransitionResult) 
 
-relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
+relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
 1. Case analysis on simpleKeysetExpressionIR
 
@@ -39024,7 +39024,7 @@ relation Expr_eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % 
 
   1. Else Dangling#12466
 
-relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR)* : % % %
+relation Eval_keysets_simple: evalContext arch |- (simpleKeysetExpressionIR)* : % % %
 
 1. Group : evalContext arch |- (simpleKeysetExpressionIR)* : % % %
 
@@ -39038,7 +39038,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
     1. (Let simpleKeysetExpressionIR_h :: (simpleKeysetExpressionIR_t)* be (simpleKeysetExpressionIR)*)
 
-      1. (Expr_eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult)
+      1. (Eval_keyset_simple: evalContext arch |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult)
 
         1. Case analysis on simpleKeysetExpressionResult
 
@@ -39052,7 +39052,7 @@ relation Exprs_eval_keyset_simple: evalContext arch |- (simpleKeysetExpressionIR
 
             1. (Let (` setValue_h) be (simpleKeysetExpressionResult as continueResult<setValue>))
 
-              1. (Exprs_eval_keyset_simple: EC_1 ARCH_1 |- (simpleKeysetExpressionIR_t)* : EC_2 ARCH_2 keysetExpressionResult)
+              1. (Eval_keysets_simple: EC_1 ARCH_1 |- (simpleKeysetExpressionIR_t)* : EC_2 ARCH_2 keysetExpressionResult)
 
                 1. Case analysis on keysetExpressionResult
 
@@ -39728,7 +39728,7 @@ relation SelectCase_match: EC_0 ARCH_0 (value_key)* |- (keysetExpressionIR : nam
 
 1. Group : EC_0 ARCH_0 (value_key)* |- (keysetExpressionIR : nameIR ;) : % % %
 
-  1. (Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult)
+  1. (Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult)
 
     1. Case analysis on keysetExpressionResult
 
@@ -39920,7 +39920,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- (tableKeyValue)* @ tableEntryIR : % % %
 
     1. (Let (n_priority)? be $get_tableEntryPriority((tableEntryPriorityIR)?))
 
-      1. (Expr_eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult)
+      1. (Eval_keyset: EC_0 ARCH_0 |- keysetExpressionIR : EC_1 ARCH_1 keysetExpressionResult)
 
         1. Case analysis on keysetExpressionResult
 
