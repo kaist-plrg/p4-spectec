@@ -105,7 +105,7 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
            match value.it with
            | TupleV [ value_key; value_value ] ->
                let n_key = value_key |> Value.Get.num |> Num.to_int in
-               (n_key, (value_key, value_value, value.note))
+               (n_key, (value_key, value_value, value.at, value.note))
            | _ -> assert false)
   in
   let values =
@@ -113,8 +113,8 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
   in
   let values =
     List.map
-      (fun (_, (value_key, value_value, note)) ->
-        TupleV [ value_key; value_value ] $$$ note)
+      (fun (_, (value_key, value_value, at, note)) ->
+        TupleV [ value_key; value_value ] $$ (at, note))
       values
   in
   let value = Value.Make.list typ values in

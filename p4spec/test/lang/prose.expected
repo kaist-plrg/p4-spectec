@@ -17495,15 +17495,15 @@ xref:Exprs_eval[Evaluating ``typedExpressionIR^{asterisk}^``, under context ``ev
    .... Let ``value~t~^{asterisk}^`` be ``expressionListResult``.
    .... Result in context ``EC~2~``, state ``ARCH~2~`` and ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^``.
 
-xref:Expr_eval_keyset[Expr_eval_keyset]:
+xref:Eval_keyset[Eval_keyset]:
 
-* Evaluating ``keysetExpressionIR``, under context ``evalContext``, and state ``arch``:
+* Evaluating ``keysetExpressionIR``, under context ``evalContext`` and state ``arch``:
 * Result in context ``evalContext``, state ``arch``, and result ``keysetExpressionResult``.
 
-xref:Expr_eval_keyset[Evaluating ``keysetExpressionIR``, under context ``EC~0~``, and state ``ARCH~0~``]:
+xref:Eval_keyset[Evaluating ``keysetExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let ``simpleKeysetExpressionListIR`` be xref:flatten_keysetExpressionIR[the flattened keyset expression list of  ``keysetExpressionIR``].
-. Let xref:Exprs_eval_keyset_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``simpleKeysetExpressionListIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``keysetExpressionResult``].
+. Let xref:Eval_keysets_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``simpleKeysetExpressionListIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``keysetExpressionResult``].
 . Result in context ``EC~1~``, state ``ARCH~1~``, and result ``keysetExpressionResult``.
 
 xref:Argument_eval[Argument_eval: ``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``%`` ``%`` ``%``]
@@ -19222,78 +19222,82 @@ for each ``value`` in ``value^{asterisk}^``
  .. Let ``bool'`` be xref:bin_le[``value~key~`` ``+<=+`` ``value~limit~``].
  .. Return ``bool`` and ``bool'``.
 
-xref:Expr_eval_keyset_simple[Expr_eval_keyset_simple: ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``simpleKeysetExpressionIR`` ``+:+`` ``%`` ``%`` ``%``]
+xref:Eval_keyset_simple[Eval_keyset_simple]:
 
-xref:Expr_eval_keyset_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typedExpressionIR`` ``+:+`` ``%`` ``%`` ``%``]:
+* Evaluating ``simpleKeysetExpressionIR``, under context ``evalContext`` and state ``arch``:
+* Result in context ``evalContext``, state ``arch``, and result ``simpleKeysetExpressionResult``.
+
+xref:Eval_keyset_simple[Evaluating ``typedExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``abortResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and result ``abortResult``.
 . Else:
  .. Let ``value`` be ``expressionResult``.
  .. If let ``setValue`` be ``value``:
-  ... Result in ``EC~1~``, ``ARCH~1~``, and ``setValue``.
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``setValue``.
  .. Else if let ``+REF+`` ``objectId`` be ``value``:
   ... Let ``object'`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
   ... Check that ``object'`` has type ``valueSetObject``.
   ... Let ``+VALUE_SET+`` ``+{+`` ``value'^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+}+`` be ``object'``.
   ... Let ``setValue`` be ``+SET+`` ``+{+`` ``value'^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+}+``.
-  ... Result in ``EC~1~``, ``ARCH~1~``, and ``setValue``.
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``setValue``.
 
-xref:Expr_eval_keyset_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typedExpressionIR~l~`` ``+&&&+`` ``typedExpressionIR~r~`` ``+:+`` ``%`` ``%`` ``%``]:
+xref:Eval_keyset_simple[Evaluating ``typedExpressionIR~l~`` ``+&&&+`` ``typedExpressionIR~r~``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``abortResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and result ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].
  .. If let ``abortResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``ARCH~2~``, and ``abortResult``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and result ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``setValue`` be ``+SET+`` ``+{+`` ``value~l~`` ``+&&&+`` ``value~r~`` ``+}+``.
-  ... Result in ``EC~2~``, ``ARCH~2~``, and ``setValue``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and result ``setValue``.
 
-xref:Expr_eval_keyset_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``typedExpressionIR~l~`` ``+..+`` ``typedExpressionIR~r~`` ``+:+`` ``%`` ``%`` ``%``]:
+xref:Eval_keyset_simple[Evaluating ``typedExpressionIR~l~`` ``+..+`` ``typedExpressionIR~r~``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~l~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . If let ``abortResult`` be ``expressionResult``:
- .. Result in ``EC~1~``, ``ARCH~1~``, and ``abortResult``.
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and result ``abortResult``.
 . Else:
  .. Let ``value~l~`` be ``expressionResult``.
  .. Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult'`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~r~``, under context ``EC~1~`` and state ``ARCH~1~`` at ``+LOCAL+``].
  .. If let ``abortResult`` be ``expressionResult'``:
-  ... Result in ``EC~2~``, ``ARCH~2~``, and ``abortResult``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and result ``abortResult``.
  .. Else:
   ... Let ``value~r~`` be ``expressionResult'``.
   ... Let ``setValue`` be ``+SET+`` ``+{+`` ``value~l~`` ``+..+`` ``value~r~`` ``+}+``.
-  ... Result in ``EC~2~``, ``ARCH~2~``, and ``setValue``.
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and result ``setValue``.
 
-xref:Expr_eval_keyset_simple[``EC~0~`` ``ARCH~0~`` ``+|-+`` ``simpleKeysetExpressionIR`` ``+:+`` ``%`` ``%`` ``%``]:
+xref:Eval_keyset_simple[Evaluating ``simpleKeysetExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Check that ``simpleKeysetExpressionIR`` is equal to ``+DEFAULT+`` or ``simpleKeysetExpressionIR`` is equal to ``+_+``.
 . Let ``setValue`` be ``+SET+`` ``+{+`` ``+...+`` ``+}+``.
-. Result in ``EC~0~``, ``ARCH~0~``, and ``setValue``.
+. Result in context ``EC~0~``, state ``ARCH~0~``, and result ``setValue``.
 
-xref:Exprs_eval_keyset_simple[Exprs_eval_keyset_simple: ``evalContext`` ``arch`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]
+xref:Eval_keysets_simple[Eval_keysets_simple: ``evalContext`` ``arch`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]
 
-xref:Exprs_eval_keyset_simple[``evalContext`` ``arch`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]:
+xref:Eval_keysets_simple[``evalContext`` ``arch`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]:
 
 . If ``simpleKeysetExpressionIR^{asterisk}^`` is equal to ``·``:
  .. Result in ``evalContext``, ``arch``, and ``·``.
 . If let ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``:
- .. Let xref:Expr_eval_keyset_simple[``evalContext`` ``arch`` ``+|-+`` ``simpleKeysetExpressionIR~h~`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``simpleKeysetExpressionResult``].
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``simpleKeysetExpressionResult`` be
+* the result of xref:Eval_keyset_simple[evaluating ``simpleKeysetExpressionIR~h~``, under context ``evalContext`` and state ``arch``].
  .. If let ``abortResult`` be ``simpleKeysetExpressionResult``:
   ... Result in ``EC~1~``, ``ARCH~1~``, and ``abortResult``.
  .. Else:
   ... Let ``setValue~h~`` be ``simpleKeysetExpressionResult``.
-  ... Let xref:Exprs_eval_keyset_simple[``EC~1~`` ``ARCH~1~`` ``+|-+`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` ``+:+`` ``EC~2~`` ``ARCH~2~`` ``keysetExpressionResult``].
+  ... Let xref:Eval_keysets_simple[``EC~1~`` ``ARCH~1~`` ``+|-+`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` ``+:+`` ``EC~2~`` ``ARCH~2~`` ``keysetExpressionResult``].
   ... If let ``abortResult`` be ``keysetExpressionResult``:
    .... Result in ``EC~2~``, ``ARCH~2~``, and ``abortResult``.
   ... Else:
@@ -19702,7 +19706,7 @@ xref:SelectCase_match[SelectCase_match]:
 xref:SelectCase_match[Matching ``value~key~^{asterisk}^`` against ``keysetExpressionIR`` ``+:+`` ``nameIR`` ``+;+`` under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``keysetExpressionResult`` be
-* the result of xref:Expr_eval_keyset[evaluating ``keysetExpressionIR``, under context ``EC~0~``, and state ``ARCH~0~``].
+* the result of xref:Eval_keyset[evaluating ``keysetExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~``].
 . If let ``rejectTransitionResult`` be ``keysetExpressionResult``:
  .. Result in the updated context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
 . Else if let ``setValue^{asterisk}^`` be ``keysetExpressionResult``:
@@ -19795,7 +19799,7 @@ xref:TableMatch_eval[Evaluating table match for keys ``tableKeyValue^{asterisk}^
 . Let ``++_++`` ``tableEntryPriorityIR^?^`` ``keysetExpressionIR`` ``+:+`` ``tableActionReferenceIR`` ``++_++`` ``+;+`` be ``tableEntryIR``.
 . Let ``n~priority~^?^`` be xref:get_tableEntryPriority[the priority of ``tableEntryPriorityIR^?^``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``keysetExpressionResult`` be
-* the result of xref:Expr_eval_keyset[evaluating ``keysetExpressionIR``, under context ``EC~0~``, and state ``ARCH~0~``].
+* the result of xref:Eval_keyset[evaluating ``keysetExpressionIR``, under context ``EC~0~`` and state ``ARCH~0~``].
 . If let ``exitResult`` be ``keysetExpressionResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~`` , and result ``+EXIT+``.
 . Else if let ``setValue^{asterisk}^`` be ``keysetExpressionResult``:

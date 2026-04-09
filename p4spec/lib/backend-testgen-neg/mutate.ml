@@ -25,7 +25,7 @@ let ( let* ) = Option.bind
 
 let wrap_value (typ : typ') (value : value') : value =
   let vhash = Value.hash_of value in
-  value $$$ { vid = -1; typ; vhash }
+  value $$ (no_region, { vid = -1; typ; vhash })
 
 let wrap_value_opt (typ : typ') (value_opt : value' option) : value option =
   Option.map (wrap_value typ) value_opt
