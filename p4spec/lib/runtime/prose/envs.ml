@@ -6,6 +6,10 @@ open Lib
 
 module TDEnv = Dynamic.Envs.TDEnv
 
+(* Meta-variable environment *)
+
+module MEnv = MakeIdEnv (Type.Typ)
+
 (* Relation input environment *)
 
 module IHEnv = MakeHIdEnv (Hints.Input)

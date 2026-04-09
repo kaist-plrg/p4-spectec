@@ -86,6 +86,7 @@ let load_def (def : def) : unit =
   | TypD (id, tparams, deftyp, _) ->
       let td = Typdef.Defined (tparams, deftyp) in
       add_typdef_global id td
+  | VarD _ -> ()
   | ExternRelD (id, nottyp, inputs, _) ->
       let rel = Rel.Extern (nottyp, inputs) in
       add_rel_global id rel

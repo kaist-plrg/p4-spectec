@@ -1,37 +1,37 @@
 open Domain.Lib
 open Lang
 open Il
+module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
-open Runtime.Dynamic_Sl
-open Envs
 open Error
 open Util.Source
 
 (* Structuring parameters *)
 
-let rec struct_param (frees : IdSet.t) (param : param) : IdSet.t * Sl.param =
+let rec struct_param (ctx : Ctx.t) (frees : IdSet.t) (param : param) :
+    IdSet.t * Sl.param =
   let at = param.at in
   match param.it with
   | ExpP typ ->
-      let exp_input, frees = Fresh.fresh_exp_from_typ frees typ in
+      let frees, exp_input = Fresh.exp_from_typ ~dim:true ctx.menv frees typ in
       let param = Sl.ExpP (typ, exp_input) $ at in
       (frees, param)
   | DefP (id_def, tparams, params, typ) ->
-      let params = struct_params params in
+      let params = struct_params ctx params in
       let param = Sl.DefP (id_def, tparams, params, typ) $ at in
       (frees, param)
 
-and struct_params (params : param list) : Sl.param list =
+and struct_params (ctx : Ctx.t) (params : param list) : Sl.param list =
   params
   |> List.fold_left
        (fun (frees, params) param ->
-         let frees, param = struct_param frees param in
+         let frees, param = struct_param ctx frees param in
          (frees, params @ [ param ]))
        (IdSet.empty, [])
   |> snd
 
-let struct_params_from_args (params : param list) (args_input : arg list) :
-    Sl.param list =
+let struct_params_from_args (ctx : Ctx.t) (params : param list)
+    (args_input : arg list) : Sl.param list =
   List.map2
     (fun param arg_input ->
       let at = param.at in
@@ -39,7 +39,7 @@ let struct_params_from_args (params : param list) (args_input : arg list) :
       | ExpP typ, ExpA exp -> Sl.ExpP (typ, exp) $ at
       | DefP (id_def, tparams, params, typ), DefA id_def_arg
         when Id.eq id_def id_def_arg ->
-          Sl.DefP (id_def, tparams, struct_params params, typ) $ at
+          Sl.DefP (id_def, tparams, struct_params ctx params, typ) $ at
       | _ -> assert false)
     params args_input
 
@@ -201,44 +201,47 @@ let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
 
 (* Structuring definitions *)
 
-let rec struct_def (tdenv : TDEnv.t) (def : def) : Sl.def =
+let rec struct_def (ctx : Ctx.t) (def : def) : Sl.def =
   let at = def.at in
   match def.it with
   | ExternTypD (id, hints) -> Sl.ExternTypD (id, hints) $ at
   | TypD (id, tparams, deftyp, hints) ->
       Sl.TypD (id, tparams, deftyp, hints) $ at
+  | VarD (id, typ, hints) -> Sl.VarD (id, typ, hints) $ at
   | ExternRelD (id, nottyp, inputs, hints) ->
-      struct_extern_rel_def at id nottyp inputs hints
+      struct_extern_rel_def ctx at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) ->
-      struct_defined_rel_def tdenv at id nottyp inputs rulegroups elsegroup_opt
+      struct_defined_rel_def ctx at id nottyp inputs rulegroups elsegroup_opt
         hints
   | ExternDecD (id, tparams, params, typ, hints) ->
-      struct_extern_dec_def at id tparams params typ hints
+      struct_extern_dec_def ctx at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
-      struct_builtin_dec_def at id tparams params typ hints
+      struct_builtin_dec_def ctx at id tparams params typ hints
   | TableDecD (id, params, typ, tablerows, hints) ->
-      struct_table_dec_def tdenv at id params tablerows typ hints
+      struct_table_dec_def ctx at id params tablerows typ hints
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
-      struct_func_dec_def tdenv at id tparams params typ clauses elseclause_opt
+      struct_func_dec_def ctx at id tparams params typ clauses elseclause_opt
         hints
 
 (* Structuring relation definitions *)
 
-and struct_extern_rel_def (at : region) (id_rel : id) (nottyp : nottyp)
-    (inputs : int list) (hints : hint list) : Sl.def =
+and struct_extern_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
+    (nottyp : nottyp) (inputs : int list) (hints : hint list) : Sl.def =
   let _, typs = nottyp.it in
   let typs_match = List.map (fun i -> List.nth typs i) inputs in
   let exps_match, _ =
     List.fold_left
       (fun (exps_match, frees) typ_match ->
-        let exp_match, frees = Fresh.fresh_exp_from_typ frees typ_match in
+        let frees, exp_match =
+          Fresh.exp_from_typ ~dim:true ctx.menv frees typ_match
+        in
         (exps_match @ [ exp_match ], frees))
       ([], IdSet.empty) typs_match
   in
   let externrel = (id_rel, (nottyp, inputs), exps_match, hints) in
   Sl.ExternRelD externrel $ at
 
-and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
+and struct_defined_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
     (elsegroup_opt : elsegroup option) (hints : hint list) : Sl.def =
   let frees =
@@ -278,7 +281,9 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
         let exps_match, _ =
           List.fold_left
             (fun (exps_match, frees) typ_match ->
-              let exp_match, frees = Fresh.fresh_exp_from_typ frees typ_match in
+              let frees, exp_match =
+                Fresh.exp_from_typ ~dim:true ctx.menv frees typ_match
+              in
               (exps_match @ [ exp_match ], frees))
             ([], IdSet.empty) typs_match
         in
@@ -311,9 +316,9 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
     | _ -> None
   in
   let block, elseblock_opt =
-    Optimize.optimize_with_else tdenv block elseblock_opt
+    Optimize.optimize_with_else ctx.tdenv block elseblock_opt
   in
-  let block, elseblock_opt = Totalize.totalize tdenv block elseblock_opt in
+  let block, elseblock_opt = Totalize.totalize ctx.tdenv block elseblock_opt in
   let exps_match_unified, block, elseblock_opt =
     Prettify.pretty_rel exps_match_unified block elseblock_opt
   in
@@ -324,19 +329,21 @@ and struct_defined_rel_def (tdenv : TDEnv.t) (at : region) (id_rel : id)
 
 (* Structuring declaration definitions *)
 
-and struct_extern_dec_def (at : region) (id_dec : id) (tparams : tparam list)
-    (params : param list) (typ : typ) (hints : hint list) : Sl.def =
-  let params = struct_params params in
+and struct_extern_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
+    (tparams : tparam list) (params : param list) (typ : typ)
+    (hints : hint list) : Sl.def =
+  let params = struct_params ctx params in
   let externfunc = (id_dec, tparams, params, typ, hints) in
   Sl.ExternDecD externfunc $ at
 
-and struct_builtin_dec_def (at : region) (id_dec : id) (tparams : tparam list)
-    (params : param list) (typ : typ) (hints : hint list) : Sl.def =
-  let params = struct_params params in
+and struct_builtin_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
+    (tparams : tparam list) (params : param list) (typ : typ)
+    (hints : hint list) : Sl.def =
+  let params = struct_params ctx params in
   let builtinfunc = (id_dec, tparams, params, typ, hints) in
   Sl.BuiltinDecD builtinfunc $ at
 
-and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
+and struct_table_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
     (params : param list) (tablerows : tablerow list) (typ : typ)
     (hints : hint list) : Sl.def =
   let exps_signature_group, clauses =
@@ -348,12 +355,12 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
     |> List.split
   in
   let args_input, paths, _ = Antiunify.antiunify_clauses clauses None in
-  let params = struct_params_from_args params args_input in
+  let params = struct_params_from_args ctx params args_input in
   let blocks_tablerows =
     paths
     |> List.map struct_tablerow_path
-    |> List.map (Optimize.optimize_without_else tdenv)
-    |> List.map (Totalize.totalize_without_else tdenv)
+    |> List.map (Optimize.optimize_without_else ctx.tdenv)
+    |> List.map (Totalize.totalize_without_else ctx.tdenv)
     |> List.map Dangle.instrument_without_else
   in
   let exp_output_group = paths |> List.split |> snd in
@@ -367,7 +374,7 @@ and struct_table_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   let tablefunc = (id_dec, params, typ, tablerows, hints) in
   Sl.TableDecD tablefunc $ at
 
-and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
+and struct_func_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
     (tparams : tparam list) (params : param list) (typ : typ)
     (clauses : clause list) (elseclause_opt : clause option) (hints : hint list)
     : Sl.def =
@@ -377,7 +384,7 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
   let params, block, elseblock_opt =
     match (paths, path_else_opt) with
     | [], None ->
-        let params = struct_params params in
+        let params = struct_params ctx params in
         (params, [], None)
     | _ ->
         let block =
@@ -385,38 +392,24 @@ and struct_func_dec_def (tdenv : TDEnv.t) (at : region) (id_dec : id)
         in
         let elseblock_opt = Option.map struct_elseclause_path path_else_opt in
         let block, elseblock_opt =
-          Optimize.optimize_with_else tdenv block elseblock_opt
+          Optimize.optimize_with_else ctx.tdenv block elseblock_opt
         in
         let block, elseblock_opt =
-          Totalize.totalize tdenv block elseblock_opt
+          Totalize.totalize ctx.tdenv block elseblock_opt
         in
         let args_input, block, elseblock_opt =
           Prettify.pretty_func args_input block elseblock_opt
         in
-        let params = struct_params_from_args params args_input in
+        let params = struct_params_from_args ctx params args_input in
         let block, elseblock_opt = Dangle.instrument block elseblock_opt in
         (params, block, elseblock_opt)
   in
   let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in
   Sl.FuncDecD func $ at
 
-(* Load type definitions *)
-
-let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
-  match def.it with
-  | ExternTypD (id, _hints) ->
-      let td = Typdef.Extern in
-      TDEnv.add id td tdenv
-  | TypD (id, tparams, deftyp, _hints) ->
-      let td = Typdef.Defined (tparams, deftyp) in
-      TDEnv.add id td tdenv
-  | _ -> tdenv
-
-let load_spec (tdenv : TDEnv.t) (spec : spec) : TDEnv.t =
-  List.fold_left load_def tdenv spec
-
 (* Entry point *)
 
 let struct_spec (spec : spec) : Sl.spec =
-  let tdenv = load_spec TDEnv.empty spec in
-  List.map (struct_def tdenv) spec
+  let ctx = Ctx.init () in
+  let ctx = Ctx.load_spec ctx spec in
+  List.map (struct_def ctx) spec

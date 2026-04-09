@@ -174,31 +174,15 @@ let gen_index_guard (exp : exp) (exp_b : exp) (exp_i : exp) : prem list =
   let exp_if = CmpE (`LtOp, `BoolT, exp_i, exp_l) $$ (exp.at, Typ.Make.bool') in
   [ IfPr exp_if $ exp.at ]
 
-let gen_iter_exp (var : var) : exp =
-  let rec gen_iter_exp' (id : id) (typ : typ) (iters : iter list) : exp =
-    match iters with
-    | [] -> VarE id $$ (id.at, typ.it)
-    | iter_h :: iters_t ->
-        let exp_t = gen_iter_exp' id typ iters_t in
-        let iterexp_h =
-          let var = (id, typ, iters_t) in
-          (iter_h, [ var ])
-        in
-        let typ = Typ.Make.iterate typ iters in
-        IterE (exp_t, iterexp_h) $$ (id.at, typ.it)
-  in
-  let id, typ, iters = var in
-  gen_iter_exp' id typ (List.rev iters)
-
 let gen_eq_epsilon_exp (iter : iter) (var : var) : exp =
   let id, typ, iters = var in
-  let exp = gen_iter_exp (id, typ, iters @ [ iter ]) in
+  let exp = Var.as_exp ~dim:true (id, typ, iters @ [ iter ]) in
   let exp_epsilon = OptE None $$ (exp.at, exp.note) in
   CmpE (`EqOp, `BoolT, exp, exp_epsilon) $$ (exp.at, Typ.Make.bool')
 
 let gen_len_exp (iter : iter) (var : var) : exp =
   let id, typ, iters = var in
-  let exp = gen_iter_exp (id, typ, iters @ [ iter ]) in
+  let exp = Var.as_exp ~dim:true (id, typ, iters @ [ iter ]) in
   LenE exp $$ (exp.at, Typ.Make.nat')
 
 let gen_iter_guard (iterexp : iterexp) : prem list =

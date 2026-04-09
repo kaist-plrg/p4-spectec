@@ -212,6 +212,8 @@ and def' =
   | ExternTypD of id * hint list
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
   | TypD of id * tparam list * deftyp * hint list
+  (* `var` id `:` typ hint* *)
+  | VarD of id * typ * hint list
   (* `extern` `relation` rel *)
   | ExternRelD of externrel
   (* `relation` rel *)

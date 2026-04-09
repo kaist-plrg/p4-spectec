@@ -224,6 +224,8 @@ and def' =
   | ExternTypD of id * hint list
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
   | TypD of id * tparam list * deftyp * hint list
+  (* `var` id `:` typ hint* *)
+  | VarD of id * typ * hint list
   (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
   | ExternRelD of id * nottyp * Hints.Input.t * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)

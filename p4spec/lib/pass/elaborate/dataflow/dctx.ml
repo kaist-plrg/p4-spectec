@@ -9,6 +9,8 @@ type t = {
   frees : IdSet.t;
   (* Bound variables so far *)
   bounds : VEnv.t;
+  (* Metavariables so far *)
+  menv : MEnv.t;
   (* Typedefs so far *)
   tdenv : TDEnv.t;
 }
@@ -18,8 +20,9 @@ type t = {
 let init (ctx : Ctx.t) : t =
   let frees = ctx.frees in
   let bounds = ctx.venv in
+  let menv = ctx.menv in
   let tdenv = ctx.tdenv in
-  { frees; bounds; tdenv }
+  { frees; bounds; menv; tdenv }
 
 (* Promoter *)
 
