@@ -583,6 +583,7 @@ and render_instrs ?(level = 0) instrs =
 
 let rec render_def (def : def) : string =
   match def.it with
+  | ExternTypD _ | TypD _ | VarD _ -> ""
   | ExternRelD externrel -> render_extern_rel_def externrel
   | RelD rel -> render_defined_rel_def rel
   | ExternDecD externfunc -> render_extern_func_def externfunc

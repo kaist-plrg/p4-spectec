@@ -863,11 +863,11 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
 and elab_exp_wildcard (ctx : Ctx.t) (at : region) (typ_il_expect : Il.typ) :
     (Ctx.t * Il.exp) attempt =
   let id_fresh, typ_fresh, iters_fresh =
-    Il.Fresh.fresh_var_from_exp ~wildcard:true ctx.frees
+    Il.Fresh.var_from_exp ~wildcard:true ctx.menv ctx.frees
       (Il.VarE ("_" $ at) $$ (at, typ_il_expect.it))
   in
   let ctx = Ctx.add_free ctx id_fresh in
-  let exp_il = Var.as_exp (id_fresh, typ_fresh, iters_fresh) in
+  let exp_il = Il.Var.as_exp ~dim:false (id_fresh, typ_fresh, iters_fresh) in
   Ok (ctx, exp_il)
 
 (* Elaboration of plain expressions *)
@@ -1695,7 +1695,8 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.def option =
   | SynD syns -> elab_syn_def ctx syns |> wrap_none
   | TypD (id, tparams, deftyp, hints) ->
       elab_typ_def ctx id tparams deftyp hints |> wrap_some
-  | VarD (id, plaintyp, _hints) -> elab_var_def ctx id plaintyp |> wrap_none
+  | VarD (id, plaintyp, hints) ->
+      elab_var_def ctx id plaintyp hints |> wrap_some
   | ExternRelD (id, nottyp, hints) ->
       elab_extern_rel_def ctx at id nottyp hints |> wrap_some
   | RelD (id, nottyp, hints) -> elab_rel_def ctx at id nottyp hints |> wrap_some
@@ -1785,11 +1786,14 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
 
 (* Elaboration of variables *)
 
-and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
+and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
+    (hints : hint list) : Ctx.t * Il.def =
   check (valid_tid id) id.at "invalid meta-variable identifier";
   check (not (Ctx.bound_typdef ctx id)) id.at "type already defined";
   let typ_il = elab_plaintyp ctx plaintyp in
-  Ctx.add_metavar ctx id typ_il
+  let ctx = Ctx.add_metavar ctx id typ_il in
+  let def_il = Il.VarD (id, typ_il, hints) $ id.at in
+  (ctx, def_il)
 
 (* Elaboration of relations *)
 

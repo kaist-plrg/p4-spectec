@@ -433,6 +433,7 @@ let rec string_of_def def =
   | TypD (id, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid id ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
+  | VarD (id, typ, _) -> "var " ^ string_of_varid id ^ " : " ^ string_of_typ typ
   | ExternRelD externrel -> "extern relation " ^ string_of_extern_rel externrel
   | RelD rel -> "relation " ^ string_of_defined_rel rel
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc

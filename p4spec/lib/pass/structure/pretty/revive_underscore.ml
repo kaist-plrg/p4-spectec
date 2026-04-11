@@ -27,7 +27,7 @@ module Underscore = struct
     |> List.fold_left
          (fun (frees, renamer_candid) id_underscore ->
            let id_revive =
-             Id.strip_underscore id_underscore |> Il.Fresh.fresh_id frees
+             Id.strip_underscore id_underscore |> Il.Fresh.id frees
            in
            let frees = IdSet.add id_revive frees in
            let renamer_candid =

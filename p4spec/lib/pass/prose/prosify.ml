@@ -652,7 +652,7 @@ and prosify_return_instr (at : region) (ctx : Ctx.t) (exp : exp) : Pl.block =
 let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
   let wrap_some def = Some def in
   match def.it with
-  | ExternTypD _ | TypD _ -> None
+  | ExternTypD _ | TypD _ | VarD _ -> None
   | ExternRelD externrel ->
       prosify_extern_rel_def ctx def.at externrel |> wrap_some
   | RelD rel -> prosify_defined_rel_def ctx def.at rel |> wrap_some
@@ -701,14 +701,18 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
       let exps_input_pl =
         List.map
           (fun typ ->
-            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            let _, exp =
+              Il.Fresh.exp_from_typ ~dim:true ctx.menv IdSet.empty typ
+            in
             prosify_exp ctx exp)
           typs_input
       in
       let exps_output_pl =
         List.map
           (fun typ ->
-            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            let _, exp =
+              Il.Fresh.exp_from_typ ~dim:true ctx.menv IdSet.empty typ
+            in
             prosify_exp ctx exp)
           typs_output
       in
@@ -956,5 +960,6 @@ and prosify_defined_func_def (ctx : Ctx.t) (at : region)
 (* Entry point *)
 
 let prosify_spec (spec : spec) : Pl.spec =
-  let ctx = Ctx.init spec in
+  let ctx = Ctx.init () in
+  let ctx = Ctx.load_spec ctx spec in
   List.filter_map (prosify_def ctx) spec

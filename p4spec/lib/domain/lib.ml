@@ -56,9 +56,9 @@ module VIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> VIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -136,9 +136,9 @@ module IdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> IdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -230,9 +230,9 @@ module MixIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> MixIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -299,9 +299,9 @@ module CaseIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> CaseIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =

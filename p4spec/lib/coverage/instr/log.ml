@@ -138,6 +138,7 @@ let log_def (cover : Multi.t) (def : def) : string =
   | TypD (typid, tparams, deftyp, _) ->
       "syntax " ^ string_of_typid typid ^ string_of_tparams tparams ^ " = "
       ^ string_of_deftyp deftyp
+  | VarD (id, typ, _) -> "var " ^ string_of_varid id ^ ": " ^ string_of_typ typ
   | ExternRelD externrel -> "extern relation " ^ string_of_extern_rel externrel
   | RelD rel -> "rel " ^ log_defined_rel cover rel
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc

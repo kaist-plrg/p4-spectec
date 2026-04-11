@@ -2,7 +2,6 @@ open Domain.Lib
 open Lang
 open Il
 module Type = Runtime.Type
-open Runtime.Static
 open Error
 open Util.Source
 
@@ -26,7 +25,11 @@ let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
 
 (* Rename for an expression *)
 
-module To = Var
+module To = struct
+  include Var
+
+  let as_exp = Var.as_exp ~dim:false
+end
 
 module From = struct
   type t =
@@ -164,7 +167,7 @@ let gen_prems (dctx : Dctx.t) (renv : REnv.t) : prem list =
 
 let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
     (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -176,7 +179,7 @@ let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
 
 let rename_exp_bind_sub (dctx : Dctx.t) (renv : REnv.t) (typ_sub : typ)
     (exp_sub : exp) (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -205,7 +208,7 @@ let rec rename_exp (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (exp : exp)
 
 and rename_exp_bound (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
     Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename

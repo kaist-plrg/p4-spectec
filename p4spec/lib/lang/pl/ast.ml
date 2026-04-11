@@ -35,6 +35,9 @@ type var = Sl.var
 type typ = Sl.typ
 type typ' = Sl.typ'
 
+type deftyp = Sl.deftyp
+type deftyp' = Sl.deftyp'
+
 (* Operators *)
 
 type unop = Sl.unop
@@ -204,6 +207,9 @@ type func = func_title * block
 
 type def = def' phrase
 and def' =
+  | ExternTypD of id
+  | TypD of id * tparam list * deftyp
+  | VarD of id * typ
   | ExternRelD of externrel
   | RelD of rel
   | ExternDecD of externfunc
