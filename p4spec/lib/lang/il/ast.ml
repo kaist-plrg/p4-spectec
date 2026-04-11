@@ -71,7 +71,7 @@ and typcase = nottyp * typorigin * hint list
 and vid = int
 and vnote = { vid : vid; typ : typ'; vhash : int } [@@deriving yojson]
 
-and value = (value', vnote) note [@@deriving yojson]
+and value = (value', vnote) note_phrase [@@deriving yojson]
 and value' =
   | BoolV of bool
   | NumV of Num.t
