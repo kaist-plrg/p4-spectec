@@ -1,0 +1,61 @@
+;; Relation invocation
+
+;; TODO: refactor below meta-functions as relations, likewise function invocation
+
+syntax matchreulres = ctx prem*
+dec $match_rule(ctx, id, rulmatch, val*) : matchreulres
+def $match_rule(C, id, rulmatch, val*) = C' prem*
+    -- if exp* `- prem* = rulmatch
+    -- if OK C' = $assign_exps(C, exp*, val*)
+
+syntax resvals = res<val*>
+
+dec $do_backtrack_rulepath(ctx, id, rulmatch, rulpath, val*) : res<val*>
+def $do_backtrack_rulepath(C, id, rulmatch, rulpath, val*) = OK val'*
+  -- if id `= exp* `- prem* = rulpath
+  -- if ctx_local = C[.LOCAL = {TYP $empty_map<id, typdef>, REL $empty_map<id, reldef>, FUNC $empty_map<id, funcdef>, VAL $empty_map<vari, val>}]
+  -- if ctx_new prem_new* = $match_rule(ctx_local, id, rulmatch, val*)
+  -- Eval_prems: ctx_new |- (prem* ++ prem_new*) : OK ctx_new'
+  -- Eval_exps: ctx_new' |- exp* : OK val'*
+def $do_backtrack_rulepath(C, id, rulmatch, rulpath, val*) = FAIL
+  -- otherwise
+
+dec $search_resvals(resvals*) : val*?
+def $search_resvals(eps) = eps
+def $search_resvals(resvals_head :: resvals*) = val*
+  -- if OK val* = resvals_head
+def $search_resvals(resvals_head :: resvals*) = $search_resvals(resvals*)
+  -- if FAIL = resvals_head
+
+;; Defined relations
+
+rulegroup Call_rel/defined {
+    
+    rule Call_rel/nil:
+      C |- id val* : $do_backtrack_rulepath(C, id_els, rulmatch_els, rulpath_els, val*)
+      -- if DEF rulgroup* elsgroup = $find_rel(C, id)
+      -- (if id `: rulmatch `= rulpath* = rulgroup)*
+      -- if resvals* = $concat_<resvals>($do_backtrack_rulepath(C, id, rulmatch, rulpath, val*)**)
+      -- if eps = $search_resvals(resvals*)
+      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
+
+    rule Call_rel/list:
+      C |- id val* : OK val_output*
+      -- if DEF rulgroup* elsgroup? = $find_rel(C, id)
+      -- (if id `: rulmatch `= rulpath* = rulgroup)*
+      -- if resvals* = $concat_<resvals>($do_backtrack_rulepath(C, id, rulmatch, rulpath, val*)**)
+      -- if eps =/= $search_resvals(resvals*)
+      -- if val_output* = $search_resvals(resvals*)
+}
+
+;; Extern relations
+
+dec $invoke_extern_rel(id, val*) : res<val*>
+
+rule Call_rel/ext:
+  C |- id val* : $invoke_extern_rel(id, val*)
+  -- if EXT = $find_rel(C, id)
+
+rule Call_rel/fail:
+  C |- id val* : FAIL
+  -- otherwise

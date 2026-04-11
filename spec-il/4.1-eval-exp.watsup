@@ -1,3 +1,5 @@
+;; Expression evaluation rules
+
 rule Eval_exp/boolean:
   C |- BOOL b : OK (BOOL b)
 
@@ -15,6 +17,7 @@ rule Eval_exp/unary_boolean:
   C |- UN NOT (BOOL b) : OK (BOOL (~b))
 
 rulegroup Eval_exp/binary_boolean {
+
   rule Eval_exp/and:
     C |- BIN AND (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l /\ b_r))
   
@@ -26,12 +29,14 @@ rulegroup Eval_exp/binary_boolean {
   
   rule Eval_exp/equiv:
     C |- BIN EQUIV (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l <=> b_r))  
+
 }
 
 rule Eval_exp/binary_number:
   C |- BIN binop num_l num_r : OK $binop_number(binop, num_l, num_r)
 
 rulegroup Eval_exp/compare_boolean {
+
   rule Eval_exp/eq:
     C |- CMP EQ exp_l exp_r : OK (BOOL (val_l = val_r))
     -- Eval_exp: C |- exp_l : OK val_l 
@@ -44,7 +49,8 @@ rulegroup Eval_exp/compare_boolean {
 }
 
 rule Eval_exp/compare_number:
-  C |- CMP cmpop num_l num_r : OK (BOOL $cmpop_number(cmpop, num_l, num_r))
+  C |- CMP cmpop num_l num_r : OK val_res
+  -- if val_res = BOOL $cmpop_number(cmpop, num_l, num_r)
 
 rule Eval_exp/upcast:
   C |- UPCAST typ exp : $upcast(C, typ, val)
@@ -57,9 +63,10 @@ rule Eval_exp/downcast:
 rule Eval_exp/subtype:
   C |- SUB exp typ : OK (BOOL b)
   -- Eval_exp: C |- exp : OK val
-  -- if OK b = $subtyp(C, typ, val)
+  -- if b = $subtyp(C, typ, val)
 
 rulegroup Eval_exp/match {
+
   rule Eval_exp/inj:
     C |- MATCH exp (INJ mixop_p) : OK (BOOL (mixop_p = mixop_v))
     -- Eval_exp: C |- exp : OK (INJ mixop_v val_v)
@@ -98,6 +105,7 @@ rulegroup Eval_exp/match {
     C |- MATCH exp optpattern : OK (BOOL false)
     -- Eval_exp: C |- exp : OK val
     -- if ~$is_opt(val)
+
 }
 
 rule Eval_exp/tuple:
@@ -133,15 +141,17 @@ rule Eval_exp/cons:
   -- Eval_exp: C |- exp_t : OK (LIST val_t*)
 
 rulegroup Eval_exp/concat {
+
   rule Eval_exp/concat_text:
   C |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
   -- Eval_exp: C |- exp_l : OK (TEXT text_l)
   -- Eval_exp: C |- exp_r : OK (TEXT text_r)
 
-  rule Eval_exp/list: 
+  rule Eval_exp/concat_list: 
   C |- CAT exp_l exp_r : OK (LIST (val_l* ++ val_r*))
   -- Eval_exp: C |- exp_l : OK (LIST val_l*)
   -- Eval_exp: C |- exp_r : OK (LIST val_r*)
+
 }
 
 rule Eval_exp/mem:
@@ -150,45 +160,50 @@ rule Eval_exp/mem:
   -- Eval_exp: C |- exp_s : OK (LIST val*)
 
 rulegroup Eval_exp/len {
+
   rule Eval_exp/len_text:
     C |- LEN exp : OK (NAT (|text|))
     -- Eval_exp: C |- exp : OK (TEXT text)
 
-  rule Eval_exp/list:
+  rule Eval_exp/len_list:
     C |- LEN exp : OK (NAT (|val*|))
     -- Eval_exp: C |- exp : OK (LIST val*)
+
 }
 
 rule Eval_exp/dot:
   C |- DOT exp atom : OK val_res
   -- Eval_exp: C |- exp : OK (STR valfield*)
   -- (if atom_field val_field = valfield)*
-  -- if val_res = $find_map<atom, val>(`{ (atom_field `: val_field)* }, atom)
+  -- if val_res = $assoc_<atom, val>(atom, (atom_field, val_field)*)
 
 rulegroup Eval_exp/idx { 
+
   rule Eval_exp/idx_text:
-    C |- IDX exp_b exp_i : OK (TEXT text[n])
-    -- Eval_exp: C |- exp_b : OK (TEXT text)
+    C |- IDX exp_b exp_i : OK (TEXT t[n])
+    -- Eval_exp: C |- exp_b : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n)
 
-  rule Eval_exp/list:
+  rule Eval_exp/idx_list:
     C |- IDX exp_b exp_i : OK (val*[n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n)
 }
 
 rulegroup Eval_exp/slice {
+
   rule Eval_exp/slice_text:
-  C |- SLICE exp_b exp_i exp_n : OK (TEXT text[n_i : n_n])
-    -- Eval_exp: C |- exp_b : OK (TEXT text)
+  C |- SLICE exp_b exp_i exp_n : OK (TEXT t[n_i : n_n])
+    -- Eval_exp: C |- exp_b : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
 
-  rule Eval_exp/list:
+  rule Eval_exp/slice_list:
     C |- SLICE exp_b exp_i exp_n : OK (LIST val*[n_i : n_n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
+
 }
 
 rule Eval_exp/upd:
@@ -201,26 +216,28 @@ rule Eval_exp/call:
   -- Call_func: C |- id targ* arg* : valres
 
 rulegroup Eval_exp/iter {
+
   rule Eval_exp/opt_some:
-    C |- ITER exp (QUEST vari) : OK (OPT val)
-    -- if C_sub = $sub_opt(C, vari)
+    C |- ITER exp (QUEST vari*) : OK (OPT val)
+    -- if C_sub = $sub_opt(C, vari*)
     -- Eval_exp: C_sub |- exp : OK val
 
   rule Eval_exp/opt_none:
-    C |- ITER exp (QUEST vari) : OK (OPT eps)
-    -- if eps = $sub_opt(C, vari)
+    C |- ITER exp (QUEST vari*) : OK (OPT eps)
+    -- if eps = $sub_opt(C, vari*)
     
   rule Eval_exp/list:
     C |- ITER exp (STAR vari*) : OK (LIST val*)
-    -- if $sub_list(C, vari*) = C_sub*
+    -- if C_sub* = $sub_list(C, vari*)
     -- (Eval_exp: C_sub |- exp : OK val)*
+
 }
 
 rule Eval_exp/fail:
   C |- exp : FAIL
   -- otherwise
 
-;;
+;; Expression sequence evaluation rules
 
 rule Eval_exps/ok:
   C |- exp* : OK val*
@@ -229,4 +246,3 @@ rule Eval_exps/ok:
 rule Eval_exps/fail:
   C |- exp* : FAIL
   -- otherwise
-
