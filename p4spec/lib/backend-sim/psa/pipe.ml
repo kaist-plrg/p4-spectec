@@ -1,6 +1,6 @@
-open Interface.Unpack
-open Interface.Pack
-open Interface.Flatten
+open Interface.P4.Unpack
+open Interface.P4.Pack
+open Interface.P4.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io

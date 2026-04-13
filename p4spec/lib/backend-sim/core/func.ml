@@ -1,6 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Interface.Unpack
+open Interface.P4.Unpack
 open Error
 open Util.Source
 

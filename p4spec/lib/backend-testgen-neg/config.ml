@@ -141,7 +141,9 @@ let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
   Driver.init (Sim.SL spec);
   let driver = (module Driver : Sim.DRIVER) in
   let printer value_program =
-    Format.asprintf "%a\n" (Interface.Unparse.pp_program_sl spec) value_program
+    Format.asprintf "%a\n"
+      (Interface.P4.Unparse.pp_program_sl spec)
+      value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let spec = Sim.SL spec in

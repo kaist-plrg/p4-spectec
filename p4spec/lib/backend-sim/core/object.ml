@@ -1,7 +1,7 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Interface.Pack
-open Interface.Unpack
+open Interface.P4.Pack
+open Interface.P4.Unpack
 open Util.Source
 
 (* Bit manipulation *)

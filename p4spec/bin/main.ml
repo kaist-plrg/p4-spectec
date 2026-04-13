@@ -682,16 +682,16 @@ let parse_command =
        try
          let spec_il = elab filenames_spec in
          let parsed_p4_file =
-           Interface.Parse.parse_file includes_p4 filename_p4
+           Interface.P4.Parse.parse_file includes_p4 filename_p4
          in
          let unparsed_p4_string =
            Format.asprintf "%a\n"
-             (Interface.Unparse.pp_program_il spec_il)
+             (Interface.P4.Unparse.pp_program_il spec_il)
              parsed_p4_file
          in
          if roundtrip then
            let parsed_p4_string =
-             Interface.Parse.parse_string filename_p4 unparsed_p4_string
+             Interface.P4.Parse.parse_string filename_p4 unparsed_p4_string
            in
            Il.Eq.eq_value ~dbg:true parsed_p4_file parsed_p4_string
            |> (fun b ->
@@ -704,7 +704,7 @@ let parse_command =
            Format.printf "Elaboration error: %s\n" (string_of_error at msg)
        | ParseError (at, msg) ->
            Format.printf "Parse error: %s\n" (string_of_error at msg)
-       | Interface.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
+       | Interface.P4.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
 let json_ast_command =
@@ -758,7 +758,7 @@ let p4_program_value_json_command =
      fun () ->
        try
          let value_program =
-           Interface.Parse.parse_file_fresh includes_p4 filename_p4
+           Interface.P4.Parse.parse_file_fresh includes_p4 filename_p4
          in
          let json = Sl.value_to_yojson value_program in
          Yojson.Safe.to_string json |> print_string
@@ -784,7 +784,7 @@ let unparse_json_value_command =
          | Ok value ->
              let p4_source =
                Format.asprintf "%a\n"
-                 (Interface.Unparse.pp_program_sl spec_sl)
+                 (Interface.P4.Unparse.pp_program_sl spec_sl)
                  value
              in
              print_string p4_source

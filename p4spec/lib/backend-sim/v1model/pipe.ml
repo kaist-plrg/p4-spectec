@@ -1,6 +1,6 @@
-open Interface.Pack
-open Interface.Unpack
-open Interface.Flatten
+open Interface.P4.Pack
+open Interface.P4.Unpack
+open Interface.P4.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
@@ -568,7 +568,7 @@ struct
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RESUBMIT *)
     let value_ctx =
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
@@ -589,15 +589,14 @@ struct
     let value_ctx =
       let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
-          (Bigint.of_int instance_type)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int instance_type)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
     in
     let value_ctx =
       let value_egress_spec =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+        pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "egress_spec" value_egress_spec
@@ -613,7 +612,7 @@ struct
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RECIRC *)
     let value_ctx =
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 4)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 4)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
@@ -632,7 +631,7 @@ struct
     in
     let value_ctx =
       let value_egress_spec =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+        pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "egress_spec" value_egress_spec

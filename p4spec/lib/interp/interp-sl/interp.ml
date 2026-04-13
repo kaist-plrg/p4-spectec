@@ -1957,7 +1957,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (filename_p4 : string) : Sim.program_result =
     clear ();
     try
-      let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
+      let value_program =
+        Interface.P4.Parse.parse_file includes_p4 filename_p4
+      in
       Hook.on_program value_program;
       let values_output = do_eval_rel relname [ value_program ] in
       Sim.Pass values_output
@@ -1988,8 +1990,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value =
-      let henv = Interface.Hint.hints_of_spec_sl spec in
-      Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
+      let henv = Interface.P4.Hint.hints_of_spec_sl spec in
+      Format.asprintf "%a" (Interface.P4.Unparse.pp_value henv) value
     in
     Builtin.Call.init printer;
     Ctx.init ~det spec
