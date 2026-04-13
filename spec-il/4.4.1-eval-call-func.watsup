@@ -1,42 +1,42 @@
 ;; Meta-function invocation
 
 relation Eval_clause:
-  ctx |- clause `@ `( val* ) : res<val>
-  hint(input %0 %1 %2)
+  ctx `/ ctx |- clause `@ `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
 
 rule Eval_clause/arg-fail:
-  C |- clause `@ `( val* ) : FAIL
+  C_local `/ C |- clause `@ `( val* ) : FAIL
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C |- val* -> arg* : FAIL
+  -- Assign_args: C_local `/ C |- val* -> arg* : FAIL
 
 rule Eval_clause/arg-succ-prem-fail:
-  C |- clause `@ `( val* ) : FAIL
+  C_local `/ C |- clause `@ `( val* ) : FAIL
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C |- val* -> arg* : OK C_local
-  -- Eval_prems: C_local |- prem* : FAIL
+  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_new
+  -- Eval_prems: C_new |- prem* : FAIL
 
 rule Eval_clause/arg-succ-prem-succ:
-  C |- clause `@ `( val* ) : OK val_out
+  C_local `/ C |- clause `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C |- val* -> arg* : OK C_local
-  -- Eval_prems: C_local |- prem* : OK C_local'
-  -- Eval_exp : C_local' |- exp_out : OK val_out
+  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_new
+  -- Eval_prems: C_new |- prem* : OK C_new
+  -- Eval_exp : C_new |- exp_out : OK val_out
 
 relation Eval_clauses:
-  ctx |- clause* `@ `( val* ) : res<val>
-  hint(input %0 %1 %2)
+  ctx `/ ctx |- clause* `@ `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
 
 rule Eval_clauses/nil:
-  C |- eps `@ `( _ ) : FAIL
+  C_local `/ C |- eps `@ `( _ ) : FAIL
 
 rule Eval_clauses/match-fail:
-  C |- (clause_h :: clause_t*) `@ `( val* ) : valres
-  -- Eval_clause: C |- clause_h `@ `( val* ) : FAIL
-  -- Eval_clauses: C |- clause_t* `@ `( val* ) : valres
+  C_local `/ C |- (clause_h :: clause_t*) `@ `( val* ) : valres
+  -- Eval_clause: C_local `/ C |- clause_h `@ `( val* ) : FAIL
+  -- Eval_clauses: C_local `/ C |- clause_t* `@ `( val* ) : valres
 
 rule Eval_clauses/match-succ:
-  C |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
-  -- Eval_clause: C |- clause_h `@ `( val* ) : OK val_res
+  C_local `/ C |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
+  -- Eval_clause: C_local `/ C |- clause_h `@ `( val* ) : OK val_res
 
 relation Call_defined_func:
   ctx |- definedFuncDef `@ `< typ* > `( val* ) : res<val>
@@ -50,7 +50,7 @@ rule Call_defined_func:
   -- if C_local = { GLOBAL $empty_layer, LOCAL layer_local }
   -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
   -- if clause_all* = clause* ++ clause_else*
-  -- Eval_clauses: C_local |- clause_all* `@ `( val* ) : valres
+  -- Eval_clauses: C_local `/ C |- clause_all* `@ `( val* ) : valres
 
 rulegroup Call_func/ok {
 

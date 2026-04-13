@@ -9,12 +9,12 @@ relation Assign_exps:
   hint(input %0 %1 %2)
 
 relation Assign_arg:
-  ctx |- val -> arg : res<ctx>
-  hint(input %0 %1 %2)
+  ctx `/ ctx |- val -> arg : res<ctx>
+  hint(input %0 %1 %2 %3)
 
 relation Assign_args:
-  ctx |- val* -> arg* : res<ctx>
-  hint(input %0 %1 %2)
+  ctx `/ ctx  |- val* -> arg* : res<ctx>
+  hint(input %0 %1 %2 %3)
 
 ;; TODO: refactor below as relations above
 
@@ -39,44 +39,92 @@ def $assign_exp_aux3(ctx_iter, (id iter*) :: vari*, ctx*) = $assign_exp_aux3(ctx
 def $assign_exp_aux3(ctx_iter, vari*, ctx*) = FAIL
     -- otherwise
 
-dec $assign_exps(ctx, exp*, val*) : res<ctx>
-dec $assign_exp(ctx, exp, val) : res<ctx>
-def $assign_exp(ctx, VAR id, val) = OK ($add_val(ctx, id eps, val))
-def $assign_exp(ctx, TUP exp*, TUP val*) = $assign_exps(ctx, exp*, val*)
-def $assign_exp(ctx, INJ mixop exp, INJ mixop' val) = $assign_exp(ctx, exp, val)
-def $assign_exp(ctx, STR expfield*, STR valfield*)  = $assign_exps(ctx, exp*, val*)
-    -- (if atom exp = expfield)*
-    -- (if atom' val = valfield)*
-def $assign_exp(ctx, OPT exp, OPT val) = $assign_exp(ctx, exp, val)
-def $assign_exp(ctx, OPT eps, OPT eps) = OK ctx
-def $assign_exp(ctx, LIST exp*, LIST val*) = $assign_exps(ctx, exp*, val*)
-def $assign_exp(ctx, CONS exp_h exp_t, LIST (val_h :: val*)) = $assign_exp(ctx', exp_t, LIST val*)
-    -- if OK ctx' = $assign_exp(ctx, exp_h, val_h)
-def $assign_exp(ctx, ITER exp (QUEST vari*), OPT eps) = OK $assign_exp_aux1(ctx, vari*, OPT eps)
-def $assign_exp(ctx, ITER exp (QUEST vari*), OPT val) = $assign_exp_aux2(ctx', vari*)
-    -- if OK ctx' = $assign_exp(ctx, exp, val)
-def $assign_exp(ctx, ITER exp (STAR vari*), LIST val*) = $assign_exp_aux3(ctx, vari*, ctx'*)
-    -- (if OK ctx' = $assign_exp(ctx[ .LOCAL.VAL = $empty_map<vari, val>], exp, val))*
-def $assign_exp(ctx, exp, val) = FAIL
+rule Assign_exp/variable:
+    C |- val -> VAR id : OK ($add_val(C, id eps, val))
+
+rule Assign_exp/tup:
+    C |- TUP val* -> TUP exp* : OK C'
+    -- Assign_exps: C |- val* -> exp* : OK C'
+
+rule Assign_exp/inj:
+    C |- INJ _ val -> INJ _ exp : OK C'
+    -- Assign_exp: C |- val -> exp : OK C'
+
+rule Assign_exp/str:
+    C |- STR valfield* -> STR expfield* : OK C'
+    -- (if _ val = valfield)*
+    -- (if _ exp = expfield)*
+    -- Assign_exps: C |- val* -> exp* : OK C'
+
+rule Assign_exp/opt_some:
+    C |- OPT val -> OPT exp : OK C'
+    -- Assign_exp: C |- val -> exp : OK C'
+
+rule Assign_exp/opt_none:
+    C |- OPT eps -> OPT eps : OK C
+
+rule Assign_exp/list:
+    C |- LIST val* -> LIST exp* : OK C'
+    -- Assign_exps: C |- val* -> exp* : OK C'
+
+rule Assign_exp/cons:
+    C |- LIST (val_h :: val*) -> CONS exp_h exp_t : OK C''
+    -- Assign_exp: C |- val_h -> exp_h : OK C'
+    -- Assign_exp: C' |- LIST val* -> exp_t : OK C''
+
+rule Assign_exp/iter_quest_none:
+    C |- OPT eps -> ITER exp (QUEST vari*) : OK $assign_exp_aux1(C, vari*, OPT eps)
+
+rule Assign_exp/iter_quest_some:
+    C |- OPT val -> ITER exp (QUEST vari*) : $assign_exp_aux2(C', vari*)
+    -- Assign_exp: C |- val -> exp : OK C'
+
+rule Assign_exp/iter_list:
+    C |- LIST val* -> ITER exp (STAR vari*) : $assign_exp_aux3(C, vari*, C'*)
+    -- if C_emp = C[ .LOCAL.VAL = $empty_map<vari, val>]
+    -- (Assign_exp: C_emp |- val -> exp : OK C')*
+
+rule Assign_exp/fail:
+    C |- val -> exp : FAIL
     -- otherwise
 
-def $assign_exps(ctx, eps, eps) = OK ctx
-def $assign_exps(ctx, exp_cur :: exp*, val_cur :: val*) = $assign_exps(ctx', exp*, val*)
-    -- if |exp*| = |val*|
-    -- if OK ctx' = $assign_exp(ctx, exp_cur, val_cur)
-def $assign_exps(ctx, exp*, val*) = FAIL
+
+rule Assign_exps/nil:
+    C |- eps -> eps : OK C 
+
+rule Assign_exps/cons:
+    C |- (val_h :: val*) -> (exp_h :: exp*) : OK C''
+    -- Assign_exp: C |- val_h -> exp_h : OK C'
+    -- Assign_exps: C' |- val* -> exp* : OK C''
+
+rule Assign_exps/fail:
+    C |- val* -> exp* : FAIL
     -- otherwise
 
-dec $assign_arg(ctx, ctx, arg, val) : res<ctx>
-def $assign_arg(C_caller, C_callee, EXP exp, val) = $assign_exp(C_callee, exp, val)
-def $assign_arg(C_caller, C_callee, FUN id, FUNC id') = OK ($add_func(C_callee, id, funcdef))
-    -- if funcdef = $find_func(C_caller, id')
-def $assign_arg(C_caller, C_callee, arg, val) = FAIL
+;;
+
+
+rule Assign_arg/exp:
+    C_callee `/ _ |- val -> EXP exp : OK C
+    -- Assign_exp: C_callee |- val -> exp : OK C
+
+rule Assign_arg/fun:
+    C_callee `/ C_caller |- val -> FUN id : OK ($add_func(C_callee, id, funcdef))
+    -- if funcdef = $find_func(C_caller, id)
+
+rule Assign_arg/fail:
+    C_callee `/ C_caller |- val -> arg : FAIL 
     -- otherwise
 
-dec $assign_args(ctx, ctx, arg*, val*) : res<ctx>
-def $assign_args(C_caller, C_callee, eps, eps) = OK C_callee
-def $assign_args(C_caller, C_callee, arg_cur :: arg*, val_cur :: val*) = $assign_args(C_caller, C_next, arg*, val*)
-    -- if OK C_next = $assign_arg(C_caller, C_callee, arg_cur, val_cur)
-def $assign_args(C_caller, C_callee, arg*, val*) = FAIL
+
+rule Assign_args/nil:
+    C_callee `/ _ |- eps -> eps : OK C_callee
+
+rule Assign_args/cons:
+    C_callee `/ C_caller |- (val_h :: val*) -> (arg_h :: arg*) : OK C_final
+    -- Assign_arg: C_callee `/ C_caller |- val_h -> arg_h : OK C_next
+    -- Assign_args: C_next `/ C_caller |- val* -> arg* : OK C_final
+
+rule Assign_args/fail:
+    C_callee `/ C_caller |- val* -> arg* : FAIL
     -- otherwise

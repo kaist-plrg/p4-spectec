@@ -53,7 +53,7 @@ def $downcast(C, NAT, NAT n) = OK (NAT n)
 def $downcast(C, NAT, INT i) = OK (NAT n)
     -- if n = i
 def $downcast(C, NAT, val) = FAIL
-    -- if ~$is_num(val)
+    -- if ~(val <: num)
 
 def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
     -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
@@ -105,10 +105,10 @@ def $subtyp(C, VAR id targ*, STR valfield*) = $forall_(b*)
 
 def $subtyp(C, TUP typ*, TUP val*) = $forall_($subtyp(C, typ, val)*)
 
-def $subtyp(C, ITER typ iter, OPT val) = $subtyp(C, typ, val)
-def $subtyp(C, ITER typ iter, OPT eps) = true 
+def $subtyp(C, ITER typ QUEST, OPT val) = $subtyp(C, typ, val)
+def $subtyp(C, ITER typ QUEST, OPT eps) = true 
 
-def $subtyp(C, ITER typ iter, LIST val*) = $forall_($subtyp(C, typ, val)*)
+def $subtyp(C, ITER typ STAR, LIST val*) = $forall_($subtyp(C, typ, val)*)
 
 def $subtyp(C, typ, val) = false
     -- otherwise
