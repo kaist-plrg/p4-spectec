@@ -4,23 +4,16 @@ relation Eval_clause:
   ctx `/ ctx |- clause `@ `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
 
-rule Eval_clause/arg-fail:
-  C_local `/ C |- clause `@ `( val* ) : FAIL
-  -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C_local `/ C |- val* -> arg* : FAIL
-
-rule Eval_clause/arg-succ-prem-fail:
-  C_local `/ C |- clause `@ `( val* ) : FAIL
-  -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_new
-  -- Eval_prems: C_new |- prem* : FAIL
-
-rule Eval_clause/arg-succ-prem-succ:
+rule Eval_clause/succ:
   C_local `/ C |- clause `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = clause
   -- Assign_args: C_local `/ C |- val* -> arg* : OK C_new
   -- Eval_prems: C_new |- prem* : OK C_new
   -- Eval_exp : C_new |- exp_out : OK val_out
+
+rule Eval_clause/fail:
+  C_local `/ C |- clause `@ `( val* ) : FAIL
+  -- otherwise
 
 relation Eval_clauses:
   ctx `/ ctx |- clause* `@ `( val* ) : res<val>
@@ -46,11 +39,53 @@ rule Call_defined_func:
   C |- definedFuncDef `@ `< typ* > `( val* ) : valres
   -- if DEF tparam* `-> clause* elsclause? = definedFuncDef
   -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS typ)))* }
-  -- if layer_local = $empty_layer[ .TYP = tdenv ]
-  -- if C_local = { GLOBAL $empty_layer, LOCAL layer_local }
+  -- if C_local = C[.LOCAL = $empty_layer[ .TYP = tdenv ]]
   -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
   -- if clause_all* = clause* ++ clause_else*
   -- Eval_clauses: C_local `/ C |- clause_all* `@ `( val* ) : valres
+
+;;
+
+relation Eval_tblrow:
+  ctx |- tblrow `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule Eval_tblrow/succ:
+  C |- tblrow `@ `( val* ) : OK val_out
+  -- if arg* `= exp_out `- prem* = tblrow
+  -- Assign_args: C[.LOCAL = $empty_layer] `/ C |- val* -> arg* : OK C_new
+  -- Eval_prems: C_new |- prem* : OK C_local
+  -- Eval_exp: C_local |- exp_out : OK val_out
+
+rule Eval_tblrow/fail:
+  C |- tblrow `@ `( val* ) : FAIL
+  -- otherwise
+
+relation Eval_tblrows:
+  ctx |- tblrow* `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule Eval_tblrows/nil:
+  C |- eps `@ `( val* ) : FAIL
+
+
+rule Eval_tblrows/cons-succ:
+  C |- (tblrow_h :: tblrow*) `@ `( val* ) : OK val_out
+  -- Eval_tblrow: C |- tblrow_h `@ `( val* ) : OK val_out
+
+rule Eval_tblrows/cons-fail:
+  C |- (tblrow_h :: tblrow*) `@ `( val* ) : valres
+  -- Eval_tblrow: C |- tblrow_h `@ `( val* ) : FAIL
+  -- Eval_tblrows: C |- tblrow* `@ `( val* ) : valres
+
+relation Call_table_func:
+  ctx |- tableFuncDef `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule Call_table_func:
+  C |- tableFuncDef `@ `( val* ) : valres
+  -- if TABLE _ `-> tblrow* = tableFuncDef
+  -- Eval_tblrows: C |- tblrow* `@ `( val* ) : valres
 
 rulegroup Call_func/ok {
 
@@ -62,8 +97,14 @@ rulegroup Call_func/ok {
       -- Call_defined_func:
           C |- definedFuncDef `@ `< typ_input* > `( val_input* ) : valres
 
+    rule Call_func/table:
+      C |- id eps arg* : valres
+      -- Eval_args: C |- arg* : OK val_input*
+      -- if tableFuncDef = $find_func(C, id)
+      -- Call_table_func:
+          C |- tableFuncDef `@ `( val_input* ) : valres
+
     ;; rule Call_func/extern: $invoke_extern_func(id, targ*, val*)
-    ;; rule Call_func/builtin: $invoke_builtin_func(id, targ*, val*)
     ;; rule Call_func/table: $invoke_table_func(id, targ*, val*)
 
 }
