@@ -41,6 +41,10 @@
         failwith
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
+
+  let set_type_namespace_of_il (value : value) (ns : namespace) : unit =
+    let id = id_of_name value in
+    set_type_namespace id ns
 %}
 
 (**************************** TOKENS ******************************)
@@ -161,7 +165,8 @@
   (* >> Declaration *) declaration
   (* Annotations *) annotationToken annotationBody structuredAnnotationBody annotation annotationListNonEmpty annotationList p4program
 %type <Lang.Il.value> push_name push_externName
-%type <unit> push_scope pop_scope go_toplevel go_local
+%type <Context.namespace> pop_scope
+%type <unit> push_scope go_toplevel go_local set_parent_namespace clear_parent_namespace
 %%
 
 (**************************** CONTEXTS ******************************)
@@ -196,6 +201,14 @@ go_local:
 toplevel(X):
   | go_toplevel x = X go_local
     { x }
+;
+set_parent_namespace:
+  | (* empty *)
+    { set_parent_namespace() }
+;
+clear_parent_namespace:
+  | (* empty *)
+    { clear_parent_namespace() }
 ;
 
 (**************************** P4-16 GRAMMAR ******************************)
@@ -550,7 +563,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpression:
-	| e = memberAccessBase DOT m = member %prec DOT
+	| e = memberAccessBase DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpression" }
 ;
 
@@ -573,7 +586,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpressionNonBrace:
-	| e = memberAccessBaseNonBrace DOT m = member %prec DOT
+	| e = memberAccessBaseNonBrace DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpressionNonBrace" }
 ;
 
@@ -811,7 +824,7 @@ argumentList:
 (* L-values *)
 lvalue:
 	| e = referenceExpression { e }
-	| lv = lvalue DOT m = member %prec DOT
+	| lv = lvalue DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ [ NT lv; Term "."; NT m ] #@ "lvalue" }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
 		{ [ NT lv; Term "["; NT i; Term "]" ] #@ "lvalue" }
@@ -1198,10 +1211,12 @@ externFunctionDeclaration:
 
 %inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
 ;
 
 externConstructorOrMethodPrototype:
@@ -1218,12 +1233,13 @@ externConstructorOrMethodPrototypeList:
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
-    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
+    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE s = pop_scope
     { let decl =
         [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
           #@ "externObjectDeclaration"
       in
       declare_type_of_il n (has_type_params_declaration decl);
+      set_type_namespace_of_il n s;
       decl }
 ;
 
@@ -1323,7 +1339,7 @@ parserStatementList:
 ;
 
 parserState:
-  | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE
+  | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE pop_scope
     { [ NT al; Term "STATE"; NT n; Term "{"; NT sl; NT t; Term "}" ]
       #@ "parserState" }
 ;

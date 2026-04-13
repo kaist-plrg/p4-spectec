@@ -476,16 +476,16 @@ let rec lexer (lexbuf:lexbuf): token =
    match !lexer_state with
     | SIdent(id, next) ->
       begin match get_kind id with
-      | TypeName true ->
+      | TypeName (true, _) ->
         lexer_state := STemplate;
         TYPENAME
-      | Ident true ->
+      | Ident (true, _) ->
         lexer_state := STemplate;
         IDENTIFIER
-      | TypeName false ->
+      | TypeName (false, _) ->
         lexer_state := next;
         TYPENAME
-      | Ident false ->
+      | Ident (false, _) ->
         lexer_state := next;
         IDENTIFIER
       end
