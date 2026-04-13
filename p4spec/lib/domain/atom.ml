@@ -23,6 +23,7 @@ type t =
   | Comma                (* ``,` *)
   | Semicolon            (* ``;` *)
   | Colon                (* `:` *)
+  | ColonEq              (* `:=` *)
   | Hash                 (* ``#` *)
   | Dollar               (* ``$` *)
   | At                   (* ``@` *)
@@ -49,6 +50,7 @@ type t =
   | Plus                 (* ``+` *)
   | Plus2                (* ``++` *)
   | PlusEq               (* ``+=` *)
+  | PlusColon            (* ``+:` *)
   | Minus                (* ``-` *)
   | MinusEq              (* ``-=` *)
   | Star                 (* ``*` *)
@@ -102,6 +104,7 @@ let string_of_atom = function
   | Comma -> ","
   | Semicolon -> ";"
   | Colon -> ":"
+  | ColonEq -> ":="
   | Hash -> "#"
   | Dollar -> "$"
   | At -> "@"
@@ -128,6 +131,7 @@ let string_of_atom = function
   | Plus -> "+"
   | Plus2 -> "++"
   | PlusEq -> "+="
+  | PlusColon -> "+:"
   | Minus -> "-"
   | MinusEq -> "-="
   | Star -> "*"
@@ -177,6 +181,7 @@ let render_atom = function
   | Comma -> ","
   | Semicolon -> ";"
   | Colon -> ":"
+  | ColonEq -> ":="
   | Hash -> "#"
   | Dollar -> "$"
   | At -> "@"
@@ -203,6 +208,7 @@ let render_atom = function
   | Plus -> "+"
   | Plus2 -> "++"
   | PlusEq -> "+="
+  | PlusColon -> "+:"
   | Minus -> "-"
   | MinusEq -> "-="
   | Star -> "*"

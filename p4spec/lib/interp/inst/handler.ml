@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-module Value = Runtime.Dynamic_Il.Value
+module Value = Runtime.Value
 module Dep = Runtime.Testgen_neg.Dep
 module Sim = Runtime.Sim.Simulator
 module ICov = Coverage.Instr.Single
@@ -40,7 +40,7 @@ module type HANDLER = sig
   (* SL events *)
 
   val on_instr : Sl.instr -> unit
-  val on_instr_dangling : bool -> PId.t -> Value.t -> unit
+  val on_instr_dangling : bool -> IId.t -> Value.t -> unit
 end
 
 (* Default handler *)

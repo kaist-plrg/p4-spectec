@@ -3,8 +3,9 @@
   open Il
   open Context
   open Extract
-  open Wrap
+  open Value.Make
   open Flatten
+  open Util.Source
 
   let declare_var_of_il (value : value) (b : bool) : unit =
     let id = id_of_name value in
@@ -12,7 +13,7 @@
 
   let rec declare_vars_of_il (value : value) : unit =
     match flatten_case_v_opt value with
-    | Some ("nameList", [ []; [","]; [] ], [ v_nameList; v_name ]) ->
+    | Some ("nameList", [ "," ], [ v_nameList; v_name ]) ->
         declare_vars_of_il v_nameList;
         declare_var_of_il v_name false
     | Some ("identifier", _, _)
@@ -28,9 +29,9 @@
     let id = id_of_name value in
     declare_type id b
 
-  let rec declare_types_of_il (value: value) : unit =
+  let rec declare_types_of_il (value : value) : unit =
     match flatten_case_v_opt value with
-    | Some ("typeParameterList", [ []; [ "," ]; [] ], [ v_tpList; v_name ]) ->
+    | Some ("typeParameterList", [ "," ], [ v_tpList; v_name ]) ->
         declare_types_of_il v_tpList;
         declare_type_of_il v_name false
     | Some ("identifier", _, _)
@@ -41,28 +42,45 @@
         failwith
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
+
+  let position_to_pos (position : Lexing.position) =
+    {
+      file = position.pos_fname;
+      line = position.pos_lnum;
+      column = position.pos_cnum - position.pos_bol
+    }
+
+  let positions_to_region (position_left : Lexing.position)
+      (position_right : Lexing.position) =
+    {
+      left = position_to_pos position_left;
+      right = position_to_pos position_right
+    }
+
+  let at ((position_left, position_right) : Lexing.position * Lexing.position)
+    = positions_to_region position_left position_right
 %}
 
 (**************************** TOKENS ******************************)
-%token<Source.info> END
+%token END
 %token TYPENAME IDENTIFIER
 %token<Lang.Il.value> NAME STRING_LITERAL
 %token<Lang.Il.value * string> NUMBER_INT NUMBER
-%token<Source.info> LE GE SHL AND OR NE EQ
-%token<Source.info> PLUS MINUS PLUS_SAT MINUS_SAT MUL INVALID DIV MOD
-%token<Source.info> BIT_OR BIT_AND BIT_XOR COMPLEMENT
-%token<Source.info> L_BRACKET R_BRACKET L_BRACE R_BRACE L_ANGLE L_ANGLE_ARGS R_ANGLE R_ANGLE_SHIFT L_PAREN R_PAREN
-%token<Source.info> ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
-%token<Source.info> AT PLUSPLUS
-%token<Source.info> DONTCARE
-%token<Source.info> MASK DOTS RANGE
-%token<Source.info> TRUE FALSE
-%token<Source.info> ABSTRACT ACTION ACTIONS APPLY BOOL BIT BREAK CONST CONTINUE CONTROL DEFAULT
-%token<Source.info> ELSE ENTRIES ENUM ERROR EXIT EXTERN HEADER HEADER_UNION IF IN INOUT FOR
-%token<Source.info> INT KEY LIST SELECT MATCH_KIND OUT PACKAGE PARSER PRIORITY RETURN STATE STRING STRUCT
-%token<Source.info> SWITCH TABLE THIS TRANSITION TUPLE TYPEDEF TYPE VALUE_SET VARBIT VOID
-%token<Source.info> PRAGMA PRAGMA_END
-%token<Source.info> PLUS_ASSIGN PLUS_SAT_ASSIGN MINUS_ASSIGN MINUS_SAT_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN  SHL_ASSIGN SHR_ASSIGN BIT_AND_ASSIGN BIT_XOR_ASSIGN BIT_OR_ASSIGN
+%token LE GE SHL AND OR NE EQ
+%token PLUS MINUS PLUS_SAT MINUS_SAT MUL INVALID DIV MOD
+%token BIT_OR BIT_AND BIT_XOR COMPLEMENT
+%token L_BRACKET R_BRACKET L_BRACE R_BRACE L_ANGLE L_ANGLE_ARGS R_ANGLE R_ANGLE_SHIFT L_PAREN R_PAREN
+%token ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
+%token AT PLUSPLUS PLUSCOLON
+%token DONTCARE
+%token MASK DOTS RANGE
+%token TRUE FALSE
+%token ABSTRACT ACTION ACTIONS APPLY BOOL BIT BREAK CONST CONTINUE CONTROL DEFAULT
+%token ELSE ENTRIES ENUM ERROR EXIT EXTERN HEADER HEADER_UNION IF IN INOUT FOR
+%token INT KEY LIST SELECT MATCH_KIND OUT PACKAGE PARSER PRIORITY RETURN STATE STRING STRUCT
+%token SWITCH TABLE THIS TRANSITION TUPLE TYPEDEF TYPE VALUE_SET VARBIT VOID
+%token PRAGMA PRAGMA_END
+%token PLUS_ASSIGN PLUS_SAT_ASSIGN MINUS_ASSIGN MINUS_SAT_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN SHL_ASSIGN SHR_ASSIGN BIT_AND_ASSIGN BIT_XOR_ASSIGN BIT_OR_ASSIGN
 %token<Lang.Il.value> UNEXPECTED_TOKEN
 
 (**************************** PRIORITY AND ASSOCIATIVITY ******************************)
@@ -211,35 +229,37 @@ int:
 ;
 
 %inline r_angle:
-	| info_r = R_ANGLE
-    { info_r }
-	| info_r = R_ANGLE_SHIFT
-    { info_r }
+	| r_angle = R_ANGLE
+    { r_angle }
+	| r_angle = R_ANGLE_SHIFT
+    { r_angle }
 ;
 %inline l_angle:
-	| info_r = L_ANGLE
-    { info_r }
-	| info_r = L_ANGLE_ARGS
-    { info_r }
+	| l_angle = L_ANGLE
+    { l_angle }
+	| l_angle = L_ANGLE_ARGS
+    { l_angle }
 ;
 
 (* Misc *)
 trailingCommaOpt:
 	| (* empty *)
-    { [ Term "`EMPTY" ] #@ "trailingCommaOpt" }
+    { "`EMPTY" <| [] <<| "trailingCommaOpt" <<<| (at $sloc) }
 	| COMMA
-    { [ Term "," ] #@ "trailingCommaOpt" }
+    { "`," <| [] <<| "trailingCommaOpt" <<<| (at $sloc) }
 ;
 
 (* Booleans *)
 %inline booleanLiteral:
-  | TRUE { [ Term "TRUE" ] #@ "booleanLiteral" }
-  | FALSE { [ Term "FALSE" ] #@ "booleanLiteral" }
+  | TRUE
+    { "TRUE" <| [] <<| "booleanLiteral" <<<| (at $sloc) }
+  | FALSE
+    { "FALSE" <| [] <<| "booleanLiteral" <<<| (at $sloc) }
 
 (* Integers *)
 integerLiteral:
 	| int = int
-    { [ Term "D"; NT int ] #@ "integerLiteral" }
+    { "D int" <| [ int ] <<| "integerLiteral" <<<| (at $sloc) }
 (* Processed by lexer *)
 	| number = NUMBER
     { fst number }
@@ -248,36 +268,45 @@ integerLiteral:
 (* Strings *)
 stringLiteral:
 	| text = STRING_LITERAL
-    { [ Term (Char.escaped '"'); NT text; Term (Char.escaped '"') ] #@ "stringLiteral"}
+    { "`\" text `\"" <| [ text ] <<| "stringLiteral" <<<| (at $sloc) }
 ;
 
 (* Names *)
 identifier:
 	| text = NAME IDENTIFIER
-    { [ Term "`ID"; NT text ] #@ "identifier" }
+    { "`ID text" <| [ text ] <<| "identifier" <<<| (at $sloc) }
 ;
 
 typeIdentifier:
 	| text = NAME TYPENAME
-    { [ Term "`TID"; NT text ] #@ "typeIdentifier" }
+    { "`TID text" <| [ text ] <<| "typeIdentifier" <<<| (at $sloc) }
 ;
 
 (* >> Non-type names *)
 nonTypeName:
-	| id = identifier { id }
-	| APPLY { [ Term "APPLY" ] #@ "nonTypeName" }
-	| KEY { [ Term "KEY" ] #@ "nonTypeName" }
-	| ACTIONS { [ Term "ACTIONS" ] #@ "nonTypeName" }
-	| STATE { [ Term "STATE" ] #@ "nonTypeName" }
-	| ENTRIES { [ Term "ENTRIES" ] #@ "nonTypeName" }
-	| TYPE { [ Term "TYPE" ] #@ "nonTypeName" }
-	| PRIORITY { [ Term "PRIORITY" ] #@ "nonTypeName" }
+	| id = identifier
+    { id }
+	| APPLY
+    { "APPLY" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| KEY
+    { "KEY" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| ACTIONS
+    { "ACTIONS" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| STATE
+    { "STATE" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| ENTRIES
+    { "ENTRIES" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| TYPE
+    { "TYPE" <| [] <<| "nonTypeName" <<<| (at $sloc) }
+	| PRIORITY
+    { "PRIORITY" <| [] <<| "nonTypeName" <<<| (at $sloc) }
 ;
 
 prefixedNonTypeName:
-	| n = nonTypeName { n }
+	| n = nonTypeName
+    { n }
 	| DOT go_toplevel n = nonTypeName go_local
-    { [ Term "`ID"; Term "."; NT n ] #@ "prefixedNonTypeName" }
+    { "`ID `. nonTypeName" <| [ n ] <<| "prefixedNonTypeName" <<<| (at $sloc) }
 ;
 
 (* >> Type names *)
@@ -286,19 +315,26 @@ typeName:
 ;
 
 prefixedTypeName:
-	| n = typeName { n }
+	| n = typeName
+    { n }
 	| DOT go_toplevel tid = typeName go_local
-		{ [ Term "`TID"; Term "."; NT tid ] #@ "prefixedType" }
+    { "`TID `. typeName" <| [ tid ] <<| "prefixedTypeName" <<<| (at $sloc) }
 ;
 
 (* >> Table custom property names *)
 tableCustomName:
-	| id = identifier { id }
-	| tid = typeIdentifier { tid }
-	| APPLY { [ Term "APPLY" ] #@ "tableCustomName" }
-	| STATE { [ Term "STATE" ] #@ "tableCustomName" }
-	| TYPE { [ Term "TYPE" ] #@ "tableCustomName" }
-	| PRIORITY { [ Term "PRIORITY" ] #@ "tableCustomName" }
+	| id = identifier
+    { id }
+	| tid = typeIdentifier
+    { tid }
+	| APPLY
+    { "APPLY" <| [] <<| "tableCustomName" <<<| (at $sloc) }
+	| STATE
+    { "STATE" <| [] <<| "tableCustomName" <<<| (at $sloc) }
+	| TYPE
+    { "TYPE" <| [] <<| "tableCustomName" <<<| (at $sloc) }
+	| PRIORITY
+    { "PRIORITY" <| [] <<| "tableCustomName" <<<| (at $sloc) }
 ;
 
 (* >> Names *)
@@ -306,14 +342,15 @@ name:
 	| n = nonTypeName
 	| n = typeName
     { n }
-	| LIST { [ Term "LIST" ] #@ "name" }
+	| LIST
+    { "LIST" <| [] <<| "name" <<<| (at $sloc) }
 ;
 
 nameList:
-	| n = name { n }
+	| n = name
+    { n }
 	| ns = nameList COMMA n = name
-    { [ NT ns; Term ","; NT n ]
-      #@ "nameList" }
+    { "nameList `, name" <| [ ns; n ] <<| "nameList" <<<| (at $sloc) }
 ;
 
 member:
@@ -323,43 +360,49 @@ member:
 
 (* Directions *)
 direction:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "direction" }
-	| IN { [ Term "IN" ] #@ "direction" }
-	| OUT { [ Term "OUT" ] #@ "direction" }
-	| INOUT { [ Term "INOUT" ] #@ "direction" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "direction" <<<| (at $sloc) }
+	| IN
+    { "IN" <| [] <<| "direction" <<<| (at $sloc) }
+	| OUT
+    { "OUT" <| [] <<| "direction" <<<| (at $sloc) }
+	| INOUT
+    { "INOUT" <| [] <<| "direction" <<<| (at $sloc) }
 ;
 
 (* Types *)
 (* >> Base types *)
 baseType:
-	| BOOL { [ Term "BOOL" ] #@ "baseType" }
-	| MATCH_KIND { [ Term "MATCH_KIND" ] #@ "baseType" }
-	| ERROR { [ Term "ERROR" ] #@ "baseType" }
-	| BIT { [ Term "BIT" ] #@ "baseType" }
-	| STRING { [ Term "STRING" ] #@ "baseType"}
+	| BOOL
+    { "BOOL" <| [] <<| "baseType" <<<| (at $sloc) }
+	| MATCH_KIND
+    { "MATCH_KIND" <| [] <<| "baseType" <<<| (at $sloc) }
+	| ERROR
+    { "ERROR" <| [] <<| "baseType" <<<| (at $sloc) }
+	| BIT
+    { "BIT" <| [] <<| "baseType" <<<| (at $sloc) }
+	| STRING
+    { "STRING" <| [] <<| "baseType" <<<| (at $sloc) }
 	| INT
-    { [ Term "INT" ] #@ "baseType" }
+    { "INT" <| [] <<| "baseType" <<<| (at $sloc) }
 	| BIT l_angle v = int r_angle
-    { [ Term "BIT"; Term "<"; NT v; Term ">" ]
-      #@ "baseType" }
+    { "BIT `< int >" <| [ v ] <<| "baseType" <<<| (at $sloc) }
 	| INT l_angle v = int r_angle
-    { [ Term "INT"; Term "<"; NT v; Term ">" ]
-      #@ "baseType" }
+    { "INT `< int >" <| [ v ] <<| "baseType" <<<| (at $sloc) }
 	| VARBIT l_angle v = int r_angle
-    { [ Term "VARBIT"; Term "<"; NT v; Term ">" ] #@ "baseType" }
+    { "VARBIT `< int >" <| [ v ] <<| "baseType" <<<| (at $sloc) }
 	| BIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "BIT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ] #@ "baseType" }
+    { "BIT `< `( expression ) >" <| [ e ] <<| "baseType" <<<| (at $sloc) }
 	| INT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "INT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ]
-      #@ "baseType" }
+    { "INT `< `( expression ) >" <| [ e ] <<| "baseType" <<<| (at $sloc) }
 	| VARBIT l_angle L_PAREN e = expression R_PAREN r_angle
-    { [ Term "VARBIT"; Term "<"; Term "("; NT e; Term ")"; Term ">" ] #@ "baseType" }
+    { "VARBIT `< `( expression ) >" <| [ e ] <<| "baseType" <<<| (at $sloc) }
 ;
 
 (* >> Named types *)
 specializedType:
   | n = prefixedTypeName l_angle tal = typeArgumentList r_angle
-    { [ NT n; Term "<"; NT tal; Term ">" ] #@ "specializedType" }
+    { "prefixedTypeName `< typeArgumentList >" <| [ n; tal ] <<| "specializedType" <<<| (at $sloc) }
 ;
 
 namedType:
@@ -371,19 +414,19 @@ namedType:
 (* >> Header stack types *)
 headerStackType:
   | t = namedType L_BRACKET e = expression R_BRACKET
-    { [ NT t; Term "["; NT e; Term "]" ] #@ "headerStackType" }
+    { "namedType `[ expression ]" <| [ t; e ] <<| "headerStackType" <<<| (at $sloc) }
 ;
 
 (* >> List types *)
 listType:
   | LIST l_angle targ = typeArgument r_angle
-    { [ Term "LIST"; Term "<"; NT targ; Term ">" ] #@ "listType" }
+    { "LIST `< typeArgument >" <| [ targ ] <<| "listType" <<<| (at $sloc) }
 ;
 
 (* >> Tuple types *)
 tupleType:
 	| TUPLE l_angle targs = typeArgumentList r_angle
-    { [ Term "TUPLE"; Term "<"; NT targs; Term ">" ] #@ "tupleType" }
+    { "TUPLE `< typeArgumentList >" <| [ targs ] <<| "tupleType" <<<| (at $sloc) }
 ;
 
 (* >> Types *)
@@ -397,9 +440,12 @@ typeRef:
 ;
 
 typeOrVoid:
-	| t = typeRef { t }
-	| VOID { [ Term "VOID" ] #@ "typeOrVoid" }
-  | id = identifier { id }
+	| t = typeRef
+    { t }
+	| VOID
+    { "VOID" <| [] <<| "typeOrVoid" <<<| (at $sloc) }
+  | id = identifier
+    { id }
 ;
 
 (* Type parameters *)
@@ -407,51 +453,60 @@ typeParameter:
 	| n = name { n }
 
 typeParameterList:
-	| tp = typeParameter { tp }
+	| tp = typeParameter
+    { tp }
 	| tps = typeParameterList COMMA tp = typeParameter
-    { [ NT tps; Term ","; NT tp ] #@ "typeParameterList" }
+    { "typeParameterList `, typeParameter" <| [ tps; tp ] <<| "typeParameterList" <<<| (at $sloc) }
 ;
 
 typeParameterListOpt:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "typeParameterListOpt" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "typeParameterListOpt" <<<| (at $sloc) }
 	| l_angle tps = typeParameterList r_angle
     { declare_types_of_il tps;
-      [ Term "<"; NT tps; Term ">" ] #@ "typeParameterListOpt" }
+      "`< typeParameterList >" <| [ tps ] <<| "typeParameterListOpt" <<<| (at $sloc) }
 ;
 
 (* Parameters *)
 parameter:
 	| al = annotationList dir = direction t = typeRef n = name i = initializerOpt
 		{ declare_var_of_il n false;
-      [ NT al; NT dir; NT t; NT n; NT i ] #@ "parameter" }
+      "annotationList direction type name initializerOpt" <| [ al; dir; t; n; i ] <<| "parameter" <<<| (at $sloc) }
 ;
 
 nonEmptyParameterList:
-	| p = parameter { p }
+	| p = parameter
+    { p }
 	| ps = nonEmptyParameterList COMMA p = parameter
-    { [ NT ps; Term ","; NT p ] #@ "nonEmptyParameterList" }
+    { "nonEmptyParameterList `, parameter" <| [ ps; p ] <<| "nonEmptyParameterList" <<<| (at $sloc) }
 ;
 
 parameterList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "parameterList" }
-	| ps = nonEmptyParameterList { ps }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "parameterList" <<<| (at $sloc) }
+	| ps = nonEmptyParameterList
+    { ps }
 ;
 
 (* Constructor parameters *)
 constructorParameterListOpt:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "constructorParameterListOpt" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "constructorParameterListOpt" <<<| (at $sloc) }
 	| L_PAREN ps = parameterList R_PAREN
-    { [ Term "("; NT ps; Term ")" ] #@ "constructorParameterListOpt" }
+    { "`( parameterList )" <| [ ps ] <<| "constructorParameterListOpt" <<<| (at $sloc) }
 ;
 
 (* Expression key-value pairs *)
 namedExpression:
-	| n = name ASSIGN e = expression { [ NT n; Term "="; NT e ] #@ "namedExpression" }
+	| n = name ASSIGN e = expression
+    { "name `= expression" <| [ n; e ] <<| "namedExpression" <<<| (at $sloc) }
 ;
 
 namedExpressionList:
-	| e = namedExpression { e }
-	| es = namedExpressionList COMMA e = namedExpression { [ NT es; Term ","; NT e ] #@ "namedExpressionList" }
+	| e = namedExpression
+    { e }
+	| es = namedExpressionList COMMA e = namedExpression
+    { "namedExpressionList `, namedExpression" <| [ es; e ] <<| "namedExpressionList" <<<| (at $sloc) }
 ;
 
 (* Expressions *)
@@ -464,135 +519,170 @@ namedExpressionList:
 
 (* >> Reference expressions *)
 %inline referenceExpression:
-	| n = prefixedNonTypeName { n }
-	| THIS { [ Term "THIS" ] #@ "referenceExpression" }
+	| n = prefixedNonTypeName
+    { n }
+	| THIS
+    { "THIS" <| [] <<| "referenceExpression" <<<| (at $sloc) }
 ;
 
 (* >> Default expressions *)
 %inline defaultExpression:
-	| DOTS { [ Term "..." ] #@ "defaultExpression" }
+	| DOTS
+    { "`..." <| [] <<| "defaultExpression" <<<| (at $sloc) }
 ;
 
 (* >> Unary, binary, and ternary expressions *)
 %inline unop: 
-	| NOT { [ Term "!" ] #@ "unop" }
-	| COMPLEMENT { [ Term "~" ] #@ "unop" }
-	| MINUS { [ Term "-" ] #@ "unop" }
-	| PLUS { [ Term "+" ] #@ "unop" }
+	| NOT
+    { "`!" <| [] <<| "unop" <<<| (at $sloc) }
+	| COMPLEMENT
+    { "`~" <| [] <<| "unop" <<<| (at $sloc) }
+	| MINUS
+    { "`-" <| [] <<| "unop" <<<| (at $sloc) }
+	| PLUS
+    { "`+" <| [] <<| "unop" <<<| (at $sloc) }
 ;
 
 %inline unaryExpression:
 	| o = unop e = expression %prec PREFIX
-		{ [ NT o; NT e ] #@ "unaryExpression" }
+		{ "unop expression" <| [ o; e ] <<| "unaryExpression" <<<| (at $sloc) }
 ;
 
 %inline binop:
-  | MUL { [ Term "*" ] #@ "binop" }
-  | DIV { [ Term "/" ] #@ "binop" }
-  | MOD { [ Term "%" ] #@ "binop" }
-  | PLUS { [ Term "+" ] #@ "binop" }
-  | PLUS_SAT { [ Term "|+|" ] #@ "binop" }
-  | MINUS { [ Term "-" ] #@ "binop" }
-  | MINUS_SAT { [ Term "|-|" ] #@ "binop" }
-  | SHL { [ Term "<<" ] #@ "binop" }
-  | r_angle R_ANGLE_SHIFT { [ Term ">>" ] #@ "binop" }
-  | LE { [ Term "<=" ] #@ "binop" }
-  | GE { [ Term ">=" ] #@ "binop" }
-  | l_angle { [ Term "<" ] #@ "binop" }
-  | r_angle { [ Term ">" ] #@ "binop" }
-  | NE { [ Term "!=" ] #@ "binop" }
-  | EQ { [ Term "==" ] #@ "binop" }
-  | BIT_AND { [ Term "&" ] #@ "binop" }
-  | BIT_XOR { [ Term "^" ] #@ "binop" }
-  | BIT_OR { [ Term "|" ] #@ "binop" }
-  | PLUSPLUS { [ Term "++" ] #@ "binop" }
-  | AND { [ Term "&&" ] #@ "binop" }
-  | OR { [ Term "||" ] #@ "binop" }
+  | MUL
+    { "`*" <| [] <<| "binop" <<<| (at $sloc) }
+  | DIV
+    { "`/" <| [] <<| "binop" <<<| (at $sloc) }
+  | MOD
+    { "`%" <| [] <<| "binop" <<<| (at $sloc) }
+  | PLUS
+    { "`+" <| [] <<| "binop" <<<| (at $sloc) }
+  | PLUS_SAT
+    { "`|+|" <| [] <<| "binop" <<<| (at $sloc) }
+  | MINUS
+    { "`-" <| [] <<| "binop" <<<| (at $sloc) }
+  | MINUS_SAT
+    { "`|-|" <| [] <<| "binop" <<<| (at $sloc) }
+  | SHL
+    { "`<<" <| [] <<| "binop" <<<| (at $sloc) }
+  | r_angle R_ANGLE_SHIFT
+    { "`>>" <| [] <<| "binop" <<<| (at $sloc) }
+  | LE
+    { "`<=" <| [] <<| "binop" <<<| (at $sloc) }
+  | GE
+    { "`>=" <| [] <<| "binop" <<<| (at $sloc) }
+  | l_angle
+    { "``<" <| [] <<| "binop" <<<| (at $sloc) }
+  | r_angle
+    { "``>" <| [] <<| "binop" <<<| (at $sloc) }
+  | NE
+    { "`!=" <| [] <<| "binop" <<<| (at $sloc) }
+  | EQ
+    { "`==" <| [] <<| "binop" <<<| (at $sloc) }
+  | BIT_AND
+    { "`&" <| [] <<| "binop" <<<| (at $sloc) }
+  | BIT_XOR
+    { "`^" <| [] <<| "binop" <<<| (at $sloc) }
+  | BIT_OR
+    { "`|" <| [] <<| "binop" <<<| (at $sloc) }
+  | PLUSPLUS
+    { "`++" <| [] <<| "binop" <<<| (at $sloc) }
+  | AND
+    { "`&&" <| [] <<| "binop" <<<| (at $sloc) }
+  | OR
+    { "`||" <| [] <<| "binop" <<<| (at $sloc) }
 ;
 
 %inline binaryExpression:
 	| l = expression o = binop r = expression
-		{ [ NT l; NT o; NT r ] #@ "binaryExpression" }
+		{ "expression binop expression" <| [ l; o; r ] <<| "binaryExpression" <<<| (at $sloc) }
 ;
 
 %inline binaryExpressionNonBrace:
 	| l = expressionNonBrace o = binop r = expression
-		{ [ NT l; NT o; NT r ] #@ "binaryExpressionNonBrace" }
+		{ "expressionNonBrace binop expression" <| [ l; o; r ] <<| "binaryExpressionNonBrace" <<<| (at $sloc) }
 ;
 
 %inline ternaryExpression:
 	| c = expression QUESTION t = expression COLON f = expression
-		{ [ NT c; Term "?"; NT t; Term ":"; NT f ] #@ "ternaryExpression" }
+		{ "expression `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpression" <<<| (at $sloc) }
 ;
 
 %inline ternaryExpressionNonBrace:
 	| c = expressionNonBrace QUESTION t = expression COLON f = expression
-		{ [ NT c; Term "?"; NT t; Term ":"; NT f ] #@ "ternaryExpressionNonBrace" }
+		{ "expressionNonBrace `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpressionNonBrace" <<<| (at $sloc) }
 ;
 
 (* >> Cast expressions *)
 %inline castExpression:
 	| L_PAREN t = typeRef R_PAREN e = expression %prec PREFIX
-    { [ Term "("; NT t; Term ")"; NT e ] #@ "castExpression" }
+    { "`( typeRef ) expression" <| [ t; e ] <<| "castExpression" <<<| (at $sloc) }
 ;
 
 (* >> Data (aggregate) expressions *)
 %inline dataExpression:
-	| INVALID { [ Term "{#}" ] #@ "invalidHeaderExpression" }
+	| INVALID
+    { "`{#}" <| [] <<| "invalidHeaderExpression" <<<| (at $sloc) }
 	| L_BRACE e = sequenceOrRecordElementExpression c = trailingCommaOpt R_BRACE
-    { [ Term "{"; NT e; NT c; Term "}" ] #@ "sequenceOrRecordExpression" }
+    { "`{ sequenceOrRecordElementExpression trailingCommaOpt }" <| [ e; c ] <<| "sequenceOrRecordExpression" <<<| (at $sloc) }
 ;
 
 (* >> Member and index access expressions *)
 %inline errorAccessExpression:
 	| ERROR DOT m = member
-		{ [ Term "ERROR"; Term "."; NT m ] #@ "errorAccessExpression" }
+		{ "ERROR `. member" <| [ m ] <<| "errorAccessExpression" <<<| (at $sloc) }
 ;
 
 %inline memberAccessExpression:
 	| e = memberAccessBase DOT m = member %prec DOT
-		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpression" }
+		{ "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" <<<| (at $sloc) }
 ;
 
 %inline indexAccessExpression:
 	| a = expression L_BRACKET i = expression R_BRACKET
-		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpression" }
+		{ "expression `[ expression ]" <| [ a; i ] <<| "indexAccessExpression" <<<| (at $sloc) }
 ;
 
+%inline sliceop:
+  | COLON
+    { "`:" <| [] <<| "sliceop" }
+  | PLUSCOLON
+    { "`+:" <| [] <<| "sliceop" }
+
 %inline sliceAccessExpression:
-  | a = expression L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpression" }
+  | a = expression L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "expression `[ expression sliceop expression ]" <| [ a; l; s; r ] <<| "sliceAccessExpression" <<<| (at $sloc) }
 ;
 
 %inline accessExpression:
-	| e = errorAccessExpression
-	| e = memberAccessExpression
-	| e = indexAccessExpression
+  | e = errorAccessExpression
+  | e = memberAccessExpression
+  | e = indexAccessExpression
   | e = sliceAccessExpression
-		{ e }
+    { e }
 ;
 
 %inline memberAccessExpressionNonBrace:
 	| e = memberAccessBaseNonBrace DOT m = member %prec DOT
-		{ [ NT e; Term "."; NT m ] #@ "memberAccessExpressionNonBrace" }
+		{ "memberAccessBaseNonBrace `. member" <| [ e; m ] <<| "memberAccessExpressionNonBrace" <<<| (at $sloc) }
 ;
 
 %inline indexAccessExpressionNonBrace:
 	| a = expressionNonBrace L_BRACKET i = expression R_BRACKET
-		{ [ NT a; Term "["; NT i; Term "]" ] #@ "indexAccessExpressionNonBrace" }
+		{ "expressionNonBrace `[ expression ]" <| [ a; i ] <<| "indexAccessExpressionNonBrace" <<<| (at $sloc) }
 ;
 
 %inline sliceAccessExpressionNonBrace:
-  | a = expressionNonBrace L_BRACKET h = expression COLON l = expression R_BRACKET
-    { [ NT a; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "sliceAccessExpressionNonBrace" }
+  | a = expressionNonBrace L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "expressionNonBrace `[ expression sliceop expression ]" <| [ a; l; s; r ] <<| "sliceAccessExpressionNonBrace" <<<| (at $sloc) }
 ;
 
 %inline accessExpressionNonBrace:
-	| e = errorAccessExpression
-	| e = memberAccessExpressionNonBrace
-	| e = indexAccessExpressionNonBrace
+  | e = errorAccessExpression
+  | e = memberAccessExpressionNonBrace
+  | e = indexAccessExpressionNonBrace
   | e = sliceAccessExpressionNonBrace
-		{ e }
+    { e }
 ;
 
 (* >> Call expressions *)
@@ -612,10 +702,9 @@ namedExpressionList:
 
 %inline callExpression:
 	| t = callTarget L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpression" }
+		{ "callTarget `( argumentList )" <| [ t; args ] <<| "callExpression" <<<| (at $sloc) }
 	| t = callableTarget l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "callExpression" }
+		{ "callTarget `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpression" <<<| (at $sloc) } 
 ;
 
 %inline callableTargetNonBrace:
@@ -630,16 +719,15 @@ namedExpressionList:
 
 %inline callExpressionNonBrace:
 	| t = callTargetNonBrace L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "("; NT args; Term ")" ] #@ "callExpressionNonBrace" }
+		{ "callTargetNonBrace `( argumentList )" <| [ t; args ] <<| "callExpressionNonBrace" <<<| (at $sloc) }
 	| t = callableTargetNonBrace l_angle targs = realTypeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT t; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "callExpressionNonBrace" }
+		{ "callTargetNonBrace `< realTypeArgumentList > `( argumentList )" <| [ t; targs; args ] <<| "callExpressionNonBrace" <<<| (at $sloc) }
 
 (* >> Parenthesized Expressions *)
 
 %inline parenthesizedExpression:
 	| L_PAREN e = expression R_PAREN
-		{ [ Term "("; NT e; Term ")" ] #@ "parenthesizedExpression" }
+		{ "`( expression )" <| [ e ] <<| "parenthesizedExpression" <<<| (at $sloc) }
 ;
 
 (* >> Expressions *)
@@ -659,10 +747,12 @@ expression:
 ;
 
 expressionList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "expressionList" }
-	| e = expression { e }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "expressionList" <<<| (at $sloc) }
+	| e = expression
+    { e }
 	| el = expressionList COMMA e = expression
-		{ [ NT el; Term ","; NT e ] #@ "expressionList" }
+		{ "expressionList `, expression" <| [ el; e ] <<| "expressionList" <<<| (at $sloc) }
 ;
 
 %inline memberAccessBase:
@@ -677,17 +767,13 @@ expressionList:
 
 %inline recordElementExpression:
   | n = name ASSIGN e = expression
-    { [ NT n; Term "="; NT e ]
-      #@ "recordElementExpression" }
+    { "name `= expression" <| [ n; e ] <<| "recordElementExpression" <<<| (at $sloc) }
   | n = name ASSIGN e = expression COMMA DOTS
-    { [ NT n; Term "="; NT e; Term ","; Term "..." ]
-      #@ "recordElementExpression" }
+    { "name `= expression `, `..." <| [ n; e ] <<| "recordElementExpression" <<<| (at $sloc) }
 	| n = name ASSIGN e = expression COMMA el = namedExpressionList
-    { [ NT n; Term "="; NT e; Term ","; NT el ]
-      #@ "recordElementExpression" }
+    { "name `= expression `, namedExpressionList" <| [ n; e; el ] <<| "recordElementExpression" <<<| (at $sloc) }
   | n = name ASSIGN e = expression COMMA el = namedExpressionList COMMA DOTS
-    { [ NT n; Term "="; NT e; Term ","; NT el; Term ","; Term "..." ]
-      #@ "recordElementExpression" }
+    { "name `= expression `, namedExpressionList `, `..." <| [ n; e; el ] <<| "recordElementExpression" <<<| (at $sloc) }
 ;
 
 %inline sequenceOrRecordElementExpression:
@@ -718,34 +804,36 @@ expressionNonBrace:
 
 (* Keyset Expressions *)
 simpleKeysetExpression:
-	| e = expression { e }
+	| e = expression
+    { e }
 	| b = expression MASK m = expression
-    { [ NT b; Term "&&&"; NT m ] #@ "simpleKeysetExpression" }
+    { "expression `&&& expression" <| [ b; m ] <<| "simpleKeysetExpression" <<<| (at $sloc) }
 	| l = expression RANGE h = expression
-    { [ NT l; Term ".."; NT h ] #@ "simpleKeysetExpression" }
+    { "expression `.. expression" <| [ l; h ] <<| "simpleKeysetExpression" <<<| (at $sloc) }
 	| DEFAULT
-    { [ Term "DEFAULT" ] #@ "simpleKeysetExpression" }
+    { "DEFAULT" <| [] <<| "simpleKeysetExpression" <<<| (at $sloc) }
 	| DONTCARE
-    { [ Term "_" ] #@ "simpleKeysetExpression" }
+    { "`_" <| [] <<| "simpleKeysetExpression" <<<| (at $sloc) }
 ;
 
 simpleKeysetExpressionList:
-	| e = simpleKeysetExpression { e }
+	| e = simpleKeysetExpression
+    { e }
 	| el = simpleKeysetExpressionList COMMA e = simpleKeysetExpression
-    { [ NT el; Term ","; NT e ] #@ "simpleKeysetExpressionList" }
+    { "simpleKeysetExpressionList `, simpleKeysetExpression" <| [ el; e ] <<| "simpleKeysetExpressionList" <<<| (at $sloc) }
 ;
 
 tupleKeysetExpression:
 	| L_PAREN b = expression MASK m = expression R_PAREN
-		{ [ Term "("; NT b; Term "&&&"; NT m; Term ")" ] #@ "tupleKeysetExpression" }
+		{ "`( expression `&&& expression )" <| [ b; m ] <<| "tupleKeysetExpression" <<<| (at $sloc) }
 	| L_PAREN l = expression RANGE h = expression R_PAREN
-		{ [ Term "("; NT l; Term ".."; NT h; Term ")" ] #@ "tupleKeysetExpression" }
+		{ "`( expression `.. expression )" <| [ l; h ] <<| "tupleKeysetExpression" <<<| (at $sloc) }
 	| L_PAREN DEFAULT R_PAREN
-		{ [ Term "("; Term "DEFAULT"; Term ")" ] #@ "tupleKeysetExpression" }
+		{ "`( DEFAULT )" <| [] <<| "tupleKeysetExpression" <<<| (at $sloc) }
 	| L_PAREN DONTCARE R_PAREN
-		{ [ Term "("; Term "_"; Term ")" ] #@ "tupleKeysetExpression" }
+		{ "`( `_ )" <| [] <<| "tupleKeysetExpression" <<<| (at $sloc) }
 	| L_PAREN e = simpleKeysetExpression COMMA es = simpleKeysetExpressionList R_PAREN
-		{ [ Term "("; NT e; Term ","; NT es; Term ")" ] #@ "tupleKeysetExpression" }
+		{ "`( simpleKeysetExpression `, simpleKeysetExpressionList )" <| [ e; es ] <<| "tupleKeysetExpression" <<<| (at $sloc) }
 ;
 
 keysetExpression:
@@ -756,17 +844,19 @@ keysetExpression:
 
 (* Type arguments *)
 realTypeArgument:
-	| t = typeRef { t }
+	| t = typeRef
+    { t }
 	| VOID
-    { [ Term "VOID" ] #@ "realTypeArgument" }
+    { "VOID" <| [] <<| "realTypeArgument" <<<| (at $sloc) }
 	| DONTCARE
-    { [ Term "_" ] #@ "realTypeArgument" }
+    { "`_" <| [] <<| "realTypeArgument" <<<| (at $sloc) }
 ;
 
 realTypeArgumentList:
-	| targ = realTypeArgument { targ }
+	| targ = realTypeArgument
+    { targ }
 	| targs = realTypeArgumentList COMMA targ = realTypeArgument
-    { [ NT targs; Term ","; NT targ ] #@ "realTypeArgumentList" }
+    { "realTypeArgumentList `, realTypeArgument" <| [ targs; targ ] <<| "realTypeArgumentList" <<<| (at $sloc) }
 ;
 
 typeArgument:
@@ -774,151 +864,168 @@ typeArgument:
 	| t = nonTypeName 
 		{ t }
 	| VOID
-    { [ Term "VOID" ] #@ "typeArgument" }
+    { "VOID" <| [] <<| "typeArgument" <<<| (at $sloc) }
 	| DONTCARE
-    { [ Term "_" ] #@ "typeArgument" }
+    { "`_" <| [] <<| "typeArgument" <<<| (at $sloc) }
 ;
 
 typeArgumentList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "typeArgumentList" }
-	| targ = typeArgument { targ }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "typeArgumentList" <<<| (at $sloc) }
+	| targ = typeArgument
+    { targ }
 	| targs = typeArgumentList COMMA targ = typeArgument
-    { [ NT targs; Term ","; NT targ ] #@ "typeArgumentList" }
+    { "typeArgumentList `, typeArgument" <| [ targs; targ ] <<| "typeArgumentList" <<<| (at $sloc) }
 ;
 
 (* Arguments *)
 argument:
-	| e = expression { e }
+	| e = expression
+    { e }
 	| n = name ASSIGN e = expression 
-		{ [ NT n; Term "="; NT e ] #@ "argument" }
+		{ "name `= expression" <| [ n; e ] <<| "argument" <<<| (at $sloc) }
 	| name = name ASSIGN DONTCARE
-		{ [ NT name; Term "="; Term "_" ] #@ "argument" }
+		{ "name `= `_ " <| [ name ] <<| "argument" <<<| (at $sloc) }
 	| DONTCARE
-		{ [ Term "_" ] #@ "argument" }
+		{ "`_" <| [] <<| "argument" <<<| (at $sloc) }
 ;
 
 argumentListNonEmpty:
-	| arg = argument { arg }
+	| arg = argument
+    { arg }
 	| args = argumentListNonEmpty COMMA arg = argument
-    { [ NT args; Term ","; NT arg ] #@ "argumentListNonEmpty" }
+    { "argumentListNonEmpty `, argument" <| [ args; arg ] <<| "argumentListNonEmpty" <<<| (at $sloc) }
 ;
 
 argumentList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "argumentList" }
-	| args = argumentListNonEmpty { args }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "argumentList" <<<| (at $sloc) }
+	| args = argumentListNonEmpty
+    { args }
 ;
 
 (* L-values *)
 lvalue:
-	| e = referenceExpression { e }
+	| e = referenceExpression
+    { e }
 	| lv = lvalue DOT m = member %prec DOT
-		{ [ NT lv; Term "."; NT m ] #@ "lvalue" }
+		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" <<<| (at $sloc) }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
-		{ [ NT lv; Term "["; NT i; Term "]" ] #@ "lvalue" }
-	| lv = lvalue L_BRACKET h = expression COLON l = expression R_BRACKET
-		{ [ NT lv; Term "["; NT h; Term ":"; NT l; Term "]" ] #@ "lvalue" }
+		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" <<<| (at $sloc) }
+	| lv = lvalue L_BRACKET l = expression s = sliceop r = expression R_BRACKET
+    { "lvalue `[ expression sliceop expression ]" <| [ lv; l; s; r ] <<| "lvalue" <<<| (at $sloc) }
 	| L_PAREN lv = lvalue R_PAREN
-		{ [ Term "("; NT lv; Term ")" ] #@ "lvalue" }
+		{ "`( lvalue )" <| [ lv ] <<| "lvalue" <<<| (at $sloc) }
 ;
 
 (* Statements *)
 (* >> Empty statements *)
 emptyStatement:
-	| SEMICOLON { [ Term ";" ] #@ "emptyStatement" }
+	| SEMICOLON
+    { "`;" <| [] <<| "emptyStatement" <<<| (at $sloc) }
 ;
 
 (* >> Assignment statements *)
 assignop:
-	| ASSIGN { [ Term "=" ] #@ "assignop" }
-	| PLUS_ASSIGN { [ Term "+=" ] #@ "assignop" }
-	| PLUS_SAT_ASSIGN { [ Term "|+|=" ] #@ "assignop" }
-	| MINUS_ASSIGN { [ Term "-=" ] #@ "assignop" }
-	| MINUS_SAT_ASSIGN { [ Term "|-|=" ] #@ "assignop" }
-	| MUL_ASSIGN { [ Term "*=" ] #@ "assignop" }
-	| DIV_ASSIGN { [ Term "/=" ] #@ "assignop" }
-	| MOD_ASSIGN { [ Term "%=" ] #@ "assignop" }
-	| SHL_ASSIGN { [ Term "<<=" ] #@ "assignop" }
-	| SHR_ASSIGN { [ Term ">>=" ] #@ "assignop" }
-	| BIT_AND_ASSIGN { [ Term "&=" ] #@ "assignop" }
-	| BIT_XOR_ASSIGN { [ Term "^=" ] #@ "assignop" }
-	| BIT_OR_ASSIGN { [ Term "|=" ] #@ "assignop" }
+	| ASSIGN
+    { "`=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| PLUS_ASSIGN
+    { "`+=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| PLUS_SAT_ASSIGN
+    { "`|+|=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| MINUS_ASSIGN
+    { "`-=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| MINUS_SAT_ASSIGN
+    { "`|-|=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| MUL_ASSIGN
+    { "`*=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| DIV_ASSIGN
+    { "`/=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| MOD_ASSIGN
+    { "`%=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| SHL_ASSIGN
+    { "`<<=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| SHR_ASSIGN
+    { "`>>=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| BIT_AND_ASSIGN
+    { "`&=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| BIT_XOR_ASSIGN
+    { "`^=" <| [] <<| "assignop" <<<| (at $sloc) }
+	| BIT_OR_ASSIGN
+    { "`|=" <| [] <<| "assignop" <<<| (at $sloc) }
 ;
 
 assignmentStatement:
 	| lv = lvalue o = assignop e = expression SEMICOLON
-		{ [ NT lv; NT o; NT e; Term ";" ] #@ "assignmentStatement" }
+		{ "lvalue assignop expression `;" <| [ lv; o; e ] <<| "assignmentStatement" <<<| (at $sloc) }
 ;
 
 (* >> Call statements *)
 callStatement:
 	| lv = lvalue L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ [ NT lv; Term "("; NT args; Term ")"; Term ";" ] #@ "callStatement" }
+		{ "lvalue `( argumentList ) `;" <| [ lv; args ] <<| "callStatement" <<<| (at $sloc) }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN SEMICOLON
-		{ [ NT lv; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")"; Term ";" ]
-      #@ "callStatement" }
+		{ "lvalue `< typeArgumentList > `( argumentList ) `;" <| [ lv; targs; args ] <<| "callStatement" <<<| (at $sloc) }
 ;
 
 (* >> Direct application statements *)
 directApplicationStatement:
 	| t = namedType DOT APPLY L_PAREN args = argumentList R_PAREN SEMICOLON
-    { [ NT t; Term "."; Term "APPLY"; Term "("; NT args; Term ")"; Term ";" ]
-      #@ "directApplicationStatement" }
+    { "namedType `. APPLY `( argumentList ) `;" <| [ t; args ] <<| "directApplicationStatement" <<<| (at $sloc) }
 ;
 
 (* >> Return statements *)
 returnStatement:
 	| RETURN SEMICOLON
-    { [ Term "RETURN"; Term ";" ] #@ "returnStatement" }
+    { "RETURN `;" <| [] <<| "returnStatement" <<<| (at $sloc) }
 	| RETURN e = expression SEMICOLON
-    { [ Term "RETURN"; NT e; Term ";" ] #@ "returnStatement" }
+    { "RETURN expression `;" <| [ e ] <<| "returnStatement" <<<| (at $sloc) }
 ;
 
 (* >> Exit statements *)
 exitStatement:
 	| EXIT SEMICOLON
-    { [ Term "EXIT"; Term ";" ] #@ "exitStatement" }
+    { "EXIT `;" <| [] <<| "exitStatement" <<<| (at $sloc) }
 ;
 
 (* >> Block statements *)
 blockStatement:
 	| al = annotationList L_BRACE
-  push_scope
-  sl = blockElementStatementList R_BRACE
-  pop_scope
-		{ [ NT al; Term "{"; NT sl; Term "}" ] #@ "blockStatement" }
+    push_scope
+    sl = blockElementStatementList R_BRACE
+    pop_scope
+		{ "annotationList `{ blockElementStatementList }" <| [ al; sl ] <<| "blockStatement" <<<| (at $sloc) }
 ;
 
 (* >> Conditional statements *)
 conditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = statement %prec THEN
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
-      #@ "conditionalStatement" }
+    { "IF `( expression ) statement" <| [ c; t ] <<| "conditionalStatement" <<<| (at $sloc) }
 	| IF L_PAREN c = expression R_PAREN t = statement ELSE f = statement
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
-      #@ "conditionalStatement" }
+    { "IF `( expression ) statement ELSE statement" <| [ c; t; f ] <<| "conditionalStatement" <<<| (at $sloc) }
 ;
 
 (* >> For statements *)
 forInitStatement:
 	| al = annotationList t = typeRef n = name i = initializerOpt
-		{ [ NT al; NT t; NT n; NT i ] #@ "forInitStatement" }
+		{ "annotationList type name initializerOpt" <| [ al; t; n; i ] <<| "forInitStatement" <<<| (at $sloc) }
 	| lv = lvalue L_PAREN args = argumentList R_PAREN
-		{ [ NT lv; Term "("; NT args; Term ")" ] #@ "forInitStatement" }
+		{ "lvalue `( argumentList )" <| [ lv; args ] <<| "forInitStatement" <<<| (at $sloc) }
 	| lv = lvalue l_angle targs = typeArgumentList r_angle L_PAREN args = argumentList R_PAREN
-		{ [ NT lv; Term "<"; NT targs; Term ">"; Term "("; NT args; Term ")" ]
-      #@ "forInitStatement" }
+		{ "lvalue `< typeArgumentList > `( argumentList )" <| [ lv; targs; args ] <<| "forInitStatement" <<<| (at $sloc) }
 	| lv = lvalue o = assignop e = expression
-		{ [ NT lv; NT o; NT e ] #@ "forInitStatement" }
+		{ "lvalue assignop expression" <| [ lv; o; e ] <<| "forInitStatement" <<<| (at $sloc) }
 ;
 
 forInitStatementListNonEmpty:
 	| s = forInitStatement { s }
 	| sl = forInitStatementListNonEmpty COMMA s = forInitStatement
-    { [ NT sl; Term ","; NT s ] #@ "forInitStatementListNonEmpty" }
+    { "forInitStatementListNonEmpty `, forInitStatement" <| [ sl; s ] <<| "forInitStatementListNonEmpty" <<<| (at $sloc) }
 ;
 
 forInitStatementList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "forInitStatementList" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "forInitStatementList" <<<| (at $sloc) }
 	| sl = forInitStatementListNonEmpty { sl }
 ;
 
@@ -929,70 +1036,69 @@ forUpdateStatement:
 forUpdateStatementListNonEmpty:
 	| s = forUpdateStatement { s }
 	| sl = forUpdateStatementListNonEmpty COMMA s = forUpdateStatement
-    { [ NT sl; Term ","; NT s ] #@ "forUpdateStatementListNonEmpty" }
+    { "forUpdateStatementListNonEmpty `, forUpdateStatement" <| [ sl; s ] <<| "forUpdateStatementListNonEmpty" <<<| (at $sloc) }
 ;
 
 forUpdateStatementList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "forUpdateStatementList" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "forUpdateStatementList" <<<| (at $sloc) }
 	| sl = forUpdateStatementListNonEmpty { sl }
 ;
 
 forCollectionExpression:
 	| e = expression { e }
 	| l = expression RANGE h = expression
-    { [ NT l; Term ".."; NT h ] #@ "forCollectionExpr" }
+    { "expression `.. expression" <| [ l; h ] <<| "forCollectionExpression" <<<| (at $sloc) }
 ;
 
 forStatement:
-  | al = annotationList FOR L_PAREN il = forInitStatementList SEMICOLON c = expression SEMICOLON ul = forUpdateStatementList R_PAREN b = statement
-		{ [ NT al; Term "FOR"; Term "("; NT il; Term ";"; NT c; Term ";"; NT ul; Term ")"; NT b ]
-      #@ "forStatement" }
+  | al = annotationList FOR L_PAREN
+    il = forInitStatementList SEMICOLON c = expression SEMICOLON
+    ul = forUpdateStatementList R_PAREN b = statement
+		{ "annotationList FOR `( forInitStatementList `; expression `; forUpdateStatementList ) statement" <| [ al; il; c; ul; b ] <<| "forStatement" <<<| (at $sloc) }
   | al = annotationList FOR L_PAREN
     t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { [ NT al; Term "FOR"; Term "("; NT t; NT n; Term "IN"; NT e; Term ")"; NT b ]
-      #@ "forStatement" }
+    { "annotationList FOR `( typeRef name IN forCollectionExpression ) statement" <| [ al; t; n; e; b ] <<| "forStatement" <<<| (at $sloc) }
   | al = annotationList FOR L_PAREN
     al_in = annotationList t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
-    { [ NT al; Term "FOR"; Term "("; NT al_in; NT t; NT n; Term "IN"; NT e; Term ")"; NT b ]
-      #@ "forStatement" }
+    { "annotationList FOR `( annotationList typeRef name IN forCollectionExpression ) statement" <| [ al; al_in; t; n; e; b ] <<| "forStatement" <<<| (at $sloc) }
 ;
 
 (* >> Switch statements *)
 switchLabel:
   | DEFAULT
-    { [ Term "DEFAULT" ] #@ "switchLabel" }
+    { "DEFAULT" <| [] <<| "switchLabel" <<<| (at $sloc) }
   | e = expressionNonBrace
     { e }
 ;
 
 switchCase:
   | l = switchLabel COLON s = blockStatement
-    { [ NT l; Term ":"; NT s ] #@ "switchCase" }
+    { "switchLabel `: blockStatement" <| [ l; s ] <<| "switchCase" <<<| (at $sloc) }
   | l = switchLabel COLON
-    { [ NT l; Term ":" ] #@ "switchCase" }
+    { "switchLabel `:" <| [ l ] <<| "switchCase" <<<| (at $sloc) }
 ;
 
 switchCaseList:
   | (* empty *)
-    { [ Term "`EMPTY" ] #@ "switchCaseList" }
+    { "`EMPTY" <| [] <<| "switchCaseList" <<<| (at $sloc) }
   | cs = switchCaseList c = switchCase
-    { [ NT cs; NT c ] #@ "switchCaseList" }
+    { "switchCaseList switchCase" <| [ cs; c ] <<| "switchCaseList" <<<| (at $sloc) }
 ;
 
 switchStatement:
   | SWITCH L_PAREN e = expression R_PAREN L_BRACE cs = switchCaseList R_BRACE
-    { [ Term "SWITCH"; Term "("; NT e; Term ")"; Term "{"; NT cs; Term "}" ]
-      #@ "switchStatement" }
+    { "SWITCH `( expression ) `{ switchCaseList }" <| [ e; cs ] <<| "switchStatement" <<<| (at $sloc) }
 
 (* >> Break and continue statements *)
 breakStatement:
   | BREAK SEMICOLON
-    { [ Term "BREAK"; Term ";" ] #@ "breakStatement" }
+    { "BREAK `;" <| [] <<| "breakStatement" <<<| (at $sloc) }
 ;
 
 continueStatement:
   | CONTINUE SEMICOLON
-    { [ Term "CONTINUE"; Term ";" ] #@ "continueStatement" }
+    { "CONTINUE `;" <| [] <<| "continueStatement" <<<| (at $sloc) }
 ;
 
 (* >> Statements *)
@@ -1018,24 +1124,24 @@ statement:
 (* initializer -> initialValue due to reserved word in OCaml *)
 initialValue:
 	| ASSIGN e = expression
-		{ [ Term "="; NT e ] #@ "initializer" }
+		{ "`= expression" <| [ e ] <<| "initializer" <<<| (at $sloc) }
 ;
 
 constantDeclaration:
   | al = annotationList CONST t = typeRef n = name i = initialValue SEMICOLON
-    { [ NT al; Term "CONST"; NT t; NT n; NT i; Term ";" ] #@ "constantDeclaration" }
+    { "annotationList CONST typeRef name initializer `;" <| [ al; t; n; i ] <<| "constantDeclaration" <<<| (at $sloc) }
 ;
 
 initializerOpt:
 	| (* empty *)
-		{ [ Term "`EMPTY" ] #@ "initializerOpt" }
+		{ "`EMPTY" <| [] <<| "initializerOpt" <<<| (at $sloc) }
 	| i = initialValue { i }
 ;
 
 variableDeclaration:
   | al = annotationList t = typeRef n = name i = initializerOpt SEMICOLON
     { declare_var_of_il n false;
-      [ NT al; NT t; NT n; NT i; Term ";" ] #@ "variableDeclaration" }
+      "annotationList typeRef name initializerOpt `;" <| [ al; t; n; i ] <<| "variableDeclaration" <<<| (at $sloc) }
 ;
 
 blockElementStatement:
@@ -1047,45 +1153,42 @@ blockElementStatement:
 
 blockElementStatementList:
   | (* empty *)
-    { [ Term "`EMPTY" ] #@ "blockElementStatementList" }
+    { "`EMPTY" <| [] <<| "blockElementStatementList" <<<| (at $sloc) }
   | sl = blockElementStatementList s = blockElementStatement
-    { [ NT sl; NT s ] #@ "blockElementStatementList" }
+    { "blockElementStatementList blockElementStatement" <| [ sl; s ] <<| "blockElementStatementList" <<<| (at $sloc) }
 ;
 
 (* >> Function declarations *)
 functionPrototype:
 	| t = typeOrVoid n = name push_scope
-  tpl = typeParameterListOpt
-  L_PAREN pl = parameterList R_PAREN
-    { [ NT t; NT n; NT tpl; Term "("; NT pl; Term ")" ]
-      #@ "functionPrototype" }
+    tpl = typeParameterListOpt
+    L_PAREN pl = parameterList R_PAREN
+    { "typeOrVoid name typeParameterListOpt `( parameterList )" <| [ t; n; tpl; pl ] <<| "functionPrototype" <<<| (at $sloc) }
 ;
 
 functionDeclaration:
 	| al = annotationList p = functionPrototype b = blockStatement pop_scope
-    { [ NT al; NT p; NT b ] #@ "functionDeclaration" }
+    { "annotationList functionPrototype blockStatement" <| [ al; p; b ] <<| "functionDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Action declarations *)
 actionDeclaration: 
   | al = annotationList ACTION n = name L_PAREN pl = parameterList R_PAREN s = blockStatement
-    { [ NT al; Term "ACTION"; NT n; Term "("; NT pl; Term ")"; NT s ]
-      #@ "actionDeclaration" }
+    { "annotationList ACTION name `( parameterList ) blockStatement" <| [ al; n; pl; s ] <<| "actionDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Instantiations *)
 objectInitializer:
 	| ASSIGN L_BRACE ds = objectDeclarationList R_BRACE
-    { [ Term "="; Term "{"; NT ds; Term "}" ] #@ "objectInitializer" }
+    { "`= `{ objectDeclarationList }" <| [ ds ] <<| "objectInitializer" <<<| (at $sloc) }
 ;
 
 instantiation:
 	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name SEMICOLON
-    { [ NT al; NT t; Term "("; NT args; Term ")"; NT n; Term ";" ]
-      #@ "instantiation" }
-	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name i = objectInitializer SEMICOLON
-    { [ NT al; NT t; Term "("; NT args; Term ")"; NT n; NT i; Term ";" ]
-      #@ "instantiation" }
+    { "annotationList typeRef `( argumentList ) name `;" <| [ al; t; args; n ] <<| "instantiation" <<<| (at $sloc) }
+	| al = annotationList t = typeRef L_PAREN args = argumentList R_PAREN n = name
+    i = objectInitializer SEMICOLON
+    { "annotationList typeRef `( argumentList ) name objectInitializer `;" <| [ al; t; args; n; i ] <<| "instantiation" <<<| (at $sloc) } 
 ;
 
 objectDeclaration:
@@ -1095,23 +1198,24 @@ objectDeclaration:
 ;
 
 objectDeclarationList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "objectDeclarationList" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "objectDeclarationList" <<<| (at $sloc) }
 	| ds = objectDeclarationList d = objectDeclaration
-    { [ NT ds; NT d ] #@ "objectDeclarationList" }
+    { "objectDeclarationList objectDeclaration" <| [ ds; d ] <<| "objectDeclarationList" <<<| (at $sloc) }
 ;
 
 (* >> Error declarations *)
 errorDeclaration:
 	| ERROR L_BRACE nl = nameList R_BRACE
     { declare_vars_of_il nl;
-      [ Term "ERROR"; Term "{"; NT nl; Term "}" ] #@ "errorDeclaration" }
+      "ERROR `{ nameList }" <| [ nl ] <<| "errorDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Match kind declarations *)
 matchKindDeclaration:
 	| MATCH_KIND L_BRACE nl = nameList c = trailingCommaOpt R_BRACE
     { declare_vars_of_il nl;
-      [ Term "MATCH_KIND"; Term "{"; NT nl; NT c; Term "}" ] #@ "matchKindDeclaration" }
+      "MATCH_KIND `{ nameList trailingCommaOpt }" <| [ nl; c ] <<| "matchKindDeclaration" <<<| (at $sloc) } 
 ;
 
 (* >> Derived type declarations *)
@@ -1119,45 +1223,41 @@ matchKindDeclaration:
 enumTypeDeclaration:
   | al = annotationList ENUM n = name L_BRACE
     nl = nameList c = trailingCommaOpt R_BRACE
-    { [ NT al; Term "ENUM"; NT n; Term "{"; NT nl; NT c; Term "}" ]
-      #@ "enumTypeDeclaration" }
+    { "annotationList ENUM name `{ nameList trailingCommaOpt }" <| [ al; n; nl; c ] <<| "enumTypeDeclaration" <<<| (at $sloc) }
   | al = annotationList ENUM t = typeRef n = name L_BRACE
     el = namedExpressionList c = trailingCommaOpt R_BRACE
-    { [ NT al; Term "ENUM"; NT t; NT n; Term "{"; NT el; NT c; Term "}" ]
-      #@ "enumTypeDeclaration" }
+    { "annotationList ENUM typeRef name `{ namedExpressionList trailingCommaOpt }" <| [ al; t; n; el; c ] <<| "enumTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* >>>>>> Struct, header, and union type declarations *)
 typeField:
   | al = annotationList t = typeRef n = name SEMICOLON
-    { [ NT al; NT t; NT n; Term ";" ] #@ "typeField" }
+    { "annotationList typeRef name `;" <| [ al; t; n ] <<| "typeField" <<<| (at $sloc) }
 ;
 
 typeFieldList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "typeFieldList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "typeFieldList" <<<| (at $sloc) }
   | fl = typeFieldList f = typeField
-    { [ NT fl; NT f ] #@ "typeFieldList" }
+    { "typeFieldList typeField" <| [ fl; f ] <<| "typeFieldList" <<<| (at $sloc) }
 ;
 
 structTypeDeclaration:
   | al = annotationList STRUCT n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "STRUCT"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "structTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "structTypeDeclaration" <<<| (at $sloc) }
 ;
 
 headerTypeDeclaration:
   | al = annotationList HEADER n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "HEADER"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "headerTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { "annotationList HEADER name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerTypeDeclaration" <<<| (at $sloc) }
 ;
 
 headerUnionTypeDeclaration:
   | al = annotationList HEADER_UNION n = name tpl = typeParameterListOpt
-      L_BRACE fl = typeFieldList R_BRACE
-    { [ NT al; Term "HEADER_UNION"; NT n; NT tpl; Term "{"; NT fl; Term "}" ]
-      #@ "headerUnionTypeDeclaration" }
+    L_BRACE fl = typeFieldList R_BRACE
+    { "annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList }" <| [ al; n; tpl; fl ] <<| "headerUnionTypeDeclaration" <<<| (at $sloc) }
 ;
 
 derivedTypeDeclaration:
@@ -1177,31 +1277,28 @@ typedef:
 
 typedefDeclaration:
 	| al = annotationList TYPEDEF t = typedef n = name SEMICOLON
-    { [ NT al; Term "TYPEDEF"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
+    { "annotationList TYPEDEF typedef name `;" <| [ al; t; n ] <<| "typedefDeclaration" <<<| (at $sloc) }
 	| al = annotationList TYPE t = typeRef n = name SEMICOLON
-    { [ NT al; Term "TYPE"; NT t; NT n; Term ";" ] #@ "typedefDeclaration" }
+    { "annotationList TYPE typeRef name `;" <| [ al; t; n ] <<| "typedefDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Extern declarations *)
 externFunctionDeclaration:
 	| al = annotationList EXTERN p = functionPrototype pop_scope SEMICOLON
-		{ let decl =
-        [ NT al; Term "EXTERN"; NT p; Term ";" ] #@ "externFunctionDeclaration"
-      in
-      declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
-      decl }
+		{ declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      "annotationList EXTERN functionPrototype `;" <| [ al; p ] <<| "externFunctionDeclaration" <<<| (at $sloc) }
 ;
 
 %inline externConstructorPrototype:
 	| al = annotationList tid = typeIdentifier L_PAREN pl = parameterList R_PAREN SEMICOLON
-    { [ NT al; NT tid; Term "("; NT pl; Term ")"; Term ";" ] #@ "externConstructorPrototype" }
+    { "annotationList typeIdentifier `( parameterList ) `;" <| [ al; tid; pl ] <<| "externConstructorPrototype" <<<| (at $sloc) }
 
 %inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { [ NT al; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { "annotationList functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { [ NT al; Term "ABSTRACT"; NT p; Term ";" ] #@ "externMethodPrototype" }
+    { "annotationList ABSTRACT functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
 ;
 
 externConstructorOrMethodPrototype:
@@ -1211,18 +1308,16 @@ externConstructorOrMethodPrototype:
 ;
 
 externConstructorOrMethodPrototypeList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "externConstructorOrMethodPrototypeList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "externConstructorOrMethodPrototypeList" <<<| (at $sloc) }
   | pl = externConstructorOrMethodPrototypeList p = externConstructorOrMethodPrototype
-    { [ NT pl; NT p ] #@ "externConstructorOrMethodPrototypeList" }
+    { "externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype" <| [ pl; p ] <<| "externConstructorOrMethodPrototypeList" <<<| (at $sloc) }
 ;
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
     L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
-    { let decl =
-        [ NT al; Term "EXTERN"; NT n; NT tpl; Term "{"; NT pl; Term "}" ]
-          #@ "externObjectDeclaration"
-      in
+    { let decl = "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList }" <| [ al; n; tpl; pl ] <<| "externObjectDeclaration" <<<| (at $sloc) in
       declare_type_of_il n (has_type_params_declaration decl);
       decl }
 ;
@@ -1237,33 +1332,34 @@ externDeclaration:
 (* >>>> Select expressions *)
 selectCase:
   | k = keysetExpression COLON n = name SEMICOLON
-    { [ NT k; Term ":"; NT n; Term ";" ] #@ "selectCase" }
+    { "keysetExpression `: name `;" <| [ k; n ] <<| "selectCase" <<<| (at $sloc) }
 ;
 
 selectCaseList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "selectCaseList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "selectCaseList" <<<| (at $sloc) }
   | cl = selectCaseList c = selectCase
-    { [ NT cl; NT c ] #@ "selectCaseList" }
+    { "selectCaseList selectCase" <| [ cl; c ] <<| "selectCaseList" <<<| (at $sloc) }
 ;
 
 selectExpression:
   | SELECT L_PAREN el = expressionList R_PAREN L_BRACE cl = selectCaseList R_BRACE
-    { [ Term "SELECT"; Term "("; NT el; Term ")"; Term "{"; NT cl; Term "}" ]
-      #@ "selectExpression" }
+    { "SELECT `( expressionList ) `{ selectCaseList }" <| [ el; cl ] <<| "selectExpression" <<<| (at $sloc) }
 ;
 
 (* >>>> Transition statements *)
 stateExpression:
   | n = name SEMICOLON
-    { [ NT n; Term ";" ] #@ "stateExpression" }
+    { "name `;" <| [ n ] <<| "stateExpression" <<<| (at $sloc) }
   | e = selectExpression
     { e }
 ;
 
 transitionStatement:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "transitionStatement" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "transitionStatement" <<<| (at $sloc) }
   | TRANSITION e = stateExpression
-    { [ Term "TRANSITION"; NT e ] #@ "transitionStatement" }
+    { "TRANSITION stateExpression" <| [ e ] <<| "transitionStatement" <<<| (at $sloc) }
 ;
 
 (* >>>> Value set declarations *)
@@ -1277,31 +1373,27 @@ valueSetType:
 valueSetDeclaration:
 	| al = annotationList VALUE_SET l_angle t = valueSetType r_angle
     L_PAREN s = expression R_PAREN n = name SEMICOLON
-    { [ NT al; Term "VALUE_SET"; Term "<"; NT t; Term ">"; Term "("; NT s; Term ")"; NT n; Term ";" ]
-       #@ "valueSetDeclaration" }
+    { "annotationList VALUE_SET `< valueSetType > `( expression ) name `;" <| [ al; t; s; n ] <<| "valueSetDeclaration" <<<| (at $sloc) }
 ;
 
 (* >>>> Parser type declarations *)
 parserTypeDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
       L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "PARSER"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "parserTypeDeclaration" }
+    { "annotationList PARSER name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "parserTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* >>>> Parser declarations *)
 parserBlockStatement:
   | al = annotationList L_BRACE sl = parserStatementList R_BRACE
-    { [ NT al; Term "{"; NT sl; Term "}" ] #@ "parserBlockStatement" }
+    { "annotationList `{ parserStatementList }" <| [ al; sl ] <<| "parserBlockStatement" <<<| (at $sloc) }
 ;
 
 parserConditionalStatement:
 	| IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t ]
-      #@ "parserConditionalStatement" }
+    { "IF `( expression ) parserStatement" <| [ c; t ] <<| "parserConditionalStatement" <<<| (at $sloc) }
 	| IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
-    { [ Term "IF"; Term "("; NT c; Term ")"; NT t; Term "ELSE"; NT f ]
-      #@ "parserConditionalStatement" }
+    { "IF `( expression ) parserStatement ELSE parserStatement" <| [ c; t; f ] <<| "parserConditionalStatement" <<<| (at $sloc) }
 ;
 
 parserStatement:
@@ -1317,21 +1409,22 @@ parserStatement:
 ;
 
 parserStatementList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "parserStatementList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "parserStatementList" <<<| (at $sloc) }
   | sl = parserStatementList s = parserStatement
-    { [ NT sl; NT s ] #@ "parserStatementList" }
+    { "parserStatementList parserStatement" <| [ sl; s ] <<| "parserStatementList" <<<| (at $sloc) }
 ;
 
 parserState:
   | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE
-    { [ NT al; Term "STATE"; NT n; Term "{"; NT sl; NT t; Term "}" ]
-      #@ "parserState" }
+    { "annotationList STATE name `{ parserStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" <<<| (at $sloc) }
 ;
 
 parserStateList:
-  | s = parserState { s }
+  | s = parserState
+    { s }
   | sl = parserStateList s = parserState
-    { [ NT sl; NT s ] #@ "parserStateList" }
+    { "parserStateList parserState" <| [ sl; s ] <<| "parserStateList" <<<| (at $sloc) }
 ;
 
 parserLocalDeclaration:
@@ -1343,36 +1436,39 @@ parserLocalDeclaration:
 ;
 
 parserLocalDeclarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "parserLocalDeclarationList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "parserLocalDeclarationList" <<<| (at $sloc) }
   | dl = parserLocalDeclarationList d = parserLocalDeclaration
-    { [ NT dl; NT d ] #@ "parserLocalDeclarationList" }
+    { "parserLocalDeclarationList parserLocalDeclaration" <| [ dl; d ] <<| "parserLocalDeclarationList" <<<| (at $sloc) }
 ;
 
 parserDeclaration:
   | al = annotationList PARSER n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = parserLocalDeclarationList sl = parserStateList R_BRACE pop_scope
-		{ [ NT al; Term "PARSER"; NT n; NT tpl; Term "("; NT pl; Term ")"; NT cpl;
-      Term "{"; NT dl; NT sl; Term "}" ] #@ "parserDeclaration" }
+		{ "annotationList PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }" <| [ al; n; tpl; pl; cpl; dl; sl ] <<| "parserDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Control statements and declarations *)
 (* >>>> Table declarations *)
 constOpt:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "constOpt" }
-  | CONST { [ Term "CONST" ] #@ "constOpt" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "constOpt" <<<| (at $sloc) }
+  | CONST
+    { "CONST" <| [] <<| "constOpt" <<<| (at $sloc) }
 ;
 
 (* >>>>>> Table key property *)
 tableKey:
   | e = expression COLON n = name al = annotationList SEMICOLON
-    { [ NT e; Term ":"; NT n; NT al; Term ";" ] #@ "tableKey" }
+    { "expression `: name annotationList `;" <| [ e; n; al ] <<| "tableKey" <<<| (at $sloc) }
 ;
 
 tableKeyList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableKeyList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "tableKeyList" <<<| (at $sloc) }
   | kl = tableKeyList k = tableKey
-    { [ NT kl; NT k ] #@ "tableKeyList" }
+    { "tableKeyList tableKey" <| [ kl; k ] <<| "tableKeyList" <<<| (at $sloc) }
 ;
 
 (* >>>>>> Table actions property *)
@@ -1380,69 +1476,72 @@ tableActionReference:
   | n = prefixedNonTypeName
     { n }
   | n = prefixedNonTypeName L_PAREN al = argumentList R_PAREN
-    { [ NT n; Term "("; NT al; Term ")" ] #@ "tableActionReference" }
+    { "prefixedNonTypeName `( argumentList )" <| [ n; al ] <<| "tableActionReference" <<<| (at $sloc) }
 ;
 
 tableAction:
   | al = annotationList ac = tableActionReference SEMICOLON
-    { [ NT al; NT ac; Term ";" ] #@ "tableAction" }
+    { "annotationList tableActionReference `;" <| [ al; ac ] <<| "tableAction" <<<| (at $sloc) }
 ;
 
 tableActionList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableActionList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "tableActionList" <<<| (at $sloc) }
   | acl = tableActionList ac = tableAction
-    { [ NT acl; NT ac ] #@ "tableActionList" }
+    { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" <<<| (at $sloc) }
 ;
 
 (* >>>>>> Table entry property *)
 tableEntryPriority:
   | PRIORITY ASSIGN int = integerLiteral COLON
-    { [ Term "PRIORITY"; Term "="; NT int; Term ":" ] #@ "tableEntryPriority" }
+    { "PRIORITY `= integerLiteral `:" <| [ int ] <<| "tableEntryPriority" <<<| (at $sloc) }
   | PRIORITY ASSIGN L_PAREN e = expression R_PAREN COLON
-    { [ Term "PRIORITY"; Term "="; Term "("; NT e; Term ")"; Term ":" ] #@ "tableEntryPriority" }
+    { "PRIORITY `= `( expression ) `:" <| [ e ] <<| "tableEntryPriority" <<<| (at $sloc) }
 ;
 
 tableEntry:
-  | c = constOpt p = tableEntryPriority k = keysetExpression COLON ac = tableActionReference al = annotationList SEMICOLON
-    { [ NT c; NT p; NT k; Term ":"; NT ac; NT al; Term ";" ] #@ "tableEntry" }
+  | c = constOpt p = tableEntryPriority k = keysetExpression COLON ac = tableActionReference
+    al = annotationList SEMICOLON
+    { "constOpt tableEntryPriority keysetExpression `: tableActionReference annotationList `;" <| [ c; p; k; ac; al ] <<| "tableEntry" <<<| (at $sloc) }
   | c = constOpt k = keysetExpression COLON ac = tableActionReference al = annotationList SEMICOLON
-    { [ NT c; NT k; Term ":"; NT ac; NT al; Term ";" ] #@ "tableEntry" }
+    { "constOpt keysetExpression `: tableActionReference annotationList `;" <| [ c; k; ac; al ] <<| "tableEntry" <<<| (at $sloc) }
 ;
 
 tableEntryList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tableEntryList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "tableEntryList" <<<| (at $sloc) }
   | el = tableEntryList e = tableEntry
-    { [ NT el; NT e ] #@ "tableEntryList" }
+    { "tableEntryList tableEntry" <| [ el; e ] <<| "tableEntryList" <<<| (at $sloc) }
 ;
 
 (* >>>>>> Table properties *)
 tableProperty:
   | KEY ASSIGN L_BRACE kl = tableKeyList R_BRACE
-    { [ Term "KEY"; Term "="; Term "{"; NT kl; Term "}" ] #@ "tableProperty" }
+    { "KEY `= `{ tableKeyList }" <| [ kl ] <<| "tableProperty" <<<| (at $sloc) }
   | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
-    { [ Term "ACTIONS"; Term "="; Term "{"; NT acl; Term "}" ] #@ "tableProperty" }
+    { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableProperty" <<<| (at $sloc) }
   | al = annotationList c = constOpt ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
-    { [ NT al; NT c; Term "ENTRIES"; Term "="; Term "{"; NT el; Term "}" ] #@ "tableProperty" }
+    { "annotationList constOpt ENTRIES `= `{ tableEntryList }" <| [ al; c; el ] <<| "tableProperty" <<<| (at $sloc) }
   | al = annotationList c = constOpt n = tableCustomName i = initialValue SEMICOLON
-    { [ NT al; NT c; NT n; NT i; Term ";" ] #@ "tableProperty" }
+    { "annotationList constOpt tableCustomName initializer `;" <| [ al; c; n; i ] <<| "tableProperty" <<<| (at $sloc) }
 ;
 
 tablePropertyList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "tablePropertyList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "tablePropertyList" <<<| (at $sloc) }
   | pl = tablePropertyList p = tableProperty
-    { [ NT pl; NT p ] #@ "tablePropertyList" }
+    { "tablePropertyList tableProperty" <| [ pl; p ] <<| "tablePropertyList" <<<| (at $sloc) }
 ;
 
 tableDeclaration:
   | al = annotationList TABLE n = name L_BRACE pl = tablePropertyList R_BRACE
-    { [ NT al; Term "TABLE"; NT n; Term "{"; NT pl; Term "}" ] #@ "tableDeclaration" }
+    { "annotationList TABLE name `{ tablePropertyList }" <| [ al; n; pl ] <<| "tableDeclaration" <<<| (at $sloc) }
 
 (* >>>> Control type declarations *)
 controlTypeDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "CONTROL"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "controlTypeDeclaration" }
+    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "controlTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* >>>> Control declarations *)
@@ -1462,25 +1561,24 @@ controlLocalDeclaration:
 ;
 
 controlLocalDeclarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "controlLocalDeclarationList" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "controlLocalDeclarationList" <<<| (at $sloc) }
   | dl = controlLocalDeclarationList d = controlLocalDeclaration
-    { [ NT dl; NT d ] #@ "controlLocalDeclarationList" }
+    { "controlLocalDeclarationList controlLocalDeclaration" <| [ dl; d ] <<| "controlLocalDeclarationList" <<<| (at $sloc) }
 ;
 
 controlDeclaration:
   | al = annotationList CONTROL n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
     L_BRACE dl = controlLocalDeclarationList APPLY b = controlBody R_BRACE pop_scope
-    { [ NT al; Term "CONTROL"; NT n; NT tpl; Term "("; NT pl; Term ")"; NT cpl;
-      Term "{"; NT dl; Term "APPLY"; NT b; Term "}" ] #@ "controlDeclaration" }
+    { "annotationList CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }" <| [ al; n; tpl; pl; cpl; dl; b ] <<| "controlDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Package type declarations *)
 packageTypeDeclaration:
   | al = annotationList PACKAGE n = push_name tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { [ NT al; Term "PACKAGE"; NT n; NT tpl; Term "("; NT pl; Term ")"; Term ";" ]
-       #@ "packageTypeDeclaration" }
+    { "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ al; n; tpl; pl ] <<| "packageTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* >> Type declarations *)
@@ -1521,105 +1619,105 @@ declaration:
 (* Annotations *)
 annotationToken:
 	| UNEXPECTED_TOKEN
-    { [ Term "UNEXPECTED_TOKEN" ] #@ "annotationToken" }
+    { "UNEXPECTED_TOKEN" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ABSTRACT
-    { [ Term "ABSTRACT" ] #@ "annotationToken" }
+    { "ABSTRACT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ACTION
-    { [ Term "ACTION" ] #@ "annotationToken" }
+    { "ACTION" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ACTIONS
-    { [ Term "ACTIONS" ] #@ "annotationToken" }
+    { "ACTIONS" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| APPLY
-    { [ Term "APPLY" ] #@ "annotationToken" }
+    { "APPLY" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BOOL
-    { [ Term "BOOL" ] #@ "annotationToken" }
+    { "BOOL" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BIT
-    { [ Term "BIT" ] #@ "annotationToken" }
+    { "BIT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BREAK
-    { [ Term "BREAK" ] #@ "annotationToken" }
+    { "BREAK" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| CONST
-    { [ Term "CONST" ] #@ "annotationToken" }
+    { "CONST" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| CONTINUE
-    { [ Term "CONTINUE" ] #@ "annotationToken" }
+    { "CONTINUE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| CONTROL
-    { [ Term "CONTROL" ] #@ "annotationToken" }
+    { "CONTROL" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| DEFAULT
-    { [ Term "DEFAULT" ] #@ "annotationToken" }
+    { "DEFAULT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ELSE
-    { [ Term "ELSE" ] #@ "annotationToken" }
+    { "ELSE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ENTRIES
-    { [ Term "ENTRIES" ] #@ "annotationToken" }
+    { "ENTRIES" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ENUM
-    { [ Term "ENUM" ] #@ "annotationToken" }
+    { "ENUM" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ERROR
-    { [ Term "ERROR" ] #@ "annotationToken" }
+    { "ERROR" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| EXIT
-    { [ Term "EXIT" ] #@ "annotationToken" }
+    { "EXIT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| EXTERN
-    { [ Term "EXTERN" ] #@ "annotationToken" }
+    { "EXTERN" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| FALSE
-    { [ Term "FALSE" ] #@ "annotationToken" }
+    { "FALSE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| FOR
-    { [ Term "FOR" ] #@ "annotationToken" }
+    { "FOR" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| HEADER
-    { [ Term "HEADER" ] #@ "annotationToken" }
+    { "HEADER" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| HEADER_UNION
-    { [ Term "HEADER_UNION" ] #@ "annotationToken" }
+    { "HEADER_UNION" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| IF
-    { [ Term "IF" ] #@ "annotationToken" }
+    { "IF" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| IN
-    { [ Term "IN" ] #@ "annotationToken" }
+    { "IN" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| INOUT
-    { [ Term "INOUT" ] #@ "annotationToken" }
+    { "INOUT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| INT
-    { [ Term "INT" ] #@ "annotationToken" }
+    { "INT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| KEY
-    { [ Term "KEY" ] #@ "annotationToken" }
+    { "KEY" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| MATCH_KIND
-    { [ Term "MATCH_KIND" ] #@ "annotationToken" }
+    { "MATCH_KIND" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TYPE
-    { [ Term "TYPE" ] #@ "annotationToken" }
+    { "TYPE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| OUT
-    { [ Term "OUT" ] #@ "annotationToken" }
+    { "OUT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PARSER
-    { [ Term "PARSER" ] #@ "annotationToken" }
+    { "PARSER" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PACKAGE
-    { [ Term "PACKAGE" ] #@ "annotationToken" }
+    { "PACKAGE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PRAGMA
-    { [ Term "PRAGMA" ] #@ "annotationToken" }
+    { "PRAGMA" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| RETURN
-    { [ Term "RETURN" ] #@ "annotationToken" }
+    { "RETURN" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| SELECT
-    { [ Term "SELECT" ] #@ "annotationToken" }
+    { "SELECT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| STATE
-    { [ Term "STATE" ] #@ "annotationToken" }
+    { "STATE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| STRING
-    { [ Term "STRING" ] #@ "annotationToken" }
+    { "STRING" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| STRUCT
-    { [ Term "STRUCT" ] #@ "annotationToken" }
+    { "STRUCT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| SWITCH
-    { [ Term "SWITCH" ] #@ "annotationToken" }
+    { "SWITCH" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TABLE
-    { [ Term "TABLE" ] #@ "annotationToken" }
+    { "TABLE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| THIS
-    { [ Term "THIS" ] #@ "annotationToken" }
+    { "THIS" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TRANSITION
-    { [ Term "TRANSITION" ] #@ "annotationToken" }
+    { "TRANSITION" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TRUE
-    { [ Term "TRUE" ] #@ "annotationToken" }
+    { "TRUE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TUPLE
-    { [ Term "TUPLE" ] #@ "annotationToken" }
+    { "TUPLE" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| TYPEDEF
-    { [ Term "TYPEDEF" ] #@ "annotationToken" }
+    { "TYPEDEF" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| VARBIT
-    { [ Term "VARBIT" ] #@ "annotationToken" }
+    { "VARBIT" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| VALUE_SET
-    { [ Term "VALUE_SET" ] #@ "annotationToken" }
+    { "VALUE_SET" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| LIST
-    { [ Term "LIST" ] #@ "annotationToken" }
+    { "LIST" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| VOID
-    { [ Term "VOID" ] #@ "annotationToken" }
+    { "VOID" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| DONTCARE
-    { [ Term "_" ] #@ "annotationToken" }
+    { "`_" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| id = identifier
     { id }
 	| tid = typeIdentifier
@@ -1629,121 +1727,126 @@ annotationToken:
 	| int = integerLiteral
     { int }
 	| MASK
-    { [ Term "&&&" ] #@ "annotationToken" }
+    { "`&&&" <| [] <<| "annotationToken" <<<| (at $sloc) }
   (* TODO: missing DOTS "..." in spec *)
 	| RANGE
-    { [ Term ".." ] #@ "annotationToken" }
+    { "`.." <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| SHL
-    { [ Term "<<" ] #@ "annotationToken" }
+    { "`<<" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| AND
-    { [ Term "&&" ] #@ "annotationToken" }
+    { "`&&" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| OR
-    { [ Term "||" ] #@ "annotationToken" }
+    { "`||" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| EQ
-    { [ Term "==" ] #@ "annotationToken" }
+    { "`==" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| NE
-    { [ Term "!=" ] #@ "annotationToken" }
+    { "`!=" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| GE
-    { [ Term ">=" ] #@ "annotationToken" }
+    { "`>=" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| LE
-    { [ Term "<=" ] #@ "annotationToken" }
+    { "`<=" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PLUSPLUS
-    { [ Term "++" ] #@ "annotationToken" }
+    { "`++" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PLUS
-    { [ Term "+" ] #@ "annotationToken" }
+    { "`+" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| PLUS_SAT
-    { [ Term "|+|" ] #@ "annotationToken" }
+    { "`|+|" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| MINUS
-    { [ Term "-" ] #@ "annotationToken" }
+    { "`-" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| MINUS_SAT
-    { [ Term "|-|" ] #@ "annotationToken" }
+    { "`|-|" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| MUL
-    { [ Term "*" ] #@ "annotationToken" }
+    { "`*" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| DIV
-    { [ Term "/" ] #@ "annotationToken" }
+    { "`/" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| MOD
-    { [ Term "%" ] #@ "annotationToken" }
+    { "`%" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BIT_OR
-    { [ Term "|" ] #@ "annotationToken" }
+    { "`|" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BIT_AND
-    { [ Term "&" ] #@ "annotationToken" }
+    { "`&" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| BIT_XOR
-    { [ Term "^" ] #@ "annotationToken" }
+    { "`^" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| COMPLEMENT
-    { [ Term "~" ] #@ "annotationToken" }
+    { "`~" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| L_BRACKET
-    { [ Term "[" ] #@ "annotationToken" }
+    { "``[" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| R_BRACKET
-    { [ Term "]" ] #@ "annotationToken" }
+    { "``]" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| L_BRACE
-    { [ Term "{" ] #@ "annotationToken" }
+    { "``{" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| R_BRACE
-    { [ Term "}" ] #@ "annotationToken" }
+    { "``}" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| L_ANGLE
-    { [ Term "<" ] #@ "annotationToken" }
+    { "``<" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| R_ANGLE
-    { [ Term ">" ] #@ "annotationToken" }
+    { "``>" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| NOT
-    { [ Term "!" ] #@ "annotationToken" }
+    { "`!" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| COLON
-    { [ Term ":" ] #@ "annotationToken" }
+    { "`:" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| COMMA
-    { [ Term "," ] #@ "annotationToken" }
+    { "`," <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| QUESTION
-    { [ Term "?" ] #@ "annotationToken" }
+    { "`?" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| DOT
-    { [ Term "." ] #@ "annotationToken" }
+    { "`." <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| ASSIGN
-    { [ Term "=" ] #@ "annotationToken" }
+    { "`=" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| SEMICOLON
-    { [ Term ";" ] #@ "annotationToken" }
+    { "`;" <| [] <<| "annotationToken" <<<| (at $sloc) }
 	| AT
-    { [ Term "@" ] #@ "annotationToken" }
+    { "`@" <| [] <<| "annotationToken" <<<| (at $sloc) }
 ;
 
 annotationBody:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "annotationBody" }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "annotationBody" <<<| (at $sloc) }
 	| ab = annotationBody L_PAREN ab_in = annotationBody R_PAREN
-    { [ NT ab; Term "("; NT ab_in; Term ")" ] #@ "annotationBody" }
-	| ab = annotationBody at = annotationToken
-    { [ NT ab; NT at ] #@ "annotationBody" }
+    { "annotationBody `( annotationBody )" <| [ ab; ab_in ] <<| "annotationBody" <<<| (at $sloc) }
+	| ab = annotationBody atoken = annotationToken
+    { "annotationBody annotationToken" <| [ ab; atoken ] <<| "annotationBody" <<<| (at $sloc) }
 ;
 
 structuredAnnotationBody:
 	| e = sequenceOrRecordElementExpression c = trailingCommaOpt
-    { [ NT e; NT c ] #@ "structuredAnnotationBody" }
+    { "sequenceOrRecordElementExpression trailingCommaOpt" <| [ e; c ] <<| "structuredAnnotationBody" <<<| (at $sloc) }
 ;
 
 annotation:
 	| AT name = name
-    { [ Term "@"; NT name ] #@ "annotation" }
+    { "`@ name" <| [ name ] <<| "annotation" <<<| (at $sloc) }
 	| AT name = name L_PAREN body = annotationBody R_PAREN
-    { [ Term "@"; NT name; Term "("; NT body; Term ")" ] #@ "annotation" }
+    { "`@ name `( annotationBody )" <| [ name; body ] <<| "annotation" <<<| (at $sloc) }
 	| AT name = name L_BRACKET body = structuredAnnotationBody R_BRACKET
-    { [ Term "@"; NT name; Term "["; NT body; Term "]" ] #@ "annotation" }
+    { "`@ name `[ structuredAnnotationBody ]" <| [ name; body ] <<| "annotation" <<<| (at $sloc) }
 (* From Petr4: PRAGMA not in Spec, but in Petr4/p4c *)
 	| PRAGMA name = name body = annotationBody PRAGMA_END
-    { [ Term "@"; Term "PRAGMA"; NT name; NT body; ] #@ "annotation" }
+    { "`@ PRAGMA name annotationBody" <| [ name; body ] <<| "annotation" <<<| (at $sloc) }
 ;
 
 annotationListNonEmpty:
-	| a = annotation { a }
+	| a = annotation
+    { a }
 	| al = annotationListNonEmpty a = annotation
-		{ [ NT al; NT a ] #@ "annotationListNonEmpty" }
+		{ "annotationListNonEmpty annotation" <| [ al; a ] <<| "annotationListNonEmpty" <<<| (at $sloc) }
 ;
 
 %inline annotationList:
-	| (* empty *) { [ Term "`EMPTY" ] #@ "annotationList" }
-	| al = annotationListNonEmpty { al }
+	| (* empty *)
+    { "`EMPTY" <| [] <<| "annotationList" <<<| (at $sloc) }
+	| al = annotationListNonEmpty
+    { al }
 ;
 
 (******** P4 program ********)
 declarationList:
-  | (* empty *) { [ Term "`EMPTY" ] #@ "p4program" }
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "declarationList" <<<| (at $sloc) }
   | ds = declarationList d = declaration
-    { [ NT ds; NT d ] #@ "p4program" }
+    { "declarationList declaration" <| [ ds; d ] <<| "declarationList" <<<| (at $sloc) }
   | ds = declarationList SEMICOLON
-    { [ NT ds; Term ";" ] #@ "p4program" }
+    { "declarationList `;" <| [ ds ] <<| "declarationList" <<<| (at $sloc) }
 ;
 
 p4program:

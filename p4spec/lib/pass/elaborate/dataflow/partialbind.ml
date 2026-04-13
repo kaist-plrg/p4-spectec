@@ -1,34 +1,35 @@
 open Domain.Lib
 open Lang
 open Il
-open Runtime.Static
+module Type = Runtime.Type
 open Error
 open Util.Source
 
 (* Helper for identifying singleton case *)
 
 let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
-  typ |> Plaintyp.of_internal_typ |> is_singleton_case' dctx
-
-and is_singleton_case' (dctx : Dctx.t) (plaintyp : El.plaintyp) : bool =
-  match plaintyp.it with
+  match typ.it with
   | VarT (tid, targs) -> (
       let td = Dctx.find_typdef dctx tid in
       match td with
-      | Defined (tparams, typdef) -> (
-          match typdef with
-          | `Plain plaintyp ->
-              let theta = List.combine tparams targs |> TIdMap.of_list in
-              let plaintyp = Plaintyp.subst_plaintyp theta plaintyp in
-              is_singleton_case' dctx plaintyp
-          | `Struct _ -> false
-          | `Variant cases -> List.length cases = 1)
+      | Defined (tparams, deftyp) -> (
+          match deftyp.it with
+          | PlainT typ ->
+              let theta = TIdMap.of_lists tparams targs in
+              let typ = Type.Subst.subst_typ theta typ in
+              is_singleton_case dctx typ
+          | StructT _ -> false
+          | VariantT typcases -> List.length typcases = 1)
       | _ -> false)
   | _ -> false
 
 (* Rename for an expression *)
 
-module To = Var
+module To = struct
+  include Var
+
+  let as_exp = Var.as_exp ~dim:false
+end
 
 module From = struct
   type t =
@@ -166,7 +167,7 @@ let gen_prems (dctx : Dctx.t) (renv : REnv.t) : prem list =
 
 let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
     (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -178,7 +179,7 @@ let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t) (pattern : pattern)
 
 let rename_exp_bind_sub (dctx : Dctx.t) (renv : REnv.t) (typ_sub : typ)
     (exp_sub : exp) (exp_from : exp) : Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp_from in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp_from in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename
@@ -207,7 +208,7 @@ let rec rename_exp (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (exp : exp)
 
 and rename_exp_bound (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
     Dctx.t * REnv.t * exp =
-  let to_ = Fresh.fresh_var_from_exp dctx.frees exp in
+  let to_ = Fresh.var_from_exp dctx.menv dctx.frees exp in
   let dctx =
     let id_rename, _, _ = to_ in
     Dctx.add_free dctx id_rename

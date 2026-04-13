@@ -68,7 +68,9 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
   | TupleT typs_a, TupleT typs_b -> eq_typs typs_a typs_b
   | IterT (typ_a, iter_a), IterT (typ_b, iter_b) ->
       eq_typ typ_a typ_b && eq_iter iter_a iter_b
-  | FuncT, FuncT -> true
+  | FuncT (tparams_a, typs_a, typ_a), FuncT (tparams_b, typs_b, typ_b) ->
+      eq_tparams tparams_a tparams_b
+      && eq_typs typs_a typs_b && eq_typ typ_a typ_b
   | _ -> false
 
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
@@ -210,6 +212,15 @@ and eq_path (path_a : path) (path_b : path) : bool =
       eq_path path_a path_b && eq_atom atom_a atom_b
   | _ -> false
 
+(* Type parameters *)
+
+and eq_tparam (tparam_a : tparam) (tparam_b : tparam) : bool =
+  eq_id tparam_a tparam_b
+
+and eq_tparams (tparams_a : tparam list) (tparams_b : tparam list) : bool =
+  List.length tparams_a = List.length tparams_b
+  && List.for_all2 eq_id tparams_a tparams_b
+
 (* Arguments *)
 
 and eq_arg (arg_a : arg) (arg_b : arg) : bool =
@@ -230,6 +241,25 @@ and eq_targs (targs_a : targ list) (targs_b : targ list) : bool =
   && List.for_all2 eq_targ targs_a targs_b
 
 (* Premises *)
+
+and eq_prem (prem_a : prem) (prem_b : prem) : bool =
+  match (prem_a.it, prem_b.it) with
+  | ( RulePr (id_a, (mixop_a, exps_a), inputs_a),
+      RulePr (id_b, (mixop_b, exps_b), inputs_b) ) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+      && Hints.Input.eq inputs_a inputs_b
+  | IfPr exp_a, IfPr exp_b -> eq_exp exp_a exp_b
+  | IfHoldPr (id_a, (mixop_a, exps_a)), IfHoldPr (id_b, (mixop_b, exps_b)) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | IfNotHoldPr (id_a, (mixop_a, exps_a)), IfNotHoldPr (id_b, (mixop_b, exps_b))
+    ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | LetPr (exp_l_a, exp_r_a), LetPr (exp_l_b, exp_r_b) ->
+      eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
+  | IterPr (prem_a, iterprem_a), IterPr (prem_b, iterprem_b) ->
+      eq_prem prem_a prem_b && eq_iterprem iterprem_a iterprem_b
+  | DebugPr exp_a, DebugPr exp_b -> eq_exp exp_a exp_b
+  | _ -> false
 
 and eq_iterprem (iterprem_a : iterprem) (iterprem_b : iterprem) : bool =
   let iter_a, vars_bound_a, vars_bind_a = iterprem_a in

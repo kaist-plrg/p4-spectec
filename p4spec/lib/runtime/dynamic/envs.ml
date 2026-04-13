@@ -31,22 +31,22 @@ module VEnv = MakeVarEnv (Value)
 (* Type definition environment *)
 
 module TDEnv = struct
-  include MakeTIdEnv (Typdef)
+  include MakeTIdEnv (Type.Typdef)
 
   let rec unroll (tdenv : t) (typ : Il.typ) : Il.typ =
     match typ.it with
     | VarT (tid, targs) -> (
         let td = find tid tdenv in
         match td with
-        | Param | Extern -> typ
+        | Param | Extern | Defining _ -> typ
         | Defined (tparams, deftyp) -> (
-            let theta = List.combine tparams targs |> TIdMap.of_list in
+            let theta = TIdMap.of_lists tparams targs in
             match deftyp.it with
             | PlainT typ ->
-                let typ = Typ.subst_typ theta typ in
+                let typ = Type.Subst.subst_typ theta typ in
                 unroll tdenv typ
             | _ -> typ))
     | _ -> typ
 end
 
-module TDTbl = MakeTIdTbl (Typdef)
+module TDTbl = MakeTIdTbl (Type.Typdef)

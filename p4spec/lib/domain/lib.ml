@@ -56,9 +56,9 @@ module VIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> VIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -84,6 +84,9 @@ module VIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module VIdTbl (V : sig
@@ -97,13 +100,6 @@ module IId = VId
 module IIdSet = VIdSet
 module IIdMap = VIdMap
 module IIdTbl = VIdTbl
-
-(* Phantom identifiers *)
-
-module PId = VId
-module PIdSet = VIdSet
-module PIdMap = VIdMap
-module PIdTbl = VIdTbl
 
 (* String-based identifiers *)
 
@@ -140,9 +136,9 @@ module IdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> IdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -168,6 +164,9 @@ module IdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module IdTbl (V : sig
@@ -231,9 +230,9 @@ module MixIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> MixIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -259,6 +258,9 @@ module MixIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module MixIdTbl (V : sig
@@ -297,9 +299,9 @@ module CaseIdMap = struct
 
   type 'v to_string_v = 'v -> string
 
-  let keys m = List.map fst (bindings m)
+  let keys m = m |> bindings |> List.map fst
   let dom m = m |> keys |> CaseIdSet.of_list
-  let values m = List.map snd (bindings m)
+  let values m = m |> bindings |> List.map snd
 
   let to_string ?(with_braces = true) ?(bind = " : ")
       (to_string_v : 'v to_string_v) m =
@@ -325,6 +327,9 @@ module CaseIdMap = struct
 
   let eq eq_v m_a m_b = subset eq_v m_a m_b && subset eq_v m_b m_a
   let of_list l = List.fold_left (fun acc (k, v) -> add k v acc) empty l
+
+  let of_lists keys values =
+    List.fold_left2 (fun acc k v -> add k v acc) empty keys values
 end
 
 module CaseIdTbl (V : sig
@@ -360,8 +365,6 @@ end) =
 
 module MakeIIdEnv = MakeVIdEnv
 module MakeIIdTbl = MakeVIdTbl
-module MakePIdEnv = MakeVIdEnv
-module MakePIdTbl = MakeVIdTbl
 
 (* String-based *)
 

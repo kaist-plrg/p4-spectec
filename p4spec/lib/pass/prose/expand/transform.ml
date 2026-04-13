@@ -1,9 +1,10 @@
-module Var = Free.Var
+module Var_ = Free.Var
 module Vars = Free.Vars
 module VarSet = Free.VarSet
 open Domain.Lib
 open Lang
 open Il
+module Var = Var_
 open Util.Source
 
 let ( let* ) = Option.bind
@@ -413,20 +414,3 @@ let transform_first_with_iters
         Some (DotP (path_b', atom) $$ (at, note), iter_state)
   in
   transform_exp acc e
-
-let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * var * IdSet.t =
-  let id_base, typ_base, iters = Fresh.fresh_var_from_typ ids typ.at typ in
-  let var_new = (id_base, typ_base, iters) in
-  let ids = IdSet.add id_base ids in
-  let exp_base = VarE id_base $$ (typ_base.at, typ_base.it) in
-  let exp_match, _ =
-    List.fold_left
-      (fun (exp_match, iters) iter ->
-        let typ = IterT (exp_match.note $ exp_match.at, iter) in
-        let var = (id_base, typ_base, iters) in
-        let iterexp = (iter, [ var ]) in
-        let exp_match = IterE (exp_match, iterexp) $$ (exp_match.at, typ) in
-        (exp_match, iters @ [ iter ]))
-      (exp_base, []) iters
-  in
-  (exp_match, var_new, ids)

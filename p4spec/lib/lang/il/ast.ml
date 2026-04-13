@@ -41,13 +41,13 @@ type var = id * typ * iter list
 
 and typ = typ' phrase
 and typ' =
-  | BoolT                   (* `bool` *)
-  | NumT of Num.typ         (* numtyp *)
-  | TextT                   (* `text` *)
-  | VarT of id * targ list  (* id (`<` list(targ, `,`) `>`)? *)
-  | TupleT of typ list      (* `(` list(typ, `,`) `)` *)
-  | IterT of typ * iter     (* typ iter *)
-  | FuncT                   (* `func` *)
+  | BoolT                                 (* `bool` *)
+  | NumT of Num.typ                       (* numtyp *)
+  | TextT                                 (* `text` *)
+  | VarT of id * targ list                (* id (`<` list(targ, `,`) `>`)? *)
+  | TupleT of typ list                    (* `(` list(typ, `,`) `)` *)
+  | IterT of typ * iter                   (* typ iter *)
+  | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
 and nottyp = nottyp' phrase
@@ -62,14 +62,16 @@ and deftyp' =
   | VariantT of typcase list
 
 and typfield = atom * typ
-and typcase = nottyp * hint list
+and typorigin = typorigin' phrase
+and typorigin' = id * targ list
+and typcase = nottyp * typorigin * hint list
 
 (* Values *)
 
 and vid = int
 and vnote = { vid : vid; typ : typ'; vhash : int } [@@deriving yojson]
 
-and value = (value', vnote) note [@@deriving yojson]
+and value = (value', vnote) note_phrase [@@deriving yojson]
 and value' =
   | BoolV of bool
   | NumV of Num.t
@@ -222,8 +224,10 @@ and def' =
   | ExternTypD of id * hint list
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
   | TypD of id * tparam list * deftyp * hint list
+  (* `var` id `:` typ hint* *)
+  | VarD of id * typ * hint list
   (* `extern` `relation` id `:` nottyp `hint(input` `%`int* `)` hint* *)
-  | ExternRelD of id * nottyp * int list * hint list
+  | ExternRelD of id * nottyp * Hints.Input.t * hint list
   (* `relation` id `:` nottyp `hint(input` `%`int* `)` rulegroup* hint* *)
   | RelD of id * nottyp * Hints.Input.t * rulegroup list * elsegroup option * hint list
   (* `extern` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)

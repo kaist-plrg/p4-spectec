@@ -32,10 +32,13 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
   | Yes -> (
       match exp.it with
       | CallE (_, _, []) -> None
-      | CallE (_funcprose, _targs, args) ->
-          let exp_new, var_new, ids_used =
-            Transform.fresh_exp_from_typ ids_used (exp.note $ exp.at)
+      | CallE (_, _, args) ->
+          let id_new, typ_new, iters_new =
+            Il.Fresh.var_from_exp TIdMap.empty ids_used exp
           in
+          let ids_used = IdSet.add id_new ids_used in
+          let var_new = (id_new, typ_new, iters_new) in
+          let exp_new = Il.Var.as_exp ~dim:true var_new in
           let iter_state : iter_state =
             {
               vars_inner = Vars.free_args args;

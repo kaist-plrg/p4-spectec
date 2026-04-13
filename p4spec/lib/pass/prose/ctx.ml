@@ -1,9 +1,21 @@
 open Domain.Lib
 open Lang
-module Typdef = Runtime.Dynamic_Sl.Typdef
+open Sl
+module Typ = Runtime.Type.Typ
+module Typdef = Runtime.Type.Typdef
 open Runtime.Prose.Envs
 open Error
 open Util.Source
+
+(* Error *)
+
+let error_undef (at : region) (kind : string) (id : string) =
+  error at (Format.asprintf "%s `%s` is undefined" kind id)
+
+let error_dup (at : region) (kind : string) (id : string) =
+  error at (Format.asprintf "%s `%s` was already defined" kind id)
+
+(* Context *)
 
 type namespace = Rel of Id.t | Func of Id.t | Empty
 type branch = If | ElseIf | Else | Check | Empty
@@ -17,83 +29,31 @@ type t = {
   frees : IdSet.t;
   (* Prose hints *)
   henv : HEnv.t;
+  (* Meta-variables *)
+  menv : MEnv.t;
   (* Type definitions *)
   tdenv : TDEnv.t;
 }
 
-(* Constructor *)
+let empty : t =
+  {
+    branch = Empty;
+    namespace = Empty;
+    frees = IdSet.empty;
+    henv = HEnv.empty;
+    menv = MEnv.empty;
+    tdenv = TDEnv.empty;
+  }
 
-let load_hints (key : HEnv.key) (henv : HEnv.t) (hints : El.hint list) : HEnv.t
-    =
-  List.fold_left
-    (fun henv El.{ hintid; hintexp } ->
-      match hintid.it with
-      (* Alter hints *)
-      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" -> (
-          let hint_alter_opt = Hints.Alter.init hintexp in
-          match hint_alter_opt with
-          | Some hint_alter -> HEnv.add_alter henv hintid key hint_alter
-          | None ->
-              error hintexp.at
-                (Format.asprintf "invalid hint expression %s for hint %s"
-                   (El.Print.string_of_exp hintexp)
-                   hintid.it))
-      (* Field hints *)
-      | "prose_fields" -> (
-          let hint_fields_opt = Hints.Fields.init hintexp in
-          match hint_fields_opt with
-          | Some hint_fields -> HEnv.add_fields henv hintid key hint_fields
-          | None ->
-              error hintexp.at
-                (Format.asprintf "invalid hint expression %s for hint %s"
-                   (El.Print.string_of_exp hintexp)
-                   hintid.it))
-      | _ -> henv)
-    henv hints
-
-let load_typcases (tid : TId.t) (henv : HEnv.t) (typcases : Sl.typcase list) :
-    HEnv.t =
-  List.fold_left
-    (fun henv (nottyp, hints) ->
-      let mixop, _ = nottyp.it in
-      let cid = (tid, mixop) in
-      load_hints (`Typ cid) henv hints)
-    henv typcases
-
-let load_defs (henv : HEnv.t) (tdenv : TDEnv.t) (def : Sl.def) :
-    HEnv.t * TDEnv.t =
-  match def.it with
-  | ExternTypD (tid, _) ->
-      let td = Typdef.Extern in
-      let tdenv = TDEnv.add tid td tdenv in
-      (henv, tdenv)
-  | TypD (tid, tparams, deftyp, _) ->
-      let henv =
-        match deftyp.it with
-        | VariantT typcases -> load_typcases tid henv typcases
-        | _ -> henv
-      in
-      let td = Typdef.Defined (tparams, deftyp) in
-      let tdenv = TDEnv.add tid td tdenv in
-      (henv, tdenv)
-  | ExternRelD (rid, _, _, hints) | RelD (rid, _, _, _, _, hints) ->
-      let henv = load_hints (`Rel rid) henv hints in
-      (henv, tdenv)
-  | ExternDecD (fid, _, _, _, hints)
-  | BuiltinDecD (fid, _, _, _, hints)
-  | TableDecD (fid, _, _, _, hints)
-  | FuncDecD (fid, _, _, _, _, _, hints) ->
-      let henv = load_hints (`Func fid) henv hints in
-      (henv, tdenv)
-
-let load_spec (spec : Sl.spec) : HEnv.t * TDEnv.t =
-  List.fold_left
-    (fun (henv, tdenv) def -> load_defs henv tdenv def)
-    (HEnv.empty, TDEnv.empty) spec
-
-let init (spec_sl : Sl.spec) : t =
-  let henv, tdenv = load_spec spec_sl in
-  { branch = Empty; namespace = Empty; frees = IdSet.empty; henv; tdenv }
+let init () : t =
+  let menv =
+    MEnv.empty
+    |> MEnv.add ("bool" $ no_region) (Il.BoolT $ no_region)
+    |> MEnv.add ("nat" $ no_region) (Il.NumT `NatT $ no_region)
+    |> MEnv.add ("int" $ no_region) (Il.NumT `IntT $ no_region)
+    |> MEnv.add ("text" $ no_region) (Il.TextT $ no_region)
+  in
+  { empty with menv }
 
 (* Namespace *)
 
@@ -114,17 +74,35 @@ let set_branch (ctx : t) (branch : branch) : t = { ctx with branch }
 
 let set_free (ctx : t) (frees : IdSet.t) : t = { ctx with frees }
 
-(* Adders *)
-
-let add_tparam (ctx : t) (tid : TId.t) : t =
-  let td = Typdef.Param in
-  let tdenv = TDEnv.add tid td ctx.tdenv in
-  { ctx with tdenv }
-
-let add_tparams (ctx : t) (tids : TId.t list) : t =
-  List.fold_left add_tparam ctx tids
-
 (* Finders *)
+
+(* Finders for type definitions *)
+
+let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
+  TDEnv.find_opt tid ctx.tdenv
+
+let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
+  match find_typdef_opt ctx tid with
+  | Some td -> td
+  | None -> error_undef tid.at "type" tid.it
+
+let bound_typdef (ctx : t) (tid : TId.t) : bool =
+  find_typdef_opt ctx tid |> Option.is_some
+
+(* Finders for meta-variables *)
+
+let find_metavar_opt (ctx : t) (tid : TId.t) : Typ.t option =
+  MEnv.find_opt tid ctx.menv
+
+let find_metavar (ctx : t) (tid : TId.t) : Typ.t =
+  match find_metavar_opt ctx tid with
+  | Some typ -> typ
+  | None -> error_undef tid.at "meta-variable" tid.it
+
+let bound_metavar (ctx : t) (tid : TId.t) : bool =
+  find_metavar_opt ctx tid |> Option.is_some
+
+(* Finders for hints *)
 
 let find_hint_alter (ctx : t) (hid : string) (key : HEnv.key) :
     Hints.Alter.t option =
@@ -152,6 +130,41 @@ let find_hint_prose_false (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
 let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hints.Fields.t option =
   find_hint_fields ctx "prose_fields" key
 
+(* Adders *)
+
+(* Adders for meta-variables *)
+
+let add_metavar (ctx : t) (tid : TId.t) (typ : Typ.t) : t =
+  if bound_metavar ctx tid then error_dup tid.at "meta-variable" tid.it;
+  let menv = MEnv.add tid typ ctx.menv in
+  { ctx with menv }
+
+(* Adders for type definitions *)
+
+let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
+  if bound_typdef ctx tid then error_dup tid.at "type" tid.it;
+  let tdenv = TDEnv.add tid td ctx.tdenv in
+  { ctx with tdenv }
+
+let add_tparam (ctx : t) (tid : TId.t) : t =
+  let td = Typdef.Param in
+  add_typdef ctx tid td
+
+let add_tparams (ctx : t) (tids : TId.t list) : t =
+  List.fold_left add_tparam ctx tids
+
+(* Adders for hints *)
+
+let add_hint_alter (ctx : t) (hid : HId.t) (key : HEnv.key)
+    (hint_alter : Hints.Alter.t) : t =
+  let henv = HEnv.add_alter ctx.henv hid key hint_alter in
+  { ctx with henv }
+
+let add_hint_fields (ctx : t) (hid : HId.t) (key : HEnv.key)
+    (hint_fields : Hints.Fields.t) : t =
+  let henv = HEnv.add_fields ctx.henv hid key hint_fields in
+  { ctx with henv }
+
 (* Validation *)
 
 let validate_hint_alter (at : region) (hint_alter : Hints.Alter.t)
@@ -169,3 +182,70 @@ let validate_hint_fields (at : region) (hint_fields : Hints.Fields.t)
 (* Unrolling types *)
 
 let unroll_typ (ctx : t) (typ : Sl.typ) : Sl.typ = TDEnv.unroll ctx.tdenv typ
+
+(* Constructor *)
+
+let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
+  List.fold_left
+    (fun ctx El.{ hintid; hintexp } ->
+      match hintid.it with
+      (* Alter hints *)
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" -> (
+          let hint_alter_opt = Hints.Alter.init hintexp in
+          match hint_alter_opt with
+          | Some hint_alter -> add_hint_alter ctx hintid key hint_alter
+          | None ->
+              error hintexp.at
+                (Format.asprintf "invalid hint expression %s for hint %s"
+                   (El.Print.string_of_exp hintexp)
+                   hintid.it))
+      (* Field hints *)
+      | "prose_fields" -> (
+          let hint_fields_opt = Hints.Fields.init hintexp in
+          match hint_fields_opt with
+          | Some hint_fields -> add_hint_fields ctx hintid key hint_fields
+          | None ->
+              error hintexp.at
+                (Format.asprintf "invalid hint expression %s for hint %s"
+                   (El.Print.string_of_exp hintexp)
+                   hintid.it))
+      | _ -> ctx)
+    ctx hints
+
+let load_typcases (ctx : t) (tid : TId.t) (typcases : typcase list) : t =
+  List.fold_left
+    (fun ctx (nottyp, _, hints) ->
+      let mixop, _ = nottyp.it in
+      let cid = (tid, mixop) in
+      load_hints ctx (`Typ cid) hints)
+    ctx typcases
+
+let load_def (ctx : t) (def : def) : t =
+  match def.it with
+  | ExternTypD (id, _) ->
+      let typ = Typ.Make.var id [] in
+      let ctx = add_metavar ctx id typ in
+      let td = Typdef.Extern in
+      add_typdef ctx id td
+  | TypD (id, tparams, deftyp, _) -> (
+      let ctx =
+        if tparams = [] then
+          let typ = Typ.Make.var id [] in
+          add_metavar ctx id typ
+        else ctx
+      in
+      let td = Typdef.Defined (tparams, deftyp) in
+      let ctx = add_typdef ctx id td in
+      match deftyp.it with
+      | VariantT typcases -> load_typcases ctx id typcases
+      | _ -> ctx)
+  | VarD (id, typ, _) -> add_metavar ctx id typ
+  | ExternRelD (id, _, _, hints) | RelD (id, _, _, _, _, hints) ->
+      load_hints ctx (`Rel id) hints
+  | ExternDecD (id, _, _, _, hints)
+  | BuiltinDecD (id, _, _, _, hints)
+  | TableDecD (id, _, _, _, hints)
+  | FuncDecD (id, _, _, _, _, _, hints) ->
+      load_hints ctx (`Func id) hints
+
+let load_spec (ctx : t) (spec : Sl.spec) : t = List.fold_left load_def ctx spec

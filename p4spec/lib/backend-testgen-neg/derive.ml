@@ -31,11 +31,11 @@ let derive_vid (vdg : Dep.Graph.t) (vid : vid) : VIdSet.t * int VIdMap.t =
 
 (* Entry point for deriving close-ASTs *)
 
-let derive_phantom (pid : pid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
+let derive_dangling (iid : iid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
     (vid * int) list =
   (* Find related values that contributed to the close-miss *)
   let vids_related =
-    let branch = DCov_single.Cover.find pid cover in
+    let branch = DCov_single.Cover.find iid cover in
     match branch.status with Hit -> [] | Miss vids_related -> vids_related
   in
   (* Randomly sample related vids *)
@@ -58,8 +58,8 @@ let derive_phantom (pid : pid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
 
 (* Entry point for debugging close-ASTs *)
 
-let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
-    (filename_p4 : string) (dirname_debug : string) (pid : pid) : unit =
+let debug_dangling (spec : spec) (relname : string) (includes_p4 : string list)
+    (filename_p4 : string) (dirname_debug : string) (iid : iid) : unit =
   let program_result, cover, vdg =
     let spec = Sim.SL spec in
     let (module Sim) = Backend_sim.Gen.gen_placeholder () in
@@ -72,7 +72,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
   | Pass _ ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
-        let branch = DCov_single.Cover.find pid cover in
+        let branch = DCov_single.Cover.find iid cover in
         match branch.status with Hit -> [] | Miss vids_related -> vids_related
       in
       F.asprintf "Found %d related values" (List.length vids_related)
@@ -96,7 +96,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           let filename_dot =
             F.asprintf "%s/%s_p%d_v%d.dot" dirname_debug
               (Util.Filesys.base ~suffix:".p4" filename_p4)
-              pid vid_related
+              iid vid_related
           in
           let oc_dot = open_out filename_dot in
           Dep.Graph.dot_of_graph vdg |> output_string oc_dot;
@@ -104,7 +104,7 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           let filename_dot_sub =
             F.asprintf "%s/%s_p%d_v%d_sub.dot" dirname_debug
               (Util.Filesys.base ~suffix:".p4" filename_p4)
-              pid vid_related
+              iid vid_related
           in
           let oc_dot_sub = open_out filename_dot_sub in
           "digraph dependencies {\n" |> output_string oc_dot_sub;
@@ -127,14 +127,14 @@ let debug_phantom (spec : spec) (relname : string) (includes_p4 : string list)
           close_out oc_dot_sub;
           match derivations_source with
           | [] ->
-              F.asprintf "Failed to derive close-AST for pid %d" pid
+              F.asprintf "Failed to derive close-AST for iid %d" iid
               |> print_endline
           | _ ->
-              F.asprintf "Found close-AST for pid %d" pid |> print_endline;
+              F.asprintf "Found close-AST for iid %d" iid |> print_endline;
               let filename_value =
                 F.asprintf "%s/%s_p%d_v%d.value" dirname_debug
                   (Util.Filesys.base ~suffix:".p4" filename_p4)
-                  pid vid_related
+                  iid vid_related
               in
               let oc_value = open_out filename_value in
               let derivations_source =

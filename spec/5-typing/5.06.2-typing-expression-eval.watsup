@@ -264,15 +264,26 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
 
 ;;;;; sliceAccessExpressionIR
 ;;;;; syntax sliceAccessExpressionIR =
-;;;;;   typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+;;;;;;  typedExpressionIR `[ typedExpressionIR `: typedExpressionIR ]
+;;;;;;  typedExpressionIR `[ typedExpressionIR `+: typedExpressionIR ]
 
-rule Expr_eval_lctk/sliceAccessExpressionIR:
-  p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ])
-          `# _
-       ~> $bitacc_op(value_base, value_hi, value_lo)
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
-  -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
+rulegroup Expr_eval_lctk/sliceAccessExpressionIR {
+
+  rule Expr_eval_lctk/range:
+    p TC |- (typedExpressionIR_base `[ typedExpressionIR_hi `: typedExpressionIR_lo ]) `# _
+         ~> $bitacc_range_op(value_base, value_hi, value_lo)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_hi ~> value_hi
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_lo ~> value_lo
+
+  rule Expr_eval_lctk/offset:
+    p TC |- (typedExpressionIR_base `[ typedExpressionIR_l `+: typedExpressionIR_w ]) `# _
+         ~> $bitacc_offset_op(value_base, value_l, value_w)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_l ~> value_l
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_w ~> value_w
+
+}
 
 ;;;; callExpressionIR
 ;;;; syntax callExpressionIR
@@ -372,18 +383,18 @@ rule Expr_eval_lctk/parenthesizedExpressionIR:
 ;; syntax argumentIR
 ;;
 
-;;; typedExpressionIR
 
-rule Argument_eval_lctk/typedExpressionIR:
-  p TC |- typedExpressionIR ~> value
-  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+rulegroup Argument_eval_lctk {
 
-;;; nameIR `= typedExpressionIR
+  rule Argument_eval_lctk/typedExpressionIR:
+    p TC |- typedExpressionIR ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
 
-rule Argument_eval_lctk/namedArgumentIR:
-  p TC |- nameIR `= typedExpressionIR ~> value
-  -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
+  rule Argument_eval_lctk/namedArgumentIR:
+    p TC |- nameIR `= typedExpressionIR ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR ~> value
 
-;;; nameIR `= `_
-;;; `_
+}
+
+;;; nameIR `= `_ and `_
 ;;; don't care arguments are not evaluated statically

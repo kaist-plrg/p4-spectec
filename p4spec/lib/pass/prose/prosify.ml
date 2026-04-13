@@ -1,4 +1,5 @@
-open Domain.Lib
+open Domain
+open Lib
 open Lang
 open Xl
 open Ll.Ast
@@ -278,7 +279,7 @@ and prosify_param (ctx : Ctx.t) (param : param) : Pl.param =
   | ExpP (typ, exp) ->
       let exp_pl = prosify_exp ctx exp in
       Pl.ExpP (typ, exp_pl) $ param.at
-  | DefP id -> Pl.DefP id $ param.at
+  | DefP (id, _, _, _) -> Pl.DefP id $ param.at
 
 and prosify_params (ctx : Ctx.t) (params : param list) =
   List.map (prosify_param ctx) params
@@ -322,12 +323,11 @@ and iterate_bind (instr : Pl.instr) (iterinstrs : iterinstr list) =
 and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.block =
   let at = instr.at in
   match instr.it with
-  | IfI (exp_cond, iterexps, block, _phantom_opt) ->
+  | IfI (exp_cond, iterexps, block, _) ->
       prosify_if_instr at ctx exp_cond iterexps block
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       prosify_hold_instr at ctx id_rel notexp iterexps holdcase
-  | CaseI (exp, cases, phantom_opt) ->
-      prosify_case_instr at ctx exp cases phantom_opt
+  | CaseI (exp, cases, dangle) -> prosify_case_instr at ctx exp cases dangle
   | OtherwiseI block -> prosify_otherwise_instr at ctx block
   | GroupI _ -> assert false
   | LetI (exp_l, exp_r, iterinstrs) ->
@@ -530,8 +530,8 @@ and prosify_cases ~(total : bool) (at : region) (ctx : Ctx.t) (exp : exp)
       |> List.concat
 
 and prosify_case_instr (at : region) (ctx : Ctx.t) (exp : exp)
-    (cases : case list) (phantom_opt : phantom option) : Pl.block =
-  let total = Option.is_none phantom_opt in
+    (cases : case list) (dangle : dangle) : Pl.block =
+  let total = not dangle in
   prosify_cases ~total at ctx exp cases
 
 (* Otherwise instruction prosification *)
@@ -652,7 +652,7 @@ and prosify_return_instr (at : region) (ctx : Ctx.t) (exp : exp) : Pl.block =
 let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
   let wrap_some def = Some def in
   match def.it with
-  | ExternTypD _ | TypD _ -> None
+  | ExternTypD _ | TypD _ | VarD _ -> None
   | ExternRelD externrel ->
       prosify_extern_rel_def ctx def.at externrel |> wrap_some
   | RelD rel -> prosify_defined_rel_def ctx def.at rel |> wrap_some
@@ -701,14 +701,18 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
       let exps_input_pl =
         List.map
           (fun typ ->
-            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            let _, exp =
+              Il.Fresh.exp_from_typ ~dim:true ctx.menv IdSet.empty typ
+            in
             prosify_exp ctx exp)
           typs_input
       in
       let exps_output_pl =
         List.map
           (fun typ ->
-            let exp, _ = Il.Fresh.fresh_exp_from_typ IdSet.empty typ in
+            let _, exp =
+              Il.Fresh.exp_from_typ ~dim:true ctx.menv IdSet.empty typ
+            in
             prosify_exp ctx exp)
           typs_output
       in
@@ -725,9 +729,7 @@ and prosify_rel_math_title (ctx : Ctx.t) (id_rel : id)
   let exps_input_pl = prosify_exps ctx exps_input in
   let exps_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_input_pl_indexed with
         | Some exp_pl -> exp_pl
         | None -> prosify_hole_exp ())
@@ -813,9 +815,7 @@ and prosify_rulegroup_math_title (ctx : Ctx.t) (_id_rel : id)
   let exps_input_pl = prosify_exps ctx exps_input in
   let epxs_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =
-    List.init
-      (List.length mixop - 1)
-      (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx epxs_input_pl_indexed with
         | Some exp_pl -> exp_pl
         | None -> prosify_hole_exp ())
@@ -960,5 +960,6 @@ and prosify_defined_func_def (ctx : Ctx.t) (at : region)
 (* Entry point *)
 
 let prosify_spec (spec : spec) : Pl.spec =
-  let ctx = Ctx.init spec in
+  let ctx = Ctx.init () in
+  let ctx = Ctx.load_spec ctx spec in
   List.filter_map (prosify_def ctx) spec

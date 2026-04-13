@@ -2,58 +2,54 @@ open Domain.Lib
 open Ast
 open Util.Source
 
-let fresh_id (ids : IdSet.t) (id : Id.t) : Id.t =
+let id (ids : IdSet.t) (id_ : Id.t) : Id.t =
   let ids =
     IdSet.filter
       (fun id_e ->
-        let id = Xl.Var.strip_var_suffix id in
+        let id_ = Xl.Var.strip_var_suffix id_ in
         let id_e = Xl.Var.strip_var_suffix id_e in
-        id.it = id_e.it)
+        id_.it = id_e.it)
       ids
   in
-  let rec fresh_id' (id : Id.t) : Id.t =
-    if IdSet.mem id ids then fresh_id' (id.it ^ "'" $ id.at) else id
+  let rec id' (id_ : Id.t) : Id.t =
+    if IdSet.mem id_ ids then id' (id_.it ^ "'" $ id_.at) else id_
   in
-  fresh_id' id
+  id' id_
 
-let fresh_id_from_plaintyp ?(wildcard = false) (ids : IdSet.t)
-    (plaintyp : El.plaintyp) : Id.t =
-  let id = El.Print.string_of_plaintyp plaintyp $ plaintyp.at in
-  let id = if wildcard then "_" ^ id.it $ id.at else id in
-  fresh_id ids id
-
-let fresh_var_from_typ ?(wildcard = false) (ids : IdSet.t) (at : region)
-    (typ : typ) : Id.t * typ * iter list =
-  let rec fresh_var_from_typ' (typ : typ) : Id.t * typ * iter list =
+let var_from_typ ?(wildcard = false) (metavars : typ TIdMap.t) (ids : IdSet.t)
+    (at : region) (typ : typ) : Var.t =
+  let rec var_from_typ' (typ : typ) : Var.t =
+    let vars_alias =
+      metavars |> TIdMap.bindings
+      |> List.filter_map (fun (tid, typ_alias) ->
+             if
+               Eq.eq_typ typ typ_alias
+               && not (String.equal (Print.string_of_typ typ) tid.it)
+             then Some (tid, typ_alias, [])
+             else None)
+    in
+    match vars_alias with [ var_alias ] -> var_alias | _ -> var_from_typ'' typ
+  and var_from_typ'' (typ : typ) : Var.t =
     match typ.it with
     | IterT (typ, iter) ->
-        let id, typ, iters = fresh_var_from_typ' typ in
+        let id, typ, iters = var_from_typ' typ in
         (id, typ, iters @ [ iter ])
     | _ ->
         let id = Print.string_of_typ typ $ at in
         (id, typ, [])
   in
-  let id, typ, iters = fresh_var_from_typ' typ in
-  let id = if wildcard then "_" ^ id.it $ id.at else id in
-  let id = fresh_id ids id in
-  (id, typ, iters)
+  let id_var, typ_var, iters_var = var_from_typ' typ in
+  let id_var = if wildcard then "_" ^ id_var.it $ id_var.at else id_var in
+  let id_var = id ids id_var in
+  (id_var, typ_var, iters_var)
 
-let fresh_var_from_exp ?(wildcard = false) (ids : IdSet.t) (exp : exp) :
-    Id.t * typ * iter list =
-  fresh_var_from_typ ~wildcard ids exp.at (exp.note $ exp.at)
+let var_from_exp ?(wildcard = false) (metavars : typ TIdMap.t) (ids : IdSet.t)
+    (exp : exp) : Var.t =
+  var_from_typ ~wildcard metavars ids exp.at (exp.note $ exp.at)
 
-let fresh_exp_from_typ (ids : IdSet.t) (typ : typ) : exp * IdSet.t =
-  let id_base, typ_base, iters = fresh_var_from_typ ids typ.at typ in
-  let ids = IdSet.add id_base ids in
-  let exp_base = VarE id_base $$ (typ_base.at, typ_base.it) in
-  let exp_match, _ =
-    List.fold_left
-      (fun (exp_match, iters) iter ->
-        let typ = IterT (exp_match.note $ exp_match.at, iter) in
-        let var = (id_base, typ_base, iters) in
-        let iterexp = (iter, [ var ]) in
-        let exp_match = IterE (exp_match, iterexp) $$ (exp_match.at, typ) in
-        (exp_match, iters @ [ iter ]))
-      (exp_base, []) iters
-  in
-  (exp_match, ids)
+let exp_from_typ ~(dim : bool) (metavars : typ TIdMap.t) (ids : IdSet.t)
+    (typ : typ) : IdSet.t * exp =
+  let id, typ, iters = var_from_typ metavars ids typ.at typ in
+  let ids = IdSet.add id ids in
+  let exp = Var.as_exp ~dim (id, typ, iters) in
+  (ids, exp)

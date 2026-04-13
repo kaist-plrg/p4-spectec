@@ -50,7 +50,7 @@ let collect_itervars (bounds : VEnv.t) (occurs : VEnv.t) (iter : iter) :
   occurs |> VEnv.bindings
   |> List.filter_map (fun (id, typ) ->
          let typ_expect = VEnv.find id bounds in
-         if Typ.sub (Typ.add_iter iter typ) typ_expect then
+         if Typdim.sub (Typdim.add_iter iter typ) typ_expect then
            let typ, iters = typ in
            Some (id, typ, iters)
          else None)
@@ -58,7 +58,7 @@ let collect_itervars (bounds : VEnv.t) (occurs : VEnv.t) (iter : iter) :
 let is_binding_itervar (binds : VEnv.t)
     ((id, typ, iters) : id * typ * iter list) : bool =
   match VEnv.find_opt id binds with
-  | Some (typ_bind, iters_bind) -> Typ.sub (typ, iters) (typ_bind, iters_bind)
+  | Some (typ_bind, iters_bind) -> Typdim.sub (typ, iters) (typ_bind, iters_bind)
   | None -> false
 
 (* Expression *)
@@ -354,12 +354,14 @@ let analyze (annotate : VEnv.t -> 'a -> VEnv.t * 'a) (bounds : VEnv.t)
   VEnv.iter
     (fun id typ ->
       let typ_expect = VEnv.find id bounds in
-      if not (Typ.equiv typ typ_expect) then
+      if not (Typdim.equiv typ typ_expect) then
         error id.at
           (Format.asprintf
              "mismatched iteration dimensions for identifier `%s`: expected \
               %s, but got %s"
-             (Id.to_string id) (Typ.to_string typ_expect) (Typ.to_string typ)))
+             (Id.to_string id)
+             (Typdim.to_string typ_expect)
+             (Typdim.to_string typ)))
     occurs;
   construct
 

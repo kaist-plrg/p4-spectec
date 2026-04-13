@@ -1,5 +1,4 @@
 open Lang
-module Value = Dynamic.Value
 module Dep = Testgen_neg.Dep
 module ICov_single = Coverage.Instr.Single
 module ICov_multi = Coverage.Instr.Multi

@@ -1,8 +1,8 @@
 open Domain.Lib
 open Lang
 open Il
-module Typ = Runtime.Static.Typ
-open Runtime.Static.Envs
+open Runtime.Static
+open Envs
 open Error
 open Bind
 open Util.Source
@@ -245,7 +245,7 @@ and analyze_let_prem (dctx : Dctx.t) (exp_l : exp) (binds_l : BEnv.t)
 and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem) (iter : iter)
     : Dctx.t * VEnv.t * prem * prem list =
   let dctx, venv, prem, prems = analyze_prem dctx prem in
-  let venv = VEnv.map (Typ.add_iter iter) venv in
+  let venv = VEnv.map (Typdim.add_iter iter) venv in
   let prems = List.map (fun prem -> IterPr (prem, (iter, [], [])) $ at) prems in
   let prem = IterPr (prem, (iter, [], [])) $ at in
   (dctx, venv, prem, prems)

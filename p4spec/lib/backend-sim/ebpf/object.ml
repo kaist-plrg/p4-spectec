@@ -1,8 +1,8 @@
-module Value = Runtime.Sim.Value
-open Interface.Wrap
-open Interface.Unwrap
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Interface.Unpack
 open Error
+open Util.Source
 
 (* Extern objects *)
 
@@ -28,7 +28,7 @@ module CounterArray = struct
      CounterArray(bit<32> max_index, bool sparse); *)
 
   let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-    let values_arg = unwrap_list_v value_args in
+    let values_arg = Value.Get.list value_args in
     let value_max_index, value_sparse =
       match values_arg with
       | [ value_max_index; value_sparse ] -> (value_max_index, value_sparse)
@@ -62,8 +62,9 @@ module CounterArray = struct
     in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+      let value_eps = Value.Make.opt typ None in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -89,8 +90,11 @@ module CounterArray = struct
     in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (counter_array, value_ctx, value_sto, value_callResult)
 end

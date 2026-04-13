@@ -10,11 +10,21 @@ let eq_typ (typ_a : typ) (typ_b : typ) : bool = eq_typ typ_a typ_b
 
 let eq_exp (exp_a : exp) (exp_b : exp) : bool = eq_exp exp_a exp_b
 
+let eq_exps (exps_a : exp list) (exps_b : exp list) : bool =
+  eq_exps exps_a exps_b
+
 let eq_iterexp (iterexp_a : iterexp) (iterexp_b : iterexp) : bool =
   eq_iterexp iterexp_a iterexp_b
 
 let eq_iterexps (iterexps_a : iterexp list) (iterexps_b : iterexp list) : bool =
   eq_iterexps iterexps_a iterexps_b
+
+(* Arguments *)
+
+let eq_arg (arg_a : arg) (arg_b : arg) : bool = eq_arg arg_a arg_b
+
+let eq_args (args_a : arg list) (args_b : arg list) : bool =
+  eq_args args_a args_b
 
 (* Patterns *)
 
@@ -89,3 +99,10 @@ and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =
 
 and eq_block (block_a : block) (block_b : block) : bool =
   eq_instrs block_a block_b
+
+and eq_elseblock_opt (elseblock_opt_a : elseblock option)
+    (elseblock_opt_b : elseblock option) : bool =
+  match (elseblock_opt_a, elseblock_opt_b) with
+  | Some block_a, Some block_b -> eq_block block_a block_b
+  | None, None -> true
+  | _ -> false

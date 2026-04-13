@@ -1,9 +1,9 @@
-module Value = Runtime.Sim.Value
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Interface.Pack
-open Interface.Wrap
-open Interface.Unwrap
 open Interface.Unpack
 open Error
+open Util.Source
 
 (* Extern objects *)
 
@@ -52,7 +52,7 @@ module Counter = struct
      counter(bit<32> size, CounterType type); *)
 
   let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-    let values_arg = unwrap_list_v value_args in
+    let values_arg = Value.Get.list value_args in
     let value_size, value_type =
       match values_arg with
       | [ value_size; value_type ] -> (value_size, value_type)
@@ -130,8 +130,11 @@ module Counter = struct
     in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -158,7 +161,7 @@ module Register = struct
      register(bit<32> size); *)
 
   let init (value_type_args : Value.t) (value_args : Value.t) : t =
-    let values_type_arg = unwrap_list_v value_type_args in
+    let values_type_arg = Value.Get.list value_type_args in
     let value_type =
       match values_type_arg with
       | [ value_type ] -> value_type
@@ -168,7 +171,7 @@ module Register = struct
                "register constructor expects 1 type argument, but %d were given"
                (List.length values_type_arg))
     in
-    let values_arg = unwrap_list_v value_args in
+    let values_arg = Value.Get.list value_args in
     let value_size =
       match values_arg with
       | [ value_size ] -> value_size
@@ -213,8 +216,11 @@ module Register = struct
       Spec.Rel.lvalue_write_var_local value_ctx value_arch "result" value
     in
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (reg, value_ctx, value_arch, value_callResult)
 
@@ -253,8 +259,11 @@ module Register = struct
     in
     let reg = { reg with values } in
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (reg, value_ctx, value_arch, value_callResult)
 end
@@ -302,7 +311,7 @@ module DirectCounter = struct
      direct_counter(CounterType type); *)
 
   let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-    let values_arg = unwrap_list_v value_args in
+    let values_arg = Value.Get.list value_args in
     let value_type =
       match values_arg with
       | [ value_type ] -> value_type
@@ -353,8 +362,11 @@ module DirectCounter = struct
     in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (counter, value_ctx, value_arch, value_callResult)
 end
@@ -390,7 +402,7 @@ module DirectMeter = struct
      direct_meter(MeterType type); *)
 
   let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-    let values_arg = unwrap_list_v value_args in
+    let values_arg = Value.Get.list value_args in
     let value_type =
       match values_arg with
       | [ value_type ] -> value_type
@@ -448,8 +460,12 @@ module DirectMeter = struct
     in
     (* Create call result *)
     let value_callResult =
-      let value_eps = wrap_opt_v "value" None in
-      [ Term "RETURN"; NT value_eps ] #@ "returnResult"
+      let value_eps =
+        let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
+
+        Value.Make.opt typ None
+      in
+      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
     in
     (meter, value_ctx, value_sto, value_callResult)
 end

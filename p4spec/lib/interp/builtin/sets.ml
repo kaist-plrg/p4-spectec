@@ -1,7 +1,8 @@
 open Domain
 open Lang
 open Il
-module Value = Runtime.Dynamic_Il.Value
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Error
 open Util.Source
 
@@ -13,30 +14,25 @@ type set = VSet.t
 
 (* Conversion between meta-sets and OCaml lists *)
 
+let mixop_set = Value.Make.mixop_of "`{ k }"
+
 let set_of_value (value : value) : set =
   match value.it with
-  | CaseV
-      ( [ [ { it = Atom.LBrace; _ } ]; [ { it = Atom.RBrace; _ } ] ],
-        [ value_elements ] ) ->
-      let values_element = Value.get_list value_elements in
-      VSet.of_list values_element
+  | CaseV (mixop, [ value_elements ]) when Mixop.eq mixop mixop_set ->
+      value_elements |> Value.Get.list |> VSet.of_list
   | _ ->
       error no_region
         (Format.asprintf "expected a set, but got %s" (Value.to_string value))
 
 let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
   let values_element = VSet.elements set in
-  let value_elements =
-    let typ = Il.IterT (typ_key, Il.List) in
-    Value.make typ (ListV values_element)
-  in
+  let typ_list = Typ.Make.list typ_key in
+  let value_elements = Value.Make.list typ_list values_element in
   add value_elements;
   let value =
-    let typ = Il.VarT ("set" $ no_region, [ typ_key ]) in
-    Value.make typ
-      (CaseV
-         ( [ [ Atom.LBrace $ no_region ]; [ Atom.RBrace $ no_region ] ],
-           [ value_elements ] ))
+    let typ = Typ.Make.var ("set" $ no_region) [ typ_key ] in
+    let valuecase = (mixop_set, [ value_elements ]) in
+    Value.Make.case typ valuecase
   in
   add value;
   value
@@ -67,8 +63,8 @@ let unions_set (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let typ_key = Extract.one at targs in
   let value_sets = Extract.one at values_input in
-  let sets = Value.get_list value_sets |> List.map set_of_value in
-  List.fold_left VSet.union VSet.empty sets |> value_of_set add typ_key
+  let sets = value_sets |> Value.Get.list |> List.map set_of_value in
+  sets |> List.fold_left VSet.union VSet.empty |> value_of_set add typ_key
 
 (* dec $diff_set<K>(set<K>, set<K>) : set<K> *)
 
@@ -88,7 +84,7 @@ let sub_set (add : value -> unit) (at : region) (targs : targ list)
   let value_set_a, value_set_b = Extract.two at values_input in
   let set_a = set_of_value value_set_a in
   let set_b = set_of_value value_set_b in
-  let value = Value.make Il.BoolT (BoolV (VSet.subset set_a set_b)) in
+  let value = Value.Make.bool (VSet.subset set_a set_b) in
   add value;
   value
 
@@ -100,6 +96,6 @@ let eq_set (add : value -> unit) (at : region) (targs : targ list)
   let value_set_a, value_set_b = Extract.two at values_input in
   let set_a = set_of_value value_set_a in
   let set_b = set_of_value value_set_b in
-  let value = Value.make Il.BoolT (BoolV (VSet.equal set_a set_b)) in
+  let value = Value.Make.bool (VSet.equal set_a set_b) in
   add value;
   value

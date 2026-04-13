@@ -83,18 +83,18 @@ type pattern = Il.pattern
 type path = Il.path [@@deriving yojson]
 type path' = Il.path'
 
+(* Type parameters *)
+
+type tparam = Il.tparam [@@deriving yojson]
+type tparam' = Il.tparam'
+
 (* Parameters *)
 
 type param = param' phrase [@@deriving yojson]
 and param' =
   | ExpP of typ * exp
-  | DefP of id
+  | DefP of id * tparam list * param list * typ
   [@@deriving yojson]
-
-(* Type parameters *)
-
-type tparam = Il.tparam [@@deriving yojson]
-type tparam' = Il.tparam'
 
 (* Arguments *)
 
@@ -106,17 +106,16 @@ type arg' = Il.arg'
 type targ = Il.targ [@@deriving yojson]
 type targ' = Il.targ'
 
-(* Phantoms *)
+(* Dangling *)
 
-and pid = int
-and phantom = pid
+and dangle = bool
 
 (* Holding conditions *)
 
 and holdcase =
   | BothH of block * block
-  | HoldH of block * phantom option
-  | NotHoldH of block * phantom option
+  | HoldH of block * dangle
+  | NotHoldH of block * dangle
 [@@deriving yojson]
 
 (* Case analysis *)
@@ -140,9 +139,9 @@ and inote = { iid : iid } [@@deriving yojson]
 and instr = (instr', inote) note_phrase [@@deriving yojson]
 and instr' =
   (* Branching instructions *)
-  | IfI of exp * iterexp list * block * phantom option
+  | IfI of exp * iterexp list * block * dangle
   | HoldI of id * notexp * iterexp list * holdcase
-  | CaseI of exp * case list * phantom option 
+  | CaseI of exp * case list * dangle
   (* Aggregate instructions *)
   | GroupI of id * rel_signature * exp list * block
   (* Binding instructions *)
@@ -213,6 +212,8 @@ and def' =
   | ExternTypD of id * hint list
   (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
   | TypD of id * tparam list * deftyp * hint list
+  (* `var` id `:` typ hint* *)
+  | VarD of id * typ * hint list
   (* `extern` `relation` rel *)
   | ExternRelD of externrel
   (* `relation` rel *)

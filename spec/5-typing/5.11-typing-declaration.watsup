@@ -176,9 +176,10 @@ rulegroup ObjectDecl_ok {
     -- Type_ok: LOCAL TC_3 |- typeOrVoid : typeIR_ret `# eps
     ---- ;; check body
     -- if TC_5 = TC_4[ .LOCAL.KIND = (EXTERN_METHOD `: typeIR_ret) ]
-    -- Block_ok: TC_5 CONT NOLOOP |- blockStatement : _ f blockStatementIR
+    -- if TC_6 = TC_5[ .CONTROL = CONT][ .LOOP = OUT ]
+    -- Block_ok: TC_6 |- blockStatement : TC_7 blockStatementIR
     ---- ;; check that the function returns on all paths, if it is not void
-    -- if f = RET \/ typeIR_ret = VOID
+    -- if TC_7.CONTROL = RET \/ typeIR_ret = VOID
     ---- ;; add function
     -- if callableId = $callableId(name, parameterList)
     -- if nameIR = $name(name)
@@ -403,7 +404,7 @@ rule Decl_ok/instantiation:
 rule FuncDecl_ok:
   p TC_0 |- annotationList
             (typeOrVoid name typeParameterListOpt `( parameterList )) blockStatement
-          : TC_4 functionDeclarationIR
+          : TC_6 functionDeclarationIR
   ---- ;; check type parameters
   -- TypeParameterListOpt_ok:
       LOCAL TC_0 |- typeParameterListOpt : TC_1 typeId_expl*
@@ -415,9 +416,10 @@ rule FuncDecl_ok:
                   : TC_2 parameterIR* `# typeId_impl*
   ---- ;; check body
   -- if TC_3 = TC_2[ .LOCAL.KIND = FUNCTION `: typeIR_ret ]
-  -- Block_ok: TC_3 CONT NOLOOP |- blockStatement : _ f blockStatementIR
+  -- if TC_4 = TC_3[ .CONTROL = CONT][ .LOOP = OUT ]
+  -- Block_ok: TC_4 |- blockStatement : TC_5 blockStatementIR
   ---- ;; check that the function returns on all paths, if it is not void
-  -- if f = RET \/ typeIR_ret = VOID
+  -- if TC_5.CONTROL = RET \/ typeIR_ret = VOID
   ---- ;; add function to the context
   -- if callableId = $callableId(name, parameterList)
   -- if nameIR = $name(name)
@@ -426,7 +428,7 @@ rule FuncDecl_ok:
           `< typeId_expl* `, typeId_impl* >
           `( parameterIR* ) `: typeIR_ret
   -- CallableTypeDef_wf: $bound(p, TC_0) |- definedFunctionTypeDefIR
-  -- if TC_4
+  -- if TC_6
       = $add_callableDef_overload_t(
           p, TC_0, callableId, definedFunctionTypeDefIR)
   ---- ;; create IR
@@ -448,20 +450,21 @@ rule Decl_ok/functionDeclaration:
 
 rule ActionDecl_ok:
   p TC_0 |- annotationList ACTION name `( parameterList ) blockStatement
-          : TC_3 actionDeclarationIR
+          : TC_4 actionDeclarationIR
   ---- ;; set local context
   -- if TC_1 = TC_0 [ .LOCAL.KIND = ACTION ]
+  -- if TC_2 = TC_1 [ .CONTROL = CONT ][ .LOOP = OUT ]
   ---- ;; check parameters
   -- ParameterList_ok:
-      LOCAL TC_1 |- parameterList : TC_2 parameterIR* `# eps
+      LOCAL TC_2 |- parameterList : TC_3 parameterIR* `# eps
   ---- ;; check body
-  -- Block_ok: TC_2 CONT NOLOOP |- blockStatement : _ _ blockStatementIR
+  -- Block_ok: TC_3 |- blockStatement : _ blockStatementIR
   ---- ;; add action to the context
   -- if callableId = $callableId(name, parameterList)
   -- if nameIR = $name(name)
   -- if actionTypeDefIR = annotationList ACTION nameIR `( parameterIR* )
   -- CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR
-  -- if TC_3 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR)
+  -- if TC_4 = $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR)
   ---- ;; create IR
   -- if actionDeclarationIR
       = annotationList ACTION nameIR `( parameterIR* ) blockStatementIR
@@ -703,7 +706,7 @@ rule Decl_ok/controlDeclaration:
   TC_0 |- annotationList CONTROL name typeParameterListOpt
            `( parameterList ) constructorParameterListOpt
            `{ controlLocalDeclarationList APPLY controlBody }
-        : TC_6 controlDeclarationIR
+        : TC_7 controlDeclarationIR
   ---- ;; set block context
   -- if TC_1 = TC_0[ .BLOCK.KIND = CONTROL ]
   ---- ;; a parser declaration cannot be generic
@@ -722,8 +725,9 @@ rule Decl_ok/controlDeclaration:
             : TC_4 controlLocalDeclarationIR*
   ---- ;; set local context
   -- if TC_5 = TC_4[ .LOCAL.KIND = CONTROL_APPLY_METHOD ]
+  -- if TC_6 = TC_5[ .CONTROL = CONT][ .LOOP = OUT ]
   ---- ;; check control body
-  -- Block_ok: TC_5 CONT NOLOOP |- controlBody : _ _ controlBodyIR
+  -- Block_ok: TC_6 |- controlBody : _ controlBodyIR
   ---- ;; check apply method
   -- if callableTypeDefIR = CONTROL_APPLY `( parameterIR* )
   -- CallableTypeDef_wf: $bound(BLOCK, TC_1) |- callableTypeDefIR
@@ -738,7 +742,7 @@ rule Decl_ok/controlDeclaration:
       = CONSTRUCTOR `< eps `, eps >
           `( constructorParameterIR* ) `: typeIR_control
   -- ConstructorTypeDef_wf: $bound(GLOBAL, TC_0) |- constructorTypeDefIR
-  -- if TC_6 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
+  -- if TC_7 = $add_constructorDef_t(TC_0, constructorId, constructorTypeDefIR)
   ---- ;; create IR
   -- if controlDeclarationIR
       = annotationList CONTROL nameIR `< eps `, eps >

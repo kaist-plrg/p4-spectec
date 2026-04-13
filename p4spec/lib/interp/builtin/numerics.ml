@@ -1,7 +1,8 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime.Dynamic_Il.Value
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Error
 open Util.Source
 
@@ -12,15 +13,13 @@ let max_bit_width = Bigint.of_int 2048
 (* Conversion between meta-bits and OCaml bool array *)
 
 let bits_of_value (value : value) : bool array =
-  value |> Value.get_list |> List.map Value.get_bool |> Array.of_list
+  value |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
 
 let value_of_bits (add : value -> unit) (bits : bool array) : value =
   let value =
-    let typ = VarT ("bits" $ no_region, []) in
-    let values_bit =
-      Array.to_list bits |> List.map (fun b -> Value.make BoolT (BoolV b))
-    in
-    Value.make typ (ListV values_bit)
+    let typ = Typ.Make.var ("bit" $ no_region) [] in
+    let values_bit = Array.to_list bits |> List.map Value.Make.bool in
+    Value.Make.list typ values_bit
   in
   add value;
   value
@@ -28,10 +27,10 @@ let value_of_bits (add : value -> unit) (bits : bool array) : value =
 (* Conversion between meta-numerics and OCaml numerics *)
 
 let bigint_of_value (value : value) : Bigint.t =
-  value |> Value.get_num |> Num.to_int
+  value |> Value.Get.num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value = Value.make (Il.NumT `IntT) (NumV (`Int i)) in
+  let value = Value.Make.int i in
   add value;
   value
 

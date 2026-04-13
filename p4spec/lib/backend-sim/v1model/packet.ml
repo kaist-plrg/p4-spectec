@@ -1,6 +1,6 @@
 open Interface.Pack
 open Interface.Unpack
-module Value = Runtime.Sim.Value
+module Value = Runtime.Value
 
 (* Packet clones *)
 

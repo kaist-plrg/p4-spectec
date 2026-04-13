@@ -65,8 +65,7 @@ rulegroup Stmt_eval/assignmentStatementIR {
                        : EC_2 ARCH_2 (`` value)
     ---- ;; perform assignment
     -- Lvalue_write:
-        p EC_2 ARCH_2 |- storageReference -> value
-                       : EC_3
+        p EC_2 ARCH_2 |- storageReference := value : EC_3
 
   rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-cont:
     p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
@@ -88,8 +87,7 @@ rulegroup Stmt_eval/assignmentStatementIR {
     -- if value_new = $bin_op(binop, value_lvalue, value)
     ---- ;; perform assignment
     -- Lvalue_write:
-        p EC_2 ARCH_2 |- storageReference -> value_new
-                       : EC_3
+        p EC_2 ARCH_2 |- storageReference := value_new : EC_3
 
 }
 
@@ -540,7 +538,7 @@ relation ForCollectionExpr_eval:
 
 ;;;;;; typedExpressionIR
 
-rulegroup ForCollectionExpr_eval {
+rulegroup ForCollectionExpr_eval/typedExpressionIR {
 
   rule ForCollectionExpr_eval/abort:
     EC_0 ARCH_0 |- typedExpressionIR

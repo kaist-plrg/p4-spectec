@@ -1,13 +1,13 @@
-open Interface.Wrap
-open Interface.Unwrap
 open Interface.Unpack
 open Interface.Pack
 open Interface.Flatten
-module Value = Runtime.Sim.Value
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
 open State
 open Error
+open Util.Source
 
 module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
@@ -58,30 +58,44 @@ struct
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
       object_state =
     Spec.Func.find_objectState_e value_arch value_objectId
-    |> unwrap_extern_v |> object_state_of_yojson |> Result.get_ok
+    |> Value.Get.extern |> object_state_of_yojson |> Result.get_ok
 
   let get_ingress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
-    let value_objectId = wrap_list_v "id" [ wrap_text_v "ingress_packet_in" ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "ingress_packet_in" ]
+    in
     match get_object_state value_arch value_objectId with
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "ingress_packet_in extern not found"
 
   let get_ingress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
     let value_objectId =
-      wrap_list_v "id" [ wrap_text_v "ingress_packet_out" ]
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "ingress_packet_out" ]
     in
     match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "ingress_packet_out extern not found"
 
   let get_egress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
-    let value_objectId = wrap_list_v "id" [ wrap_text_v "egress_packet_in" ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "egress_packet_in" ]
+    in
     match get_object_state value_arch value_objectId with
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "egress_packet_in extern not found"
 
   let get_egress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
-    let value_objectId = wrap_list_v "id" [ wrap_text_v "egress_packet_out" ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "egress_packet_out" ]
+    in
     match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "egress_packet_out extern not found"
@@ -89,8 +103,12 @@ struct
   let get_register (value_arch : Value.t) (reg_name : string) :
       Object.Register.t =
     let names = String.split_on_char '.' reg_name in
-    let values_name = List.map wrap_text_v names in
-    let value_objectId = wrap_list_v "id" values_name in
+    let values_name = List.map Value.Make.text names in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        values_name
+    in
     match get_object_state value_arch value_objectId with
     | Register register -> register
     | _ -> error_no_region ("Register extern " ^ reg_name ^ " not found")
@@ -98,10 +116,15 @@ struct
   let put_register (value_arch : Value.t) (reg_name : string)
       (reg : Object.Register.t) : Value.t =
     let names = String.split_on_char '.' reg_name in
-    let values_name = List.map wrap_text_v names in
-    let value_objectId = wrap_list_v "id" values_name in
+    let values_name = List.map Value.Make.text names in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        values_name
+    in
     let value_reg =
-      Register reg |> object_state_to_yojson |> wrap_extern_v "objectState"
+      Register reg |> object_state_to_yojson
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     Spec.Func.update_objectState_e value_arch value_objectId value_reg
 
@@ -114,31 +137,36 @@ struct
           (value_name, value_type_args, value_args)
       | _ -> error_no_region "unexpected number of arguments to extern init"
     in
-    let name_extern = unwrap_text_v value_name_extern in
+    let name_extern = Value.Get.text value_name_extern in
     match name_extern with
     | "Counter" ->
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
-        counter |> object_state_to_yojson |> wrap_extern_v "objectState"
+        counter |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Register" ->
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
-        register |> object_state_to_yojson |> wrap_extern_v "objectState"
+        register |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Hash" ->
         let hash = Object.HashExtern.init value_type_args value_args in
         let hash = Hash hash in
-        hash |> object_state_to_yojson |> wrap_extern_v "objectState"
+        hash |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "InternetChecksum" ->
         let checksum =
           Object.InternetChecksum.init value_type_args value_args
         in
         let checksum = InternetChecksum checksum in
-        checksum |> object_state_to_yojson |> wrap_extern_v "objectState"
+        checksum |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Meter" ->
         let meter = Object.Meter.init value_type_args value_args in
         let meter = Meter meter in
-        meter |> object_state_to_yojson |> wrap_extern_v "objectState"
-    | _ -> wrap_extern_v "objectState" `Null
+        meter |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+    | _ -> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -150,9 +178,9 @@ struct
             "unexpected number of arguments to local compile-time known extern \
              function call"
     in
-    let name_func = unwrap_text_v value_name_func in
+    let name_func = Value.Get.text value_name_func in
     let names_param =
-      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
     in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->
@@ -175,9 +203,9 @@ struct
           error_no_region
             "unexpected number of arguments to extern function call"
     in
-    let name_func = unwrap_text_v value_name_func in
+    let name_func = Value.Get.text value_name_func in
     let names_param =
-      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
     in
     let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
@@ -214,9 +242,9 @@ struct
           error_no_region "unexpected number of arguments to extern method call"
     in
     let obj = get_object_state value_arch value_objectId in
-    let name_method = unwrap_text_v value_name_method in
+    let name_method = Value.Get.text value_name_method in
     let names_param =
-      value_names_param |> unwrap_list_v |> List.map unwrap_text_v
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
     in
     let extern, value_ctx, value_arch, value_callResult =
       match (obj, name_method, names_param) with
@@ -338,7 +366,7 @@ struct
           (meter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
-            value_objectId |> unwrap_list_v |> List.map unwrap_text_v
+            value_objectId |> Value.Get.list |> List.map Value.Get.text
             |> String.concat "."
           in
           error_no_region
@@ -347,7 +375,8 @@ struct
             ^ ")")
     in
     let value_obj =
-      extern |> object_state_to_yojson |> wrap_extern_v "objectState"
+      extern |> object_state_to_yojson
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId value_obj
@@ -453,10 +482,15 @@ struct
       | Ingress -> "ingress_packet_in"
       | Egress -> "egress_packet_in"
     in
-    let value_objectId = wrap_list_v "id" [ wrap_text_v id_packet_in ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text id_packet_in ]
+    in
     let value_packet_in =
       let packet_in = PacketIn packet_in in
-      packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+      packet_in |> object_state_to_yojson
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     modify (fun (_, value_arch, txs) ->
         let value_arch =
@@ -473,10 +507,13 @@ struct
       in
       let packet_in = PacketIn packet_in in
       let value_objectId =
-        wrap_list_v "id" [ wrap_text_v "ingress_packet_in" ]
+        Value.Make.list
+          (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+          [ Value.Make.text "ingress_packet_in" ]
       in
       let value_packet_in =
-        packet_in |> object_state_to_yojson |> wrap_extern_v "objectState"
+        packet_in |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_in
     in
@@ -488,10 +525,13 @@ struct
       let packet_out = Core.Object.PacketOut.init () in
       let packet_out = PacketOut packet_out in
       let value_objectId =
-        wrap_list_v "id" [ wrap_text_v "ingress_packet_out" ]
+        Value.Make.list
+          (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+          [ Value.Make.text "ingress_packet_out" ]
       in
       let value_packet_out =
-        packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
+        packet_out |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
     in
@@ -503,10 +543,13 @@ struct
       let packet_out = Core.Object.PacketOut.init () in
       let packet_out = PacketOut packet_out in
       let value_objectId =
-        wrap_list_v "id" [ wrap_text_v "egress_packet_out" ]
+        Value.Make.list
+          (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+          [ Value.Make.text "egress_packet_out" ]
       in
       let value_packet_out =
-        packet_out |> object_state_to_yojson |> wrap_extern_v "objectState"
+        packet_out |> object_state_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
     in
@@ -727,9 +770,13 @@ struct
     let value_egress_packet_in =
       PacketIn (Core.Object.PacketIn.init egress_packet_in)
       |> object_state_to_yojson
-      |> wrap_extern_v "objectState"
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
-    let value_objectId = wrap_list_v "id" [ wrap_text_v "egress_packet_in" ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "egress_packet_in" ]
+    in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId
         value_egress_packet_in
@@ -754,10 +801,12 @@ struct
           let value_egress_packet_in =
             PacketIn (Core.Object.PacketIn.init egress_packet_in)
             |> object_state_to_yojson
-            |> wrap_extern_v "objectState"
+            |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
           in
           let value_objectId =
-            wrap_list_v "id" [ wrap_text_v "egress_packet_in" ]
+            Value.Make.list
+              (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+              [ Value.Make.text "egress_packet_in" ]
           in
           Spec.Func.update_objectState_e value_arch value_objectId
             value_egress_packet_in
@@ -795,10 +844,13 @@ struct
               let egress_packet_in = get_ingress_packet_in value_arch in
               let value_egress_packet_in =
                 PacketIn egress_packet_in |> object_state_to_yojson
-                |> wrap_extern_v "objectState"
+                |> Value.Make.extern
+                     (Typ.Make.var ("objectState" $ no_region) [])
               in
               let value_objectId =
-                wrap_list_v "id" [ wrap_text_v "egress_packet_in" ]
+                Value.Make.list
+                  (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+                  [ Value.Make.text "egress_packet_in" ]
               in
               Spec.Func.update_objectState_e value_arch value_objectId
                 value_egress_packet_in
@@ -846,10 +898,13 @@ struct
               let value_egress_packet_in =
                 PacketIn (Core.Object.PacketIn.init egress_packet_in)
                 |> object_state_to_yojson
-                |> wrap_extern_v "objectState"
+                |> Value.Make.extern
+                     (Typ.Make.var ("objectState" $ no_region) [])
               in
               let value_objectId =
-                wrap_list_v "id" [ wrap_text_v "egress_packet_in" ]
+                Value.Make.list
+                  (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+                  [ Value.Make.text "egress_packet_in" ]
               in
               Spec.Func.update_objectState_e value_arch_original value_objectId
                 value_egress_packet_in
@@ -891,9 +946,13 @@ struct
     let value_ingress_packet_in =
       PacketIn (Core.Object.PacketIn.init ingress_packet_in)
       |> object_state_to_yojson
-      |> wrap_extern_v "objectState"
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
-    let value_objectId = wrap_list_v "id" [ wrap_text_v "ingress_packet_in" ] in
+    let value_objectId =
+      Value.Make.list
+        (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
+        [ Value.Make.text "ingress_packet_in" ]
+    in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId
         value_ingress_packet_in
@@ -930,7 +989,11 @@ struct
     (* Setup packet_in objects *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = object_state_to_yojson packet_in in
-    let value_packet_in_state = wrap_extern_v "objectState" packet_in_state in
+    let value_packet_in_state =
+      Value.Make.extern
+        (Typ.Make.var ("objectState" $ no_region) [])
+        packet_in_state
+    in
     let* value_ctx, value_arch, txs = get in
     let value_ctx, value_arch =
       Spec.Rel.psa_ingress_init_packet_in value_ctx value_arch
@@ -943,7 +1006,11 @@ struct
     (* Setup packet_out objects *)
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = object_state_to_yojson packet_out in
-    let value_packet_out_state = wrap_extern_v "objectState" packet_out_state in
+    let value_packet_out_state =
+      Value.Make.extern
+        (Typ.Make.var ("objectState" $ no_region) [])
+        packet_out_state
+    in
     let value_ctx, value_arch =
       Spec.Rel.psa_ingress_init_packet_out value_ctx value_arch
         value_packet_out_state
@@ -968,7 +1035,7 @@ struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
+      | Some (_, [ "REJECT" ], [ value_error ]) ->
           Spec.Rel.lvalue_write_dot_global value_ctx value_arch
             "ingress_input_metadata" "parser_error" value_error
       | Some _ -> value_ctx
@@ -1009,7 +1076,7 @@ struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       match flatten_case_v_opt value_parser_result with
-      | Some (_, [ [ "REJECT" ]; [] ], [ value_error ]) ->
+      | Some (_, [ "REJECT" ], [ value_error ]) ->
           Spec.Rel.lvalue_write_dot_global value_ctx value_arch
             "egress_input_metadata" "parser_error" value_error
       | Some _ -> value_ctx

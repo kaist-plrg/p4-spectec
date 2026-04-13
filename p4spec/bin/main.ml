@@ -9,8 +9,16 @@ exception CommandError of string
 
 (* Operations *)
 
+let expand_spec filenames =
+  List.concat_map
+    (fun filename ->
+      if Sys_unix.is_directory_exn filename then
+        Util.Filesys.collect_files ~suffix:".watsup" filename
+      else [ filename ])
+    filenames
+
 let frontend filenames_spec =
-  filenames_spec |> List.concat_map Frontend.Parse.parse_file
+  filenames_spec |> expand_spec |> List.concat_map Frontend.Parse.parse_file
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
@@ -130,8 +138,8 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
         let wellformed, welltyped =
           match program_result with
           | Pass _ -> (true, true)
-          | Fail (`Syntax _) -> (true, false)
-          | Fail (`Runtime _) -> (false, false)
+          | Fail (`Syntax _) -> (false, false)
+          | Fail (`Runtime _) -> (true, false)
         in
         Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
           welltyped cover_single)
@@ -254,6 +262,15 @@ let run_command =
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
      and mode =
        Command.Param.choose_one
          [
@@ -276,13 +293,22 @@ let run_command =
              [ (module PH : Inst.Handler.HANDLER) ]
            else []
          in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
+         in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
          let result = Driver.run_program relname includes_p4 filename_p4 in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -303,6 +329,15 @@ let sim_command =
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
      and mode =
        Command.Param.choose_one
          [
@@ -325,6 +360,15 @@ let sim_command =
              [ (module PH : Inst.Handler.HANDLER) ]
            else []
          in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
+         in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
          let result =
@@ -333,7 +377,7 @@ let sim_command =
          Inst.Hook.finish ();
          match result with
          | Pass -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "sytax error: %s\n" msg
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -464,7 +508,7 @@ let run_testgen_command =
          ~doc:"randomize AST selection when no derivations exist"
      and strict =
        flag "-strict" no_arg
-         ~doc:"cover a new phantom only if it was intended by a mutation"
+         ~doc:"cover a new dangling only if it was intended by a mutation"
      in
      fun () ->
        try
@@ -515,12 +559,12 @@ let run_testgen_debug_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and debugdir =
        flag "-debug" (required string) ~doc:"directory for debug files"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
+     and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
        try
          let spec_sl = structure filenames_spec in
-         Backend_testgen_neg.Derive.debug_phantom spec_sl relname includes_p4
-           filename_p4 debugdir pid
+         Backend_testgen_neg.Derive.debug_dangling spec_sl relname includes_p4
+           filename_p4 debugdir iid
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) ->
@@ -539,7 +583,7 @@ let interesting_command =
          ~doc:"'interesting' if well-typed (default: ill-typed)"
      and check_close_miss =
        flag "-close" no_arg ~doc:"'interesting' if close-miss (default: hit)"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to test"
+     and iid = flag "-iid" (required int) ~doc:"dangling id to test"
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
@@ -552,7 +596,7 @@ let interesting_command =
          match result with
          | Pass _ ->
              if check_well_typed then (
-               let branch = Coverage.Dangling.Single.Cover.find pid cover in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -574,7 +618,7 @@ let interesting_command =
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch = Coverage.Dangling.Single.Cover.find pid cover in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";
@@ -615,7 +659,12 @@ let splice_command =
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | SpliceError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | ProseError (at, msg)
+       | SpliceError (at, msg) ->
+           Format.eprintf "%s\n" (string_of_error at msg);
            Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =

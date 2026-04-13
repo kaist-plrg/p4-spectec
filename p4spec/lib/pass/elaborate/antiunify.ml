@@ -1,14 +1,15 @@
 open Domain.Lib
 open Lang
 open Il
+module Type = Runtime.Type
 open Runtime.Static
 open Attempt
 open Util.Source
 
 (* Compute the anti-unified template by overlapping expressions *)
 
-let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
-    (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
+let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
+    (frees : IdSet.t) (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     (IdSet.t * IdSet.t * exp) attempt =
   let at, note = (exp_template.at, exp_template.note) in
   let fail =
@@ -24,20 +25,20 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
     | UpCastE (typ_template, exp_template), UpCastE (typ, exp)
       when Il.Eq.eq_typ typ_template typ ->
         let* frees, unifiers, exp_template =
-          overlap_exp tdenv frees unifiers exp_template exp
+          overlap_exp tdenv menv frees unifiers exp_template exp
         in
         let exp_template = UpCastE (typ_template, exp_template) $$ (at, note) in
         Ok (frees, unifiers, exp_template)
     | TupleE exps_template, TupleE exps ->
         let* frees, unifiers, exps_template =
-          overlap_exps tdenv frees unifiers exps_template exps
+          overlap_exps tdenv menv frees unifiers exps_template exps
         in
         let exp_template = TupleE exps_template $$ (at, note) in
         Ok (frees, unifiers, exp_template)
     | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
       when Il.Eq.eq_mixop mixop_template mixop ->
         let* frees, unifiers, exps_template =
-          overlap_exps tdenv frees unifiers exps_template exps
+          overlap_exps tdenv menv frees unifiers exps_template exps
         in
         let exp_template =
           CaseE (mixop_template, exps_template) $$ (at, note)
@@ -49,7 +50,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         if not (List.for_all2 Il.Eq.eq_atom atoms_template atoms) then fail
         else
           let* frees, unifiers, exps_template =
-            overlap_exps tdenv frees unifiers exps_template exps
+            overlap_exps tdenv menv frees unifiers exps_template exps
           in
           let expfields_template = List.combine atoms_template exps_template in
           let exp_template = StrE expfields_template $$ (at, note) in
@@ -61,52 +62,53 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
     | Ok (frees, unifiers, exp_template) -> Ok (frees, unifiers, exp_template)
     | Fail _ ->
         let typ_template = exp_template.note $ exp_template.at in
-        let plaintyp_template = typ_template |> Plaintyp.of_internal_typ in
-        let plaintyp = exp.note $ exp.at |> Plaintyp.of_internal_typ in
-        if not (Types.Equiv.equiv_plaintyp tdenv plaintyp_template plaintyp)
-        then fail
+        let typ = exp.note $ exp.at in
+        let find_typdef_opt tid = Envs.TDEnv.find_opt tid tdenv in
+        if not (Type.Equiv.equiv_typ find_typdef_opt typ_template typ) then fail
         else
           let id_fresh, typ_fresh, iter_fresh =
-            Fresh.fresh_var_from_typ frees exp_template.at typ_template
+            Fresh.var_from_typ menv frees exp_template.at typ_template
           in
           let frees = IdSet.add id_fresh frees in
           let unifiers = IdSet.add id_fresh unifiers in
-          let exp_template = Var.as_exp (id_fresh, typ_fresh, iter_fresh) in
+          let exp_template =
+            Var.as_exp ~dim:false (id_fresh, typ_fresh, iter_fresh)
+          in
           Ok (frees, unifiers, exp_template)
   in
   if Il.Eq.eq_exp exp_template exp then Ok (frees, unifiers, exp_template)
   else overlap_exp_unequal ()
 
-and overlap_exps (tdenv : Envs.TDEnv.t) (frees : IdSet.t) (unifiers : IdSet.t)
-    (exps_template : exp list) (exps : exp list) :
+and overlap_exps (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t) (frees : IdSet.t)
+    (unifiers : IdSet.t) (exps_template : exp list) (exps : exp list) :
     (IdSet.t * IdSet.t * exp list) attempt =
   match (exps_template, exps) with
   | [], [] -> Ok (frees, unifiers, [])
   | exp_template :: exps_template, exp :: exps ->
       let* frees, unifiers, exp_template =
-        overlap_exp tdenv frees unifiers exp_template exp
+        overlap_exp tdenv menv frees unifiers exp_template exp
       in
       let* frees, unifiers, exps_template =
-        overlap_exps tdenv frees unifiers exps_template exps
+        overlap_exps tdenv menv frees unifiers exps_template exps
       in
       Ok (frees, unifiers, exp_template :: exps_template)
   | _ ->
       fail no_region "cannot anti-unify expression lists of different lengths"
 
-let overlap_exp_group (tdenv : Envs.TDEnv.t) (frees : IdSet.t) (exps : exp list)
-    : IdSet.t * IdSet.t * exp =
+let overlap_exp_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
+    (frees : IdSet.t) (exps : exp list) : IdSet.t * IdSet.t * exp =
   let exp_template, exps = (List.hd exps, List.tl exps) in
   List.fold_left
     (fun (frees, unifiers, exp_template) exp ->
       let+ frees, unifiers, exp_template =
-        overlap_exp tdenv frees unifiers exp_template exp
+        overlap_exp tdenv menv frees unifiers exp_template exp
       in
       (frees, unifiers, exp_template))
     (frees, IdSet.empty, exp_template)
     exps
 
-let overlap_exps_group (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
-    (exps_group : exp list list) : IdSet.t * exp list =
+let overlap_exps_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
+    (frees : IdSet.t) (exps_group : exp list list) : IdSet.t * exp list =
   match exps_group with
   | [] -> (IdSet.empty, [])
   | [ exps ] -> (IdSet.empty, exps)
@@ -121,7 +123,7 @@ let overlap_exps_group (tdenv : Envs.TDEnv.t) (frees : IdSet.t)
         List.fold_left
           (fun (frees, unifiers, exps_template) exp_batch ->
             let frees, unifiers_batch, exp_batch_template =
-              overlap_exp_group tdenv frees exp_batch
+              overlap_exp_group tdenv menv frees exp_batch
             in
             let unifiers = IdSet.union unifiers unifiers_batch in
             (frees, unifiers, exps_template @ [ exp_batch_template ]))
@@ -185,8 +187,11 @@ let populate_exps_group (unifiers : IdSet.t) (exps_template : exp list)
 let antiunify (ctx : Ctx.t) (exps_group : exp list list) :
     Ctx.t * exp list * prem list list =
   let tdenv = ctx.tdenv in
+  let menv = ctx.menv in
   let frees = ctx.frees in
-  let unifiers, exps_template = overlap_exps_group tdenv frees exps_group in
+  let unifiers, exps_template =
+    overlap_exps_group tdenv menv frees exps_group
+  in
   let prems_match_group =
     populate_exps_group unifiers exps_template exps_group
   in
