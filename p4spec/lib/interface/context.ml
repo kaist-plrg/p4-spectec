@@ -16,7 +16,7 @@
 module SMap = Map.Make (String)
 
 type has_params = bool
-type tid = string option
+type tid = Empty | Local of string | Global of string
 
 type ident_kind =
   | TypeName of has_params * namespace
@@ -55,7 +55,7 @@ let declare (id : string) (k : ident_kind) : unit =
 let declare_type id has_params = declare id (TypeName (has_params, SMap.empty))
 let declare_types types = List.iter (fun s -> declare_type s false) types
 
-let declare_var ?(tid = None) id has_params =
+let declare_var ?(tid = Empty) id has_params =
   declare id (Ident (has_params, tid))
 
 let declare_vars vars = List.iter (fun s -> declare_var s false) vars
@@ -94,7 +94,7 @@ let get_kind (id : string) : ident_kind =
     match !parent_namespace with None -> !context | Some ns -> [ ns ]
   in
   let kind =
-    match find_opt id ctx with None -> Ident (false, None) | Some k -> k
+    match find_opt id ctx with None -> Ident (false, Empty) | Some k -> k
   in
   previous_id := Some id;
   kind
@@ -129,6 +129,15 @@ let go_toplevel () =
 
 let go_local () = context := !backup
 
+let get_global_context () =
+  let rec loop c =
+    match c with
+    | [] -> failwith "ill-formed context"
+    | [ _ ] -> c
+    | _ :: l -> loop l
+  in
+  loop !context
+
 let set_type_namespace (tid : string) (ns : namespace) =
   let rec loop = function
     | [] -> []
@@ -144,9 +153,14 @@ let set_parent_namespace () =
   let ( let* ) = Option.bind in
   let namespace =
     let* parent_id = !previous_id in
-    let* _, tid_opt = find_var_opt parent_id !context in
-    let* tid = tid_opt in
-    Option.map snd (find_type_opt tid !context)
+    let* _, tid = find_var_opt parent_id !context in
+    let* tid, ctx =
+      match tid with
+      | Empty -> None
+      | Local tid -> Some (tid, !context)
+      | Global tid -> Some (tid, get_global_context ())
+    in
+    Option.map snd (find_type_opt tid ctx)
   in
   let namespace = Option.value namespace ~default:SMap.empty in
   parent_namespace := Some namespace

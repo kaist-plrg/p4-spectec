@@ -7,9 +7,11 @@
   open Flatten
   open Util.Source
 
-  let declare_var_of_il (value : value) (b : bool) : unit =
-    let id = id_of_name value in
-    declare_var id b
+  let declare_var_of_il ?(value_typeRef : value option) (value_var : value)
+      (b : bool) : unit =
+    let tid = Option.fold ~none:Empty ~some:tid_of_typeRef value_typeRef in
+    let id = id_of_name value_var in
+    declare_var ~tid id b
 
   let rec declare_vars_of_il (value : value) : unit =
     match flatten_case_v_opt value with
@@ -483,7 +485,7 @@ typeParameterListOpt:
 (* Parameters *)
 parameter:
 	| al = annotationList dir = direction t = typeRef n = name i = initializerOpt
-		{ declare_var_of_il n false;
+		{ declare_var_of_il ~value_typeRef:t n false;
       "annotationList direction type name initializerOpt" <| [ al; dir; t; n; i ] <<| "parameter" <<<| (at $sloc) }
 ;
 
@@ -1153,7 +1155,7 @@ initializerOpt:
 
 variableDeclaration:
   | al = annotationList t = typeRef n = name i = initializerOpt SEMICOLON
-    { declare_var_of_il n false;
+    { declare_var_of_il ~value_typeRef:t n false;
       "annotationList typeRef name initializerOpt `;" <| [ al; t; n; i ] <<| "variableDeclaration" <<<| (at $sloc) }
 ;
 
@@ -1610,10 +1612,10 @@ typeDeclaration:
 (* >> Declarations *)
 declaration:
   | const = constantDeclaration
-    { declare_var (id_of_declaration const) (has_type_params_declaration const);
+    { declare_var ~tid:(tid_of_declaration const) (id_of_declaration const) (has_type_params_declaration const);
       const }
   | inst = instantiation
-    { declare_var (id_of_declaration inst) false;
+    { declare_var ~tid:(tid_of_declaration inst) (id_of_declaration inst) false;
       inst }
   | func = functionDeclaration
     { declare_var (id_of_declaration func) (has_type_params_declaration func);

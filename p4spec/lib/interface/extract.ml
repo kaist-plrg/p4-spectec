@@ -111,6 +111,42 @@ let id_of_parameter (value : value) : string =
         (F.asprintf "@id_of_parameter: expected parameter, got %s"
            (Il.Print.string_of_value value))
 
+(* Type identifier extraction *)
+
+let rec tid_of_typeRef (value : value) : Context.tid =
+  match flatten_case_v_opt value with
+  | Some ("baseType", _, _)
+  | Some ("headerStackType", _, _)
+  | Some ("listType", _, _)
+  | Some ("tupleType", _, _) ->
+      Empty
+  | Some ("typeIdentifier", [ "`TID" ], [ { it = TextV s; _ } ]) -> Local s
+  | Some ("prefixedTypeName", [ "`TID"; "." ], [ typeIdentifier ]) -> (
+      match tid_of_typeRef typeIdentifier with
+      | Local s -> Global s
+      | _ -> error no_region "@tid_of_typeRef: unreachable")
+  | Some ("specializedType", [ "<"; ">" ], [ prefixedTypeName; _ ]) ->
+      tid_of_typeRef prefixedTypeName
+  (* not a variant of typeRef *)
+  | _ ->
+      error no_region
+        (F.asprintf "@tid_of_typeRef: expected typeRef, got %s"
+           (Il.Print.string_of_value value))
+
+let tid_of_declaration (value : value) : Context.tid =
+  match flatten_case_v_opt value with
+  | Some ("constantDeclaration", [ "CONST"; ";" ], [ _; typeRef; _; _ ])
+  | Some ("instantiation", [ "("; ")"; ";" ], [ _; typeRef; _; _ ])
+  | Some ("instantiation", [ "("; ")"; ";" ], [ _; typeRef; _; _; _ ]) ->
+      tid_of_typeRef typeRef
+  | Some (name, _, _) ->
+      error no_region (F.sprintf "%s: no type identifier" name)
+  (* not a variant of declaration *)
+  | _ ->
+      error no_region
+        (F.asprintf "@tid_of_declaration: expected declaration, got %s"
+           (Il.Print.string_of_value value))
+
 (* Type parameter extraction *)
 
 let has_type_params (value : value) : bool =
