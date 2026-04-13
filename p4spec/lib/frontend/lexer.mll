@@ -237,6 +237,7 @@ and token = parse
   | ":" { COLON }
   | "::" { COLON2 }
   | ":/" { COLON_SLASH }
+  | ":=" { COLON_EQ }
   | "#" { HASH }
   | "##" { HASH2 }
   | "$" { DOLLAR }

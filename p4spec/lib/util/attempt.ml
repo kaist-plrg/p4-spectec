@@ -64,7 +64,7 @@ let rec string_of_failtrace ?(indent = "") ?(level = 0) ~(last : bool)
     else if last then indent ^ "    "
     else indent ^ "│   "
   in
-  if root then
+  if root && limit > 0 then
     Format.asprintf "%s│ ··· omitting %d traces ···\n%s" sfailtrace (limit - 1)
       (string_of_failtraces ~indent ~level:(level + 1) ~limit failtraces_sub)
   else

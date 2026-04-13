@@ -54,13 +54,13 @@ rule PSA_ingress_init_parser_input_metadata:
       = (`` "ingress_parser_input_metadata") `. "ingress_port"
   -- if value_port = 32 W i_port
   -- Lvalue_write:
-      GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
+      GLOBAL EC_0 ARCH |- storageReference_parser_input_port := value_port : EC_1
   ---- ;; setup packet path
   -- if storageReference_parser_input_path
       = (`` "ingress_parser_input_metadata") `. "packet_path"
   -- if value_path = "PSA_PacketPath_t" `. t_path
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
+      GLOBAL EC_1 ARCH |- storageReference_parser_input_path := value_path : EC_2
 
 relation PSA_ingress_init_input_metadata:
   evalContext arch |- int text : evalContext
@@ -73,20 +73,21 @@ rule PSA_ingress_init_input_metadata:
       = (`` "ingress_input_metadata") `. "ingress_port"
   -- if value_port = 32 W i_port
   -- Lvalue_write:
-      GLOBAL EC_0 ARCH |- storageReference_input_port -> value_port : EC_1
+      GLOBAL EC_0 ARCH |- storageReference_input_port := value_port : EC_1
   ---- ;; setup packet path
   -- if storageReference_input_path
       = (`` "ingress_input_metadata") `. "packet_path"
   -- if value_path = "PSA_PacketPath_t" `. t_path
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_input_path -> value_path : EC_2
+      GLOBAL EC_1 ARCH |- storageReference_input_path := value_path : EC_2
   ---- ;; (TODO) setup timestamp
   ---- ;; setup parser error
   -- if storageReference_input_parser_error
       = (`` "ingress_input_metadata") `. "parser_error"
   -- if value_parser_error = ERROR `. "NoError"
   -- Lvalue_write:
-      GLOBAL EC_2 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_3
+      GLOBAL EC_2 ARCH |- storageReference_input_parser_error := value_parser_error
+                        : EC_3
 
 relation PSA_ingress_init_output_metadata:
   evalContext arch |- evalContext
@@ -99,31 +100,31 @@ rule PSA_ingress_init_output_metadata:
       = (`` "ingress_output_metadata") `. "class_of_service"
   -- if value_cos = 8 W 0
   -- Lvalue_write:
-      GLOBAL EC_0 ARCH |- storageReference_output_cos -> value_cos : EC_1
+      GLOBAL EC_0 ARCH |- storageReference_output_cos := value_cos : EC_1
   ---- ;; setup clone
   -- if storageReference_output_clone
       = (`` "ingress_output_metadata") `. "clone"
   -- if value_clone = `B false
   -- Lvalue_write:
-      GLOBAL EC_1 ARCH |- storageReference_output_clone -> value_clone : EC_2
+      GLOBAL EC_1 ARCH |- storageReference_output_clone := value_clone : EC_2
   ---- ;; setup drop
   -- if storageReference_output_drop
       = (`` "ingress_output_metadata") `. "drop"
   -- if value_drop = `B true
   -- Lvalue_write:
-      GLOBAL EC_2 ARCH |- storageReference_output_drop -> value_drop : EC_3
+      GLOBAL EC_2 ARCH |- storageReference_output_drop := value_drop : EC_3
   ---- ;; setup resubmit
   -- if storageReference_output_resubmit
       = (`` "ingress_output_metadata") `. "resubmit"
   -- if value_resubmit = `B false
   -- Lvalue_write:
-      GLOBAL EC_3 ARCH |- storageReference_output_resubmit -> value_resubmit : EC_4
+      GLOBAL EC_3 ARCH |- storageReference_output_resubmit := value_resubmit : EC_4
   ---- ;; setup multicast group
   -- if storageReference_output_mc_grp
       = (`` "ingress_output_metadata") `. "multicast_group"
   -- if value_mc_grp = 32 W 0
   -- Lvalue_write:
-      GLOBAL EC_4 ARCH |- storageReference_output_mc_grp -> value_mc_grp : EC_5
+      GLOBAL EC_4 ARCH |- storageReference_output_mc_grp := value_mc_grp : EC_5
 
 relation PSA_ingress_init_metadata:
   evalContext arch |- int text : evalContext

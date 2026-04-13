@@ -406,8 +406,8 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
-        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
-                      : EC_2
+        p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
+                       : EC_2
 
   rule Call_eval/cont-overflow:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
@@ -434,8 +434,8 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
-        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
-                      : EC_2
+        p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
+                       : EC_2
 
 }
 
@@ -486,8 +486,8 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
-        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
-                      : EC_2
+        p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
+                       : EC_2
 
   rule Call_eval/cont-overflow:
     p EC_0 ARCH_0 |- builtinMethodCallee `@ `< eps > `( argumentIR )
@@ -514,8 +514,8 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
         = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
-        p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated
-                      : EC_2
+        p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
+                       : EC_2
 
 }
 
@@ -545,8 +545,7 @@ rule Call_eval/builtinMethodCallee-header-setValid:
   -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
   -- if value = HEADER typeId `{ true `; fieldValue* }
   -- Lvalue_write:
-      p EC_0 ARCH |- storageReference -> value
-                    : EC_1
+      p EC_0 ARCH |- storageReference := value : EC_1
   -- if returnResult = RETURN eps
 
 rule Call_eval/builtinMethodCallee-header-setInvalid:
@@ -562,8 +561,7 @@ rule Call_eval/builtinMethodCallee-header-setInvalid:
   -- if HEADER typeId `{ _ `; fieldValue* } = headerValue
   -- if value = HEADER typeId `{ false `; fieldValue* }
   -- Lvalue_write:
-      p EC_0 ARCH |- storageReference -> value
-                    : EC_1
+      p EC_0 ARCH |- storageReference := value : EC_1
   -- if returnResult = RETURN eps
 
 rule Call_eval/builtinMethodCallee-header-union-isValid:

@@ -24707,7 +24707,7 @@ abortResult
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre>relation Lvalue_write: cursor evalContext arch |- storageReference -&gt; value : evalContext</pre>
+<pre>relation Lvalue_write: cursor evalContext arch |- storageReference := value : evalContext</pre>
 </div>
 </div>
 </div>
@@ -24875,7 +24875,7 @@ abortResult
 <div class="content">
 <pre>rulegroup Lvalue_write/referenceExpressionIR:
   rule Lvalue_write/referenceExpressionIR:
-  p EC_0 ARCH |- prefixedNameIR -&gt; value : EC_1
+  p EC_0 ARCH |- prefixedNameIR := value : EC_1
  -- if EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)</pre>
 </div>
 </div>
@@ -25387,29 +25387,29 @@ abortResult
 <div class="content">
 <pre>rulegroup Lvalue_write/memberAccess:
   rule Lvalue_write/stack-next:
-  p EC_0 ARCH |- (storageReference . nameIR) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference . nameIR) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(n_idx ; n_size)] = headerStackValue_base
  -- if nameIR = "next"
  -- if value_element_update* = value_element*[[n_idx] = value]
  -- if headerStackValue_base_update = HEADER_STACK `[value_element_update* `(n_idx + 1 ; n_size)]
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerStackValue_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
   rule Lvalue_write/struct:
-  p EC_0 ARCH |- (storageReference . nameIR) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference . nameIR) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : structValue_base
  -- if STRUCT typeId `{fieldValue*} = structValue_base
  -- if fieldValue_update* = $update_fieldValue(fieldValue*, nameIR, value)
  -- if structValue_base_update = STRUCT typeId `{fieldValue_update*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; structValue_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := structValue_base_update : EC_1
   rule Lvalue_write/header:
-  p EC_0 ARCH |- (storageReference . nameIR) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference . nameIR) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue_base
  -- if HEADER typeId `{b_valid ; fieldValue*} = headerValue_base
  -- if fieldValue_update* = $update_fieldValue(fieldValue*, nameIR, value)
  -- if headerValue_base_update = HEADER typeId `{b_valid ; fieldValue_update*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerValue_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := headerValue_base_update : EC_1
   rule Lvalue_write/header-union-keep-valid-header:
-  p EC_0 ARCH |- (storageReference . nameIR) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference . nameIR) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerUnionValue_base
  -- if HEADER_UNION typeId `{fieldValue*} = headerUnionValue_base
  -- if (value_field nameIR_field ;)* = fieldValue*
@@ -25420,9 +25420,9 @@ abortResult
  -- if b_toggled = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
  -- if ~b_toggled
  -- if headerUnionValue_base_update = HEADER_UNION typeId `{fieldValue_update*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerUnionValue_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := headerUnionValue_base_update : EC_1
   rule Lvalue_write/header-union-replace-valid-header:
-  p EC_0 ARCH |- (storageReference . nameIR) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference . nameIR) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerUnionValue_base
  -- if HEADER_UNION typeId `{fieldValue*} = headerUnionValue_base
  -- if (value_field nameIR_field ;)* = fieldValue*
@@ -25434,7 +25434,7 @@ abortResult
  -- if b_toggled
  -- if fieldValue_update'* = $update_headerUnion(fieldValue_update*, nameIR)
  -- if headerUnionValue_base_update = HEADER_UNION typeId `{fieldValue_update'*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerUnionValue_base_update : EC_1</pre>
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := headerUnionValue_base_update : EC_1</pre>
 </div>
 </div>
 </div>
@@ -26027,7 +26027,7 @@ abortResult
 <div class="content">
 <pre>rulegroup Lvalue_write/indexAccess:
   rule Lvalue_write/stack-in-bounds:
-  p EC_0 ARCH |- (storageReference `[integerValue_index]) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference `[integerValue_index]) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(n_base_idx ; n_size)] = headerStackValue_base
  -- if i_idx = $int_of_integerValue(integerValue_index)
@@ -26036,9 +26036,9 @@ abortResult
  -- if n_idx = i_idx
  -- if value_element_update* = value_element*[[n_idx] = value]
  -- if headerStackValue_base_update = HEADER_STACK `[value_element_update* `(n_base_idx ; n_size)]
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; headerStackValue_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
   rule Lvalue_write/stack-out-of-bounds:
-  p EC_0 ARCH |- (storageReference `[integerValue_index]) -&gt; value : EC_0
+  p EC_0 ARCH |- (storageReference `[integerValue_index]) := value : EC_0
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base
  -- if HEADER_STACK `[value_element* `(_ ; n_size)] = headerStackValue_base
  -- if i_idx = $int_of_integerValue(integerValue_index)
@@ -26615,15 +26615,15 @@ abortResult
 <div class="content">
 <pre>rulegroup Lvalue_write/sliceAccess:
   rule Lvalue_write/range:
-  p EC_0 ARCH |- (storageReference `[value_hi : value_lo]) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference `[value_hi : value_lo]) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
  -- if value_base_update = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value_base_update : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1
   rule Lvalue_write/offset:
-  p EC_0 ARCH |- (storageReference `[value_l +: value_w]) -&gt; value : EC_1
+  p EC_0 ARCH |- (storageReference `[value_l +: value_w]) := value : EC_1
  -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
  -- if value_base_update = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value_base_update : EC_1</pre>
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1</pre>
 </div>
 </div>
 </div>
@@ -27438,7 +27438,7 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
  -- if assignop = =
  -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 (` value)
- -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -&gt; value : EC_3
+ -- Lvalue_write: p EC_2 ARCH_2 |- storageReference := value : EC_3
   rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-cont:
   p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ; : EC_3 ARCH_2 `EMPTY
  -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 (` storageReference)
@@ -27447,7 +27447,7 @@ operators, logical operators, concat, range, or mask operators.</p>
  -- Lvalue_read: p EC_2 ARCH_2 |- storageReference : value_lvalue
  -- if binop = $assignop_as_binop(assignop)
  -- if value_new = $bin_op(binop, value_lvalue, value)
- -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -&gt; value_new : EC_3</pre>
+ -- Lvalue_write: p EC_2 ARCH_2 |- storageReference := value_new : EC_3</pre>
 </div>
 </div>
 </div>
@@ -74319,7 +74319,7 @@ or <code>inout</code> parameters.</p>
   ARCH |- p_caller EC_caller_0 (_ direction typeIR nameIR _) @ p_callee EC_callee storageReference ~&gt; EC_caller_1
  -- if direction = OUT \/ direction = INOUT
  -- if value = $find_var_e(` nameIR, p_callee, EC_callee)
- -- Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference -&gt; value : EC_caller_1</pre>
+ -- Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference := value : EC_caller_1</pre>
 </div>
 </div>
 </div>
@@ -76469,7 +76469,7 @@ calls for different types of callees.</p>
  -- if value_element_updated* = value_front_invalidated* ++ value_back*
  -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated : EC_2
   rule Call_eval/cont-overflow:
   p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
  -- if BUILTIN_METHOD storageReference . "push_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
@@ -76481,7 +76481,7 @@ calls for different types of callees.</p>
  -- (if (value_element_updated = $invalidate_value(value_element)))*
  -- if n_idx_updated = $min_nat([n_size, n_idx + n_count])
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2</pre>
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated : EC_2</pre>
 </div>
 </div>
 </div>
@@ -76696,7 +76696,7 @@ calls for different types of callees.</p>
  -- if value_element_updated* = value_front* ++ value_back_invalidated*
  -- if n_idx_updated = n_front
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated : EC_2
   rule Call_eval/cont-overflow:
   p EC_0 ARCH_0 |- builtinMethodCallee @ `&lt;eps&gt; `(argumentIR) : EC_2 ARCH_1 (RETURN eps)
  -- if BUILTIN_METHOD storageReference . "pop_front" `&lt;eps&gt; `(parameterIR) = builtinMethodCallee
@@ -76708,7 +76708,7 @@ calls for different types of callees.</p>
  -- (if (value_element_updated = $invalidate_value(value_element)))*
  -- if n_idx_updated = $max_int([0, n_size - n_count])
  -- if headerStackValue_updated = HEADER_STACK `[value_element_updated* `(n_idx_updated ; n_size)]
- -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -&gt; headerStackValue_updated : EC_2</pre>
+ -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated : EC_2</pre>
 </div>
 </div>
 </div>
@@ -76983,7 +76983,7 @@ calls for different types of callees.</p>
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
  -- if HEADER typeId `{_ ; fieldValue*} = headerValue
  -- if value = HEADER typeId `{true ; fieldValue*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
  -- if returnResult = RETURN eps</pre>
 </div>
 </div>
@@ -77067,7 +77067,7 @@ calls for different types of callees.</p>
  -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue
  -- if HEADER typeId `{_ ; fieldValue*} = headerValue
  -- if value = HEADER typeId `{false ; fieldValue*}
- -- Lvalue_write: p EC_0 ARCH |- storageReference -&gt; value : EC_1
+ -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
  -- if returnResult = RETURN eps</pre>
 </div>
 </div>

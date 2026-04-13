@@ -1013,7 +1013,10 @@ and elab_exp_not_inner (ctx : Ctx.t) (mixop : Mixop.t) (typs_il : Il.typ list)
           let* ctx, exp_il = elab_exp ctx typ_il_h exp in
           Ok (ctx, typs_il_t, [ exp_il ]))
   | Atom atom_t, AtomE atom_e when atom_t.it <> atom_e.it ->
-      fail_elab_not_inner exp.at "atom does not match"
+      fail_elab_not_inner exp.at
+        (F.asprintf "atom %s does not match the expected atom %s"
+           (Il.Print.string_of_atom atom_e)
+           (Il.Print.string_of_atom atom_t))
   | Atom _, AtomE _ -> Ok (ctx, typs_il, [])
   | Seq [], SeqE [] -> Ok (ctx, typs_il, [])
   | Seq (mixop_h :: mixops_t), SeqE (exp_h :: exps_t) ->
@@ -1030,7 +1033,10 @@ and elab_exp_not_inner (ctx : Ctx.t) (mixop : Mixop.t) (typs_il : Il.typ list)
   | Seq [], SeqE (_ :: _) ->
       fail_elab_not_inner exp.at "expression is not empty"
   | Infix (_, atom_t, _), InfixE (_, atom_e, _) when atom_t.it <> atom_e.it ->
-      fail_elab_not_inner exp.at "atoms do not match"
+      fail_elab_not_inner exp.at
+        (F.asprintf "infix operator %s does not match the expected operator %s"
+           (Il.Print.string_of_atom atom_e)
+           (Il.Print.string_of_atom atom_t))
   | Infix (mixop_l, _, mixop_r), InfixE (exp_l, _, exp_r) ->
       let* ctx, typs_il, exps_il_l =
         elab_exp_not_inner ctx mixop_l typs_il exp_l
@@ -1042,10 +1048,21 @@ and elab_exp_not_inner (ctx : Ctx.t) (mixop : Mixop.t) (typs_il : Il.typ list)
       Ok (ctx, typs_il, exps_il)
   | Brack (atom_t_l, _, atom_t_r), BrackE (atom_e_l, exp, atom_e_r)
     when atom_t_l.it <> atom_e_l.it || atom_t_r.it <> atom_e_r.it ->
-      fail_elab_not_inner exp.at "atoms do not match"
+      fail_elab_not_inner exp.at
+        (F.asprintf
+           "bracketing operator %s %s does not match the expected operator %s \
+            %s"
+           (Il.Print.string_of_atom atom_e_l)
+           (Il.Print.string_of_atom atom_e_r)
+           (Il.Print.string_of_atom atom_t_l)
+           (Il.Print.string_of_atom atom_t_r))
   | Brack (_, mixop, _), BrackE (_, exp, _) ->
       elab_exp_not_inner ctx mixop typs_il exp
-  | _ -> fail_elab_not_inner exp.at "expression does not match notation"
+  | _ ->
+      fail_elab_not_inner exp.at
+        (F.asprintf "expression %s does not match notation %s"
+           (El.Print.string_of_exp exp)
+           (Mixop.string_of_mixop mixop))
 
 and fail_elab_not (at : region) (msg : string) : (Ctx.t * Il.notexp) attempt =
   fail at ("cannot elaborate notation expression because " ^ msg)

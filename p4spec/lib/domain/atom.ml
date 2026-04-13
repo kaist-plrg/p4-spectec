@@ -23,6 +23,7 @@ type t =
   | Comma                (* ``,` *)
   | Semicolon            (* ``;` *)
   | Colon                (* `:` *)
+  | ColonEq              (* `:=` *)
   | Hash                 (* ``#` *)
   | Dollar               (* ``$` *)
   | At                   (* ``@` *)
@@ -103,6 +104,7 @@ let string_of_atom = function
   | Comma -> ","
   | Semicolon -> ";"
   | Colon -> ":"
+  | ColonEq -> ":="
   | Hash -> "#"
   | Dollar -> "$"
   | At -> "@"
@@ -179,6 +181,7 @@ let render_atom = function
   | Comma -> ","
   | Semicolon -> ";"
   | Colon -> ":"
+  | ColonEq -> ":="
   | Hash -> "#"
   | Dollar -> "$"
   | At -> "@"

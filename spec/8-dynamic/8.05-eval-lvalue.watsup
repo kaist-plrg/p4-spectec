@@ -286,7 +286,7 @@ rulegroup Lvalue_read/sliceAccess {
 ;;; syntax referenceExpressionIR = prefixedNameIR
 
 rule Lvalue_write/referenceExpressionIR:
-  p EC_0 ARCH |- prefixedNameIR -> value : EC_1
+  p EC_0 ARCH |- prefixedNameIR := value : EC_1
   -- if EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
 
 ;;; storageReference `. nameIR
@@ -294,7 +294,7 @@ rule Lvalue_write/referenceExpressionIR:
 rulegroup Lvalue_write/memberAccess {
 
   rule Lvalue_write/stack-next:
-    p EC_0 ARCH |- (storageReference `. nameIR) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
@@ -306,10 +306,10 @@ rulegroup Lvalue_write/memberAccess {
     -- if headerStackValue_base_update
         = HEADER_STACK `[ value_element_update* `( $(n_idx + 1) `; n_size ) ]
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> headerStackValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
 
   rule Lvalue_write/struct:
-    p EC_0 ARCH |- (storageReference `. nameIR) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : structValue_base
@@ -321,10 +321,10 @@ rulegroup Lvalue_write/memberAccess {
     -- if structValue_base_update
         = STRUCT typeId `{ fieldValue_update* }
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> structValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := structValue_base_update : EC_1
 
   rule Lvalue_write/header:
-    p EC_0 ARCH |- (storageReference `. nameIR) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerValue_base
@@ -337,10 +337,10 @@ rulegroup Lvalue_write/memberAccess {
     -- if headerValue_base_update
         = HEADER typeId `{ b_valid `; fieldValue_update* }
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> headerValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := headerValue_base_update : EC_1
 
   rule Lvalue_write/header-union-keep-valid-header:
-    p EC_0 ARCH |- (storageReference `. nameIR) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerUnionValue_base
@@ -363,10 +363,10 @@ rulegroup Lvalue_write/memberAccess {
     -- if headerUnionValue_base_update
         = HEADER_UNION typeId `{ fieldValue_update* }
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> headerUnionValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := headerUnionValue_base_update : EC_1
 
   rule Lvalue_write/header-union-replace-valid-header:
-    p EC_0 ARCH |- (storageReference `. nameIR) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerUnionValue_base
@@ -391,14 +391,14 @@ rulegroup Lvalue_write/memberAccess {
     -- if headerUnionValue_base_update
         = HEADER_UNION typeId `{ fieldValue_update'* }
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> headerUnionValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := headerUnionValue_base_update : EC_1
 
 }
 
 rulegroup Lvalue_write/indexAccess {
 
   rule Lvalue_write/stack-in-bounds:
-    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( n_base_idx `; n_size ) ]
@@ -412,10 +412,10 @@ rulegroup Lvalue_write/indexAccess {
     -- if headerStackValue_base_update
         = HEADER_STACK `[ value_element_update* `( n_base_idx `; n_size ) ]
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> headerStackValue_base_update : EC_1
+        p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
 
   rule Lvalue_write/stack-out-of-bounds:
-    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) -> value : EC_0
+    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_0
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
     -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
@@ -429,21 +429,21 @@ rulegroup Lvalue_write/indexAccess {
 rulegroup Lvalue_write/sliceAccess {
 
   rule Lvalue_write/range:
-    p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `[ value_hi `: value_lo ]) := value : EC_1
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : value_base
     -- if value_base_update
         = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+        p EC_0 ARCH |- storageReference := value_base_update : EC_1
 
   rule Lvalue_write/offset:
-    p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) -> value : EC_1
+    p EC_0 ARCH |- (storageReference `[ value_l `+: value_w ]) := value : EC_1
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : value_base
     -- if value_base_update
         = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
     -- Lvalue_write:
-        p EC_0 ARCH |- storageReference -> value_base_update : EC_1
+        p EC_0 ARCH |- storageReference := value_base_update : EC_1
 
 }

@@ -65,7 +65,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 
 %token AND OR
 %token DOT DOT2 DOT3
-%token COMMA COMMA_NL SEMICOLON COLON COLON2 COLON_SLASH
+%token COMMA COMMA_NL SEMICOLON COLON COLON2 COLON_SLASH COLON_EQ
 %token HASH HASH2 DOLLAR QUEST TILDE TILDE2
 %token LANGLE LANGLE_DASH LANGLE_EQ
 %token RANGLE RANGLE_EQ RANGLE_LPAREN
@@ -471,6 +471,7 @@ deftyp_ :
   | relop_ { $1 @@@ $sloc }
 %inline relop_ :
   | COLON { Atom.Colon }
+  | COLON_EQ { Atom.ColonEq }
   | TILDE2 { Atom.Tilde2 }
   | SQARROW { Atom.SqArrow }
   | SQARROW_STAR { Atom.SqArrowStar }

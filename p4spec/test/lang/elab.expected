@@ -27016,14 +27016,14 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- let value = $bitacc_offset_op(value_base, value_l, value_w)
     -- output: % % % |- % : value
 
-relation Lvalue_write: cursor evalContext arch |- storageReference -> value : evalContext
+relation Lvalue_write: cursor evalContext arch |- storageReference := value : evalContext
 
   rulegroup referenceExpressionIR
 
    match
 
-    (signature) p EC_0 ARCH |- prefixedNameIR as storageReference -> value : %
-    p EC_0 ARCH |- storageReference -> value : %
+    (signature) p EC_0 ARCH |- prefixedNameIR as storageReference := value : %
+    p EC_0 ARCH |- storageReference := value : %
     -- if storageReference <: prefixedNameIR
     -- let prefixedNameIR = storageReference as prefixedNameIR
 
@@ -27031,14 +27031,14 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
 
     rulepath referenceExpressionIR
     -- let EC_1 = $update_var_e(p, EC_0, prefixedNameIR, value)
-    -- output: % % % |- % -> % : EC_1
+    -- output: % % % |- % := % : EC_1
 
   rulegroup memberAccess
 
    match
 
-    (signature) p EC_0 ARCH |- storageReference . nameIR -> value : %
-    p EC_0 ARCH |- storageReference' -> value : %
+    (signature) p EC_0 ARCH |- storageReference . nameIR := value : %
+    p EC_0 ARCH |- storageReference' := value : %
     -- if storageReference' matches `% . %`
     -- let storageReference . nameIR = storageReference'
 
@@ -27052,8 +27052,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if (nameIR = "next")
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size ) ]
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerStackValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath struct
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
@@ -27062,8 +27062,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let STRUCT typeId { fieldValue*{fieldValue <- fieldValue*} } = structValue_base
     -- let fieldValue_update*{fieldValue_update <- fieldValue_update*} = $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
     -- let structValue_base_update = STRUCT typeId { fieldValue_update*{fieldValue_update <- fieldValue_update*} }
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> structValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := structValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath header
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
@@ -27072,8 +27072,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let HEADER typeId { b_valid ; fieldValue*{fieldValue <- fieldValue*} } = headerValue_base
     -- let fieldValue_update*{fieldValue_update <- fieldValue_update*} = $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
     -- let headerValue_base_update = HEADER typeId { b_valid ; fieldValue_update*{fieldValue_update <- fieldValue_update*} }
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath header-union-keep-valid-header
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
@@ -27094,8 +27094,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let b_toggled = ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new))
     -- if ~b_toggled
     -- let headerUnionValue_base_update = HEADER_UNION typeId { fieldValue_update*{fieldValue_update <- fieldValue_update*} }
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerUnionValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerUnionValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath header-union-replace-valid-header
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
@@ -27117,15 +27117,15 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- if b_toggled
     -- let fieldValue_update'*{fieldValue_update' <- fieldValue_update'*} = $update_headerUnion(fieldValue_update*{fieldValue_update <- fieldValue_update*}, nameIR)
     -- let headerUnionValue_base_update = HEADER_UNION typeId { fieldValue_update'*{fieldValue_update' <- fieldValue_update'*} }
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerUnionValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerUnionValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
   rulegroup indexAccess
 
    match
 
-    (signature) p EC_0 ARCH |- storageReference [ integerValue_index as value ] -> value : %
-    p EC_0 ARCH |- storageReference' -> value : %
+    (signature) p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : %
+    p EC_0 ARCH |- storageReference' := value : %
     -- if storageReference' matches `% [%]`
     -- let storageReference [ value' ] = storageReference'
     -- if value' <: integerValue
@@ -27146,8 +27146,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let n_idx = i as nat
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ; n_size ) ]
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> headerStackValue_base_update as value : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath stack-out-of-bounds
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
@@ -27157,14 +27157,14 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if ~b_in_bounds
-    -- output: % % % |- % -> % : EC_0
+    -- output: % % % |- % := % : EC_0
 
   rulegroup sliceAccess
 
    match
 
-    (signature) p EC_0 ARCH |- storageReference [ value' sliceop value'' ] -> value : %
-    p EC_0 ARCH |- storageReference' -> value : %
+    (signature) p EC_0 ARCH |- storageReference [ value' sliceop value'' ] := value : %
+    p EC_0 ARCH |- storageReference' := value : %
     -- if storageReference' matches `% [% % %]`
     -- let storageReference [ value' sliceop value'' ] = storageReference'
 
@@ -27176,8 +27176,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let value_lo = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value_base_update = $bitacc_range_replace_op(value_base, value_hi, value_lo, value)
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath offset
     -- let value_l = value'
@@ -27185,8 +27185,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference -> value : ev
     -- let value_w = value''
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value_base
     -- let value_base_update = $bitacc_offset_replace_op(value_base, value_l, value_w, value)
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1
-    -- output: % % % |- % -> % : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1
+    -- output: % % % |- % := % : EC_1
 
 syntax callResult = 
    | EXIT (from exitResult) 
@@ -27280,7 +27280,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value = expressionResult as continueResult<value>
-    -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value : EC_3
+    -- Lvalue_write: p EC_2 ARCH_2 |- storageReference := value : EC_3
     -- output: % % % |- % : EC_3 ARCH_2 `EMPTY as statementResult
 
     rulepath typedLvalueIR-cont-compound-typedExpressionIR-cont
@@ -27298,7 +27298,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- if binop'?{binop' <- binop'?} matches (_)
     -- let ?(binop) = binop'?{binop' <- binop'?}
     -- let value_new = $bin_op(binop, value_lvalue, value)
-    -- Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value_new : EC_3
+    -- Lvalue_write: p EC_2 ARCH_2 |- storageReference := value_new : EC_3
     -- output: % % % |- % : EC_3 ARCH_2 `EMPTY as statementResult
 
   rulegroup callStatementIR
@@ -29103,7 +29103,7 @@ relation Copy_out_argument: arch |- cursor evalContext parameterIR @ cursor eval
     -- let ?(storageReference) = storageReference''?{storageReference'' <- storageReference''?}
     -- if ((direction = OUT) \/ (direction = INOUT))
     -- let value = $find_var_e(` nameIR, p_callee, EC_callee)
-    -- Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference -> value : EC_caller_1
+    -- Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference := value : EC_caller_1
     -- output: % |- % % % @ % % % ~> EC_caller_1
 
 relation Copy_out: cursor arch |- cursor evalContext parameterListIR @ cursor evalContext storageReference?* ~> evalContext
@@ -29326,7 +29326,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
     -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
-    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
     rulepath cont-overflow
@@ -29351,7 +29351,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- (let value_element_updated = $invalidate_value(value_element))*{value_element <- value_element*, value_element_updated -> value_element_updated*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
     -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
-    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
   rulegroup builtinMethodCallee-header-stack-pop-front
@@ -29411,7 +29411,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front*{value_front <- value_front*} ++ value_back_invalidated*{value_back_invalidated <- value_back_invalidated*}
     -- let n_idx_updated = n_front
     -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
-    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
     rulepath cont-overflow
@@ -29438,7 +29438,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- if i <: nat
     -- let n_idx_updated = i as nat
     -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
-    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference -> headerStackValue_updated as value : EC_2
+    -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
   rulegroup builtinMethodCallee-header-isValid
@@ -29489,7 +29489,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let headerValue = value' as headerValue
     -- let HEADER typeId { _b ; fieldValue*{fieldValue <- fieldValue*} } = headerValue
     -- let value = HEADER typeId { true ; fieldValue*{fieldValue <- fieldValue*} } as value
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> value : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- let returnResult = RETURN ?()
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH returnResult as callResult
 
@@ -29516,7 +29516,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let headerValue = value' as headerValue
     -- let HEADER typeId { _b ; fieldValue*{fieldValue <- fieldValue*} } = headerValue
     -- let value = HEADER typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value
-    -- Lvalue_write: p EC_0 ARCH |- storageReference -> value : EC_1
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- let returnResult = RETURN ?()
     -- output: % % % |- % @ < % > ( % ) : EC_1 ARCH returnResult as callResult
 
@@ -31797,7 +31797,7 @@ relation V1Model_init_globals: evalContext arch |- int : evalContext
     -- Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3
     -- let storageReference_port = ` "standard_metadata" as storageReference . "ingress_port"
     -- let value_port = 9 W i_port as value
-    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_port -> value_port : EC_4
+    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_port := value_port : EC_4
     -- output: % % |- % : EC_4
 
 def $V1Model_setup_packet_in_argument(evalContext) : argumentIR =
@@ -32314,7 +32314,7 @@ relation V1Model_copy_meta_fields: evalContext evalContext arch |- nameIR* : eva
     -- let nameIR_h :: nameIR_t*{nameIR_t <- nameIR_t*} = nameIR'*{nameIR' <- nameIR'*}
     -- let storageReference_h = ` "meta" as storageReference . nameIR_h
     -- Lvalue_read: GLOBAL EC_capture ARCH |- storageReference_h : value_h
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_h -> value_h : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_h := value_h : EC_1
     -- V1Model_copy_meta_fields: EC_capture EC_1 ARCH |- nameIR_t*{nameIR_t <- nameIR_t*} : EC_2
     -- output: % % % |- % : EC_2
 
@@ -32738,10 +32738,10 @@ relation PSA_ingress_init_parser_input_metadata: evalContext arch |- int text : 
     rulepath 
     -- let storageReference_parser_input_port = ` "ingress_parser_input_metadata" as storageReference . "ingress_port"
     -- let value_port = 32 W i_port as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_parser_input_port := value_port : EC_1
     -- let storageReference_parser_input_path = ` "ingress_parser_input_metadata" as storageReference . "packet_path"
     -- let value_path = "PSA_PacketPath_t" . t_path as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_parser_input_path := value_path : EC_2
     -- output: % % |- % % : EC_2
 
 relation PSA_ingress_init_input_metadata: evalContext arch |- int text : evalContext
@@ -32758,13 +32758,13 @@ relation PSA_ingress_init_input_metadata: evalContext arch |- int text : evalCon
     rulepath 
     -- let storageReference_input_port = ` "ingress_input_metadata" as storageReference . "ingress_port"
     -- let value_port = 32 W i_port as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_input_port -> value_port : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_input_port := value_port : EC_1
     -- let storageReference_input_path = ` "ingress_input_metadata" as storageReference . "packet_path"
     -- let value_path = "PSA_PacketPath_t" . t_path as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_input_path -> value_path : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_input_path := value_path : EC_2
     -- let storageReference_input_parser_error = ` "ingress_input_metadata" as storageReference . "parser_error"
     -- let value_parser_error = ERROR . "NoError" as value
-    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_3
+    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_input_parser_error := value_parser_error : EC_3
     -- output: % % |- % % : EC_3
 
 relation PSA_ingress_init_output_metadata: evalContext arch |- evalContext
@@ -32781,19 +32781,19 @@ relation PSA_ingress_init_output_metadata: evalContext arch |- evalContext
     rulepath 
     -- let storageReference_output_cos = ` "ingress_output_metadata" as storageReference . "class_of_service"
     -- let value_cos = 8 W 0 as int as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_output_cos -> value_cos : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_output_cos := value_cos : EC_1
     -- let storageReference_output_clone = ` "ingress_output_metadata" as storageReference . "clone"
     -- let value_clone = `B false as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_output_clone -> value_clone : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_output_clone := value_clone : EC_2
     -- let storageReference_output_drop = ` "ingress_output_metadata" as storageReference . "drop"
     -- let value_drop = `B true as value
-    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_output_drop -> value_drop : EC_3
+    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_output_drop := value_drop : EC_3
     -- let storageReference_output_resubmit = ` "ingress_output_metadata" as storageReference . "resubmit"
     -- let value_resubmit = `B false as value
-    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_output_resubmit -> value_resubmit : EC_4
+    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_output_resubmit := value_resubmit : EC_4
     -- let storageReference_output_mc_grp = ` "ingress_output_metadata" as storageReference . "multicast_group"
     -- let value_mc_grp = 32 W 0 as int as value
-    -- Lvalue_write: GLOBAL EC_4 ARCH |- storageReference_output_mc_grp -> value_mc_grp : EC_5
+    -- Lvalue_write: GLOBAL EC_4 ARCH |- storageReference_output_mc_grp := value_mc_grp : EC_5
     -- output: % % |- EC_4
 
 relation PSA_ingress_init_metadata: evalContext arch |- int text : evalContext
@@ -33254,10 +33254,10 @@ relation PSA_egress_init_parser_input_metadata: evalContext arch |- int text : e
     rulepath 
     -- let storageReference_parser_input_port = ` "egress_parser_input_metadata" as storageReference . "egress_port"
     -- let value_port = 32 W i_port as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_parser_input_port := value_port : EC_1
     -- let storageReference_parser_input_path = ` "egress_parser_input_metadata" as storageReference . "packet_path"
     -- let value_path = "PSA_PacketPath_t" . t_path as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_parser_input_path := value_path : EC_2
     -- output: % % |- % % : EC_2
 
 relation PSA_egress_init_input_metadata: evalContext arch |- int text int int : evalContext
@@ -33274,19 +33274,19 @@ relation PSA_egress_init_input_metadata: evalContext arch |- int text int int : 
     rulepath 
     -- let storageReference_input_cos = ` "egress_input_metadata" as storageReference . "class_of_service"
     -- let value_cos = 8 W i_cos as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_input_cos -> value_cos : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_input_cos := value_cos : EC_1
     -- let storageReference_input_port = ` "egress_input_metadata" as storageReference . "egress_port"
     -- let value_port = 32 W i_port as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_input_port -> value_port : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_input_port := value_port : EC_2
     -- let storageReference_input_path = ` "egress_input_metadata" as storageReference . "packet_path"
     -- let value_path = "PSA_PacketPath_t" . t_path as value
-    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_input_path -> value_path : EC_3
+    -- Lvalue_write: GLOBAL EC_2 ARCH |- storageReference_input_path := value_path : EC_3
     -- let storageReference_input_instance = ` "egress_input_metadata" as storageReference . "instance"
     -- let value_instance = 16 W i_inst as value
-    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_input_instance -> value_instance : EC_4
+    -- Lvalue_write: GLOBAL EC_3 ARCH |- storageReference_input_instance := value_instance : EC_4
     -- let storageReference_input_parser_error = ` "egress_input_metadata" as storageReference . "parser_error"
     -- let value_parser_error = ERROR . "NoError" as value
-    -- Lvalue_write: GLOBAL EC_4 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_5
+    -- Lvalue_write: GLOBAL EC_4 ARCH |- storageReference_input_parser_error := value_parser_error : EC_5
     -- output: % % |- % % % % : EC_5
 
 relation PSA_egress_init_output_metadata: evalContext arch |- evalContext
@@ -33303,10 +33303,10 @@ relation PSA_egress_init_output_metadata: evalContext arch |- evalContext
     rulepath 
     -- let storageReference_output_clone = ` "egress_output_metadata" as storageReference . "clone"
     -- let value_clone = `B false as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_output_clone -> value_clone : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_output_clone := value_clone : EC_1
     -- let storageReference_output_drop = ` "egress_output_metadata" as storageReference . "drop"
     -- let value_drop = `B false as value
-    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_output_drop -> value_drop : EC_2
+    -- Lvalue_write: GLOBAL EC_1 ARCH |- storageReference_output_drop := value_drop : EC_2
     -- output: % % |- EC_2
 
 relation PSA_egress_init_deparser_input_metadata: evalContext arch |- int : evalContext
@@ -33323,7 +33323,7 @@ relation PSA_egress_init_deparser_input_metadata: evalContext arch |- int : eval
     rulepath 
     -- let storageReference_deparser_input_port = ` "egress_deparser_input_metadata" as storageReference . "egress_port"
     -- let value_port = 32 W i_port as value
-    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_deparser_input_port -> value_port : EC_1
+    -- Lvalue_write: GLOBAL EC_0 ARCH |- storageReference_deparser_input_port := value_port : EC_1
     -- output: % % |- % : EC_1
 
 relation PSA_egress_init_metadata: evalContext arch |- int text int int : evalContext

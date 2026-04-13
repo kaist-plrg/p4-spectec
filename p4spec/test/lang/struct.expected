@@ -35785,7 +35785,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                 1. Result in: % % % |- % : value
 
-relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
+relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
 1. Case analysis on storageReference'
 
@@ -35793,17 +35793,17 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
     1. (Let prefixedNameIR be (storageReference' as prefixedNameIR))
 
-      1. Group referenceExpressionIR: p EC_0 ARCH |- (prefixedNameIR as storageReference) -> value : %
+      1. Group referenceExpressionIR: p EC_0 ARCH |- (prefixedNameIR as storageReference) := value : %
 
         1. (Let EC_1 be $update_var_e(p, EC_0, prefixedNameIR, value))
 
-          1. Result in: % % % |- % -> % : EC_1
+          1. Result in: % % % |- % := % : EC_1
 
   2. Case (% matches pattern `% . %`)
 
     1. (Let (storageReference . nameIR) be storageReference')
 
-      1. Group memberAccess: p EC_0 ARCH |- (storageReference . nameIR) -> value : %
+      1. Group memberAccess: p EC_0 ARCH |- (storageReference . nameIR) := value : %
 
         1. (Lvalue_read: p EC_0 ARCH |- storageReference : value')
 
@@ -35821,9 +35821,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                       1. (Let headerStackValue_base_update be (HEADER_STACK [ (value_element_update)* ( (n_idx + 1) ; n_size ) ]))
 
-                        1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (headerStackValue_base_update as value) : EC_1)
+                        1. (Lvalue_write: p EC_0 ARCH |- storageReference := (headerStackValue_base_update as value) : EC_1)
 
-                          1. Result in: % % % |- % -> % : EC_1
+                          1. Result in: % % % |- % := % : EC_1
 
                   1. Else Dangling#11321
 
@@ -35837,9 +35837,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                     1. (Let structValue_base_update be (STRUCT typeId { (fieldValue_update)* }))
 
-                      1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (structValue_base_update as value) : EC_1)
+                      1. (Lvalue_write: p EC_0 ARCH |- storageReference := (structValue_base_update as value) : EC_1)
 
-                        1. Result in: % % % |- % -> % : EC_1
+                        1. Result in: % % % |- % := % : EC_1
 
             3. Case (% has type headerValue)
 
@@ -35851,9 +35851,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                     1. (Let headerValue_base_update be (HEADER typeId { b_valid ; (fieldValue_update)* }))
 
-                      1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (headerValue_base_update as value) : EC_1)
+                      1. (Lvalue_write: p EC_0 ARCH |- storageReference := (headerValue_base_update as value) : EC_1)
 
-                        1. Result in: % % % |- % -> % : EC_1
+                        1. Result in: % % % |- % := % : EC_1
 
             4. Case (% has type headerUnionValue)
 
@@ -35887,9 +35887,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                                           1. (Let headerUnionValue_base_update be (HEADER_UNION typeId { (fieldValue_update)* }))
 
-                                            1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (headerUnionValue_base_update as value) : EC_1)
+                                            1. (Lvalue_write: p EC_0 ARCH |- storageReference := (headerUnionValue_base_update as value) : EC_1)
 
-                                              1. Result in: % % % |- % -> % : EC_1
+                                              1. Result in: % % % |- % := % : EC_1
 
                                         2. Case true
 
@@ -35897,9 +35897,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                                             1. (Let headerUnionValue_base_update be (HEADER_UNION typeId { (fieldValue_update')* }))
 
-                                              1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (headerUnionValue_base_update as value) : EC_1)
+                                              1. (Lvalue_write: p EC_0 ARCH |- storageReference := (headerUnionValue_base_update as value) : EC_1)
 
-                                                1. Result in: % % % |- % -> % : EC_1
+                                                1. Result in: % % % |- % := % : EC_1
 
                                 1. Else Dangling#11347
 
@@ -35917,7 +35917,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
         1. (Let integerValue_index be (value' as integerValue))
 
-          1. Group indexAccess: p EC_0 ARCH |- (storageReference [ (integerValue_index as value) ]) -> value : %
+          1. Group indexAccess: p EC_0 ARCH |- (storageReference [ (integerValue_index as value) ]) := value : %
 
             1. (Lvalue_read: p EC_0 ARCH |- storageReference : value'')
 
@@ -35943,15 +35943,15 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
                                   1. (Let headerStackValue_base_update be (HEADER_STACK [ (value_element_update)* ( n_base_idx ; n_size ) ]))
 
-                                    1. (Lvalue_write: p EC_0 ARCH |- storageReference -> (headerStackValue_base_update as value) : EC_1)
+                                    1. (Lvalue_write: p EC_0 ARCH |- storageReference := (headerStackValue_base_update as value) : EC_1)
 
-                                      1. Result in: % % % |- % -> % : EC_1
+                                      1. Result in: % % % |- % := % : EC_1
 
                             1. Else Dangling#11369
 
                           2. Case false
 
-                            1. Result in: % % % |- % -> % : EC_0
+                            1. Result in: % % % |- % := % : EC_0
 
               1. Else Dangling#11363
 
@@ -35961,7 +35961,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
     1. (Let (storageReference [ value' sliceop value'' ]) be storageReference')
 
-      1. Group sliceAccess: p EC_0 ARCH |- (storageReference [ value' sliceop value'' ]) -> value : %
+      1. Group sliceAccess: p EC_0 ARCH |- (storageReference [ value' sliceop value'' ]) := value : %
 
         1. Case analysis on sliceop
 
@@ -35971,9 +35971,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
               1. (Let value_base_update be $bitacc_range_replace_op(value_base, value', value'', value))
 
-                1. (Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1)
+                1. (Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1)
 
-                  1. Result in: % % % |- % -> % : EC_1
+                  1. Result in: % % % |- % := % : EC_1
 
           2. Case (% matches pattern `+:`)
 
@@ -35981,9 +35981,9 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' -> value : %
 
               1. (Let value_base_update be $bitacc_offset_replace_op(value_base, value', value'', value))
 
-                1. (Lvalue_write: p EC_0 ARCH |- storageReference -> value_base_update : EC_1)
+                1. (Lvalue_write: p EC_0 ARCH |- storageReference := value_base_update : EC_1)
 
-                  1. Result in: % % % |- % -> % : EC_1
+                  1. Result in: % % % |- % := % : EC_1
 
 syntax callResult = 
    | EXIT (from exitResult) 
@@ -36062,7 +36062,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
                               1. (Let (` value) be (expressionResult as continueResult<value>))
 
-                                1. (Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value : EC_3)
+                                1. (Lvalue_write: p EC_2 ARCH_2 |- storageReference := value : EC_3)
 
                                   1. Result in: % % % |- % : EC_3 ARCH_2 ((`EMPTY) as statementResult)
 
@@ -36092,7 +36092,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
                                         1. (Let value_new be $bin_op(binop, value_lvalue, value))
 
-                                          1. (Lvalue_write: p EC_2 ARCH_2 |- storageReference -> value_new : EC_3)
+                                          1. (Lvalue_write: p EC_2 ARCH_2 |- storageReference := value_new : EC_3)
 
                                             1. Result in: % % % |- % : EC_3 ARCH_2 ((`EMPTY) as statementResult)
 
@@ -38019,7 +38019,7 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList directi
 
           1. (Let value be $find_var_e((` nameIR), p_callee, EC_callee))
 
-            1. (Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference -> value : EC_caller_1)
+            1. (Lvalue_write: p_caller EC_caller_0 ARCH |- storageReference := value : EC_caller_1)
 
               1. Result in: % |- % % % @ % % % ~> EC_caller_1
 
@@ -38269,7 +38269,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                                                   1. (Let headerStackValue_updated be (HEADER_STACK [ (value_element_updated)* ( n_idx_updated ; n_size ) ]))
 
-                                                                    1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference -> (headerStackValue_updated as value) : EC_2)
+                                                                    1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference := (headerStackValue_updated as value) : EC_2)
 
                                                                       1. Result in: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
@@ -38285,7 +38285,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                                       1. (Let headerStackValue_updated be (HEADER_STACK [ (value_element_updated)* ( n_idx_updated ; n_size ) ]))
 
-                                                        1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference -> (headerStackValue_updated as value) : EC_2)
+                                                        1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference := (headerStackValue_updated as value) : EC_2)
 
                                                           1. Result in: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
@@ -38363,7 +38363,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                                                 1. (Let headerStackValue_updated be (HEADER_STACK [ (value_element_updated)* ( n_front ; n_size ) ]))
 
-                                                                  1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference -> (headerStackValue_updated as value) : EC_2)
+                                                                  1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference := (headerStackValue_updated as value) : EC_2)
 
                                                                     1. Result in: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
@@ -38383,7 +38383,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                                           1. (Let headerStackValue_updated be (HEADER_STACK [ (value_element_updated)* ( n_idx_updated ; n_size ) ]))
 
-                                                            1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference -> (headerStackValue_updated as value) : EC_2)
+                                                            1. (Lvalue_write: p EC_1 ARCH_1 |- storageReference := (headerStackValue_updated as value) : EC_2)
 
                                                               1. Result in: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
@@ -38471,7 +38471,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                 1. (Let value be ((HEADER typeId { true ; (fieldValue)* }) as value))
 
-                                  1. (Lvalue_write: p EC_0 ARCH_0 |- storageReference -> value : EC_1)
+                                  1. (Lvalue_write: p EC_0 ARCH_0 |- storageReference := value : EC_1)
 
                                     1. (Let returnResult be (RETURN ?()))
 
@@ -38505,7 +38505,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee @ < typeArgumentListIR > ( argumentL
 
                                 1. (Let value be ((HEADER typeId { false ; (fieldValue)* }) as value))
 
-                                  1. (Lvalue_write: p EC_0 ARCH_0 |- storageReference -> value : EC_1)
+                                  1. (Lvalue_write: p EC_0 ARCH_0 |- storageReference := value : EC_1)
 
                                     1. (Let returnResult be (RETURN ?()))
 
@@ -41296,7 +41296,7 @@ relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
                                         1. (Let value_port be ((9 W i_port) as value))
 
-                                          1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_port -> value_port : EC_4)
+                                          1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_port := value_port : EC_4)
 
                                             1. Result in: % % |- % : EC_4
 
@@ -42086,7 +42086,7 @@ relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)* : %
 
         1. (Lvalue_read: (GLOBAL) EC_capture ARCH |- storageReference_h : value_h)
 
-          1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_h -> value_h : EC_1)
+          1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_h := value_h : EC_1)
 
             1. (V1Model_copy_meta_fields: EC_capture EC_1 ARCH |- (nameIR_t)* : EC_2)
 
@@ -42748,13 +42748,13 @@ relation PSA_ingress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
     1. (Let value_port be ((32 W i_port) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_parser_input_port := value_port : EC_1)
 
         1. (Let storageReference_parser_input_path be (((` "ingress_parser_input_metadata") as storageReference) . "packet_path"))
 
           1. (Let value_path be (("PSA_PacketPath_t" . t_path) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_parser_input_path := value_path : EC_2)
 
               1. Result in: % % |- % % : EC_2
 
@@ -42766,19 +42766,19 @@ relation PSA_ingress_init_input_metadata: EC_0 ARCH |- i_port t_path : %
 
     1. (Let value_port be ((32 W i_port) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_input_port -> value_port : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_input_port := value_port : EC_1)
 
         1. (Let storageReference_input_path be (((` "ingress_input_metadata") as storageReference) . "packet_path"))
 
           1. (Let value_path be (("PSA_PacketPath_t" . t_path) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_input_path -> value_path : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_input_path := value_path : EC_2)
 
               1. (Let storageReference_input_parser_error be (((` "ingress_input_metadata") as storageReference) . "parser_error"))
 
                 1. (Let value_parser_error be ((ERROR . "NoError") as value))
 
-                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_3)
+                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_input_parser_error := value_parser_error : EC_3)
 
                     1. Result in: % % |- % % : EC_3
 
@@ -42790,31 +42790,31 @@ relation PSA_ingress_init_output_metadata: EC_0 ARCH |- %
 
     1. (Let value_cos be ((8 W (0 as int)) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_output_cos -> value_cos : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_output_cos := value_cos : EC_1)
 
         1. (Let storageReference_output_clone be (((` "ingress_output_metadata") as storageReference) . "clone"))
 
           1. (Let value_clone be ((`B false) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_output_clone -> value_clone : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_output_clone := value_clone : EC_2)
 
               1. (Let storageReference_output_drop be (((` "ingress_output_metadata") as storageReference) . "drop"))
 
                 1. (Let value_drop be ((`B true) as value))
 
-                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_output_drop -> value_drop : EC_3)
+                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_output_drop := value_drop : EC_3)
 
                     1. (Let storageReference_output_resubmit be (((` "ingress_output_metadata") as storageReference) . "resubmit"))
 
                       1. (Let value_resubmit be ((`B false) as value))
 
-                        1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_output_resubmit -> value_resubmit : EC_4)
+                        1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_output_resubmit := value_resubmit : EC_4)
 
                           1. (Let storageReference_output_mc_grp be (((` "ingress_output_metadata") as storageReference) . "multicast_group"))
 
                             1. (Let value_mc_grp be ((32 W (0 as int)) as value))
 
-                              1. (Lvalue_write: (GLOBAL) EC_4 ARCH |- storageReference_output_mc_grp -> value_mc_grp : EC_5)
+                              1. (Lvalue_write: (GLOBAL) EC_4 ARCH |- storageReference_output_mc_grp := value_mc_grp : EC_5)
 
                                 1. Result in: % % |- EC_4
 
@@ -43546,13 +43546,13 @@ relation PSA_egress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
     1. (Let value_port be ((32 W i_port) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_parser_input_port -> value_port : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_parser_input_port := value_port : EC_1)
 
         1. (Let storageReference_parser_input_path be (((` "egress_parser_input_metadata") as storageReference) . "packet_path"))
 
           1. (Let value_path be (("PSA_PacketPath_t" . t_path) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_parser_input_path -> value_path : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_parser_input_path := value_path : EC_2)
 
               1. Result in: % % |- % % : EC_2
 
@@ -43564,31 +43564,31 @@ relation PSA_egress_init_input_metadata: EC_0 ARCH |- i_port t_path i_cos i_inst
 
     1. (Let value_cos be ((8 W i_cos) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_input_cos -> value_cos : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_input_cos := value_cos : EC_1)
 
         1. (Let storageReference_input_port be (((` "egress_input_metadata") as storageReference) . "egress_port"))
 
           1. (Let value_port be ((32 W i_port) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_input_port -> value_port : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_input_port := value_port : EC_2)
 
               1. (Let storageReference_input_path be (((` "egress_input_metadata") as storageReference) . "packet_path"))
 
                 1. (Let value_path be (("PSA_PacketPath_t" . t_path) as value))
 
-                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_input_path -> value_path : EC_3)
+                  1. (Lvalue_write: (GLOBAL) EC_2 ARCH |- storageReference_input_path := value_path : EC_3)
 
                     1. (Let storageReference_input_instance be (((` "egress_input_metadata") as storageReference) . "instance"))
 
                       1. (Let value_instance be ((16 W i_inst) as value))
 
-                        1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_input_instance -> value_instance : EC_4)
+                        1. (Lvalue_write: (GLOBAL) EC_3 ARCH |- storageReference_input_instance := value_instance : EC_4)
 
                           1. (Let storageReference_input_parser_error be (((` "egress_input_metadata") as storageReference) . "parser_error"))
 
                             1. (Let value_parser_error be ((ERROR . "NoError") as value))
 
-                              1. (Lvalue_write: (GLOBAL) EC_4 ARCH |- storageReference_input_parser_error -> value_parser_error : EC_5)
+                              1. (Lvalue_write: (GLOBAL) EC_4 ARCH |- storageReference_input_parser_error := value_parser_error : EC_5)
 
                                 1. Result in: % % |- % % % % : EC_5
 
@@ -43600,13 +43600,13 @@ relation PSA_egress_init_output_metadata: EC_0 ARCH |- %
 
     1. (Let value_clone be ((`B false) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_output_clone -> value_clone : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_output_clone := value_clone : EC_1)
 
         1. (Let storageReference_output_drop be (((` "egress_output_metadata") as storageReference) . "drop"))
 
           1. (Let value_drop be ((`B false) as value))
 
-            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_output_drop -> value_drop : EC_2)
+            1. (Lvalue_write: (GLOBAL) EC_1 ARCH |- storageReference_output_drop := value_drop : EC_2)
 
               1. Result in: % % |- EC_2
 
@@ -43618,7 +43618,7 @@ relation PSA_egress_init_deparser_input_metadata: EC_0 ARCH |- i_port : %
 
     1. (Let value_port be ((32 W i_port) as value))
 
-      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_deparser_input_port -> value_port : EC_1)
+      1. (Lvalue_write: (GLOBAL) EC_0 ARCH |- storageReference_deparser_input_port := value_port : EC_1)
 
         1. Result in: % % |- % : EC_1
 
