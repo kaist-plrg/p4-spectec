@@ -43,6 +43,10 @@
           (Printf.sprintf "@declare_types_of_il: expected name, got %s"
            (Il.Print.string_of_value value))
 
+  let set_type_namespace_of_il (value : value) (ns : namespace) : unit =
+    let id = id_of_name value in
+    set_type_namespace id ns
+
   let position_to_pos (position : Lexing.position) =
     {
       file = position.pos_fname;
@@ -179,7 +183,8 @@
   (* >> Declaration *) declaration
   (* Annotations *) annotationToken annotationBody structuredAnnotationBody annotation annotationListNonEmpty annotationList p4program
 %type <Lang.Il.value> push_name push_externName
-%type <unit> push_scope pop_scope go_toplevel go_local
+%type <Context.namespace> pop_scope
+%type <unit> push_scope go_toplevel go_local set_parent_namespace clear_parent_namespace
 %%
 
 (**************************** CONTEXTS ******************************)
@@ -214,6 +219,14 @@ go_local:
 toplevel(X):
   | go_toplevel x = X go_local
     { x }
+;
+set_parent_namespace:
+  | (* empty *)
+    { set_parent_namespace() }
+;
+clear_parent_namespace:
+  | (* empty *)
+    { clear_parent_namespace() }
 ;
 
 (**************************** P4-16 GRAMMAR ******************************)
@@ -634,7 +647,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpression:
-	| e = memberAccessBase DOT m = member %prec DOT
+	| e = memberAccessBase DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" <<<| (at $sloc) }
 ;
 
@@ -663,7 +676,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpressionNonBrace:
-	| e = memberAccessBaseNonBrace DOT m = member %prec DOT
+	| e = memberAccessBaseNonBrace DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ "memberAccessBaseNonBrace `. member" <| [ e; m ] <<| "memberAccessExpressionNonBrace" <<<| (at $sloc) }
 ;
 
@@ -908,7 +921,7 @@ argumentList:
 lvalue:
 	| e = referenceExpression
     { e }
-	| lv = lvalue DOT m = member %prec DOT
+	| lv = lvalue DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
 		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" <<<| (at $sloc) }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
 		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" <<<| (at $sloc) }
@@ -1295,10 +1308,12 @@ externFunctionDeclaration:
 
 %inline externMethodPrototype:
 	| al = annotationList p = functionPrototype pop_scope SEMICOLON
-    { "annotationList functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
+    { declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      "annotationList functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
 	| al = annotationList ABSTRACT p = functionPrototype
     pop_scope SEMICOLON
-    { "annotationList ABSTRACT functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
+    { declare_var (id_of_function_prototype p) (has_type_params_function_prototype p);
+      "annotationList ABSTRACT functionPrototype `;" <| [ al; p ] <<| "externMethodPrototype" <<<| (at $sloc) }
 ;
 
 externConstructorOrMethodPrototype:
@@ -1316,9 +1331,10 @@ externConstructorOrMethodPrototypeList:
 
 externObjectDeclaration:
   | al = annotationList EXTERN n = push_externName tpl = typeParameterListOpt
-    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE pop_scope
+    L_BRACE pl = externConstructorOrMethodPrototypeList R_BRACE s = pop_scope
     { let decl = "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList }" <| [ al; n; tpl; pl ] <<| "externObjectDeclaration" <<<| (at $sloc) in
       declare_type_of_il n (has_type_params_declaration decl);
+      set_type_namespace_of_il n s;
       decl }
 ;
 
@@ -1416,7 +1432,7 @@ parserStatementList:
 ;
 
 parserState:
-  | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE
+  | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE pop_scope
     { "annotationList STATE name `{ parserStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" <<<| (at $sloc) }
 ;
 
