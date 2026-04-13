@@ -41,8 +41,8 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
   in
   let (module Driver) =
     match arch with
-    | Some arch -> Backend_sim.Gen.gen arch
-    | None -> Backend_sim.Gen.gen_placeholder ()
+    | Some arch -> Backend_sim.Gen.gen_p4 arch
+    | None -> Backend_sim.Gen.gen_p4_placeholder ()
   in
   Driver.init ~cache ~det spec_sim;
   (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
@@ -680,24 +680,24 @@ let parse_command =
      in
      fun () ->
        try
-         let spec_il = elab filenames_spec in
-         let parsed_p4_file =
-           Interface.P4.Parse.parse_file includes_p4 filename_p4
+         let _, (module Driver) = runner `IL filenames_spec in
+         let value_program =
+           match Driver.parse_file includes_p4 [ filename_p4 ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let unparsed_p4_string =
-           Format.asprintf "%a\n"
-             (Interface.P4.Unparse.pp_program_il spec_il)
-             parsed_p4_file
-         in
+         let str_program = Driver.unparse_program value_program in
          if roundtrip then
-           let parsed_p4_string =
-             Interface.P4.Parse.parse_string filename_p4 unparsed_p4_string
+           let value_program_roundtrip =
+             match Driver.parse_string filename_p4 str_program with
+             | Pass value_program_roundtrip -> value_program_roundtrip
+             | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in
-           Il.Eq.eq_value ~dbg:true parsed_p4_file parsed_p4_string
+           Il.Eq.eq_value ~dbg:true value_program value_program_roundtrip
            |> (fun b ->
                 if b then "Roundtrip successful" else "Roundtrip failed")
            |> print_endline
-         else unparsed_p4_string |> print_endline
+         else str_program |> print_endline
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->
@@ -753,12 +753,17 @@ let p4_program_value_json_command =
     ~summary:"convert a P4 program to a value and output as JSON"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
+       let _, (module Driver) = runner `IL filenames_spec in
        try
          let value_program =
-           Interface.P4.Parse.parse_file_fresh includes_p4 filename_p4
+           match Driver.parse_file includes_p4 [ filename_p4 ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
          let json = Sl.value_to_yojson value_program in
          Yojson.Safe.to_string json |> print_string
@@ -777,16 +782,12 @@ let unparse_json_value_command =
      in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let _, (module Driver) = runner `IL filenames_spec in
          let json = Yojson.Safe.from_file filename_json in
          let value_result = Sl.value_of_yojson json in
          match value_result with
          | Ok value ->
-             let p4_source =
-               Format.asprintf "%a\n"
-                 (Interface.P4.Unparse.pp_program_sl spec_sl)
-                 value
-             in
+             let p4_source = Driver.unparse_program value in
              print_string p4_source
          | Error err -> Format.printf "Error parsing JSON value: %s\n" err
        with

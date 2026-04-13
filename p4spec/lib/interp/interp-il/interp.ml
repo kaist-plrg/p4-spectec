@@ -22,7 +22,8 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
+module Make (Interface : Sim.INTERFACE) (Arch : Sim.ARCH) : Sim.INTERP_IL =
+struct
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
@@ -1497,11 +1498,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       (filename_p4 : string) : Sim.program_result =
     clear ();
     try
-      let value_program =
-        Interface.P4.Parse.parse_file includes_p4 filename_p4
-      in
-      let+ values_output = do_eval_rel relname [ value_program ] in
-      (Sim.Pass values_output : Sim.program_result)
+      let parse_result = Interface.parse_program includes_p4 [ filename_p4 ] in
+      match parse_result with
+      | Pass value_program ->
+          Hook.on_program value_program;
+          let+ values_output = do_eval_rel relname [ value_program ] in
+          (Sim.Pass values_output : Sim.program_result)
+      | Fail (`Syntax (at, msg)) -> Sim.Fail (`Syntax (at, msg))
     with
     | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
     | Util.Error.InterpError (at, msg) -> Sim.Fail (`Runtime (at, msg))
@@ -1525,10 +1528,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
-    let printer value =
-      let henv = Interface.P4.Hint.hints_of_spec_il spec in
-      Format.asprintf "%a" (Interface.P4.Unparse.pp_value henv) value
-    in
+    let printer value = Interface.unparse_program value in
     Builtin.Call.init printer;
     Ctx.init ~det spec
 end

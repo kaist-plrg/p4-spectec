@@ -9,12 +9,14 @@ open Util.Source
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
 
 module Make
+    (Interface : INTERFACE)
     (MakeArch : functor (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) -> ARCH)
-    (MakeInterp_IL : functor (Arch : ARCH) -> INTERP_IL)
-    (MakeInterp_SL : functor (Arch : ARCH) -> INTERP_SL) : DRIVER = struct
+    (MakeInterp_IL : functor (Interface : INTERFACE) (Arch : ARCH) -> INTERP_IL)
+    (MakeInterp_SL : functor (Interface : INTERFACE) (Arch : ARCH) -> INTERP_SL) :
+  DRIVER = struct
   module rec Arch : ARCH = MakeArch (Interp_IL) (Interp_SL)
-  and Interp_IL : INTERP_IL = MakeInterp_IL (Arch)
-  and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
+  and Interp_IL : INTERP_IL = MakeInterp_IL (Interface) (Arch)
+  and Interp_SL : INTERP_SL = MakeInterp_SL (Interface) (Arch)
 
   (* Initialization *)
 
@@ -83,6 +85,7 @@ module Make
   let init_call_func () = Spec.Func.register call_func
 
   let init ?(cache = true) ?(det = false) (spec_ : spec) : unit =
+    Interface.init spec_;
     (match spec_ with
     | IL spec_il ->
         spec := IL spec_il;
@@ -442,4 +445,18 @@ module Make
     | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
         Fail (`Runtime (at, msg))
     | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
+
+  (* Parsing *)
+
+  let parse_file (includes : string list) (filenames : string list) :
+      parse_result =
+    Interface.parse_program includes filenames
+
+  let parse_string (filename : string) (str : string) : parse_result =
+    Interface.parse_string filename str
+
+  (* Unparsing *)
+
+  let unparse_program (value_program : Value.t) : string =
+    Interface.unparse_program value_program
 end

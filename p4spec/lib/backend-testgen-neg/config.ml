@@ -137,14 +137,10 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     specenv =
-  let (module Driver : Sim.DRIVER) = Backend_sim.Gen.gen_placeholder () in
+  let (module Driver : Sim.DRIVER) = Backend_sim.Gen.gen_p4_placeholder () in
   Driver.init (Sim.SL spec);
   let driver = (module Driver : Sim.DRIVER) in
-  let printer value_program =
-    Format.asprintf "%a\n"
-      (Interface.P4.Unparse.pp_program_sl spec)
-      value_program
-  in
+  let printer value_program = Driver.unparse_program value_program in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let spec = Sim.SL spec in
   { driver; printer; spec; relname; tdenv; mixopenv; includes_p4 }

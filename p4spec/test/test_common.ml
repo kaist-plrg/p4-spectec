@@ -119,8 +119,8 @@ let driver ?(det = false) ?(arch : string option) mode specdir =
   in
   let (module Driver) =
     match arch with
-    | Some arch -> Backend_sim.Gen.gen arch
-    | None -> Backend_sim.Gen.gen_placeholder ()
+    | Some arch -> Backend_sim.Gen.gen_p4 arch
+    | None -> Backend_sim.Gen.gen_p4_placeholder ()
   in
   Driver.init ~det spec_sim;
   (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))

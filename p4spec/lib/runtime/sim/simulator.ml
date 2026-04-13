@@ -13,6 +13,7 @@ type mode = IL_mode | SL_mode | Empty_mode
 type spec = IL of Il.spec | SL of Sl.spec | Empty
 type rel_result = Pass of Value.t list | Fail of region * string
 type func_result = Pass of Value.t | Fail of region * string
+type parse_result = Pass of Value.t | Fail of [ `Syntax of region * string ]
 
 type program_result =
   | Pass of Value.t list
@@ -21,6 +22,21 @@ type program_result =
 type stf_result =
   | Pass
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
+
+module type INTERFACE = sig
+  (* Program parsing, into IL value *)
+
+  val parse_program : string list -> string list -> parse_result
+  val parse_string : string -> string -> parse_result
+
+  (* Program unparsing *)
+
+  val unparse_program : Value.t -> string
+
+  (* Initialization *)
+
+  val init : spec -> unit
+end
 
 module type ARCH = sig
   (* STF AST transformation *)
@@ -86,14 +102,23 @@ module type INTERP_SL = sig
 end
 
 module type DRIVER = sig
-  (* Run a P4 program against the spec *)
+  (* Run a program against the spec *)
 
   val run_program : string -> string list -> string -> program_result
   val run_program_internal : string -> Value.t -> rel_result
 
-  (* Run a P4 program against the spec and a STF test *)
+  (* Run a program against the spec and a STF test (For P4 only) *)
 
   val run_stf_test : string list -> string -> string -> stf_result
+
+  (* Parsing *)
+
+  val parse_file : string list -> string list -> parse_result
+  val parse_string : string -> string -> parse_result
+
+  (* Unparsing *)
+
+  val unparse_program : Value.t -> string
 
   (* Initialization *)
 

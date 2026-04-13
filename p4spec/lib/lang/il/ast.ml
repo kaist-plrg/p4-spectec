@@ -222,7 +222,7 @@ type def = def' phrase
 and def' =
   (* `extern` `syntax` id hint* *)
   | ExternTypD of id * hint list
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  (* `syntax` id `<` list(tparam, `,`) `>` hint* `=` deftyp *)
   | TypD of id * tparam list * deftyp * hint list
   (* `var` id `:` typ hint* *)
   | VarD of id * typ * hint list

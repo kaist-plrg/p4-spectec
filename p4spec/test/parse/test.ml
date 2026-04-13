@@ -6,34 +6,36 @@ module Filesys = Util.Filesys
 
 (* P4 Parser test *)
 
-let parse_file time_start includes filename =
-  try Interface.Parse.parse_file includes filename
-  with ParseError (at, msg) -> raise (TestParseFileErr (msg, at, time_start))
+let parse_file time_start (module Driver : Sim.DRIVER) includes filename =
+  match Driver.parse_file includes [ filename ] with
+  | Pass value -> value
+  | Fail (`Syntax (at, msg)) -> raise (TestParseFileErr (msg, at, time_start))
 
-let parse_string time_start filename program_dump =
-  try Interface.Parse.parse_string filename program_dump
-  with ParseError (at, msg) ->
-    raise (TestParseStringErr (msg, at, time_start))
+let parse_string time_start (module Driver : Sim.DRIVER) filename program_dump =
+  match Driver.parse_string filename program_dump with
+  | Pass value -> value
+  | Fail (`Syntax (at, msg)) -> raise (TestParseStringErr (msg, at, time_start))
 
-let parse_roundtrip time_start includes filename spec =
-  let program = parse_file time_start includes filename in
-  let program_dump =
-    Format.asprintf "%a\n" (Interface.Unparse.pp_program_il spec) program
+let parse_roundtrip time_start (module Driver : Sim.DRIVER) includes filename =
+  let program = parse_file time_start (module Driver) includes filename in
+  let program_dump = Driver.unparse_program program in
+  let program_roundtrip =
+    parse_string time_start (module Driver) filename program_dump
   in
-  let program_roundtrip = parse_string time_start filename program_dump in
   if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then
     raise (TestParseRoundtripErr time_start)
   else time_start
 
-let parser_ includes_p4 filename_p4 spec =
+let parser_ (module Driver : Sim.DRIVER) includes_p4 filename_p4 =
   let time_start = start () in
-  try parse_roundtrip time_start includes_p4 filename_p4 spec with
+  try parse_roundtrip time_start (module Driver) includes_p4 filename_p4 with
   | TestParseFileErr _ as err -> raise err
   | TestParseStringErr _ as err -> raise err
   | TestParseRoundtripErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let parser_test_ stat includes_p4 excludes_p4 filename_p4 spec =
+let parser_test_ stat (module Driver : Sim.DRIVER) includes_p4 excludes_p4
+    filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -44,7 +46,7 @@ let parser_test_ stat includes_p4 excludes_p4 filename_p4 spec =
     })
   else
     try
-      let time_start = parser_ includes_p4 filename_p4 spec in
+      let time_start = parser_ (module Driver) includes_p4 filename_p4 in
       let duration = stop time_start in
       let log = Format.asprintf "Parser roundtrip success: %s" filename_p4 in
       log |> print_endline;
@@ -113,7 +115,7 @@ let parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
   let filenames_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
-  let spec = elab specdir in
+  let _, (module Driver) = driver `IL specdir in
   let total = List.length filenames_p4 in
   let stat = empty_stat in
   Format.asprintf "Running parser tests on %d files\n" total |> print_endline;
@@ -122,7 +124,7 @@ let parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
       (fun stat filename_p4 ->
         Format.asprintf "\n>>> Running parser test on %s" filename_p4
         |> print_endline;
-        parser_test_ stat includes_p4 excludes_p4 filename_p4 spec)
+        parser_test_ stat (module Driver) includes_p4 excludes_p4 filename_p4)
       stat filenames_p4
   in
   log_stat "\nRunning parser" stat total

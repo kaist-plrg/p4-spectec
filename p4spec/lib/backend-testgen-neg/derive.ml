@@ -62,7 +62,7 @@ let debug_dangling (spec : spec) (relname : string) (includes_p4 : string list)
     (filename_p4 : string) (dirname_debug : string) (iid : iid) : unit =
   let program_result, cover, vdg =
     let spec = Sim.SL spec in
-    let (module Sim) = Backend_sim.Gen.gen_placeholder () in
+    let (module Sim) = Backend_sim.Gen.gen_p4_placeholder () in
     Runner.run_program_with_dangling_and_vdg ~derive:true
       (module Sim)
       spec relname includes_p4 filename_p4
