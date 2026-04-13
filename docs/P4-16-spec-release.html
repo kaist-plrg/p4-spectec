@@ -875,7 +875,7 @@ h2 { color: #030303; border-bottom: 1px solid #dddddd; }
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-04-08</span>
+<span id="revdate">2026-04-13</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -6718,6 +6718,14 @@ nesting.</p>
 </li>
 </ul>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p>The following tracks the set of bound type variables:</p>
+</div>
+<div id="bound" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">bound = set&lt;typeId&gt;</code></pre>
 </div>
 </div>
 </div>
@@ -15392,26 +15400,6 @@ constructorTypeDefIR
 </li>
 </ul>
 </div>
-</div>
-</div>
-<details>
-<summary class="title">Click to view the specification source</summary>
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre></pre>
-</div>
-</div>
-</div>
-</details>
-<div class="openblock empty">
-<div class="content">
-
-</div>
-</div>
-<div class="sidebarblock">
-<div class="content">
-
 </div>
 </div>
 </div>
@@ -26909,9 +26897,9 @@ abortResult
 </div>
 </div>
 <div class="paragraph">
-<p>In order to statically determine the control flow of a P4 program (e.g.,
-whether a function body always returns), the following indicator for abstract
-control flow is used:</p>
+<p>Within the typing context, in order to statically determine the control flow of
+a P4 program (e.g., whether a function body always returns), the following
+indicator for abstract control flow is used:</p>
 </div>
 <div id="flow" class="listingblock">
 <div class="content">
@@ -26925,9 +26913,12 @@ control flow is used:</p>
 <p>As a marker of whether a statement is nested inside a loop, the following
 indicator is used:</p>
 </div>
-<div class="listingblock">
+<div id="loop" class="listingblock">
 <div class="content">
-<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison"></code></pre>
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">loop
+   : IN
+   | OUT
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -62646,6 +62637,17 @@ invocation:</p>
 </div>
 </div>
 <div class="paragraph">
+<p>The result of evaluating a table is either an <code>exit</code> or a <code>return</code>.</p>
+</div>
+<div id="tableResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">tableResult
+   : exitResult
+   | returnResult
+   ;</code></pre>
+</div>
+</div>
+<div class="paragraph">
 <p>After evaluating the table keys, the table lookup is performed as:</p>
 </div>
 <details>
@@ -70223,11 +70225,34 @@ resolved. This is done both during type checking and runtime evaluation.</p>
 <p>While resolving callees, <code>exit;</code> statements may be encountered. Thus, the
 result of callee resolution is:</p>
 </div>
-<div id="calleeResult" class="listingblock">
+<div id="methodCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">calleeResult
    : continueResult&lt;callee&gt;
    | abortResult
+   ;
+
+callee
+   : actionCallee
+   | functionCallee
+   | methodCallee
+   ;
+
+actionCallee
+   : ACTION cursor . nameIR `( parameterListIR # id* ) blockStatementIR
+   ;
+
+functionCallee
+   : definedFunctionCallee
+   | externFunctionCallee
+   ;
+
+methodCallee
+   : builtinMethodCallee
+   | externMethodCallee
+   | parserApplyMethodCallee
+   | controlApplyMethodCallee
+   | tableApplyMethodCallee
    ;</code></pre>
 </div>
 </div>
@@ -70297,7 +70322,7 @@ result of callee resolution is:</p>
 <div class="paragraph">
 <p>During runtime evaluation, actions are resolved by:</p>
 </div>
-<div id="actionCallee" class="listingblock">
+<div class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionCallee
    : ACTION cursor . nameIR `( parameterListIR # id* ) blockStatementIR
@@ -70364,6 +70389,14 @@ result of callee resolution is:</p>
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionTypeIR
    : definedFunctionTypeIR
    | externFunctionTypeIR
+   ;
+
+definedFunctionTypeIR
+   : FUNCTION nameIR `( parameterIR* ) : typeIR
+   ;
+
+externFunctionTypeIR
+   : EXTERN_FUNCTION nameIR `( parameterIR* ) : typeIR
    ;</code></pre>
 </div>
 </div>
@@ -70432,11 +70465,21 @@ result of callee resolution is:</p>
 <div class="paragraph">
 <p>During runtime evaluation, functions are resolved by:</p>
 </div>
-<div id="functionCallee" class="listingblock">
+<div id="externFunctionCallee" class="listingblock">
 <div class="content">
 <pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">functionCallee
    : definedFunctionCallee
    | externFunctionCallee
+   ;
+
+definedFunctionCallee
+   : FUNCTION nameIR `&lt; typeParameterListIR &gt; `( parameterListIR # id* )
+       blockStatementIR
+   ;
+
+externFunctionCallee
+   : EXTERN_FUNCTION nameIR `&lt; typeParameterListIR &gt;
+       `( parameterListIR # id* # id* )
    ;</code></pre>
 </div>
 </div>
@@ -75538,8 +75581,13 @@ calls for different types of callees.</p>
 <div class="paragraph">
 <p>The result of evaluating an action body is either an <code>exit</code> or a <code>return</code>.</p>
 </div>
-<div class="paragraph">
-<p>${sytnax: actionResult}</p>
+<div id="actionResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">actionResult
+   : exitResult
+   | returnResult
+   ;</code></pre>
+</div>
 </div>
 <details>
 <summary class="title">Click to view the specification source</summary>
@@ -78333,6 +78381,17 @@ calls for different types of callees.</p>
 </li>
 </ol>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of evaluating a control body is either an <code>exit</code> or a <code>return</code>.</p>
+</div>
+<div id="controlBodyResult" class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="bison">controlBodyResult
+   : exitResult
+   | returnResult
+   ;</code></pre>
 </div>
 </div>
 </div>
@@ -85722,7 +85781,7 @@ p4programIR
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-04-08 15:39:41 +0900
+Last updated 2026-04-13 09:32:27 +0900
 </div>
 </div>
 </body>
