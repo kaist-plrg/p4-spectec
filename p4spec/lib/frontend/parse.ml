@@ -30,7 +30,13 @@ let parse_mixop str =
     | PlainT _ -> Mixop.Arg
     | NotationT nottyp -> mixop_of_nottyp nottyp
   in
-  let typ = Parser.check_typ Lexer.token (Lexing.from_string str) in
+  let lexbuf = Lexing.from_string str in
+  let typ =
+    try Parser.check_typ Lexer.token lexbuf
+    with Parser.Error ->
+      error (Lexer.region lexbuf)
+        (Format.asprintf "syntax error in mixop string: %s" str)
+  in
   mixop_of_typ typ
 
 let parse_file file =

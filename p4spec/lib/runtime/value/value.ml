@@ -126,7 +126,15 @@ module Mixops = struct
     | Some m -> m
     | None ->
         let m = Frontend.Parse.parse_mixop s in
-        Hashtbl.add mixop_cache s m;
+        let s_canon = Mixop.string_of_mixop m in
+        let m =
+          match Hashtbl.find_opt mixop_cache s_canon with
+          | Some m_cached -> m_cached
+          | None ->
+              Hashtbl.replace mixop_cache s_canon m;
+              m
+        in
+        Hashtbl.replace mixop_cache s_canon m;
         m
 end
 

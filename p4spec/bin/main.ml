@@ -704,7 +704,6 @@ let parse_command =
            Format.printf "Elaboration error: %s\n" (string_of_error at msg)
        | ParseError (at, msg) ->
            Format.printf "Parse error: %s\n" (string_of_error at msg)
-       | Interface.P4.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
 let json_ast_command =
