@@ -14,7 +14,7 @@ type set = VSet.t
 
 (* Conversion between meta-sets and OCaml lists *)
 
-let mixop_set = Value.Make.mixop_of "`{ k }"
+let mixop_set = Value.Mixops.mixop_of "`{ k }"
 
 let set_of_value (value : value) : set =
   match value.it with

@@ -4,44 +4,58 @@
   open Context
   open Extract
   open Value.Make
-  open Flatten
+  open Util.Error
   open Util.Source
+
+  let error = error_parse
 
   let declare_var_of_il (value : value) (b : bool) : unit =
     let id = id_of_name value in
     declare_var id b
 
   let rec declare_vars_of_il (value : value) : unit =
-    match flatten_case_v_opt value with
-    | Some ("nameList", [ "," ], [ v_nameList; v_name ]) ->
-        declare_vars_of_il v_nameList;
-        declare_var_of_il v_name false
-    | Some ("identifier", _, _)
-    | Some ("nonTypeName", _, _)
-    | Some ("name", _, _)
-    | Some ("typeIdentifier", _, _) -> declare_var_of_il value false
-    | _ ->
-        failwith
-          (Printf.sprintf "@declare_vars_of_il: expected name, got %s"
-           (Il.Print.string_of_value value))
+    Value.Get.mtch value
+      [
+        ("nameList `, name",
+        fun values ->
+          declare_vars_of_il (List.nth values 0);
+          declare_var_of_il (List.nth values 1) false);
+        ("`ID text", fun _ -> declare_var_of_il value false);
+        ("APPLY", fun _ -> declare_var_of_il value false);
+        ("KEY", fun _ -> declare_var_of_il value false);
+        ("ACTIONS", fun _ -> declare_var_of_il value false);
+        ("STATE", fun _ -> declare_var_of_il value false);
+        ("ENTRIES", fun _ -> declare_var_of_il value false);
+        ("TYPE", fun _ -> declare_var_of_il value false);
+        ("PRIORITY", fun _ -> declare_var_of_il value false);
+        ("`TID text", fun _ -> declare_var_of_il value false);
+        ("LIST", fun _ -> declare_var_of_il value false);
+      ]
+      (fun _ -> error no_region "@declare_vars_of_il: unexpected value")
 
   let declare_type_of_il (value : value) (b : bool) : unit =
     let id = id_of_name value in
     declare_type id b
 
   let rec declare_types_of_il (value : value) : unit =
-    match flatten_case_v_opt value with
-    | Some ("typeParameterList", [ "," ], [ v_tpList; v_name ]) ->
-        declare_types_of_il v_tpList;
-        declare_type_of_il v_name false
-    | Some ("identifier", _, _)
-    | Some ("nonTypeName", _, _)
-    | Some ("name", _, _)
-    | Some ("typeIdentifier", _, _) -> declare_type_of_il value false
-    | _ ->
-        failwith
-          (Printf.sprintf "@declare_types_of_il: expected name, got %s"
-           (Il.Print.string_of_value value))
+    Value.Get.mtch value
+      [
+        ("typeParameterList `, typeParameter",
+        (fun values ->
+          declare_types_of_il (List.nth values 0);
+          declare_type_of_il (List.nth values 1) false));
+        ("`ID text", fun _ -> declare_type_of_il value false);
+        ("APPLY", fun _ -> declare_type_of_il value false);
+        ("KEY", fun _ -> declare_type_of_il value false);
+        ("ACTIONS", fun _ -> declare_type_of_il value false);
+        ("STATE", fun _ -> declare_type_of_il value false);
+        ("ENTRIES", fun _ -> declare_type_of_il value false);
+        ("TYPE", fun _ -> declare_type_of_il value false);
+        ("PRIORITY", fun _ -> declare_type_of_il value false);
+        ("`TID text", fun _ -> declare_type_of_il value false);
+        ("LIST", fun _ -> declare_type_of_il value false);
+      ]
+      (fun _ -> error no_region "@declare_types_of_il: unexpected value")
 
   let position_to_pos (position : Lexing.position) =
     {

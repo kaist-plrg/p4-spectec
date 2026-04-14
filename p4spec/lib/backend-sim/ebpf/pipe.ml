@@ -1,9 +1,8 @@
-open Interface.P4.Unpack
-open Interface.P4.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
+open Spec.Unpack
 open Util.Source
 open Error
 
@@ -282,10 +281,7 @@ struct
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
     let drop =
-      match flatten_case_v_opt value_parse_result with
-      | Some (_, [ "REJECT" ], [ _ ]) -> true
-      | Some _ -> false
-      | None -> assert false
+      Value.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
     in
     (value_ctx, value_arch, drop)
 

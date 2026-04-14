@@ -7,7 +7,7 @@
 
 open Lang
 open Il
-open Flatten
+module Value = Runtime.Value
 open Util.Error
 open Util.Source
 module F = Format
@@ -17,175 +17,149 @@ let error = error_parse
 (* Identifier extraction *)
 
 let id_of_name (value : value) : string =
-  match flatten_case_v_opt value with
-  | Some ("identifier", [ "`ID" ], [ { it = TextV s; _ } ]) -> s
-  | Some ("nonTypeName", [ "APPLY" ], []) -> "apply"
-  | Some ("nonTypeName", [ "KEY" ], []) -> "key"
-  | Some ("nonTypeName", [ "ACTIONS" ], []) -> "actions"
-  | Some ("nonTypeName", [ "STATE" ], []) -> "state"
-  | Some ("nonTypeName", [ "ENTRIES" ], []) -> "entries"
-  | Some ("nonTypeName", [ "TYPE" ], []) -> "type"
-  | Some ("nonTypeName", [ "PRIORITY" ], []) -> "priority"
-  | Some ("name", [ "LIST" ], []) -> "list"
-  | Some ("typeIdentifier", [ "`TID" ], [ { it = TextV s; _ } ]) -> s
-  | _ ->
-      error no_region
-        (F.asprintf "@id_of_name: expected TextV, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ("`ID text", fun values -> values |> Value.Get.nth 0 |> Value.Get.text);
+      ("APPLY", fun _ -> "apply");
+      ("KEY", fun _ -> "key");
+      ("ACTIONS", fun _ -> "actions");
+      ("STATE", fun _ -> "state");
+      ("ENTRIES", fun _ -> "entries");
+      ("TYPE", fun _ -> "type");
+      ("PRIORITY", fun _ -> "priority");
+      ("`TID text", fun values -> values |> Value.Get.nth 0 |> Value.Get.text);
+      ("LIST", fun _ -> "list");
+    ]
+    (fun _ -> error no_region "@id_of_name: unexpected value")
 
 let id_of_function_prototype (value : value) : string =
-  match flatten_case_v_opt value with
-  | Some ("functionPrototype", [ "("; ")" ], [ _; name; _; _ ]) ->
-      id_of_name name
-  | _ ->
-      error no_region
-        (F.asprintf
-           "@id_of_function_prototype: expected functionPrototype, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ( "typeOrVoid name typeParameterListOpt `( parameterList )",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+    ]
+    (fun _ -> error no_region "@id_of_function_prototype: unexpected value")
 
 let id_of_declaration (value : value) : string =
-  match flatten_case_v_opt value with
-  | Some ("constantDeclaration", [ "CONST"; ";" ], [ _; _; name; _ ]) ->
-      id_of_name name
-  | Some ("instantiation", [ "("; ")"; ";" ], [ _; _; _; name ]) ->
-      id_of_name name
-  | Some ("instantiation", [ "("; ")"; ";" ], [ _; _; _; name; _ ]) ->
-      id_of_name name
-  | Some ("functionDeclaration", [], [ _; functionPrototype; _ ]) ->
-      id_of_function_prototype functionPrototype
-  | Some ("actionDeclaration", [ "ACTION"; "("; ")" ], [ _; name; _; _ ]) ->
-      id_of_name name
-  | Some ("errorDeclaration", _, _) ->
-      error no_region "errorDeclaration: no name"
-  | Some ("matchKindDeclaration", _, _) ->
-      error no_region "matchKindDeclaration: no name"
-  | Some
-      ("externFunctionDeclaration", [ "EXTERN"; ";" ], [ _; functionPrototype ])
-    ->
-      id_of_function_prototype functionPrototype
-  | Some
-      ( "externObjectDeclaration",
-        [ "EXTERN"; "{"; "}" ],
-        [ _; nonTypeName; _; _ ] ) ->
-      id_of_name nonTypeName
-  | Some
-      ( "parserDeclaration",
-        [ "PARSER"; "("; ")"; "{"; "}" ],
-        [ _; name; _; _; _; _; _ ] )
-  | Some
-      ( "controlDeclaration",
-        [ "CONTROL"; "("; ")"; "{"; "APPLY"; "}" ],
-        [ _; name; _; _; _; _; _ ] )
-  | Some ("enumTypeDeclaration", [ "ENUM"; "{"; "}" ], [ _; name; _; _ ])
-  | Some ("enumTypeDeclaration", [ "ENUM"; "{"; "}" ], [ _; _; name; _; _ ])
-  | Some ("structTypeDeclaration", [ "STRUCT"; "{"; "}" ], [ _; name; _; _ ])
-  | Some ("headerTypeDeclaration", [ "HEADER"; "{"; "}" ], [ _; name; _; _ ])
-  | Some
-      ( "headerUnionTypeDeclaration",
-        [ "HEADER_UNION"; "{"; "}" ],
-        [ _; name; _; _ ] )
-  | Some ("typedefDeclaration", [ "TYPEDEF"; ";" ], [ _; _; name ])
-  | Some ("typedefDeclaration", [ "TYPE"; ";" ], [ _; _; name ])
-  | Some
-      ("parserTypeDeclaration", [ "PARSER"; "("; ")"; ";" ], [ _; name; _; _ ])
-  | Some
-      ("controlTypeDeclaration", [ "CONTROL"; "("; ")"; ";" ], [ _; name; _; _ ])
-  | Some
-      ("packageTypeDeclaration", [ "PACKAGE"; "("; ")"; ";" ], [ _; name; _; _ ])
-    ->
-      id_of_name name
-  (* not a variant of declaration *)
-  | Some ("tableDeclaration", [ "TABLE"; "{"; "}" ], [ _; name; _ ]) ->
-      id_of_name name
-  | _ ->
-      error no_region
-        (F.asprintf "@id_of_declaration: expected declaration, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ( "annotationList CONST type name initializer `;",
+        fun values -> values |> Value.Get.nth 2 |> id_of_name );
+      ( "annotationList type `( argumentList ) name `;",
+        fun values -> values |> Value.Get.nth 3 |> id_of_name );
+      ( "annotationList type `( argumentList ) name objectInitializer `;",
+        fun values -> values |> Value.Get.nth 3 |> id_of_name );
+      ( "annotationList functionPrototype blockStatement",
+        fun values -> values |> Value.Get.nth 1 |> id_of_function_prototype );
+      ( "annotationList ACTION name `( parameterList ) blockStatement",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList EXTERN functionPrototype `;",
+        fun values -> values |> Value.Get.nth 1 |> id_of_function_prototype );
+      ( "annotationList EXTERN nonTypeName typeParameterListOpt `{ \
+         externConstructorOrMethodPrototypeList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList PARSER name typeParameterListOpt `( parameterList ) \
+         constructorParameterListOpt `{ parserLocalDeclarationList \
+         parserStateList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList ) \
+         constructorParameterListOpt `{ controlLocalDeclarationList APPLY \
+         controlBody }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList ENUM name `{ nameList trailingCommaOpt }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt }",
+        fun values -> values |> Value.Get.nth 2 |> id_of_name );
+      ( "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList HEADER name typeParameterListOpt `{ typeFieldList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList HEADER_UNION name typeParameterListOpt `{ \
+         typeFieldList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList TYPEDEF typedef name `;",
+        fun values -> values |> Value.Get.nth 2 |> id_of_name );
+      ( "annotationList TYPE type name `;",
+        fun values -> values |> Value.Get.nth 2 |> id_of_name );
+      ( "annotationList PARSER name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+      ( "annotationList TABLE name `{ tablePropertyList }",
+        fun values -> values |> Value.Get.nth 1 |> id_of_name );
+    ]
+    (fun _ -> error no_region "@id_of_declaration: unexpected value")
 
 let id_of_parameter (value : value) : string =
-  match flatten_case_v_opt value with
-  | Some ("parameter", [], [ _; _; _; name ]) -> id_of_name name
-  | Some ("parameter", [], [ _; _; _; name; _ ]) -> id_of_name name
-  | _ ->
-      error no_region
-        (F.asprintf "@id_of_parameter: expected parameter, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ( "annotationList direction type name initializerOpt",
+        fun values -> values |> Value.Get.nth 3 |> id_of_name );
+    ]
+    (fun _ -> error no_region "@id_of_parameter: unexpected value")
 
 (* Type parameter extraction *)
 
 let has_type_params (value : value) : bool =
-  match flatten_case_v_opt value with
-  | Some ("typeParameterListOpt", [ "`EMPTY" ], []) -> false
-  | Some ("typeParameterListOpt", [ "<"; ">" ], [ _ ]) -> true
-  | _ ->
-      error no_region
-        (Printf.sprintf
-           "@has_type_params: expected typeParameterListOpt, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [ ("`EMPTY", fun _ -> false); ("`< typeParameterList >", fun _ -> true) ]
+    (fun _ -> error no_region "@has_type_params: unexpected value")
 
 let has_type_params_function_prototype (value : value) : bool =
-  match flatten_case_v_opt value with
-  | Some ("functionPrototype", [ "("; ")" ], [ _; _; typeParameterListOpt; _ ])
-    ->
-      has_type_params typeParameterListOpt
-  | _ ->
-      error no_region
-        (Printf.sprintf
-           "@has_type_params_function_prototype: expected functionPrototype, \
-            got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ( "typeOrVoid name typeParameterListOpt `( parameterList )",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+    ]
+    (fun _ ->
+      error no_region "@has_type_params_function_prototype: unexpected value")
 
 let has_type_params_declaration (value : value) : bool =
-  match flatten_case_v_opt value with
-  | Some ("constantDeclaration", _, _) | Some ("instantiation", _, _) -> false
-  | Some ("functionDeclaration", [], [ _; functionPrototype; _ ]) ->
-      has_type_params_function_prototype functionPrototype
-  | Some ("actionDeclaration", _, _)
-  | Some ("errorDeclaration", _, _)
-  | Some ("matchKindDeclaration", _, _) ->
-      false
-  | Some
-      ("externFunctionDeclaration", [ "EXTERN"; ";" ], [ _; functionPrototype ])
-    ->
-      has_type_params_function_prototype functionPrototype
-  | Some
-      ( "externObjectDeclaration",
-        [ "EXTERN"; "{"; "}" ],
-        [ _; _; typeParameterListOpt; _ ] ) ->
-      has_type_params typeParameterListOpt
-  | Some ("parserDeclaration", _, _)
-  | Some ("controlDeclaration", _, _)
-  | Some ("enumTypeDeclaration", _, _) ->
-      false
-  | Some
-      ( "structTypeDeclaration",
-        [ "STRUCT"; "{"; "}" ],
-        [ _; _; typeParameterListOpt; _ ] )
-  | Some
-      ( "headerTypeDeclaration",
-        [ "HEADER"; "{"; "}" ],
-        [ _; _; typeParameterListOpt; _ ] )
-  | Some
-      ( "headerUnionTypeDeclaration",
-        [ "HEADER_UNION"; "{"; "}" ],
-        [ _; _; typeParameterListOpt; _ ] ) ->
-      has_type_params typeParameterListOpt
-  | Some ("typedefDeclaration", _, _) -> false
-  | Some
-      ( "parserTypeDeclaration",
-        [ "PARSER"; "("; ")"; ";" ],
-        [ _; _; typeParameterListOpt; _ ] )
-  | Some
-      ( "controlTypeDeclaration",
-        [ "CONTROL"; "("; ")"; ";" ],
-        [ _; _; typeParameterListOpt; _ ] )
-  | Some
-      ( "packageTypeDeclaration",
-        [ "PACKAGE"; "("; ")"; ";" ],
-        [ _; _; typeParameterListOpt; _ ] ) ->
-      has_type_params typeParameterListOpt
-  | _ ->
-      error no_region
-        (Printf.sprintf
-           "@has_type_params_declaration: expected declaration, got %s"
-           (Il.Print.string_of_value value))
+  Value.Get.mtch value
+    [
+      ("annotationList CONST type name initializer `;", fun _ -> false);
+      ("annotationList type `( argumentList ) name `;", fun _ -> false);
+      ( "annotationList type `( argumentList ) name objectInitializer `;",
+        fun _ -> false );
+      ( "annotationList functionPrototype blockStatement",
+        fun values ->
+          values |> Value.Get.nth 1 |> has_type_params_function_prototype );
+      ( "annotationList ACTION name `( parameterList ) blockStatement",
+        fun _ -> false );
+      ( "annotationList EXTERN functionPrototype `;",
+        fun values ->
+          values |> Value.Get.nth 1 |> has_type_params_function_prototype );
+      ( "annotationList EXTERN nonTypeName typeParameterListOpt `{ \
+         externConstructorOrMethodPrototypeList }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList PARSER name typeParameterListOpt `( parameterList ) \
+         constructorParameterListOpt `{ parserLocalDeclarationList \
+         parserStateList }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList ) \
+         constructorParameterListOpt `{ controlLocalDeclarationList APPLY \
+         controlBody }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ("annotationList ENUM name `{ nameList trailingCommaOpt }", fun _ -> false);
+      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt }",
+        fun _ -> false );
+      ( "annotationList STRUCT name typeParameterListOpt `{ typeFieldList }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList HEADER name typeParameterListOpt `{ typeFieldList }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList HEADER_UNION name typeParameterListOpt `{ \
+         typeFieldList }",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ("annotationList TYPEDEF typedef name `;", fun _ -> false);
+      ("annotationList TYPE type name `;", fun _ -> false);
+      ( "annotationList PARSER name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList ) `;",
+        fun values -> values |> Value.Get.nth 2 |> has_type_params );
+      ("annotationList TABLE name `{ tablePropertyList }", fun _ -> false);
+    ]
+    (fun _ -> error no_region "@has_type_params_declaration: unexpected value")

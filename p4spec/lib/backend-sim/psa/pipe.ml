@@ -1,10 +1,9 @@
-open Interface.P4.Unpack
-open Interface.P4.Pack
-open Interface.P4.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Simulator
+open Spec.Unpack
+open Spec.Pack
 open State
 open Error
 open Util.Source
@@ -1034,12 +1033,13 @@ struct
     let* value_parser_result = apply Spec.Rel.psa_ingress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ "REJECT" ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
-            "ingress_input_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
+      Value.Get.(
+        value_parser_result |>>? "REJECT errorValue" |> function
+        | Some values ->
+            let value_error = one values in
+            Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+              "ingress_input_metadata" "parser_error" value_error
+        | None -> value_ctx)
     in
     put (value_ctx, value_arch, txs)
 
@@ -1075,12 +1075,13 @@ struct
     let* value_parser_result = apply Spec.Rel.psa_egress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ "REJECT" ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
-            "egress_input_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
+      Value.Get.(
+        value_parser_result |>>? "REJECT errorValue" |> function
+        | Some values ->
+            let value_error = one values in
+            Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+              "egress_input_metadata" "parser_error" value_error
+        | None -> value_ctx)
     in
     put (value_ctx, value_arch, txs)
 

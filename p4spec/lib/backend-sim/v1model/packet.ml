@@ -1,6 +1,6 @@
-open Interface.P4.Pack
-open Interface.P4.Unpack
 module Value = Runtime.Value
+open Spec.Pack
+open Spec.Unpack
 
 (* Packet clones *)
 

@@ -116,11 +116,9 @@ let hash_of (v : value') : int =
   go v;
   !h land 0x7FFFFFFF
 
-(* Constructors *)
+(* Mixops *)
 
-module Make = struct
-  (* Mixop generator *)
-
+module Mixops = struct
   let mixop_cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
 
   let mixop_of (s : string) : Mixop.t =
@@ -130,7 +128,11 @@ module Make = struct
         let m = Frontend.Parse.parse_mixop s in
         Hashtbl.add mixop_cache s m;
         m
+end
 
+(* Constructors *)
+
+module Make = struct
   (* Constructors *)
 
   let mk (at : region) (typ : typ') (value : value') : value =
@@ -189,7 +191,7 @@ module Make = struct
 
   let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
     let typ = Typ.Make.var (s $ no_region) [] in
-    let valuecase = (mixop_of s_mixop, values) in
+    let valuecase = (Mixops.mixop_of s_mixop, values) in
     let at =
       values |> List.map at
       |> List.filter (fun region -> region <> no_region)
@@ -206,45 +208,100 @@ end
 (* Getters *)
 
 module Get = struct
-  let bool (value : t) =
+  let bool (value : t) : bool =
     match value.it with BoolV b -> b | _ -> error no_region "not a bool"
 
-  let num (value : t) =
+  let num (value : t) : Num.t =
     match value.it with NumV n -> n | _ -> error no_region "not a num"
 
-  let text (value : t) =
+  let text (value : t) : string =
     match value.it with TextV s -> s | _ -> error no_region "not a text"
 
-  let str (value : t) =
+  let str (value : t) : valuefield list =
     match value.it with
     | StructV valuefields -> valuefields
     | _ -> error no_region "not a struct"
 
-  let case (value : t) =
+  let case (value : t) : valuecase =
     match value.it with
     | CaseV valuecase -> valuecase
     | _ -> error no_region "not a case"
 
-  let tuple (value : t) =
+  let tuple (value : t) : value list =
     match value.it with
     | TupleV values -> values
     | _ -> error no_region "not a tuple"
 
-  let opt (value : t) =
+  let opt (value : t) : value option =
     match value.it with
     | OptV value -> value
     | _ -> error no_region "not an option"
 
-  let list (value : t) =
+  let list (value : t) : value list =
     match value.it with
     | ListV values -> values
     | _ -> error no_region "not a list"
 
-  let func (value : t) =
+  let func (value : t) : id =
     match value.it with FuncV id -> id | _ -> error no_region "not a function"
 
-  let extern (value : t) =
+  let extern (value : t) : Yojson.Safe.t =
     match value.it with
     | ExternV json -> json
     | _ -> error no_region "not an extern"
+
+  (* Extractors *)
+
+  let nth (n : int) (values : value list) : value = List.nth values n
+
+  let one (values : value list) : value =
+    match values with
+    | [ value ] -> value
+    | _ -> error no_region "expected exactly one value"
+
+  let two (values : value list) : value * value =
+    match values with
+    | [ value_a; value_b ] -> (value_a, value_b)
+    | _ -> error no_region "expected exactly two values"
+
+  let three (values : value list) : value * value * value =
+    match values with
+    | [ value_a; value_b; value_c ] -> (value_a, value_b, value_c)
+    | _ -> error no_region "expected exactly three values"
+
+  (* Match *)
+
+  let mtch (value : t) (cases : (string * (value list -> 'a)) list)
+      (case_default : value list -> 'a) : 'a =
+    match value.it with
+    | CaseV (mixop, values) -> (
+        let cases =
+          List.map (fun (s_mixop, f) -> (Mixops.mixop_of s_mixop, f)) cases
+        in
+        let f_opt =
+          List.find_opt (fun (m, _) -> Mixop.eq m mixop) cases |> Option.map snd
+        in
+        match f_opt with Some f -> f values | None -> case_default values)
+    | _ -> case_default []
+
+  (* Operators *)
+
+  let ( |>> ) (value : t) (s_mixop : string) : value list =
+    match value.it with
+    | CaseV (mixop, values) ->
+        let mixop_expect = Mixops.mixop_of s_mixop in
+        if Mixop.eq mixop mixop_expect then values
+        else
+          error no_region
+            (Format.asprintf "expected case with %s, but got %s"
+               (Mixop.string_of_mixop mixop_expect)
+               (Mixop.string_of_mixop mixop))
+    | _ -> error no_region "not a case"
+
+  let ( |>>? ) (value : t) (s_mixop : string) : value list option =
+    match value.it with
+    | CaseV (mixop, values) ->
+        let mixop_expect = Mixops.mixop_of s_mixop in
+        if Mixop.eq mixop mixop_expect then Some values else None
+    | _ -> None
 end
