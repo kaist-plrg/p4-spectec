@@ -1,3 +1,11 @@
+;; Premise evaluation rules
+
+rule Eval_prem/relpr:
+  C |- REL id `: exp* `-> exp_out* : ctxres
+  -- Eval_exps: C |- exp* : OK val*
+  -- Call_rel: C |- id val* : OK val_out*
+  -- Assign_exps : C |- val_out* -> exp_out* : ctxres
+
 rulegroup Eval_prem/ifpr {
 
   rule Eval_prem/fail:
@@ -13,3 +21,89 @@ rulegroup Eval_prem/ifpr {
     -- Eval_exp: C |- exp : OK (BOOL false)
 
 }
+
+rule Eval_prem/ifholdpr:
+  C |- IFHOLD id `: exp* : OK C
+  -- Eval_exps: C |- exp* : OK val_input*
+  -- Call_rel: C |- id val_input* : OK eps
+
+rule Eval_prem/ifnotholdpr:
+  C |- IFNOTHOLD id `: exp* : OK C
+  -- Eval_exps: C |- exp* : OK val_input*
+  -- Call_rel: C |- id val_input* : FAIL
+
+rule Eval_prem/letpr:
+  C |- LET exp_l `= exp_r : ctxres
+  -- Eval_exp : C |- exp_r : OK val
+  -- Assign_exp : C |- val -> exp_l : ctxres
+
+
+rulegroup Eval_prem/iterpr-opt {
+
+  rule Eval_prem/none:
+    C |- ITER prem iterprem : OK C_res
+    -- if QUEST vari_bound* vari_bind* = iterprem
+    -- if eps = $sub_opt(C, vari_bound*)
+    -- if (id_bind iter_bind* = vari_bind)*
+    -- if (vari_bind_iter = id_bind (iter_bind* ++ [ QUEST ]))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    -- if C_res = $add_vals(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/some:
+    C |- ITER prem iterprem : OK C_res
+    -- if QUEST vari_bound* vari_bind* = iterprem
+    -- if C_sub = $sub_opt(C, vari_bound*)
+    -- if (id_bind iter_bind* = vari_bind)*
+    -- if (vari_bind_iter = id_bind (iter_bind* ++ [ QUEST ]))*
+    -- if (val_bind = $find_val(C, vari_bind))*
+    -- if C_res = $add_vals(C, vari_bind_iter*, (OPT val_bind)*)
+
+}
+
+rulegroup Eval_prem/iterpr-list {
+ 
+  rule Eval_prem/empty:
+    C |- ITER prem iterprem : OK C_res
+    -- if STAR vari_bound* vari_bind* = iterprem
+    -- if eps = $sub_list(C, vari_bound*)
+    -- if (id_bind iter_bind* = vari_bind)*
+    -- if (vari_bind_iter = id_bind (iter_bind* ++ [ STAR ]))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    -- if C_res = $add_vals(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/list:
+    C |- ITER prem iterprem : OK C_res
+    -- if STAR vari_bound* vari_bind* = iterprem
+    ---- ;; decompose C into a list of subcontexts C_sub* corresponding to vari_bound*
+    -- if C_sub* = $sub_list(C, vari_bound)*
+    -- if C_sub* =/= eps
+    ---- ;; for each C_sub in C_sub*, evaluate prem
+    ---- ;; this yields val_sub_bind* for each C_sub
+    -- (Eval_prem: C_sub |- prem : OK C_sub_res)*
+    -- if (val_sub_bind* = $find_vals(C_sub_res, vari_bind*))*
+    ---- ;; transpose val_sub_bind** to get val_bind**
+    ---- ;; then combine val_bind* as a LIST, which is the value to be bound to vari_bind*
+    -- if val_bind** = $transpose<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (id_bind iter_bind* = vari_bind)*
+    -- if (vari_bind_iter = id_bind (iter_bind* ++ [ STAR ]))*
+    -- if C_res = $add_vals(C, vari_bind_iter*, val_res_bind*)
+}
+
+rule Eval_prem/fail:
+  C |- prem : FAIL
+  -- otherwise
+
+;; Premise sequence evaluation rules
+
+rule Eval_prems/empty:
+  C |- eps : OK C
+
+rule Eval_prems/list:
+  C |- (prem_cur :: prem*) : OK C''
+  -- Eval_prem: C |- prem_cur : OK C'
+  -- Eval_prems: C' |- prem* : OK C''
+
+rule Eval_prems/fail:
+  C |- prem* : FAIL
+  -- otherwise

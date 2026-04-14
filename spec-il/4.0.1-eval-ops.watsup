@@ -1,0 +1,92 @@
+;; Binary operations
+
+dec $binop_number(binop, num, num) : val
+def $binop_number(ADD, NAT n_l, NAT n_r) = NAT $(n_l + n_r)
+def $binop_number(ADD, INT i_l, INT i_r) = INT $(i_l + i_r)
+def $binop_number(SUB, NAT n_l, NAT n_r) = INT $(n_l - n_r)
+def $binop_number(SUB, INT i_l, INT i_r) = INT $(i_l - i_r)
+def $binop_number(MUL, NAT n_l, NAT n_r) = NAT $(n_l * n_r)
+def $binop_number(MUL, INT i_l, INT i_r) = INT $(i_l * i_r)
+def $binop_number(DIV, NAT n_l, NAT n_r) = NAT $(n_l / n_r)
+def $binop_number(DIV, INT i_l, INT i_r) = INT $(i_l / i_r)
+def $binop_number(MOD, NAT n_l, NAT n_r) = NAT $(n_l \ n_r)
+def $binop_number(MOD, INT i_l, INT i_r) = INT $(i_l \ i_r)
+def $binop_number(POW, NAT n_l, NAT n_r) = NAT $(n_l ^ n_r)
+def $binop_number(POW, INT i_l, INT i_r) = INT $(i_l ^ i_r)
+
+dec $cmpop_number(cmpop, num, num) : bool
+def $cmpop_number(LT, NAT n_l, NAT n_r) = $(n_l < n_r)
+def $cmpop_number(LT, INT i_l, INT i_r) = $(i_l < i_r)
+def $cmpop_number(GT, NAT n_l, NAT n_r) = $(n_l > n_r)
+def $cmpop_number(GT, INT i_l, INT i_r) = $(i_l > i_r)
+def $cmpop_number(LE, NAT n_l, NAT n_r) = $(n_l <= n_r)
+def $cmpop_number(LE, INT i_l, INT i_r) = $(i_l <= i_r)
+def $cmpop_number(GE, NAT n_l, NAT n_r) = $(n_l >= n_r)
+def $cmpop_number(GE, INT i_l, INT i_r) = $(i_l >= i_r)
+
+;; Constructor checks
+
+dec $is_tup(val) : bool
+def $is_tup(TUP val*) = true
+def $is_tup(val) = false
+    -- otherwise
+
+dec $is_fun(val) : bool
+def $is_fun(FUNC id) = true
+def $is_fun(val) = false
+    -- otherwise
+
+
+
+;;
+
+dec $access_path(ctx, val, path) : res<val>
+def $access_path(C, val_b, ROOT) = OK val_b
+def $access_path(C, val_b, IDX path exp_i) = OK (TEXT text[n_i])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+def $access_path(C, val_b, IDX path exp_i) = OK (val*[n_i])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+def $access_path(C, val_b, SLICE path exp_i exp_n) = OK (TEXT text[n_i : n_n])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+def $access_path(C, val_b, SLICE path exp_i exp_n) = OK (LIST val*[n_i : n_n])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+def $access_path(C, val_b, DOT path atom) = OK val
+    -- if OK (STR valfield*) = $access_path(C, val_b, path)
+    -- (if atom_field val_field = valfield)*
+    -- if val = $find_map<atom, val>(`{ (atom_field `: val_field)* }, atom)
+def $access_path(C, val, path) = FAIL
+    -- otherwise
+
+dec $update_path(ctx, val, path, val) : res<val>
+def $update_path(C, val_b, ROOT, val_n) = OK val_n
+def $update_path(C, val_b, IDX path exp_i, TEXT text_n) = $update_path(C, val_b, path, TEXT text[[n_target] = text_n])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    -- if |text_n| = 1
+def $update_path(C, val_b, IDX path exp_i, val_n) = $update_path(C, val_b, path, (LIST val*[[n_target] = val_n]))
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_b, path, TEXT text[[n_l : n_n] = text'])
+    -- if OK (TEXT text) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_l)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- if TEXT text' = val_n
+    -- if |text'| = n_n
+def $update_path(C, val_b, SLICE path exp_i exp_n, val_n) = $update_path(C, val_b, path, LIST val*[[n_l : n_n] = val'*])
+    -- if OK (LIST val*) = $access_path(C, val_b, path)
+    -- Eval_exp: C |- exp_i : OK (NAT n_l)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- if LIST val'* = val_n
+    -- if |val'*| = n_n
+def $update_path(C, val_b, DOT path atom_path, val_n) = $update_path(C, val_b, path, STR valfield_new*)
+    -- if OK (STR valfield*) = $access_path(C, val_b, path)
+    -- (if atom_field val_field = valfield)*
+    -- (if valfield_new = atom_field $ite<val>(atom_path = atom_field, val_n, val_field))*
+def $update_path(C, val_b, path, val_n) = FAIL
+    -- otherwise

@@ -89,7 +89,7 @@ syntax val =
   | num
   | TEXT text
   | STR valfield*
-  | INJ mixop val
+  | INJ mixop val*
   | TUP val*
   | OPT val?
   | LIST val*
@@ -170,12 +170,14 @@ syntax arg =
 syntax iterprem
 
 syntax prem =
-  | REL id `: exp* `-> exp
+  | REL id `: exp* `-> exp*
   | IF exp
   | IFHOLD id `: exp*
   | IFNOTHOLD id `: exp*
   | LET exp `= exp
   | ITER prem iterprem
+
+syntax iterprem = iter vari* vari*
 
 ;; Definitions
 

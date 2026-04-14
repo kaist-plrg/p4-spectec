@@ -1,3 +1,35 @@
+;; Argument evaluation rules
+
 rule Eval_arg/exp:
   C |- EXP exp : valres
   -- Eval_exp: C |- exp : valres
+
+rule Eval_arg/fun:
+  C |- FUN id : OK (FUNC id)
+
+;; Argument list evaluation rules
+
+rule Eval_args/ok:
+  C |- arg* : OK val*
+  -- (Eval_arg: C |- arg : OK val)*
+
+rule Eval_args/fail:
+  C |- arg* : FAIL
+  -- otherwise
+
+;; Type argument evaluation rules
+
+dec $theta_of_tdenv(tdenv) : theta
+def $theta_of_tdenv(`{ eps }) = $empty_map<id, typ>
+def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
+  = $add_map<id, typ>(theta_t, id_h, typ_h)
+  -- if typdef_h = DEF eps `-> (ALIAS typ_h)
+  -- if theta_t = $theta_of_tdenv(`{ (id_t `: typdef_t)* })
+def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
+  = $theta_of_tdenv(`{ (id_t `: typdef_t)* })
+  -- if typdef_h = PARAM \/ typdef_h = EXT
+
+rule Eval_targs:
+  C |- targ* : targ_subst*
+  -- if theta = $theta_of_tdenv(C.LOCAL.TYP)
+  -- if (targ_subst = $subst_typ(theta, targ))*

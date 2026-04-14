@@ -1,18 +1,79 @@
 ;; Context
 
-syntax layer = { TYP tdenv, REL renv, FUNC fenv }
+syntax layer =
+  { TYP tdenv,
+    REL renv,
+    FUNC fenv,
+    VAL venv }
+
+dec $empty_layer : layer
+def $empty_layer =
+  { TYP $empty_map<id, typdef>,
+    REL $empty_map<id, reldef>,
+    FUNC $empty_map<id, funcdef>,
+    VAL $empty_map<vari, val> }
+
 syntax ctx = { GLOBAL layer, LOCAL layer }
+
+dec $empty_ctx : ctx
+def $empty_ctx = { GLOBAL $empty_layer, LOCAL $empty_layer }
 
 var C : ctx
 
 ;; Loading context from a script
 
+dec $add_typ_global(ctx, id, typdef) : ctx
+def $add_typ_global(C, id, typdef)
+  = C[ .GLOBAL.TYP = tdenv_update ]
+  -- if tdenv_update = $add_map<id, typdef>(C.GLOBAL.TYP, id, typdef)
+
+dec $add_rel_global(ctx, id, reldef) : ctx
+def $add_rel_global(C, id, reldef)
+  = C[ .GLOBAL.REL = renv_update ]
+  -- if renv_update = $add_map<id, reldef>(C.GLOBAL.REL, id, reldef)
+
+dec $add_func_global(ctx, id, funcdef) : ctx
+def $add_func_global(C, id, funcdef)
+  = C[ .GLOBAL.FUNC = fenv_update ]
+  -- if fenv_update = $add_map<id, funcdef>(C.GLOBAL.FUNC, id, funcdef)
+
 dec $load(script) : ctx
+
+def $load(eps) = $empty_ctx
+
+def $load(defn_h :: defn*) = $add_typ_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTTYP id = defn_h
+def $load(defn_h :: defn*) = $add_typ_global(ctx, id, DEF tparam* `-> deftyp)
+    -- if ctx = $load(defn*)
+    -- if TYP id tparam* `= deftyp = defn_h
+
+def $load(defn_h :: defn*) = $add_rel_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTREL id `: exp* `-> exp_ret = defn_h
+def $load(defn_h :: defn*) = $add_rel_global(ctx, id, DEF rulgroup* elsgroup?)
+    -- if ctx = $load(defn*)
+    -- if REL id `: typ_param* `-> typ* `= rulgroup* elsgroup? = defn_h
+
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, EXT)
+    -- if ctx = $load(defn*)
+    -- if EXTFUNC id tparam* param* `: typ = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, BUILTIN)
+    -- if ctx = $load(defn*)
+    -- if BUILTINFUNC id tparam* param* `: typ = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, TABLE param* `-> tblrow*)
+    -- if ctx = $load(defn*)
+    -- if TABLEFUNC id param* `: typ `= tblrow* = defn_h
+def $load(defn_h :: defn*) = $add_func_global(ctx, id, DEF tparam* `-> clause* elsclause?)
+    -- if ctx = $load(defn*)
+    -- if FUNC id tparam* param* `: typ `= clause* elsclause? = defn_h
 
 ;; Adders and finders
 
 dec $add_val(ctx, vari, val) : ctx
+dec $add_vals(ctx, vari*, val*) : ctx
 dec $find_val(ctx, vari) : val?
+dec $find_vals(ctx, vari*) : val*?
 
 dec $add_typ(ctx, id, typdef) : ctx
 dec $find_typ(ctx, id) : typdef?
@@ -23,5 +84,66 @@ dec $find_func(ctx, id) : funcdef?
 dec $add_rel(ctx, id, reldef) : ctx
 dec $find_rel(ctx, id) : reldef?
 
-dec $sub_opt(ctx, vari) : ctx?
+def $add_val(C, vari, val)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $add_map<vari, val>(C.LOCAL.VAL, vari, val)
+
+def $add_vals(C, vari*, val*)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $adds_map<vari, val>(C.LOCAL.VAL, vari*, val*)
+
+def $find_val(C, vari) = $find_map<vari, val>(C.LOCAL.VAL, vari)
+
+def $find_vals(C, vari*) = val*
+  -- if (val = $find_map<vari, val>(C.LOCAL.VAL, vari))*
+def $find_vals(C, vari*) = eps
+  -- otherwise
+
+def $add_typ(C, id, typdef)
+  = C[ .LOCAL.TYP = tdenv_update ]
+  -- if tdenv_update = $add_map<id, typdef>(C.LOCAL.TYP, id, typdef)
+
+def $find_typ(C, id) = typdef
+  -- if typdef = $find_map<id, typdef>(C.LOCAL.TYP, id)
+def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
+  -- if eps = $find_map<id, typdef>(C.LOCAL.TYP, id)
+
+def $add_func(C, id, funcdef)
+  = C[ .LOCAL.FUNC = fenv_update ]
+  -- if fenv_update = $add_map<id, funcdef>(C.LOCAL.FUNC, id, funcdef)
+
+def $find_func(C, id) = funcdef
+  -- if funcdef = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+def $find_func(C, id) = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
+  -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+
+def $add_rel(C, id, reldef)
+  = C[ .LOCAL.REL = renv_update ]
+  -- if renv_update = $add_map<id, reldef>(C.LOCAL.REL, id, reldef)
+
+def $find_rel(C, id) = $find_map<id, reldef>(C.LOCAL.REL, id)
+
+;; Sub-context construction
+
+dec $sub_opt(ctx, vari*) : ctx?
 dec $sub_list(ctx, vari*) : ctx*
+
+def $sub_opt(C, vari*) = $add_vals(C, vari*, val*)
+    -- if (id iter* = vari)*
+    -- if (OPT val = $find_val(C, id (iter* ++ [ QUEST ])))*
+
+def $sub_opt(C, vari*) = eps
+    -- if (id iter* = vari)*
+    -- if (OPT eps = $find_val(C, id (iter* ++ [ QUEST ])))*
+
+dec $sub_list'(ctx, vari*, val*) : ctx
+def $sub_list'(C, eps, eps) = C 
+def $sub_list'(C, vari_h :: vari_t*, val_h :: val_t*)
+  = $sub_list'(C', vari_t*, val_t*)
+    -- if C' = $add_val(C, vari_h, val_h)
+
+def $sub_list(C, vari*) = ctx*
+    -- (if id iter* = vari)*
+    -- (if LIST val* = $find_val(C, id (iter* ++ [ STAR ])))*
+    -- if val_trans** = $transpose<val>(val**)
+    -- (if ctx = $sub_list'(C, vari*, val_trans*))*
