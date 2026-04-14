@@ -1,4 +1,3 @@
-open Lang
 module Value = Runtime.Value
 open Util.Error
 
@@ -17,7 +16,7 @@ let lex (filename : string) (file : string) =
     lexbuf
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error_no_region
 
-let parse (lexbuf : Lexing.lexbuf) =
+let parse (lexbuf : Lexing.lexbuf) : Value.t =
   try Parser.p4program Lexer.lexer lexbuf with
   | Lexer.Error s ->
       let at = Lexer.at lexbuf in
@@ -29,15 +28,15 @@ let parse (lexbuf : Lexing.lexbuf) =
       error at msg
   | e -> raise e
 
-let parse_string (filename : string) (str : string) : Il.value =
+let parse_string (filename : string) (str : string) : Value.t =
   (* Assume str is preprocessed *)
   let tokens = lex filename str in
   parse tokens
 
-let parse_file (includes : string list) (filename : string) : Il.value =
+let parse_file (includes : string list) (filename : string) : Value.t =
   let program = preprocess includes filename in
   parse_string filename program
 
-let parse_file_fresh (includes : string list) (filename : string) : Il.value =
+let parse_file_fresh (includes : string list) (filename : string) : Value.t =
   Value.Fresh_.refresh ();
   parse_file includes filename

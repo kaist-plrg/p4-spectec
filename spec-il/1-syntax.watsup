@@ -30,7 +30,7 @@ syntax deftyp =
   | VARIANT typcase*
 
 syntax typfield = atom typ
-syntax typcase = mixop typ
+syntax typcase = mixop typ*
 
 ;; Iterators
 
@@ -38,7 +38,7 @@ syntax iter = QUEST | STAR
 
 ;; Variables
 
-syntax vari = id iter*
+syntax vari = id typ iter*
 
 ;; Expressions
 
@@ -89,7 +89,7 @@ syntax val =
   | num
   | TEXT text
   | STR valfield*
-  | INJ mixop val
+  | INJ valcase
   | TUP val*
   | OPT val?
   | LIST val*
@@ -97,6 +97,7 @@ syntax val =
   | EXT json
 
 syntax valfield = atom val
+syntax valcase = mixop val*
 
 syntax exp =
   | BOOL bool
@@ -111,7 +112,7 @@ syntax exp =
   | SUB exp typ
   | MATCH exp pattern
   | TUP exp*
-  | INJ mixop exp
+  | INJ mixop exp*
   | STR expfield*
   | OPT exp?
   | LIST exp*
@@ -167,7 +168,7 @@ syntax arg =
 
 ;; Premises
 
-syntax iterprem
+syntax iterprem = iter vari* vari*
 
 syntax prem =
   | REL id `: exp* `-> exp

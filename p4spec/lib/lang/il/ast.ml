@@ -50,6 +50,8 @@ and typ' =
   | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
+(* Defined types *)
+
 and nottyp = nottyp' phrase
 [@@deriving yojson]
 and nottyp' = mixop * typ list

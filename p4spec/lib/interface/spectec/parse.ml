@@ -1,6 +1,9 @@
-open Lang
+module Value = Runtime.Value
 
-let parse_files (filenames_spec : string list) : Il.spec =
-  filenames_spec
-  |> List.concat_map Frontend.Parse.parse_file
-  |> Pass.Elaborate.Elab.elab_spec
+let parse_files (filenames_spec : string list) : Value.t =
+  let spec_il =
+    filenames_spec
+    |> List.concat_map Frontend.Parse.parse_file
+    |> Pass.Elaborate.Elab.elab_spec
+  in
+  Boot.boot_spec spec_il

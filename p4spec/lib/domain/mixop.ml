@@ -87,6 +87,30 @@ let atoms (mixop : t) : atom list =
   in
   atoms mixop
 
+type atom_internal = Atom_internal of atom | Arg_internal
+
+let atoms_matrix (mixop : t) : atom list list =
+  let rec atoms (mixop : t) : atom_internal list =
+    match mixop with
+    | Arg -> [ Arg_internal ]
+    | Atom atom -> [ Atom_internal atom ]
+    | Brack (atom_l, mixop, atom_r) ->
+        [ Atom_internal atom_l ] @ atoms mixop @ [ Atom_internal atom_r ]
+    | Infix (mixop_l, atom, mixop_r) ->
+        atoms mixop_l @ [ Atom_internal atom ] @ atoms mixop_r
+    | Seq mixops ->
+        List.fold_left
+          (fun atoms_acc mixop -> atoms_acc @ atoms mixop)
+          [] mixops
+  in
+  let atoms_internal = atoms mixop in
+  let rec split atoms_acc atoms_curr = function
+    | [] -> List.rev (List.rev atoms_curr :: atoms_acc)
+    | Arg_internal :: rest -> split (List.rev atoms_curr :: atoms_acc) [] rest
+    | Atom_internal atom :: rest -> split atoms_acc (atom :: atoms_curr) rest
+  in
+  split [] [] atoms_internal
+
 (* Stringifier *)
 
 let string_of_mixop (mixop : t) =
