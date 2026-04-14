@@ -20,3 +20,8 @@ let gen_p4 arch =
 let gen_p4_placeholder () =
   (module Driver.Make (Interface.P4) (Placeholder.Make) (Interp_il.Interp.Make)
             (Interp_sl.Interp.Make) : Sim.DRIVER)
+
+let gen_boot_placeholder () =
+  (module Driver.Make (Interface.SpecTec) (Placeholder.Make)
+            (Interp_il.Interp.Make)
+            (Interp_sl.Interp.Make) : Sim.DRIVER)
