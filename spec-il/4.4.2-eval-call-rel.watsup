@@ -1,0 +1,64 @@
+;; Relation invocation
+
+syntax valsopt = val*?
+
+relation Eval_rulpath:
+  ctx |- rulmatch -> rulpath `@ `( val* ) : val*?
+  hint(input %0 %1 %2 %3)
+
+rule Eval_rulpath/succ:
+  C_local |- rulmatch -> rulpath `@ `( val* ) : val_out*
+  -- if _ `= exp_out* `- prem_path* = rulpath
+  -- if exp* `- prem_match* = rulmatch
+  -- Assign_exps: C_local |- val* -> exp* : OK C_local'
+  -- Eval_prems: C_local' |- (prem_path* ++ prem_match*) : OK C_local''
+  -- Eval_exps: C_local'' |- exp_out* : OK val_out*
+
+rule Eval_rulpath/fail:
+  C_local |- rulmatch -> rulpath `@ `( val* ) : eps
+  -- otherwise
+
+relation Eval_rulgroup:
+  ctx |- rulgroup `@ `( val* ) : valsopt*
+  hint(input %0 %1 %2)
+
+rule Eval_rulgroup:
+  C_local |- rulgroup `@ `( val* ) : valsopt*
+  -- if _ `: rulmatch `= rulpath* = rulgroup
+  -- (Eval_rulpath: C_local |- rulmatch -> rulpath `@ `( val* ) : valsopt)*
+
+;; Defined relations
+
+rulegroup Call_rel/defined {
+    
+    rule Call_rel/nil:
+      C |- id val* : OK val_out*
+      -- if DEF rulgroup* elsgroup = $find_rel(C, id)
+      -- if C_local = C[.LOCAL = $empty_layer]
+      -- (Eval_rulgroup: C_local |- rulgroup `@ `( val* ) : valsopt*)*
+      -- if valsopt_concat* = $concat_<valsopt>(valsopt**)
+      -- if eps = $filter_<valsopt>(valsopt_concat*, (valsopt_concat =/= eps)*)
+      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
+      -- Eval_rulpath: C_local |- rulmatch_els -> rulpath_els `@ `( val* ) : val_out*
+
+    rule Call_rel/list:
+      C |- id val* : OK val_out*
+      -- if DEF rulgroup* _ = $find_rel(C, id)
+      -- (if id `: rulmatch `= rulpath* = rulgroup)*
+      -- if C_local = C[.LOCAL = $empty_layer]
+      -- (Eval_rulgroup: C_local |- rulgroup `@ `( val* ) : valsopt*)*
+      -- if valsopt_concat* = $concat_<valsopt>(valsopt**)
+      -- if val_out* = $filter_<valsopt>(valsopt_concat*, (valsopt_concat =/= eps)*)[0]
+}
+
+;; Extern relations
+
+dec $invoke_extern_rel(id, val*) : res<val*>
+
+rule Call_rel/ext:
+  C |- id val* : $invoke_extern_rel(id, val*)
+  -- if EXT = $find_rel(C, id)
+
+rule Call_rel/fail:
+  C |- id val* : FAIL
+  -- otherwise

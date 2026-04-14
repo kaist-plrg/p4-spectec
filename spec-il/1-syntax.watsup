@@ -42,7 +42,7 @@ syntax vari = id typ iter*
 
 ;; Expressions
 
-syntax valfield, valcase, expfield, pattern, path, arg, iterexp
+syntax valfield, valcase, expfield, expcase, pattern, path, arg, iterexp
 
 syntax num =
   | NAT nat
@@ -112,7 +112,7 @@ syntax exp =
   | SUB exp typ
   | MATCH exp pattern
   | TUP exp*
-  | INJ mixop exp*
+  | INJ expcase
   | STR expfield*
   | OPT exp?
   | LIST exp*
@@ -127,6 +127,7 @@ syntax exp =
   | CALL id targ* arg*
   | ITER exp iterexp
 
+syntax expcase = mixop exp*
 syntax expfield = atom exp
 syntax iterexp = iter vari*
 
@@ -171,7 +172,7 @@ syntax arg =
 syntax iterprem = iter vari* vari*
 
 syntax prem =
-  | REL id `: exp* `-> exp
+  | REL id `: exp* `-> exp*
   | IF exp
   | IFHOLD id `: exp*
   | IFNOTHOLD id `: exp*
