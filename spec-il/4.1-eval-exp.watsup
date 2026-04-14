@@ -14,26 +14,38 @@ rule Eval_exp/variable:
   -- if val = $find_val(C, id eps)
 
 rule Eval_exp/unary_boolean:
-  C |- UN NOT (BOOL b) : OK (BOOL (~b))
+  C |- UN NOT exp : OK (BOOL (~b))
+  -- Eval_exp: C |- exp : OK (BOOL b)
 
 rulegroup Eval_exp/binary_boolean {
 
   rule Eval_exp/and:
-    C |- BIN AND (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l /\ b_r))
-  
-  rule Eval_exp/or:
-    C |- BIN OR (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l \/ b_r))
+    C |- BIN AND exp_l exp_r : OK (BOOL (b_l /\ b_r))
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+
+  rule Eval_exp/and:
+    C |- BIN OR exp_l exp_r : OK (BOOL (b_l \/ b_r))
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
   
   rule Eval_exp/impl:
-    C |- BIN IMPL (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l => b_r))
-  
+    C |- BIN OR exp_l exp_r : OK (BOOL (b_l => b_r))
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+
   rule Eval_exp/equiv:
-    C |- BIN EQUIV (BOOL b_l) (BOOL b_r) : OK (BOOL (b_l <=> b_r))  
+    C |- BIN OR exp_l exp_r : OK (BOOL (b_l <=> b_r))
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
 
 }
 
 rule Eval_exp/binary_number:
-  C |- BIN binop num_l num_r : OK $binop_number(binop, num_l, num_r)
+  C |- BIN binop exp_l exp_r : OK val_res
+  -- Eval_exp: C |- exp_l : OK num_l
+  -- Eval_exp: C |- exp_r : OK num_r
+  -- if val_res = $binop_number(binop, num_l, num_r)
 
 rulegroup Eval_exp/compare_boolean {
 
@@ -49,7 +61,9 @@ rulegroup Eval_exp/compare_boolean {
 }
 
 rule Eval_exp/compare_number:
-  C |- CMP cmpop num_l num_r : OK val_res
+  C |- CMP cmpop exp_l exp_r : OK val_res
+  -- Eval_exp: C |- exp_l : OK num_l
+  -- Eval_exp: C |- exp_r : OK num_r
   -- if val_res = BOOL $cmpop_number(cmpop, num_l, num_r)
 
 rule Eval_exp/upcast:

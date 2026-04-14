@@ -7,9 +7,9 @@ relation Eval_clause:
 rule Eval_clause/succ:
   C_local `/ C |- clause `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_new
-  -- Eval_prems: C_new |- prem* : OK C_new
-  -- Eval_exp : C_new |- exp_out : OK val_out
+  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_local'
+  -- Eval_prems: C_local' |- prem* : OK C_local''
+  -- Eval_exp : C_local'' |- exp_out : OK val_out
 
 rule Eval_clause/fail:
   C_local `/ C |- clause `@ `( val* ) : FAIL
@@ -44,7 +44,7 @@ rule Call_defined_func:
   -- if clause_all* = clause* ++ clause_else*
   -- Eval_clauses: C_local `/ C |- clause_all* `@ `( val* ) : valres
 
-;;
+;; Table meta-function invocation
 
 relation Eval_tblrow:
   ctx |- tblrow `@ `( val* ) : res<val>

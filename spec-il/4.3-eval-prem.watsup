@@ -33,10 +33,9 @@ rule Eval_prem/ifnotholdpr:
   -- Call_rel: C |- id val_input* : FAIL
 
 rule Eval_prem/letpr:
-  C |- LET exp_l `= exp_r : ctxres
-  -- Eval_exp : C |- exp_r : OK val
-  -- Assign_exp : C |- val -> exp_l : ctxres
-
+  C |- LET exp_l `= exp_r : OK C'
+  -- Eval_exp : C |- exp_r : OK val_r
+  -- Assign_exp : C |- val_r -> exp_l : OK C'
 
 rulegroup Eval_prem/iterpr-opt {
 
@@ -106,9 +105,9 @@ rule Eval_prems/empty:
   C |- eps : OK C
 
 rule Eval_prems/list:
-  C |- (prem_cur :: prem*) : OK C''
-  -- Eval_prem: C |- prem_cur : OK C'
-  -- Eval_prems: C' |- prem* : OK C''
+  C |- (prem_h :: prem_t*) : OK C''
+  -- Eval_prem: C |- prem_h : OK C'
+  -- Eval_prems: C' |- prem_t* : OK C''
 
 rule Eval_prems/fail:
   C |- prem* : FAIL

@@ -19,7 +19,8 @@ relation Assign_args:
 ;; Assigning to an expression
 
 rule Assign_exp/variable:
-  C |- val -> VAR id : OK ($add_val(C, id eps, val))
+  C |- val -> VAR id : OK C'
+  -- if C' = $add_val(C, id eps, val)
 
 rule Assign_exp/tup:
   C |- TUP val* -> TUP exp* : OK C'
