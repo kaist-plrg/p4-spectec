@@ -53,22 +53,17 @@ rulegroup Eval_prem/iterpr-opt {
     C |- ITER prem iterprem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterprem
     -- if eps = $sub_opt(C, vari_bound*)
-    -- if (id_bind typ_bind iter_bind* = vari_bind)*
-    -- if (vari_bind_iter = id_bind typ_bind (iter_bind* ++ [ QUEST ]))*
-    -- if (varr_bind_iter = id_bind (iter_bind* ++ [ QUEST ]))*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
-    -- if C_res = $add_vals(C, varr_bind_iter*, val_bind*)
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/some:
     C |- ITER prem iterprem : OK C_res
     -- if QUEST vari_bound* vari_bind* = iterprem
     -- if C_sub = $sub_opt(C, vari_bound*)
-    -- if (id_bind typ_bind iter_bind* = vari_bind)*
-    -- if (varr_bind = id_bind iter_bind*)*
-    -- if (vari_bind_iter = id_bind typ_bind (iter_bind* ++ [ QUEST ]))*
-    -- if (varr_bind_iter = id_bind (iter_bind* ++ [ QUEST ]))*
-    -- if (val_bind = $find_val(C, varr_bind))*
-    -- if C_res = $add_vals(C, varr_bind_iter*, (OPT val_bind)*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $find_vari(C, vari_bind))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
 
 }
 
@@ -80,11 +75,9 @@ rulegroup Eval_prem/iterpr-list {
     C |- ITER prem iterprem : OK C_res
     -- if STAR vari_bound* vari_bind* = iterprem
     -- if eps = $sub_list(C, vari_bound*)
-    -- if (id_bind typ_bind iter_bind* = vari_bind)*
-    -- if (vari_bind_iter = id_bind typ_bind (iter_bind* ++ [ STAR ]))*
-    -- if (varr_bind_iter = id_bind (iter_bind* ++ [ STAR ]))*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
     -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
-    -- if C_res = $add_vals(C, varr_bind_iter*, val_bind*)
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
 
   rule Eval_prem/list:
     C |- ITER prem iterprem : OK C_res
@@ -95,16 +88,13 @@ rulegroup Eval_prem/iterpr-list {
     ---- ;; for each C_sub in C_sub*, evaluate prem
     ---- ;; this yields val_sub_bind* for each C_sub
     -- (Eval_prem: C_sub |- prem : OK C_sub_res)*
-    -- if (id_bind typ_bind iter_bind* = vari_bind)*
-    -- if (varr_bind = id_bind iter_bind*)*
-    -- if (val_sub_bind* = $find_vals(C_sub_res, varr_bind*))*
+    -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
     ---- ;; transpose val_sub_bind** to get val_bind**
-    ---- ;; then combine val_bind* as a LIST, which is the value to be bound to vari_bind*
+    ---- ;; then combine val_bind* as a LIST, which is the value to be bind
     -- if val_bind** = $transpose<val>(val_sub_bind**)
     -- if (val_res_bind = LIST val_bind*)*
-    -- if (id_bind _ iter_bind* = vari_bind)*
-    -- if (varr_bind_iter = id_bind (iter_bind* ++ [ STAR ]))*
-    -- if C_res = $add_vals(C, varr_bind_iter*, val_res_bind*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
 }
 
 rule Eval_prem/fail:

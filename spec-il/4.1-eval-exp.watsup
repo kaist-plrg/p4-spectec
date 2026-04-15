@@ -15,7 +15,7 @@ rule Eval_exp/string:
 
 rule Eval_exp/variable:
   C |- VAR id : OK val
-  -- if val = $find_val(C, id eps)
+  -- if val = $find_varr(C, id eps)
 
 ;;; Unary, binary, and comparison evaluation rules
 
@@ -166,12 +166,12 @@ rule Eval_exp/cons:
 
 rulegroup Eval_exp/concat {
 
-  rule Eval_exp/concat-text:
+  rule Eval_exp/text:
   C |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
   -- Eval_exp: C |- exp_l : OK (TEXT text_l)
   -- Eval_exp: C |- exp_r : OK (TEXT text_r)
 
-  rule Eval_exp/concat-list: 
+  rule Eval_exp/list: 
   C |- CAT exp_l exp_r : OK (LIST (val_l* ++ val_r*))
   -- Eval_exp: C |- exp_l : OK (LIST val_l*)
   -- Eval_exp: C |- exp_r : OK (LIST val_r*)
@@ -189,11 +189,11 @@ rule Eval_exp/mem:
 
 rulegroup Eval_exp/len {
 
-  rule Eval_exp/len-text:
+  rule Eval_exp/text:
     C |- LEN exp : OK (NAT (|text|))
     -- Eval_exp: C |- exp : OK (TEXT text)
 
-  rule Eval_exp/len-list:
+  rule Eval_exp/list:
     C |- LEN exp : OK (NAT (|val*|))
     -- Eval_exp: C |- exp : OK (LIST val*)
 
@@ -209,12 +209,12 @@ rule Eval_exp/dot:
 
 rulegroup Eval_exp/idx { 
 
-  rule Eval_exp/idx-text:
+  rule Eval_exp/text:
     C |- IDX exp_b exp_i : OK (TEXT t[n])
     -- Eval_exp: C |- exp_b : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n)
 
-  rule Eval_exp/idx-list:
+  rule Eval_exp/list:
     C |- IDX exp_b exp_i : OK (val*[n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n)
@@ -222,13 +222,13 @@ rulegroup Eval_exp/idx {
 
 rulegroup Eval_exp/slice {
 
-  rule Eval_exp/slice-text:
+  rule Eval_exp/text:
   C |- SLICE exp_b exp_i exp_n : OK (TEXT t[n_i : n_n])
     -- Eval_exp: C |- exp_b : OK (TEXT t)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
 
-  rule Eval_exp/slice-list:
+  rule Eval_exp/list:
     C |- SLICE exp_b exp_i exp_n : OK (LIST val*[n_i : n_n])
     -- Eval_exp: C |- exp_b : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)

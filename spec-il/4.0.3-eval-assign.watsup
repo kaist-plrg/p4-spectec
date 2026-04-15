@@ -20,7 +20,7 @@ relation Assign_args:
 
 rule Assign_exp/variable:
   C |- val -> VAR id : OK C'
-  -- if C' = $add_val(C, id eps, val)
+  -- if C' = $add_varr(C, id eps, val)
 
 rule Assign_exp/tup:
   C |- TUP val* -> TUP exp* : OK C'
@@ -60,23 +60,24 @@ rulegroup Assign_exp/iter {
 
   rule Assign_exp/opt-none:
     C |- OPT eps -> ITER exp (QUEST vari*) : OK C'
-    -- if (id _ iter* = vari)*
-    -- if C' = $add_vals(C, (id (iter* ++ [ QUEST ])), OPT eps)*
+    -- if (vari_iter = $iter_vari(vari, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
+    -- if C' = $add_varis(C, vari_iter*, val_bind*)
 
   rule Assign_exp/opt-some:
     C |- OPT val -> ITER exp (QUEST vari*) : OK C''
     -- Assign_exp: C |- val -> exp : OK C'
-    -- if (id _ iter* = vari)*
-    -- if (val_sub = $find_val(C, id iter*))*
-    -- if C'' = $add_vals(C', (id (iter* ++ [ QUEST ])), OPT val_sub)*
+    -- if (vari_iter* = $iter_vari(vari, QUEST))*
+    -- if (val_sub = $find_vari(C, vari))*
+    -- if C'' = $add_varis(C', vari_iter*, OPT val_sub)*
 
   rule Assign_exp/list:
     C |- LIST val* -> ITER exp (STAR vari*) : OK C'
     -- if C_local = C[ .LOCAL.VAL = $empty_map<varr, val> ]
     -- (Assign_exp: C_local |- val -> exp : OK C_sub)*
-    -- if (id _ iter* = vari)*
-    -- if (val_sub* = $finds_val(C_sub*, id iter*))*
-    -- if C' = $add_vals(C, (id (iter* ++ [ STAR ])), LIST val_sub*)*
+    -- if (vari_iter* = $iter_vari(vari, STAR))*
+    -- if (val_sub* = $finds_vari(C_sub*, vari))*
+    -- if C' = $add_varis(C, vari_iter*, LIST val_sub*)*
 
 }
 

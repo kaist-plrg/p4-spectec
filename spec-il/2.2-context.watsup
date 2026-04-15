@@ -68,92 +68,140 @@ def $load(defn_h :: defn*) = $load_funcdef(ctx, id, DEF tparam* `-> clause* elsc
     -- if ctx = $load(defn*)
     -- if FUNC id tparam* param* `: typ `= clause* elsclause? = defn_h
 
-;; Adders and finders
+;; Iteration helpers
 
-dec $add_val(ctx, varr, val) : ctx
-dec $add_vals(ctx, varr*, val*) : ctx
+dec $iter_vari(vari, iter) : vari
+def $iter_vari(id typ iter*, iter_add) = id typ (iter* ++ [ iter_add ])
 
-dec $find_val(ctx, varr) : val?
-dec $find_vals(ctx, varr*) : val*?
-dec $finds_val(ctx*, varr) : val*?
+dec $iter_varr(varr, iter) : varr
+def $iter_varr(id iter*, iter_add) = id (iter* ++ [ iter_add ])
 
-dec $add_typ(ctx, id, typdef) : ctx
-dec $find_typ(ctx, id) : typdef?
+;; Adders
 
-dec $add_func(ctx, id, funcdef) : ctx
-dec $find_func(ctx, id) : funcdef?
+;;; Value adders
 
-dec $add_rel(ctx, id, reldef) : ctx
-dec $find_rel(ctx, id) : reldef?
+dec $add_vari(ctx, vari, val) : ctx
+def $add_vari(C, vari, val)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if id _ iter* = vari
+  -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, id iter*, val)
 
-def $add_val(C, varr, val)
+dec $add_varr(ctx, varr, val) : ctx
+def $add_varr(C, varr, val)
   = C[ .LOCAL.VAL = venv_update ]
   -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, varr, val)
 
-def $add_vals(C, varr*, val*)
+dec $add_varis(ctx, vari*, val*) : ctx
+def $add_varis(C, vari*, val*)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if (id _ iter* = vari)*
+  -- if venv_update = $adds_map<varr, val>(C.LOCAL.VAL, (id iter*)*, val*)
+
+dec $add_varrs(ctx, varr*, val*) : ctx
+def $add_varrs(C, varr*, val*)
   = C[ .LOCAL.VAL = venv_update ]
   -- if venv_update = $adds_map<varr, val>(C.LOCAL.VAL, varr*, val*)
 
-def $find_val(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
+;;; Typedef adders
 
-def $find_vals(C, varr*) = val*
-  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
-def $find_vals(C, varr*) = eps
-  -- otherwise
-
-def $finds_val(C*, varr) = val*
-  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
-def $finds_val(C*, varr) = eps
-  -- otherwise
+dec $add_typ(ctx, id, typdef) : ctx
 
 def $add_typ(C, id, typdef)
   = C[ .LOCAL.TYP = tdenv_update ]
   -- if tdenv_update = $add_map<id, typdef>(C.LOCAL.TYP, id, typdef)
+
+;;; Function adders
+
+dec $add_func(ctx, id, funcdef) : ctx
+
+def $add_func(C, id, funcdef)
+  = C[ .LOCAL.FUNC = fenv_update ]
+  -- if fenv_update = $add_map<id, funcdef>(C.LOCAL.FUNC, id, funcdef)
+
+;;; Relation adders
+
+dec $add_rel(ctx, id, reldef) : ctx
+
+def $add_rel(C, id, reldef)
+  = C[ .LOCAL.REL = renv_update ]
+  -- if renv_update = $add_map<id, reldef>(C.LOCAL.REL, id, reldef)
+
+;; Finders
+
+;;; Value finders
+
+dec $find_vari(ctx, vari) : val?
+def $find_vari(C, vari) = val
+  -- if id _ iter* = vari
+  -- if val = $find_map<varr, val>(C.LOCAL.VAL, id iter*)
+
+dec $find_varr(ctx, varr) : val?
+def $find_varr(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
+
+dec $find_varis(ctx, vari*) : val*?
+def $find_varis(C, vari*) = val*
+  -- if (val = $find_vari(C, vari))*
+def $find_varis(C, vari*) = eps
+  -- otherwise
+
+dec $find_varrs(ctx, varr*) : val*?
+def $find_varrs(C, varr*) = val*
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
+def $find_varrs(C, varr*) = eps
+  -- otherwise
+
+dec $finds_vari(ctx*, vari) : val*?
+def $finds_vari(C*, vari) = val*
+  -- if id _ iter* = vari
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, id iter*))*
+def $finds_vari(C*, vari) = eps
+  -- otherwise
+
+;;; Typedef finders
+
+dec $find_typ(ctx, id) : typdef?
 
 def $find_typ(C, id) = typdef
   -- if typdef = $find_map<id, typdef>(C.LOCAL.TYP, id)
 def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
   -- if eps = $find_map<id, typdef>(C.LOCAL.TYP, id)
 
-def $add_func(C, id, funcdef)
-  = C[ .LOCAL.FUNC = fenv_update ]
-  -- if fenv_update = $add_map<id, funcdef>(C.LOCAL.FUNC, id, funcdef)
+;;; Function finders
+
+dec $find_func(ctx, id) : funcdef?
 
 def $find_func(C, id) = funcdef
   -- if funcdef = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
 def $find_func(C, id) = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
   -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
 
-def $add_rel(C, id, reldef)
-  = C[ .LOCAL.REL = renv_update ]
-  -- if renv_update = $add_map<id, reldef>(C.LOCAL.REL, id, reldef)
+;;; Relation finders
+
+dec $find_rel(ctx, id) : reldef?
 
 def $find_rel(C, id) = $find_map<id, reldef>(C.LOCAL.REL, id)
 
-;; Sub-context construction
+;; Sub-context construction for iteration
 
 dec $sub_opt(ctx, vari*) : ctx?
 dec $sub_list(ctx, vari*) : ctx*
 
-def $sub_opt(C, vari*) = $add_vals(C, varr*, val*)
-  -- if (id _ iter* = vari)*
-  -- if (varr = id iter*)*
-  -- if (OPT val = $find_val(C, id (iter* ++ [ QUEST ])))*
+def $sub_opt(C, vari*) = $add_varis(C, vari*, val*)
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT val = $find_vari(C, vari_iter))*
 
 def $sub_opt(C, vari*) = eps
-  -- if (id _ iter* = vari)*
-  -- if (OPT eps = $find_val(C, id (iter* ++ [ QUEST ])))*
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT eps = $find_vari(C, vari_iter))*
 
 dec $sub_list'(ctx, vari*, val*) : ctx
 def $sub_list'(C, eps, eps) = C 
 def $sub_list'(C, vari_h :: vari_t*, val_h :: val_t*)
   = $sub_list'(C', vari_t*, val_t*)
-  -- if id_h _ iter_h* = vari_h
-  -- if varr_h = id_h iter_h*
-  -- if C' = $add_val(C, varr_h, val_h)
+  -- if C' = $add_vari(C, vari_h, val_h)
 
-def $sub_list(C, vari*) = ctx*
-  -- if (id _ iter* = vari)*
-  -- if (LIST val* = $find_val(C, id (iter* ++ [ STAR ])))*
+def $sub_list(C, vari*) = C'*
+  -- if (vari_iter = $iter_vari(vari, STAR))*
+  -- if (LIST val* = $find_vari(C, vari_iter))*
   -- if val_trans** = $transpose<val>(val**)
-  -- if (ctx = $sub_list'(C, vari*, val_trans*))*
+  -- if (C' = $sub_list'(C, vari*, val_trans*))*
