@@ -141,16 +141,10 @@ struct
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
            and assign each value to the iterated expression *)
-        let ctxs =
-          List.fold_left
-            (fun ctxs value ->
-              let ctx =
-                { ctx with local = { ctx.local with venv = VEnv.empty } }
-              in
-              let ctx = assign_exp ctx exp value in
-              ctxs @ [ ctx ])
-            [] values
+        let ctx_sub =
+          { ctx with local = { ctx.local with venv = VEnv.empty } }
         in
+        let ctxs = List.map (assign_exp ctx_sub exp) values in
         (* Per iterated variable, collect its elementwise value,
            then make a sequence out of them *)
         List.fold_left
@@ -395,6 +389,18 @@ struct
             in
             Value.Make.tuple typ values
         | _ -> assert false)
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (upcast ctx typ) value_opt in
+            Value.Make.opt typ value_opt
+        | _ -> assert false)
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (upcast ctx typ) values in
+            Value.Make.list typ values
+        | _ -> assert false)
     | _ -> value
 
   and eval_upcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp) :
@@ -431,6 +437,18 @@ struct
                 [] typs values
             in
             Value.Make.tuple typ values
+        | _ -> assert false)
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (downcast ctx typ) value_opt in
+            Value.Make.opt typ value_opt
+        | _ -> assert false)
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (downcast ctx typ) values in
+            Value.Make.list typ values
         | _ -> assert false)
     | _ -> value
 

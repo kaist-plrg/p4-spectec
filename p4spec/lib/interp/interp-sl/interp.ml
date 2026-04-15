@@ -176,13 +176,8 @@ struct
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
            and assign each value to the iterated expression *)
-        let ctxs =
-          List.map
-            (fun value ->
-              let ctx_sub = Ctx.localize_clear ctx in
-              assign_exp ctx_sub exp value)
-            values
-        in
+        let ctx_sub = Ctx.localize_clear ctx in
+        let ctxs = List.map (assign_exp ctx_sub exp) values in
         (* Per iterated variable, collect its elementwise value,
            then make a sequence out of them *)
         List.fold_left
@@ -460,6 +455,24 @@ struct
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> back_err_upcast ())
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (upcast ctx typ) value_opt in
+            let value_res = Value.Make.opt typ value_opt in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_upcast ())
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (upcast ctx typ) values in
+            let value_res = Value.Make.list typ values in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_upcast ())
     | _ -> value
 
   and eval_upcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp) :
@@ -499,6 +512,24 @@ struct
         | TupleV values ->
             let values = List.map2 (downcast ctx) typs values in
             let value_res = Value.Make.tuple typ values in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_downcast ())
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (downcast ctx typ) value_opt in
+            let value_res = Value.Make.opt typ value_opt in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_downcast ())
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (downcast ctx typ) values in
+            let value_res = Value.Make.list typ values in
             Hook.on_value value_res;
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res

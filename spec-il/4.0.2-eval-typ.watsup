@@ -46,6 +46,11 @@ def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
 def $upcast(C, TUP typ*, val) = FAIL
   -- if ~$is_tup(val)
 
+def $upcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_upcast?)
+  -- if (OK val_upcast = $upcast(C, typ, val))?
+def $upcast(C, ITER typ STAR, LIST val*) = OK (LIST val_upcast*)
+  -- if (OK val_upcast = $upcast(C, typ, val))*
+
 def $upcast(C, typ, val) = OK val
     -- otherwise
 
@@ -68,6 +73,11 @@ def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_downcast*)
     -- (if OK val_downcast = $downcast(C, typ, val))*
 def $downcast(C, TUP typ*, val) = FAIL
     -- if ~$is_tup(val)
+
+def $downcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_downcast?)
+  -- if (OK val_downcast = $downcast(C, typ, val))?
+def $downcast(C, ITER typ STAR, LIST val*) = OK (LIST val_downcast*)
+  -- if (OK val_downcast = $downcast(C, typ, val))*
 
 def $downcast(C, typ, val) = OK val
     -- otherwise

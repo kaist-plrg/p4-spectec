@@ -81,9 +81,10 @@ rulegroup Eval_prem/iterpr-list {
 
   rule Eval_prem/list:
     C |- ITER prem iterprem : OK C_res
+    ----
     -- if STAR vari_bound* vari_bind* = iterprem
     ---- ;; decompose C into a list of subcontexts C_sub* corresponding to vari_bound*
-    -- if C_sub* = $sub_list(C, vari_bound)*
+    -- if C_sub* = $sub_list(C, vari_bound*)
     -- if C_sub* =/= eps
     ---- ;; for each C_sub in C_sub*, evaluate prem
     ---- ;; this yields val_sub_bind* for each C_sub
@@ -91,7 +92,7 @@ rulegroup Eval_prem/iterpr-list {
     -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
     ---- ;; transpose val_sub_bind** to get val_bind**
     ---- ;; then combine val_bind* as a LIST, which is the value to be bind
-    -- if val_bind** = $transpose<val>(val_sub_bind**)
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
     -- if (val_res_bind = LIST val_bind*)*
     -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
     -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)

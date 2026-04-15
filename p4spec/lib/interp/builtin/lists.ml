@@ -3,6 +3,7 @@ open Xl
 open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+open Error
 open Util.Source
 
 (* dec $rev_<X>(X* ) : X* *)
@@ -118,5 +119,45 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
       values
   in
   let value = Value.Make.list typ values in
+  add value;
+  value
+
+(* builtin dec $transpose_<X>(X** ) : X** *)
+
+let transpose_ (add : value -> unit) (at : region) (targs : targ list)
+    (values_input : value list) : value =
+  let typ = Extract.one at targs in
+  let typ_list = Typ.Make.list typ in
+  let typ_matrix = Typ.Make.list typ_list in
+  let value = Extract.one at values_input in
+  let value_matrix =
+    value |> Value.Get.list |> List.map (fun value -> value |> Value.Get.list)
+  in
+  let value_matrix =
+    match value_matrix with
+    | [] -> []
+    | value_row_h :: _ -> (
+        let width = List.length value_row_h in
+        let value_cols = Array.make width [] in
+        try
+          List.iter
+            (fun value_row ->
+              if List.length value_row <> width then
+                raise (Invalid_argument "cannot transpose a matrix of values");
+              List.iteri
+                (fun j value -> value_cols.(j) <- value :: value_cols.(j))
+                value_row)
+            (List.rev value_matrix);
+          Array.to_list value_cols
+        with Invalid_argument msg -> error no_region msg)
+  in
+  let value =
+    value_matrix
+    |> List.map (fun values_row ->
+           let value_row = Value.Make.list typ_list values_row in
+           add value_row;
+           value_row)
+    |> Value.Make.list typ_matrix
+  in
   add value;
   value

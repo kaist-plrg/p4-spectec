@@ -640,13 +640,13 @@ and boot_prem (prem : Il.prem) : Value.t option =
 
 and boot_rel_prem (at : region) (id : Il.id) (exps : Il.exp list)
     (input : Hints.Input.t) : Value.t =
-  let input_exps, output_exps = Hints.Input.split input exps in
   let value_id = boot_id id in
-  let value_input_exps = boot_exps input_exps in
-  let value_output_exp = boot_exp (List.hd output_exps) in
+  let exps_input, exps_output = Hints.Input.split input exps in
+  let value_input_exps = boot_exps exps_input in
+  let value_exps_output = boot_exps exps_output in
   Value.Make.(
-    "REL id `: exp* `-> exp"
-    <| [ value_id; value_input_exps; value_output_exp ]
+    "REL id `: exp* `-> exp*"
+    <| [ value_id; value_input_exps; value_exps_output ]
     <<| "prem" <<<| at)
 
 and boot_if_prem (at : region) (exp : Il.exp) : Value.t =
@@ -693,19 +693,19 @@ and boot_prems (prems : Il.prem list) : Value.t =
 
 (* Rule matching and paths *)
 
-and boot_rulmatch ((inputs, outputs, prems) : Il.rulematch) : Value.t =
-  let value_exps = boot_exps (inputs @ outputs) in
+and boot_rulmatch ((_, exps_input, prems) : Il.rulematch) : Value.t =
+  let value_exps = boot_exps exps_input in
   let value_prems = boot_prems prems in
   Value.Make.(
     "exp* `- prem*" <| [ value_exps; value_prems ] <<| "rulmatch" <<<| no_region)
 
-and boot_rulpath ((id, prems, exps) : Il.rulepath) : Value.t =
+and boot_rulpath ((id, prems, exps_output) : Il.rulepath) : Value.t =
   let value_id = boot_id id in
-  let value_exps = boot_exps exps in
+  let value_exps_output = boot_exps exps_output in
   let value_prems = boot_prems prems in
   Value.Make.(
     "id `= exp* `- prem*"
-    <| [ value_id; value_exps; value_prems ]
+    <| [ value_id; value_exps_output; value_prems ]
     <<| "rulpath" <<<| no_region)
 
 and boot_rulpaths (rulpaths : Il.rulepath list) : Value.t =
