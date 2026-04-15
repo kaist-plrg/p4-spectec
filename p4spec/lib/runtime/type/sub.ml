@@ -21,8 +21,8 @@ and sub_typ' (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
       match (td_opt_a, td_opt_b) with
       | ( Some (Defined (tparams_a, deftyp_a)),
           Some (Defined (tparams_b, deftyp_b)) ) -> (
-          match (deftyp_a.it, deftyp_b.it) with
-          | VariantT typcases_a, VariantT typcases_b ->
+          match (deftyp_a, deftyp_b) with
+          | `Variant (typcases_a, _), `Variant (typcases_b, _) ->
               let theta_a = TIdMap.of_lists tparams_a targs_a in
               let theta_b = TIdMap.of_lists tparams_b targs_b in
               let nottyps_a =

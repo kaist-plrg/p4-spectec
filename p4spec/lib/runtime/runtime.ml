@@ -1,3 +1,4 @@
+module Mixop = Mixop
 module Type = Type
 module Value = Value
 module Static = Static

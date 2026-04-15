@@ -66,7 +66,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx_local =
       List.fold_left2
         (fun ctx_local tparam targ ->
-          let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
+          let td = Type.Typdef.Defined ([], `Plain targ) in
           Ctx.add_typdef ctx_local tparam td)
         ctx_local tparams targs
     in
@@ -377,8 +377,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = TIdMap.of_lists tparams targs in
-        match deftyp.it with
-        | PlainT typ ->
+        match deftyp with
+        | `Plain typ ->
             let typ = Type.Subst.subst_typ theta typ in
             upcast ctx typ value
         | _ -> value)
@@ -414,8 +414,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = TIdMap.of_lists tparams targs in
-        match deftyp.it with
-        | PlainT typ ->
+        match deftyp with
+        | `Plain typ ->
             let typ = Type.Subst.subst_typ theta typ in
             downcast ctx typ value
         | _ -> value)
@@ -1286,7 +1286,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
             TDEnv.fold
               (fun tid typdef theta ->
                 match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                | Type.Typdef.Defined ([], `Plain typ) ->
                     TIdMap.add tid typ theta
                 | _ -> theta)
               ctx.local.tdenv TIdMap.empty
@@ -1430,7 +1430,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let ctx_local =
         List.fold_left2
           (fun ctx_local tparam targ ->
-            let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
+            let td = Type.Typdef.Defined ([], `Plain targ) in
             Ctx.add_typdef ctx_local tparam td)
           ctx_local tparams targs
       in

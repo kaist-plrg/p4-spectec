@@ -18,10 +18,8 @@ let is_singleton_case (tdenv : TDEnv.t) (typ : typ) : bool =
       let td = TDEnv.find tid tdenv in
       match td with
       | Param | Extern | Defining _ -> false
-      | Defined (_, deftyp) -> (
-          match deftyp.it with
-          | VariantT typcases -> List.length typcases = 1
-          | _ -> false))
+      | Defined (_, `Variant (typcases, _)) -> List.length typcases = 1
+      | Defined _ -> false)
   | _ -> false
 
 let is_singleton_match (tdenv : TDEnv.t) (exp : exp) : bool =

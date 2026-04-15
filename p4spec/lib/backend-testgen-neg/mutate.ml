@@ -64,11 +64,11 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
       match td with
       | Some (Defined (tparams, td)) -> (
           let theta = List.combine tparams targs |> TDEnv.of_list in
-          match td.it with
-          | PlainT typ ->
+          match td with
+          | `Plain typ ->
               typ |> Type.Subst.subst_typ theta
               |> gen_from_typ depth tdenv texts
-          | StructT typfields ->
+          | `Struct typfields ->
               let atoms, typs = List.split typfields in
               let* values =
                 typs
@@ -77,7 +77,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
               in
               let valuefields = List.combine atoms values in
               StructV valuefields |> Option.some |> wrap_value_opt typ.it
-          | VariantT typcases ->
+          | `Variant (typcases, _) ->
               let nottyps' =
                 typcases
                 |> List.map (fun (nottyp, _, _) ->

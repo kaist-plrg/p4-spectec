@@ -12,14 +12,12 @@ let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
   | VarT (tid, targs) -> (
       let td = Dctx.find_typdef dctx tid in
       match td with
-      | Defined (tparams, deftyp) -> (
-          match deftyp.it with
-          | PlainT typ ->
-              let theta = TIdMap.of_lists tparams targs in
-              let typ = Type.Subst.subst_typ theta typ in
-              is_singleton_case dctx typ
-          | StructT _ -> false
-          | VariantT typcases -> List.length typcases = 1)
+      | Defined (tparams, `Plain typ) ->
+          let theta = TIdMap.of_lists tparams targs in
+          let typ = Type.Subst.subst_typ theta typ in
+          is_singleton_case dctx typ
+      | Defined (_, `Struct _) -> false
+      | Defined (_, `Variant (typcases, _)) -> List.length typcases = 1
       | _ -> false)
   | _ -> false
 

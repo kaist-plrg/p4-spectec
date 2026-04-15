@@ -13,10 +13,10 @@ let rec expand_typ (find_typdef_opt : TId.t -> Typdef.t option) (typ : typ) :
       let td_opt = find_typdef_opt tid in
       match td_opt with
       | Some (Defined (tparams, deftyp)) -> (
-          match deftyp.it with
-          | PlainT _ when List.length targs <> List.length tparams ->
+          match deftyp with
+          | `Plain _ when List.length targs <> List.length tparams ->
               error typ.at "type arguments do not match"
-          | PlainT typ ->
+          | `Plain typ ->
               let theta = TIdMap.of_lists tparams targs in
               let typ = Subst.subst_typ theta typ in
               expand_typ find_typdef_opt typ

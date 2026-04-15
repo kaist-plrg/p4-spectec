@@ -10,6 +10,7 @@ open Util.Checks
 open Util.Source
 module Xl = Lang.Xl
 module F = Format
+module Mixop = Runtime.Mixop
 
 (* Checks *)
 
@@ -56,10 +57,11 @@ let as_struct_typ (ctx : Ctx.t) (typ_il : Il.typ) : Il.typfield list attempt =
   | VarT (tid, _) -> (
       let td_opt = Ctx.find_typdef_opt ctx tid in
       match td_opt with
-      | Some (Defined (_, deftyp)) -> (
-          match deftyp.it with
-          | StructT typfields_il -> Ok typfields_il
-          | _ -> fail typ_il.at "cannot destruct type as a struct")
+      | Some (Defined (_, `Struct typfields_il)) -> Ok typfields_il
+      | Some (Defined (_, `Plain _)) ->
+          fail typ_il.at "cannot destruct plain type as a struct"
+      | Some (Defined (_, `Variant _)) ->
+          fail typ_il.at "cannot destruct variant type as a struct"
       | _ -> fail typ_il.at "cannot destruct type as a struct")
   | _ -> fail typ_il.at "cannot destruct type as a struct"
 
@@ -93,52 +95,66 @@ and elab_plaintyp' (ctx : Ctx.t) (plaintyp : plaintyp') : Il.typ' =
 
 (* Elaboration of notation types *)
 
-and elab_nottyp (ctx : Ctx.t) (typ : typ) : Il.nottyp =
+and elab_nottyp (ctx : Ctx.t) (typ : typ) : Mixop.t * Il.nottyp =
   match typ with
   | PlainT plaintyp ->
-      let mixop = Mixop.Arg in
       let typ_il = elab_plaintyp ctx plaintyp in
-      (mixop, [ typ_il ]) $ plaintyp.at
+      let mixop_el = Mixop.Arg in
+      let nottyp_il = (Mixop.to_flat mixop_el, [ typ_il ]) $ plaintyp.at in
+      (mixop_el, nottyp_il)
   | NotationT nottyp -> (
       match nottyp.it with
       | AtomT atom ->
-          let mixop = Mixop.Atom atom in
-          let typs_il = [] in
-          (mixop, typs_il) $ nottyp.at
+          let mixop_el = Mixop.Atom atom in
+          let nottyp_il = (Mixop.to_flat mixop_el, []) $ nottyp.at in
+          (mixop_el, nottyp_il)
       | SeqT [] ->
-          let mixop = Mixop.Seq [] in
-          let typs_il = [] in
-          (mixop, typs_il) $ nottyp.at
+          let mixop_el = Mixop.Seq [] in
+          let nottyp_il = (Mixop.to_flat mixop_el, []) $ nottyp.at in
+          (mixop_el, nottyp_il)
       | SeqT (typ_h :: typs_t) ->
-          let mixop_h, typs_il_h = elab_nottyp ctx typ_h |> it in
-          let mixop_t, typs_il_t =
-            elab_nottyp ctx (NotationT (SeqT typs_t $ nottyp.at)) |> it
+          let mixop_el_h, nottyp_il_h = elab_nottyp ctx typ_h in
+          let mixop_el_t, nottyp_il_t =
+            elab_nottyp ctx (NotationT (SeqT typs_t $ nottyp.at))
           in
-          let mixop =
-            match mixop_t with
-            | Mixop.Seq mixops_t -> Mixop.Seq (mixop_h :: mixops_t)
+          let _, typs_il_h = nottyp_il_h.it in
+          let _, typs_il_t = nottyp_il_t.it in
+          let mixop_el =
+            match mixop_el_t with
+            | Mixop.Seq mixops_t -> Mixop.Seq (mixop_el_h :: mixops_t)
             | _ -> assert false
           in
           let typs_il = typs_il_h @ typs_il_t in
-          (mixop, typs_il) $ nottyp.at
+          let nottyp_il = (Mixop.to_flat mixop_el, typs_il) $ nottyp.at in
+          (mixop_el, nottyp_il)
       | InfixT (typ_l, atom, typ_r) ->
-          let mixop_l, typs_il_l = elab_nottyp ctx typ_l |> it in
-          let mixop_r, typs_il_r = elab_nottyp ctx typ_r |> it in
-          let mixop = Mixop.Infix (mixop_l, atom, mixop_r) in
-          let typs_il = typs_il_l @ typs_il_r in
-          (mixop, typs_il) $ nottyp.at
+          let mixop_el_l, nottyp_il_l = elab_nottyp ctx typ_l in
+          let mixop_el_r, nottyp_il_r = elab_nottyp ctx typ_r in
+          let _, typs_il_l = nottyp_il_l.it in
+          let _, typs_il_r = nottyp_il_r.it in
+          let mixop_el = Mixop.Infix (mixop_el_l, atom, mixop_el_r) in
+          let nottyp_il =
+            (Mixop.to_flat mixop_el, typs_il_l @ typs_il_r) $ nottyp.at
+          in
+          (mixop_el, nottyp_il)
       | BrackT (atom_l, typ, atom_r) ->
-          let mixop, typs_il = elab_nottyp ctx typ |> it in
-          let mixop = Mixop.Brack (atom_l, mixop, atom_r) in
-          (mixop, typs_il) $ nottyp.at)
+          let mixop_el_inner, nottyp_il_inner = elab_nottyp ctx typ in
+          let _, typs_il = nottyp_il_inner.it in
+          let mixop_el = Mixop.Brack (atom_l, mixop_el_inner, atom_r) in
+          let nottyp_il = (Mixop.to_flat mixop_el, typs_il) $ nottyp.at in
+          (mixop_el, nottyp_il))
 
 (* Elaboration of definition types *)
 
 and elab_deftyp (ctx : Ctx.t) (id : id) (tparams : tparam list)
-    (deftyp : deftyp) : Typdef.t * Il.deftyp =
+    (deftyp : deftyp) : Ctx.t * Typdef.t * Il.deftyp =
   match deftyp.it with
-  | PlainTD plaintyp -> elab_deftyp_plain ctx tparams plaintyp
-  | StructTD typfields -> elab_deftyp_struct ctx deftyp.at tparams typfields
+  | PlainTD plaintyp ->
+      let td, deftyp_il = elab_deftyp_plain ctx tparams plaintyp in
+      (ctx, td, deftyp_il)
+  | StructTD typfields ->
+      let td, deftyp_il = elab_deftyp_struct ctx deftyp.at tparams typfields in
+      (ctx, td, deftyp_il)
   | VariantTD typcases -> elab_deftyp_variant ctx deftyp.at id tparams typcases
 
 (* Elaboration of plain type definitions *)
@@ -147,7 +163,7 @@ and elab_deftyp_plain (ctx : Ctx.t) (tparams : tparam list)
     (plaintyp : plaintyp) : Typdef.t * Il.deftyp =
   let typ_il = elab_plaintyp ctx plaintyp in
   let deftyp_il = Il.PlainT typ_il $ plaintyp.at in
-  let td = Typdef.Defined (tparams, deftyp_il) in
+  let td = Typdef.Defined (tparams, `Plain typ_il) in
   (td, deftyp_il)
 
 (* Elaboration of struct type definitions *)
@@ -161,55 +177,60 @@ and elab_deftyp_struct (ctx : Ctx.t) (at : region) (tparams : tparam list)
     (typfields : typfield list) : Typdef.t * Il.deftyp =
   let typfields_il = List.map (elab_typfield ctx) typfields in
   let deftyp_il = Il.StructT typfields_il $ at in
-  let td = Typdef.Defined (tparams, deftyp_il) in
+  let td = Typdef.Defined (tparams, `Struct typfields_il) in
   (td, deftyp_il)
 
 (* Elaboration of variant type definitions *)
 
-and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
+and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) :
+    Mixop.t list * Il.typcase list =
   let typ_il = Expand.expand_typ (Ctx.find_typdef_opt ctx) typ_il in
   match typ_il.it with
   | VarT (tid, targs_il) -> (
       let td = Ctx.find_typdef ctx tid in
       match td with
       | Defining _ -> error typ_il.at "cannot extend an incomplete type"
-      | Defined (tparams, deftyp) -> (
-          match deftyp.it with
-          | VariantT typcases_il ->
-              let theta = TIdMap.of_lists tparams targs_il in
-              List.map (Subst.subst_typcase theta) typcases_il
-          | _ -> error typ_il.at "cannot extend a non-variant type")
+      | Defined (tparams, `Plain typ_il') ->
+          let theta = TIdMap.of_lists tparams targs_il in
+          let typ_il' = Subst.subst_typ theta typ_il' in
+          elab_typcase_plain ctx typ_il'
+      | Defined (tparams, `Variant (typcases_il, mixops_el)) ->
+          let theta = TIdMap.of_lists tparams targs_il in
+          let typcases_il = List.map (Subst.subst_typcase theta) typcases_il in
+          (mixops_el, typcases_il)
+      | Defined (_, `Struct _) -> error typ_il.at "cannot extend a struct type"
       | _ -> error typ_il.at "cannot extend a non-variant type")
   | _ -> error typ_il.at "cannot extend a non-variant type"
 
 and elab_typcase (ctx : Ctx.t) (typorigin_il : Il.typorigin) (typcase : typcase)
-    : Il.typcase list =
+    : Mixop.t list * Il.typcase list =
   let typ, hints = typcase in
   match typ with
   | PlainT plaintyp ->
       let typ_il = elab_plaintyp ctx plaintyp in
       elab_typcase_plain ctx typ_il
   | NotationT _ ->
-      let nottyp_il = elab_nottyp ctx typ in
+      let mixop_el, nottyp_il = elab_nottyp ctx typ in
       let typcase_il = (nottyp_il, typorigin_il, hints) in
-      [ typcase_il ]
+      ([ mixop_el ], [ typcase_il ])
 
 and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
-    (tparams : tparam list) (typcases : typcase list) : Typdef.t * Il.deftyp =
+    (tparams : tparam list) (typcases : typcase list) :
+    Ctx.t * Typdef.t * Il.deftyp =
   let typorigin_il =
     let targs_il =
       List.map (fun tparam -> Il.VarT (tparam, []) $ tparam.at) tparams
     in
     (id, targs_il) $ id.at
   in
-  let typcases_il = List.concat_map (elab_typcase ctx typorigin_il) typcases in
-  let mixops =
-    typcases_il
-    |> List.map (fun (nottyp_il, _, _) ->
-           let mixop, _ = nottyp_il.it in
-           mixop)
+  let mixops_el, typcases_il =
+    List.fold_left
+      (fun (mixops_acc, cases_acc) typcase ->
+        let mixops, cases = elab_typcase ctx typorigin_il typcase in
+        (mixops_acc @ mixops, cases_acc @ cases))
+      ([], []) typcases
   in
-  let mixop_groups = groupby Mixop.eq mixops in
+  let mixop_groups = groupby Mixop.eq mixops_el in
   let mixop_duplicates =
     List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
   in
@@ -222,8 +243,8 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
            (fun mixop_group -> Mixop.string_of_mixop (List.hd mixop_group))
            mixop_duplicates));
   let deftyp_il = Il.VariantT typcases_il $ at in
-  let td = Typdef.Defined (tparams, deftyp_il) in
-  (td, deftyp_il)
+  let td = Typdef.Defined (tparams, `Variant (typcases_il, mixops_el)) in
+  (ctx, td, deftyp_il)
 
 (* Expressions *)
 
@@ -836,26 +857,26 @@ and elab_exp_normal (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
               match td with
               | Param | Extern | Defining _ ->
                   elab_exp_plain ctx typ_il_expect exp
-              | Defined (tparams, deftyp_il) -> (
+              | Defined (tparams, `Plain typ_il) ->
                   let theta = TIdMap.of_lists tparams targs_il in
-                  match deftyp_il.it with
-                  | PlainT typ_il ->
-                      let typ_il = Subst.subst_typ theta typ_il in
-                      elab_exp_normal ctx typ_il exp
-                  | StructT typfields_il ->
-                      let typfields_il =
-                        List.map
-                          (fun (atom, typ_il) ->
-                            let typ_il = Subst.subst_typ theta typ_il in
-                            (atom, typ_il))
-                          typfields_il
-                      in
-                      elab_exp_struct ctx typ_il_expect typfields_il exp
-                  | VariantT typcases_il ->
-                      let typcases_il =
-                        List.map (Subst.subst_typcase theta) typcases_il
-                      in
-                      elab_exp_variant ctx typ_il_expect typcases_il exp))
+                  let typ_il = Subst.subst_typ theta typ_il in
+                  elab_exp_normal ctx typ_il exp
+              | Defined (tparams, `Struct typfields_il) ->
+                  let theta = TIdMap.of_lists tparams targs_il in
+                  let typfields_il =
+                    List.map
+                      (fun (atom, typ_il) ->
+                        let typ_il = Subst.subst_typ theta typ_il in
+                        (atom, typ_il))
+                      typfields_il
+                  in
+                  elab_exp_struct ctx typ_il_expect typfields_il exp
+              | Defined (tparams, `Variant (typcases_il, mixops_el)) ->
+                  let theta = TIdMap.of_lists tparams targs_il in
+                  let typcases_il =
+                    List.map (Subst.subst_typcase theta) typcases_il
+                  in
+                  elab_exp_variant ctx typ_il_expect mixops_el typcases_il exp)
           | _ -> elab_exp_plain ctx typ_il_expect exp))
 
 (* Elaboration of wildcard variable expressions *)
@@ -1067,13 +1088,13 @@ and elab_exp_not_inner (ctx : Ctx.t) (mixop : Mixop.t) (typs_il : Il.typ list)
 and fail_elab_not (at : region) (msg : string) : (Ctx.t * Il.notexp) attempt =
   fail at ("cannot elaborate notation expression because " ^ msg)
 
-and elab_exp_not (ctx : Ctx.t) (nottyp_il : Il.nottyp) (exp : exp) :
-    (Ctx.t * Il.notexp) attempt =
-  let mixop, typs_il = nottyp_il.it in
-  let* ctx, typs_il, exps_il = elab_exp_not_inner ctx mixop typs_il exp in
+and elab_exp_not (ctx : Ctx.t) (mixop_el : Mixop.t) (nottyp_il : Il.nottyp)
+    (exp : exp) : (Ctx.t * Il.notexp) attempt =
+  let mixop_il, typs_il = nottyp_il.it in
+  let* ctx, typs_il, exps_il = elab_exp_not_inner ctx mixop_el typs_il exp in
   match typs_il with
   | [] ->
-      let notexp_il = (mixop, exps_il) in
+      let notexp_il = (mixop_il, exps_il) in
       Ok (ctx, notexp_il)
   | _ -> fail_elab_not exp.at "too few arguments"
 
@@ -1123,12 +1144,13 @@ and fail_elab_variant (at : region) (msg : string) : (Ctx.t * Il.exp) attempt =
   fail at ("cannot elaborate variant case because " ^ msg)
 
 and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
-    (typcases_il : Il.typcase list) (exp : exp) : (Ctx.t * Il.exp) attempt =
+    (mixops_el : Mixop.t list) (typcases_il : Il.typcase list) (exp : exp) :
+    (Ctx.t * Il.exp) attempt =
   let ctx, exps_il =
-    List.fold_left
-      (fun (ctx, exps_il) typcase_il ->
+    List.fold_left2
+      (fun (ctx, exps_il) mixop_el typcase_il ->
         let nottyp_il, typorigin_il, _ = typcase_il in
-        match elab_exp_not ctx nottyp_il exp with
+        match elab_exp_not ctx mixop_el nottyp_il exp with
         | Ok (ctx, notexp_il) ->
             let typ_il =
               let id, targs_il = typorigin_il.it in
@@ -1136,7 +1158,7 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
             in
             let exp_il =
               let mixop, exps_il_inner = notexp_il in
-              let atoms = Mixop.atoms mixop in
+              let atoms = Domain.Mixop.atoms mixop in
               let at =
                 match atoms with
                 | [] -> exp_list_region exps_il_inner
@@ -1147,7 +1169,7 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
             let+ exp_il = cast_exp ctx typ_il_expect typ_il exp_il in
             (ctx, exps_il @ [ exp_il ])
         | Fail _ -> (ctx, exps_il))
-      (ctx, []) typcases_il
+      (ctx, []) mixops_el typcases_il
   in
   match exps_il with
   | [ exp_il ] -> Ok (ctx, exp_il)
@@ -1430,8 +1452,8 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 (* Elaboration of rule premises *)
 
 and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
-  let nottyp_il, inputs = Ctx.find_rel_signature ctx id in
-  let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
+  let mixop_el, nottyp_il, inputs = Ctx.find_rel_signature ctx id in
+  let+ ctx, notexp_il = elab_exp_not ctx mixop_el nottyp_il exp in
   let _, exps_il = notexp_il in
   if Hints.Input.is_conditional inputs exps_il then
     let prem_il = Il.IfHoldPr (id, notexp_il) in
@@ -1443,8 +1465,8 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
 (* Elaboration of negated rule premises *)
 
 and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
-  let nottyp_il, inputs = Ctx.find_rel_signature ctx id in
-  let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
+  let mixop_el, nottyp_il, inputs = Ctx.find_rel_signature ctx id in
+  let+ ctx, notexp_il = elab_exp_not ctx mixop_el nottyp_il exp in
   let _, exps_il = notexp_il in
   check
     (Hints.Input.is_conditional inputs exps_il)
@@ -1598,7 +1620,7 @@ and elab_rulepaths (at : region) (ctxs_local : Ctx.t list)
 
 and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     (rules : rule list) : rulegroup_internal =
-  let nottyp_il, inputs, _, _ = Ctx.find_defined_rel ctx id_rel in
+  let mixop_el, nottyp_il, inputs, _, _ = Ctx.find_defined_rel ctx id_rel in
   let ctxs_local =
     List.map
       (fun rule ->
@@ -1621,7 +1643,9 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
   let ctxs_local, notexps_il =
     List.map2
       (fun ctx_local exp ->
-        let+ ctx_local, notexp_il = elab_exp_not ctx_local nottyp_il exp in
+        let+ ctx_local, notexp_il =
+          elab_exp_not ctx_local mixop_el nottyp_il exp
+        in
         (ctx_local, notexp_il))
       ctxs_local exp_group
     |> List.split
@@ -1796,7 +1820,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
   in
   check (List.for_all valid_tid tparams) id.at "invalid type parameter";
   let ctx_local = Ctx.add_tparams ctx tparams in
-  let td, deftyp_il = elab_deftyp ctx_local id tparams deftyp in
+  let _ctx_local, td, deftyp_il = elab_deftyp ctx_local id tparams deftyp in
   let def_il = Il.TypD (id, tparams, deftyp_il, hints) $ deftyp.at in
   let ctx = Ctx.update_typdef ctx id td in
   (ctx, def_il)
@@ -1844,17 +1868,17 @@ and fetch_rel_input_hint (at : region) (nottyp_il : Il.nottyp)
 
 and elab_extern_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.def =
-  let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
+  let mixop_el, nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
-  let ctx = Ctx.add_extern_rel ctx id nottyp_il inputs in
+  let ctx = Ctx.add_extern_rel ctx id mixop_el nottyp_il inputs in
   let def_il = Il.ExternRelD (id, nottyp_il, inputs, hints) $ at in
   (ctx, def_il)
 
 and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.def =
-  let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
+  let mixop_el, nottyp_il = elab_nottyp ctx (NotationT nottyp) in
   let inputs = fetch_rel_input_hint at nottyp_il hints in
-  let ctx = Ctx.add_defined_rel ctx id nottyp_il inputs in
+  let ctx = Ctx.add_defined_rel ctx id mixop_el nottyp_il inputs in
   let def_il = Il.RelD (id, nottyp_il, inputs, [], None, hints) $ at in
   (ctx, def_il)
 
@@ -1983,16 +2007,14 @@ and pattern_set_covered_by_typ (ctx : Ctx.t) (typ_il : Il.typ) :
   | VarT (tid, _) -> (
       let td = Ctx.find_typdef ctx tid in
       match td with
-      | Defined (_, deftyp_il) -> (
-          match deftyp_il.it with
-          | VariantT typcases_il ->
-              typcases_il
-              |> List.map (fun (nottyp_il, _, _) -> nottyp_il)
-              |> Pattern.PatternSet.of_list
-          | _ ->
-              error typ_il.at
-                ("non-variant type not supported in patterns: "
-                ^ Il.Print.string_of_typ typ_il))
+      | Defined (_, `Variant (typcases_il, _)) ->
+          typcases_il
+          |> List.map (fun (nottyp_il, _, _) -> nottyp_il)
+          |> Pattern.PatternSet.of_list
+      | Defined _ ->
+          error typ_il.at
+            ("non-variant type not supported in patterns: "
+            ^ Il.Print.string_of_typ typ_il)
       | _ ->
           error typ_il.at
             ("non-variant type not supported in patterns: "
@@ -2119,7 +2141,9 @@ let populate_typs (ctx : Ctx.t) : unit =
 let populate_rule (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
   | Il.RelD (id, nottyp_il, inputs, [], None, hints) ->
-      let _, _, rulegroups_il, elsegroup_il_opt = Ctx.find_defined_rel ctx id in
+      let _, _, _, rulegroups_il, elsegroup_il_opt =
+        Ctx.find_defined_rel ctx id
+      in
       Il.RelD (id, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt, hints)
       $ def_il.at
   | Il.RelD _ -> error def_il.at "relation was already populated"

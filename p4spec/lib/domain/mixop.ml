@@ -1,151 +1,82 @@
 open Util.Source
 
-(* Mixop is a generalized case constructor *)
+(* Mixop: a sequence of atoms and argument placeholders. *)
 
 type atom = Atom.t phrase [@@deriving yojson]
+type mixeme = Arg | Atom of atom [@@deriving yojson]
+type t = mixeme list [@@deriving yojson]
 
-type t =
-  | Arg
-  | Atom of atom
-  | Brack of atom * t * atom
-  | Infix of t * atom * t
-  | Seq of t list
-[@@deriving yojson]
+(* Comparison *)
 
 let compare_atom (atom_a : atom) (atom_b : atom) =
   Atom.compare atom_a.it atom_b.it
 
-let rec compare (mixop_a : t) (mixop_b : t) =
-  if mixop_a == mixop_b then 0
-  else
-    let tag (mixop : t) =
-      match mixop with
-      | Arg -> 0
-      | Atom _ -> 1
-      | Brack _ -> 2
-      | Infix _ -> 3
-      | Seq _ -> 4
-    in
-    match (mixop_a, mixop_b) with
-    | Arg, Arg -> 0
-    | Atom atom_a, Atom atom_b -> compare_atom atom_a atom_b
-    | Brack (atom_a_l, mixop_a, atom_a_r), Brack (atom_b_l, mixop_b, atom_b_r)
-      ->
-        let c = compare_atom atom_a_l atom_b_l in
-        if c <> 0 then c
-        else
-          let c = compare mixop_a mixop_b in
-          if c <> 0 then c else compare_atom atom_a_r atom_b_r
-    | Infix (mixop_a_l, atom_a, mixop_a_r), Infix (mixop_b_l, atom_b, mixop_b_r)
-      ->
-        let c = compare mixop_a_l mixop_b_l in
-        if c <> 0 then c
-        else
-          let c = compare_atom atom_a atom_b in
-          if c <> 0 then c else compare mixop_a_r mixop_b_r
-    | Seq mixops_a, Seq mixops_b -> compare_mixops mixops_a mixops_b
-    | mixop_a, mixop_b -> Int.compare (tag mixop_a) (tag mixop_b)
+let compare_mixeme (a : mixeme) (b : mixeme) =
+  match (a, b) with
+  | Arg, Arg -> 0
+  | Arg, Atom _ -> -1
+  | Atom _, Arg -> 1
+  | Atom atom_a, Atom atom_b -> compare_atom atom_a atom_b
 
-and compare_mixops (mixops_a : t list) (mixops_b : t list) =
-  match (mixops_a, mixops_b) with
-  | [], [] -> 0
-  | mixop_a :: mixops_a, mixop_b :: mixops_b ->
-      let c = compare mixop_a mixop_b in
-      if c <> 0 then c else compare_mixops mixops_a mixops_b
-  | [], _ -> -1
-  | _, [] -> 1
+let compare (mixop_a : t) (mixop_b : t) =
+  List.compare compare_mixeme mixop_a mixop_b
 
 let eq (mixop_a : t) (mixop_b : t) = compare mixop_a mixop_b = 0
 
 (* Arity *)
 
 let arity (mixop : t) : int =
-  let rec arity (mixop : t) : int =
-    match mixop with
-    | Arg -> 1
-    | Atom _ -> 0
-    | Brack (_, mixop, _) -> arity mixop
-    | Infix (mixop_l, _, mixop_r) -> arity mixop_l + arity mixop_r
-    | Seq mixops ->
-        List.fold_left (fun arity_acc mixop -> arity_acc + arity mixop) 0 mixops
-  in
-  arity mixop
+  List.fold_left (fun n p -> match p with Arg -> n + 1 | Atom _ -> n) 0 mixop
 
-(* Atoms *)
+(* Atoms in sequence *)
 
 let atoms (mixop : t) : atom list =
-  let rec atoms (mixop : t) : atom list =
-    match mixop with
-    | Arg -> []
-    | Atom atom -> [ atom ]
-    | Brack (atom_l, mixop, atom_r) -> (atom_l :: atoms mixop) @ [ atom_r ]
-    | Infix (mixop_l, atom, mixop_r) -> atoms mixop_l @ [ atom ] @ atoms mixop_r
-    | Seq mixops ->
-        List.fold_left
-          (fun atoms_acc mixop -> atoms_acc @ atoms mixop)
-          [] mixops
-  in
-  atoms mixop
+  List.filter_map (function Atom a -> Some a | Arg -> None) mixop
 
-(* Stringifier *)
-
-let string_of_mixop (mixop : t) =
-  let rec string_of_mixop (mixop : t) =
-    match mixop with
-    | Arg -> "%"
-    | Atom atom -> Atom.render_atom atom.it
-    | Brack (atom_l, mixop, atom_r) ->
-        Atom.render_atom atom_l.it ^ string_of_mixop mixop
-        ^ Atom.render_atom atom_r.it
-    | Infix (mixop_l, atom, mixop_r) ->
-        string_of_mixop mixop_l ^ Atom.render_atom atom.it
-        ^ string_of_mixop mixop_r
-    | Seq mixops -> String.concat " " (List.map string_of_mixop mixops)
-  in
-  "`" ^ string_of_mixop mixop ^ "`"
-
-(* Assembler *)
+(* Assembler: interleave rendered atoms and argument strings, space-joined *)
 
 let assemble ~(string_of_atom : atom -> string) (mixop : t) (args : string list)
     : string =
-  let rec assemble (mixop : t) (args : string list) : string * string list =
-    match mixop with
-    | Arg -> (
-        match args with
-        | [] -> failwith "not enough arguments"
-        | arg :: args -> (arg, args))
-    | Atom atom ->
-        let smixop = string_of_atom atom in
-        (smixop, args)
-    | Brack (atom_l, mixop, atom_r) ->
-        let smixop, args = assemble mixop args in
-        let smixop =
-          [ string_of_atom atom_l; smixop; string_of_atom atom_r ]
-          |> List.filter (fun s -> s <> "")
-          |> String.concat " "
-        in
-        (smixop, args)
-    | Infix (mixop_l, atom, mixop_r) ->
-        let smixop_l, args = assemble mixop_l args in
-        let smixop_r, args = assemble mixop_r args in
-        let smixop =
-          [ smixop_l; string_of_atom atom; smixop_r ]
-          |> List.filter (fun s -> s <> "")
-          |> String.concat " "
-        in
-        (smixop, args)
-    | Seq mixops ->
-        let smixops, args =
-          List.fold_left
-            (fun (smixops, args) mixop ->
-              let smixop, args = assemble mixop args in
-              (smixops @ [ smixop ], args))
-            ([], args) mixops
-        in
-        let smixop =
-          smixops |> List.filter (fun s -> s <> "") |> String.concat " "
-        in
-        (smixop, args)
+  let rec assemble mixop args mixemes_rev =
+    match (mixop, args) with
+    | [], [] -> List.rev mixemes_rev
+    | [], _ :: _ -> failwith "Mixop.assemble: too many arguments"
+    | Arg :: _, [] -> failwith "Mixop.assemble: not enough arguments"
+    | Arg :: rest, arg :: args_rest ->
+        assemble rest args_rest (arg :: mixemes_rev)
+    | Atom atom :: rest, args ->
+        assemble rest args (string_of_atom atom :: mixemes_rev)
   in
-  let smixop, args = assemble mixop args in
-  match args with [] -> smixop | _ -> failwith "too many arguments"
+  assemble mixop args [] |> List.filter (fun s -> s <> "") |> String.concat " "
+
+(* Stringifier
+
+   Workaround to match the output of tree-mixops.
+   Omit the space after an open bracket, and before a close bracket. *)
+
+let is_open_bracket : Atom.t -> bool = function
+  | LParen | LBrack | LBrace | LAngle -> true
+  | _ -> false
+
+let is_close_bracket : Atom.t -> bool = function
+  | RParen | RBrack | RBrace | RAngle -> true
+  | _ -> false
+
+let opens_bracket = function Atom a -> is_open_bracket a.it | Arg -> false
+let closes_bracket = function Atom a -> is_close_bracket a.it | Arg -> false
+
+let string_of_mixeme = function
+  | Arg -> "%"
+  | Atom atom -> Atom.render_atom atom.it
+
+let string_of_mixop (mixop : t) : string =
+  let rec string_of_mixemes = function
+    | [] -> ""
+    | [ mixeme ] -> string_of_mixeme mixeme
+    | left :: (right :: _ as rest) ->
+        let sep =
+          if opens_bracket left || closes_bracket right then "" else " "
+        in
+        string_of_mixeme left ^ sep ^ string_of_mixemes rest
+  in
+  "`" ^ string_of_mixemes mixop ^ "`"

@@ -234,7 +234,7 @@ let load_def (ctx : t) (def : def) : t =
           add_metavar ctx id typ
         else ctx
       in
-      let td = Typdef.Defined (tparams, deftyp) in
+      let td = Typdef.of_deftyp tparams deftyp in
       let ctx = add_typdef ctx id td in
       match deftyp.it with
       | VariantT typcases -> load_typcases ctx id typcases

@@ -96,7 +96,7 @@ let load_def (ctx : t) (def : def) : t =
           add_metavar ctx id typ
         else ctx
       in
-      let td = Typdef.Defined (tparams, deftyp) in
+      let td = Typdef.of_deftyp tparams deftyp in
       add_typdef ctx id td
   | VarD (id, typ, _hints) -> add_metavar ctx id typ
   | _ -> ctx
