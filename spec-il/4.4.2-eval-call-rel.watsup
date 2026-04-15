@@ -2,53 +2,93 @@
 
 syntax valsopt = val*?
 
-relation Eval_rulpath:
-  ctx |- rulmatch -> rulpath `@ `( val* ) : val*?
+;;; Rule path evaluation
+
+relation Eval_rul:
+  ctx |- rulmatch -> rulpath `@ `( val* ) : res<val*>
   hint(input %0 %1 %2 %3)
 
-rule Eval_rulpath/succ:
-  C_local |- rulmatch -> rulpath `@ `( val* ) : val_out*
+rule Eval_rul/succ:
+  C |- rulmatch -> rulpath `@ `( val* ) : OK val_out*
   -- if _ `= exp_out* `- prem_path* = rulpath
   -- if exp* `- prem_match* = rulmatch
-  -- Assign_exps: C_local |- val* -> exp* : OK C_local'
-  -- Eval_prems: C_local' |- (prem_path* ++ prem_match*) : OK C_local''
-  -- Eval_exps: C_local'' |- exp_out* : OK val_out*
+  -- Assign_exps: C |- val* -> exp* : OK C'
+  -- if prem* = prem_match* ++ prem_path*
+  -- Eval_prems: C' |- prem* : OK C''
+  -- Eval_exps: C'' |- exp_out* : OK val_out*
 
-rule Eval_rulpath/fail:
-  C_local |- rulmatch -> rulpath `@ `( val* ) : eps
+rule Eval_rul/fail:
+  C |- rulmatch -> rulpath `@ `( val* ) : FAIL
   -- otherwise
 
+;;; Rule path sequence evaluation
+
+relation Eval_ruls:
+  ctx |- rulmatch -> rulpath* `@ `( val* ) : res<val*>
+  hint(input %0 %1 %2 %3)
+
+rule Eval_ruls/cons-succ:
+  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
+  -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : OK val_out*
+
+rule Eval_ruls/cons-fail:
+  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : FAIL
+  -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : FAIL
+  -- Eval_ruls: C |- rulmatch -> rulpath_t* `@ `( val* ) : OK val_out*
+
+rule Eval_ruls/fail:
+  C |- rulmatch -> rulpath* `@ `( val* ) : FAIL
+  -- otherwise
+
+;;; Rule group evaluation
+
 relation Eval_rulgroup:
-  ctx |- rulgroup `@ `( val* ) : valsopt*
+  ctx |- rulgroup `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
 
 rule Eval_rulgroup:
-  C_local |- rulgroup `@ `( val* ) : valsopt*
+  C |- rulgroup `@ `( val* ) : OK val_out*
   -- if _ `: rulmatch `= rulpath* = rulgroup
-  -- (Eval_rulpath: C_local |- rulmatch -> rulpath `@ `( val* ) : valsopt)*
+  -- Eval_ruls: C |- rulmatch -> rulpath* `@ `( val* ) : OK val_out*
+
+;;; Rule group sequence evaluation
+
+relation Eval_rulgroups:
+  ctx |- rulgroup* `@ `( val* ) : res<val*>
+  hint(input %0 %1 %2)
+
+rule Eval_rulgroups/cons-succ:
+  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
+  -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : OK val_out*
+
+rule Eval_rulgroups/cons-fail:
+  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : FAIL
+  -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : FAIL
+  -- Eval_rulgroups: C |- rulgroup_t* `@ `( val* ) : OK val_out*
+
+rule Eval_rulgroups/fail:
+  C |- rulgroup* `@ `( val* ) : FAIL
+  -- otherwise
 
 ;; Defined relations
 
 rulegroup Call_rel/defined {
     
-    rule Call_rel/nil:
+    rule Call_rel/succ:
       C |- id val* : OK val_out*
       -- if DEF rulgroup* elsgroup = $find_rel(C, id)
-      -- if C_local = C[.LOCAL = $empty_layer]
-      -- (Eval_rulgroup: C_local |- rulgroup `@ `( val* ) : valsopt*)*
-      -- if valsopt_concat* = $concat_<valsopt>(valsopt**)
-      -- if eps = $filter_<valsopt>(valsopt_concat*, (valsopt_concat =/= eps)*)
-      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
-      -- Eval_rulpath: C_local |- rulmatch_els -> rulpath_els `@ `( val* ) : val_out*
+      -- if C_local = C[ .LOCAL = $empty_layer ]
+      -- Eval_rulgroups: C_local |- rulgroup* `@ `( val* ) : OK val_out*
 
-    rule Call_rel/list:
+    rule Call_rel/fail-with-els:
       C |- id val* : OK val_out*
-      -- if DEF rulgroup* _ = $find_rel(C, id)
-      -- (if id `: rulmatch `= rulpath* = rulgroup)*
-      -- if C_local = C[.LOCAL = $empty_layer]
-      -- (Eval_rulgroup: C_local |- rulgroup `@ `( val* ) : valsopt*)*
-      -- if valsopt_concat* = $concat_<valsopt>(valsopt**)
-      -- if val_out* = $filter_<valsopt>(valsopt_concat*, (valsopt_concat =/= eps)*)[0]
+      -- if DEF rulgroup* elsgroup = $find_rel(C, id)
+      -- if C_local = C[ .LOCAL = $empty_layer ]
+      -- Eval_rulgroups: C_local |- rulgroup* `@ `( val* ) : FAIL
+      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
+      -- if rulgroup_els = id_els `: rulmatch_els `= rulpath_els
+      -- Eval_rulgroup: C_local |- rulgroup_els `@ `( val* ) : OK val_out*
+
 }
 
 ;; Extern relations

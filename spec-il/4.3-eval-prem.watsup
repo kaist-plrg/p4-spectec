@@ -1,16 +1,16 @@
 ;; Premise evaluation rules
 
+;;; Relation premises
+
 rule Eval_prem/relpr:
   C |- REL id `: exp* `-> exp_out* : ctxres
   -- Eval_exps: C |- exp* : OK val*
   -- Call_rel: C |- id val* : OK val_out*
   -- Assign_exps : C |- val_out* -> exp_out* : ctxres
 
-rulegroup Eval_prem/ifpr {
+;;; If premises
 
-  rule Eval_prem/fail:
-    C |- IF exp : FAIL
-    -- Eval_exp: C |- exp : FAIL
+rulegroup Eval_prem/ifpr {
 
   rule Eval_prem/true:
     C |- IF exp : OK C
@@ -22,20 +22,30 @@ rulegroup Eval_prem/ifpr {
 
 }
 
-rule Eval_prem/ifholdpr:
-  C |- IFHOLD id `: exp* : OK C
-  -- Eval_exps: C |- exp* : OK val_input*
-  -- Call_rel: C |- id val_input* : OK eps
+;;; If-hold and if-not-hold premises
 
-rule Eval_prem/ifnotholdpr:
-  C |- IFNOTHOLD id `: exp* : OK C
-  -- Eval_exps: C |- exp* : OK val_input*
-  -- Call_rel: C |- id val_input* : FAIL
+rulegroup Eval_prem/ifholdpr {
+
+  rule Eval_prem/hold:
+    C |- IFHOLD id `: exp* : OK C
+    -- Eval_exps: C |- exp* : OK val_input*
+    -- Call_rel: C |- id val_input* : OK eps
+
+  rule Eval_prem/nothold:
+    C |- IFNOTHOLD id `: exp* : OK C
+    -- Eval_exps: C |- exp* : OK val_input*
+    -- Call_rel: C |- id val_input* : FAIL
+
+}
+
+;;; Let premises
 
 rule Eval_prem/letpr:
   C |- LET exp_l `= exp_r : OK C'
   -- Eval_exp : C |- exp_r : OK val_r
   -- Assign_exp : C |- val_r -> exp_l : OK C'
+
+;;; Iteration premises - optional
 
 rulegroup Eval_prem/iterpr-opt {
 
@@ -61,6 +71,8 @@ rulegroup Eval_prem/iterpr-opt {
     -- if C_res = $add_vals(C, varr_bind_iter*, (OPT val_bind)*)
 
 }
+
+;;; Iteration premises - list
 
 rulegroup Eval_prem/iterpr-list {
  

@@ -1,35 +1,40 @@
 ;; Meta-function invocation
 
+;;; Clause invocation
+
 relation Eval_clause:
   ctx `/ ctx |- clause `@ `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
 
 rule Eval_clause/succ:
-  C_local `/ C |- clause `@ `( val* ) : OK val_out
+  C `/ C_caller |- clause `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C_local `/ C |- val* -> arg* : OK C_local'
-  -- Eval_prems: C_local' |- prem* : OK C_local''
-  -- Eval_exp : C_local'' |- exp_out : OK val_out
+  -- Assign_args: C `/ C_caller |- val* -> arg* : OK C'
+  -- Eval_prems: C' |- prem* : OK C''
+  -- Eval_exp : C'' |- exp_out : OK val_out
 
 rule Eval_clause/fail:
-  C_local `/ C |- clause `@ `( val* ) : FAIL
+  C `/ C_caller |- clause `@ `( val* ) : FAIL
   -- otherwise
 
 relation Eval_clauses:
   ctx `/ ctx |- clause* `@ `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
 
-rule Eval_clauses/nil:
-  C_local `/ C |- eps `@ `( _ ) : FAIL
+rule Eval_clauses/cons-succ:
+  C `/ C_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
+  -- Eval_clause: C `/ C_caller |- clause_h `@ `( val* ) : OK val_res
 
-rule Eval_clauses/match-fail:
-  C_local `/ C |- (clause_h :: clause_t*) `@ `( val* ) : valres
-  -- Eval_clause: C_local `/ C |- clause_h `@ `( val* ) : FAIL
-  -- Eval_clauses: C_local `/ C |- clause_t* `@ `( val* ) : valres
+rule Eval_clauses/cons-fail:
+  C `/ C_caller |- (clause_h :: clause_t*) `@ `( val* ) : valres
+  -- Eval_clause: C `/ C_caller |- clause_h `@ `( val* ) : FAIL
+  -- Eval_clauses: C `/ C_caller |- clause_t* `@ `( val* ) : valres
 
-rule Eval_clauses/match-succ:
-  C_local `/ C |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
-  -- Eval_clause: C_local `/ C |- clause_h `@ `( val* ) : OK val_res
+rule Eval_clauses/fail:
+  C `/ C_caller |- _ `@ `( _ ) : FAIL
+  -- otherwise
+
+;;; Defined meta-function invocation
 
 relation Call_defined_func:
   ctx |- definedFuncDef `@ `< typ* > `( val* ) : res<val>
@@ -39,12 +44,14 @@ rule Call_defined_func:
   C |- definedFuncDef `@ `< typ* > `( val* ) : valres
   -- if DEF tparam* `-> clause* elsclause? = definedFuncDef
   -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS typ)))* }
-  -- if C_local = C[.LOCAL = $empty_layer[ .TYP = tdenv ]]
+  -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
   -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
   -- if clause_all* = clause* ++ clause_else*
-  -- Eval_clauses: C_local `/ C |- clause_all* `@ `( val* ) : valres
+  -- Eval_clauses: C_callee `/ C |- clause_all* `@ `( val* ) : valres
 
-;; Table meta-function invocation
+;;; Table meta-function invocation
+
+;;;; Table row evaluation
 
 relation Eval_tblrow:
   ctx |- tblrow `@ `( val* ) : res<val>
@@ -53,13 +60,16 @@ relation Eval_tblrow:
 rule Eval_tblrow/succ:
   C |- tblrow `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = tblrow
-  -- Assign_args: C[.LOCAL = $empty_layer] `/ C |- val* -> arg* : OK C_new
-  -- Eval_prems: C_new |- prem* : OK C_local
-  -- Eval_exp: C_local |- exp_out : OK val_out
+  -- if C_callee = C[ .LOCAL = $empty_layer ]
+  -- Assign_args: C_callee `/ C |- val* -> arg* : OK C_callee'
+  -- Eval_prems: C_callee' |- prem* : OK C_callee''
+  -- Eval_exp: C_callee'' |- exp_out : OK val_out
 
 rule Eval_tblrow/fail:
   C |- tblrow `@ `( val* ) : FAIL
   -- otherwise
+
+;;;; Table row sequence evaluation
 
 relation Eval_tblrows:
   ctx |- tblrow* `@ `( val* ) : res<val>
@@ -68,15 +78,16 @@ relation Eval_tblrows:
 rule Eval_tblrows/nil:
   C |- eps `@ `( val* ) : FAIL
 
-
 rule Eval_tblrows/cons-succ:
-  C |- (tblrow_h :: tblrow*) `@ `( val* ) : OK val_out
+  C |- (tblrow_h :: tblrow_t*) `@ `( val* ) : OK val_out
   -- Eval_tblrow: C |- tblrow_h `@ `( val* ) : OK val_out
 
 rule Eval_tblrows/cons-fail:
-  C |- (tblrow_h :: tblrow*) `@ `( val* ) : valres
+  C |- (tblrow_h :: tblrow_t*) `@ `( val* ) : valres
   -- Eval_tblrow: C |- tblrow_h `@ `( val* ) : FAIL
-  -- Eval_tblrows: C |- tblrow* `@ `( val* ) : valres
+  -- Eval_tblrows: C |- tblrow_t* `@ `( val* ) : valres
+
+;;;; Table meta-function evaluation
 
 relation Call_table_func:
   ctx |- tableFuncDef `@ `( val* ) : res<val>
@@ -86,6 +97,8 @@ rule Call_table_func:
   C |- tableFuncDef `@ `( val* ) : valres
   -- if TABLE _ `-> tblrow* = tableFuncDef
   -- Eval_tblrows: C |- tblrow* `@ `( val* ) : valres
+
+;;; Meta-function dispatch
 
 rulegroup Call_func/ok {
 
@@ -108,7 +121,6 @@ rulegroup Call_func/ok {
     ;; rule Call_func/table: $invoke_table_func(id, targ*, val*)
 
 }
-
 
 rule Call_func/fail:
   C |- id targ* arg* : FAIL

@@ -22,18 +22,18 @@ var C : ctx
 
 ;; Loading context from a script
 
-dec $add_typ_global(ctx, id, typdef) : ctx
-def $add_typ_global(C, id, typdef)
+dec $load_typdef(ctx, id, typdef) : ctx
+def $load_typdef(C, id, typdef)
   = C[ .GLOBAL.TYP = tdenv_update ]
   -- if tdenv_update = $add_map<id, typdef>(C.GLOBAL.TYP, id, typdef)
 
-dec $add_rel_global(ctx, id, reldef) : ctx
-def $add_rel_global(C, id, reldef)
+dec $load_reldef(ctx, id, reldef) : ctx
+def $load_reldef(C, id, reldef)
   = C[ .GLOBAL.REL = renv_update ]
   -- if renv_update = $add_map<id, reldef>(C.GLOBAL.REL, id, reldef)
 
-dec $add_func_global(ctx, id, funcdef) : ctx
-def $add_func_global(C, id, funcdef)
+dec $load_funcdef(ctx, id, funcdef) : ctx
+def $load_funcdef(C, id, funcdef)
   = C[ .GLOBAL.FUNC = fenv_update ]
   -- if fenv_update = $add_map<id, funcdef>(C.GLOBAL.FUNC, id, funcdef)
 
@@ -41,30 +41,30 @@ dec $load(script) : ctx
 
 def $load(eps) = $empty_ctx
 
-def $load(defn_h :: defn*) = $add_typ_global(ctx, id, EXT)
+def $load(defn_h :: defn*) = $load_typdef(ctx, id, EXT)
     -- if ctx = $load(defn*)
     -- if EXTTYP id = defn_h
-def $load(defn_h :: defn*) = $add_typ_global(ctx, id, DEF tparam* `-> deftyp)
+def $load(defn_h :: defn*) = $load_typdef(ctx, id, DEF tparam* `-> deftyp)
     -- if ctx = $load(defn*)
     -- if TYP id tparam* `= deftyp = defn_h
 
-def $load(defn_h :: defn*) = $add_rel_global(ctx, id, EXT)
+def $load(defn_h :: defn*) = $load_reldef(ctx, id, EXT)
     -- if ctx = $load(defn*)
     -- if EXTREL id `: exp* `-> exp_ret = defn_h
-def $load(defn_h :: defn*) = $add_rel_global(ctx, id, DEF rulgroup* elsgroup?)
+def $load(defn_h :: defn*) = $load_reldef(ctx, id, DEF rulgroup* elsgroup?)
     -- if ctx = $load(defn*)
     -- if REL id `: typ_param* `-> typ* `= rulgroup* elsgroup? = defn_h
 
-def $load(defn_h :: defn*) = $add_func_global(ctx, id, EXT)
+def $load(defn_h :: defn*) = $load_funcdef(ctx, id, EXT)
     -- if ctx = $load(defn*)
     -- if EXTFUNC id tparam* param* `: typ = defn_h
-def $load(defn_h :: defn*) = $add_func_global(ctx, id, BUILTIN)
+def $load(defn_h :: defn*) = $load_funcdef(ctx, id, BUILTIN)
     -- if ctx = $load(defn*)
     -- if BUILTINFUNC id tparam* param* `: typ = defn_h
-def $load(defn_h :: defn*) = $add_func_global(ctx, id, TABLE param* `-> tblrow*)
+def $load(defn_h :: defn*) = $load_funcdef(ctx, id, TABLE param* `-> tblrow*)
     -- if ctx = $load(defn*)
     -- if TABLEFUNC id param* `: typ `= tblrow* = defn_h
-def $load(defn_h :: defn*) = $add_func_global(ctx, id, DEF tparam* `-> clause* elsclause?)
+def $load(defn_h :: defn*) = $load_funcdef(ctx, id, DEF tparam* `-> clause* elsclause?)
     -- if ctx = $load(defn*)
     -- if FUNC id tparam* param* `: typ `= clause* elsclause? = defn_h
 
@@ -72,8 +72,10 @@ def $load(defn_h :: defn*) = $add_func_global(ctx, id, DEF tparam* `-> clause* e
 
 dec $add_val(ctx, varr, val) : ctx
 dec $add_vals(ctx, varr*, val*) : ctx
+
 dec $find_val(ctx, varr) : val?
 dec $find_vals(ctx, varr*) : val*?
+dec $finds_val(ctx*, varr) : val*?
 
 dec $add_typ(ctx, id, typdef) : ctx
 dec $find_typ(ctx, id) : typdef?
@@ -97,6 +99,11 @@ def $find_val(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
 def $find_vals(C, varr*) = val*
   -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
 def $find_vals(C, varr*) = eps
+  -- otherwise
+
+def $finds_val(C*, varr) = val*
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
+def $finds_val(C*, varr) = eps
   -- otherwise
 
 def $add_typ(C, id, typdef)

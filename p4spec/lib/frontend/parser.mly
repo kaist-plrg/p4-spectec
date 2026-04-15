@@ -175,6 +175,7 @@ relid : id { $1 @@@ $sloc }
 ruleid : ruleid_ { $1 }
 ruleid_ :
   | id { $1 }
+  | TEXT { "text" }
   | EXTERN { "extern" }
   | BUILTIN { "builtin" }
   | NATLIT { Bigint.to_string $1 }
