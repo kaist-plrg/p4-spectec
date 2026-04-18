@@ -18,7 +18,7 @@ FROM base AS source
 
 RUN git clone https://github.com/kaist-plrg/p4-spectec.git && \
     cd p4-spectec && \
-    git checkout v1.2.5 && \
+    git checkout concrete && \
     git submodule update --init --recursive
 
 WORKDIR /home/p4-spectec
