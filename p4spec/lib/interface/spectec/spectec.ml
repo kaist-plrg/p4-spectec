@@ -1,3 +1,4 @@
+open Lang
 module Value = Runtime.Value
 module Sim = Runtime.Sim.Simulator
 open Util.Error
@@ -18,7 +19,8 @@ let parse_string (_filename : string) (_str : string) : Sim.parse_result =
 
 (* Program unparsing *)
 
-let unparse_program (_value_program : Value.t) : string = failwith "TODO"
+let unparse_program (value_program : Value.t) : string =
+  value_program |> Unboot.unboot_spec |> Il.Print.string_of_spec
 
 (* Initialization *)
 

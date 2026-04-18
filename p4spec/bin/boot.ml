@@ -171,8 +171,8 @@ let parse_command =
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         Il.Print.string_of_value value_program |> print_endline
-         (* let str_program = Driver.unparse_program value_program in *)
+         let str_program = Driver.unparse_program value_program in
+         str_program |> print_endline
          (* if roundtrip then *)
          (*   let value_program_roundtrip = *)
          (*     match Driver.parse_string filename_p4 str_program with *)
