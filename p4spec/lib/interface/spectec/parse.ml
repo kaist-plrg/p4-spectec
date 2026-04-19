@@ -7,3 +7,9 @@ let parse_files (filenames_spec : string list) : Value.t =
     |> Pass.Elaborate.Elab.elab_spec
   in
   Boot.boot_spec spec_il
+
+let parse_string (_filename : string) (str : string) : Value.t =
+  let spec_il =
+    str |> Frontend.Parse.parse_string |> Pass.Elaborate.Elab.elab_spec
+  in
+  Boot.boot_spec spec_il

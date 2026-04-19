@@ -47,3 +47,10 @@ let parse_file file =
       ~finally:(fun () -> close_in ic)
   with Sys_error msg ->
     error (Source.region_of_file file) ("i/o error: " ^ msg)
+
+let parse_string str =
+  let lexbuf = Lexing.from_string str in
+  try Parser.spec Lexer.token lexbuf
+  with Parser.Error ->
+    error (Lexer.region lexbuf)
+      (Format.asprintf "syntax error in spec string: %s" str)

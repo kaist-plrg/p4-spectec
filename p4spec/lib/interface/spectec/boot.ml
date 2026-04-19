@@ -832,31 +832,31 @@ and boot_typ_def (at : region) (id : Il.id) (tparams : Il.tparam list)
 and boot_extern_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) : Value.t =
   let _, typs = nottyp.it in
-  let input_typs, output_typs = Hints.Input.split input typs in
+  let typs_input, typs_output = Hints.Input.split input typs in
   let value_id = boot_id id in
-  let value_input_typs = boot_typs input_typs in
-  let value_output_typ = boot_typ (List.hd output_typs) in
+  let value_typs_input = boot_typs typs_input in
+  let value_typs_output = boot_typs typs_output in
   Value.Make.(
-    "EXTREL id `: exp* `-> exp"
-    <| [ value_id; value_input_typs; value_output_typ ]
+    "EXTREL id `: typ* `-> typ*"
+    <| [ value_id; value_typs_input; value_typs_output ]
     <<| "defn" <<<| at)
 
 and boot_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) (rulgroups : Il.rulegroup list)
     (elsgroup : Il.elsegroup option) : Value.t =
   let _, typs = nottyp.it in
-  let input_typs, output_typs = Hints.Input.split input typs in
+  let typs_input, typs_output = Hints.Input.split input typs in
   let value_id = boot_id id in
-  let value_input_typs = boot_typs input_typs in
-  let value_output_typs = boot_typs output_typs in
+  let value_typs_input = boot_typs typs_input in
+  let value_typs_output = boot_typs typs_output in
   let value_rulgroups = boot_rulgroups rulgroups in
   let value_elsgroup = boot_elsgroup_opt elsgroup in
   Value.Make.(
     "REL id `: typ* `-> typ* `= rulgroup* elsgroup?"
     <| [
          value_id;
-         value_input_typs;
-         value_output_typs;
+         value_typs_input;
+         value_typs_output;
          value_rulgroups;
          value_elsgroup;
        ]

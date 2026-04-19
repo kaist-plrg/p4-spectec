@@ -158,10 +158,9 @@ let parse_command =
      let open Core.Command.Param in
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
-     and filename_spectec =
-       flag "-tec" (required string) ~doc:"SpecTec program"
-       (* and roundtrip = *)
-       (*   flag "-r" no_arg ~doc:"perform a round-trip parse/unparse" *)
+     and filename_spectec = flag "-tec" (required string) ~doc:"SpecTec program"
+     and roundtrip =
+       flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
      in
      fun () ->
        try
@@ -172,18 +171,17 @@ let parse_command =
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
          let str_program = Driver.unparse_program value_program in
-         str_program |> print_endline
-         (* if roundtrip then *)
-         (*   let value_program_roundtrip = *)
-         (*     match Driver.parse_string filename_p4 str_program with *)
-         (*     | Pass value_program_roundtrip -> value_program_roundtrip *)
-         (*     | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg)) *)
-         (*   in *)
-         (*   Il.Eq.eq_value ~dbg:true value_program value_program_roundtrip *)
-         (*   |> (fun b -> *)
-         (*        if b then "Roundtrip successful" else "Roundtrip failed") *)
-         (*   |> print_endline *)
-         (* else str_program |> print_endline *)
+         if roundtrip then
+           let value_program_roundtrip =
+             match Driver.parse_string filename_spectec str_program with
+             | Pass value_program_roundtrip -> value_program_roundtrip
+             | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
+           in
+           Il.Eq.eq_value ~dbg:true value_program value_program_roundtrip
+           |> (fun b ->
+                if b then "Roundtrip successful" else "Roundtrip failed")
+           |> print_endline
+         else str_program |> print_endline
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->

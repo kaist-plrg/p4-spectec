@@ -121,7 +121,7 @@ let hash_of (v : value') : int =
 module Mixops = struct
   let mixop_cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
 
-  let mixop_of (s : string) : Mixop.t =
+  let of_string (s : string) : Mixop.t =
     match Hashtbl.find_opt mixop_cache s with
     | Some m -> m
     | None ->
@@ -136,6 +136,15 @@ module Mixops = struct
         in
         Hashtbl.replace mixop_cache s_canon m;
         m
+
+  let of_atoms_matrix (atoms_matrix : Atom.t list list) : Mixop.t =
+    let s =
+      atoms_matrix
+      |> List.map (fun atoms ->
+             atoms |> List.map Atom.string_of_atom |> String.concat " ")
+      |> String.concat " x "
+    in
+    of_string s
 end
 
 (* Constructors *)
@@ -199,7 +208,7 @@ module Make = struct
 
   let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
     let typ = Typ.Make.var (s $ no_region) [] in
-    let valuecase = (Mixops.mixop_of s_mixop, values) in
+    let valuecase = (Mixops.of_string s_mixop, values) in
     let at =
       values |> List.map at
       |> List.filter (fun region -> region <> no_region)
@@ -284,7 +293,7 @@ module Get = struct
     match value.it with
     | CaseV (mixop, values) -> (
         let cases =
-          List.map (fun (s_mixop, f) -> (Mixops.mixop_of s_mixop, f)) cases
+          List.map (fun (s_mixop, f) -> (Mixops.of_string s_mixop, f)) cases
         in
         let f_opt =
           List.find_opt (fun (m, _) -> Mixop.eq m mixop) cases |> Option.map snd
@@ -297,7 +306,7 @@ module Get = struct
   let ( |>> ) (value : t) (s_mixop : string) : value list =
     match value.it with
     | CaseV (mixop, values) ->
-        let mixop_expect = Mixops.mixop_of s_mixop in
+        let mixop_expect = Mixops.of_string s_mixop in
         if Mixop.eq mixop mixop_expect then values
         else
           error no_region
@@ -309,7 +318,7 @@ module Get = struct
   let ( |>>? ) (value : t) (s_mixop : string) : value list option =
     match value.it with
     | CaseV (mixop, values) ->
-        let mixop_expect = Mixops.mixop_of s_mixop in
+        let mixop_expect = Mixops.of_string s_mixop in
         if Mixop.eq mixop mixop_expect then Some values else None
     | _ -> None
 end

@@ -12,24 +12,47 @@ let error = error_unparse
 (* Stubs for lossy unboot conversions *)
 
 (* typcase: typorigin (owning type def) and hint list are dropped by boot *)
+
 let stub_typorigin () : Il.typorigin = ("" $ no_region, []) $ no_region
 
 (* vari: the typ field of Il.var is dropped when encoding as vari *)
+
 let stub_vari_typ () : Il.typ = Il.BoolT $ no_region
 
 (* FuncT: tparam list, param list, and return typ are dropped by boot_func_typ *)
+
 let stub_func_typ_params () : Il.tparam list * Il.typ list * Il.typ =
   ([], [], Il.BoolT $ no_region)
 
-(* notexp/nottyp mixop: relation signature mixop is dropped by boot *)
-let stub_notexp_mixop (arity : int) : Il.mixop =
-  Mixop.Seq (List.init arity (fun _ -> Mixop.Arg))
+(* notexp/nottyp: relation signature mixop is dropped by boot *)
+
+let stub_nottyp (typs_input : Il.typ list) (typs_output : Il.typ list) :
+    Il.nottyp =
+  let s_mixop =
+    (List.init (List.length typs_input) (fun _ -> "x") |> String.concat " ")
+    ^ " -> "
+    ^ (List.init (List.length typs_output) (fun _ -> "y") |> String.concat " ")
+  in
+  let mixop = Value.Mixops.of_string s_mixop in
+  (mixop, typs_input @ typs_output) $ no_region
+
+let stub_notexp (exps_input : Il.exp list) (exps_output : Il.exp list) :
+    Il.notexp =
+  let s_mixop =
+    (List.init (List.length exps_input) (fun _ -> "x") |> String.concat " ")
+    ^ " -> "
+    ^ (List.init (List.length exps_output) (fun _ -> "y") |> String.concat " ")
+  in
+  let mixop = Value.Mixops.of_string s_mixop in
+  (mixop, exps_input @ exps_output)
 
 (* input hint: boot splits inputs/outputs but doesn't store the hint explicitly.
    Recovered as [0 .. n_inputs - 1]. *)
+
 let stub_input_hint (n_inputs : int) : Hints.Input.t = List.init n_inputs Fun.id
 
 (* exp/path note: exp.note / path.note carries the IL type; lost in boot *)
+
 let stub_exp_note : Il.typ' = Il.BoolT
 
 (* Identifiers *)
@@ -47,17 +70,12 @@ let unboot_atom (value_atom : Value.t) : Il.atom =
 (* Mixops *)
 
 let unboot_mixop (value_mixop : Value.t) : Il.mixop =
-  let mat =
+  let atoms_matrix =
     value_mixop |> Value.Get.list
-    |> List.map (fun row -> Value.Get.list row |> List.map unboot_atom)
+    |> List.map (fun value_atoms ->
+           value_atoms |> Value.Get.list |> List.map unboot_atom |> List.map it)
   in
-  let pieces =
-    List.concat_map
-      (fun atoms -> List.map (fun a -> Mixop.Atom a) atoms @ [ Mixop.Arg ])
-      mat
-  in
-  let pieces = List.rev (List.tl (List.rev pieces)) in
-  match pieces with [ x ] -> x | _ -> Mixop.Seq pieces
+  Value.Mixops.of_atoms_matrix atoms_matrix
 
 (* Iterators *)
 
@@ -72,10 +90,11 @@ let unboot_iters (value_iters : Value.t) : Il.iter list =
 (* Variables *)
 
 let rec unboot_vari (value_vari : Value.t) : Il.var =
-  let vs = Value.Get.(value_vari |>> "id iter*") in
-  let id = Value.Get.nth 0 vs |> unboot_id in
-  let iters = Value.Get.nth 1 vs |> unboot_iters in
-  (id, stub_vari_typ (), iters)
+  let values = Value.Get.(value_vari |>> "id typ iter*") in
+  let id = Value.Get.nth 0 values |> unboot_id in
+  let typ = Value.Get.nth 1 values |> unboot_typ in
+  let iters = Value.Get.nth 2 values |> unboot_iters in
+  (id, typ, iters)
 
 and unboot_varis (value_varis : Value.t) : Il.var list =
   value_varis |> Value.Get.list |> List.map unboot_vari
@@ -169,9 +188,9 @@ and unboot_plain_deftyp (at : region) (values : Value.t list) : Il.deftyp =
   | _ -> error "@unboot_plain_deftyp"
 
 and unboot_typfield (value_typfield : Value.t) : Il.typfield =
-  let vs = Value.Get.(value_typfield |>> "atom typ") in
-  let atom = Value.Get.nth 0 vs |> unboot_atom in
-  let typ = Value.Get.nth 1 vs |> unboot_typ in
+  let values = Value.Get.(value_typfield |>> "atom typ") in
+  let atom = Value.Get.nth 0 values |> unboot_atom in
+  let typ = Value.Get.nth 1 values |> unboot_typ in
   (atom, typ)
 
 and unboot_typfields (value_typfields : Value.t) : Il.typfield list =
@@ -185,9 +204,9 @@ and unboot_struct_deftyp (at : region) (values : Value.t list) : Il.deftyp =
   | _ -> error "@unboot_struct_deftyp"
 
 and unboot_typcase (value_typcase : Value.t) : Il.typcase =
-  let vs = Value.Get.(value_typcase |>> "mixop typ*") in
-  let mixop = Value.Get.nth 0 vs |> unboot_mixop in
-  let typs = Value.Get.nth 1 vs |> unboot_typs in
+  let values = Value.Get.(value_typcase |>> "mixop typ*") in
+  let mixop = Value.Get.nth 0 values |> unboot_mixop in
+  let typs = Value.Get.nth 1 values |> unboot_typs in
   let nottyp = (mixop, typs) $ value_typcase.at in
   (nottyp, stub_typorigin (), [])
 
@@ -253,9 +272,9 @@ and unboot_text_value (at : region) (values : Value.t list) : Il.value =
   | _ -> error "@unboot_text_value"
 
 and unboot_valuefield (value_valuefield : Value.t) : Il.valuefield =
-  let vs = Value.Get.(value_valuefield |>> "atom val") in
-  let atom = Value.Get.nth 0 vs |> unboot_atom in
-  let v = Value.Get.nth 1 vs |> unboot_value in
+  let values = Value.Get.(value_valuefield |>> "atom val") in
+  let atom = Value.Get.nth 0 values |> unboot_atom in
+  let v = Value.Get.nth 1 values |> unboot_value in
   (atom, v)
 
 and unboot_valuefields (value_valuefields : Value.t) : Il.valuefield list =
@@ -270,9 +289,9 @@ and unboot_struct_value (at : region) (values : Value.t list) : Il.value =
   | _ -> error "@unboot_struct_value"
 
 and unboot_valuecase (value_valuecase : Value.t) : Il.valuecase =
-  let vs = Value.Get.(value_valuecase |>> "mixop val*") in
-  let mixop = Value.Get.nth 0 vs |> unboot_mixop in
-  let values = Value.Get.nth 1 vs |> unboot_values in
+  let values = Value.Get.(value_valuecase |>> "mixop val*") in
+  let mixop = Value.Get.nth 0 values |> unboot_mixop in
+  let values = Value.Get.nth 1 values |> unboot_values in
   (mixop, values)
 
 and unboot_variant_value (at : region) (values : Value.t list) : Il.value =
@@ -461,9 +480,9 @@ and unboot_exp_opt (value_exp_opt : Value.t) : Il.exp option =
   value_exp_opt |> Value.Get.opt |> Option.map unboot_exp
 
 and unboot_expfield (value_expfield : Value.t) : Il.atom * Il.exp =
-  let vs = Value.Get.(value_expfield |>> "atom exp") in
-  let atom = Value.Get.nth 0 vs |> unboot_atom in
-  let exp = Value.Get.nth 1 vs |> unboot_exp in
+  let values = Value.Get.(value_expfield |>> "atom exp") in
+  let atom = Value.Get.nth 0 values |> unboot_atom in
+  let exp = Value.Get.nth 1 values |> unboot_exp in
   (atom, exp)
 
 and unboot_expfields (value_expfields : Value.t) : (Il.atom * Il.exp) list =
@@ -768,16 +787,16 @@ and unboot_pattern (value_pattern : Value.t) : Il.pattern =
 (* Iter expressions and premises *)
 
 and unboot_iterexp (value_iterexp : Value.t) : Il.iterexp =
-  let vs = Value.Get.(value_iterexp |>> "iter vari*") in
-  let iter = Value.Get.nth 0 vs |> unboot_iter in
-  let varis = Value.Get.nth 1 vs |> unboot_varis in
+  let values = Value.Get.(value_iterexp |>> "iter vari*") in
+  let iter = Value.Get.nth 0 values |> unboot_iter in
+  let varis = Value.Get.nth 1 values |> unboot_varis in
   (iter, varis)
 
 and unboot_iterprem (value_iterprem : Value.t) : Il.iterprem =
-  let vs = Value.Get.(value_iterprem |>> "iter vari* vari*") in
-  let iter = Value.Get.nth 0 vs |> unboot_iter in
-  let varis_in = Value.Get.nth 1 vs |> unboot_varis in
-  let varis_out = Value.Get.nth 2 vs |> unboot_varis in
+  let values = Value.Get.(value_iterprem |>> "iter vari* vari*") in
+  let iter = Value.Get.nth 0 values |> unboot_iter in
+  let varis_in = Value.Get.nth 1 values |> unboot_varis in
+  let varis_out = Value.Get.nth 2 values |> unboot_varis in
   (iter, varis_in, varis_out)
 
 (* Premises *)
@@ -800,13 +819,12 @@ and unboot_prems (value_prems : Value.t) : Il.prem list =
 
 and unboot_rel_prem (at : region) (values : Value.t list) : Il.prem =
   match values with
-  | [ value_id; value_input_exps; value_output_exp ] ->
+  | [ value_id; value_exps_input; value_exps_output ] ->
       let id = unboot_id value_id in
-      let input_exps = unboot_exps value_input_exps in
-      let output_exp = unboot_exp value_output_exp in
-      let exps = input_exps @ [ output_exp ] in
-      let input = stub_input_hint (List.length input_exps) in
-      let notexp : Il.notexp = (stub_notexp_mixop (List.length exps), exps) in
+      let exps_input = unboot_exps value_exps_input in
+      let exps_output = unboot_exps value_exps_output in
+      let notexp = stub_notexp exps_input exps_output in
+      let input = stub_input_hint (List.length exps_input) in
       Il.RulePr (id, notexp, input) $ at
   | _ -> error "@unboot_rel_prem"
 
@@ -822,7 +840,7 @@ and unboot_ifhold_prem (at : region) (values : Value.t list) : Il.prem =
   | [ value_id; value_exps ] ->
       let id = unboot_id value_id in
       let exps = unboot_exps value_exps in
-      let notexp : Il.notexp = (stub_notexp_mixop (List.length exps), exps) in
+      let notexp = stub_notexp exps [] in
       Il.IfHoldPr (id, notexp) $ at
   | _ -> error "@unboot_ifhold_prem"
 
@@ -831,7 +849,7 @@ and unboot_ifnothold_prem (at : region) (values : Value.t list) : Il.prem =
   | [ value_id; value_exps ] ->
       let id = unboot_id value_id in
       let exps = unboot_exps value_exps in
-      let notexp : Il.notexp = (stub_notexp_mixop (List.length exps), exps) in
+      let notexp = stub_notexp exps [] in
       Il.IfNotHoldPr (id, notexp) $ at
   | _ -> error "@unboot_ifnothold_prem"
 
@@ -854,16 +872,16 @@ and unboot_iter_prem (at : region) (values : Value.t list) : Il.prem =
 (* Rule matching and paths *)
 
 and unboot_rulmatch (value_rulmatch : Value.t) : Il.rulematch =
-  let vs = Value.Get.(value_rulmatch |>> "exp* `- prem*") in
-  let exps = Value.Get.nth 0 vs |> unboot_exps in
-  let prems = Value.Get.nth 1 vs |> unboot_prems in
-  (exps, [], prems)
+  let values = Value.Get.(value_rulmatch |>> "exp* `- prem*") in
+  let exps = Value.Get.nth 0 values |> unboot_exps in
+  let prems = Value.Get.nth 1 values |> unboot_prems in
+  (exps, exps, prems)
 
 and unboot_rulpath (value_rulpath : Value.t) : Il.rulepath =
-  let vs = Value.Get.(value_rulpath |>> "id `= exp* `- prem*") in
-  let id = Value.Get.nth 0 vs |> unboot_id in
-  let exps = Value.Get.nth 1 vs |> unboot_exps in
-  let prems = Value.Get.nth 2 vs |> unboot_prems in
+  let values = Value.Get.(value_rulpath |>> "id `= exp* `- prem*") in
+  let id = Value.Get.nth 0 values |> unboot_id in
+  let exps = Value.Get.nth 1 values |> unboot_exps in
+  let prems = Value.Get.nth 2 values |> unboot_prems in
   (id, prems, exps)
 
 and unboot_rulpaths (value_rulpaths : Value.t) : Il.rulepath list =
@@ -871,10 +889,10 @@ and unboot_rulpaths (value_rulpaths : Value.t) : Il.rulepath list =
 
 and unboot_rulgroup (value_rulgroup : Value.t) : Il.rulegroup =
   let at = value_rulgroup.at in
-  let vs = Value.Get.(value_rulgroup |>> "id `: rulmatch `= rulpath*") in
-  let id = Value.Get.nth 0 vs |> unboot_id in
-  let rulmatch = Value.Get.nth 1 vs |> unboot_rulmatch in
-  let rulpaths = Value.Get.nth 2 vs |> unboot_rulpaths in
+  let values = Value.Get.(value_rulgroup |>> "id `: rulmatch `= rulpath*") in
+  let id = Value.Get.nth 0 values |> unboot_id in
+  let rulmatch = Value.Get.nth 1 values |> unboot_rulmatch in
+  let rulpaths = Value.Get.nth 2 values |> unboot_rulpaths in
   (id, rulmatch, rulpaths) $ at
 
 and unboot_rulgroups (value_rulgroups : Value.t) : Il.rulegroup list =
@@ -882,10 +900,10 @@ and unboot_rulgroups (value_rulgroups : Value.t) : Il.rulegroup list =
 
 and unboot_elsgroup (value_elsgroup : Value.t) : Il.elsegroup =
   let at = value_elsgroup.at in
-  let vs = Value.Get.(value_elsgroup |>> "id `: rulmatch `= rulpath") in
-  let id = Value.Get.nth 0 vs |> unboot_id in
-  let rulmatch = Value.Get.nth 1 vs |> unboot_rulmatch in
-  let rulpath = Value.Get.nth 2 vs |> unboot_rulpath in
+  let values = Value.Get.(value_elsgroup |>> "id `: rulmatch `= rulpath") in
+  let id = Value.Get.nth 0 values |> unboot_id in
+  let rulmatch = Value.Get.nth 1 values |> unboot_rulmatch in
+  let rulpath = Value.Get.nth 2 values |> unboot_rulpath in
   (id, rulmatch, rulpath) $ at
 
 and unboot_elsgroup_opt (value_elsgroup_opt : Value.t) : Il.elsegroup option =
@@ -895,10 +913,10 @@ and unboot_elsgroup_opt (value_elsgroup_opt : Value.t) : Il.elsegroup option =
 
 and unboot_clause (value_clause : Value.t) : Il.clause =
   let at = value_clause.at in
-  let vs = Value.Get.(value_clause |>> "arg* `= exp `- prem*") in
-  let args = Value.Get.nth 0 vs |> unboot_args in
-  let exp = Value.Get.nth 1 vs |> unboot_exp in
-  let prems = Value.Get.nth 2 vs |> unboot_prems in
+  let values = Value.Get.(value_clause |>> "arg* `= exp `- prem*") in
+  let args = Value.Get.nth 0 values |> unboot_args in
+  let exp = Value.Get.nth 1 values |> unboot_exp in
+  let prems = Value.Get.nth 2 values |> unboot_prems in
   (args, exp, prems) $ at
 
 and unboot_clauses (value_clauses : Value.t) : Il.clause list =
@@ -915,10 +933,10 @@ and unboot_elsclause_opt (value_elsclause_opt : Value.t) : Il.elseclause option
 
 and unboot_tablerow (value_tablerow : Value.t) : Il.tablerow =
   let at = value_tablerow.at in
-  let vs = Value.Get.(value_tablerow |>> "arg* `= exp `- prem*") in
-  let args = Value.Get.nth 0 vs |> unboot_args in
-  let exp = Value.Get.nth 1 vs |> unboot_exp in
-  let prems = Value.Get.nth 2 vs |> unboot_prems in
+  let values = Value.Get.(value_tablerow |>> "arg* `= exp `- prem*") in
+  let args = Value.Get.nth 0 values |> unboot_args in
+  let exp = Value.Get.nth 1 values |> unboot_exp in
+  let prems = Value.Get.nth 2 values |> unboot_prems in
   ([], args, exp, prems) $ at
 
 and unboot_tablerows (value_tablerows : Value.t) : Il.tablerow list =
@@ -959,13 +977,12 @@ and unboot_typ_def (at : region) (values : Value.t list) : Il.def =
 
 and unboot_extern_rel_def (at : region) (values : Value.t list) : Il.def =
   match values with
-  | [ value_id; value_input_typs; value_output_typ ] ->
+  | [ value_id; value_typs_input; value_typs_output ] ->
       let id = unboot_id value_id in
-      let input_typs = unboot_typs value_input_typs in
-      let output_typ = unboot_typ value_output_typ in
-      let typs = input_typs @ [ output_typ ] in
-      let input = stub_input_hint (List.length input_typs) in
-      let nottyp = (stub_notexp_mixop (List.length typs), typs) $ no_region in
+      let typs_input = unboot_typs value_typs_input in
+      let typs_output = unboot_typs value_typs_output in
+      let nottyp = stub_nottyp typs_input typs_output in
+      let input = stub_input_hint (List.length typs_input) in
       Il.ExternRelD (id, nottyp, input, []) $ at
   | _ -> error "@unboot_extern_rel_def"
 
@@ -973,19 +990,18 @@ and unboot_rel_def (at : region) (values : Value.t list) : Il.def =
   match values with
   | [
    value_id;
-   value_input_typs;
-   value_output_typs;
+   value_typs_input;
+   value_typs_output;
    value_rulgroups;
    value_elsgroup;
   ] ->
       let id = unboot_id value_id in
-      let input_typs = unboot_typs value_input_typs in
-      let output_typs = unboot_typs value_output_typs in
+      let typs_input = unboot_typs value_typs_input in
+      let typs_output = unboot_typs value_typs_output in
+      let nottyp = stub_nottyp typs_input typs_output in
+      let input = stub_input_hint (List.length typs_input) in
       let rulgroups = unboot_rulgroups value_rulgroups in
       let elsgroup = unboot_elsgroup_opt value_elsgroup in
-      let typs = input_typs @ output_typs in
-      let input = stub_input_hint (List.length input_typs) in
-      let nottyp = (stub_notexp_mixop (List.length typs), typs) $ no_region in
       Il.RelD (id, nottyp, input, rulgroups, elsgroup, []) $ at
   | _ -> error "@unboot_rel_def"
 

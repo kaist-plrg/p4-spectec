@@ -14,8 +14,13 @@ let parse_program (_includes : string list) (filenames : string list) :
   | ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
   | ElabError (at, msg) -> Sim.Fail (`Syntax (at, msg))
 
-let parse_string (_filename : string) (_str : string) : Sim.parse_result =
-  failwith "TODO"
+let parse_string (filename : string) (str : string) : Sim.parse_result =
+  try
+    let value_spec = Parse.parse_string filename str in
+    Sim.Pass value_spec
+  with
+  | ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+  | ElabError (at, msg) -> Sim.Fail (`Syntax (at, msg))
 
 (* Program unparsing *)
 
