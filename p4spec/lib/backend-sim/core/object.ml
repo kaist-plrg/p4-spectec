@@ -196,7 +196,8 @@ module PacketIn = struct
       |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
     in
     let size_varsize =
-      value_variableFieldSizeInBits |> Value.Get.case |> snd |> fun values ->
+      value_variableFieldSizeInBits |> Value.Get.case |> Value.Mixfix.args
+      |> fun values ->
       List.nth values 1 |> Value.Get.num
       |> (function `Nat n -> n | `Int i -> i)
       |> Bigint.to_int_exn

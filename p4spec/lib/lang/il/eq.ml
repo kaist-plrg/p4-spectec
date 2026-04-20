@@ -77,9 +77,7 @@ and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
   List.length typs_a = List.length typs_b && List.for_all2 eq_typ typs_a typs_b
 
 and eq_nottyp (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
-  let mixop_a, typs_a = nottyp_a.it in
-  let mixop_b, typs_b = nottyp_b.it in
-  eq_mixop mixop_a mixop_b && eq_typs typs_a typs_b
+  Mixfix.eq ~eq_arg:eq_typ nottyp_a.it nottyp_b.it
 
 (* Values *)
 
@@ -95,8 +93,8 @@ and eq_value ?(dbg = false) (value_a : value) (value_b : value) : bool =
              (fun (atom_a, value_a) (atom_b, value_b) ->
                eq_atom atom_a atom_b && eq_value ~dbg value_a value_b)
              valuefields_a valuefields_b
-    | CaseV (mixop_a, values_a), CaseV (mixop_b, values_b) ->
-        eq_mixop mixop_a mixop_b && eq_values ~dbg values_a values_b
+    | CaseV valuecase_a, CaseV valuecase_b ->
+        Mixfix.eq ~eq_arg:(eq_value ~dbg) valuecase_a valuecase_b
     | TupleV values_a, TupleV values_b -> eq_values ~dbg values_a values_b
     | OptV (Some v_a), OptV (Some v_b) -> eq_value ~dbg v_a v_b
     | OptV None, OptV None -> true
@@ -143,8 +141,7 @@ and eq_exp' (exp_a' : exp') (exp_b' : exp') : bool =
   | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b) ->
       eq_exp exp_a exp_b && eq_pattern pattern_a pattern_b
   | TupleE exps_a, TupleE exps_b -> eq_exps exps_a exps_b
-  | CaseE (mixop_a, exps_a), CaseE (mixop_b, exps_b) ->
-      eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | CaseE notexp_a, CaseE notexp_b -> Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
   | StrE expfields_a, StrE expfields_b ->
       List.length expfields_a = List.length expfields_b
       && List.for_all2
@@ -244,16 +241,15 @@ and eq_targs (targs_a : targ list) (targs_b : targ list) : bool =
 
 and eq_prem (prem_a : prem) (prem_b : prem) : bool =
   match (prem_a.it, prem_b.it) with
-  | ( RulePr (id_a, (mixop_a, exps_a), inputs_a),
-      RulePr (id_b, (mixop_b, exps_b), inputs_b) ) ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | RulePr (id_a, notexp_a, inputs_a), RulePr (id_b, notexp_b, inputs_b) ->
+      eq_id id_a id_b
+      && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
       && Hints.Input.eq inputs_a inputs_b
   | IfPr exp_a, IfPr exp_b -> eq_exp exp_a exp_b
-  | IfHoldPr (id_a, (mixop_a, exps_a)), IfHoldPr (id_b, (mixop_b, exps_b)) ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
-  | IfNotHoldPr (id_a, (mixop_a, exps_a)), IfNotHoldPr (id_b, (mixop_b, exps_b))
-    ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | IfHoldPr (id_a, notexp_a), IfHoldPr (id_b, notexp_b) ->
+      eq_id id_a id_b && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
+  | IfNotHoldPr (id_a, notexp_a), IfNotHoldPr (id_b, notexp_b) ->
+      eq_id id_a id_b && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
   | LetPr (exp_l_a, exp_r_a), LetPr (exp_l_b, exp_r_b) ->
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
   | IterPr (prem_a, iterprem_a), IterPr (prem_b, iterprem_b) ->

@@ -8,6 +8,8 @@ module Type = Runtime.Type
 open Runtime.Testgen_neg
 open Envs
 module Sim = Runtime.Sim.Simulator
+module Mixfix = Domain.Mixfix
+module Mixop = Domain.Mixop
 
 (* Hyperparameters for the fuzzing loop *)
 
@@ -75,7 +77,7 @@ let load_mixops (mixopenv : MixopEnv.t) (def : def) : MixopEnv.t =
           let nottyps = List.map (fun (nottyp, _, _) -> nottyp) typcases in
           let insert_into_groups (typed_groups : (typ list * MixIdSet.t) list)
               (nottyp : nottyp) : (typ list * MixIdSet.t) list =
-            let mixop, typs = nottyp.it in
+            let mixop, typs = Mixfix.split nottyp.it in
             let rec insert_into_groups' typed_group = function
               | [] -> (typs, MixIdSet.singleton mixop) :: typed_group
               | (typs_found, group) :: rest ->

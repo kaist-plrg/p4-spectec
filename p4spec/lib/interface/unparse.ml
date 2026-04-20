@@ -1,4 +1,6 @@
 open Domain
+module Mixfix = Domain.Mixfix
+module Mixop = Domain.Mixop
 open Lang
 open Hint
 module Value = Runtime.Value
@@ -63,7 +65,7 @@ and pp_text_v fmt (value : Value.t) : unit =
 
 and pp_case_v (note : Il.vnote) (henv : HEnv.t) fmt (valuecase : Il.valuecase) :
     unit =
-  let mixop, values = valuecase in
+  let mixop, values = Mixfix.split valuecase in
   let cid_opt =
     match note.typ with VarT (tid, _) -> Some (tid, mixop) | _ -> None
   in
@@ -86,12 +88,11 @@ and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
   F.fprintf fmt "%s" str
 
 and pp_default_case_v (henv : HEnv.t) fmt (valuecase : Il.valuecase) : unit =
-  let mixop, values = valuecase in
-  let svalues = List.map (F.asprintf "%a" (pp_value henv)) values in
   F.fprintf fmt "%s"
-    (Mixop.assemble
+    (Mixfix.render
        ~string_of_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
-       mixop svalues)
+       ~string_of_arg:(F.asprintf "%a" (pp_value henv))
+       valuecase)
 
 (* OptV *)
 

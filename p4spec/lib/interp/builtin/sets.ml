@@ -1,4 +1,4 @@
-open Domain
+module Mixfix = Domain.Mixfix
 open Lang
 open Il
 module Typ = Runtime.Type.Typ
@@ -18,8 +18,10 @@ let mixop_set = Value.Make.mixop_of "`{ k }"
 
 let set_of_value (value : value) : set =
   match value.it with
-  | CaseV (mixop, [ value_elements ]) when Mixop.eq mixop mixop_set ->
-      value_elements |> Value.Get.list |> VSet.of_list
+  | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_set -> (
+      match Mixfix.args valuecase with
+      | [ value_elements ] -> value_elements |> Value.Get.list |> VSet.of_list
+      | _ -> assert false)
   | _ ->
       error no_region
         (Format.asprintf "expected a set, but got %s" (Value.to_string value))
@@ -31,7 +33,7 @@ let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
   add value_elements;
   let value =
     let typ = Typ.Make.var ("set" $ no_region) [ typ_key ] in
-    let valuecase = (mixop_set, [ value_elements ]) in
+    let valuecase = Mixfix.fill mixop_set [ value_elements ] in
     Value.Make.case typ valuecase
   in
   add value;

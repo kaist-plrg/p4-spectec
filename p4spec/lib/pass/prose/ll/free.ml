@@ -1,6 +1,7 @@
 open Domain.Lib
 open Lang
 open Sl.Free
+module Mixfix = Domain.Mixfix
 open Ast
 open Util.Source
 
@@ -22,12 +23,13 @@ let free_args (args : arg list) : t = free_args args
 let rec free_instr (instr : instr) : t =
   match instr.it with
   | IfI (exp, _, block_then, _) -> free_exp exp + free_block block_then
-  | HoldI (_, (_, exps), _, holdcase) -> free_exps exps + free_holdcase holdcase
+  | HoldI (_, notexp, _, holdcase) ->
+      free_exps (Mixfix.args notexp) + free_holdcase holdcase
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
   | OtherwiseI block -> free_block block
   | GroupI (_, _, exps, block) -> free_exps exps + free_block block
   | LetI (exp_l, exp_r, _) -> free_exp exp_l + free_exp exp_r
-  | RuleI (_, (_, exps), _, _) -> free_exps exps
+  | RuleI (_, notexp, _, _) -> free_exps (Mixfix.args notexp)
   | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
 

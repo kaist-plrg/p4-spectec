@@ -1,4 +1,5 @@
 open Domain
+module Mixfix = Domain.Mixfix
 open Xl
 open Ast
 open Util.Print
@@ -32,7 +33,7 @@ let string_of_atoms atoms =
 
 (* Mixfix operators *)
 
-let string_of_mixop mixop = Mixop.string_of_mixop mixop
+let string_of_mixop mixop = Mixfix.to_string mixop
 
 (* Iterators *)
 
@@ -60,9 +61,7 @@ let rec string_of_typ typ =
 and string_of_typs sep typs = String.concat sep (List.map string_of_typ typs)
 
 and string_of_nottyp nottyp =
-  let mixop, typs = nottyp.it in
-  let styps = List.map string_of_typ typs in
-  Mixop.assemble ~string_of_atom mixop styps
+  Mixfix.render ~string_of_atom ~string_of_arg:string_of_typ nottyp.it
 
 and string_of_deftyp deftyp =
   match deftyp.it with
@@ -110,8 +109,8 @@ and string_of_value ?(short = false) ?(level = 0) value =
                   (string_of_value ~short ~level:(level + 1) value))
               valuefields))
         (indent level)
-  | CaseV (mixop, _) when short -> string_of_mixop mixop
-  | CaseV (mixop, values) -> string_of_notval ~level (mixop, values)
+  | CaseV valuecase when short -> string_of_mixop (Mixfix.to_mixop valuecase)
+  | CaseV valuecase -> string_of_notval ~level valuecase
   | TupleV values ->
       Format.asprintf "(%s)"
         (String.concat ", "
@@ -135,9 +134,9 @@ and string_of_value ?(short = false) ?(level = 0) value =
   | ExternV _ -> "extern"
 
 and string_of_notval ?(level = 0) notval =
-  let mixop, values = notval in
-  let svalues = List.map (string_of_value ~level:(level + 1)) values in
-  Mixop.assemble ~string_of_atom mixop svalues
+  Mixfix.render ~string_of_atom
+    ~string_of_arg:(string_of_value ~level:(level + 1))
+    notval
 
 (* Operators *)
 
@@ -203,9 +202,7 @@ and string_of_exp exp =
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
-  let mixop, exps = notexp in
-  let sexps = List.map string_of_exp exps in
-  Mixop.assemble ~string_of_atom mixop sexps
+  Mixfix.render ~string_of_atom ~string_of_arg:string_of_exp notexp
 
 and string_of_iterexp iterexp =
   let iter, vars = iterexp in
@@ -337,7 +334,7 @@ and string_of_iterprems iterprems =
 (* Rules *)
 
 and string_of_ruleinput nottyp inputs exps_input =
-  let mixop, typs = nottyp.it in
+  let mixop, typs = Mixfix.split nottyp.it in
   let exps_input = List.combine inputs exps_input in
   let exps =
     List.init (List.length typs) (fun idx ->
@@ -345,11 +342,11 @@ and string_of_ruleinput nottyp inputs exps_input =
         | Some exp_input -> exp_input
         | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
   in
-  let notexp = (mixop, exps) in
+  let notexp = Mixfix.fill mixop exps in
   string_of_notexp notexp
 
 and string_of_ruleoutput nottyp inputs exps_output =
-  let mixop, typs = nottyp.it in
+  let mixop, typs = Mixfix.split nottyp.it in
   let outputs =
     List.init (List.length typs) (fun idx ->
         if List.mem idx inputs then None else Some idx)
@@ -365,7 +362,7 @@ and string_of_ruleoutput nottyp inputs exps_output =
             | Some exp_output -> exp_output
             | None -> VarE ("%" $ no_region) $$ (no_region, TextT))
       in
-      let notexp = (mixop, exps) in
+      let notexp = Mixfix.fill mixop exps in
       "-- output: " ^ string_of_notexp notexp
 
 and string_of_rulematch nottyp inputs rulematch =

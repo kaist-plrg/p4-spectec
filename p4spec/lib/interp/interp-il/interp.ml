@@ -1,4 +1,5 @@
 open Domain
+module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
@@ -28,7 +29,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
       unit =
     let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-    let _, typs = nottyp |> it in
+    let typs = Mixfix.args nottyp.it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
@@ -40,7 +41,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
-    let _, typs = nottyp |> it in
+    let typs = Mixfix.args nottyp.it in
     let typs =
       typs
       |> List.mapi (fun idx typ ->
@@ -100,7 +101,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     match (exp.it, value.it) with
     | VarE id, _ -> Ctx.add_value ctx (id, []) value
     | TupleE exps, TupleV values -> assign_exps ctx exps values
-    | CaseE (_, exps), CaseV (_, values) -> assign_exps ctx exps values
+    | CaseE notexp, CaseV valuecase ->
+        assign_exps ctx (Mixfix.args notexp) (Mixfix.args valuecase)
     | StrE expfields, StructV valuefields ->
         let exps = List.map snd expfields in
         let values = List.map snd valuefields in
@@ -459,7 +461,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let* value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
-      | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
+      | CaseP mixop_p, CaseV valuecase -> Mixfix.eq_mixop mixop_p valuecase
       | ListP listpattern, ListV values -> (
           let len_v = List.length values in
           match listpattern with
@@ -485,9 +487,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_case_exp (typ_note : typ) (ctx : Ctx.t) (notexp : notexp) :
       value backtrack =
-    let mixop, exps = notexp in
+    let mixop, exps = Mixfix.split notexp in
     let* values = eval_exps ctx exps in
-    let value_res = Value.Make.case typ_note (mixop, values) in
+    let value_res = Value.Make.case typ_note (Mixfix.fill mixop values) in
     Ok value_res
 
   (* Struct expression evaluation *)
@@ -956,7 +958,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) : Ctx.t backtrack =
-    let _, exps = notexp in
+    let exps = Mixfix.args notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let* values_input = eval_exps ctx exps_input in
     let* values_output = invoke_rel ctx id values_input in
@@ -978,7 +980,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
-    let _, exps_input = notexp in
+    let exps_input = Mixfix.args notexp in
     let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
@@ -991,7 +993,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
 
   and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
-    let _, exps_input = notexp in
+    let exps_input = Mixfix.args notexp in
     let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ ->

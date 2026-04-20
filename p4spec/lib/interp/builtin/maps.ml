@@ -1,4 +1,4 @@
-open Domain
+module Mixfix = Domain.Mixfix
 open Lang
 open Il
 module Typ = Runtime.Type.Typ
@@ -28,16 +28,20 @@ let mixop_map = Value.Make.mixop_of "`{ k }"
 let map_of_value (value : value) : map =
   let tuple_of_value (value : value) : value * value =
     match value.it with
-    | CaseV (mixop, [ value_key; value_value ]) when Mixop.eq mixop mixop_pair
-      ->
-        (value_key, value_value)
+    | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_pair -> (
+        match Mixfix.args valuecase with
+        | [ value_key; value_value ] -> (value_key, value_value)
+        | _ -> assert false)
     | _ ->
         error no_region
           (Format.asprintf "expected a pair, but got %s" (Value.to_string value))
   in
   match value.it with
-  | CaseV (mixop, [ value_pairs ]) when Mixop.eq mixop mixop_map ->
-      value_pairs |> Value.Get.list |> List.map tuple_of_value
+  | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_map -> (
+      match Mixfix.args valuecase with
+      | [ value_pairs ] ->
+          value_pairs |> Value.Get.list |> List.map tuple_of_value
+      | _ -> assert false)
   | _ ->
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
@@ -47,7 +51,7 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
   let value_of_tuple ((value_key, value_value) : value * value) : value =
     let value =
       let typ = Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] in
-      let valuecase = (mixop_pair, [ value_key; value_value ]) in
+      let valuecase = Mixfix.fill mixop_pair [ value_key; value_value ] in
       Value.Make.case typ valuecase
     in
     add value;
@@ -63,7 +67,7 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
   add value_pairs;
   let value =
     let typ = Typ.Make.var ("map" $ no_region) [ typ_key; typ_value ] in
-    let valuecase = (mixop_map, [ value_pairs ]) in
+    let valuecase = Mixfix.fill mixop_map [ value_pairs ] in
     Value.Make.case typ valuecase
   in
   add value;

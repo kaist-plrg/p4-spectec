@@ -1,6 +1,7 @@
 module Fresh_ = Fresh
 module Match = Match
 open Domain
+module Mixfix = Domain.Mixfix
 open Lang
 open Xl
 open Il
@@ -41,9 +42,8 @@ let rec compare (value_l : t) (value_r : t) =
     | NumV n_l, NumV n_r -> Num.compare n_l n_r
     | TextV s_l, TextV s_r -> String.compare s_l s_r
     | StructV fields_l, StructV fields_r -> compare_fields fields_l fields_r
-    | CaseV (mixop_l, values_l), CaseV (mixop_r, values_r) ->
-        let cmp_mixop = Mixop.compare mixop_l mixop_r in
-        if cmp_mixop <> 0 then cmp_mixop else compares values_l values_r
+    | CaseV valuecase_l, CaseV valuecase_r ->
+        Mixfix.compare ~compare_arg:compare valuecase_l valuecase_r
     | TupleV values_l, TupleV values_r -> compares values_l values_r
     | OptV value_opt_l, OptV value_opt_r -> (
         match (value_opt_l, value_opt_r) with
@@ -96,10 +96,11 @@ let hash_of (v : value') : int =
             h := (!h * 31) + Hashtbl.hash atom.it;
             h := (!h * 31) + value_field.note.vhash)
           valuefields
-    | CaseV (mixop, values) ->
-        mixop |> Mixop.atoms
-        |> List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it);
-        List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
+    | CaseV valuecase ->
+        Mixfix.iter_atoms
+          (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it)
+          valuecase;
+        Mixfix.iter (fun value -> h := (!h * 31) + value.note.vhash) valuecase
     | TupleV values ->
         h := (!h * 31) + 1001;
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
@@ -189,7 +190,7 @@ module Make = struct
 
   let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
     let typ = Typ.Make.var (s $ no_region) [] in
-    let valuecase = (mixop_of s_mixop, values) in
+    let valuecase = Mixfix.fill (mixop_of s_mixop) values in
     let at =
       values |> List.map at
       |> List.filter (fun region -> region <> no_region)
