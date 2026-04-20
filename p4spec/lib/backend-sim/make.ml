@@ -347,7 +347,7 @@ module Make
       Pass
     with
     | Util.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
         Fail (`Runtime (at, msg))
     | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
 end

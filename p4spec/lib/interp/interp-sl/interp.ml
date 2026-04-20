@@ -1746,7 +1746,7 @@ struct
       (id : id) (values_input : value list) : value list =
     let values_output =
       match Extern.eval_extern_rel id.it values_input with
-      | Pass vs -> vs
+      | Pass values -> values
       | Fail (at, msg) -> back_unmatch at msg
     in
     check_rel_outputs ctx id nottyp inputs values_output;
@@ -1869,7 +1869,7 @@ struct
       =
     let value_output =
       match Extern.eval_extern_func id.it [] values_input with
-      | Pass v -> v
+      | Pass value -> value
       | Fail (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
@@ -1988,7 +1988,7 @@ struct
       | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
     | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
         Run.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
@@ -1996,7 +1996,8 @@ struct
     try
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2005,7 +2006,8 @@ struct
     try
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   (* Initialization *)

@@ -15,7 +15,7 @@ let boot_id (id : Il.id) : Value.t =
 
 let boot_atom (atom : Il.atom) : Value.t =
   let value_atom =
-    atom.it |> Atom.string_of_atom |> Value.Make.text ~at:atom.at
+    atom.it |> Atom.raw_string_of_atom |> Value.Make.text ~at:atom.at
   in
   Value.Make.(value_atom #@@ "atom")
 
@@ -459,11 +459,16 @@ and boot_tuple_exp (at : region) (exps : Il.exp list) : Value.t =
   let value_exps = boot_exps exps in
   Value.Make.("TUP exp*" <| [ value_exps ] <<| "exp" <<<| at)
 
-and boot_case_exp (at : region) (mixop : Il.mixop) (exps : Il.exp list) :
-    Value.t =
+and boot_expcase (mixop : Il.mixop) (exps : Il.exp list) : Value.t =
   let value_mixop = boot_mixop mixop in
   let value_exps = boot_exps exps in
-  Value.Make.("INJ mixop exp*" <| [ value_mixop; value_exps ] <<| "exp" <<<| at)
+  Value.Make.(
+    "mixop exp*" <| [ value_mixop; value_exps ] <<| "expcase" <<<| no_region)
+
+and boot_case_exp (at : region) (mixop : Il.mixop) (exps : Il.exp list) :
+    Value.t =
+  let value_expcase = boot_expcase mixop exps in
+  Value.Make.("INJ expcase" <| [ value_expcase ] <<| "exp" <<<| at)
 
 and boot_str_exp (at : region) (expfields : (Il.atom * Il.exp) list) : Value.t =
   let value_expfields = boot_expfields expfields in

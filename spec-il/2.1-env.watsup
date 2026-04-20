@@ -24,15 +24,18 @@ syntax renv = map<id, reldef>
 
 ;; Function environment
 
-syntax definedFuncDef =
-  | DEF tparam* `-> clause* elsclause?
+syntax builtinFuncDef =
+  | BUILTIN tparam* param*
 
 syntax tableFuncDef =
   | TABLE param* `-> tblrow*
 
+syntax definedFuncDef =
+  | DEF tparam* `-> clause* elsclause?
+
 syntax funcdef =
   | EXT
-  | BUILTIN
+  | builtinFuncDef
   | tableFuncDef
   | definedFuncDef
 

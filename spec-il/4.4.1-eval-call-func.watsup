@@ -34,20 +34,11 @@ rule Eval_clauses/fail:
   C `/ C_caller |- _ `@ `( _ ) : FAIL
   -- otherwise
 
-;;; Defined meta-function invocation
+;;; Builtin meta-function invocation
 
-relation Call_defined_func:
-  ctx |- definedFuncDef `@ `< typ* > `( val* ) : res<val>
-  hint(input %0 %1 %2 %3)
-
-rule Call_defined_func:
-  C |- definedFuncDef `@ `< typ* > `( val* ) : valres
-  -- if DEF tparam* `-> clause* elsclause? = definedFuncDef
-  -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS typ)))* }
-  -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
-  -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
-  -- if clause_all* = clause* ++ clause_else*
-  -- Eval_clauses: C_callee `/ C |- clause_all* `@ `( val* ) : valres
+extern relation Call_builtin_func:
+  ctx |- id builtinFuncDef `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2 %3 %4)
 
 ;;; Table meta-function invocation
 
@@ -98,17 +89,34 @@ rule Call_table_func:
   -- if TABLE _ `-> tblrow* = tableFuncDef
   -- Eval_tblrows: C |- tblrow* `@ `( val* ) : valres
 
+;;; Defined meta-function invocation
+
+relation Call_defined_func:
+  ctx |- definedFuncDef `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
+
+rule Call_defined_func:
+  C |- definedFuncDef `@ `< typ* > `( val* ) : valres
+  -- if DEF tparam* `-> clause* elsclause? = definedFuncDef
+  -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS typ)))* }
+  -- if C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+  -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
+  -- if clause_all* = clause* ++ clause_else*
+  -- Eval_clauses: C_callee `/ C |- clause_all* `@ `( val* ) : valres
+
 ;;; Meta-function dispatch
 
 rulegroup Call_func/ok {
 
-    rule Call_func/defined:
+    ;; rule Call_func/extern:
+
+    rule Call_func/builtin:
       C |- id targ* arg* : valres
       -- Eval_targs: C |- targ* : typ_input*
       -- Eval_args: C |- arg* : OK val_input*
-      -- if definedFuncDef = $find_func(C, id)
-      -- Call_defined_func:
-          C |- definedFuncDef `@ `< typ_input* > `( val_input* ) : valres
+      -- if builtinFuncDef = $find_func(C, id)
+      -- Call_builtin_func:
+          C |- id builtinFuncDef `@ `< typ_input* > `( val_input* ) : valres
 
     rule Call_func/table:
       C |- id eps arg* : valres
@@ -117,8 +125,13 @@ rulegroup Call_func/ok {
       -- Call_table_func:
           C |- tableFuncDef `@ `( val_input* ) : valres
 
-    ;; rule Call_func/extern: $invoke_extern_func(id, targ*, val*)
-    ;; rule Call_func/table: $invoke_table_func(id, targ*, val*)
+    rule Call_func/defined:
+      C |- id targ* arg* : valres
+      -- Eval_targs: C |- targ* : typ_input*
+      -- Eval_args: C |- arg* : OK val_input*
+      -- if definedFuncDef = $find_func(C, id)
+      -- Call_defined_func:
+          C |- definedFuncDef `@ `< typ_input* > `( val_input* ) : valres
 
 }
 

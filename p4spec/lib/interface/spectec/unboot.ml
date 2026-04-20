@@ -456,7 +456,7 @@ and unboot_exp (value_exp : Value.t) : Il.exp =
       ("SUB exp typ", unboot_sub_exp at);
       ("MATCH exp pattern", unboot_match_exp at);
       ("TUP exp*", unboot_tuple_exp at);
-      ("INJ mixop exp*", unboot_case_exp at);
+      ("INJ expcase", unboot_case_exp at);
       ("STR expfield*", unboot_str_exp at);
       ("OPT exp?", unboot_opt_exp at);
       ("LIST exp*", unboot_list_exp at);
@@ -603,11 +603,16 @@ and unboot_tuple_exp (at : region) (values : Value.t list) : Il.exp =
       Il.TupleE exps $$ (at, stub_exp_note)
   | _ -> error "@unboot_tuple_exp"
 
+and unboot_expcase (value_expcase : Value.t) : Il.mixop * Il.exp list =
+  let values = Value.Get.(value_expcase |>> "mixop exp*") in
+  let mixop = Value.Get.nth 0 values |> unboot_mixop in
+  let exps = Value.Get.nth 1 values |> unboot_exps in
+  (mixop, exps)
+
 and unboot_case_exp (at : region) (values : Value.t list) : Il.exp =
   match values with
-  | [ value_mixop; value_exps ] ->
-      let mixop = unboot_mixop value_mixop in
-      let exps = unboot_exps value_exps in
+  | [ value_expcase ] ->
+      let mixop, exps = unboot_expcase value_expcase in
       Il.CaseE (mixop, exps) $$ (at, stub_exp_note)
   | _ -> error "@unboot_case_exp"
 

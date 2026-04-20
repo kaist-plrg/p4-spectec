@@ -1188,7 +1188,7 @@ struct
       value list backtrack =
     let* values_output =
       match Extern.eval_extern_rel id.it values_input with
-      | Pass vs -> Ok vs
+      | Pass values -> Ok values
       | Fail (at, msg) -> back_err at msg
     in
     check_rel_outputs ctx id nottyp inputs values_output;
@@ -1356,7 +1356,7 @@ struct
       value backtrack =
     let* value_output =
       match Extern.eval_extern_func id.it [] values_input with
-      | Pass v -> Ok v
+      | Pass value -> Ok value
       | Fail (at, msg) -> back_err at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;

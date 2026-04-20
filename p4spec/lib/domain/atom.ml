@@ -157,6 +157,96 @@ let string_of_atom = function
   | SMinus -> "|-|"
   | SMinusEq -> "|-|="
 
+let raw_string_of_atom = function
+  | Atom id -> id
+  | SilentAtom id -> "`" ^ id
+  | Sub -> "<:"
+  | Sup -> ":>"
+  | Turnstile -> "|-"
+  | Tilesturn -> "-|"
+  | Tick -> "``"
+  | DoubleQuote -> "\""
+  | Underscore -> "_"
+  (* lossy: both ARROW and TICK_ARROW map to Arrow *)
+  | Arrow -> "->"
+  | ArrowSub -> "->_"
+  | DoubleArrow -> "`=>"
+  | DoubleArrowSub -> "=>_"
+  | DoubleArrowLong -> "==>"
+  | SqArrow -> "~>"
+  | SqArrowStar -> "~>*"
+  (* lossy: both DOT and TICK_DOT map to Dot *)
+  | Dot -> "."
+  (* lossy: both DOT2 and TICK_DOT2 map to Dot2 *)
+  | Dot2 -> ".."
+  (* lossy: both DOT3 and TICK_DOT3 map to Dot3 *)
+  | Dot3 -> "..."
+  | Comma -> "`,"
+  (* lossy: both SEMICOLON and TICK_SEMICOLON map to Semicolon *)
+  | Semicolon -> "`;"
+  (* lossy: both COLON and TICK_COLON map to Colon *)
+  | Colon -> "`:"
+  (* lossy: both COLON_EQ and TICK_COLON_EQ map to ColonEq *)
+  | ColonEq -> "`:="
+  | Hash -> "`#"
+  | Dollar -> "`$"
+  | At -> "`@"
+  | Quest -> "`?"
+  | Bang -> "`!"
+  | BangEq -> "`!="
+  | Tilde -> "`~"
+  (* lossy: both TILDE2 and TICK_TILDE2 map to Tilde *)
+  | Tilde2 -> "`~~"
+  (* lossy: both TICK2_LANGLE and TICK_LANGLE map to LAngle *)
+  | LAngle -> "`<"
+  | LAngle2 -> "`<<"
+  | LAngleEq -> "`<="
+  | LAngle2Eq -> "`<<="
+  (* lossy: both TICK2_RANGLE and RANGLE map to RAngle *)
+  | RAngle -> ">"
+  | RAngle2 -> "`>>"
+  | RAngleEq -> "`>="
+  | RAngle2Eq -> "`>>="
+  | LParen -> "`("
+  | RParen -> ")"
+  (* lossy: both TICK2_LBRACK and TICK_LBRACK map to LBrack *)
+  | LBrack -> "`["
+  (* lossy: both TICK2_RBRACK and RBRACK map to RBrack *)
+  | RBrack -> "]"
+  (* lossy: both TICK2_LBRACE and TICK_LBRACE map to LBrace *)
+  | LBrace -> "`{"
+  | LBraceHashRBrace -> "`{#}"
+  (* lossy: both TICK2_RBRACE and RBRACE map to RBrace *)
+  | RBrace -> "}"
+  | Plus -> "`+"
+  | Plus2 -> "`++"
+  | PlusEq -> "`+="
+  | PlusColon -> "`+:"
+  | Minus -> "`-"
+  | MinusEq -> "`-="
+  | Star -> "`*"
+  | StarEq -> "`*="
+  | Slash -> "`/"
+  | SlashEq -> "`/="
+  | Backslash -> "\\"
+  | Percent -> "`%"
+  | PercentEq -> "`%="
+  | Eq -> "`="
+  | Eq2 -> "`=="
+  | Amp -> "`&"
+  | Amp2 -> "`&&"
+  | Amp3 -> "`&&&"
+  | AmpEq -> "`&="
+  | Up -> "`^"
+  | UpEq -> "`^="
+  | Bar -> "`|"
+  | Bar2 -> "`||"
+  | BarEq -> "`|="
+  | SPlus -> "`|+|"
+  | SPlusEq -> "`|+|="
+  | SMinus -> "`|-|"
+  | SMinusEq -> "`|-|="
+
 let atom_of_string = function
   | "<:" -> Sub
   | ":>" -> Sup
