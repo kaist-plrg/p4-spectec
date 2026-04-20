@@ -1,7 +1,7 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 open Spec.Unpack
 open Spec.Pack
 open State

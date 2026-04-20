@@ -5,8 +5,7 @@ module IO = Runtime.Sim.Io
 
 type call_rel = string -> Value.t list -> Value.t list
 
-let call : call_rel ref = ref (fun _ _ -> assert false)
-let register f = call := f
+let call : call_rel ref = Runner.Spec.Rel.call
 
 (* Lvalue_read *)
 

@@ -2,7 +2,7 @@ open Domain.Lib
 open Lang
 open Sl
 module DCov_single = Coverage.Dangling.Single
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module F = Format
 

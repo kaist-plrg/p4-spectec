@@ -1,6 +1,6 @@
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 
 (* Interfaces *)
 
-module P4 : Sim.INTERFACE = P4
-module SpecTec : Sim.INTERFACE = Spectec
+module P4 : Run.INTERFACE = P4
+module SpecTec : Run.INTERFACE = Spectec

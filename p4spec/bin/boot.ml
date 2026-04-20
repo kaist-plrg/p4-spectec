@@ -1,5 +1,6 @@
 open Lang
 open Pass
+open Runtime.Dynamic_Runner.Signature
 open Util.Error
 
 let version = "0.1"
@@ -30,14 +31,14 @@ let runner ?(cache = true) ?(det = false) mode filenames_spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
-        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
+        (IL spec_il : spec)
     | `SL ->
         let spec_sl = structure filenames_spec in
-        (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+        (SL spec_sl : spec)
   in
-  let (module Driver) = Backend_sim.Gen.gen_boot_placeholder () in
-  Driver.init ~cache ~det spec_sim;
-  (spec_sim, (module Driver : Runtime.Sim.Simulator.DRIVER))
+  let (module Runner) = Backend_boot.Gen.gen_boot_placeholder () in
+  Runner.init ~cache ~det spec_sim;
+  (spec_sim, (module Runner : RUNNER))
 
 (* Commands *)
 
@@ -122,7 +123,7 @@ let run_command =
      fun () ->
        try
          let cache = not no_cache in
-         let spec_sim, (module Driver) =
+         let spec_sim, (module Runner) =
            runner ~cache ~det mode filenames_spec
          in
          let handlers =
@@ -142,7 +143,7 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result = Driver.run_program relname [] filename_spectec in
+         let result = Runner.run_program relname [] filename_spectec in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -164,16 +165,16 @@ let parse_command =
      in
      fun () ->
        try
-         let _, (module Driver) = runner `IL filenames_spec in
+         let _, (module Runner) = runner `IL filenames_spec in
          let value_program =
-           match Driver.parse_file [] [ filename_spectec ] with
+           match Runner.parse_file [] [ filename_spectec ] with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let str_program = Driver.unparse_program value_program in
+         let str_program = Runner.unparse_program value_program in
          if roundtrip then
            let value_program_roundtrip =
-             match Driver.parse_string filename_spectec str_program with
+             match Runner.parse_string filename_spectec str_program with
              | Pass value_program_roundtrip -> value_program_roundtrip
              | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in

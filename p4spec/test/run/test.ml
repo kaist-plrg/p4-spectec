@@ -1,15 +1,15 @@
 open Test_common
 open Util.Error
-module Sim = Runtime.Sim.Simulator
+open Runtime.Sim.Signature
 module Test = Util.Test
 module Filesys = Util.Filesys
 
 (* Interpreter test *)
 
-let run (module Driver : Sim.DRIVER) neg relname includes_p4 filename_p4 =
+let run (module Simulator : SIM) neg relname includes_p4 filename_p4 =
   let time_start = start () in
   try
-    (match Driver.run_program relname includes_p4 filename_p4 with
+    (match Simulator.run_program relname includes_p4 filename_p4 with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -19,8 +19,8 @@ let run (module Driver : Sim.DRIVER) neg relname includes_p4 filename_p4 =
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
-    excludes_p4 filename_p4 =
+let run_test (module Simulator : SIM) neg stat relname includes_p4 excludes_p4
+    filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -32,7 +32,7 @@ let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
   else
     try
       let time_start =
-        run (module Driver) neg relname includes_p4 filename_p4
+        run (module Simulator) neg relname includes_p4 filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in
@@ -84,7 +84,7 @@ let run_test_driver mode det neg specdir relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
-  let _spec_sim, (module Driver) = driver ~det mode specdir in
+  let _spec_sim, (module Simulator) = simulator ~det mode specdir in
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
@@ -92,7 +92,7 @@ let run_test_driver mode det neg specdir relname includes_p4 excludes_p4
           filename_p4
         |> print_endline;
         run_test
-          (module Driver)
+          (module Simulator)
           neg stat relname includes_p4 excludes_p4 filename_p4)
       stat filenames_p4
   in

@@ -9,8 +9,7 @@ open Util.Source
 
 type call_func = string -> Sl.typ list -> Value.t list -> Value.t
 
-let call : call_func ref = ref (fun _ _ -> assert false)
-let register f = call := f
+let call : call_func ref = Runner.Spec.Func.call
 
 (* write_value_from_bits *)
 

@@ -11,7 +11,7 @@ module Type = Runtime.Type
 module Typ = Type.Typ
 open Runtime.Dynamic_Sl
 open Envs
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
 open Error
@@ -25,7 +25,7 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Interface : Sim.INTERFACE) (Extern : Sim.EXTERN) : Sim.INTERP_SL =
+module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) : Run.INTERP_SL =
 struct
   (* Checkers *)
 
@@ -1976,7 +1976,7 @@ struct
       error no_region msg
 
   let eval_program (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Sim.program_result =
+      (filename_p4 : string) : Run.program_result =
     clear ();
     try
       let parse_result = Interface.parse_program includes_p4 [ filename_p4 ] in
@@ -1984,29 +1984,29 @@ struct
       | Pass value_program ->
           Hook.on_program value_program;
           let values_output = do_eval_rel relname [ value_program ] in
-          Sim.Pass values_output
-      | Fail (`Syntax (at, msg)) -> Sim.Fail (`Syntax (at, msg))
+          Run.Pass values_output
+      | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
-    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-        Sim.Fail (`Runtime (at, msg))
+        Run.Fail (`Runtime (at, msg))
 
-  let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
+  let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
       let values_output = do_eval_rel relname values_input in
-      Sim.Pass values_output
+      Run.Pass values_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result =
+      (values_input : value list) : Run.func_result =
     clear ();
     try
       let value_output = do_eval_func funcname targs values_input in
-      Sim.Pass value_output
+      Run.Pass value_output
     with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Fail (at, msg)
 
   (* Initialization *)
 

@@ -5,8 +5,7 @@ module IO = Runtime.Sim.Io
 
 type call_pgm = string -> string list -> string -> Value.t * Value.t
 
-let call : call_pgm ref = ref (fun _ _ _ -> assert false)
-let register f = call := f
+let call : call_pgm ref = Runner.Spec.Pgm.call
 
 (* V1Model_init *)
 

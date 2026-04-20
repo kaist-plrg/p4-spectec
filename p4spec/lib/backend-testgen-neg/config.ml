@@ -7,7 +7,7 @@ module DCov_multi = Coverage.Dangling.Multi
 module Type = Runtime.Type
 open Runtime.Testgen_neg
 open Envs
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 
 (* Hyperparameters for the fuzzing loop *)
 
@@ -31,7 +31,7 @@ let timeout_seed = 30
 
 (* Environment for the spec *)
 type specenv = {
-  driver : (module Sim.DRIVER);
+  simulator : (module Sim.SIM);
   printer : Sl.value -> string;
   spec : Sim.spec;
   relname : string;
@@ -137,13 +137,13 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     specenv =
-  let (module Driver : Sim.DRIVER) = Backend_sim.Gen.gen_p4_placeholder () in
-  Driver.init (Sim.SL spec);
-  let driver = (module Driver : Sim.DRIVER) in
-  let printer value_program = Driver.unparse_program value_program in
+  let (module Simulator : Sim.SIM) = Backend_sim.Gen.gen_p4_placeholder () in
+  Simulator.init (Sim.SL spec);
+  let simulator = (module Simulator : Sim.SIM) in
+  let printer value_program = Simulator.unparse_program value_program in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let spec = Sim.SL spec in
-  { driver; printer; spec; relname; tdenv; mixopenv; includes_p4 }
+  { simulator; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =
   Util.Filesys.mkdir dirname_gen;

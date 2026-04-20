@@ -1,7 +1,7 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Runtime.Sim.Io
-open Runtime.Sim.Simulator
+open Runtime.Sim.Signature
 open Error
 open Util.Source
 
@@ -19,7 +19,7 @@ module Make
       (Extern : EXTERN)
       -> INTERP_SL) : SIM = struct
   include (
-    Runner.Make (Interface) (Arch) (MakeInterp_IL) (MakeInterp_SL) : RUNNER)
+    Runner.Make.Make (Interface) (Arch) (MakeInterp_IL) (MakeInterp_SL) : RUNNER)
 
   (* Logger *)
 

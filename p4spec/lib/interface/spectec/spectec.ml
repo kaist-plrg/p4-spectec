@@ -1,26 +1,26 @@
 open Lang
 module Value = Runtime.Value
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Error
 
 (* Program parsing *)
 
 let parse_program (_includes : string list) (filenames : string list) :
-    Sim.parse_result =
+    Run.parse_result =
   try
     let value_spec = Parse.parse_files filenames in
-    Sim.Pass value_spec
+    Run.Pass value_spec
   with
-  | ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
-  | ElabError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+  | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+  | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-let parse_string (filename : string) (str : string) : Sim.parse_result =
+let parse_string (filename : string) (str : string) : Run.parse_result =
   try
     let value_spec = Parse.parse_string filename str in
-    Sim.Pass value_spec
+    Run.Pass value_spec
   with
-  | ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
-  | ElabError (at, msg) -> Sim.Fail (`Syntax (at, msg))
+  | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+  | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
 (* Program unparsing *)
 
@@ -29,4 +29,4 @@ let unparse_program (value_program : Value.t) : string =
 
 (* Initialization *)
 
-let init (_spec : Sim.spec) : unit = ()
+let init (_spec : Run.spec) : unit = ()

@@ -1,6 +1,6 @@
 open Lang
 module Value = Runtime.Value
-open Runtime.Sim.Simulator
+open Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 

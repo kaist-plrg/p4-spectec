@@ -4,7 +4,7 @@ open Sl
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
 module Dep = Runtime.Testgen_neg.Dep
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 module F = Format
 open Util.Source
 
@@ -79,8 +79,9 @@ let update_hit_new (fuel : int) (iid : iid) (idx_seed : int) (strategy : string)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+    Runner.run_program_with_dangling config.specenv.simulator
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      filename_gen_p4
   in
   match program_result with
   | Pass _ when IIdSet.for_all (DCov_single.is_hit cover) iids_hit_new ->
@@ -127,8 +128,9 @@ let update_close_miss_new (fuel : int) (iid : iid) (idx_seed : int)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+    Runner.run_program_with_dangling config.specenv.simulator
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      filename_gen_p4
   in
   match program_result with
   | Pass _
@@ -153,7 +155,7 @@ let update_interesting (fuel : int) (iid : iid) (idx_seed : int)
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
     let rel_result, cover =
-      Runner.run_program_internal_with_dangling config.specenv.driver
+      Runner.run_program_internal_with_dangling config.specenv.simulator
         config.specenv.spec config.specenv.relname value_program
     in
     match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
@@ -438,7 +440,7 @@ let fuzz_seed (fuel : int) (iid : iid) (idx_seed : int) (config : Config.t)
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
   let program_result, cover, vdg =
-    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.driver
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.simulator
       config.specenv.spec config.specenv.relname config.specenv.includes_p4
       filename_p4
   in
@@ -608,7 +610,7 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
-          Boot.boot_cold specenv.driver specenv.spec relname includes_p4
+          Boot.boot_cold specenv.simulator specenv.spec relname includes_p4
             excludes_p4 dirname_seed_p4
         in
         (* Log the initial coverage for later use in warm boot *)

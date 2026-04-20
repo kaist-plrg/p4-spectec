@@ -1,15 +1,15 @@
 open Test_common
 open Util.Error
-module Sim = Runtime.Sim.Simulator
+open Runtime.Sim.Signature
 module Test = Util.Test
 module Filesys = Util.Filesys
 
 (* Simulator test *)
 
-let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
+let run_sim (module Simulator : SIM) includes_p4 filename_p4 filename_stf =
   let time_start = start () in
   try
-    (match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
+    (match Simulator.run_stf_test includes_p4 filename_p4 filename_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -37,7 +37,7 @@ let find_exclude_subdir filename_p4 filename_stf excludes_by_subdir =
       else None)
     excludes_by_subdir
 
-let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
+let run_sim_test (module Simulator : SIM) stat includes_p4 excludes
     excludes_by_subdir is_patched filename_p4 filename_stf =
   let stat =
     if is_patched then { stat with patch_run = stat.patch_run + 1 } else stat
@@ -62,7 +62,7 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
   else
     try
       let time_start =
-        run_sim (module Driver) includes_p4 filename_p4 filename_stf
+        run_sim (module Simulator) includes_p4 filename_p4 filename_stf
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_stf in
@@ -116,7 +116,7 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
-  let _spec_sim, (module Driver) = driver ~det ~arch mode specdir in
+  let _spec_sim, (module Simulator) = simulator ~det ~arch mode specdir in
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf, is_patched) ->
@@ -125,7 +125,7 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
           filename_p4 filename_stf
         |> print_endline;
         run_sim_test
-          (module Driver : Sim.DRIVER)
+          (module Simulator : SIM)
           stat includes_p4 excludes_p4 excludes_by_subdir is_patched filename_p4
           filename_stf)
       stat filename_pairs
