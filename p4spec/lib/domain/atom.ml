@@ -89,8 +89,8 @@ let string_of_atom = function
   | Turnstile -> "|-"
   | Tilesturn -> "-|"
   | Tick -> "``"
-  | DoubleQuote -> "\""
-  | Underscore -> "_"
+  | DoubleQuote -> "`\""
+  | Underscore -> "`_"
   | Arrow `Plain -> "->"
   | Arrow `Tick -> "`->"
   | ArrowSub -> "->_"
@@ -177,7 +177,7 @@ let atom_of_string = function
   | "|-" -> Turnstile
   | "-|" -> Tilesturn
   | "``" -> Tick
-  | "\"" -> DoubleQuote
+  | "`\"" -> DoubleQuote
   | "`_" -> Underscore
   | "->" -> Arrow `Plain
   | "`->" -> Arrow `Tick

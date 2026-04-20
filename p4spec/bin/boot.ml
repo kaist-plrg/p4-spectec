@@ -166,8 +166,9 @@ let parse_command =
      fun () ->
        try
          let _, (module Runner) = runner `IL filenames_spec in
+         let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
-           match Runner.parse_file [] [ filename_spectec ] with
+           match Runner.parse_file [] filenames_spectec with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
