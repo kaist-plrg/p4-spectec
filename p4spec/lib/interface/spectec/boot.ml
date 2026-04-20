@@ -15,7 +15,7 @@ let boot_id (id : Il.id) : Value.t =
 
 let boot_atom (atom : Il.atom) : Value.t =
   let value_atom =
-    atom.it |> Atom.raw_string_of_atom |> Value.Make.text ~at:atom.at
+    atom.it |> Atom.string_of_atom |> Value.Make.text ~at:atom.at
   in
   Value.Make.(value_atom #@@ "atom")
 

@@ -382,7 +382,11 @@ let sim_command =
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
@@ -426,7 +430,11 @@ let cover_run_command =
                filenames_p4 filename_cov
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let cover_sim_command =
@@ -476,7 +484,11 @@ let cover_sim_command =
                filenames_p4 filenames_stf filename_cov
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_command =
@@ -545,7 +557,11 @@ let run_testgen_command =
            name_campaign randseed logmode bootmode mutationmode covermode
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_debug_command =
@@ -568,7 +584,11 @@ let run_testgen_debug_command =
            filename_p4 debugdir iid
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let interesting_command =
@@ -632,7 +652,11 @@ let interesting_command =
                    exit 1)
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
 
 let splice_command =

@@ -10,20 +10,20 @@ type t =
   | Tick                 (* ```` *)
   | DoubleQuote          (* ``''` *)
   | Underscore           (* ``_` *)
-  | Arrow                (* `->` *)
+  | Arrow of [ `Plain | `Tick ] (* `->` or -> *)
   | ArrowSub             (* `->_` *)
   | DoubleArrow          (* ``=>` *)
   | DoubleArrowSub       (* ``=>_` *)
   | DoubleArrowLong      (* ``==>` *)
   | SqArrow              (* `~>` *)
   | SqArrowStar          (* `~>*` *)
-  | Dot                  (* ``.` *)
-  | Dot2                 (* ``..` *)
-  | Dot3                 (* ``...` *)
+  | Dot of [ `Plain | `Tick ]   (* ``.` or . *)
+  | Dot2 of [ `Plain | `Tick ]  (* ``..` or .. *)
+  | Dot3 of [ `Plain | `Tick ]  (* ``...` or ... *)
   | Comma                (* ``,` *)
-  | Semicolon            (* ``;` *)
-  | Colon                (* `:` *)
-  | ColonEq              (* `:=` *)
+  | Semicolon of [ `Plain | `Tick ] (* ``;` or ; *)
+  | Colon of [ `Plain | `Tick ]     (* `:` or : *)
+  | ColonEq of [ `Plain | `Tick ]   (* `:=` or := *)
   | Hash                 (* ``#` *)
   | Dollar               (* ``$` *)
   | At                   (* ``@` *)
@@ -31,22 +31,22 @@ type t =
   | Bang                 (* ``!` *)
   | BangEq               (* ``!=` *)
   | Tilde                (* ``~` *)
-  | Tilde2               (* `~~` *)
-  | LAngle               (* ``<` *)
+  | Tilde2 of [ `Plain | `Tick ] (* `~~` or ~~ *)
+  | LAngle of [ `Tick | `Tick2 ] (* ``<` or ```<` *)
   | LAngle2              (* `<<` *)
   | LAngleEq             (* ``<=` *)
   | LAngle2Eq            (* `<<=` *)
-  | RAngle               (* ``>` *)
+  | RAngle of [ `Plain | `Tick2 ] (* > or ```>` *)
   | RAngle2              (* `>>` *)
   | RAngleEq             (* ``>=` *)
   | RAngle2Eq            (* `>>=` *)
   | LParen               (* ``(` *)
   | RParen               (* ``)` *)
-  | LBrack               (* ``[` *)
-  | RBrack               (* ``]` *)
-  | LBrace               (* ``{` *)
+  | LBrack of [ `Tick | `Tick2 ] (* ``[` or ```[` *)
+  | RBrack of [ `Plain | `Tick2 ] (* ] or ```]` *)
+  | LBrace of [ `Tick | `Tick2 ] (* ``{` or ```{` *)
   | LBraceHashRBrace     (* `{#}` *)
-  | RBrace               (* ``}` *)
+  | RBrace of [ `Plain | `Tick2 ] (* } or ```}` *)
   | Plus                 (* ``+` *)
   | Plus2                (* ``++` *)
   | PlusEq               (* ``+=` *)
@@ -88,106 +88,30 @@ let string_of_atom = function
   | Sup -> ":>"
   | Turnstile -> "|-"
   | Tilesturn -> "-|"
-  | Tick -> "`"
-  | DoubleQuote -> "\""
-  | Underscore -> "_"
-  | Arrow -> "->"
-  | ArrowSub -> "->_"
-  | DoubleArrow -> "=>"
-  | DoubleArrowSub -> "=>_"
-  | DoubleArrowLong -> "==>"
-  | SqArrow -> "~>"
-  | SqArrowStar -> "~>*"
-  | Dot -> "."
-  | Dot2 -> ".."
-  | Dot3 -> "..."
-  | Comma -> ","
-  | Semicolon -> ";"
-  | Colon -> ":"
-  | ColonEq -> ":="
-  | Hash -> "#"
-  | Dollar -> "$"
-  | At -> "@"
-  | Quest -> "?"
-  | Bang -> "!"
-  | BangEq -> "!="
-  | Tilde -> "~"
-  | Tilde2 -> "~~"
-  | LAngle -> "<"
-  | LAngle2 -> "<<"
-  | LAngleEq -> "<="
-  | LAngle2Eq -> "<<="
-  | RAngle -> ">"
-  | RAngle2 -> ">>"
-  | RAngleEq -> ">="
-  | RAngle2Eq -> ">>="
-  | LParen -> "("
-  | RParen -> ")"
-  | LBrack -> "["
-  | RBrack -> "]"
-  | LBrace -> "{"
-  | LBraceHashRBrace -> "{#}"
-  | RBrace -> "}"
-  | Plus -> "+"
-  | Plus2 -> "++"
-  | PlusEq -> "+="
-  | PlusColon -> "+:"
-  | Minus -> "-"
-  | MinusEq -> "-="
-  | Star -> "*"
-  | StarEq -> "*="
-  | Slash -> "/"
-  | SlashEq -> "/="
-  | Backslash -> "\\"
-  | Percent -> "%"
-  | PercentEq -> "%="
-  | Eq -> "="
-  | Eq2 -> "=="
-  | Amp -> "&"
-  | Amp2 -> "&&"
-  | Amp3 -> "&&&"
-  | AmpEq -> "&="
-  | Up -> "^"
-  | UpEq -> "^="
-  | Bar -> "|"
-  | Bar2 -> "||"
-  | BarEq -> "|="
-  | SPlus -> "|+|"
-  | SPlusEq -> "|+|="
-  | SMinus -> "|-|"
-  | SMinusEq -> "|-|="
-
-let raw_string_of_atom = function
-  | Atom id -> id
-  | SilentAtom id -> "`" ^ id
-  | Sub -> "<:"
-  | Sup -> ":>"
-  | Turnstile -> "|-"
-  | Tilesturn -> "-|"
   | Tick -> "``"
   | DoubleQuote -> "\""
   | Underscore -> "_"
-  (* lossy: both ARROW and TICK_ARROW map to Arrow *)
-  | Arrow -> "->"
+  | Arrow `Plain -> "->"
+  | Arrow `Tick -> "`->"
   | ArrowSub -> "->_"
   | DoubleArrow -> "`=>"
   | DoubleArrowSub -> "=>_"
   | DoubleArrowLong -> "==>"
   | SqArrow -> "~>"
   | SqArrowStar -> "~>*"
-  (* lossy: both DOT and TICK_DOT map to Dot *)
-  | Dot -> "."
-  (* lossy: both DOT2 and TICK_DOT2 map to Dot2 *)
-  | Dot2 -> ".."
-  (* lossy: both DOT3 and TICK_DOT3 map to Dot3 *)
-  | Dot3 -> "..."
+  | Dot `Plain -> "."
+  | Dot `Tick -> "`."
+  | Dot2 `Plain -> ".."
+  | Dot2 `Tick -> "`.."
+  | Dot3 `Plain -> "..."
+  | Dot3 `Tick -> "`..."
   | Comma -> "`,"
-  (* lossy: both SEMICOLON and TICK_SEMICOLON map to Semicolon *)
-  | Semicolon -> "`;"
-  (* lossy: both COLON and TICK_COLON map to Colon *)
-  | Colon -> "`:"
-  (* lossy: both COLON_EQ and TICK_COLON_EQ map to ColonEq *)
-  | ColonEq -> "`:="
+  | Semicolon `Plain -> ";"
+  | Semicolon `Tick -> "`;"
+  | Colon `Plain -> ":"
+  | Colon `Tick -> "`:"
+  | ColonEq `Plain -> ":="
+  | ColonEq `Tick -> "`:="
   | Hash -> "`#"
   | Dollar -> "`$"
   | At -> "`@"
@@ -195,29 +119,29 @@ let raw_string_of_atom = function
   | Bang -> "`!"
   | BangEq -> "`!="
   | Tilde -> "`~"
-  (* lossy: both TILDE2 and TICK_TILDE2 map to Tilde *)
-  | Tilde2 -> "`~~"
-  (* lossy: both TICK2_LANGLE and TICK_LANGLE map to LAngle *)
-  | LAngle -> "`<"
+  | Tilde2 `Plain -> "~~"
+  | Tilde2 `Tick -> "`~~"
+  | LAngle `Tick -> "`<"
+  | LAngle `Tick2 -> "``<"
   | LAngle2 -> "`<<"
   | LAngleEq -> "`<="
   | LAngle2Eq -> "`<<="
-  (* lossy: both TICK2_RANGLE and RANGLE map to RAngle *)
-  | RAngle -> ">"
+  | RAngle `Plain -> ">"
+  | RAngle `Tick2 -> "``>"
   | RAngle2 -> "`>>"
   | RAngleEq -> "`>="
   | RAngle2Eq -> "`>>="
   | LParen -> "`("
   | RParen -> ")"
-  (* lossy: both TICK2_LBRACK and TICK_LBRACK map to LBrack *)
-  | LBrack -> "`["
-  (* lossy: both TICK2_RBRACK and RBRACK map to RBrack *)
-  | RBrack -> "]"
-  (* lossy: both TICK2_LBRACE and TICK_LBRACE map to LBrace *)
-  | LBrace -> "`{"
+  | LBrack `Tick -> "`["
+  | LBrack `Tick2 -> "``["
+  | RBrack `Plain -> "]"
+  | RBrack `Tick2 -> "``]"
+  | LBrace `Tick -> "`{"
+  | LBrace `Tick2 -> "``{"
   | LBraceHashRBrace -> "`{#}"
-  (* lossy: both TICK2_RBRACE and RBRACE map to RBrace *)
-  | RBrace -> "}"
+  | RBrace `Plain -> "}"
+  | RBrace `Tick2 -> "``}"
   | Plus -> "`+"
   | Plus2 -> "`++"
   | PlusEq -> "`+="
@@ -252,74 +176,88 @@ let atom_of_string = function
   | ":>" -> Sup
   | "|-" -> Turnstile
   | "-|" -> Tilesturn
-  | "`" -> Tick
+  | "``" -> Tick
   | "\"" -> DoubleQuote
-  | "_" -> Underscore
-  | "->" -> Arrow
+  | "`_" -> Underscore
+  | "->" -> Arrow `Plain
+  | "`->" -> Arrow `Tick
   | "->_" -> ArrowSub
-  | "=>" -> DoubleArrow
+  | "`=>" -> DoubleArrow
   | "=>_" -> DoubleArrowSub
   | "==>" -> DoubleArrowLong
   | "~>" -> SqArrow
   | "~>*" -> SqArrowStar
-  | "." -> Dot
-  | ".." -> Dot2
-  | "..." -> Dot3
-  | "," -> Comma
-  | ";" -> Semicolon
-  | ":" -> Colon
-  | ":=" -> ColonEq
-  | "#" -> Hash
-  | "$" -> Dollar
-  | "@" -> At
-  | "?" -> Quest
-  | "!" -> Bang
-  | "!=" -> BangEq
-  | "~" -> Tilde
-  | "~~" -> Tilde2
-  | "<" -> LAngle
-  | "<<" -> LAngle2
-  | "<=" -> LAngleEq
-  | "<<=" -> LAngle2Eq
-  | ">" -> RAngle
-  | ">>" -> RAngle2
-  | ">=" -> RAngleEq
-  | ">>=" -> RAngle2Eq
-  | "(" -> LParen
+  | "." -> Dot `Plain
+  | "`." -> Dot `Tick
+  | ".." -> Dot2 `Plain
+  | "`.." -> Dot2 `Tick
+  | "..." -> Dot3 `Plain
+  | "`..." -> Dot3 `Tick
+  | "`," -> Comma
+  | ";" -> Semicolon `Plain
+  | "`;" -> Semicolon `Tick
+  | ":" -> Colon `Plain
+  | "`:" -> Colon `Tick
+  | ":=" -> ColonEq `Plain
+  | "`:=" -> ColonEq `Tick
+  | "`#" -> Hash
+  | "`$" -> Dollar
+  | "`@" -> At
+  | "`?" -> Quest
+  | "`!" -> Bang
+  | "`!=" -> BangEq
+  | "`~" -> Tilde
+  | "~~" -> Tilde2 `Plain
+  | "`~~" -> Tilde2 `Tick
+  | "`<" -> LAngle `Tick
+  | "``<" -> LAngle `Tick2
+  | "`<<" -> LAngle2
+  | "`<=" -> LAngleEq
+  | "`<<=" -> LAngle2Eq
+  | ">" -> RAngle `Plain
+  | "``>" -> RAngle `Tick2
+  | "`>>" -> RAngle2
+  | "`>=" -> RAngleEq
+  | "`>>=" -> RAngle2Eq
+  | "`(" -> LParen
   | ")" -> RParen
-  | "[" -> LBrack
-  | "]" -> RBrack
-  | "{" -> LBrace
-  | "{#}" -> LBraceHashRBrace
-  | "}" -> RBrace
-  | "+" -> Plus
-  | "++" -> Plus2
-  | "+=" -> PlusEq
-  | "+:" -> PlusColon
-  | "-" -> Minus
-  | "-=" -> MinusEq
-  | "*" -> Star
-  | "*=" -> StarEq
-  | "/" -> Slash
-  | "/=" -> SlashEq
+  | "`[" -> LBrack `Tick
+  | "``[" -> LBrack `Tick2
+  | "]" -> RBrack `Plain
+  | "``]" -> RBrack `Tick2
+  | "{" -> LBrace `Tick
+  | "``{" -> LBrace `Tick2
+  | "`{#}" -> LBraceHashRBrace
+  | "}" -> RBrace `Plain
+  | "``}" -> RBrace `Tick2
+  | "`+" -> Plus
+  | "`++" -> Plus2
+  | "`+=" -> PlusEq
+  | "`+:" -> PlusColon
+  | "`-" -> Minus
+  | "`-=" -> MinusEq
+  | "`*" -> Star
+  | "`*=" -> StarEq
+  | "`/" -> Slash
+  | "`/=" -> SlashEq
   | "\\" -> Backslash
-  | "%" -> Percent
-  | "%=" -> PercentEq
-  | "=" -> Eq
-  | "==" -> Eq2
-  | "&" -> Amp
-  | "&&" -> Amp2
-  | "&&&" -> Amp3
-  | "&=" -> AmpEq
-  | "^" -> Up
-  | "^=" -> UpEq
-  | "|" -> Bar
-  | "||" -> Bar2
-  | "|=" -> BarEq
-  | "|+|" -> SPlus
-  | "|+|=" -> SPlusEq
-  | "|-|" -> SMinus
-  | "|-|=" -> SMinusEq
+  | "`%" -> Percent
+  | "`%=" -> PercentEq
+  | "`=" -> Eq
+  | "`==" -> Eq2
+  | "`&" -> Amp
+  | "`&&" -> Amp2
+  | "`&&&" -> Amp3
+  | "`&=" -> AmpEq
+  | "`^" -> Up
+  | "`^=" -> UpEq
+  | "`|" -> Bar
+  | "`||" -> Bar2
+  | "`|=" -> BarEq
+  | "`|+|" -> SPlus
+  | "`|+|=" -> SPlusEq
+  | "`|-|" -> SMinus
+  | "`|-|=" -> SMinusEq
   | id when String.starts_with ~prefix:"`" id ->
       SilentAtom (String.sub id 1 (String.length id - 1))
   | id -> Atom id
@@ -335,20 +273,20 @@ let render_atom = function
   | Tick -> "`"
   | DoubleQuote -> "\""
   | Underscore -> "_"
-  | Arrow -> "->"
+  | Arrow _ -> "->"
   | ArrowSub -> "->_"
   | DoubleArrow -> "=>"
   | DoubleArrowSub -> "=>_"
   | DoubleArrowLong -> "==>"
   | SqArrow -> "~>"
   | SqArrowStar -> "~>*"
-  | Dot -> "."
-  | Dot2 -> ".."
-  | Dot3 -> "..."
+  | Dot _ -> "."
+  | Dot2 _ -> ".."
+  | Dot3 _ -> "..."
   | Comma -> ","
-  | Semicolon -> ";"
-  | Colon -> ":"
-  | ColonEq -> ":="
+  | Semicolon _ -> ";"
+  | Colon _ -> ":"
+  | ColonEq _ -> ":="
   | Hash -> "#"
   | Dollar -> "$"
   | At -> "@"
@@ -356,22 +294,22 @@ let render_atom = function
   | Bang -> "!"
   | BangEq -> "!="
   | Tilde -> "~"
-  | Tilde2 -> "~~"
-  | LAngle -> "<"
+  | Tilde2 _ -> "~~"
+  | LAngle _ -> "<"
   | LAngle2 -> "<<"
   | LAngleEq -> "<="
   | LAngle2Eq -> "<<="
-  | RAngle -> ">"
+  | RAngle _ -> ">"
   | RAngle2 -> ">>"
   | RAngleEq -> ">="
   | RAngle2Eq -> ">>="
   | LParen -> "("
   | RParen -> ")"
-  | LBrack -> "["
-  | RBrack -> "]"
-  | LBrace -> "{"
+  | LBrack _ -> "["
+  | RBrack _ -> "]"
+  | LBrace _ -> "{"
   | LBraceHashRBrace -> "{#}"
-  | RBrace -> "}"
+  | RBrace _ -> "}"
   | Plus -> "+"
   | Plus2 -> "++"
   | PlusEq -> "+="
