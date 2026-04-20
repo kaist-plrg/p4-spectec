@@ -6,7 +6,7 @@ open Spec.Unpack
 open Util.Source
 open Error
 
-module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
+module Make : Sim.ARCH =
 struct
   (* STF AST transformation *)
 

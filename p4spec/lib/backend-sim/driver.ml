@@ -10,13 +10,12 @@ open Util.Source
 
 module Make
     (Interface : INTERFACE)
-    (MakeArch : functor (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) -> ARCH)
+    (Arch : ARCH)
     (MakeInterp_IL : functor (Interface : INTERFACE) (Arch : ARCH) -> INTERP_IL)
     (MakeInterp_SL : functor (Interface : INTERFACE) (Arch : ARCH) -> INTERP_SL) :
   DRIVER = struct
-  module rec Arch : ARCH = MakeArch (Interp_IL) (Interp_SL)
-  and Interp_IL : INTERP_IL = MakeInterp_IL (Interface) (Arch)
-  and Interp_SL : INTERP_SL = MakeInterp_SL (Interface) (Arch)
+  module Interp_IL = MakeInterp_IL (Interface) (Arch)
+  module Interp_SL = MakeInterp_SL (Interface) (Arch)
 
   (* Initialization *)
 
