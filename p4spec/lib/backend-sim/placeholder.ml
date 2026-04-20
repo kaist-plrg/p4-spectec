@@ -5,8 +5,7 @@ module Sim = Runtime.Sim.Simulator
 open Error
 open Util.Source
 
-module Make : Sim.ARCH =
-struct
+module Make : Sim.ARCH = struct
   let transform_stf_stmt = Fun.id
 
   (* Extern calls *)
@@ -107,4 +106,12 @@ struct
   let drive_pipe (_value_ctx : Value.t) (_value_arch : Value.t) (_rx : IO.rx) :
       Value.t * Value.t * IO.tx list =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

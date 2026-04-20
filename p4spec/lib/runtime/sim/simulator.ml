@@ -5,6 +5,7 @@ module ICov_multi = Coverage.Instr.Multi
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
 module IO = Io
+module Typ = Type.Typ
 open Util.Source
 
 (* Module signatures for interpreter-architecture interaction *)
@@ -36,6 +37,13 @@ module type INTERFACE = sig
   (* Initialization *)
 
   val init : spec -> unit
+end
+
+module type EXTERN = sig
+  (* Extern relation and meta-function evaluation *)
+
+  val eval_extern_rel : string -> Value.t list -> rel_result
+  val eval_extern_func : string -> Typ.t list -> Value.t list -> func_result
 end
 
 module type ARCH = sig
@@ -75,6 +83,11 @@ module type ARCH = sig
 
   val init_pipe : string list -> string -> Value.t * Value.t
   val drive_pipe : Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
+
+  (* Extern relation and meta-function evaluation *)
+
+  val eval_extern_rel : string -> Value.t list -> rel_result
+  val eval_extern_func : string -> Typ.t list -> Value.t list -> func_result
 end
 
 module type INTERP_IL = sig
@@ -101,15 +114,11 @@ module type INTERP_SL = sig
   val init : cache:bool -> det:bool -> Sl.spec -> unit
 end
 
-module type DRIVER = sig
+module type RUNNER = sig
   (* Run a program against the spec *)
 
   val run_program : string -> string list -> string -> program_result
   val run_program_internal : string -> Value.t -> rel_result
-
-  (* Run a program against the spec and a STF test (For P4 only) *)
-
-  val run_stf_test : string list -> string -> string -> stf_result
 
   (* Parsing *)
 
@@ -124,3 +133,13 @@ module type DRIVER = sig
 
   val init : ?cache:bool -> ?det:bool -> spec -> unit
 end
+
+module type SIM = sig
+  include RUNNER
+
+  (* Run a program against the spec and a STF test (For P4 only) *)
+
+  val run_stf_test : string list -> string -> string -> stf_result
+end
+
+module type DRIVER = SIM

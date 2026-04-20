@@ -25,7 +25,7 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Interface : Sim.INTERFACE) (Arch : Sim.ARCH) : Sim.INTERP_SL =
+module Make (Interface : Sim.INTERFACE) (Extern : Sim.EXTERN) : Sim.INTERP_SL =
 struct
   (* Checkers *)
 
@@ -1745,15 +1745,9 @@ struct
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
     let values_output =
-      try
-        match id.it with
-        | "ExternFunctionCall_eval_lctk" ->
-            Arch.eval_extern_func_lctk_call values_input
-        | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
-        | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_rel id.it values_input with
+      | Pass vs -> vs
+      | Fail (at, msg) -> back_unmatch at msg
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     List.iteri
@@ -1874,13 +1868,9 @@ struct
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
       =
     let value_output =
-      try
-        match id.it with
-        | "init_objectState" -> Arch.eval_extern_init values_input
-        | "init_archState" -> Arch.init_arch_state
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_func id.it [] values_input with
+      | Pass v -> v
+      | Fail (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri

@@ -22,7 +22,7 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Interface : Sim.INTERFACE) (Arch : Sim.ARCH) : Sim.INTERP_IL =
+module Make (Interface : Sim.INTERFACE) (Extern : Sim.EXTERN) : Sim.INTERP_IL =
 struct
   (* Checkers *)
 
@@ -1186,22 +1186,13 @@ struct
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_input : value list) :
       value list backtrack =
-    let* values_ouptut =
-      match id.it with
-      | "ExternFunctionCall_eval_lctk" ->
-          let values_output = Arch.eval_extern_func_lctk_call values_input in
-          Ok values_output
-      | "ExternFunctionCall_eval" ->
-          let values_output = Arch.eval_extern_func_call values_input in
-          Ok values_output
-      | "ExternMethodCall_eval" ->
-          let values_output = Arch.eval_extern_method_call values_input in
-          Ok values_output
-      | _ ->
-          back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
+    let* values_output =
+      match Extern.eval_extern_rel id.it values_input with
+      | Pass vs -> Ok vs
+      | Fail (at, msg) -> back_err at msg
     in
-    check_rel_outputs ctx id nottyp inputs values_ouptut;
-    Ok values_ouptut
+    check_rel_outputs ctx id nottyp inputs values_output;
+    Ok values_output
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
       (elsegroup_opt : elsegroup option) (values_input : value list) :
@@ -1364,15 +1355,9 @@ struct
       (targs : targ list) (values_input : value list) (typ_output : typ) :
       value backtrack =
     let* value_output =
-      match id.it with
-      | "init_objectState" ->
-          let value_output = Arch.eval_extern_init values_input in
-          Ok value_output
-      | "init_archState" ->
-          let value_output = Arch.init_arch_state in
-          Ok value_output
-      | _ ->
-          back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
+      match Extern.eval_extern_func id.it [] values_input with
+      | Pass v -> Ok v
+      | Fail (at, msg) -> back_err at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     Ok value_output

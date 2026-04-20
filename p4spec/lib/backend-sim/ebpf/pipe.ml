@@ -6,8 +6,7 @@ open Spec.Unpack
 open Util.Source
 open Error
 
-module Make : Sim.ARCH =
-struct
+module Make : Sim.ARCH = struct
   (* STF AST transformation *)
 
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
@@ -308,4 +307,12 @@ struct
       let accept = unpack_p4_bool value_accept in
       if accept then (value_ctx, value_arch, [ rx ])
       else (value_ctx, value_arch, [])
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

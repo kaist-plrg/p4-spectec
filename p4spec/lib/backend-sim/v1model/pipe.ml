@@ -8,8 +8,7 @@ open State
 open Error
 open Util.Source
 
-module Make : Sim.ARCH =
-struct
+module Make : Sim.ARCH = struct
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =
       Stf.Transform.Name.(
@@ -826,4 +825,12 @@ struct
     let state_init = (value_ctx, value_arch, []) in
     let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
     (value_ctx, value_arch, List.rev txs)
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end
