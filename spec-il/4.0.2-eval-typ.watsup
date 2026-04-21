@@ -102,12 +102,21 @@ def $subtyp(C, VAR id targ*, val) = $subtyp(C, typ_subst, val)
   -- if theta = `{ (tparam `: targ)* }
   -- if typ_subst = $subst_typ(theta, typ)
 
-def $subtyp(C, VAR id targ*, INJ (mixop val*)) = $exists_(b*)
+def $subtyp(C, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtyp(C, typ_case_found_subst, val)*)
   -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
   -- if theta = `{ (tparam `: targ)* }
-  -- if (mixop_case typ_case = typcase)*
-  -- if (typ_case_subst = $subst_typ(theta, typ_case))*
-  -- if (b = ((mixop = mixop_case) /\ $subtyp(C, typ_case_subst, val)))*
+  -- if (mixop_case typ_case* = typcase)*
+  -- if mixop <- mixop_case*
+  -- if typ_case_found*
+      = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
+  -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
+
+def $subtyp(C, VAR id targ*, INJ (mixop val*)) = false
+  -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (mixop_case typ_case* = typcase)*
+  -- if mixop <- mixop_case*
 
 def $subtyp(C, VAR id targ*, STR valfield*) = $forall_(b*)
   -- if DEF tparam* `-> (STRUCT typfield*) = $find_typ(C, id)

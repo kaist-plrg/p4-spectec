@@ -53,9 +53,12 @@ module type INTERP_IL = sig
 end
 
 module type INTERP_SL = sig
-  (* Relation and meta-function evaluation *)
+  (* An entry point for running a closed program against the spec *)
 
   val eval_program : string -> string list -> string -> program_result
+
+  (* Relation and meta-function evaluation *)
+
   val eval_rel : string -> Value.t list -> rel_result
   val eval_func : string -> Sl.typ list -> Value.t list -> func_result
 
@@ -69,6 +72,10 @@ module type RUNNER = sig
 
   val run_program : string -> string list -> string -> program_result
   val run_program_internal : string -> Value.t -> rel_result
+
+  (* Relation and meta-function evaluation *)
+
+  val run_func : string -> Sl.typ list -> Value.t list -> func_result
 
   (* Parsing *)
 

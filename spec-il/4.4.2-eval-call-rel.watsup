@@ -10,7 +10,8 @@ relation Eval_rul:
 
 rule Eval_rul/succ:
   C |- rulmatch -> rulpath `@ `( val* ) : OK val_out*
-  -- if _ `= exp_out* `- prem_path* = rulpath
+  -- if id `= exp_out* `- prem_path* = rulpath
+  -- debug id
   -- if exp* `- prem_match* = rulmatch
   -- Assign_exps: C |- val* -> exp* : OK C'
   -- if prem* = prem_match* ++ prem_path*
@@ -32,7 +33,7 @@ rule Eval_ruls/cons-succ:
   -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : OK val_out*
 
 rule Eval_ruls/cons-fail:
-  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : FAIL
+  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
   -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : FAIL
   -- Eval_ruls: C |- rulmatch -> rulpath_t* `@ `( val* ) : OK val_out*
 
@@ -46,10 +47,15 @@ relation Eval_rulgroup:
   ctx |- rulgroup `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
 
-rule Eval_rulgroup:
+rule Eval_rulgroup/succ:
   C |- rulgroup `@ `( val* ) : OK val_out*
-  -- if _ `: rulmatch `= rulpath* = rulgroup
+  -- if id `: rulmatch `= rulpath* = rulgroup
+  -- debug id
   -- Eval_ruls: C |- rulmatch -> rulpath* `@ `( val* ) : OK val_out*
+
+rule Eval_rulgroup/fail:
+  C |- rulgroup `@ `( val* ) : FAIL
+  -- otherwise
 
 ;;; Rule group sequence evaluation
 
@@ -62,7 +68,7 @@ rule Eval_rulgroups/cons-succ:
   -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : OK val_out*
 
 rule Eval_rulgroups/cons-fail:
-  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : FAIL
+  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
   -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : FAIL
   -- Eval_rulgroups: C |- rulgroup_t* `@ `( val* ) : OK val_out*
 

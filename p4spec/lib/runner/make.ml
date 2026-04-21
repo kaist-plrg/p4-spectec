@@ -102,11 +102,11 @@ module Make
 
   (* Relation runner *)
 
-  let run_program (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : program_result =
+  let run_program (relname : string) (includes : string list)
+      (filename : string) : program_result =
     match !spec with
-    | IL _ -> Interp_IL.eval_program relname includes_p4 filename_p4
-    | SL _ -> Interp_SL.eval_program relname includes_p4 filename_p4
+    | IL _ -> Interp_IL.eval_program relname includes filename
+    | SL _ -> Interp_SL.eval_program relname includes filename
     | Empty -> assert false
 
   let run_program_internal (relname : string) (value_program : Value.t) :
@@ -114,6 +114,15 @@ module Make
     match !spec with
     | IL _ -> Interp_IL.eval_rel relname [ value_program ]
     | SL _ -> Interp_SL.eval_rel relname [ value_program ]
+    | Empty -> assert false
+
+  (* Meta-function runner *)
+
+  let run_func (funcname : string) (typs : Typ.t list) (values : Value.t list) :
+      func_result =
+    match !spec with
+    | IL _ -> Interp_IL.eval_func funcname typs values
+    | SL _ -> Interp_SL.eval_func funcname typs values
     | Empty -> assert false
 
   (* Parsing *)

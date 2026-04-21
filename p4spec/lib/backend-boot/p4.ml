@@ -4,7 +4,7 @@ module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 
-module Make : Run.EXTERN = struct
+module Make (Runner_P4 : Run.RUNNER) : Run.EXTERN = struct
   let call_builtin_func (values_input : Value.t list) : Value.t list =
     let _value_ctx, value_id, _value_builtinFuncDef, value_typs, value_values =
       match values_input with
