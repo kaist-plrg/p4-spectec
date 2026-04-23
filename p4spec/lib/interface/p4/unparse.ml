@@ -76,9 +76,10 @@ let pp_num fmt (num : Il.num) : unit =
 
 let pp_atom fmt (atom : Il.atom) : unit =
   match atom.it with
-  | Atom.SilentAtom _ -> F.fprintf fmt ""
+  | Atom.SilentAtom _ -> ()
   | _ ->
-      F.fprintf fmt "%s" (Atom.string_of_atom atom.it |> String.lowercase_ascii)
+      atom.it |> Atom.string_of_atom |> String.lowercase_ascii
+      |> String.split_on_char '`' |> String.concat "" |> F.fprintf fmt "%s"
 
 let pp_atoms fmt (atoms : Il.atom list) : unit =
   match atoms with
