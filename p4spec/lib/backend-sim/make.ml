@@ -20,8 +20,15 @@ module Make
       (Extern : EXTERN)
       ()
       -> INTERP_SL) : SIM = struct
+  module MakeExtern (_ : INTERP_IL) (_ : INTERP_SL) : EXTERN = struct
+    let init_mode _ = ()
+    let eval_extern_rel = Arch.eval_extern_rel
+    let eval_extern_func = Arch.eval_extern_func
+  end
+
   include (
-    Runner.Make.Make (Interface) (Arch) (MakeInterp_IL) (MakeInterp_SL) : RUNNER)
+    Runner.Make.Make (Interface) (MakeExtern) (MakeInterp_IL) (MakeInterp_SL) :
+        RUNNER)
 
   (* Logger *)
 

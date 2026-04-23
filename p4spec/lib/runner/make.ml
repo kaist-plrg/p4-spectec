@@ -6,7 +6,10 @@ open Util.Source
 
 module Make
     (Interface : INTERFACE)
-    (Extern : EXTERN)
+    (MakeExtern : functor
+      (Interp_IL : INTERP_IL)
+      (Interp_SL : INTERP_SL)
+      -> EXTERN)
     (MakeInterp_IL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
@@ -17,8 +20,19 @@ module Make
       (Extern : EXTERN)
       ()
       -> INTERP_SL) : RUNNER = struct
-  module Interp_IL = MakeInterp_IL (Interface) (Extern) ()
-  module Interp_SL = MakeInterp_SL (Interface) (Extern) ()
+  (* Recursive instantiations *)
+
+  module rec Extern : EXTERN = struct
+    include MakeExtern (Interp_IL) (Interp_SL)
+  end
+
+  and Interp_IL : INTERP_IL = struct
+    include MakeInterp_IL (Interface) (Extern) ()
+  end
+
+  and Interp_SL : INTERP_SL = struct
+    include MakeInterp_SL (Interface) (Extern) ()
+  end
 
   (* Initialization *)
 
@@ -98,6 +112,7 @@ module Make
         init_mode SL_mode;
         Interp_SL.init ~cache ~det spec_sl
     | Empty -> assert false);
+    Extern.init_mode !mode;
     init_call_pgm ();
     init_call_rel ();
     init_call_func ()

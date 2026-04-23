@@ -6,8 +6,13 @@ let gen_boot_zero () =
             (Interp_sl.Interp.Make) : Run.RUNNER)
 
 let get_p4 () =
-  (module Runner.Make.Make (Interface.P4) (Backend_sim.Placeholder.Make)
-            (Interp_il.Interp.Make)
+  let module MakeExtern (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN =
+  struct
+    let init_mode _ = ()
+    let eval_extern_rel = Backend_sim.Placeholder.Make.eval_extern_rel
+    let eval_extern_func = Backend_sim.Placeholder.Make.eval_extern_func
+  end in
+  (module Runner.Make.Make (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
             (Interp_sl.Interp.Make) : Run.RUNNER)
 
 let gen_boot_one () =
