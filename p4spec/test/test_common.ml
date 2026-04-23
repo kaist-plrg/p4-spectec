@@ -125,6 +125,30 @@ let simulator ?(det = false) ?(arch : string option) mode specdir =
   Simulator.init ~det spec_sim;
   (spec_sim, (module Simulator : SIM))
 
+let booter ?(det = false) mode specdir specdir_p4 =
+  let spec =
+    match mode with
+    | `IL ->
+        let spec_il = elab specdir in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure specdir in
+        (SL spec_sl : spec)
+  in
+  let spec_p4 =
+    match mode with
+    | `IL ->
+        let spec_il = elab specdir_p4 in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure specdir_p4 in
+        (SL spec_sl : spec)
+  in
+  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_boot_one () in
+  Runner_P4.init ~det spec_p4;
+  Booter.init ~det spec;
+  (spec, (module Booter : RUNNER))
+
 let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4
     filename_p4 =
   let (module IH : Inst.Handler.HANDLER), read_coverage_instr =

@@ -124,6 +124,6 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
         hints_il )
     $ no_region
   in
-  Il.Print.string_of_def def_il |> print_endline;
+  (* Il.Print.string_of_def def_il |> print_endline; *)
   let value_spectec_p4 = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
   value_spectec_p4
