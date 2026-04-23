@@ -25,12 +25,12 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
       | Param | Defining _ -> error typ.at "unexpected type variable"
       | Extern -> ( match value.it with ExternV _ -> true | _ -> false)
       | Defined (tparams, deftyp) -> (
-          match (deftyp.it, value.it) with
-          | PlainT typ, _ ->
+          match (deftyp, value.it) with
+          | `Plain typ, _ ->
               let theta = TIdMap.of_lists tparams targs in
               let typ = Type.Subst.subst_typ theta typ in
               sub_ find_typdef_opt find_func typ value
-          | StructT typfields, StructV valuefields
+          | `Struct typfields, StructV valuefields
             when List.length typfields = List.length valuefields ->
               let theta = TIdMap.of_lists tparams targs in
               List.for_all2
@@ -40,7 +40,7 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
                   let typ = Type.Subst.subst_typ theta typ in
                   sub_ find_typdef_opt find_func typ value)
                 typfields valuefields
-          | VariantT typcases, CaseV (mixop_v, values_inner) ->
+          | `Variant (typcases, _), CaseV (mixop_v, values_inner) ->
               let theta = TIdMap.of_lists tparams targs in
               List.exists
                 (fun typcase ->

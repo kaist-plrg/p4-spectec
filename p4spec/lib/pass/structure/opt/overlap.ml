@@ -54,17 +54,15 @@ let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
       let td = TDEnv.find tid tdenv in
       match td with
       | Param | Extern | Defining _ -> None
-      | Defined (_, deftyp) -> (
-          match deftyp.it with
-          | VariantT typcases ->
-              let mixops =
-                typcases
-                |> List.map (fun (nottyp, _, _) ->
-                       let mixop, _ = nottyp.it in
-                       mixop)
-              in
-              Some mixops
-          | _ -> None))
+      | Defined (_, `Variant (typcases, _)) ->
+          let mixops =
+            typcases
+            |> List.map (fun (nottyp, _, _) ->
+                   let mixop, _ = nottyp.it in
+                   mixop)
+          in
+          Some mixops
+      | Defined _ -> None)
   | _ -> None
 
 (* Determine the overlapping guard of two conditions *)

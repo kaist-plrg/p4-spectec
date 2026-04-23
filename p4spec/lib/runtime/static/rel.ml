@@ -4,15 +4,16 @@ open Il
 (* Relation *)
 
 type t =
-  | Extern of nottyp * Hints.Input.t
-  | Defined of nottyp * Hints.Input.t * rulegroup list * elsegroup option
+  | Extern of Mixop.t * nottyp * Hints.Input.t
+  | Defined of
+      Mixop.t * nottyp * Hints.Input.t * rulegroup list * elsegroup option
 
 let to_string = function
-  | Extern (nottyp_il, inputs) ->
+  | Extern (_, nottyp_il, inputs) ->
       Hints.Input.to_string inputs
       ^ " = extern "
       ^ Il.Print.string_of_nottyp nottyp_il
-  | Defined (nottyp_il, inputs, rulegroups, elsegroup_opt) ->
+  | Defined (_, nottyp_il, inputs, rulegroups, elsegroup_opt) ->
       Hints.Input.to_string inputs
       ^ " =\n\n"
       ^ Il.Print.string_of_rulegroups nottyp_il inputs rulegroups

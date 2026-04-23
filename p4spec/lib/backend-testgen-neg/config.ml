@@ -121,7 +121,7 @@ let load_def (tdenv : TDEnv.t) (def : def) : TDEnv.t =
       let td = Type.Typdef.Extern in
       TDEnv.add id td tdenv
   | TypD (id, tparams, deftyp, _) ->
-      let td = Type.Typdef.Defined (tparams, deftyp) in
+      let td = Type.Typdef.of_deftyp tparams deftyp in
       TDEnv.add id td tdenv
   | _ -> tdenv
 

@@ -84,7 +84,7 @@ let load_def (def : def) : unit =
       let td = Typdef.Extern in
       add_typdef_global id td
   | TypD (id, tparams, deftyp, _) ->
-      let td = Typdef.Defined (tparams, deftyp) in
+      let td = Typdef.of_deftyp tparams deftyp in
       add_typdef_global id td
   | VarD _ -> ()
   | ExternRelD (id, nottyp, inputs, _) ->
@@ -146,7 +146,7 @@ let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
   | Some td -> td
   | None -> error_undef tid.at "type" tid.it
 
-let find_defined_typdef (ctx : t) (tid : TId.t) : tparam list * deftyp =
+let find_defined_typdef (ctx : t) (tid : TId.t) =
   match find_typdef ctx tid with
   | Param | Extern | Defining _ -> error_undef tid.at "defined type" tid.it
   | Defined (tparams, deftyp) -> (tparams, deftyp)

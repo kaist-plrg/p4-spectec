@@ -95,33 +95,36 @@ let bound_metavar (ctx : t) (tid : TId.t) : bool =
 (* Finders for rules *)
 
 let find_defined_rel_opt (ctx : t) (rid : RId.t) :
-    (Il.nottyp * int list * Il.rulegroup list * Il.elsegroup option) option =
+    (Mixop.t * Il.nottyp * int list * Il.rulegroup list * Il.elsegroup option)
+    option =
   let rel_opt = REnv.find_opt rid ctx.renv in
   Option.bind rel_opt (function
-    | Rel.Defined (nottyp_il, inputs, rulegroups, elsegroup_opt) ->
-        Some (nottyp_il, inputs, rulegroups, elsegroup_opt)
+    | Rel.Defined (mixop_el, nottyp_il, inputs, rulegroups, elsegroup_opt) ->
+        Some (mixop_el, nottyp_il, inputs, rulegroups, elsegroup_opt)
     | Rel.Extern _ -> None)
 
 let find_defined_rel (ctx : t) (rid : RId.t) :
-    Il.nottyp * int list * Il.rulegroup list * Il.elsegroup option =
+    Mixop.t * Il.nottyp * int list * Il.rulegroup list * Il.elsegroup option =
   match find_defined_rel_opt ctx rid with
-  | Some (nottyp_il, inputs, rulegroups, elsegroup_opt) ->
-      (nottyp_il, inputs, rulegroups, elsegroup_opt)
+  | Some result -> result
   | None -> error_undef rid.at "defined relation" rid.it
 
 let bound_defined_rel (ctx : t) (rid : RId.t) : bool =
   find_defined_rel_opt ctx rid |> Option.is_some
 
 let find_rel_signature_opt (ctx : t) (rid : RId.t) :
-    (Il.nottyp * int list) option =
+    (Mixop.t * Il.nottyp * int list) option =
   REnv.find_opt rid ctx.renv
   |> Option.map (function
-         | Rel.Extern (nottyp_il, inputs) | Rel.Defined (nottyp_il, inputs, _, _)
-         -> (nottyp_il, inputs))
+       | Rel.Extern (mixop_el, nottyp_il, inputs) ->
+           (mixop_el, nottyp_il, inputs)
+       | Rel.Defined (mixop_el, nottyp_il, inputs, _, _) ->
+           (mixop_el, nottyp_il, inputs))
 
-let find_rel_signature (ctx : t) (rid : RId.t) : Il.nottyp * int list =
+let find_rel_signature (ctx : t) (rid : RId.t) : Mixop.t * Il.nottyp * int list
+    =
   match find_rel_signature_opt ctx rid with
-  | Some (nottyp_il, inputs) -> (nottyp_il, inputs)
+  | Some result -> result
   | None -> error_undef rid.at "relation" rid.it
 
 let bound_rel (ctx : t) (rid : RId.t) : bool =
@@ -129,7 +132,7 @@ let bound_rel (ctx : t) (rid : RId.t) : bool =
 
 let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
   match find_defined_rel_opt ctx rid with
-  | Some (_, _, rulegroups, elsegroup_opt) ->
+  | Some (_, _, _, rulegroups, elsegroup_opt) ->
       let rulegroupids =
         List.map
           (fun rulegroup ->
@@ -240,17 +243,17 @@ let add_tparams (ctx : t) (tparams : tparam list) : t =
 
 (* Adders for rules *)
 
-let add_extern_rel (ctx : t) (rid : RId.t) (nottyp_il : Il.nottyp)
-    (inputs : int list) : t =
+let add_extern_rel (ctx : t) (rid : RId.t) (mixop_el : Mixop.t)
+    (nottyp_il : Il.nottyp) (inputs : int list) : t =
   if bound_rel ctx rid then error_dup rid.at "relation" rid.it;
-  let rel = Rel.Extern (nottyp_il, inputs) in
+  let rel = Rel.Extern (mixop_el, nottyp_il, inputs) in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
-let add_defined_rel (ctx : t) (rid : RId.t) (nottyp_il : Il.nottyp)
-    (inputs : int list) : t =
+let add_defined_rel (ctx : t) (rid : RId.t) (mixop_el : Mixop.t)
+    (nottyp_il : Il.nottyp) (inputs : int list) : t =
   if bound_rel ctx rid then error_dup rid.at "relation" rid.it;
-  let rel = Rel.Defined (nottyp_il, inputs, [], None) in
+  let rel = Rel.Defined (mixop_el, nottyp_il, inputs, [], None) in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
@@ -260,11 +263,13 @@ let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup_il : Il.rulegroup)
   let rulegroupid, _, _ = rulegroup_il.it in
   if bound_rulegroup ctx rid rulegroupid then
     error_dup rulegroupid.at "rulegroup" rulegroupid.it;
-  let nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =
+  let mixop_el, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =
     find_defined_rel ctx rid
   in
   let rulegroups_il = rulegroups_il @ [ rulegroup_il ] in
-  let rel = Rel.Defined (nottyp_il, inputs, rulegroups_il, elsegroup_il_opt) in
+  let rel =
+    Rel.Defined (mixop_el, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt)
+  in
   let renv = REnv.add rid rel ctx.renv in
   { ctx with renv }
 
@@ -274,7 +279,7 @@ let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup_il : Il.elsegroup)
   let rulegroupid, _, _ = elsegroup_il.it in
   if bound_rulegroup ctx rid rulegroupid then
     error_dup rulegroupid.at "rulegroup" rulegroupid.it;
-  let nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =
+  let mixop_el, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =
     find_defined_rel ctx rid
   in
   match elsegroup_il_opt with
@@ -282,7 +287,8 @@ let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup_il : Il.elsegroup)
   | None ->
       let elsegroup_il_opt = Some elsegroup_il in
       let rel =
-        Rel.Defined (nottyp_il, inputs, rulegroups_il, elsegroup_il_opt)
+        Rel.Defined
+          (mixop_el, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt)
       in
       let renv = REnv.add rid rel ctx.renv in
       { ctx with renv }

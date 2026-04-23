@@ -68,7 +68,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let tdenv_local =
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+          let td = Type.Typdef.Defined ([], `Plain targ) in
           TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
@@ -444,8 +444,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | _ -> back_err_upcast ())
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
-        match deftyp.it with
-        | PlainT typ ->
+        match deftyp with
+        | `Plain typ ->
             let theta = TIdMap.of_lists tparams targs in
             let typ = Type.Subst.subst_typ theta typ in
             upcast ctx typ value
@@ -487,8 +487,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         | _ -> back_err_downcast ())
     | VarT (tid, targs) -> (
         let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
-        match deftyp.it with
-        | PlainT typ ->
+        match deftyp with
+        | `Plain typ ->
             let theta = TIdMap.of_lists tparams targs in
             let typ = Type.Subst.subst_typ theta typ in
             downcast ctx typ value
@@ -1781,7 +1781,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             TDEnv.fold
               (fun tid typdef theta ->
                 match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                | Type.Typdef.Defined ([], `Plain typ) ->
                     TIdMap.add tid typ theta
                 | _ -> theta)
               tdenv_local TIdMap.empty
@@ -1901,7 +1901,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         id.at "arity mismatch in type arguments";
       List.fold_left2
         (fun tdenv_local tparam targ ->
-          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+          let td = Type.Typdef.Defined ([], `Plain targ) in
           TDEnv.add tparam td tdenv_local)
         TDEnv.empty tparams targs
     in
