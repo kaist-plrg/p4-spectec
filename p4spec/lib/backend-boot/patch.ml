@@ -57,6 +57,26 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
   in
   (* Create a synthetic "main" meta-function calling [rel_p4] on [value_p4] *)
   (* def main() : text = "pass" -- let x = [value_p4] -- [rel_p4]: x *)
+  let defs_il = Interface.SpecTec.unboot_spec value_spectec_p4 in
+  let mixop_rel, inputs_rel =
+    List.find_map
+      (fun def_il ->
+        match def_il.it with
+        | RelD (id, nottyp, inputs, _, _, _) when id.it = rel_p4 ->
+            let mixop, _ = nottyp.it in
+            Some (mixop, inputs)
+        | _ -> None)
+      defs_il
+    |> function
+    | Some (mixop_rel, inputs_rel) -> (mixop_rel, inputs_rel)
+    | None ->
+        error no_region
+          (Format.asprintf "relation %s not found in the spec" rel_p4)
+  in
+  check
+    (List.length inputs_rel = 1)
+    no_region
+    (Format.asprintf "relation %s must have exactly one input" rel_p4);
   let def_il =
     let id_il = "main" $ no_region in
     let tparams_il = [] in
@@ -72,9 +92,19 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
           in
           let exp_value = value_as_exp value_p4 in
           let prem_bind_il = LetPr (exp_bind, exp_value) $ no_region in
+          let exps_output =
+            List.init
+              (Mixop.arity mixop_rel - List.length inputs_rel)
+              (fun idx ->
+                VarE ("y_" ^ string_of_int idx $ no_region)
+                $$ (no_region, VarT ("y_" ^ string_of_int idx $ no_region, [])))
+          in
           let prem_call_il =
-            let notexp_il = (Mixop.Arg, [ exp_bind ]) in
-            RulePr (rel_p4 $ no_region, notexp_il, [ 0 ]) $ no_region
+            let exps =
+              Hints.Input.combine inputs_rel [ exp_bind ] exps_output
+            in
+            let notexp_il = (mixop_rel, exps) in
+            RulePr (rel_p4 $ no_region, notexp_il, inputs_rel) $ no_region
           in
           [ prem_bind_il; prem_call_il ]
         in
@@ -95,8 +125,5 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
     $ no_region
   in
   Il.Print.string_of_def def_il |> print_endline;
-  let value_spectec_p4 =
-    let defs_il = Interface.SpecTec.unboot_spec value_spectec_p4 in
-    defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec
-  in
+  let value_spectec_p4 = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
   value_spectec_p4

@@ -10,13 +10,15 @@ module Make
     (MakeInterp_IL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
+      ()
       -> INTERP_IL)
     (MakeInterp_SL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
+      ()
       -> INTERP_SL) : RUNNER = struct
-  module Interp_IL = MakeInterp_IL (Interface) (Extern)
-  module Interp_SL = MakeInterp_SL (Interface) (Extern)
+  module Interp_IL = MakeInterp_IL (Interface) (Extern) ()
+  module Interp_SL = MakeInterp_SL (Interface) (Extern) ()
 
   (* Initialization *)
 

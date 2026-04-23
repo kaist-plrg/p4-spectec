@@ -107,9 +107,9 @@ rule Assign_arg/exp:
   -- Assign_exp: C_callee |- val -> exp : OK C_callee'
 
 rule Assign_arg/fun:
-  C_callee `/ C_caller |- val -> FUN id : OK C_callee'
-  -- if funcdef = $find_func(C_caller, id)
-  -- if C_callee' = $add_func(C_callee, id, funcdef)
+  C_callee `/ C_caller |- (FUNC id_caller) -> FUN id_callee : OK C_callee'
+  -- if funcdef = $find_func(C_caller, id_caller)
+  -- if C_callee' = $add_func(C_callee, id_callee, funcdef)
 
 rule Assign_arg/fail:
   C_callee `/ C_caller |- val -> arg : FAIL 

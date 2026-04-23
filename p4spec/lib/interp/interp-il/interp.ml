@@ -19,11 +19,14 @@ open Util.Source
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create ~size:10000)
-let rel_cache = ref (Cache.Cache.create ~size:10000)
+module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
+  Run.INTERP_IL = struct
+  module Ctx = Ctx.Make ()
+  module Builtin = Builtin.Call.Make ()
 
-module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) : Run.INTERP_IL =
-struct
+  let func_cache = ref (Cache.Cache.create ~size:10000)
+  let rel_cache = ref (Cache.Cache.create ~size:10000)
+
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
@@ -1172,9 +1175,9 @@ struct
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let builtin_ctr_before = !Builtin.ctr in
           let* values_output = invoke_rel'' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
+          let builtin_ctr_after = !Builtin.ctr in
           (* Cache if the relation does not create a side-effect *)
           if builtin_ctr_after = builtin_ctr_before then
             Cache.Cache.add !rel_cache (id.it, values_input) values_output;
@@ -1337,9 +1340,9 @@ struct
         match cache_result with
         | Some value_output -> Ok value_output
         | None ->
-            let builtin_ctr_before = !Builtin.Fresh.ctr in
+            let builtin_ctr_before = !Builtin.ctr in
             let* value_output = invoke_func_with_values' () in
-            let builtin_ctr_after = !Builtin.Fresh.ctr in
+            let builtin_ctr_after = !Builtin.ctr in
             (* Cache if the function does not create a side-effect *)
             if builtin_ctr_after = builtin_ctr_before then
               Cache.Cache.add !func_cache (id.it, values_input) value_output;
@@ -1366,9 +1369,7 @@ struct
       (targs : targ list) (values_input : value list) (typ_output : typ) :
       value backtrack =
     try
-      let value_output =
-        Builtin.Call.invoke (fun _ -> ()) id targs values_input
-      in
+      let value_output = Builtin.invoke (fun _ -> ()) id targs values_input in
       check_func_output ctx id tparams typ_output targs value_output;
       Ok value_output
     with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
@@ -1532,6 +1533,6 @@ struct
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value = Interface.unparse_program value in
-    Builtin.Call.init printer;
+    Builtin.init printer;
     Ctx.init ~det spec
 end

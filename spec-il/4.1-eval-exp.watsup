@@ -30,18 +30,18 @@ rulegroup Eval_exp/binary-boolean {
     -- Eval_exp: C |- exp_l : OK (BOOL b_l)
     -- Eval_exp: C |- exp_r : OK (BOOL b_r)
 
-  rule Eval_exp/and:
+  rule Eval_exp/or:
     C |- BIN OR exp_l exp_r : OK (BOOL (b_l \/ b_r))
     -- Eval_exp: C |- exp_l : OK (BOOL b_l)
     -- Eval_exp: C |- exp_r : OK (BOOL b_r)
   
   rule Eval_exp/impl:
-    C |- BIN OR exp_l exp_r : OK (BOOL (b_l => b_r))
+    C |- BIN IMPL exp_l exp_r : OK (BOOL (b_l => b_r))
     -- Eval_exp: C |- exp_l : OK (BOOL b_l)
     -- Eval_exp: C |- exp_r : OK (BOOL b_r)
 
   rule Eval_exp/equiv:
-    C |- BIN OR exp_l exp_r : OK (BOOL (b_l <=> b_r))
+    C |- BIN EQUIV exp_l exp_r : OK (BOOL (b_l <=> b_r))
     -- Eval_exp: C |- exp_l : OK (BOOL b_l)
     -- Eval_exp: C |- exp_r : OK (BOOL b_r)
 
@@ -81,11 +81,6 @@ rule Eval_exp/upcast:
 rule Eval_exp/downcast:
   C |- DOWNCAST typ exp : $downcast(C, typ, val)
   -- Eval_exp: C |- exp : OK val
-  -- debug "downcast"
-  -- debug typ
-  -- debug val
-  -- if valres = $downcast(C, typ, val)
-  -- debug valres
 
 rule Eval_exp/subtype:
   C |- SUB exp typ : OK (BOOL b)

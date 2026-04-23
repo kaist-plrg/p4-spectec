@@ -51,7 +51,7 @@ let booter ?(cache = true) ?(det = false) mode filenames_spec filenames_spec_p4
         let spec_sl = structure filenames_spec in
         (SL spec_sl : spec)
   in
-  let _spec_p4 =
+  let spec_p4 =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec_p4 in
@@ -61,7 +61,7 @@ let booter ?(cache = true) ?(det = false) mode filenames_spec filenames_spec_p4
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_boot_one () in
-  (* Runner_P4.init ~cache ~det spec_p4; *)
+  Runner_P4.init ~cache ~det spec_p4;
   Booter.init ~cache ~det spec;
   (spec, (module Booter : RUNNER))
 

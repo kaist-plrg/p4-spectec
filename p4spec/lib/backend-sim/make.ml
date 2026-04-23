@@ -13,10 +13,12 @@ module Make
     (MakeInterp_IL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
+      ()
       -> INTERP_IL)
     (MakeInterp_SL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
+      ()
       -> INTERP_SL) : SIM = struct
   include (
     Runner.Make.Make (Interface) (Arch) (MakeInterp_IL) (MakeInterp_SL) : RUNNER)
