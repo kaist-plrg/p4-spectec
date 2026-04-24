@@ -183,13 +183,14 @@ let boot_command =
   Core.Command.basic ~summary:"execute a P4 spec against a P4-SpecTec spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec =
-       anon (non_empty_sequence_as_list ("filename" %: string))
-     and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and filename_spec_p4 = flag "-s" (required string) ~doc:"p4 spec"
-     and rel_p4 = flag "-r" (required string) ~doc:"p4 spec relation to run"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 program"
+     let%map dirname_spec =
+       flag "-s0" (required string) ~doc:"directory for boot spec files"
+     and rel = flag "-r0" (required string) ~doc:"boot spec relation to run"
+     and dirname_spec_p4 =
+       flag "-s1" (required string) ~doc:"directory for p4 spec files"
+     and rel_p4 = flag "-r1" (required string) ~doc:"p4 spec relation to run"
+     and includes_p4 = flag "-i1" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p1" (required string) ~doc:"p4 program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and profile = flag "-profile" no_arg ~doc:"profiling"
@@ -215,7 +216,8 @@ let boot_command =
      fun () ->
        try
          let cache = not no_cache in
-         let filenames_spec_p4 = expand_spec [ filename_spec_p4 ] in
+         let filenames_spec = expand_spec [ dirname_spec ] in
+         let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
            booter ~cache ~det mode filenames_spec filenames_spec_p4
          in
@@ -240,7 +242,7 @@ let boot_command =
            Backend_boot.Patch.apply filenames_spec_p4 rel_p4 includes_p4
              filename_p4
          in
-         let result = Booter.run_program_internal relname value_spectec in
+         let result = Booter.run_program_internal rel value_spectec in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
