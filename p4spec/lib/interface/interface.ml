@@ -1,4 +1,5 @@
 open Lang
+module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
 open Util.Error
@@ -37,6 +38,31 @@ module P4 = struct
   let unparse_program (value_program : Value.t) : string =
     !unparser value_program
 
+  (* Builtins *)
+
+  module Builtin_P4_Ext = struct
+    (* dec $print_<X>(X) : text *)
+
+    let print (add : Value.t -> unit) (at : region) (targs : Typ.t list)
+        (values_input : Value.t list) : Value.t =
+      let _typ = Builtin.Extract.one at targs in
+      let value = Builtin.Extract.one at values_input in
+      let text = !unparser value in
+      let value = Value.Make.text text in
+      add value;
+      value
+
+    (* Builtin extension entries *)
+
+    let entries = [ ("print_", print) ]
+  end
+
+  module Builtin_P4 = Builtin.Call.Make (Builtin_P4_Ext) ()
+
+  let call_builtin = Builtin_P4.invoke
+  let checkpoint = Builtin_P4.checkpoint
+  let seff = Builtin_P4.seff
+
   (* Initialization *)
 
   let init (spec : Run.spec) : unit =
@@ -51,8 +77,6 @@ module P4 = struct
       | Empty -> assert false
     in
     unparser := printer
-
-  module Builtin_ext = Builtin.Call.No_ext
 end
 
 (* SpecTec *)
@@ -85,9 +109,15 @@ module SpecTec = struct
   let unparse_program (value_program : Value.t) : string =
     value_program |> unboot_spec |> Il.Print.string_of_spec
 
+  (* Builtins *)
+
+  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+
+  let call_builtin = Builtin_SpecTec.invoke
+  let checkpoint = Builtin_SpecTec.checkpoint
+  let seff = Builtin_SpecTec.seff
+
   (* Initialization *)
 
   let init (_spec : Run.spec) : unit = ()
-
-  module Builtin_ext = Builtin.Call.No_ext
 end

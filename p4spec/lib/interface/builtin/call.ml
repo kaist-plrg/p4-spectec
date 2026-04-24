@@ -1,31 +1,40 @@
 module Fresh_ = Fresh
 open Lang
 open Il
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 
 (* Extensibility point: extra or override builtins per interface *)
 
-type impl = Run.builtin
+type impl = (Value.t -> unit) -> region -> Typ.t list -> Value.t list -> Value.t
 
-module type EXT = Run.BUILTIN_EXT
+module type EXT = sig
+  val entries : (string * impl) list
+end
 
 module No_ext : EXT = struct
   let entries = []
 end
 
+(* Create a BUILTIN from an EXT module containing extensions *)
+
 module Make (Ext : EXT) () = struct
   (* States for builtins *)
 
-  let printer : (value -> string) ref = ref (fun _ -> "")
   let ctr : int ref = ref 0
 
   (* Initializer *)
 
-  let init (printer_fn : value -> string) : unit =
-    ctr := 0;
-    printer := printer_fn
+  let init () : unit = ctr := 0
+
+  (* State management *)
+
+  let ckpt : int ref = ref !ctr
+  let checkpoint () : unit = ckpt := !ctr
+  let seff () : bool = !ctr - !ckpt <> 0
 
   (* Builtin calls *)
 
@@ -33,8 +42,6 @@ module Make (Ext : EXT) () = struct
 
   let funcs =
     Funcs.empty
-    (* Printing *)
-    |> Funcs.add "print_" (Printer.print printer)
     (* Nats *)
     |> Funcs.add "sum_nat" Nats.sum_nat
     |> Funcs.add "max_nat" Nats.max_nat

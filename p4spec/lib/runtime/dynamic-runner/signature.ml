@@ -1,3 +1,4 @@
+open Domain.Lib
 open Lang
 module Typ = Type.Typ
 open Util.Source
@@ -6,6 +7,9 @@ open Util.Source
 
 type mode = IL_mode | SL_mode | Empty_mode
 type spec = IL of Il.spec | SL of Sl.spec | Empty
+
+(* Result types *)
+
 type rel_result = Pass of Value.t list | Fail of region * string
 type func_result = Pass of Value.t | Fail of region * string
 type parse_result = Pass of Value.t | Fail of [ `Syntax of region * string ]
@@ -18,13 +22,6 @@ type stf_result =
   | Pass
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
-type builtin =
-  (Value.t -> unit) -> region -> Typ.t list -> Value.t list -> Value.t
-
-module type BUILTIN_EXT = sig
-  val entries : (string * builtin) list
-end
-
 module type INTERFACE = sig
   (* Program parsing, into IL value *)
 
@@ -35,13 +32,17 @@ module type INTERFACE = sig
 
   val unparse_program : Value.t -> string
 
+  (* Builtins *)
+
+  val call_builtin :
+    (Value.t -> unit) -> Id.t -> Typ.t list -> Value.t list -> Value.t
+
+  val checkpoint : unit -> unit
+  val seff : unit -> bool
+
   (* Initialization *)
 
   val init : spec -> unit
-
-  (* Pluggable extra builtins; override or extend the base set *)
-
-  module Builtin_ext : BUILTIN_EXT
 end
 
 module type EXTERN = sig

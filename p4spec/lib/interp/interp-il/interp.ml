@@ -21,8 +21,9 @@ open Util.Source
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_IL = struct
+  (* Build context and caches *)
+
   module Ctx = Ctx.Make ()
-  module Builtin = Builtin.Call.Make (Interface.Builtin_ext) ()
 
   let func_cache = ref (Cache.Cache.create ~size:10000)
   let rel_cache = ref (Cache.Cache.create ~size:10000)
@@ -1175,11 +1176,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       match cache_result with
       | Some values_output -> Ok values_output
       | None ->
-          let builtin_ctr_before = !Builtin.ctr in
+          Interface.checkpoint ();
           let* values_output = invoke_rel'' () in
-          let builtin_ctr_after = !Builtin.ctr in
           (* Cache if the relation does not create a side-effect *)
-          if builtin_ctr_after = builtin_ctr_before then
+          if not (Interface.seff ()) then
             Cache.Cache.add !rel_cache (id.it, values_input) values_output;
           Ok values_output)
     else (
@@ -1340,11 +1340,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         match cache_result with
         | Some value_output -> Ok value_output
         | None ->
-            let builtin_ctr_before = !Builtin.ctr in
+            Interface.checkpoint ();
             let* value_output = invoke_func_with_values' () in
-            let builtin_ctr_after = !Builtin.ctr in
             (* Cache if the function does not create a side-effect *)
-            if builtin_ctr_after = builtin_ctr_before then
+            if not (Interface.seff ()) then
               Cache.Cache.add !func_cache (id.it, values_input) value_output;
             Ok value_output)
       else (
@@ -1369,7 +1368,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (targs : targ list) (values_input : value list) (typ_output : typ) :
       value backtrack =
     try
-      let value_output = Builtin.invoke (fun _ -> ()) id targs values_input in
+      let value_output =
+        Interface.call_builtin (fun _ -> ()) id targs values_input
+      in
       check_func_output ctx id tparams typ_output targs value_output;
       Ok value_output
     with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
@@ -1532,7 +1533,5 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
-    let printer value = Interface.unparse_program value in
-    Builtin.init printer;
     Ctx.init ~det spec
 end
