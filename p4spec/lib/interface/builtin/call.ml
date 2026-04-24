@@ -1,10 +1,21 @@
 module Fresh_ = Fresh
 open Lang
 open Il
+module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 
-module Make () = struct
+(* Extensibility point: extra or override builtins per interface *)
+
+type impl = Run.builtin
+
+module type EXT = Run.BUILTIN_EXT
+
+module No_ext : EXT = struct
+  let entries = []
+end
+
+module Make (Ext : EXT) () = struct
   (* States for builtins *)
 
   let printer : (value -> string) ref = ref (fun _ -> "")
@@ -79,6 +90,9 @@ module Make () = struct
     |> Funcs.add "bor" Numerics.bor
     |> Funcs.add "bitacc" Numerics.bitacc
     |> Funcs.add "bitacc_replace" Numerics.bitacc_replace
+    (* Ext entries merged last — allow interface-specific overrides *)
+    |> fun m ->
+    List.fold_left (fun acc (k, v) -> Funcs.add k v acc) m Ext.entries
 
   let invoke (add : value -> unit) (id : id) (targs : targ list)
       (args : value list) : value =

@@ -24,10 +24,10 @@ open Util.Source
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_SL = struct
-  (* Build context and caches *)
+  (* Build context, builtins and caches *)
 
   module Ctx = Ctx.Make ()
-  module Builtin = Builtin.Call.Make ()
+  module Builtin = Builtin.Call.Make (Interface.Builtin_ext) ()
 
   let func_cache = ref (Cache.Cache.create ~size:10000)
   let rel_cache = ref (Cache.Cache.create ~size:10000)

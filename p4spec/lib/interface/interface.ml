@@ -51,6 +51,8 @@ module P4 = struct
       | Empty -> assert false
     in
     unparser := printer
+
+  module Builtin_ext = Builtin.Call.No_ext
 end
 
 (* SpecTec *)
@@ -86,4 +88,6 @@ module SpecTec = struct
   (* Initialization *)
 
   let init (_spec : Run.spec) : unit = ()
+
+  module Builtin_ext = Builtin.Call.No_ext
 end

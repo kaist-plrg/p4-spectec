@@ -18,6 +18,13 @@ type stf_result =
   | Pass
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
+type builtin =
+  (Value.t -> unit) -> region -> Typ.t list -> Value.t list -> Value.t
+
+module type BUILTIN_EXT = sig
+  val entries : (string * builtin) list
+end
+
 module type INTERFACE = sig
   (* Program parsing, into IL value *)
 
@@ -31,6 +38,10 @@ module type INTERFACE = sig
   (* Initialization *)
 
   val init : spec -> unit
+
+  (* Pluggable extra builtins; override or extend the base set *)
+
+  module Builtin_ext : BUILTIN_EXT
 end
 
 module type EXTERN = sig
