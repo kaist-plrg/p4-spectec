@@ -6,8 +6,19 @@ open Spec.Unpack
 open Util.Source
 open Error
 
-module Make : Sim.ARCH = struct
-  (* STF AST transformation *)
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* EBPF-specific externs *)
+
+  module Object = Object.Make (Spec.Func)
+
+  (* STF transformation *)
 
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =

@@ -8,7 +8,21 @@ open State
 open Error
 open Util.Source
 
-module Make : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* V1Model-specific externs *)
+
+  module Func = Func.Make (Spec)
+  module Object = Object.Make (Spec)
+
+  (* STF transformation *)
+
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =
       Stf.Transform.Name.(

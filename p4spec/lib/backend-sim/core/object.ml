@@ -77,13 +77,9 @@ let int_to_bits_signed value size =
   let value = Bigint.(value land mask) in
   int_to_bits_unsigned value size
 
-(* Core extern objects *)
-
-(* Input packet *)
+(* Input packet — pure type and data-only methods *)
 
 module PacketIn = struct
-  (* Type *)
-
   type t = { bits : bits; idx : int; len : int } [@@deriving yojson]
 
   let pp fmt (pkt : t) = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
@@ -92,24 +88,16 @@ module PacketIn = struct
     let bits = Array.sub pkt.bits pkt.idx (pkt.len - pkt.idx) in
     Format.fprintf fmt "%s" (bits_to_string bits)
 
-  (* Initializer *)
-
   let init (pkt : string) : t =
     let bits = string_to_bits pkt in
     { bits; idx = 0; len = Array.length bits }
 
-  (* Resetter *)
-
   let reset (pkt : t) : t = { pkt with idx = 0 }
-
-  (* Parser *)
 
   let parse (pkt : t) (size : int) : t * bits =
     let bits = Array.sub pkt.bits pkt.idx size in
     let pkt = { pkt with idx = pkt.idx + size } in
     (pkt, bits)
-
-  (* Payload *)
 
   let payload (pkt : t) : bits =
     let bits = Array.sub pkt.bits pkt.idx (pkt.len - pkt.idx) in
@@ -120,278 +108,244 @@ module PacketIn = struct
     let len = Array.length bits in
     let len = len / 8 in
     Array.init len (fun i -> Array.sub bits (i * 8) 8 |> bits_to_int_unsigned)
-
-  (* Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
-     May trigger error PacketTooShort or StackOutOfBounds.
-     @T must be a fixed-size header type
-
-     void extract<T>(out T hdr); *)
-
-  let extract (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get "T" *)
-    let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
-    (* Get size of "T" *)
-    let size =
-      Spec.Func.subst_type_e_local value_ctx value_typ
-      |> Spec.Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
-    in
-    if pkt.idx + size > pkt.len then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else
-      (* Parse from packet *)
-      let pkt, bits = parse pkt size in
-      (* Find "hdr" in context *)
-      let value_hdr = Spec.Func.find_var_e_local value_ctx "hdr" in
-      (* Write bits to "hdr" *)
-      let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
-      (* Update "hdr" in context *)
-      let value_ctx =
-        Spec.Rel.lvalue_write_var_local value_ctx value_arch "hdr" value_hdr
-      in
-      (* Create call result *)
-      let value_callResult =
-        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-
-  (* Read bits from the packet into a variable-sized header @variableSizeHeader
-     and advance the cursor.
-     @T must be a header containing exactly 1 varbit field.
-     May trigger errors PacketTooShort, StackOutOfBounds, or HeaderTooShort.
-
-     void extract<T>(out T variableSizeHeader,
-                      in bit<32> variableFieldSizeInBits); *)
-
-  let extract_varsize (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get "T" *)
-    let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
-    (* Get size of "T" *)
-    let value_typ_subst = Spec.Func.subst_type_e_local value_ctx value_typ in
-    let size_min =
-      Spec.Func.sizeof_minSizeInBits' value_typ_subst |> Bigint.to_int_exn
-    in
-    let size_max =
-      Spec.Func.sizeof_maxSizeInBits' value_typ_subst |> Bigint.to_int_exn
-    in
-    (* Get "variableFieldSizeInBits" in context *)
-    let value_variableFieldSizeInBits =
-      Spec.Func.find_var_e_local value_ctx "variableFieldSizeInBits"
-    in
-    let alignment =
-      Spec.Func.bitacc_range_op value_variableFieldSizeInBits
-        (pack_p4_arbitraryInt (Bigint.of_int 2))
-        (pack_p4_arbitraryInt (Bigint.of_int 0))
-      |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
-    in
-    let size_varsize =
-      value_variableFieldSizeInBits |> Value.Get.case |> snd |> fun values ->
-      List.nth values 1 |> Value.Get.num
-      |> (function `Nat n -> n | `Int i -> i)
-      |> Bigint.to_int_exn
-    in
-    let size = size_min + size_varsize in
-    if alignment <> 0 then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR"
-            <| [ text "ParserInvalidArgument" ]
-            <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else if pkt.idx + size > pkt.len then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else if size > size_max then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else
-      (* Parse from packet *)
-      let pkt, bits = parse pkt size in
-      (* Get "variableSizeHeader" in context *)
-      let value_variableSizeHeader =
-        Spec.Func.find_var_e_local value_ctx "variableSizeHeader"
-      in
-      (* Write bits to "variableSizeHeader" *)
-      let value_variableSizeHeader =
-        Spec.Func.write_value_from_bits value_variableSizeHeader size_varsize
-          bits
-      in
-      (* Update "variableSizeHeader" in context *)
-      let value_ctx =
-        Spec.Rel.lvalue_write_var_local value_ctx value_arch
-          "variableSizeHeader" value_variableSizeHeader
-      in
-      (* Create call result *)
-      let value_callResult =
-        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-
-  (* Read bits from the packet without advancing the cursor.
-     @returns: the bits read from the packet.
-     T may be an arbitrary fixed-size type.
-
-     T lookahead<T>(); *)
-
-  let lookahead (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get "T" *)
-    let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
-    (* Get size of "T" *)
-    let size =
-      Spec.Func.subst_type_e_local value_ctx value_typ
-      |> Spec.Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
-    in
-    (* Create a dummy "hdr" *)
-    let value_hdr = Spec.Func.default value_typ in
-    if pkt.idx + size > pkt.len then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else
-      (* Parse from packet *)
-      let _pkt, bits = parse pkt size in
-      (* Write bits to "hdr" *)
-      let value_hdr = Spec.Func.write_value_from_bits value_hdr 0 bits in
-      (* Create call result *)
-      let value_callResult =
-        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_hdr = Value.Make.opt typ (Some value_hdr) in
-        Value.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-
-  (* Advance the packet cursor by the specified number of bits.
-
-     void advance(in bit<32> sizeInBits); *)
-
-  let advance (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get "sizeInBits" in context *)
-    let value_sizeInBits = Spec.Func.find_var_e_local value_ctx "sizeInBits" in
-    let size =
-      value_sizeInBits |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
-    in
-    if pkt.idx + size > pkt.len then
-      let value_callResult =
-        let value_err =
-          Value.Make.(
-            "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
-        in
-        Value.Make.(
-          "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-    else
-      (* Advance cursor *)
-      let pkt = { pkt with idx = pkt.idx + size } in
-      let value_callResult =
-        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
-      in
-      (pkt, value_ctx, value_arch, value_callResult)
-
-  (* @return packet length in bytes.  This method may be unavailable on
-     some target architectures.
-
-     bit<32> length(); *)
-  let length (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get packet length in bytes *)
-    let length = if pkt.len mod 8 = 0 then pkt.len / 8 else (pkt.len / 8) + 1 in
-    let value_length =
-      pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int length)
-    in
-    let value_callResult =
-      let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-      let value_length_opt = Value.Make.opt typ (Some value_length) in
-      Value.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
-    in
-    (pkt, value_ctx, value_arch, value_callResult)
 end
 
-(* Output packet *)
+(* Output packet — pure type and data-only methods *)
 
 module PacketOut = struct
-  (* Type *)
-
   type t = { bits : bits } [@@deriving yojson]
 
   let pp fmt pkt = Format.fprintf fmt "%s" (bits_to_string pkt.bits)
-
-  (* Initializer *)
-
   let init () = { bits = Array.make 0 false }
-
-  (* Write @hdr into the output packet, advancing cursor.
-     @T can be a header type, a header stack, a header_union, or a struct
-     containing fields with such types.
-
-     void emit<T>(in T hdr); *)
-
-  let emit (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-      t * Value.t * Value.t * Value.t =
-    (* Get "hdr" in context *)
-    let value_hdr = Spec.Func.find_var_e_local value_ctx "hdr" in
-    (* Get bits of "hdr" *)
-    let bits =
-      Spec.Func.write_bits_from_value value_hdr
-      |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
-    in
-    let pkt = { bits = Array.append pkt.bits bits } in
-    (* Create call result *)
-    let value_callResult =
-      let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-      let value_eps = Value.Make.opt typ None in
-      Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
-    in
-    (pkt, value_ctx, value_arch, value_callResult)
 end
 
-module Packet = struct
-  let pp fmt ((pkt_in, pkt_out) : PacketIn.t * PacketOut.t) =
-    let payload_bits =
-      Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx)
-    in
-    let packet = Array.append pkt_out.bits payload_bits in
-    Format.fprintf fmt "%s" (bits_to_string packet)
+(* Functor providing spec-dependent methods *)
+
+module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
+  module PacketIn = struct
+    include PacketIn
+
+    (* Read a header from the packet into a fixed-sized header @hdr and advance the cursor.
+       May trigger error PacketTooShort or StackOutOfBounds.
+       @T must be a fixed-size header type
+
+       void extract<T>(out T hdr); *)
+
+    let extract (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
+      let size =
+        Spec_Func.subst_type_e_local value_ctx value_typ
+        |> Spec_Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
+      in
+      if pkt.idx + size > pkt.len then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else
+        let pkt, bits = parse pkt size in
+        let value_hdr = Spec_Func.find_var_e_local value_ctx "hdr" in
+        let value_hdr = Spec_Func.write_value_from_bits value_hdr 0 bits in
+        let value_ctx =
+          Spec_Rel.lvalue_write_var_local value_ctx value_arch "hdr" value_hdr
+        in
+        let value_callResult =
+          let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+          let value_eps = Value.Make.opt typ None in
+          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+
+    (* void extract<T>(out T variableSizeHeader, in bit<32> variableFieldSizeInBits); *)
+
+    let extract_varsize (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
+      let value_typ_subst = Spec_Func.subst_type_e_local value_ctx value_typ in
+      let size_min =
+        Spec_Func.sizeof_minSizeInBits' value_typ_subst |> Bigint.to_int_exn
+      in
+      let size_max =
+        Spec_Func.sizeof_maxSizeInBits' value_typ_subst |> Bigint.to_int_exn
+      in
+      let value_variableFieldSizeInBits =
+        Spec_Func.find_var_e_local value_ctx "variableFieldSizeInBits"
+      in
+      let alignment =
+        Spec_Func.bitacc_range_op value_variableFieldSizeInBits
+          (pack_p4_arbitraryInt (Bigint.of_int 2))
+          (pack_p4_arbitraryInt (Bigint.of_int 0))
+        |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+      in
+      let size_varsize =
+        value_variableFieldSizeInBits |> Value.Get.case |> snd |> fun values ->
+        List.nth values 1 |> Value.Get.num
+        |> (function `Nat n -> n | `Int i -> i)
+        |> Bigint.to_int_exn
+      in
+      let size = size_min + size_varsize in
+      if alignment <> 0 then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR"
+              <| [ text "ParserInvalidArgument" ]
+              <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else if pkt.idx + size > pkt.len then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else if size > size_max then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else
+        let pkt, bits = parse pkt size in
+        let value_variableSizeHeader =
+          Spec_Func.find_var_e_local value_ctx "variableSizeHeader"
+        in
+        let value_variableSizeHeader =
+          Spec_Func.write_value_from_bits value_variableSizeHeader size_varsize
+            bits
+        in
+        let value_ctx =
+          Spec_Rel.lvalue_write_var_local value_ctx value_arch
+            "variableSizeHeader" value_variableSizeHeader
+        in
+        let value_callResult =
+          let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+          let value_eps = Value.Make.opt typ None in
+          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+
+    (* T lookahead<T>(); *)
+
+    let lookahead (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
+      let size =
+        Spec_Func.subst_type_e_local value_ctx value_typ
+        |> Spec_Func.sizeof_maxSizeInBits' |> Bigint.to_int_exn
+      in
+      let value_hdr = Spec_Func.default value_typ in
+      if pkt.idx + size > pkt.len then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else
+        let _pkt, bits = parse pkt size in
+        let value_hdr = Spec_Func.write_value_from_bits value_hdr 0 bits in
+        let value_callResult =
+          let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+          let value_hdr = Value.Make.opt typ (Some value_hdr) in
+          Value.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+
+    (* void advance(in bit<32> sizeInBits); *)
+
+    let advance (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let value_sizeInBits =
+        Spec_Func.find_var_e_local value_ctx "sizeInBits"
+      in
+      let size =
+        value_sizeInBits |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
+      in
+      if pkt.idx + size > pkt.len then
+        let value_callResult =
+          let value_err =
+            Value.Make.(
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+          in
+          Value.Make.(
+            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+      else
+        let pkt = { pkt with idx = pkt.idx + size } in
+        let value_callResult =
+          let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+          let value_eps = Value.Make.opt typ None in
+          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        in
+        (pkt, value_ctx, value_arch, value_callResult)
+
+    (* bit<32> length(); *)
+
+    let length (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let length =
+        if pkt.len mod 8 = 0 then pkt.len / 8 else (pkt.len / 8) + 1
+      in
+      let value_length =
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int length)
+      in
+      let value_callResult =
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_length_opt = Value.Make.opt typ (Some value_length) in
+        Value.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
+      in
+      (pkt, value_ctx, value_arch, value_callResult)
+  end
+
+  module PacketOut = struct
+    include PacketOut
+
+    (* void emit<T>(in T hdr); *)
+
+    let emit (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
+        t * Value.t * Value.t * Value.t =
+      let value_hdr = Spec_Func.find_var_e_local value_ctx "hdr" in
+      let bits =
+        Spec_Func.write_bits_from_value value_hdr
+        |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
+      in
+      let pkt = { bits = Array.append pkt.bits bits } in
+      let value_callResult =
+        let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
+        let value_eps = Value.Make.opt typ None in
+        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+      in
+      (pkt, value_ctx, value_arch, value_callResult)
+  end
+
+  module Packet = struct
+    let pp fmt ((pkt_in, pkt_out) : PacketIn.t * PacketOut.t) =
+      let payload_bits =
+        Array.sub pkt_in.bits pkt_in.idx (pkt_in.len - pkt_in.idx)
+      in
+      let packet = Array.append pkt_out.bits payload_bits in
+      Format.fprintf fmt "%s" (bits_to_string packet)
+  end
 end

@@ -5,7 +5,11 @@ module Sim = Runtime.Sim.Signature
 open Error
 open Util.Source
 
-module Make : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+  end
+
   let transform_stf_stmt = Fun.id
 
   (* Extern calls *)
