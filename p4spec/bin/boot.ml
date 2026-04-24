@@ -40,8 +40,8 @@ let runner ?(cache = true) ?(det = false) mode filenames_spec =
   Runner.init ~cache ~det spec_sim;
   (spec_sim, (module Runner : RUNNER))
 
-let booter ?(cache = true) ?(det = false) mode filenames_spec filenames_spec_p4
-    =
+let booter_square ?(cache = true) ?(det = false) mode filenames_spec
+    filenames_spec_p4 =
   let spec =
     match mode with
     | `IL ->
@@ -61,6 +61,38 @@ let booter ?(cache = true) ?(det = false) mode filenames_spec filenames_spec_p4
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_boot_one () in
+  Runner_P4.init ~cache ~det spec_p4;
+  Booter.init ~cache ~det spec;
+  (spec, (module Booter : RUNNER))
+
+let booter_cube ?(cache = true) ?(det = false) mode filenames_spec
+    filenames_spec_p4 =
+  let spec =
+    match mode with
+    | `IL ->
+        let spec_il = elab filenames_spec in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure filenames_spec in
+        (SL spec_sl : spec)
+  in
+  let spec_p4 =
+    match mode with
+    | `IL ->
+        let spec_il = elab filenames_spec_p4 in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure filenames_spec_p4 in
+        (SL spec_sl : spec)
+  in
+  let ( (module Runner_SpecTec),
+        (module Booter_interm),
+        (module Runner_P4),
+        (module Booter) ) =
+    Backend_boot.Gen.gen_boot_two ()
+  in
+  Runner_SpecTec.init ~cache ~det spec;
+  Booter_interm.init ~cache ~det spec;
   Runner_P4.init ~cache ~det spec_p4;
   Booter.init ~cache ~det spec;
   (spec, (module Booter : RUNNER))
@@ -179,7 +211,7 @@ let run_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let boot_command =
+let boot_square_command =
   Core.Command.basic ~summary:"execute a P4 spec against a P4-SpecTec spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
@@ -219,7 +251,7 @@ let boot_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter ~cache ~det mode filenames_spec filenames_spec_p4
+           booter_square ~cache ~det mode filenames_spec filenames_spec_p4
          in
          let handlers =
            if profile then
@@ -238,11 +270,85 @@ let boot_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec;
-         let value_spectec =
-           Backend_boot.Patch.apply filenames_spec_p4 rel_p4 includes_p4
+         let value_p4_spec =
+           Backend_boot.Patch.apply_square filenames_spec_p4 rel_p4 includes_p4
              filename_p4
          in
-         let result = Booter.run_program_internal rel value_spectec in
+         let result = Booter.run_program_internal rel value_p4_spec in
+         Inst.Hook.finish ();
+         match result with
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg
+       with
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let boot_cube_command =
+  Core.Command.basic
+    ~summary:
+      "execute a P4 spec against a P4-SpecTec spec against a P4-SpecTec spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map dirname_spec =
+       flag "-s0" (required string) ~doc:"directory for boot spec files"
+     and rel = flag "-r0" (required string) ~doc:"boot spec relation to run"
+     and dirname_spec_p4 =
+       flag "-s1" (required string) ~doc:"directory for p4 spec files"
+     and rel_p4 = flag "-r1" (required string) ~doc:"p4 spec relation to run"
+     and includes_p4 = flag "-i1" (listed string) ~doc:"p4 include paths"
+     and filename_p4 = flag "-p1" (required string) ~doc:"p4 program"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "il" no_arg ~doc:"run IL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+         ]
+         ~if_nothing_chosen:(Default_to `SL)
+     in
+     fun () ->
+       try
+         let cache = not no_cache in
+         let filenames_spec = expand_spec [ dirname_spec ] in
+         let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
+         let spec, (module Booter) =
+           booter_cube ~cache ~det mode filenames_spec filenames_spec_p4
+         in
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec;
+         let value_spec =
+           Backend_boot.Patch.apply_cube filenames_spec rel filenames_spec_p4
+             rel_p4 includes_p4 filename_p4
+         in
+         let result = Booter.run_program_internal rel value_spec in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -302,7 +408,8 @@ let command =
       ("prose", prose_command);
       (* Execution *)
       ("run", run_command);
-      ("boot", boot_command);
+      ("boot-2", boot_square_command);
+      ("boot-3", boot_cube_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]

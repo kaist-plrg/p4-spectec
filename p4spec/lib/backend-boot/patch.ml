@@ -41,28 +41,19 @@ let rec value_as_exp (value : value) : exp =
   in
   exp $$ (at_value, typ_value)
 
-let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
-    (includes_p4 : string list) (filename_p4 : string) : Value.t =
-  (* Parse the P4 spec as a meta-value *)
-  let value_spectec_p4 =
-    match Interface.SpecTec.parse_program [] filenames_spectec_p4 with
-    | Run.Pass value_spectec -> value_spectec
-    | Run.Fail (`Syntax (at, msg)) -> error at msg
-  in
-  (* Parse the P4 program as a meta-value, and wrap it again as an input to the boot spec *)
-  let value_p4 =
-    match Interface.P4.parse_program includes_p4 [ filename_p4 ] with
-    | Run.Pass value_p4 -> value_p4
-    | Run.Fail (`Syntax (at, msg)) -> error at msg
-  in
-  (* Create a synthetic "main" meta-function calling [rel_p4] on [value_p4] *)
-  (* def main() : text = "pass" -- let x = [value_p4] -- [rel_p4]: x *)
-  let defs_il = Interface.SpecTec.unboot_spec value_spectec_p4 in
+(* Patch *)
+
+(* Create a synthetic "main" meta-function calling [rel] on [value] *)
+(* def main() : text = "pass" -- let x = [value] -- [rel]: x *)
+
+let apply (value_spec : Value.t) (rel : string) (value_program : Value.t) :
+    Value.t =
+  let defs_il = Interface.SpecTec.unboot_spec value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun def_il ->
         match def_il.it with
-        | RelD (id, nottyp, inputs, _, _, _) when id.it = rel_p4 ->
+        | RelD (id, nottyp, inputs, _, _, _) when id.it = rel ->
             let mixop, _ = nottyp.it in
             Some (mixop, inputs)
         | _ -> None)
@@ -71,12 +62,12 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
     | Some (mixop_rel, inputs_rel) -> (mixop_rel, inputs_rel)
     | None ->
         error no_region
-          (Format.asprintf "relation %s not found in the spec" rel_p4)
+          (Format.asprintf "relation %s not found in the spec" rel)
   in
   check
     (List.length inputs_rel = 1)
     no_region
-    (Format.asprintf "relation %s must have exactly one input" rel_p4);
+    (Format.asprintf "relation %s must have exactly one input" rel);
   let def_il =
     let id_il = "main" $ no_region in
     let tparams_il = [] in
@@ -90,7 +81,7 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
           let exp_bind =
             VarE ("x" $ no_region) $$ (no_region, VarT ("x" $ no_region, []))
           in
-          let exp_value = value_as_exp value_p4 in
+          let exp_value = value_as_exp value_program in
           let prem_bind_il = LetPr (exp_bind, exp_value) $ no_region in
           let exps_output =
             List.init
@@ -104,7 +95,7 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
               Hints.Input.combine inputs_rel [ exp_bind ] exps_output
             in
             let notexp_il = (mixop_rel, exps) in
-            RulePr (rel_p4 $ no_region, notexp_il, inputs_rel) $ no_region
+            RulePr (rel $ no_region, notexp_il, inputs_rel) $ no_region
           in
           [ prem_bind_il; prem_call_il ]
         in
@@ -125,5 +116,42 @@ let apply (filenames_spectec_p4 : string list) (rel_p4 : string)
     $ no_region
   in
   (* Il.Print.string_of_def def_il |> print_endline; *)
-  let value_spectec_p4 = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
-  value_spectec_p4
+  let value_spec = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
+  value_spec
+
+(* Patch on square *)
+
+let apply_square (filenames_p4_spec : string list) (rel_p4 : string)
+    (includes_p4 : string list) (filename_p4 : string) : Value.t =
+  (* Parse the P4 spec as a meta-value *)
+  let value_p4_spec =
+    match Interface.SpecTec.parse_program [] filenames_p4_spec with
+    | Run.Pass value_spectec -> value_spectec
+    | Run.Fail (`Syntax (at, msg)) -> error at msg
+  in
+  (* Parse the P4 program as a meta-value, and wrap it again as an input to the boot spec *)
+  let value_p4 =
+    match Interface.P4.parse_program includes_p4 [ filename_p4 ] with
+    | Run.Pass value_p4 -> value_p4
+    | Run.Fail (`Syntax (at, msg)) -> error at msg
+  in
+  (* Create a synthetic "main" meta-function calling [rel_p4] on [value_p4] *)
+  apply value_p4_spec rel_p4 value_p4
+
+(* Patch on cube *)
+
+let apply_cube (filenames_spec : string list) (rel : string)
+    (filenames_spectec_p4 : string list) (rel_p4 : string)
+    (includes_p4 : string list) (filename_p4 : string) : Value.t =
+  (* Bundle the P4 spec and its input P4 program as a single meta-value *)
+  let value_script =
+    apply_square filenames_spectec_p4 rel_p4 includes_p4 filename_p4
+  in
+  (* Parse the SpecTec spec as a meta-value *)
+  let value_spec =
+    match Interface.SpecTec.parse_program [] filenames_spec with
+    | Run.Pass value_spec -> value_spec
+    | Run.Fail (`Syntax (at, msg)) -> error at msg
+  in
+  (* Create a synthetic "main" meta-function calling [rel] on [value] *)
+  apply value_spec rel value_script
