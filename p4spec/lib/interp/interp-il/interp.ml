@@ -96,6 +96,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (F.sprintf "return value of function %s does not match the expected type"
          id_func.it)
 
+  (* Helper for checking if an expression is a simple iteration of a variable *)
+
+  let rec is_iter_var_exp (exp : exp) : Var.t option =
+    match exp.it with
+    | VarE id_exp -> Some (id_exp, [])
+    | IterE (exp_inner, iterexp) -> (
+        match is_iter_var_exp exp_inner with
+        | Some (id_var, iters_var) -> (
+            match iterexp with
+            | iter, [ var ] ->
+                let id_iter, _, iters_iter = var in
+                if Id.eq id_var id_iter && iters_var = iters_iter then
+                  Some (id_var, iters_var @ [ iter ])
+                else None
+            | _ -> None)
+        | None -> None)
+    | _ -> None
+
   (* Assignments *)
 
   (* Assigning a value to an expression *)
@@ -103,63 +121,17 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
     let typ_value = value.note.typ $ exp.at in
     match (exp.it, value.it) with
-    | VarE id, _ -> Ctx.add_value ctx (id, []) value
-    | TupleE exps, TupleV values -> assign_exps ctx exps values
-    | CaseE (_, exps), CaseV (_, values) -> assign_exps ctx exps values
+    | VarE id, _ -> assign_var_exp ctx id value
+    | TupleE exps, TupleV values -> assign_tuple_exp ctx exps values
+    | CaseE (_, exps), CaseV (_, values) -> assign_case_exp ctx exps values
     | StrE expfields, StructV valuefields ->
-        let exps = List.map snd expfields in
-        let values = List.map snd valuefields in
-        assign_exps ctx exps values
-    | OptE exp_opt, OptV value_opt -> (
-        match (exp_opt, value_opt) with
-        | Some exp, Some value -> assign_exp ctx exp value
-        | None, None -> ctx
-        | _ -> assert false)
-    | ListE exps, ListV values -> assign_exps ctx exps values
+        assign_str_exp ctx expfields valuefields
+    | OptE exp_opt, OptV value_opt -> assign_opt_exp ctx exp_opt value_opt
+    | ListE exps, ListV values -> assign_list_exp ctx exps values
     | ConsE (exp_h, exp_t), ListV values_inner ->
-        let value_h = List.hd values_inner in
-        let value_t = Value.Make.list typ_value (List.tl values_inner) in
-        let ctx = assign_exp ctx exp_h value_h in
-        assign_exp ctx exp_t value_t
-    | IterE (_, (Opt, vars)), OptV None ->
-        (* Per iterated variable, make an option out of the value *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
-            let value_sub = Value.Make.opt typ None in
-            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
-          ctx vars
-    | IterE (exp, (Opt, vars)), OptV (Some value) ->
-        (* Assign the value to the iterated expression *)
-        let ctx = assign_exp ctx exp value in
-        (* Per iterated variable, make an option out of the value *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let value_sub =
-              let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
-              let value = Ctx.find_value ctx (id, iters) in
-              Value.Make.opt typ (Some value)
-            in
-            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
-          ctx vars
-    | IterE (exp, (List, vars)), ListV values ->
-        (* Map over the value list elements,
-           and assign each value to the iterated expression *)
-        let ctx_sub =
-          { ctx with local = { ctx.local with venv = VEnv.empty } }
-        in
-        let ctxs = List.map (assign_exp ctx_sub exp) values in
-        (* Per iterated variable, collect its elementwise value,
-           then make a sequence out of them *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ List ]) in
-            let values =
-              List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
-            in
-            let value_sub = Value.Make.list typ values in
-            Ctx.add_value ctx (id, iters @ [ List ]) value_sub)
-          ctx vars
+        assign_cons_exp typ_value ctx exp_h exp_t values_inner
+    | IterE (exp_inner, iterexp), _ ->
+        assign_iter_exp (exp.note $ exp.at) ctx exp_inner iterexp value
     | _ ->
         error exp.at
           (F.asprintf "match failed %s <- %s"
@@ -176,6 +148,88 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           expected %d value(s) but got %d"
          (List.length exps) (List.length values));
     List.fold_left2 assign_exp ctx exps values
+
+  and assign_var_exp (ctx : Ctx.t) (id : id) (value : value) : Ctx.t =
+    Ctx.add_value ctx (id, []) value
+
+  and assign_tuple_exp (ctx : Ctx.t) (exps : exp list) (values : value list) :
+      Ctx.t =
+    assign_exps ctx exps values
+
+  and assign_case_exp (ctx : Ctx.t) (exps : exp list) (values : value list) :
+      Ctx.t =
+    assign_exps ctx exps values
+
+  and assign_str_exp (ctx : Ctx.t) (expfields : (atom * exp) list)
+      (valuefields : (atom * value) list) : Ctx.t =
+    let exps = List.map snd expfields in
+    let values = List.map snd valuefields in
+    assign_exps ctx exps values
+
+  and assign_opt_exp (ctx : Ctx.t) (exp_opt : exp option)
+      (value_opt : value option) : Ctx.t =
+    match (exp_opt, value_opt) with
+    | Some exp, Some value -> assign_exp ctx exp value
+    | None, None -> ctx
+    | _ -> assert false
+
+  and assign_list_exp (ctx : Ctx.t) (exps : exp list) (values : value list) :
+      Ctx.t =
+    assign_exps ctx exps values
+
+  and assign_cons_exp (typ_value : typ) (ctx : Ctx.t) (exp_h : exp)
+      (exp_t : exp) (values : value list) : Ctx.t =
+    let value_h = List.hd values in
+    let value_t = Value.Make.list typ_value (List.tl values) in
+    let ctx = assign_exp ctx exp_h value_h in
+    assign_exp ctx exp_t value_t
+
+  and assign_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    match Value.Get.opt value with
+    | Some inner_value ->
+        let ctx = assign_exp ctx exp inner_value in
+        List.fold_left
+          (fun ctx (id, typ, iters) ->
+            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+            let inner_value = Ctx.find_value ctx (id, iters) in
+            let value_sub = Value.Make.opt typ (Some inner_value) in
+            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
+          ctx vars
+    | None ->
+        List.fold_left
+          (fun ctx (id, typ, iters) ->
+            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+            let value_sub = Value.Make.opt typ None in
+            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
+          ctx vars
+
+  and assign_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    let values = Value.Get.list value in
+    let ctx_sub = { ctx with local = { ctx.local with venv = VEnv.empty } } in
+    let ctxs = List.map (assign_exp ctx_sub exp) values in
+    List.fold_left
+      (fun ctx (id, typ, iters) ->
+        let typ = Typ.Make.iterate typ (iters @ [ List ]) in
+        let values =
+          List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
+        in
+        let value_sub = Value.Make.list typ values in
+        Ctx.add_value ctx (id, iters @ [ List ]) value_sub)
+      ctx vars
+
+  and assign_iter_exp (typ_exp : typ) (ctx : Ctx.t) (exp : exp)
+      (iterexp : iterexp) (value : value) : Ctx.t =
+    match
+      is_iter_var_exp (IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
+    with
+    | Some (id_var, iters_var) -> Ctx.add_value ctx (id_var, iters_var) value
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> assign_iter_exp_opt ctx exp vars value
+        | List -> assign_iter_exp_list ctx exp vars value)
 
   (* Assigning a value to an argument *)
 
@@ -930,10 +984,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_iter_exp (typ_note : typ) (ctx : Ctx.t) (exp : exp)
       (iterexp : iterexp) : value backtrack =
-    let iter, vars = iterexp in
-    match iter with
-    | Opt -> eval_iter_exp_opt typ_note ctx exp vars
-    | List -> eval_iter_exp_list typ_note ctx exp vars
+    match
+      is_iter_var_exp (IterE (exp, iterexp) $$ (typ_note.at, typ_note.it))
+    with
+    | Some var -> Ok (Ctx.find_value ctx var)
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> eval_iter_exp_opt typ_note ctx exp vars
+        | List -> eval_iter_exp_list typ_note ctx exp vars)
 
   (* Argument evaluation *)
 

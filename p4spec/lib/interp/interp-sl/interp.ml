@@ -99,102 +99,45 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (F.sprintf "return value of function %s does not match the expected type"
          id_func.it)
 
+  (* Helper for checking if an expression is a simple iteration of a variable *)
+
+  let rec is_iter_var_exp (exp : exp) : Var.t option =
+    match exp.it with
+    | VarE id_exp -> Some (id_exp, [])
+    | IterE (exp_inner, iterexp) -> (
+        match is_iter_var_exp exp_inner with
+        | Some (id_var, iters_var) -> (
+            match iterexp with
+            | iter, [ var ] ->
+                let id_iter, _, iters_iter = var in
+                if Id.eq id_var id_iter && iters_var = iters_iter then
+                  Some (id_var, iters_var @ [ iter ])
+                else None
+            | _ -> None)
+        | None -> None)
+    | _ -> None
+
   (* Assignments *)
 
   (* Assigning a value to an expression *)
 
   let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
-    let typ_value = value.note.typ $ exp.at in
+    let typ_exp = exp.note $ exp.at in
     match (exp.it, value.it) with
-    | VarE id, _ -> Ctx.add_value ctx (id, []) value
+    | VarE id, _ -> assign_var_exp ctx id value
     | TupleE exps_inner, TupleV values_inner ->
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
+        assign_tuple_exp value ctx exps_inner values_inner
     | CaseE (_, exps_inner), CaseV (_, values_inner) ->
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
+        assign_case_exp value ctx exps_inner values_inner
     | StrE expfields, StructV valuefields ->
-        let exps_inner = List.map snd expfields in
-        let values_inner = List.map snd valuefields in
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
-    | OptE exp_opt, OptV value_opt -> (
-        match (exp_opt, value_opt) with
-        | Some exp_inner, Some value_inner ->
-            let ctx = assign_exp ctx exp_inner value_inner in
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign;
-            ctx
-        | None, None -> ctx
-        | _ -> assert false)
+        assign_str_exp value ctx expfields valuefields
+    | OptE exp_opt, OptV value_opt -> assign_opt_exp value ctx exp_opt value_opt
     | ListE exps_inner, ListV values_inner ->
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
+        assign_list_exp value ctx exps_inner values_inner
     | ConsE (exp_h, exp_t), ListV values_inner ->
-        let value_h = List.hd values_inner in
-        let value_t = Value.Make.list typ_value (List.tl values_inner) in
-        Hook.on_value value_t;
-        let ctx = assign_exp ctx exp_h value_h in
-        Hook.on_value_dependency value_h value Dep.Edges.Assign;
-        let ctx = assign_exp ctx exp_t value_t in
-        Hook.on_value_dependency value_t value Dep.Edges.Assign;
-        ctx
-    | IterE (_, (Opt, vars)), OptV None ->
-        (* Per iterated variable, make an option out of the value *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
-            let value_sub = Value.Make.opt typ None in
-            Hook.on_value value_sub;
-            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
-          ctx vars
-    | IterE (exp, (Opt, vars)), OptV (Some value) ->
-        (* Assign the value to the iterated expression *)
-        let ctx = assign_exp ctx exp value in
-        (* Per iterated variable, make an option out of the value *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
-            let value = Ctx.find_value ctx (id, iters) in
-            let value_sub = Value.Make.opt typ (Some value) in
-            Hook.on_value value_sub;
-            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
-          ctx vars
-    | IterE (exp, (List, vars)), ListV values ->
-        (* Map over the value list elements,
-           and assign each value to the iterated expression *)
-        let ctx_sub = Ctx.localize_clear ctx in
-        let ctxs = List.map (assign_exp ctx_sub exp) values in
-        (* Per iterated variable, collect its elementwise value,
-           then make a sequence out of them *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Il.List ]) in
-            let values =
-              List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
-            in
-            let value_sub = Value.Make.list typ values in
-            Hook.on_value value_sub;
-            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
-          ctx vars
+        assign_cons_exp value ctx exp_h exp_t values_inner
+    | IterE (exp_inner, iterexp), _ ->
+        assign_iter_exp typ_exp ctx exp_inner iterexp value
     | _ ->
         back_err exp.at
           (F.asprintf "match failed %s <- %s"
@@ -211,6 +154,128 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           expected %d value(s) but got %d"
          (List.length exps) (List.length values));
     List.fold_left2 assign_exp ctx exps values
+
+  and assign_var_exp (ctx : Ctx.t) (id : id) (value : value) : Ctx.t =
+    Ctx.add_value ctx (id, []) value
+
+  and assign_tuple_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_case_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_str_exp (value_outer : value) (ctx : Ctx.t)
+      (expfields : (atom * exp) list) (valuefields : (atom * value) list) :
+      Ctx.t =
+    let exps = List.map snd expfields in
+    let values = List.map snd valuefields in
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_opt_exp (value_outer : value) (ctx : Ctx.t) (exp_opt : exp option)
+      (value_opt : value option) : Ctx.t =
+    match (exp_opt, value_opt) with
+    | Some exp_inner, Some value_inner ->
+        let ctx = assign_exp ctx exp_inner value_inner in
+        Hook.on_value_dependency value_inner value_outer Dep.Edges.Assign;
+        ctx
+    | None, None -> ctx
+    | _ -> assert false
+
+  and assign_list_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_cons_exp (value_outer : value) (ctx : Ctx.t) (exp_h : exp)
+      (exp_t : exp) (values : value list) : Ctx.t =
+    let value_h = List.hd values in
+    let value_t =
+      Value.Make.list (value_outer.note.typ $ exp_t.at) (List.tl values)
+    in
+    Hook.on_value value_t;
+    let ctx = assign_exp ctx exp_h value_h in
+    Hook.on_value_dependency value_h value_outer Dep.Edges.Assign;
+    let ctx = assign_exp ctx exp_t value_t in
+    Hook.on_value_dependency value_t value_outer Dep.Edges.Assign;
+    ctx
+
+  and assign_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    let value_opt = Value.Get.opt value in
+    match value_opt with
+    | Some value ->
+        (* Assign the value to the iterated expression *)
+        let ctx_sub = assign_exp ctx exp value in
+        (* Per iterated variable, make an option out of the value *)
+        List.fold_left
+          (fun ctx (id, typ, iters) ->
+            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
+            let value = Ctx.find_value ctx_sub (id, iters) in
+            let value_sub = Value.Make.opt typ (Some value) in
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
+          ctx vars
+    | None ->
+        (* Per iterated variable, make an option out of the value *)
+        List.fold_left
+          (fun ctx (id, typ, iters) ->
+            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
+            let value_sub = Value.Make.opt typ None in
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
+          ctx vars
+
+  and assign_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    let values = Value.Get.list value in
+    (* Map over the value list elements,
+       and assign each value to the iterated expression *)
+    let ctx_sub = Ctx.localize_clear ctx in
+    let ctxs_sub = List.map (assign_exp ctx_sub exp) values in
+    (* Per iterated variable, collect its elementwise value,
+       then make a sequence out of them *)
+    List.fold_left
+      (fun ctx (id, typ, iters) ->
+        let typ = Typ.Make.iterate typ (iters @ [ Il.List ]) in
+        let values =
+          List.map (fun ctx_sub -> Ctx.find_value ctx_sub (id, iters)) ctxs_sub
+        in
+        let value_sub = Value.Make.list typ values in
+        Hook.on_value value_sub;
+        Hook.on_value_dependency value_sub value Dep.Edges.Assign;
+        Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
+      ctx vars
+
+  and assign_iter_exp (typ_exp : typ) (ctx : Ctx.t) (exp : exp)
+      (iterexp : iterexp) (value : value) : Ctx.t =
+    match
+      is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
+    with
+    | Some (id_var, iters_var) -> Ctx.add_value ctx (id_var, iters_var) value
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> assign_iter_exp_opt ctx exp vars value
+        | List -> assign_iter_exp_list ctx exp vars value)
 
   (* Assigning a value to a parameter *)
 
@@ -1050,10 +1115,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_iter_exp (typ_note : typ) (ctx : Ctx.t) (exp : exp)
       (iterexp : iterexp) : value =
-    let iter, vars = iterexp in
-    match iter with
-    | Opt -> eval_iter_exp_opt typ_note ctx exp vars
-    | List -> eval_iter_exp_list typ_note ctx exp vars
+    match
+      is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_note.at, typ_note.it))
+    with
+    | Some var -> Ctx.find_value ctx var
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> eval_iter_exp_opt typ_note ctx exp vars
+        | List -> eval_iter_exp_list typ_note ctx exp vars)
 
   (* Argument evaluation *)
 
