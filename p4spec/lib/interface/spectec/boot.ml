@@ -631,17 +631,16 @@ and boot_iterprem ((iter, vars_in, vars_out) : Il.iterprem) : Value.t =
 
 (* Premises *)
 
-and boot_prem (prem : Il.prem) : Value.t option =
-  let wrap_some value = Some value in
+and boot_prem (prem : Il.prem) : Value.t =
   let at = prem.at in
   match prem.it with
-  | RulePr (id, (_, exps), input) -> boot_rel_prem at id exps input |> wrap_some
-  | IfPr exp -> boot_if_prem at exp |> wrap_some
-  | IfHoldPr (id, (_, exps)) -> boot_ifhold_prem at id exps |> wrap_some
-  | IfNotHoldPr (id, (_, exps)) -> boot_ifnothold_prem at id exps |> wrap_some
-  | LetPr (exp_l, exp_r) -> boot_let_prem at exp_l exp_r |> wrap_some
+  | RulePr (id, (_, exps), input) -> boot_rel_prem at id exps input
+  | IfPr exp -> boot_if_prem at exp
+  | IfHoldPr (id, (_, exps)) -> boot_ifhold_prem at id exps
+  | IfNotHoldPr (id, (_, exps)) -> boot_ifnothold_prem at id exps
+  | LetPr (exp_l, exp_r) -> boot_let_prem at exp_l exp_r
   | IterPr (prem, iterprem) -> boot_iter_prem at prem iterprem
-  | DebugPr _ -> None
+  | DebugPr exp -> boot_debug_prem at exp
 
 and boot_rel_prem (at : region) (id : Il.id) (exps : Il.exp list)
     (input : Hints.Input.t) : Value.t =
@@ -678,21 +677,18 @@ and boot_let_prem (at : region) (exp_l : Il.exp) (exp_r : Il.exp) : Value.t =
     "LET exp `= exp" <| [ value_exp_l; value_exp_r ] <<| "prem" <<<| at)
 
 and boot_iter_prem (at : region) (prem : Il.prem) (iterprem : Il.iterprem) :
-    Value.t option =
-  match boot_prem prem with
-  | Some value_prem ->
-      let value_iterprem = boot_iterprem iterprem in
-      let value_prem =
-        Value.Make.(
-          "ITER prem iterprem"
-          <| [ value_prem; value_iterprem ]
-          <<| "prem" <<<| at)
-      in
-      Some value_prem
-  | None -> None
+    Value.t =
+  let value_prem = boot_prem prem in
+  let value_iterprem = boot_iterprem iterprem in
+  Value.Make.(
+    "ITER prem iterprem" <| [ value_prem; value_iterprem ] <<| "prem" <<<| at)
+
+and boot_debug_prem (at : region) (exp : Il.exp) : Value.t =
+  let value_exp = boot_exp exp in
+  Value.Make.("DEBUG exp" <| [ value_exp ] <<| "prem" <<<| at)
 
 and boot_prems (prems : Il.prem list) : Value.t =
-  let values_prems = prems |> List.map boot_prem |> List.filter_map Fun.id in
+  let values_prems = List.map boot_prem prems in
   let typ_prems = Typ.Make.var ("prem" $ no_region) [] |> Typ.Make.list in
   Value.Make.list typ_prems values_prems
 

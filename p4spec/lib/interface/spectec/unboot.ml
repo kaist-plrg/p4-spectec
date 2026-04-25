@@ -816,6 +816,7 @@ and unboot_prem (value_prem : Value.t) : Il.prem =
       ("IFNOTHOLD id `: exp*", unboot_ifnothold_prem at);
       ("LET exp `= exp", unboot_let_prem at);
       ("ITER prem iterprem", unboot_iter_prem at);
+      ("DEBUG exp", unboot_debug_prem at);
     ]
     (fun _ -> error "@unboot_prem")
 
@@ -873,6 +874,13 @@ and unboot_iter_prem (at : region) (values : Value.t list) : Il.prem =
       let iterprem = unboot_iterprem value_iterprem in
       Il.IterPr (prem, iterprem) $ at
   | _ -> error "@unboot_iter_prem"
+
+and unboot_debug_prem (at : region) (values : Value.t list) : Il.prem =
+  match values with
+  | [ value_exp ] ->
+      let exp = unboot_exp value_exp in
+      Il.DebugPr exp $ at
+  | _ -> error "@unboot_debug_prem"
 
 (* Rule matching and paths *)
 
