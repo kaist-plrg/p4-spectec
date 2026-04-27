@@ -6,54 +6,17 @@ open Util.Source
 
 (* The bottom layer *)
 
-module Make_zero (Interp_IL : Run.INTERP_IL) (Interp_SL : Run.INTERP_SL) :
-  Run.EXTERN = struct
+module Make_null (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN = struct
   (* Mode initialization *)
 
-  let mode : Run.mode ref = ref Run.Empty_mode
-  let init_mode mode_ = mode := mode_
+  let init_mode _ = ()
 
-  (* Calling SpecTec spec's built-in functions *)
+  (* Externs *)
 
-  let call_builtin_func (values_input : Value.t list) : Value.t list =
-    let _value_ctx, value_id, _value_builtinFuncDef, value_typs, value_values =
-      match values_input with
-      | [ value_ctx; value_id; value_builtinFuncDef; value_typs; value_values ]
-        ->
-          (value_ctx, value_id, value_builtinFuncDef, value_typs, value_values)
-      | _ ->
-          error_no_region "unexpected number of arguments to call_builtin_func"
-    in
-    let id = value_id |> Interface.SpecTec.unboot_id in
-    let typs = value_typs |> Interface.SpecTec.unboot_typs in
-    let values = value_values |> Interface.SpecTec.unboot_values in
-    let value_output =
-      match !mode with
-      | Run.IL_mode -> (
-          match Interp_IL.eval_func id.it typs values with
-          | Run.Pass v -> v
-          | Run.Fail (at, msg) -> error at msg)
-      | Run.SL_mode -> (
-          match Interp_SL.eval_func id.it typs values with
-          | Run.Pass v -> v
-          | Run.Fail (at, msg) -> error at msg)
-      | Run.Empty_mode -> assert false
-    in
-    let value_value_output = Interface.SpecTec.boot_value value_output in
-    let value_value_output_res =
-      Value.Make.("OK val" <| [ value_value_output ] <<| "valres")
-    in
-    [ value_value_output_res ]
-
-  let eval_extern_rel (name : string) (values_input : Value.t list) :
+  let eval_extern_rel (name : string) (_values_input : Value.t list) :
       Run.rel_result =
     try
-      Run.Pass
-        (match name with
-        | "Call_builtin_func" -> call_builtin_func values_input
-        | _ ->
-            error no_region
-              (Format.asprintf "unimplemented extern relation: %s" name))
+      error no_region (Format.asprintf "unimplemented extern relation: %s" name)
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
@@ -65,15 +28,15 @@ end
 
 (* The intermediate layer *)
 
-module Make_interm
-    (Runner_SpecTec : Run.RUNNER)
+module Make_parametric
+    (Runner : Run.RUNNER)
     (_ : Run.INTERP_IL)
     (_ : Run.INTERP_SL) : Run.EXTERN = struct
   (* Mode initialization *)
 
   let init_mode _ = ()
 
-  (* Calling SpecTec's built-in functions *)
+  (* Externs - threading extern calls to the runner *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
     let _value_ctx, value_id, _value_builtinFuncDef, value_typs, value_values =
@@ -88,7 +51,7 @@ module Make_interm
     let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
     let value_output =
-      match Runner_SpecTec.run_func id.it typs values with
+      match Runner.run_func id.it typs values with
       | Pass value_output -> value_output
       | Fail (at, msg) -> error at msg
     in
@@ -98,58 +61,25 @@ module Make_interm
     in
     [ value_value_output_res ]
 
-  let eval_extern_rel (name : string) (values_input : Value.t list) :
-      Run.rel_result =
-    try
-      Run.Pass
-        (match name with
-        | "Call_builtin_func" -> call_builtin_func values_input
-        | _ ->
-            error no_region
-              (Format.asprintf "unimplemented extern relation: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
-
-  let eval_extern_func (name : string) (_typs : Typ.t list)
-      (_values_input : Value.t list) : Run.func_result =
-    try
-      error no_region (Format.asprintf "unimplemented extern function: %s" name)
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
-end
-
-(* The top layer *)
-
-module Make_top
-    (Runner_P4 : Run.RUNNER)
-    (_ : Run.INTERP_IL)
-    (_ : Run.INTERP_SL) : Run.EXTERN = struct
-  (* Mode initialization *)
-
-  let init_mode _ = ()
-
-  (* Calling P4 spec's built-in functions *)
-
-  let call_builtin_func (values_input : Value.t list) : Value.t list =
-    let _value_ctx, value_id, _value_builtinFuncDef, value_typs, value_values =
+  let call_extern_rel (values_input : Value.t list) : Value.t list =
+    let _value_ctx, value_id, value_values =
       match values_input with
-      | [ value_ctx; value_id; value_builtinFuncDef; value_typs; value_values ]
-        ->
-          (value_ctx, value_id, value_builtinFuncDef, value_typs, value_values)
-      | _ ->
-          error_no_region "unexpected number of arguments to call_builtin_func"
+      | [ value_ctx; value_id; value_values ] ->
+          (value_ctx, value_id, value_values)
+      | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
     let id = value_id |> Interface.SpecTec.unboot_id in
-    let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
-    let value_output =
-      match Runner_P4.run_func id.it typs values with
-      | Pass value_output -> value_output
+    let values_output =
+      match Runner.run_rel id.it values with
+      | Pass values_output -> values_output
       | Fail (at, msg) -> error at msg
     in
-    let value_value_output = Interface.SpecTec.boot_value value_output in
-    let value_value_output_res =
-      Value.Make.("OK val" <| [ value_value_output ] <<| "valres")
+    let value_values_output = Interface.SpecTec.boot_values values_output in
+    let value_values_output_res =
+      Value.Make.("OK val*" <| [ value_values_output ] <<| "valsres")
     in
-    [ value_value_output_res ]
+    [ value_values_output_res ]
 
   let eval_extern_rel (name : string) (values_input : Value.t list) :
       Run.rel_result =
@@ -157,9 +87,9 @@ module Make_top
       Run.Pass
         (match name with
         | "Call_builtin_func" -> call_builtin_func values_input
+        | "Call_extern_rel" -> call_extern_rel values_input
         | _ ->
-            error no_region
-              (Format.asprintf "unimplemented extern relation: %s" name))
+            failwith (Format.asprintf "unimplemented extern relation: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)

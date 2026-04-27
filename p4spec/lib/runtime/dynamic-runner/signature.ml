@@ -91,6 +91,7 @@ module type RUNNER = sig
 
   (* Relation and meta-function evaluation *)
 
+  val run_rel : string -> Value.t list -> rel_result
   val run_func : string -> Sl.typ list -> Value.t list -> func_result
 
   (* Parsing *)

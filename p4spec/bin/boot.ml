@@ -26,7 +26,7 @@ let structure filenames_spec =
 let prosify filenames_spec =
   filenames_spec |> structure |> Prose.Prosify.prosify_spec
 
-let runner ?(cache = true) ?(det = false) mode filenames_spec =
+let booter ?(cache = true) ?(det = false) mode filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
@@ -36,9 +36,9 @@ let runner ?(cache = true) ?(det = false) mode filenames_spec =
         let spec_sl = structure filenames_spec in
         (SL spec_sl : spec)
   in
-  let (module Runner) = Backend_boot.Gen.gen_boot_zero () in
-  Runner.init ~cache ~det spec_sim;
-  (spec_sim, (module Runner : RUNNER))
+  let (module Booter) = Backend_boot.Gen.gen_zero_spectec () in
+  Booter.init ~cache ~det spec_sim;
+  (spec_sim, (module Booter : RUNNER))
 
 let booter_square ?(cache = true) ?(det = false) mode filenames_spec
     filenames_spec_p4 =
@@ -60,12 +60,12 @@ let booter_square ?(cache = true) ?(det = false) mode filenames_spec
         let spec_sl = structure filenames_spec_p4 in
         (SL spec_sl : spec)
   in
-  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_boot_one () in
+  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
   Runner_P4.init ~cache ~det spec_p4;
   Booter.init ~cache ~det spec;
   (spec, (module Booter : RUNNER))
 
-let booter_cube ?(cache = true) ?(det = false) mode filenames_spec
+let booter_cube_p4 ?(cache = true) ?(det = false) mode filenames_spec
     filenames_spec_p4 =
   let spec =
     match mode with
@@ -85,15 +85,40 @@ let booter_cube ?(cache = true) ?(det = false) mode filenames_spec
         let spec_sl = structure filenames_spec_p4 in
         (SL spec_sl : spec)
   in
-  let ( (module Runner_SpecTec),
-        (module Booter_interm),
-        (module Runner_P4),
-        (module Booter) ) =
-    Backend_boot.Gen.gen_boot_two ()
+  let (module Runner_P4), (module Runner_SpecTec_mid), (module Booter) =
+    Backend_boot.Gen.gen_cube_p4 ()
   in
-  Runner_SpecTec.init ~cache ~det spec;
-  Booter_interm.init ~cache ~det spec;
   Runner_P4.init ~cache ~det spec_p4;
+  Runner_SpecTec_mid.init ~cache ~det spec;
+  Booter.init ~cache ~det spec;
+  (spec, (module Booter : RUNNER))
+
+let booter_cube_spectec ?(cache = true) ?(det = false) mode filenames_spec
+    filenames_spec_pgm =
+  let spec =
+    match mode with
+    | `IL ->
+        let spec_il = elab filenames_spec in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure filenames_spec in
+        (SL spec_sl : spec)
+  in
+  let spec_pgm =
+    match mode with
+    | `IL ->
+        let spec_il = elab filenames_spec_pgm in
+        (IL spec_il : spec)
+    | `SL ->
+        let spec_sl = structure filenames_spec_pgm in
+        (SL spec_sl : spec)
+  in
+  let (module Runner_SpecTec_pgm), (module Runner_SpecTec_mid), (module Booter)
+      =
+    Backend_boot.Gen.gen_cube_spectec ()
+  in
+  Runner_SpecTec_pgm.init ~cache ~det spec_pgm;
+  Runner_SpecTec_mid.init ~cache ~det spec_pgm;
   Booter.init ~cache ~det spec;
   (spec, (module Booter : RUNNER))
 
@@ -181,8 +206,8 @@ let run_command =
      fun () ->
        try
          let cache = not no_cache in
-         let spec_sim, (module Runner) =
-           runner ~cache ~det mode filenames_spec
+         let spec_sim, (module Booter) =
+           booter ~cache ~det mode filenames_spec
          in
          let handlers =
            if profile then
@@ -201,7 +226,7 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result = Runner.run_program relname [] filename_spectec in
+         let result = Booter.run_program relname [] filename_spectec in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -283,7 +308,7 @@ let boot_square_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let boot_cube_command =
+let boot_cube_p4_command =
   Core.Command.basic
     ~summary:
       "execute a P4 spec against a P4-SpecTec spec against a P4-SpecTec spec"
@@ -325,7 +350,7 @@ let boot_cube_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_cube ~cache ~det mode filenames_spec filenames_spec_p4
+           booter_cube_p4 ~cache ~det mode filenames_spec filenames_spec_p4
          in
          let handlers =
            if profile then
@@ -357,6 +382,82 @@ let boot_cube_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let boot_cube_spectec_command =
+  Core.Command.basic
+    ~summary:
+      "execute a P4-SpecTec program against a P4-SpecTec spec against a \
+       P4-SpecTec spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map dirname_spec =
+       flag "-s0" (required string) ~doc:"directory for boot spec files"
+     and rel = flag "-r0" (required string) ~doc:"boot spec relation to run"
+     and dirname_spec_pgm =
+       flag "-s1" (required string) ~doc:"directory for spectec spec files"
+     and rel_pgm =
+       flag "-r1" (required string) ~doc:"SpecTec program relation to run"
+     and filename_pgm = flag "-p1" (required string) ~doc:"SpecTec program"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "il" no_arg ~doc:"run IL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+         ]
+         ~if_nothing_chosen:(Default_to `SL)
+     in
+     fun () ->
+       try
+         let cache = not no_cache in
+         let filenames_spec = expand_spec [ dirname_spec ] in
+         let filenames_spec_pgm = expand_spec [ dirname_spec_pgm ] in
+         let spec, (module Booter) =
+           booter_cube_spectec ~cache ~det mode filenames_spec
+             filenames_spec_pgm
+         in
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec;
+         let value_spec =
+           Backend_boot.Patch.apply_cube_small filenames_spec rel
+             filenames_spec_pgm rel_pgm filename_pgm
+         in
+         let result = Booter.run_program_internal rel value_spec in
+         Inst.Hook.finish ();
+         match result with
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg
+       with
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let parse_command =
   Core.Command.basic ~summary:"parse a SpecTec program"
     (let open Core.Command.Let_syntax in
@@ -369,17 +470,17 @@ let parse_command =
      in
      fun () ->
        try
-         let _, (module Runner) = runner `IL filenames_spec in
+         let _, (module Booter) = booter `IL filenames_spec in
          let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
-           match Runner.parse_file [] filenames_spectec with
+           match Booter.parse_file [] filenames_spectec with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let str_program = Runner.unparse_program value_program in
+         let str_program = Booter.unparse_program value_program in
          if roundtrip then
            let value_program_roundtrip =
-             match Runner.parse_string filename_spectec str_program with
+             match Booter.parse_string filename_spectec str_program with
              | Pass value_program_roundtrip -> value_program_roundtrip
              | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in
@@ -408,8 +509,9 @@ let command =
       ("prose", prose_command);
       (* Execution *)
       ("run", run_command);
-      ("boot-2", boot_square_command);
-      ("boot-3", boot_cube_command);
+      ("boot-2-p4", boot_square_command);
+      ("boot-3-p4", boot_cube_p4_command);
+      ("boot-3-spectec", boot_cube_spectec_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]

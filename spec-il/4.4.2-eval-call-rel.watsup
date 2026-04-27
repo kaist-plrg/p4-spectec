@@ -97,11 +97,14 @@ rulegroup Call_rel/defined {
 
 ;; Extern relations
 
-dec $invoke_extern_rel(id, val*) : res<val*>
+extern relation Call_extern_rel:
+  ctx |- id val* : res<val*>
+  hint(input %0 %1 %2)
 
 rule Call_rel/ext:
-  C |- id val* : $invoke_extern_rel(id, val*)
+  C |- id val* : OK val_out*
   -- if EXT = $find_rel(C, id)
+  -- Call_extern_rel: C |- id val* : OK val_out*
 
 rule Call_rel/fail:
   C |- id val* : FAIL

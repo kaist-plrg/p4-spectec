@@ -69,6 +69,12 @@ module Make
 
   (* Meta-function runner *)
 
+  let run_rel (relname : string) (values : Value.t list) : rel_result =
+    match !spec with
+    | IL _ -> Interp_IL.eval_rel relname values
+    | SL _ -> Interp_SL.eval_rel relname values
+    | Empty -> assert false
+
   let run_func (funcname : string) (typs : Typ.t list) (values : Value.t list) :
       func_result =
     match !spec with
