@@ -34,11 +34,17 @@ rule Eval_clauses/fail:
   C `/ C_caller |- _ `@ `( _ ) : FAIL
   -- otherwise
 
+;;; Extern meta-function invocation
+
+extern relation Call_extern_func:
+  ctx |- id `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
+
 ;;; Builtin meta-function invocation
 
 extern relation Call_builtin_func:
-  ctx |- id builtinFuncDef `@ `< typ* > `( val* ) : res<val>
-  hint(input %0 %1 %2 %3 %4)
+  ctx |- id `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
 
 ;;; Table meta-function invocation
 
@@ -108,33 +114,57 @@ rule Call_defined_func:
 
 rulegroup Call_func/ok {
 
-    ;; rule Call_func/extern:
+    rule Call_func/extern:
+      C |- (EXT id) typ* val* : OK val_output
+      -- Call_extern_func:
+          C |- id `< typ* > `( val* ) : OK val_output
 
     rule Call_func/builtin:
-      C |- id targ* arg* : valres
-      -- Eval_targs: C |- targ* : typ_input*
-      -- Eval_args: C |- arg* : OK val_input*
-      -- if builtinFuncDef = $find_func(C, id)
+      C |- builtinFuncDef typ* val* : OK val_output
+      -- if BUILTIN id _ _ = builtinFuncDef
       -- Call_builtin_func:
-          C |- id builtinFuncDef `@ `< typ_input* > `( val_input* ) : valres
+          C |- id `@ `< typ* > `( val* ) : OK val_output
 
     rule Call_func/table:
-      C |- id eps arg* : valres
-      -- Eval_args: C |- arg* : OK val_input*
-      -- if tableFuncDef = $find_func(C, id)
+      C |- tableFuncDef eps val* : OK val_output
       -- Call_table_func:
-          C |- tableFuncDef `@ `( val_input* ) : valres
+          C |- tableFuncDef `@ `( val* ) : OK val_output
 
     rule Call_func/defined:
-      C |- id targ* arg* : valres
-      -- Eval_targs: C |- targ* : typ_input*
-      -- Eval_args: C |- arg* : OK val_input*
-      -- if definedFuncDef = $find_func(C, id)
+      C |- definedFuncDef typ* val* : OK val_output
       -- Call_defined_func:
-          C |- definedFuncDef `@ `< typ_input* > `( val_input* ) : valres
+          C |- definedFuncDef `@ `< typ* > `( val* ) : OK val_output
 
 }
 
 rule Call_func/fail:
-  C |- id targ* arg* : FAIL
+  C |- funcdef typ* val* : FAIL
   -- otherwise
+
+;; Meta-function call wrapper with cache
+
+rule Call_func_cached:
+  C |- id targ* arg* : valres
+  -- Eval_targs: C |- targ* : typ_input*
+  -- Eval_args: C |- arg* : OK val_input*
+  -- if funccache = $cache_find_func(id, val_input*)
+  -- Call_func_dispatch:
+      C |- id typ_input* val_input* funccache : valres
+
+rule Call_func_dispatch/hit:
+  C |- id typ* val* (OK val_cached) : OK val_cached
+
+rule Call_func_dispatch/miss:
+  C |- id typ* val* NONE : valres
+  -- if (cursor, funcdef) = $find_func(C, id)
+  -- if cp_before = $cache_checkpoint()
+  -- Call_func: C |- funcdef typ* val* : valres
+  -- if cp_after = $cache_checkpoint()
+  -- if b_ext = (funcdef <: externFuncDef)
+  -- if b_seff = $cache_seff(cp_before, cp_after)
+  -- if b_anon = (cursor = LOCAL)
+  -- if b_hoff = $exists_($is_fun(val)*)
+  -- if $cache_add_func_maybe(
+          b_ext \/ b_seff \/ b_anon \/ b_hoff,
+          ;; false,
+          id, val*, valres)

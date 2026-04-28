@@ -95,4 +95,18 @@ module Make
 
   let unparse_program (value_program : Value.t) : string =
     Interface.unparse_program value_program
+
+  (* State management *)
+
+  let checkpoint () : int = Interface.checkpoint ()
+
+  let seff (checkpoint_before : int) (checkpoint_after : int) : bool =
+    Interface.seff checkpoint_before checkpoint_after
+
+  (* Clear the cache *)
+
+  let clear () : unit =
+    Interp_IL.clear ();
+    Interp_SL.clear ();
+    Extern.clear ()
 end

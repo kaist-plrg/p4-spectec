@@ -61,6 +61,7 @@ module Make
       Spec_.Rel.register call_rel;
       Spec_.Pgm.register call_pgm
 
+    let clear () = ()
     let eval_extern_rel = Arch.eval_extern_rel
     let eval_extern_func = Arch.eval_extern_func
   end

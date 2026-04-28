@@ -5,7 +5,7 @@
 rule Eval_prem/relpr:
   C |- REL id `: exp* `-> exp_out* : ctxres
   -- Eval_exps: C |- exp* : OK val*
-  -- Call_rel: C |- id val* : OK val_out*
+  -- Call_rel_cached: C |- id val* : OK val_out*
   -- Assign_exps : C |- val_out* -> exp_out* : ctxres
 
 ;;; If premises
@@ -29,12 +29,12 @@ rulegroup Eval_prem/ifholdpr {
   rule Eval_prem/hold:
     C |- IFHOLD id `: exp* : OK C
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : OK eps
+    -- Call_rel_cached: C |- id val_input* : OK eps
 
   rule Eval_prem/nothold:
     C |- IFNOTHOLD id `: exp* : OK C
     -- Eval_exps: C |- exp* : OK val_input*
-    -- Call_rel: C |- id val_input* : FAIL
+    -- Call_rel_cached: C |- id val_input* : FAIL
 
 }
 

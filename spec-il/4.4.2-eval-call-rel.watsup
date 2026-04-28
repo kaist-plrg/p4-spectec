@@ -74,38 +74,83 @@ rule Eval_rulgroups/fail:
   C |- rulgroup* `@ `( val* ) : FAIL
   -- otherwise
 
-;; Defined relations
+;;; Defined relations
 
-rulegroup Call_rel/defined {
-    
-    rule Call_rel/succ:
-      C |- id val* : OK val_out*
-      -- if DEF rulgroup* elsgroup? = $find_rel(C, id)
-      -- if C_local = C[ .LOCAL = $empty_layer ]
-      -- Eval_rulgroups: C_local |- rulgroup* `@ `( val* ) : OK val_out*
+relation Call_defined_rel:
+  ctx |- definedRelDef `@ `( val* ) : res<val*>
+  hint(input %0 %1 %2)
 
-    rule Call_rel/fail-with-els:
-      C |- id val* : OK val_out*
-      -- if DEF rulgroup* elsgroup = $find_rel(C, id)
+rulegroup Call_defined_rel/ok {
+
+    rule Call_defined_rel/succ:
+      C |- definedRelDef `@ `( val* ) : OK val_out*
+      -- if DEF rulgroup* elsgroup? = definedRelDef
       -- if C_local = C[ .LOCAL = $empty_layer ]
-      -- Eval_rulgroups: C_local |- rulgroup* `@ `( val* ) : FAIL
+      -- Eval_rulgroups:
+          C_local |- rulgroup* `@ `( val* ) : OK val_out*
+
+    rule Call_defined_rel/fail-with-els:
+      C |- definedRelDef `@ `( val* ) : OK val_out*
+      -- if DEF rulgroup* elsgroup = definedRelDef
+      -- if C_local = C[ .LOCAL = $empty_layer ]
+      -- Eval_rulgroups:
+          C_local |- rulgroup* `@ `( val* ) : FAIL
       -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
       -- if rulgroup_els = id_els `: rulmatch_els `= rulpath_els
-      -- Eval_rulgroup: C_local |- rulgroup_els `@ `( val* ) : OK val_out*
+      -- Eval_rulgroup:
+          C_local |- rulgroup_els `@ `( val* ) : OK val_out*
 
 }
 
-;; Extern relations
+rule Call_defined_rel/fail:
+  C |- definedRelDef `@ `( val* ) : FAIL
+  -- otherwise
+
+;;; Extern relations
 
 extern relation Call_extern_rel:
   ctx |- id val* : res<val*>
   hint(input %0 %1 %2)
 
-rule Call_rel/ext:
-  C |- id val* : OK val_out*
-  -- if EXT = $find_rel(C, id)
-  -- Call_extern_rel: C |- id val* : OK val_out*
+;; Relation dispatch
+
+rulegroup Call_rel/ok {
+
+    rule Call_rel/defined:
+      C |- definedRelDef val* : OK val_out*
+      -- Call_defined_rel:
+          C |- definedRelDef `@ `( val* ) : OK val_out*
+
+    rule Call_rel/ext:
+      C |- (EXT id) val* : OK val_out*
+      -- Call_extern_rel:
+          C |- id val* : OK val_out*
+
+}
 
 rule Call_rel/fail:
-  C |- id val* : FAIL
+  C |- reldef val* : FAIL
   -- otherwise
+
+;; Relation call wrapper with cache
+
+rule Call_rel_cached:
+  C |- id val* : valsres
+  -- if relcache = $cache_find_rel(id, val*)
+  -- Call_rel_dispatch: C |- id val* relcache : valsres
+
+rule Call_rel_dispatch/hit:
+  C |- id val_input* (OK val_cached*) : OK val_cached*
+
+rule Call_rel_dispatch/miss:
+  C |- id val_input* NONE : valsres
+  -- if reldef = $find_rel(C, id)
+  -- if cp_before = $cache_checkpoint()
+  -- Call_rel: C |- reldef val_input* : valsres
+  -- if cp_after = $cache_checkpoint()
+  -- if b_ext = (reldef <: externRelDef)
+  -- if b_seff = $cache_seff(cp_before, cp_after)
+  -- if $cache_add_rel_maybe(
+          b_ext \/ b_seff,
+          ;; false,
+          id, val_input*, valsres)

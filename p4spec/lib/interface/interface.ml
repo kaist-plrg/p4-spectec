@@ -60,6 +60,9 @@ module P4 = struct
   module Builtin_P4 = Builtin.Call.Make (Builtin_P4_Ext) ()
 
   let call_builtin = Builtin_P4.invoke
+
+  (* State management *)
+
   let checkpoint = Builtin_P4.checkpoint
   let seff = Builtin_P4.seff
 
@@ -114,6 +117,9 @@ module SpecTec = struct
   module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
 
   let call_builtin = Builtin_SpecTec.invoke
+
+  (* State management *)
+
   let checkpoint = Builtin_SpecTec.checkpoint
   let seff = Builtin_SpecTec.seff
 

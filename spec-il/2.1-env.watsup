@@ -16,16 +16,25 @@ syntax tdenv = map<id, typdef>
 
 ;; Relation environment
 
-syntax reldef =
-  | EXT
+syntax externRelDef =
+  | EXT id
+
+syntax definedRelDef =
   | DEF rulgroup* elsgroup?
+
+syntax reldef =
+  | externRelDef
+  | definedRelDef
 
 syntax renv = map<id, reldef>
 
 ;; Function environment
 
+syntax externFuncDef =
+  | EXT id
+
 syntax builtinFuncDef =
-  | BUILTIN tparam* param*
+  | BUILTIN id tparam* param*
 
 syntax tableFuncDef =
   | TABLE param* `-> tblrow*
@@ -34,7 +43,7 @@ syntax definedFuncDef =
   | DEF tparam* `-> clause* elsclause?
 
 syntax funcdef =
-  | EXT
+  | externFuncDef
   | builtinFuncDef
   | tableFuncDef
   | definedFuncDef

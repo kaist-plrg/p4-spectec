@@ -144,7 +144,7 @@ let booter ?(det = false) mode specdir specdir_p4 =
         let spec_sl = structure specdir_p4 in
         (SL spec_sl : spec)
   in
-  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_boot_one () in
+  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
   Runner_P4.init ~det spec_p4;
   Booter.init ~det spec;
   (spec, (module Booter : RUNNER))

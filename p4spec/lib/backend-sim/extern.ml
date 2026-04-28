@@ -14,6 +14,7 @@ end
 
 module Make (A : IMPL) : Run.EXTERN = struct
   let init_mode _ = ()
+  let clear () = ()
 
   let eval_extern_rel (name : string) (values_input : Value.t list) :
       Run.rel_result =

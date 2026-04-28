@@ -32,9 +32,8 @@ module Make (Ext : EXT) () = struct
 
   (* State management *)
 
-  let ckpt : int ref = ref !ctr
-  let checkpoint () : unit = ckpt := !ctr
-  let seff () : bool = !ctr - !ckpt <> 0
+  let checkpoint () : int = !ctr
+  let seff (before : int) (after : int) : bool = before <> after
 
   (* Builtin calls *)
 

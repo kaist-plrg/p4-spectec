@@ -37,8 +37,10 @@ module type INTERFACE = sig
   val call_builtin :
     (Value.t -> unit) -> Id.t -> Typ.t list -> Value.t list -> Value.t
 
-  val checkpoint : unit -> unit
-  val seff : unit -> bool
+  (* State management *)
+
+  val checkpoint : unit -> int
+  val seff : int -> int -> bool
 
   (* Initialization *)
 
@@ -54,6 +56,10 @@ module type EXTERN = sig
   (* Mode initialization *)
 
   val init_mode : mode -> unit
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
 end
 
 module type INTERP_IL = sig
@@ -66,6 +72,10 @@ module type INTERP_IL = sig
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> Il.spec -> unit
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
 end
 
 module type INTERP_SL = sig
@@ -81,6 +91,10 @@ module type INTERP_SL = sig
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> Sl.spec -> unit
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
 end
 
 module type RUNNER = sig
@@ -103,7 +117,16 @@ module type RUNNER = sig
 
   val unparse_program : Value.t -> string
 
+  (* State management *)
+
+  val checkpoint : unit -> int
+  val seff : int -> int -> bool
+
   (* Initialization *)
 
   val init : ?cache:bool -> ?det:bool -> spec -> unit
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
 end

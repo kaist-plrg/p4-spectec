@@ -37,9 +37,42 @@ relation Eval_prems:
   hint(input %0 %1)
 
 relation Call_func:
+  ctx |- funcdef targ* val* : res<val>
+  hint(input %0 %1 %2 %3)
+
+relation Call_func_cached:
   ctx |- id targ* arg* : res<val>
   hint(input %0 %1 %2 %3)
 
 relation Call_rel:
+  ctx |- reldef val* : res<val*>
+  hint(input %0 %1 %2)
+
+relation Call_rel_cached:
   ctx |- id val* : res<val*>
   hint(input %0 %1 %2)
+
+;; Interface to an external cache
+
+extern syntax cachepoint
+syntax funccache = OK val | NONE
+syntax relcache = OK val* | NONE
+
+var cp : cachepoint
+
+extern dec $cache_find_func(id, val*) : funccache
+extern dec $cache_add_func_maybe(bool, id, val*, valres) : bool
+
+extern dec $cache_find_rel(id, val*) : relcache
+extern dec $cache_add_rel_maybe(bool, id, val*, valsres) : bool
+
+extern dec $cache_checkpoint() : cachepoint
+extern dec $cache_seff(cachepoint, cachepoint) : bool
+
+relation Call_func_dispatch:
+  ctx |- id typ* val* funccache : res<val>
+  hint(input %0 %1 %2 %3 %4)
+
+relation Call_rel_dispatch:
+  ctx |- id val* relcache : res<val*>
+  hint(input %0 %1 %2 %3)

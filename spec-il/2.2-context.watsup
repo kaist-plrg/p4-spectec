@@ -1,5 +1,7 @@
 ;; Context
 
+syntax cursor = GLOBAL | LOCAL
+
 syntax layer =
   { TYP tdenv,
     REL renv,
@@ -51,7 +53,7 @@ def $load(C, defn_h :: defn_t*)
 def $load(C, defn_h :: defn_t*)
   = $load(C', defn_t*)
   -- if EXTREL id `: typ_input* `-> typ_output* = defn_h
-  -- if C' = $load_reldef(C, id, EXT)
+  -- if C' = $load_reldef(C, id, EXT id)
 def $load(C, defn_h :: defn_t*)
   = $load(C', defn_t*)
   -- if REL id `: typ_input* `-> typ_output* `= rulgroup* elsgroup? = defn_h
@@ -60,12 +62,12 @@ def $load(C, defn_h :: defn_t*)
 def $load(C, defn_h :: defn_t*)
   = $load(C', defn_t*)
   -- if EXTFUNC id tparam* param* `: typ = defn_h
-  -- if C' = $load_funcdef(C, id, EXT)
+  -- if C' = $load_funcdef(C, id, EXT id)
 
 def $load(C, defn_h :: defn_t*)
   = $load(C', defn_t*)
   -- if BUILTINFUNC id tparam* param* `: typ = defn_h
-  -- if C' = $load_funcdef(C, id, BUILTIN tparam* param*)
+  -- if C' = $load_funcdef(C, id, BUILTIN id tparam* param*)
 
 def $load(C, defn_h :: defn_t*)
   = $load(C', defn_t*)
@@ -180,12 +182,15 @@ def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
 
 ;;; Function finders
 
-dec $find_func(ctx, id) : funcdef?
+dec $find_func(ctx, id) : (cursor, funcdef)?
 
-def $find_func(C, id) = funcdef
+def $find_func(C, id) = (LOCAL, funcdef)
   -- if funcdef = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
-def $find_func(C, id) = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
+def $find_func(C, id) = (GLOBAL, funcdef)
   -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+  -- if funcdef = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
+def $find_func(C, id) = eps
+  -- otherwise
 
 ;;; Relation finders
 

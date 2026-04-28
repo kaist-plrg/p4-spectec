@@ -1805,10 +1805,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       match cache_result with
       | Some values_output -> values_output
       | None ->
-          Interface.checkpoint ();
+          let checkpoint_before = Interface.checkpoint () in
           let values_output = invoke_rel'' () in
+          let checkpoint_after = Interface.checkpoint () in
           (* Cache if the relation does not create a side-effect *)
-          if not (Interface.seff ()) then
+          if not (Interface.seff checkpoint_before checkpoint_after) then
             Cache.Cache.add !rel_cache (id.it, values_input) values_output;
           values_output)
     else (
@@ -1920,10 +1921,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           match cache_result with
           | Some value_output -> value_output
           | None ->
-              Interface.checkpoint ();
+              let checkpoint_before = Interface.checkpoint () in
               let value_output = invoke_func_with_values' () in
+              let checkpoint_after = Interface.checkpoint () in
               (* Cache if the builtin function does not create a side-effect *)
-              if not (Interface.seff ()) then
+              if not (Interface.seff checkpoint_before checkpoint_after) then
                 Cache.Cache.add !func_cache (id.it, values_input) value_output;
               value_output)
         else (

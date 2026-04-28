@@ -41,6 +41,7 @@ module Make () : RUNNER = struct
       Spec_.Rel.register call_rel;
       Spec_.Pgm.register call_pgm
 
+    let clear () = ()
     let eval_extern_rel = Placeholder.eval_extern_rel
     let eval_extern_func = Placeholder.eval_extern_func
   end

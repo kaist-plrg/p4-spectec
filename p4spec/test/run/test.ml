@@ -9,6 +9,7 @@ module Filesys = Util.Filesys
 let run (module Simulator : SIM) neg relname includes_p4 filename_p4 =
   let time_start = start () in
   try
+    Simulator.clear ();
     (match Simulator.run_program relname includes_p4 filename_p4 with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
