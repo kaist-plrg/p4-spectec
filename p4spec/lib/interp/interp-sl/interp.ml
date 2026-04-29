@@ -33,71 +33,82 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Checkers *)
 
+  let check_guard = ref true
+
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
       unit =
-    let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-    let _, typs = nottyp |> it in
-    let typs = List.map (fun i -> List.nth typs i) inputs in
-    check
-      (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typs values_input)
-      id_rel.at
-      (F.sprintf "relation input of %s does not match the expected type"
-         id_rel.it)
+    if not !check_guard then ()
+    else
+      let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
+      let _, typs = nottyp |> it in
+      let typs = List.map (fun i -> List.nth typs i) inputs in
+      check
+        (Value.Match.subs (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typs values_input)
+        id_rel.at
+        (F.sprintf "relation input of %s does not match the expected type"
+           id_rel.it)
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
-    let _, typs = nottyp |> it in
-    let typs =
-      typs
-      |> List.mapi (fun idx typ ->
-             if List.mem idx inputs then None else Some typ)
-      |> List.filter_map Fun.id
-    in
-    check
-      (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typs values_output)
-      id_rel.at
-      (F.sprintf "relation output of %s does not match the expected type"
-         id_rel.it)
+    if not !check_guard then ()
+    else
+      let _, typs = nottyp |> it in
+      let typs =
+        typs
+        |> List.mapi (fun idx typ ->
+               if List.mem idx inputs then None else Some typ)
+        |> List.filter_map Fun.id
+      in
+      check
+        (Value.Match.subs (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typs values_output)
+        id_rel.at
+        (F.sprintf "relation output of %s does not match the expected type"
+           id_rel.it)
 
   let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
       (values_input : value list) : unit =
-    let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
-    check
-      (List.length targs = List.length tparams)
-      id_func.at
-      (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
-    let tdenv_local =
-      List.fold_left2
-        (fun tdenv_local tparam targ ->
-          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
-          TDEnv.add tparam td tdenv_local)
-        TDEnv.empty tparams targs
-    in
-    let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
-    check
-      (Value.Match.subs
-         (Ctx.find_typdef_opt ctx_local)
-         (Ctx.find_func_signature ctx_local)
-         typs_params values_input)
-      id_func.at
-      (F.sprintf "function argument of %s does not match the parameter type"
-         id_func.it)
+    if not !check_guard then ()
+    else
+      let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
+      check
+        (List.length targs = List.length tparams)
+        id_func.at
+        (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
+      let tdenv_local =
+        List.fold_left2
+          (fun tdenv_local tparam targ ->
+            let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+            TDEnv.add tparam td tdenv_local)
+          TDEnv.empty tparams targs
+      in
+      let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
+      check
+        (Value.Match.subs
+           (Ctx.find_typdef_opt ctx_local)
+           (Ctx.find_func_signature ctx_local)
+           typs_params values_input)
+        id_func.at
+        (F.sprintf "function argument of %s does not match the parameter type"
+           id_func.it)
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
-    let theta = TIdMap.of_lists tparams targs in
-    let typ_output = Type.Subst.subst_typ theta typ_output in
-    check
-      (Value.Match.sub (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typ_output value_output)
-      id_func.at
-      (F.sprintf "return value of function %s does not match the expected type"
-         id_func.it)
+    if not !check_guard then ()
+    else
+      let theta = TIdMap.of_lists tparams targs in
+      let typ_output = Type.Subst.subst_typ theta typ_output in
+      check
+        (Value.Match.sub (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typ_output value_output)
+        id_func.at
+        (F.sprintf
+           "return value of function %s does not match the expected type"
+           id_func.it)
 
   (* Helper for checking if an expression is a simple iteration of a variable *)
 
@@ -2083,7 +2094,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
+    check_guard := guard;
     Ctx.init ~det spec
 end

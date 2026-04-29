@@ -26,7 +26,7 @@ let structure filenames_spec =
 let prosify filenames_spec =
   filenames_spec |> structure |> Prose.Prosify.prosify_spec
 
-let booter ?(cache = true) ?(det = false) mode filenames_spec =
+let booter ?(cache = true) ?(det = false) ?(guard = false) mode filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
@@ -37,11 +37,11 @@ let booter ?(cache = true) ?(det = false) mode filenames_spec =
         (SL spec_sl : spec)
   in
   let (module Booter) = Backend_boot.Gen.gen_zero_spectec () in
-  Booter.init ~cache ~det spec_sim;
+  Booter.init ~cache ~det ~guard spec_sim;
   (spec_sim, (module Booter : RUNNER))
 
-let booter_square ?(cache = true) ?(det = false) mode filenames_spec
-    filenames_spec_p4 =
+let booter_square ?(cache = true) ?(det = false) ?(guard = false) mode
+    filenames_spec filenames_spec_p4 =
   let spec =
     match mode with
     | `IL ->
@@ -61,12 +61,12 @@ let booter_square ?(cache = true) ?(det = false) mode filenames_spec
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
-  Runner_P4.init ~cache ~det spec_p4;
-  Booter.init ~cache ~det spec;
+  Runner_P4.init ~cache ~det ~guard spec_p4;
+  Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
-let booter_cube_p4 ?(cache = true) ?(det = false) mode filenames_spec
-    filenames_spec_p4 =
+let booter_cube_p4 ?(cache = true) ?(det = false) ?(guard = false) mode
+    filenames_spec filenames_spec_p4 =
   let spec =
     match mode with
     | `IL ->
@@ -88,13 +88,13 @@ let booter_cube_p4 ?(cache = true) ?(det = false) mode filenames_spec
   let (module Runner_P4), (module Runner_SpecTec_mid), (module Booter) =
     Backend_boot.Gen.gen_cube_p4 ()
   in
-  Runner_P4.init ~cache ~det spec_p4;
-  Runner_SpecTec_mid.init ~cache ~det spec;
-  Booter.init ~cache ~det spec;
+  Runner_P4.init ~cache ~det ~guard spec_p4;
+  Runner_SpecTec_mid.init ~cache ~det ~guard spec;
+  Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
-let booter_cube_spectec ?(cache = true) ?(det = false) mode filenames_spec
-    filenames_spec_pgm =
+let booter_cube_spectec ?(cache = true) ?(det = false) ?(guard = false) mode
+    filenames_spec filenames_spec_pgm =
   let spec =
     match mode with
     | `IL ->
@@ -117,9 +117,9 @@ let booter_cube_spectec ?(cache = true) ?(det = false) mode filenames_spec
       =
     Backend_boot.Gen.gen_cube_spectec ()
   in
-  Runner_SpecTec_pgm.init ~cache ~det spec_pgm;
-  Runner_SpecTec_mid.init ~cache ~det spec_pgm;
-  Booter.init ~cache ~det spec;
+  Runner_SpecTec_pgm.init ~cache ~det ~guard spec_pgm;
+  Runner_SpecTec_mid.init ~cache ~det ~guard spec_pgm;
+  Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
 (* Commands *)
@@ -183,6 +183,8 @@ let run_command =
      and filename_spectec = flag "-tec" (required string) ~doc:"SpecTec program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -207,7 +209,7 @@ let run_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Booter) =
-           booter ~cache ~det mode filenames_spec
+           booter ~cache ~det ~guard mode filenames_spec
          in
          let handlers =
            if profile then
@@ -250,6 +252,8 @@ let boot_square_command =
      and filename_p4 = flag "-p1" (required string) ~doc:"p4 program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -276,7 +280,8 @@ let boot_square_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_square ~cache ~det mode filenames_spec filenames_spec_p4
+           booter_square ~cache ~det ~guard mode filenames_spec
+             filenames_spec_p4
          in
          let handlers =
            if profile then
@@ -324,6 +329,8 @@ let boot_cube_p4_command =
      and filename_p4 = flag "-p1" (required string) ~doc:"p4 program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -350,7 +357,8 @@ let boot_cube_p4_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_cube_p4 ~cache ~det mode filenames_spec filenames_spec_p4
+           booter_cube_p4 ~cache ~det ~guard mode filenames_spec
+             filenames_spec_p4
          in
          let handlers =
            if profile then
@@ -399,6 +407,8 @@ let boot_cube_spectec_command =
      and filename_pgm = flag "-p1" (required string) ~doc:"SpecTec program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -425,7 +435,7 @@ let boot_cube_spectec_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_pgm = expand_spec [ dirname_spec_pgm ] in
          let spec, (module Booter) =
-           booter_cube_spectec ~cache ~det mode filenames_spec
+           booter_cube_spectec ~cache ~det ~guard mode filenames_spec
              filenames_spec_pgm
          in
          let handlers =

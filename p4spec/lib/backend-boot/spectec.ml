@@ -12,6 +12,61 @@ module Make_null (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN = struct
 
   let init_mode _ = ()
 
+  (* Cache management *)
+
+  let cache_find_func (values_input : Value.t list) : Value.t =
+    let _value_id, _value_values_input =
+      match values_input with
+      | [ value_id; value_values_input ] -> (value_id, value_values_input)
+      | _ -> error_no_region "unexpected number of arguments to cache_find_func"
+    in
+    Value.Make.("NONE" <| [] <<| "funccache")
+
+  let cache_add_func_maybe (values_input : Value.t list) : Value.t =
+    let _value_seff, _value_id, _value_values_input, _value_valres =
+      match values_input with
+      | [ value_seff; value_id; value_values_input; value_valres ] ->
+          (value_seff, value_id, value_values_input, value_valres)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to cache_add_func_maybe"
+    in
+    Value.Make.bool true
+
+  let cache_find_rel (values_input : Value.t list) : Value.t =
+    let _value_id, _value_values_input =
+      match values_input with
+      | [ value_id; value_values_input ] -> (value_id, value_values_input)
+      | _ -> error_no_region "unexpected number of arguments to cache_find_rel"
+    in
+    Value.Make.("NONE" <| [] <<| "relcache")
+
+  let cache_checkpoint (values_input : Value.t list) : Value.t =
+    (match values_input with
+    | [] -> ()
+    | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
+    Value.Make.extern (Typ.Make.var ("cachepoint" $ no_region) []) (`Int 42)
+
+  let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
+    let _value_seff, _value_id, _value_values_input, _value_valsres =
+      match values_input with
+      | [ value_seff; value_id; value_values_input; value_valsres ] ->
+          (value_seff, value_id, value_values_input, value_valsres)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to cache_add_rel_maybe"
+    in
+    Value.Make.bool true
+
+  let cache_seff (values_input : Value.t list) : Value.t =
+    let _value_cachepoint_before, _value_cachepoint_after =
+      match values_input with
+      | [ value_cachepoint_before; value_cachepoint_after ] ->
+          (value_cachepoint_before, value_cachepoint_after)
+      | _ -> error_no_region "unexpected number of arguments to cache_seff"
+    in
+    Value.Make.bool false
+
   (* Externs *)
 
   let eval_extern_rel (name : string) (_values_input : Value.t list) :
@@ -21,9 +76,19 @@ module Make_null (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN = struct
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
-      (_values_input : Value.t list) : Run.func_result =
+      (values_input : Value.t list) : Run.func_result =
     try
-      error no_region (Format.asprintf "unimplemented extern function: %s" name)
+      Run.Pass
+        (match name with
+        | "cache_find_func" -> cache_find_func values_input
+        | "cache_add_func_maybe" -> cache_add_func_maybe values_input
+        | "cache_find_rel" -> cache_find_rel values_input
+        | "cache_add_rel_maybe" -> cache_add_rel_maybe values_input
+        | "cache_checkpoint" -> cache_checkpoint values_input
+        | "cache_seff" -> cache_seff values_input
+        | _ ->
+            error no_region
+              (Format.asprintf "unimplemented extern function: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
   (* Clear the cache *)

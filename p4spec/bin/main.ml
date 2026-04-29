@@ -29,8 +29,8 @@ let structure filenames_spec =
 let prosify filenames_spec =
   filenames_spec |> structure |> Prose.Prosify.prosify_spec
 
-let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
-    filenames_spec =
+let runner ?(cache = true) ?(det = false) ?(guard = false)
+    ?(arch : string option) mode filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
@@ -45,7 +45,7 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     | Some arch -> Backend_sim.Gen.gen_p4 arch
     | None -> Backend_sim.Gen.gen_p4_placeholder ()
   in
-  Simulator.init ~cache ~det spec_sim;
+  Simulator.init ~cache ~det ~guard spec_sim;
   (spec_sim, (module Simulator : SIM))
 
 let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4
@@ -262,6 +262,8 @@ let run_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -286,7 +288,7 @@ let run_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Simulator) =
-           runner ~cache ~det mode filenames_spec
+           runner ~cache ~det ~guard mode filenames_spec
          in
          let handlers =
            if profile then
@@ -329,6 +331,8 @@ let sim_command =
      and arch = flag "-arch" (required string) ~doc:"target architecture"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and trace =
        Command.Param.choose_one
@@ -353,7 +357,7 @@ let sim_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Simulator) =
-           runner ~cache ~det ~arch mode filenames_spec
+           runner ~cache ~det ~guard ~arch mode filenames_spec
          in
          let handlers =
            if profile then

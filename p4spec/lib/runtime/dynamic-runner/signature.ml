@@ -71,7 +71,7 @@ module type INTERP_IL = sig
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> Il.spec -> unit
+  val init : cache:bool -> det:bool -> guard:bool -> Il.spec -> unit
 
   (* Clear the cache *)
 
@@ -90,7 +90,7 @@ module type INTERP_SL = sig
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> Sl.spec -> unit
+  val init : cache:bool -> det:bool -> guard:bool -> Sl.spec -> unit
 
   (* Clear the cache *)
 
@@ -124,7 +124,7 @@ module type RUNNER = sig
 
   (* Initialization *)
 
-  val init : ?cache:bool -> ?det:bool -> spec -> unit
+  val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
 
   (* Clear the cache *)
 

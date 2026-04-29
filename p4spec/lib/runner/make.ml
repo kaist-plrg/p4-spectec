@@ -37,17 +37,18 @@ module Make
   let mode : mode ref = ref Empty_mode
   let init_mode (mode_ : mode) : unit = mode := mode_
 
-  let init ?(cache = true) ?(det = false) (spec_ : spec) : unit =
+  let init ?(cache = true) ?(det = false) ?(guard = false) (spec_ : spec) : unit
+      =
     Interface.init spec_;
     (match spec_ with
     | IL spec_il ->
         spec := IL spec_il;
         init_mode IL_mode;
-        Interp_IL.init ~cache ~det spec_il
+        Interp_IL.init ~cache ~det ~guard spec_il
     | SL spec_sl ->
         spec := SL spec_sl;
         init_mode SL_mode;
-        Interp_SL.init ~cache ~det spec_sl
+        Interp_SL.init ~cache ~det ~guard spec_sl
     | Empty -> assert false);
     Extern.init_mode !mode
 
