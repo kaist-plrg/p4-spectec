@@ -10,7 +10,7 @@ let boot (module Booter : RUNNER) neg rel specdir_p4 rel_p4 includes_p4
     filename_p4 =
   let time_start = start () in
   try
-    Booter.clear ();
+    Booter.Interp.clear ();
     let filenames_spec_p4 =
       specdir_p4 |> Filesys.collect_files ~suffix:".watsup"
     in
@@ -18,7 +18,7 @@ let boot (module Booter : RUNNER) neg rel specdir_p4 rel_p4 includes_p4
       Backend_boot.Patch.apply_square filenames_spec_p4 rel_p4 includes_p4
         filename_p4
     in
-    (match Booter.eval_rel rel [ value_spectec ] with
+    (match Booter.Interp.eval_rel rel [ value_spectec ] with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
     | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start)));
     time_start

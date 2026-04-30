@@ -9,7 +9,7 @@ module Filesys = Util.Filesys
 let run_sim (module Simulator : SIM) includes_p4 filename_p4 filename_stf =
   let time_start = start () in
   try
-    Simulator.clear ();
+    Simulator.Interp.clear ();
     (match Simulator.run_stf_test includes_p4 filename_p4 filename_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
