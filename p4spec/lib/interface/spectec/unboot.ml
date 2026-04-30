@@ -1157,7 +1157,7 @@ let () =
         ("DOT path atom", unboot_dot_path);
       ];
   (* Patterns *)
-  j unboot_pattern_mtchtbl :=
+  unboot_pattern_mtchtbl :=
     Value.Get.build_mtchtbl
       [
         ("INJ mixop", unboot_inj_pattern);
