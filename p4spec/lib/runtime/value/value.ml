@@ -220,6 +220,13 @@ module Make = struct
 
   let ( #@@ ) (value : value) (s : string) : value =
     { value with note = { value.note with typ = VarT (s $ no_region, []) } }
+
+  (* Fast-path operators: pre-parsed Mixop.t + pre-computed typ, no at computation *)
+  let ( <|! ) (mixop : Mixop.t) (values : value list) : Mixop.t * value list =
+    (mixop, values)
+
+  let ( <<|! ) ((mixop, values) : Mixop.t * value list) (typ : typ) : value =
+    case ~at:no_region typ (mixop, values)
 end
 
 (* Getters *)
@@ -301,12 +308,51 @@ module Get = struct
         match f_opt with Some f -> f values | None -> case_default values)
     | _ -> case_default []
 
+  module MtchTbl = Hashtbl.Make (String)
+
+  type 'a mtch = region -> value list -> 'a
+  type 'a mtchtbl = 'a mtch MtchTbl.t
+
+  let build_mtchtbl (cases : (string * (region -> value list -> 'a)) list) :
+      'a mtchtbl =
+    let tbl = MtchTbl.create (List.length cases) in
+    List.iter
+      (fun (s_mixop, f) ->
+        let canonical = Mixop.string_of_mixop (Mixops.of_string s_mixop) in
+        MtchTbl.add tbl canonical f)
+      cases;
+    tbl
+
+  let mtch_dispatch (value : t) (tbl : 'a mtchtbl) (case_default : 'a mtch) : 'a
+      =
+    let at = value.at in
+    match value.it with
+    | CaseV (mixop, values) -> (
+        let key = Mixop.string_of_mixop mixop in
+        match MtchTbl.find_opt tbl key with
+        | Some f -> f at values
+        | None -> case_default at values)
+    | _ -> case_default at []
+
+  let build_dispatch = build_mtchtbl
+
   (* Operators *)
 
   let ( |>> ) (value : t) (s_mixop : string) : value list =
     match value.it with
     | CaseV (mixop, values) ->
         let mixop_expect = Mixops.of_string s_mixop in
+        if Mixop.eq mixop mixop_expect then values
+        else
+          error no_region
+            (Format.asprintf "expected case with %s, but got %s"
+               (Mixop.string_of_mixop mixop_expect)
+               (Mixop.string_of_mixop mixop))
+    | _ -> error no_region "not a case"
+
+  let ( |>>! ) (value : t) (mixop_expect : Mixop.t) : value list =
+    match value.it with
+    | CaseV (mixop, values) ->
         if Mixop.eq mixop mixop_expect then values
         else
           error no_region

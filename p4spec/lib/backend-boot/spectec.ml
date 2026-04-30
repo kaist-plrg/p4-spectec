@@ -226,15 +226,6 @@ module Make_parametric
         Value.Make.("OK val*" <| [ value_values_output ] <<| "relcache")
     | None -> Value.Make.("NONE" <| [] <<| "relcache")
 
-  let cache_checkpoint (values_input : Value.t list) : Value.t =
-    (match values_input with
-    | [] -> ()
-    | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
-    let checkpoint = Runner.checkpoint () in
-    Value.Make.extern
-      (Typ.Make.var ("cachepoint" $ no_region) [])
-      (`Int checkpoint)
-
   let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
     let value_seff, value_id, value_values_input, value_valsres =
       match values_input with
@@ -254,6 +245,15 @@ module Make_parametric
              value_values_output
        | _ -> ());
     Value.Make.bool true
+
+  let cache_checkpoint (values_input : Value.t list) : Value.t =
+    (match values_input with
+    | [] -> ()
+    | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
+    let checkpoint = Runner.checkpoint () in
+    Value.Make.extern
+      (Typ.Make.var ("cachepoint" $ no_region) [])
+      (`Int checkpoint)
 
   let cache_seff (values_input : Value.t list) : Value.t =
     let value_cachepoint_before, value_cachepoint_after =

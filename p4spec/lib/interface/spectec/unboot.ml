@@ -2,6 +2,7 @@ open Domain
 open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+open Mixops
 open Util.Error
 open Util.Source
 
@@ -55,6 +56,48 @@ let stub_input_hint (n_inputs : int) : Hints.Input.t = List.init n_inputs Fun.id
 
 let stub_exp_note : Il.typ' = Il.BoolT
 
+(* Forward references for match dispatch tables,
+   populated after all sub-match functions are defined *)
+
+let unboot_value_mtchtbl : Il.value Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_typ_mtchtbl : Il.typ Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_deftyp_mtchtbl : Il.deftyp Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_unop_mtchtbl : Il.unop Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_binop_mtchtbl : Il.binop Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_cmpop_mtchtbl : Il.cmpop Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_param_mtchtbl : Il.param Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_arg_mtchtbl : Il.arg Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_exp_mtchtbl : Il.exp Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_path_mtchtbl : Il.path Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_pattern_mtchtbl : Il.pattern Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_prem_mtchtbl : Il.prem Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
+let unboot_def_mtchtbl : Il.def Value.Get.mtchtbl ref =
+  ref (Value.Get.MtchTbl.create 0)
+
 (* Identifiers *)
 
 let unboot_id (value_id : Value.t) : Il.id =
@@ -79,10 +122,13 @@ let unboot_mixop (value_mixop : Value.t) : Il.mixop =
 
 (* Iterators *)
 
+let unboot_iter_tbl =
+  Value.Get.build_mtchtbl
+    [ ("QUEST", fun _ _ -> Il.Opt); ("STAR", fun _ _ -> Il.List) ]
+
 let unboot_iter (value_iter : Value.t) : Il.iter =
-  Value.Get.mtch value_iter
-    [ ("QUEST", fun _ -> Il.Opt); ("STAR", fun _ -> Il.List) ]
-    (fun _ -> error "@unboot_iter")
+  Value.Get.mtch_dispatch value_iter unboot_iter_tbl (fun _ _ ->
+      error "@unboot_iter")
 
 let unboot_iters (value_iters : Value.t) : Il.iter list =
   value_iters |> Value.Get.list |> List.map unboot_iter
@@ -90,7 +136,7 @@ let unboot_iters (value_iters : Value.t) : Il.iter list =
 (* Variables *)
 
 let rec unboot_vari (value_vari : Value.t) : Il.var =
-  let values = Value.Get.(value_vari |>> "id typ iter*") in
+  let values = Value.Get.(value_vari |>>! mop_vari) in
   let id = Value.Get.nth 0 values |> unboot_id in
   let typ = Value.Get.nth 1 values |> unboot_typ in
   let iters = Value.Get.nth 2 values |> unboot_iters in
@@ -102,19 +148,8 @@ and unboot_varis (value_varis : Value.t) : Il.var list =
 (* Types *)
 
 and unboot_typ (value_typ : Value.t) : Il.typ =
-  let at = value_typ.at in
-  Value.Get.mtch value_typ
-    [
-      ("BOOL", unboot_bool_typ at);
-      ("NAT", unboot_num_typ_nat at);
-      ("INT", unboot_num_typ_int at);
-      ("TEXT", unboot_text_typ at);
-      ("VAR id targ*", unboot_var_typ at);
-      ("TUP typ*", unboot_tuple_typ at);
-      ("ITER typ iter", unboot_iter_typ at);
-      ("FUNC", unboot_func_typ at);
-    ]
-    (fun _ -> error "@unboot_typ")
+  Value.Get.mtch_dispatch value_typ !unboot_typ_mtchtbl (fun _ _ ->
+      error "@unboot_typ")
 
 and unboot_typs (value_typs : Value.t) : Il.typ list =
   value_typs |> Value.Get.list |> List.map unboot_typ
@@ -171,14 +206,8 @@ and unboot_tparams (value_tparams : Value.t) : Il.tparam list =
 (* Defined types *)
 
 and unboot_deftyp (value_deftyp : Value.t) : Il.deftyp =
-  let at = value_deftyp.at in
-  Value.Get.mtch value_deftyp
-    [
-      ("ALIAS typ", unboot_plain_deftyp at);
-      ("STRUCT typfield*", unboot_struct_deftyp at);
-      ("VARIANT typcase*", unboot_variant_deftyp at);
-    ]
-    (fun _ -> error "@unboot_deftyp")
+  Value.Get.mtch_dispatch value_deftyp !unboot_deftyp_mtchtbl (fun _ _ ->
+      error "@unboot_deftyp")
 
 and unboot_plain_deftyp (at : region) (values : Value.t list) : Il.deftyp =
   match values with
@@ -188,7 +217,7 @@ and unboot_plain_deftyp (at : region) (values : Value.t list) : Il.deftyp =
   | _ -> error "@unboot_plain_deftyp"
 
 and unboot_typfield (value_typfield : Value.t) : Il.typfield =
-  let values = Value.Get.(value_typfield |>> "atom typ") in
+  let values = Value.Get.(value_typfield |>>! mop_typfield) in
   let atom = Value.Get.nth 0 values |> unboot_atom in
   let typ = Value.Get.nth 1 values |> unboot_typ in
   (atom, typ)
@@ -204,7 +233,7 @@ and unboot_struct_deftyp (at : region) (values : Value.t list) : Il.deftyp =
   | _ -> error "@unboot_struct_deftyp"
 
 and unboot_typcase (value_typcase : Value.t) : Il.typcase =
-  let values = Value.Get.(value_typcase |>> "mixop typ*") in
+  let values = Value.Get.(value_typcase |>>! mop_typcase) in
   let mixop = Value.Get.nth 0 values |> unboot_mixop in
   let typs = Value.Get.nth 1 values |> unboot_typs in
   let nottyp = (mixop, typs) $ value_typcase.at in
@@ -223,22 +252,8 @@ and unboot_variant_deftyp (at : region) (values : Value.t list) : Il.deftyp =
 (* Values *)
 
 and unboot_value (value_value : Value.t) : Il.value =
-  let at = value_value.at in
-  Value.Get.mtch value_value
-    [
-      ("BOOL bool", unboot_bool_value at);
-      ("NAT nat", unboot_num_value_nat at);
-      ("INT int", unboot_num_value_int at);
-      ("TEXT text", unboot_text_value at);
-      ("STR valfield*", unboot_struct_value at);
-      ("INJ valcase", unboot_variant_value at);
-      ("TUP val*", unboot_tuple_value at);
-      ("OPT val?", unboot_opt_value at);
-      ("LIST val*", unboot_list_value at);
-      ("FUNC id", unboot_func_value at);
-      ("EXT json", unboot_extern_value at);
-    ]
-    (fun _ -> error "@unboot_value")
+  Value.Get.mtch_dispatch value_value !unboot_value_mtchtbl (fun _ _ ->
+      error "@unboot_value")
 
 and unboot_values (value_values : Value.t) : Il.value list =
   value_values |> Value.Get.list |> List.map unboot_value
@@ -272,7 +287,7 @@ and unboot_text_value (at : region) (values : Value.t list) : Il.value =
   | _ -> error "@unboot_text_value"
 
 and unboot_valuefield (value_valuefield : Value.t) : Il.valuefield =
-  let values = Value.Get.(value_valuefield |>> "atom val") in
+  let values = Value.Get.(value_valuefield |>>! mop_valuefield) in
   let atom = Value.Get.nth 0 values |> unboot_atom in
   let v = Value.Get.nth 1 values |> unboot_value in
   (atom, v)
@@ -289,7 +304,7 @@ and unboot_struct_value (at : region) (values : Value.t list) : Il.value =
   | _ -> error "@unboot_struct_value"
 
 and unboot_valuecase (value_valuecase : Value.t) : Il.valuecase =
-  let values = Value.Get.(value_valuecase |>> "mixop val*") in
+  let values = Value.Get.(value_valuecase |>>! mop_valuecase) in
   let mixop = Value.Get.nth 0 values |> unboot_mixop in
   let values = Value.Get.nth 1 values |> unboot_values in
   (mixop, values)
@@ -348,91 +363,82 @@ and unboot_extern_value (at : region) (values : Value.t list) : Il.value =
 (* Operators *)
 
 and unboot_unop (value_unop : Value.t) : Il.unop =
-  Value.Get.mtch value_unop
-    [
-      ("NOT", fun _ : Il.unop -> `NotOp);
-      ("PLUS", fun _ -> `PlusOp);
-      ("MINUS", fun _ -> `MinusOp);
-    ]
-    (fun _ -> error "@unboot_unop")
+  Value.Get.mtch_dispatch value_unop !unboot_unop_mtchtbl (fun _ _ ->
+      error "@unboot_unop")
+
+and unboot_not_unop (_ : region) (_ : Value.t list) : Il.unop = `NotOp
+and unboot_plus_unop (_ : region) (_ : Value.t list) : Il.unop = `PlusOp
+and unboot_minus_unop (_ : region) (_ : Value.t list) : Il.unop = `MinusOp
 
 and unboot_binop (value_binop : Value.t) : Il.binop =
-  Value.Get.mtch value_binop
-    [
-      ("AND", fun _ : Il.binop -> `AndOp);
-      ("OR", fun _ -> `OrOp);
-      ("IMPL", fun _ -> `ImplOp);
-      ("EQUIV", fun _ -> `EquivOp);
-      ("ADD", fun _ -> `AddOp);
-      ("SUB", fun _ -> `SubOp);
-      ("MUL", fun _ -> `MulOp);
-      ("DIV", fun _ -> `DivOp);
-      ("MOD", fun _ -> `ModOp);
-      ("POW", fun _ -> `PowOp);
-    ]
-    (fun _ -> error "@unboot_binop")
+  Value.Get.mtch_dispatch value_binop !unboot_binop_mtchtbl (fun _ _ ->
+      error "@unboot_binop")
+
+and unboot_and_binop (_ : region) (_ : Value.t list) : Il.binop = `AndOp
+and unboot_or_binop (_ : region) (_ : Value.t list) : Il.binop = `OrOp
+and unboot_impl_binop (_ : region) (_ : Value.t list) : Il.binop = `ImplOp
+and unboot_equiv_binop (_ : region) (_ : Value.t list) : Il.binop = `EquivOp
+and unboot_add_binop (_ : region) (_ : Value.t list) : Il.binop = `AddOp
+and unboot_sub_binop (_ : region) (_ : Value.t list) : Il.binop = `SubOp
+and unboot_mul_binop (_ : region) (_ : Value.t list) : Il.binop = `MulOp
+and unboot_div_binop (_ : region) (_ : Value.t list) : Il.binop = `DivOp
+and unboot_mod_binop (_ : region) (_ : Value.t list) : Il.binop = `ModOp
+and unboot_pow_binop (_ : region) (_ : Value.t list) : Il.binop = `PowOp
 
 and unboot_cmpop (value_cmpop : Value.t) : Il.cmpop =
-  Value.Get.mtch value_cmpop
-    [
-      ("EQ", fun _ : Il.cmpop -> `EqOp);
-      ("NE", fun _ -> `NeOp);
-      ("LT", fun _ -> `LtOp);
-      ("LE", fun _ -> `LeOp);
-      ("GT", fun _ -> `GtOp);
-      ("GE", fun _ -> `GeOp);
-    ]
-    (fun _ -> error "@unboot_cmpop")
+  Value.Get.mtch_dispatch value_cmpop !unboot_cmpop_mtchtbl (fun _ _ ->
+      error "@unboot_cmpop")
+
+and unboot_eq_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `EqOp
+and unboot_ne_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `NeOp
+and unboot_lt_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `LtOp
+and unboot_le_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `LeOp
+and unboot_gt_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `GtOp
+and unboot_ge_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `GeOp
 
 (* Parameters and arguments *)
 
 and unboot_param (value_param : Value.t) : Il.param =
-  let at = value_param.at in
-  Value.Get.mtch value_param
-    [
-      ( "EXP typ",
-        fun values ->
-          match values with
-          | [ value_typ ] ->
-              let typ = unboot_typ value_typ in
-              Il.ExpP typ $ at
-          | _ -> error "@unboot_param/EXP" );
-      ( "FUN id `: tparam* param* `-> typ",
-        fun values ->
-          match values with
-          | [ value_id; value_tparams; value_params; value_typ ] ->
-              let id = unboot_id value_id in
-              let tparams = unboot_tparams value_tparams in
-              let params = unboot_params value_params in
-              let typ = unboot_typ value_typ in
-              Il.DefP (id, tparams, params, typ) $ at
-          | _ -> error "@unboot_param/FUN" );
-    ]
-    (fun _ -> error "@unboot_param")
+  Value.Get.mtch_dispatch value_param !unboot_param_mtchtbl (fun _ _ ->
+      error "@unboot_param")
+
+and unboot_exp_param (at : region) (values : Value.t list) : Il.param =
+  match values with
+  | [ value_typ ] ->
+      let typ = unboot_typ value_typ in
+      Il.ExpP typ $ at
+  | _ -> error "@unboot_param/EXP"
+
+and unboot_def_param (at : region) (values : Value.t list) : Il.param =
+  match values with
+  | [ value_id; value_tparams; value_params; value_typ ] ->
+      let id = unboot_id value_id in
+      let tparams = unboot_tparams value_tparams in
+      let params = unboot_params value_params in
+      let typ = unboot_typ value_typ in
+      Il.DefP (id, tparams, params, typ) $ at
+  | _ -> error "@unboot_param/FUN"
 
 and unboot_params (value_params : Value.t) : Il.param list =
   value_params |> Value.Get.list |> List.map unboot_param
 
 and unboot_arg (value_arg : Value.t) : Il.arg =
-  let at = value_arg.at in
-  Value.Get.mtch value_arg
-    [
-      ( "EXP exp",
-        fun values ->
-          match values with
-          | [ value_exp ] ->
-              let exp = unboot_exp value_exp in
-              Il.ExpA exp $ at
-          | _ -> error "@unboot_arg" );
-      ( "FUN id",
-        fun values ->
-          match values with
-          | [ value_id ] ->
-              let id = unboot_id value_id in
-              Il.DefA id $ at
-          | _ -> error "@unboot_arg" );
-    ]
-    (fun _ -> error "@unboot_arg")
+  Value.Get.mtch_dispatch value_arg !unboot_arg_mtchtbl (fun _ _ ->
+      error "@unboot_arg")
+
+and unboot_exp_arg (at : region) (values : Value.t list) : Il.arg =
+  match values with
+  | [ value_exp ] ->
+      let exp = unboot_exp value_exp in
+      Il.ExpA exp $ at
+  | _ -> error "@unboot_arg/EXP"
+
+and unboot_def_arg (at : region) (values : Value.t list) : Il.arg =
+  match values with
+  | [ value_id ] ->
+      let id = unboot_id value_id in
+      Il.DefA id $ at
+  | _ -> error "@unboot_arg/FUN"
 
 and unboot_args (value_args : Value.t) : Il.arg list =
   value_args |> Value.Get.list |> List.map unboot_arg
@@ -440,38 +446,8 @@ and unboot_args (value_args : Value.t) : Il.arg list =
 (* Expressions *)
 
 and unboot_exp (value_exp : Value.t) : Il.exp =
-  let at = value_exp.at in
-  Value.Get.mtch value_exp
-    [
-      ("BOOL bool", unboot_bool_exp at);
-      ("NAT nat", unboot_num_exp_nat at);
-      ("INT int", unboot_num_exp_int at);
-      ("TEXT text", unboot_text_exp at);
-      ("VAR id", unboot_var_exp at);
-      ("UN unop exp", unboot_un_exp at);
-      ("BIN binop exp exp", unboot_bin_exp at);
-      ("CMP cmpop exp exp", unboot_cmp_exp at);
-      ("UPCAST typ exp", unboot_upcast_exp at);
-      ("DOWNCAST typ exp", unboot_downcast_exp at);
-      ("SUB exp typ", unboot_sub_exp at);
-      ("MATCH exp pattern", unboot_match_exp at);
-      ("TUP exp*", unboot_tuple_exp at);
-      ("INJ expcase", unboot_case_exp at);
-      ("STR expfield*", unboot_str_exp at);
-      ("OPT exp?", unboot_opt_exp at);
-      ("LIST exp*", unboot_list_exp at);
-      ("CONS exp exp", unboot_cons_exp at);
-      ("CAT exp exp", unboot_cat_exp at);
-      ("MEM exp exp", unboot_mem_exp at);
-      ("LEN exp", unboot_len_exp at);
-      ("DOT exp atom", unboot_dot_exp at);
-      ("IDX exp exp", unboot_idx_exp at);
-      ("SLICE exp exp exp", unboot_slice_exp at);
-      ("UPD exp path exp", unboot_upd_exp at);
-      ("CALL id targ* arg*", unboot_call_exp at);
-      ("ITER exp iterexp", unboot_iter_exp at);
-    ]
-    (fun _ -> error "@unboot_exp")
+  Value.Get.mtch_dispatch value_exp !unboot_exp_mtchtbl (fun _ _ ->
+      error "@unboot_exp")
 
 and unboot_exps (value_exps : Value.t) : Il.exp list =
   value_exps |> Value.Get.list |> List.map unboot_exp
@@ -480,7 +456,7 @@ and unboot_exp_opt (value_exp_opt : Value.t) : Il.exp option =
   value_exp_opt |> Value.Get.opt |> Option.map unboot_exp
 
 and unboot_expfield (value_expfield : Value.t) : Il.atom * Il.exp =
-  let values = Value.Get.(value_expfield |>> "atom exp") in
+  let values = Value.Get.(value_expfield |>>! mop_expfield) in
   let atom = Value.Get.nth 0 values |> unboot_atom in
   let exp = Value.Get.nth 1 values |> unboot_exp in
   (atom, exp)
@@ -604,7 +580,7 @@ and unboot_tuple_exp (at : region) (values : Value.t list) : Il.exp =
   | _ -> error "@unboot_tuple_exp"
 
 and unboot_expcase (value_expcase : Value.t) : Il.mixop * Il.exp list =
-  let values = Value.Get.(value_expcase |>> "mixop exp*") in
+  let values = Value.Get.(value_expcase |>>! mop_expcase) in
   let mixop = Value.Get.nth 0 values |> unboot_mixop in
   let exps = Value.Get.nth 1 values |> unboot_exps in
   (mixop, exps)
@@ -722,83 +698,88 @@ and unboot_iter_exp (at : region) (values : Value.t list) : Il.exp =
 (* Paths *)
 
 and unboot_path (value_path : Value.t) : Il.path =
-  let at = value_path.at in
-  Value.Get.mtch value_path
-    [
-      ("ROOT", fun _ -> Il.RootP $$ (at, stub_exp_note));
-      ( "IDX path exp",
-        fun values ->
-          match values with
-          | [ value_path; value_exp ] ->
-              let path = unboot_path value_path in
-              let exp = unboot_exp value_exp in
-              Il.IdxP (path, exp) $$ (at, stub_exp_note)
-          | _ -> error "@unboot_path" );
-      ( "SLICE path exp exp",
-        fun values ->
-          match values with
-          | [ value_path; value_exp_i; value_exp_n ] ->
-              let path = unboot_path value_path in
-              let exp_i = unboot_exp value_exp_i in
-              let exp_n = unboot_exp value_exp_n in
-              Il.SliceP (path, exp_i, exp_n) $$ (at, stub_exp_note)
-          | _ -> error "@unboot_path" );
-      ( "DOT path atom",
-        fun values ->
-          match values with
-          | [ value_path; value_atom ] ->
-              let path = unboot_path value_path in
-              let atom = unboot_atom value_atom in
-              Il.DotP (path, atom) $$ (at, stub_exp_note)
-          | _ -> error "@unboot_path" );
-    ]
-    (fun _ -> error "@unboot_path")
+  Value.Get.mtch_dispatch value_path !unboot_path_mtchtbl (fun _ _ ->
+      error "@unboot_path")
+
+and unboot_root_path (at : region) (_ : Value.t list) : Il.path =
+  Il.RootP $$ (at, stub_exp_note)
+
+and unboot_idx_path (at : region) (values : Value.t list) : Il.path =
+  match values with
+  | [ value_path; value_exp ] ->
+      let path = unboot_path value_path in
+      let exp = unboot_exp value_exp in
+      Il.IdxP (path, exp) $$ (at, stub_exp_note)
+  | _ -> error "@unboot_path/IDX"
+
+and unboot_slice_path (at : region) (values : Value.t list) : Il.path =
+  match values with
+  | [ value_path; value_exp_i; value_exp_n ] ->
+      let path = unboot_path value_path in
+      let exp_i = unboot_exp value_exp_i in
+      let exp_n = unboot_exp value_exp_n in
+      Il.SliceP (path, exp_i, exp_n) $$ (at, stub_exp_note)
+  | _ -> error "@unboot_path/SLICE"
+
+and unboot_dot_path (at : region) (values : Value.t list) : Il.path =
+  match values with
+  | [ value_path; value_atom ] ->
+      let path = unboot_path value_path in
+      let atom = unboot_atom value_atom in
+      Il.DotP (path, atom) $$ (at, stub_exp_note)
+  | _ -> error "@unboot_path/DOT"
 
 (* Patterns *)
 
 and unboot_pattern (value_pattern : Value.t) : Il.pattern =
-  Value.Get.mtch value_pattern
-    [
-      ( "INJ mixop",
-        fun values ->
-          match values with
-          | [ value_mixop ] ->
-              let mixop = unboot_mixop value_mixop in
-              Il.CaseP mixop
-          | _ -> error "@unboot_pattern" );
-      ("CONS", fun _ -> Il.ListP `Cons);
-      ( "FIXED nat",
-        fun values ->
-          match values with
-          | [ value_nat ] ->
-              let n =
-                match Value.Get.num value_nat with
-                | `Nat n -> n
-                | `Int _ -> error "@unboot_pattern"
-              in
-              let n_int =
-                match Bigint.to_int n with
-                | Some i -> i
-                | None -> error "@unboot_pattern"
-              in
-              Il.ListP (`Fixed n_int)
-          | _ -> error "@unboot_pattern" );
-      ("NIL", fun _ -> Il.ListP `Nil);
-      ("SOME", fun _ -> Il.OptP `Some);
-      ("NONE", fun _ -> Il.OptP `None);
-    ]
-    (fun _ -> error "@unboot_pattern")
+  Value.Get.mtch_dispatch value_pattern !unboot_pattern_mtchtbl (fun _ _ ->
+      error "@unboot_pattern")
+
+and unboot_inj_pattern (_ : region) (values : Value.t list) : Il.pattern =
+  match values with
+  | [ value_mixop ] ->
+      let mixop = unboot_mixop value_mixop in
+      Il.CaseP mixop
+  | _ -> error "@unboot_pattern/INJ"
+
+and unboot_cons_pattern (_ : region) (_ : Value.t list) : Il.pattern =
+  Il.ListP `Cons
+
+and unboot_fixed_pattern (_ : region) (values : Value.t list) : Il.pattern =
+  match values with
+  | [ value_nat ] ->
+      let n =
+        match Value.Get.num value_nat with
+        | `Nat n -> n
+        | `Int _ -> error "@unboot_pattern/FIXED"
+      in
+      let n_int =
+        match Bigint.to_int n with
+        | Some i -> i
+        | None -> error "@unboot_pattern/FIXED"
+      in
+      Il.ListP (`Fixed n_int)
+  | _ -> error "@unboot_pattern/FIXED"
+
+and unboot_nil_pattern (_ : region) (_ : Value.t list) : Il.pattern =
+  Il.ListP `Nil
+
+and unboot_some_pattern (_ : region) (_ : Value.t list) : Il.pattern =
+  Il.OptP `Some
+
+and unboot_none_pattern (_ : region) (_ : Value.t list) : Il.pattern =
+  Il.OptP `None
 
 (* Iter expressions and premises *)
 
 and unboot_iterexp (value_iterexp : Value.t) : Il.iterexp =
-  let values = Value.Get.(value_iterexp |>> "iter vari*") in
+  let values = Value.Get.(value_iterexp |>>! mop_iterexp) in
   let iter = Value.Get.nth 0 values |> unboot_iter in
   let varis = Value.Get.nth 1 values |> unboot_varis in
   (iter, varis)
 
 and unboot_iterprem (value_iterprem : Value.t) : Il.iterprem =
-  let values = Value.Get.(value_iterprem |>> "iter vari* vari*") in
+  let values = Value.Get.(value_iterprem |>>! mop_iterprem) in
   let iter = Value.Get.nth 0 values |> unboot_iter in
   let varis_in = Value.Get.nth 1 values |> unboot_varis in
   let varis_out = Value.Get.nth 2 values |> unboot_varis in
@@ -807,18 +788,8 @@ and unboot_iterprem (value_iterprem : Value.t) : Il.iterprem =
 (* Premises *)
 
 and unboot_prem (value_prem : Value.t) : Il.prem =
-  let at = value_prem.at in
-  Value.Get.mtch value_prem
-    [
-      ("REL id `: exp* `-> exp", unboot_rel_prem at);
-      ("IF exp", unboot_if_prem at);
-      ("IFHOLD id `: exp*", unboot_ifhold_prem at);
-      ("IFNOTHOLD id `: exp*", unboot_ifnothold_prem at);
-      ("LET exp `= exp", unboot_let_prem at);
-      ("ITER prem iterprem", unboot_iter_prem at);
-      ("DEBUG exp", unboot_debug_prem at);
-    ]
-    (fun _ -> error "@unboot_prem")
+  Value.Get.mtch_dispatch value_prem !unboot_prem_mtchtbl (fun _ _ ->
+      error "@unboot_prem")
 
 and unboot_prems (value_prems : Value.t) : Il.prem list =
   value_prems |> Value.Get.list |> List.map unboot_prem
@@ -885,13 +856,13 @@ and unboot_debug_prem (at : region) (values : Value.t list) : Il.prem =
 (* Rule matching and paths *)
 
 and unboot_rulmatch (value_rulmatch : Value.t) : Il.rulematch =
-  let values = Value.Get.(value_rulmatch |>> "exp* `- prem*") in
+  let values = Value.Get.(value_rulmatch |>>! mop_rulematch) in
   let exps = Value.Get.nth 0 values |> unboot_exps in
   let prems = Value.Get.nth 1 values |> unboot_prems in
   (exps, exps, prems)
 
 and unboot_rulpath (value_rulpath : Value.t) : Il.rulepath =
-  let values = Value.Get.(value_rulpath |>> "id `= exp* `- prem*") in
+  let values = Value.Get.(value_rulpath |>>! mop_rulepath) in
   let id = Value.Get.nth 0 values |> unboot_id in
   let exps = Value.Get.nth 1 values |> unboot_exps in
   let prems = Value.Get.nth 2 values |> unboot_prems in
@@ -902,7 +873,7 @@ and unboot_rulpaths (value_rulpaths : Value.t) : Il.rulepath list =
 
 and unboot_rulgroup (value_rulgroup : Value.t) : Il.rulegroup =
   let at = value_rulgroup.at in
-  let values = Value.Get.(value_rulgroup |>> "id `: rulmatch `= rulpath*") in
+  let values = Value.Get.(value_rulgroup |>>! mop_rulegroup) in
   let id = Value.Get.nth 0 values |> unboot_id in
   let rulmatch = Value.Get.nth 1 values |> unboot_rulmatch in
   let rulpaths = Value.Get.nth 2 values |> unboot_rulpaths in
@@ -913,7 +884,7 @@ and unboot_rulgroups (value_rulgroups : Value.t) : Il.rulegroup list =
 
 and unboot_elsgroup (value_elsgroup : Value.t) : Il.elsegroup =
   let at = value_elsgroup.at in
-  let values = Value.Get.(value_elsgroup |>> "id `: rulmatch `= rulpath") in
+  let values = Value.Get.(value_elsgroup |>>! mop_elsegroup) in
   let id = Value.Get.nth 0 values |> unboot_id in
   let rulmatch = Value.Get.nth 1 values |> unboot_rulmatch in
   let rulpath = Value.Get.nth 2 values |> unboot_rulpath in
@@ -926,7 +897,7 @@ and unboot_elsgroup_opt (value_elsgroup_opt : Value.t) : Il.elsegroup option =
 
 and unboot_clause (value_clause : Value.t) : Il.clause =
   let at = value_clause.at in
-  let values = Value.Get.(value_clause |>> "arg* `= exp `- prem*") in
+  let values = Value.Get.(value_clause |>>! mop_clause) in
   let args = Value.Get.nth 0 values |> unboot_args in
   let exp = Value.Get.nth 1 values |> unboot_exp in
   let prems = Value.Get.nth 2 values |> unboot_prems in
@@ -946,7 +917,7 @@ and unboot_elsclause_opt (value_elsclause_opt : Value.t) : Il.elseclause option
 
 and unboot_tablerow (value_tablerow : Value.t) : Il.tablerow =
   let at = value_tablerow.at in
-  let values = Value.Get.(value_tablerow |>> "arg* `= exp `- prem*") in
+  let values = Value.Get.(value_tablerow |>>! mop_clause) in
   let args = Value.Get.nth 0 values |> unboot_args in
   let exp = Value.Get.nth 1 values |> unboot_exp in
   let prems = Value.Get.nth 2 values |> unboot_prems in
@@ -957,20 +928,9 @@ and unboot_tablerows (value_tablerows : Value.t) : Il.tablerow list =
 
 (* Definitions *)
 
-let rec unboot_def (value_def : Value.t) : Il.def =
-  let at = value_def.at in
-  Value.Get.mtch value_def
-    [
-      ("EXTTYP id", unboot_extern_typ_def at);
-      ("TYP id tparam* `= deftyp", unboot_typ_def at);
-      ("EXTREL id `: exp* `-> exp", unboot_extern_rel_def at);
-      ("REL id `: typ* `-> typ* `= rulgroup* elsgroup?", unboot_rel_def at);
-      ("EXTFUNC id tparam* param* `: typ", unboot_extern_func_def at);
-      ("BUILTINFUNC id tparam* param* `: typ", unboot_builtin_func_def at);
-      ("TABLEFUNC id param* `: typ `= tblrow*", unboot_table_func_def at);
-      ("FUNC id tparam* param* `: typ `= clause* elsclause?", unboot_func_def at);
-    ]
-    (fun _ -> error "@unboot_def")
+let unboot_def (value_def : Value.t) : Il.def =
+  Value.Get.mtch_dispatch value_def !unboot_def_mtchtbl (fun _ _ ->
+      error "@unboot_def")
 
 and unboot_extern_typ_def (at : region) (values : Value.t list) : Il.def =
   match values with
@@ -1072,3 +1032,163 @@ and unboot_func_def (at : region) (values : Value.t list) : Il.def =
 let unboot_spec (value_script : Value.t) : Il.spec =
   let value_defs = Value.Get.list value_script in
   List.map unboot_def value_defs
+
+(* Initialize dispatch tables after all handler functions are defined *)
+
+let () =
+  (* Values *)
+  unboot_value_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("BOOL bool", unboot_bool_value);
+        ("NAT nat", unboot_num_value_nat);
+        ("INT int", unboot_num_value_int);
+        ("TEXT text", unboot_text_value);
+        ("STR valfield*", unboot_struct_value);
+        ("INJ valcase", unboot_variant_value);
+        ("TUP val*", unboot_tuple_value);
+        ("OPT val?", unboot_opt_value);
+        ("LIST val*", unboot_list_value);
+        ("FUNC id", unboot_func_value);
+        ("EXT json", unboot_extern_value);
+      ];
+  (* Types *)
+  unboot_typ_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("BOOL", unboot_bool_typ);
+        ("NAT", unboot_num_typ_nat);
+        ("INT", unboot_num_typ_int);
+        ("TEXT", unboot_text_typ);
+        ("VA id targ*", unboot_var_typ);
+        ("TUP typ*", unboot_tuple_typ);
+        ("ITER typ iter", unboot_iter_typ);
+        ("FUNC", unboot_func_typ);
+      ];
+  (* Defined types *)
+  unboot_deftyp_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("ALIAS typ", unboot_plain_deftyp);
+        ("STRUCT typfield*", unboot_struct_deftyp);
+        ("VARIANT typcase*", unboot_variant_deftyp);
+      ];
+  (* Operators *)
+  unboot_unop_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("NOT", unboot_not_unop);
+        ("PLUS", unboot_plus_unop);
+        ("MINUS", unboot_minus_unop);
+      ];
+  unboot_binop_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("AND", unboot_and_binop);
+        ("OR", unboot_or_binop);
+        ("IMPL", unboot_impl_binop);
+        ("EQUIV", unboot_equiv_binop);
+        ("ADD", unboot_add_binop);
+        ("SUB", unboot_sub_binop);
+        ("MUL", unboot_mul_binop);
+        ("DIV", unboot_div_binop);
+        ("MOD", unboot_mod_binop);
+        ("POW", unboot_pow_binop);
+      ];
+  unboot_cmpop_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("EQ", unboot_eq_cmpop);
+        ("NE", unboot_ne_cmpop);
+        ("LT", unboot_lt_cmpop);
+        ("LE", unboot_le_cmpop);
+        ("GT", unboot_gt_cmpop);
+        ("GE", unboot_ge_cmpop);
+      ];
+  (* Parameters and arguments *)
+  unboot_param_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("EXP typ", unboot_exp_param);
+        ("FUN id `: tparam* param* `-> typ", unboot_def_param);
+      ];
+  unboot_arg_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [ ("EXP exp", unboot_exp_arg); ("FUN id", unboot_def_arg) ];
+  (* Expressions *)
+  unboot_exp_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("BOOL bool", unboot_bool_exp);
+        ("NAT nat", unboot_num_exp_nat);
+        ("INT int", unboot_num_exp_int);
+        ("TEXT text", unboot_text_exp);
+        ("VAR id", unboot_var_exp);
+        ("UN unop exp", unboot_un_exp);
+        ("BIN binop exp exp", unboot_bin_exp);
+        ("CMP cmpop exp exp", unboot_cmp_exp);
+        ("UPCAST typ exp", unboot_upcast_exp);
+        ("DOWNCAST typ exp", unboot_downcast_exp);
+        ("SUB exp typ", unboot_sub_exp);
+        ("MATCH exp pattern", unboot_match_exp);
+        ("TUP exp*", unboot_tuple_exp);
+        ("INJ expcase", unboot_case_exp);
+        ("STR expfield*", unboot_str_exp);
+        ("OPT exp?", unboot_opt_exp);
+        ("LIST exp*", unboot_list_exp);
+        ("CONS exp exp", unboot_cons_exp);
+        ("CAT exp exp", unboot_cat_exp);
+        ("MEM exp exp", unboot_mem_exp);
+        ("LEN exp", unboot_len_exp);
+        ("DOT exp atom", unboot_dot_exp);
+        ("IDX exp exp", unboot_idx_exp);
+        ("SLICE exp exp exp", unboot_slice_exp);
+        ("UPD exp path exp", unboot_upd_exp);
+        ("CALL id targ* arg*", unboot_call_exp);
+        ("ITER exp iterexp", unboot_iter_exp);
+      ];
+  (* Paths *)
+  unboot_path_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("ROOT", unboot_root_path);
+        ("IDX path exp", unboot_idx_path);
+        ("SLICE path exp exp", unboot_slice_path);
+        ("DOT path atom", unboot_dot_path);
+      ];
+  (* Patterns *)
+  j unboot_pattern_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("INJ mixop", unboot_inj_pattern);
+        ("CONS", unboot_cons_pattern);
+        ("FIXED nat", unboot_fixed_pattern);
+        ("NIL", unboot_nil_pattern);
+        ("SOME", unboot_some_pattern);
+        ("NONE", unboot_none_pattern);
+      ];
+  (* Premises *)
+  unboot_prem_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("REL id `: exp* `-> exp", unboot_rel_prem);
+        ("IF exp", unboot_if_prem);
+        ("IFHOLD id `: exp*", unboot_ifhold_prem);
+        ("IFNOTHOLD id `: exp*", unboot_ifnothold_prem);
+        ("LET exp `= exp", unboot_let_prem);
+        ("ITER prem iterprem", unboot_iter_prem);
+        ("DEBUG exp", unboot_debug_prem);
+      ];
+  (* Definitions *)
+  unboot_def_mtchtbl :=
+    Value.Get.build_mtchtbl
+      [
+        ("EXTTYP id", unboot_extern_typ_def);
+        ("TYP id tparam* `= deftyp", unboot_typ_def);
+        ("EXTREL id `: exp* `-> exp", unboot_extern_rel_def);
+        ("REL id `: typ* `-> typ* `= rulgroup* elsgroup?", unboot_rel_def);
+        ("EXTFUNC id tparam* param* `: typ", unboot_extern_func_def);
+        ("BUILTINFUNC id tparam* param* `: typ", unboot_builtin_func_def);
+        ("TABLEFUNC id param* `: typ `= tblrow*", unboot_table_func_def);
+        ("FUNC id tparam* param* `: typ `= clause* elsclause?", unboot_func_def);
+      ]
