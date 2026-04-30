@@ -8,18 +8,18 @@ module Filesys = Util.Filesys
 (* P4 Parser test *)
 
 let parse_file time_start (module Simulator : SIM) includes filename =
-  match Simulator.parse_file includes [ filename ] with
+  match Simulator.Interface.parse_program includes [ filename ] with
   | Pass value -> value
   | Fail (`Syntax (at, msg)) -> raise (TestParseFileErr (msg, at, time_start))
 
 let parse_string time_start (module Simulator : SIM) filename program_dump =
-  match Simulator.parse_string filename program_dump with
+  match Simulator.Interface.parse_string filename program_dump with
   | Pass value -> value
   | Fail (`Syntax (at, msg)) -> raise (TestParseStringErr (msg, at, time_start))
 
 let parse_roundtrip time_start (module Simulator : SIM) includes filename =
   let program = parse_file time_start (module Simulator) includes filename in
-  let program_dump = Simulator.unparse_program program in
+  let program_dump = Simulator.Interface.unparse_program program in
   let program_roundtrip =
     parse_string time_start (module Simulator) filename program_dump
   in

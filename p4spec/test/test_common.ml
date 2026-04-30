@@ -156,7 +156,7 @@ let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4
   in
   Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_instr () in
   (result, cover)
@@ -168,7 +168,7 @@ let run_with_dangling (module Simulator : SIM) spec_sim relname includes_p4
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)

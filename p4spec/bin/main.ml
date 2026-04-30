@@ -55,7 +55,7 @@ let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4
   in
   Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_instr () in
   (result, cover)
@@ -67,7 +67,7 @@ let run_with_dangling (module Simulator : SIM) spec_sim relname includes_p4
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)
@@ -307,7 +307,9 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result = Simulator.run_program relname includes_p4 filename_p4 in
+         let result =
+           Simulator.Interp.eval_program relname includes_p4 filename_p4
+         in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -711,14 +713,16 @@ let parse_command =
        try
          let _, (module Simulator) = runner `IL filenames_spec in
          let value_program =
-           match Simulator.parse_file includes_p4 [ filename_p4 ] with
+           match
+             Simulator.Interface.parse_program includes_p4 [ filename_p4 ]
+           with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let str_program = Simulator.unparse_program value_program in
+         let str_program = Simulator.Interface.unparse_program value_program in
          if roundtrip then
            let value_program_roundtrip =
-             match Simulator.parse_string filename_p4 str_program with
+             match Simulator.Interface.parse_string filename_p4 str_program with
              | Pass value_program_roundtrip -> value_program_roundtrip
              | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in
@@ -789,7 +793,9 @@ let p4_program_value_json_command =
        let _, (module Simulator) = runner `IL filenames_spec in
        try
          let value_program =
-           match Simulator.parse_file includes_p4 [ filename_p4 ] with
+           match
+             Simulator.Interface.parse_program includes_p4 [ filename_p4 ]
+           with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
@@ -815,7 +821,7 @@ let unparse_json_value_command =
          let value_result = Sl.value_of_yojson json in
          match value_result with
          | Ok value ->
-             let p4_source = Simulator.unparse_program value in
+             let p4_source = Simulator.Interface.unparse_program value in
              print_string p4_source
          | Error err -> Format.printf "Error parsing JSON value: %s\n" err
        with

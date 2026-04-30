@@ -15,7 +15,9 @@ let run_program_with_dangling (module Simulator : Sim.SIM) (spec : Sim.spec)
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec;
-  let program_result = Simulator.run_program relname includes_p4 filename_p4 in
+  let program_result =
+    Simulator.Interp.eval_program relname includes_p4 filename_p4
+  in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (program_result, cover)
@@ -51,7 +53,7 @@ let run_program_internal_with_dangling (module Simulator : Sim.SIM)
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec;
-  let rel_result = Simulator.run_program_internal relname value_program in
+  let rel_result = Simulator.Interp.eval_rel relname [ value_program ] in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (rel_result, cover)
@@ -71,7 +73,9 @@ let run_program_with_dangling_and_vdg ~(derive : bool)
   in
   Inst.Hook.register handlers;
   Inst.Hook.init_spec spec;
-  let program_result = Simulator.run_program relname includes_p4 filename_p4 in
+  let program_result =
+    Simulator.Interp.eval_program relname includes_p4 filename_p4
+  in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   let vdg = read_vdg () in

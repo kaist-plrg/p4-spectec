@@ -120,7 +120,7 @@ module Make_parametric
     let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
     let value_output =
-      match Runner.run_func id.it typs values with
+      match Runner.Interp.eval_func id.it typs values with
       | Pass value_output -> value_output
       | Fail (at, msg) -> error at msg
     in
@@ -141,7 +141,7 @@ module Make_parametric
     let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
     let value_output =
-      match Runner.run_func id.it typs values with
+      match Runner.Interp.eval_func id.it typs values with
       | Pass value_output -> value_output
       | Fail (at, msg) -> error at msg
     in
@@ -161,7 +161,7 @@ module Make_parametric
     let id = value_id |> Interface.SpecTec.unboot_id in
     let values = value_values |> Interface.SpecTec.unboot_values in
     let values_output =
-      match Runner.run_rel id.it values with
+      match Runner.Interp.eval_rel id.it values with
       | Pass values_output -> values_output
       | Fail (at, msg) -> error at msg
     in
@@ -250,7 +250,7 @@ module Make_parametric
     (match values_input with
     | [] -> ()
     | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
-    let checkpoint = Runner.checkpoint () in
+    let checkpoint = Runner.Interface.checkpoint () in
     Value.Make.extern
       (Typ.Make.var ("cachepoint" $ no_region) [])
       (`Int checkpoint)
@@ -272,7 +272,7 @@ module Make_parametric
       | `Int i -> i
       | _ -> error_no_region "unexpected type for cachepoint_after"
     in
-    let seff = Runner.seff cachepoint_before cachepoint_after in
+    let seff = Runner.Interface.seff cachepoint_before cachepoint_after in
     Value.Make.bool seff
 
   (* Extern handlers *)

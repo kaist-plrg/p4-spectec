@@ -62,71 +62,39 @@ module type EXTERN = sig
   val clear : unit -> unit
 end
 
-module type INTERP_IL = sig
+module type INTERP = sig
   (* Relation and meta-function evaluation *)
 
   val eval_program : string -> string list -> string -> program_result
   val eval_rel : string -> Value.t list -> rel_result
-  val eval_func : string -> Il.typ list -> Value.t list -> func_result
+  val eval_func : string -> Typ.t list -> Value.t list -> func_result
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
+end
+
+module type INTERP_IL = sig
+  include INTERP
 
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> guard:bool -> Il.spec -> unit
-
-  (* Clear the cache *)
-
-  val clear : unit -> unit
 end
 
 module type INTERP_SL = sig
-  (* An entry point for running a closed program against the spec *)
-
-  val eval_program : string -> string list -> string -> program_result
-
-  (* Relation and meta-function evaluation *)
-
-  val eval_rel : string -> Value.t list -> rel_result
-  val eval_func : string -> Sl.typ list -> Value.t list -> func_result
+  include INTERP
 
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> guard:bool -> Sl.spec -> unit
-
-  (* Clear the cache *)
-
-  val clear : unit -> unit
 end
 
 module type RUNNER = sig
-  (* Run a program against the spec *)
-
-  val run_program : string -> string list -> string -> program_result
-  val run_program_internal : string -> Value.t -> rel_result
-
-  (* Relation and meta-function evaluation *)
-
-  val run_rel : string -> Value.t list -> rel_result
-  val run_func : string -> Sl.typ list -> Value.t list -> func_result
-
-  (* Parsing *)
-
-  val parse_file : string list -> string list -> parse_result
-  val parse_string : string -> string -> parse_result
-
-  (* Unparsing *)
-
-  val unparse_program : Value.t -> string
-
-  (* State management *)
-
-  val checkpoint : unit -> int
-  val seff : int -> int -> bool
+  module Interface : INTERFACE
+  module Interp : INTERP
 
   (* Initialization *)
 
   val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
-
-  (* Clear the cache *)
-
-  val clear : unit -> unit
 end

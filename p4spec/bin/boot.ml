@@ -228,7 +228,7 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
-         let result = Booter.run_program relname [] filename_spectec in
+         let result = Booter.Interp.eval_program relname [] filename_spectec in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -304,7 +304,7 @@ let boot_square_command =
            Backend_boot.Patch.apply_square filenames_spec_p4 rel_p4 includes_p4
              filename_p4
          in
-         let result = Booter.run_program_internal rel value_p4_spec in
+         let result = Booter.Interp.eval_rel rel [ value_p4_spec ] in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -381,7 +381,7 @@ let boot_cube_p4_command =
            Backend_boot.Patch.apply_cube filenames_spec rel filenames_spec_p4
              rel_p4 includes_p4 filename_p4
          in
-         let result = Booter.run_program_internal rel value_spec in
+         let result = Booter.Interp.eval_rel rel [ value_spec ] in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -459,7 +459,7 @@ let boot_cube_spectec_command =
            Backend_boot.Patch.apply_cube_small filenames_spec rel
              filenames_spec_pgm rel_pgm filename_pgm
          in
-         let result = Booter.run_program_internal rel value_spec in
+         let result = Booter.Interp.eval_rel rel [ value_spec ] in
          Inst.Hook.finish ();
          match result with
          | Pass _ -> Format.printf "passed\n"
@@ -483,14 +483,16 @@ let parse_command =
          let _, (module Booter) = booter `IL filenames_spec in
          let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
-           match Booter.parse_file [] filenames_spectec with
+           match Booter.Interface.parse_program [] filenames_spectec with
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let str_program = Booter.unparse_program value_program in
+         let str_program = Booter.Interface.unparse_program value_program in
          if roundtrip then
            let value_program_roundtrip =
-             match Booter.parse_string filename_spectec str_program with
+             match
+               Booter.Interface.parse_string filename_spectec str_program
+             with
              | Pass value_program_roundtrip -> value_program_roundtrip
              | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in

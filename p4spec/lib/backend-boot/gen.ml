@@ -13,7 +13,7 @@ let gen_zero_spectec () =
   boot
 
 (* Two-layer stack: boot spec delegates externs to the P4 runner.
- *   boot [Make_parametric(Runner_P4)] --extern--> Runner_P4.run_rel/func
+ *   boot [Make_parametric(Runner_P4)] --extern--> Runner_P4.eval_rel/func
  *)
 
 let gen_square_p4 () =
@@ -28,8 +28,8 @@ let gen_square_p4 () =
   ((module Runner_P4 : RUNNER), boot)
 
 (* Three-layer P4 stack: boot -> mid -> P4 runner.
- *   boot [Make_parametric(Runner_SpecTec_mid)] --extern--> Runner_SpecTec_mid.run_rel/func
- *   Runner_SpecTec_mid [Make_parametric(Runner_P4)] --extern--> Runner_P4.run_rel/func
+ *   boot [Make_parametric(Runner_SpecTec_mid)] --extern--> Runner_SpecTec_mid.eval_rel/func
+ *   Runner_SpecTec_mid [Make_parametric(Runner_P4)] --extern--> Runner_P4.eval_rel/func
  *)
 
 let gen_cube_p4 () =
@@ -52,9 +52,9 @@ let gen_cube_p4 () =
 
 (* Three-layer SpecTec stack giving each layer its own extern routing.
  *   boot [Make_parametric(Runner_SpecTec_mid)]
- *     --extern--> Runner_SpecTec_mid.run_rel/func
+ *     --extern--> Runner_SpecTec_mid.eval_rel/func
  *   Runner_SpecTec_mid [Make_parametric(Runner_SpecTec_pgm)]
- *     --extern--> Runner_SpecTec_pgm.run_rel/func
+ *     --extern--> Runner_SpecTec_pgm.eval_rel/func
  *   Runner_SpecTec_pgm [Make_null]
  *     --extern--> (error)
  *)
