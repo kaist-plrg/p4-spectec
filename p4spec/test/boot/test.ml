@@ -10,7 +10,7 @@ let boot (module Booter : RUNNER) neg rel specdir_p4 rel_p4 includes_p4
     filename_p4 =
   let time_start = start () in
   try
-    Booter.Interp.clear ();
+    Booter.clear ();
     let filenames_spec_p4 =
       specdir_p4 |> Filesys.collect_files ~suffix:".watsup"
     in

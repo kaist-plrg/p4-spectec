@@ -7,7 +7,7 @@ open Util.Source
 
 (* The bottom layer *)
 
-module Make_null (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN = struct
+module Make_null () : Run.EXTERN = struct
   (* Mode initialization *)
 
   let init_mode _ = ()
@@ -103,10 +103,7 @@ end
 
 (* The intermediate layer *)
 
-module Make_parametric
-    (Runner : Run.RUNNER)
-    (_ : Run.INTERP_IL)
-    (_ : Run.INTERP_SL) : Run.EXTERN = struct
+module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
   (* Mode initialization *)
 
   let init_mode _ = ()

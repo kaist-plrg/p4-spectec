@@ -102,4 +102,8 @@ module type RUNNER = sig
   (* Initialization *)
 
   val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
+
+  (* Clear the cache *)
+
+  val clear : unit -> unit
 end

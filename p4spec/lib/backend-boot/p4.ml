@@ -49,7 +49,7 @@ module Make () : RUNNER = struct
   end
 
   include (
-    Runner.Make.Make (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
+    Runner.Make.Make_rec (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
       (Interp_sl.Interp.Make) :
         RUNNER)
 end

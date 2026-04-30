@@ -69,7 +69,8 @@ module Make
   end
 
   include (
-    Runner.Make.Make (Interface) (MakeExtern) (MakeInterp_IL) (MakeInterp_SL) :
+    Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_IL)
+      (MakeInterp_SL) :
         RUNNER)
 
   (* Logger *)
