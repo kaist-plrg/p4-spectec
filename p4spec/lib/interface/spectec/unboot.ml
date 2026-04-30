@@ -1060,7 +1060,7 @@ let () =
         ("NAT", unboot_num_typ_nat);
         ("INT", unboot_num_typ_int);
         ("TEXT", unboot_text_typ);
-        ("VA id targ*", unboot_var_typ);
+        ("VAR id targ*", unboot_var_typ);
         ("TUP typ*", unboot_tuple_typ);
         ("ITER typ iter", unboot_iter_typ);
         ("FUNC", unboot_func_typ);
