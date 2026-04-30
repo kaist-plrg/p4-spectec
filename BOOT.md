@@ -16,7 +16,7 @@ interfering with one another.
 │    p4.ml            P4.Make () : RUNNER                 │
 ├─────────────────────────────────────────────────────────┤
 │  backend-sim/       simulation runners                  │
-│    gen.ml           gen_p4 "v1model" / "ebpf" / "psa"  │
+│    gen.ml           gen_p4 "v1model" / "ebpf" / "psa"   │
 │    make.ml          Make.Make (...) : SIM               │
 │    spec.ml          Spec.Make () : Spec.S               │
 │    {v1model,ebpf,psa}/pipe.ml   Pipe.Make (Spec) : ARCH │
@@ -212,6 +212,95 @@ gen_boot_zero () =
 gen_boot_one () =
   let Runner_P4 = P4.Make () in
   Runner.Make.Make (Interface.SpecTec) (Spectec.Make_one (Runner_P4)) (...)
+```
+
+---
+
+## Builtin call flow in boot-2-p4
+
+Builtin functions (e.g., `$find_map`) are declared in the P4 spec and called
+by the SpecTec interpreter via an `extern relation Call_builtin_func`.  The
+call crosses two interpreter layers — SpecTec then P4 — before resolving in
+native OCaml.
+
+### Spec sources
+
+```
+┌─────────────────────────────────┐  ┌──────────────────────────────┐  ┌──────────────────┐
+│ spec^IL_src                     │  │ spec^P4_src                  │  │ pgm^P4_src       │
+│                                 │  │                              │  │                  │
+│ ;; 4.4.1-eval-cal-func.watsup   │  │ ;; 0.0-stdlib.watsup (P4)    │  │ bit<32> x = 32w1;│
+│ extern relation Call_builtin_   │  │ builtin dec                  │  │ bit<32> y = x;   │
+│   func                          │  │   $find_map<K,V>             │  │                  │
+│                                 │  │   (map<K,V>, K) : V?         │  └──────────────────┘
+│ rule Call_func/builtin:         │  │                              │
+│   C |- builtinFuncDef           │  │ ;; 5.02.1-typing-            │
+│     typ* val* : OK val_output   │  │    context.watsup (P4)       │
+│   -- if BUILTIN id _ _ =        │  │ -- if varTypeIR =            │
+│        builtinFuncDef           │  │      $find_map<id,           │
+│   -- Call_builtin_func:         │  │      varTypeIR>              │
+│      C |- id @`<typ*>`          │  │      (typeFrame, id)         │
+│         `(val*)` : OK val_out   │  └──────────────────────────────┘
+│                                 │
+│ ;; 4.1-eval-exp.watsup (SpecTec)│
+│ rule Eval_exp/call:             │
+│   C |- CALL id targ* arg*       │
+│     : valres                    │
+│   -- Call_func_cached:          │
+│      C |- id targ* arg* : valres│
+└─────────────────────────────────┘
+```
+
+### Runtime layers
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  P4 interpreter layer  (Runner_P4 = P4.Make ())                         │
+│                                                                         │
+│  ┌──────────────────────────┬──────────────────────────────────────┐    │
+│  │  Builtin^P4              │  Extern^P4  (Placeholder)            │    │
+│  ├──────────────────────────┴──────────────────────────────────────┤    │
+│  │  Interp^P4_OCaml                                  ↺ recursive   │    │
+│  └──────────────────────────────────────────────────────────────── ┘    │
+│                                                                         │
+│  invoke_builtin_func (...) =       eval_extern_rel (...) =              │
+│    let value_output =                (match name with                   │
+│      try                            | "Call_builtin_func" ->            │
+│        Interface.call_builtin           call_builtin_func values_input) │
+│          Hook.on_value id           call_builtin_func (...) =           │
+│          targs values_input           let value_output =                │
+│                            (4)          match Runner.run_func           │
+│                              ◄────────    id.it typs values with ...    │
+└──────────────────────────────────────────────────────────────────────── ┘
+                                ▲
+                                │  (3) Runner_P4.run_func
+                                │
+┌─────────────────────────────────────────────────────────────────────────┐
+│  SpecTec interpreter layer  (Runner_SpecTec = gen_boot_one ())          │
+│                                                                         │
+│  ┌──────────────────────────┬──────────────────────────────────────┐    │
+│  │  Builtin^SpecTec         │  Extern^SpecTec  (Spectec_one)       │◄── (2)
+│  ├──────────────────────────┴──────────────────────────────────────┤    │
+│  │  Interp^SpecTec_OCaml                                           │    │
+│  └──────────────────────────────────────────────────────────────── ┘    │
+│                                                                         │
+│  (1) rule Eval_exp/call fires; spec IL derives Call_builtin_func        │
+│  (2) invoke_extern_rel:                                                 │
+│        let values_output =                                              │
+│          match Extern.eval_extern_rel id.it values_input with ...       │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Call sequence
+
+```
+(1) SpecTec interp hits Eval_exp/call; spec IL fires rule Call_func/builtin
+(2) invoke_extern_rel → Extern^SpecTec.eval_extern_rel "Call_builtin_func"
+        dispatches to call_builtin_func in Placeholder (Extern^P4)
+(3) call_builtin_func → Runner_P4.run_func id.it typs values
+        (crosses from SpecTec layer up to P4 layer)
+(4) P4 interp → invoke_builtin_func
+        → Interface.call_builtin  (native OCaml)
 ```
 
 ---

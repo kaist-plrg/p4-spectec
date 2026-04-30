@@ -19,9 +19,14 @@ rule Eval_exp/variable:
 
 ;;; Unary, binary, and comparison evaluation rules
 
-rule Eval_exp/unary:
+rule Eval_exp/unary-boolean:
   C |- UN NOT exp : OK (BOOL (~b))
   -- Eval_exp: C |- exp : OK (BOOL b)
+
+rule Eval_exp/unary-number:
+  C |- UN numunop exp : OK val_res
+  -- Eval_exp: C |- exp : OK num
+  -- if val_res = $unop_number(numunop, num)
 
 rulegroup Eval_exp/binary-boolean {
 
@@ -48,10 +53,10 @@ rulegroup Eval_exp/binary-boolean {
 }
 
 rule Eval_exp/binary-number:
-  C |- BIN binop exp_l exp_r : OK val_res
+  C |- BIN numbinop exp_l exp_r : OK val_res
   -- Eval_exp: C |- exp_l : OK num_l
   -- Eval_exp: C |- exp_r : OK num_r
-  -- if val_res = $binop_number(binop, num_l, num_r)
+  -- if val_res = $binop_number(numbinop, num_l, num_r)
 
 rulegroup Eval_exp/compare-poly {
 

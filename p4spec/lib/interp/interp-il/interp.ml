@@ -1247,11 +1247,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Some values_output -> Ok values_output
       | None ->
           let checkpoint_before = Interface.checkpoint () in
+          let extern_checkpoint_before = Extern.checkpoint () in
           let* values_output = invoke_rel'' () in
           let checkpoint_after = Interface.checkpoint () in
-          (* Cache if the relation does not create a side-effect *)
-          if not (Interface.seff checkpoint_before checkpoint_after) then
-            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+          let extern_checkpoint_after = Extern.checkpoint () in
+          (* Cache if neither the interface nor the extern created a side-effect *)
+          if
+            (not (Interface.seff checkpoint_before checkpoint_after))
+            && not
+                 (Extern.seff extern_checkpoint_before extern_checkpoint_after)
+          then Cache.Cache.add !rel_cache (id.it, values_input) values_output;
           Ok values_output)
     else (
       if not internal then check_rel_inputs ctx id values_input;
@@ -1412,11 +1417,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | Some value_output -> Ok value_output
         | None ->
             let checkpoint_before = Interface.checkpoint () in
+            let extern_checkpoint_before = Extern.checkpoint () in
             let* value_output = invoke_func_with_values' () in
             let checkpoint_after = Interface.checkpoint () in
-            (* Cache if the function does not create a side-effect *)
-            if not (Interface.seff checkpoint_before checkpoint_after) then
-              Cache.Cache.add !func_cache (id.it, values_input) value_output;
+            let extern_checkpoint_after = Extern.checkpoint () in
+            (* Cache if neither the interface nor the extern created a side-effect *)
+            if
+              (not (Interface.seff checkpoint_before checkpoint_after))
+              && not
+                   (Extern.seff extern_checkpoint_before extern_checkpoint_after)
+            then Cache.Cache.add !func_cache (id.it, values_input) value_output;
             Ok value_output)
       else (
         if not internal then check_func_inputs ctx id targs values_input;

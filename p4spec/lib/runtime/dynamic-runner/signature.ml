@@ -57,6 +57,11 @@ module type EXTERN = sig
 
   val init_mode : mode -> unit
 
+  (* State management *)
+
+  val checkpoint : unit -> int
+  val seff : int -> int -> bool
+
   (* Clear the cache *)
 
   val clear : unit -> unit

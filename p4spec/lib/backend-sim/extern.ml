@@ -14,6 +14,8 @@ end
 
 module Make (A : IMPL) : Run.EXTERN = struct
   let init_mode _ = ()
+  let checkpoint () : int = 0
+  let seff (before : int) (after : int) : bool = before <> after
   let clear () = ()
 
   let eval_extern_rel (name : string) (values_input : Value.t list) :

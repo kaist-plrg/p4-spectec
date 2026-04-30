@@ -91,6 +91,11 @@ module Make_null (_ : Run.INTERP_IL) (_ : Run.INTERP_SL) : Run.EXTERN = struct
               (Format.asprintf "unimplemented extern function: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
+  (* State management *)
+
+  let checkpoint () : int = 0
+  let seff (before : int) (after : int) : bool = before <> after
+
   (* Clear the cache *)
 
   let clear () : unit = ()
@@ -305,6 +310,13 @@ module Make_parametric
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+
+  (* State management *)
+
+  let checkpoint () : int = Runner.Interface.checkpoint ()
+
+  let seff (before : int) (after : int) : bool =
+    Runner.Interface.seff before after
 
   (* Clear the cache *)
 

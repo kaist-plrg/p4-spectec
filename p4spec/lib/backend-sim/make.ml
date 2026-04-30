@@ -61,6 +61,8 @@ module Make
       Spec_.Rel.register call_rel;
       Spec_.Pgm.register call_pgm
 
+    let checkpoint () : int = 0
+    let seff (before : int) (after : int) : bool = before <> after
     let clear () = ()
     let eval_extern_rel = Arch.eval_extern_rel
     let eval_extern_func = Arch.eval_extern_func
