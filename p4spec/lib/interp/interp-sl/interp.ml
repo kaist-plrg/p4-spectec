@@ -31,6 +31,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let func_cache = ref (Cache.Cache.create ~size:10000)
   let rel_cache = ref (Cache.Cache.create ~size:10000)
 
+  (* Function result *)
+
+  type func_result = Return of value | Tailcall of id * targ list * value list
+
   (* Checkers *)
 
   let check_guard = ref true
@@ -1078,28 +1082,29 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Function call expression evaluation *)
 
+  and resolve_targs (ctx : Ctx.t) (targs : targ list) : targ list =
+    match targs with
+    | [] -> []
+    | targs ->
+        let theta =
+          let tdenv_local =
+            match ctx.local with
+            | Empty | Rel _ -> TIdMap.empty
+            | Func { tdenv; _ } -> tdenv
+          in
+          TDEnv.fold
+            (fun tid typdef theta ->
+              match typdef with
+              | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                  TIdMap.add tid typ theta
+              | _ -> theta)
+            tdenv_local TIdMap.empty
+        in
+        List.map (Type.Subst.subst_typ theta) targs
+
   and eval_call_exp (ctx : Ctx.t) (id : id) (targs : targ list)
       (args : arg list) : value =
-    let targs =
-      match targs with
-      | [] -> []
-      | targs ->
-          let theta =
-            let tdenv_local =
-              match ctx.local with
-              | Empty | Rel _ -> TIdMap.empty
-              | Func { tdenv; _ } -> tdenv
-            in
-            TDEnv.fold
-              (fun tid typdef theta ->
-                match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
-                    TIdMap.add tid typ theta
-                | _ -> theta)
-              tdenv_local TIdMap.empty
-          in
-          List.map (Type.Subst.subst_typ theta) targs
-    in
+    let targs = resolve_targs ctx targs in
     let values_args = eval_args ctx args in
     invoke_func ctx id targs values_args
 
@@ -1169,40 +1174,42 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Instruction evaluation *)
 
-  and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
+  and eval_instr ~(tail : bool) (ctx : Ctx.t) (instr : instr) : Flow.t =
     Hook.on_instr instr;
     try
       let iid = instr.note.iid in
       match instr.it with
       | IfI (exp_cond, iterexps, block_then, dangle) ->
-          eval_if_instr iid ctx exp_cond iterexps block_then dangle
+          eval_if_instr ~tail iid ctx exp_cond iterexps block_then dangle
       | HoldI (id, notexp, iterexps, holdcase) ->
-          eval_hold_instr iid ctx id notexp iterexps holdcase
-      | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
+          eval_hold_instr ~tail iid ctx id notexp iterexps holdcase
+      | CaseI (exp, cases, dangle) ->
+          eval_case_instr ~tail iid ctx exp cases dangle
       | GroupI (id_group, rel_signature, exps_group, block) ->
-          eval_group_instr ctx id_group rel_signature exps_group block
+          eval_group_instr ~tail ctx id_group rel_signature exps_group block
       | LetI (exp_l, exp_r, iterinstrs, block) ->
-          eval_let_instr ctx exp_l exp_r iterinstrs block
+          eval_let_instr ~tail ctx exp_l exp_r iterinstrs block
       | RuleI (id, notexp, inputs, iterinstrs, block) ->
-          eval_rule_instr ctx id notexp inputs iterinstrs block
+          eval_rule_instr ~tail ctx id notexp inputs iterinstrs block
       | ResultI (rel_signature, exps) ->
-          eval_result_instr ctx rel_signature exps
-      | ReturnI exp -> eval_return_instr ctx exp
-      | DebugI exp -> eval_debug_instr ctx exp
+          eval_result_instr ~tail ctx rel_signature exps
+      | ReturnI exp -> eval_return_instr ~tail ctx exp
+      | DebugI exp -> eval_debug_instr ~tail ctx exp
     with Backtrace backtrace ->
       backtrace
       |> back_nest instr.at
            (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
-  and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
-    if !Ctx.is_det then eval_block_deterministic ctx block
-    else eval_block_sequential ctx block
+  and eval_block ~(tail : bool) (ctx : Ctx.t) (block : block) : Flow.t =
+    if !Ctx.is_det then eval_block_deterministic ~tail ctx block
+    else eval_block_sequential ~tail ctx block
 
-  and eval_block_deterministic (ctx : Ctx.t) (block : block) : Flow.t =
+  and eval_block_deterministic ~(tail : bool) (ctx : Ctx.t) (block : block) :
+      Flow.t =
     let eval_instr_deterministic (flow_pre : Flow.t) (instr : instr) : Flow.t =
       let open Flow in
       try
-        let flow_post = eval_instr ctx instr in
+        let flow_post = eval_instr ~tail ctx instr in
         match flow_pre with
         | Cont traces_pre -> (
             match flow_post with
@@ -1212,12 +1219,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> nondet instr.at
-            | Ret _ -> back_err instr.at "cannot have both result and return")
+            | Ret _ -> back_err instr.at "cannot have both result and return"
+            | Tailcall _ ->
+                back_err instr.at "cannot have both result and tail call")
         | Ret _ -> (
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> back_err instr.at "cannot have both return and result"
-            | Ret _ -> nondet instr.at)
+            | Ret _ -> nondet instr.at
+            | Tailcall _ ->
+                back_err instr.at "cannot have both return and tail call")
+        | Tailcall _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ -> back_err instr.at "cannot have both tail call and result"
+            | Ret _ -> back_err instr.at "cannot have both tail call and return"
+            | Tailcall _ -> nondet instr.at)
       with Backtrace (Unmatch _) -> flow_pre
     in
     try
@@ -1226,20 +1243,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         (Flow.Cont []) block
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
-  and eval_block_sequential (ctx : Ctx.t) (block : block) : Flow.t =
-    List.fold_left
-      (fun flow_pre instr ->
-        match flow_pre with
-        | Flow.Cont _ -> eval_instr ctx instr
-        | _ -> flow_pre)
-      (Flow.Cont []) block
+  and eval_block_sequential ~(tail : bool) (ctx : Ctx.t) (block : block) :
+      Flow.t =
+    block
+    |> List.mapi (fun idx instr ->
+           if idx <> List.length block - 1 then (false, instr) else (tail, instr))
+    |> List.fold_left
+         (fun flow_pre (tail, instr) ->
+           match flow_pre with
+           | Flow.Cont _ -> eval_instr ~tail ctx instr
+           | _ -> flow_pre)
+         (Flow.Cont [])
 
-  and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
+  and eval_elseblock_opt ~(tail : bool) (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
     match flow with
     | Flow.Cont traces -> (
         match elseblock_opt with
-        | Some block_else -> eval_block ctx block_else
+        | Some block_else -> eval_block ~tail ctx block_else
         | None -> Flow.Cont traces)
     | _ -> flow
 
@@ -1316,14 +1337,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterexps = List.rev iterexps in
     eval_if_cond_iter' ctx exp_cond iterexps
 
-  and eval_if_instr (iid : iid) (ctx : Ctx.t) (exp_cond : exp)
+  and eval_if_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (exp_cond : exp)
       (iterexps : iterexp list) (block_then : block) (dangle : dangle) : Flow.t
       =
     (* Evaluate the if condition and mark dangle *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block ctx block_then else Cont []
+    if cond then eval_block ~tail ctx block_then else Cont []
 
   (* Hold instruction evaluation *)
 
@@ -1413,8 +1434,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterexps = List.rev iterexps in
     eval_hold_cond_iter' ctx id notexp iterexps
 
-  and eval_hold_instr (iid : iid) (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) (holdcase : holdcase) : Flow.t =
+  and eval_hold_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (id : id)
+      (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) : Flow.t
+      =
     (* Backup in case of failure *)
     Hook.backup ();
     (* Evaluate the hold condition *)
@@ -1423,17 +1445,17 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
        if the expected behavior is the relation not holding *)
     match holdcase with
     | BothH (block_hold, block_not_hold) ->
-        if cond then eval_block ctx block_hold
+        if cond then eval_block ~tail ctx block_hold
         else (
           Hook.restore ();
-          eval_block ctx block_not_hold)
+          eval_block ~tail ctx block_not_hold)
     | HoldH (block_hold, dangle) ->
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
-        if cond then eval_block ctx block_hold else Cont []
+        if cond then eval_block ~tail ctx block_hold else Cont []
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
-        if not cond then eval_block ctx block_not_hold else Cont []
+        if not cond then eval_block ~tail ctx block_not_hold else Cont []
 
   (* Case analysis instruction evaluation *)
 
@@ -1473,22 +1495,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     Hook.on_value value_cond;
     (block_match, value_cond)
 
-  and eval_case_instr (iid : iid) (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (dangle : dangle) : Flow.t =
+  and eval_case_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (exp : exp)
+      (cases : case list) (dangle : dangle) : Flow.t =
     (* Evaluate the matching case and mark dangle *)
     let block_opt, value_cond = eval_cases ctx exp cases in
     (if dangle then
        let matched = Option.is_some block_opt in
        Hook.on_instr_dangling (not matched) iid value_cond);
     (* Evaluate the matching case if any *)
-    match block_opt with Some block -> eval_block ctx block | None -> Cont []
+    match block_opt with
+    | Some block -> eval_block ~tail ctx block
+    | None -> Cont []
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (_id_group : id)
+  and eval_group_instr ~(tail : bool) (ctx : Ctx.t) (_id_group : id)
       (_rel_signature : rel_signature) (_exps_group : exp list)
       (block : instr list) : Flow.t =
-    eval_block ctx block
+    eval_block ~tail ctx block
 
   (* Let instruction evaluation *)
 
@@ -1624,11 +1648,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterinstrs = List.rev iterinstrs in
     eval_let_iter' ctx exp_l exp_r iterinstrs
 
-  and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+  and eval_let_instr ~(tail : bool) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
       (iterinstrs : iterinstr list) (block : block) : Flow.t =
     try
       let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
-      eval_block ctx block
+      eval_block ~tail ctx block
     with Backtrace (Unmatch traces) -> Cont traces
 
   (* Rule instruction evaluation *)
@@ -1755,35 +1779,41 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterinstrs = List.rev iterinstrs in
     eval_rule_iter' ctx id notexp inputs iterinstrs
 
-  and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
+  and eval_rule_instr ~(tail : bool) (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
       Flow.t =
     try
       let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-      eval_block ctx block
+      eval_block ~tail ctx block
     with Backtrace (Unmatch traces) -> Cont traces
 
   (* Result instruction evaluation *)
 
-  and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
-      (exps : exp list) : Flow.t =
+  and eval_result_instr ~(tail : bool) (ctx : Ctx.t)
+      (_rel_signature : rel_signature) (exps : exp list) : Flow.t =
     try
+      tail |> ignore;
       let values = eval_exps ctx exps in
       Flow.Res values
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Return instruction evaluation *)
 
-  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
+  and eval_return_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
     try
-      let value = eval_exp ctx exp in
-      Flow.Ret value
+      match exp.it with
+      | Il.CallE (id, targs, args) when tail ->
+          let targs = resolve_targs ctx targs in
+          let values_args = eval_args ctx args in
+          Flow.Tailcall (id, targs, values_args)
+      | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
+  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
     try
+      tail |> ignore;
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
       |> print_endline;
@@ -1867,8 +1897,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (values_input : value list) : value list =
     let ctx_local = Ctx.localize_rule ctx id values_input in
     let ctx_local = assign_exps ctx_local exps_input values_input in
-    let flow = eval_block ctx_local block in
-    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    let flow =
+      let tail = Option.is_none elseblock_opt in
+      eval_block ~tail ctx_local block
+    in
+    let flow = eval_elseblock_opt ~tail:true ctx_local flow elseblock_opt in
     match flow with
     | Res values_output ->
         List.iteri
@@ -1881,6 +1914,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           values_input;
         values_output
     | Ret _ -> back_err id.at "relation cannot return a value"
+    | Tailcall _ -> back_err id.at "unexpected tail call in relation body"
     | Cont traces -> Unmatch traces |> back
 
   (* Invoke a function *)
@@ -1896,57 +1930,76 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
-    try
-      Hook.on_func_enter id values_input;
-      let cursor, func = Ctx.find_func ctx id in
-      let anon = cursor = Ctx.Local in
-      let value_output =
-        if
-          Hook.is_cache_on () && (not anon)
-          && (not (is_extern_func func))
-          && not (is_high_order_func values_input)
-        then (
-          let cache_result =
-            Cache.Cache.find !func_cache (id.it, values_input)
-          in
-          match cache_result with
-          | Some value_output -> value_output
-          | None ->
-              let checkpoint_before = Interface.checkpoint () in
-              let extern_checkpoint_before = Extern.checkpoint () in
-              let value_output =
-                invoke_func_body ctx id func targs values_input
-              in
-              let checkpoint_after = Interface.checkpoint () in
-              let extern_checkpoint_after = Extern.checkpoint () in
-              (* Cache if neither the interface nor the extern created a side-effect *)
-              if
-                (not (Interface.seff checkpoint_before checkpoint_after))
-                && not
-                     (Extern.seff extern_checkpoint_before
-                        extern_checkpoint_after)
-              then
-                Cache.Cache.add !func_cache (id.it, values_input) value_output;
-              value_output)
-        else (
-          if not internal then check_func_inputs ctx id targs values_input;
-          invoke_func_body ctx id func targs values_input)
-      in
-      Hook.on_func_exit id;
-      value_output
-    with Backtrace backtrace ->
-      Hook.on_func_exit id;
-      back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
+    let rec loop id targs values_input =
+      try
+        Hook.on_func_enter id values_input;
+        let cursor, func = Ctx.find_func ctx id in
+        let anon = cursor = Ctx.Local in
+        let result =
+          if
+            Hook.is_cache_on () && (not anon)
+            && (not (is_extern_func func))
+            && not (is_high_order_func values_input)
+          then
+            let cache_result =
+              Cache.Cache.find !func_cache (id.it, values_input)
+            in
+            match cache_result with
+            | Some value_output -> Return value_output
+            | None -> (
+                let checkpoint_before = Interface.checkpoint () in
+                let extern_checkpoint_before = Extern.checkpoint () in
+                let result = invoke_func_body ctx id func targs values_input in
+                match result with
+                | Return value_output ->
+                    let checkpoint_after = Interface.checkpoint () in
+                    let extern_checkpoint_after = Extern.checkpoint () in
+                    (* Cache if neither the interface nor the extern created a side-effect *)
+                    if
+                      (not (Interface.seff checkpoint_before checkpoint_after))
+                      && not
+                           (Extern.seff extern_checkpoint_before
+                              extern_checkpoint_after)
+                    then
+                      Cache.Cache.add !func_cache (id.it, values_input)
+                        value_output;
+                    Return value_output
+                | Tailcall _ -> result)
+          else (
+            if not internal then check_func_inputs ctx id targs values_input;
+            invoke_func_body ctx id func targs values_input)
+        in
+        match result with
+        | Return value_output ->
+            Hook.on_func_exit id;
+            value_output
+        | Tailcall (id, targs, values) ->
+            Hook.on_func_exit id;
+            loop id targs values
+      with Backtrace backtrace ->
+        Hook.on_func_exit id;
+        back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
+    in
+    loop id targs values_input
 
   and invoke_func_body (ctx : Ctx.t) (id : id) (func : Func.t)
-      (targs : targ list) (values_input : value list) : value =
+      (targs : targ list) (values_input : value list) : func_result =
     match func with
     | Func.Extern (tparams, _, typ) ->
-        invoke_extern_func ctx id tparams targs values_input typ
+        let value_output =
+          invoke_extern_func ctx id tparams targs values_input typ
+        in
+        Return value_output
     | Func.Builtin (tparams, _, typ) ->
-        invoke_builtin_func ctx id tparams targs values_input typ
+        let value_output =
+          invoke_builtin_func ctx id tparams targs values_input typ
+        in
+        Return value_output
     | Func.Table (params, _, tablerows) ->
-        invoke_table_func ctx id params tablerows values_input
+        let value_output =
+          invoke_table_func ctx id params tablerows values_input
+        in
+        Return value_output
     | Func.Defined (tparams, params, _, block, elseblock_opt) ->
         invoke_defined_func ctx id tparams params block elseblock_opt targs
           values_input
@@ -1987,7 +2040,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block_sequential ctx_local instrs in
+    let flow = eval_block_sequential ~tail:true ctx_local instrs in
     match flow with
     | Ret value_output ->
         List.iteri
@@ -2000,7 +2053,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (params : param list) (block : block) (elseblock_opt : elseblock option)
-      (targs : targ list) (values_input : value list) : value =
+      (targs : targ list) (values_input : value list) : func_result =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -2013,18 +2066,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let ctx_local = assign_params ctx ctx_local params values_input in
-    let flow = eval_block ctx_local block in
-    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    let flow =
+      let tail = Option.is_none elseblock_opt in
+      eval_block ~tail ctx_local block
+    in
+    let flow = eval_elseblock_opt ~tail:true ctx_local flow elseblock_opt in
     match flow with
-    | Ret value_output ->
+    | Flow.Tailcall (id, targs, values) -> Tailcall (id, targs, values)
+    | Flow.Ret value_output ->
         List.iteri
           (fun idx_arg value_input ->
             Hook.on_value_dependency value_output value_input
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
-        value_output
-    | Res _ -> back_err id.at "relation cannot return a value"
-    | Cont traces -> Unmatch traces |> back
+        Return value_output
+    | Flow.Res _ -> back_err id.at "function cannot produce a relation result"
+    | Flow.Cont traces -> Unmatch traces |> back
 
   (* Entry points for evaluation *)
 
@@ -2036,10 +2093,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
       let ctx = Ctx.empty () in
-      let values_ouput =
-        invoke_rel ~internal:false ctx (relname $ no_region) values_input
-      in
-      values_ouput
+      invoke_rel ~internal:false ctx (relname $ no_region) values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
@@ -2049,11 +2103,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (values_input : value list) : value =
     try
       let ctx = Ctx.empty () in
-      let value_output =
-        invoke_func ~internal:false ctx (funcname $ no_region) targs
-          values_input
-      in
-      value_output
+      invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in

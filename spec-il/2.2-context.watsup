@@ -27,16 +27,19 @@ var C : ctx
 dec $load_typdef(ctx, id, typdef) : ctx
 def $load_typdef(C, id, typdef)
   = C[ .GLOBAL.TYP = tdenv_update ]
+  ;; -- debug ("load type " ++ id)
   -- if tdenv_update = $add_map<id, typdef>(C.GLOBAL.TYP, id, typdef)
 
 dec $load_reldef(ctx, id, reldef) : ctx
 def $load_reldef(C, id, reldef)
   = C[ .GLOBAL.REL = renv_update ]
+  ;; -- debug ("load rel " ++ id)
   -- if renv_update = $add_map<id, reldef>(C.GLOBAL.REL, id, reldef)
 
 dec $load_funcdef(ctx, id, funcdef) : ctx
 def $load_funcdef(C, id, funcdef)
   = C[ .GLOBAL.FUNC = fenv_update ]
+  ;; -- debug ("load func " ++ id)
   -- if fenv_update = $add_map<id, funcdef>(C.GLOBAL.FUNC, id, funcdef)
 
 dec $load(ctx, script) : ctx
@@ -79,8 +82,7 @@ def $load(C, defn_h :: defn_t*)
   -- if FUNC id tparam* param* `: typ `= clause* elsclause? = defn_h
   -- if C' = $load_funcdef(C, id, DEF tparam* `-> clause* elsclause?)
 
-def $load(C, _) = C
-  -- otherwise
+def $load(C, eps) = C
 
 ;; Iteration helpers
 
