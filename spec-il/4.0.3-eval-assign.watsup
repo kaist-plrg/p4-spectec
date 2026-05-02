@@ -1,80 +1,91 @@
 ;; Assignments
 
 relation Assign_exp:
-  ctx |- val -> exp : res<ctx>
+  ctx |- exp := val : res<ctx>
   hint(input %0 %1 %2)
 
 relation Assign_exps:
-  ctx |- val* -> exp* : res<ctx>
+  ctx |- exp* := val* : res<ctx>
   hint(input %0 %1 %2)
 
 relation Assign_arg:
-  ctx `/ ctx |- val -> arg : res<ctx>
+  ctx `/ ctx |- arg := val : res<ctx>
   hint(input %0 %1 %2 %3)
 
 relation Assign_args:
-  ctx `/ ctx  |- val* -> arg* : res<ctx>
+  ctx `/ ctx  |- arg* := val* : res<ctx>
   hint(input %0 %1 %2 %3)
 
 ;;; Assigning to an expression
 
 rule Assign_exp/variable:
-  C |- val -> VAR id : OK C'
+  C |- VAR id := val : OK C'
   -- if C' = $add_varr(C, id eps, val)
 
 rule Assign_exp/tup:
-  C |- TUP val* -> TUP exp* : OK C'
-  -- Assign_exps: C |- val* -> exp* : OK C'
+  C |- TUP exp* := TUP val* : OK C'
+  -- Assign_exps: C |- exp* := val* : OK C'
 
 rule Assign_exp/inj:
-  C |- INJ (mixop val*) -> INJ (mixop exp*) : OK C'
-  -- Assign_exps: C |- val* -> exp* : OK C'
+  C |- INJ (mixop exp*) := INJ (mixop val*) : OK C'
+  -- Assign_exps: C |- exp* := val* : OK C'
 
 rule Assign_exp/str:
-  C |- STR valfield* -> STR expfield* : OK C'
+  C |- STR expfield* := STR valfield* : OK C'
   -- (if atom val = valfield)*
   -- (if atom exp = expfield)*
-  -- Assign_exps: C |- val* -> exp* : OK C'
+  -- Assign_exps: C |- exp* := val* : OK C'
 
 rulegroup Assign_exp/opt {
 
   rule Assign_exp/opt-some:
-    C |- OPT val -> OPT exp : OK C'
-    -- Assign_exp: C |- val -> exp : OK C'
+    C |- OPT exp := OPT val : OK C'
+    -- Assign_exp: C |- exp := val : OK C'
 
   rule Assign_exp/opt-none:
-    C |- OPT eps -> OPT eps : OK C
+    C |- OPT eps := OPT eps : OK C
 
 }
 
 rule Assign_exp/list:
-  C |- LIST val* -> LIST exp* : OK C'
-  -- Assign_exps: C |- val* -> exp* : OK C'
+  C |- LIST exp* := LIST val* : OK C'
+  -- Assign_exps: C |- exp* := val* : OK C'
 
 rule Assign_exp/cons:
-  C |- LIST (val_h :: val_t*) -> CONS exp_h exp_t : OK C''
-  -- Assign_exp: C |- val_h -> exp_h : OK C'
-  -- Assign_exp: C' |- LIST val_t* -> exp_t : OK C''
+  C |- CONS exp_h exp_t := LIST (val_h :: val_t*) : OK C''
+  -- Assign_exp: C |- exp_h := val_h : OK C'
+  -- Assign_exp: C' |- exp_t := LIST val_t* : OK C''
 
 rulegroup Assign_exp/iter {
 
+  rule Assign_exp/simple:
+    C |- ITER exp iterexp := val : OK C'
+    -- if varr = $is_iter_on_var(ITER exp iterexp)
+    -- if C' = $add_varr(C, varr, val)
+
   rule Assign_exp/opt-none:
-    C |- OPT eps -> ITER exp (QUEST vari*) : OK C'
+    C |- ITER exp iterexp := OPT eps : OK C'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
     -- if (vari_iter = $iter_vari(vari, QUEST))*
     -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
     -- if C' = $add_varis(C, vari_iter*, val_bind*)
 
   rule Assign_exp/opt-some:
-    C |- OPT val -> ITER exp (QUEST vari*) : OK C''
-    -- Assign_exp: C |- val -> exp : OK C'
+    C |- ITER exp iterexp := OPT val : OK C''
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- Assign_exp: C |- exp := val : OK C'
     -- if (vari_iter = $iter_vari(vari, QUEST))*
     -- if (val_sub = $find_vari(C', vari))*
     -- if C'' = $add_varis(C', vari_iter*, OPT val_sub)*
 
   rule Assign_exp/list:
-    C |- LIST val* -> ITER exp (STAR vari*) : OK C'
+    C |- ITER exp iterexp := LIST val* : OK C'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if STAR vari* = iterexp
     -- if C_local = C[ .LOCAL.VAL = $empty_map<varr, val> ]
-    -- (Assign_exp: C_local |- val -> exp : OK C_sub)*
+    -- (Assign_exp: C_local |- exp := val : OK C_sub)*
     -- if (vari_iter = $iter_vari(vari, STAR))*
     -- if (val_sub* = $finds_vari(C_sub*, vari))*
     -- if (val_bind = LIST val_sub*)*
@@ -83,48 +94,48 @@ rulegroup Assign_exp/iter {
 }
 
 rule Assign_exp/fail:
-  C |- val -> exp : FAIL
+  C |- exp := val : FAIL
   -- otherwise
 
 ;;; Assigning to a sequence of expressions
 
 rule Assign_exps/nil:
-  C |- eps -> eps : OK C 
+  C |- eps := eps : OK C 
 
 rule Assign_exps/cons:
-  C |- (val_h :: val_t*) -> (exp_h :: exp_t*) : OK C''
-  -- Assign_exp: C |- val_h -> exp_h : OK C'
-  -- Assign_exps: C' |- val_t* -> exp_t* : OK C''
+  C |- exp_h :: exp_t* := val_h :: val_t* : OK C''
+  -- Assign_exp: C |- exp_h := val_h : OK C'
+  -- Assign_exps: C' |- exp_t* := val_t* : OK C''
 
 rule Assign_exps/fail:
-  C |- val* -> exp* : FAIL
+  C |- exp* := val* : FAIL
   -- otherwise
 
 ;;; Assigning to an argument
 
 rule Assign_arg/exp:
-  C_callee `/ _ |- val -> EXP exp : OK C_callee'
-  -- Assign_exp: C_callee |- val -> exp : OK C_callee'
+  C_callee `/ _ |- EXP exp := val : OK C_callee'
+  -- Assign_exp: C_callee |- exp := val : OK C_callee'
 
 rule Assign_arg/fun:
-  C_callee `/ C_caller |- (FUNC id_caller) -> FUN id_callee : OK C_callee'
+  C_callee `/ C_caller |- FUN id_callee := FUNC id_caller : OK C_callee'
   -- if (_, funcdef) = $find_func(C_caller, id_caller)
   -- if C_callee' = $add_func(C_callee, id_callee, funcdef)
 
 rule Assign_arg/fail:
-  C_callee `/ C_caller |- val -> arg : FAIL 
+  C_callee `/ C_caller |- arg := val : FAIL 
   -- otherwise
 
 ;;; Assigning to a sequence of arguments
 
 rule Assign_args/nil:
-  C_callee `/ _ |- eps -> eps : OK C_callee
+  C_callee `/ _ |- eps := eps : OK C_callee
 
 rule Assign_args/cons:
-  C_callee `/ C_caller |- (val_h :: val_t*) -> (arg_h :: arg_t*) : OK C_callee''
-  -- Assign_arg: C_callee `/ C_caller |- val_h -> arg_h : OK C_callee'
-  -- Assign_args: C_callee' `/ C_caller |- val_t* -> arg_t* : OK C_callee''
+  C_callee `/ C_caller |- arg_h :: arg_t* := val_h :: val_t* : OK C_callee''
+  -- Assign_arg: C_callee `/ C_caller |- arg_h := val_h : OK C_callee'
+  -- Assign_args: C_callee' `/ C_caller |- arg_t* := val_t* : OK C_callee''
 
 rule Assign_args/fail:
-  C_callee `/ C_caller |- val* -> arg* : FAIL
+  C_callee `/ C_caller |- arg* := val* : FAIL
   -- otherwise

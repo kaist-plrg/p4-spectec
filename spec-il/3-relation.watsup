@@ -76,3 +76,15 @@ relation Call_func_dispatch:
 relation Call_rel_dispatch:
   ctx |- id val* relcache : res<val*>
   hint(input %0 %1 %2 %3)
+
+;; Iteration helper
+
+dec $is_iter_on_var(exp) : varr?
+
+def $is_iter_on_var(VAR id) = id eps
+def $is_iter_on_var(ITER exp iterexp)
+  = id (iter* ++ [ iter_outer ])
+  -- if id iter* = $is_iter_on_var(exp)
+  -- if iter_outer (id _ iter*) = iterexp
+def $is_iter_on_var(_) = eps
+  -- otherwise
