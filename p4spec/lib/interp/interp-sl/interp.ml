@@ -337,51 +337,49 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
      Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
   let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
-    try eval_exp' ctx exp
+    try
+      let typ_note = exp.note $ exp.at in
+      match exp.it with
+      | BoolE b -> eval_bool_exp ctx b
+      | NumE n -> eval_num_exp ctx n
+      | TextE s -> eval_text_exp ctx s
+      | VarE id -> eval_var_exp ctx id
+      | UnE (unop, optyp, exp) -> eval_un_exp ctx unop optyp exp
+      | BinE (binop, optyp, exp_l, exp_r) ->
+          eval_bin_exp ctx binop optyp exp_l exp_r
+      | CmpE (cmpop, optyp, exp_l, exp_r) ->
+          eval_cmp_exp ctx cmpop optyp exp_l exp_r
+      | UpCastE (typ, exp) -> eval_upcast_exp ctx typ exp
+      | DownCastE (typ, exp) -> eval_downcast_exp ctx typ exp
+      | SubE (exp, typ) -> eval_sub_exp ctx exp typ
+      | MatchE (exp, pattern) -> eval_match_exp ctx exp pattern
+      | TupleE exps -> eval_tuple_exp typ_note ctx exps
+      | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
+      | StrE fields -> eval_str_exp typ_note ctx fields
+      | OptE exp_opt -> eval_opt_exp typ_note ctx exp_opt
+      | ListE exps -> eval_list_exp typ_note ctx exps
+      | ConsE (exp_h, exp_t) -> eval_cons_exp typ_note ctx exp_h exp_t
+      | CatE (exp_l, exp_r) -> eval_cat_exp typ_note ctx exp_l exp_r
+      | MemE (exp_e, exp_s) -> eval_mem_exp ctx exp_e exp_s
+      | LenE exp -> eval_len_exp ctx exp
+      | DotE (exp_b, atom) -> eval_dot_exp typ_note ctx exp_b atom
+      | IdxE (exp_b, exp_i) -> eval_idx_exp ctx exp_b exp_i
+      | SliceE (exp_b, exp_l, exp_h) ->
+          eval_slice_exp typ_note ctx exp_b exp_l exp_h
+      | UpdE (exp_b, path, exp_f) -> eval_upd_exp ctx exp_b path exp_f
+      | CallE (id, targs, args) -> eval_call_exp ctx id targs args
+      | IterE (exp, iterexp) -> eval_iter_exp typ_note ctx exp iterexp
     with Backtrace backtrace ->
       back_nest exp.at
         (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
         backtrace
-
-  and eval_exp' (ctx : Ctx.t) (exp : exp) : value =
-    let typ_note = exp.note $ exp.at in
-    match exp.it with
-    | BoolE b -> eval_bool_exp typ_note ctx b
-    | NumE n -> eval_num_exp typ_note ctx n
-    | TextE s -> eval_text_exp typ_note ctx s
-    | VarE id -> eval_var_exp typ_note ctx id
-    | UnE (unop, optyp, exp) -> eval_un_exp typ_note ctx unop optyp exp
-    | BinE (binop, optyp, exp_l, exp_r) ->
-        eval_bin_exp typ_note ctx binop optyp exp_l exp_r
-    | CmpE (cmpop, optyp, exp_l, exp_r) ->
-        eval_cmp_exp typ_note ctx cmpop optyp exp_l exp_r
-    | UpCastE (typ, exp) -> eval_upcast_exp typ_note ctx typ exp
-    | DownCastE (typ, exp) -> eval_downcast_exp typ_note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp typ_note ctx exp typ
-    | MatchE (exp, pattern) -> eval_match_exp typ_note ctx exp pattern
-    | TupleE exps -> eval_tuple_exp typ_note ctx exps
-    | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
-    | StrE fields -> eval_str_exp typ_note ctx fields
-    | OptE exp_opt -> eval_opt_exp typ_note ctx exp_opt
-    | ListE exps -> eval_list_exp typ_note ctx exps
-    | ConsE (exp_h, exp_t) -> eval_cons_exp typ_note ctx exp_h exp_t
-    | CatE (exp_l, exp_r) -> eval_cat_exp typ_note ctx exp_l exp_r
-    | MemE (exp_e, exp_s) -> eval_mem_exp typ_note ctx exp_e exp_s
-    | LenE exp -> eval_len_exp typ_note ctx exp
-    | DotE (exp_b, atom) -> eval_dot_exp typ_note ctx exp_b atom
-    | IdxE (exp_b, exp_i) -> eval_idx_exp typ_note ctx exp_b exp_i
-    | SliceE (exp_b, exp_l, exp_h) ->
-        eval_slice_exp typ_note ctx exp_b exp_l exp_h
-    | UpdE (exp_b, path, exp_f) -> eval_upd_exp typ_note ctx exp_b path exp_f
-    | CallE (id, targs, args) -> eval_call_exp typ_note ctx id targs args
-    | IterE (exp, iterexp) -> eval_iter_exp typ_note ctx exp iterexp
 
   and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
     List.map (eval_exp ctx) exps
 
   (* Boolean expression evaluation *)
 
-  and eval_bool_exp (_typ_note : typ) (ctx : Ctx.t) (b : bool) : value =
+  and eval_bool_exp (ctx : Ctx.t) (b : bool) : value =
     let value_res = Value.Make.bool b in
     Hook.on_value value_res;
     List.iter
@@ -392,7 +390,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Numeric expression evaluation *)
 
-  and eval_num_exp (_typ_note : typ) (ctx : Ctx.t) (n : Num.t) : value =
+  and eval_num_exp (ctx : Ctx.t) (n : Num.t) : value =
     let value_res = Value.Make.num n in
     Hook.on_value value_res;
     List.iter
@@ -403,7 +401,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Text expression evaluation *)
 
-  and eval_text_exp (_typ_note : typ) (ctx : Ctx.t) (s : string) : value =
+  and eval_text_exp (ctx : Ctx.t) (s : string) : value =
     let value_res = Value.Make.text s in
     Hook.on_value value_res;
     List.iter
@@ -414,8 +412,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Variable expression evaluation *)
 
-  and eval_var_exp (_typ_note : typ) (ctx : Ctx.t) (id : id) : value =
-    Ctx.find_value ctx (id, [])
+  and eval_var_exp (ctx : Ctx.t) (id : id) : value = Ctx.find_value ctx (id, [])
 
   (* Unary expression evaluation *)
 
@@ -426,8 +423,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and eval_un_num (unop : Num.unop) (value : value) : value =
     value |> Value.Get.num |> Num.un unop |> Value.Make.num
 
-  and eval_un_exp (_typ_note : typ) (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
-      (exp : exp) : value =
+  and eval_un_exp (ctx : Ctx.t) (unop : unop) (_optyp : optyp) (exp : exp) :
+      value =
     let value = eval_exp ctx exp in
     let value_res =
       match unop with
@@ -456,8 +453,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let num_r = Value.Get.num value_r in
     Value.Make.num (Num.bin binop num_l num_r)
 
-  and eval_bin_exp (_typ_note : typ) (ctx : Ctx.t) (binop : binop)
-      (_optyp : optyp) (exp_l : exp) (exp_r : exp) : value =
+  and eval_bin_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp) (exp_l : exp)
+      (exp_r : exp) : value =
     let value_l = eval_exp ctx exp_l in
     let value_r = eval_exp ctx exp_r in
     let value_res =
@@ -485,8 +482,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let num_r = Value.Get.num value_r in
     Value.Make.bool (Num.cmp cmpop num_l num_r)
 
-  and eval_cmp_exp (_typ_note : typ) (ctx : Ctx.t) (cmpop : cmpop)
-      (_optyp : optyp) (exp_l : exp) (exp_r : exp) : value =
+  and eval_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp) (exp_l : exp)
+      (exp_r : exp) : value =
     let value_l = eval_exp ctx exp_l in
     let value_r = eval_exp ctx exp_r in
     let value_res =
@@ -555,8 +552,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | _ -> back_err_upcast ())
     | _ -> value
 
-  and eval_upcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
+  and eval_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : value =
     let value = eval_exp ctx exp in
     upcast ctx typ value
 
@@ -616,15 +612,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | _ -> back_err_downcast ())
     | _ -> value
 
-  and eval_downcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp)
-      : value =
+  and eval_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : value =
     let value = eval_exp ctx exp in
     downcast ctx typ value
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value =
+  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
     let value = eval_exp ctx exp in
     let sub =
       Value.Match.sub (Ctx.find_typdef_opt ctx)
@@ -638,8 +632,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Pattern match check expression evaluation *)
 
-  and eval_match_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp)
-      (pattern : pattern) : value =
+  and eval_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) : value =
     let value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
@@ -767,8 +760,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Membership expression evaluation *)
 
-  and eval_mem_exp (_typ_note : typ) (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-      value =
+  and eval_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : value =
     let value_e = eval_exp ctx exp_e in
     let value_s = eval_exp ctx exp_s in
     let values_s = Value.Get.list value_s in
@@ -780,7 +772,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Length expression evaluation *)
 
-  and eval_len_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) : value =
+  and eval_len_exp (ctx : Ctx.t) (exp : exp) : value =
     let value = eval_exp ctx exp in
     let len =
       match value.it with
@@ -812,8 +804,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Index expression evaluation *)
 
-  and eval_idx_exp (_typ_note : typ) (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-      value =
+  and eval_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : value =
     let value_b = eval_exp ctx exp_b in
     let value_i = eval_exp ctx exp_i in
     let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
@@ -1079,17 +1070,38 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         Hook.on_value value;
         eval_update_path ctx value_b path value
 
-  and eval_upd_exp (_typ_note : typ) (ctx : Ctx.t) (exp_b : exp) (path : path)
-      (exp_f : exp) : value =
+  and eval_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
+      value =
     let value_b = eval_exp ctx exp_b in
     let value_f = eval_exp ctx exp_f in
     eval_update_path ctx value_b path value_f
 
   (* Function call expression evaluation *)
 
-  and eval_call_exp (_typ_note : typ) (ctx : Ctx.t) (id : id)
-      (targs : targ list) (args : arg list) : value =
-    invoke_func ctx id targs args
+  and eval_call_exp (ctx : Ctx.t) (id : id) (targs : targ list)
+      (args : arg list) : value =
+    let targs =
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            let tdenv_local =
+              match ctx.local with
+              | Empty | Rel _ -> TIdMap.empty
+              | Func { tdenv; _ } -> tdenv
+            in
+            TDEnv.fold
+              (fun tid typdef theta ->
+                match typdef with
+                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                    TIdMap.add tid typ theta
+                | _ -> theta)
+              tdenv_local TIdMap.empty
+          in
+          List.map (Type.Subst.subst_typ theta) targs
+    in
+    let values_args = eval_args ctx args in
+    invoke_func ctx id targs values_args
 
   (* Iterated expression evaluation *)
 
@@ -1139,20 +1151,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Argument evaluation *)
 
   and eval_arg (ctx : Ctx.t) (arg : arg) : value =
-    try eval_arg' ctx arg
+    try
+      match arg.it with
+      | ExpA exp -> eval_exp ctx exp
+      | DefA id ->
+          let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
+          let value_res = Value.Make.func id tparams typs_params typ in
+          Hook.on_value value_res;
+          value_res
     with Backtrace backtrace ->
       back_nest arg.at
         (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
         backtrace
-
-  and eval_arg' (ctx : Ctx.t) (arg : arg) : value =
-    match arg.it with
-    | ExpA exp -> eval_exp ctx exp
-    | DefA id ->
-        let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
-        let value_res = Value.Make.func id tparams typs_params typ in
-        Hook.on_value value_res;
-        value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list =
     List.map (eval_arg ctx) args
@@ -1161,29 +1171,28 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
     Hook.on_instr instr;
-    try eval_instr' ctx instr
+    try
+      let iid = instr.note.iid in
+      match instr.it with
+      | IfI (exp_cond, iterexps, block_then, dangle) ->
+          eval_if_instr iid ctx exp_cond iterexps block_then dangle
+      | HoldI (id, notexp, iterexps, holdcase) ->
+          eval_hold_instr iid ctx id notexp iterexps holdcase
+      | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
+      | GroupI (id_group, rel_signature, exps_group, block) ->
+          eval_group_instr ctx id_group rel_signature exps_group block
+      | LetI (exp_l, exp_r, iterinstrs, block) ->
+          eval_let_instr ctx exp_l exp_r iterinstrs block
+      | RuleI (id, notexp, inputs, iterinstrs, block) ->
+          eval_rule_instr ctx id notexp inputs iterinstrs block
+      | ResultI (rel_signature, exps) ->
+          eval_result_instr ctx rel_signature exps
+      | ReturnI exp -> eval_return_instr ctx exp
+      | DebugI exp -> eval_debug_instr ctx exp
     with Backtrace backtrace ->
       backtrace
       |> back_nest instr.at
            (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
-
-  and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
-    let iid = instr.note.iid in
-    match instr.it with
-    | IfI (exp_cond, iterexps, block_then, dangle) ->
-        eval_if_instr iid ctx exp_cond iterexps block_then dangle
-    | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr iid ctx id notexp iterexps holdcase
-    | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
-    | GroupI (id_group, rel_signature, exps_group, block) ->
-        eval_group_instr ctx id_group rel_signature exps_group block
-    | LetI (exp_l, exp_r, iterinstrs, block) ->
-        eval_let_instr ctx exp_l exp_r iterinstrs block
-    | RuleI (id, notexp, inputs, iterinstrs, block) ->
-        eval_rule_instr ctx id notexp inputs iterinstrs block
-    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
-    | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI exp -> eval_debug_instr ctx exp
 
   and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
     if !Ctx.is_det then eval_block_deterministic ctx block
@@ -1794,43 +1803,46 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (values_input : value list) : value list =
     try
       Hook.on_rel_enter id values_input;
-      let values_output = invoke_rel' ~internal ctx id values_input in
+      let rel = Ctx.find_rel ctx id in
+      let dispatch () =
+        match rel with
+        | Rel.Extern (nottyp, inputs) ->
+            invoke_extern_rel ctx nottyp inputs id values_input
+        | Rel.Defined (_, exps_input, block, elseblock_opt) ->
+            invoke_defined_rel ctx id exps_input block elseblock_opt
+              values_input
+      in
+      let values_output =
+        if Hook.is_cache_on () && not (is_extern_rel rel) then (
+          let cache_result =
+            Cache.Cache.find !rel_cache (id.it, values_input)
+          in
+          match cache_result with
+          | Some values_output -> values_output
+          | None ->
+              let checkpoint_before = Interface.checkpoint () in
+              let extern_checkpoint_before = Extern.checkpoint () in
+              let values_output = dispatch () in
+              let checkpoint_after = Interface.checkpoint () in
+              let extern_checkpoint_after = Extern.checkpoint () in
+              (* Cache if neither the interface nor the extern created a side-effect *)
+              if
+                (not (Interface.seff checkpoint_before checkpoint_after))
+                && not
+                     (Extern.seff extern_checkpoint_before
+                        extern_checkpoint_after)
+              then
+                Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+              values_output)
+        else (
+          if not internal then check_rel_inputs ctx id values_input;
+          dispatch ())
+      in
       Hook.on_rel_exit id;
       values_output
     with Backtrace backtrace ->
       Hook.on_rel_exit id;
       back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
-
-  and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
-      (values_input : value list) : value list =
-    let rel = Ctx.find_rel ctx id in
-    let invoke_rel'' () =
-      match rel with
-      | Rel.Extern (nottyp, inputs) ->
-          invoke_extern_rel ctx nottyp inputs id values_input
-      | Rel.Defined (_, exps_input, block, elseblock_opt) ->
-          invoke_defined_rel ctx id exps_input block elseblock_opt values_input
-    in
-    if Hook.is_cache_on () && not (is_extern_rel rel) then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
-      match cache_result with
-      | Some values_output -> values_output
-      | None ->
-          let checkpoint_before = Interface.checkpoint () in
-          let extern_checkpoint_before = Extern.checkpoint () in
-          let values_output = invoke_rel'' () in
-          let checkpoint_after = Interface.checkpoint () in
-          let extern_checkpoint_after = Extern.checkpoint () in
-          (* Cache if neither the interface nor the extern created a side-effect *)
-          if
-            (not (Interface.seff checkpoint_before checkpoint_after))
-            && not
-                 (Extern.seff extern_checkpoint_before extern_checkpoint_after)
-          then Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-          values_output)
-    else (
-      if not internal then check_rel_inputs ctx id values_input;
-      invoke_rel'' ())
 
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
@@ -1882,49 +1894,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         match value_input.it with Il.FuncV _ -> true | _ -> false)
       values_input
 
-  and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value =
-    let targs =
-      match targs with
-      | [] -> []
-      | targs ->
-          let theta =
-            let tdenv_local =
-              match ctx.local with
-              | Empty | Rel _ -> TIdMap.empty
-              | Func { tdenv; _ } -> tdenv
-            in
-            TDEnv.fold
-              (fun tid typdef theta ->
-                match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
-                    TIdMap.add tid typ theta
-                | _ -> theta)
-              tdenv_local TIdMap.empty
-          in
-          List.map (Type.Subst.subst_typ theta) targs
-    in
-    let values_input = eval_args ctx args in
-    invoke_func_with_values ctx id targs values_input
-
-  and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+  and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
       let cursor, func = Ctx.find_func ctx id in
       let anon = cursor = Ctx.Local in
-      let invoke_func_with_values' () =
-        match func with
-        | Func.Extern (tparams, _, typ) ->
-            invoke_extern_func ctx id tparams targs values_input typ
-        | Func.Builtin (tparams, _, typ) ->
-            invoke_builtin_func ctx id tparams targs values_input typ
-        | Func.Table (params, _, tablerows) ->
-            invoke_table_func ctx id params tablerows values_input
-        | Func.Defined (tparams, params, _, block, elseblock_opt) ->
-            invoke_defined_func ctx id tparams params block elseblock_opt targs
-              values_input
-      in
       let value_output =
         if
           Hook.is_cache_on () && (not anon)
@@ -1939,7 +1914,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           | None ->
               let checkpoint_before = Interface.checkpoint () in
               let extern_checkpoint_before = Extern.checkpoint () in
-              let value_output = invoke_func_with_values' () in
+              let value_output =
+                invoke_func_body ctx id func targs values_input
+              in
               let checkpoint_after = Interface.checkpoint () in
               let extern_checkpoint_after = Extern.checkpoint () in
               (* Cache if neither the interface nor the extern created a side-effect *)
@@ -1953,13 +1930,26 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
               value_output)
         else (
           if not internal then check_func_inputs ctx id targs values_input;
-          invoke_func_with_values' ())
+          invoke_func_body ctx id func targs values_input)
       in
       Hook.on_func_exit id;
       value_output
     with Backtrace backtrace ->
       Hook.on_func_exit id;
       back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
+
+  and invoke_func_body (ctx : Ctx.t) (id : id) (func : Func.t)
+      (targs : targ list) (values_input : value list) : value =
+    match func with
+    | Func.Extern (tparams, _, typ) ->
+        invoke_extern_func ctx id tparams targs values_input typ
+    | Func.Builtin (tparams, _, typ) ->
+        invoke_builtin_func ctx id tparams targs values_input typ
+    | Func.Table (params, _, tablerows) ->
+        invoke_table_func ctx id params tablerows values_input
+    | Func.Defined (tparams, params, _, block, elseblock_opt) ->
+        invoke_defined_func ctx id tparams params block elseblock_opt targs
+          values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
@@ -2060,7 +2050,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let ctx = Ctx.empty () in
       let value_output =
-        invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
+        invoke_func ~internal:false ctx (funcname $ no_region) targs
           values_input
       in
       value_output

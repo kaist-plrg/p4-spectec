@@ -962,7 +962,23 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_call_exp (_typ_note : typ) (ctx : Ctx.t) (id : id)
       (targs : targ list) (args : arg list) : value backtrack =
-    invoke_func ctx id targs args
+    let targs =
+      match targs with
+      | [] -> []
+      | targs ->
+          let theta =
+            TDEnv.fold
+              (fun tid typdef theta ->
+                match typdef with
+                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                    TIdMap.add tid typ theta
+                | _ -> theta)
+              ctx.local.tdenv TIdMap.empty
+          in
+          List.map (Type.Subst.subst_typ theta) targs
+    in
+    let* values_args = eval_args ctx args in
+    invoke_func ctx id targs values_args
 
   (* Iterated expression evaluation *)
 
@@ -1226,41 +1242,39 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list backtrack =
     Hook.on_rel_enter id values_input;
-    let backtrack = invoke_rel' ~internal ctx id values_input in
-    Hook.on_rel_exit id;
-    backtrack
-    |> back_nest id.at (F.asprintf "invocation of relation %s failed" id.it)
-
-  and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
-      (values_input : value list) : value list backtrack =
-    let rel = Ctx.find_rel ctx id in
-    let invoke_rel'' () =
-      match rel with
-      | Rel.Extern (nottyp, inputs) ->
-          invoke_extern_rel ctx id nottyp inputs values_input
-      | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
-          invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
+    let result =
+      let rel = Ctx.find_rel ctx id in
+      let dispatch () =
+        match rel with
+        | Rel.Extern (nottyp, inputs) ->
+            invoke_extern_rel ctx id nottyp inputs values_input
+        | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
+            invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
+      in
+      if Hook.is_cache_on () && not (is_extern_rel rel) then (
+        let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
+        match cache_result with
+        | Some values_output -> Ok values_output
+        | None ->
+            let checkpoint_before = Interface.checkpoint () in
+            let extern_checkpoint_before = Extern.checkpoint () in
+            let* values_output = dispatch () in
+            let checkpoint_after = Interface.checkpoint () in
+            let extern_checkpoint_after = Extern.checkpoint () in
+            (* Cache if neither the interface nor the extern created a side-effect *)
+            if
+              (not (Interface.seff checkpoint_before checkpoint_after))
+              && not
+                   (Extern.seff extern_checkpoint_before extern_checkpoint_after)
+            then Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+            Ok values_output)
+      else (
+        if not internal then check_rel_inputs ctx id values_input;
+        dispatch ())
     in
-    if Hook.is_cache_on () && not (is_extern_rel rel) then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
-      match cache_result with
-      | Some values_output -> Ok values_output
-      | None ->
-          let checkpoint_before = Interface.checkpoint () in
-          let extern_checkpoint_before = Extern.checkpoint () in
-          let* values_output = invoke_rel'' () in
-          let checkpoint_after = Interface.checkpoint () in
-          let extern_checkpoint_after = Extern.checkpoint () in
-          (* Cache if neither the interface nor the extern created a side-effect *)
-          if
-            (not (Interface.seff checkpoint_before checkpoint_after))
-            && not
-                 (Extern.seff extern_checkpoint_before extern_checkpoint_after)
-          then Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-          Ok values_output)
-    else (
-      if not internal then check_rel_inputs ctx id values_input;
-      invoke_rel'' ())
+    Hook.on_rel_exit id;
+    result
+    |> back_nest id.at (F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_input : value list) :
@@ -1355,57 +1369,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         match value_input.it with Il.FuncV _ -> true | _ -> false)
       values_input
 
-  and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value backtrack =
-    invoke_func' ctx id targs args
-    |> back_nest id.at
-         (F.asprintf "invocation of function %s%s%s failed"
-            (Il.Print.string_of_defid id)
-            (Il.Print.string_of_targs targs)
-            (Il.Print.string_of_args args))
-
-  and invoke_func' (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value backtrack =
-    (* Evaluate type arguments *)
-    let targs =
-      match targs with
-      | [] -> []
-      | targs ->
-          let theta =
-            TDEnv.fold
-              (fun tid typdef theta ->
-                match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
-                    TIdMap.add tid typ theta
-                | _ -> theta)
-              ctx.local.tdenv TIdMap.empty
-          in
-          List.map (Type.Subst.subst_typ theta) targs
-    in
-    (* Evaluate arguments *)
-    let* values_input = eval_args ctx args in
-    (* Invoke the function *)
-    invoke_func_with_values ctx id targs values_input
-
-  and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+  and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
     (* Find the function *)
     let cursor, func = Ctx.find_func ctx id in
     let anon = cursor = Ctx.Local in
-    (* Invoke the function *)
-    let invoke_func_with_values' () =
-      match func with
-      | Func.Extern (tparams, _, typ) ->
-          invoke_extern_func ctx id tparams targs values_input typ
-      | Func.Builtin (tparams, _, typ) ->
-          invoke_builtin_func ctx id tparams targs values_input typ
-      | Func.Table (_, _, tablerows) ->
-          invoke_table_func ctx id tablerows values_input
-      | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
-          invoke_defined_func ctx id tparams clauses elseclause_opt targs
-            values_input
-    in
     let result =
       if
         Hook.is_cache_on () && (not anon)
@@ -1418,7 +1387,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | None ->
             let checkpoint_before = Interface.checkpoint () in
             let extern_checkpoint_before = Extern.checkpoint () in
-            let* value_output = invoke_func_with_values' () in
+            let* value_output =
+              invoke_func_body ctx id func targs values_input
+            in
             let checkpoint_after = Interface.checkpoint () in
             let extern_checkpoint_after = Extern.checkpoint () in
             (* Cache if neither the interface nor the extern created a side-effect *)
@@ -1430,10 +1401,27 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             Ok value_output)
       else (
         if not internal then check_func_inputs ctx id targs values_input;
-        invoke_func_with_values' ())
+        invoke_func_body ctx id func targs values_input)
     in
     Hook.on_func_exit id;
     result
+    |> back_nest id.at
+         (F.asprintf "invocation of function %s%s failed"
+            (Il.Print.string_of_defid id)
+            (Il.Print.string_of_targs targs))
+
+  and invoke_func_body (ctx : Ctx.t) (id : id) (func : Func.t)
+      (targs : targ list) (values_input : value list) : value backtrack =
+    match func with
+    | Func.Extern (tparams, _, typ) ->
+        invoke_extern_func ctx id tparams targs values_input typ
+    | Func.Builtin (tparams, _, typ) ->
+        invoke_builtin_func ctx id tparams targs values_input typ
+    | Func.Table (_, _, tablerows) ->
+        invoke_table_func ctx id tablerows values_input
+    | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
+        invoke_defined_func ctx id tparams clauses elseclause_opt targs
+          values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (targs : targ list) (values_input : value list) (typ_output : typ) :
@@ -1578,8 +1566,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value backtrack =
     let ctx = Ctx.empty in
-    invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
-      values_input
+    invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
 
   let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Run.program_result =
