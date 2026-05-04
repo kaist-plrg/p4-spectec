@@ -8,4 +8,5 @@ type t =
   | Cont of trace list
   | Res of value list
   | Ret of value
-  | Tailcall of id * targ list * value list
+  | Tailcall_func of id * targ list * value list
+  | Tailcall_rel of id * value list

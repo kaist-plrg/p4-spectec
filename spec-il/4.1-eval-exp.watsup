@@ -126,20 +126,20 @@ rulegroup Eval_exp/match {
 
 rule Eval_exp/tuple:
   C |- TUP exp* : OK (TUP val*)
-  -- Eval_exps: C |- exp* : OK val*
+  -- (Eval_exp: C |- exp : OK val)*
 
 ;;; Case evaluation rules
 
 rule Eval_exp/case:
   C |- INJ (mixop exp*) : OK (INJ (mixop val*))
-  -- Eval_exps: C |- exp* : OK val*
+  -- (Eval_exp: C |- exp : OK val)*
 
 ;;; Struct evaluation rules
 
 rule Eval_exp/struct:
   C |- STR expfield* : OK (STR valfield*)
   -- (if atom exp = expfield)*
-  -- Eval_exps: C |- exp* : OK val*
+  -- (Eval_exp: C |- exp : OK val)*
   -- (if valfield = atom val)*
 
 ;;; Option evaluation rules
@@ -158,7 +158,7 @@ rulegroup Eval_exp/opt {
 
 rule Eval_exp/list:
   C |- LIST exp* : OK (LIST val*)
-  -- Eval_exps: C |- exp* : OK val*
+  -- (Eval_exp: C |- exp : OK val)*
 
 ;;; Cons-list evaluation rules
 
@@ -253,7 +253,7 @@ rule Eval_exp/upd:
 rule Eval_exp/call:
   C |- CALL id targ* arg* : valres
   -- Eval_targs: C |- targ* : typ_input*
-  -- Eval_args: C |- arg* : OK val_input*
+  -- (Eval_arg: C |- arg : OK val_input)*
   -- Call_func_cached: C |- id targ* val_input* : valres
 
 ;;; Iterated expression evaluation rules
@@ -289,14 +289,4 @@ rulegroup Eval_exp/iter {
 
 rule Eval_exp/fail:
   C |- exp : FAIL
-  -- otherwise
-
-;; Expression sequence evaluation rules
-
-rule Eval_exps/ok:
-  C |- exp* : OK val*
-  -- (Eval_exp: C |- exp : OK val)*
-
-rule Eval_exps/fail:
-  C |- exp* : FAIL
   -- otherwise

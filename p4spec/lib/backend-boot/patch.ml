@@ -6,6 +6,8 @@ module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 
+(* Convert a meta-value to an expression that evaluates to the same value *)
+
 let rec value_as_exp (value : value) : exp =
   let at_value = value.at in
   let typ_value = value.note.typ in

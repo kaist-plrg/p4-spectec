@@ -33,7 +33,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Function/relation result *)
 
-  type func_result = Return of value | Tailcall of id * targ list * value list
+  type func_result =
+    | Return of value
+    | Tailcall_func of id * targ list * value list
+
+  type rel_result = Result of value list | Tailcall_rel of id * value list
 
   (* Checkers *)
 
@@ -1220,21 +1224,29 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             | Cont _ -> flow_pre
             | Res _ -> nondet instr.at
             | Ret _ -> back_err instr.at "cannot have both result and return"
-            | Tailcall _ ->
+            | Tailcall_func _ | Tailcall_rel _ ->
                 back_err instr.at "cannot have both result and tail call")
         | Ret _ -> (
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> back_err instr.at "cannot have both return and result"
             | Ret _ -> nondet instr.at
-            | Tailcall _ ->
+            | Tailcall_func _ | Tailcall_rel _ ->
                 back_err instr.at "cannot have both return and tail call")
-        | Tailcall _ -> (
+        | Tailcall_func _ -> (
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> back_err instr.at "cannot have both tail call and result"
             | Ret _ -> back_err instr.at "cannot have both tail call and return"
-            | Tailcall _ -> nondet instr.at)
+            | Tailcall_func _ | Tailcall_rel _ -> nondet instr.at)
+        | Tailcall_rel _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ ->
+                back_err instr.at "cannot have both rel tail call and result"
+            | Ret _ ->
+                back_err instr.at "cannot have both rel tail call and return"
+            | Tailcall_func _ | Tailcall_rel _ -> nondet instr.at)
       with Backtrace (Unmatch _) -> flow_pre
     in
     try
@@ -1783,8 +1795,19 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
       Flow.t =
     try
-      let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-      eval_block ~tail ctx block
+      match block with
+      | [ { it = ResultI (_, exps_result); _ } ] when tail && iterinstrs = [] ->
+          let _, exps = notexp in
+          let exps_input, exps_output = Hints.Input.split inputs exps in
+          if Il.Eq.eq_exps exps_output exps_result then
+            let values_input = eval_exps ctx exps_input in
+            Flow.Tailcall_rel (id, values_input)
+          else
+            let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+            eval_block ~tail ctx block
+      | _ ->
+          let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+          eval_block ~tail ctx block
     with Backtrace (Unmatch traces) -> Cont traces
 
   (* Result instruction evaluation *)
@@ -1802,10 +1825,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and eval_return_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
     try
       match exp.it with
-      | Il.CallE (id, targs, args) when tail && not tail ->
+      | Il.CallE (id, targs, args) when tail ->
           let targs = resolve_targs ctx targs in
           let values_args = eval_args ctx args in
-          Flow.Tailcall (id, targs, values_args)
+          Flow.Tailcall_func (id, targs, values_args)
       | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
@@ -1831,48 +1854,63 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list =
-    try
-      Hook.on_rel_enter id values_input;
-      let rel = Ctx.find_rel ctx id in
-      let dispatch () =
-        match rel with
-        | Rel.Extern (nottyp, inputs) ->
-            invoke_extern_rel ctx nottyp inputs id values_input
-        | Rel.Defined (_, exps_input, block, elseblock_opt) ->
-            invoke_defined_rel ctx id exps_input block elseblock_opt
-              values_input
-      in
-      let values_output =
-        if Hook.is_cache_on () && not (is_extern_rel rel) then (
-          let cache_result =
-            Cache.Cache.find !rel_cache (id.it, values_input)
-          in
-          match cache_result with
-          | Some values_output -> values_output
-          | None ->
-              let checkpoint_before = Interface.checkpoint () in
-              let extern_checkpoint_before = Extern.checkpoint () in
-              let values_output = dispatch () in
-              let checkpoint_after = Interface.checkpoint () in
-              let extern_checkpoint_after = Extern.checkpoint () in
-              (* Cache if neither the interface nor the extern created a side-effect *)
-              if
-                (not (Interface.seff checkpoint_before checkpoint_after))
-                && not
-                     (Extern.seff extern_checkpoint_before
-                        extern_checkpoint_after)
-              then
-                Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-              values_output)
-        else (
-          if not internal then check_rel_inputs ctx id values_input;
-          dispatch ())
-      in
-      Hook.on_rel_exit id;
-      values_output
-    with Backtrace backtrace ->
-      Hook.on_rel_exit id;
-      back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
+    let rec loop id values_input =
+      try
+        Hook.on_rel_enter id values_input;
+        let rel = Ctx.find_rel ctx id in
+        let dispatch () =
+          match rel with
+          | Rel.Extern (nottyp, inputs) ->
+              let values_output =
+                invoke_extern_rel ctx nottyp inputs id values_input
+              in
+              Result values_output
+          | Rel.Defined (_, exps_input, block, elseblock_opt) ->
+              invoke_defined_rel ctx id exps_input block elseblock_opt
+                values_input
+        in
+        let result =
+          if Hook.is_cache_on () && not (is_extern_rel rel) then
+            let cache_result =
+              Cache.Cache.find !rel_cache (id.it, values_input)
+            in
+            match cache_result with
+            | Some values_output -> Result values_output
+            | None -> (
+                let checkpoint_before = Interface.checkpoint () in
+                let extern_checkpoint_before = Extern.checkpoint () in
+                let result = dispatch () in
+                match result with
+                | Result values_output ->
+                    let checkpoint_after = Interface.checkpoint () in
+                    let extern_checkpoint_after = Extern.checkpoint () in
+                    (* Cache if neither the interface nor the extern created a side-effect *)
+                    if
+                      (not (Interface.seff checkpoint_before checkpoint_after))
+                      && not
+                           (Extern.seff extern_checkpoint_before
+                              extern_checkpoint_after)
+                    then
+                      Cache.Cache.add !rel_cache (id.it, values_input)
+                        values_output;
+                    Result values_output
+                | Tailcall_rel _ -> result)
+          else (
+            if not internal then check_rel_inputs ctx id values_input;
+            dispatch ())
+        in
+        match result with
+        | Result values_output ->
+            Hook.on_rel_exit id;
+            values_output
+        | Tailcall_rel (id_tail, values_tail) ->
+            Hook.on_rel_exit id;
+            loop id_tail values_tail
+      with Backtrace backtrace ->
+        Hook.on_rel_exit id;
+        back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
+    in
+    loop id values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
@@ -1894,7 +1932,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (block : block) (elseblock_opt : elseblock option)
-      (values_input : value list) : value list =
+      (values_input : value list) : rel_result =
     let ctx_local = Ctx.localize_rule ctx id values_input in
     let ctx_local = assign_exps ctx_local exps_input values_input in
     let flow =
@@ -1912,9 +1950,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                   (Dep.Edges.Rel (id, idx_arg)))
               values_output)
           values_input;
-        values_output
+        Result values_output
+    | Tailcall_rel (id, values) -> Tailcall_rel (id, values)
     | Ret _ -> back_err id.at "relation cannot return a value"
-    | Tailcall _ -> back_err id.at "unexpected tail call in relation body"
+    | Tailcall_func _ ->
+        back_err id.at "unexpected function tailcall in relation body"
     | Cont traces -> Unmatch traces |> back
 
   (* Invoke a function *)
@@ -1964,7 +2004,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                       Cache.Cache.add !func_cache (id.it, values_input)
                         value_output;
                     Return value_output
-                | Tailcall _ -> result)
+                | Tailcall_func _ -> result)
           else (
             if not internal then check_func_inputs ctx id targs values_input;
             invoke_func_body ctx id func targs values_input)
@@ -1973,9 +2013,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | Return value_output ->
             Hook.on_func_exit id;
             value_output
-        | Tailcall (id, targs, values) ->
+        | Tailcall_func (id_tail, targs_tail, values_tail) ->
             Hook.on_func_exit id;
-            loop id targs values
+            loop id_tail targs_tail values_tail
       with Backtrace backtrace ->
         Hook.on_func_exit id;
         back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
@@ -2072,7 +2112,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     let flow = eval_elseblock_opt ~tail:true ctx_local flow elseblock_opt in
     match flow with
-    | Flow.Tailcall (id, targs, values) -> Tailcall (id, targs, values)
+    | Flow.Tailcall_func (id, targs, values) -> Tailcall_func (id, targs, values)
     | Flow.Ret value_output ->
         List.iteri
           (fun idx_arg value_input ->
@@ -2081,6 +2121,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           values_input;
         Return value_output
     | Flow.Res _ -> back_err id.at "function cannot produce a relation result"
+    | Flow.Tailcall_rel _ ->
+        back_err id.at "function cannot produce a relation tail call"
     | Flow.Cont traces -> Unmatch traces |> back
 
   (* Entry points for evaluation *)

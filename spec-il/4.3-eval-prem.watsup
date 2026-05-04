@@ -4,7 +4,7 @@
 
 rule Eval_prem/relpr:
   C |- REL id `: exp* `-> exp_out* : OK C'
-  -- Eval_exps: C |- exp* : OK val*
+  -- (Eval_exp: C |- exp : OK val)*
   -- Call_rel_cached: C |- id val* : OK val_out*
   -- Assign_exps : C |- exp_out* := val_out* : C'
 
@@ -28,12 +28,12 @@ rulegroup Eval_prem/ifholdpr {
 
   rule Eval_prem/hold:
     C |- IFHOLD id `: exp* : OK C
-    -- Eval_exps: C |- exp* : OK val_input*
+    -- (Eval_exp: C |- exp : OK val_input)*
     -- Call_rel_cached: C |- id val_input* : OK eps
 
   rule Eval_prem/nothold:
     C |- IFNOTHOLD id `: exp* : OK C
-    -- Eval_exps: C |- exp* : OK val_input*
+    -- (Eval_exp: C |- exp : OK val_input)*
     -- Call_rel_cached: C |- id val_input* : FAIL
 
 }
@@ -111,14 +111,18 @@ rule Eval_prem/fail:
 
 ;; Premise sequence evaluation rules
 
-rule Eval_prems/empty:
-  C |- eps : OK C
+rulegroup Eval_prems {
 
-rule Eval_prems/list:
-  C |- (prem_h :: prem_t*) : OK C''
-  -- Eval_prem: C |- prem_h : OK C'
-  -- Eval_prems: C' |- prem_t* : OK C''
+  rule Eval_prems/empty:
+    C |- eps : OK C
 
-rule Eval_prems/fail:
-  C |- prem* : FAIL
-  -- otherwise
+  rule Eval_prems/head-fail:
+    C |- prem_h :: prem_t* : FAIL
+    -- Eval_prem: C |- prem_h : FAIL
+
+  rule Eval_prems/head-succ:
+    C |- prem_h :: prem_t* : ctxres
+    -- Eval_prem: C |- prem_h : OK C'
+    -- Eval_prems: C' |- prem_t* : ctxres
+
+}
