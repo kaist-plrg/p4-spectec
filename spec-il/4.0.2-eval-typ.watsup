@@ -89,8 +89,7 @@ dec $subtyps(ctx, typ*, val*) : bool
 
 def $subtyp(C, BOOL, BOOL b) = true
 def $subtyp(C, NAT, NAT n) = true
-def $subtyp(C, NAT, INT i) = true
-  -- if $(i >= 0)
+def $subtyp(C, NAT, INT i) = $(i >= 0)
 def $subtyp(C, INT, num) = true
 def $subtyp(C, TEXT, TEXT t) = true
 
@@ -111,12 +110,6 @@ def $subtyp(C, VAR id targ*, INJ (mixop val*))
   -- if typ_case_found*
       = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
   -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
-
-def $subtyp(C, VAR id targ*, INJ (mixop val*)) = false
-  -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
-  -- if theta = `{ (tparam `: targ)* }
-  -- if (mixop_case typ_case* = typcase)*
-  -- if mixop <- mixop_case*
 
 def $subtyp(C, VAR id targ*, STR valfield*) = $forall_(b*)
   -- if DEF tparam* `-> (STRUCT typfield*) = $find_typ(C, id)

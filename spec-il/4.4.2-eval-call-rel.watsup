@@ -10,7 +10,7 @@ rule Eval_rul/succ:
   C |- rulmatch -> rulpath `@ `( val* ) : OK val_out*
   -- if id `= exp_out* `- prem_path* = rulpath
   -- if exp* `- prem_match* = rulmatch
-  -- Assign_exps: C |- exp* := val* : OK C'
+  -- Assign_exps: C |- exp* := val* : C'
   -- if prem* = prem_match* ++ prem_path*
   -- Eval_prems: C' |- prem* : OK C''
   -- Eval_exps: C'' |- exp_out* : OK val_out*
@@ -25,18 +25,17 @@ relation Eval_ruls:
   ctx |- rulmatch -> rulpath* `@ `( val* ) : res<val*>
   hint(input %0 %1 %2 %3)
 
+rule Eval_ruls/nil:
+  C |- rulmatch -> eps `@ `( val* ) : FAIL
+
 rule Eval_ruls/cons-succ:
   C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
   -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : OK val_out*
 
 rule Eval_ruls/cons-fail:
-  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
+  C |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : valsres
   -- Eval_rul: C |- rulmatch -> rulpath_h `@ `( val* ) : FAIL
-  -- Eval_ruls: C |- rulmatch -> rulpath_t* `@ `( val* ) : OK val_out*
-
-rule Eval_ruls/fail:
-  C |- rulmatch -> rulpath* `@ `( val* ) : FAIL
-  -- otherwise
+  -- Eval_ruls: C |- rulmatch -> rulpath_t* `@ `( val* ) : valsres
 
 ;;; Rule group evaluation
 
@@ -59,18 +58,17 @@ relation Eval_rulgroups:
   ctx |- rulgroup* `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
 
+rule Eval_rulgroups/nil:
+  C |- eps `@ `( val* ) : FAIL
+
 rule Eval_rulgroups/cons-succ:
   C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
   -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : OK val_out*
 
 rule Eval_rulgroups/cons-fail:
-  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
+  C |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : valsres
   -- Eval_rulgroup: C |- rulgroup_h `@ `( val* ) : FAIL
-  -- Eval_rulgroups: C |- rulgroup_t* `@ `( val* ) : OK val_out*
-
-rule Eval_rulgroups/fail:
-  C |- rulgroup* `@ `( val* ) : FAIL
-  -- otherwise
+  -- Eval_rulgroups: C |- rulgroup_t* `@ `( val* ) : valsres
 
 ;;; Defined relations
 
@@ -100,9 +98,18 @@ rulegroup Call_defined_rel/ok {
 
 }
 
-rule Call_defined_rel/fail:
-  C |- definedRelDef `@ `( val* ) : FAIL
-  -- otherwise
+dec $elsgroup_as_rulgroup(elsgroup) : rulgroup
+def $elsgroup_as_rulgroup(id `: rulmatch `= rulpath)
+  = id `: rulmatch `= rulpath
+
+rule Call_defined_rel:
+  C |- definedRelDef `@ `( val* ) : valsres
+  -- if DEF rulgroup* elsgroup? = definedRelDef
+  -- if (rulgroup_els = $elsgroup_as_rulgroup(elsgroup))?
+  -- if rulgroup_all* = rulgroup* ++ $opt_as_seq_<rulgroup>(rulgroup_els?)
+  -- if C_local = C[ .LOCAL = $empty_layer ]
+  -- Eval_rulgroups:
+      C_local |- rulgroup_all* `@ `( val* ) : valsres
 
 ;;; Extern relations
 
@@ -112,23 +119,19 @@ extern relation Call_extern_rel:
 
 ;; Relation dispatch
 
-rulegroup Call_rel/ok {
+rulegroup Call_rel {
 
     rule Call_rel/defined:
-      C |- definedRelDef val* : OK val_out*
+      C |- definedRelDef val* : valsres
       -- Call_defined_rel:
-          C |- definedRelDef `@ `( val* ) : OK val_out*
+          C |- definedRelDef `@ `( val* ) : valsres
 
     rule Call_rel/ext:
-      C |- (EXT id) val* : OK val_out*
+      C |- (EXT id) val* : valsres
       -- Call_extern_rel:
-          C |- id val* : OK val_out*
+          C |- id val* : valsres
 
 }
-
-rule Call_rel/fail:
-  C |- reldef val* : FAIL
-  -- otherwise
 
 ;; Relation call wrapper with cache
 

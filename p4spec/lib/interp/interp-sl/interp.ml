@@ -31,7 +31,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let func_cache = ref (Cache.Cache.create ~size:10000)
   let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-  (* Function result *)
+  (* Function/relation result *)
 
   type func_result = Return of value | Tailcall of id * targ list * value list
 
@@ -1247,7 +1247,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       Flow.t =
     block
     |> List.mapi (fun idx instr ->
-           if idx <> List.length block - 1 then (false, instr) else (tail, instr))
+           if idx = List.length block - 1 then (tail, instr) else (false, instr))
     |> List.fold_left
          (fun flow_pre (tail, instr) ->
            match flow_pre with
@@ -1802,7 +1802,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and eval_return_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
     try
       match exp.it with
-      | Il.CallE (id, targs, args) when tail ->
+      | Il.CallE (id, targs, args) when tail && not tail ->
           let targs = resolve_targs ctx targs in
           let values_args = eval_args ctx args in
           Flow.Tailcall (id, targs, values_args)

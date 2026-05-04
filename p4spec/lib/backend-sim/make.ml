@@ -21,6 +21,7 @@ module Make
       ()
       -> INTERP_SL) : SIM = struct
   (* Instantiations *)
+  (* Spec_ is a trampoline to allow Arch/Table to call back into the Interp modules *)
 
   module Spec_ = Spec.Make ()
   module Arch = MakeArch (Spec_)

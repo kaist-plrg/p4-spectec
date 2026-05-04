@@ -3,10 +3,10 @@
 ;;; Relation premises
 
 rule Eval_prem/relpr:
-  C |- REL id `: exp* `-> exp_out* : ctxres
+  C |- REL id `: exp* `-> exp_out* : OK C'
   -- Eval_exps: C |- exp* : OK val*
   -- Call_rel_cached: C |- id val* : OK val_out*
-  -- Assign_exps : C |- exp_out* := val_out* : ctxres
+  -- Assign_exps : C |- exp_out* := val_out* : C'
 
 ;;; If premises
 
@@ -43,7 +43,7 @@ rulegroup Eval_prem/ifholdpr {
 rule Eval_prem/letpr:
   C |- LET exp_l `= exp_r : OK C'
   -- Eval_exp : C |- exp_r : OK val_r
-  -- Assign_exp : C |- exp_l := val_r : OK C'
+  -- Assign_exp : C |- exp_l := val_r : C'
 
 ;;; Iteration premises - optional
 

@@ -9,7 +9,7 @@ relation Eval_clause:
 rule Eval_clause/succ:
   C `/ C_caller |- clause `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = clause
-  -- Assign_args: C `/ C_caller |- arg* := val* : OK C'
+  -- Assign_args: C `/ C_caller |- arg* := val* : C'
   -- Eval_prems: C' |- prem* : OK C''
   -- Eval_exp : C'' |- exp_out : OK val_out
 
@@ -21,18 +21,17 @@ relation Eval_clauses:
   ctx `/ ctx |- clause* `@ `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
 
+rule Eval_clauses/nil:
+  C `/ C_caller |- eps `@ `( val* ) : FAIL
+
 rule Eval_clauses/cons-succ:
   C `/ C_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
   -- Eval_clause: C `/ C_caller |- clause_h `@ `( val* ) : OK val_res
 
 rule Eval_clauses/cons-fail:
-  C `/ C_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
+  C `/ C_caller |- (clause_h :: clause_t*) `@ `( val* ) : valres
   -- Eval_clause: C `/ C_caller |- clause_h `@ `( val* ) : FAIL
-  -- Eval_clauses: C `/ C_caller |- clause_t* `@ `( val* ) : OK val_res
-
-rule Eval_clauses/fail:
-  C `/ C_caller |- _ `@ `( _ ) : FAIL
-  -- otherwise
+  -- Eval_clauses: C `/ C_caller |- clause_t* `@ `( val* ) : valres
 
 ;;; Extern meta-function invocation
 
@@ -58,7 +57,7 @@ rule Eval_tblrow/succ:
   C |- tblrow `@ `( val* ) : OK val_out
   -- if arg* `= exp_out `- prem* = tblrow
   -- if C_callee = C[ .LOCAL = $empty_layer ]
-  -- Assign_args: C_callee `/ C |- arg* := val* : OK C_callee'
+  -- Assign_args: C_callee `/ C |- arg* := val* : C_callee'
   -- Eval_prems: C_callee' |- prem* : OK C_callee''
   -- Eval_exp: C_callee'' |- exp_out : OK val_out
 
@@ -112,34 +111,30 @@ rule Call_defined_func:
 
 ;;; Meta-function dispatch
 
-rulegroup Call_func/ok {
+rulegroup Call_func {
 
     rule Call_func/extern:
-      C |- (EXT id) typ* val* : OK val_output
+      C |- (EXT id) typ* val* : valres
       -- Call_extern_func:
-          C |- id `< typ* > `( val* ) : OK val_output
+          C |- id `< typ* > `( val* ) : valres
 
     rule Call_func/builtin:
-      C |- builtinFuncDef typ* val* : OK val_output
+      C |- builtinFuncDef typ* val* : valres
       -- if BUILTIN id _ _ = builtinFuncDef
       -- Call_builtin_func:
-          C |- id `@ `< typ* > `( val* ) : OK val_output
+          C |- id `@ `< typ* > `( val* ) : valres
 
     rule Call_func/table:
-      C |- tableFuncDef eps val* : OK val_output
+      C |- tableFuncDef eps val* : valres
       -- Call_table_func:
-          C |- tableFuncDef `@ `( val* ) : OK val_output
+          C |- tableFuncDef `@ `( val* ) : valres
 
     rule Call_func/defined:
-      C |- definedFuncDef typ* val* : OK val_output
+      C |- definedFuncDef typ* val* : valres
       -- Call_defined_func:
-          C |- definedFuncDef `@ `< typ* > `( val* ) : OK val_output
+          C |- definedFuncDef `@ `< typ* > `( val* ) : valres
 
 }
-
-rule Call_func/fail:
-  C |- funcdef typ* val* : FAIL
-  -- otherwise
 
 ;; Meta-function call wrapper with cache
 
