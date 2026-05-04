@@ -104,17 +104,22 @@ let frontend specdir =
   |> List.concat_map Frontend.Parse.parse_file
 
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
-let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
-let simulator ?(det = false) ?(arch : string option) mode specdir =
+let structure ~(final : bool) specdir =
+  specdir |> elab |> Structure.Struct.struct_spec ~final
+
+let prosify specdir =
+  specdir |> structure ~final:false |> Prose.Prosify.prosify_spec
+
+let simulator ?(det = false) ?(arch : string option) ~(final : bool) mode
+    specdir =
   let spec_sim =
     match mode with
     | `IL ->
         let spec_il = elab specdir in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure specdir in
+        let spec_sl = structure ~final specdir in
         (SL spec_sl : spec)
   in
   let (module Simulator) =
@@ -125,14 +130,14 @@ let simulator ?(det = false) ?(arch : string option) mode specdir =
   Simulator.init ~det spec_sim;
   (spec_sim, (module Simulator : SIM))
 
-let booter ?(det = false) mode specdir specdir_p4 =
+let booter ?(det = false) ~(final : bool) mode specdir specdir_p4 =
   let spec =
     match mode with
     | `IL ->
         let spec_il = elab specdir in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure specdir in
+        let spec_sl = structure ~final specdir in
         (SL spec_sl : spec)
   in
   let spec_p4 =
@@ -141,7 +146,7 @@ let booter ?(det = false) mode specdir specdir_p4 =
         let spec_il = elab specdir_p4 in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure specdir_p4 in
+        let spec_sl = structure ~final specdir_p4 in
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
@@ -199,7 +204,9 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 filename_p4
 
 let cover_run_instr ?(arch : string option) mode filenames_spec relname
     includes_p4 filenames_p4 =
-  let spec_sim, (module Simulator) = simulator ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    simulator ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -219,7 +226,9 @@ let cover_run_instr ?(arch : string option) mode filenames_spec relname
 
 let cover_run_dangling ?(arch : string option) mode filenames_spec relname
     includes_p4 filenames_p4 =
-  let spec_sim, (module Simulator) = simulator ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    simulator ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -246,7 +255,9 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
 
 let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
     filenames_p4 filenames_stf =
-  let spec_sim, (module Simulator) = simulator ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    simulator ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -266,7 +277,9 @@ let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
 
 let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
     filenames_p4 filenames_stf =
-  let spec_sim, (module Simulator) = simulator ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    simulator ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in

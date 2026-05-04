@@ -23,21 +23,21 @@ let frontend filenames_spec =
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
-let structure filenames_spec =
-  filenames_spec |> elab |> Structure.Struct.struct_spec
+let structure ~(final : bool) filenames_spec =
+  filenames_spec |> elab |> Structure.Struct.struct_spec ~final
 
 let prosify filenames_spec =
-  filenames_spec |> structure |> Prose.Prosify.prosify_spec
+  filenames_spec |> structure ~final:false |> Prose.Prosify.prosify_spec
 
 let runner ?(cache = true) ?(det = false) ?(guard = false)
-    ?(arch : string option) mode filenames_spec =
+    ?(arch : string option) ~(final : bool) mode filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec in
+        let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
   in
   let (module Simulator) =
@@ -98,7 +98,9 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 filename_p4
 
 let cover_run_instr ?(arch : string option) mode filenames_spec relname
     includes_p4 filenames_p4 filename_cov =
-  let spec_sim, (module Simulator) = runner ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    runner ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -121,7 +123,9 @@ let cover_run_instr ?(arch : string option) mode filenames_spec relname
 
 let cover_run_dangling ?(arch : string option) mode filenames_spec relname
     includes_p4 filenames_p4 filename_cov =
-  let spec_sim, (module Simulator) = runner ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    runner ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -150,7 +154,9 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
 
 let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
     filenames_p4 filenames_stf filename_cov =
-  let spec_sim, (module Simulator) = runner ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    runner ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -173,7 +179,9 @@ let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
 
 let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
     filenames_p4 filenames_stf filename_cov =
-  let spec_sim, (module Simulator) = runner ?arch mode filenames_spec in
+  let spec_sim, (module Simulator) =
+    runner ?arch ~final:true mode filenames_spec
+  in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -228,7 +236,7 @@ let struct_command =
      in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let spec_sl = structure ~final:true filenames_spec in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
@@ -288,7 +296,7 @@ let run_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Simulator) =
-           runner ~cache ~det ~guard mode filenames_spec
+           runner ~cache ~det ~guard ~final:true mode filenames_spec
          in
          let handlers =
            if profile then
@@ -359,7 +367,7 @@ let sim_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Simulator) =
-           runner ~cache ~det ~guard ~arch mode filenames_spec
+           runner ~cache ~det ~guard ~arch ~final:true mode filenames_spec
          in
          let handlers =
            if profile then
@@ -531,7 +539,7 @@ let run_testgen_command =
      in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let spec_sl = structure ~final:true filenames_spec in
          let logmode =
            if silent then Backend_testgen_neg.Modes.Silent
            else Backend_testgen_neg.Modes.Verbose
@@ -585,7 +593,7 @@ let run_testgen_debug_command =
      and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let spec_sl = structure ~final:true filenames_spec in
          Backend_testgen_neg.Derive.debug_dangling spec_sl relname includes_p4
            filename_p4 debugdir iid
        with
@@ -614,7 +622,9 @@ let interesting_command =
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
-         let spec_sim, (module Simulator) = runner `SL filenames_spec in
+         let spec_sim, (module Simulator) =
+           runner ~final:true `SL filenames_spec
+         in
          let result, cover =
            run_with_dangling
              (module Simulator)
@@ -711,7 +721,7 @@ let parse_command =
      in
      fun () ->
        try
-         let _, (module Simulator) = runner `IL filenames_spec in
+         let _, (module Simulator) = runner ~final:true `IL filenames_spec in
          let value_program =
            match
              Simulator.Interface.parse_program includes_p4 [ filename_p4 ]
@@ -761,7 +771,7 @@ let json_ast_command =
        match mode with
        | `Emit -> (
            try
-             let spec_sl = structure filenames in
+             let spec_sl = structure ~final:true filenames in
              let sl_ast_json = Sl.spec_to_yojson spec_sl in
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
@@ -790,7 +800,7 @@ let p4_program_value_json_command =
      and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and filename_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
-       let _, (module Simulator) = runner `IL filenames_spec in
+       let _, (module Simulator) = runner ~final:true `IL filenames_spec in
        try
          let value_program =
            match
@@ -816,7 +826,7 @@ let unparse_json_value_command =
      in
      fun () ->
        try
-         let _, (module Simulator) = runner `IL filenames_spec in
+         let _, (module Simulator) = runner ~final:true `IL filenames_spec in
          let json = Yojson.Safe.from_file filename_json in
          let value_result = Sl.value_of_yojson json in
          match value_result with

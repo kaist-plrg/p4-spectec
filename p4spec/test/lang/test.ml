@@ -21,7 +21,7 @@ let elab_command =
 (* Structuring test *)
 
 let structure_test specdir =
-  let spec_sl = structure specdir in
+  let spec_sl = structure ~final:true specdir in
   Sl.Print.string_of_spec spec_sl |> print_endline
 
 let structure_command =

@@ -20,35 +20,36 @@ let frontend filenames_spec =
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
-let structure filenames_spec =
-  filenames_spec |> elab |> Structure.Struct.struct_spec
+let structure ~(final : bool) filenames_spec =
+  filenames_spec |> elab |> Structure.Struct.struct_spec ~final
 
 let prosify filenames_spec =
-  filenames_spec |> structure |> Prose.Prosify.prosify_spec
+  filenames_spec |> structure ~final:false |> Prose.Prosify.prosify_spec
 
-let booter ?(cache = true) ?(det = false) ?(guard = false) mode filenames_spec =
+let booter ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool) mode
+    filenames_spec =
   let spec_sim =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec in
+        let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
   in
   let (module Booter) = Backend_boot.Gen.gen_zero_spectec () in
   Booter.init ~cache ~det ~guard spec_sim;
   (spec_sim, (module Booter : RUNNER))
 
-let booter_square ?(cache = true) ?(det = false) ?(guard = false) mode
-    filenames_spec filenames_spec_p4 =
+let booter_square ?(cache = true) ?(det = false) ?(guard = false)
+    ~(final : bool) mode filenames_spec filenames_spec_p4 =
   let spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec in
+        let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
   in
   let spec_p4 =
@@ -57,7 +58,7 @@ let booter_square ?(cache = true) ?(det = false) ?(guard = false) mode
         let spec_il = elab filenames_spec_p4 in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec_p4 in
+        let spec_sl = structure ~final filenames_spec_p4 in
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
@@ -65,15 +66,15 @@ let booter_square ?(cache = true) ?(det = false) ?(guard = false) mode
   Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
-let booter_cube_p4 ?(cache = true) ?(det = false) ?(guard = false) mode
-    filenames_spec filenames_spec_p4 =
+let booter_cube_p4 ?(cache = true) ?(det = false) ?(guard = false)
+    ~(final : bool) mode filenames_spec filenames_spec_p4 =
   let spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec in
+        let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
   in
   let spec_p4 =
@@ -82,7 +83,7 @@ let booter_cube_p4 ?(cache = true) ?(det = false) ?(guard = false) mode
         let spec_il = elab filenames_spec_p4 in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec_p4 in
+        let spec_sl = structure ~final filenames_spec_p4 in
         (SL spec_sl : spec)
   in
   let (module Runner_P4), (module Runner_SpecTec_mid), (module Booter) =
@@ -93,15 +94,15 @@ let booter_cube_p4 ?(cache = true) ?(det = false) ?(guard = false) mode
   Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
-let booter_cube_spectec ?(cache = true) ?(det = false) ?(guard = false) mode
-    filenames_spec filenames_spec_pgm =
+let booter_cube_spectec ?(cache = true) ?(det = false) ?(guard = false)
+    ~(final : bool) mode filenames_spec filenames_spec_pgm =
   let spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec in
+        let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
   in
   let spec_pgm =
@@ -110,7 +111,7 @@ let booter_cube_spectec ?(cache = true) ?(det = false) ?(guard = false) mode
         let spec_il = elab filenames_spec_pgm in
         (IL spec_il : spec)
     | `SL ->
-        let spec_sl = structure filenames_spec_pgm in
+        let spec_sl = structure ~final filenames_spec_pgm in
         (SL spec_sl : spec)
   in
   let (module Runner_SpecTec_pgm), (module Runner_SpecTec_mid), (module Booter)
@@ -149,7 +150,7 @@ let struct_command =
      in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let spec_sl = structure ~final:true filenames_spec in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
@@ -209,7 +210,7 @@ let run_command =
        try
          let cache = not no_cache in
          let spec_sim, (module Booter) =
-           booter ~cache ~det ~guard mode filenames_spec
+           booter ~cache ~det ~guard ~final:true mode filenames_spec
          in
          let handlers =
            if profile then
@@ -280,7 +281,7 @@ let boot_square_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_square ~cache ~det ~guard mode filenames_spec
+           booter_square ~cache ~det ~guard ~final:true mode filenames_spec
              filenames_spec_p4
          in
          let handlers =
@@ -357,7 +358,7 @@ let boot_cube_p4_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_cube_p4 ~cache ~det ~guard mode filenames_spec
+           booter_cube_p4 ~cache ~det ~guard ~final:true mode filenames_spec
              filenames_spec_p4
          in
          let handlers =
@@ -435,8 +436,8 @@ let boot_cube_spectec_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_pgm = expand_spec [ dirname_spec_pgm ] in
          let spec, (module Booter) =
-           booter_cube_spectec ~cache ~det ~guard mode filenames_spec
-             filenames_spec_pgm
+           booter_cube_spectec ~cache ~det ~guard ~final:true mode
+             filenames_spec filenames_spec_pgm
          in
          let handlers =
            if profile then
@@ -480,7 +481,7 @@ let parse_command =
      in
      fun () ->
        try
-         let _, (module Booter) = booter `IL filenames_spec in
+         let _, (module Booter) = booter ~final:true `IL filenames_spec in
          let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
            match Booter.Interface.parse_program [] filenames_spectec with

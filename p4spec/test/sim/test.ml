@@ -117,7 +117,9 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
-  let _spec_sim, (module Simulator) = simulator ~det ~arch mode specdir in
+  let _spec_sim, (module Simulator) =
+    simulator ~det ~arch ~final:true mode specdir
+  in
   let stat =
     List.fold_left
       (fun stat (filename_p4, filename_stf, is_patched) ->

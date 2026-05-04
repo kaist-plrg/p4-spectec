@@ -85,7 +85,7 @@ let run_test_driver mode det neg specdir relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
-  let _spec_sim, (module Simulator) = simulator ~det mode specdir in
+  let _spec_sim, (module Simulator) = simulator ~det ~final:true mode specdir in
   let stat =
     List.fold_left
       (fun stat filename_p4 ->

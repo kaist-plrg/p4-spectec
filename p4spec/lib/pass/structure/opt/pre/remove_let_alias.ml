@@ -2,7 +2,7 @@ open Lang
 open Ol.Ast
 open Util.Source
 
-(* remove_block redundant, trivial let aliases from the code,
+(* Remove redundant, trivial let aliases from the code,
 
    let y = x; if (y == 0) then { let z = y + y; let y = 1; let k = y + y; ... }
 

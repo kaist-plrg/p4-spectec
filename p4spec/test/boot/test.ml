@@ -92,7 +92,7 @@ let boot_test_driver mode det neg specdir rel specdir_p4 rel_p4 includes_p4
   let stat = empty_stat in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let _, (module Booter) = booter ~det mode specdir specdir_p4 in
+  let _, (module Booter) = booter ~det ~final:true mode specdir specdir_p4 in
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
