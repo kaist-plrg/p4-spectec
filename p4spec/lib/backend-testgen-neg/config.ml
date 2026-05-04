@@ -8,8 +8,6 @@ module Type = Runtime.Type
 open Runtime.Testgen_neg
 open Envs
 module Sim = Runtime.Sim.Simulator
-module Mixfix = Domain.Mixfix
-module Mixop = Domain.Mixop
 
 (* Hyperparameters for the fuzzing loop *)
 
