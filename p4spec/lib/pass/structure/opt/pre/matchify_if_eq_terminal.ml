@@ -1,3 +1,4 @@
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -9,17 +10,25 @@ let matchify_exp (exp : exp) : exp =
   match exp.it with
   | CmpE (`EqOp, _, exp_l, { it = OptE None; _ }) ->
       Il.MatchE (exp_l, OptP `None) $$ (at, note)
-  | CmpE (`EqOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
-      Il.MatchE (exp_l, CaseP mixop) $$ (at, note)
-  | CmpE (`EqOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
-      Il.MatchE (exp_r, CaseP mixop) $$ (at, note)
+  | CmpE (`EqOp, _, exp_l, { it = CaseE notexp; _ })
+    when Mixfix.arity notexp = 0 ->
+      Il.MatchE (exp_l, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
+  | CmpE (`EqOp, _, { it = CaseE notexp; _ }, exp_r)
+    when Mixfix.arity notexp = 0 ->
+      Il.MatchE (exp_r, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
   | CmpE (`NeOp, _, exp_l, { it = OptE None; _ }) ->
       Il.MatchE (exp_l, OptP `Some) $$ (at, note)
-  | CmpE (`NeOp, _, exp_l, { it = CaseE (mixop, []); _ }) ->
-      let exp = Il.MatchE (exp_l, CaseP mixop) $$ (at, note) in
+  | CmpE (`NeOp, _, exp_l, { it = CaseE notexp; _ })
+    when Mixfix.arity notexp = 0 ->
+      let exp =
+        Il.MatchE (exp_l, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
+      in
       Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
-  | CmpE (`NeOp, _, { it = CaseE (mixop, []); _ }, exp_r) ->
-      let exp = Il.MatchE (exp_r, CaseP mixop) $$ (at, note) in
+  | CmpE (`NeOp, _, { it = CaseE notexp; _ }, exp_r)
+    when Mixfix.arity notexp = 0 ->
+      let exp =
+        Il.MatchE (exp_r, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
+      in
       Il.UnE (`NotOp, `BoolT, exp) $$ (at, note)
   | _ -> exp
 

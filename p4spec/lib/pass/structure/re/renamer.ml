@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -60,9 +61,9 @@ let rec rename_exp (renamer : t) (exp : exp) : exp =
   | TupleE exps ->
       let exps = rename_exps renamer exps in
       Il.TupleE exps $$ (at, note)
-  | CaseE (mixop, exps) ->
-      let exps = rename_exps renamer exps in
-      Il.CaseE (mixop, exps) $$ (at, note)
+  | CaseE notexp ->
+      let notexp = Mixfix.map (rename_exp renamer) notexp in
+      Il.CaseE notexp $$ (at, note)
   | StrE expfields ->
       let atoms, exps = List.split expfields in
       let exps = rename_exps renamer exps in
@@ -196,12 +197,12 @@ and rename_instr (renamer : t) (instr : instr) : instr =
       let iterexps = rename_iterexps renamer iterexps in
       let block_then = rename_block renamer block_then in
       IfI (exp_cond, iterexps, block_then) $ at
-  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
-      let exps = rename_exps renamer exps in
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let notexp = Mixfix.map (rename_exp renamer) notexp in
       let iterexps = rename_iterexps renamer iterexps in
       let block_hold = rename_block renamer block_hold in
       let block_nothold = rename_block renamer block_nothold in
-      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) ->
       let exp = rename_exp renamer exp in
       let cases = rename_cases renamer cases in
@@ -217,7 +218,8 @@ and rename_instr (renamer : t) (instr : instr) : instr =
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
       let block = rename_block renamer block in
       LetI (exp_l, exp_r, iterinstrs, block) $ at
-  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) ->
+  | RuleI (id_rel, notexp, inputs, iterinstrs, block) ->
+      let mixop, exps = Mixfix.split notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let exps_input = rename_exps renamer exps_input in
       let frees_output = Ol.Free.free_exps exps_output in
@@ -227,7 +229,7 @@ and rename_instr (renamer : t) (instr : instr) : instr =
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
       let block = rename_block renamer block in
-      RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) $ at
+      RuleI (id_rel, Mixfix.fill mixop exps, inputs, iterinstrs, block) $ at
   | ResultI (rel_signature, exps) ->
       let exps = rename_exps renamer exps in
       ResultI (rel_signature, exps) $ at

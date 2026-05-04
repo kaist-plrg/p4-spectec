@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Ast
 open Util.Source
 
@@ -26,7 +27,7 @@ let rec free_exp (exp : exp) : t =
   | SubE (exp, _) -> free_exp exp
   | MatchE (exp, _) -> free_exp exp
   | TupleE exps -> free_exps exps
-  | CaseE (_, exps) -> free_exps exps
+  | CaseE notexp -> free_exps (Mixfix.args notexp)
   | StrE expfields -> expfields |> List.map snd |> free_exps
   | OptE (Some exp) -> free_exp exp
   | OptE None -> empty
@@ -69,10 +70,10 @@ and free_args (args : arg list) : t =
 
 let rec free_prem (prem : prem) : t =
   match prem.it with
-  | RulePr (_, (_, exps), _) -> free_exps exps
+  | RulePr (_, notexp, _) -> free_exps (Mixfix.args notexp)
   | IfPr exp -> free_exp exp
-  | IfHoldPr (_, (_, exps)) -> free_exps exps
-  | IfNotHoldPr (_, (_, exps)) -> free_exps exps
+  | IfHoldPr (_, notexp) -> free_exps (Mixfix.args notexp)
+  | IfNotHoldPr (_, notexp) -> free_exps (Mixfix.args notexp)
   | LetPr (exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
   | IterPr (prem, _) -> free_prem prem
   | DebugPr exp -> free_exp exp

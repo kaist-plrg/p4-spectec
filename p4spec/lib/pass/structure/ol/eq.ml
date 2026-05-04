@@ -1,5 +1,6 @@
 open Ast
 open Lang
+module Mixfix = Domain.Mixfix
 open Sl.Eq
 
 (* Types *)
@@ -61,10 +62,10 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       eq_exp exp_cond_a exp_cond_b
       && eq_iterexps iterexps_a iterexps_b
       && eq_block block_then_a block_then_b
-  | ( HoldI (id_a, (mixop_a, exps_a), iterexps_a, block_hold_a, block_nothold_a),
-      HoldI (id_b, (mixop_b, exps_b), iterexps_b, block_hold_b, block_nothold_b)
-    ) ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | ( HoldI (id_a, notexp_a, iterexps_a, block_hold_a, block_nothold_a),
+      HoldI (id_b, notexp_b, iterexps_b, block_hold_b, block_nothold_b) ) ->
+      eq_id id_a id_b
+      && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
       && eq_iterexps iterexps_a iterexps_b
       && eq_block block_hold_a block_hold_b
       && eq_block block_nothold_a block_nothold_b
@@ -81,9 +82,10 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
       && eq_block block_a block_b
-  | ( RuleI (id_a, (mixop_a, exps_a), inputs_a, iterinstrs_a, block_a),
-      RuleI (id_b, (mixop_b, exps_b), inputs_b, iterinstrs_b, block_b) ) ->
-      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
+  | ( RuleI (id_a, notexp_a, inputs_a, iterinstrs_a, block_a),
+      RuleI (id_b, notexp_b, inputs_b, iterinstrs_b, block_b) ) ->
+      eq_id id_a id_b
+      && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
       && Hints.Input.eq inputs_a inputs_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
       && eq_block block_a block_b

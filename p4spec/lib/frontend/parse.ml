@@ -27,7 +27,7 @@ let parse_mixop str =
         Mixop.Brack (atom_l, mixop, atom_r)
   and mixop_of_typ (typ : El.typ) =
     match typ with
-    | PlainT _ -> Mixop.Arg
+    | PlainT _ -> Mixop.Arg ()
     | NotationT nottyp -> mixop_of_nottyp nottyp
   in
   let typ = Parser.check_typ Lexer.token (Lexing.from_string str) in

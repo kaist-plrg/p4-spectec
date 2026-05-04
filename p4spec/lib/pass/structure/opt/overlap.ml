@@ -47,7 +47,7 @@ let guard_as_exp (exp_target : exp) (guard : guard) : exp =
 
 (* Conversion from type to its variants *)
 
-let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
+let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : Mixop.t list option =
   let typ_unrolled = TDEnv.unroll tdenv typ in
   match typ_unrolled.it with
   | VarT (tid, _) -> (
@@ -59,9 +59,7 @@ let typ_as_variant (tdenv : TDEnv.t) (typ : typ) : mixop list option =
           | VariantT typcases ->
               let mixops =
                 typcases
-                |> List.map (fun (nottyp, _, _) ->
-                       let mixop, _ = nottyp.it in
-                       mixop)
+                |> List.map (fun (nottyp, _, _) -> Mixfix.to_mixop nottyp.it)
               in
               Some mixops
           | _ -> None))
@@ -90,9 +88,10 @@ let rec disjoint_exp_literal (exp_a : exp) (exp_b : exp) : bool =
   | TupleE exps_a, TupleE exps_b ->
       assert (List.length exps_a = List.length exps_b);
       List.exists2 disjoint_exp_literal exps_a exps_b
-  | CaseE (mixop_a, exps_a), CaseE (mixop_b, exps_b) ->
-      if Mixop.eq mixop_a mixop_b then
-        List.exists2 disjoint_exp_literal exps_a exps_b
+  | CaseE notexp_a, CaseE notexp_b ->
+      if Mixfix.eq_mixop notexp_a notexp_b then
+        List.exists2 disjoint_exp_literal (Mixfix.args notexp_a)
+          (Mixfix.args notexp_b)
       else true
   | ListE exps_a, ListE exps_b when List.length exps_a = List.length exps_b ->
       List.exists2 disjoint_exp_literal exps_a exps_b

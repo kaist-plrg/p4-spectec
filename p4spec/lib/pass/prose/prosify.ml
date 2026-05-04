@@ -31,7 +31,9 @@ and prosify_exp' (ctx : Ctx.t) (exp : exp) : Pl.exp' =
   | SubE (exp, typ) -> prosify_sub_exp ctx exp typ
   | MatchE (exp, pattern) -> prosify_match_exp ctx exp pattern
   | TupleE exps -> prosify_tuple_exp ctx exps
-  | CaseE (mixop, exps) -> prosify_case_exp note ctx mixop exps
+  | CaseE notexp ->
+      let mixop, exps = Mixfix.split notexp in
+      prosify_case_exp note ctx mixop exps
   | StrE expfields -> prosify_str_exp ctx expfields
   | OptE exp_opt -> prosify_opt_exp ctx exp_opt
   | ListE exps -> prosify_list_exp ctx exps
@@ -406,7 +408,7 @@ and prosify_if_instr (at : region) (ctx : Ctx.t) (exp_cond : exp)
 
 and prosify_hold_cond ~(hold : bool) (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (iterexps : iterexp list) : Pl.cond =
-  let mixop, exps = notexp in
+  let mixop, exps = Mixfix.split notexp in
   let exps_pl = prosify_exps ctx exps in
   let hid = if hold then "prose_true" else "prose_false" in
   let rel_call_pl =
@@ -553,7 +555,8 @@ and prosify_let_instr (at : region) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
 and prosify_let_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
     (exp_r : exp) (iterinstrs : iterinstr list) : Pl.block option =
   match exp_l.it with
-  | CaseE (mixop, exps_l) -> (
+  | CaseE notexp_l -> (
+      let mixop, exps_l = Mixfix.split notexp_l in
       let tid =
         match exp_l.note with VarT (tid, _) -> tid | _ -> assert false
       in
@@ -596,7 +599,7 @@ and prosify_let_non_case_instr (at : region) (ctx : Ctx.t) (exp_l : exp)
 and prosify_rule_instr (at : region) (ctx : Ctx.t) (id_rel : id)
     (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs : iterinstr list) :
     Pl.block =
-  let mixop, exps = notexp in
+  let mixop, exps = Mixfix.split notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   let exps_input_pl = prosify_exps ctx exps_input in
   let exps_output_pl = prosify_exps ctx exps_output in
@@ -625,7 +628,7 @@ and prosify_result_instr (at : region) (ctx : Ctx.t)
     (rel_signature : rel_signature) (exps : exp list) : Pl.block =
   let exps_pl = prosify_exps ctx exps in
   let nottyp, inputs = rel_signature in
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let result_pl =
     if Hints.Input.is_conditional inputs typs then Pl.ProseResult `Hold
     else
@@ -670,7 +673,7 @@ let rec prosify_def (ctx : Ctx.t) (def : def) : Pl.def option =
 and prosify_rel_title (ctx : Ctx.t) (id_rel : id)
     (rel_signature : rel_signature) (exps_input : exp list) : Pl.rel_title =
   let nottyp, inputs = rel_signature in
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   if Hints.Input.is_conditional inputs typs then
     prosify_rel_hold_title ctx id_rel rel_signature exps_input
   else prosify_rel_yield_title ctx id_rel rel_signature exps_input
@@ -694,7 +697,7 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
   match (prose_in_opt, prose_out_opt) with
   | Some prose_in, Some prose_out ->
       let nottyp, inputs = rel_signature in
-      let _, typs = nottyp.it in
+      let typs = Mixfix.args nottyp.it in
       let typs_input, typs_output = Hints.Input.split inputs typs in
       Ctx.validate_hint_alter id_rel.at prose_in exps_input;
       let prose_out_aligned = Hints.Alter.realign prose_out inputs in
@@ -725,7 +728,7 @@ and prosify_rel_yield_title (ctx : Ctx.t) (id_rel : id)
 and prosify_rel_math_title (ctx : Ctx.t) (id_rel : id)
     (rel_signature : rel_signature) (exps_input : exp list) : Pl.rel_title =
   let nottyp, inputs = rel_signature in
-  let mixop, _ = nottyp.it in
+  let mixop = Mixfix.to_mixop nottyp.it in
   let exps_input_pl = prosify_exps ctx exps_input in
   let exps_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =
@@ -773,7 +776,7 @@ and prosify_rulegroup_title (ctx : Ctx.t) (id_rel : id) (id_rulegroup : id)
     (rel_signature : rel_signature) (exps_input : exp list) : Pl.rulegroup_title
     =
   let nottyp, inputs = rel_signature in
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   if Hints.Input.is_conditional inputs typs then
     prosify_rulegroup_hold_title ctx id_rel id_rulegroup rel_signature
       exps_input
@@ -811,7 +814,7 @@ and prosify_rulegroup_math_title (ctx : Ctx.t) (_id_rel : id)
     (id_rulegroup : id) (rel_signature : rel_signature) (exps_input : exp list)
     : Pl.rulegroup_title =
   let nottyp, inputs = rel_signature in
-  let mixop, _ = nottyp.it in
+  let mixop = Mixfix.to_mixop nottyp.it in
   let exps_input_pl = prosify_exps ctx exps_input in
   let epxs_input_pl_indexed = List.combine inputs exps_input_pl in
   let exps_pl =

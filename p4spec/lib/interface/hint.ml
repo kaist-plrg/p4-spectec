@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Util.Source
 
@@ -20,7 +21,7 @@ let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
   let hint_alter_opt = Option.bind hint_opt Hints.Alter.init in
   match hint_alter_opt with
   | Some hint_alter ->
-      let mixop, _ = nottyp.it in
+      let mixop = Mixfix.to_mixop nottyp.it in
       let cid = (tid, mixop) in
       HEnv.add cid hint_alter henv
   | None -> henv
