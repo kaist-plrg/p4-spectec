@@ -22,27 +22,35 @@ let boot_atom (atom : Il.atom) : Value.t =
 
 (* Mixfix operators *)
 
+let mixop_cache : (string, Value.t) Hashtbl.t = Hashtbl.create 64
+
 let boot_mixop (mixop : Il.mixop) : Value.t =
-  let atoms_matrix = Mixop.atoms_matrix mixop in
-  let values_atoms =
-    List.map
-      (fun atoms ->
-        let values_atoms = List.map boot_atom atoms in
-        let typ_atoms =
+  let key = Mixop.string_of_mixop mixop in
+  match Hashtbl.find_opt mixop_cache key with
+  | Some value -> value
+  | None ->
+      let atoms_matrix = Mixop.atoms_matrix mixop in
+      let values_atoms =
+        List.map
+          (fun atoms ->
+            let values_atoms = List.map boot_atom atoms in
+            let typ_atoms =
+              Runtime.Type.Typ.Make.var ("atom" $ no_region) []
+              |> Runtime.Type.Typ.Make.list
+            in
+            Value.Make.list typ_atoms values_atoms)
+          atoms_matrix
+      in
+      let value_atoms_matrix =
+        let typ_atoms_matrix =
           Runtime.Type.Typ.Make.var ("atom" $ no_region) []
           |> Runtime.Type.Typ.Make.list
         in
-        Value.Make.list typ_atoms values_atoms)
-      atoms_matrix
-  in
-  let value_atoms_matrix =
-    let typ_atoms_matrix =
-      Runtime.Type.Typ.Make.var ("atom" $ no_region) []
-      |> Runtime.Type.Typ.Make.list
-    in
-    Value.Make.list typ_atoms_matrix values_atoms
-  in
-  Value.Make.(value_atoms_matrix #@@ "mixop")
+        Value.Make.list typ_atoms_matrix values_atoms
+      in
+      let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
+      Hashtbl.replace mixop_cache key value;
+      value
 
 (* Iterators *)
 

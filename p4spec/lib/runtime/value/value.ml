@@ -97,8 +97,7 @@ let hash_of (v : value') : int =
             h := (!h * 31) + value_field.note.vhash)
           valuefields
     | CaseV (mixop, values) ->
-        mixop |> Mixop.atoms
-        |> List.iter (fun atom -> h := (!h * 31) + Hashtbl.hash atom.it);
+        h := (!h * 31) + Hashtbl.hash (Mixop.string_of_mixop mixop);
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
     | TupleV values ->
         h := (!h * 31) + 1001;
