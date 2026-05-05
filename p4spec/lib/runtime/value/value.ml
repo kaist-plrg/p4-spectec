@@ -140,8 +140,7 @@ module Mixops = struct
     atoms_matrix
     |> List.map (fun atoms ->
            atoms |> List.map Atom.string_of_atom |> String.concat " ")
-    |> String.concat " x "
-    |> of_string
+    |> String.concat " x " |> of_string
 end
 
 (* Constructors *)

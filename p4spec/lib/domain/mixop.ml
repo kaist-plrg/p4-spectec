@@ -78,8 +78,10 @@ let atoms (mixop : t) : atom list =
     match mixop with
     | Arg -> atoms_acc
     | Atom atom -> atom :: atoms_acc
-    | Brack (atom_l, mixop, atom_r) -> atom_r :: atoms (atom_l :: atoms_acc) mixop
-    | Infix (mixop_l, atom, mixop_r) -> atoms (atom :: atoms atoms_acc mixop_l) mixop_r
+    | Brack (atom_l, mixop, atom_r) ->
+        atom_r :: atoms (atom_l :: atoms_acc) mixop
+    | Infix (mixop_l, atom, mixop_r) ->
+        atoms (atom :: atoms atoms_acc mixop_l) mixop_r
     | Seq mixops -> List.fold_left atoms atoms_acc mixops
   in
   List.rev (atoms [] mixop)
@@ -104,7 +106,6 @@ let atoms_matrix (mixop : t) : atom list list =
     | Atom_internal atom :: rest -> split atoms_acc (atom :: atoms_curr) rest
   in
   split [] [] atoms_internal
-
 
 (* Stringifier *)
 
