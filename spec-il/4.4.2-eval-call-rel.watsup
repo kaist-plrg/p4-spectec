@@ -76,28 +76,6 @@ relation Call_defined_rel:
   ctx |- definedRelDef `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
 
-rulegroup Call_defined_rel/ok {
-
-    rule Call_defined_rel/succ:
-      C |- definedRelDef `@ `( val* ) : OK val_out*
-      -- if DEF rulgroup* elsgroup? = definedRelDef
-      -- if C_local = C[ .LOCAL = $empty_layer ]
-      -- Eval_rulgroups:
-          C_local |- rulgroup* `@ `( val* ) : OK val_out*
-
-    rule Call_defined_rel/fail-with-els:
-      C |- definedRelDef `@ `( val* ) : OK val_out*
-      -- if DEF rulgroup* elsgroup = definedRelDef
-      -- if C_local = C[ .LOCAL = $empty_layer ]
-      -- Eval_rulgroups:
-          C_local |- rulgroup* `@ `( val* ) : FAIL
-      -- if id_els `: rulmatch_els `= rulpath_els = elsgroup
-      -- if rulgroup_els = id_els `: rulmatch_els `= rulpath_els
-      -- Eval_rulgroup:
-          C_local |- rulgroup_els `@ `( val* ) : OK val_out*
-
-}
-
 dec $elsgroup_as_rulgroup(elsgroup) : rulgroup
 def $elsgroup_as_rulgroup(id `: rulmatch `= rulpath)
   = id `: rulmatch `= rulpath
