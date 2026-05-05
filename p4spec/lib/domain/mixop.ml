@@ -74,42 +74,37 @@ let arity (mixop : t) : int =
 (* Atoms *)
 
 let atoms (mixop : t) : atom list =
-  let rec atoms (mixop : t) : atom list =
+  let rec atoms (atoms_acc : atom list) (mixop : t) =
     match mixop with
-    | Arg -> []
-    | Atom atom -> [ atom ]
-    | Brack (atom_l, mixop, atom_r) -> (atom_l :: atoms mixop) @ [ atom_r ]
-    | Infix (mixop_l, atom, mixop_r) -> atoms mixop_l @ [ atom ] @ atoms mixop_r
-    | Seq mixops ->
-        List.fold_left
-          (fun atoms_acc mixop -> atoms_acc @ atoms mixop)
-          [] mixops
+    | Arg -> atoms_acc
+    | Atom atom -> atom :: atoms_acc
+    | Brack (atom_l, mixop, atom_r) -> atom_r :: atoms (atom_l :: atoms_acc) mixop
+    | Infix (mixop_l, atom, mixop_r) -> atoms (atom :: atoms atoms_acc mixop_l) mixop_r
+    | Seq mixops -> List.fold_left atoms atoms_acc mixops
   in
-  atoms mixop
+  List.rev (atoms [] mixop)
 
 type atom_internal = Atom_internal of atom | Arg_internal
 
 let atoms_matrix (mixop : t) : atom list list =
-  let rec atoms (mixop : t) : atom_internal list =
+  let rec atoms (atoms_acc : atom_internal list) (mixop : t) =
     match mixop with
-    | Arg -> [ Arg_internal ]
-    | Atom atom -> [ Atom_internal atom ]
+    | Arg -> Arg_internal :: atoms_acc
+    | Atom atom -> Atom_internal atom :: atoms_acc
     | Brack (atom_l, mixop, atom_r) ->
-        [ Atom_internal atom_l ] @ atoms mixop @ [ Atom_internal atom_r ]
+        Atom_internal atom_r :: atoms (Atom_internal atom_l :: atoms_acc) mixop
     | Infix (mixop_l, atom, mixop_r) ->
-        atoms mixop_l @ [ Atom_internal atom ] @ atoms mixop_r
-    | Seq mixops ->
-        List.fold_left
-          (fun atoms_acc mixop -> atoms_acc @ atoms mixop)
-          [] mixops
+        atoms (Atom_internal atom :: atoms atoms_acc mixop_l) mixop_r
+    | Seq mixops -> List.fold_left atoms atoms_acc mixops
   in
-  let atoms_internal = atoms mixop in
+  let atoms_internal = List.rev (atoms [] mixop) in
   let rec split atoms_acc atoms_curr = function
     | [] -> List.rev (List.rev atoms_curr :: atoms_acc)
     | Arg_internal :: rest -> split (List.rev atoms_curr :: atoms_acc) [] rest
     | Atom_internal atom :: rest -> split atoms_acc (atom :: atoms_curr) rest
   in
   split [] [] atoms_internal
+
 
 (* Stringifier *)
 

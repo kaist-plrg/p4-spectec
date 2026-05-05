@@ -122,28 +122,26 @@ module Mixops = struct
 
   let of_string (s : string) : Mixop.t =
     match Hashtbl.find_opt mixop_cache s with
-    | Some m -> m
+    | Some mixop -> mixop
     | None ->
-        let m = Frontend.Parse.parse_mixop s in
-        let s_canon = Mixop.string_of_mixop m in
-        let m =
+        let mixop = Frontend.Parse.parse_mixop s in
+        let s_canon = Mixop.string_of_mixop mixop in
+        let mixop =
           match Hashtbl.find_opt mixop_cache s_canon with
-          | Some m_cached -> m_cached
+          | Some mixop_cached -> mixop_cached
           | None ->
-              Hashtbl.replace mixop_cache s_canon m;
-              m
+              Hashtbl.replace mixop_cache s_canon mixop;
+              mixop
         in
-        Hashtbl.replace mixop_cache s_canon m;
-        m
+        Hashtbl.replace mixop_cache s_canon mixop;
+        mixop
 
   let of_atoms_matrix (atoms_matrix : Atom.t list list) : Mixop.t =
-    let s =
-      atoms_matrix
-      |> List.map (fun atoms ->
-             atoms |> List.map Atom.string_of_atom |> String.concat " ")
-      |> String.concat " x "
-    in
-    of_string s
+    atoms_matrix
+    |> List.map (fun atoms ->
+           atoms |> List.map Atom.string_of_atom |> String.concat " ")
+    |> String.concat " x "
+    |> of_string
 end
 
 (* Constructors *)
