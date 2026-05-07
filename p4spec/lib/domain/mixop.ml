@@ -109,27 +109,21 @@ let atoms_matrix (mixop : t) : atom list list =
 
 (* Stringifier *)
 
-let mixop_cache : (t, string) Hashtbl.t = Hashtbl.create 64
-
 let string_of_mixop (mixop : t) =
-  match Hashtbl.find_opt mixop_cache mixop with
-  | Some s -> s
-  | None ->
-      let rec string_of_mixop (mixop : t) =
-        match mixop with
-        | Arg -> "%"
-        | Atom atom -> Atom.render_atom atom.it
-        | Brack (atom_l, mixop, atom_r) ->
-            Atom.render_atom atom_l.it ^ string_of_mixop mixop
-            ^ Atom.render_atom atom_r.it
-        | Infix (mixop_l, atom, mixop_r) ->
-            string_of_mixop mixop_l ^ Atom.render_atom atom.it
-            ^ string_of_mixop mixop_r
-        | Seq mixops -> String.concat " " (List.map string_of_mixop mixops)
-      in
-      let s = "`" ^ string_of_mixop mixop ^ "`" in
-      Hashtbl.replace mixop_cache mixop s;
-      s
+  let rec string_of_mixop (mixop : t) =
+    match mixop with
+    | Arg -> "%"
+    | Atom atom -> Atom.render_atom atom.it
+    | Brack (atom_l, mixop, atom_r) ->
+        Atom.render_atom atom_l.it ^ string_of_mixop mixop
+        ^ Atom.render_atom atom_r.it
+    | Infix (mixop_l, atom, mixop_r) ->
+        string_of_mixop mixop_l ^ Atom.render_atom atom.it
+        ^ string_of_mixop mixop_r
+    | Seq mixops -> String.concat " " (List.map string_of_mixop mixops)
+  in
+  let s = "`" ^ string_of_mixop mixop ^ "`" in
+  s
 
 (* Assembler *)
 
