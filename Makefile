@@ -26,6 +26,8 @@ release:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
+	cd p4spec && opam exec -- dune build --profile=release bin/boot.exe && echo
+	ln -f $(EXEBOOT) ./$(BOOT)
 
 # Spec
 
