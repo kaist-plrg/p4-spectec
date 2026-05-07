@@ -288,7 +288,16 @@ module Get = struct
         match f_opt with Some f -> f values | None -> case_default values)
     | _ -> case_default []
 
-  module MtchTbl = Hashtbl.Make (String)
+  module MixopHashed = struct
+    type t = Mixop.t
+
+    let equal = Mixop.eq
+
+    let hash (m : Mixop.t) : int =
+      Hashtbl.hash (Mixop.string_of_mixop m) land 0x7FFFFFFF
+  end
+
+  module MtchTbl = Hashtbl.Make (MixopHashed)
 
   type 'a mtch = region -> value list -> 'a
   type 'a mtchtbl = 'a mtch MtchTbl.t
@@ -298,8 +307,8 @@ module Get = struct
     let tbl = MtchTbl.create (List.length cases) in
     List.iter
       (fun (s_mixop, f) ->
-        let canonical = Mixop.string_of_mixop (Mixops.of_string s_mixop) in
-        MtchTbl.add tbl canonical f)
+        let key = Mixops.of_string s_mixop in
+        MtchTbl.add tbl key f)
       cases;
     tbl
 
@@ -308,8 +317,7 @@ module Get = struct
     let at = value.at in
     match value.it with
     | CaseV (mixop, values) -> (
-        let key = Mixop.string_of_mixop mixop in
-        match MtchTbl.find_opt tbl key with
+        match MtchTbl.find_opt tbl mixop with
         | Some f -> f at values
         | None -> case_default at values)
     | _ -> case_default at []

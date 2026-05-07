@@ -5,12 +5,11 @@ open Xl
 open Il
 module Type = Runtime.Type
 module Typ = Type.Typ
-module CCache = Runtime.Cache.CallCache
+module CCache = Runtime.Dynamic.Caches.CallCache
 open Runtime.Dynamic_Il
 open Envs
 module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
-module DCov_single = Coverage.Dangling.Single
 module Hook = Inst.Hook
 open Error
 open Backtrack

@@ -4,14 +4,14 @@ open Xl
 open Mixops
 open Typs
 module Value = Runtime.Value
-module VCache = Runtime.Cache.ValueCache
-module SCache = Runtime.Cache.StringCache
+module VCache = Runtime.Dynamic.Caches.ValueCache
+module MCache = Domain.Caches.MixopCache
 open Util.Source
 
 (* Boot caches *)
 
 let boot_value_cache = VCache.create ~size:4096
-let boot_mixop_cache = SCache.create ~size:4096
+let boot_mixop_cache = MCache.create ~size:4096
 
 (* Identifiers *)
 
@@ -29,11 +29,8 @@ let boot_atom (atom : Il.atom) : Value.t =
 
 (* Mixfix operators *)
 
-let mixop_cache : (string, Value.t) Hashtbl.t = Hashtbl.create 64
-
 let boot_mixop (mixop : Il.mixop) : Value.t =
-  let key = Mixop.string_of_mixop mixop in
-  match SCache.find boot_mixop_cache key with
+  match MCache.find boot_mixop_cache mixop with
   | Some value -> value
   | None ->
       let atoms_matrix = Mixop.atoms_matrix mixop in
@@ -56,7 +53,7 @@ let boot_mixop (mixop : Il.mixop) : Value.t =
         Value.Make.list typ_atoms_matrix values_atoms
       in
       let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
-      SCache.add boot_mixop_cache key value;
+      MCache.add boot_mixop_cache mixop value;
       value
 
 (* Iterators *)

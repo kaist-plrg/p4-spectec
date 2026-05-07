@@ -1,17 +1,5 @@
 open Util.Source
 
-(* Cache entry using strings *)
-
-module StringEntry = struct
-  type t = string
-
-  let default : t = ""
-  let equal (s_a : t) (s_b : t) : bool = s_a = s_b
-  let hash (s : t) : int = Hashtbl.hash s land 0x7FFFFFFF
-end
-
-module StringCache = Make.Make (StringEntry)
-
 (* Cache entry using values *)
 
 module ValueEntry = struct
@@ -22,7 +10,7 @@ module ValueEntry = struct
   let hash (value : Value.t) = value.note.vhash
 end
 
-module ValueCache = Make.Make (ValueEntry)
+module ValueCache = Cache.Make.Make (ValueEntry)
 
 (* Cache entry using id and values *)
 
@@ -48,4 +36,4 @@ module CallEntry = struct
     !h land 0x7FFFFFFF
 end
 
-module CallCache = Make.Make (CallEntry)
+module CallCache = Cache.Make.Make (CallEntry)

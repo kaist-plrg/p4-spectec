@@ -2,7 +2,7 @@ open Domain
 open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-module VCache = Runtime.Cache.ValueCache
+module VCache = Runtime.Dynamic.Caches.ValueCache
 open Mixops
 open Stub
 open Util.Error

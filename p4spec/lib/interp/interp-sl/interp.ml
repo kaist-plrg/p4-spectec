@@ -5,7 +5,7 @@ open Xl
 open Sl
 module Type = Runtime.Type
 module Typ = Type.Typ
-module CCache = Runtime.Cache.CallCache
+module CCache = Runtime.Dynamic.Caches.CallCache
 open Runtime.Dynamic_Sl
 open Envs
 module Run = Runtime.Dynamic_Runner.Signature

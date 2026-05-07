@@ -1,6 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-module CCache = Runtime.Cache.CallCache
+module CCache = Runtime.Dynamic.Caches.CallCache
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
