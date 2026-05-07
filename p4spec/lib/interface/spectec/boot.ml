@@ -4,7 +4,12 @@ open Xl
 open Mixops
 open Typs
 module Value = Runtime.Value
+open Cache
 open Util.Source
+
+(* Boot caches *)
+
+let boot_value_cache : Value.t Tbl.t = Tbl.create 4096
 
 (* Identifiers *)
 
@@ -167,18 +172,25 @@ and boot_variant_deftyp (at : region) (typcases : Il.typcase list) : Value.t =
 (* Values *)
 
 and boot_value (value : Il.value) : Value.t =
-  let at = value.at in
-  match value.it with
-  | BoolV b -> boot_bool_value at b
-  | NumV num -> boot_num_value at num
-  | TextV t -> boot_text_value at t
-  | StructV valuefields -> boot_struct_value at valuefields
-  | CaseV valuecase -> boot_case_value at valuecase
-  | TupleV values -> boot_tuple_value at values
-  | OptV value_opt -> boot_opt_value at value_opt
-  | ListV values -> boot_list_value at values
-  | FuncV id -> boot_func_value at id
-  | ExternV json -> boot_extern_value at json
+  match Tbl.find_opt boot_value_cache value with
+  | Some value_value -> value_value
+  | None ->
+      let at = value.at in
+      let value_value =
+        match value.it with
+        | BoolV b -> boot_bool_value at b
+        | NumV num -> boot_num_value at num
+        | TextV t -> boot_text_value at t
+        | StructV valuefields -> boot_struct_value at valuefields
+        | CaseV valuecase -> boot_case_value at valuecase
+        | TupleV values -> boot_tuple_value at values
+        | OptV value_opt -> boot_opt_value at value_opt
+        | ListV values -> boot_list_value at values
+        | FuncV id -> boot_func_value at id
+        | ExternV json -> boot_extern_value at json
+      in
+      Tbl.replace boot_value_cache value value_value;
+      value_value
 
 and boot_value_opt (value_opt : Il.value option) : Value.t =
   Value.Make.opt

@@ -3,6 +3,7 @@ open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Mixops
+open Cache
 open Util.Error
 open Util.Source
 
@@ -55,6 +56,11 @@ let stub_input_hint (n_inputs : int) : Hints.Input.t = List.init n_inputs Fun.id
 (* exp/path note: exp.note / path.note carries the IL type; lost in boot *)
 
 let stub_exp_note : Il.typ' = Il.BoolT
+
+(* Unboot caches *)
+
+let unboot_typ_cache : Typ.t Tbl.t = Tbl.create 4096
+let unboot_value_cache : Value.t Tbl.t = Tbl.create 4096
 
 (* Forward references for match dispatch tables,
    populated after all sub-match functions are defined *)
@@ -148,8 +154,15 @@ and unboot_varis (value_varis : Value.t) : Il.var list =
 (* Types *)
 
 and unboot_typ (value_typ : Value.t) : Il.typ =
-  Value.Get.mtch_dispatch value_typ !unboot_typ_mtchtbl (fun _ _ ->
-      error "@unboot_typ")
+  match Tbl.find_opt unboot_typ_cache value_typ with
+  | Some typ -> typ
+  | None ->
+      let typ =
+        Value.Get.mtch_dispatch value_typ !unboot_typ_mtchtbl (fun _ _ ->
+            error "@unboot_typ")
+      in
+      Tbl.replace unboot_typ_cache value_typ typ;
+      typ
 
 and unboot_typs (value_typs : Value.t) : Il.typ list =
   value_typs |> Value.Get.list |> List.map unboot_typ
@@ -252,8 +265,15 @@ and unboot_variant_deftyp (at : region) (values : Value.t list) : Il.deftyp =
 (* Values *)
 
 and unboot_value (value_value : Value.t) : Il.value =
-  Value.Get.mtch_dispatch value_value !unboot_value_mtchtbl (fun _ _ ->
-      error "@unboot_value")
+  match Tbl.find_opt unboot_value_cache value_value with
+  | Some value -> value
+  | None ->
+      let value =
+        Value.Get.mtch_dispatch value_value !unboot_value_mtchtbl (fun _ _ ->
+            error "@unboot_value")
+      in
+      Tbl.replace unboot_value_cache value_value value;
+      value
 
 and unboot_values (value_values : Value.t) : Il.value list =
   value_values |> Value.Get.list |> List.map unboot_value
