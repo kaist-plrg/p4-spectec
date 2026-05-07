@@ -66,6 +66,13 @@ module P4 = struct
   let checkpoint = Builtin_P4.checkpoint
   let seff = Builtin_P4.seff
 
+  (* Cache management *)
+
+  module Cache = struct
+    let cache_on () = ()
+    let cache_off () = ()
+  end
+
   (* Initialization *)
 
   let init (spec : Run.spec) : unit =
@@ -122,6 +129,18 @@ module SpecTec = struct
 
   let checkpoint = Builtin_SpecTec.checkpoint
   let seff = Builtin_SpecTec.seff
+
+  (* Cache management *)
+
+  module Cache = struct
+    let cache_on () =
+      Spectec.Boot.cache_on ();
+      Spectec.Unboot.cache_on ()
+
+    let cache_off () =
+      Spectec.Boot.cache_off ();
+      Spectec.Unboot.cache_off ()
+  end
 
   (* Initialization *)
 

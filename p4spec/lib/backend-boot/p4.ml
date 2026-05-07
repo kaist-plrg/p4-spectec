@@ -44,6 +44,12 @@ module Make () : RUNNER = struct
     let checkpoint () : int = 0
     let seff (before : int) (after : int) : bool = before <> after
     let clear () = ()
+
+    module Cache = struct
+      let cache_on () = ()
+      let cache_off () = ()
+    end
+
     let eval_extern_rel = Placeholder.eval_extern_rel
     let eval_extern_func = Placeholder.eval_extern_func
   end

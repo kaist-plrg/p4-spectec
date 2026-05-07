@@ -66,7 +66,8 @@ let run_program_with_dangling_and_vdg ~(derive : bool)
     Inst.Coverage_dangling.make ()
   in
   let (module VH : Inst.Handler.HANDLER), read_vdg =
-    Inst.Value_dependency.make ~derive
+    Inst.Value_dependency.make ~derive ~cache_on:Simulator.Cache.cache_on
+      ~cache_off:Simulator.Cache.cache_off
   in
   let handlers =
     [ (module DH : Inst.Handler.HANDLER); (module VH : Inst.Handler.HANDLER) ]

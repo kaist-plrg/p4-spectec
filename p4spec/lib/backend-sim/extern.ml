@@ -18,6 +18,11 @@ module Make (A : IMPL) : Run.EXTERN = struct
   let seff (before : int) (after : int) : bool = before <> after
   let clear () = ()
 
+  module Cache = struct
+    let cache_on () = ()
+    let cache_off () = ()
+  end
+
   let eval_extern_rel (name : string) (values_input : Value.t list) :
       Run.rel_result =
     try

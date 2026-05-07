@@ -61,6 +61,18 @@ module Make_rec
       | SL_mode -> Interp_SL.eval_func funcname typs values
       | Empty_mode -> assert false
 
+    (* Cache management *)
+
+    module Cache = struct
+      let cache_on () =
+        Interp_IL.Cache.cache_on ();
+        Interp_SL.Cache.cache_on ()
+
+      let cache_off () =
+        Interp_IL.Cache.cache_off ();
+        Interp_SL.Cache.cache_off ()
+    end
+
     (* Clear the cache *)
 
     let clear () : unit =
@@ -84,11 +96,21 @@ module Make_rec
     | Empty -> assert false);
     Extern.init_mode !mode
 
-  (* Clear the cache *)
+  (* Cache management *)
 
   let clear () : unit =
     Extern.clear ();
     Interp.clear ()
+
+  module Cache = struct
+    let cache_on () =
+      Interp_IL.Cache.cache_on ();
+      Interp_SL.Cache.cache_on ()
+
+    let cache_off () =
+      Interp_IL.Cache.cache_off ();
+      Interp_SL.Cache.cache_off ()
+  end
 end
 
 (* Variant for externs that do not depend on the interpreters.
@@ -143,6 +165,18 @@ module Make_nonrec
       | SL_mode -> Interp_SL.eval_func funcname typs values
       | Empty_mode -> assert false
 
+    (* Cache management *)
+
+    module Cache = struct
+      let cache_on () =
+        Interp_IL.Cache.cache_on ();
+        Interp_SL.Cache.cache_on ()
+
+      let cache_off () =
+        Interp_IL.Cache.cache_off ();
+        Interp_SL.Cache.cache_off ()
+    end
+
     (* Clear the cache *)
 
     let clear () : unit =
@@ -166,9 +200,19 @@ module Make_nonrec
     | Empty -> assert false);
     Extern.init_mode !mode
 
-  (* Clear the cache *)
+  (* Cache management *)
 
   let clear () : unit =
     Extern.clear ();
     Interp.clear ()
+
+  module Cache = struct
+    let cache_on () =
+      Interp_IL.Cache.cache_on ();
+      Interp_SL.Cache.cache_on ()
+
+    let cache_off () =
+      Interp_IL.Cache.cache_off ();
+      Interp_SL.Cache.cache_off ()
+  end
 end

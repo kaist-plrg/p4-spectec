@@ -99,6 +99,13 @@ module Make_null () : Run.EXTERN = struct
   (* Clear the cache *)
 
   let clear () : unit = ()
+
+  (* Cache management *)
+
+  module Cache = struct
+    let cache_on () = ()
+    let cache_off () = ()
+  end
 end
 
 (* The intermediate layer *)
@@ -175,76 +182,98 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
 
   (* Cache management *)
 
+  let cache_enabled = ref true
   let func_cache = ref (CCache.create ~size:10000)
   let rel_cache = ref (CCache.create ~size:10000)
 
+  module Cache = struct
+    let cache_on () = cache_enabled := true
+
+    let cache_off () =
+      cache_enabled := false;
+      CCache.reset !func_cache;
+      CCache.reset !rel_cache
+  end
+
   let cache_find_func (values_input : Value.t list) : Value.t =
-    let value_id, value_values_input =
-      match values_input with
-      | [ value_id; value_values_input ] -> (value_id, value_values_input)
-      | _ -> error_no_region "unexpected number of arguments to cache_find_func"
-    in
-    let id = value_id |> Interface.SpecTec.unboot_id in
-    let cache_result =
-      CCache.find !func_cache (id.it, [ value_values_input ])
-    in
-    match cache_result with
-    | Some value_value_output ->
-        Value.Make.("OK val" <| [ value_value_output ] <<| "funccache")
-    | None -> Value.Make.("NONE" <| [] <<| "funccache")
+    if not !cache_enabled then Value.Make.("NONE" <| [] <<| "funccache")
+    else
+      let value_id, value_values_input =
+        match values_input with
+        | [ value_id; value_values_input ] -> (value_id, value_values_input)
+        | _ ->
+            error_no_region "unexpected number of arguments to cache_find_func"
+      in
+      let id = value_id |> Interface.SpecTec.unboot_id in
+      let cache_result =
+        CCache.find !func_cache (id.it, [ value_values_input ])
+      in
+      match cache_result with
+      | Some value_value_output ->
+          Value.Make.("OK val" <| [ value_value_output ] <<| "funccache")
+      | None -> Value.Make.("NONE" <| [] <<| "funccache")
 
   let cache_add_func_maybe (values_input : Value.t list) : Value.t =
-    let value_seff, value_id, value_values_input, value_valres =
-      match values_input with
-      | [ value_seff; value_id; value_values_input; value_valres ] ->
-          (value_seff, value_id, value_values_input, value_valres)
-      | _ ->
-          error_no_region
-            "unexpected number of arguments to cache_add_func_maybe"
-    in
-    let seff = value_seff |> Value.Get.bool in
-    (if not seff then
-       match Value.Get.(value_valres |>>? "OK val") with
-       | Some [ value_value_output ] ->
-           let id = value_id |> Interface.SpecTec.unboot_id in
-           CCache.add !func_cache
-             (id.it, [ value_values_input ])
-             value_value_output
-       | _ -> ());
-    Value.Make.bool true
+    if not !cache_enabled then Value.Make.bool true
+    else
+      let value_seff, value_id, value_values_input, value_valres =
+        match values_input with
+        | [ value_seff; value_id; value_values_input; value_valres ] ->
+            (value_seff, value_id, value_values_input, value_valres)
+        | _ ->
+            error_no_region
+              "unexpected number of arguments to cache_add_func_maybe"
+      in
+      let seff = value_seff |> Value.Get.bool in
+      (if not seff then
+         match Value.Get.(value_valres |>>? "OK val") with
+         | Some [ value_value_output ] ->
+             let id = value_id |> Interface.SpecTec.unboot_id in
+             CCache.add !func_cache
+               (id.it, [ value_values_input ])
+               value_value_output
+         | _ -> ());
+      Value.Make.bool true
 
   let cache_find_rel (values_input : Value.t list) : Value.t =
-    let value_id, value_values_input =
-      match values_input with
-      | [ value_id; value_values_input ] -> (value_id, value_values_input)
-      | _ -> error_no_region "unexpected number of arguments to cache_find_rel"
-    in
-    let id = value_id |> Interface.SpecTec.unboot_id in
-    let cache_result = CCache.find !rel_cache (id.it, [ value_values_input ]) in
-    match cache_result with
-    | Some value_values_output ->
-        Value.Make.("OK val*" <| [ value_values_output ] <<| "relcache")
-    | None -> Value.Make.("NONE" <| [] <<| "relcache")
+    if not !cache_enabled then Value.Make.("NONE" <| [] <<| "relcache")
+    else
+      let value_id, value_values_input =
+        match values_input with
+        | [ value_id; value_values_input ] -> (value_id, value_values_input)
+        | _ ->
+            error_no_region "unexpected number of arguments to cache_find_rel"
+      in
+      let id = value_id |> Interface.SpecTec.unboot_id in
+      let cache_result =
+        CCache.find !rel_cache (id.it, [ value_values_input ])
+      in
+      match cache_result with
+      | Some value_values_output ->
+          Value.Make.("OK val*" <| [ value_values_output ] <<| "relcache")
+      | None -> Value.Make.("NONE" <| [] <<| "relcache")
 
   let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
-    let value_seff, value_id, value_values_input, value_valsres =
-      match values_input with
-      | [ value_seff; value_id; value_values_input; value_valsres ] ->
-          (value_seff, value_id, value_values_input, value_valsres)
-      | _ ->
-          error_no_region
-            "unexpected number of arguments to cache_add_rel_maybe"
-    in
-    let seff = value_seff |> Value.Get.bool in
-    (if not seff then
-       match Value.Get.(value_valsres |>>? "OK val*") with
-       | Some [ value_values_output ] ->
-           let id = value_id |> Interface.SpecTec.unboot_id in
-           CCache.add !rel_cache
-             (id.it, [ value_values_input ])
-             value_values_output
-       | _ -> ());
-    Value.Make.bool true
+    if not !cache_enabled then Value.Make.bool true
+    else
+      let value_seff, value_id, value_values_input, value_valsres =
+        match values_input with
+        | [ value_seff; value_id; value_values_input; value_valsres ] ->
+            (value_seff, value_id, value_values_input, value_valsres)
+        | _ ->
+            error_no_region
+              "unexpected number of arguments to cache_add_rel_maybe"
+      in
+      let seff = value_seff |> Value.Get.bool in
+      (if not seff then
+         match Value.Get.(value_valsres |>>? "OK val*") with
+         | Some [ value_values_output ] ->
+             let id = value_id |> Interface.SpecTec.unboot_id in
+             CCache.add !rel_cache
+               (id.it, [ value_values_input ])
+               value_values_output
+         | _ -> ());
+      Value.Make.bool true
 
   let cache_checkpoint (values_input : Value.t list) : Value.t =
     (match values_input with

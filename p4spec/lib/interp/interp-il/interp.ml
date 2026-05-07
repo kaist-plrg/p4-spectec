@@ -30,6 +30,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let func_cache = ref (CCache.create ~size:10000)
   let rel_cache = ref (CCache.create ~size:10000)
 
+  (* Cache toggle *)
+
+  let cache_enabled = ref false
+
+  module Cache = struct
+    let cache_on () =
+      cache_enabled := true;
+      Interface.Cache.cache_on ();
+      Extern.Cache.cache_on ()
+
+    let cache_off () =
+      cache_enabled := false;
+      Interface.Cache.cache_off ();
+      Extern.Cache.cache_off ()
+  end
+
   (* Checkers *)
 
   let check_guard = ref true
@@ -1253,7 +1269,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | Rel.Defined (_, _, rulegroups, elsegroup_opt) ->
             invoke_defined_rel ctx id rulegroups elsegroup_opt values_input
       in
-      if Hook.is_cache_on () && not (is_extern_rel rel) then (
+      if !cache_enabled && not (is_extern_rel rel) then (
         let cache_result = CCache.find !rel_cache (id.it, values_input) in
         match cache_result with
         | Some values_output -> Ok values_output
@@ -1379,7 +1395,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let anon = cursor = Ctx.Local in
     let result =
       if
-        Hook.is_cache_on () && (not anon)
+        !cache_enabled && (not anon)
         && (not (is_extern_func func))
         && not (is_high_order_func values_input)
       then (
@@ -1603,7 +1619,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Initialization *)
 
   let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
-    if cache then Hook.cache_on () else Hook.cache_off ();
+    if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
     Ctx.init ~det spec
 end

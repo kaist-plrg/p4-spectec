@@ -14,9 +14,17 @@ let error = error_unparse
 
 (* Unboot caches *)
 
+let unboot_cache_enabled = ref true
 let unboot_mixop_cache = VCache.create ~size:4096
 let unboot_typ_cache = VCache.create ~size:4096
 let unboot_value_cache = VCache.create ~size:4096
+let cache_on () = unboot_cache_enabled := true
+
+let cache_off () =
+  unboot_cache_enabled := false;
+  VCache.reset unboot_mixop_cache;
+  VCache.reset unboot_typ_cache;
+  VCache.reset unboot_value_cache
 
 (* Forward references for match dispatch tables,
    populated after all sub-match functions are defined *)
@@ -75,7 +83,11 @@ let unboot_atom (value_atom : Value.t) : Il.atom =
 (* Mixops *)
 
 let unboot_mixop (value_mixop : Value.t) : Il.mixop =
-  match VCache.find unboot_mixop_cache value_mixop with
+  let cached =
+    if !unboot_cache_enabled then VCache.find unboot_mixop_cache value_mixop
+    else None
+  in
+  match cached with
   | Some mixop -> mixop
   | None ->
       let atoms_matrix =
@@ -85,7 +97,8 @@ let unboot_mixop (value_mixop : Value.t) : Il.mixop =
                |> List.map it)
       in
       let mixop = Value.Mixops.of_atoms_matrix atoms_matrix in
-      VCache.add unboot_mixop_cache value_mixop mixop;
+      if !unboot_cache_enabled then
+        VCache.add unboot_mixop_cache value_mixop mixop;
       mixop
 
 (* Iterators *)
@@ -116,14 +129,18 @@ and unboot_varis (value_varis : Value.t) : Il.var list =
 (* Types *)
 
 and unboot_typ (value_typ : Value.t) : Il.typ =
-  match VCache.find unboot_typ_cache value_typ with
+  let cached =
+    if !unboot_cache_enabled then VCache.find unboot_typ_cache value_typ
+    else None
+  in
+  match cached with
   | Some typ -> typ
   | None ->
       let typ =
         Value.Get.mtch_dispatch value_typ !unboot_typ_mtchtbl (fun _ _ ->
             error "@unboot_typ")
       in
-      VCache.add unboot_typ_cache value_typ typ;
+      if !unboot_cache_enabled then VCache.add unboot_typ_cache value_typ typ;
       typ
 
 and unboot_typs (value_typs : Value.t) : Il.typ list =
@@ -227,14 +244,19 @@ and unboot_variant_deftyp (at : region) (values : Value.t list) : Il.deftyp =
 (* Values *)
 
 and unboot_value (value_value : Value.t) : Il.value =
-  match VCache.find unboot_value_cache value_value with
+  let cached =
+    if !unboot_cache_enabled then VCache.find unboot_value_cache value_value
+    else None
+  in
+  match cached with
   | Some value -> value
   | None ->
       let value =
         Value.Get.mtch_dispatch value_value !unboot_value_mtchtbl (fun _ _ ->
             error "@unboot_value")
       in
-      VCache.add unboot_value_cache value_value value;
+      if !unboot_cache_enabled then
+        VCache.add unboot_value_cache value_value value;
       value
 
 and unboot_values (value_values : Value.t) : Il.value list =

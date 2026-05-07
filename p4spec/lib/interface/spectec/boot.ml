@@ -10,8 +10,15 @@ open Util.Source
 
 (* Boot caches *)
 
+let boot_cache_enabled = ref true
 let boot_value_cache = VCache.create ~size:4096
 let boot_mixop_cache = MCache.create ~size:4096
+let cache_on () = boot_cache_enabled := true
+
+let cache_off () =
+  boot_cache_enabled := false;
+  VCache.reset boot_value_cache;
+  MCache.reset boot_mixop_cache
 
 (* Identifiers *)
 
@@ -30,7 +37,10 @@ let boot_atom (atom : Il.atom) : Value.t =
 (* Mixfix operators *)
 
 let boot_mixop (mixop : Il.mixop) : Value.t =
-  match MCache.find boot_mixop_cache mixop with
+  let cached =
+    if !boot_cache_enabled then MCache.find boot_mixop_cache mixop else None
+  in
+  match cached with
   | Some value -> value
   | None ->
       let atoms_matrix = Mixop.atoms_matrix mixop in
@@ -53,7 +63,7 @@ let boot_mixop (mixop : Il.mixop) : Value.t =
         Value.Make.list typ_atoms_matrix values_atoms
       in
       let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
-      MCache.add boot_mixop_cache mixop value;
+      if !boot_cache_enabled then MCache.add boot_mixop_cache mixop value;
       value
 
 (* Iterators *)
@@ -171,7 +181,10 @@ and boot_variant_deftyp (at : region) (typcases : Il.typcase list) : Value.t =
 (* Values *)
 
 and boot_value (value : Il.value) : Value.t =
-  match VCache.find boot_value_cache value with
+  let cached =
+    if !boot_cache_enabled then VCache.find boot_value_cache value else None
+  in
+  match cached with
   | Some value_value -> value_value
   | None ->
       let at = value.at in
@@ -188,7 +201,7 @@ and boot_value (value : Il.value) : Value.t =
         | FuncV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
-      VCache.add boot_value_cache value value_value;
+      if !boot_cache_enabled then VCache.add boot_value_cache value value_value;
       value_value
 
 and boot_value_opt (value_opt : Il.value option) : Value.t =

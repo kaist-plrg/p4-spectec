@@ -23,12 +23,29 @@ open Util.Source
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_SL = struct
-  (* Build context and caches *)
+  (* Build context *)
 
   module Ctx = Ctx.Make ()
 
+  (* Build caches *)
+
   let func_cache = ref (CCache.create ~size:10000)
   let rel_cache = ref (CCache.create ~size:10000)
+  let cache_enabled = ref false
+
+  module Cache = struct
+    let cache_on () =
+      cache_enabled := true;
+      Interface.Cache.cache_on ();
+      Extern.Cache.cache_on ()
+
+    let cache_off () =
+      cache_enabled := false;
+      CCache.clear !func_cache;
+      CCache.clear !rel_cache;
+      Interface.Cache.cache_off ();
+      Extern.Cache.cache_off ()
+  end
 
   (* Function/relation result *)
 
@@ -1869,7 +1886,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 values_input
         in
         let result =
-          if Hook.is_cache_on () && not (is_extern_rel rel) then
+          if !cache_enabled && not (is_extern_rel rel) then
             let cache_result = CCache.find !rel_cache (id.it, values_input) in
             match cache_result with
             | Some values_output -> Result values_output
@@ -1973,7 +1990,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let anon = cursor = Ctx.Local in
         let result =
           if
-            Hook.is_cache_on () && (not anon)
+            !cache_enabled && (not anon)
             && (not (is_extern_func func))
             && not (is_high_order_func values_input)
           then
@@ -2182,7 +2199,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Initialization *)
 
   let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
-    if cache then Hook.cache_on () else Hook.cache_off ();
+    if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
     Ctx.init ~det spec
 end

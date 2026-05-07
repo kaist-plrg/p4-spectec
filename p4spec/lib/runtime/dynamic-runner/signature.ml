@@ -22,6 +22,15 @@ type stf_result =
   | Pass
   | Fail of [ `Syntax of region * string | `Runtime of region * string ]
 
+(* Cache management *)
+
+module type CACHE = sig
+  val cache_on : unit -> unit
+  val cache_off : unit -> unit
+end
+
+(* Interface for the interaction between SpecTec and the defined language *)
+
 module type INTERFACE = sig
   (* Program parsing, into IL value *)
 
@@ -45,9 +54,17 @@ module type INTERFACE = sig
   (* Initialization *)
 
   val init : spec -> unit
+
+  (* Cache management *)
+
+  module Cache : CACHE
 end
 
+(* Interface for the interaction between SpecTec and external code *)
+
 module type EXTERN = sig
+  module Cache : CACHE
+
   (* Extern relation and meta-function evaluation *)
 
   val eval_extern_rel : string -> Value.t list -> rel_result
@@ -61,20 +78,21 @@ module type EXTERN = sig
 
   val checkpoint : unit -> int
   val seff : int -> int -> bool
-
-  (* Clear the cache *)
-
   val clear : unit -> unit
 end
 
+(* SpecTec interperter(s) *)
+
 module type INTERP = sig
+  module Cache : CACHE
+
   (* Relation and meta-function evaluation *)
 
   val eval_program : string -> string list -> string -> program_result
   val eval_rel : string -> Value.t list -> rel_result
   val eval_func : string -> Typ.t list -> Value.t list -> func_result
 
-  (* Clear the cache *)
+  (* Clear the state *)
 
   val clear : unit -> unit
 end
@@ -95,7 +113,10 @@ module type INTERP_SL = sig
   val init : cache:bool -> det:bool -> guard:bool -> Sl.spec -> unit
 end
 
+(* Runner for SpecTec, which glues together the interface, the extern, and the interpreter *)
+
 module type RUNNER = sig
+  module Cache : CACHE
   module Interface : INTERFACE
   module Interp : INTERP
 
@@ -103,7 +124,7 @@ module type RUNNER = sig
 
   val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
 
-  (* Clear the cache *)
+  (* Clear the state *)
 
   val clear : unit -> unit
 end
