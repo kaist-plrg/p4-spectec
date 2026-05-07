@@ -1,5 +1,6 @@
 module Type = Type
 module Value = Value
+module Cache = Cache
 module Static = Static
 module Dynamic_Il = Dynamic_il
 module Dynamic_Sl = Dynamic_sl

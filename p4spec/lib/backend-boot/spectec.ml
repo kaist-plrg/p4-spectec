@@ -1,6 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-module Cache = Runtime.Dynamic_Runner.Cache
+module CCache = Runtime.Cache.CallCache
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
@@ -175,8 +175,8 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
 
   (* Cache management *)
 
-  let func_cache = ref (Cache.Cache.create ~size:10000)
-  let rel_cache = ref (Cache.Cache.create ~size:10000)
+  let func_cache = ref (CCache.create ~size:10000)
+  let rel_cache = ref (CCache.create ~size:10000)
 
   let cache_find_func (values_input : Value.t list) : Value.t =
     let value_id, value_values_input =
@@ -186,7 +186,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     in
     let id = value_id |> Interface.SpecTec.unboot_id in
     let cache_result =
-      Cache.Cache.find !func_cache (id.it, [ value_values_input ])
+      CCache.find !func_cache (id.it, [ value_values_input ])
     in
     match cache_result with
     | Some value_value_output ->
@@ -207,7 +207,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
        match Value.Get.(value_valres |>>? "OK val") with
        | Some [ value_value_output ] ->
            let id = value_id |> Interface.SpecTec.unboot_id in
-           Cache.Cache.add !func_cache
+           CCache.add !func_cache
              (id.it, [ value_values_input ])
              value_value_output
        | _ -> ());
@@ -220,9 +220,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       | _ -> error_no_region "unexpected number of arguments to cache_find_rel"
     in
     let id = value_id |> Interface.SpecTec.unboot_id in
-    let cache_result =
-      Cache.Cache.find !rel_cache (id.it, [ value_values_input ])
-    in
+    let cache_result = CCache.find !rel_cache (id.it, [ value_values_input ]) in
     match cache_result with
     | Some value_values_output ->
         Value.Make.("OK val*" <| [ value_values_output ] <<| "relcache")
@@ -242,7 +240,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
        match Value.Get.(value_valsres |>>? "OK val*") with
        | Some [ value_values_output ] ->
            let id = value_id |> Interface.SpecTec.unboot_id in
-           Cache.Cache.add !rel_cache
+           CCache.add !rel_cache
              (id.it, [ value_values_input ])
              value_values_output
        | _ -> ());
@@ -318,6 +316,6 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
   (* Clear the cache *)
 
   let clear () : unit =
-    Cache.Cache.clear !func_cache;
-    Cache.Cache.clear !rel_cache
+    CCache.clear !func_cache;
+    CCache.clear !rel_cache
 end

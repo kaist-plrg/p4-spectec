@@ -3,12 +3,9 @@ open Lib
 open Lang
 open Xl
 open Sl
-module ICov_single = Coverage.Instr.Single
-module ICov_multi = Coverage.Instr.Multi
-module DCov_single = Coverage.Dangling.Single
-module DCov_multi = Coverage.Dangling.Multi
 module Type = Runtime.Type
 module Typ = Type.Typ
+module CCache = Runtime.Cache.CallCache
 open Runtime.Dynamic_Sl
 open Envs
 module Run = Runtime.Dynamic_Runner.Signature
@@ -22,14 +19,16 @@ open Util.Source
 
 (* Cache *)
 
+(* Interpreter *)
+
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_SL = struct
   (* Build context and caches *)
 
   module Ctx = Ctx.Make ()
 
-  let func_cache = ref (Cache.Cache.create ~size:10000)
-  let rel_cache = ref (Cache.Cache.create ~size:10000)
+  let func_cache = ref (CCache.create ~size:10000)
+  let rel_cache = ref (CCache.create ~size:10000)
 
   (* Function/relation result *)
 
@@ -1871,9 +1870,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         in
         let result =
           if Hook.is_cache_on () && not (is_extern_rel rel) then
-            let cache_result =
-              Cache.Cache.find !rel_cache (id.it, values_input)
-            in
+            let cache_result = CCache.find !rel_cache (id.it, values_input) in
             match cache_result with
             | Some values_output -> Result values_output
             | None -> (
@@ -1891,8 +1888,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                            (Extern.seff extern_checkpoint_before
                               extern_checkpoint_after)
                     then
-                      Cache.Cache.add !rel_cache (id.it, values_input)
-                        values_output;
+                      CCache.add !rel_cache (id.it, values_input) values_output;
                     Result values_output
                 | Tailcall_rel _ -> result)
           else (
@@ -1981,9 +1977,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             && (not (is_extern_func func))
             && not (is_high_order_func values_input)
           then
-            let cache_result =
-              Cache.Cache.find !func_cache (id.it, values_input)
-            in
+            let cache_result = CCache.find !func_cache (id.it, values_input) in
             match cache_result with
             | Some value_output -> Return value_output
             | None -> (
@@ -2001,8 +1995,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                            (Extern.seff extern_checkpoint_before
                               extern_checkpoint_after)
                     then
-                      Cache.Cache.add !func_cache (id.it, values_input)
-                        value_output;
+                      CCache.add !func_cache (id.it, values_input) value_output;
                     Return value_output
                 | Tailcall_func _ -> result)
           else (
@@ -2129,8 +2122,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   let clear () : unit =
     Value.Fresh_.refresh ();
-    Cache.Cache.reset !func_cache;
-    Cache.Cache.reset !rel_cache
+    CCache.reset !func_cache;
+    CCache.reset !rel_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try

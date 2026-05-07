@@ -4,12 +4,14 @@ open Xl
 open Mixops
 open Typs
 module Value = Runtime.Value
-open Cache
+module VCache = Runtime.Cache.ValueCache
+module SCache = Runtime.Cache.StringCache
 open Util.Source
 
 (* Boot caches *)
 
-let boot_value_cache : Value.t Tbl.t = Tbl.create 4096
+let boot_value_cache = VCache.create ~size:4096
+let boot_mixop_cache = SCache.create ~size:4096
 
 (* Identifiers *)
 
@@ -31,7 +33,7 @@ let mixop_cache : (string, Value.t) Hashtbl.t = Hashtbl.create 64
 
 let boot_mixop (mixop : Il.mixop) : Value.t =
   let key = Mixop.string_of_mixop mixop in
-  match Hashtbl.find_opt mixop_cache key with
+  match SCache.find boot_mixop_cache key with
   | Some value -> value
   | None ->
       let atoms_matrix = Mixop.atoms_matrix mixop in
@@ -54,7 +56,7 @@ let boot_mixop (mixop : Il.mixop) : Value.t =
         Value.Make.list typ_atoms_matrix values_atoms
       in
       let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
-      Hashtbl.replace mixop_cache key value;
+      SCache.add boot_mixop_cache key value;
       value
 
 (* Iterators *)
@@ -172,7 +174,7 @@ and boot_variant_deftyp (at : region) (typcases : Il.typcase list) : Value.t =
 (* Values *)
 
 and boot_value (value : Il.value) : Value.t =
-  match Tbl.find_opt boot_value_cache value with
+  match VCache.find boot_value_cache value with
   | Some value_value -> value_value
   | None ->
       let at = value.at in
@@ -189,7 +191,7 @@ and boot_value (value : Il.value) : Value.t =
         | FuncV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
-      Tbl.replace boot_value_cache value value_value;
+      VCache.add boot_value_cache value value_value;
       value_value
 
 and boot_value_opt (value_opt : Il.value option) : Value.t =

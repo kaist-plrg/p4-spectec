@@ -118,23 +118,7 @@ let hash_of (v : value') : int =
 (* Mixops *)
 
 module Mixops = struct
-  let mixop_cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
-
-  let of_string (s : string) : Mixop.t =
-    match Hashtbl.find_opt mixop_cache s with
-    | Some mixop -> mixop
-    | None ->
-        let mixop = Frontend.Parse.parse_mixop s in
-        let s_canon = Mixop.string_of_mixop mixop in
-        let mixop =
-          match Hashtbl.find_opt mixop_cache s_canon with
-          | Some mixop_cached -> mixop_cached
-          | None ->
-              Hashtbl.replace mixop_cache s_canon mixop;
-              mixop
-        in
-        Hashtbl.replace mixop_cache s_canon mixop;
-        mixop
+  let of_string (s : string) : Mixop.t = Frontend.Parse.parse_mixop s
 
   let of_atoms_matrix (atoms_matrix : Atom.t list list) : Mixop.t =
     atoms_matrix
