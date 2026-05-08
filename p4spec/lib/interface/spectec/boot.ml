@@ -1,4 +1,5 @@
-open Domain
+module Atom = Domain.Atom
+module Mixop = Domain.Mixop
 open Lang
 open Xl
 open Mixops
@@ -6,19 +7,8 @@ open Typs
 module Value = Runtime.Value
 module VCache = Runtime.Dynamic.Caches.ValueCache
 module MCache = Domain.Caches.MixopCache
+open Caches
 open Util.Source
-
-(* Boot caches *)
-
-let boot_cache_enabled = ref true
-let boot_value_cache = VCache.create ~size:4096
-let boot_mixop_cache = MCache.create ~size:4096
-let cache_on () = boot_cache_enabled := true
-
-let cache_off () =
-  boot_cache_enabled := false;
-  VCache.reset boot_value_cache;
-  MCache.reset boot_mixop_cache
 
 (* Identifiers *)
 
@@ -38,7 +28,7 @@ let boot_atom (atom : Il.atom) : Value.t =
 
 let boot_mixop (mixop : Il.mixop) : Value.t =
   let cached =
-    if !boot_cache_enabled then MCache.find boot_mixop_cache mixop else None
+    if !cache_enabled then MCache.find boot_mixop_cache mixop else None
   in
   match cached with
   | Some value -> value
@@ -63,7 +53,7 @@ let boot_mixop (mixop : Il.mixop) : Value.t =
         Value.Make.list typ_atoms_matrix values_atoms
       in
       let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
-      if !boot_cache_enabled then MCache.add boot_mixop_cache mixop value;
+      if !cache_enabled then MCache.add boot_mixop_cache mixop value;
       value
 
 (* Iterators *)
@@ -182,7 +172,12 @@ and boot_variant_deftyp (at : region) (typcases : Il.typcase list) : Value.t =
 
 and boot_value (value : Il.value) : Value.t =
   let cached =
-    if !boot_cache_enabled then VCache.find boot_value_cache value else None
+    if !cache_enabled then
+      let cached = VCache.find boot_value_pingpong_cache value in
+      match cached with
+      | Some value -> Some value
+      | None -> VCache.find boot_value_cache value
+    else None
   in
   match cached with
   | Some value_value -> value_value
@@ -201,7 +196,9 @@ and boot_value (value : Il.value) : Value.t =
         | FuncV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
-      if !boot_cache_enabled then VCache.add boot_value_cache value value_value;
+      if !cache_enabled then (
+        VCache.add boot_value_cache value value_value;
+        VCache.add unboot_value_pingpong_cache value_value value);
       value_value
 
 and boot_value_opt (value_opt : Il.value option) : Value.t =

@@ -133,13 +133,8 @@ module SpecTec = struct
   (* Cache management *)
 
   module Cache = struct
-    let cache_on () =
-      Spectec.Boot.cache_on ();
-      Spectec.Unboot.cache_on ()
-
-    let cache_off () =
-      Spectec.Boot.cache_off ();
-      Spectec.Unboot.cache_off ()
+    let cache_on () = Spectec.Caches.cache_on ()
+    let cache_off () = Spectec.Caches.cache_off ()
   end
 
   (* Initialization *)
