@@ -8,63 +8,58 @@ open Util.Source
 
 (* Value map *)
 
-type map = (Value.t * Value.t) list
-
-let rec map_find_opt key = function
-  | [] -> None
-  | (k, v) :: _ when Value.eq k key -> Some v
-  | _ :: t -> map_find_opt key t
-
-let rec map_update key value = function
-  | [] -> [ (key, value) ]
-  | (k, _) :: t when Value.eq k key -> (key, value) :: t
-  | h :: t -> h :: map_update key value t
-
-(* Conversion between meta-maps and OCaml assoc lists *)
+type map = value list
 
 let mixop_pair = Value.Mixops.of_string "k `: v"
 let mixop_map = Value.Mixops.of_string "`{ k }"
 
+let rec map_find_opt key = function
+  | [] -> None
+  | pair :: pairs -> (
+      match pair.it with
+      | CaseV (mixop, [ value_key; value_value ])
+        when Mixop.eq mixop mixop_pair && Value.eq value_key key ->
+          Some value_value
+      | _ -> map_find_opt key pairs)
+
+let make_pair (add : value -> unit) (typ_key : typ) (typ_value : typ)
+    (value_key : value) (value_value : value) : value =
+  let typ = Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] in
+  let pair = Value.Make.case typ (mixop_pair, [ value_key; value_value ]) in
+  add pair;
+  pair
+
+let rec map_update make_pair key value = function
+  | [] -> [ make_pair key value ]
+  | pair :: pairs -> (
+      match pair.it with
+      | CaseV (mixop, [ value_key; _ ])
+        when Mixop.eq mixop mixop_pair && Value.eq value_key key ->
+          make_pair key value :: pairs
+      | _ -> pair :: map_update make_pair key value pairs)
+
+(* Conversion between meta-maps and OCaml lists *)
+
 let map_of_value (value : value) : map =
-  let tuple_of_value (value : value) : value * value =
-    match value.it with
-    | CaseV (mixop, [ value_key; value_value ]) when Mixop.eq mixop mixop_pair
-      ->
-        (value_key, value_value)
-    | _ ->
-        error no_region
-          (Format.asprintf "expected a pair, but got %s" (Value.to_string value))
-  in
   match value.it with
   | CaseV (mixop, [ value_pairs ]) when Mixop.eq mixop mixop_map ->
-      value_pairs |> Value.Get.list |> List.map tuple_of_value
+      Value.Get.list value_pairs
   | _ ->
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
 
 let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
     (map : map) : value =
-  let value_of_tuple ((value_key, value_value) : value * value) : value =
-    let value =
-      let typ = Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] in
-      let valuecase = (mixop_pair, [ value_key; value_value ]) in
-      Value.Make.case typ valuecase
-    in
-    add value;
-    value
-  in
   let value_pairs =
     let typ =
       Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] |> Typ.Make.list
     in
-    let values = map |> List.map value_of_tuple in
-    Value.Make.list typ values
+    Value.Make.list typ map
   in
   add value_pairs;
   let value =
     let typ = Typ.Make.var ("map" $ no_region) [ typ_key; typ_value ] in
-    let valuecase = (mixop_map, [ value_pairs ]) in
-    Value.Make.case typ valuecase
+    Value.Make.case typ (mixop_map, [ value_pairs ])
   in
   add value;
   value
@@ -110,8 +105,9 @@ let add_map (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
+  let mk = make_pair add typ_key typ_value in
   map_of_value value_map
-  |> map_update value_key value_value
+  |> map_update mk value_key value_value
   |> value_of_map add typ_key typ_value
 
 (* dec $adds_map<K, V>(map<K, V>, K*, V* ) : map<K, V> *)
@@ -123,8 +119,9 @@ let adds_map (add : value -> unit) (at : region) (targs : targ list)
   let map = map_of_value value_map in
   let values_key = value_keys |> Value.Get.list in
   let values_value = value_values |> Value.Get.list in
+  let mk = make_pair add typ_key typ_value in
   List.fold_left2
-    (fun map value_key value_value -> map_update value_key value_value map)
+    (fun map value_key value_value -> map_update mk value_key value_value map)
     map values_key values_value
   |> value_of_map add typ_key typ_value
 
@@ -134,6 +131,7 @@ let update_map (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let typ_key, typ_value = Extract.two at targs in
   let value_map, value_key, value_value = Extract.three at values_input in
+  let mk = make_pair add typ_key typ_value in
   map_of_value value_map
-  |> map_update value_key value_value
+  |> map_update mk value_key value_value
   |> value_of_map add typ_key typ_value

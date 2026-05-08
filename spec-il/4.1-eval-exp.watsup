@@ -265,19 +265,13 @@ rulegroup Eval_exp/iter {
     -- if varr = $is_iter_on_var(ITER exp iterexp)
     -- if val = $find_varr(C, varr)
 
-  rule Eval_exp/opt-some:
-    C |- ITER exp iterexp : OK (OPT val)
+  rule Eval_exp/opt:
+    C |- ITER exp iterexp : OK (OPT val?)
     -- if eps = $is_iter_on_var(ITER exp iterexp)
     -- if QUEST vari* = iterexp
-    -- if C_sub = $sub_opt(C, vari*)
-    -- Eval_exp: C_sub |- exp : OK val
-
-  rule Eval_exp/opt-none:
-    C |- ITER exp iterexp : OK (OPT eps)
-    -- if eps = $is_iter_on_var(ITER exp iterexp)
-    -- if QUEST vari* = iterexp
-    -- if eps = $sub_opt(C, vari*)
-    
+    -- if C_sub? = $sub_opt(C, vari*)
+    -- (Eval_exp: C_sub |- exp : OK val)?
+   
   rule Eval_exp/list:
     C |- ITER exp iterexp : OK (LIST val*)
     -- if eps = $is_iter_on_var(ITER exp iterexp)
