@@ -22,6 +22,9 @@ let frontend filenames_spec =
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
+let elab2 filenames_spec =
+  filenames_spec |> frontend |> Elaborate2.Elab.elab_spec
+
 let structure filenames_spec =
   filenames_spec |> elab |> Structure.Struct.struct_spec
 
@@ -212,6 +215,23 @@ let elab_command =
        try
          let spec_il = elab filenames_spec in
          Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let elab2_command =
+  Core.Command.basic ~summary:"parse and elaborate a P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
+     fun () ->
+       try
+         let spec_il = elab2 filenames_spec in
+         Format.printf "%s\n" (Iil.Print.string_of_spec spec_il);
          ()
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -800,6 +820,7 @@ let command =
     [
       (* Transformations *)
       ("elab", elab_command);
+      ("elab2", elab2_command);
       ("struct", struct_command);
       ("prose", prose_command);
       (* Execution *)
