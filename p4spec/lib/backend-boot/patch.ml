@@ -121,9 +121,9 @@ let apply (value_spec : Value.t) (rel : string) (value_program : Value.t) :
   let value_spec = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
   value_spec
 
-(* Patch on square - P4 |> P4 spec |> SpecTec spec |> OCaml *)
+(* Patch - P4 |> P4 spec *)
 
-let apply_square (filenames_p4_spec : string list) (rel_p4 : string)
+let apply_p4_on_p4_spec (filenames_p4_spec : string list) (rel_p4 : string)
     (includes_p4 : string list) (filename_p4 : string) : Value.t =
   (* Parse the P4 spec as a meta-value *)
   let value_p4_spec =
@@ -140,29 +140,31 @@ let apply_square (filenames_p4_spec : string list) (rel_p4 : string)
   (* Create a synthetic "main" meta-function calling [rel_p4] on [value_p4] *)
   apply value_p4_spec rel_p4 value_p4
 
-(* Patch on cube - P4 |> P4 spec |> SpecTec spec |> SpecTec spec |> OCaml *)
+(* Patch on N - P4 |> P4 spec |> [ SpecTec spec * N ] |> SpecTec spec |> OCaml *)
 
-let apply_cube (filenames_spec : string list) (rel : string)
+let apply_n_p4 ~(depth : int) (filenames_spec : string list) (rel : string)
     (filenames_spec_p4 : string list) (rel_p4 : string)
     (includes_p4 : string list) (filename_p4 : string) : Value.t =
   (* Bundle the P4 spec and its input P4 program as a single meta-value *)
   let value_script =
-    apply_square filenames_spec_p4 rel_p4 includes_p4 filename_p4
+    apply_p4_on_p4_spec filenames_spec_p4 rel_p4 includes_p4 filename_p4
   in
-  (* Parse the SpecTec spec as a meta-value *)
-  let value_spec =
-    match Interface.SpecTec.parse_program [] filenames_spec with
-    | Run.Pass value_spec -> value_spec
-    | Run.Fail (`Syntax (at, msg)) -> error at msg
-  in
-  (* Create a synthetic "main" meta-function calling [rel] on [value] *)
-  apply value_spec rel value_script
+  List.fold_left
+    (fun value_script _ ->
+      (* Parse the SpecTec spec as a meta-value *)
+      let value_spec =
+        match Interface.SpecTec.parse_program [] filenames_spec with
+        | Run.Pass value_spec -> value_spec
+        | Run.Fail (`Syntax (at, msg)) -> error at msg
+      in
+      (* Create a synthetic "main" meta-function calling [rel] on [value_script] *)
+      apply value_spec rel value_script)
+    value_script (List.init depth Fun.id)
 
-(* Patch on small cube - SpecTec pgm |> SpecTec spec |> SpecTec spec |> OCaml *)
+(* Patch - SpecTec |> SpecTec spec *)
 
-let apply_cube_small (filenames_spec : string list) (rel : string)
-    (filenames_spec_pgm : string list) (rel_pgm : string)
-    (filename_pgm : string) : Value.t =
+let apply_spectec_on_spectec_spec (filenames_spec_pgm : string list)
+    (rel_pgm : string) (filename_pgm : string) : Value.t =
   (* Parse the SpecTec spec as a meta-value *)
   let value_pgm_spec =
     match Interface.SpecTec.parse_program [] filenames_spec_pgm with
@@ -175,13 +177,25 @@ let apply_cube_small (filenames_spec : string list) (rel : string)
     | Run.Pass value_pgm -> value_pgm
     | Run.Fail (`Syntax (at, msg)) -> error at msg
   in
-  (* Create a synthetic "main" meta-function calling [rel_pgm] on [value_pgm] *)
-  let value_script = apply value_pgm_spec rel_pgm value_pgm in
-  (* Parse the SpecTec spec as a meta-value *)
-  let value_spec =
-    match Interface.SpecTec.parse_program [] filenames_spec with
-    | Run.Pass value_spec -> value_spec
-    | Run.Fail (`Syntax (at, msg)) -> error at msg
+  apply value_pgm_spec rel_pgm value_pgm
+
+(* Patch on N - SpecTec pgm |> [ SpecTec spec * N ] |> SpecTec spec |> OCaml *)
+
+let apply_n_spectec ~(depth : int) (filenames_spec : string list) (rel : string)
+    (filenames_spec_pgm : string list) (rel_pgm : string)
+    (filename_pgm : string) : Value.t =
+  (* Bundle the SpecTec spec and its input SpecTec program as a single meta-value *)
+  let value_script =
+    apply_spectec_on_spectec_spec filenames_spec_pgm rel_pgm filename_pgm
   in
-  (* Create a synthetic "main" meta-function calling [rel] on [value] *)
-  apply value_spec rel value_script
+  List.fold_left
+    (fun value_script _ ->
+      (* Parse the SpecTec spec as a meta-value *)
+      let value_spec =
+        match Interface.SpecTec.parse_program [] filenames_spec with
+        | Run.Pass value_spec -> value_spec
+        | Run.Fail (`Syntax (at, msg)) -> error at msg
+      in
+      (* Create a synthetic "main" meta-function calling [rel] on [value] *)
+      apply value_spec rel value_script)
+    value_script (List.init depth Fun.id)

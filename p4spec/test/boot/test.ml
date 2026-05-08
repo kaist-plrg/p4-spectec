@@ -6,17 +6,14 @@ module Filesys = Util.Filesys
 
 (* Interpreter test *)
 
-let boot (module Booter : RUNNER) neg rel specdir_p4 rel_p4 includes_p4
-    filename_p4 =
+let boot (module Booter : RUNNER) depth neg filenames_spec rel filenames_spec_p4
+    rel_p4 includes_p4 filename_p4 =
   let time_start = start () in
   try
     Booter.clear ();
-    let filenames_spec_p4 =
-      specdir_p4 |> Filesys.collect_files ~suffix:".watsup"
-    in
     let value_spectec =
-      Backend_boot.Patch.apply_square filenames_spec_p4 rel_p4 includes_p4
-        filename_p4
+      Backend_boot.Patch.apply_n_p4 ~depth filenames_spec_p4 rel
+        filenames_spec_p4 rel_p4 includes_p4 filename_p4
     in
     (match Booter.Interp.eval_rel rel [ value_spectec ] with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
@@ -27,8 +24,8 @@ let boot (module Booter : RUNNER) neg rel specdir_p4 rel_p4 includes_p4
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let boot_test (module Booter : RUNNER) neg stat rel specdir_p4 rel_p4
-    includes_p4 excludes_p4 filename_p4 =
+let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
+    filenames_spec_p4 rel_p4 includes_p4 excludes_p4 filename_p4 =
   if List.exists (String.equal filename_p4) excludes_p4 then (
     let log = Format.asprintf "Excluding file: %s" filename_p4 in
     log |> print_endline;
@@ -40,7 +37,10 @@ let boot_test (module Booter : RUNNER) neg stat rel specdir_p4 rel_p4
   else
     try
       let time_start =
-        boot (module Booter) neg rel specdir_p4 rel_p4 includes_p4 filename_p4
+        boot
+          (module Booter)
+          depth neg filenames_spec rel filenames_spec_p4 rel_p4 includes_p4
+          filename_p4
       in
       let duration = stop time_start in
       let log = Format.asprintf "Run success: %s" filename_p4 in
@@ -79,8 +79,8 @@ let boot_test (module Booter : RUNNER) neg stat rel specdir_p4 rel_p4
           fail_run = stat.fail_run + 1;
         }
 
-let boot_test_driver mode det neg specdir rel specdir_p4 rel_p4 includes_p4
-    excludes_p4 testdirs_p4 =
+let boot_test_driver mode depth det neg specdir rel specdir_p4 rel_p4
+    includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
@@ -92,7 +92,11 @@ let boot_test_driver mode det neg specdir rel specdir_p4 rel_p4 includes_p4
   let stat = empty_stat in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let _, (module Booter) = booter ~det ~final:true mode specdir specdir_p4 in
+  let _, (module Booter) =
+    booter ~det ~final:true ~depth mode specdir specdir_p4
+  in
+  let filenames_spec = expand_spec [ specdir ] in
+  let filenames_spec_p4 = expand_spec [ specdir_p4 ] in
   let stat =
     List.fold_left
       (fun stat filename_p4 ->
@@ -101,7 +105,8 @@ let boot_test_driver mode det neg specdir rel specdir_p4 rel_p4 includes_p4
         |> print_endline;
         boot_test
           (module Booter)
-          neg stat rel specdir_p4 rel_p4 includes_p4 excludes_p4 filename_p4)
+          depth neg stat filenames_spec rel filenames_spec_p4 rel_p4 includes_p4
+          excludes_p4 filename_p4)
       stat filenames_p4
   in
   log_stat (Format.asprintf "\nRunning boot test (%s/%s)" rel rel_p4) stat total
@@ -117,6 +122,7 @@ let boot_command =
      and includes_p4 = flag "-i1" (listed string) ~doc:"p4 include path"
      and excludes_p4 = flag "-e1" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p1" (listed string) ~doc:"p4 test directories"
+     and depth = flag "-n" (required int) ~doc:"number of layers of boot specs"
      and neg = flag "-neg" no_arg ~doc:"neg testsing (expect failure)"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and mode =
@@ -130,7 +136,10 @@ let boot_command =
          ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
-       boot_test_driver mode det neg specdir relname specdir_p4 rel_p4
+       let depth =
+         if depth < 2 then failwith "depth must be at least 2" else depth - 2
+       in
+       boot_test_driver mode depth det neg specdir relname specdir_p4 rel_p4
          includes_p4 excludes_p4 testdirs_p4)
 
 let command =

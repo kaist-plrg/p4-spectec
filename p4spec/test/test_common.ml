@@ -98,6 +98,14 @@ let stop start = Util.Time.now () -. start
 
 (* Operations *)
 
+let expand_spec filenames =
+  List.concat_map
+    (fun filename ->
+      if Sys_unix.is_directory_exn filename then
+        Util.Filesys.collect_files ~suffix:".watsup" filename
+      else [ filename ])
+    filenames
+
 let frontend specdir =
   specdir
   |> Filesys.collect_files ~suffix:".watsup"
@@ -130,7 +138,8 @@ let simulator ?(det = false) ?(arch : string option) ~(final : bool) mode
   Simulator.init ~det spec_sim;
   (spec_sim, (module Simulator : SIM))
 
-let booter ?(det = false) ~(final : bool) mode specdir specdir_p4 =
+let booter ?(det = false) ~(final : bool) ~(depth : int) mode specdir specdir_p4
+    =
   let spec =
     match mode with
     | `IL ->
@@ -149,8 +158,14 @@ let booter ?(det = false) ~(final : bool) mode specdir specdir_p4 =
         let spec_sl = structure ~final specdir_p4 in
         (SL spec_sl : spec)
   in
-  let (module Runner_P4), (module Booter) = Backend_boot.Gen.gen_square_p4 () in
+  let (module Runner_P4), runners_intermediate, (module Booter) =
+    Backend_boot.Gen.gen_n_p4 ~depth
+  in
   Runner_P4.init ~det spec_p4;
+  List.iter
+    (fun (module Runner_SpecTec_mid : RUNNER) ->
+      Runner_SpecTec_mid.init ~det spec)
+    runners_intermediate;
   Booter.init ~det spec;
   (spec, (module Booter : RUNNER))
 
