@@ -70,9 +70,7 @@ let unboot_atom (value_atom : Value.t) : Il.atom =
 (* Mixops *)
 
 let unboot_mixop (value_mixop : Value.t) : Il.mixop =
-  let cached =
-    if !cache_enabled then VCache.find unboot_mixop_cache value_mixop else None
-  in
+  let cached = !find_unboot_mixop_cache value_mixop in
   match cached with
   | Some mixop -> mixop
   | None ->
@@ -83,7 +81,7 @@ let unboot_mixop (value_mixop : Value.t) : Il.mixop =
                |> List.map it)
       in
       let mixop = Value.Mixops.of_atoms_matrix atoms_matrix in
-      if !cache_enabled then VCache.add unboot_mixop_cache value_mixop mixop;
+      !add_unboot_mixop_cache value_mixop mixop;
       mixop
 
 (* Iterators *)
@@ -114,9 +112,7 @@ and unboot_varis (value_varis : Value.t) : Il.var list =
 (* Types *)
 
 and unboot_typ (value_typ : Value.t) : Il.typ =
-  let cached =
-    if !cache_enabled then VCache.find unboot_typ_cache value_typ else None
-  in
+  let cached = !find_unboot_typ_cache value_typ in
   match cached with
   | Some typ -> typ
   | None ->
@@ -124,7 +120,7 @@ and unboot_typ (value_typ : Value.t) : Il.typ =
         Value.Get.mtch_dispatch value_typ !unboot_typ_mtchtbl (fun _ _ ->
             error "@unboot_typ")
       in
-      if !cache_enabled then VCache.add unboot_typ_cache value_typ typ;
+      !add_unboot_typ_cache value_typ typ;
       typ
 
 and unboot_typs (value_typs : Value.t) : Il.typ list =
@@ -229,12 +225,10 @@ and unboot_variant_deftyp (at : region) (values : Value.t list) : Il.deftyp =
 
 and unboot_value (value_value : Value.t) : Il.value =
   let cached =
-    if !cache_enabled then
-      let cached = VCache.find unboot_value_pingpong_cache value_value in
-      match cached with
-      | Some value -> Some value
-      | None -> VCache.find unboot_value_cache value_value
-    else None
+    let cached = !find_unboot_value_pingpong_cache value_value in
+    match cached with
+    | Some value -> Some value
+    | None -> !find_unboot_value_cache value_value
   in
   match cached with
   | Some value -> value
@@ -243,9 +237,8 @@ and unboot_value (value_value : Value.t) : Il.value =
         Value.Get.mtch_dispatch value_value !unboot_value_mtchtbl (fun _ _ ->
             error "@unboot_value")
       in
-      if !cache_enabled then (
-        VCache.add unboot_value_cache value_value value;
-        VCache.add boot_value_pingpong_cache value value_value);
+      !add_unboot_value_cache value_value value;
+      !add_boot_value_pingpong_cache value value_value;
       value
 
 and unboot_values (value_values : Value.t) : Il.value list =

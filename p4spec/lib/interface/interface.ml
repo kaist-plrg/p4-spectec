@@ -94,6 +94,7 @@ end
 module SpecTec = struct
   include Spectec.Boot
   include Spectec.Unboot
+  include Spectec.Caches
 
   (* Program parsing *)
 
@@ -129,13 +130,6 @@ module SpecTec = struct
 
   let checkpoint = Builtin_SpecTec.checkpoint
   let seff = Builtin_SpecTec.seff
-
-  (* Cache management *)
-
-  module Cache = struct
-    let cache_on () = Spectec.Caches.cache_on ()
-    let cache_off () = Spectec.Caches.cache_off ()
-  end
 
   (* Initialization *)
 

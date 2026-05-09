@@ -1,5 +1,7 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module MCache = Domain.Caches.MixopCache
+module VCache = Runtime.Dynamic.Caches.ValueCache
 module CCache = Runtime.Dynamic.Caches.CallCache
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
@@ -115,6 +117,59 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
 
   let init_mode _ = ()
 
+  (* Caches
+   * a meta-cache for storing results of meta-relation and meta-meta-function calls
+   * an interface cache for storing results of booting and unbooting values, types, and mixops *)
+
+  type cache_meta = {
+    mutable enabled : bool;
+    func : Value.t CCache.t;
+    rel : Value.t CCache.t;
+  }
+
+  type cache = { meta : cache_meta; interface : Interface.SpecTec.cache }
+
+  let cache : cache =
+    let meta : cache_meta =
+      {
+        enabled = true;
+        func = CCache.create ~size:10000;
+        rel = CCache.create ~size:10000;
+      }
+    in
+    let interface : Interface.SpecTec.cache =
+      {
+        enabled = true;
+        boot_mixop = MCache.create ~size:4096;
+        boot_value = VCache.create ~size:4096;
+        boot_value_pingpong = VCache.create ~size:(256 * 1024);
+        unboot_mixop = VCache.create ~size:4096;
+        unboot_typ = VCache.create ~size:4096;
+        unboot_value = VCache.create ~size:4096;
+        unboot_value_pingpong = VCache.create ~size:(256 * 1024);
+      }
+    in
+    { meta; interface }
+
+  module Cache = struct
+    let cache_on () =
+      cache.meta.enabled <- true;
+      cache.interface.enabled <- true
+
+    let cache_off () =
+      cache.meta.enabled <- false;
+      CCache.reset cache.meta.func;
+      CCache.reset cache.meta.rel;
+      cache.interface.enabled <- false;
+      MCache.reset cache.interface.boot_mixop;
+      VCache.reset cache.interface.boot_value;
+      VCache.reset cache.interface.boot_value_pingpong;
+      VCache.reset cache.interface.unboot_mixop;
+      VCache.reset cache.interface.unboot_typ;
+      VCache.reset cache.interface.unboot_value;
+      VCache.reset cache.interface.unboot_value_pingpong
+  end
+
   (* Threading extern calls to the runner *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
@@ -125,6 +180,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       | _ ->
           error_no_region "unexpected number of arguments to call_builtin_func"
     in
+    Interface.SpecTec.set_cache cache.interface;
     let id = value_id |> Interface.SpecTec.unboot_id in
     let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
@@ -137,6 +193,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     let value_value_output_res =
       Value.Make.("OK val" <| [ value_value_output ] <<| "valres")
     in
+    Interface.SpecTec.unset_cache ();
     [ value_value_output_res ]
 
   let call_extern_func (values_input : Value.t list) : Value.t list =
@@ -146,6 +203,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
           (value_ctx, value_id, value_typs, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
+    Interface.SpecTec.set_cache cache.interface;
     let id = value_id |> Interface.SpecTec.unboot_id in
     let typs = value_typs |> Interface.SpecTec.unboot_typs in
     let values = value_values |> Interface.SpecTec.unboot_values in
@@ -158,6 +216,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     let value_value_output_res =
       Value.Make.("OK val" <| [ value_value_output ] <<| "valsres")
     in
+    Interface.SpecTec.unset_cache ();
     [ value_value_output_res ]
 
   let call_extern_rel (values_input : Value.t list) : Value.t list =
@@ -167,6 +226,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
           (value_ctx, value_id, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
+    Interface.SpecTec.set_cache cache.interface;
     let id = value_id |> Interface.SpecTec.unboot_id in
     let values = value_values |> Interface.SpecTec.unboot_values in
     let values_output =
@@ -178,25 +238,13 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     let value_values_output_res =
       Value.Make.("OK val*" <| [ value_values_output ] <<| "valsres")
     in
+    Interface.SpecTec.unset_cache ();
     [ value_values_output_res ]
 
-  (* Cache management *)
-
-  let cache_enabled = ref true
-  let func_cache = ref (CCache.create ~size:10000)
-  let rel_cache = ref (CCache.create ~size:10000)
-
-  module Cache = struct
-    let cache_on () = cache_enabled := true
-
-    let cache_off () =
-      cache_enabled := false;
-      CCache.reset !func_cache;
-      CCache.reset !rel_cache
-  end
+  (* Meta-cache management *)
 
   let cache_find_func (values_input : Value.t list) : Value.t =
-    if not !cache_enabled then Value.Make.("NONE" <| [] <<| "funccache")
+    if not cache.meta.enabled then Value.Make.("NONE" <| [] <<| "funccache")
     else
       let value_id, value_values_input =
         match values_input with
@@ -206,7 +254,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       in
       let id = value_id |> Interface.SpecTec.unboot_id in
       let cache_result =
-        CCache.find !func_cache (id.it, [ value_values_input ])
+        CCache.find cache.meta.func (id.it, [ value_values_input ])
       in
       match cache_result with
       | Some value_value_output ->
@@ -214,7 +262,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       | None -> Value.Make.("NONE" <| [] <<| "funccache")
 
   let cache_add_func_maybe (values_input : Value.t list) : Value.t =
-    if not !cache_enabled then Value.Make.bool true
+    if not cache.meta.enabled then Value.Make.bool true
     else
       let value_seff, value_id, value_values_input, value_valres =
         match values_input with
@@ -229,14 +277,14 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
          match Value.Get.(value_valres |>>? "OK val") with
          | Some [ value_value_output ] ->
              let id = value_id |> Interface.SpecTec.unboot_id in
-             CCache.add !func_cache
+             CCache.add cache.meta.func
                (id.it, [ value_values_input ])
                value_value_output
          | _ -> ());
       Value.Make.bool true
 
   let cache_find_rel (values_input : Value.t list) : Value.t =
-    if not !cache_enabled then Value.Make.("NONE" <| [] <<| "relcache")
+    if not cache.meta.enabled then Value.Make.("NONE" <| [] <<| "relcache")
     else
       let value_id, value_values_input =
         match values_input with
@@ -246,7 +294,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       in
       let id = value_id |> Interface.SpecTec.unboot_id in
       let cache_result =
-        CCache.find !rel_cache (id.it, [ value_values_input ])
+        CCache.find cache.meta.rel (id.it, [ value_values_input ])
       in
       match cache_result with
       | Some value_values_output ->
@@ -254,7 +302,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
       | None -> Value.Make.("NONE" <| [] <<| "relcache")
 
   let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
-    if not !cache_enabled then Value.Make.bool true
+    if not cache.meta.enabled then Value.Make.bool true
     else
       let value_seff, value_id, value_values_input, value_valsres =
         match values_input with
@@ -269,7 +317,7 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
          match Value.Get.(value_valsres |>>? "OK val*") with
          | Some [ value_values_output ] ->
              let id = value_id |> Interface.SpecTec.unboot_id in
-             CCache.add !rel_cache
+             CCache.add cache.meta.rel
                (id.it, [ value_values_input ])
                value_values_output
          | _ -> ());
@@ -344,7 +392,17 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
 
   (* Clear the cache *)
 
+  let clear_cache_interface () : unit =
+    MCache.clear cache.interface.boot_mixop;
+    VCache.clear cache.interface.boot_value;
+    VCache.clear cache.interface.boot_value_pingpong;
+    VCache.clear cache.interface.unboot_mixop;
+    VCache.clear cache.interface.unboot_typ;
+    VCache.clear cache.interface.unboot_value;
+    VCache.clear cache.interface.unboot_value_pingpong
+
   let clear () : unit =
-    CCache.clear !func_cache;
-    CCache.clear !rel_cache
+    clear_cache_interface ();
+    CCache.clear cache.meta.func;
+    CCache.clear cache.meta.rel
 end

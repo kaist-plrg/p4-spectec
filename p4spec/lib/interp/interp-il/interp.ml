@@ -37,12 +37,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   module Cache = struct
     let cache_on () =
       cache_enabled := true;
-      Interface.Cache.cache_on ();
       Extern.Cache.cache_on ()
 
     let cache_off () =
       cache_enabled := false;
-      Interface.Cache.cache_off ();
       Extern.Cache.cache_off ()
   end
 

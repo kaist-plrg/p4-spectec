@@ -54,10 +54,6 @@ module type INTERFACE = sig
   (* Initialization *)
 
   val init : spec -> unit
-
-  (* Cache management *)
-
-  module Cache : CACHE
 end
 
 (* Interface for the interaction between SpecTec and external code *)

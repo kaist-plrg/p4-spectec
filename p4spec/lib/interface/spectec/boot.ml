@@ -27,9 +27,7 @@ let boot_atom (atom : Il.atom) : Value.t =
 (* Mixfix operators *)
 
 let boot_mixop (mixop : Il.mixop) : Value.t =
-  let cached =
-    if !cache_enabled then MCache.find boot_mixop_cache mixop else None
-  in
+  let cached = !find_boot_mixop_cache mixop in
   match cached with
   | Some value -> value
   | None ->
@@ -53,7 +51,7 @@ let boot_mixop (mixop : Il.mixop) : Value.t =
         Value.Make.list typ_atoms_matrix values_atoms
       in
       let value = Value.Make.(value_atoms_matrix #@@ "mixop") in
-      if !cache_enabled then MCache.add boot_mixop_cache mixop value;
+      !add_boot_mixop_cache mixop value;
       value
 
 (* Iterators *)
@@ -172,12 +170,10 @@ and boot_variant_deftyp (at : region) (typcases : Il.typcase list) : Value.t =
 
 and boot_value (value : Il.value) : Value.t =
   let cached =
-    if !cache_enabled then
-      let cached = VCache.find boot_value_pingpong_cache value in
-      match cached with
-      | Some value -> Some value
-      | None -> VCache.find boot_value_cache value
-    else None
+    let cached = !find_boot_value_pingpong_cache value in
+    match cached with
+    | Some value -> Some value
+    | None -> !find_boot_value_cache value
   in
   match cached with
   | Some value_value -> value_value
@@ -196,9 +192,8 @@ and boot_value (value : Il.value) : Value.t =
         | FuncV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
-      if !cache_enabled then (
-        VCache.add boot_value_cache value value_value;
-        VCache.add unboot_value_pingpong_cache value_value value);
+      !add_boot_value_cache value value_value;
+      !add_unboot_value_pingpong_cache value_value value;
       value_value
 
 and boot_value_opt (value_opt : Il.value option) : Value.t =
