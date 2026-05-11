@@ -116,9 +116,10 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
           in
           [ instr_h ]
       | DebugPr exp ->
-          let instr_h = Ol.Ast.DebugI exp $ at in
           let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          instr_h :: instrs_t
+          let instr_t = List.hd instrs_t in
+          let instr_h = Ol.Ast.DebugI (exp, instr_t) $ at in
+          [ instr_h ]
       | _ -> assert false)
 
 (* Structuring rules *)

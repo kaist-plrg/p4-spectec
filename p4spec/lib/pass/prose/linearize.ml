@@ -51,7 +51,7 @@ let rec linearize_instr (instr : instr) : Ll.Ast.block =
   | ResultI (rel_signature, exps) ->
       [ Ll.Ast.ResultI (rel_signature, exps) $$ (at, note) ]
   | ReturnI exp -> [ Ll.Ast.ReturnI exp $$ (at, note) ]
-  | DebugI _ -> []
+  | DebugI (_, instr) -> linearize_instr instr
 
 and linearize_block (block : block) : Ll.Ast.block =
   block |> List.concat_map linearize_instr

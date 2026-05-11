@@ -322,9 +322,11 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   | ReturnI exp ->
       let s_short = Format.asprintf "Return %s" (string_of_exp exp) in
       if short then s_short else Format.asprintf "%s%s" order s_short
-  | DebugI exp ->
+  | DebugI (exp, instr) ->
       let s_short = Format.asprintf "Debug: %s" (string_of_exp exp) in
-      if short then s_short else Format.asprintf "%s%s" order s_short
+      let s_instr = string_of_instr ~level ~index:(index + 1) instr in
+      if short then s_short
+      else Format.asprintf "%s%s\n\n%s" order s_short s_instr
 
 and string_of_block ?(level = 0) ?(index = 0) block =
   block

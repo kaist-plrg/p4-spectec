@@ -198,13 +198,19 @@ let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
       let exp = Re.Renamer.rename_exp renamer_candid exp in
       let instr = ReturnI exp $ at in
       (underscores_revive, instr)
-  | DebugI exp ->
+  | DebugI (exp, inner) ->
       let underscores_used = Underscore.init_exp exp in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
       in
       let exp = Re.Renamer.rename_exp renamer_candid exp in
-      let instr = DebugI exp $ at in
+      let underscores_revive_inner, inner =
+        downstream_instr renamer_candid inner
+      in
+      let underscores_revive =
+        Underscore.union underscores_revive underscores_revive_inner
+      in
+      let instr = DebugI (exp, inner) $ at in
       (underscores_revive, instr)
 
 and downstream_block (renamer_candid : Re.Renamer.t) (block : block) :

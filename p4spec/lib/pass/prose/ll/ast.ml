@@ -13,6 +13,7 @@ and instr' =
   | CaseI of exp * case list * dangle
   | OtherwiseI of block
   | GroupI of id * rel_signature * exp list * block
+  | DebugI of exp
   | LetI of exp * exp * iterinstr list
   | RuleI of id * notexp * Hints.Input.t * iterinstr list
   | ResultI of rel_signature * exp list

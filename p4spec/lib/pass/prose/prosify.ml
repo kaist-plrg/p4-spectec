@@ -332,6 +332,7 @@ and prosify_instr (ctx : Ctx.t) (instr : instr) : Pl.block =
   | CaseI (exp, cases, dangle) -> prosify_case_instr at ctx exp cases dangle
   | OtherwiseI block -> prosify_otherwise_instr at ctx block
   | GroupI _ -> assert false
+  | DebugI _ -> []
   | LetI (exp_l, exp_r, iterinstrs) ->
       prosify_let_instr at ctx exp_l exp_r iterinstrs
   | RuleI (id, notexp, inputs, iterinstrs) ->
@@ -766,6 +767,7 @@ and collect_rulegroups_instr (instr : instr) :
       block_group |> List.map collect_rulegroups_block |> List.concat
   | GroupI (id_rulegroup, rel_signature, exps_input, block) ->
       [ (id_rulegroup, rel_signature, exps_input, block) ]
+  | DebugI _ -> []
   | _ -> []
 
 and collect_rulegroups_block (block : block) :
