@@ -27,8 +27,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   module Ctx = Ctx.Make ()
 
-  let func_cache = ref (CCache.create ~size:10000)
-  let rel_cache = ref (CCache.create ~size:10000)
+  let func_cache = ref (CCache.create ~size:(256 * 1024))
+  let rel_cache = ref (CCache.create ~size:(256 * 1024))
 
   (* Cache toggle *)
 

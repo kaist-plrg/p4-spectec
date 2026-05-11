@@ -133,8 +133,8 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     let meta : cache_meta =
       {
         enabled = true;
-        func = CCache.create ~size:10000;
-        rel = CCache.create ~size:10000;
+        func = CCache.create ~size:(256 * 1024);
+        rel = CCache.create ~size:(256 * 1024);
       }
     in
     let interface : Interface.SpecTec.cache =
