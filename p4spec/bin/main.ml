@@ -40,8 +40,8 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
     | `PL ->
         let spec_pl =
-          filenames_spec |> structure |> Annotate.annotate_spec
-          |> Pl_x.Shorthand.shorten_defs
+          filenames_spec |> structure |> Annotate.Expand.expand_spec
+          |> Annotate.annotate_spec |> Pl_x.Shorthand.shorten_defs
         in
         (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
@@ -266,7 +266,9 @@ let annotate_command =
      in
      fun () ->
        try
-         let spec_sl = structure filenames_spec in
+         let spec_sl =
+           structure filenames_spec |> Annotate.Expand.expand_spec
+         in
          let spec_pl_x =
            Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
          in
@@ -685,7 +687,9 @@ let splice_command =
            else List.combine filenames_input filenames_output
          in
          let spec = frontend filenames_spec in
-         let spec_sl = structure filenames_spec in
+         let spec_sl =
+           structure filenames_spec |> Annotate.Expand.expand_spec
+         in
          let spec_pl =
            Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
          in

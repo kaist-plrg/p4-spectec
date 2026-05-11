@@ -1,3 +1,7 @@
+(* Re-exported so the new pass/annotate/expand pipeline can reuse these
+   layer-agnostic helpers. Will go away with the rest of pass/prose/. *)
+module Free = Free
+module Transform = Transform
 module Vars = Free.Vars
 module VarSet = Free.VarSet
 open Domain.Lib

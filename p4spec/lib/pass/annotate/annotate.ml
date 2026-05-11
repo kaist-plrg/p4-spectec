@@ -5,6 +5,7 @@ module Mixfix = Domain.Mixfix
 module Pl = Pl_x
 module Annot = Pl_x.Annot
 module Ctx = Prose.Ctx
+module Expand = Expand
 module IdSet = Domain.Lib.IdSet
 
 (* Hints lookup *)

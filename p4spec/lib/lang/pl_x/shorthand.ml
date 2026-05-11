@@ -164,9 +164,9 @@ let shorten_option_get (instrs : instr list) : (instr list * instr list) option
 (* Recursive traversal *)
 
 let rec shorten_block (block : block) : block =
+  let block = shorten_block_seq block in
   let block = List.concat_map shorten_instr_shallow block in
-  let block = List.map recurse_into_nested block in
-  shorten_block_seq block
+  List.map recurse_into_nested block
 
 and shorten_instr_shallow (instr : instr) : instr list = shorten_instr instr
 
