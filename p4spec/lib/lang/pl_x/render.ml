@@ -647,6 +647,41 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
             F.asprintf "%sResult in %s." bullet (render_exps in_prose exps))
   | ReturnI e -> F.asprintf "%sReturn %s." bullet (render_exp in_prose e)
   | DebugI e -> F.asprintf "%s(debug: %s)" bullet (render_exp in_prose e)
+  | DestructI (fields, exp_source) -> (
+      let projections =
+        List.filter_map
+          (fun (name_opt, exp_target) ->
+            Option.map (fun name -> (name, exp_target)) name_opt)
+          fields
+      in
+      match projections with
+      | [ (name, exp_target) ] ->
+          F.asprintf "%sLet %s be the %s of %s." bullet
+            (render_exp in_prose exp_target)
+            name
+            (render_exp in_prose exp_source)
+      | _ ->
+          let names = List.map fst projections in
+          let exps_target = List.map snd projections in
+          F.asprintf "%sLet %s be %s of %s." bullet
+            (render_exps in_prose exps_target)
+            (render_list (List.map (fun s -> "the " ^ s) names))
+            (render_exp in_prose exp_source))
+  | CheckLetI (exp_l, exp_r, block_inner) ->
+      let head =
+        F.asprintf "%sLet!~type~ %s be %s." bullet
+          (render_exp_as_code in_prose exp_l)
+          (render_exp in_prose exp_r)
+      in
+      if block_inner = [] then head
+      else
+        head ^ "\n"
+        ^ (block_inner |> List.map (render_instr ~level) |> String.concat "\n")
+  | OptionGetI (exp_l, exp_r) ->
+      F.asprintf "%sLet %s be %s %s." bullet
+        (render_exp_as_code in_prose exp_l)
+        (adoc_link ~link:"option_get" "*!*")
+        (render_exp in_prose exp_r)
 
 and render_instrs ?(level = 0) (instrs : block) : string =
   match instrs with
@@ -762,8 +797,11 @@ let rec collect_groups_instr (instr : instr) : instr list =
       cases
       |> List.concat_map (fun (_guard, block) -> collect_groups_block block)
   | TryI arms -> arms |> List.concat_map collect_groups_block
+  | CheckLetI (_, _, block_inner) -> collect_groups_block block_inner
   | GroupI _ -> [ instr ]
-  | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ -> []
+  | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _
+  | OptionGetI _ ->
+      []
 
 and collect_groups_block (block : block) : instr list =
   block |> List.concat_map collect_groups_instr

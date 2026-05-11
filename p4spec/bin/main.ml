@@ -39,7 +39,10 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
     | `PL ->
-        let spec_pl = filenames_spec |> structure |> Annotate.annotate_spec in
+        let spec_pl =
+          filenames_spec |> structure |> Annotate.annotate_spec
+          |> Pl_x.Shorthand.shorten_defs
+        in
         (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
@@ -264,7 +267,9 @@ let annotate_command =
      fun () ->
        try
          let spec_sl = structure filenames_spec in
-         let spec_pl_x = Annotate.annotate_spec spec_sl in
+         let spec_pl_x =
+           Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
+         in
          Format.printf "%s\n" (Pl_x.Render.render_spec spec_pl_x);
          ()
        with
@@ -681,7 +686,9 @@ let splice_command =
          in
          let spec = frontend filenames_spec in
          let spec_sl = structure filenames_spec in
-         let spec_pl = Annotate.annotate_spec spec_sl in
+         let spec_pl =
+           Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
+         in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg

@@ -293,8 +293,15 @@ and annotate_instr' (ctx : Ctx.t) (instr : instr) : Pl.instr' * Annot.hints =
   | TryI arms -> (Pl.TryI (List.map (annotate_block ctx) arms), Annot.empty)
   | DebugI exp -> (Pl.DebugI (annotate_exp ctx exp), Annot.empty)
   | LetI (exp_l, exp_r, iterinstrs) ->
-      ( Pl.LetI (annotate_exp ctx exp_l, annotate_exp ctx exp_r, iterinstrs),
-        Annot.empty )
+      let exp_l_pl = annotate_exp ctx exp_l in
+      let exp_r_pl = annotate_exp ctx exp_r in
+      let hints =
+        match exp_l_pl.node.it with
+        | Pl.CaseE _ ->
+            { Annot.empty with prose_fields = exp_l_pl.hints.prose_fields }
+        | _ -> Annot.empty
+      in
+      (Pl.LetI (exp_l_pl, exp_r_pl, iterinstrs), hints)
   | RuleI (id_rel, notexp, inputs, iterinstrs) ->
       let notexp_pl = annotate_notexp ctx notexp in
       let hints = hints_of_rule_instr ctx id_rel inputs in

@@ -274,6 +274,26 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   | DebugI exp ->
       let s_short = Format.asprintf "Debug: %s" (string_of_exp exp) in
       if short then s_short else Format.asprintf "%s%s" order s_short
+  | DestructI (fields, exp_r) ->
+      let targets =
+        fields |> List.map snd |> List.map string_of_exp |> String.concat ", "
+      in
+      let s_short =
+        Format.asprintf "(Destruct (%s) = %s)" targets (string_of_exp exp_r)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
+  | CheckLetI (exp_l, exp_r, _block) ->
+      let s_short =
+        Format.asprintf "(Let!type %s be %s)" (string_of_exp exp_l)
+          (string_of_exp exp_r)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
+  | OptionGetI (exp_l, exp_r) ->
+      let s_short =
+        Format.asprintf "(Let %s be ! %s)" (string_of_exp exp_l)
+          (string_of_exp exp_r)
+      in
+      if short then s_short else Format.asprintf "%s%s" order s_short
 
 and string_of_block ?(level = 0) ?(index = 0) block =
   block

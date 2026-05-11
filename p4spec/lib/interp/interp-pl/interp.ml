@@ -132,14 +132,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
-    | OptE exp_opt, OptV value_opt -> (
-        match (exp_opt, value_opt) with
-        | Some exp_inner, Some value_inner ->
-            let ctx = assign_exp ctx exp_inner value_inner in
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign;
-            ctx
-        | None, None -> ctx
-        | _ -> assert false)
+    | OptE (Some exp_inner), OptV (Some value_inner) ->
+        let ctx = assign_exp ctx exp_inner value_inner in
+        Hook.on_value_dependency value_inner value Dep.Edges.Assign;
+        ctx
+    | OptE None, OptV None -> ctx
     | ListE exps_inner, ListV values_inner ->
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
@@ -147,9 +144,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
-    | ConsE (exp_h, exp_t), ListV values_inner ->
-        let value_h = List.hd values_inner in
-        let value_t = Value.Make.list typ_value (List.tl values_inner) in
+    | ConsE (exp_h, exp_t), ListV (value_h :: values_inner) ->
+        let value_t = Value.Make.list typ_value values_inner in
         Hook.on_value value_t;
         let ctx = assign_exp ctx exp_h value_h in
         Hook.on_value_dependency value_h value Dep.Edges.Assign;
@@ -1068,7 +1064,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
         eval_group_instr ctx id_group rel_signature exps_group block
     | TryI arms -> eval_try ctx arms
-    | LetI _ | RuleI _ | DebugI _ -> assert false
+    | CheckLetI (exp_l, exp_r, block_inner) ->
+        let value = eval_exp ctx exp_r in
+        let case_ok =
+          match (exp_l.node.it, value.it) with
+          | CaseE (mixop_e, _), CaseV valuecase_v ->
+              Mixop.eq mixop_e (Mixfix.to_mixop valuecase_v)
+          | _ -> true
+        in
+        let typ_target = exp_l.node.note $ exp_l.node.at in
+        let sub =
+          Value.Match.sub (Ctx.find_typdef_opt ctx)
+            (Ctx.find_func_signature ctx)
+            typ_target value
+        in
+        if case_ok && sub then
+          let value' = downcast ctx typ_target value in
+          match
+            try Some (assign_exp ctx exp_l value')
+            with Backtrace (Err _) -> None
+          with
+          | Some ctx -> eval_block ctx block_inner
+          | None -> Cont []
+        else Cont []
+    | LetI _ | RuleI _ | DebugI _ | DestructI _ | OptionGetI _ -> assert false
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
 
@@ -1096,6 +1115,29 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             ^ Il.Print.string_of_value value
             |> print_endline;
             eval_block ctx rest
+        | OptionGetI (exp_l, exp_r) -> (
+            let value = eval_exp ctx exp_r in
+            match value.it with
+            | OptV (Some value_inner) ->
+                let ctx = assign_exp ctx exp_l value_inner in
+                eval_block ctx rest
+            | _ -> Cont [])
+        | DestructI (fields, exp_source) -> (
+            let value = eval_exp ctx exp_source in
+            match value.it with
+            | CaseV valuecase
+              when List.length fields = List.length (Mixfix.args valuecase) ->
+                let values = Mixfix.args valuecase in
+                let ctx =
+                  List.fold_left2
+                    (fun ctx (_, exp_target) v -> assign_exp ctx exp_target v)
+                    ctx fields values
+                in
+                eval_block ctx rest
+            | _ ->
+                back_err exp_source.node.at
+                  (F.asprintf "destructure failed: %s"
+                     (Sl.Print.string_of_value ~short:true value)))
         | _ -> (
             let flow = eval_instr ctx instr in
             match flow with Flow.Cont _ -> eval_block ctx rest | _ -> flow))
