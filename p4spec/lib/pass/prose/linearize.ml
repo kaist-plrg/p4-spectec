@@ -36,7 +36,13 @@ let rec linearize_instr (instr : instr) : Ll.Ast.block =
       in
       [ Ll.Ast.CaseI (exp, cases_ll, dangle) $$ (at, note) ]
   | GroupI (id, rel_signature, exps_group, block) ->
-      let block_ll = linearize_block block in
+      let arms = List.map linearize_instr block in
+      let block_ll =
+        match arms with
+        | [] -> []
+        | [ single_arm ] -> single_arm
+        | _ -> [ Ll.Ast.TryI arms $$ (no_region, { iid = -1 }) ]
+      in
       [ Ll.Ast.GroupI (id, rel_signature, exps_group, block_ll) $$ (at, note) ]
   | LetI (exp_l, exp_r, iterinstrs, block) ->
       let block_ll = linearize_block block in
@@ -51,10 +57,34 @@ let rec linearize_instr (instr : instr) : Ll.Ast.block =
   | ResultI (rel_signature, exps) ->
       [ Ll.Ast.ResultI (rel_signature, exps) $$ (at, note) ]
   | ReturnI exp -> [ Ll.Ast.ReturnI exp $$ (at, note) ]
-  | DebugI (_, instr) -> linearize_instr instr
+  | DebugI (exp, instr) ->
+      let instr_debug = Ll.Ast.DebugI exp $$ (at, note) in
+      instr_debug :: linearize_instr instr
 
 and linearize_block (block : block) : Ll.Ast.block =
-  block |> List.concat_map linearize_instr
+  block |> List.concat_map linearize_instr |> wrap_try_arms
+
+and is_branching (instr : Ll.Ast.instr) : bool =
+  match instr.it with IfI _ | HoldI _ | CaseI _ -> true | _ -> false
+
+and wrap_try_arms (instrs : Ll.Ast.block) : Ll.Ast.block =
+  match split_leading_branches instrs with
+  | [], [] -> []
+  | [], head :: rest -> head :: wrap_try_arms rest
+  | [ single ], remainder -> single :: wrap_try_arms remainder
+  | branches, remainder ->
+      let arms = List.map (fun i -> [ i ]) branches in
+      let wrapped = Ll.Ast.TryI arms $$ (no_region, { iid = -1 }) in
+      wrapped :: wrap_try_arms remainder
+
+(* Returns (leading run of branching instructions, the rest). *)
+and split_leading_branches (instrs : Ll.Ast.block) :
+    Ll.Ast.instr list * Ll.Ast.block =
+  match instrs with
+  | instr :: rest when is_branching instr ->
+      let branches, remainder = split_leading_branches rest in
+      (instr :: branches, remainder)
+  | _ -> ([], instrs)
 
 let linearize_elseblock (elseblock : elseblock) : Ll.Ast.block =
   let block_ll = linearize_block elseblock in
