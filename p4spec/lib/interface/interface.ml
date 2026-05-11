@@ -1,4 +1,3 @@
-open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
@@ -92,8 +91,10 @@ end
 (* SpecTec *)
 
 module SpecTec = struct
-  include Spectec.Boot
-  include Spectec.Unboot
+  include Spectec.Common.Boot
+  include Spectec.Common.Unboot
+  include Spectec.Ili.Boot
+  include Spectec.Ili.Unboot
   include Spectec.Caches
 
   (* Program parsing *)

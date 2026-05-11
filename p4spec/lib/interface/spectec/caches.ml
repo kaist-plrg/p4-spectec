@@ -1,4 +1,4 @@
-open Lang
+module Il = Lang.Il
 module VCache = Runtime.Dynamic.Caches.ValueCache
 module MCache = Domain.Caches.MixopCache
 
