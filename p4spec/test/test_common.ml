@@ -116,6 +116,9 @@ let driver ?(det = false) ?(arch : string option) mode specdir =
     | `SL ->
         let spec_sl = structure specdir in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+    | `PL ->
+        let spec_pl = specdir |> structure |> Annotate.annotate_spec in
+        (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
     match arch with
