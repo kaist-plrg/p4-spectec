@@ -1,8 +1,9 @@
 open Domain.Lib
 open Lang
-open Sl
+module Pl = Pl_x
+open Pl
 module Typdef = Runtime.Type.Typdef
-open Runtime.Dynamic_Sl
+open Runtime.Dynamic_Pl
 open Envs
 open Interp_common.Error
 open Interp_common.Backtrace
@@ -98,30 +99,30 @@ let add_func_global (fid : FId.t) (func : Func.t) : unit =
 (* Global initializer *)
 
 let load_def (def : def) : unit =
-  match def.it with
-  | ExternTypD (id, _) ->
+  match def.node.it with
+  | ExternTypD id ->
       let td = Typdef.Extern in
       add_typdef_global id td
-  | TypD (id, tparams, deftyp, _) ->
+  | TypD (id, tparams, deftyp) ->
       let td = Typdef.Defined (tparams, deftyp) in
       add_typdef_global id td
   | VarD _ -> ()
-  | ExternRelD (id, rel_signature, _, _) ->
+  | ExternRelD (id, rel_signature, _) ->
       let rel = Rel.Extern rel_signature in
       add_rel_global id rel
-  | RelD (id, rel_signature, exps_match, block, elseblock_opt, _) ->
+  | RelD (id, rel_signature, exps_match, block, elseblock_opt) ->
       let rel = Rel.Defined (rel_signature, exps_match, block, elseblock_opt) in
       add_rel_global id rel
-  | ExternDecD (id, tparams, params, typ, _) ->
+  | ExternDecD (id, tparams, params, typ) ->
       let func = Func.Extern (tparams, params, typ) in
       add_func_global id func
-  | BuiltinDecD (id, tparams, params, typ, _) ->
+  | BuiltinDecD (id, tparams, params, typ) ->
       let func = Func.Builtin (tparams, params, typ) in
       add_func_global id func
-  | TableDecD (id, params, typ, tablerows, _) ->
+  | TableDecD (id, params, typ, tablerows) ->
       let func = Func.Table (params, typ, tablerows) in
       add_func_global id func
-  | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
+  | FuncDecD (id, tparams, params, typ, block, elseblock_opt) ->
       let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
       add_func_global id func
 

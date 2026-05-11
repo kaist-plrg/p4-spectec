@@ -38,6 +38,9 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     | `SL ->
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+    | `PL ->
+        let spec_pl = filenames_spec |> structure |> Annotate.annotate_spec in
+        (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
     match arch with
@@ -296,6 +299,8 @@ let run_command =
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `PL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
      in
@@ -363,6 +368,8 @@ let sim_command =
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `PL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
      in

@@ -1,16 +1,16 @@
 open Domain
-module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
-open Sl
+module Pl = Pl_x
+open Pl
 module ICov_single = Coverage.Instr.Single
 module ICov_multi = Coverage.Instr.Multi
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
 module Type = Runtime.Type
 module Typ = Type.Typ
-open Runtime.Dynamic_Sl
+open Runtime.Dynamic_Pl
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
@@ -27,13 +27,17 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
+module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
+  let annot (node : ('a, 'b) Util.Source.note_phrase) :
+      ('a, 'b) Util.Source.note_phrase Annot.t =
+    { Annot.node; hints = Annot.empty }
+
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
       unit =
     let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-    let typs = Mixfix.args nottyp.it in
+    let typs = Mixfix.args (nottyp |> it) in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
@@ -45,7 +49,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
-    let typs = Mixfix.args nottyp.it in
+    let typs = Mixfix.args (nottyp |> it) in
     let typs =
       typs
       |> List.mapi (fun idx typ ->
@@ -101,8 +105,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Assigning a value to an expression *)
 
   let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
-    let typ_value = value.note.typ $ exp.at in
-    match (exp.it, value.it) with
+    let typ_value = value.note.typ $ exp.node.at in
+    match (exp.node.it, value.it) with
     | VarE id, _ -> Ctx.add_value ctx (id, []) value
     | TupleE exps_inner, TupleV values_inner ->
         let ctx = assign_exps ctx exps_inner values_inner in
@@ -111,9 +115,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
-    | CaseE notexp, CaseV valuecase ->
-        let exps_inner = Mixfix.args notexp in
-        let values_inner = Mixfix.args valuecase in
+    | CaseE (_, exps_inner), CaseV valuecase_inner ->
+        let values_inner = Mixfix.args valuecase_inner in
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
@@ -200,16 +203,16 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
           ctx vars
     | _ ->
-        back_err exp.at
+        back_err exp.node.at
           (F.asprintf "match failed %s <- %s"
-             (Sl.Print.string_of_exp exp)
+             (Pl.Print.string_of_exp exp)
              (Sl.Print.string_of_value ~short:true value))
 
   and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) : Ctx.t
       =
     check_back_err
       (List.length exps = List.length values)
-      (over_region (List.map at exps))
+      (over_region (List.map (fun e -> e.Annot.node.at) exps))
       (F.asprintf
          "mismatch in number of expressions and values while assigning, \
           expected %d value(s) but got %d"
@@ -222,7 +225,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (value : value) : Ctx.t =
     match param.it with
     | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
-    | DefP (id, _, _, _) -> assign_param_def ctx_caller ctx_callee id value
+    | DefP id -> assign_param_def ctx_caller ctx_callee id value
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
@@ -267,13 +270,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
     try eval_exp' ctx exp
     with Backtrace backtrace ->
-      back_nest exp.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
+      back_nest exp.node.at
+        (F.asprintf "%s failed" (Pl.Print.string_of_exp exp))
         backtrace
 
   and eval_exp' (ctx : Ctx.t) (exp : exp) : value =
-    let typ_note = exp.note $ exp.at in
-    match exp.it with
+    let typ_note = exp.node.note $ exp.node.at in
+    match exp.node.it with
     | BoolE b -> eval_bool_exp typ_note ctx b
     | NumE n -> eval_num_exp typ_note ctx n
     | TextE s -> eval_text_exp typ_note ctx s
@@ -535,7 +538,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
-      | CaseP mixop_p, CaseV valuecase -> Mixfix.eq_mixop mixop_p valuecase
+      | CaseP mixop_p, CaseV valuecase_v ->
+          Mixop.eq mixop_p (Mixfix.to_mixop valuecase_v)
       | ListP listpattern, ListV values -> (
           let len_v = List.length values in
           match listpattern with
@@ -567,7 +571,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Case expression evaluation *)
 
   and eval_case_exp (typ_note : typ) (ctx : Ctx.t) (notexp : notexp) : value =
-    let mixop, exps = Mixfix.split notexp in
+    let mixop, exps = notexp in
     let values = eval_exps ctx exps in
     let value_res = Value.Make.case typ_note (Mixfix.fill mixop values) in
     Hook.on_value value_res;
@@ -645,7 +649,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           Value.Make.list typ_note (values_l @ values_r)
       | _ ->
           back_err
-            (over_region [ exp_l.at; exp_r.at ])
+            (over_region [ exp_l.node.at; exp_r.node.at ])
             (F.asprintf
                "concatenation expects either two texts or two lists, but got \
                 %s and %s"
@@ -679,7 +683,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       | TextV s -> s |> String.length |> Bigint.of_int
       | ListV values -> values |> List.length |> Bigint.of_int
       | _ ->
-          back_err exp.at
+          back_err exp.node.at
             (F.asprintf
                "length operation expects either a text or a list, but got %s"
                (Sl.Print.string_of_value ~short:true value))
@@ -711,7 +715,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
     match value_b.it with
     | TextV s when idx < 0 || idx >= String.length s ->
-        back_err exp_i.at
+        back_err exp_i.node.at
           (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
     | TextV s ->
         let s = String.get s idx |> String.make 1 in
@@ -719,11 +723,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value_res;
         value_res
     | ListV values when idx < 0 || idx >= List.length values ->
-        back_err exp_i.at
+        back_err exp_i.node.at
           (F.asprintf "index %d out of bounds [0, %d)" idx (List.length values))
     | ListV values -> List.nth values idx
     | _ ->
-        back_err exp_b.at
+        back_err exp_b.node.at
           (F.asprintf "indexing expects either a text or a list, but got %s"
              (Sl.Print.string_of_value ~short:true value_b))
 
@@ -739,7 +743,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let idx_h = idx_l + idx_n in
     match value_b.it with
     | TextV s when idx_l < 0 || idx_h > String.length s ->
-        back_err exp_n.at
+        back_err exp_n.node.at
           (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
              (String.length s))
     | TextV s ->
@@ -748,7 +752,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value_res;
         value_res
     | ListV values when idx_l < 0 || idx_h > List.length values ->
-        back_err exp_n.at
+        back_err exp_n.node.at
           (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
              (List.length values))
     | ListV values ->
@@ -763,7 +767,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value_res;
         value_res
     | _ ->
-        back_err exp_b.at
+        back_err exp_b.node.at
           (F.asprintf "slicing expects either a text or a list, but got %s"
              (Sl.Print.string_of_value ~short:true value_b))
 
@@ -778,7 +782,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
         match value.it with
         | TextV s when idx < 0 || idx >= String.length s ->
-            back_err exp_i.at
+            back_err exp_i.node.at
               (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
         | TextV s ->
             let s = String.get s idx |> String.make 1 in
@@ -786,7 +790,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value value_res;
             value_res
         | ListV values when idx < 0 || idx >= List.length values ->
-            back_err exp_i.at
+            back_err exp_i.node.at
               (F.asprintf "index %d out of bounds [0, %d)" idx
                  (List.length values))
         | ListV values -> List.nth values idx
@@ -808,7 +812,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let idx_h = idx_l + idx_n in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
-            back_err exp_n.at
+            back_err exp_n.node.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (String.length s))
         | TextV s ->
@@ -817,7 +821,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value value_res;
             value_res
         | ListV values when idx_l < 0 || idx_h > List.length values ->
-            back_err exp_n.at
+            back_err exp_n.node.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (List.length values))
         | ListV values ->
@@ -855,13 +859,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         in
         match value.it with
         | TextV s when idx_target < 0 || idx_target >= String.length s ->
-            back_err exp_i.at
+            back_err exp_i.node.at
               (F.asprintf "index %d out of bounds [0, %d)" idx_target
                  (String.length s))
         | TextV s ->
             let s_n = Value.Get.text value_upd in
             if String.length s_n <> 1 then
-              back_err exp_i.at
+              back_err exp_i.node.at
                 (F.asprintf
                    "updating a character requires a single-character text, but \
                     got %s"
@@ -877,7 +881,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               eval_update_path ctx value_b path value
         | ListV values when idx_target < 0 || idx_target >= List.length values
           ->
-            back_err exp_i.at
+            back_err exp_i.node.at
               (F.asprintf "index %d out of bounds [0, %d)" idx_target
                  (List.length values))
         | ListV values ->
@@ -907,13 +911,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         let idx_h = idx_l + idx_n in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
-            back_err exp_n.at
+            back_err exp_n.node.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (String.length s))
         | TextV s ->
             let s_upd = Value.Get.text value_upd in
             if String.length s_upd <> idx_n then
-              back_err exp_n.at
+              back_err exp_n.node.at
                 (F.asprintf
                    "updating a slice of length %d requires a text of length \
                     %d, but got %s"
@@ -928,13 +932,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
               Hook.on_value value;
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
-            back_err exp_n.at
+            back_err exp_n.node.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (List.length values))
         | ListV values ->
             let values_upd = Value.Get.list value_upd in
             if List.length values_upd <> idx_n then
-              back_err exp_n.at
+              back_err exp_n.node.at
                 (F.asprintf
                    "updating a slice of length %d requires a list of length \
                     %d, but got %s"
@@ -1029,7 +1033,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try eval_arg' ctx arg
     with Backtrace backtrace ->
       back_nest arg.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
+        (F.asprintf "%s failed" (Pl.Print.string_of_arg arg))
         backtrace
 
   and eval_arg' (ctx : Ctx.t) (arg : arg) : value =
@@ -1047,70 +1051,78 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Instruction evaluation *)
 
   and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
-    Hook.on_instr instr;
     try eval_instr' ctx instr
     with Backtrace backtrace ->
       backtrace
-      |> back_nest instr.at
-           (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+      |> back_nest instr.node.at
+           (F.asprintf "%s failed" (Pl.Print.string_of_instr instr))
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
-    let iid = instr.note.iid in
-    match instr.it with
+    let iid = instr.node.note.iid in
+    match instr.node.it with
     | IfI (exp_cond, iterexps, block_then, dangle) ->
         eval_if_instr iid ctx exp_cond iterexps block_then dangle
     | HoldI (id, notexp, iterexps, holdcase) ->
         eval_hold_instr iid ctx id notexp iterexps holdcase
     | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
-    | GroupI (id_group, rel_signature, exps_group, block) ->
+    | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
         eval_group_instr ctx id_group rel_signature exps_group block
-    | LetI (exp_l, exp_r, iterinstrs, block) ->
-        eval_let_instr ctx exp_l exp_r iterinstrs block
-    | RuleI (id, notexp, inputs, iterinstrs, block) ->
-        eval_rule_instr ctx id notexp inputs iterinstrs block
+    | TryI arms -> eval_try ctx arms
+    | LetI _ | RuleI _ | DebugI _ -> assert false
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI (exp, instr) -> eval_debug_instr ctx exp instr
 
   and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
-    if !Ctx.is_det then eval_block_deterministic ctx block
-    else eval_block_sequential ctx block
+    match block with
+    | [] -> Flow.Cont []
+    | instr :: rest -> (
+        match instr.node.it with
+        | LetI (exp_l, exp_r, iterinstrs) -> (
+            try
+              let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
+              eval_block ctx rest
+            with Backtrace (Unmatch traces) -> Flow.Cont traces)
+        | RuleI (id, notexp, inputs, iterinstrs) -> (
+            try
+              let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+              eval_block ctx rest
+            with Backtrace (Unmatch traces) -> Flow.Cont traces)
+        | DebugI exp ->
+            let value = eval_exp ctx exp in
+            string_of_region exp.node.at ^ ": " ^ Pl.Print.string_of_exp exp
+            |> print_endline;
+            let region = string_of_region value.at in
+            (if region = "" then "" else region ^ ": ")
+            ^ Il.Print.string_of_value value
+            |> print_endline;
+            eval_block ctx rest
+        | _ -> (
+            let flow = eval_instr ctx instr in
+            match flow with Flow.Cont _ -> eval_block ctx rest | _ -> flow))
 
-  and eval_block_deterministic (ctx : Ctx.t) (block : block) : Flow.t =
-    let eval_instr_deterministic (flow_pre : Flow.t) (instr : instr) : Flow.t =
-      let open Flow in
+  and eval_try (ctx : Ctx.t) (arms : block list) : Flow.t =
+    if !Ctx.is_det then eval_try_det ctx arms else eval_try_seq ctx arms
+
+  and eval_try_seq (ctx : Ctx.t) (arms : block list) : Flow.t =
+    match arms with
+    | [] -> Flow.Cont []
+    | arm :: rest -> (
+        try
+          let flow = eval_block ctx arm in
+          match flow with Flow.Cont _ -> eval_try_seq ctx rest | _ -> flow
+        with Backtrace (Unmatch _) -> eval_try_seq ctx rest)
+
+  and eval_try_det (ctx : Ctx.t) (arms : block list) : Flow.t =
+    let try_arm (arm : block) : Flow.t option =
       try
-        let flow_post = eval_instr ctx instr in
-        match flow_pre with
-        | Cont traces_pre -> (
-            match flow_post with
-            | Cont traces_post -> Cont (traces_pre @ traces_post)
-            | _ -> flow_post)
-        | Res _ -> (
-            match flow_post with
-            | Cont _ -> flow_pre
-            | Res _ -> nondet instr.at
-            | Ret _ -> back_err instr.at "cannot have both result and return")
-        | Ret _ -> (
-            match flow_post with
-            | Cont _ -> flow_pre
-            | Res _ -> back_err instr.at "cannot have both return and result"
-            | Ret _ -> nondet instr.at)
-      with Backtrace (Unmatch _) -> flow_pre
+        match eval_block ctx arm with Flow.Cont _ -> None | flow -> Some flow
+      with Backtrace (Unmatch _) -> None
     in
-    try
-      List.fold_left
-        (fun flow_pre instr -> eval_instr_deterministic flow_pre instr)
-        (Flow.Cont []) block
-    with Nondet at -> back_err at "nondeterministic instruction evaluation"
-
-  and eval_block_sequential (ctx : Ctx.t) (block : block) : Flow.t =
-    List.fold_left
-      (fun flow_pre instr ->
-        match flow_pre with
-        | Flow.Cont _ -> eval_instr ctx instr
-        | _ -> flow_pre)
-      (Flow.Cont []) block
+    let results = List.filter_map try_arm arms in
+    match results with
+    | [] -> Flow.Cont []
+    | [ flow ] -> flow
+    | _ :: _ :: _ -> nondet no_region
 
   and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
@@ -1206,7 +1218,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   (* Hold instruction evaluation *)
 
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
-    let exps_input = Mixfix.args notexp in
+    let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
     let hold =
       try
@@ -1320,7 +1332,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let value_exp = eval_exp ctx exp in
     let id_tmp = "~case" $ no_region in
     let ctx = Ctx.add_value ctx (id_tmp, []) value_exp in
-    let exp = Il.VarE id_tmp $$ (exp.at, exp.note) in
+    let exp_inner = Pl.VarE id_tmp $$ (exp.node.at, exp.node.note) in
+    let exp = annot exp_inner in
     let block_match, values_cond_rev =
       List.fold_left
         (fun (block_match, values_cond_rev) (guard, block) ->
@@ -1329,15 +1342,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
           | None ->
               let exp_cond =
                 match guard with
-                | BoolG true -> exp.it
-                | BoolG false -> Il.UnE (`NotOp, `BoolT, exp)
+                | BoolG true -> exp.node.it
+                | BoolG false -> Pl.UnE (`NotOp, `BoolT, exp)
                 | CmpG (cmpop, optyp, exp_r) ->
-                    Il.CmpE (cmpop, optyp, exp, exp_r)
-                | SubG typ -> Il.SubE (exp, typ)
-                | MatchG pattern -> Il.MatchE (exp, pattern)
-                | MemG exp_s -> Il.MemE (exp, exp_s)
+                    Pl.CmpE (cmpop, optyp, exp, exp_r)
+                | SubG typ -> Pl.SubE (exp, typ)
+                | MatchG pattern -> Pl.MatchE (exp, pattern)
+                | MemG exp_s -> Pl.MemE (exp, exp_s)
               in
-              let exp_cond = exp_cond $$ (exp.at, Il.BoolT) in
+              let exp_cond = annot (exp_cond $$ (exp.node.at, Il.BoolT)) in
               let value_cond = eval_exp ctx exp_cond in
               let values_cond_rev = value_cond :: values_cond_rev in
               let cond = Value.Get.bool value_cond in
@@ -1502,18 +1515,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_let_iter' ctx exp_l exp_r iterinstrs
 
-  and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
-      (iterinstrs : iterinstr list) (block : block) : Flow.t =
-    try
-      let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
-      eval_block ctx block
-    with Backtrace (Unmatch traces) -> Cont traces
-
   (* Rule instruction evaluation *)
 
   and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) : Ctx.t =
-    let exps = Mixfix.args notexp in
+    let _, exps = notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let values_input = eval_exps ctx exps_input in
     let values_output = invoke_rel ctx id values_input in
@@ -1633,14 +1639,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_rule_iter' ctx id notexp inputs iterinstrs
 
-  and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
-      Flow.t =
-    try
-      let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-      eval_block ctx block
-    with Backtrace (Unmatch traces) -> Cont traces
-
   (* Result instruction evaluation *)
 
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
@@ -1656,20 +1654,6 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try
       let value = eval_exp ctx exp in
       Flow.Ret value
-    with Backtrace (Unmatch traces) -> Flow.Cont traces
-
-  (* Debug instruction evaluation *)
-
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) (instr : instr) : Flow.t =
-    try
-      let value = eval_exp ctx exp in
-      string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
-      |> print_endline;
-      let region = string_of_region value.at in
-      (if region = "" then "" else region ^ ": ")
-      ^ Il.Print.string_of_value value
-      |> print_endline;
-      eval_instr ctx instr
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Invoke a relation *)
@@ -1885,7 +1869,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block_sequential ctx_local instrs in
+    let flow = eval_block ctx_local instrs in
     match flow with
     | Ret value_output ->
         List.iteri
@@ -1992,7 +1976,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value =
-      let henv = Interface.Hint.hints_of_spec_sl spec in
+      let henv = Interface.Hint.hints_of_spec_pl spec in
       Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
     in
     Builtin.Call.init printer;
