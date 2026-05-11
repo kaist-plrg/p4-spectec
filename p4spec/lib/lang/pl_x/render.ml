@@ -425,6 +425,110 @@ and render_params ctx params =
   | params ->
       "(" ^ String.concat ", " (List.map (render_param ctx) params) ^ ")"
 
+(* Backtracking blocks (CaseI / TryI).
+   Fallthrough markers emitted only on instructions that may raise Unmatch:
+   IfI, LetI, RuleI, CheckLetI, and OptionGetI. *)
+
+module BlockLabel : sig
+  type t = { id : string; display : string }
+
+  val set_namespace : string -> unit
+  val fresh : unit -> t
+end = struct
+  type t = { id : string; display : string }
+
+  let namespace : string option ref = ref None
+  let counters : (string, int) Hashtbl.t = Hashtbl.create 64
+  let set_namespace ns = namespace := Some ns
+
+  let fresh () =
+    let ns = !namespace in
+    let key = Option.value ns ~default:"" in
+    let n = (try Hashtbl.find counters key with Not_found -> 0) + 1 in
+    Hashtbl.replace counters key n;
+    let id =
+      match ns with
+      | None -> F.asprintf "bk-%d" n
+      | Some ns -> F.asprintf "bk-%s-%d" ns n
+    in
+    { id; display = F.asprintf "#%d" n }
+end
+
+type backtrack_target = NextArm of string | OutOfBlock
+type backtrack_ctx = { block : BlockLabel.t; target : backtrack_target }
+
+(* Asciidoctor's default ordered-list style cycle, indexed by nesting depth. *)
+type ordered_style =
+  | Arabic
+  | Loweralpha
+  | Lowerroman
+  | Upperalpha
+  | Upperroman
+
+let style_at_level (level : int) : ordered_style =
+  let cycle = [| Arabic; Loweralpha; Lowerroman; Upperalpha; Upperroman |] in
+  cycle.(((level mod 5) + 5) mod 5)
+
+let arm_letter (level : int) (idx : int) : string =
+  let to_roman ?(upper = false) (n : int) =
+    let units =
+      [| ""; "i"; "ii"; "iii"; "iv"; "v"; "vi"; "vii"; "viii"; "ix" |]
+    in
+    let tens =
+      [| ""; "x"; "xx"; "xxx"; "xl"; "l"; "lx"; "lxx"; "lxxx"; "xc" |]
+    in
+    let n = max 1 n in
+    let s = tens.(n / 10 mod 10) ^ units.(n mod 10) in
+    if upper then String.uppercase_ascii s else s
+  in
+  let n = idx + 1 in
+  match style_at_level level with
+  | Arabic -> string_of_int n
+  | Loweralpha when idx < 26 -> String.make 1 (Char.chr (Char.code 'a' + idx))
+  | Upperalpha when idx < 26 -> String.make 1 (Char.chr (Char.code 'A' + idx))
+  | Lowerroman -> to_roman n
+  | Upperroman -> to_roman ~upper:true n
+  | Loweralpha | Upperalpha -> F.asprintf "arm%d" n
+
+(* Sits at the end of the bullet's first line so the line still starts with
+   plain text -- otherwise asciidoctor fails to recognise it as a list item. *)
+let render_block_label (block : BlockLabel.t) : string =
+  F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]" block.id
+    block.display
+
+(* +++...+++ passthrough rather than pass:[...] because the content contains
+   '[' and ']' literally, which would terminate pass:[...]. *)
+let render_fallthrough_link (bt : backtrack_ctx option) : string =
+  match bt with
+  | None -> ""
+  | Some { block; target } ->
+      let text, target_id =
+        match target with
+        | NextArm letter ->
+            ( F.asprintf "else %s-%s" block.display letter,
+              F.asprintf "%s-%s" block.id letter )
+        | OutOfBlock -> (F.asprintf "fail %s" block.display, block.id)
+      in
+      F.asprintf "+++<sub class=\"bk-mark\">[<a href=\"#%s\">%s</a>]</sub>+++"
+        target_id text
+
+let arm_backtrack_ctx ~(block : BlockLabel.t) ~arm_level ~total (idx : int) :
+    backtrack_ctx =
+  let target =
+    if idx + 1 < total then NextArm (arm_letter arm_level (idx + 1))
+    else OutOfBlock
+  in
+  { block; target }
+
+(* Sits at the end of the arm's first line so the line still starts with
+   plain text -- otherwise asciidoctor drops the list-item marker for
+   arms whose first instruction is If / If-let. The bk-arm-anchor class
+   supplies scroll-margin-top so fragment links land looking at the arm
+   header rather than past it. *)
+let arm_anchor ~(block : BlockLabel.t) ~arm_level (idx : int) : string =
+  F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++" block.id
+    (arm_letter arm_level idx)
+
 (* Guards, iterators, instructions *)
 
 let render_guard ctx (exp_scrut : exp) (guard : guard) : string =
@@ -483,17 +587,26 @@ let render_rel_title_math ctx (rel_signature : rel_signature) (exps : exp list)
   let padded = Hints.Input.combine inputs sexps holes in
   Mixop.assemble ~string_of_atom:code_of_atom mixop padded |> adoc_as_code ctx
 
-let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
-    =
+let rec render_instr ?(level = 0) ?(unordered = false)
+    ?(backtrack : backtrack_ctx option = None) (instr : instr) : string =
   let bullet =
     if unordered then adoc_unordered_bullet level else adoc_ordered_bullet level
   in
   let hints = instr.hints in
   match instr.node.it with
-  | IfI (cond, iterexps, block_then, _dangle) ->
-      F.asprintf "%sIf %s%s:%s" bullet (render_exp in_prose cond)
-        (render_iterexp_suffix in_prose iterexps)
-        (render_instrs ~level:(level + 1) block_then)
+  | IfI (cond, iterexps, block_then, _) ->
+      let fallthrough = render_fallthrough_link backtrack in
+      let check_line =
+        F.asprintf "%sCheck that %s%s.%s" bullet (render_exp in_prose cond)
+          (render_iterexp_suffix in_prose iterexps)
+          fallthrough
+      in
+      if block_then = [] then check_line
+      else
+        check_line ^ "\n"
+        ^ (block_then
+          |> List.map (render_instr ~level ~backtrack)
+          |> String.concat "\n")
   | HoldI (id_rel, (mixop, exps), iterexps, holdcase) -> (
       let hint_true = hints.Annot.prose_true in
       let hint_false = hints.Annot.prose_false in
@@ -516,23 +629,32 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
       match holdcase with
       | HoldH (block, _dangle) ->
           F.asprintf "%sIf %s%s:%s" bullet (render_head ~hold:true) iter_suffix
-            (render_instrs ~level:(level + 1) block)
+            (render_instrs ~level:(level + 1) ~backtrack block)
       | NotHoldH (block, _dangle) ->
           F.asprintf "%sIf %s%s:%s" bullet (render_head ~hold:false) iter_suffix
-            (render_instrs ~level:(level + 1) block)
+            (render_instrs ~level:(level + 1) ~backtrack block)
       | BothH (block_hold, block_nothold) ->
           F.asprintf "%sIf %s%s:%s\n%sElse:%s" bullet (render_head ~hold:true)
             iter_suffix
-            (render_instrs ~level:(level + 1) block_hold)
+            (render_instrs ~level:(level + 1) ~backtrack block_hold)
             bullet
-            (render_instrs ~level:(level + 1) block_nothold))
+            (render_instrs ~level:(level + 1) ~backtrack block_nothold))
   | CaseI (exp_scrut, cases, _dangle) ->
-      cases
-      |> List.map (fun (guard, block) ->
-             F.asprintf "%sIf %s:%s" bullet
-               (render_guard in_prose exp_scrut guard)
-               (render_instrs ~level:(level + 1) block))
-      |> String.concat "\n"
+      let block = BlockLabel.fresh () in
+      let arm_level = level + 1 in
+      let body_level = level + 2 in
+      let total = List.length cases in
+      let render_arm idx ((guard, arm_body) : case) =
+        let bt = arm_backtrack_ctx ~block ~arm_level ~total idx in
+        let anchor = arm_anchor ~block ~arm_level idx in
+        F.asprintf "%sIf %s:%s%s"
+          (adoc_ordered_bullet arm_level)
+          (render_guard in_prose exp_scrut guard)
+          anchor
+          (render_instrs ~level:body_level ~backtrack:(Some bt) arm_body)
+      in
+      F.asprintf "%sTry %s:\n%s" bullet (render_block_label block)
+        (String.concat "\n" (List.mapi render_arm cases))
   | GroupI (_id_rulegroup, id_rel, rel_signature, exps, block) ->
       let hint_in = hints.Annot.prose_in in
       let hint_true = hints.Annot.prose_true in
@@ -546,20 +668,27 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
             render_rel_title_math in_prose rel_signature exps
             |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
       in
-      F.asprintf "%s%s:%s" bullet title (render_instrs ~level:(level + 1) block)
+      F.asprintf "%s%s:%s" bullet title
+        (render_instrs ~level:(level + 1) ~backtrack block)
   | TryI arms ->
-      let last = List.length arms - 1 in
-      arms
-      |> List.mapi (fun idx arm ->
-             let prefix =
-               if idx = 0 then "Try:"
-               else if idx < last then "Otherwise, try:"
-               else "Otherwise:"
-             in
-             F.asprintf "%s%s%s" bullet prefix
-               (render_instrs ~level:(level + 1) arm))
-      |> String.concat "\n"
+      let block = BlockLabel.fresh () in
+      let arm_level = level + 1 in
+      let body_level = level + 2 in
+      let total = List.length arms in
+      let render_arm idx arm =
+        let bt = arm_backtrack_ctx ~block ~arm_level ~total idx in
+        let anchor = arm_anchor ~block ~arm_level idx in
+        F.asprintf "%s{empty}%s%s"
+          (adoc_ordered_bullet arm_level)
+          anchor
+          (render_instrs ~level:body_level ~backtrack:(Some bt) arm)
+      in
+      F.asprintf "%sTry %s:\n%s" bullet (render_block_label block)
+        (String.concat "\n" (List.mapi render_arm arms))
   | LetI (exp_l, exp_r, iterinstrs) ->
+      (* RHS can contain a CallE to a partial defined function, which
+         backtracks via Unmatch. *)
+      let fallthrough = render_fallthrough_link backtrack in
       let vars_out_visible =
         iterinstrs
         |> List.concat_map (fun (_, _, vars_out) -> vars_out)
@@ -569,10 +698,11 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
         List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
       in
       if vars_out_visible = [] then
-        F.asprintf "%sLet %s be %s%s." bullet
+        F.asprintf "%sLet %s be %s%s.%s" bullet
           (render_exp_as_code in_prose exp_l)
           (render_exp in_prose exp_r)
           (render_iterinstr_suffix in_prose iterinstrs)
+          fallthrough
       else
         let inner_bullet = adoc_unordered_bullet (level + 1) in
         let body =
@@ -581,12 +711,14 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
             (render_exp in_prose exp_r)
         in
         F.asprintf
-          "%sLet %s obtained by repeating:\n+\n--\n%s\n--\n+\nfor each %s."
+          "%sLet %s obtained by repeating:\n+\n--\n%s\n--\n+\nfor each %s.%s"
           bullet
           (render_out_itervars in_prose vars_out_visible)
           body
           (render_in_itervars in_prose vars_in_all)
+          fallthrough
   | RuleI (id_rel, (mixop, exps), input_hint, iterinstrs) ->
+      let fallthrough = render_fallthrough_link backtrack in
       let exps_in, exps_out = Hints.Input.split input_hint exps in
       let hint_in = hints.Annot.prose_in in
       let hint_out = hints.Annot.prose_out in
@@ -620,16 +752,18 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
               |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
       in
       if vars_out_visible = [] then
-        F.asprintf "%s%s%s." bullet rule_body
+        F.asprintf "%s%s%s.%s" bullet rule_body
           (render_iterinstr_suffix in_prose iterinstrs)
+          fallthrough
       else
         let inner_bullet = adoc_unordered_bullet (level + 1) in
         F.asprintf
-          "%sLet %s obtained by repeating:\n+\n--\n%s%s.\n--\n+\nfor each %s."
+          "%sLet %s obtained by repeating:\n+\n--\n%s%s.\n--\n+\nfor each %s.%s"
           bullet
           (render_out_itervars in_prose vars_out_visible)
           inner_bullet rule_body
           (render_in_itervars in_prose vars_in_all)
+          fallthrough
   | ResultI (rel_signature, exps) -> (
       (* Mirrors the old prosify decision (prosify.ml ~628):
            is_conditional       → "Then, the relation holds."
@@ -672,29 +806,38 @@ let rec render_instr ?(level = 0) ?(unordered = false) (instr : instr) : string
             (render_list (List.map (fun s -> "the " ^ s) names))
             (render_exp in_prose exp_source))
   | CheckLetI (exp_l, exp_r, block_inner) ->
+      let fallthrough = render_fallthrough_link backtrack in
       let head =
-        F.asprintf "%sLet!~type~ %s be %s." bullet
+        F.asprintf "%sLet!~type~ %s be %s.%s" bullet
           (render_exp_as_code in_prose exp_l)
           (render_exp in_prose exp_r)
+          fallthrough
       in
       if block_inner = [] then head
       else
         head ^ "\n"
-        ^ (block_inner |> List.map (render_instr ~level) |> String.concat "\n")
+        ^ (block_inner
+          |> List.map (render_instr ~level ~backtrack)
+          |> String.concat "\n")
   | OptionGetI (exp_l, exp_r) ->
-      F.asprintf "%sLet %s be %s %s." bullet
+      let fallthrough = render_fallthrough_link backtrack in
+      F.asprintf "%sLet %s be %s %s.%s" bullet
         (render_exp_as_code in_prose exp_l)
         (adoc_link ~link:"option_get" "*!*")
         (render_exp in_prose exp_r)
+        fallthrough
 
-and render_instrs ?(level = 0) (instrs : block) : string =
+and render_instrs ?(level = 0) ?(backtrack : backtrack_ctx option = None)
+    (instrs : block) : string =
   match instrs with
   | [
    ({ node = { it = ReturnI ({ node = { it = BoolE _; _ }; _ } as e); _ }; _ } :
      instr);
   ] ->
       F.asprintf " return %s." (render_exp_as_code in_prose e)
-  | _ -> "\n" ^ (List.map (render_instr ~level) instrs |> String.concat "\n")
+  | _ ->
+      "\n"
+      ^ (List.map (render_instr ~level ~backtrack) instrs |> String.concat "\n")
 
 (* Definitions *)
 
@@ -885,7 +1028,18 @@ let render_defined_func_def (hints : Annot.hints) (func : definedfunc) : string
   ^ strip_leading_newline (render_instrs block)
   ^ render_elseblock elseblock_opt
 
+let def_id_for_labels (def : def) : string option =
+  match def.node.it with
+  | ExternTypD _ | TypD _ | VarD _ -> None
+  | ExternRelD (id, _, _) | RelD (id, _, _, _, _) -> Some id.it
+  | ExternDecD (id, _, _, _)
+  | BuiltinDecD (id, _, _, _)
+  | TableDecD (id, _, _, _)
+  | FuncDecD (id, _, _, _, _, _) ->
+      Some id.it
+
 let render_def (def : def) : string option =
+  Option.iter BlockLabel.set_namespace (def_id_for_labels def);
   let hints = def.hints in
   match def.node.it with
   | ExternTypD _ | TypD _ | VarD _ -> None

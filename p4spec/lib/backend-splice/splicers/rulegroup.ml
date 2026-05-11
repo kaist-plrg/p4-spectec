@@ -69,7 +69,16 @@ module Prose = struct
 
     let render (values : t list) : string =
       values
-      |> List.map (fun instr -> Pl.Render.render_instrs [ instr ])
+      |> List.map (fun (instr : Pl.instr) ->
+             (* collect_groups_instr only emits GroupI -- the splicer's
+                values are guaranteed to be rulegroups. *)
+             let id_rel =
+               match instr.node.it with
+               | GroupI (_, id_rel, _, _, _) -> id_rel
+               | _ -> assert false
+             in
+             Pl.Render.BlockLabel.set_namespace id_rel.it;
+             Pl.Render.render_group instr)
       |> String.concat "\n\n"
   end
 
