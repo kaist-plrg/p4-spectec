@@ -1,0 +1,128 @@
+;; Premise evaluation rules
+
+;;; Relation premises
+
+rule Eval_prem/relpr:
+  CIL |- REL id `: exp* `-> exp_out* : OK CIL'
+  -- (EvalIL_exp: CIL |- exp : OK val)*
+  -- CallIL_rel_cached: CIL |- id val* : OK val_out*
+  -- AssignIL_exps : CIL |- exp_out* := val_out* : CIL'
+
+;;; If premises
+
+rulegroup Eval_prem/ifpr {
+
+  rule Eval_prem/true:
+    CIL |- IF exp : OK CIL
+    -- EvalIL_exp: CIL |- exp : OK (BOOL true)
+
+  rule Eval_prem/false:
+    CIL |- IF exp : FAIL
+    -- EvalIL_exp: CIL |- exp : OK (BOOL false)
+
+}
+
+;;; If-hold and if-not-hold premises
+
+rulegroup Eval_prem/ifholdpr {
+
+  rule Eval_prem/hold:
+    CIL |- IFHOLD id `: exp* : OK CIL
+    -- (EvalIL_exp: CIL |- exp : OK val_input)*
+    -- CallIL_rel_cached: CIL |- id val_input* : OK eps
+
+  rule Eval_prem/nothold:
+    CIL |- IFNOTHOLD id `: exp* : OK CIL
+    -- (EvalIL_exp: CIL |- exp : OK val_input)*
+    -- CallIL_rel_cached: CIL |- id val_input* : FAIL
+
+}
+
+;;; Let premises
+
+rule Eval_prem/letpr:
+  CIL |- LET exp_l `= exp_r : OK CIL'
+  -- EvalIL_exp : CIL |- exp_r : OK val_r
+  -- AssignIL_exp : CIL |- exp_l := val_r : CIL'
+
+;;; Iteration premises - optional
+
+rulegroup Eval_prem/iterpr-opt {
+
+  rule Eval_prem/none:
+    CIL |- ITER prem iterprem : OK CIL_res
+    -- if QUEST vari_bound* vari_bind* = iterprem
+    -- if eps = $subIL_opt(CIL, vari_bound*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    -- if CIL_res = $addIL_varis(CIL, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/some:
+    CIL |- ITER prem iterprem : OK CIL_res
+    -- if QUEST vari_bound* vari_bind* = iterprem
+    -- if CIL_sub = $subIL_opt(CIL, vari_bound*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $findIL_vari(CIL, vari_bind))*
+    -- if CIL_res = $addIL_varis(CIL, vari_bind_iter*, (OPT val_bind)*)
+
+}
+
+;;; Iteration premises - list
+
+rulegroup Eval_prem/iterpr-list {
+ 
+  rule Eval_prem/empty:
+    CIL |- ITER prem iterprem : OK CIL_res
+    -- if STAR vari_bound* vari_bind* = iterprem
+    -- if eps = $subIL_list(CIL, vari_bound*)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    -- if CIL_res = $addIL_varis(CIL, vari_bind_iter*, val_bind*)
+
+  rule Eval_prem/list:
+    CIL |- ITER prem iterprem : OK CIL_res
+    ----
+    -- if STAR vari_bound* vari_bind* = iterprem
+    ---- ;; decompose CIL into a list of subcontexts CIL_sub* corresponding to vari_bound*
+    -- if CIL_sub* = $subIL_list(CIL, vari_bound*)
+    -- if CIL_sub* =/= eps
+    ---- ;; for each CIL_sub in CIL_sub*, evaluate prem
+    ---- ;; this yields val_sub_bind* for each CIL_sub
+    -- (Eval_prem: CIL_sub |- prem : OK CIL_sub_res)*
+    -- if (val_sub_bind* = $findIL_varis(CIL_sub_res, vari_bind*))*
+    ---- ;; transpose val_sub_bind** to get val_bind**
+    ---- ;; then combine val_bind* as a LIST, which is the value to be bind
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if CIL_res = $addIL_varis(CIL, vari_bind_iter*, val_res_bind*)
+}
+
+;;; Debug premises
+
+rule Eval_prem/dbg:
+  CIL |- DEBUG exp : OK CIL
+  -- EvalIL_exp: CIL |- exp : OK val
+  -- debug val
+
+rule Eval_prem/fail:
+  CIL |- prem : FAIL
+  -- otherwise
+
+;; Premise sequence evaluation rules
+
+rulegroup Eval_prems {
+
+  rule Eval_prems/empty:
+    CIL |- eps : OK CIL
+
+  rule Eval_prems/head-fail:
+    CIL |- prem_h :: prem_t* : FAIL
+    -- Eval_prem: CIL |- prem_h : FAIL
+
+  rule Eval_prems/head-succ:
+    CIL |- prem_h :: prem_t* : ctxILres
+    -- Eval_prem: CIL |- prem_h : OK CIL'
+    -- Eval_prems: CIL' |- prem_t* : ctxILres
+
+}

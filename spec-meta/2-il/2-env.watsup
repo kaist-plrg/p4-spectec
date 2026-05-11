@@ -1,0 +1,35 @@
+;; Relation environment
+
+syntax externRelDefIL =
+  | EXT id
+
+syntax definedRelDefIL =
+  | DEF rulgroup* elsgroup?
+
+syntax reldefIL =
+  | externRelDefIL
+  | definedRelDefIL
+
+syntax renvIL = map<id, reldefIL>
+
+;; Function environment
+
+syntax externFuncDefIL =
+  | EXT id
+
+syntax builtinFuncDefIL =
+  | BUILTIN id tparam* paramIL*
+
+syntax tableFuncDefIL =
+  | TABLE paramIL* `-> tblrowIL*
+
+syntax definedFuncDefIL =
+  | DEF tparam* `-> clause* elsclause?
+
+syntax funcdefIL =
+  | externFuncDefIL
+  | builtinFuncDefIL
+  | tableFuncDefIL
+  | definedFuncDefIL
+
+syntax fenvIL = map<id, funcdefIL>

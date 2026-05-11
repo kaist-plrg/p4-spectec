@@ -34,7 +34,7 @@ let unboot_binop_mtchtbl : Il.binop Value.Get.mtchtbl ref =
 let unboot_cmpop_mtchtbl : Il.cmpop Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
-let unboot_param_mtchtbl : Il.param Value.Get.mtchtbl ref =
+let unboot_paramIL_mtchtbl : Il.param Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
 let unboot_arg_mtchtbl : Il.arg Value.Get.mtchtbl ref =
@@ -52,7 +52,7 @@ let unboot_pattern_mtchtbl : Il.pattern Value.Get.mtchtbl ref =
 let unboot_prem_mtchtbl : Il.prem Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
-let unboot_def_mtchtbl : Il.def Value.Get.mtchtbl ref =
+let unboot_defIL_mtchtbl : Il.def Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
 (* Identifiers *)
@@ -384,29 +384,29 @@ and unboot_ge_cmpop (_ : region) (_ : Value.t list) : Il.cmpop = `GeOp
 
 (* Parameters and arguments *)
 
-and unboot_param (value_param : Value.t) : Il.param =
-  Value.Get.mtch_dispatch value_param !unboot_param_mtchtbl (fun _ _ ->
-      error "@unboot_param")
+and unboot_paramIL (value_param : Value.t) : Il.param =
+  Value.Get.mtch_dispatch value_param !unboot_paramIL_mtchtbl (fun _ _ ->
+      error "@unboot_paramIL")
 
-and unboot_exp_param (at : region) (values : Value.t list) : Il.param =
+and unboot_exp_paramIL (at : region) (values : Value.t list) : Il.param =
   match values with
   | [ value_typ ] ->
       let typ = unboot_typ value_typ in
       Il.ExpP typ $ at
-  | _ -> error "@unboot_param/EXP"
+  | _ -> error "@unboot_exp_paramIL"
 
-and unboot_def_param (at : region) (values : Value.t list) : Il.param =
+and unboot_def_paramIL (at : region) (values : Value.t list) : Il.param =
   match values with
-  | [ value_id; value_tparams; value_params; value_typ ] ->
+  | [ value_id; value_tparams; value_paramILs; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let params = unboot_params value_params in
+      let paramILs = unboot_paramILs value_paramILs in
       let typ = unboot_typ value_typ in
-      Il.DefP (id, tparams, params, typ) $ at
-  | _ -> error "@unboot_param/FUN"
+      Il.DefP (id, tparams, paramILs, typ) $ at
+  | _ -> error "@unboot_def_paramIL"
 
-and unboot_params (value_params : Value.t) : Il.param list =
-  value_params |> Value.Get.list |> List.map unboot_param
+and unboot_paramILs (value_paramILs : Value.t) : Il.param list =
+  value_paramILs |> Value.Get.list |> List.map unboot_paramIL
 
 and unboot_arg (value_arg : Value.t) : Il.arg =
   Value.Get.mtch_dispatch value_arg !unboot_arg_mtchtbl (fun _ _ ->
@@ -901,40 +901,40 @@ and unboot_elsclause_opt (value_elsclause_opt : Value.t) : Il.elseclause option
 
 (* Table rows *)
 
-and unboot_tablerow (value_tablerow : Value.t) : Il.tablerow =
-  let at = value_tablerow.at in
-  let values = Value.Get.(value_tablerow |>>! mop_clause) in
+and unboot_tablerowIL (value_tablerowIL : Value.t) : Il.tablerow =
+  let at = value_tablerowIL.at in
+  let values = Value.Get.(value_tablerowIL |>>! mop_tablerowIL) in
   let args = Value.Get.nth 0 values |> unboot_args in
   let exp = Value.Get.nth 1 values |> unboot_exp in
   let prems = Value.Get.nth 2 values |> unboot_prems in
   ([], args, exp, prems) $ at
 
-and unboot_tablerows (value_tablerows : Value.t) : Il.tablerow list =
-  value_tablerows |> Value.Get.list |> List.map unboot_tablerow
+and unboot_tablerowILs (value_tablerowILs : Value.t) : Il.tablerow list =
+  value_tablerowILs |> Value.Get.list |> List.map unboot_tablerowIL
 
 (* Definitions *)
 
-let unboot_def (value_def : Value.t) : Il.def =
-  Value.Get.mtch_dispatch value_def !unboot_def_mtchtbl (fun _ _ ->
-      error "@unboot_def")
+let unboot_defIL (value_def : Value.t) : Il.def =
+  Value.Get.mtch_dispatch value_def !unboot_defIL_mtchtbl (fun _ _ ->
+      error "@unboot_defIL")
 
-and unboot_extern_typ_def (at : region) (values : Value.t list) : Il.def =
+and unboot_extern_typ_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
   | [ value_id ] ->
       let id = unboot_id value_id in
       Il.ExternTypD (id, []) $ at
-  | _ -> error "@unboot_extern_typ_def"
+  | _ -> error "@unboot_extern_typ_defIL"
 
-and unboot_typ_def (at : region) (values : Value.t list) : Il.def =
+and unboot_typ_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
   | [ value_id; value_tparams; value_deftyp ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
       let deftyp = unboot_deftyp value_deftyp in
       Il.TypD (id, tparams, deftyp, []) $ at
-  | _ -> error "@unboot_typ_def"
+  | _ -> error "@unboot_typ_defIL"
 
-and unboot_extern_rel_def (at : region) (values : Value.t list) : Il.def =
+and unboot_extern_rel_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
   | [ value_id; value_typs_input; value_typs_output ] ->
       let id = unboot_id value_id in
@@ -943,9 +943,9 @@ and unboot_extern_rel_def (at : region) (values : Value.t list) : Il.def =
       let nottyp = stub_nottyp typs_input typs_output in
       let input = stub_input_hint (List.length typs_input) in
       Il.ExternRelD (id, nottyp, input, []) $ at
-  | _ -> error "@unboot_extern_rel_def"
+  | _ -> error "@unboot_extern_rel_defIL"
 
-and unboot_rel_def (at : region) (values : Value.t list) : Il.def =
+and unboot_rel_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
   | [
    value_id;
@@ -962,62 +962,62 @@ and unboot_rel_def (at : region) (values : Value.t list) : Il.def =
       let rulgroups = unboot_rulgroups value_rulgroups in
       let elsgroup = unboot_elsgroup_opt value_elsgroup in
       Il.RelD (id, nottyp, input, rulgroups, elsgroup, []) $ at
-  | _ -> error "@unboot_rel_def"
+  | _ -> error "@unboot_rel_defIL"
 
-and unboot_extern_func_def (at : region) (values : Value.t list) : Il.def =
+and unboot_extern_func_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
-  | [ value_id; value_tparams; value_params; value_typ ] ->
+  | [ value_id; value_tparams; value_paramILs; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let params = unboot_params value_params in
+      let paramILs = unboot_paramILs value_paramILs in
       let typ = unboot_typ value_typ in
-      Il.ExternDecD (id, tparams, params, typ, []) $ at
-  | _ -> error "@unboot_extern_func_def"
+      Il.ExternDecD (id, tparams, paramILs, typ, []) $ at
+  | _ -> error "@unboot_extern_func_defIL"
 
-and unboot_builtin_func_def (at : region) (values : Value.t list) : Il.def =
+and unboot_builtin_func_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
-  | [ value_id; value_tparams; value_params; value_typ ] ->
+  | [ value_id; value_tparams; value_paramILs; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let params = unboot_params value_params in
+      let paramILs = unboot_paramILs value_paramILs in
       let typ = unboot_typ value_typ in
-      Il.BuiltinDecD (id, tparams, params, typ, []) $ at
-  | _ -> error "@unboot_builtin_func_def"
+      Il.BuiltinDecD (id, tparams, paramILs, typ, []) $ at
+  | _ -> error "@unboot_builtin_func_defIL"
 
-and unboot_table_func_def (at : region) (values : Value.t list) : Il.def =
+and unboot_table_func_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
-  | [ value_id; value_params; value_typ; value_tablerows ] ->
+  | [ value_id; value_paramILs; value_typ; value_tablerowILs ] ->
       let id = unboot_id value_id in
-      let params = unboot_params value_params in
+      let paramILs = unboot_paramILs value_paramILs in
       let typ = unboot_typ value_typ in
-      let tablerows = unboot_tablerows value_tablerows in
-      Il.TableDecD (id, params, typ, tablerows, []) $ at
-  | _ -> error "@unboot_table_func_def"
+      let tablerowILs = unboot_tablerowILs value_tablerowILs in
+      Il.TableDecD (id, paramILs, typ, tablerowILs, []) $ at
+  | _ -> error "@unboot_table_func_defIL"
 
-and unboot_func_def (at : region) (values : Value.t list) : Il.def =
+and unboot_func_defIL (at : region) (values : Value.t list) : Il.def =
   match values with
   | [
    value_id;
    value_tparams;
-   value_params;
+   value_paramILs;
    value_typ;
    value_clauses;
    value_elsclause;
   ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let params = unboot_params value_params in
+      let paramILs = unboot_paramILs value_paramILs in
       let typ = unboot_typ value_typ in
       let clauses = unboot_clauses value_clauses in
       let elsclause = unboot_elsclause_opt value_elsclause in
-      Il.FuncDecD (id, tparams, params, typ, clauses, elsclause, []) $ at
-  | _ -> error "@unboot_func_def"
+      Il.FuncDecD (id, tparams, paramILs, typ, clauses, elsclause, []) $ at
+  | _ -> error "@unboot_func_defIL"
 
 (* Specification *)
 
-let unboot_spec (value_script : Value.t) : Il.spec =
-  let value_defs = Value.Get.list value_script in
-  List.map unboot_def value_defs
+let unboot_scriptIL (value_scriptIL : Value.t) : Il.spec =
+  let value_defILs = Value.Get.list value_scriptIL in
+  List.map unboot_defIL value_defILs
 
 (* Initialize dispatch tables after all handler functions are defined *)
 
@@ -1092,11 +1092,11 @@ let () =
         ("GE", unboot_ge_cmpop);
       ];
   (* Parameters and arguments *)
-  unboot_param_mtchtbl :=
+  unboot_paramIL_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("EXP typ", unboot_exp_param);
-        ("FUN id `: tparam* param* `-> typ", unboot_def_param);
+        ("EXP typ", unboot_exp_paramIL);
+        ("FUN id `: tparam* paramIL* `-> typ", unboot_def_paramIL);
       ];
   unboot_arg_mtchtbl :=
     Value.Get.build_mtchtbl
@@ -1166,15 +1166,16 @@ let () =
         ("DEBUG exp", unboot_debug_prem);
       ];
   (* Definitions *)
-  unboot_def_mtchtbl :=
+  unboot_defIL_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("EXTTYP id", unboot_extern_typ_def);
-        ("TYP id tparam* `= deftyp", unboot_typ_def);
-        ("EXTREL id `: exp* `-> exp", unboot_extern_rel_def);
-        ("REL id `: typ* `-> typ* `= rulgroup* elsgroup?", unboot_rel_def);
-        ("EXTFUNC id tparam* param* `: typ", unboot_extern_func_def);
-        ("BUILTINFUNC id tparam* param* `: typ", unboot_builtin_func_def);
-        ("TABLEFUNC id param* `: typ `= tblrow*", unboot_table_func_def);
-        ("FUNC id tparam* param* `: typ `= clause* elsclause?", unboot_func_def);
+        ("EXTTYP id", unboot_extern_typ_defIL);
+        ("TYP id tparam* `= deftyp", unboot_typ_defIL);
+        ("EXTREL id `: exp* `-> exp", unboot_extern_rel_defIL);
+        ("REL id `: typ* `-> typ* `= rulgroup* elsgroup?", unboot_rel_defIL);
+        ("EXTFUNC id tparam* paramIL* `: typ", unboot_extern_func_defIL);
+        ("BUILTINFUNC id tparam* paramIL* `: typ", unboot_builtin_func_defIL);
+        ("TABLEFUNC id paramIL* `: typ `= tblrowIL*", unboot_table_func_defIL);
+        ( "FUNC id tparam* paramIL* `: typ `= clause* elsclause?",
+          unboot_func_defIL );
       ]

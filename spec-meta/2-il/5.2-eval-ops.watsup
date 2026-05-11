@@ -1,0 +1,58 @@
+;; Accesses and updates
+
+dec $access_path(ctxIL, val, path) : res<val>
+def $access_path(CIL, val_b, ROOT) = OK val_b
+def $access_path(CIL, val_b, IDX path exp_i) = OK (TEXT t[n_i])
+    -- if OK (TEXT t) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+def $access_path(CIL, val_b, IDX path exp_i) = OK (val*[n_i])
+    -- if OK (LIST val*) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+def $access_path(CIL, val_b, SLICE path exp_i exp_n) = OK (TEXT t[n_i : n_n])
+    -- if OK (TEXT t) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+def $access_path(CIL, val_b, SLICE path exp_i exp_n) = OK (LIST val*[n_i : n_n])
+    -- if OK (LIST val*) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+def $access_path(CIL, val_b, DOT path atom) = OK val
+    -- if OK (STR valfield*) = $access_path(CIL, val_b, path)
+    -- if (atom_field val_field = valfield)*
+    -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
+def $access_path(CIL, val, path) = FAIL
+    -- otherwise
+
+dec $update_path(ctxIL, val, path, val) : res<val>
+def $update_path(CIL, val_b, ROOT, val_n) = OK val_n
+def $update_path(CIL, val_b, IDX path exp_i, TEXT t_n)
+  = $update_path(CIL, val_b, path, TEXT t[ [n_target] = t_n ])
+    -- if OK (TEXT t) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_target)
+    -- if |t_n| = 1
+def $update_path(CIL, val_b, IDX path exp_i, val_n)
+  = $update_path(CIL, val_b, path, (LIST val*[ [n_target] = val_n ]))
+    -- if OK (LIST val*) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_target)
+def $update_path(CIL, val_b, SLICE path exp_i exp_n, val_n)
+  = $update_path(CIL, val_b, path, TEXT t[ [n_l : n_n] = t' ])
+    -- if OK (TEXT t) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_l)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+    -- if TEXT t' = val_n
+    -- if |t'| = n_n
+def $update_path(CIL, val_b, SLICE path exp_i exp_n, val_n)
+  = $update_path(CIL, val_b, path, LIST val*[ [n_l : n_n] = val'* ])
+    -- if OK (LIST val*) = $access_path(CIL, val_b, path)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_l)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+    -- if LIST val'* = val_n
+    -- if |val'*| = n_n
+def $update_path(CIL, val_b, DOT path atom_path, val_n)
+  = $update_path(CIL, val_b, path, STR valfield_new*)
+    -- if OK (STR valfield*) = $access_path(CIL, val_b, path)
+    -- (if atom_field val_field = valfield)*
+    -- (if valfield_new
+         = atom_field $ite<val>(atom_path = atom_field, val_n, val_field))*
+def $update_path(CIL, val_b, path, val_n) = FAIL
+    -- otherwise

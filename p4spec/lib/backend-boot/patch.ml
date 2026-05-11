@@ -50,7 +50,7 @@ let rec value_as_exp (value : value) : exp =
 
 let apply (value_spec : Value.t) (rel : string) (value_program : Value.t) :
     Value.t =
-  let defs_il = Interface.SpecTec.unboot_spec value_spec in
+  let defs_il = Interface.SpecTec.unboot_scriptIL value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun def_il ->
@@ -118,7 +118,7 @@ let apply (value_spec : Value.t) (rel : string) (value_program : Value.t) :
     $ no_region
   in
   (* Il.Print.string_of_def def_il |> print_endline; *)
-  let value_spec = defs_il @ [ def_il ] |> Interface.SpecTec.boot_spec in
+  let value_spec = defs_il @ [ def_il ] |> Interface.SpecTec.boot_specIL in
   value_spec
 
 (* Patch - P4 |> P4 spec *)

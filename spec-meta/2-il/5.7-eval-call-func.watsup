@@ -1,0 +1,151 @@
+;; Meta-function invocation
+
+;;; Clause invocation
+
+relation Eval_clause:
+  ctxIL `/ ctxIL |- clause `@ `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
+
+rule Eval_clause/succ:
+  CIL `/ CIL_caller |- clause `@ `( val* ) : OK val_out
+  -- if arg* `= exp_out `- prem* = clause
+  -- AssignIL_args: CIL `/ CIL_caller |- arg* := val* : CIL'
+  -- Eval_prems: CIL' |- prem* : OK CIL''
+  -- EvalIL_exp : CIL'' |- exp_out : OK val_out
+
+rule Eval_clause/fail:
+  CIL `/ CIL_caller |- clause `@ `( val* ) : FAIL
+  -- otherwise
+
+relation Eval_clauses:
+  ctxIL `/ ctxIL |- clause* `@ `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
+
+rule Eval_clauses/nil:
+  CIL `/ CIL_caller |- eps `@ `( val* ) : FAIL
+
+rule Eval_clauses/cons-succ:
+  CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
+  -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : OK val_res
+
+rule Eval_clauses/cons-fail:
+  CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : valres
+  -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : FAIL
+  -- Eval_clauses: CIL `/ CIL_caller |- clause_t* `@ `( val* ) : valres
+
+;;; Table meta-function invocation
+
+;;;; Table row evaluation
+
+relation EvalIL_tblrow:
+  ctxIL |- tblrowIL `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule EvalIL_tblrow/succ:
+  CIL |- tblrowIL `@ `( val* ) : OK val_out
+  -- if arg* `= exp_out `- prem* = tblrowIL
+  -- if CIL_callee = CIL[ .LOCAL = $emptyIL_layer ]
+  -- AssignIL_args: CIL_callee `/ CIL |- arg* := val* : CIL_callee'
+  -- Eval_prems: CIL_callee' |- prem* : OK CIL_callee''
+  -- EvalIL_exp: CIL_callee'' |- exp_out : OK val_out
+
+rule EvalIL_tblrow/fail:
+  CIL |- tblrowIL `@ `( val* ) : FAIL
+  -- otherwise
+
+;;;; Table row sequence evaluation
+
+relation EvalIL_tblrows:
+  ctxIL |- tblrowIL* `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule EvalIL_tblrows/nil:
+  CIL |- eps `@ `( val* ) : FAIL
+
+rule EvalIL_tblrows/cons-succ:
+  CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : OK val_out
+  -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : OK val_out
+
+rule EvalIL_tblrows/cons-fail:
+  CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : valres
+  -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : FAIL
+  -- EvalIL_tblrows: CIL |- tblrowIL_t* `@ `( val* ) : valres
+
+;;;; Table meta-function evaluation
+
+relation CallIL_table_func:
+  ctxIL |- tableFuncDefIL `@ `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+rule CallIL_table_func:
+  CIL |- tableFuncDefIL `@ `( val* ) : valres
+  -- if TABLE _ `-> tblrowIL* = tableFuncDefIL
+  -- EvalIL_tblrows: CIL |- tblrowIL* `@ `( val* ) : valres
+
+;;; Defined meta-function invocation
+
+relation CallIL_defined_func:
+  ctxIL |- definedFuncDefIL `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2 %3)
+
+rule CallIL_defined_func:
+  CIL |- definedFuncDefIL `@ `< typ* > `( val* ) : valres
+  -- if DEF tparam* `-> clause* elsclause? = definedFuncDefIL
+  -- if tdenv = `{ (tparam `: (DEF eps `-> (ALIAS typ)))* }
+  -- if CIL_callee = CIL[ .LOCAL = $emptyIL_layer[ .TYP = tdenv ] ]
+  -- if clause_else* = $opt_as_seq_<clause>(elsclause?)
+  -- if clause_all* = clause* ++ clause_else*
+  -- Eval_clauses: CIL_callee `/ CIL |- clause_all* `@ `( val* ) : valres
+
+;;; Meta-function dispatch
+
+rulegroup CallIL_func {
+
+    rule CallIL_func/extern:
+      CIL |- (EXT id) typ* val* : valres
+      -- Call_extern_func:
+          |- id `< typ* > `( val* ) : valres
+
+    rule CallIL_func/builtin:
+      CIL |- builtinFuncDefIL typ* val* : valres
+      -- if BUILTIN id _ _ = builtinFuncDefIL
+      -- Call_builtin_func:
+          |- id `@ `< typ* > `( val* ) : valres
+
+    rule CallIL_func/table:
+      CIL |- tableFuncDefIL eps val* : valres
+      -- CallIL_table_func:
+          CIL |- tableFuncDefIL `@ `( val* ) : valres
+
+    rule CallIL_func/defined:
+      CIL |- definedFuncDefIL typ* val* : valres
+      -- CallIL_defined_func:
+          CIL |- definedFuncDefIL `@ `< typ* > `( val* ) : valres
+
+}
+
+;; Meta-function call wrapper with cache
+
+rule CallIL_func_cached:
+  CIL |- id typ* val* : valres
+  -- if funccache = $cache_find_func(id, val*)
+  -- CallIL_func_dispatch:
+      CIL |- id typ* val* funccache : valres
+
+rule CallIL_func_dispatch/hit:
+  CIL |- id typ* val* (OK val_cached) : OK val_cached
+
+rule CallIL_func_dispatch/miss:
+  CIL |- id typ* val* NONE : valres
+  -- if (cursor, funcdefIL) = $findIL_func(CIL, id)
+  -- if cp_before = $cache_checkpoint()
+  -- CallIL_func: CIL |- funcdefIL typ* val* : valres
+  -- if cp_after = $cache_checkpoint()
+  -- if b_ext = (funcdefIL <: externFuncDefIL)
+  -- if b_seff = $cache_seff(cp_before, cp_after)
+  -- if b_anon = (cursor = LOCAL)
+  -- if b_hoff = $exists_($is_fun(val)*)
+  -- if $cache_add_func_maybe(
+          b_ext \/ b_seff \/ b_anon \/ b_hoff,
+          ;; true,
+          id, val*, valres)

@@ -1,0 +1,44 @@
+;; Parameters
+
+syntax paramIL =
+  | EXP typ
+  | FUN id `: tparam* paramIL* `-> typ
+
+;; Premises
+
+syntax iterprem = iter vari* vari*
+
+syntax prem =
+  | REL id `: exp* `-> exp*
+  | IF exp
+  | IFHOLD id `: exp*
+  | IFNOTHOLD id `: exp*
+  | LET exp `= exp
+  | ITER prem iterprem
+  | DEBUG exp
+
+;; Definitions
+
+syntax rulmatch = exp* `- prem*
+syntax rulpath = id `= exp* `- prem*
+syntax rulgroup = id `: rulmatch `= rulpath*
+syntax elsgroup = id `: rulmatch `= rulpath
+
+syntax clause = arg* `= exp `- prem*
+syntax elsclause = clause
+
+syntax tblrowIL = arg* `= exp `- prem*
+
+syntax defnIL =
+  | EXTTYP id
+  | TYP id tparam* `= deftyp
+  | EXTREL id `: typ* `-> typ*
+  | REL id `: typ* `-> typ* `= rulgroup* elsgroup?
+  | EXTFUNC id tparam* paramIL* `: typ
+  | BUILTINFUNC id tparam* paramIL* `: typ
+  | TABLEFUNC id paramIL* `: typ `= tblrowIL*
+  | FUNC id tparam* paramIL* `: typ `= clause* elsclause?
+
+;; Scripts
+
+syntax scriptIL = defnIL*

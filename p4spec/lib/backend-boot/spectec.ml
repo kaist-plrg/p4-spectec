@@ -173,10 +173,10 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
   (* Threading extern calls to the runner *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
-    let _value_ctx, value_id, value_typs, value_values =
+    let value_id, value_typs, value_values =
       match values_input with
-      | [ value_ctx; value_id; value_typs; value_values ] ->
-          (value_ctx, value_id, value_typs, value_values)
+      | [ value_id; value_typs; value_values ] ->
+          (value_id, value_typs, value_values)
       | _ ->
           error_no_region "unexpected number of arguments to call_builtin_func"
     in
@@ -197,10 +197,10 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     [ value_value_output_res ]
 
   let call_extern_func (values_input : Value.t list) : Value.t list =
-    let _value_ctx, value_id, value_typs, value_values =
+    let value_id, value_typs, value_values =
       match values_input with
-      | [ value_ctx; value_id; value_typs; value_values ] ->
-          (value_ctx, value_id, value_typs, value_values)
+      | [ value_id; value_typs; value_values ] ->
+          (value_id, value_typs, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
     Interface.SpecTec.set_cache cache.interface;
@@ -220,10 +220,9 @@ module Make_parametric (Runner : Run.RUNNER) () : Run.EXTERN = struct
     [ value_value_output_res ]
 
   let call_extern_rel (values_input : Value.t list) : Value.t list =
-    let _value_ctx, value_id, value_values =
+    let value_id, value_values =
       match values_input with
-      | [ value_ctx; value_id; value_values ] ->
-          (value_ctx, value_id, value_values)
+      | [ value_id; value_values ] -> (value_id, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
     Interface.SpecTec.set_cache cache.interface;

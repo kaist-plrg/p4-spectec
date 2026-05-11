@@ -1,0 +1,41 @@
+;; Result to represent backtracking in evaluation
+
+syntax res<X> = OK X | FAIL
+
+syntax valres = res<val>
+syntax valsres = res<val*>
+
+;; Interface to an external cache
+
+extern syntax cachepoint
+syntax funccache = OK val | NONE
+syntax relcache = OK val* | NONE
+
+var cp : cachepoint
+
+extern dec $cache_find_func(id, val*) : funccache
+extern dec $cache_add_func_maybe(bool, id, val*, valres) : bool
+
+extern dec $cache_find_rel(id, val*) : relcache
+extern dec $cache_add_rel_maybe(bool, id, val*, valsres) : bool
+
+extern dec $cache_checkpoint() : cachepoint
+extern dec $cache_seff(cachepoint, cachepoint) : bool
+
+;;; Extern meta-function invocation
+
+extern relation Call_extern_func:
+  |- id `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+;;; Builtin meta-function invocation
+
+extern relation Call_builtin_func:
+  |- id `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2)
+
+;;; Extern relations
+
+extern relation Call_extern_rel:
+  |- id val* : res<val*>
+  hint(input %0 %1)

@@ -1,0 +1,215 @@
+;; Context
+
+syntax layerIL =
+  { TYP tdenv,
+    REL renvIL,
+    FUNC fenvIL,
+    VAL venv }
+
+dec $emptyIL_layer : layerIL
+def $emptyIL_layer =
+  { TYP $empty_map<id, typdef>,
+    REL $empty_map<id, reldefIL>,
+    FUNC $empty_map<id, funcdefIL>,
+    VAL $empty_map<varr, val> }
+
+syntax ctxIL = { GLOBAL layerIL, LOCAL layerIL }
+
+dec $emptyIL_ctx : ctxIL
+def $emptyIL_ctx = { GLOBAL $emptyIL_layer, LOCAL $emptyIL_layer }
+
+var CIL : ctxIL
+
+;; Loading context from a script
+
+dec $loadIL_typdef(ctxIL, id, typdef) : ctxIL
+def $loadIL_typdef(CIL, id, typdef)
+  = CIL[ .GLOBAL.TYP = tdenv_update ]
+  -- debug ("load type " ++ id)
+  -- if tdenv_update = $add_map<id, typdef>(CIL.GLOBAL.TYP, id, typdef)
+
+dec $loadIL_reldef(ctxIL, id, reldefIL) : ctxIL
+def $loadIL_reldef(CIL, id, reldefIL)
+  = CIL[ .GLOBAL.REL = renvIL_update ]
+  -- debug ("load rel " ++ id)
+  -- if renvIL_update = $add_map<id, reldefIL>(CIL.GLOBAL.REL, id, reldefIL)
+
+dec $loadIL_funcdef(ctxIL, id, funcdefIL) : ctxIL
+def $loadIL_funcdef(CIL, id, funcdefIL)
+  = CIL[ .GLOBAL.FUNC = fenvIL_update ]
+  -- debug ("load func " ++ id)
+  -- if fenvIL_update = $add_map<id, funcdefIL>(CIL.GLOBAL.FUNC, id, funcdefIL)
+
+dec $loadIL(ctxIL, scriptIL) : ctxIL
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if EXTTYP id = defnIL_h
+  -- if CIL' = $loadIL_typdef(CIL, id, EXT)
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if TYP id tparam* `= deftyp = defnIL_h
+  -- if CIL' = $loadIL_typdef(CIL, id, DEF tparam* `-> deftyp)
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if EXTREL id `: typ_input* `-> typ_output* = defnIL_h
+  -- if CIL' = $loadIL_reldef(CIL, id, EXT id)
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if REL id `: typ_input* `-> typ_output* `= rulgroup* elsgroup? = defnIL_h
+  -- if CIL' = $loadIL_reldef(CIL, id, DEF rulgroup* elsgroup?)
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if EXTFUNC id tparam* paramIL* `: typ = defnIL_h
+  -- if CIL' = $loadIL_funcdef(CIL, id, EXT id)
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if BUILTINFUNC id tparam* paramIL* `: typ = defnIL_h
+  -- if CIL' = $loadIL_funcdef(CIL, id, BUILTIN id tparam* paramIL*)
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if TABLEFUNC id paramIL* `: typ `= tblrowIL* = defnIL_h
+  -- if CIL' = $loadIL_funcdef(CIL, id, TABLE paramIL* `-> tblrowIL*)
+
+def $loadIL(CIL, defnIL_h :: defnIL_t*)
+  = $loadIL(CIL', defnIL_t*)
+  -- if FUNC id tparam* paramIL* `: typ `= clause* elsclause? = defnIL_h
+  -- if CIL' = $loadIL_funcdef(CIL, id, DEF tparam* `-> clause* elsclause?)
+
+def $loadIL(CIL, eps) = CIL
+
+;; Adders
+
+;;; Value adders
+
+dec $addIL_vari(ctxIL, vari, val) : ctxIL
+def $addIL_vari(CIL, vari, val)
+  = CIL[ .LOCAL.VAL = venv_update ]
+  -- if id _ iter* = vari
+  -- if venv_update = $add_map<varr, val>(CIL.LOCAL.VAL, id iter*, val)
+
+dec $addIL_varr(ctxIL, varr, val) : ctxIL
+def $addIL_varr(CIL, varr, val)
+  = CIL[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $add_map<varr, val>(CIL.LOCAL.VAL, varr, val)
+
+dec $addIL_varis(ctxIL, vari*, val*) : ctxIL
+def $addIL_varis(CIL, vari*, val*)
+  = CIL[ .LOCAL.VAL = venv_update ]
+  -- if (id _ iter* = vari)*
+  -- if venv_update = $adds_map<varr, val>(CIL.LOCAL.VAL, (id iter*)*, val*)
+
+dec $addIL_varrs(ctxIL, varr*, val*) : ctxIL
+def $addIL_varrs(CIL, varr*, val*)
+  = CIL[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $adds_map<varr, val>(CIL.LOCAL.VAL, varr*, val*)
+
+;;; Typedef adders
+
+dec $addIL_typ(ctxIL, id, typdef) : ctxIL
+
+def $addIL_typ(CIL, id, typdef)
+  = CIL[ .LOCAL.TYP = tdenv_update ]
+  -- if tdenv_update = $add_map<id, typdef>(CIL.LOCAL.TYP, id, typdef)
+
+;;; Function adders
+
+dec $addIL_func(ctxIL, id, funcdefIL) : ctxIL
+
+def $addIL_func(CIL, id, funcdefIL)
+  = CIL[ .LOCAL.FUNC = fenvIL_update ]
+  -- if fenvIL_update = $add_map<id, funcdefIL>(CIL.LOCAL.FUNC, id, funcdefIL)
+
+;;; Relation adders
+
+dec $addIL_rel(ctxIL, id, reldefIL) : ctxIL
+
+def $addIL_rel(CIL, id, reldefIL)
+  = CIL[ .LOCAL.REL = renvIL_update ]
+  -- if renvIL_update = $add_map<id, reldefIL>(CIL.LOCAL.REL, id, reldefIL)
+
+;; Finders
+
+;;; Value finders
+
+dec $findIL_vari(ctxIL, vari) : val?
+def $findIL_vari(CIL, vari) = val
+  -- if id _ iter* = vari
+  -- if val = $find_map<varr, val>(CIL.LOCAL.VAL, id iter*)
+
+dec $findIL_varr(ctxIL, varr) : val?
+def $findIL_varr(CIL, varr) = $find_map<varr, val>(CIL.LOCAL.VAL, varr)
+
+dec $findIL_varis(ctxIL, vari*) : val*?
+def $findIL_varis(CIL, vari*) = val*
+  -- if (val = $findIL_vari(CIL, vari))*
+def $findIL_varis(CIL, vari*) = eps
+  -- otherwise
+
+dec $findIL_varrs(ctxIL, varr*) : val*?
+def $findIL_varrs(CIL, varr*) = val*
+  -- if (val = $find_map<varr, val>(CIL.LOCAL.VAL, varr))*
+def $findIL_varrs(CIL, varr*) = eps
+  -- otherwise
+
+dec $findsIL_vari(ctxIL*, vari) : val*?
+def $findsIL_vari(CIL*, vari) = val*
+  -- if id _ iter* = vari
+  -- if (val = $find_map<varr, val>(CIL.LOCAL.VAL, id iter*))*
+def $findsIL_vari(CIL*, vari) = eps
+  -- otherwise
+
+;;; Typedef finders
+
+dec $findIL_typ(ctxIL, id) : typdef?
+
+def $findIL_typ(CIL, id) = typdef
+  -- if typdef = $find_map<id, typdef>(CIL.LOCAL.TYP, id)
+def $findIL_typ(CIL, id) = $find_map<id, typdef>(CIL.GLOBAL.TYP, id)
+  -- if eps = $find_map<id, typdef>(CIL.LOCAL.TYP, id)
+
+;;; Function finders
+
+dec $findIL_func(ctxIL, id) : (cursor, funcdefIL)?
+
+def $findIL_func(CIL, id) = (LOCAL, funcdefIL)
+  -- if funcdefIL = $find_map<id, funcdefIL>(CIL.LOCAL.FUNC, id)
+def $findIL_func(CIL, id) = (GLOBAL, funcdefIL)
+  -- if eps = $find_map<id, funcdefIL>(CIL.LOCAL.FUNC, id)
+  -- if funcdefIL = $find_map<id, funcdefIL>(CIL.GLOBAL.FUNC, id)
+def $findIL_func(CIL, id) = eps
+  -- otherwise
+
+;;; Relation finders
+
+dec $findIL_rel(ctxIL, id) : reldefIL?
+
+def $findIL_rel(CIL, id) = $find_map<id, reldefIL>(CIL.GLOBAL.REL, id)
+
+;; Sub-context construction for iteration
+
+dec $subIL_opt(ctxIL, vari*) : ctxIL?
+dec $subIL_list(ctxIL, vari*) : ctxIL*
+
+def $subIL_opt(CIL, vari*) = $addIL_varis(CIL, vari*, val*)
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT val = $findIL_vari(CIL, vari_iter))*
+def $subIL_opt(CIL, vari*) = eps
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT eps = $findIL_vari(CIL, vari_iter))*
+
+dec $subIL_list'(ctxIL, vari*, val*) : ctxIL
+def $subIL_list'(CIL, eps, eps) = CIL
+def $subIL_list'(CIL, vari_h :: vari_t*, val_h :: val_t*)
+  = $subIL_list'(CIL', vari_t*, val_t*)
+  -- if CIL' = $addIL_vari(CIL, vari_h, val_h)
+
+def $subIL_list(CIL, vari*) = CIL'*
+  -- if (vari_iter = $iter_vari(vari, STAR))*
+  -- if (LIST val* = $findIL_vari(CIL, vari_iter))*
+  -- if val_trans** = $transpose_<val>(val**)
+  -- if (CIL' = $subIL_list'(CIL, vari*, val_trans*))*

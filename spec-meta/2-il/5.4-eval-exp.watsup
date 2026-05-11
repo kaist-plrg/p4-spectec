@@ -1,0 +1,286 @@
+;; Expression evaluation rules
+
+;;; Boolean, number, and text evaluation rules
+
+rule EvalIL_exp/boolean:
+  CIL |- BOOL b : OK (BOOL b)
+
+rule EvalIL_exp/number:
+  CIL |- num : OK num
+
+rule EvalIL_exp/string:
+  CIL |- TEXT t : OK (TEXT t)
+
+;;; Variable evaluation rules
+
+rule EvalIL_exp/variable:
+  CIL |- VAR id : OK val
+  -- if val = $findIL_varr(CIL, id eps)
+
+;;; Unary, binary, and comparison evaluation rules
+
+rule EvalIL_exp/unary-boolean:
+  CIL |- UN NOT exp : OK (BOOL (~b))
+  -- EvalIL_exp: CIL |- exp : OK (BOOL b)
+
+rule EvalIL_exp/unary-number:
+  CIL |- UN numunop exp : OK val_res
+  -- EvalIL_exp: CIL |- exp : OK num
+  -- if val_res = $unop_number(numunop, num)
+
+rulegroup EvalIL_exp/binary-boolean {
+
+  rule EvalIL_exp/and:
+    CIL |- BIN AND exp_l exp_r : OK (BOOL (b_l /\ b_r))
+    -- EvalIL_exp: CIL |- exp_l : OK (BOOL b_l)
+    -- EvalIL_exp: CIL |- exp_r : OK (BOOL b_r)
+
+  rule EvalIL_exp/or:
+    CIL |- BIN OR exp_l exp_r : OK (BOOL (b_l \/ b_r))
+    -- EvalIL_exp: CIL |- exp_l : OK (BOOL b_l)
+    -- EvalIL_exp: CIL |- exp_r : OK (BOOL b_r)
+  
+  rule EvalIL_exp/impl:
+    CIL |- BIN IMPL exp_l exp_r : OK (BOOL (b_l => b_r))
+    -- EvalIL_exp: CIL |- exp_l : OK (BOOL b_l)
+    -- EvalIL_exp: CIL |- exp_r : OK (BOOL b_r)
+
+  rule EvalIL_exp/equiv:
+    CIL |- BIN EQUIV exp_l exp_r : OK (BOOL (b_l <=> b_r))
+    -- EvalIL_exp: CIL |- exp_l : OK (BOOL b_l)
+    -- EvalIL_exp: CIL |- exp_r : OK (BOOL b_r)
+
+}
+
+rule EvalIL_exp/binary-number:
+  CIL |- BIN numbinop exp_l exp_r : OK val_res
+  -- EvalIL_exp: CIL |- exp_l : OK num_l
+  -- EvalIL_exp: CIL |- exp_r : OK num_r
+  -- if val_res = $binop_number(numbinop, num_l, num_r)
+
+rulegroup EvalIL_exp/compare-poly {
+
+  rule EvalIL_exp/eq:
+    CIL |- CMP EQ exp_l exp_r : OK (BOOL (val_l = val_r))
+    -- EvalIL_exp: CIL |- exp_l : OK val_l 
+    -- EvalIL_exp: CIL |- exp_r : OK val_r 
+  
+  rule EvalIL_exp/neq:
+    CIL |- CMP NE exp_l exp_r : OK (BOOL (val_l =/= val_r))
+    -- EvalIL_exp: CIL |- exp_l : OK val_l 
+    -- EvalIL_exp: CIL |- exp_r : OK val_r 
+}
+
+rule EvalIL_exp/compare-number:
+  CIL |- CMP cmpop exp_l exp_r : OK val_res
+  -- EvalIL_exp: CIL |- exp_l : OK num_l
+  -- EvalIL_exp: CIL |- exp_r : OK num_r
+  -- if val_res = BOOL $cmpop_number(cmpop, num_l, num_r)
+
+;;; Upcasting, downcasting, and subtyping evaluation rules
+
+rule EvalIL_exp/upcast:
+  CIL |- UPCAST typ exp : $upcast(CIL, typ, val)
+  -- EvalIL_exp: CIL |- exp : OK val
+
+rule EvalIL_exp/downcast:
+  CIL |- DOWNCAST typ exp : $downcast(CIL, typ, val)
+  -- EvalIL_exp: CIL |- exp : OK val
+
+rule EvalIL_exp/subtype:
+  CIL |- SUB exp typ : OK (BOOL b)
+  -- EvalIL_exp: CIL |- exp : OK val
+  -- if b = $subtyp(CIL, typ, val)
+
+;;; Match evaluation rules
+
+rulegroup EvalIL_exp/match {
+
+  rule EvalIL_exp/inj:
+    CIL |- MATCH exp (INJ mixop_p) : OK (BOOL (mixop_p = mixop_v))
+    -- EvalIL_exp: CIL |- exp : OK (INJ (mixop_v _))
+
+  rule EvalIL_exp/list-cons:
+    CIL |- MATCH exp CONS : OK (BOOL $(|val*| > 0))
+    -- EvalIL_exp: CIL |- exp : OK (LIST val*)
+
+  rule EvalIL_exp/list-fixed:
+    CIL |- MATCH exp (FIXED n) : OK (BOOL (|val*| = n))
+    -- EvalIL_exp: CIL |- exp : OK (LIST val*)
+
+  rule EvalIL_exp/list-nil:
+    CIL |- MATCH exp NIL : OK (BOOL (|val*| = 0))
+    -- EvalIL_exp: CIL |- exp : OK (LIST val*)
+
+  rule EvalIL_exp/opt-some:
+    CIL |- MATCH exp SOME : OK (BOOL (val? =/= eps))
+    -- EvalIL_exp: CIL |- exp : OK (OPT val?)
+
+  rule EvalIL_exp/opt-none:
+    CIL |- MATCH exp NONE : OK (BOOL (val? = eps))
+    -- EvalIL_exp: CIL |- exp : OK (OPT val?)
+  
+}
+
+;;; Tuple evaluation rules
+
+rule EvalIL_exp/tuple:
+  CIL |- TUP exp* : OK (TUP val*)
+  -- (EvalIL_exp: CIL |- exp : OK val)*
+
+;;; Case evaluation rules
+
+rule EvalIL_exp/case:
+  CIL |- INJ (mixop exp*) : OK (INJ (mixop val*))
+  -- (EvalIL_exp: CIL |- exp : OK val)*
+
+;;; Struct evaluation rules
+
+rule EvalIL_exp/struct:
+  CIL |- STR expfield* : OK (STR valfield*)
+  -- (if atom exp = expfield)*
+  -- (EvalIL_exp: CIL |- exp : OK val)*
+  -- (if valfield = atom val)*
+
+;;; Option evaluation rules
+
+rulegroup EvalIL_exp/opt {
+
+  rule EvalIL_exp/some:
+    CIL |- OPT exp : OK (OPT val)
+    -- EvalIL_exp : CIL |- exp : OK val
+
+  rule EvalIL_exp/none:
+    CIL |- OPT eps : OK (OPT eps)
+}
+
+;;; List evaluation rules
+
+rule EvalIL_exp/list:
+  CIL |- LIST exp* : OK (LIST val*)
+  -- (EvalIL_exp: CIL |- exp : OK val)*
+
+;;; Cons-list evaluation rules
+
+rule EvalIL_exp/cons:
+  CIL |- CONS exp_h exp_t : OK (LIST (val_h :: val_t*))
+  -- EvalIL_exp: CIL |- exp_h : OK val_h
+  -- EvalIL_exp: CIL |- exp_t : OK (LIST val_t*)
+
+;;; Concatentation evaluation rules
+
+rulegroup EvalIL_exp/concat {
+
+  rule EvalIL_exp/text:
+  CIL |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
+  -- EvalIL_exp: CIL |- exp_l : OK (TEXT text_l)
+  -- EvalIL_exp: CIL |- exp_r : OK (TEXT text_r)
+
+  rule EvalIL_exp/list: 
+  CIL |- CAT exp_l exp_r : OK (LIST (val_l* ++ val_r*))
+  -- EvalIL_exp: CIL |- exp_l : OK (LIST val_l*)
+  -- EvalIL_exp: CIL |- exp_r : OK (LIST val_r*)
+
+}
+
+;;; Membership evaluation rules
+
+rule EvalIL_exp/mem:
+  CIL |- MEM exp_e exp_s : OK (BOOL $exists_((val_e = val)*))
+  -- EvalIL_exp: CIL |- exp_e : OK val_e
+  -- EvalIL_exp: CIL |- exp_s : OK (LIST val*)
+
+;;; Length evaluation rules
+
+rulegroup EvalIL_exp/len {
+
+  rule EvalIL_exp/text:
+    CIL |- LEN exp : OK (NAT (|text|))
+    -- EvalIL_exp: CIL |- exp : OK (TEXT text)
+
+  rule EvalIL_exp/list:
+    CIL |- LEN exp : OK (NAT (|val*|))
+    -- EvalIL_exp: CIL |- exp : OK (LIST val*)
+
+}
+
+;;; Dot, indexing, and slicing evaluation rules
+
+rule EvalIL_exp/dot:
+  CIL |- DOT exp atom : OK val_res
+  -- EvalIL_exp: CIL |- exp : OK (STR valfield*)
+  -- (if atom_field val_field = valfield)*
+  -- if val_res = $assoc_<atom, val>(atom, (atom_field, val_field)*)
+
+rulegroup EvalIL_exp/idx { 
+
+  rule EvalIL_exp/text:
+    CIL |- IDX exp_b exp_i : OK (TEXT t[n])
+    -- EvalIL_exp: CIL |- exp_b : OK (TEXT t)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n)
+
+  rule EvalIL_exp/list:
+    CIL |- IDX exp_b exp_i : OK (val*[n])
+    -- EvalIL_exp: CIL |- exp_b : OK (LIST val*)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n)
+}
+
+rulegroup EvalIL_exp/slice {
+
+  rule EvalIL_exp/text:
+  CIL |- SLICE exp_b exp_i exp_n : OK (TEXT t[n_i : n_n])
+    -- EvalIL_exp: CIL |- exp_b : OK (TEXT t)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+
+  rule EvalIL_exp/list:
+    CIL |- SLICE exp_b exp_i exp_n : OK (LIST val*[n_i : n_n])
+    -- EvalIL_exp: CIL |- exp_b : OK (LIST val*)
+    -- EvalIL_exp: CIL |- exp_i : OK (NAT n_i)
+    -- EvalIL_exp: CIL |- exp_n : OK (NAT n_n)
+
+}
+
+;;; Update evaluation rules
+
+rule EvalIL_exp/upd:
+  CIL |- UPD exp_b path exp_f : $update_path(CIL, val_b, path, val_f)
+  -- EvalIL_exp: CIL |- exp_b : OK val_b
+  -- EvalIL_exp: CIL |- exp_f : OK val_f
+
+;;; Meta-function call evaluation rules
+
+rule EvalIL_exp/call:
+  CIL |- CALL id targ* arg* : valres
+  -- EvalIL_targs: CIL |- targ* : typ_input*
+  -- (EvalIL_arg: CIL |- arg : OK val_input)*
+  -- CallIL_func_cached: CIL |- id targ* val_input* : valres
+
+;;; Iterated expression evaluation rules
+
+rulegroup EvalIL_exp/iter {
+
+  rule EvalIL_exp/simple:
+    CIL |- ITER exp iterexp : OK val
+    -- if varr = $is_iter_on_var(ITER exp iterexp)
+    -- if val = $findIL_varr(CIL, varr)
+
+  rule EvalIL_exp/opt:
+    CIL |- ITER exp iterexp : OK (OPT val?)
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- if CIL_sub? = $subIL_opt(CIL, vari*)
+    -- (EvalIL_exp: CIL_sub |- exp : OK val)?
+   
+  rule EvalIL_exp/list:
+    CIL |- ITER exp iterexp : OK (LIST val*)
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if STAR vari* = iterexp
+    -- if CIL_sub* = $subIL_list(CIL, vari*)
+    -- (EvalIL_exp: CIL_sub |- exp : OK val)*
+
+}
+
+rule EvalIL_exp/fail:
+  CIL |- exp : FAIL
+  -- otherwise

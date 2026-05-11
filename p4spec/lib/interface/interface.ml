@@ -117,8 +117,8 @@ module SpecTec = struct
 
   (* Program unparsing *)
 
-  let unparse_program (value_program : Value.t) : string =
-    value_program |> unboot_spec |> Il.Print.string_of_spec
+  let unparse_program (value_scriptIL : Value.t) : string =
+    value_scriptIL |> unboot_scriptIL |> Il.Print.string_of_spec
 
   (* Builtins *)
 
