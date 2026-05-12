@@ -1370,12 +1370,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
   (* Case analysis instruction evaluation *)
 
   and eval_cases (ctx : Ctx.t) (exp : exp) (cases : case list) :
-      block option * value =
+      (Ctx.t * block) option * value =
     let value_exp = eval_exp ctx exp in
     let id_tmp = "~case" $ no_region in
     let ctx = Ctx.add_value ctx (id_tmp, []) value_exp in
     let exp_inner = Pl.VarE id_tmp $$ (exp.node.at, exp.node.note) in
     let exp = annot exp_inner in
+    let bind_target (ctx : Ctx.t) (guard : guard) : Ctx.t =
+      match guard with
+      | CheckLetSubG (_, target) ->
+          let typ_target = target.node.note $ target.node.at in
+          let value' = downcast ctx typ_target value_exp in
+          assign_exp ctx target value'
+      | CheckLetMatchG (_, target) -> assign_exp ctx target value_exp
+      | _ -> ctx
+    in
     let block_match, values_cond_rev =
       List.fold_left
         (fun (block_match, values_cond_rev) (guard, block) ->
@@ -1388,15 +1397,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
                 | BoolG false -> Pl.UnE (`NotOp, `BoolT, exp)
                 | CmpG (cmpop, optyp, exp_r) ->
                     Pl.CmpE (cmpop, optyp, exp, exp_r)
-                | SubG typ -> Pl.SubE (exp, typ)
-                | MatchG pattern -> Pl.MatchE (exp, pattern)
+                | SubG typ | CheckLetSubG (typ, _) -> Pl.SubE (exp, typ)
+                | MatchG pattern | CheckLetMatchG (pattern, _) ->
+                    Pl.MatchE (exp, pattern)
                 | MemG exp_s -> Pl.MemE (exp, exp_s)
               in
               let exp_cond = annot (exp_cond $$ (exp.node.at, Il.BoolT)) in
               let value_cond = eval_exp ctx exp_cond in
               let values_cond_rev = value_cond :: values_cond_rev in
               let cond = Value.Get.bool value_cond in
-              if cond then (Some block, values_cond_rev)
+              if cond then
+                let ctx_arm = bind_target ctx guard in
+                (Some (ctx_arm, block), values_cond_rev)
               else (None, values_cond_rev))
         (None, []) cases
     in
@@ -1414,7 +1426,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
        let matched = Option.is_some block_opt in
        Hook.on_instr_dangling (not matched) iid value_cond);
     (* Evaluate the matching case if any *)
-    match block_opt with Some block -> eval_block ctx block | None -> Cont []
+    match block_opt with
+    | Some (ctx, block) -> eval_block ctx block
+    | None -> Cont []
 
   (* Group instruction evaluation *)
 

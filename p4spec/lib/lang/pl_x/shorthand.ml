@@ -34,22 +34,28 @@ let mk_instr (src : instr) (it : instr') : instr =
    - Check let exp_target be exp_scrut:
      - rest... *)
 
+(* True if evaluating [exp_rhs] yields the same value as [exp_scrut], possibly
+   through a DownCastE (which only narrows the static type). *)
+let is_scrut_alias (exp_scrut : exp) (exp_rhs : exp) : bool =
+  match exp_rhs.node.it with
+  | DownCastE (_, exp_scrut') -> eq_exp_var exp_scrut exp_scrut'
+  | _ -> eq_exp_var exp_scrut exp_rhs
+
+(* If [block] begins with "let target = scrut" or "let target = (T) scrut",
+   returns (target, rest); the leading LetI is a no-op rename. *)
+let strip_leading_rename (exp_scrut : exp) (block : block) :
+    (exp * block) option =
+  match block with
+  | { node = { it = LetI (exp_target, exp_rhs, []); _ }; _ } :: rest
+    when is_scrut_alias exp_scrut exp_rhs ->
+      Some (exp_target, rest)
+  | _ -> None
+
 let shorten_check_let (instr : instr) : instr option =
   let try_lift (exp_scrut : exp) (block : block) : instr option =
-    match block with
-    | inner :: rest -> (
-        match inner.node.it with
-        | LetI (exp_target, exp_rhs, []) ->
-            let rhs_matches_scrut =
-              match exp_rhs.node.it with
-              | DownCastE (_, exp_scrut') -> eq_exp_var exp_scrut exp_scrut'
-              | _ -> eq_exp_var exp_scrut exp_rhs
-            in
-            if rhs_matches_scrut then
-              Some (mk_instr instr (CheckLetI (exp_target, exp_scrut, rest)))
-            else None
-        | _ -> None)
-    | [] -> None
+    strip_leading_rename exp_scrut block
+    |> Option.map (fun (exp_target, rest) ->
+           mk_instr instr (CheckLetI (exp_target, exp_scrut, rest)))
   in
   match instr.node.it with
   | IfI (exp_cond, [], block, _dangle) -> (
@@ -59,6 +65,22 @@ let shorten_check_let (instr : instr) : instr option =
   | CaseI (exp_scrut, [ ((SubG _ | MatchG _), block) ], _dangle) ->
       try_lift exp_scrut block
   | _ -> None
+
+(* Shorthand for an arm of a multi-arm CaseI:
+
+   (SubG typ | MatchG p, [LetI(target, scrut [or (T) scrut], []); rest])
+     becomes
+   (CheckLetSubG (typ, target) | CheckLetMatchG (p, target), rest)
+
+   The single-arm form is handled by shorten_check_let above; this catches
+   the same pattern per-arm in multi-arm CaseI, where the shorthand cannot
+   collapse the whole instruction. *)
+let shorten_case_let_guard (exp_scrut : exp) ((guard, block) : case) : case =
+  match (strip_leading_rename exp_scrut block, guard) with
+  | Some (exp_target, rest), SubG typ -> (CheckLetSubG (typ, exp_target), rest)
+  | Some (exp_target, rest), MatchG patt ->
+      (CheckLetMatchG (patt, exp_target), rest)
+  | _ -> (guard, block)
 
 (* Shortens the following, when prose_fields is set on the LetI's hintbag:
 
@@ -163,7 +185,9 @@ and recurse_into_nested (instr : instr) : instr =
         HoldI (id, notexp, iterexps, holdcase')
     | CaseI (exp, cases, dangle) ->
         let cases' =
-          List.map (fun (guard, block) -> (guard, shorten_block block)) cases
+          cases
+          |> List.map (shorten_case_let_guard exp)
+          |> List.map (fun (guard, block) -> (guard, shorten_block block))
         in
         CaseI (exp, cases', dangle)
     | TryI arms -> TryI (List.map shorten_block arms)

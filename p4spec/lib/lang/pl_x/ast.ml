@@ -107,6 +107,9 @@ and guard =
   | SubG of typ
   | MatchG of pattern
   | MemG of exp
+  (* Shorthands — only emitted by the shorten pass. *)
+  | CheckLetSubG of typ * exp        (* scrut <: typ, bind scrut as exp *)
+  | CheckLetMatchG of pattern * exp  (* scrut matches pattern, bind scrut as exp *)
 
 and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =

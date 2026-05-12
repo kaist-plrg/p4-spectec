@@ -450,6 +450,10 @@ let render_guard ctx (exp_scrut : exp) (guard : guard) : string =
       F.asprintf "%s matches pattern %s" (render_exp ctx exp_scrut)
         (code_of_pattern pattern |> adoc_as_code ctx)
   | MemG e -> render_exp ctx exp_scrut ^ " is in " ^ render_exp ctx e
+  | CheckLetSubG (_, target) | CheckLetMatchG (_, target) ->
+      F.asprintf "let %s be %s"
+        (render_exp_as_code ctx target)
+        (render_exp ctx exp_scrut)
 
 let render_iterexp_suffix ctx (iterexps : iterexp list) : string =
   match iterexps with

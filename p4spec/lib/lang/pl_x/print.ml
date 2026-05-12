@@ -145,6 +145,12 @@ and string_of_guard guard =
   | SubG typ -> "(% has type " ^ string_of_typ typ ^ ")"
   | MatchG pattern -> "(% matches pattern " ^ string_of_pattern pattern ^ ")"
   | MemG exp -> "(% is in " ^ string_of_exp exp ^ ")"
+  | CheckLetSubG (typ, exp) ->
+      "(let " ^ string_of_exp exp ^ " be %, % has type " ^ string_of_typ typ
+      ^ ")"
+  | CheckLetMatchG (pattern, exp) ->
+      "(let " ^ string_of_exp exp ^ " be %, % matches pattern "
+      ^ string_of_pattern pattern ^ ")"
 
 and string_of_case ?(level = 0) ?(index = 0) case =
   let indent = String.make (level * 2) ' ' in
