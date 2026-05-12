@@ -133,9 +133,9 @@ and boot_rulgroups (rulgroups : Il.rulegroup list) : Value.t =
   let values_rulgroups = List.map boot_rulgroup rulgroups in
   Value.Make.list (Runtime.Type.Typ.Make.list typ_rulgroup) values_rulgroups
 
-and boot_elsgroup (eg : Il.elsegroup) : Value.t =
-  let at = eg.at in
-  let id, rulmatch_, rulpath_ = eg.it in
+and boot_elsgroup (elsegroup : Il.elsegroup) : Value.t =
+  let at = elsegroup.at in
+  let id, rulmatch_, rulpath_ = elsegroup.it in
   let value_id = boot_id id in
   let value_rulmatch = boot_rulmatch rulmatch_ in
   let value_rulpath = boot_rulpath rulpath_ in
@@ -144,10 +144,10 @@ and boot_elsgroup (eg : Il.elsegroup) : Value.t =
     <|! [ value_id; value_rulmatch; value_rulpath ]
     <<|! typ_elsgroup <<<| at)
 
-and boot_elsgroup_opt (elsgroup_opt : Il.elsegroup option) : Value.t =
+and boot_elsgroup_opt (elsegroup_opt : Il.elsegroup option) : Value.t =
   Value.Make.opt
     (Runtime.Type.Typ.Make.opt typ_elsgroup)
-    (Option.map boot_elsgroup elsgroup_opt)
+    (Option.map boot_elsgroup elsegroup_opt)
 
 (* Clauses *)
 

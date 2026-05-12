@@ -82,6 +82,8 @@ let mop_def_arg = Value.Mixops.of_string "FUN id"
 (* Expressions *)
 
 let mop_bool_exp = mop_bool_value
+let mop_num_exp_nat = mop_num_value_nat
+let mop_num_exp_int = mop_num_value_int
 let mop_text_exp = mop_text_value
 let mop_var_exp = Value.Mixops.of_string "VAR id"
 let mop_un_exp = Value.Mixops.of_string "UN unop exp"

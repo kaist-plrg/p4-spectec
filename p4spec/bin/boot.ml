@@ -30,7 +30,7 @@ let prosify filenames_spec =
 
 let booter ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool) mode
     filenames_spec =
-  let spec_sim =
+  let spec =
     match mode with
     | `IL ->
         let spec_il = elab filenames_spec in
@@ -40,8 +40,8 @@ let booter ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool) mode
         (SL spec_sl : spec)
   in
   let (module Booter) = Backend_boot.Gen.gen_zero_spectec () in
-  Booter.init ~cache ~det ~guard spec_sim;
-  (spec_sim, (module Booter : RUNNER))
+  Booter.init ~cache ~det ~guard spec;
+  (spec, (module Booter : RUNNER))
 
 let booter_n_p4 ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool)
     ~(depth : int) mode filenames_spec filenames_spec_p4 =
@@ -397,12 +397,20 @@ let parse_command =
      let%map filenames_spec =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and filename_spectec = flag "-tec" (required string) ~doc:"SpecTec program"
-     and roundtrip =
-       flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
+     and roundtrip = flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "il" no_arg ~doc:"as IL"
+           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "sl" no_arg ~doc:"as SL"
+           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+         ]
+         ~if_nothing_chosen:(Default_to `SL)
      in
      fun () ->
        try
-         let _, (module Booter) = booter ~final:true `IL filenames_spec in
+         let _, (module Booter) = booter ~final:true mode filenames_spec in
          let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
            match Booter.Interface.parse_program [] filenames_spectec with

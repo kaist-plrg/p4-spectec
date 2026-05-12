@@ -306,32 +306,31 @@ let () =
   unboot_paramIL_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("EXP typ", unboot_exp_paramIL);
-        ("FUN id `: tparam* paramIL* `-> typ", unboot_def_paramIL);
+        (mop_exp_paramIL, unboot_exp_paramIL);
+        (mop_def_paramIL, unboot_def_paramIL);
       ];
   (* Premises *)
   unboot_prem_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("REL id `: exp* `-> exp", unboot_rel_prem);
-        ("IF exp", unboot_if_prem);
-        ("IFHOLD id `: exp*", unboot_ifhold_prem);
-        ("IFNOTHOLD id `: exp*", unboot_ifnothold_prem);
-        ("LET exp `= exp", unboot_let_prem);
-        ("ITER prem iterprem", unboot_iter_prem);
-        ("DEBUG exp", unboot_debug_prem);
+        (mop_rel_prem, unboot_rel_prem);
+        (mop_if_prem, unboot_if_prem);
+        (mop_if_hold_prem, unboot_ifhold_prem);
+        (mop_if_nothold_prem, unboot_ifnothold_prem);
+        (mop_let_prem, unboot_let_prem);
+        (mop_iter_prem, unboot_iter_prem);
+        (mop_debug_prem, unboot_debug_prem);
       ];
   (* Definitions *)
   unboot_defIL_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("EXTTYP id", unboot_extern_typ_defIL);
-        ("TYP id tparam* `= deftyp", unboot_typ_defIL);
-        ("EXTREL id `: exp* `-> exp", unboot_extern_rel_defIL);
-        ("REL id `: typ* `-> typ* `= rulgroup* elsgroup?", unboot_rel_defIL);
-        ("EXTFUNC id tparam* paramIL* `: typ", unboot_extern_func_defIL);
-        ("BUILTINFUNC id tparam* paramIL* `: typ", unboot_builtin_func_defIL);
-        ("TABLEFUNC id paramIL* `: typ `= tblrowIL*", unboot_table_func_defIL);
-        ( "FUNC id tparam* paramIL* `: typ `= clause* elsclause?",
-          unboot_func_defIL );
+        (mop_extern_typ_defIL, unboot_extern_typ_defIL);
+        (mop_typ_defIL, unboot_typ_defIL);
+        (mop_extern_rel_defIL, unboot_extern_rel_defIL);
+        (mop_rel_defIL, unboot_rel_defIL);
+        (mop_extern_func_defIL, unboot_extern_func_defIL);
+        (mop_builtin_func_defIL, unboot_builtin_func_defIL);
+        (mop_table_func_defIL, unboot_table_func_defIL);
+        (mop_func_defIL, unboot_func_defIL);
       ]

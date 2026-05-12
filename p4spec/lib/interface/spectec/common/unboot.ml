@@ -79,7 +79,7 @@ let unboot_mixop (value_mixop : Value.t) : Il.mixop =
 
 let unboot_iter_tbl =
   Value.Get.build_mtchtbl
-    [ ("QUEST", fun _ _ -> Il.Opt); ("STAR", fun _ _ -> Il.List) ]
+    [ (mop_quest, fun _ _ -> Il.Opt); (mop_star, fun _ _ -> Il.List) ]
 
 let unboot_iter (value_iter : Value.t) : Il.iter =
   Value.Get.mtch_dispatch value_iter unboot_iter_tbl (fun _ _ ->
@@ -731,6 +731,9 @@ and unboot_iterexp (value_iterexp : Value.t) : Il.iterexp =
   let varis = Value.Get.nth 1 values |> unboot_varis in
   (iter, varis)
 
+and unboot_iterexps (value_iterexps : Value.t) : Il.iterexp list =
+  value_iterexps |> Value.Get.list |> List.map unboot_iterexp
+
 (* Initialize dispatch tables after all handler functions are defined *)
 
 let () =
@@ -738,124 +741,124 @@ let () =
   unboot_value_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("BOOL bool", unboot_bool_value);
-        ("NAT nat", unboot_num_value_nat);
-        ("INT int", unboot_num_value_int);
-        ("TEXT text", unboot_text_value);
-        ("STR valfield*", unboot_struct_value);
-        ("INJ valcase", unboot_variant_value);
-        ("TUP val*", unboot_tuple_value);
-        ("OPT val?", unboot_opt_value);
-        ("LIST val*", unboot_list_value);
-        ("FUNC id", unboot_func_value);
-        ("EXT json", unboot_extern_value);
+        (mop_bool_value, unboot_bool_value);
+        (mop_num_value_nat, unboot_num_value_nat);
+        (mop_num_value_int, unboot_num_value_int);
+        (mop_text_value, unboot_text_value);
+        (mop_struct_value, unboot_struct_value);
+        (mop_case_value, unboot_variant_value);
+        (mop_tuple_value, unboot_tuple_value);
+        (mop_opt_value, unboot_opt_value);
+        (mop_list_value, unboot_list_value);
+        (mop_func_value, unboot_func_value);
+        (mop_extern_value, unboot_extern_value);
       ];
   (* Types *)
   unboot_typ_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("BOOL", unboot_bool_typ);
-        ("NAT", unboot_num_typ_nat);
-        ("INT", unboot_num_typ_int);
-        ("TEXT", unboot_text_typ);
-        ("VAR id targ*", unboot_var_typ);
-        ("TUP typ*", unboot_tuple_typ);
-        ("ITER typ iter", unboot_iter_typ);
-        ("FUNC", unboot_func_typ);
+        (mop_bool_typ, unboot_bool_typ);
+        (mop_num_typ_nat, unboot_num_typ_nat);
+        (mop_num_typ_int, unboot_num_typ_int);
+        (mop_text_typ, unboot_text_typ);
+        (mop_var_typ, unboot_var_typ);
+        (mop_tuple_typ, unboot_tuple_typ);
+        (mop_iter_typ, unboot_iter_typ);
+        (mop_func_typ, unboot_func_typ);
       ];
   (* Defined types *)
   unboot_deftyp_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("ALIAS typ", unboot_plain_deftyp);
-        ("STRUCT typfield*", unboot_struct_deftyp);
-        ("VARIANT typcase*", unboot_variant_deftyp);
+        (mop_plain_deftyp, unboot_plain_deftyp);
+        (mop_struct_deftyp, unboot_struct_deftyp);
+        (mop_variant_deftyp, unboot_variant_deftyp);
       ];
   (* Operators *)
   unboot_unop_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("NOT", unboot_not_unop);
-        ("PLUS", unboot_plus_unop);
-        ("MINUS", unboot_minus_unop);
+        (mop_not_unop, unboot_not_unop);
+        (mop_plus_unop, unboot_plus_unop);
+        (mop_minus_unop, unboot_minus_unop);
       ];
   unboot_binop_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("AND", unboot_and_binop);
-        ("OR", unboot_or_binop);
-        ("IMPL", unboot_impl_binop);
-        ("EQUIV", unboot_equiv_binop);
-        ("ADD", unboot_add_binop);
-        ("SUB", unboot_sub_binop);
-        ("MUL", unboot_mul_binop);
-        ("DIV", unboot_div_binop);
-        ("MOD", unboot_mod_binop);
-        ("POW", unboot_pow_binop);
+        (mop_and_binop, unboot_and_binop);
+        (mop_or_binop, unboot_or_binop);
+        (mop_impl_binop, unboot_impl_binop);
+        (mop_equiv_binop, unboot_equiv_binop);
+        (mop_add_binop, unboot_add_binop);
+        (mop_sub_binop, unboot_sub_binop);
+        (mop_mul_binop, unboot_mul_binop);
+        (mop_div_binop, unboot_div_binop);
+        (mop_mod_binop, unboot_mod_binop);
+        (mop_pow_binop, unboot_pow_binop);
       ];
   unboot_cmpop_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("EQ", unboot_eq_cmpop);
-        ("NE", unboot_ne_cmpop);
-        ("LT", unboot_lt_cmpop);
-        ("LE", unboot_le_cmpop);
-        ("GT", unboot_gt_cmpop);
-        ("GE", unboot_ge_cmpop);
+        (mop_eq_cmpop, unboot_eq_cmpop);
+        (mop_ne_cmpop, unboot_ne_cmpop);
+        (mop_lt_cmpop, unboot_lt_cmpop);
+        (mop_le_cmpop, unboot_le_cmpop);
+        (mop_gt_cmpop, unboot_gt_cmpop);
+        (mop_ge_cmpop, unboot_ge_cmpop);
       ];
   (* Arguments *)
   unboot_arg_mtchtbl :=
     Value.Get.build_mtchtbl
-      [ ("EXP exp", unboot_exp_arg); ("FUN id", unboot_def_arg) ];
+      [ (mop_exp_arg, unboot_exp_arg); (mop_def_arg, unboot_def_arg) ];
   (* Expressions *)
   unboot_exp_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("BOOL bool", unboot_bool_exp);
-        ("NAT nat", unboot_num_exp_nat);
-        ("INT int", unboot_num_exp_int);
-        ("TEXT text", unboot_text_exp);
-        ("VAR id", unboot_var_exp);
-        ("UN unop exp", unboot_un_exp);
-        ("BIN binop exp exp", unboot_bin_exp);
-        ("CMP cmpop exp exp", unboot_cmp_exp);
-        ("UPCAST typ exp", unboot_upcast_exp);
-        ("DOWNCAST typ exp", unboot_downcast_exp);
-        ("SUB exp typ", unboot_sub_exp);
-        ("MATCH exp pattern", unboot_match_exp);
-        ("TUP exp*", unboot_tuple_exp);
-        ("INJ expcase", unboot_case_exp);
-        ("STR expfield*", unboot_str_exp);
-        ("OPT exp?", unboot_opt_exp);
-        ("LIST exp*", unboot_list_exp);
-        ("CONS exp exp", unboot_cons_exp);
-        ("CAT exp exp", unboot_cat_exp);
-        ("MEM exp exp", unboot_mem_exp);
-        ("LEN exp", unboot_len_exp);
-        ("DOT exp atom", unboot_dot_exp);
-        ("IDX exp exp", unboot_idx_exp);
-        ("SLICE exp exp exp", unboot_slice_exp);
-        ("UPD exp path exp", unboot_upd_exp);
-        ("CALL id targ* arg*", unboot_call_exp);
-        ("ITER exp iterexp", unboot_iter_exp);
+        (mop_bool_exp, unboot_bool_exp);
+        (mop_num_exp_nat, unboot_num_exp_nat);
+        (mop_num_exp_int, unboot_num_exp_int);
+        (mop_text_exp, unboot_text_exp);
+        (mop_var_exp, unboot_var_exp);
+        (mop_un_exp, unboot_un_exp);
+        (mop_bin_exp, unboot_bin_exp);
+        (mop_cmp_exp, unboot_cmp_exp);
+        (mop_upcast_exp, unboot_upcast_exp);
+        (mop_downcast_exp, unboot_downcast_exp);
+        (mop_sub_exp, unboot_sub_exp);
+        (mop_match_exp, unboot_match_exp);
+        (mop_tuple_exp, unboot_tuple_exp);
+        (mop_case_exp, unboot_case_exp);
+        (mop_struct_exp, unboot_str_exp);
+        (mop_opt_exp, unboot_opt_exp);
+        (mop_list_exp, unboot_list_exp);
+        (mop_cons_exp, unboot_cons_exp);
+        (mop_cat_exp, unboot_cat_exp);
+        (mop_mem_exp, unboot_mem_exp);
+        (mop_len_exp, unboot_len_exp);
+        (mop_dot_exp, unboot_dot_exp);
+        (mop_idx_exp, unboot_idx_exp);
+        (mop_slice_exp, unboot_slice_exp);
+        (mop_upd_exp, unboot_upd_exp);
+        (mop_call_exp, unboot_call_exp);
+        (mop_iter_exp, unboot_iter_exp);
       ];
   (* Paths *)
   unboot_path_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("ROOT", unboot_root_path);
-        ("IDX path exp", unboot_idx_path);
-        ("SLICE path exp exp", unboot_slice_path);
-        ("DOT path atom", unboot_dot_path);
+        (mop_root_path, unboot_root_path);
+        (mop_idx_path, unboot_idx_path);
+        (mop_slice_path, unboot_slice_path);
+        (mop_dot_path, unboot_dot_path);
       ];
   (* Patterns *)
   unboot_pattern_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        ("INJ mixop", unboot_inj_pattern);
-        ("CONS", unboot_cons_pattern);
-        ("FIXED nat", unboot_fixed_pattern);
-        ("NIL", unboot_nil_pattern);
-        ("SOME", unboot_some_pattern);
-        ("NONE", unboot_none_pattern);
+        (mop_case_pattern, unboot_inj_pattern);
+        (mop_list_cons_pattern, unboot_cons_pattern);
+        (mop_list_fixed_pattern, unboot_fixed_pattern);
+        (mop_list_nil_pattern, unboot_nil_pattern);
+        (mop_opt_some_pattern, unboot_some_pattern);
+        (mop_opt_none_pattern, unboot_none_pattern);
       ]

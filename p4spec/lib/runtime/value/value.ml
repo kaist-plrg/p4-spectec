@@ -302,14 +302,10 @@ module Get = struct
   type 'a mtch = region -> value list -> 'a
   type 'a mtchtbl = 'a mtch MtchTbl.t
 
-  let build_mtchtbl (cases : (string * (region -> value list -> 'a)) list) :
+  let build_mtchtbl (cases : (Mixop.t * (region -> value list -> 'a)) list) :
       'a mtchtbl =
     let tbl = MtchTbl.create (List.length cases) in
-    List.iter
-      (fun (s_mixop, f) ->
-        let key = Mixops.of_string s_mixop in
-        MtchTbl.add tbl key f)
-      cases;
+    List.iter (fun (mixop, f) -> MtchTbl.add tbl mixop f) cases;
     tbl
 
   let mtch_dispatch (value : t) (tbl : 'a mtchtbl) (case_default : 'a mtch) : 'a

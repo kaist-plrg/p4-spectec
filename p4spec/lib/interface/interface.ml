@@ -1,3 +1,4 @@
+open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
@@ -95,14 +96,20 @@ module SpecTec = struct
   include Spectec.Common.Unboot
   include Spectec.Ili.Boot
   include Spectec.Ili.Unboot
+  include Spectec.Sli.Boot
+  include Spectec.Sli.Unboot
   include Spectec.Caches
+
+  (* Mode *)
+
+  let mode : Run.mode ref = ref Run.Empty_mode
 
   (* Program parsing *)
 
   let parse_program (_includes : string list) (filenames : string list) :
       Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_files filenames in
+      let value_spec = Spectec.Parse.parse_files !mode filenames in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -110,7 +117,7 @@ module SpecTec = struct
 
   let parse_string (filename : string) (str : string) : Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_string filename str in
+      let value_spec = Spectec.Parse.parse_string !mode filename str in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -118,8 +125,11 @@ module SpecTec = struct
 
   (* Program unparsing *)
 
-  let unparse_program (value_scriptIL : Value.t) : string =
-    value_scriptIL |> unboot_scriptIL |> Il.Print.string_of_spec
+  let unparse_program (value_script : Value.t) : string =
+    match !mode with
+    | IL_mode -> value_script |> unboot_scriptIL |> Il.Print.string_of_spec
+    | SL_mode -> value_script |> unboot_scriptSL |> Sl.Print.string_of_spec
+    | Empty_mode -> assert false
 
   (* Builtins *)
 
@@ -134,5 +144,9 @@ module SpecTec = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (spec : Run.spec) : unit =
+    match spec with
+    | IL _ -> mode := IL_mode
+    | SL _ -> mode := SL_mode
+    | Empty -> assert false
 end
