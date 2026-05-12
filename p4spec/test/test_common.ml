@@ -1,3 +1,4 @@
+open Lang
 open Pass
 module Sim = Runtime.Sim.Simulator
 module Filesys = Util.Filesys
@@ -105,7 +106,10 @@ let frontend specdir =
 
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
+
+let prosify specdir =
+  specdir |> structure |> Annotate.Expand.expand_spec |> Annotate.annotate_spec
+  |> Pl_x.Shorthand.shorten_defs
 
 let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =

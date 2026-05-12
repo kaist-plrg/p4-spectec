@@ -1,4 +1,4 @@
-;; Elaboration, structuring, and prose tests for specification language
+;; Elaboration, structuring, and annotate tests for specification language
 
 (test
  (name test)
@@ -19,7 +19,7 @@
    (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
-    (diff prose.expected prose.actual)))))
+    (diff annotate.expected annotate.actual)))))
 
 (rule
  (alias speclang)
@@ -30,7 +30,7 @@
    (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
-    (diff prose.expected prose.actual)))))
+    (diff annotate.expected annotate.actual)))))
 
 ;; Rules to generate outputs
 
@@ -53,10 +53,10 @@
     (run ./test.exe struct -s ../../../../../spec)))))
 
 (rule
- (target prose.actual)
+ (target annotate.actual)
  (action
   (with-stdout-to
-   prose.actual
+   annotate.actual
    (with-stderr-to
-    prose.err
-    (run ./test.exe prose -s ../../../../../spec)))))
+    annotate.err
+    (run ./test.exe annotate -s ../../../../../spec)))))

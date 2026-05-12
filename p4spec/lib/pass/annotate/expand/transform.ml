@@ -297,44 +297,45 @@ let transform_first_with_iters
       | IterE (exp_inner, (iter, vars)) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           let { vars_inner; vars_outer; var_new; iterexps; _ } = iter_state in
-          (* main algorithm : compare / replace / increment iterations *)
-          let vars_inner, var_new, iterexps, vars =
+          (* One iteration can bind several variables at once (e.g. f(a, b)* ).
+             They all belong to a single iteration level, so add one level for
+             the whole group instead of one per variable. *)
+          let matched =
             VarSet.fold
-              (fun var_inner
-                   (vars_inner_acc, var_new_acc, iterexps_acc, vars_acc) ->
-                if List.mem var_inner vars then
-                  let vars_upd =
-                    (* Used outside CallE *)
-                    if VarSet.mem var_inner vars_outer then var_new :: vars_acc
-                    else
-                      var_new
-                      :: List.filter
-                           (fun v -> not (Var.equal v var_inner))
-                           vars_acc
-                  in
-                  let var_new_upd =
-                    let id, typ, iters = var_new_acc in
-                    (id, typ, iters @ [ iter ])
-                  in
-                  let vars_inner_upd =
-                    VarSet.map
-                      (fun v ->
-                        if Var.equal v var_inner then
-                          let id, typ, iters = var_inner in
-                          (id, typ, iters @ [ iter ])
-                        else v)
-                      vars_inner_acc
-                  in
-                  let iterexp_new =
-                    (iter, List.filter (fun v -> Var.equal v var_inner) vars_acc)
-                  in
-                  ( vars_inner_upd,
-                    var_new_upd,
-                    iterexps_acc @ [ iterexp_new ],
-                    vars_upd )
-                else (vars_inner_acc, var_new_acc, iterexps_acc, vars_acc))
-              vars_inner
-              (vars_inner, var_new, iterexps, vars)
+              (fun v acc -> if List.mem v vars then v :: acc else acc)
+              vars_inner []
+          in
+          let vars_inner, var_new, iterexps, vars =
+            match matched with
+            | [] -> (vars_inner, var_new, iterexps, vars)
+            | _ ->
+                let is_matched v = List.exists (Var.equal v) matched in
+                let vars_inner =
+                  VarSet.map
+                    (fun v ->
+                      if is_matched v then
+                        let id, typ, iters = v in
+                        (id, typ, iters @ [ iter ])
+                      else v)
+                    vars_inner
+                in
+                let iterexp_vars = List.filter is_matched vars in
+                (* Vars used only inside the call are replaced by the new var;
+                   vars also used outside it are kept alongside. *)
+                let vars_kept =
+                  List.filter
+                    (fun v -> (not (is_matched v)) || VarSet.mem v vars_outer)
+                    vars
+                in
+                let var_new_inner = var_new in
+                let var_new =
+                  let id, typ, iters = var_new in
+                  (id, typ, iters @ [ iter ])
+                in
+                ( vars_inner,
+                  var_new,
+                  iterexps @ [ (iter, iterexp_vars) ],
+                  var_new_inner :: vars_kept )
           in
           let iter_state = { iter_state with vars_inner; var_new; iterexps } in
           Some (IterE (exp_inner', (iter, vars)) $$ (at, note), iter_state)

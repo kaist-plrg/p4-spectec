@@ -1,5 +1,5 @@
-module Free = Prose.Expand.Free
-module Transform = Prose.Expand.Transform
+module Free = Free
+module Transform = Transform
 module Vars = Free.Vars
 module VarSet = Free.VarSet
 open Domain.Lib

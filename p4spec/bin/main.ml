@@ -25,9 +25,6 @@ let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 let structure filenames_spec =
   filenames_spec |> elab |> Structure.Struct.struct_spec
 
-let prosify filenames_spec =
-  filenames_spec |> structure |> Prose.Prosify.prosify_spec
-
 let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     filenames_spec =
   let spec_sim =
@@ -240,25 +237,8 @@ let struct_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let prose_command =
-  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map filenames_spec =
-       anon (non_empty_sequence_as_list ("filename" %: string))
-     in
-     fun () ->
-       try
-         let spec_pl = prosify filenames_spec in
-         Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
-         ()
-       with
-       | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
-         Format.printf "%s\n" (string_of_error at msg))
-
 let annotate_command =
-  Core.Command.basic
-    ~summary:"generate AsciiDoc prose via the pl_x AST (experimental)"
+  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map filenames_spec =
@@ -269,10 +249,10 @@ let annotate_command =
          let spec_sl =
            structure filenames_spec |> Annotate.Expand.expand_spec
          in
-         let spec_pl_x =
+         let spec_pl =
            Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
          in
-         Format.printf "%s\n" (Pl_x.Render.render_spec spec_pl_x);
+         Format.printf "%s\n" (Pl_x.Render.render_spec spec_pl);
          ()
        with
        | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
@@ -838,7 +818,6 @@ let command =
       (* Transformations *)
       ("elab", elab_command);
       ("struct", struct_command);
-      ("prose", prose_command);
       ("annotate", annotate_command);
       (* Execution *)
       ("run", run_command);

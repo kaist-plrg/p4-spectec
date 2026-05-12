@@ -1,10 +1,10 @@
 open Lang
 open Util.Source
-open Prose.Ll.Ast
+open Ll.Ast
 module Mixfix = Domain.Mixfix
 module Pl = Pl_x
 module Annot = Pl_x.Annot
-module Ctx = Prose.Ctx
+module Ctx = Ctx
 module Expand = Expand
 module IdSet = Domain.Lib.IdSet
 
@@ -351,10 +351,10 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
     | RelD (id, rel_signature, exps, block, elseblock_opt, _) ->
         let ctx_rel = Ctx.enter_rel ctx id in
         let exps_pl = List.map (annotate_exp ctx_rel) exps in
-        let block_ll = Prose.Linearize.linearize_block block in
+        let block_ll = Linearize.linearize_block block in
         let block_pl = annotate_block ctx_rel block_ll in
         let elseblock_ll_opt =
-          Option.map Prose.Linearize.linearize_block elseblock_opt
+          Option.map Linearize.linearize_block elseblock_opt
         in
         let elseblock_pl_opt =
           Option.map (annotate_block ctx_rel) elseblock_ll_opt
@@ -376,7 +376,7 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
         let tablerows_pl =
           List.map
             (fun (exps_in, exp_out, block) ->
-              let block_ll = Prose.Linearize.linearize_block block in
+              let block_ll = Linearize.linearize_block block in
               ( List.map (annotate_exp ctx) exps_in,
                 annotate_exp ctx exp_out,
                 annotate_block ctx block_ll ))
@@ -387,10 +387,10 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
     | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
         let ctx_local = Ctx.add_tparams ctx tparams in
         let params_pl = annotate_params ctx_local params in
-        let block_ll = Prose.Linearize.linearize_block block in
+        let block_ll = Linearize.linearize_block block in
         let block_pl = annotate_block ctx_local block_ll in
         let elseblock_ll_opt =
-          Option.map Prose.Linearize.linearize_block elseblock_opt
+          Option.map Linearize.linearize_block elseblock_opt
         in
         let elseblock_pl_opt =
           Option.map (annotate_block ctx_local) elseblock_ll_opt
