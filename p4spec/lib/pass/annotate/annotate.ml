@@ -2,8 +2,7 @@ open Lang
 open Util.Source
 open Ll.Ast
 module Mixfix = Domain.Mixfix
-module Pl = Pl_x
-module Annot = Pl_x.Annot
+module Annot = Pl.Annot
 module Ctx = Ctx
 module Expand = Expand
 module IdSet = Domain.Lib.IdSet

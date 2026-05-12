@@ -1,5 +1,4 @@
 open Lang
-module Pl = Pl_x
 open Pl
 
 (* Relation *)

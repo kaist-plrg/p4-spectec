@@ -38,7 +38,7 @@ let structure_command =
 
 let annotate_test specdir =
   let spec_pl = prosify specdir in
-  Pl_x.Render.render_spec spec_pl |> print_endline
+  Pl.Render.render_spec spec_pl |> print_endline
 
 let annotate_command =
   Core.Command.basic ~summary:"run annotate test"

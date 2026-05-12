@@ -1,7 +1,6 @@
 open Lang
 open Error
 open Util.Source
-module Pl = Pl_x
 
 (* Splice key and values *)
 

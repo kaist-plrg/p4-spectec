@@ -109,7 +109,7 @@ let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
 
 let prosify specdir =
   specdir |> structure |> Annotate.Expand.expand_spec |> Annotate.annotate_spec
-  |> Pl_x.Shorthand.shorten_defs
+  |> Pl.Shorthand.shorten_defs
 
 let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =

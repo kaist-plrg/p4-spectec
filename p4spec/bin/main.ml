@@ -38,7 +38,7 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     | `PL ->
         let spec_pl =
           filenames_spec |> structure |> Annotate.Expand.expand_spec
-          |> Annotate.annotate_spec |> Pl_x.Shorthand.shorten_defs
+          |> Annotate.annotate_spec |> Pl.Shorthand.shorten_defs
         in
         (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
@@ -250,9 +250,9 @@ let annotate_command =
            structure filenames_spec |> Annotate.Expand.expand_spec
          in
          let spec_pl =
-           Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
+           Annotate.annotate_spec spec_sl |> Pl.Shorthand.shorten_defs
          in
-         Format.printf "%s\n" (Pl_x.Render.render_spec spec_pl);
+         Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
        | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
@@ -671,7 +671,7 @@ let splice_command =
            structure filenames_spec |> Annotate.Expand.expand_spec
          in
          let spec_pl =
-           Annotate.annotate_spec spec_sl |> Pl_x.Shorthand.shorten_defs
+           Annotate.annotate_spec spec_sl |> Pl.Shorthand.shorten_defs
          in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with

@@ -1,6 +1,5 @@
 open Domain.Lib
 open Lang
-module Pl = Pl_x
 open Pl
 module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Pl

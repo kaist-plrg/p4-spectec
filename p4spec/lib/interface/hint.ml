@@ -58,11 +58,11 @@ let hints_of_spec_il (spec_il : Il.spec) : HEnv.t =
 let hints_of_spec_sl (spec_sl : Sl.spec) : HEnv.t =
   List.fold_left hints_of_def_sl HEnv.empty spec_sl
 
-let hints_of_def_pl (henv : HEnv.t) (def_pl : Pl_x.def) : HEnv.t =
-  let open Pl_x in
+let hints_of_def_pl (henv : HEnv.t) (def_pl : Pl.def) : HEnv.t =
+  let open Pl in
   match def_pl.Annot.node.it with
   | TypD (id, _, deftyp) -> hints_of_deftyp henv id deftyp
   | _ -> henv
 
-let hints_of_spec_pl (spec_pl : Pl_x.spec) : HEnv.t =
+let hints_of_spec_pl (spec_pl : Pl.spec) : HEnv.t =
   List.fold_left hints_of_def_pl HEnv.empty spec_pl

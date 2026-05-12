@@ -2,7 +2,6 @@ open Domain
 open Lib
 open Lang
 open Xl
-module Pl = Pl_x
 open Pl
 module ICov_single = Coverage.Instr.Single
 module ICov_multi = Coverage.Instr.Multi

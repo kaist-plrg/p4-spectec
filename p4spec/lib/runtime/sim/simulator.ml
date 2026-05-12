@@ -9,8 +9,6 @@ open Util.Source
 
 (* Module signatures for interpreter-architecture interaction *)
 
-module Pl = Pl_x
-
 type mode = IL_mode | SL_mode | PL_mode | Empty_mode
 type spec = IL of Il.spec | SL of Sl.spec | PL of Pl.spec | Empty
 type rel_result = Pass of Value.t list | Fail of region * string
