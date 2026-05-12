@@ -42,8 +42,8 @@ rulegroup Eval_prem/ifholdpr {
 
 rule Eval_prem/letpr:
   CIL |- LET exp_l `= exp_r : OK CIL'
-  -- EvalIL_exp : CIL |- exp_r : OK val_r
-  -- AssignIL_exp : CIL |- exp_l := val_r : CIL'
+  -- EvalIL_exp: CIL |- exp_r : OK val_r
+  -- AssignIL_exp: CIL |- exp_l := val_r : CIL'
 
 ;;; Iteration premises - optional
 
@@ -62,7 +62,8 @@ rulegroup Eval_prem/iterpr-opt {
     -- if QUEST vari_bound* vari_bind* = iterprem
     -- if CIL_sub = $subIL_opt(CIL, vari_bound*)
     -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
-    -- if (val_bind = $findIL_vari(CIL, vari_bind))*
+    -- Eval_prem: CIL_sub |- prem : OK CIL_sub_res
+    -- if (val_bind = $findIL_vari(CIL_sub_res, vari_bind))*
     -- if CIL_res = $addIL_varis(CIL, vari_bind_iter*, (OPT val_bind)*)
 
 }

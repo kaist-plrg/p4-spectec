@@ -1,0 +1,107 @@
+;; Type casts
+
+;;; Upcasts
+
+dec $upcastSL(ctxSL, typ, val) : res<val>
+
+def $upcastSL(CSL, INT, INT i) = OK (INT i)
+def $upcastSL(CSL, INT, NAT n) = OK (INT n)
+def $upcastSL(CSL, INT, val) = FAIL
+  -- if ~(val <: num)
+
+def $upcastSL(CSL, VAR id targ*, val) = $upcastSL(CSL, typ', val)
+  -- if (DEF tparam* `-> (ALIAS typ)) = $findSL_typ(CSL, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ' = $subst_typ(theta, typ)
+
+def $upcastSL(CSL, TUP typ*, TUP val*) = OK (TUP val_upcast*)
+  -- if (OK val_upcast = $upcastSL(CSL, typ, val))*
+def $upcastSL(CSL, TUP typ*, val) = FAIL
+  -- if ~$is_tup(val)
+
+def $upcastSL(CSL, ITER typ QUEST, OPT val?) = OK (OPT val_upcast?)
+  -- if (OK val_upcast = $upcastSL(CSL, typ, val))?
+def $upcastSL(CSL, ITER typ STAR, LIST val*) = OK (LIST val_upcast*)
+  -- if (OK val_upcast = $upcastSL(CSL, typ, val))*
+
+def $upcastSL(CSL, typ, val) = OK val
+    -- otherwise
+
+;;; Downcasts
+
+dec $downcastSL(ctxSL, typ, val) : res<val>
+
+def $downcastSL(CSL, NAT, NAT n) = OK (NAT n)
+def $downcastSL(CSL, NAT, INT i) = OK (NAT n)
+    -- if n = i
+def $downcastSL(CSL, NAT, val) = FAIL
+    -- if ~(val <: num)
+
+def $downcastSL(CSL, VAR id targ*, val) = $downcastSL(CSL, typ', val)
+    -- if (DEF tparam* `-> (ALIAS typ)) = $findSL_typ(CSL, id)
+    -- if theta = `{ (tparam `: targ)* }
+    -- if typ' = $subst_typ(theta, typ)
+
+def $downcastSL(CSL, TUP typ*, TUP val*) = OK (TUP val_downcast*)
+    -- (if OK val_downcast = $downcastSL(CSL, typ, val))*
+def $downcastSL(CSL, TUP typ*, val) = FAIL
+    -- if ~$is_tup(val)
+
+def $downcastSL(CSL, ITER typ QUEST, OPT val?) = OK (OPT val_downcast?)
+  -- if (OK val_downcast = $downcastSL(CSL, typ, val))?
+def $downcastSL(CSL, ITER typ STAR, LIST val*) = OK (LIST val_downcast*)
+  -- if (OK val_downcast = $downcastSL(CSL, typ, val))*
+
+def $downcastSL(CSL, typ, val) = OK val
+    -- otherwise
+
+;;; Value-type matching
+
+dec $subtypSL(ctxSL, typ, val) : bool
+dec $subtypSLs(ctxSL, typ*, val*) : bool
+
+def $subtypSL(CSL, BOOL, BOOL b) = true
+def $subtypSL(CSL, NAT, NAT n) = true
+def $subtypSL(CSL, NAT, INT i) = $(i >= 0)
+def $subtypSL(CSL, INT, num) = true
+def $subtypSL(CSL, TEXT, TEXT t) = true
+
+def $subtypSL(CSL, VAR id targ*, EXT json) = true
+  -- if EXT = $findSL_typ(CSL, id)
+
+def $subtypSL(CSL, VAR id targ*, val) = $subtypSL(CSL, typ_subst, val)
+  -- if DEF tparam* `-> (ALIAS typ) = $findSL_typ(CSL, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ_subst = $subst_typ(theta, typ)
+
+def $subtypSL(CSL, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtypSL(CSL, typ_case_found_subst, val)*)
+  -- if DEF tparam* `-> (VARIANT typcase*) = $findSL_typ(CSL, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (mixop_case typ_case* = typcase)*
+  -- if mixop <- mixop_case*
+  -- if typ_case_found*
+      = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
+  -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
+
+def $subtypSL(CSL, VAR id targ*, STR valfield*) = $forall_(b*)
+  -- if DEF tparam* `-> (STRUCT typfield*) = $findSL_typ(CSL, id)
+  -- if (atom_typ typ_field = typfield)*
+  -- if (atom_val val_field = valfield)*
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (typ_field_subst = $subst_typ(theta, typ_field))*
+  -- if (b = ((atom_typ = atom_val) /\ $subtypSL(CSL, typ_field_subst, val_field)))*
+
+def $subtypSL(CSL, TUP typ*, TUP val*) = $forall_($subtypSL(CSL, typ, val)*)
+
+def $subtypSL(CSL, ITER typ QUEST, OPT val) = $subtypSL(CSL, typ, val)
+def $subtypSL(CSL, ITER typ QUEST, OPT eps) = true 
+
+def $subtypSL(CSL, ITER typ STAR, LIST val*) = $forall_($subtypSL(CSL, typ, val)*)
+
+def $subtypSL(CSL, typ, val) = false
+    -- otherwise
+
+def $subtypSLs(CSL, typ*, val*) = $forall_($subtypSL(CSL, typ, val)*)
+def $subtypSLs(CSL, typ*, val*) = false
+    -- otherwise

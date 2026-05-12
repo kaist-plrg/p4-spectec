@@ -21,17 +21,21 @@ relation Eval_clauses:
   ctxIL `/ ctxIL |- clause* `@ `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
 
-rule Eval_clauses/nil:
-  CIL `/ CIL_caller |- eps `@ `( val* ) : FAIL
+rulegroup Eval_clauses {
 
-rule Eval_clauses/cons-succ:
-  CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
-  -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : OK val_res
+  rule Eval_clauses/nil:
+    CIL `/ CIL_caller |- eps `@ `( val* ) : FAIL
 
-rule Eval_clauses/cons-fail:
-  CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : valres
-  -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : FAIL
-  -- Eval_clauses: CIL `/ CIL_caller |- clause_t* `@ `( val* ) : valres
+  rule Eval_clauses/cons-succ:
+    CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : OK val_res
+    -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : OK val_res
+
+  rule Eval_clauses/cons-fail:
+    CIL `/ CIL_caller |- (clause_h :: clause_t*) `@ `( val* ) : valres
+    -- Eval_clause: CIL `/ CIL_caller |- clause_h `@ `( val* ) : FAIL
+    -- Eval_clauses: CIL `/ CIL_caller |- clause_t* `@ `( val* ) : valres
+
+}
 
 ;;; Table meta-function invocation
 
@@ -59,17 +63,21 @@ relation EvalIL_tblrows:
   ctxIL |- tblrowIL* `@ `( val* ) : res<val>
   hint(input %0 %1 %2)
 
-rule EvalIL_tblrows/nil:
-  CIL |- eps `@ `( val* ) : FAIL
+rulegroup EvalIL_tblrows {
 
-rule EvalIL_tblrows/cons-succ:
-  CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : OK val_out
-  -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : OK val_out
+  rule EvalIL_tblrows/nil:
+    CIL |- eps `@ `( val* ) : FAIL
 
-rule EvalIL_tblrows/cons-fail:
-  CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : valres
-  -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : FAIL
-  -- EvalIL_tblrows: CIL |- tblrowIL_t* `@ `( val* ) : valres
+  rule EvalIL_tblrows/cons-succ:
+    CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : OK val_out
+    -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : OK val_out
+
+  rule EvalIL_tblrows/cons-fail:
+    CIL |- (tblrowIL_h :: tblrowIL_t*) `@ `( val* ) : valres
+    -- EvalIL_tblrow: CIL |- tblrowIL_h `@ `( val* ) : FAIL
+    -- EvalIL_tblrows: CIL |- tblrowIL_t* `@ `( val* ) : valres
+
+}
 
 ;;;; Table meta-function evaluation
 

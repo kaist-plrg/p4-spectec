@@ -1,0 +1,361 @@
+;; Instruction evaluation rules
+
+;;; If instructions
+
+relation Eval_if_cond:
+  ctxSL |- exp iterexp* : unitres
+  hint(input %0 %1 %2)
+
+rulegroup Eval_if_cond {
+
+  rule Eval_if_cond/nil:
+    CSL |- exp eps : OK
+    -- EvalSL_exp: CSL |- exp : OK (BOOL true)
+
+  rule Eval_if_cond/cons-opt:
+    CSL |- exp (iterexp_h :: iterexp_t*) : OK
+    -- if QUEST vari* = iterexp_h
+    -- if CSL_sub? = $subSL_opt(CSL, vari*)
+    -- (Eval_if_cond: CSL_sub |- exp iterexp_t* : OK)?
+
+  rule Eval_if_cond/cons-list:
+    CSL |- exp (iterexp_h :: iterexp_t*) : OK
+    -- if STAR vari* = iterexp_h
+    -- if CSL_sub* = $subSL_list(CSL, vari*)
+    -- (Eval_if_cond: CSL_sub |- exp iterexp_t* : OK)*
+
+}
+
+rule Eval_if_cond/fail:
+  CSL |- exp iterexp* : FAIL
+  -- otherwise
+
+rulegroup Eval_instr/ifinstr {
+
+  rule Eval_instr/true:
+    CSL |- IF exp iterexp* block : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_if_cond: CSL |- exp iterexp_rev* : OK
+    -- Eval_block: CSL |- block : flow
+
+  rule Eval_instr/false:
+    CSL |- IF exp iterexp* block : FAIL
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_if_cond: CSL |- exp iterexp_rev* : FAIL
+
+}
+
+;;; If-hold instructions
+
+relation Eval_ifhold_cond:
+  ctxSL |- id `: exp* iterexp* : unitres
+  hint(input %0 %1 %2 %3)
+
+rulegroup Eval_ifhold_cond {
+
+  rule Eval_ifhold_cond/nil:
+    CSL |- id `: exp* eps : OK
+    -- (EvalSL_exp: CSL |- exp : OK val)*
+    -- CallSL_rel_cached: CSL |- id val* : OK eps
+
+  rule Eval_ifhold_cond/cons-opt:
+    CSL |- id `: exp* (iterexp_h :: iterexp_t*) : OK
+    -- if QUEST vari* = iterexp_h
+    -- if CSL_sub? = $subSL_opt(CSL, vari*)
+    -- (Eval_ifhold_cond: CSL_sub |- id `: exp* iterexp_t* : OK)?
+
+  rule Eval_ifhold_cond/cons-list:
+    CSL |- id `: exp* (iterexp_h :: iterexp_t*) : OK
+    -- if STAR vari* = iterexp_h
+    -- if CSL_sub* = $subSL_list(CSL, vari*)
+    -- (Eval_ifhold_cond: CSL_sub |- id `: exp* iterexp_t* : OK)*
+
+}
+
+rule Eval_ifhold_cond/fail:
+  CSL |- id `: exp* iterexp* : FAIL
+  -- otherwise
+
+rulegroup Eval_instr/ifhold {
+
+  rule Eval_instr/both:
+    CSL |- IFHOLD id `: exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond: CSL |- id `: exp* iterexp_rev* : unitres
+    -- if BOTH block_hold block_nothold = holdcase
+    -- if block_select = $ite<block>(unitres = OK, block_hold, block_nothold)
+    -- Eval_block: CSL |- block_select : flow
+
+  rule Eval_instr/hold:
+    CSL |- IFHOLD id `: exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond: CSL |- id `: exp* iterexp_rev* : OK
+    -- if HOLD block_hold = holdcase
+    -- Eval_block: CSL |- block_hold : flow
+
+  rule Eval_instr/nothold:
+    CSL |- IFHOLD id `: exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond: CSL |- id `: exp* iterexp_rev* : FAIL
+    -- if NOTHOLD block_nothold = holdcase
+    -- Eval_block: CSL |- block_nothold : flow
+
+}
+
+;;; Case instructions
+
+dec $guard_as_exp(exp, guard) : exp
+
+def $guard_as_exp(exp, BOOL true) = exp
+def $guard_as_exp(exp, BOOL false) = UN NOT exp 
+def $guard_as_exp(exp, CMP cmpop exp_r) = CMP cmpop exp exp_r
+def $guard_as_exp(exp, SUB typ) = SUB exp typ
+def $guard_as_exp(exp, MATCH pattern) = MATCH exp pattern
+def $guard_as_exp(exp, MEM exp_s) = MEM exp exp_s
+
+relation Eval_case:
+  ctxSL |- exp case : res<block>
+  hint(input %0 %1 %2)
+
+rule Eval_case/hit:
+  CSL |- exp (guard block) : OK block
+  -- if exp_cond = $guard_as_exp(exp, guard)
+  -- EvalSL_exp: CSL |- exp_cond : OK (BOOL true)
+
+rule Eval_case/fail:
+  CSL |- exp (guard block) : FAIL
+  -- otherwise
+
+relation Eval_cases:
+  ctxSL |- exp case* : res<block>
+  hint(input %0 %1 %2)
+
+rulegroup Eval_cases {
+
+  rule Eval_cases/nil:
+    CSL |- exp eps : FAIL
+
+  rule Eval_cases/cons-hit:
+    CSL |- exp (case_h :: case_t*) : OK block
+    -- Eval_case: CSL |- exp case_h : OK block
+
+  rule Eval_cases/cons-miss:
+    CSL |- exp (case_h :: case_t*) : blockres
+    -- Eval_case: CSL |- exp case_h : FAIL
+    -- Eval_cases: CSL |- exp case_t* : blockres
+
+}
+
+rule Eval_instr/case:
+  CSL |- CASE exp case* : flow
+  -- Eval_cases: CSL |- exp case* : OK block
+  -- Eval_block: CSL |- block : flow
+
+;;; Group instructions
+
+rule Eval_instr/group:
+  CSL |- GROUP _ _ `: _ `-> _ `= block : flow
+  -- Eval_block: CSL |- block : flow
+
+;;; Let instructions
+
+relation Eval_let:
+  ctxSL |- exp `= exp iterinstr* : ctxSLres
+  hint(input %0 %1 %2 %3)
+
+rulegroup Eval_let {
+
+  rule Eval_let/nil:
+    CSL |- exp_l `= exp_r eps : OK CSL'
+    -- EvalSL_exp: CSL |- exp_r : OK val_r
+    -- AssignSL_exp: CSL |- exp_l := val_r : CSL'
+
+  rule Eval_let/cons-opt-none:
+    CSL |- exp_l `= exp_r (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $subSL_opt(CSL, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_bind*)
+
+  rule Eval_let/cons-opt-some:
+    CSL |- exp_l `= exp_r (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if CSL_sub = $subSL_opt(CSL, vari_bound*)
+    ---- ;; iter body
+    -- Eval_let: CSL_sub |- exp_l `= exp_r iterinstr_t* : OK CSL_sub_res
+    ---- ;; iterate out of
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $findSL_vari(CSL_sub_res, vari_bind))*
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, (OPT val_bind)*)
+
+  rule Eval_let/cons-list-empty:
+    CSL |- exp_l `= exp_r (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $subSL_list(CSL, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_bind*)
+
+  rule Eval_let/cons-list-nonempty:
+    CSL |- exp_l `= exp_r (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if CSL_sub* = $subSL_list(CSL, vari_bound*)
+    -- if CSL_sub* =/= eps
+    ---- ;; iter body
+    -- (Eval_let: CSL_sub |- exp_l `= exp_r iterinstr_t* : OK CSL_sub_res)*
+    -- if (val_sub_bind* = $findSL_varis(CSL_sub_res, vari_bind*))*
+    ---- ;; iterate out of
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_res_bind*)
+
+}
+
+rule Eval_let/fail:
+  CSL |- exp_l `= exp_r iterinstr* : FAIL
+  -- otherwise
+
+rule Eval_instr/let:
+  CSL |- LET exp_l `= exp_r iterinstr* block : flow
+  -- Eval_let: CSL |- exp_l `= exp_r iterinstr* : OK CSL'
+  -- Eval_block: CSL' |- block : flow
+
+;;; Relation instructions
+
+relation Eval_rel:
+  ctxSL |- id `: exp* `-> exp* iterinstr* : ctxSLres
+  hint(input %0 %1 %2 %3 %4)
+
+rulegroup Eval_rel {
+
+  rule Eval_rel/nil:
+    CSL |- id `: exp_in* `-> exp_out* eps : OK CSL'
+    -- (EvalSL_exp: CSL |- exp_in : OK val_in)*
+    -- CallSL_rel_cached: CSL |- id val_in* : OK val_out*
+    -- AssignSL_exps: CSL |- exp_out* := val_out* : CSL'
+
+  rule Eval_rel/cons-opt-none:
+    CSL |- id `: exp_in* `-> exp_out* (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $subSL_opt(CSL, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_bind*)
+
+  rule Eval_rel/cons-opt-some:
+    CSL |- id `: exp_in* `-> exp_out* (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if CSL_sub = $subSL_opt(CSL, vari_bound*)
+    ---- ;; iter body
+    -- Eval_rel: CSL_sub |- id `: exp_in* `-> exp_out* iterinstr_t* : OK CSL_sub_res
+    ---- ;; iterate out of
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $findSL_vari(CSL_sub_res, vari_bind))*
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, (OPT val_bind)*)
+
+  rule Eval_rel/cons-list-empty:
+    CSL |- id `: exp_in* `-> exp_out* (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $subSL_list(CSL, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_bind*)
+
+  rule Eval_rel/cons-list-nonempty:
+    CSL |- id `: exp_in* `-> exp_out* (iterinstr_h :: iterinstr_t*) : OK CSL_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if CSL_sub* = $subSL_list(CSL, vari_bound*)
+    -- if CSL_sub* =/= eps
+    ---- ;; iter body
+    -- (Eval_rel: CSL_sub |- id `: exp_in* `-> exp_out* iterinstr_t* : OK CSL_sub_res)*
+    -- if (val_sub_bind* = $findSL_varis(CSL_sub_res, vari_bind*))*
+    ---- ;; iterate out of
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if CSL_res = $addSL_varis(CSL, vari_bind_iter*, val_res_bind*)
+
+}
+
+rule Eval_rel/fail:
+  CSL |- id `: exp_in* `-> exp_out* iterinstr* : FAIL
+  -- otherwise
+
+rule Eval_instr/rel:
+  CSL |- REL id `: exp* `-> exp* iterinstr* block : flow
+  -- Eval_rel: CSL |- id `: exp* `-> exp* iterinstr* : OK CSL'
+  -- Eval_block: CSL' |- block : flow
+
+;;; Result instructions
+
+rule Eval_instr/result:
+  CSL |- RESULT _ `-> _ `: exp* : RES val*
+  -- (EvalSL_exp: CSL |- exp : OK val)*
+
+;;; Return instructions
+
+rule Eval_instr/return:
+  CSL |- RETURN exp : RET val
+  -- EvalSL_exp: CSL |- exp : OK val
+
+;;; Debug instructions
+
+rule Eval_instr/dbg:
+  CSL |- DEBUG exp : OK
+  -- EvalSL_exp: CSL |- exp : OK val
+  -- debug val
+
+rule Eval_instr/fail:
+  CSL |- instr : FAIL
+  -- otherwise
+
+;; Instruction sequence evaluation rules
+
+rulegroup Eval_instrs {
+
+  rule Eval_instrs/nil:
+    CSL |- eps : OK
+
+  rule Eval_instrs/cons-res:
+    CSL |- instr_h :: instr_t* : RES val*
+    -- Eval_instr: CSL |- instr_h : RES val*
+
+  rule Eval_instrs/cons-ret:
+    CSL |- instr_h :: instr_t* : RET val
+    -- Eval_instr: CSL |- instr_h : RET val
+
+  rule Eval_instrs/ok:
+    CSL |- instr_h :: instr_t* : flow
+    -- Eval_instr: CSL |- instr_h : OK
+    -- Eval_instrs: CSL |- instr_t* : flow
+
+  rule Eval_instrs/fail:
+    CSL |- instr_h :: instr_t* : flow
+    -- Eval_instr: CSL |- instr_h : FAIL
+    -- Eval_instrs: CSL |- instr_t* : flow
+
+}
+
+;; Block evaluation rules
+
+rule Eval_block:
+  CSL |- block : flow
+  -- Eval_instrs: CSL |- block : flow

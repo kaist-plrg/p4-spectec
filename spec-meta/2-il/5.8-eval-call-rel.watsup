@@ -25,17 +25,21 @@ relation Eval_ruls:
   ctxIL |- rulmatch -> rulpath* `@ `( val* ) : res<val*>
   hint(input %0 %1 %2 %3)
 
-rule Eval_ruls/nil:
-  CIL |- rulmatch -> eps `@ `( val* ) : FAIL
+rulegroup Eval_ruls {
 
-rule Eval_ruls/cons-succ:
-  CIL |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
-  -- Eval_rul: CIL |- rulmatch -> rulpath_h `@ `( val* ) : OK val_out*
+  rule Eval_ruls/nil:
+    CIL |- rulmatch -> eps `@ `( val* ) : FAIL
 
-rule Eval_ruls/cons-fail:
-  CIL |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : valsres
-  -- Eval_rul: CIL |- rulmatch -> rulpath_h `@ `( val* ) : FAIL
-  -- Eval_ruls: CIL |- rulmatch -> rulpath_t* `@ `( val* ) : valsres
+  rule Eval_ruls/cons-succ:
+    CIL |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : OK val_out*
+    -- Eval_rul: CIL |- rulmatch -> rulpath_h `@ `( val* ) : OK val_out*
+
+  rule Eval_ruls/cons-fail:
+    CIL |- rulmatch -> (rulpath_h :: rulpath_t*) `@ `( val* ) : valsres
+    -- Eval_rul: CIL |- rulmatch -> rulpath_h `@ `( val* ) : FAIL
+    -- Eval_ruls: CIL |- rulmatch -> rulpath_t* `@ `( val* ) : valsres
+
+}
 
 ;;; Rule group evaluation
 
@@ -58,17 +62,21 @@ relation Eval_rulgroups:
   ctxIL |- rulgroup* `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
 
-rule Eval_rulgroups/nil:
-  CIL |- eps `@ `( val* ) : FAIL
+rulegroup Eval_rulgroups {
 
-rule Eval_rulgroups/cons-succ:
-  CIL |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
-  -- Eval_rulgroup: CIL |- rulgroup_h `@ `( val* ) : OK val_out*
+  rule Eval_rulgroups/nil:
+    CIL |- eps `@ `( val* ) : FAIL
 
-rule Eval_rulgroups/cons-fail:
-  CIL |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : valsres
-  -- Eval_rulgroup: CIL |- rulgroup_h `@ `( val* ) : FAIL
-  -- Eval_rulgroups: CIL |- rulgroup_t* `@ `( val* ) : valsres
+  rule Eval_rulgroups/cons-succ:
+    CIL |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : OK val_out*
+    -- Eval_rulgroup: CIL |- rulgroup_h `@ `( val* ) : OK val_out*
+
+  rule Eval_rulgroups/cons-fail:
+    CIL |- (rulgroup_h :: rulgroup_t*) `@ `( val* ) : valsres
+    -- Eval_rulgroup: CIL |- rulgroup_h `@ `( val* ) : FAIL
+    -- Eval_rulgroups: CIL |- rulgroup_t* `@ `( val* ) : valsres
+
+}
 
 ;;; Defined relations
 

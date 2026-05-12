@@ -1,0 +1,58 @@
+;; Relation invocation
+
+;;; Defined relations
+
+relation CallSL_defined_rel:
+  ctxSL |- definedRelDefSL `@ `( val* ) : res<val*>
+  hint(input %0 %1 %2)
+
+rule CallSL_defined_rel/succ:
+  CSL |- definedRelDefSL `@ `( val* ) : OK val_out*
+  -- if DEF exp* block block_els? = definedRelDefSL
+  -- if CSL_local = CSL[ .LOCAL = $emptySL_layer ]
+  -- AssignSL_exps: CSL_local |- exp* := val* : CSL_local'
+  -- if block_all = block ++ $elsblock_as_block(block_els?)
+  -- Eval_block: CSL_local' |- block_all : RES val_out*
+
+rule CallSL_defined_rel/fail:
+  CSL |- definedRelDefSL `@ `( val* ) : FAIL
+  -- otherwise
+
+;; Relation dispatch
+
+rulegroup CallSL_rel {
+
+    rule CallSL_rel/defined:
+      CSL |- definedRelDefSL val* : valsres
+      -- CallSL_defined_rel:
+          CSL |- definedRelDefSL `@ `( val* ) : valsres
+
+    rule CallSL_rel/ext:
+      CSL |- (EXT id) val* : valsres
+      -- Call_extern_rel:
+          |- id val* : valsres
+
+}
+
+;; Relation call wrapper with cache
+
+rule CallSL_rel_cached:
+  CSL |- id val* : valsres
+  -- if relcache = $cache_find_rel(id, val*)
+  -- CallSL_rel_dispatch: CSL |- id val* relcache : valsres
+
+rule CallSL_rel_dispatch/hit:
+  CSL |- id val_input* (OK val_cached*) : OK val_cached*
+
+rule CallSL_rel_dispatch/miss:
+  CSL |- id val_input* NONE : valsres
+  -- if reldefSL = $findSL_rel(CSL, id)
+  -- if cp_before = $cache_checkpoint()
+  -- CallSL_rel: CSL |- reldefSL val_input* : valsres
+  -- if cp_after = $cache_checkpoint()
+  -- if b_ext = (reldefSL <: externRelDefSL)
+  -- if b_seff = $cache_seff(cp_before, cp_after)
+  -- if $cache_add_rel_maybe(
+          b_ext \/ b_seff,
+          ;; true,
+          id, val_input*, valsres)

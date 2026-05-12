@@ -1,0 +1,125 @@
+;; Assignments
+
+relation AssignSL_exp:
+  ctxSL |- exp := val : ctxSL
+  hint(input %0 %1 %2)
+
+relation AssignSL_exps:
+  ctxSL |- exp* := val* : ctxSL
+  hint(input %0 %1 %2)
+
+relation AssignSL_param:
+  ctxSL `/ ctxSL |- paramSL := val : ctxSL
+  hint(input %0 %1 %2 %3)
+
+relation AssignSL_params:
+  ctxSL `/ ctxSL  |- paramSL* := val* : ctxSL
+  hint(input %0 %1 %2 %3)
+
+;;; Assigning to an expression
+
+rule AssignSL_exp/variable:
+  CSL |- VAR id := val : CSL'
+  -- if CSL' = $addSL_varr(CSL, id eps, val)
+
+rule AssignSL_exp/tup:
+  CSL |- TUP exp* := TUP val* : CSL'
+  -- AssignSL_exps: CSL |- exp* := val* : CSL'
+
+rule AssignSL_exp/inj:
+  CSL |- INJ (mixop exp*) := INJ (mixop val*) : CSL'
+  -- AssignSL_exps: CSL |- exp* := val* : CSL'
+
+rule AssignSL_exp/str:
+  CSL |- STR expfield* := STR valfield* : CSL'
+  -- (if atom val = valfield)*
+  -- (if atom exp = expfield)*
+  -- AssignSL_exps: CSL |- exp* := val* : CSL'
+
+rulegroup AssignSL_exp/opt {
+
+  rule AssignSL_exp/opt-some:
+    CSL |- OPT exp := OPT val : CSL'
+    -- AssignSL_exp: CSL |- exp := val : CSL'
+
+  rule AssignSL_exp/opt-none:
+    CSL |- OPT eps := OPT eps : CSL
+
+}
+
+rule AssignSL_exp/list:
+  CSL |- LIST exp* := LIST val* : CSL'
+  -- AssignSL_exps: CSL |- exp* := val* : CSL'
+
+rule AssignSL_exp/cons:
+  CSL |- CONS exp_h exp_t := LIST (val_h :: val_t*) : CSL''
+  -- AssignSL_exp: CSL |- exp_h := val_h : CSL'
+  -- AssignSL_exp: CSL' |- exp_t := LIST val_t* : CSL''
+
+rulegroup AssignSL_exp/iter {
+
+  rule AssignSL_exp/simple:
+    CSL |- ITER exp iterexp := val : CSL'
+    -- if varr = $is_iter_on_var(ITER exp iterexp)
+    -- if CSL' = $addSL_varr(CSL, varr, val)
+
+  rule AssignSL_exp/opt-none:
+    CSL |- ITER exp iterexp := OPT eps : CSL'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- if (vari_iter = $iter_vari(vari, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
+    -- if CSL' = $addSL_varis(CSL, vari_iter*, val_bind*)
+
+  rule AssignSL_exp/opt-some:
+    CSL |- ITER exp iterexp := OPT val : CSL''
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- AssignSL_exp: CSL |- exp := val : CSL'
+    -- if (vari_iter = $iter_vari(vari, QUEST))*
+    -- if (val_sub = $findSL_vari(CSL', vari))*
+    -- if CSL'' = $addSL_varis(CSL', vari_iter*, OPT val_sub)*
+
+  rule AssignSL_exp/list:
+    CSL |- ITER exp iterexp := LIST val* : CSL'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if STAR vari* = iterexp
+    -- if CSL_local = CSL[ .LOCAL.VAL = $empty_map<varr, val> ]
+    -- (AssignSL_exp: CSL_local |- exp := val : CSL_sub)*
+    -- if (vari_iter = $iter_vari(vari, STAR))*
+    -- if (val_sub* = $findsSL_vari(CSL_sub*, vari))*
+    -- if (val_bind = LIST val_sub*)*
+    -- if CSL' = $addSL_varis(CSL, vari_iter*, val_bind*)
+
+}
+
+;;; Assigning to a sequence of expressions
+
+rule AssignSL_exps/nil:
+  CSL |- eps := eps : CSL 
+
+rule AssignSL_exps/cons:
+  CSL |- exp_h :: exp_t* := val_h :: val_t* : CSL''
+  -- AssignSL_exp: CSL |- exp_h := val_h : CSL'
+  -- AssignSL_exps: CSL' |- exp_t* := val_t* : CSL''
+
+;;; Assigning to a parameter
+
+rule AssignSL_param/exp:
+  CSL_callee `/ _ |- EXP _ exp := val : CSL_callee'
+  -- AssignSL_exp: CSL_callee |- exp := val : CSL_callee'
+
+rule AssignSL_param/fun:
+  CSL_callee `/ CSL_caller |- FUN id_callee `: _ _ `-> _ := FUNC id_caller : CSL_callee'
+  -- if (_, funcdefSL) = $findSL_func(CSL_caller, id_caller)
+  -- if CSL_callee' = $addSL_func(CSL_callee, id_callee, funcdefSL)
+
+;;; Assigning to a sequence of parameters
+
+rule AssignSL_params/nil:
+  CSL_callee `/ _ |- eps := eps : CSL_callee
+
+rule AssignSL_params/cons:
+  CSL_callee `/ CSL_caller |- paramSL_h :: paramSL_t* := val_h :: val_t* : CSL_callee''
+  -- AssignSL_param: CSL_callee `/ CSL_caller |- paramSL_h := val_h : CSL_callee'
+  -- AssignSL_params: CSL_callee' `/ CSL_caller |- paramSL_t* := val_t* : CSL_callee''
