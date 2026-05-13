@@ -7,6 +7,14 @@ let version = "0.1"
 
 exception CommandError of string
 
+(* Modes *)
+
+let interp_mode_arg =
+  Command.Arg_type.create (function
+    | "il" -> IL_mode
+    | "sl" -> SL_mode
+    | _ -> failwith "invalid mode, expected il or sl")
+
 (* Operations *)
 
 let expand_spec filenames =
@@ -29,42 +37,53 @@ let prosify filenames_spec =
   filenames_spec |> structure ~final:false |> Prose.Prosify.prosify_spec
 
 let booter ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool) mode
-    filenames_spec =
+    specmode filenames_spec =
   let spec =
     match mode with
-    | `IL ->
+    | IL_mode ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
-    | `SL ->
+    | SL_mode ->
         let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
+    | Empty_mode -> assert false
   in
-  let (module Booter) = Backend_boot.Gen.gen_zero_spectec () in
+  let (module Booter) =
+    match specmode with
+    | IL_mode -> Backend_boot.Gen.gen_zero_il ()
+    | SL_mode -> Backend_boot.Gen.gen_zero_sl ()
+    | Empty_mode -> assert false
+  in
   Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
 let booter_n_p4 ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool)
-    ~(depth : int) mode filenames_spec filenames_spec_p4 =
+    ~(depth : int) mode specmode filenames_spec filenames_spec_p4 =
   let spec =
     match mode with
-    | `IL ->
+    | IL_mode ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
-    | `SL ->
+    | SL_mode ->
         let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
+    | Empty_mode -> assert false
   in
   let spec_p4 =
     match mode with
-    | `IL ->
+    | IL_mode ->
         let spec_il = elab filenames_spec_p4 in
         (IL spec_il : spec)
-    | `SL ->
+    | SL_mode ->
         let spec_sl = structure ~final filenames_spec_p4 in
         (SL spec_sl : spec)
+    | Empty_mode -> assert false
   in
   let (module Runner_P4), runners_intermediate, (module Booter) =
-    Backend_boot.Gen.gen_n_p4 ~depth
+    match specmode with
+    | IL_mode -> Backend_boot.Gen.gen_n_p4_il ~depth
+    | SL_mode -> Backend_boot.Gen.gen_n_p4_sl ~depth
+    | Empty_mode -> assert false
   in
   Runner_P4.init ~cache ~det ~guard spec_p4;
   List.iter
@@ -75,27 +94,33 @@ let booter_n_p4 ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool)
   (spec, (module Booter : RUNNER))
 
 let booter_n_spectec ?(cache = true) ?(det = false) ?(guard = false)
-    ~(final : bool) ~(depth : int) mode filenames_spec filenames_spec_pgm =
+    ~(final : bool) ~(depth : int) mode specmode filenames_spec
+    filenames_spec_pgm =
   let spec =
     match mode with
-    | `IL ->
+    | IL_mode ->
         let spec_il = elab filenames_spec in
         (IL spec_il : spec)
-    | `SL ->
+    | SL_mode ->
         let spec_sl = structure ~final filenames_spec in
         (SL spec_sl : spec)
+    | Empty_mode -> assert false
   in
   let spec_pgm =
     match mode with
-    | `IL ->
+    | IL_mode ->
         let spec_il = elab filenames_spec_pgm in
         (IL spec_il : spec)
-    | `SL ->
+    | SL_mode ->
         let spec_sl = structure ~final filenames_spec_pgm in
         (SL spec_sl : spec)
+    | Empty_mode -> assert false
   in
   let (module Runner_SpecTec_pgm), runners_intermediate, (module Booter) =
-    Backend_boot.Gen.gen_n_spectec ~depth
+    match specmode with
+    | IL_mode -> Backend_boot.Gen.gen_n_spectec_il ~depth
+    | SL_mode -> Backend_boot.Gen.gen_n_spectec_sl ~depth
+    | Empty_mode -> assert false
   in
   Runner_SpecTec_pgm.init ~cache ~det ~guard spec_pgm;
   List.iter
@@ -179,20 +204,19 @@ let run_command =
          ]
          ~if_nothing_chosen:(Default_to None)
      and mode =
-       Command.Param.choose_one
-         [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
-           flag "sl" no_arg ~doc:"run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
-         ]
-         ~if_nothing_chosen:(Default_to `SL)
+       flag "mode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} interpreter"
+     and specmode =
+       flag "specmode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} meta-spec"
      in
      fun () ->
        try
          let cache = not no_cache in
-         let spec_sim, (module Booter) =
-           booter ~cache ~det ~guard ~final:true mode filenames_spec
+         let spec, (module Booter) =
+           booter ~cache ~det ~guard ~final:true mode specmode filenames_spec
          in
          let handlers =
            if profile then
@@ -210,7 +234,7 @@ let run_command =
            | None -> handlers
          in
          Inst.Hook.register handlers;
-         Inst.Hook.init_spec spec_sim;
+         Inst.Hook.init_spec spec;
          let result = Booter.Interp.eval_program relname [] filename_spectec in
          Inst.Hook.finish ();
          match result with
@@ -252,14 +276,13 @@ let boot_n_p4_command =
          ]
          ~if_nothing_chosen:(Default_to None)
      and mode =
-       Command.Param.choose_one
-         [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
-           flag "sl" no_arg ~doc:"run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
-         ]
-         ~if_nothing_chosen:(Default_to `SL)
+       flag "mode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} meta-spec"
+     and specmode =
+       flag "specmode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} meta-spec"
      in
      fun () ->
        try
@@ -271,8 +294,8 @@ let boot_n_p4_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_p4 = expand_spec [ dirname_spec_p4 ] in
          let spec, (module Booter) =
-           booter_n_p4 ~cache ~det ~guard ~final:true ~depth mode filenames_spec
-             filenames_spec_p4
+           booter_n_p4 ~cache ~det ~guard ~final:true ~depth mode specmode
+             filenames_spec filenames_spec_p4
          in
          let handlers =
            if profile then
@@ -292,8 +315,8 @@ let boot_n_p4_command =
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec;
          let value_spec =
-           Backend_boot.Patch.apply_n_p4 ~depth filenames_spec rel
-             filenames_spec_p4 rel_p4 includes_p4 filename_p4
+           Backend_boot.Patch.apply_n_p4 ~depth ~mode:specmode filenames_spec
+             rel filenames_spec_p4 rel_p4 includes_p4 filename_p4
          in
          let result = Booter.Interp.eval_rel rel [ value_spec ] in
          Inst.Hook.finish ();
@@ -337,14 +360,13 @@ let boot_n_spectec_command =
          ]
          ~if_nothing_chosen:(Default_to None)
      and mode =
-       Command.Param.choose_one
-         [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
-           flag "sl" no_arg ~doc:"run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
-         ]
-         ~if_nothing_chosen:(Default_to `SL)
+       flag "mode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} interpreter"
+     and specmode =
+       flag "specmode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} meta-spec"
      in
      fun () ->
        try
@@ -356,7 +378,7 @@ let boot_n_spectec_command =
          let filenames_spec = expand_spec [ dirname_spec ] in
          let filenames_spec_pgm = expand_spec [ dirname_spec_pgm ] in
          let spec, (module Booter) =
-           booter_n_spectec ~cache ~det ~guard ~final:true ~depth mode
+           booter_n_spectec ~cache ~det ~guard ~final:true ~depth mode specmode
              filenames_spec filenames_spec_pgm
          in
          let handlers =
@@ -377,8 +399,8 @@ let boot_n_spectec_command =
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec;
          let value_spec =
-           Backend_boot.Patch.apply_n_spectec ~depth filenames_spec rel
-             filenames_spec_pgm rel_pgm filename_pgm
+           Backend_boot.Patch.apply_n_spectec ~depth ~mode:specmode
+             filenames_spec rel filenames_spec_pgm rel_pgm filename_pgm
          in
          let result = Booter.Interp.eval_rel rel [ value_spec ] in
          Inst.Hook.finish ();
@@ -398,19 +420,16 @@ let parse_command =
        anon (non_empty_sequence_as_list ("filename" %: string))
      and filename_spectec = flag "-tec" (required string) ~doc:"SpecTec program"
      and roundtrip = flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
-     and mode =
-       Command.Param.choose_one
-         [
-           flag "il" no_arg ~doc:"as IL"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
-           flag "sl" no_arg ~doc:"as SL"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
-         ]
-         ~if_nothing_chosen:(Default_to `SL)
+     and specmode =
+       flag "specmode"
+         (optional_with_default SL_mode interp_mode_arg)
+         ~doc:"on {il|sl} meta-spec"
      in
      fun () ->
        try
-         let _, (module Booter) = booter ~final:true mode filenames_spec in
+         let _, (module Booter) =
+           booter ~final:true SL_mode specmode filenames_spec
+         in
          let filenames_spectec = expand_spec [ filename_spectec ] in
          let value_program =
            match Booter.Interface.parse_program [] filenames_spectec with
@@ -451,8 +470,8 @@ let command =
       ("prose", prose_command);
       (* Execution *)
       ("run", run_command);
-      ("boot-n-p4", boot_n_p4_command);
-      ("boot-n-spectec", boot_n_spectec_command);
+      ("boot-p4", boot_n_p4_command);
+      ("boot-spectec", boot_n_spectec_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]

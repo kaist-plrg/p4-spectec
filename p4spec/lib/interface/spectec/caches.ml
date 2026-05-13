@@ -63,6 +63,39 @@ let add_unboot_value_pingpong_cache : (Il.value -> Il.value -> unit) ref =
 
 (* Setter and unsetter *)
 
+let make_cache () : cache =
+  {
+    enabled = true;
+    boot_mixop = MCache.create ~size:4096;
+    boot_value = VCache.create ~size:4096;
+    boot_value_pingpong = VCache.create ~size:(256 * 1024);
+    unboot_mixop = VCache.create ~size:4096;
+    unboot_typ = VCache.create ~size:4096;
+    unboot_value = VCache.create ~size:4096;
+    unboot_value_pingpong = VCache.create ~size:(256 * 1024);
+  }
+
+let cache_enable (cache : cache) : unit = cache.enabled <- true
+
+let cache_disable_reset (cache : cache) : unit =
+  cache.enabled <- false;
+  MCache.reset cache.boot_mixop;
+  VCache.reset cache.boot_value;
+  VCache.reset cache.boot_value_pingpong;
+  VCache.reset cache.unboot_mixop;
+  VCache.reset cache.unboot_typ;
+  VCache.reset cache.unboot_value;
+  VCache.reset cache.unboot_value_pingpong
+
+let cache_clear (cache : cache) : unit =
+  MCache.clear cache.boot_mixop;
+  VCache.clear cache.boot_value;
+  VCache.clear cache.boot_value_pingpong;
+  VCache.clear cache.unboot_mixop;
+  VCache.clear cache.unboot_typ;
+  VCache.clear cache.unboot_value;
+  VCache.clear cache.unboot_value_pingpong
+
 let unset_cache () : unit =
   (* Boot caches *)
   (find_boot_mixop_cache := fun _ -> None);

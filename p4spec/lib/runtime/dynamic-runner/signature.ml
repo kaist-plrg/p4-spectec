@@ -66,15 +66,15 @@ module type EXTERN = sig
   val eval_extern_rel : string -> Value.t list -> rel_result
   val eval_extern_func : string -> Typ.t list -> Value.t list -> func_result
 
-  (* Mode initialization *)
-
-  val init_mode : mode -> unit
-
   (* State management *)
 
   val checkpoint : unit -> int
   val seff : int -> int -> bool
   val clear : unit -> unit
+
+  (* Mode initialization for interp-extern knot *)
+
+  val init_mode : mode -> unit
 end
 
 (* SpecTec interperter(s) *)

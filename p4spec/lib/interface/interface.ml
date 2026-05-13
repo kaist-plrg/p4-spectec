@@ -89,27 +89,21 @@ module P4 = struct
     unparser := printer
 end
 
-(* SpecTec *)
+(* SpecTec IL *)
 
-module SpecTec = struct
+module SpecTec_IL = struct
   include Spectec.Common.Boot
   include Spectec.Common.Unboot
   include Spectec.Ili.Boot
   include Spectec.Ili.Unboot
-  include Spectec.Sli.Boot
-  include Spectec.Sli.Unboot
   include Spectec.Caches
-
-  (* Mode *)
-
-  let mode : Run.mode ref = ref Run.Empty_mode
 
   (* Program parsing *)
 
   let parse_program (_includes : string list) (filenames : string list) :
       Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_files !mode filenames in
+      let value_spec = Spectec.Parse.parse_files Run.IL_mode filenames in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -117,7 +111,7 @@ module SpecTec = struct
 
   let parse_string (filename : string) (str : string) : Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_string !mode filename str in
+      let value_spec = Spectec.Parse.parse_string Run.IL_mode filename str in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -126,10 +120,7 @@ module SpecTec = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    match !mode with
-    | IL_mode -> value_script |> unboot_scriptIL |> Il.Print.string_of_spec
-    | SL_mode -> value_script |> unboot_scriptSL |> Sl.Print.string_of_spec
-    | Empty_mode -> assert false
+    value_script |> unboot_scriptIL |> Il.Print.string_of_spec
 
   (* Builtins *)
 
@@ -144,9 +135,54 @@ module SpecTec = struct
 
   (* Initialization *)
 
-  let init (spec : Run.spec) : unit =
-    match spec with
-    | IL _ -> mode := IL_mode
-    | SL _ -> mode := SL_mode
-    | Empty -> assert false
+  let init (_spec : Run.spec) : unit = ()
+end
+
+(* SpecTec SL *)
+
+module SpecTec_SL = struct
+  include Spectec.Common.Boot
+  include Spectec.Common.Unboot
+  include Spectec.Sli.Boot
+  include Spectec.Sli.Unboot
+  include Spectec.Caches
+
+  (* Program parsing *)
+
+  let parse_program (_includes : string list) (filenames : string list) :
+      Run.parse_result =
+    try
+      let value_spec = Spectec.Parse.parse_files Run.SL_mode filenames in
+      Run.Pass value_spec
+    with
+    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  let parse_string (filename : string) (str : string) : Run.parse_result =
+    try
+      let value_spec = Spectec.Parse.parse_string Run.SL_mode filename str in
+      Run.Pass value_spec
+    with
+    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  (* Program unparsing *)
+
+  let unparse_program (value_script : Value.t) : string =
+    value_script |> unboot_scriptSL |> Sl.Print.string_of_spec
+
+  (* Builtins *)
+
+  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+
+  let call_builtin = Builtin_SpecTec.invoke
+
+  (* State management *)
+
+  let checkpoint = Builtin_SpecTec.checkpoint
+  let seff = Builtin_SpecTec.seff
+
+  (* Initialization *)
+
+  let init (_spec : Run.spec) : unit = ()
 end
