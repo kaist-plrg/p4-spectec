@@ -250,6 +250,24 @@ let prose_command =
        | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
+let annotate_command =
+  Core.Command.basic
+    ~summary:"generate AsciiDoc prose via the pl_x AST (experimental)"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
+     fun () ->
+       try
+         let spec_sl = structure filenames_spec in
+         let spec_pl_x = Annotate.annotate_spec spec_sl in
+         Format.printf "%s\n" (Pl_x.Render.render_spec spec_pl_x);
+         ()
+       with
+       | ParseError (at, msg) | ElabError (at, msg) | ProseError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
+
 let run_command =
   Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
     (let open Core.Command.Let_syntax in
@@ -655,7 +673,8 @@ let splice_command =
            else List.combine filenames_input filenames_output
          in
          let spec = frontend filenames_spec in
-         let spec_pl = prosify filenames_spec in
+         let spec_sl = structure filenames_spec in
+         let spec_pl = Annotate.annotate_spec spec_sl in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -802,6 +821,7 @@ let command =
       ("elab", elab_command);
       ("struct", struct_command);
       ("prose", prose_command);
+      ("annotate", annotate_command);
       (* Execution *)
       ("run", run_command);
       ("sim", sim_command);
