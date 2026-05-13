@@ -130,7 +130,7 @@ let booter_n_spectec ?(cache = true) ?(det = false) ?(guard = false)
   Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : RUNNER))
 
-(* Commands *)
+(* Commands using the Command module *)
 
 let elab_command =
   Core.Command.basic ~summary:"parse and elaborate a P4 spec"
@@ -412,6 +412,13 @@ let boot_n_spectec_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let boot_n_command =
+  Core.Command.basic
+    ~summary:
+      "execute N layers of bootstrapped specs against a program (flags: -n N, \
+       -lK {il|sl}, -sK <dir>, -rK <rel>, -p <prog>, -i <inc>)"
+    (Core.Command.Param.return (fun () -> ()))
+
 let parse_command =
   Core.Command.basic ~summary:"parse a SpecTec program"
     (let open Core.Command.Let_syntax in
@@ -458,7 +465,188 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
-let command =
+(* `boot-n` command does not use the Command module *)
+
+let boot_n_main args =
+  try
+    (* Arguments *)
+    let depth = ref None in
+    let dirnames_spec = ref [] in
+    let rels = ref [] in
+    let langs = ref [] in
+    let filename_p4 = ref None in
+    let includes_p4 = ref [] in
+    (* Argument parsing *)
+    let rec parse = function
+      | [] -> ()
+      | "-n" :: arg :: args -> (
+          match int_of_string_opt arg with
+          | Some n ->
+              depth := Some n;
+              parse args
+          | None ->
+              raise
+                (CommandError
+                   (Format.asprintf "-n: expected integer, got %s" arg)))
+      | "-p" :: arg :: args ->
+          filename_p4 := Some arg;
+          parse args
+      | "-i" :: arg :: args ->
+          includes_p4 := !includes_p4 @ [ arg ];
+          parse args
+      | flag :: arg :: args when String.length flag >= 3 && flag.[0] = '-' -> (
+          let flag_prefix = String.sub flag 0 2 in
+          let s_idx = String.sub flag 2 (String.length flag - 2) in
+          match (flag_prefix, int_of_string_opt s_idx) with
+          | "-s", Some idx ->
+              dirnames_spec := (idx, arg) :: !dirnames_spec;
+              parse args
+          | "-s", None ->
+              raise
+                (CommandError
+                   (Format.asprintf
+                      "invalid flag: %s (expected -sN where N is an integer)"
+                      flag))
+          | "-r", Some idx ->
+              rels := (idx, arg) :: !rels;
+              parse args
+          | "-r", None ->
+              raise
+                (CommandError
+                   (Format.asprintf
+                      "invalid flag: %s (expected -rN where N is an integer)"
+                      flag))
+          | "-l", Some idx -> (
+              match arg with
+              | "il" ->
+                  langs := (idx, IL_mode) :: !langs;
+                  parse args
+              | "sl" ->
+                  langs := (idx, SL_mode) :: !langs;
+                  parse args
+              | _ ->
+                  raise
+                    (CommandError
+                       (Format.asprintf
+                          "invalid language: %s (expected 'il' or 'sl')" arg)))
+          | "-l", None ->
+              raise
+                (CommandError
+                   (Format.asprintf
+                      "invalid flag: %s (expected -lN where N is an integer)"
+                      flag))
+          | _ ->
+              raise
+                (CommandError (Format.asprintf "unrecognized flag: %s" flag)))
+      | args ->
+          raise
+            (CommandError
+               (Format.asprintf "unexpected argument: %s"
+                  (String.concat " " args)))
+    in
+    parse args;
+    (* Validate parsed result *)
+    (* -n is required and must be >= 1 *)
+    let depth =
+      match !depth with
+      | None -> raise (CommandError "-n is required")
+      | Some depth when depth < 1 ->
+          raise (CommandError (Format.asprintf "-n must be >= 1, got %d" depth))
+      | Some depth -> depth
+    in
+    (* -p is required *)
+    let filename_p4 =
+      match !filename_p4 with
+      | None -> raise (CommandError "-p is required")
+      | Some filename -> filename
+    in
+    (* -s0 and -r0 are disallowed *)
+    if List.mem_assoc 0 !dirnames_spec then
+      raise (CommandError "-s0 is disallowed (only -l0 is allowed at index 0)");
+    if List.mem_assoc 0 !rels then
+      raise (CommandError "-r0 is disallowed (only -l0 is allowed at index 0)");
+    (* For each index 1..N: -sN and -rN must be present;
+       -lN is required for 1..N-1 only *)
+    for idx = 1 to depth do
+      if not (List.mem_assoc idx !dirnames_spec) then
+        raise (CommandError (Format.asprintf "missing -s%d" idx));
+      if not (List.mem_assoc idx !rels) then
+        raise (CommandError (Format.asprintf "missing -r%d" idx));
+      if idx < depth && not (List.mem_assoc idx !langs) then
+        raise (CommandError (Format.asprintf "missing -l%d" idx))
+    done;
+    (* Indices must be in-range *)
+    List.iter
+      (fun (idx, _) ->
+        if idx > depth then
+          raise
+            (CommandError
+               (Format.asprintf "-s%d is out of range (n = %d)" idx depth)))
+      !dirnames_spec;
+    List.iter
+      (fun (idx, _) ->
+        if idx > depth then
+          raise
+            (CommandError
+               (Format.asprintf "-r%d is out of range (n = %d)" idx depth)))
+      !rels;
+    List.iter
+      (fun (idx, _) ->
+        if idx > depth && idx <> 0 then
+          raise
+            (CommandError
+               (Format.asprintf "-l%d is out of range (n = %d)" idx depth)))
+      !langs;
+    (* Booting *)
+    let sort lst =
+      lst
+      |> List.sort (fun (idx_a, _) (idx_b, _) -> compare idx_a idx_b)
+      |> List.map snd
+    in
+    let dirnames_spec_interm, dirname_spec_target =
+      !dirnames_spec |> sort |> List.rev |> fun dirnames_spec ->
+      (dirnames_spec |> List.tl |> List.rev, List.hd dirnames_spec)
+    in
+    let rels_interm, rel_target =
+      !rels |> sort |> List.rev |> fun rels ->
+      (rels |> List.tl |> List.rev, List.hd rels)
+    in
+    let lang_boot, langs_interm =
+      !langs |> sort |> fun langs -> (List.hd langs, List.tl langs)
+    in
+    let lang_to_string = function
+      | IL_mode -> "IL"
+      | SL_mode -> "SL"
+      | Empty_mode -> assert false
+    in
+    Format.asprintf "Booting with language %s" (lang_to_string lang_boot)
+    |> print_endline;
+    let interms =
+      List.combine dirnames_spec_interm rels_interm
+      |> List.combine langs_interm
+      |> List.map (fun (lang, (dirname_spec, rel)) -> (dirname_spec, rel, lang))
+    in
+    List.iter
+      (fun (dirname_spec, rel, lang) ->
+        Format.asprintf
+          "Booting intermediate with spec %s and relation %s in language %s"
+          dirname_spec rel (lang_to_string lang)
+        |> print_endline)
+      interms;
+    let _target = (dirname_spec_target, rel_target) in
+    Format.asprintf "Booting target with spec %s and relation %s"
+      dirname_spec_target rel_target
+    |> print_endline;
+    let includes_p4 = !includes_p4 in
+    Format.asprintf "Running %s on includes %s" filename_p4
+      (includes_p4 |> String.concat ", ")
+    |> print_endline;
+    ()
+  with CommandError msg -> Format.eprintf "error: %s\n" msg
+
+(* Command-line interface *)
+
+let command_core =
   Core.Command.group
     ~summary:
       "p4spectec-boot: a language design framework for the p4_16 language, \
@@ -472,8 +660,18 @@ let command =
       ("run", run_command);
       ("boot-p4", boot_n_p4_command);
       ("boot-spectec", boot_n_spectec_command);
+      ("boot-n", boot_n_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]
 
-let () = Command_unix.run ~version command
+let () =
+  match Array.to_list Sys.argv with
+  | _ :: "boot-n" :: args -> (
+      match args with
+      | ("-help" | "--help" | "help") :: _ ->
+          Command_unix.run ~version command_core
+      | _ ->
+          boot_n_main args;
+          exit 0)
+  | _ -> Command_unix.run ~version command_core
