@@ -69,8 +69,7 @@ let boot_test (module Booter : RUNNER) neg stat tower excludes_p4 path_p4 =
           fail_run = stat.fail_run + 1;
         }
 
-let boot_test_driver mode det neg path_spec rel interface_spec path_spec_p4
-    rel_p4 includes_p4 excludes_p4 testdirs_p4 =
+let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
@@ -79,30 +78,14 @@ let boot_test_driver mode det neg path_spec rel interface_spec path_spec_p4
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
   let total = List.length paths_p4 in
-  let stat = empty_stat in
+  let tower =
+    let target = { includes = includes_p4; path = "" } in
+    Backend_boot.Config.tower_of_file path_tower target
+  in
+  let rel = tower.level_boot.layer.rel in
+  let rel_p4 = tower.level_target.layer.rel in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let tower =
-    let open Backend_boot.Config in
-    let level_boot =
-      let interface_spec =
-        match interface_spec with
-        | "il" -> IL_interface
-        | "sl" -> SL_interface
-        | _ -> failwith "invalid interface spec"
-      in
-      { layer = { specdir = path_spec; rel }; interface = interface_spec }
-    in
-    let levels_interm = [] in
-    let level_target =
-      {
-        layer = { specdir = path_spec_p4; rel = rel_p4 };
-        interface = P4_interface;
-      }
-    in
-    let target = { includes = includes_p4; path = "" } in
-    { mode; level_boot; levels_interm; level_target; target }
-  in
   let _, _, _, (module Booter) = Backend_boot.Build.build_tower ~det tower in
   let stat =
     List.fold_left
@@ -114,7 +97,7 @@ let boot_test_driver mode det neg path_spec rel interface_spec path_spec_p4
           { tower with target = { tower.target with path = path_p4 } }
         in
         boot_test (module Booter) neg stat tower excludes_p4 path_p4)
-      stat paths_p4
+      empty_stat paths_p4
   in
   log_stat (Format.asprintf "\nRunning boot test (%s/%s)" rel rel_p4) stat total
 
@@ -122,29 +105,15 @@ let boot_command =
   Core.Command.basic ~summary:"run interpreter test (boot)"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map path_spec = flag "-s0" (required string) ~doc:"boot spec directory"
-     and relname = flag "-r0" (required string) ~doc:"boot relation to run"
-     and interface_spec = flag "-i0" (required string) ~doc:"boot interface"
-     and path_spec_p4 = flag "-s1" (required string) ~doc:"p4 spec directory"
-     and rel_p4 = flag "-r1" (required string) ~doc:"p4 spec relation to run"
+     let%map path_tower =
+       flag "-tower" (required string) ~doc:"FILE tower config JSON file"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include path"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p" (listed string) ~doc:"p4 test directories"
-     and neg = flag "-neg" no_arg ~doc:"neg testsing (expect failure)"
-     and det = flag "-det" no_arg ~doc:"deterministic mode"
-     and mode =
-       Command.Param.choose_one
-         [
-           flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
-           flag "sl" no_arg ~doc:"Run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
-         ]
-         ~if_nothing_chosen:(Default_to SL_mode)
-     in
+     and neg = flag "-neg" no_arg ~doc:"neg testing (expect failure)"
+     and det = flag "-det" no_arg ~doc:"deterministic mode" in
      fun () ->
-       boot_test_driver mode det neg path_spec relname interface_spec
-         path_spec_p4 rel_p4 includes_p4 excludes_p4 testdirs_p4)
+       boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4)
 
 let command =
   Core.Command.group ~summary:"p4spec-test-boot" [ ("boot", boot_command) ]
