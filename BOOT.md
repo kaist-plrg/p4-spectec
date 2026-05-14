@@ -1,354 +1,440 @@
-# Bootstrap Harness — Module & Functor Structure
+# Meta-circular interpretation
 
-This document describes the layered functor architecture used by the bootstrap harness.
-The design relies on OCaml's **generative functors** (`Make ()`) to give each simulator
-instance its own isolated mutable state, so that multiple SIM runners can coexist without
-interfering with one another.
+This document explains the meta-circular interpretation feature of P4-SpecTec,
+alongside the **tower abstraction** that builds the meta-circular stack of interpreters.
 
 ---
 
-## Layer overview
+## Motivation
+
+### Background: type-checking P4 programs with P4-SpecTec
+
+The standard use of P4-SpecTec is a two-level stack:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  backend-boot/      boot-time runners                   │
-│    gen.ml           gen_boot_zero / gen_boot_one        │
-│    p4.ml            P4.Make () : RUNNER                 │
-├─────────────────────────────────────────────────────────┤
-│  backend-sim/       simulation runners                  │
-│    gen.ml           gen_p4 "v1model" / "ebpf" / "psa"   │
-│    make.ml          Make.Make (...) : SIM               │
-│    spec.ml          Spec.Make () : Spec.S               │
-│    {v1model,ebpf,psa}/pipe.ml   Pipe.Make (Spec) : ARCH │
-├─────────────────────────────────────────────────────────┤
-│  runner/            generic runner (arch-agnostic)      │
-│    make.ml          Make.Make (...) : RUNNER            │
-├─────────────────────────────────────────────────────────┤
-│  backend-sim/spec_impl/         per-SIM call refs       │
-│    func.ml  rel.ml  pgm.ml      Make () + register      │
-└─────────────────────────────────────────────────────────┘
+OCaml IL/SL interpreter  ──runs──►  P4 static semantics spec
+                                            │
+                                            └──type-checks──►  P4 program
 ```
+
+The OCaml IL/SL interpreter is a general meta-interpreter: given any spec
+written in the P4-SpecTec DSL, it can execute that spec.The P4 static semantics
+spec is simply one particular spec in this meta-language.
+
+### Meta-circular interpretation: P4-SpecTec²
+
+Because the OCaml IL/SL interpreter is general-purpose, it can equally well
+interpret a spec that describes the *dynamic semantics of P4-SpecTec itself*
+— a spec we call **P4-SpecTec²** (read: P4-SpecTec-squared, or
+P4-SpecTec-in-P4-SpecTec). This gives a three-level stack:
+
+```
+OCaml IL/SL interpreter  ──runs──►  P4-SpecTec² spec
+                                            │
+                                       ──runs──►  P4 static semantics spec
+                                                        │
+                                                   ──type-checks──►  P4 program
+```
+
+This is **meta-circular interpretation**: the interpreter spec is written in
+the same language that the interpreter interprets.Note that this is distinct
+from *bootstrapping* — we are chaining interpreters, not compiling the defined
+language with itself.
+
+Stacking one more P4-SpecTec² layer in between yields the second tower:
+
+```
+OCaml  ──►  P4-SpecTec²  ──►  P4-SpecTec²  ──►  P4 static semantics  ──►  P4 program
+```
+
+In principle, any number of intermediate layers can be inserted. Also note that
+we have multiple P4-SpecTec² specs. Because P4-SpecTec adopts a multi-stage
+compilation approach, each stage has its own spec. Currently, we have a spec
+for the IL stage and a spec for the SL stage. Thus, we may stack multiple
+versions of P4-SpecTec², each running a different stage's spec.
+
+```
+OCaml  ──►  P4-SpecTec² (of SL)  ──►  P4-SpecTec² (of IL)  ──►  P4 static semantics  ──►  P4 program
+```
+
+## The Tower Abstraction
+
+A **tower** is a stack of interpreter *levels* where each level runs the spec
+of the level below it.  The outermost (topmost) level is the **booter**; the
+innermost (bottommost) level is the **target**.  Zero or more **intermediate**
+levels sit in between.
+
+```
+  ┌──────────────────────────────────┐
+  │  Booter  (runs EntryIL / EntrySL)│  ← run on OCaml IL/SL interpreter
+  ├──────────────────────────────────┤
+  │  Intermediate  (optional, ...)   │
+  ├──────────────────────────────────┤
+  │  Target  (runs Program_ok / ...) │
+  └──────────────────────────────────┘
+```
+
+Concretely, a tower is represented by the `Config.tower` record:
+
+```ocaml
+type tower = {
+  mode        : mode;          (* IL_mode or SL_mode — how the booter's spec is loaded *)
+  level_boot  : level;         (* outermost level, run directly on the OCaml interpreter *)
+  levels_interm : level list;  (* zero or more intermediate levels, top to bottom *)
+  level_target : level;        (* innermost level, runs the object-language spec *)
+  target      : target;        (* the object-language program to check *)
+}
+
+type level  = { layer : layer; interface : interface }
+type layer  = { specdir : string; rel : string }
+type target = { includes : string list; path : string }
+```
+
+The `target` field carries the P4 program path and include directories supplied
+on the command line (`-p` / `-i`).
+
+Each level is described by:
+
+| Field       | Meaning                                             |
+|-------------|-----------------------------------------------------|
+| `specdir`   | Directory whose `.watsup` files define this level   |
+| `rel`       | Entry relation to evaluate at this level            |
+| `interface` | How programs at this level are parsed (`il`/`sl`/`p4`) |
+
+A tower also carries a global `mode` (`il` or `sl`) that determines whether the
+booter's own spec is loaded as an IL or SL spec. If the `mode` is set as `il`,
+the IL interpreter (in OCaml) runs the tower's boot level; if `mode` is `sl`,
+the SL interpreter runs the boot level.
+
+### Runner modules
+
+Each level in the tower is realized as an OCaml `Runner` module with three
+sub-modules:
+
+```
+Runner
+  ├── Interface   — language-specific I/O: parses and unparses programs,
+  │                 provides native builtins (e.g. map lookup for P4,
+  │                 boot/unboot conversions for IL/SL specs)
+  ├── Interp      — the IL or SL interpreter that evaluates the level's spec
+  └── Extern      — supplies semantics for `extern` declarations in the spec
+```
+
+The `Interface` module determines what *language* the level speaks. For a P4
+level it parses P4 programs; for an IL or SL level it parses SpecTec scripts
+and provides the boot/unboot functions that convert between OCaml runtime values
+and their spec-level representations.
+
+The `Extern` module supplies the semantics for `extern` declarations in the spec.
+In P4-SpecTec, a spec may declare relations or functions as `extern`, meaning
+their implementation is provided from the outside rather than specified in the
+DSL itself. Normally this is how native OCaml primitives (e.g. map lookup) are
+hooked in. In the tower, we reuse this same mechanism to wire levels together.
+
+Each intermediate or boot level is given a `Make_parametric` extern, constructed
+with the `Runner` of the level immediately above it:
+
+```ocaml
+module Make_parametric
+    (Runner_above : Run.RUNNER)
+    (Interface_SpecTec : INTERFACE_SPECTEC)
+    () : Run.EXTERN
+```
+
+When the level's interpreter encounters an `extern` call, `Make_parametric`
+handles it by translating the call across the level boundary:
+
+1. **Unboot** — convert the meta-level value representation of the arguments
+   to the spec-level representation using `Interface_SpecTec.unboot_*`.
+2. **Relay** — dispatch to `Runner_above.Interp.eval_rel` or `eval_func`,
+   passing the spec-level values.
+3. **Boot** — convert the results back into the meta-level representation
+   using `Interface_SpecTec.boot_*` and return them to the caller.
+
+The three `extern` relations that flow across level boundaries are:
+
+| Extern name         | Relay target                       | Meaning                                    |
+|---------------------|------------------------------------|--------------------------------------------|
+| `Call_builtin_func` | `Runner_above.Interp.eval_func`    | Call a builtin function one level up       |
+| `Call_extern_func`  | `Runner_above.Interp.eval_func`    | Call an extern function one level up       |
+| `Call_extern_rel`   | `Runner_above.Interp.eval_rel`     | Invoke an extern relation one level up     |
+
+### JSON schema for defining a tower
+
+```json
+{
+  "mode": "il" | "sl",
+  "levels": [
+    { "specdir": "<dir>", "rel": "<rel>", "interface": "il" | "sl" | "p4" },
+    ...
+  ]
+}
+```
+
+We supply the tower definition as a JSON file to ease command-line parsing. The
+first entry in `levels` is the boot level; the last entry is the target level;
+everything in between is intermediate. At least two levels (for boot and
+target) are required.
 
 ---
 
-## `runner/make.ml` — the recursive knot
+### Example Towers
 
-`Runner.Make.Make` is the lowest-level combinator.  It ties the `Extern ↔ Interp`
-circular dependency using OCaml's `module rec`:
+In `towers`, we define several example towers.
 
-```
-Runner.Make.Make
-  (Interface   : INTERFACE)
-  (MakeExtern  : functor (INTERP_IL) (INTERP_SL) -> EXTERN)
-  (MakeInterp_IL : functor (INTERFACE) (EXTERN) () -> INTERP_IL)
-  (MakeInterp_SL : functor (INTERFACE) (EXTERN) () -> INTERP_SL)
-  : RUNNER
-```
-
-Inside the functor body, the three modules are co-defined:
-
-```ocaml
-module rec Extern   : EXTERN   = MakeExtern   (Interp_IL) (Interp_SL)
-       and Interp_IL : INTERP_IL = MakeInterp_IL (Interface) (Extern) ()
-       and Interp_SL : INTERP_SL = MakeInterp_SL (Interface) (Extern) ()
-```
-
-On `init`, after loading the spec into one of the interpreters, the runner calls:
-
-```
-RUNNER.init spec
-  ├── Interface.init spec
-  ├── Interp_{IL,SL}.init spec     ← loads and caches the spec AST
-  └── Extern.init_mode mode        ← wires Spec_.*.call (see below)
-```
+| File          | Mode  | Boot interface | Intermediates | Target | Description                           |
+|---------------|-------|----------------|---------------|--------|---------------------------------------|
+| `il.json`     | `sl`  | `il`           | —             | `p4`   | Single IL meta-interpreter over P4    |
+| `sl.json`     | `sl`  | `sl`           | —             | `p4`   | Single SL meta-interpreter over P4    |
+| `il-il.json`  | `sl`  | `il`           | IL            | `p4`   | IL meta-interpreter over IL-over-P4   |
+| `il-sl.json`  | `sl`  | `il`           | SL            | `p4`   | IL meta-interpreter over SL-over-P4   |
+| `sl-il.json`  | `sl`  | `sl`           | IL            | `p4`   | SL meta-interpreter over IL-over-P4   |
+| `sl-sl.json`  | `sl`  | `sl`           | SL            | `p4`   | SL meta-interpreter over SL-over-P4   |
 
 ---
 
-## `backend-sim/make.ml` — the SIM functor
+## How a Tower Is Built
 
-`Backend_sim.Make.Make` wraps a runner with P4-specific concerns:
+`build_tower` assembles the runner stack from target to booter:
 
 ```
-Backend_sim.Make.Make
-  (Interface : INTERFACE)
-  (MakeArch  : functor (Spec : Spec.S) -> ARCH)
-  (MakeInterp_IL : ...)
-  (MakeInterp_SL : ...)
-  : SIM
+1.  build_target (level_target)
+      → creates a Runner for the target, either P4 or IL/SL depending on the target's interface
+      → loads the target spec to the Runner's interpreter module for relays
+
+2.  for each intermediate level (target → boot order):
+      build_interm (Runner_above, level)
+        → creates a Runner with Make_parametric(Runner_above) Extern
+        → loads the level's spec to the Runner's interpreter module for relays
+
+3.  build_boot (Runner_above, mode, level_boot)
+      → creates a Runner with Make_parametric(Runner_above) Extern
+      → loads the boot level's spec as IL (if mode=il) or SL (if mode=sl)
 ```
 
-Key steps inside the body:
+The result is a chain of runners where each runner's `Extern` module holds a
+reference to the runner above it. `extern` meta-function or relation calls
+are relayed upwards from the booter to the appropriate level where they are defined.
+
+---
+
+## The `il-sl.json` Tower
+
+```json
+{
+  "mode": "sl",
+  "levels": [
+    { "specdir": "spec-meta", "rel": "EntryIL", "interface": "il" },
+    { "specdir": "spec-meta", "rel": "EntrySL", "interface": "sl" },
+    { "specdir": "spec",      "rel": "Program_ok", "interface": "p4" }
+  ]
+}
+```
+
+This builds a three-level tower:
+
+```
+Level 0 (boot):   spec-meta/EntryIL   — IL interface, loaded as SL spec
+Level 1 (interm): spec-meta/EntrySL   — SL interface, loaded as SL spec
+Level 2 (target): spec/Program_ok     — P4 interface, loaded as SL spec
+```
+
+### Extern relay
+
+What happens when "spec" (the P4 spec) calls a builtin function?
+
+```
+;; spec/5-typing/5.02.1-typing-context.watsup
+def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
+  -- ...
+  -- if typeFrame_update
+      = $add_map<nameIR, varTypeIR>(typeFrame, id, varTypeIR)
+```
+
+The semantics of a builtin function is interpreted at the intermediate level,
+running "spec-meta" in "sl" interface.
+
+```
+;; spec-meta/3-sl/5.7-eval-call-func.watsup
+rule CallSL_func/builtin:
+  CSL |- builtinFuncDefSL typ* val* : valres
+  -- if BUILTIN id _ _ = builtinFuncDefSL
+  -- Call_builtin_func:
+      |- id `@ `< typ* > `( val* ) : valres
+
+;; spec-meta/1-common/4-relations.watsup
+extern relation Call_builtin_func:
+  |- id `@ `< typ* > `( val* ) : res<val>
+  hint(input %0 %1 %2)
+```
+
+So, the builtin meta-function call at the target spec layer is relayed as an
+extern relation call in the intermediate layer. Now, the semantics of an extern
+relation is interpreted at the layer below, the boot level, running "spec-meta"
+in "il" interface.
+
+```
+;; spec-meta/2-il/5.8-eval-call-rel.watsup
+rule CallIL_rel/ext:
+  CIL |- (EXT id) val* : valsres
+  -- Call_extern_rel:
+      |- id val* : valsres
+
+;; spec-meta/1-common/4-relations.watsup
+extern relation Call_extern_rel:
+  |- id val* : res<val*>
+  hint(input %0 %1)
+```
+
+Below the boot level, is the SL interpreter in OCaml. When it receives the extern relation
+call to `Call_extern_rel`, it dispatches to its extern module.
 
 ```ocaml
-module Spec_  = Spec.Make ()                  (* fresh per-SIM spec bundle *)
-module Arch   = MakeArch (Spec_)              (* e.g. V1model.Pipe.Make    *)
-module Table  = Table.Make (Spec_.Func)
+(* p4spec/lib/interp/interp-sl/interp.ml *)
+and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
+    (id : id) (values_input : value list) : value list =
+  let values_output =
+    match Extern.eval_extern_rel id.it values_input with
+    | Pass values -> values
+    | Fail (at, msg) -> back_unmatch at msg
+  in
 ```
 
-`MakeExtern` closes over `Spec_` so that `init_mode` can register the
-right interpreter callbacks:
+This extern call is handled by the `Make_parametric` extern module (the one
+constructed during tower building).
 
 ```ocaml
-module MakeExtern (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) : EXTERN = struct
-  let init_mode mode_ =
-    Spec_.Func.register (fun name typs values -> ...dispatch to IL/SL...);
-    Spec_.Rel.register  (fun name values      -> ...);
-    Spec_.Pgm.register  (fun rel inc file     -> ...)
-  let eval_extern_rel = Arch.eval_extern_rel
-  let eval_extern_func = Arch.eval_extern_func
+(* p4spec/lib/backend-boot/spectec.ml *)
+module Make_parametric
+    (Runner : Run.RUNNER)
+    (Interface_SpecTec : INTERFACE_SPECTEC)
+    () : Run.EXTERN = struct
+
+  let call_extern_rel (values_input : Value.t list) : Value.t list =
+    let value_id, value_values =
+      match values_input with
+      | [ value_id; value_values ] -> (value_id, value_values)
+      | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
+    in
+    ...
+    let id = value_id |> Interface_SpecTec.unboot_id in
+    let values = value_values |> Interface_SpecTec.unboot_values in
+    let values_output =
+      match Runner.Interp.eval_rel id.it values with
+      | Pass values_output -> values_output
+      | Fail (at, msg) -> error at msg
+    in
+    let value_values_output = Interface_SpecTec.boot_values values_output in
+    let value_values_output_res =
+      Value.Make.("OK val*" <| [ value_values_output ] <<| "valsres")
+    in
+    ...
+    [ value_values_output_res ]
+
+  let eval_extern_rel (name : string) (values_input : Value.t list) :
+      Run.rel_result =
+    try
+      Run.Pass
+        (match name with
+        | "Call_extern_rel" -> call_extern_rel values_input
+        | ...
+    with ...
+
 end
 ```
 
-The resulting module is handed to `Runner.Make.Make`, which handles the
-`module rec` knot and `init` sequencing.
-
----
-
-## `spec.ml` / `spec_impl/` — per-SIM isolation
-
-### The problem (before this design)
-
-The original code had a single global trampoline per family:
+And `Runner.Interp.eval_rel` in `call_extern_rel` would relay the call to the
+intermediate level's interpreter, which would dispatch `Call_builtin_func` to the
+intermediate level's extern module.
 
 ```ocaml
-(* old — shared across all runners *)
-let call : call_func ref = Runner.Spec.Func.call
-```
+(* p4spec/lib/backend-boot/spectec.ml *)
+module Make_parametric
+    (Runner : Run.RUNNER)
+    (Interface_SpecTec : INTERFACE_SPECTEC)
+    () : Run.EXTERN = struct
 
-Initialising any runner would overwrite `Runner.Spec.Func.call`, silently
-breaking any concurrently active runner.
+  let call_builtin_func (values_input : Value.t list) : Value.t list =
+    let value_id, value_typs, value_values =
+      match values_input with
+      | [ value_id; value_typs; value_values ] ->
+          (value_id, value_typs, value_values)
+      | _ ->
+          error_no_region "unexpected number of arguments to call_builtin_func"
+    in
+    ...
+    let id = value_id |> Interface_SpecTec.unboot_id in
+    let typs = value_typs |> Interface_SpecTec.unboot_typs in
+    let values = value_values |> Interface_SpecTec.unboot_values in
+    let value_output =
+      match Runner.Interp.eval_func id.it typs values with
+      | Pass value_output -> value_output
+      | Fail (at, msg) -> error at msg
+    in
+    let value_value_output = Interface_SpecTec.boot_value value_output in
+    let value_value_output_res =
+      Value.Make.("OK val" <| [ value_value_output ] <<| "valres")
+    in
+    ...
+    [ value_value_output_res ]
 
-### The fix — generative functors
+  let eval_extern_rel (name : string) (values_input : Value.t list) :
+      Run.rel_result =
+    try
+      Run.Pass
+        (match name with
+        | "Call_builtin_func" -> call_builtin_func values_input
+        | ...
+    with ...
 
-Each file in `spec_impl/` follows the same pattern:
-
-```ocaml
-(* spec_impl/func.ml *)
-module Make () = struct
-  let call : call_func ref = ref (fun _ _ _ -> assert false)
-  let register (f : call_func) = call := f
-  (* helper functions that invoke !call *)
-  let find_var_e_local ctx name = !call "find_var_e_local" [] [ctx; ...]
-  ...
-end
-module type S = module type of Make ()
-```
-
-`spec.ml` bundles the three families and exposes the aggregate type:
-
-```ocaml
-module type S = sig
-  module Func : Func.S
-  module Rel  : Rel.S
-  module Pgm  : Pgm.S
-end
-
-module Make () : S = struct          (* generative *)
-  module Func = Func.Make ()         (* fresh ref *)
-  module Rel  = Rel.Make  ()         (* fresh ref *)
-  module Pgm  = Pgm.Make  ()         (* fresh ref *)
 end
 ```
 
-Every call to `Spec.Make ()` produces a **new, independent** triple of refs.
+Now, the `Call_builtin_func` extern relation call is handled by the intermediate level's
+extern module. It is relayed to the target level's interpreter, which evaluates the builtin function
+call (according to the semantics of the P4 interface) and returns the result.
+
+Now the result travels back as follows:
+
+* The intermediate level's extern module receives the result.
+* The intermediate level's extern module wraps the result as a intermediate-level spec value and returns it to the boot level's interpreter.
+* The boot level's extern module receives the result.
+* The boot level's extern module wraps the result again as a boot-level spec value and returns it to the SL interpreter.
+* The SL interpreter receives the value.
+
+Notice that this call path is very costly, as it traverses the whole tower.
+Thus, caches are inserted at each relay point to avoid redundant calls and
+wrap-unwraps.
+
+## The Patch Mechanism
+
+Before `eval_rel` is called on the booter, `apply_tower` synthesizes a `main()`
+function and splices it into each level's spec.  The synthetic `main()` embeds
+the parsed program (and each intermediate spec) as a literal value so that the
+boot relation finds them at runtime without any I/O.
+
+The patch proceeds from the target upward:
+
+```
+1. parse_target (prog.p4)         → value_target
+2. apply_target (level_target, value_target, level_interm_spec)
+     → synthetic main() in interm spec that calls EntrySL on value_target
+3. apply_interm (level_interm, value_interm_script, level_boot_spec)
+     → synthetic main() in boot spec that calls EntryIL on value_interm_script
+```
+
+The booter's `eval_rel "EntryIL"` receives the fully patched script as input
+and evaluates the whole tower without any further file I/O.
 
 ---
 
-## Arch functors — `Pipe.Make (Spec : Spec.S) : ARCH`
+## Invoking a Tower
 
-Each architecture entry point takes the bundled spec and wires its
-sub-components:
-
-```
-V1model.Pipe.Make (Spec : Spec.S) : ARCH
-  ├── Core.Func   = Core.Func.Make   (Spec.Func)
-  ├── Core.Object = Core.Object.Make (Spec.Func) (Spec.Rel)
-  ├── Func        = V1model.Func.Make   (Spec)
-  └── Object      = V1model.Object.Make (Spec)
+```bash
+spectec-boot boot-n \
+  -tower towers/il-sl.json \
+  -p     prog.p4 \
+  -i     p4c/p4include
 ```
 
-```
-Ebpf.Pipe.Make (Spec : Spec.S) : ARCH
-  ├── Core.Func   = Core.Func.Make   (Spec.Func)
-  ├── Core.Object = Core.Object.Make (Spec.Func) (Spec.Rel)
-  └── Object      = Ebpf.Object.Make (Spec.Func)
-
-Psa.Pipe.Make  (Spec : Spec.S) : ARCH    (same shape as ebpf)
-```
-
-Sub-functors that only need a subset of the spec keep narrower parameters
-(`Spec.Func.S` only) for precision; the arch pipe functor threads the right
-sub-module through each application.
-
----
-
-## `backend-boot/` — the boot path
-
-The boot path uses a **placeholder** arch (no real packet pipeline) purely to
-run `static_assert` and other compile-time externs during P4 type-checking.
-
-### `p4.ml`
-
-```
-P4.Make () : RUNNER
-  ├── Spec_       = Spec.Make ()
-  ├── Placeholder = Placeholder.Make (Spec_)   ← stub arch
-  ├── MakeExtern  = { init_mode registers Spec_.*.call;
-  │                   delegates eval_extern_{rel,func} to Placeholder }
-  └── include Runner.Make.Make (Interface.P4) (MakeExtern) (...)
-```
-
-Each call to `P4.Make ()` is fully isolated: it carries its own `Spec_`
-instance and its own `Placeholder`.
-
-### `gen.ml`
-
-```ocaml
-(* Zero-boot: SpecTec runner with no P4 sub-runner *)
-gen_boot_zero () =
-  Runner.Make.Make (Interface.SpecTec) (Spectec.Make_zero) (...)
-
-(* One-boot: SpecTec runner that drives a P4 sub-runner *)
-gen_boot_one () =
-  let Runner_P4 = P4.Make () in
-  Runner.Make.Make (Interface.SpecTec) (Spectec.Make_one (Runner_P4)) (...)
-```
-
----
-
-## Builtin call flow in boot-2-p4
-
-Builtin functions (e.g., `$find_map`) are declared in the P4 spec and called
-by the SpecTec interpreter via an `extern relation Call_builtin_func`.  The
-call crosses two interpreter layers — SpecTec then P4 — before resolving in
-native OCaml.
-
-### Spec sources
-
-```
-┌─────────────────────────────────┐  ┌──────────────────────────────┐  ┌──────────────────┐
-│ spec^IL_src                     │  │ spec^P4_src                  │  │ pgm^P4_src       │
-│                                 │  │                              │  │                  │
-│ ;; 4.4.1-eval-cal-func.watsup   │  │ ;; 0.0-stdlib.watsup (P4)    │  │ bit<32> x = 32w1;│
-│ extern relation Call_builtin_   │  │ builtin dec                  │  │ bit<32> y = x;   │
-│   func                          │  │   $find_map<K,V>             │  │                  │
-│                                 │  │   (map<K,V>, K) : V?         │  └──────────────────┘
-│ rule Call_func/builtin:         │  │                              │
-│   C |- builtinFuncDef           │  │ ;; 5.02.1-typing-            │
-│     typ* val* : OK val_output   │  │    context.watsup (P4)       │
-│   -- if BUILTIN id _ _ =        │  │ -- if varTypeIR =            │
-│        builtinFuncDef           │  │      $find_map<id,           │
-│   -- Call_builtin_func:         │  │      varTypeIR>              │
-│      C |- id @`<typ*>`          │  │      (typeFrame, id)         │
-│         `(val*)` : OK val_out   │  └──────────────────────────────┘
-│                                 │
-│ ;; 4.1-eval-exp.watsup (SpecTec)│
-│ rule Eval_exp/call:             │
-│   C |- CALL id targ* arg*       │
-│     : valres                    │
-│   -- Call_func_cached:          │
-│      C |- id targ* arg* : valres│
-└─────────────────────────────────┘
-```
-
-### Runtime layers
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  P4 interpreter layer  (Runner_P4 = P4.Make ())                         │
-│                                                                         │
-│  ┌──────────────────────────┬──────────────────────────────────────┐    │
-│  │  Builtin^P4              │  Extern^P4  (Placeholder)            │    │
-│  ├──────────────────────────┴──────────────────────────────────────┤    │
-│  │  Interp^P4_OCaml                                  ↺ recursive   │    │
-│  └──────────────────────────────────────────────────────────────── ┘    │
-│                                                                         │
-│  invoke_builtin_func (...) =       eval_extern_rel (...) =              │
-│    let value_output =                (match name with                   │
-│      try                            | "Call_builtin_func" ->            │
-│        Interface.call_builtin           call_builtin_func values_input) │
-│          Hook.on_value id           call_builtin_func (...) =           │
-│          targs values_input           let value_output =                │
-│                            (4)          match Runner.run_func           │
-│                              ◄────────    id.it typs values with ...    │
-└──────────────────────────────────────────────────────────────────────── ┘
-                                ▲
-                                │  (3) Runner_P4.run_func
-                                │
-┌─────────────────────────────────────────────────────────────────────────┐
-│  SpecTec interpreter layer  (Runner_SpecTec = gen_boot_one ())          │
-│                                                                         │
-│  ┌──────────────────────────┬──────────────────────────────────────┐    │
-│  │  Builtin^SpecTec         │  Extern^SpecTec  (Spectec_one)       │◄── (2)
-│  ├──────────────────────────┴──────────────────────────────────────┤    │
-│  │  Interp^SpecTec_OCaml                                           │    │
-│  └──────────────────────────────────────────────────────────────── ┘    │
-│                                                                         │
-│  (1) rule Eval_exp/call fires; spec IL derives Call_builtin_func        │
-│  (2) invoke_extern_rel:                                                 │
-│        let values_output =                                              │
-│          match Extern.eval_extern_rel id.it values_input with ...       │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Call sequence
-
-```
-(1) SpecTec interp hits Eval_exp/call; spec IL fires rule Call_func/builtin
-(2) invoke_extern_rel → Extern^SpecTec.eval_extern_rel "Call_builtin_func"
-        dispatches to call_builtin_func in Placeholder (Extern^P4)
-(3) call_builtin_func → Runner_P4.run_func id.it typs values
-        (crosses from SpecTec layer up to P4 layer)
-(4) P4 interp → invoke_builtin_func
-        → Interface.call_builtin  (native OCaml)
-```
-
----
-
-## Instance topology — no shared state
-
-Two independent SIM instances after `init`:
-
-```
-SIM_v1model = Backend_sim.Make.Make (Interface.P4) (V1model.Pipe.Make) (...)
-  │
-  ├── Spec_v1        = Spec.Make ()
-  │     Func.call ──────────────────► Interp_SL_v1.eval_func
-  │     Rel.call  ──────────────────► Interp_SL_v1.eval_rel
-  │     Pgm.call  ──────────────────► Interp_SL_v1.eval_program
-  └── Arch_v1        = V1model.Pipe.Make (Spec_v1)
-
-SIM_ebpf = Backend_sim.Make.Make (Interface.P4) (Ebpf.Pipe.Make) (...)
-  │
-  ├── Spec_ebpf      = Spec.Make ()   ← entirely separate refs
-  │     Func.call ──────────────────► Interp_SL_ebpf.eval_func
-  │     Rel.call  ──────────────────► Interp_SL_ebpf.eval_rel
-  │     Pgm.call  ──────────────────► Interp_SL_ebpf.eval_program
-  └── Arch_ebpf      = Ebpf.Pipe.Make (Spec_ebpf)
-```
-
-No ref is shared between the two instances.
-
----
-
-## Init sequence (step by step)
-
-Given `(module SIM) = Backend_sim.Make.Make (Interface.P4) (V1model.Pipe.Make) (...)`:
-
-```
-1.  SIM.init (SL spec_sl)
-2.    Interface.P4.init (SL spec_sl)          ← parse context reset
-3.    Interp_SL.init ~cache ~det spec_sl      ← spec AST loaded & cached
-4.    Extern.init_mode SL_mode
-5.      Spec_.Func.register call_func         ← call_func dispatches to Interp_SL
-6.      Spec_.Rel.register  call_rel
-7.      Spec_.Pgm.register  call_pgm
-        (Spec_.Func.call now points to Interp_SL.eval_func)
-8.  SIM.init_pipe includes filename
-9.    Spec_.Pgm.call "V1Model_init" includes filename
-10.     Interp_SL.eval_program "V1Model_init" includes filename
-           ↳  interpreter executes spec relation, returns (ctx, arch)
-```
-
-From step 7 onward, every call through `Spec_.Func.*` / `Spec_.Rel.*` /
-`Spec_.Pgm.*` reaches this SIM's own interpreter — never another SIM's.
+Optional flags: `-no-cache`, `-det`, `-guard`, `-trace`, `-trace-full`, `-profile`.
