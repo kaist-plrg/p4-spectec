@@ -103,7 +103,7 @@ let boot_test_driver mode det neg path_spec rel interface_spec path_spec_p4
     let target = { includes = includes_p4; path = "" } in
     { mode; level_boot; levels_interm; level_target; target }
   in
-  let _, _, _, (module Booter) = Backend_boot.Build.build ~det tower in
+  let _, _, _, (module Booter) = Backend_boot.Build.build_tower ~det tower in
   let stat =
     List.fold_left
       (fun stat path_p4 ->

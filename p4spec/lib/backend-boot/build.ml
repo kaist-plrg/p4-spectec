@@ -11,12 +11,16 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
     | P4_interface -> (module P4.Make () : Run.RUNNER)
     | IL_interface ->
         let module Interface_SpecTec = Interface.SpecTec_IL in
-        (module Runner.Make.Make_nonrec (Interface_SpecTec) (Spectec.Make_null)
+        (module Runner.Make.Make_rec
+                  (Interface_SpecTec)
+                  (Spectec.Make_null (Interface_SpecTec))
                   (Interp_il.Interp.Make)
                   (Interp_sl.Interp.Make) : Run.RUNNER)
     | SL_interface ->
         let module Interface_SpecTec = Interface.SpecTec_SL in
-        (module Runner.Make.Make_nonrec (Interface_SpecTec) (Spectec.Make_null)
+        (module Runner.Make.Make_rec
+                  (Interface_SpecTec)
+                  (Spectec.Make_null (Interface_SpecTec))
                   (Interp_il.Interp.Make)
                   (Interp_sl.Interp.Make) : Run.RUNNER)
   in
@@ -85,8 +89,8 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
   Booter.init ~cache ~det ~guard spec;
   (spec, (module Booter : Run.RUNNER))
 
-let build ?(cache = true) ?(det = false) ?(guard = false) (tower : Config.tower)
-    =
+let build_tower ?(cache = true) ?(det = false) ?(guard = false)
+    (tower : Config.tower) =
   (* Build the target runner *)
   let runner_target = build_target ~cache ~det ~guard tower.level_target in
   (* Reverse the levels, so that we build levels from the target to boot *)
@@ -128,7 +132,9 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
   in
   let (module Runner) =
-    (module Runner.Make.Make_nonrec (Interface_SpecTec) (Spectec.Make_null)
+    (module Runner.Make.Make_rec
+              (Interface_SpecTec)
+              (Spectec.Make_null (Interface_SpecTec))
               (Interp_il.Interp.Make)
               (Interp_sl.Interp.Make) : Run.RUNNER)
   in

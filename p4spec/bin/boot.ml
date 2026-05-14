@@ -345,8 +345,8 @@ let boot_n_main args =
     in
     (* Build the tower *)
     let spec, _, _, (module Booter) =
-      Backend_boot.Build.build ~cache:(not !no_cache) ~det:!det ~guard:!guard
-        tower
+      Backend_boot.Build.build_tower ~cache:(not !no_cache) ~det:!det
+        ~guard:!guard tower
     in
     (* Set up hooks for profiling and tracing *)
     let handlers =
