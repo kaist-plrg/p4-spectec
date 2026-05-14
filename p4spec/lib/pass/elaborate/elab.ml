@@ -9,7 +9,6 @@ open Error
 open Util.Checks
 open Util.Source
 module Xl = Lang.Xl
-module Mixfix = Domain.Mixfix
 module F = Format
 
 (* Checks *)
@@ -97,30 +96,41 @@ and elab_plaintyp' (ctx : Ctx.t) (plaintyp : plaintyp') : Il.typ' =
 and elab_nottyp (ctx : Ctx.t) (typ : typ) : Il.nottyp =
   match typ with
   | PlainT plaintyp ->
+      let mixop = Mixop.Arg in
       let typ_il = elab_plaintyp ctx plaintyp in
-      Mixfix.Arg typ_il $ plaintyp.at
+      (mixop, [ typ_il ]) $ plaintyp.at
   | NotationT nottyp -> (
       match nottyp.it with
-      | AtomT atom -> Mixfix.Atom atom $ nottyp.at
-      | SeqT [] -> Mixfix.Seq [] $ nottyp.at
+      | AtomT atom ->
+          let mixop = Mixop.Atom atom in
+          let typs_il = [] in
+          (mixop, typs_il) $ nottyp.at
+      | SeqT [] ->
+          let mixop = Mixop.Seq [] in
+          let typs_il = [] in
+          (mixop, typs_il) $ nottyp.at
       | SeqT (typ_h :: typs_t) ->
-          let mixfix_h = elab_nottyp ctx typ_h |> it in
-          let mixfix_t =
+          let mixop_h, typs_il_h = elab_nottyp ctx typ_h |> it in
+          let mixop_t, typs_il_t =
             elab_nottyp ctx (NotationT (SeqT typs_t $ nottyp.at)) |> it
           in
-          let mixfix =
-            match mixfix_t with
-            | Mixfix.Seq mixfixes_t -> Mixfix.Seq (mixfix_h :: mixfixes_t)
+          let mixop =
+            match mixop_t with
+            | Mixop.Seq mixops_t -> Mixop.Seq (mixop_h :: mixops_t)
             | _ -> assert false
           in
-          mixfix $ nottyp.at
+          let typs_il = typs_il_h @ typs_il_t in
+          (mixop, typs_il) $ nottyp.at
       | InfixT (typ_l, atom, typ_r) ->
-          let mixfix_l = elab_nottyp ctx typ_l |> it in
-          let mixfix_r = elab_nottyp ctx typ_r |> it in
-          Mixfix.Infix (mixfix_l, atom, mixfix_r) $ nottyp.at
+          let mixop_l, typs_il_l = elab_nottyp ctx typ_l |> it in
+          let mixop_r, typs_il_r = elab_nottyp ctx typ_r |> it in
+          let mixop = Mixop.Infix (mixop_l, atom, mixop_r) in
+          let typs_il = typs_il_l @ typs_il_r in
+          (mixop, typs_il) $ nottyp.at
       | BrackT (atom_l, typ, atom_r) ->
-          let mixfix = elab_nottyp ctx typ |> it in
-          Mixfix.Brack (atom_l, mixfix, atom_r) $ nottyp.at)
+          let mixop, typs_il = elab_nottyp ctx typ |> it in
+          let mixop = Mixop.Brack (atom_l, mixop, atom_r) in
+          (mixop, typs_il) $ nottyp.at)
 
 (* Elaboration of definition types *)
 
@@ -195,7 +205,9 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
   let typcases_il = List.concat_map (elab_typcase ctx typorigin_il) typcases in
   let mixops =
     typcases_il
-    |> List.map (fun (nottyp_il, _, _) -> Mixfix.to_mixop nottyp_il.it)
+    |> List.map (fun (nottyp_il, _, _) ->
+           let mixop, _ = nottyp_il.it in
+           mixop)
   in
   let mixop_groups = groupby Mixop.eq mixops in
   let mixop_duplicates =
@@ -711,8 +723,7 @@ and is_pure_exp (exp_il : Il.exp) : bool =
   | SubE (exp_il, _)
   | MatchE (exp_il, _) ->
       is_pure_exp exp_il
-  | TupleE exps_il -> List.for_all is_pure_exp exps_il
-  | CaseE notexp_il -> List.for_all is_pure_exp (Mixfix.args notexp_il)
+  | TupleE exps_il | CaseE (_, exps_il) -> List.for_all is_pure_exp exps_il
   | StrE expfields_il ->
       let exps_il = List.map snd expfields_il in
       List.for_all is_pure_exp exps_il
@@ -987,55 +998,57 @@ and elab_iter_exp (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp)
 
 (* Elaboration of notation expressions *)
 
-and fail_elab_not (at : region) (msg : string) : (Ctx.t * Il.notexp) attempt =
+and fail_elab_not_inner (at : region) (msg : string) :
+    (Ctx.t * Il.typ list * Il.exp list) attempt =
   fail at ("cannot elaborate notation expression because " ^ msg)
 
-and elab_exp_not (ctx : Ctx.t) (nottyp_il : Il.nottyp) (exp : exp) :
-    (Ctx.t * Il.notexp) attempt =
-  let open Mixfix in
-  match (nottyp_il.it, exp.it) with
-  | _, ParenE exp -> elab_exp_not ctx nottyp_il exp
-  | Arg typ_il, _ ->
-      let* ctx, exp_il = elab_exp ctx typ_il exp in
-      Ok (ctx, Arg exp_il)
+and elab_exp_not_inner (ctx : Ctx.t) (mixop : Mixop.t) (typs_il : Il.typ list)
+    (exp : exp) : (Ctx.t * Il.typ list * Il.exp list) attempt =
+  match (mixop, exp.it) with
+  | _, ParenE exp -> elab_exp_not_inner ctx mixop typs_il exp
+  | Arg, _ -> (
+      match typs_il with
+      | [] -> fail_elab_not_inner exp.at "too many arguments"
+      | typ_il_h :: typs_il_t ->
+          let* ctx, exp_il = elab_exp ctx typ_il_h exp in
+          Ok (ctx, typs_il_t, [ exp_il ]))
   | Atom atom_t, AtomE atom_e when atom_t.it <> atom_e.it ->
-      fail_elab_not exp.at
+      fail_elab_not_inner exp.at
         (F.asprintf "atom %s does not match the expected atom %s"
            (Il.Print.string_of_atom atom_e)
            (Il.Print.string_of_atom atom_t))
-  | Atom atom_t, AtomE _ -> Ok (ctx, Atom atom_t)
-  | Seq [], SeqE [] -> Ok (ctx, Seq [])
-  | Seq (nottyp_il_h :: nottyps_il_t), SeqE (exp_h :: exps_t) ->
-      let* ctx, notexp_il_h =
-        elab_exp_not ctx (nottyp_il_h $ nottyp_il.at) exp_h
+  | Atom _, AtomE _ -> Ok (ctx, typs_il, [])
+  | Seq [], SeqE [] -> Ok (ctx, typs_il, [])
+  | Seq (mixop_h :: mixops_t), SeqE (exp_h :: exps_t) ->
+      let* ctx, typs_il, exps_il_h =
+        elab_exp_not_inner ctx mixop_h typs_il exp_h
       in
-      let* ctx, notexp_il_t =
-        elab_exp_not ctx (Seq nottyps_il_t $ nottyp_il.at) (SeqE exps_t $ exp.at)
+      let* ctx, typs_il, exps_il_t =
+        elab_exp_not_inner ctx (Mixop.Seq mixops_t) typs_il
+          (SeqE exps_t $ exp.at)
       in
-      let mixfix_t =
-        match notexp_il_t with
-        | Seq mixfixes_t -> mixfixes_t
-        | _ -> assert false
-      in
-      Ok (ctx, Seq (notexp_il_h :: mixfix_t))
-  | Seq (_ :: _), SeqE [] -> fail_elab_not exp.at "omitted sequence tail"
-  | Seq [], SeqE (_ :: _) -> fail_elab_not exp.at "expression is not empty"
+      let exps_il = exps_il_h @ exps_il_t in
+      Ok (ctx, typs_il, exps_il)
+  | Seq (_ :: _), SeqE [] -> fail_elab_not_inner exp.at "omitted sequence tail"
+  | Seq [], SeqE (_ :: _) ->
+      fail_elab_not_inner exp.at "expression is not empty"
   | Infix (_, atom_t, _), InfixE (_, atom_e, _) when atom_t.it <> atom_e.it ->
-      fail_elab_not exp.at
+      fail_elab_not_inner exp.at
         (F.asprintf "infix operator %s does not match the expected operator %s"
            (Il.Print.string_of_atom atom_e)
            (Il.Print.string_of_atom atom_t))
-  | Infix (nottyp_il_l, atom, nottyp_il_r), InfixE (exp_l, _, exp_r) ->
-      let* ctx, notexp_il_l =
-        elab_exp_not ctx (nottyp_il_l $ nottyp_il.at) exp_l
+  | Infix (mixop_l, _, mixop_r), InfixE (exp_l, _, exp_r) ->
+      let* ctx, typs_il, exps_il_l =
+        elab_exp_not_inner ctx mixop_l typs_il exp_l
       in
-      let* ctx, notexp_il_r =
-        elab_exp_not ctx (nottyp_il_r $ nottyp_il.at) exp_r
+      let* ctx, typs_il, exps_il_r =
+        elab_exp_not_inner ctx mixop_r typs_il exp_r
       in
-      Ok (ctx, Infix (notexp_il_l, atom, notexp_il_r))
+      let exps_il = exps_il_l @ exps_il_r in
+      Ok (ctx, typs_il, exps_il)
   | Brack (atom_t_l, _, atom_t_r), BrackE (atom_e_l, exp, atom_e_r)
     when atom_t_l.it <> atom_e_l.it || atom_t_r.it <> atom_e_r.it ->
-      fail_elab_not exp.at
+      fail_elab_not_inner exp.at
         (F.asprintf
            "bracketing operator %s %s does not match the expected operator %s \
             %s"
@@ -1043,16 +1056,26 @@ and elab_exp_not (ctx : Ctx.t) (nottyp_il : Il.nottyp) (exp : exp) :
            (Il.Print.string_of_atom atom_e_r)
            (Il.Print.string_of_atom atom_t_l)
            (Il.Print.string_of_atom atom_t_r))
-  | Brack (atom_l, nottyp_inner, atom_r), BrackE (_, exp, _) ->
-      let* ctx, notexp_il =
-        elab_exp_not ctx (nottyp_inner $ nottyp_il.at) exp
-      in
-      Ok (ctx, Brack (atom_l, notexp_il, atom_r))
+  | Brack (_, mixop, _), BrackE (_, exp, _) ->
+      elab_exp_not_inner ctx mixop typs_il exp
   | _ ->
-      fail_elab_not exp.at
+      fail_elab_not_inner exp.at
         (F.asprintf "expression %s does not match notation %s"
            (El.Print.string_of_exp exp)
-           (Mixfix.to_string nottyp_il.it))
+           (Mixop.string_of_mixop mixop))
+
+and fail_elab_not (at : region) (msg : string) : (Ctx.t * Il.notexp) attempt =
+  fail at ("cannot elaborate notation expression because " ^ msg)
+
+and elab_exp_not (ctx : Ctx.t) (nottyp_il : Il.nottyp) (exp : exp) :
+    (Ctx.t * Il.notexp) attempt =
+  let mixop, typs_il = nottyp_il.it in
+  let* ctx, typs_il, exps_il = elab_exp_not_inner ctx mixop typs_il exp in
+  match typs_il with
+  | [] ->
+      let notexp_il = (mixop, exps_il) in
+      Ok (ctx, notexp_il)
+  | _ -> fail_elab_not exp.at "too few arguments"
 
 (* Elaboration of struct expressions *)
 
@@ -1112,10 +1135,11 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
               Il.VarT (id, targs_il) $ typorigin_il.at
             in
             let exp_il =
-              let atoms = Mixfix.atoms notexp_il in
+              let mixop, exps_il_inner = notexp_il in
+              let atoms = Mixop.atoms mixop in
               let at =
                 match atoms with
-                | [] -> exp_list_region (Mixfix.args notexp_il)
+                | [] -> exp_list_region exps_il_inner
                 | _ -> atoms |> List.map at |> over_region
               in
               Il.CaseE notexp_il $$ (at, typ_il.it)
@@ -1408,7 +1432,7 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
 and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
   let nottyp_il, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
-  let exps_il = Mixfix.args notexp_il in
+  let _, exps_il = notexp_il in
   if Hints.Input.is_conditional inputs exps_il then
     let prem_il = Il.IfHoldPr (id, notexp_il) in
     (ctx, prem_il)
@@ -1421,7 +1445,7 @@ and elab_rule_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
 and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
   let nottyp_il, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
-  let exps_il = Mixfix.args notexp_il in
+  let _, exps_il = notexp_il in
   check
     (Hints.Input.is_conditional inputs exps_il)
     exp.at "negated rule premises do not take inputs";
@@ -1605,7 +1629,7 @@ and elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
   let exps_il_input_group, exps_il_output_group =
     List.map
       (fun notexp_il ->
-        let exps_il = Mixfix.args notexp_il in
+        let _, exps_il = notexp_il in
         Hints.Input.split inputs exps_il)
       notexps_il
     |> List.split
@@ -1792,7 +1816,7 @@ and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
 
 and fetch_rel_input_hint (at : region) (nottyp_il : Il.nottyp)
     (hints : hint list) : int list =
-  let len = Mixfix.arity nottyp_il.it in
+  let len = nottyp_il.it |> snd |> List.length in
   let hint_input_default = List.init len Fun.id in
   let hintexp_input_opt =
     List.find_map
@@ -1982,12 +2006,8 @@ and pattern_set_covered_by_exp (ctx : Ctx.t) (exp_il : Il.exp) :
   | UpCastE (_, { it = VarE _; note; at }) ->
       pattern_set_covered_by_typ ctx (note $ at)
   | UpCastE (_, { it = CaseE notexp_il; at; _ }) ->
-      let mixop, exps_il = Mixfix.split notexp_il in
-      [
-        Mixfix.fill mixop
-          (List.map (fun exp_il -> exp_il.note $ exp_il.at) exps_il)
-        $ at;
-      ]
+      let mixop, exps_il = notexp_il in
+      [ (mixop, List.map (fun exp_il -> exp_il.note $ exp_il.at) exps_il) $ at ]
       |> Pattern.PatternSet.of_list
   | _ -> assert false
 

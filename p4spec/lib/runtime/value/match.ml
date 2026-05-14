@@ -1,6 +1,5 @@
 open Domain
 open Lib
-module Mixfix = Domain.Mixfix
 open Lang
 open Il
 open Error
@@ -41,16 +40,16 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
                   let typ = Type.Subst.subst_typ theta typ in
                   sub_ find_typdef_opt find_func typ value)
                 typfields valuefields
-          | VariantT typcases, CaseV valuecase ->
+          | VariantT typcases, CaseV (mixop_v, values_inner) ->
               let theta = TIdMap.of_lists tparams targs in
-              let mixop_v, values = Mixfix.split valuecase in
               List.exists
                 (fun typcase ->
                   let nottyp, _, _ = typcase in
-                  let nottyp = Type.Subst.subst_nottyp theta nottyp in
-                  let mixop_t, typs = Mixfix.split nottyp.it in
+                  let mixop_t, typs_inner = nottyp.it in
                   Mixop.eq mixop_t mixop_v
-                  && subs_ find_typdef_opt find_func typs values)
+                  &&
+                  let typs_inner = Type.Subst.subst_typs theta typs_inner in
+                  subs_ find_typdef_opt find_func typs_inner values_inner)
                 typcases
           | _ -> false))
   | TupleT typs -> (

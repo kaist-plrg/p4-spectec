@@ -30,7 +30,11 @@ let rec equiv_typ (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
 
 and equiv_nottyp (find_typdef_opt : TId.t -> Typdef.t option)
     (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
-  Mixfix.eq ~eq_arg:(equiv_typ find_typdef_opt) nottyp_a.it nottyp_b.it
+  let mixop_a, typs_a = nottyp_a.it in
+  let mixop_b, typs_b = nottyp_b.it in
+  Mixop.eq mixop_a mixop_b
+  && List.length typs_a = List.length typs_b
+  && List.for_all2 (equiv_typ find_typdef_opt) typs_a typs_b
 
 and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
     (tparams_a : tparam list) (typs_params_a : typ list) (typ_a : typ)

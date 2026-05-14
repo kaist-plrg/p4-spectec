@@ -1,5 +1,4 @@
 open Domain.Lib
-module Mixfix = Domain.Mixfix
 open Lang
 open Sl
 module Typ = Runtime.Type.Typ
@@ -216,7 +215,7 @@ let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
 let load_typcases (ctx : t) (tid : TId.t) (typcases : typcase list) : t =
   List.fold_left
     (fun ctx (nottyp, _, hints) ->
-      let mixop = Mixfix.to_mixop nottyp.it in
+      let mixop, _ = nottyp.it in
       let cid = (tid, mixop) in
       load_hints ctx (`Typ cid) hints)
     ctx typcases

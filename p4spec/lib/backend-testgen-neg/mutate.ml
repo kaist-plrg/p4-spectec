@@ -1,3 +1,4 @@
+open Domain
 open Lang
 open Il
 module Type = Runtime.Type
@@ -6,8 +7,6 @@ open Runtime.Testgen_neg
 open Envs
 open Domain.Lib
 open Util.Source
-module Mixfix = Domain.Mixfix
-module Mixop = Domain.Mixop
 
 (* Kinds of mutations *)
 
@@ -82,12 +81,14 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
               let nottyps' =
                 typcases
                 |> List.map (fun (nottyp, _, _) ->
-                       Mixfix.map (Type.Subst.subst_typ theta) nottyp.it)
+                       let mixop, typs = nottyp.it in
+                       let typs = Type.Subst.subst_typs theta typs in
+                       (mixop, typs))
               in
               let expand_nottyp' nottyp' =
-                let mixop, typs = Mixfix.split nottyp' in
+                let mixop, typs = nottyp' in
                 let* values = gen_from_typs depth tdenv texts typs in
-                CaseV (Mixfix.fill mixop values) |> Option.some
+                CaseV (mixop, values) |> Option.some
               in
               List.map expand_nottyp' nottyps'
               |> List.filter Option.is_some |> List.map Option.get
@@ -146,8 +147,7 @@ let mutate_mixop (mixopenv : MixopEnv.t) (value : value) : (kind * value) option
   match typ with
   | VarT (id, _) -> (
       match value.it with
-      | CaseV valuecase ->
-          let mixop, values = Mixfix.split valuecase in
+      | CaseV (mixop, values) ->
           let* mixop_family = MixopEnv.find_opt id mixopenv in
           let mixop_family =
             Mixops.Family.filter
@@ -163,7 +163,7 @@ let mutate_mixop (mixopenv : MixopEnv.t) (value : value) : (kind * value) option
             |> MixIdSet.filter (fun mixop_e -> not (Mixop.eq mixop mixop_e))
             |> MixIdSet.elements |> Rand.random_select
           in
-          let value = CaseV (Mixfix.fill mixop values) |> wrap_value typ in
+          let value = CaseV (mixop, values) |> wrap_value typ in
           (MixopGroup, value) |> Option.some
       | _ -> assert false)
   | _ -> assert false
@@ -179,9 +179,9 @@ let rec shuffle_list' (value : value) : value =
       let values_shuffled = List.map shuffle_list' values in
       let valuefields_shuffled = List.combine atoms values_shuffled in
       StructV valuefields_shuffled |> wrap_value typ
-  | CaseV valuecase ->
-      let valuecase_shuffled = Mixfix.map shuffle_list' valuecase in
-      CaseV valuecase_shuffled |> wrap_value typ
+  | CaseV (mixop, values) ->
+      let values_shuffled = List.map shuffle_list' values in
+      CaseV (mixop, values_shuffled) |> wrap_value typ
   | TupleV values ->
       let values_shuffled = List.map shuffle_list' values in
       TupleV values_shuffled |> wrap_value typ
@@ -207,9 +207,9 @@ let rec duplicate_list' (value : value) : value =
       let values_duplicated = List.map duplicate_list' values in
       let valuefields_duplicated = List.combine atoms values_duplicated in
       StructV valuefields_duplicated |> wrap_value typ
-  | CaseV valuecase ->
-      let valuecase_duplicated = Mixfix.map duplicate_list' valuecase in
-      CaseV valuecase_duplicated |> wrap_value typ
+  | CaseV (mixop, values) ->
+      let values_duplicated = List.map duplicate_list' values in
+      CaseV (mixop, values_duplicated) |> wrap_value typ
   | TupleV values ->
       let values_duplicated = List.map duplicate_list' values in
       TupleV values_duplicated |> wrap_value typ
@@ -238,9 +238,9 @@ let rec shrink_list' (value : value) : value =
       let values_shrinked = List.map shrink_list' values in
       let valuefields_shrinked = List.combine atoms values_shrinked in
       StructV valuefields_shrinked |> wrap_value typ
-  | CaseV valuecase ->
-      let valuecase_shrinked = Mixfix.map shrink_list' valuecase in
-      CaseV valuecase_shrinked |> wrap_value typ
+  | CaseV (mixop, values) ->
+      let values_shrinked = List.map shrink_list' values in
+      CaseV (mixop, values_shrinked) |> wrap_value typ
   | TupleV values ->
       let values_shrinked = List.map shrink_list' values in
       TupleV values_shrinked |> wrap_value typ
@@ -285,7 +285,7 @@ let mutate_node (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
         |> Rand.random_select
       in
       mutation ()
-  | CaseV _ ->
+  | CaseV (_, _) ->
       let* mutation =
         [
           (fun () -> mutate_mixop mixopenv value);
@@ -314,12 +314,7 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
         List.iteri
           (fun idx (_, value) -> traverse (idx :: path) value (depth + 1))
           valuefields
-    | CaseV valuecase ->
-        let values = Mixfix.args valuecase in
-        List.iteri
-          (fun idx value -> traverse (idx :: path) value (depth + 1))
-          values
-    | TupleV values | ListV values ->
+    | CaseV (_, values) | TupleV values | ListV values ->
         List.iteri
           (fun idx value -> traverse (idx :: path) value (depth + 1))
           values
@@ -344,10 +339,9 @@ let mutate_walk (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (texts : value' list)
             let* values = rebuilds path idx values in
             let valuefields = List.combine atoms values in
             StructV valuefields |> wrap_value typ |> Option.some
-        | CaseV valuecase ->
-            let mixop, values = Mixfix.split valuecase in
+        | CaseV (mixop, values) ->
             let* values = rebuilds path idx values in
-            CaseV (Mixfix.fill mixop values) |> wrap_value typ |> Option.some
+            CaseV (mixop, values) |> wrap_value typ |> Option.some
         | TupleV values ->
             let* values = rebuilds path idx values in
             TupleV values |> wrap_value typ |> Option.some

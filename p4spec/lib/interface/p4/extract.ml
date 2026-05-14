@@ -100,55 +100,6 @@ let id_of_parameter (value : value) : string =
     ]
     (fun _ -> error no_region "@id_of_parameter: unexpected value")
 
-(* Type identifier extraction *)
-
-let rec tid_of_typeRef (value : value) : Context.tid =
-  Value.Get.mtch value
-    [
-      ("BOOL", fun _ -> Context.Empty);
-      ("ERROR", fun _ -> Context.Empty);
-      ("MATCH_KIND", fun _ -> Context.Empty);
-      ("STRING", fun _ -> Context.Empty);
-      ("INT", fun _ -> Context.Empty);
-      ("INT `< int >", fun _ -> Context.Empty);
-      ("INT `< `( expression ) >", fun _ -> Context.Empty);
-      ("BIT", fun _ -> Context.Empty);
-      ("BIT `< int >", fun _ -> Context.Empty);
-      ("BIT `< `( expression ) >", fun _ -> Context.Empty);
-      ("VARBIT `< int >", fun _ -> Context.Empty);
-      ("VARBIT `< `( expression ) >", fun _ -> Context.Empty);
-      ( "`TID text",
-        fun values ->
-          let s = values |> Value.Get.nth 0 |> Value.Get.text in
-          Context.Local s );
-      ( "`TID `. typeName",
-        fun values ->
-          let value = values |> Value.Get.nth 0 in
-          match tid_of_typeRef value with
-          | Context.Local s -> Context.Global s
-          | _ -> error no_region "@tid_of_typeRef: unreachable" );
-      ( "prefixedTypeName `< typeArgumentList >",
-        fun values ->
-          let prefixedTypeName = values |> Value.Get.nth 0 in
-          tid_of_typeRef prefixedTypeName );
-      ("namedType `[ expression ]", fun _ -> Context.Empty);
-      ("LIST `< typeArgument >", fun _ -> Context.Empty);
-      ("TUPLE `< typeArgumentList >", fun _ -> Context.Empty);
-    ]
-    (fun _ -> error no_region "@tid_of_typeRef: unexpected value")
-
-let tid_of_declaration (value : value) : Context.tid =
-  Value.Get.mtch value
-    [
-      ( "annotationList CONST type name initializer `;",
-        fun values -> values |> Value.Get.nth 1 |> tid_of_typeRef );
-      ( "annotationList type `( argumentList ) name `;",
-        fun values -> values |> Value.Get.nth 1 |> tid_of_typeRef );
-      ( "annotationList type `( argumentList ) name objectInitializer `;",
-        fun values -> values |> Value.Get.nth 1 |> tid_of_typeRef );
-    ]
-    (fun _ -> error no_region "@tid_of_declaration: unexpected value")
-
 (* Type parameter extraction *)
 
 let has_type_params (value : value) : bool =

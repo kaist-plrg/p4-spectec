@@ -1,4 +1,4 @@
-module Mixfix = Domain.Mixfix
+open Domain
 open Lang
 open Il
 module Typ = Runtime.Type.Typ
@@ -17,43 +17,33 @@ let rec map_find_opt key = function
   | [] -> None
   | pair :: pairs -> (
       match pair.it with
-      | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_pair -> (
-          match Mixfix.args valuecase with
-          | [ value_key; value_value ] when Value.eq value_key key ->
-              Some value_value
-          | _ -> map_find_opt key pairs)
+      | CaseV (mixop, [ value_key; value_value ])
+        when Mixop.eq mixop mixop_pair && Value.eq value_key key ->
+          Some value_value
       | _ -> map_find_opt key pairs)
 
 let make_pair (add : value -> unit) (typ_key : typ) (typ_value : typ)
     (value_key : value) (value_value : value) : value =
   let typ = Typ.Make.var ("pair" $ no_region) [ typ_key; typ_value ] in
-  let valuecase = Mixfix.fill mixop_pair [ value_key; value_value ] in
-  let value_pair = Value.Make.case typ valuecase in
-  add value_pair;
-  value_pair
+  let pair = Value.Make.case typ (mixop_pair, [ value_key; value_value ]) in
+  add pair;
+  pair
 
 let rec map_update make_pair key value = function
   | [] -> [ make_pair key value ]
   | pair :: pairs -> (
       match pair.it with
-      | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_pair -> (
-          match Mixfix.args valuecase with
-          | [ value_key; _ ] when Value.eq value_key key ->
-              make_pair key value :: pairs
-          | _ -> pair :: map_update make_pair key value pairs)
+      | CaseV (mixop, [ value_key; _ ])
+        when Mixop.eq mixop mixop_pair && Value.eq value_key key ->
+          make_pair key value :: pairs
       | _ -> pair :: map_update make_pair key value pairs)
 
 (* Conversion between meta-maps and OCaml lists *)
 
 let map_of_value (value : value) : map =
   match value.it with
-  | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_map -> (
-      match Mixfix.args valuecase with
-      | [ value_pairs ] -> value_pairs |> Value.Get.list
-      | _ ->
-          error no_region
-            (Format.asprintf "expected a map, but got %s"
-               (Value.to_string value)))
+  | CaseV (mixop, [ value_pairs ]) when Mixop.eq mixop mixop_map ->
+      Value.Get.list value_pairs
   | _ ->
       error no_region
         (Format.asprintf "expected a map, but got %s" (Value.to_string value))
@@ -69,8 +59,7 @@ let value_of_map (add : value -> unit) (typ_key : typ) (typ_value : typ)
   add value_pairs;
   let value =
     let typ = Typ.Make.var ("map" $ no_region) [ typ_key; typ_value ] in
-    let valuecase = Mixfix.fill mixop_map [ value_pairs ] in
-    Value.Make.case typ valuecase
+    Value.Make.case typ (mixop_map, [ value_pairs ])
   in
   add value;
   value

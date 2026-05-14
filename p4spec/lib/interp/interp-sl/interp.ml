@@ -1,5 +1,4 @@
 open Domain
-module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
@@ -63,7 +62,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if not !check_guard then ()
     else
       let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-      let typs = Mixfix.args nottyp.it in
+      let _, typs = nottyp |> it in
       let typs = List.map (fun i -> List.nth typs i) inputs in
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
@@ -77,7 +76,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (inputs : Hints.Input.t) (values_output : value list) : unit =
     if not !check_guard then ()
     else
-      let typs = Mixfix.args nottyp.it in
+      let _, typs = nottyp |> it in
       let typs =
         typs
         |> List.mapi (fun idx typ ->
@@ -161,7 +160,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | VarE id, _ -> assign_var_exp ctx id value
     | TupleE exps_inner, TupleV values_inner ->
         assign_tuple_exp value ctx exps_inner values_inner
-    | CaseE notexp, CaseV valucase -> assign_case_exp value ctx notexp valucase
+    | CaseE (_, exps_inner), CaseV (_, values_inner) ->
+        assign_case_exp value ctx exps_inner values_inner
     | StrE expfields, StructV valuefields ->
         assign_str_exp value ctx expfields valuefields
     | OptE exp_opt, OptV value_opt -> assign_opt_exp value ctx exp_opt value_opt
@@ -199,10 +199,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       values;
     ctx
 
-  and assign_case_exp (value_outer : value) (ctx : Ctx.t) (notexp : notexp)
-      (valuecase : valuecase) : Ctx.t =
-    let exps = Mixfix.args notexp in
-    let values = Mixfix.args valuecase in
+  and assign_case_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
     let ctx = assign_exps ctx exps values in
     List.iter
       (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
@@ -660,7 +658,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
-      | CaseP mixop_p, CaseV valuecase -> Mixfix.eq_mixop mixop_p valuecase
+      | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
       | ListP listpattern, ListV values -> (
           let len_v = List.length values in
           match listpattern with
@@ -692,9 +690,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Case expression evaluation *)
 
   and eval_case_exp (typ_note : typ) (ctx : Ctx.t) (notexp : notexp) : value =
-    let mixop, exps = Mixfix.split notexp in
+    let mixop, exps = notexp in
     let values = eval_exps ctx exps in
-    let value_res = Value.Make.case typ_note (Mixfix.fill mixop values) in
+    let value_res = Value.Make.case typ_note (mixop, values) in
     Hook.on_value value_res;
     if List.length values = 0 then
       List.iter
@@ -1377,7 +1375,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Hold instruction evaluation *)
 
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
-    let exps_input = Mixfix.args notexp in
+    let _, exps_input = notexp in
     let values_input = eval_exps ctx exps_input in
     let hold =
       try
@@ -1687,7 +1685,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) : Ctx.t =
-    let exps = Mixfix.args notexp in
+    let _, exps = notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let values_input = eval_exps ctx exps_input in
     let values_output = invoke_rel ctx id values_input in
@@ -1813,7 +1811,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       match block with
       | [ { it = ResultI (_, exps_result); _ } ] when tail && iterinstrs = [] ->
-          let exps = Mixfix.args notexp in
+          let _, exps = notexp in
           let exps_input, exps_output = Hints.Input.split inputs exps in
           if Il.Eq.eq_exps exps_output exps_result then
             let values_input = eval_exps ctx exps_input in

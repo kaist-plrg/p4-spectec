@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Il
-module Mixfix = Domain.Mixfix
 open Runtime.Static
 open Error
 open Envs
@@ -108,9 +107,9 @@ let rec annotate_exp (bounds : VEnv.t) (exp : exp) : VEnv.t * exp =
       let exp = TupleE exps $$ (at, note) in
       (occurs, exp)
   | CaseE notexp ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let occurs, exps = annotate_exps bounds exps in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let exp = CaseE notexp $$ (at, note) in
       (occurs, exp)
   | StrE expfields ->
@@ -262,13 +261,13 @@ and annotate_prem_inner (bounds : VEnv.t) (prem : prem) : VEnv.t * VEnv.t * prem
   let at = prem.at in
   match prem.it with
   | RulePr (id, notexp, inputs) ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let occurs_input, exps_input = annotate_exps bounds exps_input in
       let occurs_output, exps_output = annotate_exps bounds exps_output in
       let occurs = union occurs_input occurs_output in
       let exps = Hints.Input.combine inputs exps_input exps_output in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let prem = RulePr (id, notexp, inputs) $ at in
       (occurs_output, occurs, prem)
   | IfPr exp ->
@@ -276,15 +275,15 @@ and annotate_prem_inner (bounds : VEnv.t) (prem : prem) : VEnv.t * VEnv.t * prem
       let prem = IfPr exp $ at in
       (empty, occurs, prem)
   | IfHoldPr (id, notexp) ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let occurs, exps = annotate_exps bounds exps in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let prem = IfHoldPr (id, notexp) $ at in
       (empty, occurs, prem)
   | IfNotHoldPr (id, notexp) ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let occurs, exps = annotate_exps bounds exps in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let prem = IfNotHoldPr (id, notexp) $ at in
       (empty, occurs, prem)
   | LetPr (exp_l, exp_r) ->

@@ -1,4 +1,4 @@
-module Mixfix = Domain.Mixfix
+open Domain
 open Lang
 open Il
 open Util.Source
@@ -9,11 +9,13 @@ module Nottyp = struct
   type t = nottyp
 
   let compare (t_a : t) (t_b : t) : int =
-    let compare_mixop = Mixfix.compare_mixop t_a.it t_b.it in
+    let mixop_a, typs_a = t_a.it in
+    let mixop_b, typs_b = t_b.it in
+    let compare_mixop = Mixop.compare mixop_a mixop_b in
     if compare_mixop <> 0 then compare_mixop
     else
-      let typs_a = List.map it (Mixfix.args t_a.it) in
-      let typs_b = List.map it (Mixfix.args t_b.it) in
+      let typs_a = List.map it typs_a in
+      let typs_b = List.map it typs_b in
       List.compare compare typs_a typs_b
 end
 

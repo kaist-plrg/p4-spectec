@@ -77,7 +77,7 @@ module Bind = struct
   let init_rule_bind (id : id) (notexp : notexp) (inputs : Hints.Input.t)
       (iterinstrs : iterinstr list) : t =
     let exps_input, exps_output =
-      let exps = Mixfix.args notexp in
+      let _, exps = notexp in
       Hints.Input.split inputs exps
     in
     let iterexps_bound, iterexps_bind =
@@ -113,10 +113,8 @@ module Bind = struct
         in
         Some renamer
     | TupleE exps, TupleE exps_target -> collapse_exps renamer exps exps_target
-    | CaseE notexp, CaseE notexp_target
-      when Mixfix.eq_mixop notexp notexp_target ->
-        let exps = Mixfix.args notexp in
-        let exps_target = Mixfix.args notexp_target in
+    | CaseE (mixop, exps), CaseE (mixop_target, exps_target)
+      when Sl.Eq.eq_mixop mixop mixop_target ->
         collapse_exps renamer exps exps_target
     | StrE expfields, StrE expfields_target ->
         let atoms, exps = List.split expfields in

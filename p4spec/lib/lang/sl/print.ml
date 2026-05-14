@@ -134,7 +134,9 @@ let rec string_of_exp exp =
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
-  Mixfix.render ~string_of_atom ~string_of_arg:string_of_exp notexp
+  let mixop, exps = notexp in
+  let sexps = List.map string_of_exp exps in
+  Mixop.assemble ~string_of_atom mixop sexps
 
 (* Patterns *)
 
@@ -354,31 +356,32 @@ and string_of_iterinstrs iterinstrs =
 
 and string_of_relinput rel_signature exps_input =
   let nottyp, inputs = rel_signature in
-  let arity = Mixfix.arity nottyp.it in
+  let mixop, _ = nottyp.it in
   let exps_input = List.combine inputs exps_input in
   let sexps =
-    List.init arity (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_input with
         | Some exp_input -> string_of_exp exp_input
         | None -> "%")
   in
-  Mixop.assemble ~string_of_atom (Mixfix.to_mixop nottyp.it) sexps
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_reloutput rel_signature exps_output =
   let nottyp, inputs = rel_signature in
-  let arity = Mixfix.arity nottyp.it in
+  let mixop, _ = nottyp.it in
   let outputs =
-    List.init arity (fun idx -> if List.mem idx inputs then None else Some idx)
+    List.init (Mixop.arity mixop) (fun idx ->
+        if List.mem idx inputs then None else Some idx)
     |> List.filter_map Fun.id
   in
   let exps_output = List.combine outputs exps_output in
   let sexps =
-    List.init arity (fun idx ->
+    List.init (Mixop.arity mixop) (fun idx ->
         match List.assoc_opt idx exps_output with
         | Some exp_output -> string_of_exp exp_output
         | None -> "%")
   in
-  Mixop.assemble ~string_of_atom (Mixfix.to_mixop nottyp.it) sexps
+  Mixop.assemble ~string_of_atom mixop sexps
 
 and string_of_extern_rel externrel =
   let relid, rel_signature, exps_match, _hints = externrel in
