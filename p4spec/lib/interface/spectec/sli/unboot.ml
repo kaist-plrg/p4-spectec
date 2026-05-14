@@ -8,7 +8,7 @@ open Util.Source
 (* Forward references for SL dispatch tables,
    populated after all sub-match functions are defined *)
 
-let unboot_paramSL_mtchtbl : Sl.param Value.Get.mtchtbl ref =
+let unboot_param_mtchtbl : Sl.param Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
 let unboot_holdcase_mtchtbl : Sl.holdcase Value.Get.mtchtbl ref =
@@ -20,7 +20,7 @@ let unboot_guard_mtchtbl : Sl.guard Value.Get.mtchtbl ref =
 let unboot_instr_mtchtbl : Sl.instr Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
-let unboot_defSL_mtchtbl : Sl.def Value.Get.mtchtbl ref =
+let unboot_def_mtchtbl : Sl.def Value.Get.mtchtbl ref =
   ref (Value.Get.MtchTbl.create 0)
 
 (* Iter instrises *)
@@ -37,30 +37,30 @@ let unboot_iterinstrs (value_iterinstrs : Value.t) : Sl.iterinstr list =
 
 (* Parameters *)
 
-let rec unboot_paramSL (value_param : Value.t) : Sl.param =
-  Value.Get.mtch_dispatch value_param !unboot_paramSL_mtchtbl (fun _ _ ->
-      error "@unboot_paramSL")
+let rec unboot_param (value_param : Value.t) : Sl.param =
+  Value.Get.mtch_dispatch value_param !unboot_param_mtchtbl (fun _ _ ->
+      error "@unboot_param")
 
-and unboot_exp_paramSL (at : region) (values : Value.t list) : Sl.param =
+and unboot_exp_param (at : region) (values : Value.t list) : Sl.param =
   match values with
   | [ value_typ; value_exp ] ->
       let typ = unboot_typ value_typ in
       let exp = unboot_exp value_exp in
       Sl.ExpP (typ, exp) $ at
-  | _ -> error "@unboot_exp_paramSL"
+  | _ -> error "@unboot_exp_param"
 
-and unboot_def_paramSL (at : region) (values : Value.t list) : Sl.param =
+and unboot_def_param (at : region) (values : Value.t list) : Sl.param =
   match values with
-  | [ value_id; value_tparams; value_paramSLs; value_typ ] ->
+  | [ value_id; value_tparams; value_params; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let paramSLs = unboot_paramSLs value_paramSLs in
+      let params = unboot_params value_params in
       let typ = unboot_typ value_typ in
-      Sl.DefP (id, tparams, paramSLs, typ) $ at
-  | _ -> error "@unboot_def_paramSL"
+      Sl.DefP (id, tparams, params, typ) $ at
+  | _ -> error "@unboot_def_param"
 
-and unboot_paramSLs (value_paramSLs : Value.t) : Sl.param list =
-  value_paramSLs |> Value.Get.list |> List.map unboot_paramSL
+and unboot_params (value_params : Value.t) : Sl.param list =
+  value_params |> Value.Get.list |> List.map unboot_param
 
 (* Instructions *)
 
@@ -254,39 +254,39 @@ and unboot_block_opt (value_block_opt : Value.t) : Sl.block option =
 
 (* Table rows *)
 
-let rec unboot_tablerowSL (value_tablerowSL : Value.t) : Sl.tablerow =
-  let values = Value.Get.(value_tablerowSL |>>! mop_tablerowSL) in
+let rec unboot_tablerow (value_tablerow : Value.t) : Sl.tablerow =
+  let values = Value.Get.(value_tablerow |>>! mop_tablerow) in
   let exps = Value.Get.nth 0 values |> unboot_exps in
   let exp = Value.Get.nth 1 values |> unboot_exp in
   let block = Value.Get.nth 2 values |> unboot_block in
   (exps, exp, block)
 
-and unboot_tablerowSLs (value_tablerowSLs : Value.t) : Sl.tablerow list =
-  value_tablerowSLs |> Value.Get.list |> List.map unboot_tablerowSL
+and unboot_tablerows (value_tablerows : Value.t) : Sl.tablerow list =
+  value_tablerows |> Value.Get.list |> List.map unboot_tablerow
 
 (* Definitions *)
 
-let unboot_defSL (value_defSL : Value.t) : Sl.def =
-  Value.Get.mtch_dispatch value_defSL !unboot_defSL_mtchtbl (fun _ _ ->
-      error "@unboot_defSL")
+let unboot_def (value_def : Value.t) : Sl.def =
+  Value.Get.mtch_dispatch value_def !unboot_def_mtchtbl (fun _ _ ->
+      error "@unboot_def")
 
-let unboot_extern_typ_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_extern_typ_def (at : region) (values : Value.t list) : Sl.def =
   match values with
   | [ value_id ] ->
       let id = unboot_id value_id in
       Sl.ExternTypD (id, []) $ at
-  | _ -> error "@unboot_extern_typ_defSL"
+  | _ -> error "@unboot_extern_typ_def"
 
-let unboot_typ_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_typ_def (at : region) (values : Value.t list) : Sl.def =
   match values with
   | [ value_id; value_tparams; value_deftyp ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
       let deftyp = unboot_deftyp value_deftyp in
       Sl.TypD (id, tparams, deftyp, []) $ at
-  | _ -> error "@unboot_typ_defSL"
+  | _ -> error "@unboot_typ_def"
 
-let unboot_extern_rel_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_extern_rel_def (at : region) (values : Value.t list) : Sl.def =
   match values with
   | [ value_id; value_exps; value_typs_in; value_typs_out ] ->
       let id = unboot_id value_id in
@@ -296,9 +296,9 @@ let unboot_extern_rel_defSL (at : region) (values : Value.t list) : Sl.def =
       let nottyp = stub_nottyp typs_in typs_out in
       let inputs = stub_input_hint (List.length typs_in) in
       Sl.ExternRelD (id, (nottyp, inputs), exps, []) $ at
-  | _ -> error "@unboot_extern_rel_defSL"
+  | _ -> error "@unboot_extern_rel_def"
 
-let unboot_rel_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_rel_def (at : region) (values : Value.t list) : Sl.def =
   match values with
   | [
    value_id;
@@ -317,73 +317,65 @@ let unboot_rel_defSL (at : region) (values : Value.t list) : Sl.def =
       let block = unboot_block value_block in
       let elseblock_opt = unboot_block_opt value_elsblock in
       Sl.RelD (id, (nottyp, inputs), exps, block, elseblock_opt, []) $ at
-  | _ -> error "@unboot_rel_defSL"
+  | _ -> error "@unboot_rel_def"
 
-let unboot_extern_func_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_extern_func_def (at : region) (values : Value.t list) : Sl.def =
   match values with
-  | [ value_id; value_tparams; value_paramSLs; value_typ ] ->
+  | [ value_id; value_tparams; value_params; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let paramSLs = unboot_paramSLs value_paramSLs in
+      let params = unboot_params value_params in
       let typ = unboot_typ value_typ in
-      Sl.ExternDecD (id, tparams, paramSLs, typ, []) $ at
-  | _ -> error "@unboot_extern_func_defSL"
+      Sl.ExternDecD (id, tparams, params, typ, []) $ at
+  | _ -> error "@unboot_extern_func_def"
 
-let unboot_builtin_func_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_builtin_func_def (at : region) (values : Value.t list) : Sl.def =
   match values with
-  | [ value_id; value_tparams; value_paramSLs; value_typ ] ->
+  | [ value_id; value_tparams; value_params; value_typ ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let paramSLs = unboot_paramSLs value_paramSLs in
+      let params = unboot_params value_params in
       let typ = unboot_typ value_typ in
-      Sl.BuiltinDecD (id, tparams, paramSLs, typ, []) $ at
-  | _ -> error "@unboot_builtin_func_defSL"
+      Sl.BuiltinDecD (id, tparams, params, typ, []) $ at
+  | _ -> error "@unboot_builtin_func_def"
 
-let unboot_table_func_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_table_func_def (at : region) (values : Value.t list) : Sl.def =
   match values with
-  | [ value_id; value_paramSLs; value_typ; value_tablerowSLs ] ->
+  | [ value_id; value_params; value_typ; value_tablerows ] ->
       let id = unboot_id value_id in
-      let paramSLs = unboot_paramSLs value_paramSLs in
+      let params = unboot_params value_params in
       let typ = unboot_typ value_typ in
-      let tablerowSLs = unboot_tablerowSLs value_tablerowSLs in
-      Sl.TableDecD (id, paramSLs, typ, tablerowSLs, []) $ at
-  | _ -> error "@unboot_table_func_defSL"
+      let tablerows = unboot_tablerows value_tablerows in
+      Sl.TableDecD (id, params, typ, tablerows, []) $ at
+  | _ -> error "@unboot_table_func_def"
 
-let unboot_func_defSL (at : region) (values : Value.t list) : Sl.def =
+let unboot_func_def (at : region) (values : Value.t list) : Sl.def =
   match values with
   | [
-   value_id;
-   value_tparams;
-   value_paramSLs;
-   value_typ;
-   value_block;
-   value_elsblock;
+   value_id; value_tparams; value_params; value_typ; value_block; value_elsblock;
   ] ->
       let id = unboot_id value_id in
       let tparams = unboot_tparams value_tparams in
-      let paramSLs = unboot_paramSLs value_paramSLs in
+      let params = unboot_params value_params in
       let typ = unboot_typ value_typ in
       let block = unboot_block value_block in
       let elseblock_opt = unboot_block_opt value_elsblock in
-      Sl.FuncDecD (id, tparams, paramSLs, typ, block, elseblock_opt, []) $ at
-  | _ -> error "@unboot_func_defSL"
+      Sl.FuncDecD (id, tparams, params, typ, block, elseblock_opt, []) $ at
+  | _ -> error "@unboot_func_def"
 
 (* Specification *)
 
-let unboot_scriptSL (value_scriptSL : Value.t) : Sl.spec =
-  let value_defSLs = Value.Get.list value_scriptSL in
-  List.map unboot_defSL value_defSLs
+let unboot_script (value_script : Value.t) : Sl.spec =
+  let value_defs = Value.Get.list value_script in
+  List.map unboot_def value_defs
 
 (* Initialize SL dispatch tables after all handler functions are defined *)
 
 let () =
   (* Parameters *)
-  unboot_paramSL_mtchtbl :=
+  unboot_param_mtchtbl :=
     Value.Get.build_mtchtbl
-      [
-        (mop_exp_paramSL, unboot_exp_paramSL);
-        (mop_def_paramSL, unboot_def_paramSL);
-      ];
+      [ (mop_exp_param, unboot_exp_param); (mop_def_param, unboot_def_param) ];
   (* Instructions *)
   unboot_holdcase_mtchtbl :=
     Value.Get.build_mtchtbl
@@ -415,15 +407,15 @@ let () =
         (mop_debug_instr, unboot_debug_instr);
       ];
   (* Definitions *)
-  unboot_defSL_mtchtbl :=
+  unboot_def_mtchtbl :=
     Value.Get.build_mtchtbl
       [
-        (mop_extern_typ_defSL, unboot_extern_typ_defSL);
-        (mop_typ_defSL, unboot_typ_defSL);
-        (mop_extern_rel_defSL, unboot_extern_rel_defSL);
-        (mop_rel_defSL, unboot_rel_defSL);
-        (mop_extern_func_defSL, unboot_extern_func_defSL);
-        (mop_builtin_func_defSL, unboot_builtin_func_defSL);
-        (mop_table_func_defSL, unboot_table_func_defSL);
-        (mop_func_defSL, unboot_func_defSL);
+        (mop_extern_typ_def, unboot_extern_typ_def);
+        (mop_typ_def, unboot_typ_def);
+        (mop_extern_rel_def, unboot_extern_rel_def);
+        (mop_rel_def, unboot_rel_def);
+        (mop_extern_func_def, unboot_extern_func_def);
+        (mop_builtin_func_def, unboot_builtin_func_def);
+        (mop_table_func_def, unboot_table_func_def);
+        (mop_func_def, unboot_func_def);
       ]

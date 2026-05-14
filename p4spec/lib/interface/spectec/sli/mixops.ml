@@ -4,10 +4,8 @@ module Value = Runtime.Value
 
 (* Parameters *)
 
-let mop_exp_paramSL = Value.Mixops.of_string "EXP typ exp"
-
-let mop_def_paramSL =
-  Value.Mixops.of_string "FUN id `: tparam* paramSL* `-> typ"
+let mop_exp_param = Value.Mixops.of_string "EXP typ exp"
+let mop_def_param = Value.Mixops.of_string "FUN id `: tparam* param* `-> typ"
 
 (* Iter instructions *)
 
@@ -45,27 +43,27 @@ let mop_debug_instr = Value.Mixops.of_string "DEBUG exp"
 
 (* Rule structure *)
 
-let mop_tablerowSL = Value.Mixops.of_string "exp* `= exp `- block"
+let mop_tablerow = Value.Mixops.of_string "exp* `= exp `- block"
 
 (* Definitions *)
 
-let mop_extern_typ_defSL = Value.Mixops.of_string "EXTTYP id"
-let mop_typ_defSL = Value.Mixops.of_string "TYP id tparam* `= deftyp"
+let mop_extern_typ_def = Value.Mixops.of_string "EXTTYP id"
+let mop_typ_def = Value.Mixops.of_string "TYP id tparam* `= deftyp"
 
-let mop_extern_rel_defSL =
+let mop_extern_rel_def =
   Value.Mixops.of_string "EXTREL id exp* `: typ* `-> typ*"
 
-let mop_rel_defSL =
+let mop_rel_def =
   Value.Mixops.of_string "REL id exp* `: typ* `-> typ* `= block block?"
 
-let mop_extern_func_defSL =
-  Value.Mixops.of_string "EXTFUNC id tparam* paramSL* `: typ"
+let mop_extern_func_def =
+  Value.Mixops.of_string "EXTFUNC id tparam* param* `: typ"
 
-let mop_builtin_func_defSL =
-  Value.Mixops.of_string "BUILTINFUNC id tparam* paramSL* `: typ"
+let mop_builtin_func_def =
+  Value.Mixops.of_string "BUILTINFUNC id tparam* param* `: typ"
 
-let mop_table_func_defSL =
-  Value.Mixops.of_string "TABLEFUNC id paramSL* `: typ `= tblrowSL*"
+let mop_table_func_def =
+  Value.Mixops.of_string "TABLEFUNC id param* `: typ `= tblrow*"
 
-let mop_func_defSL =
-  Value.Mixops.of_string "FUNC id tparam* paramSL* `: typ `= block block?"
+let mop_func_def =
+  Value.Mixops.of_string "FUNC id tparam* param* `: typ `= block block?"

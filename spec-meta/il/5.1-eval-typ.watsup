@@ -1,0 +1,107 @@
+;; Type casts
+
+;;; Upcasts
+
+dec $upcast(ctx, typ, val) : res<val>
+
+def $upcast(C, INT, INT i) = OK (INT i)
+def $upcast(C, INT, NAT n) = OK (INT n)
+def $upcast(C, INT, val) = FAIL
+  -- if ~(val <: num)
+
+def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
+  -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ' = $subst_typ(theta, typ)
+
+def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
+  -- if (OK val_upcast = $upcast(C, typ, val))*
+def $upcast(C, TUP typ*, val) = FAIL
+  -- if ~$is_tup(val)
+
+def $upcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_upcast?)
+  -- if (OK val_upcast = $upcast(C, typ, val))?
+def $upcast(C, ITER typ STAR, LIST val*) = OK (LIST val_upcast*)
+  -- if (OK val_upcast = $upcast(C, typ, val))*
+
+def $upcast(C, typ, val) = OK val
+    -- otherwise
+
+;;; Downcasts
+
+dec $downcast(ctx, typ, val) : res<val>
+
+def $downcast(C, NAT, NAT n) = OK (NAT n)
+def $downcast(C, NAT, INT i) = OK (NAT n)
+    -- if n = i
+def $downcast(C, NAT, val) = FAIL
+    -- if ~(val <: num)
+
+def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
+    -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+    -- if theta = `{ (tparam `: targ)* }
+    -- if typ' = $subst_typ(theta, typ)
+
+def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_downcast*)
+    -- (if OK val_downcast = $downcast(C, typ, val))*
+def $downcast(C, TUP typ*, val) = FAIL
+    -- if ~$is_tup(val)
+
+def $downcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_downcast?)
+  -- if (OK val_downcast = $downcast(C, typ, val))?
+def $downcast(C, ITER typ STAR, LIST val*) = OK (LIST val_downcast*)
+  -- if (OK val_downcast = $downcast(C, typ, val))*
+
+def $downcast(C, typ, val) = OK val
+    -- otherwise
+
+;;; Value-type matching
+
+dec $subtyp(ctx, typ, val) : bool
+dec $subtyps(ctx, typ*, val*) : bool
+
+def $subtyp(C, BOOL, BOOL b) = true
+def $subtyp(C, NAT, NAT n) = true
+def $subtyp(C, NAT, INT i) = $(i >= 0)
+def $subtyp(C, INT, num) = true
+def $subtyp(C, TEXT, TEXT t) = true
+
+def $subtyp(C, VAR id targ*, EXT json) = true
+  -- if EXT = $find_typ(C, id)
+
+def $subtyp(C, VAR id targ*, val) = $subtyp(C, typ_subst, val)
+  -- if DEF tparam* `-> (ALIAS typ) = $find_typ(C, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ_subst = $subst_typ(theta, typ)
+
+def $subtyp(C, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtyp(C, typ_case_found_subst, val)*)
+  -- if DEF tparam* `-> (VARIANT typcase*) = $find_typ(C, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (mixop_case typ_case* = typcase)*
+  -- if mixop <- mixop_case*
+  -- if typ_case_found*
+      = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
+  -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
+
+def $subtyp(C, VAR id targ*, STR valfield*) = $forall_(b*)
+  -- if DEF tparam* `-> (STRUCT typfield*) = $find_typ(C, id)
+  -- if (atom_typ typ_field = typfield)*
+  -- if (atom_val val_field = valfield)*
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (typ_field_subst = $subst_typ(theta, typ_field))*
+  -- if (b = ((atom_typ = atom_val) /\ $subtyp(C, typ_field_subst, val_field)))*
+
+def $subtyp(C, TUP typ*, TUP val*) = $forall_($subtyp(C, typ, val)*)
+
+def $subtyp(C, ITER typ QUEST, OPT val) = $subtyp(C, typ, val)
+def $subtyp(C, ITER typ QUEST, OPT eps) = true 
+
+def $subtyp(C, ITER typ STAR, LIST val*) = $forall_($subtyp(C, typ, val)*)
+
+def $subtyp(C, typ, val) = false
+    -- otherwise
+
+def $subtyps(C, typ*, val*) = $forall_($subtyp(C, typ, val)*)
+def $subtyps(C, typ*, val*) = false
+    -- otherwise

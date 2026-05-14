@@ -6,27 +6,27 @@ open Util.Source
 
 (* Parameters *)
 
-let rec boot_paramSL (paramSL : Sl.param) : Value.t =
-  let at = paramSL.at in
-  match paramSL.it with
+let rec boot_param (param : Sl.param) : Value.t =
+  let at = param.at in
+  match param.it with
   | ExpP (typ, exp) ->
       let value_typ = boot_typ typ in
       let value_exp = boot_exp exp in
       Value.Make.(
-        mop_exp_paramSL <|! [ value_typ; value_exp ] <<|! typ_paramSL <<<| at)
-  | DefP (id, tparams, paramSLs, typ) ->
+        mop_exp_param <|! [ value_typ; value_exp ] <<|! typ_param <<<| at)
+  | DefP (id, tparams, params, typ) ->
       let value_id = boot_id id in
       let value_tparams = boot_tparams tparams in
-      let value_paramSLs = boot_paramSLs paramSLs in
+      let value_params = boot_params params in
       let value_typ = boot_typ typ in
       Value.Make.(
-        mop_def_paramSL
-        <|! [ value_id; value_tparams; value_paramSLs; value_typ ]
-        <<|! typ_paramSL <<<| at)
+        mop_def_param
+        <|! [ value_id; value_tparams; value_params; value_typ ]
+        <<|! typ_param <<<| at)
 
-and boot_paramSLs (paramSLs : Sl.param list) : Value.t =
-  let values_paramSLs = List.map boot_paramSL paramSLs in
-  Value.Make.list (Runtime.Type.Typ.Make.list typ_paramSL) values_paramSLs
+and boot_params (params : Sl.param list) : Value.t =
+  let values_params = List.map boot_param params in
+  Value.Make.list (Runtime.Type.Typ.Make.list typ_param) values_params
 
 (* Iter instructions *)
 
@@ -220,56 +220,55 @@ and boot_elsblock_opt (elseblock_opt : Sl.elseblock option) : Value.t =
 
 (* Table rows *)
 
-and boot_tablerowSL ((exps, exp, block) : Sl.tablerow) : Value.t =
+and boot_tablerow ((exps, exp, block) : Sl.tablerow) : Value.t =
   let value_exps = boot_exps exps in
   let value_exp = boot_exp exp in
   let value_block = boot_block block in
   Value.Make.(
-    mop_tablerowSL <|! [ value_exps; value_exp; value_block ] <<|! typ_tblrowSL)
+    mop_tablerow <|! [ value_exps; value_exp; value_block ] <<|! typ_tblrow)
 
-and boot_tablerowSLs (tablerowSLs : Sl.tablerow list) : Value.t =
-  let values_tablerowSLs = List.map boot_tablerowSL tablerowSLs in
-  Value.Make.list (Runtime.Type.Typ.Make.list typ_tblrowSL) values_tablerowSLs
+and boot_tablerows (tablerows : Sl.tablerow list) : Value.t =
+  let values_tablerows = List.map boot_tablerow tablerows in
+  Value.Make.list (Runtime.Type.Typ.Make.list typ_tblrow) values_tablerows
 
 (* Definitions *)
 
-let rec boot_defSL (defSL : Sl.def) : Value.t option =
+let rec boot_def (def : Sl.def) : Value.t option =
   let wrap_some value = Some value in
-  let at = defSL.at in
-  match defSL.it with
-  | ExternTypD (id, _) -> boot_extern_typ_defSL at id |> wrap_some
+  let at = def.at in
+  match def.it with
+  | ExternTypD (id, _) -> boot_extern_typ_def at id |> wrap_some
   | TypD (id, tparams, deftyp, _) ->
-      boot_typ_defSL at id tparams deftyp |> wrap_some
+      boot_typ_def at id tparams deftyp |> wrap_some
   | VarD _ -> None
   | ExternRelD (id, (nottyp, input), exps, _) ->
-      boot_extern_rel_defSL at id nottyp input exps |> wrap_some
+      boot_extern_rel_def at id nottyp input exps |> wrap_some
   | RelD (id, (nottyp, input), exps, block, elseblock_opt, _) ->
-      boot_rel_defSL at id nottyp input exps block elseblock_opt |> wrap_some
-  | ExternDecD (id, tparams, paramSLs, typ, _) ->
-      boot_extern_func_defSL at id tparams paramSLs typ |> wrap_some
-  | BuiltinDecD (id, tparams, paramSLs, typ, _) ->
-      boot_builtin_func_defSL at id tparams paramSLs typ |> wrap_some
-  | TableDecD (id, paramSLs, typ, tablerowSLs, _) ->
-      boot_table_func_defSL at id paramSLs typ tablerowSLs |> wrap_some
-  | FuncDecD (id, tparams, paramSLs, typ, block, elseblock_opt, _) ->
-      boot_func_defSL at id tparams paramSLs typ block elseblock_opt
-      |> wrap_some
+      boot_rel_def at id nottyp input exps block elseblock_opt |> wrap_some
+  | ExternDecD (id, tparams, params, typ, _) ->
+      boot_extern_func_def at id tparams params typ |> wrap_some
+  | BuiltinDecD (id, tparams, params, typ, _) ->
+      boot_builtin_func_def at id tparams params typ |> wrap_some
+  | TableDecD (id, params, typ, tablerows, _) ->
+      boot_table_func_def at id params typ tablerows |> wrap_some
+  | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
+      boot_func_def at id tparams params typ block elseblock_opt |> wrap_some
 
-and boot_extern_typ_defSL (at : region) (id : Sl.id) : Value.t =
+and boot_extern_typ_def (at : region) (id : Sl.id) : Value.t =
   let value_id = boot_id id in
-  Value.Make.(mop_extern_typ_defSL <|! [ value_id ] <<|! typ_defnSL <<<| at)
+  Value.Make.(mop_extern_typ_def <|! [ value_id ] <<|! typ_defn <<<| at)
 
-and boot_typ_defSL (at : region) (id : Sl.id) (tparams : Sl.tparam list)
+and boot_typ_def (at : region) (id : Sl.id) (tparams : Sl.tparam list)
     (deftyp : Sl.deftyp) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
   let value_deftyp = boot_deftyp deftyp in
   Value.Make.(
-    mop_typ_defSL
+    mop_typ_def
     <|! [ value_id; value_tparams; value_deftyp ]
-    <<|! typ_defnSL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_extern_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
+and boot_extern_rel_def (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
     (input : Hints.Input.t) (exps : Sl.exp list) : Value.t =
   let _, typs = nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
@@ -278,11 +277,11 @@ and boot_extern_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
   let value_typs_in = boot_typs typs_in in
   let value_typs_out = boot_typs typs_out in
   Value.Make.(
-    mop_extern_rel_defSL
+    mop_extern_rel_def
     <|! [ value_id; value_exps; value_typs_in; value_typs_out ]
-    <<|! typ_defnSL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
+and boot_rel_def (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
     (input : Hints.Input.t) (exps : Sl.exp list) (block : Sl.block)
     (elseblock_opt : Sl.elseblock option) : Value.t =
   let _, typs = nottyp.it in
@@ -294,7 +293,7 @@ and boot_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
   let value_block = boot_block block in
   let value_elsblock = boot_elsblock_opt elseblock_opt in
   Value.Make.(
-    mop_rel_defSL
+    mop_rel_def
     <|! [
           value_id;
           value_exps;
@@ -303,66 +302,65 @@ and boot_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
           value_block;
           value_elsblock;
         ]
-    <<|! typ_defnSL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_extern_func_defSL (at : region) (id : Sl.id) (tparams : Sl.tparam list)
-    (paramSLs : Sl.param list) (typ : Sl.typ) : Value.t =
+and boot_extern_func_def (at : region) (id : Sl.id) (tparams : Sl.tparam list)
+    (params : Sl.param list) (typ : Sl.typ) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramSLs = boot_paramSLs paramSLs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   Value.Make.(
-    mop_extern_func_defSL
-    <|! [ value_id; value_tparams; value_paramSLs; value_typ ]
-    <<|! typ_defnSL <<<| at)
+    mop_extern_func_def
+    <|! [ value_id; value_tparams; value_params; value_typ ]
+    <<|! typ_defn <<<| at)
 
-and boot_builtin_func_defSL (at : region) (id : Sl.id)
-    (tparams : Sl.tparam list) (paramSLs : Sl.param list) (typ : Sl.typ) :
-    Value.t =
+and boot_builtin_func_def (at : region) (id : Sl.id) (tparams : Sl.tparam list)
+    (params : Sl.param list) (typ : Sl.typ) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramSLs = boot_paramSLs paramSLs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   Value.Make.(
-    mop_builtin_func_defSL
-    <|! [ value_id; value_tparams; value_paramSLs; value_typ ]
-    <<|! typ_defnSL <<<| at)
+    mop_builtin_func_def
+    <|! [ value_id; value_tparams; value_params; value_typ ]
+    <<|! typ_defn <<<| at)
 
-and boot_table_func_defSL (at : region) (id : Sl.id) (paramSLs : Sl.param list)
-    (typ : Sl.typ) (tablerowSLs : Sl.tablerow list) : Value.t =
+and boot_table_func_def (at : region) (id : Sl.id) (params : Sl.param list)
+    (typ : Sl.typ) (tablerows : Sl.tablerow list) : Value.t =
   let value_id = boot_id id in
-  let value_paramSLs = boot_paramSLs paramSLs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
-  let value_tablerowSLs = boot_tablerowSLs tablerowSLs in
+  let value_tablerows = boot_tablerows tablerows in
   Value.Make.(
-    mop_table_func_defSL
-    <|! [ value_id; value_paramSLs; value_typ; value_tablerowSLs ]
-    <<|! typ_defnSL <<<| at)
+    mop_table_func_def
+    <|! [ value_id; value_params; value_typ; value_tablerows ]
+    <<|! typ_defn <<<| at)
 
-and boot_func_defSL (at : region) (id : Sl.id) (tparams : Sl.tparam list)
-    (paramSLs : Sl.param list) (typ : Sl.typ) (block : Sl.block)
+and boot_func_def (at : region) (id : Sl.id) (tparams : Sl.tparam list)
+    (params : Sl.param list) (typ : Sl.typ) (block : Sl.block)
     (elseblock_opt : Sl.elseblock option) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramSLs = boot_paramSLs paramSLs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   let value_block = boot_block block in
   let value_elsblock = boot_elsblock_opt elseblock_opt in
   Value.Make.(
-    mop_func_defSL
+    mop_func_def
     <|! [
           value_id;
           value_tparams;
-          value_paramSLs;
+          value_params;
           value_typ;
           value_block;
           value_elsblock;
         ]
-    <<|! typ_defnSL <<<| at)
+    <<|! typ_defn <<<| at)
 
 (* Specification *)
 
-let boot_specSL (specSL : Sl.spec) : Value.t =
-  let values_defSL = List.map boot_defSL specSL |> List.filter_map Fun.id in
-  let typ_scriptSL = Runtime.Type.Typ.Make.var ("scriptSL" $ no_region) [] in
-  Value.Make.list typ_scriptSL values_defSL
+let boot_spec (spec : Sl.spec) : Value.t =
+  let values_def = List.map boot_def spec |> List.filter_map Fun.id in
+  let typ_script = Runtime.Type.Typ.Make.var ("script" $ no_region) [] in
+  Value.Make.list typ_script values_def

@@ -1,0 +1,49 @@
+;; Result to represent backtracking in evaluation
+
+syntax ctxres = res<ctx>
+
+;; Evaluation relations
+
+relation Eval_exp:
+  ctx |- exp : res<val>
+  hint(input %0 %1)
+
+relation Eval_targs:
+  ctx |- targ* : typ*
+  hint(input %0 %1)
+
+relation Eval_arg:
+  ctx |- arg : res<val>
+  hint(input %0 %1)
+
+relation Eval_prem:
+  ctx |- prem : res<ctx>
+  hint(input %0 %1)
+
+relation Eval_prems:
+  ctx |- prem* : res<ctx>
+  hint(input %0 %1)
+
+relation Call_func:
+  ctx |- funcdef targ* val* : res<val>
+  hint(input %0 %1 %2 %3)
+
+relation Call_func_cached:
+  ctx |- id targ* val* : res<val>
+  hint(input %0 %1 %2 %3)
+
+relation Call_rel:
+  ctx |- reldef val* : res<val*>
+  hint(input %0 %1 %2)
+
+relation Call_rel_cached:
+  ctx |- id val* : res<val*>
+  hint(input %0 %1 %2)
+
+relation Call_func_dispatch:
+  ctx |- id typ* val* funccache : res<val>
+  hint(input %0 %1 %2 %3 %4)
+
+relation Call_rel_dispatch:
+  ctx |- id val* relcache : res<val*>
+  hint(input %0 %1 %2 %3)

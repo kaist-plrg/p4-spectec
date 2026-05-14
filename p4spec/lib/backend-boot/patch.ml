@@ -76,7 +76,7 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
     (value_spec : Value.t) : Value.t =
   (* Find the relation in the spec *)
   let rel_meta = level_meta.layer.rel in
-  let defs = Interface.SpecTec_IL.unboot_scriptIL value_spec in
+  let defs = Interface.SpecTec_IL.unboot_script value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun (def : Il.def) ->
@@ -141,14 +141,14 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
     $ no_region
   in
   (* Il.Print.string_of_def def |> print_endline; *)
-  let value_spec = defs @ [ def ] |> Interface.SpecTec_IL.boot_specIL in
+  let value_spec = defs @ [ def ] |> Interface.SpecTec_IL.boot_spec in
   value_spec
 
 let apply_sl (level_meta : Config.level) (value_meta : Value.t)
     (value_spec : Value.t) : Value.t =
   (* Find the relation in the spec *)
   let rel_meta = level_meta.layer.rel in
-  let defs = Interface.SpecTec_SL.unboot_scriptSL value_spec in
+  let defs = Interface.SpecTec_SL.unboot_script value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun (def : Sl.def) ->
@@ -211,7 +211,7 @@ let apply_sl (level_meta : Config.level) (value_meta : Value.t)
     $ no_region
   in
   (* Sl.Print.string_of_def def_sl |> print_endline; *)
-  let value_spec = defs @ [ def ] |> Interface.SpecTec_SL.boot_specSL in
+  let value_spec = defs @ [ def ] |> Interface.SpecTec_SL.boot_spec in
   value_spec
 
 let apply (level_meta : Config.level) (value_meta : Value.t)

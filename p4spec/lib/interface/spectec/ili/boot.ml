@@ -6,25 +6,25 @@ open Util.Source
 
 (* Parameters *)
 
-let rec boot_paramIL (paramIL : Il.param) : Value.t =
-  let at = paramIL.at in
-  match paramIL.it with
+let rec boot_param (param : Il.param) : Value.t =
+  let at = param.at in
+  match param.it with
   | ExpP typ ->
       let value_typ = boot_typ typ in
-      Value.Make.(mop_exp_paramIL <|! [ value_typ ] <<|! typ_paramIL <<<| at)
-  | DefP (id, tparams, paramILs, typ) ->
+      Value.Make.(mop_exp_param <|! [ value_typ ] <<|! typ_param <<<| at)
+  | DefP (id, tparams, params, typ) ->
       let value_id = boot_id id in
       let value_tparams = boot_tparams tparams in
-      let value_paramILs = boot_paramILs paramILs in
+      let value_params = boot_params params in
       let value_typ = boot_typ typ in
       Value.Make.(
-        mop_def_paramIL
-        <|! [ value_id; value_tparams; value_paramILs; value_typ ]
-        <<|! typ_paramIL <<<| at)
+        mop_def_param
+        <|! [ value_id; value_tparams; value_params; value_typ ]
+        <<|! typ_param <<<| at)
 
-and boot_paramILs (paramILs : Il.param list) : Value.t =
-  let values_paramILs = List.map boot_paramIL paramILs in
-  Value.Make.list (Runtime.Type.Typ.Make.list typ_paramIL) values_paramILs
+and boot_params (params : Il.param list) : Value.t =
+  let values_params = List.map boot_param params in
+  Value.Make.list (Runtime.Type.Typ.Make.list typ_param) values_params
 
 (* Iter premises *)
 
@@ -176,60 +176,59 @@ and boot_elsclause_opt (elsclause_opt : Il.elseclause option) : Value.t =
 
 (* Table rows *)
 
-and boot_tablerowIL (tablerowIL : Il.tablerow) : Value.t =
-  let at = tablerowIL.at in
-  let _exps, args, exp, prems = tablerowIL.it in
+and boot_tablerow (tablerow : Il.tablerow) : Value.t =
+  let at = tablerow.at in
+  let _exps, args, exp, prems = tablerow.it in
   let value_args = boot_args args in
   let value_exp = boot_exp exp in
   let value_prems = boot_prems prems in
   Value.Make.(
     mop_clause
     <|! [ value_args; value_exp; value_prems ]
-    <<|! typ_tblrowIL <<<| at)
+    <<|! typ_tblrow <<<| at)
 
-and boot_tablerowILs (tablerowILs : Il.tablerow list) : Value.t =
-  let values_tablerowILs = List.map boot_tablerowIL tablerowILs in
-  Value.Make.list (Runtime.Type.Typ.Make.list typ_tblrowIL) values_tablerowILs
+and boot_tablerows (tablerows : Il.tablerow list) : Value.t =
+  let values_tablerows = List.map boot_tablerow tablerows in
+  Value.Make.list (Runtime.Type.Typ.Make.list typ_tblrow) values_tablerows
 
 (* Definitions *)
 
-let rec boot_defIL (defIL : Il.def) : Value.t option =
+let rec boot_def (def : Il.def) : Value.t option =
   let wrap_some value = Some value in
-  let at = defIL.at in
-  match defIL.it with
-  | ExternTypD (id, _) -> boot_extern_typ_defIL at id |> wrap_some
+  let at = def.at in
+  match def.it with
+  | ExternTypD (id, _) -> boot_extern_typ_def at id |> wrap_some
   | TypD (id, tparams, deftyp, _) ->
-      boot_typ_defIL at id tparams deftyp |> wrap_some
+      boot_typ_def at id tparams deftyp |> wrap_some
   | VarD _ -> None
   | ExternRelD (id, nottyp, input, _) ->
-      boot_extern_rel_defIL at id nottyp input |> wrap_some
+      boot_extern_rel_def at id nottyp input |> wrap_some
   | RelD (id, nottyp, input, rulgroups, elsegroup_opt, _) ->
-      boot_rel_defIL at id nottyp input rulgroups elsegroup_opt |> wrap_some
-  | ExternDecD (id, tparams, paramILs, typ, _) ->
-      boot_extern_func_defIL at id tparams paramILs typ |> wrap_some
-  | BuiltinDecD (id, tparams, paramILs, typ, _) ->
-      boot_builtin_func_defIL at id tparams paramILs typ |> wrap_some
-  | TableDecD (id, paramILs, typ, tablerowILs, _) ->
-      boot_table_func_defIL at id paramILs typ tablerowILs |> wrap_some
-  | FuncDecD (id, tparams, paramILs, typ, clauses, elseclause_opt, _) ->
-      boot_func_defIL at id tparams paramILs typ clauses elseclause_opt
-      |> wrap_some
+      boot_rel_def at id nottyp input rulgroups elsegroup_opt |> wrap_some
+  | ExternDecD (id, tparams, params, typ, _) ->
+      boot_extern_func_def at id tparams params typ |> wrap_some
+  | BuiltinDecD (id, tparams, params, typ, _) ->
+      boot_builtin_func_def at id tparams params typ |> wrap_some
+  | TableDecD (id, params, typ, tablerows, _) ->
+      boot_table_func_def at id params typ tablerows |> wrap_some
+  | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, _) ->
+      boot_func_def at id tparams params typ clauses elseclause_opt |> wrap_some
 
-and boot_extern_typ_defIL (at : region) (id : Il.id) : Value.t =
+and boot_extern_typ_def (at : region) (id : Il.id) : Value.t =
   let value_id = boot_id id in
-  Value.Make.(mop_extern_typ_defIL <|! [ value_id ] <<|! typ_defnIL <<<| at)
+  Value.Make.(mop_extern_typ_def <|! [ value_id ] <<|! typ_defn <<<| at)
 
-and boot_typ_defIL (at : region) (id : Il.id) (tparams : Il.tparam list)
+and boot_typ_def (at : region) (id : Il.id) (tparams : Il.tparam list)
     (deftyp : Il.deftyp) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
   let value_deftyp = boot_deftyp deftyp in
   Value.Make.(
-    mop_typ_defIL
+    mop_typ_def
     <|! [ value_id; value_tparams; value_deftyp ]
-    <<|! typ_defnIL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_extern_rel_defIL (at : region) (id : Il.id) (nottyp : Il.nottyp)
+and boot_extern_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) : Value.t =
   let _, typs = nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
@@ -237,11 +236,11 @@ and boot_extern_rel_defIL (at : region) (id : Il.id) (nottyp : Il.nottyp)
   let value_typs_in = boot_typs typs_in in
   let value_typs_out = boot_typs typs_out in
   Value.Make.(
-    mop_extern_rel_defIL
+    mop_extern_rel_def
     <|! [ value_id; value_typs_in; value_typs_out ]
-    <<|! typ_defnIL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_rel_defIL (at : region) (id : Il.id) (nottyp : Il.nottyp)
+and boot_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) (rulgroups : Il.rulegroup list)
     (elsegroup_opt : Il.elsegroup option) : Value.t =
   let _, typs = nottyp.it in
@@ -252,7 +251,7 @@ and boot_rel_defIL (at : region) (id : Il.id) (nottyp : Il.nottyp)
   let value_rulgroups = boot_rulgroups rulgroups in
   let value_elsgroup = boot_elsgroup_opt elsegroup_opt in
   Value.Make.(
-    mop_rel_defIL
+    mop_rel_def
     <|! [
           value_id;
           value_typs_in;
@@ -260,66 +259,65 @@ and boot_rel_defIL (at : region) (id : Il.id) (nottyp : Il.nottyp)
           value_rulgroups;
           value_elsgroup;
         ]
-    <<|! typ_defnIL <<<| at)
+    <<|! typ_defn <<<| at)
 
-and boot_extern_func_defIL (at : region) (id : Il.id) (tparams : Il.tparam list)
-    (paramILs : Il.param list) (typ : Il.typ) : Value.t =
+and boot_extern_func_def (at : region) (id : Il.id) (tparams : Il.tparam list)
+    (params : Il.param list) (typ : Il.typ) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramILs = boot_paramILs paramILs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   Value.Make.(
-    mop_extern_func_defIL
-    <|! [ value_id; value_tparams; value_paramILs; value_typ ]
-    <<|! typ_defnIL <<<| at)
+    mop_extern_func_def
+    <|! [ value_id; value_tparams; value_params; value_typ ]
+    <<|! typ_defn <<<| at)
 
-and boot_builtin_func_defIL (at : region) (id : Il.id)
-    (tparams : Il.tparam list) (paramILs : Il.param list) (typ : Il.typ) :
-    Value.t =
+and boot_builtin_func_def (at : region) (id : Il.id) (tparams : Il.tparam list)
+    (params : Il.param list) (typ : Il.typ) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramILs = boot_paramILs paramILs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   Value.Make.(
-    mop_builtin_func_defIL
-    <|! [ value_id; value_tparams; value_paramILs; value_typ ]
-    <<|! typ_defnIL <<<| at)
+    mop_builtin_func_def
+    <|! [ value_id; value_tparams; value_params; value_typ ]
+    <<|! typ_defn <<<| at)
 
-and boot_table_func_defIL (at : region) (id : Il.id) (paramILs : Il.param list)
-    (typ : Il.typ) (tablerowILs : Il.tablerow list) : Value.t =
+and boot_table_func_def (at : region) (id : Il.id) (params : Il.param list)
+    (typ : Il.typ) (tablerows : Il.tablerow list) : Value.t =
   let value_id = boot_id id in
-  let value_paramILs = boot_paramILs paramILs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
-  let value_tablerowILs = boot_tablerowILs tablerowILs in
+  let value_tablerows = boot_tablerows tablerows in
   Value.Make.(
-    mop_table_func_defIL
-    <|! [ value_id; value_paramILs; value_typ; value_tablerowILs ]
-    <<|! typ_defnIL <<<| at)
+    mop_table_func_def
+    <|! [ value_id; value_params; value_typ; value_tablerows ]
+    <<|! typ_defn <<<| at)
 
-and boot_func_defIL (at : region) (id : Il.id) (tparams : Il.tparam list)
-    (paramILs : Il.param list) (typ : Il.typ) (clauses : Il.clause list)
+and boot_func_def (at : region) (id : Il.id) (tparams : Il.tparam list)
+    (params : Il.param list) (typ : Il.typ) (clauses : Il.clause list)
     (elseclause_opt : Il.elseclause option) : Value.t =
   let value_id = boot_id id in
   let value_tparams = boot_tparams tparams in
-  let value_paramILs = boot_paramILs paramILs in
+  let value_params = boot_params params in
   let value_typ = boot_typ typ in
   let value_clauses = boot_clauses clauses in
   let value_elsclause = boot_elsclause_opt elseclause_opt in
   Value.Make.(
-    mop_func_defIL
+    mop_func_def
     <|! [
           value_id;
           value_tparams;
-          value_paramILs;
+          value_params;
           value_typ;
           value_clauses;
           value_elsclause;
         ]
-    <<|! typ_defnIL <<<| at)
+    <<|! typ_defn <<<| at)
 
 (* Specification *)
 
-let boot_specIL (specIL : Il.spec) : Value.t =
-  let values_defIL = List.map boot_defIL specIL |> List.filter_map Fun.id in
-  let typ_scriptIL = Runtime.Type.Typ.Make.var ("scriptIL" $ no_region) [] in
-  Value.Make.list typ_scriptIL values_defIL
+let boot_spec (spec : Il.spec) : Value.t =
+  let values_def = List.map boot_def spec |> List.filter_map Fun.id in
+  let typ_script = Runtime.Type.Typ.Make.var ("script" $ no_region) [] in
+  Value.Make.list typ_script values_def

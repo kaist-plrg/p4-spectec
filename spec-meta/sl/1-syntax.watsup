@@ -1,8 +1,8 @@
 ;; Parameters
 
-syntax paramSL =
+syntax param =
   | EXP typ exp
-  | FUN id `: tparam* paramSL* `-> typ
+  | FUN id `: tparam* param* `-> typ
 
 ;; Instructions
 
@@ -39,18 +39,18 @@ syntax case = guard block
 
 ;; Definitions
 
-syntax tblrowSL = exp* `= exp `- block
+syntax tblrow = exp* `= exp `- block
 
-syntax defnSL =
+syntax defn =
   | EXTTYP id
   | TYP id tparam* `= deftyp
   | EXTREL id exp* `: typ* `-> typ*
   | REL id exp* `: typ* `-> typ* `= block block?
-  | EXTFUNC id tparam* paramSL* `: typ
-  | BUILTINFUNC id tparam* paramSL* `: typ
-  | TABLEFUNC id paramSL* `: typ `= tblrowSL*
-  | FUNC id tparam* paramSL* `: typ `= block block?
+  | EXTFUNC id tparam* param* `: typ
+  | BUILTINFUNC id tparam* param* `: typ
+  | TABLEFUNC id param* `: typ `= tblrow*
+  | FUNC id tparam* param* `: typ `= block block?
 
 ;; Scripts
 
-syntax scriptSL = defnSL*
+syntax script = defn*

@@ -120,7 +120,7 @@ module SpecTec_IL = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_scriptIL |> Il.Print.string_of_spec
+    value_script |> unboot_script |> Il.Print.string_of_spec
 
   (* Builtins *)
 
@@ -169,7 +169,7 @@ module SpecTec_SL = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_scriptSL |> Sl.Print.string_of_spec
+    value_script |> unboot_script |> Sl.Print.string_of_spec
 
   (* Builtins *)
 
