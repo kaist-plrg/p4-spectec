@@ -100,7 +100,7 @@ and boot_holdcase (holdcase : Sl.holdcase) : Value.t =
 and boot_hold_instr (at : region) (id : Sl.id) (notexp : Sl.notexp)
     (iterexps : Sl.iterexp list) (holdcase : Sl.holdcase) : Value.t =
   let value_id = boot_id id in
-  let _, exps = notexp in
+  let exps = Mixfix.args notexp in
   let value_exps = boot_exps exps in
   let value_iterexps = boot_iterexps iterexps in
   let value_holdcase = boot_holdcase holdcase in
@@ -148,7 +148,7 @@ and boot_case_instr (at : region) (exp : Sl.exp) (cases : Sl.case list) :
 and boot_group_instr (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
     (inputs : Hints.Input.t) (exps : Sl.exp list) (block : Sl.block) : Value.t =
   let value_id = boot_id id in
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split inputs typs in
   let value_typs_in = boot_typs typs_in in
   let value_typs_out = boot_typs typs_out in
@@ -174,7 +174,7 @@ and boot_rule_instr (at : region) (id : Sl.id) (notexp : Sl.notexp)
     (inputs : Hints.Input.t) (iterinstrs : Sl.iterinstr list) (block : Sl.block)
     : Value.t =
   let value_id = boot_id id in
-  let _, exps = notexp in
+  let exps = Mixfix.args notexp in
   let exps_in, exps_out = Hints.Input.split inputs exps in
   let value_exps_in = boot_exps exps_in in
   let value_exps_out = boot_exps exps_out in
@@ -189,7 +189,7 @@ and boot_rule_instr (at : region) (id : Sl.id) (notexp : Sl.notexp)
 
 and boot_result_instr (at : region) (nottyp : Sl.nottyp)
     (inputs : Hints.Input.t) (exps : Sl.exp list) : Value.t =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split inputs typs in
   let value_typs_in = boot_typs typs_in in
   let value_typs_out = boot_typs typs_out in
@@ -271,7 +271,7 @@ and boot_typ_defSL (at : region) (id : Sl.id) (tparams : Sl.tparam list)
 
 and boot_extern_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
     (input : Hints.Input.t) (exps : Sl.exp list) : Value.t =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
   let value_id = boot_id id in
   let value_exps = boot_exps exps in
@@ -285,7 +285,7 @@ and boot_extern_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
 and boot_rel_defSL (at : region) (id : Sl.id) (nottyp : Sl.nottyp)
     (input : Hints.Input.t) (exps : Sl.exp list) (block : Sl.block)
     (elseblock_opt : Sl.elseblock option) : Value.t =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
   let value_id = boot_id id in
   let value_exps = boot_exps exps in

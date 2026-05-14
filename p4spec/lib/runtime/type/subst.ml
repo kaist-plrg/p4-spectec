@@ -1,5 +1,6 @@
 module Fresh_ = Fresh
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Il
 open Error
@@ -59,9 +60,7 @@ let subst_typs (theta : theta) (typs : typ list) : typ list =
 (* Variant types *)
 
 let subst_nottyp (theta : theta) (nottyp : nottyp) : nottyp =
-  let mixop, typs = nottyp.it in
-  let typs = subst_typs theta typs in
-  (mixop, typs) $ nottyp.at
+  Mixfix.map (subst_typ theta) nottyp.it $ nottyp.at
 
 let subst_typcase (theta : theta) (typcase : typcase) : typcase =
   let nottyp, typorigin, hints = typcase in

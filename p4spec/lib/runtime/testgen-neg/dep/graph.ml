@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang.Il
 open Util.Source
 
@@ -52,7 +53,8 @@ let add_node ~(taint : bool) (graph : t) (value : value) : unit =
         let vids_from = List.map (fun value -> value.note.vid) values in
         let vidfields = List.combine atoms vids_from in
         (Node.StructN vidfields, values)
-    | CaseV (mixop, values) ->
+    | CaseV valuecase ->
+        let mixop, values = Mixfix.split valuecase in
         let vids_from = List.map (fun value -> value.note.vid) values in
         (Node.CaseN (mixop, vids_from), values)
     | TupleV values ->
@@ -104,8 +106,8 @@ and assemble_graph' (graph : t) (value : value) : unit =
   | BoolV _ | NumV _ | TextV _ -> ()
   | StructV valuefields ->
       valuefields |> List.map snd |> List.iter (assemble_graph' graph)
-  | CaseV (_, values) | TupleV values ->
-      values |> List.iter (assemble_graph' graph)
+  | CaseV valuecase -> Mixfix.iter (assemble_graph' graph) valuecase
+  | TupleV values -> values |> List.iter (assemble_graph' graph)
   | OptV None -> ()
   | OptV (Some value) -> assemble_graph' graph value
   | ListV values -> values |> List.iter (assemble_graph' graph)
@@ -136,7 +138,7 @@ and reassemble_graph' (graph : t) (renamer : value VIdMap.t) (vid : vid) : value
         StructV valuefields
     | CaseN (mixop, vids) ->
         let values = List.map (reassemble_graph graph renamer) vids in
-        CaseV (mixop, values)
+        CaseV (Mixfix.fill mixop values)
     | TupleN vids ->
         let values = List.map (reassemble_graph graph renamer) vids in
         TupleV values

@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Sl.Free
 open Ast
@@ -37,13 +38,15 @@ and free_guard (guard : guard) : t =
 and free_instr (instr : instr) : t =
   match instr.it with
   | IfI (exp, _, block) -> free_exp exp + free_block block
-  | HoldI (_, (_, exps), _, block_then, block_else) ->
-      free_exps exps + free_block block_then + free_block block_else
+  | HoldI (_, notexp, _, block_then, block_else) ->
+      free_exps (Mixfix.args notexp)
+      + free_block block_then + free_block block_else
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
   | GroupI (_, _, exps, block) -> free_exps exps + free_block block
   | LetI (exp_l, exp_r, _, block) ->
       free_exp exp_l + free_exp exp_r + free_block block
-  | RuleI (_, (_, exps), _, _, block) -> free_exps exps + free_block block
+  | RuleI (_, notexp, _, _, block) ->
+      free_exps (Mixfix.args notexp) + free_block block
   | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
   | DebugI exp -> free_exp exp

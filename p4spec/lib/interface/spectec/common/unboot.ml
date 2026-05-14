@@ -1,4 +1,5 @@
 module Atom = Domain.Atom
+module Mixfix = Domain.Mixfix
 module Il = Lang.Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
@@ -199,7 +200,7 @@ and unboot_typcase (value_typcase : Value.t) : Il.typcase =
   let values = Value.Get.(value_typcase |>>! mop_typcase) in
   let mixop = Value.Get.nth 0 values |> unboot_mixop in
   let typs = Value.Get.nth 1 values |> unboot_typs in
-  let nottyp = (mixop, typs) $ value_typcase.at in
+  let nottyp = Mixfix.fill mixop typs $ value_typcase.at in
   (nottyp, stub_typorigin (), [])
 
 and unboot_typcases (value_typcases : Value.t) : Il.typcase list =
@@ -284,7 +285,8 @@ and unboot_valuecase (value_valuecase : Value.t) : Il.valuecase =
   let values = Value.Get.(value_valuecase |>>! mop_valuecase) in
   let mixop = Value.Get.nth 0 values |> unboot_mixop in
   let values = Value.Get.nth 1 values |> unboot_values in
-  (mixop, values)
+  let valuecase = Mixfix.fill mixop values in
+  valuecase
 
 and unboot_variant_value (at : region) (values : Value.t list) : Il.value =
   match values with
@@ -542,7 +544,8 @@ and unboot_case_exp (at : region) (values : Value.t list) : Il.exp =
   match values with
   | [ value_expcase ] ->
       let mixop, exps = unboot_expcase value_expcase in
-      Il.CaseE (mixop, exps) $$ (at, stub_exp_note)
+      let notexp = Mixfix.fill mixop exps in
+      Il.CaseE notexp $$ (at, stub_exp_note)
   | _ -> error "@unboot_case_exp"
 
 and unboot_str_exp (at : region) (values : Value.t list) : Il.exp =

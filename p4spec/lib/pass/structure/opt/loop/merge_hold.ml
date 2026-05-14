@@ -1,3 +1,4 @@
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 module Typ = Runtime.Type.Typ
@@ -12,8 +13,8 @@ let rec merge_identical_hold (at : region) (id_target : id)
   match block with
   | { it = HoldI (id, notexp, iterexps, block_hold, block_nothold); _ }
     :: block_t ->
-      let mixop_target, exps_target = notexp_target in
-      let mixop, exps = notexp in
+      let mixop_target, exps_target = Mixfix.split notexp_target in
+      let mixop, exps = Mixfix.split notexp in
       if
         Sl.Eq.eq_id id id_target
         && Sl.Eq.eq_mixop mixop mixop_target

@@ -1,5 +1,6 @@
 open Lang
 open Il
+module Mixfix = Domain.Mixfix
 open Util.Source
 
 (* Check that binding patterns are shallow
@@ -21,7 +22,7 @@ let check_shallow_exp (exp : exp) : bool =
   match exp.it with
   | VarE _ -> true
   | UpCastE (_, { it = VarE _; _ }) | UpCastE (_, { it = CaseE _; _ }) -> true
-  | CaseE notexp -> notexp |> snd |> List.for_all is_iterated_var
+  | CaseE notexp -> notexp |> Mixfix.args |> List.for_all is_iterated_var
   | _ -> false
 
 let check_shallow_exps (exps : exp list) : bool =

@@ -1,9 +1,11 @@
+open Util.Source
+
 (* Cache entry using mixops *)
 
 module MixopEntry = struct
   type t = Mixop.t
 
-  let default : t = Mixop.Arg
+  let default : t = Mixop.Atom (Atom.Atom "" $ no_region)
   let equal = Mixop.eq
 
   let hash (m : Mixop.t) : int =
