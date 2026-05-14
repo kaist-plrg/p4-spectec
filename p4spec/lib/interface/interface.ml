@@ -16,20 +16,20 @@ module P4 = struct
 
   (* Program parsing *)
 
-  let parse_program (includes_p4 : string list) (filenames_p4 : string list) :
+  let parse_program (includes_p4 : string list) (paths_p4 : string list) :
       Run.parse_result =
     try
-      match filenames_p4 with
-      | [ filename_p4 ] ->
-          let value_program = P4.Parse.parse_file includes_p4 filename_p4 in
+      match paths_p4 with
+      | [ path_p4 ] ->
+          let value_program = P4.Parse.parse_file includes_p4 path_p4 in
           Run.Pass value_program
       | _ ->
           Run.Fail (`Syntax (no_region, "exactly one P4 file must be provided"))
     with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  let parse_string (filename_p4 : string) (str : string) : Run.parse_result =
+  let parse_string (path_p4 : string) (str : string) : Run.parse_result =
     try
-      let value_program = P4.Parse.parse_string filename_p4 str in
+      let value_program = P4.Parse.parse_string path_p4 str in
       Run.Pass value_program
     with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
@@ -100,18 +100,18 @@ module SpecTec_IL = struct
 
   (* Program parsing *)
 
-  let parse_program (_includes : string list) (filenames : string list) :
+  let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_files Run.IL_mode filenames in
+      let value_spec = Spectec.Parse.parse_files Run.IL_mode paths in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  let parse_string (filename : string) (str : string) : Run.parse_result =
+  let parse_string (path : string) (str : string) : Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_string Run.IL_mode filename str in
+      let value_spec = Spectec.Parse.parse_string Run.IL_mode path str in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -149,18 +149,18 @@ module SpecTec_SL = struct
 
   (* Program parsing *)
 
-  let parse_program (_includes : string list) (filenames : string list) :
+  let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_files Run.SL_mode filenames in
+      let value_spec = Spectec.Parse.parse_files Run.SL_mode paths in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  let parse_string (filename : string) (str : string) : Run.parse_result =
+  let parse_string (path : string) (str : string) : Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_string Run.SL_mode filename str in
+      let value_spec = Spectec.Parse.parse_string Run.SL_mode path str in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))

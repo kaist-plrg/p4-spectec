@@ -1,20 +1,18 @@
 open Test_common
 open Util.Error
 open Runtime.Sim.Signature
+open Backend_boot.Config
 module Test = Util.Test
 module Filesys = Util.Filesys
 
 (* Interpreter test *)
 
-let boot (module Booter : RUNNER) depth neg filenames_spec rel filenames_spec_p4
-    rel_p4 includes_p4 filename_p4 =
+let boot (module Booter : RUNNER) neg tower =
   let time_start = start () in
   try
     Booter.clear ();
-    let value_spectec =
-      Backend_boot.Patch.apply_n_p4 ~depth filenames_spec_p4 rel
-        filenames_spec_p4 rel_p4 includes_p4 filename_p4
-    in
+    let value_spectec = Backend_boot.Patch.apply_tower tower in
+    let rel = tower.level_boot.layer.rel in
     (match Booter.Interp.eval_rel rel [ value_spectec ] with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
     | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start)));
@@ -24,10 +22,9 @@ let boot (module Booter : RUNNER) depth neg filenames_spec rel filenames_spec_p4
   | TestRunNegErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
-    filenames_spec_p4 rel_p4 includes_p4 excludes_p4 filename_p4 =
-  if List.exists (String.equal filename_p4) excludes_p4 then (
-    let log = Format.asprintf "Excluding file: %s" filename_p4 in
+let boot_test (module Booter : RUNNER) neg stat tower excludes_p4 path_p4 =
+  if List.exists (String.equal tower.target.path) excludes_p4 then (
+    let log = Format.asprintf "Excluding file: %s" tower.target.path in
     log |> print_endline;
     {
       stat with
@@ -36,14 +33,9 @@ let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
     })
   else
     try
-      let time_start =
-        boot
-          (module Booter)
-          depth neg filenames_spec rel filenames_spec_p4 rel_p4 includes_p4
-          filename_p4
-      in
+      let time_start = boot (module Booter) neg tower in
       let duration = stop time_start in
-      let log = Format.asprintf "Run success: %s" filename_p4 in
+      let log = Format.asprintf "Run success: %s" path_p4 in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -51,9 +43,8 @@ let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
     with
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s" filename_p4 |> print_endline;
-        Format.eprintf "Error on run: %s\n%s\n" filename_p4
-          (string_of_error at msg);
+        Format.asprintf "Error on run: %s" path_p4 |> print_endline;
+        Format.eprintf "Error on run: %s\n%s\n" path_p4 (string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
@@ -62,16 +53,15 @@ let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
         }
     | TestRunNegErr time_start ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s (should fail)" filename_p4
+        Format.asprintf "Error on run: %s (should fail)" path_p4
         |> print_endline;
-        Format.eprintf "Error on run: %s (should fail)\n" filename_p4;
+        Format.eprintf "Error on run: %s (should fail)\n" path_p4;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         { stat with durations = duration :: stat.durations }
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s (unknown)" filename_p4
-        |> print_endline;
-        Format.eprintf "Error on run: %s (unknown)\n" filename_p4;
+        Format.asprintf "Error on run: %s (unknown)" path_p4 |> print_endline;
+        Format.eprintf "Error on run: %s (unknown)\n" path_p4;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
@@ -79,35 +69,52 @@ let boot_test (module Booter : RUNNER) depth neg stat filenames_spec rel
           fail_run = stat.fail_run + 1;
         }
 
-let boot_test_driver mode depth det neg specdir rel specdir_p4 rel_p4
-    includes_p4 excludes_p4 testdirs_p4 =
+let boot_test_driver mode det neg path_spec rel interface_spec path_spec_p4
+    rel_p4 includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
+  let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
-  let total = List.length filenames_p4 in
+  let total = List.length paths_p4 in
   let stat = empty_stat in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let _, (module Booter) =
-    booter ~det ~final:true ~depth mode specdir specdir_p4
+  let tower =
+    let open Backend_boot.Config in
+    let level_boot =
+      let interface_spec =
+        match interface_spec with
+        | "il" -> IL_interface
+        | "sl" -> SL_interface
+        | _ -> failwith "invalid interface spec"
+      in
+      { layer = { specdir = path_spec; rel }; interface = interface_spec }
+    in
+    let levels_interm = [] in
+    let level_target =
+      {
+        layer = { specdir = path_spec_p4; rel = rel_p4 };
+        interface = P4_interface;
+      }
+    in
+    let target = { includes = includes_p4; path = "" } in
+    { mode; level_boot; levels_interm; level_target; target }
   in
-  let filenames_spec = expand_spec [ specdir ] in
-  let filenames_spec_p4 = expand_spec [ specdir_p4 ] in
+  let _, _, _, (module Booter) = Backend_boot.Build.build ~det tower in
   let stat =
     List.fold_left
-      (fun stat filename_p4 ->
+      (fun stat path_p4 ->
         Format.asprintf "\n>>> Running boot test (%s/%s) on %s" rel rel_p4
-          filename_p4
+          path_p4
         |> print_endline;
-        boot_test
-          (module Booter)
-          depth neg stat filenames_spec rel filenames_spec_p4 rel_p4 includes_p4
-          excludes_p4 filename_p4)
-      stat filenames_p4
+        let tower =
+          { tower with target = { tower.target with path = path_p4 } }
+        in
+        boot_test (module Booter) neg stat tower excludes_p4 path_p4)
+      stat paths_p4
   in
   log_stat (Format.asprintf "\nRunning boot test (%s/%s)" rel rel_p4) stat total
 
@@ -115,32 +122,29 @@ let boot_command =
   Core.Command.basic ~summary:"run interpreter test (boot)"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map specdir = flag "-s0" (required string) ~doc:"boot spec directory"
+     let%map path_spec = flag "-s0" (required string) ~doc:"boot spec directory"
      and relname = flag "-r0" (required string) ~doc:"boot relation to run"
-     and specdir_p4 = flag "-s1" (required string) ~doc:"p4 spec directory"
+     and interface_spec = flag "-i0" (required string) ~doc:"boot interface"
+     and path_spec_p4 = flag "-s1" (required string) ~doc:"p4 spec directory"
      and rel_p4 = flag "-r1" (required string) ~doc:"p4 spec relation to run"
-     and includes_p4 = flag "-i1" (listed string) ~doc:"p4 include path"
-     and excludes_p4 = flag "-e1" (listed string) ~doc:"p4 test exclude paths"
-     and testdirs_p4 = flag "-p1" (listed string) ~doc:"p4 test directories"
-     and depth = flag "-n" (required int) ~doc:"number of layers of boot specs"
+     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include path"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and testdirs_p4 = flag "-p" (listed string) ~doc:"p4 test directories"
      and neg = flag "-neg" no_arg ~doc:"neg testsing (expect failure)"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and mode =
        Command.Param.choose_one
          [
            flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
            flag "sl" no_arg ~doc:"Run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
          ]
-         ~if_nothing_chosen:(Default_to `SL)
+         ~if_nothing_chosen:(Default_to SL_mode)
      in
      fun () ->
-       let depth =
-         if depth < 2 then failwith "depth must be at least 2" else depth - 2
-       in
-       boot_test_driver mode depth det neg specdir relname specdir_p4 rel_p4
-         includes_p4 excludes_p4 testdirs_p4)
+       boot_test_driver mode det neg path_spec relname interface_spec
+         path_spec_p4 rel_p4 includes_p4 excludes_p4 testdirs_p4)
 
 let command =
   Core.Command.group ~summary:"p4spec-test-boot" [ ("boot", boot_command) ]

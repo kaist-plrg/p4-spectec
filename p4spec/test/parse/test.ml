@@ -7,38 +7,37 @@ module Filesys = Util.Filesys
 
 (* P4 Parser test *)
 
-let parse_file time_start (module Simulator : SIM) includes filename =
-  match Simulator.Interface.parse_program includes [ filename ] with
+let parse_file time_start (module Simulator : SIM) includes path =
+  match Simulator.Interface.parse_program includes [ path ] with
   | Pass value -> value
   | Fail (`Syntax (at, msg)) -> raise (TestParseFileErr (msg, at, time_start))
 
-let parse_string time_start (module Simulator : SIM) filename program_dump =
-  match Simulator.Interface.parse_string filename program_dump with
+let parse_string time_start (module Simulator : SIM) path program_dump =
+  match Simulator.Interface.parse_string path program_dump with
   | Pass value -> value
   | Fail (`Syntax (at, msg)) -> raise (TestParseStringErr (msg, at, time_start))
 
-let parse_roundtrip time_start (module Simulator : SIM) includes filename =
-  let program = parse_file time_start (module Simulator) includes filename in
+let parse_roundtrip time_start (module Simulator : SIM) includes path =
+  let program = parse_file time_start (module Simulator) includes path in
   let program_dump = Simulator.Interface.unparse_program program in
   let program_roundtrip =
-    parse_string time_start (module Simulator) filename program_dump
+    parse_string time_start (module Simulator) path program_dump
   in
   if not (Il.Eq.eq_value ~dbg:true program program_roundtrip) then
     raise (TestParseRoundtripErr time_start)
   else time_start
 
-let parser_ (module Simulator : SIM) includes_p4 filename_p4 =
+let parser_ (module Simulator : SIM) includes_p4 path_p4 =
   let time_start = start () in
-  try parse_roundtrip time_start (module Simulator) includes_p4 filename_p4 with
+  try parse_roundtrip time_start (module Simulator) includes_p4 path_p4 with
   | TestParseFileErr _ as err -> raise err
   | TestParseStringErr _ as err -> raise err
   | TestParseRoundtripErr _ as err -> raise err
   | _ -> raise (TestUnknownErr time_start)
 
-let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
-    filename_p4 =
-  if List.exists (String.equal filename_p4) excludes_p4 then (
-    let log = Format.asprintf "Excluding file: %s" filename_p4 in
+let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4 path_p4 =
+  if List.exists (String.equal path_p4) excludes_p4 then (
+    let log = Format.asprintf "Excluding file: %s" path_p4 in
     log |> print_endline;
     {
       stat with
@@ -47,9 +46,9 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
     })
   else
     try
-      let time_start = parser_ (module Simulator) includes_p4 filename_p4 in
+      let time_start = parser_ (module Simulator) includes_p4 path_p4 in
       let duration = stop time_start in
-      let log = Format.asprintf "Parser roundtrip success: %s" filename_p4 in
+      let log = Format.asprintf "Parser roundtrip success: %s" path_p4 in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -58,7 +57,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
     | TestParseFileErr (msg, at, time_start) ->
         let duration = stop time_start in
         let log =
-          Format.asprintf "Error parsing file: %s\n%s" filename_p4
+          Format.asprintf "Error parsing file: %s\n%s" path_p4
             (string_of_error at msg)
         in
         log |> print_endline;
@@ -72,7 +71,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
     | TestParseStringErr (msg, at, time_start) ->
         let duration = stop time_start in
         let log =
-          Format.asprintf "Error parsing string: %s\n%s" filename_p4
+          Format.asprintf "Error parsing string: %s\n%s" path_p4
             (string_of_error at msg)
         in
         log |> print_endline;
@@ -85,9 +84,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
         }
     | TestParseRoundtripErr time_start ->
         let duration = stop time_start in
-        let log =
-          Format.asprintf "Error roundtripping parser: %s" filename_p4
-        in
+        let log = Format.asprintf "Error roundtripping parser: %s" path_p4 in
         log |> print_endline;
         Format.eprintf "%s\n" log;
         Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -98,7 +95,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
         }
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        let log = Format.asprintf "Unknown error on parser: %s" filename_p4 in
+        let log = Format.asprintf "Unknown error on parser: %s" path_p4 in
         log |> print_endline;
         Format.eprintf "%s\n" log;
         Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -108,25 +105,27 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4
           fail_run = stat.fail_run + 1;
         }
 
-let parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
+let parser_test_driver includes_p4 excludes_p4 testdirs_p4 path_spec =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
   in
-  let filenames_p4 =
+  let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
-  let _, (module Simulator) = simulator `IL specdir in
-  let total = List.length filenames_p4 in
+  let _, (module Simulator) =
+    Backend_sim.Build.build ~final:true SL_mode [ path_spec ]
+  in
+  let total = List.length paths_p4 in
   let stat = empty_stat in
   Format.asprintf "Running parser tests on %d files\n" total |> print_endline;
   let stat =
     List.fold_left
-      (fun stat filename_p4 ->
-        Format.asprintf "\n>>> Running parser test on %s" filename_p4
+      (fun stat path_p4 ->
+        Format.asprintf "\n>>> Running parser test on %s" path_p4
         |> print_endline;
-        parser_test_ stat (module Simulator) includes_p4 excludes_p4 filename_p4)
-      stat filenames_p4
+        parser_test_ stat (module Simulator) includes_p4 excludes_p4 path_p4)
+      stat paths_p4
   in
   log_stat "\nRunning parser" stat total
 
@@ -137,8 +136,8 @@ let parser_command_ =
      let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
-     and specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
-     fun () -> parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir)
+     and path_spec = flag "-s" (required string) ~doc:"p4 spec directory" in
+     fun () -> parser_test_driver includes_p4 excludes_p4 testdirs_p4 path_spec)
 
 let command =
   Core.Command.group ~summary:"p4spec-test-parse"

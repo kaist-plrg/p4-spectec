@@ -392,7 +392,7 @@ and string = parse
       { let rest, end_region = (string lexbuf) in
         ((String.make 1 chr) ^ rest, end_region) }
     
-(* Preprocessor annotations indicate line and filename *)
+(* Preprocessor annotations indicate line and path *)
 and preprocessor = parse
   | ' '
       { preprocessor lexbuf }
@@ -408,12 +408,12 @@ and preprocessor = parse
       
 and preprocessor_string = parse
   | [^ '"'] * '"'
-    { let filename = lexeme lexbuf in 
-      let filename = String.sub filename 0 (String.length filename - 1) in
-      Lexing.set_filename lexbuf filename;
+    { let path = lexeme lexbuf in 
+      let path = String.sub path 0 (String.length path - 1) in
+      Lexing.set_filename lexbuf path;
       preprocessor_column lexbuf }
       
-(* Once a filename has been recognized, ignore the rest of the line *)
+(* Once a path has been recognized, ignore the rest of the line *)
 and preprocessor_column = parse
   | ' ' 
       { preprocessor_column lexbuf }

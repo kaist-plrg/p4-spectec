@@ -1,4 +1,3 @@
-open Pass
 open Runtime.Sim.Signature
 module Filesys = Util.Filesys
 open Util.Source
@@ -98,129 +97,58 @@ let stop start = Util.Time.now () -. start
 
 (* Operations *)
 
-let expand_spec filenames =
-  List.concat_map
-    (fun filename ->
-      if Sys_unix.is_directory_exn filename then
-        Util.Filesys.collect_files ~suffix:".watsup" filename
-      else [ filename ])
-    filenames
-
-let frontend specdir =
-  specdir
-  |> Filesys.collect_files ~suffix:".watsup"
-  |> List.concat_map Frontend.Parse.parse_file
-
-let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
-
-let structure ~(final : bool) specdir =
-  specdir |> elab |> Structure.Struct.struct_spec ~final
-
-let prosify specdir =
-  specdir |> structure ~final:false |> Prose.Prosify.prosify_spec
-
-let simulator ?(det = false) ?(arch : string option) ~(final : bool) mode
-    specdir =
-  let spec_sim =
-    match mode with
-    | `IL ->
-        let spec_il = elab specdir in
-        (IL spec_il : spec)
-    | `SL ->
-        let spec_sl = structure ~final specdir in
-        (SL spec_sl : spec)
-  in
-  let (module Simulator) =
-    match arch with
-    | Some arch -> Backend_sim.Gen.gen_p4 arch
-    | None -> Backend_sim.Gen.gen_p4_placeholder ()
-  in
-  Simulator.init ~det spec_sim;
-  (spec_sim, (module Simulator : SIM))
-
-let booter ?(det = false) ~(final : bool) ~(depth : int) mode specdir specdir_p4
+let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4 path_p4
     =
-  let spec =
-    match mode with
-    | `IL ->
-        let spec_il = elab specdir in
-        (IL spec_il : spec)
-    | `SL ->
-        let spec_sl = structure ~final specdir in
-        (SL spec_sl : spec)
-  in
-  let spec_p4 =
-    match mode with
-    | `IL ->
-        let spec_il = elab specdir_p4 in
-        (IL spec_il : spec)
-    | `SL ->
-        let spec_sl = structure ~final specdir_p4 in
-        (SL spec_sl : spec)
-  in
-  let (module Runner_P4), runners_intermediate, (module Booter) =
-    Backend_boot.Gen.gen_n_p4 ~depth
-  in
-  Runner_P4.init ~det spec_p4;
-  List.iter
-    (fun (module Runner_SpecTec_mid : RUNNER) ->
-      Runner_SpecTec_mid.init ~det spec)
-    runners_intermediate;
-  Booter.init ~det spec;
-  (spec, (module Booter : RUNNER))
-
-let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4
-    filename_p4 =
   let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
     Inst.Coverage_instr.make ()
   in
   Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 path_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_instr () in
   (result, cover)
 
 let run_with_dangling (module Simulator : SIM) spec_sim relname includes_p4
-    filename_p4 =
+    path_p4 =
   let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
     Inst.Coverage_dangling.make ()
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.Interp.eval_program relname includes_p4 filename_p4 in
+  let result = Simulator.Interp.eval_program relname includes_p4 path_p4 in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)
 
-let sim_with_instr (module Simulator : SIM) spec_sim includes_p4 filename_p4
-    filename_stf =
+let sim_with_instr (module Simulator : SIM) spec_sim includes_p4 path_p4
+    path_stf =
   let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
     Inst.Coverage_instr.make ()
   in
   Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_stf_test includes_p4 filename_p4 filename_stf in
+  let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
   Inst.Hook.finish ();
   let cover = read_coverage_instr () in
   (result, cover)
 
-let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 filename_p4
-    filename_stf =
+let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
+    path_stf =
   let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
     Inst.Coverage_dangling.make ()
   in
   Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
   Inst.Hook.init_spec spec_sim;
-  let result = Simulator.run_stf_test includes_p4 filename_p4 filename_stf in
+  let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
   Inst.Hook.finish ();
   let cover = read_coverage_dangling () in
   (result, cover)
 
-let cover_run_instr ?(arch : string option) mode filenames_spec relname
-    includes_p4 filenames_p4 =
+let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
+    paths_p4 =
   let spec_sim, (module Simulator) =
-    simulator ?arch ~final:true mode filenames_spec
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
   in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
@@ -228,21 +156,19 @@ let cover_run_instr ?(arch : string option) mode filenames_spec relname
   let cover_multi = Coverage.Instr.Multi.init spec_sl in
   let cover_multi =
     List.fold_left
-      (fun cover_multi filename_p4 ->
+      (fun cover_multi path_p4 ->
         let _, cover_single =
-          run_with_instr
-            (module Simulator)
-            spec_sim relname includes_p4 filename_p4
+          run_with_instr (module Simulator) spec_sim relname includes_p4 path_p4
         in
-        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
-      cover_multi filenames_p4
+        Coverage.Instr.Multi.extend cover_multi path_p4 cover_single)
+      cover_multi paths_p4
   in
-  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_multi spec_sl
+  Coverage.Instr.Log.log_spec ~path_cov_opt:None cover_multi spec_sl
 
-let cover_run_dangling ?(arch : string option) mode filenames_spec relname
-    includes_p4 filenames_p4 =
+let cover_run_dangling ?(arch : string option) mode paths_spec relname
+    includes_p4 paths_p4 =
   let spec_sim, (module Simulator) =
-    simulator ?arch ~final:true mode filenames_spec
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
   in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
@@ -250,11 +176,11 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
   let cover_multi = Coverage.Dangling.Multi.init spec_sl in
   let cover_multi =
     List.fold_left
-      (fun cover_multi filename_p4 ->
+      (fun cover_multi path_p4 ->
         let program_result, cover_single =
           run_with_dangling
             (module Simulator)
-            spec_sim relname includes_p4 filename_p4
+            spec_sim relname includes_p4 path_p4
         in
         let wellformed, welltyped =
           match program_result with
@@ -262,16 +188,16 @@ let cover_run_dangling ?(arch : string option) mode filenames_spec relname
           | Fail (`Syntax _) -> (true, false)
           | Fail (`Runtime _) -> (false, false)
         in
-        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
-          welltyped cover_single)
-      cover_multi filenames_p4
+        Coverage.Dangling.Multi.extend cover_multi path_p4 wellformed welltyped
+          cover_single)
+      cover_multi paths_p4
   in
-  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover_multi
+  Coverage.Dangling.Multi.log ~path_cov_opt:None cover_multi
 
-let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
-    filenames_p4 filenames_stf =
+let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
+    paths_stf =
   let spec_sim, (module Simulator) =
-    simulator ?arch ~final:true mode filenames_spec
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
   in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
@@ -279,21 +205,21 @@ let cover_sim_instr ?(arch : string option) mode filenames_spec includes_p4
   let cover_multi = Coverage.Instr.Multi.init spec_sl in
   let cover_multi =
     List.fold_left2
-      (fun cover_multi filename_p4 filename_stf ->
+      (fun cover_multi path_p4 path_stf ->
         let _, cover_single =
           sim_with_instr
             (module Simulator)
-            spec_sim includes_p4 filename_p4 filename_stf
+            spec_sim includes_p4 path_p4 path_stf
         in
-        Coverage.Instr.Multi.extend cover_multi filename_p4 cover_single)
-      cover_multi filenames_p4 filenames_stf
+        Coverage.Instr.Multi.extend cover_multi path_p4 cover_single)
+      cover_multi paths_p4 paths_stf
   in
-  Coverage.Instr.Log.log_spec ~filename_cov_opt:None cover_multi spec_sl
+  Coverage.Instr.Log.log_spec ~path_cov_opt:None cover_multi spec_sl
 
-let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
-    filenames_p4 filenames_stf =
+let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
+    paths_p4 paths_stf =
   let spec_sim, (module Simulator) =
-    simulator ?arch ~final:true mode filenames_spec
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
   in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
@@ -301,11 +227,11 @@ let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
   let cover_multi = Coverage.Dangling.Multi.init spec_sl in
   let cover_multi =
     List.fold_left2
-      (fun cover_multi filename_p4 filename_stf ->
+      (fun cover_multi path_p4 path_stf ->
         let program_result, cover_single =
           sim_with_dangling
             (module Simulator)
-            spec_sim includes_p4 filename_p4 filename_stf
+            spec_sim includes_p4 path_p4 path_stf
         in
         let wellformed, welltyped =
           match program_result with
@@ -313,8 +239,8 @@ let cover_sim_dangling ?(arch : string option) mode filenames_spec includes_p4
           | Fail (`Syntax _) -> (true, false)
           | Fail (`Runtime _) -> (false, false)
         in
-        Coverage.Dangling.Multi.extend cover_multi filename_p4 wellformed
-          welltyped cover_single)
-      cover_multi filenames_p4 filenames_stf
+        Coverage.Dangling.Multi.extend cover_multi path_p4 wellformed welltyped
+          cover_single)
+      cover_multi paths_p4 paths_stf
   in
-  Coverage.Dangling.Multi.log ~filename_cov_opt:None cover_multi
+  Coverage.Dangling.Multi.log ~path_cov_opt:None cover_multi

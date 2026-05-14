@@ -2160,10 +2160,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       error no_region msg
 
   let eval_program (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Run.program_result =
+      (path_p4 : string) : Run.program_result =
     clear ();
     try
-      let parse_result = Interface.parse_program includes_p4 [ filename_p4 ] in
+      let parse_result = Interface.parse_program includes_p4 [ path_p4 ] in
       match parse_result with
       | Pass value_program ->
           Hook.on_program value_program;

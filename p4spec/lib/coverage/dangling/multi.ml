@@ -11,8 +11,8 @@ module Branch = struct
   type origin = id
 
   (* Status of a branch:
-     if hit, record the filenames that hit it with its likeliness;
-     if missed, record the closest-missing filenames;
+     if hit, record the paths that hit it with its likeliness;
+     if missed, record the closest-missing paths;
      note that close-missing files must be well-formed and well-typed *)
 
   type status = Hit of bool * string list | Miss of string list
@@ -130,18 +130,16 @@ module Cover = struct
   let load_line (line : string) : iid * Branch.t =
     let data = String.split_on_char ' ' line in
     match data with
-    | iid :: status :: origin :: filenames ->
+    | iid :: status :: origin :: paths ->
         let iid = int_of_string iid in
         let status =
           match status with
-          | "Hit_likely" -> Branch.Hit (true, filenames)
-          | "Hit_unlikely" -> Branch.Hit (false, filenames)
+          | "Hit_likely" -> Branch.Hit (true, paths)
+          | "Hit_unlikely" -> Branch.Hit (false, paths)
           | "Miss" ->
-              if
-                List.length filenames == 1
-                && String.length (List.hd filenames) < 2
+              if List.length paths == 1 && String.length (List.hd paths) < 2
               then Branch.Miss []
-              else Branch.Miss filenames
+              else Branch.Miss paths
           | _ -> assert false
         in
         let origin = origin $ no_region in
@@ -159,7 +157,7 @@ module Cover = struct
         load_lines cover ic
     with End_of_file -> cover
 
-  let load_file (filename : string) : t = open_in filename |> load_lines empty
+  let load_file (path : string) : t = open_in path |> load_lines empty
 end
 
 (* Dangling coverage *)
@@ -180,7 +178,7 @@ let is_close_miss (cover : t) (iid : iid) : bool =
   let branch = Cover.find iid cover in
   match branch.status with
   | Hit _ -> false
-  | Miss filenames -> List.length filenames > 0
+  | Miss paths -> List.length paths > 0
 
 (* Measuring coverage *)
 
@@ -201,38 +199,38 @@ let measure_coverage (cover : t) : int * int * float =
 
    A close-miss is added only if the program is well-typed and well-formed *)
 
-let extend (cover : t) (filename_p4 : string) (wellformed : bool)
-    (welltyped : bool) (cover_single : Single.t) : t =
+let extend (cover : t) (path_p4 : string) (wellformed : bool) (welltyped : bool)
+    (cover_single : Single.t) : t =
   Cover.mapi
     (fun (iid : iid) (branch : Branch.t) ->
       let branch_single = Single.Cover.find iid cover_single in
       match branch.status with
-      | Hit (likely, filenames_p4) -> (
+      | Hit (likely, paths_p4) -> (
           match branch_single.status with
           | Hit ->
               let likely = likely && not (wellformed && welltyped) in
-              let filenames_p4 = filename_p4 :: filenames_p4 in
-              { branch with status = Hit (likely, filenames_p4) }
+              let paths_p4 = path_p4 :: paths_p4 in
+              { branch with status = Hit (likely, paths_p4) }
           | _ -> branch)
-      | Miss filenames_p4 -> (
+      | Miss paths_p4 -> (
           match branch_single.status with
           | Hit ->
               let likely = not (wellformed && welltyped) in
-              let filenames_p4 = [ filename_p4 ] in
-              { branch with status = Hit (likely, filenames_p4) }
+              let paths_p4 = [ path_p4 ] in
+              { branch with status = Hit (likely, paths_p4) }
           | Miss (_ :: _) when wellformed && welltyped ->
-              let filenames_p4 = filename_p4 :: filenames_p4 in
-              { branch with status = Miss filenames_p4 }
+              let paths_p4 = path_p4 :: paths_p4 in
+              { branch with status = Miss paths_p4 }
           | Miss _ -> branch))
     cover
 
 (* Logging *)
 
-let log ~(filename_cov_opt : string option) (cover : t) : unit =
+let log ~(path_cov_opt : string option) (cover : t) : unit =
   let output oc_opt =
     match oc_opt with Some oc -> output_string oc | None -> print_string
   in
-  let oc_opt = Option.map open_out filename_cov_opt in
+  let oc_opt = Option.map open_out path_cov_opt in
   (* Output overall coverage *)
   let total, hits, coverage = measure_coverage cover in
   Format.asprintf "# Overall Coverage: %d/%d (%.2f%%)\n" hits total coverage
@@ -260,17 +258,17 @@ let log ~(filename_cov_opt : string option) (cover : t) : unit =
         (fun (iid : iid) (branch : Branch.t) ->
           let origin = branch.origin in
           match branch.status with
-          | Hit (likely, filenames) ->
-              let filenames = String.concat " " filenames in
+          | Hit (likely, paths) ->
+              let paths = String.concat " " paths in
               Format.asprintf "%d Hit_%s %s %s\n" iid
                 (if likely then "likely" else "unlikely")
-                origin.it filenames
+                origin.it paths
               |> output oc_opt
           | Miss [] ->
               Format.asprintf "%d Miss %s\n" iid origin.it |> output oc_opt
-          | Miss filenames ->
-              let filenames = String.concat " " filenames in
-              Format.asprintf "%d Miss %s %s\n" iid origin.it filenames
+          | Miss paths ->
+              let paths = String.concat " " paths in
+              Format.asprintf "%d Miss %s %s\n" iid origin.it paths
               |> output oc_opt)
         cover_origin)
     covers_origin;
@@ -279,4 +277,4 @@ let log ~(filename_cov_opt : string option) (cover : t) : unit =
 (* Constructor *)
 
 let init (spec : spec) : t = Cover.init_spec spec
-let load (filename : string) : t = Cover.load_file filename
+let load (path : string) : t = Cover.load_file path

@@ -4,15 +4,15 @@ open Util.Error
 let error = error_parse
 let error_no_region = error_parse_no_region
 
-let preprocess (includes : string list) (filename : string) =
-  try Preprocessor.preprocess includes filename
+let preprocess (includes : string list) (path : string) =
+  try Preprocessor.preprocess includes path
   with _ -> "preprocessor error" |> error_no_region
 
-let lex (filename : string) (file : string) =
+let lex (path : string) (file : string) =
   try
     let () = Lexer.reset () in
     let lexbuf = Lexing.from_string file in
-    let () = Lexing.set_filename lexbuf filename in
+    let () = Lexing.set_filename lexbuf path in
     lexbuf
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error_no_region
 
@@ -28,15 +28,15 @@ let parse (lexbuf : Lexing.lexbuf) : Value.t =
       error at msg
   | e -> raise e
 
-let parse_string (filename : string) (str : string) : Value.t =
+let parse_string (path : string) (str : string) : Value.t =
   (* Assume str is preprocessed *)
-  let tokens = lex filename str in
+  let tokens = lex path str in
   parse tokens
 
-let parse_file (includes : string list) (filename : string) : Value.t =
-  let program = preprocess includes filename in
-  parse_string filename program
+let parse_file (includes : string list) (path : string) : Value.t =
+  let program = preprocess includes path in
+  parse_string path program
 
-let parse_file_fresh (includes : string list) (filename : string) : Value.t =
+let parse_file_fresh (includes : string list) (path : string) : Value.t =
   Value.Fresh_.refresh ();
-  parse_file includes filename
+  parse_file includes path

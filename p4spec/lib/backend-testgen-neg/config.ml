@@ -137,7 +137,7 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
     specenv =
-  let (module Simulator : Sim.SIM) = Backend_sim.Gen.gen_p4_placeholder () in
+  let (module Simulator : Sim.SIM) = Backend_sim.Build.gen_p4_placeholder () in
   Simulator.init (Sim.SL spec);
   let simulator = (module Simulator : Sim.SIM) in
   let printer value_program =

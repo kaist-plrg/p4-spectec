@@ -152,12 +152,12 @@ let log_defs (cover : Multi.t) (defs : def list) : string =
 
 (* Spec *)
 
-let log_spec ~(filename_cov_opt : string option) (cover : Multi.t) (spec : spec)
-    : unit =
+let log_spec ~(path_cov_opt : string option) (cover : Multi.t) (spec : spec) :
+    unit =
   let output oc_opt =
     match oc_opt with Some oc -> output_string oc | None -> print_string
   in
-  let oc_opt = Option.map open_out filename_cov_opt in
+  let oc_opt = Option.map open_out path_cov_opt in
   let output = output oc_opt in
   (* Output overall coverage *)
   let total, hits, coverage = Multi.measure_coverage cover in

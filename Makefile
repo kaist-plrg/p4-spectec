@@ -14,11 +14,13 @@ build:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
+	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
 boot:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
+	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
 release:
 	rm -f ./$(SPEC)

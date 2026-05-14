@@ -41,11 +41,11 @@ module Make_rec
   (* Interpreter *)
 
   module Interp = struct
-    let eval_program (relname : string) (includes : string list)
-        (filename : string) : program_result =
+    let eval_program (relname : string) (includes : string list) (path : string)
+        : program_result =
       match !mode with
-      | IL_mode -> Interp_IL.eval_program relname includes filename
-      | SL_mode -> Interp_SL.eval_program relname includes filename
+      | IL_mode -> Interp_IL.eval_program relname includes path
+      | SL_mode -> Interp_SL.eval_program relname includes path
       | Empty_mode -> assert false
 
     let eval_rel (relname : string) (values : Value.t list) : rel_result =
@@ -145,11 +145,11 @@ module Make_nonrec
   (* Interpreter *)
 
   module Interp = struct
-    let eval_program (relname : string) (includes : string list)
-        (filename : string) : program_result =
+    let eval_program (relname : string) (includes : string list) (path : string)
+        : program_result =
       match !mode with
-      | IL_mode -> Interp_IL.eval_program relname includes filename
-      | SL_mode -> Interp_SL.eval_program relname includes filename
+      | IL_mode -> Interp_IL.eval_program relname includes path
+      | SL_mode -> Interp_SL.eval_program relname includes path
       | Empty_mode -> assert false
 
     let eval_rel (relname : string) (values : Value.t list) : rel_result =

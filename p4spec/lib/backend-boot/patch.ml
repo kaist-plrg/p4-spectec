@@ -42,19 +42,46 @@ let rec value_as_exp (value : Value.t) : Il.exp =
   in
   exp $$ (at_value, typ_value)
 
+(* Parsing *)
+
+let parse_spec (layer_spec : Config.layer) (interface_spec : Config.interface) :
+    Value.t =
+  let parse_spec =
+    match interface_spec with
+    | P4_interface -> assert false
+    | IL_interface -> Interface.SpecTec_IL.parse_program []
+    | SL_interface -> Interface.SpecTec_SL.parse_program []
+  in
+  match parse_spec [ layer_spec.specdir ] with
+  | Run.Pass value_spec -> value_spec
+  | Run.Fail (`Syntax (at, msg)) -> error at msg
+
+let parse_target (target : Config.target) (level_target : Config.level) :
+    Value.t =
+  let parse_target =
+    match level_target.interface with
+    | P4_interface -> Interface.P4.parse_program
+    | IL_interface | SL_interface -> assert false
+  in
+  match parse_target target.includes [ target.path ] with
+  | Run.Pass value_target -> value_target
+  | Run.Fail (`Syntax (at, msg)) -> error at msg
+
 (* Patch *)
 
 (* Create a synthetic "main" meta-function calling [rel] on [value] *)
 (* def main() : text = "pass" -- let x = [value] -- [rel]: x *)
 
-let apply_il (value_spec : Value.t) (rel : string) (value_program : Value.t) :
-    Value.t =
+let apply_il (level_meta : Config.level) (value_meta : Value.t)
+    (value_spec : Value.t) : Value.t =
+  (* Find the relation in the spec *)
+  let rel_meta = level_meta.layer.rel in
   let defs = Interface.SpecTec_IL.unboot_scriptIL value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun (def : Il.def) ->
         match def.it with
-        | RelD (id, nottyp, inputs, _, _, _) when id.it = rel ->
+        | RelD (id, nottyp, inputs, _, _, _) when id.it = rel_meta ->
             let mixop, _ = nottyp.it in
             Some (mixop, inputs)
         | _ -> None)
@@ -63,12 +90,14 @@ let apply_il (value_spec : Value.t) (rel : string) (value_program : Value.t) :
     | Some (mixop_rel, inputs_rel) -> (mixop_rel, inputs_rel)
     | None ->
         error no_region
-          (Format.asprintf "relation %s not found in the spec" rel)
+          (Format.asprintf "relation %s not found in the spec" rel_meta)
   in
+  (* Validate the relation, that it has exactly one input *)
   check
     (List.length inputs_rel = 1)
     no_region
-    (Format.asprintf "relation %s must have exactly one input" rel);
+    (Format.asprintf "relation %s must have exactly one input" rel_meta);
+  (* Create the main function definition *)
   let def =
     let id = "main" $ no_region in
     let tparams = [] in
@@ -83,7 +112,7 @@ let apply_il (value_spec : Value.t) (rel : string) (value_program : Value.t) :
             Il.VarE ("x" $ no_region)
             $$ (no_region, Il.VarT ("x" $ no_region, []))
           in
-          let exp_value = value_as_exp value_program in
+          let exp_value = value_as_exp value_meta in
           let prem_bind = Il.LetPr (exp_bind, exp_value) $ no_region in
           let exps_output =
             List.init
@@ -98,7 +127,7 @@ let apply_il (value_spec : Value.t) (rel : string) (value_program : Value.t) :
               Hints.Input.combine inputs_rel [ exp_bind ] exps_output
             in
             let notexp = (mixop_rel, exps) in
-            Il.RulePr (rel $ no_region, notexp, inputs_rel) $ no_region
+            Il.RulePr (rel_meta $ no_region, notexp, inputs_rel) $ no_region
           in
           [ prem_bind; prem_call ]
         in
@@ -115,14 +144,16 @@ let apply_il (value_spec : Value.t) (rel : string) (value_program : Value.t) :
   let value_spec = defs @ [ def ] |> Interface.SpecTec_IL.boot_specIL in
   value_spec
 
-let apply_sl (value_spec : Value.t) (rel : string) (value_program : Value.t) :
-    Value.t =
+let apply_sl (level_meta : Config.level) (value_meta : Value.t)
+    (value_spec : Value.t) : Value.t =
+  (* Find the relation in the spec *)
+  let rel_meta = level_meta.layer.rel in
   let defs = Interface.SpecTec_SL.unboot_scriptSL value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
       (fun (def : Sl.def) ->
         match def.it with
-        | RelD (id, (nottyp, inputs), _, _, _, _) when id.it = rel ->
+        | RelD (id, (nottyp, inputs), _, _, _, _) when id.it = rel_meta ->
             let mixop, _ = nottyp.it in
             Some (mixop, inputs)
         | _ -> None)
@@ -131,12 +162,14 @@ let apply_sl (value_spec : Value.t) (rel : string) (value_program : Value.t) :
     | Some (mixop_rel, inputs_rel) -> (mixop_rel, inputs_rel)
     | None ->
         error no_region
-          (Format.asprintf "relation %s not found in the spec" rel)
+          (Format.asprintf "relation %s not found in the spec" rel_meta)
   in
+  (* Validate the relation, that it has exactly one input *)
   check
     (List.length inputs_rel = 1)
     no_region
-    (Format.asprintf "relation %s must have exactly one input" rel);
+    (Format.asprintf "relation %s must have exactly one input" rel_meta);
+  (* Create the main function definition *)
   let def =
     let id = "main" $ no_region in
     let tparams = [] in
@@ -146,7 +179,7 @@ let apply_sl (value_spec : Value.t) (rel : string) (value_program : Value.t) :
       let exp_bind =
         Il.VarE ("x" $ no_region) $$ (no_region, Il.VarT ("x" $ no_region, []))
       in
-      let exp_value = value_as_exp value_program in
+      let exp_value = value_as_exp value_meta in
       let instr_return =
         let exp_output = Il.TextE "pass" $$ (no_region, Il.TextT) in
         Sl.(ReturnI exp_output $$ (no_region, { iid = 0 }))
@@ -162,7 +195,7 @@ let apply_sl (value_spec : Value.t) (rel : string) (value_program : Value.t) :
         let exps = Hints.Input.combine inputs_rel [ exp_bind ] exps_output_sl in
         let notexp = (mixop_rel, exps) in
         Sl.(
-          RuleI (rel $ no_region, notexp, inputs_rel, [], [ instr_return ])
+          RuleI (rel_meta $ no_region, notexp, inputs_rel, [], [ instr_return ])
           $$ (no_region, { iid = 0 }))
       in
       let instr_bind =
@@ -181,89 +214,58 @@ let apply_sl (value_spec : Value.t) (rel : string) (value_program : Value.t) :
   let value_spec = defs @ [ def ] |> Interface.SpecTec_SL.boot_specSL in
   value_spec
 
-let apply ~(mode : Run.mode) (value_spec : Value.t) (rel : string)
-    (value_program : Value.t) : Value.t =
-  match mode with
-  | IL_mode -> apply_il value_spec rel value_program
-  | SL_mode -> apply_sl value_spec rel value_program
-  | Empty_mode -> assert false
+let apply (level_meta : Config.level) (value_meta : Value.t)
+    (level_spec : Config.level) (value_spec : Value.t) : Value.t =
+  match level_spec.interface with
+  | P4_interface -> assert false
+  | IL_interface -> apply_il level_meta value_meta value_spec
+  | SL_interface -> apply_sl level_meta value_meta value_spec
 
-(* Parsing a spec as a meta-value *)
+let apply_target (target : Config.target) (level_target : Config.level)
+    (level_spec : Config.level) : Value.t =
+  (* Parse the target spec as a meta-value *)
+  let value_spec = parse_spec level_target.layer level_spec.interface in
+  (* Parse the target as a meta-value *)
+  let value_target = parse_target target level_target in
+  (* Create a synthetic "main" meta-function *)
+  apply level_target value_target level_spec value_spec
 
-let parse_spec ~(mode : Run.mode) (filenames_spec : string list) : Value.t =
-  let parse_program =
-    match mode with
-    | IL_mode -> Interface.SpecTec_IL.parse_program
-    | SL_mode -> Interface.SpecTec_SL.parse_program
-    | Empty_mode -> assert false
+let apply_interm (level_meta : Config.level) (value_meta : Value.t)
+    (level_spec : Config.level) : Value.t =
+  (* Parse the spec as a meta-value *)
+  let value_spec = parse_spec level_meta.layer level_spec.interface in
+  (* Create a synthetic "main" meta-function *)
+  apply level_meta value_meta level_spec value_spec
+
+let apply_tower (tower : Config.tower) : Value.t =
+  (* Reverse the levels, from target to booter *)
+  let levels =
+    (tower.level_boot :: tower.levels_interm) @ [ tower.level_target ]
+    |> List.rev
   in
-  match parse_program [] filenames_spec with
-  | Run.Pass value_spec -> value_spec
-  | Run.Fail (`Syntax (at, msg)) -> error at msg
-
-(* Parsing a P4 program as a meta-value *)
-
-let parse_p4_program (includes_p4 : string list) (filename_p4 : string) :
-    Value.t =
-  match Interface.P4.parse_program includes_p4 [ filename_p4 ] with
-  | Run.Pass value_p4 -> value_p4
-  | Run.Fail (`Syntax (at, msg)) -> error at msg
-
-(* Patch - P4 |> P4 spec *)
-
-let apply_p4_on_p4_spec ~(mode : Run.mode) (filenames_p4_spec : string list)
-    (rel_p4 : string) (includes_p4 : string list) (filename_p4 : string) :
-    Value.t =
-  (* Parse the P4 spec as a meta-value *)
-  let value_p4_spec = parse_spec ~mode filenames_p4_spec in
-  (* Parse the P4 program as a meta-value, and wrap it again as an input to the boot spec *)
-  let value_p4 = parse_p4_program includes_p4 filename_p4 in
-  (* Create a synthetic "main" meta-function calling [rel_p4] on [value_p4] *)
-  apply ~mode value_p4_spec rel_p4 value_p4
-
-(* Patch on N - P4 |> P4 spec |> [ SpecTec spec * N ] |> SpecTec spec |> OCaml *)
-
-let apply_n_p4 ~(depth : int) ~(mode : Run.mode) (filenames_spec : string list)
-    (rel : string) (filenames_spec_p4 : string list) (rel_p4 : string)
-    (includes_p4 : string list) (filename_p4 : string) : Value.t =
-  (* Bundle the P4 spec and its input P4 program as a single meta-value *)
+  (* Pair of levels, from target to booter *)
+  let level_pairs =
+    levels
+    |> List.fold_left
+         (fun (level_above, level_pairs) level ->
+           match level_above with
+           | None -> (Some level, level_pairs)
+           | Some level_above ->
+               (Some level, level_pairs @ [ (level_above, level) ]))
+         (None, [])
+    |> snd
+  in
+  (* Patch the target *)
+  let level_pair_target, level_pairs =
+    (List.hd level_pairs, List.tl level_pairs)
+  in
   let value_script =
-    apply_p4_on_p4_spec ~mode filenames_spec_p4 rel_p4 includes_p4 filename_p4
+    let level_target, level_spec = level_pair_target in
+    apply_target tower.target level_target level_spec
   in
+  (* Patch the intermediate levels *)
   List.fold_left
-    (fun value_script _ ->
-      (* Parse the SpecTec spec as a meta-value *)
-      let value_spec = parse_spec ~mode filenames_spec in
-      (* Create a synthetic "main" meta-function calling [rel] on [value_script] *)
-      apply ~mode value_spec rel value_script)
-    value_script (List.init depth Fun.id)
-
-(* Patch - SpecTec |> SpecTec spec *)
-
-let apply_spectec_on_spectec_spec ~(mode : Run.mode)
-    (filenames_spec_pgm : string list) (rel_pgm : string)
-    (filename_pgm : string) : Value.t =
-  (* Parse the SpecTec spec as a meta-value *)
-  let value_pgm_spec = parse_spec ~mode filenames_spec_pgm in
-  (* Parse the SpecTec program as a meta-value, and wrap it again as an input to the boot spec *)
-  let value_pgm = parse_spec ~mode [ filename_pgm ] in
-  (* Create a synthetic "main" meta-function calling [rel_pgm] on [value_pgm] *)
-  apply ~mode value_pgm_spec rel_pgm value_pgm
-
-(* Patch on N - SpecTec pgm |> [ SpecTec spec * N ] |> SpecTec spec |> OCaml *)
-
-let apply_n_spectec ~(depth : int) ~(mode : Run.mode)
-    (filenames_spec : string list) (rel : string)
-    (filenames_spec_pgm : string list) (rel_pgm : string)
-    (filename_pgm : string) : Value.t =
-  (* Bundle the SpecTec spec and its input SpecTec program as a single meta-value *)
-  let value_script =
-    apply_spectec_on_spectec_spec ~mode filenames_spec_pgm rel_pgm filename_pgm
-  in
-  List.fold_left
-    (fun value_script _ ->
-      (* Parse the SpecTec spec as a meta-value *)
-      let value_spec = parse_spec ~mode filenames_spec in
-      (* Create a synthetic "main" meta-function calling [rel] on [value] *)
-      apply ~mode value_spec rel value_script)
-    value_script (List.init depth Fun.id)
+    (fun value_meta level_pair ->
+      let level_meta, level_spec = level_pair in
+      apply_interm level_meta value_meta level_spec)
+    value_script level_pairs

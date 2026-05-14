@@ -48,10 +48,10 @@ module Make
         | Pass values -> values
         | Fail (at, msg) -> error at msg
       in
-      let call_pgm relname includes filename =
+      let call_pgm relname includes path =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_program relname includes filename
-        | SL_mode -> Interp_SL.eval_program relname includes filename
+        | IL_mode -> Interp_IL.eval_program relname includes path
+        | SL_mode -> Interp_SL.eval_program relname includes path
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
@@ -397,11 +397,11 @@ module Make
         in
         error_stf (msg_output ^ msg_expect)
 
-  let run_stf_test (includes_p4 : string list) (filename_p4 : string)
-      (filename_stf : string) : stf_result =
+  let run_stf_test (includes_p4 : string list) (path_p4 : string)
+      (path_stf : string) : stf_result =
     try
-      let value_ctx, value_arch = Arch.init_pipe includes_p4 filename_p4 in
-      let stf_stmts = Stf.Parse.parse_file filename_stf in
+      let value_ctx, value_arch = Arch.init_pipe includes_p4 path_p4 in
+      let stf_stmts = Stf.Parse.parse_file path_stf in
       run_stf_stmts value_ctx value_arch stf_stmts;
       Pass
     with
