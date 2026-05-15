@@ -1,6 +1,7 @@
 open Lang
 open Il
 open Util.Source
+module Mixfix = Domain.Mixfix
 
 (* Fold logic: takes the results of sub-expressions and combines them into a new result *)
 
@@ -62,7 +63,9 @@ let identity : (exp, arg, path) folder =
     f_MatchE =
       (fun note at exp pattern -> { it = MatchE (exp, pattern); at; note });
     f_TupleE = (fun note at exps -> { it = TupleE exps; at; note });
-    f_CaseE = (fun note at mixop exps -> { it = CaseE (mixop, exps); at; note });
+    f_CaseE =
+      (fun note at mixop exps ->
+        { it = CaseE (Mixfix.fill mixop exps); at; note });
     f_StrE = (fun note at expfields -> { it = StrE expfields; at; note });
     f_OptE = (fun note at exp_opt -> { it = OptE exp_opt; at; note });
     f_ListE = (fun note at exps -> { it = ListE exps; at; note });
@@ -127,7 +130,8 @@ let rec fold_exp (alg : ('a_exp, 'a_arg, 'a_path) folder) (e : exp) : 'a_exp =
   | TupleE exps ->
       let accs = List.map (fold_exp alg) exps in
       alg.f_TupleE note at accs
-  | CaseE (mixop, exps) ->
+  | CaseE notexp ->
+      let mixop, exps = Mixfix.split notexp in
       let accs = List.map (fold_exp alg) exps in
       alg.f_CaseE note at mixop accs
   | StrE expfields ->

@@ -42,16 +42,17 @@ and boot_iterprem ((iter, vars_in, vars_out) : Il.iterprem) : Value.t =
 and boot_prem (prem : Il.prem) : Value.t =
   let at = prem.at in
   match prem.it with
-  | RulePr (id, (_, exps), input) -> boot_rel_prem at id exps input
+  | RulePr (id, notexp, input) -> boot_rel_prem at id notexp input
   | IfPr e -> boot_if_prem at e
-  | IfHoldPr (id, (_, exps)) -> boot_if_hold_prem at id exps
-  | IfNotHoldPr (id, (_, exps)) -> boot_if_nothold_prem at id exps
+  | IfHoldPr (id, notexp) -> boot_if_hold_prem at id notexp
+  | IfNotHoldPr (id, notexp) -> boot_if_nothold_prem at id notexp
   | LetPr (el, er) -> boot_let_prem at el er
   | IterPr (p, ip) -> boot_iter_prem at p ip
   | DebugPr e -> boot_debug_prem at e
 
-and boot_rel_prem (at : region) (id : Il.id) (exps : Il.exp list)
+and boot_rel_prem (at : region) (id : Il.id) (notexp : Il.notexp)
     (input : Hints.Input.t) : Value.t =
+  let exps = Mixfix.args notexp in
   let value_id = boot_id id in
   let exps_in, exps_out = Hints.Input.split input exps in
   let value_exps_in = boot_exps exps_in in
@@ -65,15 +66,17 @@ and boot_if_prem (at : region) (e : Il.exp) : Value.t =
   let value_exp = boot_exp e in
   Value.Make.(mop_if_prem <|! [ value_exp ] <<|! typ_prem <<<| at)
 
-and boot_if_hold_prem (at : region) (id : Il.id) (exps : Il.exp list) : Value.t
+and boot_if_hold_prem (at : region) (id : Il.id) (notexp : Il.notexp) : Value.t
     =
+  let exps = Mixfix.args notexp in
   let value_id = boot_id id in
   let value_exps = boot_exps exps in
   Value.Make.(
     mop_if_hold_prem <|! [ value_id; value_exps ] <<|! typ_prem <<<| at)
 
-and boot_if_nothold_prem (at : region) (id : Il.id) (exps : Il.exp list) :
+and boot_if_nothold_prem (at : region) (id : Il.id) (notexp : Il.notexp) :
     Value.t =
+  let exps = Mixfix.args notexp in
   let value_id = boot_id id in
   let value_exps = boot_exps exps in
   Value.Make.(
@@ -230,7 +233,7 @@ and boot_typ_def (at : region) (id : Il.id) (tparams : Il.tparam list)
 
 and boot_extern_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) : Value.t =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
   let value_id = boot_id id in
   let value_typs_in = boot_typs typs_in in
@@ -243,7 +246,7 @@ and boot_extern_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
 and boot_rel_def (at : region) (id : Il.id) (nottyp : Il.nottyp)
     (input : Hints.Input.t) (rulgroups : Il.rulegroup list)
     (elsegroup_opt : Il.elsegroup option) : Value.t =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_in, typs_out = Hints.Input.split input typs in
   let value_id = boot_id id in
   let value_typs_in = boot_typs typs_in in

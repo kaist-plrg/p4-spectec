@@ -1,4 +1,5 @@
 open Ast
+module Mixfix = Domain.Mixfix
 open Util.Source
 
 (* Collector interface *)
@@ -71,7 +72,8 @@ let default_collect_exp (c : 'a collector) (exp : exp) : 'a =
       collect_typ c typ $@ collect_exp c exp
   | SubE (exp, typ) -> collect_exp c exp $@ collect_typ c typ
   | MatchE (exp, _) -> collect_exp c exp
-  | TupleE exps | CaseE (_, exps) -> collect_exps c exps
+  | TupleE exps -> collect_exps c exps
+  | CaseE notexp -> collect_exps c (Mixfix.args notexp)
   | StrE expfields -> expfields |> List.map snd |> collect_exps c
   | OptE (Some exp) -> collect_exp c exp
   | OptE None -> c.default
@@ -105,9 +107,10 @@ let default_collect_arg (c : 'a collector) (arg : arg) : 'a =
 let default_collect_prem (c : 'a collector) (prem : prem) : 'a =
   let ( $@ ) = c.compose in
   match prem.it with
-  | RulePr (_, (_, exps), _) -> collect_exps c exps
+  | RulePr (_, notexp, _) -> collect_exps c (Mixfix.args notexp)
   | IfPr exp -> collect_exp c exp
-  | IfHoldPr (_, (_, exps)) | IfNotHoldPr (_, (_, exps)) -> collect_exps c exps
+  | IfHoldPr (_, notexp) | IfNotHoldPr (_, notexp) ->
+      collect_exps c (Mixfix.args notexp)
   | LetPr (exp_l, exp_r) -> collect_exp c exp_l $@ collect_exp c exp_r
   | IterPr (prem, iterprem) ->
       collect_prem c prem $@ collect_iterprem c iterprem

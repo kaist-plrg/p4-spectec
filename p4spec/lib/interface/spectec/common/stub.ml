@@ -1,3 +1,4 @@
+module Mixfix = Domain.Mixfix
 open Lang
 module Value = Runtime.Value
 open Mixops
@@ -33,7 +34,8 @@ let stub_nottyp (typs_input : Il.typ list) (typs_output : Il.typ list) :
     ^ (List.init (List.length typs_output) (fun _ -> "y") |> String.concat " ")
   in
   let mixop = Value.Mixops.of_string s_mixop in
-  (mixop, typs_input @ typs_output) $ no_region
+  let nottyp = Mixfix.fill mixop (typs_input @ typs_output) in
+  nottyp $ no_region
 
 let stub_notexp (exps_input : Il.exp list) (exps_output : Il.exp list) :
     Il.notexp =
@@ -43,7 +45,8 @@ let stub_notexp (exps_input : Il.exp list) (exps_output : Il.exp list) :
     ^ (List.init (List.length exps_output) (fun _ -> "y") |> String.concat " ")
   in
   let mixop = Value.Mixops.of_string s_mixop in
-  (mixop, exps_input @ exps_output)
+  let notexp = Mixfix.fill mixop (exps_input @ exps_output) in
+  notexp
 
 (* input hint: boot splits inputs/outputs but doesn't store the hint explicitly.
    Recovered as [0 .. n_inputs - 1]. *)

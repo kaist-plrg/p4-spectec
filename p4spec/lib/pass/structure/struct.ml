@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Il
 module Typ = Runtime.Type.Typ
@@ -227,7 +228,7 @@ let rec struct_def ~(final : bool) (ctx : Ctx.t) (def : def) : Sl.def =
 
 and struct_extern_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (nottyp : nottyp) (inputs : int list) (hints : hint list) : Sl.def =
-  let _, typs = nottyp.it in
+  let typs = Mixfix.args nottyp.it in
   let typs_match = List.map (fun i -> List.nth typs i) inputs in
   let exps_match, _ =
     List.fold_left
@@ -277,7 +278,7 @@ and struct_defined_rel_def ~(final : bool) (ctx : Ctx.t) (at : region)
   let exps_match_unified, prems_match_group, prems_match_else_opt =
     match (rulegroups, elsegroup_opt) with
     | [], None ->
-        let _, typs = nottyp.it in
+        let typs = Mixfix.args nottyp.it in
         let typs_match = List.map (fun i -> List.nth typs i) inputs in
         let exps_match, _ =
           List.fold_left
