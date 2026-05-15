@@ -243,10 +243,118 @@ rulegroup Eval_exp/slice {
 
 ;;; Update evaluation rules
 
+relation Eval_path:
+  ctx |- val path : res<val>
+  hint(input %0 %1 %2)
+
+rule Eval_path/root:
+  C |- val_b ROOT : OK val_b
+
+rulegroup Eval_path/idx {
+
+  rule Eval_path/text:
+    C |- val_b (IDX path exp_i) : OK (TEXT t[n])
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
+  
+  rule Eval_path/list:
+    C |- val_b (IDX path exp_i) : OK val*[n]
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
+
+}
+
+rulegroup Eval_path/slice {
+
+  rule Eval_path/text:
+    C |- val_b (SLICE path exp_i exp_n) : OK (TEXT t[n_i : n_n])
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+
+  rule Eval_path/list:
+    C |- val_b (SLICE path exp_i exp_n) : OK (LIST val*[n_i : n_n])
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+
+}
+
+rule Eval_path/dot:
+  C |- val_b (DOT path atom) : OK val
+  -- Eval_path: C |- val_b path : OK (STR valfield*)
+  -- if (atom_field val_field = valfield)*
+  -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
+
+rule Eval_path/fail:
+  C |- val path : FAIL
+  -- otherwise
+
+relation Eval_path_upd:
+  ctx |- val path := val : res<val>
+  hint(input %0 %1 %2 %3)
+
+rule Eval_path_upd/root:
+  C |- val_b ROOT := val_n : OK val_n
+
+rulegroup Eval_path_upd/idx {
+
+  rule Eval_path_upd/text:
+    C |- val_b (IDX path exp_i) := TEXT t_n : valres
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    -- if |t_n| = 1
+    -- Eval_path_upd:
+        C |- val_b path := (TEXT t[ [n_target] = t_n ]) : valres
+
+  rule Eval_path_upd/list:
+    C |- val_b (IDX path exp_i) := val_n : valres
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    -- Eval_path_upd:
+        C |- val_b path := (LIST val*[ [n_target] = val_n ]) : valres
+
+}
+
+rulegroup Eval_path_upd/slice {
+
+  rule Eval_path_upd/text:
+    C |- val_b (SLICE path exp_i exp_n) := TEXT t_n : valres
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- if |t_n| = n_n
+    -- Eval_path_upd:
+        C |- val_b path := (TEXT t[ [n_i : n_n] = t_n ]) : valres
+
+  rule Eval_path_upd/list:
+    C |- val_b (SLICE path exp_i exp_n) := val_n : valres
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- Eval_path_upd:
+        C |- val_b path := (LIST val*[ [n_i : n_n] = val_n ]) : valres
+
+}
+
+rule Eval_path_upd/dot:
+  C |- val_b (DOT path atom) := val_n : valres
+  -- Eval_path: C |- val_b path : OK (STR valfield*)
+  -- if (atom_field val_field = valfield)*
+  -- if (valfield_new
+      = atom_field $ite<val>(atom = atom_field, val_n, val_field))*
+  -- Eval_path_upd:
+      C |- val_b path := (STR valfield_new*) : valres
+
+rule Eval_path_upd/fail:
+  C |- val_b path := val_n : FAIL
+  -- otherwise
+
 rule Eval_exp/upd:
-  C |- UPD exp_b path exp_f : $update_path(C, val_b, path, val_f)
+  C |- UPD exp_b path exp_f : valres
   -- Eval_exp: C |- exp_b : OK val_b
   -- Eval_exp: C |- exp_f : OK val_f
+  -- Eval_path_upd: C |- val_b path := val_f : valres
 
 ;;; Meta-function call evaluation rules
 
