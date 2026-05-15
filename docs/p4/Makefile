@@ -2,7 +2,7 @@ ROUGE_STYLE=github
 ROUGE_CSS=style
 
 SPECTEC=p4spectec
-SPECFILES=../spec/*/*.watsup
+SPECFILES=../../spec/*/*.watsup
 SPEC=P4-16-spec-new
 RELEASE=P4-16-spec-release
 DRAFT=P4-16-spec-draft
@@ -11,13 +11,13 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd .. && make release && cd docs
+	cd ../.. && make release && cd docs
 
 splice: spectec
 	rm -r sections || true
 	cp -r sections-skeleton sections
 	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
-	../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
+	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
 	python3 text_missing.py > text.missing
 
 ${DRAFT}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc

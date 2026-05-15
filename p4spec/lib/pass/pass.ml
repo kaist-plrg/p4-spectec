@@ -29,4 +29,4 @@ let structure ~(final : bool) paths_spec =
 (* Prose generation *)
 
 let prosify paths_spec =
-  paths_spec |> structure ~final:true |> Prose.Prosify.prosify_spec
+  paths_spec |> structure ~final:false |> Prose.Prosify.prosify_spec
