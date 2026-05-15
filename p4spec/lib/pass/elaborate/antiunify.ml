@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Il
-module Mixfix = Domain.Mixfix
 module Type = Runtime.Type
 open Runtime.Static
 open Attempt
@@ -36,15 +35,13 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
         in
         let exp_template = TupleE exps_template $$ (at, note) in
         Ok (frees, unifiers, exp_template)
-    | CaseE notexp_template, CaseE notexp
-      when Mixfix.eq_mixop notexp_template notexp ->
-        let mixop, exps_template = Mixfix.split notexp_template in
-        let exps = Mixfix.args notexp in
+    | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
+      when Il.Eq.eq_mixop mixop_template mixop ->
         let* frees, unifiers, exps_template =
           overlap_exps tdenv menv frees unifiers exps_template exps
         in
         let exp_template =
-          CaseE (Mixfix.fill mixop exps_template) $$ (at, note)
+          CaseE (mixop_template, exps_template) $$ (at, note)
         in
         Ok (frees, unifiers, exp_template)
     | StrE expfields_template, StrE expfields ->
@@ -151,11 +148,9 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
         populate_exp unifiers exp_template exp
     | TupleE exps_template, TupleE exps ->
         populate_exps unifiers exps_template exps
-    | CaseE notexp_template, CaseE notexp
-      when Mixfix.eq_mixop notexp_template notexp ->
-        populate_exps unifiers
-          (Mixfix.args notexp_template)
-          (Mixfix.args notexp)
+    | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
+      when Il.Eq.eq_mixop mixop_template mixop ->
+        populate_exps unifiers exps_template exps
     | StrE expfields_template, StrE expfields ->
         let exps_template = List.map snd expfields_template in
         let exps = List.map snd expfields in

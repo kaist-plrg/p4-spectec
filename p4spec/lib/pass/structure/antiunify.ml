@@ -1,5 +1,4 @@
 open Domain.Lib
-module Mixfix = Domain.Mixfix
 open Lang
 open Il
 open Error
@@ -28,11 +27,9 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
         [ prem ]
     | TupleE exps_template, TupleE exps ->
         populate_exps_templates uenv exps_template exps
-    | CaseE notexp_template, CaseE notexp
-      when Mixfix.eq_mixop notexp_template notexp ->
-        populate_exps_templates uenv
-          (Mixfix.args notexp_template)
-          (Mixfix.args notexp)
+    | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
+      when Il.Eq.eq_mixop mixop_template mixop ->
+        populate_exps_templates uenv exps_template exps
     | StrE expfields_template, StrE expfields ->
         let exps_template = List.map snd expfields_template in
         let exps = List.map snd expfields in
@@ -93,15 +90,13 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
         in
         let exp_template = TupleE exps_template $$ (at, note) in
         (frees, uenv, exp_template)
-    | CaseE notexp_template, CaseE notexp
-      when Mixfix.eq_mixop notexp_template notexp ->
-        let mixop, exps_template = Mixfix.split notexp_template in
-        let exps = Mixfix.args notexp in
+    | CaseE (mixop_template, exps_template), CaseE (mixop, exps)
+      when Il.Eq.eq_mixop mixop_template mixop ->
         let frees, uenv, exps_template =
           antiunify_exps frees uenv exps_template exps
         in
         let exp_template =
-          CaseE (Mixfix.fill mixop exps_template) $$ (at, note)
+          CaseE (mixop_template, exps_template) $$ (at, note)
         in
         (frees, uenv, exp_template)
     | StrE expfields_template, StrE expfields ->

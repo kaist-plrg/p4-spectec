@@ -24,9 +24,9 @@ let rec value_as_exp (value : Value.t) : Il.exp =
             valuefields
         in
         Il.StrE expfields
-    | CaseV valuecase ->
-        let notexp = Mixfix.map value_as_exp valuecase in
-        Il.CaseE notexp
+    | CaseV (mixop, values) ->
+        let exps = List.map value_as_exp values in
+        Il.CaseE (mixop, exps)
     | TupleV values ->
         let exps = List.map value_as_exp values in
         Il.TupleE exps
@@ -82,7 +82,7 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
       (fun (def : Il.def) ->
         match def.it with
         | RelD (id, nottyp, inputs, _, _, _) when id.it = rel_meta ->
-            let mixop, _ = Mixfix.split nottyp.it in
+            let mixop, _ = nottyp.it in
             Some (mixop, inputs)
         | _ -> None)
       defs
@@ -126,7 +126,7 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
             let exps =
               Hints.Input.combine inputs_rel [ exp_bind ] exps_output
             in
-            let notexp = Mixfix.fill mixop_rel exps in
+            let notexp = (mixop_rel, exps) in
             Il.RulePr (rel_meta $ no_region, notexp, inputs_rel) $ no_region
           in
           [ prem_bind; prem_call ]
@@ -154,7 +154,7 @@ let apply_sl (level_meta : Config.level) (value_meta : Value.t)
       (fun (def : Sl.def) ->
         match def.it with
         | RelD (id, (nottyp, inputs), _, _, _, _) when id.it = rel_meta ->
-            let mixop, _ = Mixfix.split nottyp.it in
+            let mixop, _ = nottyp.it in
             Some (mixop, inputs)
         | _ -> None)
       defs
@@ -193,7 +193,7 @@ let apply_sl (level_meta : Config.level) (value_meta : Value.t)
               $$ (no_region, Il.VarT ("y_" ^ string_of_int idx $ no_region, [])))
         in
         let exps = Hints.Input.combine inputs_rel [ exp_bind ] exps_output_sl in
-        let notexp = Mixfix.fill mixop_rel exps in
+        let notexp = (mixop_rel, exps) in
         Sl.(
           RuleI (rel_meta $ no_region, notexp, inputs_rel, [], [ instr_return ])
           $$ (no_region, { iid = 0 }))

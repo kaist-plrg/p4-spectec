@@ -1,4 +1,4 @@
-module Mixop = Domain.Mixop
+open Domain
 open Ol.Ast
 module Typ = Runtime.Type.Typ
 open Runtime.Dynamic_Sl.Envs
@@ -7,7 +7,7 @@ open Util.Source
 (* Totalize case analysis of variant matches *)
 
 let find_variant_case_analysis (tdenv : TDEnv.t) (cases : case list) :
-    Mixop.t list option =
+    mixop list option =
   List.fold_left
     (fun mixops_opt (guard, _) ->
       match mixops_opt with

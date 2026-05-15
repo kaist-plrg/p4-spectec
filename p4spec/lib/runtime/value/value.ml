@@ -1,7 +1,6 @@
 module Fresh_ = Fresh
 module Match = Match
 open Domain
-module Mixfix = Domain.Mixfix
 open Lang
 open Xl
 open Il
@@ -42,8 +41,9 @@ let rec compare (value_l : t) (value_r : t) =
     | NumV n_l, NumV n_r -> Num.compare n_l n_r
     | TextV s_l, TextV s_r -> String.compare s_l s_r
     | StructV fields_l, StructV fields_r -> compare_fields fields_l fields_r
-    | CaseV valuecase_l, CaseV valuecase_r ->
-        Mixfix.compare ~compare_arg:compare valuecase_l valuecase_r
+    | CaseV (mixop_l, values_l), CaseV (mixop_r, values_r) ->
+        let cmp_mixop = Mixop.compare mixop_l mixop_r in
+        if cmp_mixop <> 0 then cmp_mixop else compares values_l values_r
     | TupleV values_l, TupleV values_r -> compares values_l values_r
     | OptV value_opt_l, OptV value_opt_r -> (
         match (value_opt_l, value_opt_r) with
@@ -96,8 +96,7 @@ let hash_of (v : value') : int =
             h := (!h * 31) + Hashtbl.hash atom.it;
             h := (!h * 31) + value_field.note.vhash)
           valuefields
-    | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) ->
         h := (!h * 31) + Hashtbl.hash (Mixop.string_of_mixop mixop);
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
     | TupleV values ->
@@ -189,7 +188,7 @@ module Make = struct
 
   let ( <<| ) ((s_mixop, values) : string * value list) (s : string) : value =
     let typ = Typ.Make.var (s $ no_region) [] in
-    let valuecase = Mixfix.fill (Mixops.of_string s_mixop) values in
+    let valuecase = (Mixops.of_string s_mixop, values) in
     let at =
       values |> List.map at
       |> List.filter (fun region -> region <> no_region)
@@ -202,12 +201,11 @@ module Make = struct
   let ( #@@ ) (value : value) (s : string) : value =
     { value with note = { value.note with typ = VarT (s $ no_region, []) } }
 
-  (* Fast-path operators: pre-parsed Mixop.t + pre-computed typ, no at computation *)
   let ( <|! ) (mixop : Mixop.t) (values : value list) : Mixop.t * value list =
     (mixop, values)
 
   let ( <<|! ) ((mixop, values) : Mixop.t * value list) (typ : typ) : value =
-    let valuecase = Mixfix.fill mixop values in
+    let valuecase = (mixop, values) in
     case ~at:no_region typ valuecase
 end
 
@@ -280,8 +278,7 @@ module Get = struct
   let mtch (value : t) (cases : (string * (value list -> 'a)) list)
       (case_default : value list -> 'a) : 'a =
     match value.it with
-    | CaseV valuecase -> (
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) -> (
         let cases =
           List.map (fun (s_mixop, f) -> (Mixops.of_string s_mixop, f)) cases
         in
@@ -315,8 +312,7 @@ module Get = struct
       =
     let at = value.at in
     match value.it with
-    | CaseV valuecase -> (
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) -> (
         match MtchTbl.find_opt tbl mixop with
         | Some f -> f at values
         | None -> case_default at values)
@@ -328,8 +324,7 @@ module Get = struct
 
   let ( |>> ) (value : t) (s_mixop : string) : value list =
     match value.it with
-    | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) ->
         let mixop_expect = Mixops.of_string s_mixop in
         if Mixop.eq mixop mixop_expect then values
         else
@@ -341,8 +336,7 @@ module Get = struct
 
   let ( |>>! ) (value : t) (mixop_expect : Mixop.t) : value list =
     match value.it with
-    | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) ->
         if Mixop.eq mixop mixop_expect then values
         else
           error no_region
@@ -353,8 +347,7 @@ module Get = struct
 
   let ( |>>? ) (value : t) (s_mixop : string) : value list option =
     match value.it with
-    | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
+    | CaseV (mixop, values) ->
         let mixop_expect = Mixops.of_string s_mixop in
         if Mixop.eq mixop mixop_expect then Some values else None
     | _ -> None

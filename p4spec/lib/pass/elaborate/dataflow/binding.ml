@@ -1,5 +1,4 @@
 open Domain.Lib
-module Mixfix = Domain.Mixfix
 open Lang
 open Il
 open Runtime.Static
@@ -166,7 +165,7 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     (inputs : Hints.Input.t) : Dctx.t * VEnv.t * prem * prem list =
-  let mixop, exps = Mixfix.split notexp in
+  let mixop, exps = notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   analyze_exps_as_bound dctx exps_input;
   let dctx, venv, exps_output, sideconditions =
@@ -176,7 +175,7 @@ and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
     (dctx, venv, exps_output, sideconditions)
   in
   let exps = Hints.Input.combine inputs exps_input exps_output in
-  let notexp = Mixfix.fill mixop exps in
+  let notexp = (mixop, exps) in
   let prem = RulePr (id, notexp, inputs) $ at in
   (dctx, venv, prem, sideconditions)
 
@@ -213,14 +212,14 @@ and analyze_if_prem (dctx : Dctx.t) (at : region) (exp : exp) :
 
 and analyze_if_hold_prem (dctx : Dctx.t) (at : region) (id : id)
     (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
-  let exps = Mixfix.args notexp in
+  let _, exps = notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfHoldPr (id, notexp) $ at in
   (dctx, VEnv.empty, prem, [])
 
 and analyze_if_not_hold_prem (dctx : Dctx.t) (at : region) (id : id)
     (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
-  let exps = Mixfix.args notexp in
+  let _, exps = notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfNotHoldPr (id, notexp) $ at in
   (dctx, VEnv.empty, prem, [])

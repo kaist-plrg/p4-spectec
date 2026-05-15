@@ -1,5 +1,4 @@
 open Ast
-module Mixfix = Domain.Mixfix
 open Util.Source
 
 (* Identifiers *)
@@ -120,10 +119,9 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       && eq_iterexps iterexps_a iterexps_b
       && eq_block block_then_a block_then_b
       && dangle_a = dangle_b
-  | ( HoldI (id_a, notexp_a, iterexps_a, holdcase_a),
-      HoldI (id_b, notexp_b, iterexps_b, holdcase_b) ) ->
-      eq_id id_a id_b
-      && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
+  | ( HoldI (id_a, (mixop_a, exps_a), iterexps_a, holdcase_a),
+      HoldI (id_b, (mixop_b, exps_b), iterexps_b, holdcase_b) ) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
       && eq_iterexps iterexps_a iterexps_b
       && eq_holdcase holdcase_a holdcase_b
   | CaseI (exp_a, cases_a, dangle_a), CaseI (exp_b, cases_b, dangle_b) ->
@@ -139,10 +137,9 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
       eq_exp exp_l_a exp_l_b && eq_exp exp_r_a exp_r_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
       && eq_block block_a block_b
-  | ( RuleI (id_a, notexp_a, inputs_a, iterinstrs_a, block_a),
-      RuleI (id_b, notexp_b, inputs_b, iterinstrs_b, block_b) ) ->
-      eq_id id_a id_b
-      && Mixfix.eq ~eq_arg:eq_exp notexp_a notexp_b
+  | ( RuleI (id_a, (mixop_a, exps_a), inputs_a, iterinstrs_a, block_a),
+      RuleI (id_b, (mixop_b, exps_b), inputs_b, iterinstrs_b, block_b) ) ->
+      eq_id id_a id_b && eq_mixop mixop_a mixop_b && eq_exps exps_a exps_b
       && Hints.Input.eq inputs_a inputs_b
       && eq_iterinstrs iterinstrs_a iterinstrs_b
       && eq_block block_a block_b

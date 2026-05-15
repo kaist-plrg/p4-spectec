@@ -24,7 +24,7 @@ and atom' = Atom.t [@@deriving yojson]
 
 (* Mixfix operators *)
 
-type mixop = Mixfix.mixop [@@deriving yojson]
+type mixop = Mixop.t [@@deriving yojson]
 
 (* Iterators *)
 
@@ -54,7 +54,7 @@ and typ' =
 
 and nottyp = nottyp' phrase
 [@@deriving yojson]
-and nottyp' = typ Mixfix.t
+and nottyp' = mixop * typ list
 [@@deriving yojson]
 
 and deftyp = deftyp' phrase
@@ -89,7 +89,7 @@ and value' =
 
 and valuefield = atom * value
 [@@deriving yojson]
-and valuecase = value Mixfix.t
+and valuecase = mixop * value list
 [@@deriving yojson]
 
 (* Operators *)
@@ -131,7 +131,7 @@ and exp' =
   | CallE of id * targ list * arg list    (* $id`<` targ* `>``(` arg* `)` *)
   | IterE of exp * iterexp                (* exp iterexp *)
 
-and notexp = exp Mixfix.t
+and notexp = mixop * exp list
 and iterexp = iter * var list
 
 (* Patterns *)

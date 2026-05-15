@@ -1,7 +1,5 @@
-open Domain.Lib
-module Atom = Domain.Atom
-module Mixfix = Domain.Mixfix
-module Mixop = Domain.Mixop
+open Domain
+open Lib
 open Lang
 module Value = Runtime.Value
 open Util.Source
@@ -25,7 +23,7 @@ let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
   let hint_alter_opt = Option.bind hint_opt Hints.Alter.init in
   match hint_alter_opt with
   | Some hint_alter ->
-      let mixop, _ = Mixfix.split nottyp.it in
+      let mixop, _ = nottyp.it in
       let cid = (tid, mixop) in
       HEnv.add cid hint_alter henv
   | None -> henv
@@ -123,7 +121,7 @@ and pp_text_v fmt (value : Value.t) : unit =
 
 and pp_case_v (note : Il.vnote) (henv : HEnv.t) fmt (valuecase : Il.valuecase) :
     unit =
-  let mixop, values = Mixfix.split valuecase in
+  let mixop, values = valuecase in
   let cid_opt =
     match note.typ with VarT (tid, _) -> Some (tid, mixop) | _ -> None
   in
@@ -146,11 +144,12 @@ and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
   F.fprintf fmt "%s" str
 
 and pp_default_case_v (henv : HEnv.t) fmt (valuecase : Il.valuecase) : unit =
+  let mixop, values = valuecase in
+  let svalues = List.map (F.asprintf "%a" (pp_value henv)) values in
   F.fprintf fmt "%s"
-    (Mixfix.render
+    (Mixop.assemble
        ~string_of_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
-       ~string_of_arg:(F.asprintf "%a" (pp_value henv))
-       valuecase)
+       mixop svalues)
 
 (* OptV *)
 

@@ -1,4 +1,3 @@
-module Mixfix = Domain.Mixfix
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Spec.Pack
@@ -185,8 +184,7 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
       in
       let size_varsize =
-        value_variableFieldSizeInBits |> Value.Get.case |> Mixfix.args
-        |> fun values ->
+        value_variableFieldSizeInBits |> Value.Get.case |> snd |> fun values ->
         List.nth values 1 |> Value.Get.num
         |> (function `Nat n -> n | `Int i -> i)
         |> Bigint.to_int_exn

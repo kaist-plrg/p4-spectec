@@ -1,6 +1,5 @@
 open Lang
 open Il
-module Mixfix = Domain.Mixfix
 open Error
 open Runtime.Static.Envs
 open Util.Source
@@ -54,7 +53,7 @@ let rec collect_exp (dctx : Dctx.t) (exp : exp) : Bind.BEnv.t =
       collect_noninvertible exp.at "match check operator" binds;
       Bind.BEnv.empty
   | TupleE exps -> collect_exps dctx exps
-  | CaseE notexp -> notexp |> Mixfix.args |> collect_exps dctx
+  | CaseE notexp -> notexp |> snd |> collect_exps dctx
   | StrE expfields -> expfields |> List.map snd |> collect_exps dctx
   | OptE exp_opt ->
       exp_opt

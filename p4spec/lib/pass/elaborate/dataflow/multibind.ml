@@ -1,7 +1,6 @@
 open Domain.Lib
 open Lang
 open Il
-module Mixfix = Domain.Mixfix
 open Error
 open Util.Source
 
@@ -103,10 +102,9 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
       let dctx, renv, exps = rename_exps dctx renv exps in
       let exp = TupleE exps $$ (at, note) in
       (dctx, renv, exp)
-  | CaseE notexp ->
-      let mixop, exps = Mixfix.split notexp in
+  | CaseE (mixop, exps) ->
       let dctx, renv, exps = rename_exps dctx renv exps in
-      let exp = CaseE (Mixfix.fill mixop exps) $$ (at, note) in
+      let exp = CaseE (mixop, exps) $$ (at, note) in
       (dctx, renv, exp)
   | StrE expfields ->
       let atoms, exps = List.split expfields in

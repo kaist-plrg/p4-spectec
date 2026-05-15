@@ -5,7 +5,6 @@ open Lang
 open Ll.Ast
 open Transform
 open Util.Source
-module Mixfix = Domain.Mixfix
 
 (** Replaces first CallE (pre-order) in exp,
 
@@ -123,21 +122,21 @@ let expand_nested_calls ids_used instrs =
       let instr_let = LetI (exp_l, exp_r, iterexps) $$ (at, note) in
       Some (ids, [ instr_new; instr_let ], instrs_rest)
   | { it = HoldI (id, notexp, iterexps, holdcase); at; note } :: instrs_rest ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let* instrs_new, exps, ids =
         replace_call_exps ~call_e_count:SkipOne ids_used exps
       in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let instr_rule = HoldI (id, notexp, iterexps, holdcase) $$ (at, note) in
       Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
   | { it = RuleI (id, notexp, inputs, iterexps); at; note } :: instrs_rest ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let* instrs_new, exps_input, ids =
         replace_call_exps ~call_e_count:SkipOne ids_used exps_input
       in
       let exps = Hints.Input.combine inputs exps_input exps_output in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let instr_rule = RuleI (id, notexp, inputs, iterexps) $$ (at, note) in
       Some (ids, instrs_new @ [ instr_rule ], instrs_rest)
   | { it = ResultI (rel_signature, exps); at; note } :: instrs_rest ->

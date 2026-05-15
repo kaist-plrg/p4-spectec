@@ -1,5 +1,4 @@
 open Domain.Lib
-module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -65,8 +64,7 @@ let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
       in
       let instr = IfI (exp_cond, iterexps, block_then) $ at in
       (underscores_revive, instr)
-  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
-      let mixop, exps = Mixfix.split notexp in
+  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
       let underscores_used = Underscore.init_exps exps in
       let underscores_revive =
         Underscore.revive renamer_candid underscores_used
@@ -84,8 +82,7 @@ let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
           (Underscore.union underscores_revive_hold underscores_revive_nothold)
       in
       let instr =
-        HoldI (id, Mixfix.fill mixop exps, iterexps, block_hold, block_nothold)
-        $ at
+        HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
       in
       (underscores_revive, instr)
   | CaseI (exp, cases, total) ->
@@ -158,7 +155,7 @@ let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
       let instr = LetI (exp_l, exp_r, iterinstrs, block) $ at in
       (underscores_revive, instr)
   | RuleI (id, notexp, inputs, iterinstrs, block) ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let underscores_used = Underscore.init_exps exps_input in
       let underscores_revive =
@@ -166,7 +163,7 @@ let rec downstream_instr (renamer_candid : Re.Renamer.t) (instr : instr) :
       in
       let exps_input = Re.Renamer.rename_exps renamer_candid exps_input in
       let exps = Hints.Input.combine inputs exps_input exps_output in
-      let notexp = Mixfix.fill mixop exps in
+      let notexp = (mixop, exps) in
       let iterinstrs =
         Re.Renamer.rename_iterinstrs_bound renamer_candid iterinstrs
       in
@@ -258,7 +255,7 @@ let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
       let block = Re.Renamer.rename_block renamer_revive block in
       LetI (exp_l, exp_r, iterinstrs, block) $ instr.at
   | RuleI (id, notexp, inputs, iterinstrs, block) ->
-      let mixop, exps = Mixfix.split notexp in
+      let mixop, exps = notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let underscores_bound =
         Underscore.init_exps exps_output |> IdSet.filter Id.is_underscored
@@ -273,7 +270,7 @@ let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
       let notexp =
         let exps_output = Re.Renamer.rename_exps renamer_revive exps_output in
         let exps = Hints.Input.combine inputs exps_input exps_output in
-        Mixfix.fill mixop exps
+        (mixop, exps)
       in
       let iterinstrs =
         Re.Renamer.rename_iterinstrs_bind renamer_revive iterinstrs

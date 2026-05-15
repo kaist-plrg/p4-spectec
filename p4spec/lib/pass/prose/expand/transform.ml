@@ -6,7 +6,6 @@ open Lang
 open Il
 module Var = Var_
 open Util.Source
-module Mixfix = Domain.Mixfix
 
 let ( let* ) = Option.bind
 let ( ++ ) = VarSet.union
@@ -122,10 +121,9 @@ let transform_first_with_iters
       | TupleE exps ->
           let* exps', iter_state = transform_exps acc exps in
           Some (TupleE exps' $$ (at, note), iter_state)
-      | CaseE notexp ->
-          let mixop, exps = Mixfix.split notexp in
+      | CaseE (mixop, exps) ->
           let* exps', iter_state = transform_exps acc exps in
-          Some (CaseE (Mixfix.fill mixop exps') $$ (at, note), iter_state)
+          Some (CaseE (mixop, exps') $$ (at, note), iter_state)
       | StrE fields ->
           let atoms, values = List.split fields in
           let* values', iter_state = transform_exps acc values in
