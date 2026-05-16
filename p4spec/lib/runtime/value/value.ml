@@ -78,7 +78,8 @@ and compares (values_l : t list) (values_r : t list) : int =
 
 (* Equality *)
 
-let eq (value_l : t) (value_r : t) : bool = compare value_l value_r = 0
+let eq (value_l : t) (value_r : t) : bool =
+  value_l == value_r || compare value_l value_r = 0
 
 (* Hash computation *)
 
