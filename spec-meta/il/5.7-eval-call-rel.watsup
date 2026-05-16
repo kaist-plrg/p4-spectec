@@ -83,6 +83,8 @@ rulegroup Eval_rulgroups {
 relation Call_defined_rel:
   ctx |- definedRelDef `@ `( val* ) : res<val*>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_out %3)
 
 dec $elsgroup_as_rulgroup(elsgroup) : rulgroup
 def $elsgroup_as_rulgroup(id `: rulmatch `= rulpath)
@@ -99,14 +101,14 @@ rule Call_defined_rel:
 
 ;; Relation dispatch
 
-rulegroup Call_rel {
+rulegroup Call_rel_dispatch {
 
-    rule Call_rel/defined:
+    rule Call_rel_dispatch/defined:
       C |- definedRelDef val* : valsres
       -- Call_defined_rel:
           C |- definedRelDef `@ `( val* ) : valsres
 
-    rule Call_rel/ext:
+    rule Call_rel_dispatch/ext:
       C |- (EXT id) val* : valsres
       -- Call_extern_rel:
           |- id val* : valsres
@@ -115,23 +117,27 @@ rulegroup Call_rel {
 
 ;; Relation call wrapper with cache
 
-rule Call_rel_cached:
+rule Call_rel:
   C |- id val* : valsres
   -- if relcache = $cache_find_rel(id, val*)
-  -- Call_rel_dispatch: C |- id val* relcache : valsres
+  -- Call_rel_cache: C |- id val* relcache : valsres
 
-rule Call_rel_dispatch/hit:
-  C |- id val_input* (OK val_cached*) : OK val_cached*
+rulegroup Call_rel_cache {
 
-rule Call_rel_dispatch/miss:
-  C |- id val_input* NONE : valsres
-  -- if reldef = $find_rel(C, id)
-  -- if cp_before = $cache_checkpoint()
-  -- Call_rel: C |- reldef val_input* : valsres
-  -- if cp_after = $cache_checkpoint()
-  -- if b_ext = (reldef <: externRelDef)
-  -- if b_seff = $cache_seff(cp_before, cp_after)
-  -- if $cache_add_rel_maybe(
-          b_ext \/ b_seff,
-          ;; true,
-          id, val_input*, valsres)
+  rule Call_rel_cache/hit:
+    C |- id val_input* (OK val_cached*) : OK val_cached*
+
+  rule Call_rel_cache/miss:
+    C |- id val_input* NONE : valsres
+    -- if reldef = $find_rel(C, id)
+    -- if cp_before = $cache_checkpoint()
+    -- Call_rel_dispatch: C |- reldef val_input* : valsres
+    -- if cp_after = $cache_checkpoint()
+    -- if b_ext = (reldef <: externRelDef)
+    -- if b_seff = $cache_seff(cp_before, cp_after)
+    -- if $cache_add_rel_maybe(
+            b_ext \/ b_seff,
+            ;; true,
+            id, val_input*, valsres)
+
+}

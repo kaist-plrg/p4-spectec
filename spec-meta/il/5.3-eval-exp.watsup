@@ -2,14 +2,18 @@
 
 ;;; Boolean, number, and text evaluation rules
 
-rule Eval_exp/boolean:
-  C |- BOOL b : OK (BOOL b)
+rulegroup Eval_exp/literal {
 
-rule Eval_exp/number:
-  C |- num : OK num
+  rule Eval_exp/boolean:
+    C |- BOOL b : OK (BOOL b)
 
-rule Eval_exp/string:
-  C |- TEXT t : OK (TEXT t)
+  rule Eval_exp/number:
+    C |- num : OK num
+
+  rule Eval_exp/string:
+    C |- TEXT t : OK (TEXT t)
+
+}
 
 ;;; Variable evaluation rules
 
@@ -19,63 +23,50 @@ rule Eval_exp/variable:
 
 ;;; Unary, binary, and comparison evaluation rules
 
-rule Eval_exp/unary-boolean:
-  C |- UN NOT exp : OK (BOOL (~b))
-  -- Eval_exp: C |- exp : OK (BOOL b)
+rulegroup Eval_exp/unary {
 
-rule Eval_exp/unary-number:
-  C |- UN numunop exp : OK val_res
-  -- Eval_exp: C |- exp : OK num
-  -- if val_res = $unop_number(numunop, num)
+  rule Eval_exp/boolean:
+    C |- UN NOT exp : OK (BOOL (~b))
+    -- Eval_exp: C |- exp : OK (BOOL b)
 
-rulegroup Eval_exp/binary-boolean {
-
-  rule Eval_exp/and:
-    C |- BIN AND exp_l exp_r : OK (BOOL (b_l /\ b_r))
-    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
-    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
-
-  rule Eval_exp/or:
-    C |- BIN OR exp_l exp_r : OK (BOOL (b_l \/ b_r))
-    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
-    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
-  
-  rule Eval_exp/impl:
-    C |- BIN IMPL exp_l exp_r : OK (BOOL (b_l => b_r))
-    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
-    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
-
-  rule Eval_exp/equiv:
-    C |- BIN EQUIV exp_l exp_r : OK (BOOL (b_l <=> b_r))
-    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
-    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+  rule Eval_exp/number:
+    C |- UN numunop exp : OK val_res
+    -- Eval_exp: C |- exp : OK num
+    -- if val_res = $unop_number(numunop, num)
 
 }
 
-rule Eval_exp/binary-number:
-  C |- BIN numbinop exp_l exp_r : OK val_res
-  -- Eval_exp: C |- exp_l : OK num_l
-  -- Eval_exp: C |- exp_r : OK num_r
-  -- if val_res = $binop_number(numbinop, num_l, num_r)
+rulegroup Eval_exp/binary {
 
-rulegroup Eval_exp/compare-poly {
+  rule Eval_exp/boolean:
+    C |- BIN boolbinop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+    -- if b_res = $binop_bool(boolbinop, b_l, b_r)
 
-  rule Eval_exp/eq:
-    C |- CMP EQ exp_l exp_r : OK (BOOL (val_l = val_r))
-    -- Eval_exp: C |- exp_l : OK val_l 
-    -- Eval_exp: C |- exp_r : OK val_r 
-  
-  rule Eval_exp/neq:
-    C |- CMP NE exp_l exp_r : OK (BOOL (val_l =/= val_r))
-    -- Eval_exp: C |- exp_l : OK val_l 
-    -- Eval_exp: C |- exp_r : OK val_r 
+  rule Eval_exp/number:
+    C |- BIN numbinop exp_l exp_r : OK val_res
+    -- Eval_exp: C |- exp_l : OK num_l
+    -- Eval_exp: C |- exp_r : OK num_r
+    -- if val_res = $binop_number(numbinop, num_l, num_r)
+
 }
 
-rule Eval_exp/compare-number:
-  C |- CMP cmpop exp_l exp_r : OK val_res
-  -- Eval_exp: C |- exp_l : OK num_l
-  -- Eval_exp: C |- exp_r : OK num_r
-  -- if val_res = BOOL $cmpop_number(cmpop, num_l, num_r)
+rulegroup Eval_exp/compare {
+
+  rule Eval_exp/poly:
+    C |- CMP polycmpop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK val_l
+    -- Eval_exp: C |- exp_r : OK val_r
+    -- if b_res = $cmpop_poly(polycmpop, val_l, val_r)
+
+  rule Eval_exp/number:
+    C |- CMP numcmpop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK num_l
+    -- Eval_exp: C |- exp_r : OK num_r
+    -- if b_res = $cmpop_number(numcmpop, num_l, num_r)
+
+}
 
 ;;; Upcasting, downcasting, and subtyping evaluation rules
 
@@ -206,49 +197,20 @@ rulegroup Eval_exp/len {
 
 ;;; Dot, indexing, and slicing evaluation rules
 
-rule Eval_exp/dot:
-  C |- DOT exp atom : OK val_res
-  -- Eval_exp: C |- exp : OK (STR valfield*)
-  -- (if atom_field val_field = valfield)*
-  -- if val_res = $assoc_<atom, val>(atom, (atom_field, val_field)*)
-
-rulegroup Eval_exp/idx { 
-
-  rule Eval_exp/text:
-    C |- IDX exp_b exp_i : OK (TEXT t[n])
-    -- Eval_exp: C |- exp_b : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
-
-  rule Eval_exp/list:
-    C |- IDX exp_b exp_i : OK (val*[n])
-    -- Eval_exp: C |- exp_b : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n)
-}
-
-rulegroup Eval_exp/slice {
-
-  rule Eval_exp/text:
-  C |- SLICE exp_b exp_i exp_n : OK (TEXT t[n_i : n_n])
-    -- Eval_exp: C |- exp_b : OK (TEXT t)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-
-  rule Eval_exp/list:
-    C |- SLICE exp_b exp_i exp_n : OK (LIST val*[n_i : n_n])
-    -- Eval_exp: C |- exp_b : OK (LIST val*)
-    -- Eval_exp: C |- exp_i : OK (NAT n_i)
-    -- Eval_exp: C |- exp_n : OK (NAT n_n)
-
-}
-
-;;; Update evaluation rules
-
 relation Eval_path:
   ctx |- val path : res<val>
   hint(input %0 %1 %2)
+  hint(prose_in "accessing" %2 "of" %1 "under" %0)
+  hint(prose_out %3)
 
 rule Eval_path/root:
   C |- val_b ROOT : OK val_b
+
+rule Eval_path/dot:
+  C |- val_b (DOT path atom) : OK val
+  -- Eval_path: C |- val_b path : OK (STR valfield*)
+  -- if (atom_field val_field = valfield)*
+  -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
 
 rulegroup Eval_path/idx {
 
@@ -280,19 +242,32 @@ rulegroup Eval_path/slice {
 
 }
 
-rule Eval_path/dot:
-  C |- val_b (DOT path atom) : OK val
-  -- Eval_path: C |- val_b path : OK (STR valfield*)
-  -- if (atom_field val_field = valfield)*
-  -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
-
 rule Eval_path/fail:
   C |- val path : FAIL
   -- otherwise
 
+rule Eval_exp/dot:
+  C |- DOT exp atom : valres
+  -- Eval_exp: C |- exp : OK val
+  -- Eval_path: C |- val (DOT ROOT atom) : valres
+
+rule Eval_exp/idx:
+  C |- IDX exp_b exp_i : valres
+  -- Eval_exp: C |- exp_b : OK val_b
+  -- Eval_path: C |- val_b (IDX ROOT exp_i) : valres
+
+rule Eval_exp/slice:
+  C |- SLICE exp_b exp_i exp_n : valres
+  -- Eval_exp: C |- exp_b : OK val_b
+  -- Eval_path: C |- val_b (SLICE ROOT exp_i exp_n) : valres
+
+;;; Update evaluation rules
+
 relation Eval_path_upd:
   ctx |- val path := val : res<val>
   hint(input %0 %1 %2 %3)
+  hint(prose_in "updating" %2 "of" %1 "with" %3 "under" %0)
+  hint(prose_out %4)
 
 rule Eval_path_upd/root:
   C |- val_b ROOT := val_n : OK val_n
@@ -362,7 +337,7 @@ rule Eval_exp/call:
   C |- CALL id targ* arg* : valres
   -- Eval_targs: C |- targ* : typ_input*
   -- (Eval_arg: C |- arg : OK val_input)*
-  -- Call_func_cached: C |- id targ* val_input* : valres
+  -- Call_func: C |- id targ* val_input* : valres
 
 ;;; Iterated expression evaluation rules
 

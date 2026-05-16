@@ -1,17 +1,17 @@
 === Assignments
 
 This section describes the semantics of assignments in the language. An
-assignment occurs when evaluating a let instruction, and when invoking a
-function or relation.
+assignment occurs when evaluating a let premise, and when invoking a function
+or relation.
 
 ==== Assigning a value to an expression
 
-On a let instruction and relation invocation, a value is assigned to an
-expression. Assignment interprets the expression as a pattern, matching the
-value's structure against the expression's shape and binding the corresponding
+On a let premise and relation invocation, a value is assigned to an expression.
+Assignment interprets the expression as a pattern, matching the value's
+structure against the expression's shape and binding the corresponding
 sub-values to variables in the context. This makes assignment the bridge
-between computed values and the variable bindings that downstream instructions
-can observe.
+between computed values and the variable bindings that downstream premises can
+observe.
 
 ${relation-title-prose: Assign_exp}
 
@@ -24,7 +24,7 @@ Only a subset of expressions can be assigned to. The assignable forms are those
 that can serve as patterns: variable references, tuples, case constructors,
 structs, options, lists, and cons cells. An assignment to an assignable
 expression extends the context with the bindings it introduces, while a
-mismatch causes the enclosing instruction to fail.
+mismatch causes the enclosing rule to fail.
 
 ===== Variable references
 
@@ -88,33 +88,33 @@ element expression in the matching sub-context.
 
 ${rulegroup-prose: Assign_exp/iter}
 
-==== Assigning a value to a function parameter
+==== Assigning a value to a function argument
 
-When invoking a function, the arguments are assigned to the parameters of the
-function. This is the entry point from call-site values to the parameter
-bindings that the function body sees. Unlike expression assignment, parameter
-assignment must also handle higher-order function parameters, which pass a
+When invoking a function, argument values are assigned to the formal argument
+patterns. This is the entry point from call-site values to the parameter
+bindings that the function body sees. Unlike expression assignment, argument
+assignment must also handle higher-order function arguments, which pass a
 function name rather than a value.
 
-${relation-title-prose: Assign_param}
+${relation-title-prose: Assign_arg}
 
-A sequence of parameter assignments is defined as follows:
+A sequence of argument assignments is defined as follows:
 
-${relation-title-prose: Assign_params}
-${rulegroup-prose: Assign_params}
+${relation-title-prose: Assign_args}
+${rulegroup-prose: Assign_args}
 
-===== Expression parameters
+===== Expression arguments
 
-An expression parameter assignment evaluates the argument expression under the
-caller's context, then assigns the resulting value to the formal parameter
-expression under the callee's context.
+An expression argument assignment receives a pre-computed value (produced by
+`Eval_arg` at the call site under the caller's context) and assigns it to the
+formal parameter expression under the callee's context.
 
-${rulegroup-prose: Assign_param/exp}
+${rulegroup-prose: Assign_arg/exp}
 
-===== Function parameters
+===== Function arguments
 
-A function parameter assignment records the supplied function name in the
+A function argument assignment records the supplied function name in the
 callee's context under the formal function parameter's name, enabling
 higher-order function calls within the function body.
 
-${rulegroup-prose: Assign_param/fun}
+${rulegroup-prose: Assign_arg/fun}

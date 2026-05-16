@@ -3,6 +3,7 @@
 ;;; Upcasts
 
 dec $upcast(ctx, typ, val) : res<val>
+  hint(prose_in %2 "upcasted to" %1 "under" %0)
 
 def $upcast(C, INT, INT i) = OK (INT i)
 def $upcast(C, INT, NAT n) = OK (INT n)
@@ -30,6 +31,7 @@ def $upcast(C, typ, val) = OK val
 ;;; Downcasts
 
 dec $downcast(ctx, typ, val) : res<val>
+  hint(prose_in %2 "downcasted to" %1 "under" %0)
 
 def $downcast(C, NAT, NAT n) = OK (NAT n)
 def $downcast(C, NAT, INT i) = OK (NAT n)
@@ -58,7 +60,11 @@ def $downcast(C, typ, val) = OK val
 ;;; Value-type matching
 
 dec $subtyp(ctx, typ, val) : bool
+  hint(prose_true %2 "matches type" %1 "under" %0)
+  hint(prose_false %2 "does not match type" %1 "under" %0)
 dec $subtyps(ctx, typ*, val*) : bool
+  hint(prose_true "each of" %2 "matches each of type" %1 "under" %0)
+  hint(prose_false "each of" %2 "does not match each of type" %1 "under" %0)
 
 def $subtyp(C, BOOL, BOOL b) = true
 def $subtyp(C, NAT, NAT n) = true

@@ -3,18 +3,27 @@
 relation Assign_exp:
   ctx |- exp := val : ctx
   hint(input %0 %1 %2)
+  hint(prose_in "assigning" %2 "to" %1 "under" %0)
+  hint(prose_out %3)
 
 relation Assign_exps:
   ctx |- exp* := val* : ctx
   hint(input %0 %1 %2)
+  hint(prose_in "assigning each of" %2 "to each of" %1 "under" %0)
+  hint(prose_out %3)
 
 relation Assign_arg:
   ctx `/ ctx |- arg := val : ctx
   hint(input %0 %1 %2 %3)
+  hint(prose_in "assigning" %2 "to" %1
+                "under caller" %1 "and callee" %0)
+  hint(prose_out %4)
 
 relation Assign_args:
   ctx `/ ctx  |- arg* := val* : ctx
   hint(input %0 %1 %2 %3)
+  hint(prose_in "assigning each of" %2 "to each of" %1
+                "under caller" %1 "and callee" %0)
 
 ;;; Assigning to an expression
 
@@ -95,13 +104,17 @@ rulegroup Assign_exp/iter {
 
 ;;; Assigning to a sequence of expressions
 
-rule Assign_exps/nil:
-  C |- eps := eps : C 
+rulegroup Assign_exps {
 
-rule Assign_exps/cons:
-  C |- exp_h :: exp_t* := val_h :: val_t* : C''
-  -- Assign_exp: C |- exp_h := val_h : C'
-  -- Assign_exps: C' |- exp_t* := val_t* : C''
+  rule Assign_exps/nil:
+    C |- eps := eps : C 
+
+  rule Assign_exps/cons:
+    C |- exp_h :: exp_t* := val_h :: val_t* : C''
+    -- Assign_exp: C |- exp_h := val_h : C'
+    -- Assign_exps: C' |- exp_t* := val_t* : C''
+
+}
 
 ;;; Assigning to an argument
 
@@ -116,10 +129,14 @@ rule Assign_arg/fun:
 
 ;;; Assigning to a sequence of arguments
 
-rule Assign_args/nil:
-  C_callee `/ _ |- eps := eps : C_callee
+rulegroup Assign_args {
 
-rule Assign_args/cons:
-  C_callee `/ C_caller |- arg_h :: arg_t* := val_h :: val_t* : C_callee''
-  -- Assign_arg: C_callee `/ C_caller |- arg_h := val_h : C_callee'
-  -- Assign_args: C_callee' `/ C_caller |- arg_t* := val_t* : C_callee''
+  rule Assign_args/nil:
+    C_callee `/ _ |- eps := eps : C_callee
+
+  rule Assign_args/cons:
+    C_callee `/ C_caller |- arg_h :: arg_t* := val_h :: val_t* : C_callee''
+    -- Assign_arg: C_callee `/ C_caller |- arg_h := val_h : C_callee'
+    -- Assign_args: C_callee' `/ C_caller |- arg_t* := val_t* : C_callee''
+
+}

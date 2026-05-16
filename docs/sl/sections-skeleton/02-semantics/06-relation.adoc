@@ -1,26 +1,49 @@
 === Relations
 
+Relation calls are dispatched through the same layered chain as function calls:
+a memo cache is checked first for a previously computed result, then the
+relation definition is resolved from the context, and finally evaluation is
+dispatched based on whether the relation is extern or user-defined.
+
 An entry point for relation calls is the following relation:
 
 ${relation-title-prose: Call_rel}
 ${rulegroup-prose: Call_rel}
 
-A meta-cache is used for performance reasons.
+A meta-cache is used for performance reasons. Before evaluating a relation call
+from scratch, the cache is consulted for a previously computed result with the
+same identifier and input values. If found, the cached result is returned
+immediately; otherwise, the result is computed and stored in the cache for
+future reuse.
 
 ${relation-title-prose: Call_rel_cache}
 ${rulegroup-prose: Call_rel_cache}
 
 The actual function call is performed by the following relation, dispatching
-according to the function type:
+according to the function type. The relation definition is looked up in the
+context and its kind determines which evaluation strategy is used.
 
 ${relation-title-prose: Call_rel_dispatch}
 ${rulegroup-prose: Call_rel_dispatch}
 
 ==== Extern relations
 
+Extern relations are declared in the specification but implemented outside of
+it, typically by the host environment or an architecture-specific model. The
+specification defines only the signature; the implementation is invoked by the
+interpreter's external dispatch mechanism.
+
 ${relation-title-prose: Call_extern_rel}
 
 ==== User-defined relations
+
+A user-defined relation in the structured language is defined by a primary
+block and an optional else block, together with input pattern expressions
+embedded in the definition. Calling a user-defined relation creates a fresh
+local context, assigns the actual input values to the definition's input
+expression patterns, and then evaluates the combined block. The relation's
+outputs are extracted from a `RES val*` flow produced by a `RESULT` instruction
+within the block.
 
 ${relation-title-prose: Call_defined_rel}
 ${rulegroup-prose: Call_defined_rel/succ}
