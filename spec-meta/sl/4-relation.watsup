@@ -14,47 +14,63 @@ syntax ctxres = res<ctx>
 relation Eval_exp:
   ctx |- exp : res<val>
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
 relation Eval_targs:
   ctx |- targ* : typ*
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
 relation Eval_arg:
   ctx |- arg : res<val>
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
 relation Eval_instr:
   ctx |- instr : flow
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
 relation Eval_instrs:
   ctx |- instr* : flow
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
 relation Eval_block:
   ctx |- block : flow
   hint(input %0 %1)
+  hint(prose_in "evaluating" %1 "under" %0)
+  hint(prose_out %2)
 
-relation Call_func:
+relation Call_func_dispatch:
   ctx |- funcdef targ* val* : res<val>
   hint(input %0 %1 %2 %3)
 
-relation Call_func_cached:
-  ctx |- id targ* val* : res<val>
-  hint(input %0 %1 %2 %3)
-
-relation Call_rel:
-  ctx |- reldef val* : res<val*>
-  hint(input %0 %1 %2)
-
-relation Call_rel_cached:
-  ctx |- id val* : res<val*>
-  hint(input %0 %1 %2)
-
-relation Call_func_dispatch:
+relation Call_func_cache:
   ctx |- id typ* val* funccache : res<val>
   hint(input %0 %1 %2 %3 %4)
 
+relation Call_func:
+  ctx |- id targ* val* : res<val>
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "calling" %1 "with types" %2 "and arguments" %3 "under" %0)
+  hint(prose_out %4)
+
 relation Call_rel_dispatch:
+  ctx |- reldef val* : res<val*>
+  hint(input %0 %1 %2)
+
+relation Call_rel_cache:
   ctx |- id val* relcache : res<val*>
   hint(input %0 %1 %2 %3)
+
+relation Call_rel:
+  ctx |- id val* : res<val*>
+  hint(input %0 %1 %2)
+  hint(prose_in "calling" %1 "with arguments" %2 "under" %0)
+  hint(prose_out %3)

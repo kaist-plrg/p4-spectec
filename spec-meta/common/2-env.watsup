@@ -19,6 +19,7 @@ syntax tdenv = map<id, typdef>
 syntax theta = map<id, typ>
 
 dec $theta_of_tdenv(tdenv) : theta
+  hint(prose_in "the type substitution environment of" %0)
 def $theta_of_tdenv(`{ eps }) = $empty_map<id, typ>
 def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
   = $add_map<id, typ>(theta_t, id_h, typ_h)
@@ -31,7 +32,7 @@ def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
 ;; Iteration helper
 
 dec $is_iter_on_var(exp) : varr?
-
+  hint(prose_in "the iterated variable of" %0)
 def $is_iter_on_var(VAR id) = id eps
 def $is_iter_on_var(ITER exp iterexp)
   = id (iter* ++ [ iter_outer ])
@@ -41,7 +42,11 @@ def $is_iter_on_var(_) = eps
   -- otherwise
 
 dec $iter_vari(vari, iter) : vari
-def $iter_vari(id typ iter*, iter_add) = id typ (iter* ++ [ iter_add ])
+  hint(prose_in %0 "iterated by" %1)
+def $iter_vari(id typ iter*, iter_add)
+  = id typ (iter* ++ [ iter_add ])
 
 dec $iter_varr(varr, iter) : varr
-def $iter_varr(id iter*, iter_add) = id (iter* ++ [ iter_add ])
+  hint(prose_in %0 "iterated by" %1)
+def $iter_varr(id iter*, iter_add)
+  = id (iter* ++ [ iter_add ])

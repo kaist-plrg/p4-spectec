@@ -1,0 +1,96 @@
+=== Instructions
+
+A function and relation body is defined as a sequence of instructions.
+
+${relation-title-prose: Eval_instr}
+
+Evaluating an instruction yields a `flow` as a result, representing the control
+flow.
+
+${syntax: flow}
+
+If none of the below rules apply, the result is a `FAIL`,
+
+${rulegroup-prose: Eval_instr/fail}
+
+A sequence of instructions is evaluated as follows:
+
+${relation-title-prose: Eval_instrs}
+${rulegroup-prose: Eval_instrs}
+
+A block is a sequence of instructions, and is evaluated as follows:
+
+${relation-title-prose: Eval_block}
+${rulegroup-prose: Eval_block}
+
+==== If instructions
+
+${rulegroup-prose: Eval_instr/ifinstr}
+
+An if condition may be iterated, where the condition must evaluate to true for
+all sub-contexts of the iteration.
+
+${relation-title-prose: Eval_if_cond}
+${rulegroup-prose: Eval_if_cond}
+
+==== If-hold instructions
+
+A relation without an output may be used as a condition.
+
+${rulegroup-prose: Eval_instr/ifhold}
+
+The condition is evaluated by evaluating the relation body for all sub-contexts
+of the iteration, and checking that the relation holds for all sub-contexts.
+
+${relation-title-prose: Eval_ifhold_cond}
+${rulegroup-prose: Eval_ifhold_cond}
+
+==== Case instructions
+
+${rulegroup-prose: Eval_instr/case}
+
+A matching case is selected as follows:
+
+${relation-title-prose: Eval_cases}
+${rulegroup-prose: Eval_cases}
+
+${relation-title-prose: Eval_case}
+${rulegroup-prose: Eval_case/hit}
+${rulegroup-prose: Eval_case/fail}
+
+==== Group instructions
+
+A group is simply a wrapper around a sequence of instructions, used as an
+intermediary for prose generation backend.
+
+${rulegroup-prose: Eval_instr/group}
+
+==== Let instructions
+
+${rulegroup-prose: Eval_instr/let}
+
+A let assignment may also be iterated. Iteration dimensions of the right-hand
+side are evaluated outside-in, reaching the innermost assignment, then the
+assigned contexts are collected inside-out to produce the final result.
+
+${relation-title-prose: Eval_let}
+${rulegroup-prose: Eval_let}
+${rulegroup-prose: Eval_let/fail}
+
+==== Relation call instructions
+
+${rulegroup-prose: Eval_instr/rel}
+
+A relation call instruction is a mixture of a relation call and an assignment.
+
+${relation-title-prose: Eval_rel}
+${rulegroup-prose: Eval_rel}
+${rulegroup-prose: Eval_rel/fail}
+
+==== Result instructions
+
+${rulegroup-prose: Eval_instr/result}
+
+==== Return instructions
+
+${rulegroup-prose: Eval_instr/return}

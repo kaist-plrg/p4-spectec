@@ -3,100 +3,104 @@
 ;;; If instructions
 
 relation Eval_if_cond:
-  ctx |- exp iterexp* : unitres
+  ctx |- exp iterexp*
   hint(input %0 %1 %2)
+  hint(prose_true "evaluaing condition" %1 "with iteration" %2 "under" %0 "yields true")
+  hint(prose_false "evaluating condition" %1 "with iteration" %2 "under" %0 "yields false")
 
 rulegroup Eval_if_cond {
 
   rule Eval_if_cond/nil:
-    C |- exp eps : OK
+    C |- exp eps
     -- Eval_exp: C |- exp : OK (BOOL true)
 
   rule Eval_if_cond/cons-opt:
-    C |- exp (iterexp_h :: iterexp_t*) : OK
+    C |- exp (iterexp_h :: iterexp_t*)
     -- if QUEST vari* = iterexp_h
     -- if C_sub? = $sub_opt(C, vari*)
-    -- (Eval_if_cond: C_sub |- exp iterexp_t* : OK)?
+    -- (Eval_if_cond: C_sub |- exp iterexp_t*)?
 
   rule Eval_if_cond/cons-list:
-    C |- exp (iterexp_h :: iterexp_t*) : OK
+    C |- exp (iterexp_h :: iterexp_t*)
     -- if STAR vari* = iterexp_h
     -- if C_sub* = $sub_list(C, vari*)
-    -- (Eval_if_cond: C_sub |- exp iterexp_t* : OK)*
+    -- (Eval_if_cond: C_sub |- exp iterexp_t*)*
 
 }
-
-rule Eval_if_cond/fail:
-  C |- exp iterexp* : FAIL
-  -- otherwise
 
 rulegroup Eval_instr/ifinstr {
 
   rule Eval_instr/true:
     C |- IF exp iterexp* block : flow
     -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
-    -- Eval_if_cond: C |- exp iterexp_rev* : OK
+    -- Eval_if_cond: C |- exp iterexp_rev*
     -- Eval_block: C |- block : flow
 
   rule Eval_instr/false:
     C |- IF exp iterexp* block : FAIL
     -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
-    -- Eval_if_cond: C |- exp iterexp_rev* : FAIL
+    -- Eval_if_cond:/ C |- exp iterexp_rev*
 
 }
 
 ;;; If-hold instructions
 
 relation Eval_ifhold_cond:
-  ctx |- id `: exp* iterexp* : unitres
+  ctx |- id `: exp* iterexp*
   hint(input %0 %1 %2 %3)
+  hint(prose_true "evaluating relation" %1 "with inputs"
+                  %2 "and iteration" %3 "under" %0 "holds")
+  hint(prose_false "evaluating relation" %1 "with inputs"
+                   %2 "and iteration" %3 "under" %0 "does not hold")
 
 rulegroup Eval_ifhold_cond {
 
   rule Eval_ifhold_cond/nil:
-    C |- id `: exp* eps : OK
+    C |- id `: exp* eps
     -- (Eval_exp: C |- exp : OK val)*
-    -- Call_rel_cached: C |- id val* : OK eps
+    -- Call_rel: C |- id val* : OK eps
 
   rule Eval_ifhold_cond/cons-opt:
-    C |- id `: exp* (iterexp_h :: iterexp_t*) : OK
+    C |- id `: exp* (iterexp_h :: iterexp_t*)
     -- if QUEST vari* = iterexp_h
     -- if C_sub? = $sub_opt(C, vari*)
-    -- (Eval_ifhold_cond: C_sub |- id `: exp* iterexp_t* : OK)?
+    -- (Eval_ifhold_cond: C_sub |- id `: exp* iterexp_t*)?
 
   rule Eval_ifhold_cond/cons-list:
-    C |- id `: exp* (iterexp_h :: iterexp_t*) : OK
+    C |- id `: exp* (iterexp_h :: iterexp_t*)
     -- if STAR vari* = iterexp_h
     -- if C_sub* = $sub_list(C, vari*)
-    -- (Eval_ifhold_cond: C_sub |- id `: exp* iterexp_t* : OK)*
+    -- (Eval_ifhold_cond: C_sub |- id `: exp* iterexp_t*)*
 
 }
 
-rule Eval_ifhold_cond/fail:
-  C |- id `: exp* iterexp* : FAIL
-  -- otherwise
-
 rulegroup Eval_instr/ifhold {
 
-  rule Eval_instr/both:
+  rule Eval_instr/both-hold:
     C |- IFHOLD id `: exp* iterexp* holdcase : flow
     -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
-    -- Eval_ifhold_cond: C |- id `: exp* iterexp_rev* : unitres
+    -- Eval_ifhold_cond: C |- id `: exp* iterexp_rev*
     -- if BOTH block_hold block_nothold = holdcase
-    -- if block_select = $ite<block>(unitres = OK, block_hold, block_nothold)
-    -- Eval_block: C |- block_select : flow
+    -- Eval_block: C |- block_hold : flow
+
+  rule Eval_instr/both-nothold:
+    C |- IFHOLD id `: exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond:/ C |- id `: exp* iterexp_rev*
+    -- if BOTH block_hold block_nothold = holdcase
+    -- Eval_block: C |- block_nothold : flow
 
   rule Eval_instr/hold:
     C |- IFHOLD id `: exp* iterexp* holdcase : flow
     -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
-    -- Eval_ifhold_cond: C |- id `: exp* iterexp_rev* : OK
+    -- Eval_ifhold_cond: C |- id `: exp* iterexp_rev*
     -- if HOLD block_hold = holdcase
     -- Eval_block: C |- block_hold : flow
 
   rule Eval_instr/nothold:
     C |- IFHOLD id `: exp* iterexp* holdcase : flow
     -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
-    -- Eval_ifhold_cond: C |- id `: exp* iterexp_rev* : FAIL
+    -- Eval_ifhold_cond:/ C |- id `: exp* iterexp_rev*
     -- if NOTHOLD block_nothold = holdcase
     -- Eval_block: C |- block_nothold : flow
 
@@ -105,7 +109,7 @@ rulegroup Eval_instr/ifhold {
 ;;; Case instructions
 
 dec $guard_as_exp(exp, guard) : exp
-
+  hint(prose_in %1 "as an expression matching against" %0)
 def $guard_as_exp(exp, BOOL true) = exp
 def $guard_as_exp(exp, BOOL false) = UN NOT exp 
 def $guard_as_exp(exp, CMP cmpop exp_r) = CMP cmpop exp exp_r
@@ -116,6 +120,8 @@ def $guard_as_exp(exp, MEM exp_s) = MEM exp exp_s
 relation Eval_case:
   ctx |- exp case : res<block>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating case match for" %1 "against" %2 "under" %0)
+  hint(prose_out %3)
 
 rule Eval_case/hit:
   C |- exp (guard block) : OK block
@@ -129,6 +135,8 @@ rule Eval_case/fail:
 relation Eval_cases:
   ctx |- exp case* : res<block>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating case matches for" %1 "against" %2 "under" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_cases {
 
@@ -162,6 +170,9 @@ rule Eval_instr/group:
 relation Eval_let:
   ctx |- exp `= exp iterinstr* : ctxres
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating assignment" %1 `= %2
+                "with iteration" %3 "under" %0)
+  hint(prose_out %4)
 
 rulegroup Eval_let {
 
@@ -235,13 +246,16 @@ rule Eval_instr/let:
 relation Eval_rel:
   ctx |- id `: exp* `-> exp* iterinstr* : ctxres
   hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "evaluating relation" %1 "with inputs" %2#
+                ", outputs" %3#", and iteration" %4 "under" %0)
+  hint(prose_out %5)
 
 rulegroup Eval_rel {
 
   rule Eval_rel/nil:
     C |- id `: exp_in* `-> exp_out* eps : OK C'
     -- (Eval_exp: C |- exp_in : OK val_in)*
-    -- Call_rel_cached: C |- id val_in* : OK val_out*
+    -- Call_rel: C |- id val_in* : OK val_out*
     -- Assign_exps: C |- exp_out* := val_out* : C'
 
   rule Eval_rel/cons-opt-none:

@@ -33,15 +33,18 @@ release:
 
 # Spec
 
-spec-draft:
-	cd docs/p4 && make draft && cd ..
-spec-draft-html:
-	cd docs/p4 && make draft-html && cd ..
+p4spec-draft:
+	cd docs/p4 && make draft && cd ../..
+p4spec-draft-html:
+	cd docs/p4 && make draft-html && cd ../..
 
-spec-release:
-	cd docs/p4 && make release && cd ..
-spec-release-html:
-	cd docs/p4 && make release-html && cd ..
+p4spec-release:
+	cd docs/p4 && make release && cd ../..
+p4spec-release-html:
+	cd docs/p4 && make release-html && cd ../..
+
+slspec:
+	cd docs/sl && make spec && cd ../..
 
 # Format
 

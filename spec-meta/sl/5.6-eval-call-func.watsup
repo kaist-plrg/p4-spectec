@@ -7,6 +7,8 @@
 relation Eval_tblrow:
   ctx |- tblrow `@ `( val* ) : res<val>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_out %3)
 
 rule Eval_tblrow/succ:
   C |- tblrow `@ `( val* ) : OK val_out
@@ -22,6 +24,8 @@ rule Eval_tblrow/fail:
 relation Eval_tblrows:
   ctx |- tblrow* `@ `( val* ) : res<val>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_out %3)
 
 rulegroup Eval_tblrows {
 
@@ -44,6 +48,8 @@ rulegroup Eval_tblrows {
 relation Call_table_func:
   ctx |- tableFuncDef `@ `( val* ) : res<val>
   hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_out %3)
 
 rule Call_table_func:
   C |- tableFuncDef `@ `( val* ) : valres
@@ -57,8 +63,12 @@ rule Call_table_func:
 relation Call_defined_func:
   ctx |- definedFuncDef `@ `< typ* > `( val* ) : res<val>
   hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating" %1 "with types" %2
+                "and inputs" %3 "under" %0)
+  hint(prose_out %3)
 
 dec $elsblock_as_block(block?) : block
+  hint(prose_in %0 "as a block")
 def $elsblock_as_block(eps) = eps
 def $elsblock_as_block(block) = block
 
@@ -71,31 +81,31 @@ rule Call_defined_func/ret:
   -- if block_all = block ++ $elsblock_as_block(block_els?)
   -- Eval_block: C_callee' |- block_all : RET val_ret
 
-rule Call_defined_func/owise:
+rule Call_defined_func/fail:
   C |- definedFuncDef `@ `< typ* > `( val* ) : FAIL
   -- otherwise
 
 ;;; Meta-function dispatch
 
-rulegroup Call_func {
+rulegroup Call_func_dispatch {
 
-    rule Call_func/extern:
+    rule Call_func_dispatch/extern:
       C |- (EXT id) typ* val* : valres
       -- Call_extern_func:
           |- id `< typ* > `( val* ) : valres
 
-    rule Call_func/builtin:
+    rule Call_func_dispatch/builtin:
       C |- builtinFuncDef typ* val* : valres
       -- if BUILTIN id _ _ = builtinFuncDef
       -- Call_builtin_func:
           |- id `@ `< typ* > `( val* ) : valres
 
-    rule Call_func/table:
+    rule Call_func_dispatch/table:
       C |- tableFuncDef eps val* : valres
       -- Call_table_func:
           C |- tableFuncDef `@ `( val* ) : valres
 
-    rule Call_func/defined:
+    rule Call_func_dispatch/defined:
       C |- definedFuncDef typ* val* : valres
       -- Call_defined_func:
           C |- definedFuncDef `@ `< typ* > `( val* ) : valres
@@ -104,26 +114,30 @@ rulegroup Call_func {
 
 ;; Meta-function call wrapper with cache
 
-rule Call_func_cached:
+rule Call_func:
   C |- id typ* val* : valres
   -- if funccache = $cache_find_func(id, val*)
-  -- Call_func_dispatch:
+  -- Call_func_cache:
       C |- id typ* val* funccache : valres
 
-rule Call_func_dispatch/hit:
-  C |- id typ* val* (OK val_cached) : OK val_cached
+rulegroup Call_func_cache {
 
-rule Call_func_dispatch/miss:
-  C |- id typ* val* NONE : valres
-  -- if (cursor, funcdef) = $find_func(C, id)
-  -- if cp_before = $cache_checkpoint()
-  -- Call_func: C |- funcdef typ* val* : valres
-  -- if cp_after = $cache_checkpoint()
-  -- if b_ext = (funcdef <: externFuncDef)
-  -- if b_seff = $cache_seff(cp_before, cp_after)
-  -- if b_anon = (cursor = LOCAL)
-  -- if b_hoff = $exists_($is_fun(val)*)
-  -- if $cache_add_func_maybe(
-          b_ext \/ b_seff \/ b_anon \/ b_hoff,
-          ;; true,
-          id, val*, valres)
+  rule Call_func_cache/hit:
+    C |- id typ* val* (OK val_cached) : OK val_cached
+
+  rule Call_func_cache/miss:
+    C |- id typ* val* NONE : valres
+    -- if (cursor, funcdef) = $find_func(C, id)
+    -- if cp_before = $cache_checkpoint()
+    -- Call_func_dispatch: C |- funcdef typ* val* : valres
+    -- if cp_after = $cache_checkpoint()
+    -- if b_ext = (funcdef <: externFuncDef)
+    -- if b_seff = $cache_seff(cp_before, cp_after)
+    -- if b_anon = (cursor = LOCAL)
+    -- if b_hoff = $exists_($is_fun(val)*)
+    -- if $cache_add_func_maybe(
+            b_ext \/ b_seff \/ b_anon \/ b_hoff,
+            ;; true,
+            id, val*, valres)
+
+}
