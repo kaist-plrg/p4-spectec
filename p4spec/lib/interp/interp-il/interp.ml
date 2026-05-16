@@ -1572,7 +1572,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Entry points for evaluation *)
 
   let clear () : unit =
-    Value.Fresh_.refresh ();
     CCache.reset !func_cache;
     CCache.reset !rel_cache
 

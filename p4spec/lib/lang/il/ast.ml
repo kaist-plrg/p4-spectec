@@ -70,6 +70,11 @@ and typcase = nottyp * typorigin * hint list
 
 (* Values *)
 
+(* Invariant: vid is a globally unique identifier.
+   Consequently, equal vids imply structural equality. Breaking this invariant
+   would cause silent bugs in the implementation of value equality, since it
+   would cause id aliasing between structurally distinct values. *)
+
 and vid = int
 and vnote = { vid : vid; typ : typ'; vhash : int } [@@deriving yojson]
 

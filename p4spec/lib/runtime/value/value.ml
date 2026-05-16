@@ -21,6 +21,7 @@ let to_string t = string_of_value t
 
 let rec compare (value_l : t) (value_r : t) =
   if value_l == value_r then 0
+  else if value_l.note.vid = value_r.note.vid then 0
   else
     let tag (value : t) =
       match value.it with
@@ -79,7 +80,10 @@ and compares (values_l : t list) (values_r : t list) : int =
 (* Equality *)
 
 let eq (value_l : t) (value_r : t) : bool =
-  value_l == value_r || compare value_l value_r = 0
+  if value_l == value_r then true
+  else if value_l.note.vid = value_r.note.vid then true
+  else if value_l.note.vhash <> value_r.note.vhash then false
+  else compare value_l value_r = 0
 
 (* Hash computation *)
 
