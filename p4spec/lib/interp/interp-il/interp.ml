@@ -29,6 +29,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   let func_cache = ref (CCache.create ~size:(256 * 1024))
   let rel_cache = ref (CCache.create ~size:(256 * 1024))
+  let sub_cache = Hashtbl.create 4096
 
   (* Cache toggle *)
 
@@ -115,7 +116,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let theta = TIdMap.of_lists tparams targs in
       let typ_output = Type.Subst.subst_typ theta typ_output in
       check
-        (Value.Match.sub (Ctx.find_typdef_opt ctx)
+        (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
            typ_output value_output)
         id_func.at
@@ -551,7 +552,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       value backtrack =
     let* value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub (Ctx.find_typdef_opt ctx)
+      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
         typ value
     in

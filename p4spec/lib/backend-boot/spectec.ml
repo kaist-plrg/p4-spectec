@@ -15,8 +15,8 @@ module type INTERFACE_SPECTEC = sig
   type cache
 
   val make_cache : unit -> cache
-  val set_cache : cache -> unit
-  val unset_cache : unit -> unit
+  val push_cache : cache -> unit
+  val pop_cache : unit -> unit
   val cache_enable : cache -> unit
   val cache_disable_reset : cache -> unit
   val cache_clear : cache -> unit
@@ -229,7 +229,7 @@ module Make_parametric
       | _ ->
           error_no_region "unexpected number of arguments to call_builtin_func"
     in
-    Interface_SpecTec.set_cache cache.interface;
+    Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> Interface_SpecTec.unboot_id in
     let typs = value_typs |> Interface_SpecTec.unboot_typs in
     let values = value_values |> Interface_SpecTec.unboot_values in
@@ -242,7 +242,7 @@ module Make_parametric
     let value_value_output_res =
       Value.Make.("OK val" <| [ value_value_output ] <<| "valres")
     in
-    Interface_SpecTec.unset_cache ();
+    Interface_SpecTec.pop_cache ();
     [ value_value_output_res ]
 
   let call_extern_func (values_input : Value.t list) : Value.t list =
@@ -252,7 +252,7 @@ module Make_parametric
           (value_id, value_typs, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
-    Interface_SpecTec.set_cache cache.interface;
+    Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> Interface_SpecTec.unboot_id in
     let typs = value_typs |> Interface_SpecTec.unboot_typs in
     let values = value_values |> Interface_SpecTec.unboot_values in
@@ -265,7 +265,7 @@ module Make_parametric
     let value_value_output_res =
       Value.Make.("OK val" <| [ value_value_output ] <<| "valsres")
     in
-    Interface_SpecTec.unset_cache ();
+    Interface_SpecTec.pop_cache ();
     [ value_value_output_res ]
 
   let call_extern_rel (values_input : Value.t list) : Value.t list =
@@ -274,7 +274,7 @@ module Make_parametric
       | [ value_id; value_values ] -> (value_id, value_values)
       | _ -> error_no_region "unexpected number of arguments to call_extern_rel"
     in
-    Interface_SpecTec.set_cache cache.interface;
+    Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> Interface_SpecTec.unboot_id in
     let values = value_values |> Interface_SpecTec.unboot_values in
     let values_output =
@@ -286,7 +286,7 @@ module Make_parametric
     let value_values_output_res =
       Value.Make.("OK val*" <| [ value_values_output ] <<| "valsres")
     in
-    Interface_SpecTec.unset_cache ();
+    Interface_SpecTec.pop_cache ();
     [ value_values_output_res ]
 
   (* Meta-cache management *)

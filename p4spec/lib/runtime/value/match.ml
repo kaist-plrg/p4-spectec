@@ -85,11 +85,18 @@ and subs_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
   List.length typs = List.length values
   && List.for_all2 (sub_ find_typdef_opt find_func) typs values
 
-(* Entry point *)
+(* Caches *)
 
-let cache find_typdef_opt =
+(* Caching subtyping of type variables to values,
+   using the pair of type variable and value id as key *)
+
+type cache_sub_var = (string * int, bool) Hashtbl.t
+
+(* Caching type definition finder *)
+
+let cache_find_typdef_opt find_typdef_opt =
   let cache : (string, Type.Typdef.t option) Hashtbl.t = Hashtbl.create 8 in
-  fun tid ->
+  fun (tid : TId.t) ->
     match Hashtbl.find_opt cache tid.it with
     | Some td_opt -> td_opt
     | None ->
@@ -97,8 +104,21 @@ let cache find_typdef_opt =
         Hashtbl.add cache tid.it td_opt;
         td_opt
 
-let sub find_typdef_opt find_func typ value =
-  sub_ (cache find_typdef_opt) find_func typ value
+(* Entry point *)
+
+let sub cache_sub_var find_typdef_opt find_func typ value =
+  match typ.it with
+  | VarT (tid, []) -> (
+      let key = (tid.it, value.note.vid) in
+      match Hashtbl.find_opt cache_sub_var key with
+      | Some res -> res
+      | None ->
+          let res =
+            sub_ (cache_find_typdef_opt find_typdef_opt) find_func typ value
+          in
+          Hashtbl.add cache_sub_var key res;
+          res)
+  | _ -> sub_ (cache_find_typdef_opt find_typdef_opt) find_func typ value
 
 let subs find_typdef_opt find_func typs values =
-  subs_ (cache find_typdef_opt) find_func typs values
+  subs_ (cache_find_typdef_opt find_typdef_opt) find_func typs values

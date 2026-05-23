@@ -96,15 +96,19 @@ let cache_clear (cache : cache) : unit =
   VCache.clear cache.unboot_value;
   VCache.clear cache.unboot_value_pingpong
 
-let unset_cache () : unit =
-  (* Boot caches *)
+(* Stack of caches, where the stack is pushed along calls that climb tower levels,
+   and popped along call returns that descend tower levels *)
+
+let stack : cache option list ref = ref []
+let curr : cache option ref = ref None
+
+let install_none () : unit =
   (find_boot_mixop_cache := fun _ -> None);
   (add_boot_mixop_cache := fun _ _ -> ());
   (find_boot_value_cache := fun _ -> None);
   (add_boot_value_cache := fun _ _ -> ());
   (find_boot_value_pingpong_cache := fun _ -> None);
   (add_boot_value_pingpong_cache := fun _ _ -> ());
-  (* Unboot caches *)
   (find_unboot_mixop_cache := fun _ -> None);
   (add_unboot_mixop_cache := fun _ _ -> ());
   (find_unboot_typ_cache := fun _ -> None);
@@ -114,12 +118,8 @@ let unset_cache () : unit =
   (find_unboot_value_pingpong_cache := fun _ -> None);
   add_unboot_value_pingpong_cache := fun _ _ -> ()
 
-let set_cache (cache : cache) : unit =
-  (* A no-op if the cache is marked as disabled *)
-  (if not cache.enabled then unset_cache ()
-   else
-     (* Boot caches *)
-     find_boot_mixop_cache := fun mixop -> MCache.find cache.boot_mixop mixop);
+let install_some (cache : cache) : unit =
+  (find_boot_mixop_cache := fun mixop -> MCache.find cache.boot_mixop mixop);
   (add_boot_mixop_cache :=
      fun mixop value -> MCache.add cache.boot_mixop mixop value);
   (find_boot_value_cache := fun value -> VCache.find cache.boot_value value);
@@ -129,7 +129,6 @@ let set_cache (cache : cache) : unit =
      fun value -> VCache.find cache.boot_value_pingpong value);
   (add_boot_value_pingpong_cache :=
      fun value result -> VCache.add cache.boot_value_pingpong value result);
-  (* Unboot caches *)
   (find_unboot_mixop_cache :=
      fun value_mixop -> VCache.find cache.unboot_mixop value_mixop);
   (add_unboot_mixop_cache :=
@@ -147,3 +146,25 @@ let set_cache (cache : cache) : unit =
   add_unboot_value_pingpong_cache :=
     fun value_value value ->
       VCache.add cache.unboot_value_pingpong value_value value
+
+let install (cache_opt : cache option) : unit =
+  match cache_opt with
+  | None -> install_none ()
+  | Some cache -> install_some cache
+
+let push_cache (cache : cache) : unit =
+  stack := !curr :: !stack;
+  let next = if cache.enabled then Some cache else None in
+  curr := next;
+  install next
+
+let pop_cache () : unit =
+  let prev =
+    match !stack with
+    | [] -> None
+    | prev :: rest ->
+        stack := rest;
+        prev
+  in
+  curr := prev;
+  install prev
