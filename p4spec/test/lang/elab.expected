@@ -21401,37 +21401,43 @@ tbl def $compat_table_exact_optional_key(typeIR) : bool =
 
 tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
   row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
     (signature) INT as typeIR
     (typeIR) -> true
     -- if typeIR <: intTypeIR
     -- let intTypeIR = typeIR as intTypeIR
     -- if (intTypeIR = INT)
-  row 1 :
+  row 2 :
     (signature) INT < _nat > as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
     -- let INT < _nat > = typeIR as fixedIntTypeIR
-  row 2 :
+  row 3 :
     (signature) BIT < _nat > as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
     -- let BIT < _nat > = typeIR as fixedBitTypeIR
-  row 3 :
+  row 4 :
     (signature) TYPEDEF _typeId typeIR as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
-  row 4 :
+  row 5 :
     (signature) TYPE _typeId typeIR as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: newTypeIR
     -- let TYPE _typeId typeIR = typeIR' as newTypeIR
-  row 5 :
+  row 6 :
     (signature) ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: serializableEnumTypeIR
     -- let ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
-  row 6 :
+  row 7 :
     (signature) _typeIR
     (_typeIR) -> false
 
