@@ -2947,26 +2947,44 @@ xref:bin_div[``value`` ``+/+`` ``value'``]
 
 . Check that ``value`` has type ``integerLiteral``.
 . Let ``integerLiteral`` be ``value``.
-. Check that ``integerLiteral`` matches pattern ``+D+`` ``%``.
-. Let ``+D+`` ``i~l~`` be ``integerLiteral``.
-. Check that ``value'`` has type ``integerLiteral``.
-. Let ``integerLiteral'`` be ``value'``.
-. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
-. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
-. Return ``+D+`` ``i~l~`` ``/`` ``i~r~``.
+. If let ``+D+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
+ .. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
+ .. Return ``+D+`` ``i~l~`` ``/`` ``i~r~``.
+. Else if let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. Check that ``integerLiteral'`` matches pattern ``%`` ``+W+`` ``%``.
+ .. Let ``w'`` ``+W+`` ``i~r~`` be ``integerLiteral'``.
+ .. Check that ``w`` is equal to ``w'``.
+ .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].
+ .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].
+ .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``/`` ``i~r'~``].
+ .. Return ``w`` ``+W+`` ``i``.
 
 xref:bin_mod[``value`` ``+%+`` ``value'``]
 
 
 . Check that ``value`` has type ``integerLiteral``.
 . Let ``integerLiteral`` be ``value``.
-. Check that ``integerLiteral`` matches pattern ``+D+`` ``%``.
-. Let ``+D+`` ``i~l~`` be ``integerLiteral``.
-. Check that ``value'`` has type ``integerLiteral``.
-. Let ``integerLiteral'`` be ``value'``.
-. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
-. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
-. Return ``+D+`` ``i~l~`` ``\`` ``i~r~``.
+. If let ``+D+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. Check that ``integerLiteral'`` matches pattern ``+D+`` ``%``.
+ .. Let ``+D+`` ``i~r~`` be ``integerLiteral'``.
+ .. Return ``+D+`` ``i~l~`` ``\`` ``i~r~``.
+. Else if let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
+ .. Check that ``value'`` has type ``integerLiteral``.
+ .. Let ``integerLiteral'`` be ``value'``.
+ .. Check that ``integerLiteral'`` matches pattern ``%`` ``+W+`` ``%``.
+ .. Let ``w'`` ``+W+`` ``i~r~`` be ``integerLiteral'``.
+ .. Check that ``w`` is equal to ``w'``.
+ .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].
+ .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].
+ .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``\`` ``i~r'~``].
+ .. Return ``w`` ``+W+`` ``i``.
 
 xref:bin_shl[``value`` ``+<<+`` ``value'``]
 
@@ -13207,6 +13225,7 @@ xref:compat_divmod[$compat_divmod(typeIR'', typeIR''')]:
 | (``typeIR''``, ``typeIR'''``) | Result 
 
 | +INT+, +INT+ | true
+| +BIT+ +<+ w~l~ +>+, +BIT+ +<+ w~r~ +>+ | w~l~ = w~r~
 | +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_divmod[$compat_divmod(typeIR~l~, typeIR~r~)]
 | typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_divmod[$compat_divmod(typeIR~l~, typeIR~r~)]
 | ++_++, ++_++ | false

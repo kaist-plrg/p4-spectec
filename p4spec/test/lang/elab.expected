@@ -5605,6 +5605,20 @@ def $bin_div(value, value) : value =
   -- if integerLiteral' matches `D %`
   -- let D i_r = integerLiteral'
 
+  clause 1 : (value, value') = w W i' as value
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `% W %`
+  -- let w W i_l = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let w' W i_r = integerLiteral'
+  -- if (w = w')
+  -- let i_l' = $bitstr_to_int(w as int, i_l)
+  -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- let i' = $int_to_bitstr(w as int, (i_l' / i_r'))
+
 def $bin_mod(value, value) : value =
 
   clause 0 : (value, value') = D (i_l \ i_r) as value
@@ -5616,6 +5630,20 @@ def $bin_mod(value, value) : value =
   -- let integerLiteral' = value' as integerLiteral
   -- if integerLiteral' matches `D %`
   -- let D i_r = integerLiteral'
+
+  clause 1 : (value, value') = w W i' as value
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `% W %`
+  -- let w W i_l = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let w' W i_r = integerLiteral'
+  -- if (w = w')
+  -- let i_l' = $bitstr_to_int(w as int, i_l)
+  -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- let i' = $int_to_bitstr(w as int, (i_l' \ i_r'))
 
 def $bin_shl(value, value) : value =
 
@@ -19678,16 +19706,23 @@ tbl def $compat_divmod(typeIR, typeIR) : bool =
     -- let intTypeIR' = typeIR' as intTypeIR
     -- if (intTypeIR' = INT)
   row 1 :
+    (signature) BIT < w_l > as typeIR, BIT < w_r > as typeIR
+    (typeIR, typeIR') -> (w_l = w_r)
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT < w_l > = typeIR as fixedBitTypeIR
+    -- if typeIR' <: fixedBitTypeIR
+    -- let BIT < w_r > = typeIR' as fixedBitTypeIR
+  row 2 :
     (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
     (typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 2 :
+  row 3 :
     (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
     (typeIR_l, typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 3 :
+  row 4 :
     (signature) _typeIR, _typeIR'
     (_typeIR, _typeIR') -> false
 
