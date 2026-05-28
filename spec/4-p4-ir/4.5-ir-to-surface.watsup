@@ -2159,21 +2159,64 @@ def $lift_parserTypeDeclarationIR(
 
 dec $lift_parserStatementIR(parserStatementIR) : parserStatement
   hint(testgen_ignore)
-dec $lift_parserStatementListIR(parserStatementIR*)
-  : parserStatementList
-  hint(testgen_ignore)
 
 ;;; paresrBlockStatementIR
+
+dec $lift_parserBlockElementStatementIR(parserBlockElementStatementIR)
+  : parserBlockElementStatement
+  hint(testgen_ignore)
+
+def $lift_parserBlockElementStatementIR(constantDeclarationIR)
+  = $lift_constantDeclarationIR(constantDeclarationIR)
+def $lift_parserBlockElementStatementIR(variableDeclarationIR)
+  = $lift_variableDeclarationIR(variableDeclarationIR)
+def $lift_parserBlockElementStatementIR(parserStatementIR)
+  = $lift_parserStatementIR(parserStatementIR)
+
+dec $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
+  : parserBlockElementStatementList
+  hint(testgen_ignore)
+
+dec $unflatten_parserBlockElementStatementList(parserBlockElementStatement*)
+  : parserBlockElementStatementList
+  hint(testgen_ignore)
+dec $unflatten_parserBlockElementStatementList'(
+    parserBlockElementStatementList, parserBlockElementStatement*
+  )
+  : parserBlockElementStatementList
+  hint(testgen_ignore)
+
+def $unflatten_parserBlockElementStatementList(parserBlockElementStatement*)
+  = $unflatten_parserBlockElementStatementList'(
+      `EMPTY, parserBlockElementStatement*)
+def $unflatten_parserBlockElementStatementList'(
+    parserBlockElementStatementList, eps)
+  = parserBlockElementStatementList
+def $unflatten_parserBlockElementStatementList'(
+    parserBlockElementStatementList,
+    parserBlockElementStatement_h :: parserBlockElementStatement_t*)
+  = $unflatten_parserBlockElementStatementList'(
+      parserBlockElementStatementList parserBlockElementStatement_h,
+      parserBlockElementStatement_t*)
+
+def $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
+  = parserBlockElementStatementList
+  -- if (parserBlockElementStatement
+      = $lift_parserBlockElementStatementIR(
+          parserBlockElementStatementIR))*
+  -- if parserBlockElementStatementList
+      = $unflatten_parserBlockElementStatementList(
+          parserBlockElementStatement*)
 
 dec $lift_parserBlockStatementIR(parserBlockStatementIR)
   : parserBlockStatement
   hint(testgen_ignore)
 
 def $lift_parserBlockStatementIR(
-    annotationList `{ parserStatementIR* })
-  = annotationList `{ parserStatementList }
-  -- if parserStatementList
-      = $lift_parserStatementListIR(parserStatementIR*)
+    annotationList `{ parserBlockElementStatementIR* })
+  = annotationList `{ parserBlockElementStatementList }
+  -- if parserBlockElementStatementList
+      = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
 
 ;;; parserConditionalStatementIR
 
@@ -2182,7 +2225,7 @@ dec $lift_parserConditionalStatementIR(parserConditionalStatementIR)
   hint(testgen_ignore)
 
 def $lift_parserConditionalStatementIR(
-    IF `( typedExpressionIR_cond) parserStatementIR_then)
+    IF `( typedExpressionIR_cond ) parserStatementIR_then)
   = IF `( expression_cond ) parserStatement_then
   -- if expression_cond = $lift_typedExpressionIR(typedExpressionIR_cond)
   -- if parserStatement_then = $lift_parserStatementIR(parserStatementIR_then)
@@ -2197,10 +2240,6 @@ def $lift_parserConditionalStatementIR(
 
 ;;; parserStatementIR
 
-def $lift_parserStatementIR(constantDeclarationIR)
-  = $lift_constantDeclarationIR(constantDeclarationIR)
-def $lift_parserStatementIR(variableDeclarationIR)
-  = $lift_variableDeclarationIR(variableDeclarationIR)
 def $lift_parserStatementIR(emptyStatementIR)
   = $lift_emptyStatementIR(emptyStatementIR)
 def $lift_parserStatementIR(assignmentStatementIR)
@@ -2214,31 +2253,6 @@ def $lift_parserStatementIR(parserBlockStatementIR)
 def $lift_parserStatementIR(parserConditionalStatementIR)
   = $lift_parserConditionalStatementIR(parserConditionalStatementIR)
 
-;;; parserStatementListIR
-
-dec $unflatten_parserStatementList(parserStatement*) : parserStatementList
-  hint(testgen_ignore)
-dec $unflatten_parserStatementList'(parserStatementList, parserStatement*)
-  : parserStatementList
-  hint(testgen_ignore)
-
-def $unflatten_parserStatementList(parserStatement*)
-  = $unflatten_parserStatementList'(
-      `EMPTY, parserStatement*)
-def $unflatten_parserStatementList'(parserStatementList, eps)
-  = parserStatementList
-def $unflatten_parserStatementList'(
-    parserStatementList, parserStatement_h :: parserStatement_t*)
-  = $unflatten_parserStatementList'(
-      parserStatementList parserStatement_h, parserStatement_t*)
-
-def $lift_parserStatementListIR(parserStatementIR*)
-  = parserStatementList
-  -- if (parserStatement
-      = $lift_parserStatementIR(parserStatementIR))*
-  -- if parserStatementList
-      = $unflatten_parserStatementList(parserStatement*)
-
 ;;; parserStateIR
 
 dec $lift_parserStateIR(parserStateIR) : parserState
@@ -2246,11 +2260,11 @@ dec $lift_parserStateIR(parserStateIR) : parserState
 
 def $lift_parserStateIR(
     annotationList STATE nameIR
-      `{ parserStatementIR* transitionStatementIR })
-  = annotationList STATE name `{ parserStatementList transitionStatement }
+      `{ parserBlockElementStatementIR* transitionStatementIR })
+  = annotationList STATE name `{ parserBlockElementStatementList transitionStatement }
   -- if name = $lift_nameIR_as_nonTypeName(nameIR)
-  -- if parserStatementList
-      = $lift_parserStatementListIR(parserStatementIR*)
+  -- if parserBlockElementStatementList
+      = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*)
   -- if transitionStatement
       = $lift_transitionStatementIR(transitionStatementIR)
 

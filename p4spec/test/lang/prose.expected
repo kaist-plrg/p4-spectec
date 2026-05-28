@@ -682,15 +682,15 @@ xref:flatten_selectCaseList[``selectCaseList'`` flattened]
  .. Let ``selectCase'^{asterisk}^`` be xref:flatten_selectCaseList[``selectCaseList`` flattened].
  .. Return ``selectCase'^{asterisk}^`` concatenated with ``selectCase``.
 
-xref:flatten_parserStatementList[``parserStatementList'`` flattened]
+xref:flatten_parserBlockElementStatementList[``parserBlockElementStatementList'`` flattened]
 
 
-. If ``parserStatementList'`` is ``+`EMPTY+``:
+. If ``parserBlockElementStatementList'`` is ``+`EMPTY+``:
  .. Return ``·``.
 . Else:
- .. Let ``parserStatementList`` ``parserStatement`` be ``parserStatementList'``.
- .. Let ``parserStatement'^{asterisk}^`` be xref:flatten_parserStatementList[``parserStatementList`` flattened].
- .. Return ``parserStatement'^{asterisk}^`` concatenated with ``parserStatement``.
+ .. Let ``parserBlockElementStatementList`` ``parserBlockElementStatement`` be ``parserBlockElementStatementList'``.
+ .. Let ``parserBlockElementStatement'^{asterisk}^`` be xref:flatten_parserBlockElementStatementList[``parserBlockElementStatementList`` flattened].
+ .. Return ``parserBlockElementStatement'^{asterisk}^`` concatenated with ``parserBlockElementStatement``.
 
 xref:flatten_parserStateList[``parserStateList'`` flattened]
 
@@ -6537,13 +6537,7 @@ xref:lift_parserTypeDeclarationIR[$lift_parserTypeDeclarationIR(annotationList +
 xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]
 
 
-. If let ``constantDeclarationIR`` be ``parserStatementIR``:
- .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
- .. Return ``constantDeclaration``.
-. Else if let ``variableDeclarationIR`` be ``parserStatementIR``:
- .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
- .. Return ``variableDeclaration``.
-. Else if let ``emptyStatementIR`` be ``parserStatementIR``:
+. If let ``emptyStatementIR`` be ``parserStatementIR``:
  .. Let ``emptyStatement`` be ``xref:lift_emptyStatementIR[$lift_emptyStatementIR(emptyStatementIR)]``.
  .. Return ``emptyStatement``.
 . Else if let ``assignmentStatementIR`` be ``parserStatementIR``:
@@ -6563,24 +6557,52 @@ xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]
  .. Let ``parserConditionalStatement`` be ``xref:lift_parserConditionalStatementIR[$lift_parserConditionalStatementIR(parserConditionalStatementIR)]``.
  .. Return ``parserConditionalStatement``.
 
-xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]
+xref:lift_parserBlockElementStatementIR[$lift_parserBlockElementStatementIR(parserBlockElementStatementIR)]
 
 
-. Let ``parserStatement^{asterisk}^`` be the list obtained by repeating:
+. If let ``constantDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Let ``constantDeclaration`` be ``xref:lift_constantDeclarationIR[$lift_constantDeclarationIR(constantDeclarationIR)]``.
+ .. Return ``constantDeclaration``.
+. Else if let ``variableDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Let ``variableDeclaration`` be ``xref:lift_variableDeclarationIR[$lift_variableDeclarationIR(variableDeclarationIR)]``.
+ .. Return ``variableDeclaration``.
+. Else:
+ .. Let ``parserStatementIR`` be ``parserBlockElementStatementIR``.
+ .. Let ``parserStatement`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]``.
+ .. Return ``parserStatement``.
+
+xref:lift_parserBlockElementStatementListIR[$lift_parserBlockElementStatementListIR(parserBlockElementStatementIR^{asterisk}^)]
+
+
+. Let ``parserBlockElementStatement^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``parserStatement`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR)]``.
+ ** Let ``parserBlockElementStatement`` be ``xref:lift_parserBlockElementStatementIR[$lift_parserBlockElementStatementIR(parserBlockElementStatementIR)]``.
 --
 +
-for each ``parserStatementIR`` in ``parserStatementIR^{asterisk}^``
-. Let ``parserStatementList`` be ``xref:unflatten_parserStatementList[$unflatten_parserStatementList(parserStatement^{asterisk}^)]``.
-. Return ``parserStatementList``.
+for each ``parserBlockElementStatementIR`` in ``parserBlockElementStatementIR^{asterisk}^``
+. Let ``parserBlockElementStatementList`` be ``xref:unflatten_parserBlockElementStatementList[$unflatten_parserBlockElementStatementList(parserBlockElementStatement^{asterisk}^)]``.
+. Return ``parserBlockElementStatementList``.
 
-xref:lift_parserBlockStatementIR[$lift_parserBlockStatementIR(annotationList +{+ parserStatementIR^{asterisk}^ +}+)]
+xref:unflatten_parserBlockElementStatementList[$unflatten_parserBlockElementStatementList(parserBlockElementStatement^{asterisk}^)]
 
 
-. Let ``parserStatementList`` be ``xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]``.
-. Return ``annotationList`` ``+{+`` ``parserStatementList`` ``+}+``.
+. Return ``xref:unflatten_parserBlockElementStatementList'[$unflatten_parserBlockElementStatementList'(+`EMPTY+,`` ``parserBlockElementStatement^{asterisk}^)]``.
+
+xref:unflatten_parserBlockElementStatementList'[$unflatten_parserBlockElementStatementList'(parserBlockElementStatementList, parserBlockElementStatement^{asterisk}^)]
+
+
+. If ``parserBlockElementStatement^{asterisk}^`` is an empty list:
+ .. Return ``parserBlockElementStatementList``.
+. Else:
+ .. Let ``parserBlockElementStatement~h~`` ``{two-colons}`` ``parserBlockElementStatement~t~^{asterisk}^`` be ``parserBlockElementStatement^{asterisk}^``.
+ .. Return ``xref:unflatten_parserBlockElementStatementList'[$unflatten_parserBlockElementStatementList'(parserBlockElementStatementList`` ``parserBlockElementStatement~h~,`` ``parserBlockElementStatement~t~^{asterisk}^)]``.
+
+xref:lift_parserBlockStatementIR[$lift_parserBlockStatementIR(annotationList +{+ parserBlockElementStatementIR^{asterisk}^ +}+)]
+
+
+. Let ``parserBlockElementStatementList`` be ``xref:lift_parserBlockElementStatementListIR[$lift_parserBlockElementStatementListIR(parserBlockElementStatementIR^{asterisk}^)]``.
+. Return ``annotationList`` ``+{+`` ``parserBlockElementStatementList`` ``+}+``.
 
 xref:lift_parserConditionalStatementIR[$lift_parserConditionalStatementIR(parserConditionalStatementIR)]
 
@@ -6596,28 +6618,14 @@ xref:lift_parserConditionalStatementIR[$lift_parserConditionalStatementIR(parser
  .. Let ``parserStatement~else~`` be ``xref:lift_parserStatementIR[$lift_parserStatementIR(parserStatementIR~else~)]``.
  .. Return ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``parserStatement~then~`` ``+ELSE+`` ``parserStatement~else~``.
 
-xref:unflatten_parserStatementList[$unflatten_parserStatementList(parserStatement^{asterisk}^)]
-
-
-. Return ``xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(+`EMPTY+,`` ``parserStatement^{asterisk}^)]``.
-
-xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(parserStatementList, parserStatement^{asterisk}^)]
-
-
-. If ``parserStatement^{asterisk}^`` is an empty list:
- .. Return ``parserStatementList``.
-. Else:
- .. Let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``.
- .. Return ``xref:unflatten_parserStatementList'[$unflatten_parserStatementList'(parserStatementList`` ``parserStatement~h~,`` ``parserStatement~t~^{asterisk}^)]``.
-
-xref:lift_parserStateIR[$lift_parserStateIR(annotationList +STATE+ nameIR +{+ parserStatementIR^{asterisk}^ transitionStatementIR +}+)]
+xref:lift_parserStateIR[$lift_parserStateIR(annotationList +STATE+ nameIR +{+ parserBlockElementStatementIR^{asterisk}^ transitionStatementIR +}+)]
 
 
 . Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
 . Let ``name`` be ``nonTypeName``.
-. Let ``parserStatementList`` be ``xref:lift_parserStatementListIR[$lift_parserStatementListIR(parserStatementIR^{asterisk}^)]``.
+. Let ``parserBlockElementStatementList`` be ``xref:lift_parserBlockElementStatementListIR[$lift_parserBlockElementStatementListIR(parserBlockElementStatementIR^{asterisk}^)]``.
 . Let ``transitionStatement`` be ``xref:lift_transitionStatementIR[$lift_transitionStatementIR(transitionStatementIR)]``.
-. Return ``annotationList`` ``+STATE+`` ``name`` ``+{+`` ``parserStatementList`` ``transitionStatement`` ``+}+``.
+. Return ``annotationList`` ``+STATE+`` ``name`` ``+{+`` ``parserBlockElementStatementList`` ``transitionStatement`` ``+}+``.
 
 xref:lift_parserStateListIR[$lift_parserStateListIR(parserStateIR^{asterisk}^)]
 
@@ -11090,93 +11098,113 @@ xref:ParserStmt_ok[ParserStmt_ok]:
 * Typing ``parserStatement``, under context ``TC``:
 * Result in context ``TC`` and typed parser statement ``parserStatementIR``.
 
-xref:ParserStmt_ok[Typing ``constantDeclaration``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``emptyStatement``, under context ``TC``]:
 
-. Let context ``TC~1~`` and ``constantDeclarationIR`` be
-* the result of xref:ConstDecl_ok[typing ``constantDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
-. Result in context ``TC~1~`` and typed parser statement ``constantDeclarationIR``.
-
-xref:ParserStmt_ok[Typing ``variableDeclaration``, under context ``TC~0~``]:
-
-. Let context ``TC~1~`` and ``variableDeclarationIR`` be
-* the result of xref:VarDecl_ok[typing ``variableDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
-. Result in context ``TC~1~`` and typed parser statement ``variableDeclarationIR``.
-
-xref:ParserStmt_ok[Typing ``emptyStatement``, under context ``TC~0~``]:
-
-. Let context ``TC`` and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``emptyStatement``, under context ``TC~0~`` at ``+LOCAL+``].
-. Check that ``TC`` is equal to ``TC~0~``.
+. Let context ``TC'`` and ``statementIR`` be
+* the result of xref:Stmt_ok[typing ``emptyStatement``, under context ``TC`` at ``+LOCAL+``].
+. Check that ``TC'`` is equal to ``TC``.
 . Check that ``statementIR`` has type ``emptyStatementIR``.
 . Let ``emptyStatementIR`` be ``statementIR``.
-. Result in context ``TC~0~`` and typed parser statement ``emptyStatementIR``.
+. Result in context ``TC`` and typed parser statement ``emptyStatementIR``.
 
-xref:ParserStmt_ok[Typing ``assignmentStatement``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``assignmentStatement``, under context ``TC``]:
 
 . Let context ``TC~1~`` and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``assignmentStatement``, under context ``TC~0~`` at ``+LOCAL+``].
+* the result of xref:Stmt_ok[typing ``assignmentStatement``, under context ``TC`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``assignmentStatementIR``.
 . Let ``assignmentStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``assignmentStatementIR``.
 
-xref:ParserStmt_ok[Typing ``callStatement``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``callStatement``, under context ``TC``]:
 
 . Let context ``TC~1~`` and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``callStatement``, under context ``TC~0~`` at ``+LOCAL+``].
+* the result of xref:Stmt_ok[typing ``callStatement``, under context ``TC`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``callStatementIR``.
 . Let ``callStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``callStatementIR``.
 
-xref:ParserStmt_ok[Typing ``directApplicationStatement``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``directApplicationStatement``, under context ``TC``]:
 
 . Let context ``TC~1~`` and ``statementIR`` be
-* the result of xref:Stmt_ok[typing ``directApplicationStatement``, under context ``TC~0~`` at ``+LOCAL+``].
+* the result of xref:Stmt_ok[typing ``directApplicationStatement``, under context ``TC`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``directApplicationStatementIR``.
 . Let ``directApplicationStatementIR`` be ``statementIR``.
 . Result in context ``TC~1~`` and typed parser statement ``directApplicationStatementIR``.
 
-xref:ParserStmt_ok[Typing ``annotationList`` ``+{+`` ``parserStatementList`` ``+}+``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``parserBlockStatement``, under context ``TC``]:
 
-. Let ``TC~1~`` be xref:enter_t[``TC~0~`` with a new local frame].
-. Let context ``TC~2~`` and typed parser statements ``parserStatementIR^{asterisk}^`` be
-* the result of xref:ParserStmtList_ok[typing ``parserStatementList``, under context ``TC~1~``].
+. Let ``TC~1~`` be xref:enter_t[``TC`` with a new local frame].
+. Let context ``TC~2~`` and ``parserBlockStatementIR`` be
+* the result of xref:ParserBlock_ok[typing ``parserBlockStatement`` under context ``TC~1~``].
 . Let ``TC~3~`` be xref:exit_t[``TC~2~`` with the innermost frame removed].
-. Let ``parserBlockStatementIR`` be ``annotationList`` ``+{+`` ``parserStatementIR^{asterisk}^`` ``+}+``.
 . Result in context ``TC~1~`` and typed parser statement ``parserBlockStatementIR``.
 
-xref:ParserStmt_ok[Typing ``parserConditionalStatement``, under context ``TC~0~``]:
+xref:ParserStmt_ok[Typing ``parserConditionalStatement``, under context ``TC``]:
 
 . If let ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``parserStatement~then~`` be ``parserConditionalStatement``:
  .. Let ``typedExpressionIR~cond~`` be
-* the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC~0~`` at ``+LOCAL+``].
+* the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typeIR~cond~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~cond~``].
  .. Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR~cond~`` with typedefs unrolled].
  .. Let context ``TC~then~`` and typed parser statement ``parserStatementIR~then~`` be
-* the result of xref:ParserStmt_ok[typing ``parserStatement~then~``, under context ``TC~0~``].
- .. Result in context ``TC~0~`` and typed parser statement ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~``.
+* the result of xref:ParserStmt_ok[typing ``parserStatement~then~``, under context ``TC``].
+ .. Result in context ``TC`` and typed parser statement ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~``.
 . Else:
  .. Let ``+IF+`` ``+(+`` ``expression~cond~`` ``+)+`` ``parserStatement~then~`` ``+ELSE+`` ``parserStatement~else~`` be ``parserConditionalStatement``.
  .. Let ``typedExpressionIR~cond~`` be
-* the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC~0~`` at ``+LOCAL+``].
+* the result of xref:Expr_ok[typing ``expression~cond~``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typeIR~cond~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~cond~``].
  .. Check that ``+BOOL+`` is equal to xref:unroll_typeIR[``typeIR~cond~`` with typedefs unrolled].
  .. Let context ``TC~then~`` and typed parser statement ``parserStatementIR~then~`` be
-* the result of xref:ParserStmt_ok[typing ``parserStatement~then~``, under context ``TC~0~``].
+* the result of xref:ParserStmt_ok[typing ``parserStatement~then~``, under context ``TC``].
  .. Let context ``TC~else~`` and typed parser statement ``parserStatementIR~else~`` be
-* the result of xref:ParserStmt_ok[typing ``parserStatement~else~``, under context ``TC~0~``].
- .. Result in context ``TC~0~`` and typed parser statement ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~``.
+* the result of xref:ParserStmt_ok[typing ``parserStatement~else~``, under context ``TC``].
+ .. Result in context ``TC`` and typed parser statement ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~``.
 
-xref:ParserStmtList_ok[ParserStmtList_ok]:
+xref:ParserBlockElementStmt_ok[ParserBlockElementStmt_ok]:
 
-* Typing ``parserStatementList``, under context ``TC``:
-* Result in context ``TC`` and typed parser statements ``parserStatementIR^{asterisk}^``.
+* Typing ``parserBlockElementStatement`` under context ``TC``:
+* Result in context ``TC`` and ``parserBlockElementStatementIR``.
 
-xref:ParserStmtList_ok[Typing ``parserStatementList``, under context ``TC~0~``]:
+xref:ParserBlockElementStmt_ok[Typing ``parserBlockElementStatement`` under context ``TC~0~``]:
 
-. Let ``parserStatement^{asterisk}^`` be xref:flatten_parserStatementList[``parserStatementList`` flattened].
-. Let the updated context ``TC~1~`` and the typed parser statements ``parserStatementIR^{asterisk}^`` be
-* the result of xref:ParserStmts_ok[typing ``parserStatement^{asterisk}^``, under context ``TC~0~``].
-. Result in context ``TC~1~`` and typed parser statements ``parserStatementIR^{asterisk}^``.
+. If let ``constantDeclaration`` be ``parserBlockElementStatement``:
+ .. Let context ``TC~1~`` and ``constantDeclarationIR`` be
+* the result of xref:ConstDecl_ok[typing ``constantDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
+ .. Result in context ``TC~1~`` and ``constantDeclarationIR``.
+. Else if let ``variableDeclaration`` be ``parserBlockElementStatement``:
+ .. Let context ``TC~1~`` and ``variableDeclarationIR`` be
+* the result of xref:VarDecl_ok[typing ``variableDeclaration``, under context ``TC~0~`` at ``+LOCAL+``].
+ .. Result in context ``TC~1~`` and ``variableDeclarationIR``.
+. Else:
+ .. Let ``parserStatement`` be ``parserBlockElementStatement``.
+ .. Let context ``TC~1~`` and typed parser statement ``parserStatementIR`` be
+* the result of xref:ParserStmt_ok[typing ``parserStatement``, under context ``TC~0~``].
+ .. Result in context ``TC~1~`` and ``parserStatementIR``.
+
+xref:ParserBlockElementStmtList_ok[ParserBlockElementStmtList_ok]:
+
+* Typing ``parserBlockElementStatementList`` under context ``TC``:
+* Result in context ``TC`` and ``parserBlockElementStatementIR^{asterisk}^``.
+
+xref:ParserBlockElementStmtList_ok[Typing ``parserBlockElementStatementList`` under context ``TC~0~``]:
+
+. Let ``parserBlockElementStatement^{asterisk}^`` be xref:flatten_parserBlockElementStatementList[``parserBlockElementStatementList`` flattened].
+. Let context ``TC~1~`` and ``parserBlockElementStatementIR^{asterisk}^`` be
+* the result of xref:ParserBlockElementStmts_ok[typing ``parserBlockElementStatement^{asterisk}^`` under context ``TC~0~``].
+. Result in context ``TC~1~`` and ``parserBlockElementStatementIR^{asterisk}^``.
+
+xref:ParserBlock_ok[ParserBlock_ok]:
+
+* Typing ``parserBlockStatement`` under context ``TC``:
+* Result in context ``TC`` and ``parserBlockStatementIR``.
+
+xref:ParserBlock_ok[Typing ``annotationList`` ``+{+`` ``parserBlockElementStatementList`` ``+}+`` under context ``TC~0~``]:
+
+. Let context ``TC~1~`` and ``parserBlockElementStatementIR^{asterisk}^`` be
+* the result of xref:ParserBlockElementStmtList_ok[typing ``parserBlockElementStatementList`` under context ``TC~0~``].
+. Let ``parserBlockStatementIR`` be ``annotationList`` ``+{+`` ``parserBlockElementStatementIR^{asterisk}^`` ``+}+``.
+. Result in context ``TC~1~`` and ``parserBlockStatementIR``.
 
 xref:ParserState_ok[ParserState_ok]:
 
@@ -11185,16 +11213,15 @@ xref:ParserState_ok[ParserState_ok]:
 
 xref:ParserState_ok[Typing ``parserState``, under context ``TC~0~`` and parser state names ``nameIR~state~^{asterisk}^``]:
 
-. Let ``annotationList`` ``+STATE+`` ``name`` ``+{+`` ``parserStatementList`` ``transitionStatement`` ``+}+`` be ``parserState``.
+. Let ``annotationList`` ``+STATE+`` ``name`` ``+{+`` ``parserBlockElementStatementList`` ``transitionStatement`` ``+}+`` be ``parserState``.
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``TC~1~`` be xref:enter_t[``TC~0~`` with a new local frame].
-. Let ``parserStatement^{asterisk}^`` be xref:flatten_parserStatementList[``parserStatementList`` flattened].
-. Let the updated context ``TC~2~`` and the typed parser statements ``parserStatementIR^{asterisk}^`` be
-* the result of xref:ParserStmts_ok[typing ``parserStatement^{asterisk}^``, under context ``TC~1~``].
+. Let context ``TC~2~`` and ``parserBlockElementStatementIR^{asterisk}^`` be
+* the result of xref:ParserBlockElementStmtList_ok[typing ``parserBlockElementStatementList`` under context ``TC~1~``].
 . Let typed transition statement ``transitionStatementIR`` be
 * the result of xref:ParserTransition_ok[typing ``transitionStatement``, under context ``TC~2~`` and parser state names ``nameIR~state~^{asterisk}^``].
 . Let ``TC~3~`` be xref:exit_t[``TC~2~`` with the innermost frame removed].
-. Let ``parserStateIR`` be ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserStatementIR^{asterisk}^`` ``transitionStatementIR`` ``+}+``.
+. Let ``parserStateIR`` be ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserBlockElementStatementIR^{asterisk}^`` ``transitionStatementIR`` ``+}+``.
 . Result in ``parserStateIR``.
 
 xref:ParserStateList_ok[ParserStateList_ok]:
@@ -14211,21 +14238,21 @@ xref:SelectCase_ok[Typing ``keysetExpression`` ``+:+`` ``name`` ``+;+`` under co
 . Check that ``nameIR`` is in ``nameIR~state~^{asterisk}^``.
 . Result in ``keysetExpressionIR`` ``+:+`` ``nameIR`` ``+;+``.
 
-xref:ParserStmts_ok[ParserStmts_ok]:
+xref:ParserBlockElementStmts_ok[ParserBlockElementStmts_ok]:
 
-* Typing ``parserStatement^{asterisk}^``, under context ``TC``:
-* Result in the updated context ``TC`` and the typed parser statements ``parserStatementIR^{asterisk}^``.
+* Typing ``parserBlockElementStatement^{asterisk}^`` under context ``TC``:
+* Result in context ``TC`` and ``parserBlockElementStatementIR^{asterisk}^``.
 
-xref:ParserStmts_ok[Typing ``parserStatement^{asterisk}^``, under context ``TC``]:
+xref:ParserBlockElementStmts_ok[Typing ``parserBlockElementStatement^{asterisk}^`` under context ``TC``]:
 
-. If ``parserStatement^{asterisk}^`` is equal to ``·``:
- .. Result in the updated context ``TC`` and the typed parser statements ``·``.
-. If let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``:
- .. Let context ``TC~1~`` and typed parser statement ``parserStatementIR~h~`` be
-* the result of xref:ParserStmt_ok[typing ``parserStatement~h~``, under context ``TC``].
- .. Let the updated context ``TC~2~`` and the typed parser statements ``parserStatementIR~t~^{asterisk}^`` be
-* the result of xref:ParserStmts_ok[typing ``parserStatement~t~^{asterisk}^``, under context ``TC~1~``].
- .. Result in the updated context ``TC~2~`` and the typed parser statements ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^``.
+. If ``parserBlockElementStatement^{asterisk}^`` is equal to ``·``:
+ .. Result in context ``TC`` and ``·``.
+. If let ``parserBlockElementStatement~h~`` ``{two-colons}`` ``parserBlockElementStatement~t~^{asterisk}^`` be ``parserBlockElementStatement^{asterisk}^``:
+ .. Let context ``TC~1~`` and ``parserBlockElementStatementIR~h~`` be
+* the result of xref:ParserBlockElementStmt_ok[typing ``parserBlockElementStatement~h~`` under context ``TC``].
+ .. Let context ``TC~2~`` and ``parserBlockElementStatementIR~t~^{asterisk}^`` be
+* the result of xref:ParserBlockElementStmts_ok[typing ``parserBlockElementStatement~t~^{asterisk}^`` under context ``TC~1~``].
+ .. Result in context ``TC~2~`` and ``parserBlockElementStatementIR~h~`` ``{two-colons}`` ``parserBlockElementStatementIR~t~^{asterisk}^``.
 
 xref:ParserLocalDecls_ok[ParserLocalDecls_ok]:
 
@@ -15725,83 +15752,104 @@ xref:ParserStmt_inst[ParserStmt_inst]:
 * Compile-time evaluation of ``parserStatementIR``, under context ``IC`` and store ``STO``:
 * Result in context ``IC`` and store ``STO``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``constantDeclarationIR``, under context ``IC~0~`` and store ``STO``]:
-
-. Let context ``IC~1~`` be
-* the result of xref:ConstDecl_inst[loading ``constantDeclarationIR``, under context ``IC~0~`` at ``+LOCAL+``].
-. Result in context ``IC~1~`` and store ``STO``.
-
-xref:ParserStmt_inst[Compile-time evaluation of ``variableDeclarationIR``, under context ``IC~0~`` and store ``STO``]:
-
-. Result in context ``IC~0~`` and store ``STO``.
-
-xref:ParserStmt_inst[Compile-time evaluation of ``emptyStatementIR``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``emptyStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . Let context ``IC~1~``, store ``STO~1~``, and ``statementIR`` be
-* the result of xref:Stmt_inst[compile-time evaluation of ``emptyStatementIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
+* the result of xref:Stmt_inst[compile-time evaluation of ``emptyStatementIR``, under context ``IC~0~`` and store ``STO~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``emptyStatementIR``.
 . Let ``emptyStatementIR~inst~`` be ``statementIR``.
 . Result in context ``IC~1~`` and store ``STO~1~``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``assignmentStatementIR``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``assignmentStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . Let context ``IC~1~``, store ``STO~1~``, and ``statementIR`` be
-* the result of xref:Stmt_inst[compile-time evaluation of ``assignmentStatementIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
+* the result of xref:Stmt_inst[compile-time evaluation of ``assignmentStatementIR``, under context ``IC~0~`` and store ``STO~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``assignmentStatementIR``.
 . Let ``assignmentStatementIR~inst~`` be ``statementIR``.
 . Result in context ``IC~1~`` and store ``STO~1~``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``callStatementIR``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``callStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . Let context ``IC~1~``, store ``STO~1~``, and ``statementIR`` be
-* the result of xref:Stmt_inst[compile-time evaluation of ``callStatementIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
+* the result of xref:Stmt_inst[compile-time evaluation of ``callStatementIR``, under context ``IC~0~`` and store ``STO~0~`` at ``+LOCAL+``].
 . Check that ``statementIR`` has type ``callStatementIR``.
 . Let ``callStatementIR~inst~`` be ``statementIR``.
 . Result in context ``IC~1~`` and store ``STO~1~``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``directApplicationStatementIR``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``directApplicationStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . Let store ``STO~1~`` and desugared ``constantDeclarationIR``, ``callStatementIR`` be
-* the result of xref:DirectApplicationStmt_inst[compile-time evaluation of ``directApplicationStatementIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
+* the result of xref:DirectApplicationStmt_inst[compile-time evaluation of ``directApplicationStatementIR``, under context ``IC~0~`` and store ``STO~0~`` at ``+LOCAL+``].
 . Let ``parserBlockStatementIR`` be ``+`EMPTY+`` ``+{+`` ``+[+`` ``constantDeclarationIR,`` ``callStatementIR`` ``+]+`` ``+}+``.
 . Result in context ``IC~0~`` and store ``STO~1~``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``annotationList`` ``+{+`` ``parserStatementListIR`` ``+}+``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``parserBlockStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
-. Let context ``IC~1~`` and store ``STO~1~`` be
-* the result of xref:ParserStmts_inst[compile-time evaluation of ``parserStatementListIR``, under context ``IC~0~`` and store ``STO``].
-. Let ``parserBlockStatementIR~inst~`` be ``annotationList`` ``+{+`` ``parserStatementListIR~inst~`` ``+}+``.
-. Result in context ``IC~1~`` and store ``STO~1~``.
+. Let ``IC~1~`` be xref:enter_i[``IC~0~`` with a new local frame].
+. Let context ``IC~2~``, store ``STO~1~``, and ``parserBlockStatementIR~inst~`` be
+* the result of xref:ParserBlock_inst[compile-time evaluation of ``parserBlockStatementIR``, under context ``IC~1~``, and store ``STO~0~``].
+. Let ``IC~3~`` be xref:exit_i[``IC~2~`` with the innermost frame removed].
+. Result in context ``IC~3~`` and store ``STO~1~``.
 
-xref:ParserStmt_inst[Compile-time evaluation of ``parserConditionalStatementIR``, under context ``IC~0~`` and store ``STO``]:
+xref:ParserStmt_inst[Compile-time evaluation of ``parserConditionalStatementIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . If let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` be ``parserConditionalStatementIR``:
  .. Let context ``IC~then~`` and store ``STO~1~`` be
-* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~then~``, under context ``IC~0~`` and store ``STO``].
+* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~then~``, under context ``IC~0~`` and store ``STO~0~``].
  .. Result in context ``IC~0~`` and store ``STO~1~``.
 . Else:
  .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
  .. Let context ``IC~then~`` and store ``STO~1~`` be
-* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~then~``, under context ``IC~0~`` and store ``STO``].
+* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~then~``, under context ``IC~0~`` and store ``STO~0~``].
  .. Let context ``IC~else~`` and store ``STO~2~`` be
 * the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~else~``, under context ``IC~0~`` and store ``STO~1~``].
  .. Result in context ``IC~0~`` and store ``STO~2~``.
 
-xref:ParserStmts_inst[ParserStmts_inst]:
+xref:ParserBlockElementStmt_inst[ParserBlockElementStmt_inst]:
 
-* Compile-time evaluation of ``parserStatementIR^{asterisk}^``, under context ``IC`` and store ``STO``:
-* Result in context ``IC`` and store ``STO``.
+* Compile-time evaluation of ``parserBlockElementStatementIR``, under context ``IC``, and store ``STO``:
+* Result in context ``IC``, store ``STO``, and ``parserBlockElementStatementIR``.
 
-xref:ParserStmts_inst[Compile-time evaluation of ``parserStatementIR^{asterisk}^``, under context ``IC`` and store ``STO``]:
+xref:ParserBlockElementStmt_inst[Compile-time evaluation of ``parserBlockElementStatementIR``, under context ``IC``, and store ``STO``]:
 
-. If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in context ``IC`` and store ``STO``.
-. If let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``:
+. If let ``constantDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Let context ``IC~1~`` be
+* the result of xref:ConstDecl_inst[loading ``constantDeclarationIR``, under context ``IC`` at ``+LOCAL+``].
+ .. Result in context ``IC~1~``, store ``STO``, and ``constantDeclarationIR``.
+. Else if let ``variableDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Result in context ``IC``, store ``STO``, and ``variableDeclarationIR``.
+. Else:
+ .. Let ``parserStatementIR`` be ``parserBlockElementStatementIR``.
  .. Let context ``IC~1~`` and store ``STO~1~`` be
-* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~h~``, under context ``IC`` and store ``STO``].
- .. Let context ``IC~2~`` and store ``STO~2~`` be
-* the result of xref:ParserStmts_inst[compile-time evaluation of ``parserStatementIR~t~^{asterisk}^``, under context ``IC~1~`` and store ``STO~1~``].
- .. Result in context ``IC~2~`` and store ``STO~2~``.
+* the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR``, under context ``IC`` and store ``STO``].
+ .. Result in context ``IC~1~``, store ``STO~1~``, and ``parserStatementIR~inst~``.
+
+xref:ParserBlockElementStmtList_inst[ParserBlockElementStmtList_inst]:
+
+* Compile-time evaluation of ``parserBlockElementStatementListIR``, under context ``IC``, and store ``STO``:
+* Result in context ``IC``, store ``STO``, and ``parserBlockElementStatementIR^{asterisk}^``.
+
+xref:ParserBlockElementStmtList_inst[Compile-time evaluation of ``parserBlockElementStatementIR^{asterisk}^``, under context ``IC``, and store ``STO``]:
+
+. If ``parserBlockElementStatementIR^{asterisk}^`` is equal to ``·``:
+ .. Result in context ``IC``, store ``STO``, and ``·``.
+. If let ``parserBlockElementStatementIR~h~`` ``{two-colons}`` ``parserBlockElementStatementIR~t~^{asterisk}^`` be ``parserBlockElementStatementIR^{asterisk}^``:
+ .. Let context ``IC~1~``, store ``STO~1~``, and ``parserBlockElementStatementIR~h_inst~`` be
+* the result of xref:ParserBlockElementStmt_inst[compile-time evaluation of ``parserBlockElementStatementIR~h~``, under context ``IC``, and store ``STO``].
+ .. Let context ``IC~2~``, store ``STO~2~``, and ``parserBlockElementStatementIR~t_inst~^{asterisk}^`` be
+* the result of xref:ParserBlockElementStmtList_inst[compile-time evaluation of ``parserBlockElementStatementIR~t~^{asterisk}^``, under context ``IC~1~``, and store ``STO~1~``].
+ .. Result in context ``IC~2~``, store ``STO~2~``, and ``parserBlockElementStatementIR~h_inst~`` ``{two-colons}`` ``parserBlockElementStatementIR~t_inst~^{asterisk}^``.
+
+xref:ParserBlock_inst[ParserBlock_inst]:
+
+* Compile-time evaluation of ``parserBlockStatementIR``, under context ``IC``, and store ``STO``:
+* Result in context ``IC``, store ``STO``, and ``parserBlockStatementIR``.
+
+xref:ParserBlock_inst[Compile-time evaluation of ``annotationList`` ``+{+`` ``parserBlockElementStatementListIR`` ``+}+``, under context ``IC~0~``, and store ``STO~0~``]:
+
+. Let context ``IC~1~``, store ``STO~1~``, and ``parserBlockElementStatementListIR~inst~`` be
+* the result of xref:ParserBlockElementStmtList_inst[compile-time evaluation of ``parserBlockElementStatementListIR``, under context ``IC~0~``, and store ``STO~0~``].
+. Result in context ``IC~1~``, store ``STO~1~``, and ``annotationList`` ``+{+`` ``parserBlockElementStatementListIR~inst~`` ``+}+``.
 
 xref:ParserState_inst[ParserState_inst]:
 
@@ -15810,10 +15858,10 @@ xref:ParserState_inst[ParserState_inst]:
 
 xref:ParserState_inst[Compile-time evaluation of ``parserStateIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
-. Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserStatementListIR`` ``transitionStatementIR`` ``+}+`` be ``parserStateIR``.
-. Let context ``IC~1~`` and store ``STO~1~`` be
-* the result of xref:ParserStmts_inst[compile-time evaluation of ``parserStatementListIR``, under context ``IC~0~`` and store ``STO~0~``].
-. Let ``parserStateIR~inst~`` be ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserStatementListIR~inst~`` ``transitionStatementIR`` ``+}+``.
+. Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserBlockElementStatementListIR`` ``transitionStatementIR`` ``+}+`` be ``parserStateIR``.
+. Let context ``IC~1~``, store ``STO~1~``, and ``parserBlockElementStatementListIR~inst~`` be
+* the result of xref:ParserBlockElementStmtList_inst[compile-time evaluation of ``parserBlockElementStatementListIR``, under context ``IC~0~``, and store ``STO~0~``].
+. Let ``parserStateIR~inst~`` be ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserBlockElementStatementListIR~inst~`` ``transitionStatementIR`` ``+}+``.
 . Let ``IC~2~`` be xref:add_parserState_i[``IC~1~`` where ``nameIR`` to ``parserStateIR~inst~`` is added].
 . Result in context ``IC~2~`` and store ``STO~1~``.
 
@@ -18039,60 +18087,45 @@ xref:ParserStmt_eval[ParserStmt_eval]:
 * Runtime evaluation of ``parserStatementIR``, under context ``EC`` and state ``ARCH``:
 * Result in context ``EC``, state ``ARCH``, and ``parserStatementResult``.
 
-xref:ParserStmt_eval[Runtime evaluation of ``constantDeclarationIR``, under context ``EC~0~`` and state ``ARCH``]:
-
-. Let context ``EC~1~`` be
-* the result of xref:ConstDecl_eval[evaluating ``constantDeclarationIR``, under context ``EC~0~`` at ``+LOCAL+``].
-. Result in context ``EC~1~``, state ``ARCH``, and ``+`EMPTY+``.
-
-xref:ParserStmt_eval[Runtime evaluation of ``variableDeclarationIR``, under context ``EC~0~`` and state ``ARCH``]:
-
-. Let context ``EC~1~``, state ``ARCH~1~``, and result ``declarationResult`` be
-* the result of xref:VarDecl_eval[evaluating ``variableDeclarationIR``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
-. If let ``rejectTransitionResult`` be ``declarationResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
-. Else if let ``continueEmptyResult`` be ``declarationResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
-
-xref:ParserStmt_eval[Runtime evaluation of ``emptyStatementIR``, under context ``EC~0~`` and state ``ARCH``]:
+xref:ParserStmt_eval[Runtime evaluation of ``emptyStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
-* the result of xref:Stmt_eval[runtime evaluation of ``emptyStatementIR``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+* the result of xref:Stmt_eval[runtime evaluation of ``emptyStatementIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . Check that ``statementResult`` has type ``continueEmptyResult``.
 . Let ``continueEmptyResult`` be ``statementResult``.
 . Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
 
-xref:ParserStmt_eval[Runtime evaluation of ``assignmentStatementIR``, under context ``EC~0~`` and state ``ARCH``]:
+xref:ParserStmt_eval[Runtime evaluation of ``assignmentStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
-* the result of xref:Stmt_eval[runtime evaluation of ``assignmentStatementIR``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+* the result of xref:Stmt_eval[runtime evaluation of ``assignmentStatementIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . If let ``rejectTransitionResult`` be ``statementResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
 
-xref:ParserStmt_eval[Runtime evaluation of ``callStatementIR``, under context ``EC~0~`` and state ``ARCH``]:
+xref:ParserStmt_eval[Runtime evaluation of ``callStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
-* the result of xref:Stmt_eval[runtime evaluation of ``callStatementIR``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+* the result of xref:Stmt_eval[runtime evaluation of ``callStatementIR``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
 . If let ``rejectTransitionResult`` be ``statementResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
 . Else if let ``continueEmptyResult`` be ``statementResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
 
-xref:ParserStmt_eval[Runtime evaluation of ``annotationList`` ``+{+`` ``parserStatementListIR`` ``+}+``, under context ``EC~0~`` and state ``ARCH``]:
+xref:ParserStmt_eval[Runtime evaluation of ``parserBlockStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . Let ``EC~1~`` be xref:enter_e[``EC~0~`` with a new local frame].
 . Let context ``EC~2~``, state ``ARCH~1~``, and ``parserStatementResult`` be
-* the result of xref:ParserStmts_eval[runtime evaluation of ``parserStatementListIR``, under context ``EC~1~`` and state ``ARCH``].
+* the result of xref:ParserBlock_eval[runtime evaluation of ``parserBlockStatementIR``, under context ``EC~1~``, and state ``ARCH~0~``].
 . Let ``EC~3~`` be xref:exit_e[``EC~2~`` with the innermost frame removed].
 . Result in context ``EC~3~``, state ``ARCH~1~``, and ``parserStatementResult``.
 
-xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, under context ``EC~0~`` and state ``ARCH``]:
+xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, under context ``EC~0~`` and state ``ARCH~0~``]:
 
 . If let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` be ``parserConditionalStatementIR``:
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be
-* the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+* the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
  .. If let ``rejectTransitionResult`` be ``expressionResult``:
   ... Result in context ``EC~cond~``, state ``ARCH~cond~``, and ``rejectTransitionResult``.
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
@@ -18104,7 +18137,7 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
 . Else:
  .. Let ``+IF+`` ``+(+`` ``typedExpressionIR~cond~`` ``+)+`` ``parserStatementIR~then~`` ``+ELSE+`` ``parserStatementIR~else~`` be ``parserConditionalStatementIR``.
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be
-* the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+* the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
  .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
   ... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
@@ -18114,25 +18147,59 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~else~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
   ... Result in context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult``.
 
-xref:ParserStmts_eval[ParserStmts_eval]:
+xref:ParserBlockElementStmt_eval[ParserBlockElementStmt_eval]:
 
-* Runtime evaluation of ``parserStatementListIR``, under context ``EC`` and state ``ARCH``:
+* Runtime evaluation of ``parserBlockElementStatementIR``, under context ``EC``, and state ``ARCH``:
 * Result in context ``EC``, state ``ARCH``, and ``parserStatementResult``.
 
-xref:ParserStmts_eval[Runtime evaluation of ``parserStatementIR^{asterisk}^``, under context ``EC`` and state ``ARCH``]:
+xref:ParserBlockElementStmt_eval[Runtime evaluation of ``parserBlockElementStatementIR``, under context ``EC~0~``, and state ``ARCH``]:
 
-. If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
- .. Result in context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``:
- .. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult'`` be
-* the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~h~``, under context ``EC`` and state ``ARCH``].
- .. If let ``rejectTransitionResult`` be ``parserStatementResult'``:
+. If let ``constantDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Let context ``EC~1~`` be
+* the result of xref:ConstDecl_eval[evaluating ``constantDeclarationIR``, under context ``EC~0~`` at ``+LOCAL+``].
+ .. Result in context ``EC~1~``, state ``ARCH``, and ``+`EMPTY+``.
+. Else if let ``variableDeclarationIR`` be ``parserBlockElementStatementIR``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``declarationResult`` be
+* the result of xref:VarDecl_eval[evaluating ``variableDeclarationIR``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
+ .. If let ``rejectTransitionResult`` be ``declarationResult``:
   ... Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
- .. Else:
-  ... Let ``continueEmptyResult`` be ``parserStatementResult'``.
+ .. Else if let ``continueEmptyResult`` be ``declarationResult``:
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and ``+`EMPTY+``.
+. Else:
+ .. Let ``parserStatementIR`` be ``parserBlockElementStatementIR``.
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be
+* the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR``, under context ``EC~0~`` and state ``ARCH``].
+ .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult``.
+
+xref:ParserBlockElementStmtList_eval[ParserBlockElementStmtList_eval]:
+
+* Runtime evaluation of ``parserBlockElementStatementListIR``, under context ``EC``, and state ``ARCH``:
+* Result in context ``EC``, state ``ARCH``, and ``parserStatementResult``.
+
+xref:ParserBlockElementStmtList_eval[Runtime evaluation of ``parserBlockElementStatementIR^{asterisk}^``, under context ``EC``, and state ``ARCH``]:
+
+. If ``parserBlockElementStatementIR^{asterisk}^`` is equal to ``·``:
+ .. Result in context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
+. If let ``parserBlockElementStatementIR~h~`` ``{two-colons}`` ``parserBlockElementStatementIR~t~^{asterisk}^`` be ``parserBlockElementStatementIR^{asterisk}^``:
+ .. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be
+* the result of xref:ParserBlockElementStmt_eval[runtime evaluation of ``parserBlockElementStatementIR~h~``, under context ``EC``, and state ``ARCH``].
+ .. If ``parserStatementResult`` is not equal to ``+`EMPTY+``:
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult``.
+ .. If let ``continueEmptyResult`` be ``parserStatementResult``:
   ... Let context ``EC~2~``, state ``ARCH~2~``, and ``parserStatementResult`` be
-* the result of xref:ParserStmts_eval[runtime evaluation of ``parserStatementIR~t~^{asterisk}^``, under context ``EC~1~`` and state ``ARCH~1~``].
+* the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementIR~t~^{asterisk}^``, under context ``EC~1~``, and state ``ARCH~1~``].
   ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``parserStatementResult``.
+
+xref:ParserBlock_eval[ParserBlock_eval]:
+
+* Runtime evaluation of ``parserBlockStatementIR``, under context ``EC``, and state ``ARCH``:
+* Result in context ``EC``, state ``ARCH``, and ``parserStatementResult``.
+
+xref:ParserBlock_eval[Runtime evaluation of ``annotationList`` ``+{+`` ``parserBlockElementStatementListIR`` ``+}+``, under context ``EC~0~``, and state ``ARCH~0~``]:
+
+. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be
+* the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementListIR``, under context ``EC~0~``, and state ``ARCH~0~``].
+. Result in context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult``.
 
 xref:ParserSelect_eval[ParserSelect_eval]:
 
@@ -18189,9 +18256,9 @@ xref:ParserState_eval[ParserState_eval]:
 
 xref:ParserState_eval[Evaluating parser state ``parserStateIR``, under context ``EC~0~``, and state ``ARCH~0~``]:
 
-. Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserStatementListIR`` ``transitionStatementIR`` ``+}+`` be ``parserStateIR``.
+. Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+{+`` ``parserBlockElementStatementListIR`` ``transitionStatementIR`` ``+}+`` be ``parserStateIR``.
 . Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be
-* the result of xref:ParserStmts_eval[runtime evaluation of ``parserStatementListIR``, under context ``EC~0~`` and state ``ARCH~0~``].
+* the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementListIR``, under context ``EC~0~``, and state ``ARCH~0~``].
 . If let ``rejectTransitionResult`` be ``parserStatementResult``:
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
 . Else:

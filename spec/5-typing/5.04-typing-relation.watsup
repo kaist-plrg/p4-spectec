@@ -259,11 +259,26 @@ relation ParserStmt_ok:
   hint(prose_in "typing" %1#", under context" %0)
   hint(prose_out "context" %2 "and typed parser statement" %3)
 
-relation ParserStmtList_ok:
-  typingContext |- parserStatementList : typingContext parserStatementIR*
+relation ParserBlockElementStmt_ok:
+  typingContext |- parserBlockElementStatement
+                 : typingContext parserBlockElementStatementIR
   hint(input %0 %1)
-  hint(prose_in "typing" %1#", under context" %0)
-  hint(prose_out "context" %2 "and typed parser statements" %3)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
+
+relation ParserBlockElementStmtList_ok:
+  typingContext |- parserBlockElementStatementList
+                 : typingContext parserBlockElementStatementIR*
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
+
+relation ParserBlock_ok:
+  typingContext |- parserBlockStatement
+                 : typingContext parserBlockStatementIR
+  hint(input %0 %1)
+  hint(prose_in "typing" %1 "under context" %0)
+  hint(prose_out "context" %2 "and" %3)
 
 relation ParserState_ok:
   typingContext nameIR* |- parserState : parserStateIR

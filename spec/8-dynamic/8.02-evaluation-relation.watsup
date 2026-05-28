@@ -176,12 +176,30 @@ relation ParserStmt_eval:
   hint(prose_out "context" %3#
                  ", state" %4#", and" %5)
 
-relation ParserStmts_eval:
-  evalContext arch |- parserStatementListIR
+relation ParserBlockElementStmt_eval:
+  evalContext arch |- parserBlockElementStatementIR
                     : evalContext arch parserStatementResult
   hint(input %0 %1 %2)
   hint(prose_in "runtime evaluation of" %2#
-                ", under context" %0 "and state" %1)
+                ", under context" %0#", and state" %1)
+  hint(prose_out "context" %3#
+                 ", state" %4#", and" %5)
+
+relation ParserBlockElementStmtList_eval:
+  evalContext arch |- parserBlockElementStatementListIR
+                     : evalContext arch parserStatementResult
+  hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0#", and state" %1)
+  hint(prose_out "context" %3#
+                 ", state" %4#", and" %5)
+
+relation ParserBlock_eval:
+  evalContext arch |- parserBlockStatementIR
+                    : evalContext arch parserStatementResult
+  hint(input %0 %1 %2)
+  hint(prose_in "runtime evaluation of" %2#
+                ", under context" %0#", and state" %1)
   hint(prose_out "context" %3#
                  ", state" %4#", and" %5)
 
