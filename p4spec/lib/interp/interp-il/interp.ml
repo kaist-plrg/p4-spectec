@@ -1,4 +1,5 @@
 open Domain
+module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
@@ -54,7 +55,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if not !check_guard then ()
     else
       let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-      let _, typs = nottyp.it in
+      let typs = Mixfix.args nottyp.it in
       let typs = List.map (fun i -> List.nth typs i) inputs in
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
@@ -68,7 +69,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (inputs : Hints.Input.t) (values_output : value list) : unit =
     if not !check_guard then ()
     else
-      let _, typs = nottyp.it in
+      let typs = Mixfix.args nottyp.it in
       let typs =
         typs
         |> List.mapi (fun idx typ ->
@@ -186,9 +187,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and assign_case_exp (ctx : Ctx.t) (notexp : notexp) (valuecase : valuecase) :
       Ctx.t =
-    let _, exps = notexp in
-    let _, values = valuecase in
-    assign_exps ctx exps values
+    assign_exps ctx (Mixfix.args notexp) (Mixfix.args valuecase)
 
   and assign_str_exp (ctx : Ctx.t) (expfields : (atom * exp) list)
       (valuefields : (atom * value) list) : Ctx.t =
@@ -566,7 +565,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
-      | CaseP mixop_p, CaseV (mixop_v, _) -> Mixop.eq mixop_p mixop_v
+      | CaseP mixop_p, CaseV valuecase -> Mixfix.eq_mixop mixop_p valuecase
       | ListP listpattern, ListV values -> (
           let len_v = List.length values in
           match listpattern with
@@ -592,9 +591,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_case_exp (typ_note : typ) (ctx : Ctx.t) (notexp : notexp) :
       value backtrack =
-    let mixop, exps = notexp in
+    let mixop, exps = Mixfix.split notexp in
     let* values = eval_exps ctx exps in
-    let value_res = Value.Make.case typ_note (mixop, values) in
+    let value_res = Value.Make.case typ_note (Mixfix.fill mixop values) in
     Ok value_res
 
   (* Struct expression evaluation *)
@@ -1084,7 +1083,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_rule_prem (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) : Ctx.t backtrack =
-    let _, exps = notexp in
+    let exps = Mixfix.args notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let* values_input = eval_exps ctx exps_input in
     let* values_output = invoke_rel ctx id values_input in
@@ -1106,7 +1105,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_if_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
-    let _, exps_input = notexp in
+    let exps_input = Mixfix.args notexp in
     let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ -> Ok ctx
@@ -1119,7 +1118,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_if_not_hold_prem (ctx : Ctx.t) (id : id) (notexp : notexp) :
       Ctx.t backtrack =
-    let _, exps_input = notexp in
+    let exps_input = Mixfix.args notexp in
     let* values_input = eval_exps ctx exps_input in
     match invoke_rel ctx id values_input with
     | Ok _ ->

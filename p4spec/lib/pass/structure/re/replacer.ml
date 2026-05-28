@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -61,9 +62,9 @@ let rec replace_exp (replacer : t) (exp : exp) : exp =
   | TupleE exps ->
       let exps = replace_exps replacer exps in
       Il.TupleE exps $$ (at, note)
-  | CaseE (mixop, exps) ->
-      let exps = replace_exps replacer exps in
-      Il.CaseE (mixop, exps) $$ (at, note)
+  | CaseE notexp ->
+      let notexp = Mixfix.map (replace_exp replacer) notexp in
+      Il.CaseE notexp $$ (at, note)
   | StrE expfields ->
       let atoms, exps = List.split expfields in
       let exps = replace_exps replacer exps in
@@ -192,12 +193,12 @@ and replace_instr (replacer : t) (instr : instr) : instr =
       let iterexps = replace_iterexps replacer iterexps in
       let block_then = replace_block replacer block_then in
       IfI (exp_cond, iterexps, block_then) $ at
-  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
-      let exps = replace_exps replacer exps in
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let notexp = Mixfix.map (replace_exp replacer) notexp in
       let iterexps = replace_iterexps replacer iterexps in
       let block_hold = replace_block replacer block_hold in
       let block_nothold = replace_block replacer block_nothold in
-      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ at
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ at
   | CaseI (exp, cases, total) ->
       let exp = replace_exp replacer exp in
       let cases = replace_cases replacer cases in
@@ -213,7 +214,8 @@ and replace_instr (replacer : t) (instr : instr) : instr =
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
       let block = replace_block replacer block in
       LetI (exp_l, exp_r, iterinstrs, block) $ at
-  | RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) ->
+  | RuleI (id_rel, notexp, inputs, iterinstrs, block) ->
+      let mixop, exps = Mixfix.split notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let exps_input = replace_exps replacer exps_input in
       let frees_output = Ol.Free.free_exps exps_output in
@@ -223,7 +225,7 @@ and replace_instr (replacer : t) (instr : instr) : instr =
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
       let block = replace_block replacer block in
-      RuleI (id_rel, (mixop, exps), inputs, iterinstrs, block) $ at
+      RuleI (id_rel, Mixfix.fill mixop exps, inputs, iterinstrs, block) $ at
   | ResultI (rel_signature, exps) ->
       let exps = replace_exps replacer exps in
       ResultI (rel_signature, exps) $ at

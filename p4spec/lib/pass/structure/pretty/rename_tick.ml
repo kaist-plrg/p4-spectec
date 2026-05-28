@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -51,11 +52,12 @@ let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
       let frees = Ol.Free.free_exp exp_cond |> IdSet.union frees in
       let block_then = upstream_block frees block_then in
       IfI (exp_cond, iterexps, block_then) $ instr.at
-  | HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) ->
+  | HoldI (id, notexp, iterexps, block_hold, block_nothold) ->
+      let exps = Mixfix.args notexp in
       let frees = Ol.Free.free_exps exps |> IdSet.union frees in
       let block_hold = upstream_block frees block_hold in
       let block_nothold = upstream_block frees block_nothold in
-      HoldI (id, (mixop, exps), iterexps, block_hold, block_nothold) $ instr.at
+      HoldI (id, notexp, iterexps, block_hold, block_nothold) $ instr.at
   | CaseI (exp, cases, total) ->
       let frees = Ol.Free.free_exp exp |> IdSet.union frees in
       let cases =
@@ -73,8 +75,8 @@ let rec upstream_instr (frees : IdSet.t) (instr : instr) : instr =
       GroupI (id, rel_signature, exps, block) $ instr.at
   | LetI (exp_l, exp_r, iterinstrs, block) ->
       upstream_let_instr frees instr.at exp_l exp_r iterinstrs block
-  | RuleI (id, (mixop, exps), inputs, iterinstrs, block) ->
-      upstream_rule_instr frees instr.at id mixop exps inputs iterinstrs block
+  | RuleI (id, notexp, inputs, iterinstrs, block) ->
+      upstream_rule_instr frees instr.at id notexp inputs iterinstrs block
   | _ -> instr
 
 and upstream_let_instr (frees_upstream : IdSet.t) (at : region) (exp_l : exp)
@@ -113,8 +115,9 @@ and upstream_let_instr (frees_upstream : IdSet.t) (at : region) (exp_l : exp)
   LetI (exp_l, exp_r, iterinstrs, block) $ at
 
 and upstream_rule_instr (frees_upstream : IdSet.t) (at : region) (id : id)
-    (mixop : mixop) (exps : exp list) (inputs : Hints.Input.t)
-    (iterinstrs : iterinstr list) (block : block) : instr =
+    (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs : iterinstr list)
+    (block : block) : instr =
+  let mixop, exps = Mixfix.split notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   let frees_input = Ol.Free.free_exps exps_input in
   let frees_output = Ol.Free.free_exps exps_output in
@@ -147,7 +150,7 @@ and upstream_rule_instr (frees_upstream : IdSet.t) (at : region) (id : id)
   let block =
     Re.Renamer.rename_block renamer block |> upstream_block frees_upstream
   in
-  RuleI (id, (mixop, exps), inputs, iterinstrs, block) $ at
+  RuleI (id, Mixfix.fill mixop exps, inputs, iterinstrs, block) $ at
 
 and upstream_block (frees_upstream : IdSet.t) (block : block) : block =
   match block with

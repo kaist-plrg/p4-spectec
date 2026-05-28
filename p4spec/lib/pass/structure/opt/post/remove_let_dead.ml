@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Ol.Ast
 open Util.Source
@@ -41,7 +42,8 @@ let rec removable_let (exp_r : exp) : bool =
       removable_let exp_l && removable_let exp_r
   | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
       removable_let exp
-  | TupleE exps | CaseE (_, exps) -> List.for_all removable_let exps
+  | TupleE exps -> List.for_all removable_let exps
+  | CaseE notexp -> List.for_all removable_let (Mixfix.args notexp)
   | StrE expfields -> expfields |> List.map snd |> List.for_all removable_let
   | OptE (Some exp) -> removable_let exp
   | OptE None -> true
@@ -64,7 +66,8 @@ let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
       let used = Used.init_exp defined exp_cond in
       let used_then = downstream_block defined block_then in
       Used.union used used_then
-  | HoldI (_, (_, exps), _, block_hold, block_nothold) ->
+  | HoldI (_, notexp, _, block_hold, block_nothold) ->
+      let exps = Mixfix.args notexp in
       let used = Used.init_exps defined exps in
       let used_hold = downstream_block defined block_hold in
       let used_nothold = downstream_block defined block_nothold in
@@ -88,7 +91,8 @@ let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
       let used = Used.init_exp defined exp_r in
       let used_block = downstream_block defined block in
       Used.union used used_block
-  | RuleI (_, (_, exps), inputs, _, block) ->
+  | RuleI (_, notexp, inputs, _, block) ->
+      let exps = Mixfix.args notexp in
       let exps_input, _ = Hints.Input.split inputs exps in
       let used = Used.init_exps defined exps_input in
       let used_block = downstream_block defined block in
@@ -106,7 +110,8 @@ and downstream_block (defined : Defined.t) (block : block) : Used.t =
       let defined = Defined.exclude defined defined_h in
       let used_t = downstream_block defined block_t in
       Used.union used_h used_t
-  | ({ it = RuleI (_, (_, exps), inputs, _, _); _ } as instr_h) :: block_t ->
+  | ({ it = RuleI (_, notexp, inputs, _, _); _ } as instr_h) :: block_t ->
+      let exps = Mixfix.args notexp in
       let used_h = downstream_instr defined instr_h in
       let _, exps_output = Hints.Input.split inputs exps in
       let defined_h = Defined.init_exps exps_output in

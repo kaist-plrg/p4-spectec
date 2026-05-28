@@ -1,5 +1,6 @@
 module Atom = Domain.Atom
 module Mixop = Domain.Mixop
+module Mixfix = Domain.Mixfix
 module Il = Lang.Il
 open Lang.Xl
 open Mixops
@@ -152,7 +153,7 @@ and boot_struct_deftyp (at : region) (typfields : Il.typfield list) : Value.t =
 
 and boot_typcase (typcase : Il.typcase) : Value.t =
   let nottyp, _, _ = typcase in
-  let mixop, typs = nottyp.it in
+  let mixop, typs = Mixfix.split nottyp.it in
   let value_mixop = boot_mixop mixop in
   let value_typs = boot_typs typs in
   Value.Make.(
@@ -232,7 +233,7 @@ and boot_struct_value (at : region) (valuefields : Il.valuefield list) : Value.t
   Value.Make.(mop_struct_value <|! [ value_valuefields ] <<|! typ_val <<<| at)
 
 and boot_valuecase (valuecase : Il.valuecase) : Value.t =
-  let mixop, values = valuecase in
+  let mixop, values = Mixfix.split valuecase in
   let value_mixop = boot_mixop mixop in
   let value_values = boot_values values in
   Value.Make.(mop_valuecase <|! [ value_mixop; value_values ] <<|! typ_valcase)
@@ -454,7 +455,7 @@ and boot_tuple_exp (at : region) (exps : Il.exp list) : Value.t =
   Value.Make.(mop_tuple_exp <|! [ value_exps ] <<|! typ_exp <<<| at)
 
 and boot_expcase (notexp : Il.notexp) : Value.t =
-  let mixop, exps = notexp in
+  let mixop, exps = Mixfix.split notexp in
   let value_mixop = boot_mixop mixop in
   let value_exps = boot_exps exps in
   Value.Make.(mop_expcase <|! [ value_mixop; value_exps ] <<|! typ_expcase)
