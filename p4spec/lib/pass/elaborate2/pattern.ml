@@ -1,6 +1,6 @@
 module Mixfix = Domain.Mixfix
 open Lang
-open Iil
+open Il2
 open Util.Source
 
 (* Pattern is a set of notation types *)
@@ -23,7 +23,7 @@ module PatternSet = struct
   let to_string (pattern_set : t) : string =
     "{"
     ^ (elements pattern_set
-      |> List.map Iil.Print.string_of_nottyp
+      |> List.map Il2.Print.string_of_nottyp
       |> String.concat " | ")
     ^ "}"
 end

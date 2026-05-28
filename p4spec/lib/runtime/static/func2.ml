@@ -1,6 +1,6 @@
 open Lang
-open Iil
-open Iil.Print
+open Il2
+open Il2.Print
 
 (* Function *)
 
