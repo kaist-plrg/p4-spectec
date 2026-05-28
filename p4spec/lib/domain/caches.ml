@@ -5,7 +5,7 @@ open Util.Source
 module MixopEntry = struct
   type t = Mixop.t
 
-  let default : t = Mixop.Atom (Atom.Atom "" $ no_region)
+  let default : t = Mixfix.Atom (Atom.Atom "" $ no_region)
   let equal = Mixop.eq
 
   let hash (m : Mixop.t) : int =

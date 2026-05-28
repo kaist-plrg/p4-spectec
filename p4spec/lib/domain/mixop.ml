@@ -1,12 +1,4 @@
 type atom = Mixfix.atom
-
-type 'a tree = 'a Mixfix.t =
-  | Arg of 'a
-  | Atom of atom
-  | Brack of atom * 'a tree * atom
-  | Infix of 'a tree * atom * 'a tree
-  | Seq of 'a tree list
-
 type mixop = Mixfix.mixop
 type t = mixop
 
