@@ -213,6 +213,7 @@ rule Expr_ok/binaryExpression-satplusminus:
 tbl dec $compat_divmod(typeIR, typeIR) : bool
 tbl def $compat_divmod =
   | (INT, INT) => true
+  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
   | (TYPEDEF _ typeIR_l, typeIR_r)
       => $compat_divmod(typeIR_l, typeIR_r)
   | (typeIR_l, TYPEDEF _ typeIR_r)

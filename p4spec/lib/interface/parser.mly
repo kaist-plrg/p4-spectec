@@ -170,7 +170,9 @@
   (* >>>> Value set declarations *) valueSetType valueSetDeclaration
   (* >>>> Parser type declarations *) parserTypeDeclaration
   (* >>>> Parser Declarations *)
-  parserBlockStatement parserStatement parserStatementList parserState
+  parserBlockElementStatement parserBlockElementStatementList parserBlockStatement 
+  parserConditionalStatement
+  parserStatement parserStatementList parserState
   parserStateList parserLocalDeclaration parserLocalDeclarationList parserDeclaration
   (* >> Control statements and declarations *)
   (* >>>> Table declarations *) constOpt
@@ -1402,9 +1404,21 @@ parserTypeDeclaration:
 ;
 
 (* >>>> Parser declarations *)
+parserBlockElementStatement:
+  | s = constantDeclaration
+  | s = variableDeclaration
+  | s = parserStatement
+    { s }
+
+parserBlockElementStatementList:
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "parserBlockElementStatementList" <<<| (at $sloc) }
+  | sl = parserBlockElementStatementList s = parserBlockElementStatement
+    { "parserBlockElementStatementList parserBlockElementStatement" <| [ sl; s ] <<| "parserBlockElementStatementList" <<<| (at $sloc) }
+
 parserBlockStatement:
-  | al = annotationList L_BRACE sl = parserStatementList R_BRACE
-    { "annotationList `{ parserStatementList }" <| [ al; sl ] <<| "parserBlockStatement" <<<| (at $sloc) }
+  | al = annotationList L_BRACE sl = parserBlockElementStatementList R_BRACE
+    { "annotationList `{ parserBlockElementStatementList }" <| [ al; sl ] <<| "parserBlockStatement" <<<| (at $sloc) }
 ;
 
 parserConditionalStatement:
@@ -1415,8 +1429,6 @@ parserConditionalStatement:
 ;
 
 parserStatement:
-  | s = constantDeclaration
-  | s = variableDeclaration
   | s = emptyStatement
   | s = assignmentStatement
   | s = callStatement
@@ -1434,8 +1446,8 @@ parserStatementList:
 ;
 
 parserState:
-  | al = annotationList STATE n = push_name L_BRACE sl = parserStatementList t = transitionStatement R_BRACE pop_scope
-    { "annotationList STATE name `{ parserStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" <<<| (at $sloc) }
+  | al = annotationList STATE n = push_name L_BRACE sl = parserBlockElementStatementList t = transitionStatement R_BRACE pop_scope
+    { "annotationList STATE name `{ parserBlockElementStatementList transitionStatement }" <| [ al; n; sl; t ] <<| "parserState" <<<| (at $sloc) }
 ;
 
 parserStateList:

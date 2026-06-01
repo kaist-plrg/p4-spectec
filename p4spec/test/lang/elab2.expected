@@ -1887,14 +1887,34 @@ syntax valueSetDeclaration =
 syntax parserTypeDeclaration = 
    | annotationList PARSER name typeParameterListOpt ( parameterList ) ; (from parserTypeDeclaration) 
 
+syntax parserBlockElementStatementList = 
+   | `EMPTY (from parserBlockElementStatementList) 
+   | parserBlockElementStatementList parserBlockElementStatement (from parserBlockElementStatementList) 
+
+def $flatten_parserBlockElementStatementList(parserBlockElementStatementList) : parserBlockElementStatement* =
+
+  clause 0 : (`EMPTY) = []
+
+  clause 1 : (parserBlockElementStatementList parserBlockElementStatement) = $flatten_parserBlockElementStatementList(parserBlockElementStatementList) ++ [parserBlockElementStatement]
+
 syntax parserBlockStatement = 
-   | annotationList { parserStatementList } (from parserBlockStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
 
 syntax parserConditionalStatement = 
    | IF ( expression ) parserStatement (from parserConditionalStatement) 
    | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
 
 syntax parserStatement = 
+   | ; (from emptyStatement) 
+   | lvalue assignop expression ; (from assignmentStatement) 
+   | lvalue ( argumentList ) ; (from callStatement) 
+   | lvalue < typeArgumentList > ( argumentList ) ; (from callStatement) 
+   | namedType . APPLY ( argumentList ) ; (from directApplicationStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
+   | IF ( expression ) parserStatement (from parserConditionalStatement) 
+   | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
+
+syntax parserBlockElementStatement = 
    | annotationList CONST type name initializer ; (from constantDeclaration) 
    | annotationList type name initializerOpt ; (from variableDeclaration) 
    | ; (from emptyStatement) 
@@ -1902,25 +1922,15 @@ syntax parserStatement =
    | lvalue ( argumentList ) ; (from callStatement) 
    | lvalue < typeArgumentList > ( argumentList ) ; (from callStatement) 
    | namedType . APPLY ( argumentList ) ; (from directApplicationStatement) 
-   | annotationList { parserStatementList } (from parserBlockStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
    | IF ( expression ) parserStatement (from parserConditionalStatement) 
    | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
 
-syntax parserStatementList = 
-   | `EMPTY (from parserStatementList) 
-   | parserStatementList parserStatement (from parserStatementList) 
-
-def $flatten_parserStatementList(parserStatementList) : parserStatement* =
-
-  clause 0 : (`EMPTY) = []
-
-  clause 1 : (parserStatementList parserStatement) = $flatten_parserStatementList(parserStatementList) ++ [parserStatement]
-
 syntax parserState = 
-   | annotationList STATE name { parserStatementList transitionStatement } (from parserState) 
+   | annotationList STATE name { parserBlockElementStatementList transitionStatement } (from parserState) 
 
 syntax parserStateList = 
-   | annotationList STATE name { parserStatementList transitionStatement } (from parserState) 
+   | annotationList STATE name { parserBlockElementStatementList transitionStatement } (from parserState) 
    | parserStateList parserState (from parserStateList) 
 
 def $flatten_parserStateList(parserStateList) : parserState* =
@@ -4083,9 +4093,19 @@ def $bin_div(value, value) : value =
 
   clause 0 : (D i_l as value, D i_r as value) = D (i_l / i_r) as value
 
+  clause 1 : (w W i_l as value, w W i_r as value) = w W i' as value
+  -- if (i_l' = $bitstr_to_int(w as int, i_l))
+  -- if (i_r' = $bitstr_to_int(w as int, i_r))
+  -- if (i' = $int_to_bitstr(w as int, (i_l' / i_r')))
+
 def $bin_mod(value, value) : value =
 
   clause 0 : (D i_l as value, D i_r as value) = D (i_l \ i_r) as value
+
+  clause 1 : (w W i_l as value, w W i_r as value) = w W i' as value
+  -- if (i_l' = $bitstr_to_int(w as int, i_l))
+  -- if (i_r' = $bitstr_to_int(w as int, i_r))
+  -- if (i' = $int_to_bitstr(w as int, (i_l' \ i_r')))
 
 def $bin_shl(value, value) : value =
 
@@ -5196,28 +5216,37 @@ syntax valueSetDeclarationIR =
 syntax parserTypeDeclarationIR = 
    | annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR > ( parameterListIR ) ; (from parserTypeDeclarationIR) 
 
+syntax parserBlockElementStatementListIR = parserBlockElementStatementIR*
+
 syntax parserBlockStatementIR = 
-   | annotationList { parserStatementListIR } (from parserBlockStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
 
 syntax parserConditionalStatementIR = 
    | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
 
 syntax parserStatementIR = 
+   | ; (from emptyStatement) 
+   | typedLvalueIR assignop typedExpressionIR ; (from assignmentStatementIR) 
+   | callableTargetIR < typeArgumentListIR > ( argumentListIR ) ; (from callStatementIR) 
+   | constructorTargetIR . APPLY ( argumentListIR ) ; (from directApplicationStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
+   | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
+   | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
+
+syntax parserBlockElementStatementIR = 
    | annotationList CONST typeIR nameIR constantInitializerIR ; (from constantDeclarationIR) 
    | annotationList typeIR nameIR initializerOptIR ; (from variableDeclarationIR) 
    | ; (from emptyStatement) 
    | typedLvalueIR assignop typedExpressionIR ; (from assignmentStatementIR) 
    | callableTargetIR < typeArgumentListIR > ( argumentListIR ) ; (from callStatementIR) 
    | constructorTargetIR . APPLY ( argumentListIR ) ; (from directApplicationStatementIR) 
-   | annotationList { parserStatementListIR } (from parserBlockStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
 
-syntax parserStatementListIR = parserStatementIR*
-
 syntax parserStateIR = 
-   | annotationList STATE nameIR { parserStatementListIR transitionStatementIR } (from parserStateIR) 
+   | annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } (from parserStateIR) 
 
 syntax parserStateListIR = parserStateIR*
 
@@ -6891,32 +6920,46 @@ def $lift_parserTypeDeclarationIR(parserTypeDeclarationIR) : parserTypeDeclarati
 
 def $lift_parserStatementIR(parserStatementIR) : parserStatement =
 
-  clause 0 : (constantDeclarationIR as parserStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserStatement
+  clause 0 : (emptyStatementIR as parserStatementIR) = $lift_emptyStatementIR(emptyStatementIR) as parserStatement
 
-  clause 1 : (variableDeclarationIR as parserStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserStatement
+  clause 1 : (assignmentStatementIR as parserStatementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as parserStatement
 
-  clause 2 : (emptyStatementIR as parserStatementIR) = $lift_emptyStatementIR(emptyStatementIR) as parserStatement
+  clause 2 : (callStatementIR as parserStatementIR) = $lift_callStatementIR(callStatementIR) as parserStatement
 
-  clause 3 : (assignmentStatementIR as parserStatementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as parserStatement
+  clause 3 : (directApplicationStatementIR as parserStatementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as parserStatement
 
-  clause 4 : (callStatementIR as parserStatementIR) = $lift_callStatementIR(callStatementIR) as parserStatement
+  clause 4 : (parserBlockStatementIR as parserStatementIR) = $lift_parserBlockStatementIR(parserBlockStatementIR) as parserStatement
 
-  clause 5 : (directApplicationStatementIR as parserStatementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as parserStatement
+  clause 5 : (parserConditionalStatementIR as parserStatementIR) = $lift_parserConditionalStatementIR(parserConditionalStatementIR) as parserStatement
 
-  clause 6 : (parserBlockStatementIR as parserStatementIR) = $lift_parserBlockStatementIR(parserBlockStatementIR) as parserStatement
+def $lift_parserBlockElementStatementIR(parserBlockElementStatementIR) : parserBlockElementStatement =
 
-  clause 7 : (parserConditionalStatementIR as parserStatementIR) = $lift_parserConditionalStatementIR(parserConditionalStatementIR) as parserStatement
+  clause 0 : (constantDeclarationIR as parserBlockElementStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserBlockElementStatement
 
-def $lift_parserStatementListIR(parserStatementIR*) : parserStatementList =
+  clause 1 : (variableDeclarationIR as parserBlockElementStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserBlockElementStatement
 
-  clause 0 : (parserStatementIR*{parserStatementIR <- parserStatementIR*}) = parserStatementList
-  -- (if (parserStatement = $lift_parserStatementIR(parserStatementIR)))*{parserStatement <- parserStatement*, parserStatementIR <- parserStatementIR*}
-  -- if (parserStatementList = $unflatten_parserStatementList(parserStatement*{parserStatement <- parserStatement*}))
+  clause 2 : (parserStatementIR as parserBlockElementStatementIR) = $lift_parserStatementIR(parserStatementIR) as parserBlockElementStatement
+
+def $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}) = parserBlockElementStatementList
+  -- (if (parserBlockElementStatement = $lift_parserBlockElementStatementIR(parserBlockElementStatementIR)))*{parserBlockElementStatement <- parserBlockElementStatement*, parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+  -- if (parserBlockElementStatementList = $unflatten_parserBlockElementStatementList(parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}))
+
+def $unflatten_parserBlockElementStatementList(parserBlockElementStatement*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}) = $unflatten_parserBlockElementStatementList'(`EMPTY, parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*})
+
+def $unflatten_parserBlockElementStatementList'(parserBlockElementStatementList, parserBlockElementStatement*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatementList, []) = parserBlockElementStatementList
+
+  clause 1 : (parserBlockElementStatementList, parserBlockElementStatement_h :: parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*}) = $unflatten_parserBlockElementStatementList'(parserBlockElementStatementList parserBlockElementStatement_h, parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*})
 
 def $lift_parserBlockStatementIR(parserBlockStatementIR) : parserBlockStatement =
 
-  clause 0 : (annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }) = annotationList { parserStatementList }
-  -- if (parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*}))
+  clause 0 : (annotationList { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} }) = annotationList { parserBlockElementStatementList }
+  -- if (parserBlockElementStatementList = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}))
 
 def $lift_parserConditionalStatementIR(parserConditionalStatementIR) : parserConditionalStatement =
 
@@ -6929,21 +6972,11 @@ def $lift_parserConditionalStatementIR(parserConditionalStatementIR) : parserCon
   -- if (parserStatement_then = $lift_parserStatementIR(parserStatementIR_then))
   -- if (parserStatement_else = $lift_parserStatementIR(parserStatementIR_else))
 
-def $unflatten_parserStatementList(parserStatement*) : parserStatementList =
-
-  clause 0 : (parserStatement*{parserStatement <- parserStatement*}) = $unflatten_parserStatementList'(`EMPTY, parserStatement*{parserStatement <- parserStatement*})
-
-def $unflatten_parserStatementList'(parserStatementList, parserStatement*) : parserStatementList =
-
-  clause 0 : (parserStatementList, []) = parserStatementList
-
-  clause 1 : (parserStatementList, parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*}) = $unflatten_parserStatementList'(parserStatementList parserStatement_h, parserStatement_t*{parserStatement_t <- parserStatement_t*})
-
 def $lift_parserStateIR(parserStateIR) : parserState =
 
-  clause 0 : (annotationList STATE nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }) = annotationList STATE name { parserStatementList transitionStatement }
+  clause 0 : (annotationList STATE nameIR { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} transitionStatementIR }) = annotationList STATE name { parserBlockElementStatementList transitionStatement }
   -- if (name = $lift_nameIR_as_nonTypeName(nameIR) as name)
-  -- if (parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*}))
+  -- if (parserBlockElementStatementList = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}))
   -- if (transitionStatement = $lift_transitionStatementIR(transitionStatementIR))
 
 def $lift_parserStateListIR(parserStateIR*) : parserStateList =
@@ -10354,16 +10387,6 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
 relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserStatementIR
 
-  rulegroup constantDeclaration
-
-    rule constantDeclaration: TC_0 |- constantDeclaration as parserStatement : TC_1 constantDeclarationIR as parserStatementIR
-    -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
-
-  rulegroup variableDeclaration
-
-    rule variableDeclaration: TC_0 |- variableDeclaration as parserStatement : TC_1 variableDeclarationIR as parserStatementIR
-    -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
-
   rulegroup emptyStatement
 
     rule emptyStatement: TC |- emptyStatement as parserStatement : TC emptyStatementIR as parserStatementIR
@@ -10386,11 +10409,10 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
 
   rulegroup parserBlockStatement
 
-    rule parserBlockStatement: TC_0 |- annotationList { parserStatementList } as parserStatement : TC_1 parserBlockStatementIR as parserStatementIR
+    rule parserBlockStatement: TC_0 |- parserBlockStatement as parserStatement : TC_1 parserBlockStatementIR as parserStatementIR
     -- if (TC_1 = $enter_t(TC_0))
-    -- ParserStmtList_ok: TC_1 |- parserStatementList : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    -- ParserBlock_ok: TC_1 |- parserBlockStatement : TC_2 parserBlockStatementIR
     -- if (TC_3 = $exit_t(TC_2))
-    -- if (parserBlockStatementIR = annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} })
 
   rulegroup parserConditionalStatement
 
@@ -10407,27 +10429,47 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- ParserStmt_ok: TC |- parserStatement_then : TC_then parserStatementIR_then
     -- ParserStmt_ok: TC |- parserStatement_else : TC_else parserStatementIR_else
 
-relation ParserStmtList_ok: typingContext |- parserStatementList : typingContext parserStatementIR*
+relation ParserBlockElementStmt_ok: typingContext |- parserBlockElementStatement : typingContext parserBlockElementStatementIR
 
   rulegroup 
 
-    rule : TC_0 |- parserStatementList : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
-    -- if (parserStatement*{parserStatement <- parserStatement*} = $flatten_parserStatementList(parserStatementList))
-    -- ParserStmts_ok: TC_0 |- parserStatement*{parserStatement <- parserStatement*} : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    rule constantDeclaration: TC_0 |- constantDeclaration as parserBlockElementStatement : TC_1 constantDeclarationIR as parserBlockElementStatementIR
+    -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
+
+    rule variableDeclaration: TC_0 |- variableDeclaration as parserBlockElementStatement : TC_1 variableDeclarationIR as parserBlockElementStatementIR
+    -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
+
+    rule parserStatement: TC_0 |- parserStatement as parserBlockElementStatement : TC_1 parserStatementIR as parserBlockElementStatementIR
+    -- ParserStmt_ok: TC_0 |- parserStatement : TC_1 parserStatementIR
+
+relation ParserBlockElementStmtList_ok: typingContext |- parserBlockElementStatementList : typingContext parserBlockElementStatementIR*
+
+  rulegroup 
+
+    rule : TC_0 |- parserBlockElementStatementList : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+    -- if (parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} = $flatten_parserBlockElementStatementList(parserBlockElementStatementList))
+    -- ParserBlockElementStmts_ok: TC_0 |- parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+
+relation ParserBlock_ok: typingContext |- parserBlockStatement : typingContext parserBlockStatementIR
+
+  rulegroup 
+
+    rule : TC_0 |- annotationList { parserBlockElementStatementList } : TC_1 parserBlockStatementIR
+    -- ParserBlockElementStmtList_ok: TC_0 |- parserBlockElementStatementList : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+    -- if (parserBlockStatementIR = annotationList { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} })
 
 relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
 
   rulegroup 
 
     rule : TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- parserState : parserStateIR
-    -- if (annotationList STATE name { parserStatementList transitionStatement } = parserState)
+    -- if (annotationList STATE name { parserBlockElementStatementList transitionStatement } = parserState)
     -- if (nameIR = $name(name))
     -- if (TC_1 = $enter_t(TC_0))
-    -- if (parserStatement*{parserStatement <- parserStatement*} = $flatten_parserStatementList(parserStatementList))
-    -- ParserStmts_ok: TC_1 |- parserStatement*{parserStatement <- parserStatement*} : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    -- ParserBlockElementStmtList_ok: TC_1 |- parserBlockElementStatementList : TC_2 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
     -- ParserTransition_ok: TC_2 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : transitionStatementIR
     -- if (TC_3 = $exit_t(TC_2))
-    -- if (parserStateIR = annotationList STATE nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR })
+    -- if (parserStateIR = annotationList STATE nameIR { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} transitionStatementIR })
 
 relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
 
@@ -10435,7 +10477,7 @@ relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
 
     rule : TC |- parserStateList : parserStateIR*{parserStateIR <- parserStateIR*}
     -- if (parserState*{parserState <- parserState*} = $flatten_parserStateList(parserStateList))
-    -- (if (_annotationList STATE name_state { _parserStatementList _transitionStatement } = parserState))*{_annotationList <- _annotationList*, _parserStatementList <- _parserStatementList*, _transitionStatement <- _transitionStatement*, name_state <- name_state*, parserState <- parserState*}
+    -- (if (_annotationList STATE name_state { _parserBlockElementStatementList _transitionStatement } = parserState))*{_annotationList <- _annotationList*, _parserBlockElementStatementList <- _parserBlockElementStatementList*, _transitionStatement <- _transitionStatement*, name_state <- name_state*, parserState <- parserState*}
     -- (if (nameIR_state = $name(name_state)))*{nameIR_state <- nameIR_state*, name_state <- name_state*}
     -- if $distinct_<nameIR>(nameIR_state*{nameIR_state <- nameIR_state*})
     -- if "start" <- nameIR_state*{nameIR_state <- nameIR_state*}
@@ -11787,10 +11829,12 @@ tbl def $compat_divmod(typeIR, typeIR) : bool =
   row 0 :
     (INT as typeIR, INT as typeIR) -> true
   row 1 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
+    (BIT < w_l > as typeIR, BIT < w_r > as typeIR) -> (w_l = w_r)
   row 2 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
+    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
   row 3 :
+    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
+  row 4 :
     (_typeIR, _typeIR') -> false
 
 tbl def $compat_shift(typeIR, typeIR) : bool =
@@ -12524,15 +12568,15 @@ relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCase
     -- if (nameIR = $name(name))
     -- if nameIR <- nameIR_state*{nameIR_state <- nameIR_state*}
 
-relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parserStatementIR*
+relation ParserBlockElementStmts_ok: typingContext |- parserBlockElementStatement* : typingContext parserBlockElementStatementIR*
 
   rulegroup 
 
     rule nil: TC |- [] : TC []
 
-    rule cons: TC_0 |- parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} : TC_2 parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
-    -- ParserStmt_ok: TC_0 |- parserStatement_h : TC_1 parserStatementIR_h
-    -- ParserStmts_ok: TC_1 |- parserStatement_t*{parserStatement_t <- parserStatement_t*} : TC_2 parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
+    rule cons: TC_0 |- parserBlockElementStatement_h :: parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*} : TC_2 parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*}
+    -- ParserBlockElementStmt_ok: TC_0 |- parserBlockElementStatement_h : TC_1 parserBlockElementStatementIR_h
+    -- ParserBlockElementStmts_ok: TC_1 |- parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*} : TC_2 parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*}
 
 relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingContext parserLocalDeclarationIR*
 
@@ -12564,18 +12608,20 @@ tbl def $compat_table_exact_optional_key(typeIR) : bool =
 
 tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
   row 0 :
-    (INT as typeIR) -> true
+    (BOOL as typeIR) -> true
   row 1 :
-    (INT < _nat > as typeIR) -> true
+    (INT as typeIR) -> true
   row 2 :
-    (BIT < _nat > as typeIR) -> true
+    (INT < _nat > as typeIR) -> true
   row 3 :
-    (TYPEDEF _typeId typeIR as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
+    (BIT < _nat > as typeIR) -> true
   row 4 :
-    (TYPE _typeId typeIR as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
+    (TYPEDEF _typeId typeIR as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
   row 5 :
-    (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
+    (TYPE _typeId typeIR as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
   row 6 :
+    (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR)
+  row 7 :
     (_typeIR) -> false
 
 def $compat_table_key(nameIR, typeIR) : bool =
@@ -13872,15 +13918,6 @@ relation ExternMethods_inst: instContext |- externMethodPrototypeIR* : instConte
 
 relation ParserStmt_inst: instContext store |- parserStatementIR : instContext store parserStatementIR
 
-  rulegroup constantDeclarationIR
-
-    rule constantDeclarationIR: IC_0 STO |- constantDeclarationIR as parserStatementIR : IC_1 STO constantDeclarationIR as parserStatementIR
-    -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1
-
-  rulegroup variableDeclarationIR
-
-    rule variableDeclarationIR: IC STO |- variableDeclarationIR as parserStatementIR : IC STO variableDeclarationIR as parserStatementIR
-
   rulegroup emptyStatementIR
 
     rule emptyStatementIR: IC_0 STO_0 |- emptyStatementIR as parserStatementIR : IC_1 STO_1 emptyStatementIR_inst as parserStatementIR
@@ -13900,13 +13937,14 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
 
     rule directApplicationStatementIR: IC STO_0 |- directApplicationStatementIR as parserStatementIR : IC STO_1 parserBlockStatementIR as parserStatementIR
     -- DirectApplicationStmt_inst: LOCAL IC STO_0 |- directApplicationStatementIR : STO_1 constantDeclarationIR callStatementIR
-    -- if (parserBlockStatementIR = `EMPTY { [constantDeclarationIR as parserStatementIR, callStatementIR as parserStatementIR] })
+    -- if (parserBlockStatementIR = `EMPTY { [constantDeclarationIR as parserBlockElementStatementIR, callStatementIR as parserBlockElementStatementIR] })
 
   rulegroup parserBlockStatementIR
 
-    rule parserBlockStatementIR: IC_0 STO_0 |- annotationList { parserStatementListIR } as parserStatementIR : IC_1 STO_1 parserBlockStatementIR_inst as parserStatementIR
-    -- ParserStmts_inst: IC_0 STO_0 |- parserStatementListIR : IC_1 STO_1 parserStatementListIR_inst
-    -- if (parserBlockStatementIR_inst = annotationList { parserStatementListIR_inst })
+    rule parserBlockStatementIR: IC_0 STO_0 |- parserBlockStatementIR as parserStatementIR : IC_3 STO_1 parserBlockStatementIR_inst as parserStatementIR
+    -- if (IC_1 = $enter_i(IC_0))
+    -- ParserBlock_inst: IC_1 STO_0 |- parserBlockStatementIR : IC_2 STO_1 parserBlockStatementIR_inst
+    -- if (IC_3 = $exit_i(IC_2))
 
   rulegroup parserConditionalStatementIR
 
@@ -13917,24 +13955,43 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
     -- ParserStmt_inst: IC STO_0 |- parserStatementIR_then : IC_then STO_1 parserStatementIR_then_inst
     -- ParserStmt_inst: IC STO_1 |- parserStatementIR_else : IC_else STO_2 parserStatementIR_else_inst
 
-relation ParserStmts_inst: instContext store |- parserStatementIR* : instContext store parserStatementIR*
+relation ParserBlockElementStmt_inst: instContext store |- parserBlockElementStatementIR : instContext store parserBlockElementStatementIR
+
+  rulegroup 
+
+    rule constantDeclarationIR: IC_0 STO_0 |- constantDeclarationIR as parserBlockElementStatementIR : IC_1 STO_0 constantDeclarationIR as parserBlockElementStatementIR
+    -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1
+
+    rule variableDeclarationIR: IC STO |- variableDeclarationIR as parserBlockElementStatementIR : IC STO variableDeclarationIR as parserBlockElementStatementIR
+
+    rule parserStatementIR: IC_0 STO_0 |- parserStatementIR as parserBlockElementStatementIR : IC_1 STO_1 parserStatementIR_inst as parserBlockElementStatementIR
+    -- ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : IC_1 STO_1 parserStatementIR_inst
+
+relation ParserBlockElementStmtList_inst: instContext store |- parserBlockElementStatementListIR : instContext store parserBlockElementStatementIR*
 
   rulegroup 
 
     rule nil: IC STO |- [] : IC STO []
 
-    rule cons: IC_0 STO_0 |- parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : IC_2 STO_2 parserStatementIR_h_inst :: parserStatementIR_t_inst*{parserStatementIR_t_inst <- parserStatementIR_t_inst*}
-    -- ParserStmt_inst: IC_0 STO_0 |- parserStatementIR_h : IC_1 STO_1 parserStatementIR_h_inst
-    -- ParserStmts_inst: IC_1 STO_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : IC_2 STO_2 parserStatementIR_t_inst*{parserStatementIR_t_inst <- parserStatementIR_t_inst*}
+    rule cons: IC_0 STO_0 |- parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : IC_2 STO_2 parserBlockElementStatementIR_h_inst :: parserBlockElementStatementIR_t_inst*{parserBlockElementStatementIR_t_inst <- parserBlockElementStatementIR_t_inst*}
+    -- ParserBlockElementStmt_inst: IC_0 STO_0 |- parserBlockElementStatementIR_h : IC_1 STO_1 parserBlockElementStatementIR_h_inst
+    -- ParserBlockElementStmtList_inst: IC_1 STO_1 |- parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : IC_2 STO_2 parserBlockElementStatementIR_t_inst*{parserBlockElementStatementIR_t_inst <- parserBlockElementStatementIR_t_inst*}
+
+relation ParserBlock_inst: instContext store |- parserBlockStatementIR : instContext store parserBlockStatementIR
+
+  rulegroup 
+
+    rule : IC_0 STO_0 |- annotationList { parserBlockElementStatementListIR } : IC_1 STO_1 annotationList { parserBlockElementStatementListIR_inst }
+    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
 
 relation ParserState_inst: instContext store |- parserStateIR : instContext store
 
   rulegroup 
 
     rule : IC_0 STO_0 |- parserStateIR : IC_2 STO_1
-    -- if (annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR)
-    -- ParserStmts_inst: IC_0 STO_0 |- parserStatementListIR : IC_1 STO_1 parserStatementListIR_inst
-    -- if (parserStateIR_inst = annotationList STATE nameIR { parserStatementListIR_inst transitionStatementIR })
+    -- if (annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR)
+    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
+    -- if (parserStateIR_inst = annotationList STATE nameIR { parserBlockElementStatementListIR_inst transitionStatementIR })
     -- if (IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst))
 
 relation ParserStates_inst: instContext store |- parserStateIR* : instContext store
@@ -15670,19 +15727,6 @@ syntax parserStatementResult =
 
 relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext arch parserStatementResult
 
-  rulegroup constantDeclarationIR
-
-    rule constantDeclarationIR: EC_0 ARCH |- constantDeclarationIR as parserStatementIR : EC_1 ARCH `EMPTY as parserStatementResult
-    -- ConstDecl_eval: LOCAL EC_0 |- constantDeclarationIR : EC_1
-
-  rulegroup variableDeclarationIR
-
-    rule reject: EC_0 ARCH_0 |- variableDeclarationIR as parserStatementIR : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
-    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 rejectTransitionResult as declarationResult
-
-    rule cont: EC_0 ARCH_0 |- variableDeclarationIR as parserStatementIR : EC_1 ARCH_1 `EMPTY as parserStatementResult
-    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY as declarationResult
-
   rulegroup emptyStatementIR
 
     rule emptyStatementIR: EC_0 ARCH_0 |- emptyStatementIR as parserStatementIR : EC_1 ARCH_1 `EMPTY as parserStatementResult
@@ -15706,9 +15750,9 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
 
   rulegroup parserBlockStatementIR
 
-    rule parserBlockStatementIR: EC_0 ARCH_0 |- annotationList { parserStatementListIR } as parserStatementIR : EC_3 ARCH_1 parserStatementResult
+    rule parserBlockStatementIR: EC_0 ARCH_0 |- parserBlockStatementIR as parserStatementIR : EC_3 ARCH_1 parserStatementResult
     -- if (EC_1 = $enter_e(EC_0))
-    -- ParserStmts_eval: EC_1 ARCH_0 |- parserStatementListIR : EC_2 ARCH_1 parserStatementResult
+    -- ParserBlock_eval: EC_1 ARCH_0 |- parserBlockStatementIR : EC_2 ARCH_1 parserStatementResult
     -- if (EC_3 = $exit_e(EC_2))
 
   rulegroup parserConditionalStatementIR
@@ -15731,18 +15775,42 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond ` `B false as value as expressionResult
     -- ParserStmt_eval: EC_cond ARCH_cond |- parserStatementIR_else : EC_else ARCH_else parserStatementResult
 
-relation ParserStmts_eval: evalContext arch |- parserStatementListIR : evalContext arch parserStatementResult
+relation ParserBlockElementStmt_eval: evalContext arch |- parserBlockElementStatementIR : evalContext arch parserStatementResult
+
+  rulegroup 
+
+    rule constantDeclarationIR: EC_0 ARCH |- constantDeclarationIR as parserBlockElementStatementIR : EC_1 ARCH `EMPTY as parserStatementResult
+    -- ConstDecl_eval: LOCAL EC_0 |- constantDeclarationIR : EC_1
+
+    rule variableDeclarationIR-reject: EC_0 ARCH_0 |- variableDeclarationIR as parserBlockElementStatementIR : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 rejectTransitionResult as declarationResult
+
+    rule variableDeclarationIR-empty: EC_0 ARCH_0 |- variableDeclarationIR as parserBlockElementStatementIR : EC_1 ARCH_1 `EMPTY as parserStatementResult
+    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 `EMPTY as declarationResult
+
+    rule statementIR: EC_0 ARCH_0 |- parserStatementIR as parserBlockElementStatementIR : EC_1 ARCH_1 parserStatementResult
+    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : EC_1 ARCH_1 parserStatementResult
+
+relation ParserBlockElementStmtList_eval: evalContext arch |- parserBlockElementStatementListIR : evalContext arch parserStatementResult
 
   rulegroup 
 
     rule nil: EC ARCH |- [] : EC ARCH `EMPTY as parserStatementResult
 
-    rule cons-head-reject: EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
-    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+    rule cons-head-non-cont: EC_0 ARCH_0 |- parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_1 ARCH_1 parserStatementResult
+    -- ParserBlockElementStmt_eval: EC_0 ARCH_0 |- parserBlockElementStatementIR_h : EC_1 ARCH_1 parserStatementResult
+    -- if (parserStatementResult =/= `EMPTY as parserStatementResult)
 
-    rule cons-head-cont: EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
-    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 `EMPTY as parserStatementResult
-    -- ParserStmts_eval: EC_1 ARCH_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
+    rule cons-head-cont: EC_0 ARCH_0 |- parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
+    -- ParserBlockElementStmt_eval: EC_0 ARCH_0 |- parserBlockElementStatementIR_h : EC_1 ARCH_1 `EMPTY as parserStatementResult
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_1 |- parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
+
+relation ParserBlock_eval: evalContext arch |- parserBlockStatementIR : evalContext arch parserStatementResult
+
+  rulegroup 
+
+    rule : EC_0 ARCH_0 |- annotationList { parserBlockElementStatementListIR } : EC_1 ARCH_1 parserStatementResult
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
 
 syntax transitionResult = 
    | ACCEPT (from acceptTransitionResult) 
@@ -15797,12 +15865,12 @@ relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch 
   rulegroup 
 
     rule reject: EC_0 ARCH_0 |- parserStateIR : EC_1 ARCH_1 rejectTransitionResult as transitionResult
-    -- if (annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR)
-    -- ParserStmts_eval: EC_0 ARCH_0 |- parserStatementListIR : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+    -- if (annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR)
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
 
     rule cont: EC_0 ARCH_0 |- parserStateIR : EC_2 ARCH_2 transitionResult
-    -- if (annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR)
-    -- ParserStmts_eval: EC_0 ARCH_0 |- parserStatementListIR : EC_1 ARCH_1 `EMPTY as parserStatementResult
+    -- if (annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR)
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 `EMPTY as parserStatementResult
     -- ParserTransition_eval: EC_1 ARCH_1 |- transitionStatementIR : EC_2 ARCH_2 transitionResult
 
 relation ParserState_trans: evalContext arch |- TRANSITION nameIR : evalContext arch transitionResult

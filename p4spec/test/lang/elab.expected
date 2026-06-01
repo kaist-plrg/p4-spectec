@@ -2167,14 +2167,37 @@ syntax valueSetDeclaration =
 syntax parserTypeDeclaration = 
    | annotationList PARSER name typeParameterListOpt ( parameterList ) ; (from parserTypeDeclaration) 
 
+syntax parserBlockElementStatementList = 
+   | `EMPTY (from parserBlockElementStatementList) 
+   | parserBlockElementStatementList parserBlockElementStatement (from parserBlockElementStatementList) 
+
+def $flatten_parserBlockElementStatementList(parserBlockElementStatementList) : parserBlockElementStatement* =
+
+  clause 0 : (parserBlockElementStatementList) = []
+  -- if parserBlockElementStatementList matches `/* empty */`
+
+  clause 1 : (parserBlockElementStatementList') = $flatten_parserBlockElementStatementList(parserBlockElementStatementList) ++ [parserBlockElementStatement]
+  -- if parserBlockElementStatementList' matches `% %`
+  -- let parserBlockElementStatementList parserBlockElementStatement = parserBlockElementStatementList'
+
 syntax parserBlockStatement = 
-   | annotationList { parserStatementList } (from parserBlockStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
 
 syntax parserConditionalStatement = 
    | IF ( expression ) parserStatement (from parserConditionalStatement) 
    | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
 
 syntax parserStatement = 
+   | ; (from emptyStatement) 
+   | lvalue assignop expression ; (from assignmentStatement) 
+   | lvalue ( argumentList ) ; (from callStatement) 
+   | lvalue < typeArgumentList > ( argumentList ) ; (from callStatement) 
+   | namedType . APPLY ( argumentList ) ; (from directApplicationStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
+   | IF ( expression ) parserStatement (from parserConditionalStatement) 
+   | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
+
+syntax parserBlockElementStatement = 
    | annotationList CONST type name initializer ; (from constantDeclaration) 
    | annotationList type name initializerOpt ; (from variableDeclaration) 
    | ; (from emptyStatement) 
@@ -2182,28 +2205,15 @@ syntax parserStatement =
    | lvalue ( argumentList ) ; (from callStatement) 
    | lvalue < typeArgumentList > ( argumentList ) ; (from callStatement) 
    | namedType . APPLY ( argumentList ) ; (from directApplicationStatement) 
-   | annotationList { parserStatementList } (from parserBlockStatement) 
+   | annotationList { parserBlockElementStatementList } (from parserBlockStatement) 
    | IF ( expression ) parserStatement (from parserConditionalStatement) 
    | IF ( expression ) parserStatement ELSE parserStatement (from parserConditionalStatement) 
 
-syntax parserStatementList = 
-   | `EMPTY (from parserStatementList) 
-   | parserStatementList parserStatement (from parserStatementList) 
-
-def $flatten_parserStatementList(parserStatementList) : parserStatement* =
-
-  clause 0 : (parserStatementList) = []
-  -- if parserStatementList matches `/* empty */`
-
-  clause 1 : (parserStatementList') = $flatten_parserStatementList(parserStatementList) ++ [parserStatement]
-  -- if parserStatementList' matches `% %`
-  -- let parserStatementList parserStatement = parserStatementList'
-
 syntax parserState = 
-   | annotationList STATE name { parserStatementList transitionStatement } (from parserState) 
+   | annotationList STATE name { parserBlockElementStatementList transitionStatement } (from parserState) 
 
 syntax parserStateList = 
-   | annotationList STATE name { parserStatementList transitionStatement } (from parserState) 
+   | annotationList STATE name { parserBlockElementStatementList transitionStatement } (from parserState) 
    | parserStateList parserState (from parserStateList) 
 
 def $flatten_parserStateList(parserStateList) : parserState* =
@@ -5605,6 +5615,20 @@ def $bin_div(value, value) : value =
   -- if integerLiteral' matches `D %`
   -- let D i_r = integerLiteral'
 
+  clause 1 : (value, value') = w W i' as value
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `% W %`
+  -- let w W i_l = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let w' W i_r = integerLiteral'
+  -- if (w = w')
+  -- let i_l' = $bitstr_to_int(w as int, i_l)
+  -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- let i' = $int_to_bitstr(w as int, (i_l' / i_r'))
+
 def $bin_mod(value, value) : value =
 
   clause 0 : (value, value') = D (i_l \ i_r) as value
@@ -5616,6 +5640,20 @@ def $bin_mod(value, value) : value =
   -- let integerLiteral' = value' as integerLiteral
   -- if integerLiteral' matches `D %`
   -- let D i_r = integerLiteral'
+
+  clause 1 : (value, value') = w W i' as value
+  -- if value <: integerLiteral
+  -- let integerLiteral = value as integerLiteral
+  -- if integerLiteral matches `% W %`
+  -- let w W i_l = integerLiteral
+  -- if value' <: integerLiteral
+  -- let integerLiteral' = value' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let w' W i_r = integerLiteral'
+  -- if (w = w')
+  -- let i_l' = $bitstr_to_int(w as int, i_l)
+  -- let i_r' = $bitstr_to_int(w as int, i_r)
+  -- let i' = $int_to_bitstr(w as int, (i_l' \ i_r'))
 
 def $bin_shl(value, value) : value =
 
@@ -7666,28 +7704,37 @@ syntax valueSetDeclarationIR =
 syntax parserTypeDeclarationIR = 
    | annotationList PARSER nameIR < typeParameterListIR , typeParameterListIR > ( parameterListIR ) ; (from parserTypeDeclarationIR) 
 
+syntax parserBlockElementStatementListIR = parserBlockElementStatementIR*
+
 syntax parserBlockStatementIR = 
-   | annotationList { parserStatementListIR } (from parserBlockStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
 
 syntax parserConditionalStatementIR = 
    | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
 
 syntax parserStatementIR = 
+   | ; (from emptyStatement) 
+   | typedLvalueIR assignop typedExpressionIR ; (from assignmentStatementIR) 
+   | callableTargetIR < typeArgumentListIR > ( argumentListIR ) ; (from callStatementIR) 
+   | constructorTargetIR . APPLY ( argumentListIR ) ; (from directApplicationStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
+   | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
+   | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
+
+syntax parserBlockElementStatementIR = 
    | annotationList CONST typeIR nameIR constantInitializerIR ; (from constantDeclarationIR) 
    | annotationList typeIR nameIR initializerOptIR ; (from variableDeclarationIR) 
    | ; (from emptyStatement) 
    | typedLvalueIR assignop typedExpressionIR ; (from assignmentStatementIR) 
    | callableTargetIR < typeArgumentListIR > ( argumentListIR ) ; (from callStatementIR) 
    | constructorTargetIR . APPLY ( argumentListIR ) ; (from directApplicationStatementIR) 
-   | annotationList { parserStatementListIR } (from parserBlockStatementIR) 
+   | annotationList { parserBlockElementStatementListIR } (from parserBlockStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR (from parserConditionalStatementIR) 
    | IF ( typedExpressionIR ) parserStatementIR ELSE parserStatementIR (from parserConditionalStatementIR) 
 
-syntax parserStatementListIR = parserStatementIR*
-
 syntax parserStateIR = 
-   | annotationList STATE nameIR { parserStatementListIR transitionStatementIR } (from parserStateIR) 
+   | annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } (from parserStateIR) 
 
 syntax parserStateListIR = parserStateIR*
 
@@ -9981,48 +10028,67 @@ def $lift_parserTypeDeclarationIR(parserTypeDeclarationIR) : parserTypeDeclarati
 
 def $lift_parserStatementIR(parserStatementIR) : parserStatement =
 
-  clause 0 : (parserStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserStatement
-  -- if parserStatementIR <: constantDeclarationIR
-  -- let constantDeclarationIR = parserStatementIR as constantDeclarationIR
-
-  clause 1 : (parserStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserStatement
-  -- if parserStatementIR <: variableDeclarationIR
-  -- let variableDeclarationIR = parserStatementIR as variableDeclarationIR
-
-  clause 2 : (parserStatementIR) = $lift_emptyStatementIR(emptyStatementIR) as parserStatement
+  clause 0 : (parserStatementIR) = $lift_emptyStatementIR(emptyStatementIR) as parserStatement
   -- if parserStatementIR <: emptyStatementIR
   -- let emptyStatementIR = parserStatementIR as emptyStatementIR
 
-  clause 3 : (parserStatementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as parserStatement
+  clause 1 : (parserStatementIR) = $lift_assignmentStatementIR(assignmentStatementIR) as parserStatement
   -- if parserStatementIR <: assignmentStatementIR
   -- let assignmentStatementIR = parserStatementIR as assignmentStatementIR
 
-  clause 4 : (parserStatementIR) = $lift_callStatementIR(callStatementIR) as parserStatement
+  clause 2 : (parserStatementIR) = $lift_callStatementIR(callStatementIR) as parserStatement
   -- if parserStatementIR <: callStatementIR
   -- let callStatementIR = parserStatementIR as callStatementIR
 
-  clause 5 : (parserStatementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as parserStatement
+  clause 3 : (parserStatementIR) = $lift_directApplicationStatementIR(directApplicationStatementIR) as parserStatement
   -- if parserStatementIR <: directApplicationStatementIR
   -- let directApplicationStatementIR = parserStatementIR as directApplicationStatementIR
 
-  clause 6 : (parserStatementIR) = $lift_parserBlockStatementIR(parserBlockStatementIR) as parserStatement
+  clause 4 : (parserStatementIR) = $lift_parserBlockStatementIR(parserBlockStatementIR) as parserStatement
   -- if parserStatementIR <: parserBlockStatementIR
   -- let parserBlockStatementIR = parserStatementIR as parserBlockStatementIR
 
-  clause 7 : (parserStatementIR) = $lift_parserConditionalStatementIR(parserConditionalStatementIR) as parserStatement
+  clause 5 : (parserStatementIR) = $lift_parserConditionalStatementIR(parserConditionalStatementIR) as parserStatement
   -- if parserStatementIR <: parserConditionalStatementIR
   -- let parserConditionalStatementIR = parserStatementIR as parserConditionalStatementIR
 
-def $lift_parserStatementListIR(parserStatementIR*) : parserStatementList =
+def $lift_parserBlockElementStatementIR(parserBlockElementStatementIR) : parserBlockElementStatement =
 
-  clause 0 : (parserStatementIR*{parserStatementIR <- parserStatementIR*}) = parserStatementList
-  -- (let parserStatement = $lift_parserStatementIR(parserStatementIR))*{parserStatementIR <- parserStatementIR*, parserStatement -> parserStatement*}
-  -- let parserStatementList = $unflatten_parserStatementList(parserStatement*{parserStatement <- parserStatement*})
+  clause 0 : (parserBlockElementStatementIR) = $lift_constantDeclarationIR(constantDeclarationIR) as parserBlockElementStatement
+  -- if parserBlockElementStatementIR <: constantDeclarationIR
+  -- let constantDeclarationIR = parserBlockElementStatementIR as constantDeclarationIR
+
+  clause 1 : (parserBlockElementStatementIR) = $lift_variableDeclarationIR(variableDeclarationIR) as parserBlockElementStatement
+  -- if parserBlockElementStatementIR <: variableDeclarationIR
+  -- let variableDeclarationIR = parserBlockElementStatementIR as variableDeclarationIR
+
+  clause 2 : (parserBlockElementStatementIR) = $lift_parserStatementIR(parserStatementIR) as parserBlockElementStatement
+  -- if parserBlockElementStatementIR <: parserStatementIR
+  -- let parserStatementIR = parserBlockElementStatementIR as parserStatementIR
+
+def $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}) = parserBlockElementStatementList
+  -- (let parserBlockElementStatement = $lift_parserBlockElementStatementIR(parserBlockElementStatementIR))*{parserBlockElementStatementIR <- parserBlockElementStatementIR*, parserBlockElementStatement -> parserBlockElementStatement*}
+  -- let parserBlockElementStatementList = $unflatten_parserBlockElementStatementList(parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*})
+
+def $unflatten_parserBlockElementStatementList(parserBlockElementStatement*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}) = $unflatten_parserBlockElementStatementList'(`EMPTY, parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*})
+
+def $unflatten_parserBlockElementStatementList'(parserBlockElementStatementList, parserBlockElementStatement*) : parserBlockElementStatementList =
+
+  clause 0 : (parserBlockElementStatementList, parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}) = parserBlockElementStatementList
+  -- if parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} matches []
+
+  clause 1 : (parserBlockElementStatementList, parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}) = $unflatten_parserBlockElementStatementList'(parserBlockElementStatementList parserBlockElementStatement_h, parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*})
+  -- if parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} matches _ :: _
+  -- let parserBlockElementStatement_h :: parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*} = parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}
 
 def $lift_parserBlockStatementIR(parserBlockStatementIR) : parserBlockStatement =
 
-  clause 0 : (annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }) = annotationList { parserStatementList }
-  -- let parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*})
+  clause 0 : (annotationList { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} }) = annotationList { parserBlockElementStatementList }
+  -- let parserBlockElementStatementList = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*})
 
 def $lift_parserConditionalStatementIR(parserConditionalStatementIR) : parserConditionalStatement =
 
@@ -10039,24 +10105,11 @@ def $lift_parserConditionalStatementIR(parserConditionalStatementIR) : parserCon
   -- let parserStatement_then = $lift_parserStatementIR(parserStatementIR_then)
   -- let parserStatement_else = $lift_parserStatementIR(parserStatementIR_else)
 
-def $unflatten_parserStatementList(parserStatement*) : parserStatementList =
-
-  clause 0 : (parserStatement*{parserStatement <- parserStatement*}) = $unflatten_parserStatementList'(`EMPTY, parserStatement*{parserStatement <- parserStatement*})
-
-def $unflatten_parserStatementList'(parserStatementList, parserStatement*) : parserStatementList =
-
-  clause 0 : (parserStatementList, parserStatement*{parserStatement <- parserStatement*}) = parserStatementList
-  -- if parserStatement*{parserStatement <- parserStatement*} matches []
-
-  clause 1 : (parserStatementList, parserStatement*{parserStatement <- parserStatement*}) = $unflatten_parserStatementList'(parserStatementList parserStatement_h, parserStatement_t*{parserStatement_t <- parserStatement_t*})
-  -- if parserStatement*{parserStatement <- parserStatement*} matches _ :: _
-  -- let parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} = parserStatement*{parserStatement <- parserStatement*}
-
 def $lift_parserStateIR(parserStateIR) : parserState =
 
-  clause 0 : (annotationList STATE nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }) = annotationList STATE name { parserStatementList transitionStatement }
+  clause 0 : (annotationList STATE nameIR { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} transitionStatementIR }) = annotationList STATE name { parserBlockElementStatementList transitionStatement }
   -- let name = $lift_nameIR_as_nonTypeName(nameIR) as name
-  -- let parserStatementList = $lift_parserStatementListIR(parserStatementIR*{parserStatementIR <- parserStatementIR*})
+  -- let parserBlockElementStatementList = $lift_parserBlockElementStatementListIR(parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*})
   -- let transitionStatement = $lift_transitionStatementIR(transitionStatementIR)
 
 def $lift_parserStateListIR(parserStateIR*) : parserStateList =
@@ -16801,36 +16854,6 @@ relation ParserTransition_ok: typingContext nameIR* |- transitionStatement : tra
 
 relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserStatementIR
 
-  rulegroup constantDeclaration
-
-   match
-
-    (signature) TC_0 |- constantDeclaration as parserStatement : % %
-    TC_0 |- parserStatement : % %
-    -- if parserStatement <: constantDeclaration
-    -- let constantDeclaration = parserStatement as constantDeclaration
-
-   paths
-
-    rulepath constantDeclaration
-    -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
-    -- output: % |- % : TC_1 constantDeclarationIR as parserStatementIR
-
-  rulegroup variableDeclaration
-
-   match
-
-    (signature) TC_0 |- variableDeclaration as parserStatement : % %
-    TC_0 |- parserStatement : % %
-    -- if parserStatement <: variableDeclaration
-    -- let variableDeclaration = parserStatement as variableDeclaration
-
-   paths
-
-    rulepath variableDeclaration
-    -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
-    -- output: % |- % : TC_1 variableDeclarationIR as parserStatementIR
-
   rulegroup emptyStatement
 
    match
@@ -16904,18 +16927,17 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
 
    match
 
-    (signature) TC_0 |- annotationList { parserStatementList } as parserStatement : % %
+    (signature) TC_0 |- parserBlockStatement as parserStatement : % %
     TC_0 |- parserStatement : % %
     -- if parserStatement <: parserBlockStatement
-    -- let annotationList { parserStatementList } = parserStatement as parserBlockStatement
+    -- let parserBlockStatement = parserStatement as parserBlockStatement
 
    paths
 
     rulepath parserBlockStatement
     -- let TC_1 = $enter_t(TC_0)
-    -- ParserStmtList_ok: TC_1 |- parserStatementList : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    -- ParserBlock_ok: TC_1 |- parserBlockStatement : TC_2 parserBlockStatementIR
     -- let TC_3 = $exit_t(TC_2)
-    -- let parserBlockStatementIR = annotationList { parserStatementIR*{parserStatementIR <- parserStatementIR*} }
     -- output: % |- % : TC_1 parserBlockStatementIR as parserStatementIR
 
   rulegroup parserConditionalStatement
@@ -16950,21 +16972,69 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- ParserStmt_ok: TC |- parserStatement_else : TC_else parserStatementIR_else
     -- output: % |- % : TC IF ( typedExpressionIR_cond ) parserStatementIR_then ELSE parserStatementIR_else as parserStatementIR
 
-relation ParserStmtList_ok: typingContext |- parserStatementList : typingContext parserStatementIR*
+relation ParserBlockElementStmt_ok: typingContext |- parserBlockElementStatement : typingContext parserBlockElementStatementIR
 
   rulegroup 
 
    match
 
-    (signature) TC_0 |- parserStatementList : % %
-    TC_0 |- parserStatementList : % %
+    (signature) TC_0 |- parserBlockElementStatement : % %
+    TC_0 |- parserBlockElementStatement : % %
+
+   paths
+
+    rulepath constantDeclaration
+    -- let parserBlockElementStatement' = parserBlockElementStatement
+    -- if parserBlockElementStatement' <: constantDeclaration
+    -- let constantDeclaration = parserBlockElementStatement' as constantDeclaration
+    -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration : TC_1 constantDeclarationIR
+    -- output: % |- % : TC_1 constantDeclarationIR as parserBlockElementStatementIR
+
+    rulepath variableDeclaration
+    -- let parserBlockElementStatement' = parserBlockElementStatement
+    -- if parserBlockElementStatement' <: variableDeclaration
+    -- let variableDeclaration = parserBlockElementStatement' as variableDeclaration
+    -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration : TC_1 variableDeclarationIR
+    -- output: % |- % : TC_1 variableDeclarationIR as parserBlockElementStatementIR
+
+    rulepath parserStatement
+    -- let parserBlockElementStatement' = parserBlockElementStatement
+    -- if parserBlockElementStatement' <: parserStatement
+    -- let parserStatement = parserBlockElementStatement' as parserStatement
+    -- ParserStmt_ok: TC_0 |- parserStatement : TC_1 parserStatementIR
+    -- output: % |- % : TC_1 parserStatementIR as parserBlockElementStatementIR
+
+relation ParserBlockElementStmtList_ok: typingContext |- parserBlockElementStatementList : typingContext parserBlockElementStatementIR*
+
+  rulegroup 
+
+   match
+
+    (signature) TC_0 |- parserBlockElementStatementList : % %
+    TC_0 |- parserBlockElementStatementList : % %
 
    paths
 
     rulepath 
-    -- let parserStatement*{parserStatement <- parserStatement*} = $flatten_parserStatementList(parserStatementList)
-    -- ParserStmts_ok: TC_0 |- parserStatement*{parserStatement <- parserStatement*} : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
-    -- output: % |- % : TC_1 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    -- let parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} = $flatten_parserBlockElementStatementList(parserBlockElementStatementList)
+    -- ParserBlockElementStmts_ok: TC_0 |- parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+    -- output: % |- % : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+
+relation ParserBlock_ok: typingContext |- parserBlockStatement : typingContext parserBlockStatementIR
+
+  rulegroup 
+
+   match
+
+    (signature) TC_0 |- annotationList { parserBlockElementStatementList } : % %
+    TC_0 |- annotationList { parserBlockElementStatementList } : % %
+
+   paths
+
+    rulepath 
+    -- ParserBlockElementStmtList_ok: TC_0 |- parserBlockElementStatementList : TC_1 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+    -- let parserBlockStatementIR = annotationList { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} }
+    -- output: % |- % : TC_1 parserBlockStatementIR
 
 relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
 
@@ -16978,14 +17048,13 @@ relation ParserState_ok: typingContext nameIR* |- parserState : parserStateIR
    paths
 
     rulepath 
-    -- let annotationList STATE name { parserStatementList transitionStatement } = parserState
+    -- let annotationList STATE name { parserBlockElementStatementList transitionStatement } = parserState
     -- let nameIR = $name(name)
     -- let TC_1 = $enter_t(TC_0)
-    -- let parserStatement*{parserStatement <- parserStatement*} = $flatten_parserStatementList(parserStatementList)
-    -- ParserStmts_ok: TC_1 |- parserStatement*{parserStatement <- parserStatement*} : TC_2 parserStatementIR*{parserStatementIR <- parserStatementIR*}
+    -- ParserBlockElementStmtList_ok: TC_1 |- parserBlockElementStatementList : TC_2 parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
     -- ParserTransition_ok: TC_2 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : transitionStatementIR
     -- let TC_3 = $exit_t(TC_2)
-    -- let parserStateIR = annotationList STATE nameIR { parserStatementIR*{parserStatementIR <- parserStatementIR*} transitionStatementIR }
+    -- let parserStateIR = annotationList STATE nameIR { parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} transitionStatementIR }
     -- output: % % |- % : parserStateIR
 
 relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
@@ -17001,7 +17070,7 @@ relation ParserStateList_ok: typingContext |- parserStateList : parserStateIR*
 
     rulepath 
     -- let parserState*{parserState <- parserState*} = $flatten_parserStateList(parserStateList)
-    -- (let _annotationList STATE name_state { _parserStatementList _transitionStatement } = parserState)*{parserState <- parserState*, _annotationList -> _annotationList*, _parserStatementList -> _parserStatementList*, _transitionStatement -> _transitionStatement*, name_state -> name_state*}
+    -- (let _annotationList STATE name_state { _parserBlockElementStatementList _transitionStatement } = parserState)*{parserState <- parserState*, _annotationList -> _annotationList*, _parserBlockElementStatementList -> _parserBlockElementStatementList*, _transitionStatement -> _transitionStatement*, name_state -> name_state*}
     -- (let nameIR_state = $name(name_state))*{name_state <- name_state*, nameIR_state -> nameIR_state*}
     -- if $distinct_<nameIR>(nameIR_state*{nameIR_state <- nameIR_state*})
     -- if "start" <- nameIR_state*{nameIR_state <- nameIR_state*}
@@ -19678,16 +19747,23 @@ tbl def $compat_divmod(typeIR, typeIR) : bool =
     -- let intTypeIR' = typeIR' as intTypeIR
     -- if (intTypeIR' = INT)
   row 1 :
+    (signature) BIT < w_l > as typeIR, BIT < w_r > as typeIR
+    (typeIR, typeIR') -> (w_l = w_r)
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT < w_l > = typeIR as fixedBitTypeIR
+    -- if typeIR' <: fixedBitTypeIR
+    -- let BIT < w_r > = typeIR' as fixedBitTypeIR
+  row 2 :
     (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
     (typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 2 :
+  row 3 :
     (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
     (typeIR_l, typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
     -- if typeIR <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 3 :
+  row 4 :
     (signature) _typeIR, _typeIR'
     (_typeIR, _typeIR') -> false
 
@@ -21307,30 +21383,30 @@ relation SelectCase_ok: typingContext nameIR* typeIR* |- selectCase : selectCase
     -- if nameIR <- nameIR_state*{nameIR_state <- nameIR_state*}
     -- output: % % % |- % : keysetExpressionIR : nameIR ;
 
-relation ParserStmts_ok: typingContext |- parserStatement* : typingContext parserStatementIR*
+relation ParserBlockElementStmts_ok: typingContext |- parserBlockElementStatement* : typingContext parserBlockElementStatementIR*
 
   rulegroup 
 
    match
 
-    (signature) TC' |- parserStatement*{parserStatement <- parserStatement*} : % %
-    TC' |- parserStatement*{parserStatement <- parserStatement*} : % %
+    (signature) TC' |- parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} : % %
+    TC' |- parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} : % %
 
    paths
 
     rulepath nil
     -- let TC = TC'
-    -- if (parserStatement*{parserStatement <- parserStatement*} = [])
+    -- if (parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} = [])
     -- output: % |- % : TC []
 
     rulepath cons
     -- let TC_0 = TC'
-    -- let parserStatement'*{parserStatement' <- parserStatement'*} = parserStatement*{parserStatement <- parserStatement*}
-    -- if parserStatement'*{parserStatement' <- parserStatement'*} matches _ :: _
-    -- let parserStatement_h :: parserStatement_t*{parserStatement_t <- parserStatement_t*} = parserStatement'*{parserStatement' <- parserStatement'*}
-    -- ParserStmt_ok: TC_0 |- parserStatement_h : TC_1 parserStatementIR_h
-    -- ParserStmts_ok: TC_1 |- parserStatement_t*{parserStatement_t <- parserStatement_t*} : TC_2 parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
-    -- output: % |- % : TC_2 parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*}
+    -- let parserBlockElementStatement'*{parserBlockElementStatement' <- parserBlockElementStatement'*} = parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}
+    -- if parserBlockElementStatement'*{parserBlockElementStatement' <- parserBlockElementStatement'*} matches _ :: _
+    -- let parserBlockElementStatement_h :: parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*} = parserBlockElementStatement'*{parserBlockElementStatement' <- parserBlockElementStatement'*}
+    -- ParserBlockElementStmt_ok: TC_0 |- parserBlockElementStatement_h : TC_1 parserBlockElementStatementIR_h
+    -- ParserBlockElementStmts_ok: TC_1 |- parserBlockElementStatement_t*{parserBlockElementStatement_t <- parserBlockElementStatement_t*} : TC_2 parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*}
+    -- output: % |- % : TC_2 parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*}
 
 relation ParserLocalDecls_ok: typingContext |- parserLocalDeclaration* : typingContext parserLocalDeclarationIR*
 
@@ -21401,37 +21477,43 @@ tbl def $compat_table_exact_optional_key(typeIR) : bool =
 
 tbl def $compat_table_lpm_ternary_range_key(typeIR) : bool =
   row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
     (signature) INT as typeIR
     (typeIR) -> true
     -- if typeIR <: intTypeIR
     -- let intTypeIR = typeIR as intTypeIR
     -- if (intTypeIR = INT)
-  row 1 :
+  row 2 :
     (signature) INT < _nat > as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedIntTypeIR
     -- let INT < _nat > = typeIR as fixedIntTypeIR
-  row 2 :
+  row 3 :
     (signature) BIT < _nat > as typeIR
     (typeIR) -> true
     -- if typeIR <: fixedBitTypeIR
     -- let BIT < _nat > = typeIR as fixedBitTypeIR
-  row 3 :
+  row 4 :
     (signature) TYPEDEF _typeId typeIR as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: typedefTypeIR
     -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
-  row 4 :
+  row 5 :
     (signature) TYPE _typeId typeIR as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: newTypeIR
     -- let TYPE _typeId typeIR = typeIR' as newTypeIR
-  row 5 :
+  row 6 :
     (signature) ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
     (typeIR') -> $compat_table_lpm_ternary_range_key(typeIR)
     -- if typeIR' <: serializableEnumTypeIR
     -- let ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
-  row 6 :
+  row 7 :
     (signature) _typeIR
     (_typeIR) -> false
 
@@ -23749,35 +23831,6 @@ relation ExternMethods_inst: instContext |- externMethodPrototypeIR* : instConte
 
 relation ParserStmt_inst: instContext store |- parserStatementIR : instContext store parserStatementIR
 
-  rulegroup constantDeclarationIR
-
-   match
-
-    (signature) IC_0 STO |- constantDeclarationIR as parserStatementIR : % % %
-    IC_0 STO |- parserStatementIR : % % %
-    -- if parserStatementIR <: constantDeclarationIR
-    -- let constantDeclarationIR = parserStatementIR as constantDeclarationIR
-
-   paths
-
-    rulepath constantDeclarationIR
-    -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1
-    -- output: % % |- % : IC_1 STO constantDeclarationIR as parserStatementIR
-
-  rulegroup variableDeclarationIR
-
-   match
-
-    (signature) IC STO |- variableDeclarationIR as parserStatementIR : % % %
-    IC STO |- parserStatementIR : % % %
-    -- if parserStatementIR <: variableDeclarationIR
-    -- let variableDeclarationIR = parserStatementIR as variableDeclarationIR
-
-   paths
-
-    rulepath variableDeclarationIR
-    -- output: % % |- % : IC STO variableDeclarationIR as parserStatementIR
-
   rulegroup emptyStatementIR
 
    match
@@ -23842,24 +23895,25 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
 
     rulepath directApplicationStatementIR
     -- DirectApplicationStmt_inst: LOCAL IC STO_0 |- directApplicationStatementIR : STO_1 constantDeclarationIR callStatementIR
-    -- let parserBlockStatementIR = `EMPTY { [constantDeclarationIR as parserStatementIR, callStatementIR as parserStatementIR] }
+    -- let parserBlockStatementIR = `EMPTY { [constantDeclarationIR as parserBlockElementStatementIR, callStatementIR as parserBlockElementStatementIR] }
     -- output: % % |- % : IC STO_1 parserBlockStatementIR as parserStatementIR
 
   rulegroup parserBlockStatementIR
 
    match
 
-    (signature) IC_0 STO_0 |- annotationList { parserStatementListIR } as parserStatementIR : % % %
+    (signature) IC_0 STO_0 |- parserBlockStatementIR as parserStatementIR : % % %
     IC_0 STO_0 |- parserStatementIR : % % %
     -- if parserStatementIR <: parserBlockStatementIR
-    -- let annotationList { parserStatementListIR } = parserStatementIR as parserBlockStatementIR
+    -- let parserBlockStatementIR = parserStatementIR as parserBlockStatementIR
 
    paths
 
     rulepath parserBlockStatementIR
-    -- ParserStmts_inst: IC_0 STO_0 |- parserStatementListIR : IC_1 STO_1 parserStatementListIR_inst
-    -- let parserBlockStatementIR_inst = annotationList { parserStatementListIR_inst }
-    -- output: % % |- % : IC_1 STO_1 parserBlockStatementIR_inst as parserStatementIR
+    -- let IC_1 = $enter_i(IC_0)
+    -- ParserBlock_inst: IC_1 STO_0 |- parserBlockStatementIR : IC_2 STO_1 parserBlockStatementIR_inst
+    -- let IC_3 = $exit_i(IC_2)
+    -- output: % % |- % : IC_3 STO_1 parserBlockStatementIR_inst as parserStatementIR
 
   rulegroup parserConditionalStatementIR
 
@@ -23887,32 +23941,84 @@ relation ParserStmt_inst: instContext store |- parserStatementIR : instContext s
     -- ParserStmt_inst: IC STO_1 |- parserStatementIR_else : IC_else STO_2 parserStatementIR_else_inst
     -- output: % % |- % : IC STO_2 IF ( typedExpressionIR_cond ) parserStatementIR_then_inst ELSE parserStatementIR_else_inst as parserStatementIR
 
-relation ParserStmts_inst: instContext store |- parserStatementIR* : instContext store parserStatementIR*
+relation ParserBlockElementStmt_inst: instContext store |- parserBlockElementStatementIR : instContext store parserBlockElementStatementIR
 
   rulegroup 
 
    match
 
-    (signature) IC' STO' |- parserStatementIR*{parserStatementIR <- parserStatementIR*} : % % %
-    IC' STO' |- parserStatementIR*{parserStatementIR <- parserStatementIR*} : % % %
+    (signature) IC' STO' |- parserBlockElementStatementIR : % % %
+    IC' STO' |- parserBlockElementStatementIR : % % %
+
+   paths
+
+    rulepath constantDeclarationIR
+    -- let IC_0 = IC'
+    -- let STO_0 = STO'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: constantDeclarationIR
+    -- let constantDeclarationIR = parserBlockElementStatementIR' as constantDeclarationIR
+    -- ConstDecl_inst: LOCAL IC_0 |- constantDeclarationIR : IC_1
+    -- output: % % |- % : IC_1 STO_0 constantDeclarationIR as parserBlockElementStatementIR
+
+    rulepath variableDeclarationIR
+    -- let IC = IC'
+    -- let STO = STO'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: variableDeclarationIR
+    -- let variableDeclarationIR = parserBlockElementStatementIR' as variableDeclarationIR
+    -- output: % % |- % : IC STO variableDeclarationIR as parserBlockElementStatementIR
+
+    rulepath parserStatementIR
+    -- let IC_0 = IC'
+    -- let STO_0 = STO'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: parserStatementIR
+    -- let parserStatementIR = parserBlockElementStatementIR' as parserStatementIR
+    -- ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : IC_1 STO_1 parserStatementIR_inst
+    -- output: % % |- % : IC_1 STO_1 parserStatementIR_inst as parserBlockElementStatementIR
+
+relation ParserBlockElementStmtList_inst: instContext store |- parserBlockElementStatementListIR : instContext store parserBlockElementStatementIR*
+
+  rulegroup 
+
+   match
+
+    (signature) IC' STO' |- parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} : % % %
+    IC' STO' |- parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} : % % %
 
    paths
 
     rulepath nil
     -- let IC = IC'
     -- let STO = STO'
-    -- if (parserStatementIR*{parserStatementIR <- parserStatementIR*} = [])
+    -- if (parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} = [])
     -- output: % % |- % : IC STO []
 
     rulepath cons
     -- let IC_0 = IC'
     -- let STO_0 = STO'
-    -- let parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} = parserStatementIR*{parserStatementIR <- parserStatementIR*}
-    -- if parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} matches _ :: _
-    -- let parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} = parserStatementIR'*{parserStatementIR' <- parserStatementIR'*}
-    -- ParserStmt_inst: IC_0 STO_0 |- parserStatementIR_h : IC_1 STO_1 parserStatementIR_h_inst
-    -- ParserStmts_inst: IC_1 STO_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : IC_2 STO_2 parserStatementIR_t_inst*{parserStatementIR_t_inst <- parserStatementIR_t_inst*}
-    -- output: % % |- % : IC_2 STO_2 parserStatementIR_h_inst :: parserStatementIR_t_inst*{parserStatementIR_t_inst <- parserStatementIR_t_inst*}
+    -- let parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*} = parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+    -- if parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*} matches _ :: _
+    -- let parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} = parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*}
+    -- ParserBlockElementStmt_inst: IC_0 STO_0 |- parserBlockElementStatementIR_h : IC_1 STO_1 parserBlockElementStatementIR_h_inst
+    -- ParserBlockElementStmtList_inst: IC_1 STO_1 |- parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : IC_2 STO_2 parserBlockElementStatementIR_t_inst*{parserBlockElementStatementIR_t_inst <- parserBlockElementStatementIR_t_inst*}
+    -- output: % % |- % : IC_2 STO_2 parserBlockElementStatementIR_h_inst :: parserBlockElementStatementIR_t_inst*{parserBlockElementStatementIR_t_inst <- parserBlockElementStatementIR_t_inst*}
+
+relation ParserBlock_inst: instContext store |- parserBlockStatementIR : instContext store parserBlockStatementIR
+
+  rulegroup 
+
+   match
+
+    (signature) IC_0 STO_0 |- annotationList { parserBlockElementStatementListIR } : % % %
+    IC_0 STO_0 |- annotationList { parserBlockElementStatementListIR } : % % %
+
+   paths
+
+    rulepath 
+    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
+    -- output: % % |- % : IC_1 STO_1 annotationList { parserBlockElementStatementListIR_inst }
 
 relation ParserState_inst: instContext store |- parserStateIR : instContext store
 
@@ -23926,9 +24032,9 @@ relation ParserState_inst: instContext store |- parserStateIR : instContext stor
    paths
 
     rulepath 
-    -- let annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR
-    -- ParserStmts_inst: IC_0 STO_0 |- parserStatementListIR : IC_1 STO_1 parserStatementListIR_inst
-    -- let parserStateIR_inst = annotationList STATE nameIR { parserStatementListIR_inst transitionStatementIR }
+    -- let annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR
+    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
+    -- let parserStateIR_inst = annotationList STATE nameIR { parserBlockElementStatementListIR_inst transitionStatementIR }
     -- let IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst)
     -- output: % % |- % : IC_2 STO_1
 
@@ -27713,45 +27819,6 @@ syntax parserStatementResult =
 
 relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext arch parserStatementResult
 
-  rulegroup constantDeclarationIR
-
-   match
-
-    (signature) EC_0 ARCH |- constantDeclarationIR as parserStatementIR : % % %
-    EC_0 ARCH |- parserStatementIR : % % %
-    -- if parserStatementIR <: constantDeclarationIR
-    -- let constantDeclarationIR = parserStatementIR as constantDeclarationIR
-
-   paths
-
-    rulepath constantDeclarationIR
-    -- ConstDecl_eval: LOCAL EC_0 |- constantDeclarationIR : EC_1
-    -- output: % % |- % : EC_1 ARCH `EMPTY as parserStatementResult
-
-  rulegroup variableDeclarationIR
-
-   match
-
-    (signature) EC_0 ARCH_0 |- variableDeclarationIR as parserStatementIR : % % %
-    EC_0 ARCH_0 |- parserStatementIR : % % %
-    -- if parserStatementIR <: variableDeclarationIR
-    -- let variableDeclarationIR = parserStatementIR as variableDeclarationIR
-
-   paths
-
-    rulepath reject
-    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 declarationResult
-    -- if declarationResult <: rejectTransitionResult
-    -- let rejectTransitionResult = declarationResult as rejectTransitionResult
-    -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
-
-    rulepath cont
-    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 declarationResult
-    -- if declarationResult <: continueEmptyResult
-    -- let continueEmptyResult = declarationResult as continueEmptyResult
-    -- if (continueEmptyResult = `EMPTY)
-    -- output: % % |- % : EC_1 ARCH_1 `EMPTY as parserStatementResult
-
   rulegroup emptyStatementIR
 
    match
@@ -27822,16 +27889,16 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
 
    match
 
-    (signature) EC_0 ARCH_0 |- annotationList { parserStatementListIR } as parserStatementIR : % % %
+    (signature) EC_0 ARCH_0 |- parserBlockStatementIR as parserStatementIR : % % %
     EC_0 ARCH_0 |- parserStatementIR : % % %
     -- if parserStatementIR <: parserBlockStatementIR
-    -- let annotationList { parserStatementListIR } = parserStatementIR as parserBlockStatementIR
+    -- let parserBlockStatementIR = parserStatementIR as parserBlockStatementIR
 
    paths
 
     rulepath parserBlockStatementIR
     -- let EC_1 = $enter_e(EC_0)
-    -- ParserStmts_eval: EC_1 ARCH_0 |- parserStatementListIR : EC_2 ARCH_1 parserStatementResult
+    -- ParserBlock_eval: EC_1 ARCH_0 |- parserBlockStatementIR : EC_2 ARCH_1 parserStatementResult
     -- let EC_3 = $exit_e(EC_2)
     -- output: % % |- % : EC_3 ARCH_1 parserStatementResult
 
@@ -27890,46 +27957,108 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- ParserStmt_eval: EC_cond ARCH_cond |- parserStatementIR_else : EC_else ARCH_else parserStatementResult
     -- output: % % |- % : EC_else ARCH_else parserStatementResult
 
-relation ParserStmts_eval: evalContext arch |- parserStatementListIR : evalContext arch parserStatementResult
+relation ParserBlockElementStmt_eval: evalContext arch |- parserBlockElementStatementIR : evalContext arch parserStatementResult
 
   rulegroup 
 
    match
 
-    (signature) EC' ARCH' |- parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} : % % %
-    EC' ARCH' |- parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} : % % %
+    (signature) EC_0 ARCH' |- parserBlockElementStatementIR : % % %
+    EC_0 ARCH' |- parserBlockElementStatementIR : % % %
+
+   paths
+
+    rulepath constantDeclarationIR
+    -- let ARCH = ARCH'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: constantDeclarationIR
+    -- let constantDeclarationIR = parserBlockElementStatementIR' as constantDeclarationIR
+    -- ConstDecl_eval: LOCAL EC_0 |- constantDeclarationIR : EC_1
+    -- output: % % |- % : EC_1 ARCH `EMPTY as parserStatementResult
+
+    rulepath variableDeclarationIR-reject
+    -- let ARCH_0 = ARCH'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: variableDeclarationIR
+    -- let variableDeclarationIR = parserBlockElementStatementIR' as variableDeclarationIR
+    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 declarationResult
+    -- if declarationResult <: rejectTransitionResult
+    -- let rejectTransitionResult = declarationResult as rejectTransitionResult
+    -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+
+    rulepath variableDeclarationIR-empty
+    -- let ARCH_0 = ARCH'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: variableDeclarationIR
+    -- let variableDeclarationIR = parserBlockElementStatementIR' as variableDeclarationIR
+    -- VarDecl_eval: LOCAL EC_0 ARCH_0 |- variableDeclarationIR : EC_1 ARCH_1 declarationResult
+    -- if declarationResult <: continueEmptyResult
+    -- let continueEmptyResult = declarationResult as continueEmptyResult
+    -- if (continueEmptyResult = `EMPTY)
+    -- output: % % |- % : EC_1 ARCH_1 `EMPTY as parserStatementResult
+
+    rulepath statementIR
+    -- let ARCH_0 = ARCH'
+    -- let parserBlockElementStatementIR' = parserBlockElementStatementIR
+    -- if parserBlockElementStatementIR' <: parserStatementIR
+    -- let parserStatementIR = parserBlockElementStatementIR' as parserStatementIR
+    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : EC_1 ARCH_1 parserStatementResult
+    -- output: % % |- % : EC_1 ARCH_1 parserStatementResult
+
+relation ParserBlockElementStmtList_eval: evalContext arch |- parserBlockElementStatementListIR : evalContext arch parserStatementResult
+
+  rulegroup 
+
+   match
+
+    (signature) EC' ARCH' |- parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*} : % % %
+    EC' ARCH' |- parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*} : % % %
 
    paths
 
     rulepath nil
     -- let EC = EC'
     -- let ARCH = ARCH'
-    -- if (parserStatementIR'*{parserStatementIR' <- parserStatementIR'*} = [])
+    -- if (parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*} = [])
     -- output: % % |- % : EC ARCH `EMPTY as parserStatementResult
 
-    rulepath cons-head-reject
+    rulepath cons-head-non-cont
     -- let EC_0 = EC'
     -- let ARCH_0 = ARCH'
-    -- let parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*} = parserStatementIR'*{parserStatementIR' <- parserStatementIR'*}
-    -- if parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*} matches _ :: _
-    -- let parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} = parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*}
-    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 parserStatementResult'
-    -- if parserStatementResult' <: rejectTransitionResult
-    -- let rejectTransitionResult = parserStatementResult' as rejectTransitionResult
-    -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+    -- let parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*} = parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*}
+    -- if parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*} matches _ :: _
+    -- let parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} = parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*}
+    -- ParserBlockElementStmt_eval: EC_0 ARCH_0 |- parserBlockElementStatementIR_h : EC_1 ARCH_1 parserStatementResult
+    -- if (parserStatementResult =/= `EMPTY as parserStatementResult)
+    -- output: % % |- % : EC_1 ARCH_1 parserStatementResult
 
     rulepath cons-head-cont
     -- let EC_0 = EC'
     -- let ARCH_0 = ARCH'
-    -- let parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*} = parserStatementIR'*{parserStatementIR' <- parserStatementIR'*}
-    -- if parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*} matches _ :: _
-    -- let parserStatementIR_h :: parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} = parserStatementIR''*{parserStatementIR'' <- parserStatementIR''*}
-    -- ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR_h : EC_1 ARCH_1 parserStatementResult'
+    -- let parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*} = parserBlockElementStatementIR'*{parserBlockElementStatementIR' <- parserBlockElementStatementIR'*}
+    -- if parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*} matches _ :: _
+    -- let parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} = parserBlockElementStatementIR''*{parserBlockElementStatementIR'' <- parserBlockElementStatementIR''*}
+    -- ParserBlockElementStmt_eval: EC_0 ARCH_0 |- parserBlockElementStatementIR_h : EC_1 ARCH_1 parserStatementResult'
     -- if parserStatementResult' <: continueEmptyResult
     -- let continueEmptyResult = parserStatementResult' as continueEmptyResult
     -- if (continueEmptyResult = `EMPTY)
-    -- ParserStmts_eval: EC_1 ARCH_1 |- parserStatementIR_t*{parserStatementIR_t <- parserStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_1 |- parserBlockElementStatementIR_t*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_2 ARCH_2 parserStatementResult
     -- output: % % |- % : EC_2 ARCH_2 parserStatementResult
+
+relation ParserBlock_eval: evalContext arch |- parserBlockStatementIR : evalContext arch parserStatementResult
+
+  rulegroup 
+
+   match
+
+    (signature) EC_0 ARCH_0 |- annotationList { parserBlockElementStatementListIR } : % % %
+    EC_0 ARCH_0 |- annotationList { parserBlockElementStatementListIR } : % % %
+
+   paths
+
+    rulepath 
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
+    -- output: % % |- % : EC_1 ARCH_1 parserStatementResult
 
 syntax transitionResult = 
    | ACCEPT (from acceptTransitionResult) 
@@ -28049,15 +28178,15 @@ relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch 
    paths
 
     rulepath reject
-    -- let annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR
-    -- ParserStmts_eval: EC_0 ARCH_0 |- parserStatementListIR : EC_1 ARCH_1 parserStatementResult
+    -- let annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
     -- if parserStatementResult <: rejectTransitionResult
     -- let rejectTransitionResult = parserStatementResult as rejectTransitionResult
     -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as transitionResult
 
     rulepath cont
-    -- let annotationList STATE nameIR { parserStatementListIR transitionStatementIR } = parserStateIR
-    -- ParserStmts_eval: EC_0 ARCH_0 |- parserStatementListIR : EC_1 ARCH_1 parserStatementResult
+    -- let annotationList STATE nameIR { parserBlockElementStatementListIR transitionStatementIR } = parserStateIR
+    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
     -- if parserStatementResult <: continueEmptyResult
     -- let continueEmptyResult = parserStatementResult as continueEmptyResult
     -- if (continueEmptyResult = `EMPTY)

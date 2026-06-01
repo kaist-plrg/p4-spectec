@@ -1181,17 +1181,31 @@ syntax parserTypeDeclaration =
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatement, parserStatementList
+syntax parserBlockElementStatement, parserStatement
 
-syntax parserBlockStatement = annotationList `{ parserStatementList }
+syntax parserBlockElementStatementList =
+  | `EMPTY
+  | parserBlockElementStatementList parserBlockElementStatement
+
+dec $flatten_parserBlockElementStatementList(
+    parserBlockElementStatementList
+  )
+  : parserBlockElementStatement*
+  hint(prose_in %0 "flattened")
+def $flatten_parserBlockElementStatementList(`EMPTY) = eps
+def $flatten_parserBlockElementStatementList(
+    parserBlockElementStatementList parserBlockElementStatement
+  )
+  = $flatten_parserBlockElementStatementList(parserBlockElementStatementList)
+    ++ [ parserBlockElementStatement ]
+
+syntax parserBlockStatement = annotationList `{ parserBlockElementStatementList }
 
 syntax parserConditionalStatement =
   | IF `( expression ) parserStatement
   | IF `( expression ) parserStatement ELSE parserStatement
 
 syntax parserStatement =
-  | constantDeclaration
-  | variableDeclaration
   | emptyStatement
   | assignmentStatement
   | callStatement
@@ -1199,18 +1213,13 @@ syntax parserStatement =
   | parserBlockStatement
   | parserConditionalStatement
 
-syntax parserStatementList =
-  | `EMPTY
-  | parserStatementList parserStatement
-
-dec $flatten_parserStatementList(parserStatementList) : parserStatement*
-  hint(prose_in %0 "flattened")
-def $flatten_parserStatementList(`EMPTY) = eps
-def $flatten_parserStatementList(parserStatementList parserStatement)
-  = $flatten_parserStatementList(parserStatementList) ++ [ parserStatement ]
+syntax parserBlockElementStatement =
+  | constantDeclaration
+  | variableDeclaration
+  | parserStatement
 
 syntax parserState =
-  annotationList STATE name `{ parserStatementList transitionStatement }
+  annotationList STATE name `{ parserBlockElementStatementList transitionStatement }
 
 syntax parserStateList =
   | parserState
