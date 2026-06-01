@@ -104,6 +104,7 @@ let frontend specdir =
   |> List.concat_map Frontend.Parse.parse_file
 
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
+let elab2 specdir = specdir |> frontend |> Elaborate2.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
 let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
 
