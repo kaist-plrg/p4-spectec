@@ -15765,7 +15765,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_infer*{typeId_infer <- typeId_infer*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
-    -- Call_ok: p TC |- callableTypeIR < [] # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = ` typeId_infer as typeIR*{typeId_infer <- typeId_infer*}
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if (typeIR_ret =/= VOID as typeIR)
     -- let ctk = $is_static_callableTypeIR(callableTypeIR)
     -- if $is_static_assert_callableTypeIR(callableTypeIR)
@@ -15785,7 +15786,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- CallableTarget_ok: p TC |- callableTarget : callableTargetIR
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_infer*{typeId_infer <- typeId_infer*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
-    -- Call_ok: p TC |- callableTypeIR < [] # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = ` typeId_infer as typeIR*{typeId_infer <- typeId_infer*}
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if (typeIR_ret =/= VOID as typeIR)
     -- let ctk = $is_static_callableTypeIR(callableTypeIR)
     -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
@@ -15802,8 +15804,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- TypeArguments_ok: p TC |- realTypeArgument*{realTypeArgument <- realTypeArgument*} as typeArgument* : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_inserted*{typeId_inserted <- typeId_inserted*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ ` typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*}
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
-    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if (typeIR_ret =/= VOID as typeIR)
     -- let ctk = $is_static_callableTypeIR(callableTypeIR)
     -- let callExpressionIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
@@ -15831,7 +15834,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let constructorTargetIR = prefixedNameIR < [] >
     -- ConstructorType_ok: p TC |- constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) : constructorTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
-    -- Inst_ok: p TC ANON |- constructorTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = ` typeId_impl as typeIR*{typeId_impl <- typeId_impl*}
+    -- Inst_ok: p TC ANON |- constructorTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_concrete_extern_object(typeIR_object)
     -- let callExpressionIR = prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let expressionNoteIR = ( typeIR_object CTK )
@@ -15846,8 +15850,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let constructorTargetIR = prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >
     -- ConstructorType_ok: p TC |- constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) : constructorTypeIR < # typeId_inserted*{typeId_inserted <- typeId_inserted*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ ` typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*}
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
-    -- Inst_ok: p TC ANON |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Inst_ok: p TC ANON |- constructorTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_concrete_extern_object(typeIR_object)
     -- let callExpressionIR = prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let expressionNoteIR = ( typeIR_object CTK )
@@ -16228,7 +16233,8 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
-    -- Call_ok: p TC |- callableTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = ` typeId_impl as typeIR*{typeId_impl <- typeId_impl*}
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if $is_static_assert_callableTypeIR(callableTypeIR)
     -- let callExpressionIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let expressionNoteIR = ( typeIR_ret LCTK )
@@ -16244,7 +16250,8 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- CallableTarget_lvalue_ok: p TC |- lvalue_callable : callableTargetIR
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < [] > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
-    -- Call_ok: p TC |- callableTypeIR < [] # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = ` typeId_impl as typeIR*{typeId_impl <- typeId_impl*}
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_impl*{typeId_impl <- typeId_impl*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ;
     -- output: % % |- % : TC callStatementIR as statementIR
@@ -16257,8 +16264,9 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- TypeArgumentList_ok: p TC |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- CallableType_ok: p TC |- callableTargetIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( argumentIR*{argumentIR <- argumentIR*} ) : callableTypeIR < # typeId_inserted*{typeId_inserted <- typeId_inserted*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ ` typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*}
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
-    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Call_ok: p TC |- callableTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_ret < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let callStatementIR = callableTargetIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} ) ;
     -- output: % % |- % : TC callStatementIR as statementIR
 
@@ -18943,7 +18951,6 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let ?(callableId : callableTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?}
     -- if callableTypeDefIR <: actionTypeIR
     -- let actionTypeIR = callableTypeDefIR as actionTypeIR
-    -- if CallableType_wf: $bound(p, TC) |- actionTypeIR as callableTypeIR holds
     -- output: % % |- % < % > ( % ) : actionTypeIR as callableTypeIR < # [] > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
   rulegroup functionTypeIR
@@ -18966,8 +18973,6 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let (callableTypeIR, typeId*) = $specialize_callableTypeDefIR(functionTypeDefIR as callableTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- if (callableTypeIR, typeId*) <: (functionTypeIR, typeId*)
     -- let (functionTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = (callableTypeIR, typeId*) as (functionTypeIR, typeId*)
-    -- let bound = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
-    -- if CallableType_wf: bound |- functionTypeIR as callableTypeIR holds
     -- output: % % |- % < % > ( % ) : functionTypeIR as callableTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
   rulegroup builtinMethodTypeIR-size
@@ -19092,8 +19097,6 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     -- let (callableTypeIR, typeId*) = $specialize_callableTypeDefIR(externMethodTypeDefIR as callableTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
     -- if (callableTypeIR, typeId*) <: (externMethodTypeIR, typeId*)
     -- let (externMethodTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = (callableTypeIR, typeId*) as (externMethodTypeIR, typeId*)
-    -- let bound = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
-    -- if CallableType_wf: bound |- externMethodTypeIR as callableTypeIR holds
     -- output: % % |- % < % > ( % ) : externMethodTypeIR as callableTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
   rulegroup parserApplyMethodTypeIR
@@ -19224,14 +19227,12 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- let FUNCTION nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = definedFunctionTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
     -- let functionTypeIR_inferred = FUNCTION nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred as functionTypeIR
-    -- if CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred as callableTypeIR holds
+    -- let B = $bound(p, TC)
+    -- if CallableType_wf: B |- functionTypeIR_inferred as callableTypeIR holds
     -- if $callable_definedFunction(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
@@ -19251,14 +19252,12 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- let EXTERN_FUNCTION nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = externFunctionTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
-    -- let functionTypeIR_inferred = EXTERN_FUNCTION nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred as functionTypeIR
-    -- if CallableType_wf: $bound(p, TC) |- functionTypeIR_inferred as callableTypeIR holds
+    -- let externFunctionTypeIR_inferred = EXTERN_FUNCTION nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred
+    -- let B = $bound(p, TC)
+    -- if CallableType_wf: B |- externFunctionTypeIR_inferred as callableTypeIR holds
     -- if $callable_externFunction(p, TC, nameIR)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
@@ -19298,14 +19297,12 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- let EXTERN_METHOD nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = externMethodTypeIR'
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
     -- let externMethodTypeIR_inferred = EXTERN_METHOD nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred
-    -- if CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred as callableTypeIR holds
+    -- let B = $bound(p, TC)
+    -- if CallableType_wf: B |- externMethodTypeIR_inferred as callableTypeIR holds
     -- if $callable_externMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
@@ -19316,14 +19313,12 @@ relation Call_ok: cursor typingContext |- callableTypeIR < typeArgumentListIR # 
     -- let EXTERN_METHOD ABSTRACT nameIR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_ret = externMethodTypeIR'
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
     -- let externMethodTypeIR_inferred = EXTERN_METHOD ABSTRACT nameIR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_ret_inferred
-    -- if CallableType_wf: $bound(p, TC) |- externMethodTypeIR_inferred as callableTypeIR holds
+    -- let B = $bound(p, TC)
+    -- if CallableType_wf: B |- externMethodTypeIR_inferred as callableTypeIR holds
     -- if $callable_externMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} @ argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % < % # % > ( % # % # % ) : typeIR_ret_inferred < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
@@ -19407,8 +19402,6 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
     -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
-    -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
-    -- if ConstructorType_wf: B |- constructorTypeIR holds
     -- output: % % |- % ( % ) : constructorTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
     rulepath non-aliased-some-type
@@ -19421,8 +19414,6 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
     -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
-    -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
-    -- if ConstructorType_wf: B |- constructorTypeIR holds
     -- output: % % |- % ( % ) : constructorTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
     rulepath aliased
@@ -19437,8 +19428,6 @@ relation ConstructorType_ok: cursor typingContext |- constructorTargetIR ( argum
     -- if callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?} matches (_)
     -- let ?(callableId : constructorTypeDefIR # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*}) = callResolution<constructorTypeDefIR>?{callResolution<constructorTypeDefIR> <- callResolution<constructorTypeDefIR>?}
     -- let (constructorTypeIR, typeId_impl*{typeId_impl <- typeId_impl*}) = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*})
-    -- let B = $union_set<typeId>($bound(p, TC), { typeId_impl*{typeId_impl <- typeId_impl*} })
-    -- if ConstructorType_wf: B |- constructorTypeIR holds
     -- output: % % |- % ( % ) : constructorTypeIR < # typeId_impl*{typeId_impl <- typeId_impl*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
 
 syntax instctxt = 
@@ -19460,10 +19449,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
     -- let CONSTRUCTOR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_object = constructorTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
     -- let constructorTypeIR_inferred = CONSTRUCTOR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_object_inferred
@@ -19479,10 +19465,7 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR < typeArgum
     -- let CONSTRUCTOR ( parameterIR*{parameterIR <- parameterIR*} ) : typeIR_object = constructorTypeIR
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
-    -- (let typeIR?{typeIR <- typeIR?} = $find_map<typeId, typeIR>(inference, typeId_infer))*{typeId_infer <- typeId_infer*, typeIR? -> typeIR?*}
-    -- (if typeIR?{typeIR <- typeIR?} matches (_))*{typeIR? <- typeIR?*}
-    -- (let ?(typeIR_inferred) = typeIR?{typeIR <- typeIR?})*{typeIR? <- typeIR?*, typeIR_inferred -> typeIR_inferred*}
-    -- let typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ typeIR_inferred*{typeIR_inferred <- typeIR_inferred*}
+    -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
     -- let constructorTypeIR_inferred = CONSTRUCTOR ( parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} ) : typeIR_object_inferred
@@ -20807,8 +20790,9 @@ relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationLi
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let constructorTargetIR = prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >
     -- ConstructorType_ok: p TC_0 |- constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) : constructorTypeIR < # typeId_inserted*{typeId_inserted <- typeId_inserted*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ ` typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*}
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
-    -- Inst_ok: p TC_0 NAMED |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Inst_ok: p TC_0 NAMED |- constructorTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let nameIR = $name(name)
     -- let TC_1 = $add_var_t(p, TC_0, nameIR, `EMPTY typeIR_object CTK ?())
     -- let constructorTargetIR_inferred = prefixedNameIR < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} >
@@ -20939,8 +20923,9 @@ relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList p
     -- let prefixedNameIR = $prefixedTypeName(prefixedTypeName)
     -- let constructorTargetIR = prefixedNameIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} >
     -- ConstructorType_ok: p TC_0 |- constructorTargetIR ( argumentIR*{argumentIR <- argumentIR*} ) : constructorTypeIR < # typeId_inserted*{typeId_inserted <- typeId_inserted*} > ( # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} )
+    -- let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ ` typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*}
     -- let typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*}
-    -- Inst_ok: p TC_0 NAMED |- constructorTypeIR < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
+    -- Inst_ok: p TC_0 NAMED |- constructorTypeIR < typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} # typeId_infer*{typeId_infer <- typeId_infer*} > ( argumentIR*{argumentIR <- argumentIR*} # id_default*{id_default <- id_default*} # id_optional*{id_optional <- id_optional*} ) : typeIR_object < typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} > ( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} )
     -- let typeIR = $unroll_typeIR(typeIR_object)
     -- if typeIR <: externObjectTypeIR
     -- let EXTERN typeId_extern < typeIR_arg*{typeIR_arg <- typeIR_arg*} > externMethodTypeDefEnv_extern = typeIR as externObjectTypeIR
@@ -22117,10 +22102,26 @@ def $merge_constraints(constraint, constraint*) : constraint =
 
 def $resolve_constraint(constraint) : inference =
 
-  clause 0 : ({ typeId : infer*{infer <- infer*, typeId <- typeId*} }) = { typeId : typeIR*{typeIR <- typeIR*, typeId <- typeId*} }
-  -- (let infer' = infer)*{infer <- infer*, infer' -> infer'*}
-  -- (if infer' matches `KNOWN AS %`)*{infer' <- infer'*}
-  -- (let KNOWN AS typeIR = infer')*{infer' <- infer'*, typeIR -> typeIR*}
+  clause 0 : (set<pair<typeId, infer>>) = { [] }
+  -- if (set<pair<typeId, infer>> = { [] })
+
+  clause 1 : ({ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} }) = { typeId_h : typeIR_h :: typeId_t : typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} }
+  -- if pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} matches _ :: _
+  -- let typeId_h : infer_h :: typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} = pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*}
+  -- let infer = infer_h
+  -- if infer matches `KNOWN AS %`
+  -- let KNOWN AS typeIR_h = infer
+  -- let { typeId : typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} } = $resolve_constraint({ typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} })
+  -- if (|typeId*{typeId <- typeId*}| = |typeId_t*{typeId_t <- typeId_t*}|)
+  -- (if (typeId = typeId_t))*{typeId <- typeId*, typeId_t <- typeId_t*}
+
+  clause 2 : ({ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} }) = { typeId_h : BOOL as typeIR :: typeId_t : typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} }
+  -- if pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} matches _ :: _
+  -- let typeId_h : infer_h :: typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} = pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*}
+  -- if (UNKNOWN = infer_h)
+  -- let { typeId : typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} } = $resolve_constraint({ typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} })
+  -- if (|typeId*{typeId <- typeId*}| = |typeId_t*{typeId_t <- typeId_t*}|)
+  -- (if (typeId = typeId_t))*{typeId <- typeId*, typeId_t <- typeId_t*}
 
 def $resolve_type_alias(typeIR) : (nameIR, typeIR*) =
 

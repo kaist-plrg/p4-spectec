@@ -10325,8 +10325,9 @@ xref:Expr_ok[Typing ``callExpression``, under context ``TC`` at ``p``]:
 * the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``p``].
  .. Let callable type ``callableTypeIR`` with fresh type variables ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:CallableType_ok[finding type of callable call ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeId~infer~^{asterisk}^``.
  .. Let return type ``typeIR~ret~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
+* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
  .. Check that ``typeIR~ret~`` is not equal to ``+VOID+``.
  .. Let ``ctk`` be xref:is_static_callableTypeIR[compile-time known-ness of ``callableTypeIR``].
  .. If xref:is_static_assert_callableTypeIR[``callableTypeIR`` is a static_assert call]:
@@ -10352,9 +10353,10 @@ xref:Expr_ok[Typing ``callExpression``, under context ``TC`` at ``p``]:
 * the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``p``].
  .. Let callable type ``callableTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:CallableType_ok[finding type of callable call ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let return type ``typeIR~ret~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
+* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
  .. Check that ``typeIR~ret~`` is not equal to ``+VOID+``.
  .. Let ``ctk`` be xref:is_static_callableTypeIR[compile-time known-ness of ``callableTypeIR``].
  .. Let ``callExpressionIR`` be ``callableTargetIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
@@ -10370,8 +10372,9 @@ xref:Expr_ok[Typing ``callTarget`` ``+(+`` ``argumentList`` ``+)+``, under conte
  .. Let ``constructorTargetIR`` be ``prefixedNameIR`` ``+<+`` ``·`` ``+>+``.
  .. Let ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:ConstructorType_ok[finding type of constructor call ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^``.
  .. Let constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``+ANON+`` instantiation site context].
+* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``+ANON+`` instantiation site context].
  .. Check that xref:is_concrete_extern_object[``typeIR~object~`` is an extern object type without abstract methods].
  .. Let ``callExpressionIR`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~object~`` and compile-time known-ness ``+CTK+``].
@@ -10385,9 +10388,10 @@ xref:Expr_ok[Typing ``callTarget`` ``+(+`` ``argumentList`` ``+)+``, under conte
  .. Let ``constructorTargetIR`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+``.
  .. Let ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:ConstructorType_ok[finding type of constructor call ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``+ANON+`` instantiation site context].
+* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``+ANON+`` instantiation site context].
  .. Check that xref:is_concrete_extern_object[``typeIR~object~`` is an extern object type without abstract methods].
  .. Let ``callExpressionIR`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~object~`` and compile-time known-ness ``+CTK+``].
@@ -10617,8 +10621,9 @@ xref:Stmt_ok[Typing ``callStatement``, under context ``TC`` at ``p``]:
 * the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``p``].
  .. Let callable type ``callableTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:CallableType_ok[finding type of callable call ``callableTargetIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^``.
  .. Let return type ``typeIR~ret~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
+* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
  .. If xref:is_static_assert_callableTypeIR[``callableTypeIR`` is a static_assert call]:
   ... Let ``callExpressionIR`` be ``callableTargetIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+``.
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~ret~`` and compile-time known-ness ``+LCTK+``].
@@ -10640,9 +10645,10 @@ xref:Stmt_ok[Typing ``callStatement``, under context ``TC`` at ``p``]:
 * the result of xref:ArgumentList_ok[typing ``argumentList``, under context ``TC`` at ``p``].
  .. Let callable type ``callableTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:CallableType_ok[finding type of callable call ``callableTargetIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``].
+ .. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
  .. Let return type ``typeIR~ret~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
+* the result of xref:Call_ok[typing invocation ``callableTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``].
  .. Let ``callStatementIR`` be ``callableTargetIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR~cast~^{asterisk}^`` ``+)+`` ``+;+``.
  .. Result in context ``TC`` and ``callStatementIR``.
 
@@ -12690,8 +12696,6 @@ xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``
 . Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_callableDef_overloaded_t[the overloaded callable definition of ``prefixedNameIR`` ``+(+`` ``argumentIR'^{asterisk}^`` ``+)+`` from the ``p`` layer of ``TC``].
 . Check that ``callableTypeDefIR`` has type ``actionTypeIR``.
 . Let ``actionTypeIR`` be ``callableTypeDefIR``.
-. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Check that xref:CallableType_wf[``actionTypeIR`` is a well-formed callable type, with bound type variables ``bound``].
 . Result in callable type ``actionTypeIR`` with fresh type variables ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 
 xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR'^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
@@ -12702,9 +12706,6 @@ xref:CallableType_ok[Finding type of callable call ``prefixedNameIR`` ``+<+`` ``
 . Let ``(callableTypeIR,`` ``typeId*)`` be xref:specialize_callableTypeDefIR[``functionTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``].
 . Check that ``(callableTypeIR,`` ``typeId*)`` has type ``(functionTypeIR,`` ``typeId*)``.
 . Let ``(`` ``functionTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be ``(callableTypeIR,`` ``typeId*)``.
-. Let ``bound'`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Let ``bound`` be xref:union_set[the union of the sets ``bound'`` and ``+{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
-. Check that xref:CallableType_wf[``functionTypeIR`` is a well-formed callable type, with bound type variables ``bound``].
 . Result in callable type ``functionTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under cursor ``p`` and context ``TC``]:
@@ -12762,9 +12763,6 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 . Let ``(callableTypeIR,`` ``typeId*)`` be xref:specialize_callableTypeDefIR[``externMethodTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``].
 . Check that ``(callableTypeIR,`` ``typeId*)`` has type ``(externMethodTypeIR,`` ``typeId*)``.
 . Let ``(`` ``externMethodTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be ``(callableTypeIR,`` ``typeId*)``.
-. Let ``bound'`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Let ``bound`` be xref:union_set[the union of the sets ``bound'`` and ``+{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
-. Check that xref:CallableType_wf[``externMethodTypeIR`` is a well-formed callable type, with bound type variables ``bound``].
 . Result in callable type ``externMethodTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+.+`` ``"apply"`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR'^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
@@ -12839,22 +12837,13 @@ xref:Call_ok[Typing invocation ``definedFunctionTypeIR`` ``+<+`` ``typeArgumentI
 . Let ``+FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``definedFunctionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``typeArgumentIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+ ** Let ``typeArgumentIR~inferred~`` be xref:subst_typeIR[``typeArgumentIR`` substituted by ``inference``].
 --
 +
-for each ``typeId`` in ``typeId^{asterisk}^``
-. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -12864,8 +12853,8 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
 . Let ``functionTypeIR~inferred~`` be ``+FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Check that xref:CallableType_wf[``functionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+. Let ``B`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+. Check that xref:CallableType_wf[``functionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``B``].
 . Check that ``xref:callable_definedFunction[$callable_definedFunction(p,`` ``TC)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
@@ -12876,22 +12865,13 @@ xref:Call_ok[Typing invocation ``externFunctionTypeIR`` ``+<+`` ``typeArgumentIR
 . Let ``+EXTERN_FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externFunctionTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``typeArgumentIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+ ** Let ``typeArgumentIR~inferred~`` be xref:subst_typeIR[``typeArgumentIR`` substituted by ``inference``].
 --
 +
-for each ``typeId`` in ``typeId^{asterisk}^``
-. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -12900,9 +12880,9 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 +
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
 . Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
-. Let ``functionTypeIR~inferred~`` be ``+EXTERN_FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
-. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
-. Check that xref:CallableType_wf[``functionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+. Let ``externFunctionTypeIR~inferred~`` be ``+EXTERN_FUNCTION+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
+. Let ``B`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+. Check that xref:CallableType_wf[``externFunctionTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``B``].
 . Check that ``xref:callable_externFunction[$callable_externFunction(p,`` ``TC,`` ``nameIR)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
@@ -12921,22 +12901,13 @@ xref:Call_ok[Typing invocation ``externMethodTypeIR`` ``+<+`` ``typeArgumentIR^{
 . If let ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``:
  .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
  .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
- .. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+ .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+  *** Let ``typeArgumentIR~inferred~`` be xref:subst_typeIR[``typeArgumentIR`` substituted by ``inference``].
 --
 +
-for each ``typeId`` in ``typeId^{asterisk}^``
- .. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
- .. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
- .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -12946,8 +12917,8 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
  .. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
- .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+ .. Let ``B`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+ .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``B``].
  .. Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
  .. Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
@@ -12956,22 +12927,13 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
  .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
  .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
- .. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+ .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId`` in map ``inference``].
+  *** Let ``typeArgumentIR~inferred~`` be xref:subst_typeIR[``typeArgumentIR`` substituted by ``inference``].
 --
 +
-for each ``typeId`` in ``typeId^{asterisk}^``
- .. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
- .. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
- .. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
  .. Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -12981,8 +12943,8 @@ for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
 for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``
  .. Let ``typeIR~ret_inferred~`` be xref:subst_typeIR[``typeIR~ret~`` substituted by ``inference``].
  .. Let ``externMethodTypeIR~inferred~`` be ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+(+`` ``parameterIR~aligned_inferred~^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret_inferred~``.
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
- .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``bound``].
+ .. Let ``B`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
+ .. Check that xref:CallableType_wf[``externMethodTypeIR~inferred~`` is a well-formed callable type, with bound type variables ``B``].
  .. Check that ``xref:callable_externMethod[$callable_externMethod(p,`` ``TC)]``.
  .. Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned_inferred~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
@@ -13022,18 +12984,12 @@ xref:ConstructorType_ok[Finding type of constructor call ``prefixedNameIR`` ``+<
 . If ``·`` is equal to xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``]:
  .. Let ``callableId`` ``+:+`` ``constructorTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_overloaded_t[the overloaded constructor definition of ``prefixedNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``TC``].
  .. Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be xref:specialize_constructorTypeDefIR[``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``].
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
- .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
- .. Check that xref:ConstructorType_wf[``constructorTypeIR`` is a well-formed constructor type, with bound type variables ``B``].
  .. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 . Let ``typeDefIR'^?^`` be xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``].
 . If let ``typeDefIR`` be ``typeDefIR'^?^``:
  .. Check that ``typeDefIR`` does not have type ``typedefTypeIR``.
  .. Let ``callableId`` ``+:+`` ``constructorTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_overloaded_t[the overloaded constructor definition of ``prefixedNameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``TC``].
  .. Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be xref:specialize_constructorTypeDefIR[``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``].
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
- .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
- .. Check that xref:ConstructorType_wf[``constructorTypeIR`` is a well-formed constructor type, with bound type variables ``B``].
  .. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 . If ``typeArgumentIR'^{asterisk}^`` is equal to ``·``:
  .. Let ``typeDefIR'`` be xref:option_get[*!*] xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``].
@@ -13042,9 +12998,6 @@ xref:ConstructorType_ok[Finding type of constructor call ``prefixedNameIR`` ``+<
  .. Let ``(`` ``nameIR,`` ``typeArgumentIR^{asterisk}^`` ``)`` be xref:resolve_type_alias[type alias in ``typeIR~alias~`` resolved to aliased name and type arguments].
  .. Let ``callableId`` ``+:+`` ``constructorTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_overloaded_t[the overloaded constructor definition of ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``TC``].
  .. Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be xref:specialize_constructorTypeDefIR[``constructorTypeDefIR`` specialized by ``typeArgumentIR^{asterisk}^``].
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
- .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
- .. Check that xref:ConstructorType_wf[``constructorTypeIR`` is a well-formed constructor type, with bound type variables ``B``].
  .. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 
 xref:Inst_ok[Inst_ok]:
@@ -13057,22 +13010,13 @@ xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR
 . Let ``+CONSTRUCTOR+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~object~`` be ``constructorTypeIR``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``inference`` be ``xref:infer[$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Let ``typeIR^?^^{asterisk}^`` be the list obtained by repeating:
+. Let ``typeArgumentIR~inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``typeIR^?^`` be xref:find_map[the value of ``typeId~infer~`` in map ``inference``].
+ ** Let ``typeArgumentIR~inferred~`` be xref:subst_typeIR[``typeArgumentIR`` substituted by ``inference``].
 --
 +
-for each ``typeId~infer~`` in ``typeId~infer~^{asterisk}^``
-. Check that ``typeIR^?^`` is defined, for all ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``.
-. Let ``typeIR~inferred~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``typeIR~inferred~`` be ``typeIR^?^``.
---
-+
-for each ``typeIR^?^`` in ``typeIR^?^^{asterisk}^``
-. Let ``typeArgumentIR~inferred~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeIR~inferred~^{asterisk}^``.
+for each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``
 . Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -13860,9 +13804,10 @@ xref:InstDecl_non_objectInitializer_ok[Typing ``annotationList`` ``prefixedTypeN
 . Let ``constructorTargetIR`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+``.
 . Let ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:ConstructorType_ok[finding type of constructor call ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC~0~``].
+. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
 . Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
 . Let constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC~0~``, and ``+NAMED+`` instantiation site context].
+* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC~0~``, and ``+NAMED+`` instantiation site context].
 . Let ``nameIR`` be xref:name[the name of ``name``].
 . Let ``TC~1~`` be xref:add_var_t[``TC~0~`` where ``nameIR`` to ``+`EMPTY+`` ``typeIR~object~`` ``+CTK+`` ``·`` is added to the ``p`` layer].
 . Let ``constructorTargetIR~inferred~`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR~inferred~^{asterisk}^`` ``+>+``.
@@ -13967,9 +13912,10 @@ xref:InstDecl_objectInitializer_ok[Typing ``annotationList`` ``prefixedTypeName`
 . Let ``constructorTargetIR`` be ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+``.
 . Let ``constructorTypeIR`` with fresh type variables ``typeId~inserted~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:ConstructorType_ok[finding type of constructor call ``constructorTargetIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC~0~``].
+. Let ``typeArgumentIR~infer~^{asterisk}^`` be ``typeArgumentIR^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
 . Let ``typeId~infer~^{asterisk}^`` be ``typeId~impl~^{asterisk}^`` concatenated with ``typeId~inserted~^{asterisk}^``.
 . Let constructed type ``typeIR~object~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^`` be
-* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC~0~``, and ``+NAMED+`` instantiation site context].
+* the result of xref:Inst_ok[typing instantiation ``constructorTypeIR`` ``+<+`` ``typeArgumentIR~infer~^{asterisk}^`` ``+>+`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC~0~``, and ``+NAMED+`` instantiation site context].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~object~`` with typedefs unrolled].
 . Check that ``typeIR`` has type ``externObjectTypeIR``.
 . Let ``+EXTERN+`` ``typeId~extern~`` ``+<+`` ``typeIR~arg~^{asterisk}^`` ``+>+`` ``externMethodTypeDefEnv~extern~`` be ``typeIR``.
@@ -14767,18 +14713,23 @@ xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}
  .. Let ``constraint~pre_2~`` be ``xref:merge_constraints[$merge_constraints(constraint~pre_1~,`` ``constraint~post_t~^{asterisk}^)]``.
  .. Return ``constraint~pre_2~``.
 
-xref:resolve_constraint[$resolve_constraint(+{+ ( typeId +:+ infer )^{asterisk}^ +}+)]
+xref:resolve_constraint[$resolve_constraint(set<pair<typeId, infer>>)]
 
 
-. Check that ``infer`` matches pattern ``+KNOWN+`` ``+AS+`` ``%``, for all ``infer`` in ``infer^{asterisk}^``.
-. Let ``typeIR^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``+KNOWN+`` ``+AS+`` ``typeIR`` be ``infer``.
---
-+
-for each ``infer`` in ``infer^{asterisk}^``
-. Return ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR`` ``)^{asterisk}^`` ``+}+``.
+. If ``set<pair<typeId,`` ``infer>>`` is equal to ``+{+`` ``·`` ``+}+``:
+ .. Return ``+{+`` ``·`` ``+}+``.
+. Let ``+{+`` ``pair<typeId,`` ``infer>^{asterisk}^`` ``+}+`` be ``set<pair<typeId,`` ``infer>>``.
+. If let ``typeId~h~`` ``+:+`` ``infer~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` be ``pair<typeId,`` ``infer>^{asterisk}^``:
+ .. If let ``+KNOWN+`` ``+AS+`` ``typeIR~h~`` be ``infer~h~``:
+  ... Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.
+  ... Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.
+  ... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.
+  ... Return ``+{+`` ``typeId~h~`` ``+:+`` ``typeIR~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.
+  ... Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.
+  ... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.
+  ... Return ``+{+`` ``typeId~h~`` ``+:+`` ``+BOOL+`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
 
 xref:resolve_type_alias[Type alias in ``typeIR`` resolved to aliased name and type arguments]
 
