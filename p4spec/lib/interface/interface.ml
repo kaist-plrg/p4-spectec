@@ -84,6 +84,7 @@ module P4 = struct
       | SL spec_sl ->
           let henv = P4.Unparse.hints_of_spec_sl spec_sl in
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
+      | ML -> assert false
       | Empty -> assert false
     in
     unparser := printer

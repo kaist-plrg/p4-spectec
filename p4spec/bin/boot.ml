@@ -62,8 +62,12 @@ let run_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and relname = flag "-rel" (required string) ~doc:"relation to run"
-     and path_spectec = flag "-tec" (required string) ~doc:"SpecTec program"
+     and relname =
+       flag "-rel" (optional string) ~doc:"relation to run (with -tec)"
+     and path_spectec =
+       flag "-tec" (optional string) ~doc:"SpecTec program (with -rel)"
+     and funcname =
+       flag "-func" (optional string) ~doc:"spec function to call directly"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
      and guard =
@@ -121,12 +125,27 @@ let run_command =
          in
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec;
-         let result = Runner.Interp.eval_program relname [] path_spectec in
+         let output =
+           match (funcname, relname, path_spectec) with
+           | Some fname, None, None -> (
+               match Runner.Interp.eval_func fname [] [] with
+               | Pass value ->
+                   Format.sprintf "result: %s" (Runtime.Value.to_string value)
+               | Fail (_, msg) -> Format.sprintf "runtime error: %s" msg)
+           | None, Some rname, Some path -> (
+               match Runner.Interp.eval_program rname [] path with
+               | Pass _ -> "passed"
+               | Fail (`Syntax (_, msg)) ->
+                   Format.sprintf "syntax error: %s" msg
+               | Fail (`Runtime (_, msg)) ->
+                   Format.sprintf "runtime error: %s" msg)
+           | _ ->
+               raise
+                 (CommandError
+                    "provide either -func NAME or both -rel NAME -tec PATH")
+         in
          Inst.Hook.finish ();
-         match result with
-         | Pass _ -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+         Format.printf "%s\n" output
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
@@ -242,6 +261,18 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
+let compile_command =
+  Core.Command.basic ~summary:"compile a SpecTec spec to a native OCaml module"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and path_out = flag "-o" (required string) ~doc:"output .ml file path" in
+     fun () ->
+       try Pass.compile paths_spec path_out
+       with
+       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
+
 (* Command-line interface *)
 
 let command_core =
@@ -259,6 +290,8 @@ let command_core =
       ("boot-n", boot_n_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
+      (* Compilation *)
+      ("compile", compile_command);
     ]
 
 let () = Command_unix.run ~version command_core

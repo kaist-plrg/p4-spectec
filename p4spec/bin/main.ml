@@ -784,6 +784,18 @@ let unparse_json_value_command =
        | Yojson.Json_error msg -> Format.printf "JSON parsing error: %s\n" msg
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
+let ocaml_command =
+  Core.Command.basic ~summary:"compile the P4 spec to a native OCaml module"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and path_out = flag "-o" (required string) ~doc:"output .ml file path" in
+     fun () ->
+       try Pass.compile paths_spec path_out with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
 let command =
   Core.Command.group
     ~summary:"p4spectec: a language design framework for the p4_16 language"
@@ -810,6 +822,8 @@ let command =
       ("json-ast", json_ast_command);
       ("p4-program-value-json", p4_program_value_json_command);
       ("unparse-json-value", unparse_json_value_command);
+      (* OCaml backend *)
+      ("ocaml", ocaml_command);
     ]
 
 let () = Command_unix.run ~version command

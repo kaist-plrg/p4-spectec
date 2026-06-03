@@ -1,6 +1,7 @@
 module Elaborate = Elaborate
 module Structure = Structure
 module Prose = Prose
+module Compile = Compile
 
 (* Shortcuts *)
 
@@ -30,3 +31,8 @@ let structure ~(final : bool) paths_spec =
 
 let prosify paths_spec =
   paths_spec |> structure ~final:false |> Prose.Prosify.prosify_spec
+
+(* Compilation *)
+
+let compile paths_spec path_out =
+  paths_spec |> structure ~final:true |> Compile.Codegen.compile_spec path_out

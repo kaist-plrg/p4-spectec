@@ -31,6 +31,7 @@ let build ?(cache = true) ?(det = false) ?(guard = false)
     | SL_mode ->
         let spec_sl = Pass.structure ~final paths_spec in
         (SL spec_sl : Sim.spec)
+    | ML_mode -> (ML : Sim.spec)
     | Empty_mode -> assert false
   in
   let (module Simulator) =

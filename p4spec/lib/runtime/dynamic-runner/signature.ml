@@ -5,8 +5,8 @@ open Util.Source
 
 (* Module signatures for interpreter-extern interaction *)
 
-type mode = IL_mode | SL_mode | Empty_mode
-type spec = IL of Il.spec | SL of Sl.spec | Empty
+type mode = IL_mode | SL_mode | ML_mode | Empty_mode
+type spec = IL of Il.spec | SL of Sl.spec | ML | Empty
 
 (* Result types *)
 
@@ -107,6 +107,14 @@ module type INTERP_SL = sig
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> guard:bool -> Sl.spec -> unit
+end
+
+module type INTERP_ML = sig
+  include INTERP
+
+  (* Initialization — no spec arg: compiled code is already linked in *)
+
+  val init : cache:bool -> det:bool -> guard:bool -> unit -> unit
 end
 
 (* Runner for SpecTec, which glues together the interface, the extern, and the interpreter *)

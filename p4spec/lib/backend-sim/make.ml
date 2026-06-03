@@ -34,6 +34,7 @@ module Make
         (match mode_ with
         | IL_mode -> Interp_IL.eval_func name typs values
         | SL_mode -> Interp_SL.eval_func name typs values
+        | ML_mode -> Interp_SL.eval_func name typs values
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
@@ -43,6 +44,7 @@ module Make
         (match mode_ with
         | IL_mode -> Interp_IL.eval_rel name values
         | SL_mode -> Interp_SL.eval_rel name values
+        | ML_mode -> Interp_SL.eval_rel name values
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
@@ -52,6 +54,7 @@ module Make
         (match mode_ with
         | IL_mode -> Interp_IL.eval_program relname includes path
         | SL_mode -> Interp_SL.eval_program relname includes path
+        | ML_mode -> Interp_SL.eval_program relname includes path
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
@@ -77,7 +80,8 @@ module Make
 
   include (
     Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_IL)
-      (MakeInterp_SL) :
+      (MakeInterp_SL)
+      (Backend_ocaml.Spec_compiled.Make) :
         RUNNER)
 
   (* Logger *)

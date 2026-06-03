@@ -16,7 +16,12 @@ module Make_rec
       (Interface : INTERFACE)
       (Extern : EXTERN)
       ()
-      -> INTERP_SL) : RUNNER = struct
+      -> INTERP_SL)
+    (MakeInterp_ML : functor
+      (Interface : INTERFACE)
+      (Extern : EXTERN)
+      ()
+      -> INTERP_ML) : RUNNER = struct
   module Interface = Interface
 
   (* Recursive instantiations *)
@@ -33,6 +38,10 @@ module Make_rec
     include MakeInterp_SL (Interface) (Extern) ()
   end
 
+  and Interp_ML : INTERP_ML = struct
+    include MakeInterp_ML (Interface) (Extern) ()
+  end
+
   (* Shared state *)
 
   let mode : mode ref = ref Empty_mode
@@ -46,12 +55,14 @@ module Make_rec
       match !mode with
       | IL_mode -> Interp_IL.eval_program relname includes path
       | SL_mode -> Interp_SL.eval_program relname includes path
+      | ML_mode -> Interp_ML.eval_program relname includes path
       | Empty_mode -> assert false
 
     let eval_rel (relname : string) (values : Value.t list) : rel_result =
       match !mode with
       | IL_mode -> Interp_IL.eval_rel relname values
       | SL_mode -> Interp_SL.eval_rel relname values
+      | ML_mode -> Interp_ML.eval_rel relname values
       | Empty_mode -> assert false
 
     let eval_func (funcname : string) (typs : Typ.t list)
@@ -59,6 +70,7 @@ module Make_rec
       match !mode with
       | IL_mode -> Interp_IL.eval_func funcname typs values
       | SL_mode -> Interp_SL.eval_func funcname typs values
+      | ML_mode -> Interp_ML.eval_func funcname typs values
       | Empty_mode -> assert false
 
     (* Cache management *)
@@ -66,11 +78,13 @@ module Make_rec
     module Cache = struct
       let cache_on () =
         Interp_IL.Cache.cache_on ();
-        Interp_SL.Cache.cache_on ()
+        Interp_SL.Cache.cache_on ();
+        Interp_ML.Cache.cache_on ()
 
       let cache_off () =
         Interp_IL.Cache.cache_off ();
-        Interp_SL.Cache.cache_off ()
+        Interp_SL.Cache.cache_off ();
+        Interp_ML.Cache.cache_off ()
     end
 
     (* Clear the cache *)
@@ -78,6 +92,7 @@ module Make_rec
     let clear () : unit =
       Interp_IL.clear ();
       Interp_SL.clear ();
+      Interp_ML.clear ();
       Extern.clear ()
   end
 
@@ -93,6 +108,9 @@ module Make_rec
     | SL spec_sl ->
         init_mode SL_mode;
         Interp_SL.init ~cache ~det ~guard spec_sl
+    | ML ->
+        init_mode ML_mode;
+        Interp_ML.init ~cache ~det ~guard ()
     | Empty -> assert false);
     Extern.init_mode !mode
 
@@ -105,11 +123,13 @@ module Make_rec
   module Cache = struct
     let cache_on () =
       Interp_IL.Cache.cache_on ();
-      Interp_SL.Cache.cache_on ()
+      Interp_SL.Cache.cache_on ();
+      Interp_ML.Cache.cache_on ()
 
     let cache_off () =
       Interp_IL.Cache.cache_off ();
-      Interp_SL.Cache.cache_off ()
+      Interp_SL.Cache.cache_off ();
+      Interp_ML.Cache.cache_off ()
   end
 end
 
@@ -128,7 +148,12 @@ module Make_nonrec
       (Interface : INTERFACE)
       (Extern : EXTERN)
       ()
-      -> INTERP_SL) : RUNNER = struct
+      -> INTERP_SL)
+    (MakeInterp_ML : functor
+      (Interface : INTERFACE)
+      (Extern : EXTERN)
+      ()
+      -> INTERP_ML) : RUNNER = struct
   module Interface = Interface
 
   (* Sequential instantiations: Extern is independent of the interpreters *)
@@ -136,6 +161,7 @@ module Make_nonrec
   module Extern : EXTERN = MakeExtern ()
   module Interp_IL : INTERP_IL = MakeInterp_IL (Interface) (Extern) ()
   module Interp_SL : INTERP_SL = MakeInterp_SL (Interface) (Extern) ()
+  module Interp_ML : INTERP_ML = MakeInterp_ML (Interface) (Extern) ()
 
   (* Shared state *)
 
@@ -150,12 +176,14 @@ module Make_nonrec
       match !mode with
       | IL_mode -> Interp_IL.eval_program relname includes path
       | SL_mode -> Interp_SL.eval_program relname includes path
+      | ML_mode -> Interp_ML.eval_program relname includes path
       | Empty_mode -> assert false
 
     let eval_rel (relname : string) (values : Value.t list) : rel_result =
       match !mode with
       | IL_mode -> Interp_IL.eval_rel relname values
       | SL_mode -> Interp_SL.eval_rel relname values
+      | ML_mode -> Interp_ML.eval_rel relname values
       | Empty_mode -> assert false
 
     let eval_func (funcname : string) (typs : Typ.t list)
@@ -163,6 +191,7 @@ module Make_nonrec
       match !mode with
       | IL_mode -> Interp_IL.eval_func funcname typs values
       | SL_mode -> Interp_SL.eval_func funcname typs values
+      | ML_mode -> Interp_ML.eval_func funcname typs values
       | Empty_mode -> assert false
 
     (* Cache management *)
@@ -170,11 +199,13 @@ module Make_nonrec
     module Cache = struct
       let cache_on () =
         Interp_IL.Cache.cache_on ();
-        Interp_SL.Cache.cache_on ()
+        Interp_SL.Cache.cache_on ();
+        Interp_ML.Cache.cache_on ()
 
       let cache_off () =
         Interp_IL.Cache.cache_off ();
-        Interp_SL.Cache.cache_off ()
+        Interp_SL.Cache.cache_off ();
+        Interp_ML.Cache.cache_off ()
     end
 
     (* Clear the cache *)
@@ -182,6 +213,7 @@ module Make_nonrec
     let clear () : unit =
       Interp_IL.clear ();
       Interp_SL.clear ();
+      Interp_ML.clear ();
       Extern.clear ()
   end
 
@@ -197,6 +229,9 @@ module Make_nonrec
     | SL spec_sl ->
         init_mode SL_mode;
         Interp_SL.init ~cache ~det ~guard spec_sl
+    | ML ->
+        init_mode ML_mode;
+        Interp_ML.init ~cache ~det ~guard ()
     | Empty -> assert false);
     Extern.init_mode !mode
 
@@ -209,10 +244,12 @@ module Make_nonrec
   module Cache = struct
     let cache_on () =
       Interp_IL.Cache.cache_on ();
-      Interp_SL.Cache.cache_on ()
+      Interp_SL.Cache.cache_on ();
+      Interp_ML.Cache.cache_on ()
 
     let cache_off () =
       Interp_IL.Cache.cache_off ();
-      Interp_SL.Cache.cache_off ()
+      Interp_SL.Cache.cache_off ();
+      Interp_ML.Cache.cache_off ()
   end
 end

@@ -15,14 +15,16 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
                   (Interface_SpecTec)
                   (Spectec.Make_null (Interface_SpecTec))
                   (Interp_il.Interp.Make)
-                  (Interp_sl.Interp.Make) : Run.RUNNER)
+                  (Interp_sl.Interp.Make)
+                  (Backend_ocaml.Spec_compiled.Make) : Run.RUNNER)
     | SL_interface ->
         let module Interface_SpecTec = Interface.SpecTec_SL in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
                   (Spectec.Make_null (Interface_SpecTec))
                   (Interp_il.Interp.Make)
-                  (Interp_sl.Interp.Make) : Run.RUNNER)
+                  (Interp_sl.Interp.Make)
+                  (Backend_ocaml.Spec_compiled.Make) : Run.RUNNER)
   in
   (* Initialize the target runner, as an SL spec *)
   let spec =
@@ -47,7 +49,8 @@ let build_interm ?(cache = true) ?(det = false) ?(guard = false)
               (Interface_SpecTec)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
               (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_sl.Interp.Make)
+              (Backend_ocaml.Spec_compiled.Make) : Run.RUNNER)
   in
   (* Initialize the runner, as an SL spec *)
   let spec =
@@ -73,7 +76,8 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
               (Interface_SpecTec)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
               (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_sl.Interp.Make)
+              (Backend_ocaml.Spec_compiled.Make) : Run.RUNNER)
   in
   (* Initialize the booter, as mode *)
   let spec =
@@ -84,6 +88,7 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
     | SL_mode ->
         let spec_sl = Pass.structure ~final:true [ level.layer.specdir ] in
         (SL spec_sl : Run.spec)
+    | ML_mode -> (ML : Run.spec)
     | Empty_mode -> assert false
   in
   Booter.init ~cache ~det ~guard spec;
@@ -136,7 +141,8 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
               (Interface_SpecTec)
               (Spectec.Make_null (Interface_SpecTec))
               (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_sl.Interp.Make)
+              (Backend_ocaml.Spec_compiled.Make) : Run.RUNNER)
   in
   let spec =
     match mode with
@@ -146,6 +152,7 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     | SL_mode ->
         let spec_sl = Pass.structure ~final:true paths_spec in
         (SL spec_sl : Run.spec)
+    | ML_mode -> (ML : Run.spec)
     | Empty_mode -> assert false
   in
   Runner.init ~cache ~det ~guard spec;

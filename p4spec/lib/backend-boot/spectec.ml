@@ -45,6 +45,7 @@ module Make_null
       (match mode_ with
       | Run.IL_mode -> Interp_IL.eval_func name typs values
       | Run.SL_mode -> Interp_SL.eval_func name typs values
+      | Run.ML_mode -> Interp_SL.eval_func name typs values
       | Run.Empty_mode -> assert false)
       |> function
       | Pass value -> value

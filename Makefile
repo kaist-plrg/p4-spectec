@@ -1,14 +1,30 @@
 SPEC = p4spectec
 BOOT = spectec-boot
+COMP = p4spectec-comp
 
 # Compile
 
-.PHONY: build stat perf spec-test
+.PHONY: build stat perf spec-test ensure-spec-compiled restore-stub build-compiled
+
+# Executables
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 EXEBOOT = p4spec/_build/default/bin/boot.exe
+EXECOMP = p4spec/_build/default/bin/comp.exe
 
-build:
+# Compiled spec paths
+
+SPEC_COMPILED      = p4spec/lib/backend-ocaml/spec_compiled.ml
+SPEC_COMPILED_STUB = p4spec/lib/backend-ocaml/spec_compiled_stub.ml
+
+# Restore the compiled spec to a stub version
+
+restore-stub:
+	cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
+
+# Build EXESPEC
+
+build: restore-stub
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	opam switch 5.1.0
@@ -16,13 +32,42 @@ build:
 	ln -f $(EXESPEC) ./$(SPEC)
 	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
-boot:
+# Build EXEBOOT
+
+boot: restore-stub
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
 	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
-release:
+# Build SPEC_COMPILED
+
+SPEC_PATHS ?= spec
+
+ifeq ($(firstword $(MAKECMDGOALS)),gen-ocaml)
+_gen_ocaml_paths := $(or $(filter-out gen-ocaml,$(MAKECMDGOALS)),$(SPEC_PATHS))
+$(filter-out gen-ocaml,$(MAKECMDGOALS)):
+	@:
+else
+_gen_ocaml_paths := $(SPEC_PATHS)
+endif
+
+gen-ocaml: restore-stub
+	./$(SPEC) ocaml $(_gen_ocaml_paths) -o $(SPEC_COMPILED)
+
+# Build EXECOMP with SPEC_COMPILED
+
+ensure-spec-compiled:
+	@test -f $(SPEC_COMPILED) || cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
+
+build-compiled: ensure-spec-compiled
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/comp.exe && echo
+	ln -f $(EXECOMP) ./$(COMP)
+
+# Release build for EXESPEC and EXEBOOT
+
+release: restore-stub
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	opam switch 5.1.0

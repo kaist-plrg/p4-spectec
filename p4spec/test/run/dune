@@ -55,6 +55,15 @@
     (diff run_neg_sl.expected run_neg_sl.actual)))))
 
 (rule
+ (alias run-sl-mono)
+ (action
+  (progn
+   (ignore-outputs
+    (diff run_pos_sl.expected run_pos_sl_mono.actual))
+   (ignore-outputs
+    (diff run_neg_sl.expected run_neg_sl_mono.actual)))))
+
+(rule
  (alias run-det)
  (action
   (progn
@@ -165,6 +174,55 @@
      ./test.exe
      run
      -sl
+     -s
+     ../../../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+;; Rules to generate outputs (sl with -mono)
+
+(rule
+ (target run_pos_sl_mono.actual)
+ (action
+  (with-stdout-to
+   run_pos_sl_mono.actual
+   (with-stderr-to
+    run_pos_sl_mono.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -mono
+     -s
+     ../../../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target run_neg_sl_mono.actual)
+ (action
+  (with-stdout-to
+   run_neg_sl_mono.actual
+   (with-stderr-to
+    run_neg_sl_mono.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -mono
      -s
      ../../../../../spec
      -rel

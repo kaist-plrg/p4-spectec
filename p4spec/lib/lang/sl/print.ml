@@ -195,7 +195,7 @@ and string_of_dangle iid = Format.asprintf "Dangling#%d" iid
 (* Case analysis *)
 
 and string_of_case ?(level = 0) ?(index = 0) case =
-  let indent = String.make (level * 2) ' ' in
+  let indent = Util.Print.indent level in
   let order = Format.asprintf "%s%d. " indent index in
   let guard, block = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
@@ -218,7 +218,7 @@ and string_of_guard guard =
 (* Instructions *)
 
 and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
-  let indent = String.make (level * 2) ' ' in
+  let indent = Util.Print.indent level in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.it with
   | IfI (exp_cond, iterexps, block, dangle) ->
@@ -333,9 +333,7 @@ and string_of_block ?(level = 0) ?(index = 0) block =
   |> String.concat "\n\n"
 
 and string_of_elseblock ?(level = 0) ?(index = 0) elseblock =
-  Format.asprintf "%s%d. Otherwise,\n\n%s"
-    (String.make (level * 2) ' ')
-    (index + 1)
+  Format.asprintf "%s%d. Otherwise,\n\n%s" (Util.Print.indent level) (index + 1)
     (string_of_block ~level:(level + 1) elseblock)
 
 and string_of_elseblock_opt ?(level = 0) ?(index = 0) elseblock_opt =

@@ -13,6 +13,7 @@ module Make () : RUNNER = struct
         (match mode_ with
         | IL_mode -> Interp_IL.eval_func name typs values
         | SL_mode -> Interp_SL.eval_func name typs values
+        | ML_mode -> Interp_SL.eval_func name typs values
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
@@ -22,6 +23,7 @@ module Make () : RUNNER = struct
         (match mode_ with
         | IL_mode -> Interp_IL.eval_rel name values
         | SL_mode -> Interp_SL.eval_rel name values
+        | ML_mode -> Interp_SL.eval_rel name values
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
@@ -31,6 +33,7 @@ module Make () : RUNNER = struct
         (match mode_ with
         | IL_mode -> Interp_IL.eval_program relname includes filename
         | SL_mode -> Interp_SL.eval_program relname includes filename
+        | ML_mode -> Interp_SL.eval_program relname includes filename
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
@@ -56,6 +59,7 @@ module Make () : RUNNER = struct
 
   include (
     Runner.Make.Make_rec (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
-      (Interp_sl.Interp.Make) :
+      (Interp_sl.Interp.Make)
+      (Backend_ocaml.Spec_compiled.Make) :
         RUNNER)
 end
