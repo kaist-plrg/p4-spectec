@@ -2,8 +2,6 @@
 
 let header =
   {|
-module Run = Runtime.Dynamic_Runner.Signature
-
 module Make
     (Interface : Run.INTERFACE)
     (Extern : Run.EXTERN)
@@ -21,7 +19,10 @@ module Make
 
 let footer =
   {|
-  let eval_rel (_name : string) (_args : Runtime.Value.t list) : Run.rel_result =
+  let eval_func (_name : string) (_targs : Typ.t list) (_args : Value.t list) : Run.func_result =
+    Fail (no_region, "ML interpreter: eval_func dispatch not yet wired (Phase 7)")
+
+  let eval_rel (_name : string) (_args : Value.t list) : Run.rel_result =
     Fail (no_region, "ML interpreter: eval_rel dispatch not yet wired (Phase 7)")
 
   let eval_program (_relname : string) (_includes : string list)

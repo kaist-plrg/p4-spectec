@@ -1,4 +1,3 @@
-open Domain
 open Lang
 open Util.Source
 
@@ -36,13 +35,13 @@ and compile_var_typ ~(tparams : string list) (id : Sl.id) (targs : Sl.targ list)
     : Ml.Ast.typ =
   match targs with
   | [] when List.mem id.it tparams ->
-      let id_ml = Ml.Names.tvar id.it in
+      let id_ml = Names.tvar id.it in
       Ml.Ast.VarT id_ml
   | [] when not (List.mem id.it tparams) ->
-      let id_ml = Ml.Names.var id.it in
+      let id_ml = Names.var id.it in
       Ml.Ast.NameT id_ml
   | _ ->
-      let id_ml = Ml.Names.var id.it in
+      let id_ml = Names.var id.it in
       let targs_ml = compile_typs ~tparams targs in
       Ml.Ast.AppT (id_ml, targs_ml)
 
@@ -71,12 +70,12 @@ and compile_func_typ : Ml.Ast.typ = Ml.Ast.UnitT
 
 (* Compiling deftyps *)
 
-let rec compile_deftyp ~(tparams : string list) (id_parent : Sl.id)
-    (deftyp : Sl.deftyp) : Ml.Ast.deftyp =
+let rec compile_deftyp ~(tparams : string list) (deftyp : Sl.deftyp) :
+    Ml.Ast.deftyp =
   match deftyp.it with
   | Il.PlainT typ -> compile_alias_deftyp ~tparams typ
   | Il.StructT typfields -> compile_struct_deftyp ~tparams typfields
-  | Il.VariantT typcases -> compile_variant_deftyp ~tparams id_parent typcases
+  | Il.VariantT typcases -> compile_variant_deftyp ~tparams typcases
 
 (* Compiling alias deftyps *)
 
@@ -90,9 +89,7 @@ and compile_alias_deftyp ~(tparams : string list) (typ : Sl.typ) : Ml.Ast.deftyp
 and compile_typfield ~(tparams : string list) (typfield : Sl.typfield) :
     Ml.Ast.typfield =
   let atom, typ = typfield in
-  let field_ml =
-    Ml.Names.escape_keyword (Ml.Names.to_snake_case (Atom.ctor_of_atom atom.it))
-  in
+  let field_ml = Names.field atom in
   let typ_ml = compile_typ ~tparams typ in
   (field_ml, typ_ml)
 
@@ -117,17 +114,14 @@ and is_unique_variant (typcases_all : Sl.typcase list) (id : Sl.id) =
   in
   count = 1
 
-and compile_typcase ~(tparams : string list) (id_parent : Sl.id)
-    (typcases_all : Sl.typcase list) (typcase : Sl.typcase) : Ml.Ast.typcase =
+and compile_typcase ~(tparams : string list) (typcases_all : Sl.typcase list)
+    (typcase : Sl.typcase) : Ml.Ast.typcase =
   let nottyp, typorigin, _ = typcase in
   let id_origin, _ = typorigin.it in
   let ctor_ml =
     if is_unique_variant typcases_all id_origin then
       String.capitalize_ascii id_origin.it
-    else
-      Ml.Names.ctor_of_nottyp
-        ~fallback:(String.capitalize_ascii id_parent.it)
-        nottyp
+    else Names.ctor nottyp
   in
   let typs_arg = Domain.Mixfix.args nottyp.it in
   let typs_ml = compile_typs ~tparams typs_arg in
@@ -145,15 +139,13 @@ and dedup_typcases_ml (typcases_ml : Ml.Ast.typcase list) =
       (ctor_ml, typs_ml))
     typcases_ml
 
-and compile_typcases ~(tparams : string list) (id_parent : Sl.id)
-    (typcases : Sl.typcase list) : Ml.Ast.typcase list =
-  typcases
-  |> List.map (compile_typcase ~tparams id_parent typcases)
-  |> dedup_typcases_ml
+and compile_typcases ~(tparams : string list) (typcases : Sl.typcase list) :
+    Ml.Ast.typcase list =
+  typcases |> List.map (compile_typcase ~tparams typcases) |> dedup_typcases_ml
 
-and compile_variant_deftyp ~(tparams : string list) (id_parent : Sl.id)
-    (typcases : Sl.typcase list) : Ml.Ast.deftyp =
-  let typcases_ml = compile_typcases ~tparams id_parent typcases in
+and compile_variant_deftyp ~(tparams : string list) (typcases : Sl.typcase list)
+    : Ml.Ast.deftyp =
+  let typcases_ml = compile_typcases ~tparams typcases in
   Ml.Ast.VariantTD typcases_ml
 
 (* Compiling defs *)
@@ -162,12 +154,12 @@ let compile_def (def : Sl.def) : Ml.Ast.typdef option =
   match def.it with
   | Sl.TypD (id, tparams, deftyp, _) ->
       let tparams = List.map it tparams in
-      let tparams_ml = List.map Ml.Names.var tparams in
-      let id_ml = Ml.Names.var id.it in
-      let deftyp_ml = compile_deftyp ~tparams id deftyp in
+      let tparams_ml = List.map Names.var tparams in
+      let id_ml = Names.var id.it in
+      let deftyp_ml = compile_deftyp ~tparams deftyp in
       Some (tparams_ml, id_ml, deftyp_ml)
   | Sl.ExternTypD (id, _) ->
-      let id_ml = Ml.Names.var id.it in
+      let id_ml = Names.var id.it in
       let deftyp_ml = Ml.Ast.AliasTD Ml.Ast.UnitT in
       Some ([], id_ml, deftyp_ml)
   | _ -> None

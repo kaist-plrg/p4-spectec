@@ -5,28 +5,24 @@ let prelude =
 
 [@@@warning "-8-11-26-27-30-32-33-39"]
 
+open Domain
+module Value = Runtime.Value
+module Typ = Runtime.Type.Typ
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Source
 
 exception Unmatch of string
 
-let make_typ_var_ (s : string) (targs_ : Runtime.Type.Typ.t list) : Runtime.Type.Typ.t =
-  Runtime.Type.Typ.Make.var {it = s; at = no_region; note = ()} targs_
+let make_typ_var_ (s : string) (targs_ : Typ.t list) : Typ.t =
+  Typ.Make.var {it = s; at = no_region; note = ()} targs_
 
-let parse_mixop_ (s : string) : Domain.Mixop.t =
-  Frontend.Parse.parse_mixop s
-
-let make_atom_ (s : string) : Domain.Atom.t phrase =
-  {it = Domain.Atom.Atom s; at = no_region; note = ()}
+let make_atom_ (s : string) : Atom.t phrase =
+  {it = Atom.Atom s; at = no_region; note = ()}
 
 let make_case_
-    (mixop : Domain.Mixop.t)
-    (payload : Runtime.Value.t list)
-    (typ : Runtime.Type.Typ.t) : Runtime.Value.t =
-  Runtime.Value.Make.(mixop <|! payload <<|! typ)
-
-let get_field_
-    (fields : (Domain.Atom.t phrase * Runtime.Value.t) list)
-    (name : string) : Runtime.Value.t =
-  snd (List.find (fun (a_, _) -> Domain.Atom.eq a_.it (Domain.Atom.Atom name)) fields)
+    (mixop : Mixop.t)
+    (payload : Value.t list)
+    (typ : Typ.t) : Value.t =
+  Value.Make.(mixop <|! payload <<|! typ)
 
 |}

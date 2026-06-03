@@ -1,34 +1,24 @@
 open Lang
-open Util.Source
 
 let compile_spec (path_out : string) (spec : Sl.spec) =
-  let spec_sl, dispatch_table = Mono.monomorphize spec in
-  (* Add non-poly builtins/externs to dispatch_table *)
-  List.iter
-    (fun def ->
-      match def.it with
-      | Sl.BuiltinDecD (id, [], _, _, _)
-        when not (Hashtbl.mem dispatch_table id.it) ->
-          Hashtbl.replace dispatch_table id.it
-            {
-              Mono.original_name = id.it;
-              concrete_targs = [];
-              kind = Mono.Builtin;
-            }
-      | Sl.ExternDecD (id, [], _, _, _)
-        when not (Hashtbl.mem dispatch_table id.it) ->
-          Hashtbl.replace dispatch_table id.it
-            {
-              Mono.original_name = id.it;
-              concrete_targs = [];
-              kind = Mono.Extern;
-            }
-      | _ -> ())
-    spec_sl;
-  let _env = Gen.Env.make_env () in
-  let type_defs = Gen.Type.compile_defs spec_sl in
-  let ml_file : Ml.Ast.file = [ Ml.Ast.TypeRec type_defs ] in
-  let out_str = Ml.Print.print_file ml_file in
+  let spec_sl, _dispatch_table = Mono.monomorphize spec in
+  let _ctx = Gen.Ctx.init () in
+  (* Prelude *)
+  let toplevel_prelude_ml = Ml.Ast.Raw Prelude.prelude in
+  (* Type definitions *)
+  let toplevel_typdefs_ml =
+    let typdefs_ml = Gen.Type.compile_defs spec_sl in
+    Ml.Ast.TypeRec typdefs_ml
+  in
+  (* Functor *)
+  let toplevel_functor_ml =
+    [ Ml.Ast.Raw Functor.header; Ml.Ast.Raw Functor.footer ]
+  in
+  (* Assemble the file *)
+  let file_ml =
+    [ toplevel_prelude_ml; toplevel_typdefs_ml ] @ toplevel_functor_ml
+  in
+  let out_str = Ml.Print.print_file file_ml in
   let oc = open_out path_out in
   output_string oc out_str;
   close_out oc
