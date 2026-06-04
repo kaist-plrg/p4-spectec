@@ -44,26 +44,38 @@ and compile_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr list =
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) exps
 
-(* Boolean expressions *)
+(* Boolean expression: [b]
+
+   [b] *)
 
 and compile_bool_exp (b : bool) : Ml.expr = Ml.BoolE b
 
-(* Numeric expressions *)
+(* Numeric expression: [n]
+
+   [Bigint n] *)
 
 and compile_num_exp (num : Xl.Num.t) : Ml.expr =
   Ml.BigintE (Bigint.to_string (Xl.Num.to_int num))
 
-(* Text expressions *)
+(* Text expression: [s]
+
+   [s] *)
 
 and compile_text_exp (str : string) : Ml.expr = Ml.StrE str
 
-(* Variable expressions *)
+(* Variable expression: [x]
+
+   [ctx[x]] *)
 
 and compile_var_exp (ctx : Ctx.t) (id : id) : Ml.expr =
   let id_ml = Ctx.find_binding ctx (id, []) in
   Ml.VarE id_ml
 
-(* Unary expressions *)
+(* Unary expression: [unop exp]
+
+   not  ->  [not expr]
+   +    ->  [expr]
+   -    ->  [Bigint.neg expr] *)
 
 and compile_unop_exp (ctx : Ctx.t) (unop : unop) (_optyp : optyp) (exp : exp) :
     Ctx.t * Ml.expr =
@@ -76,7 +88,7 @@ and compile_unop_exp (ctx : Ctx.t) (unop : unop) (_optyp : optyp) (exp : exp) :
   in
   (ctx, expr_ml)
 
-(* Binary expressions *)
+(* Binary expressions: [exp_l binop exp_r] *)
 
 and compile_binop_bool (binop : Bool.binop) : string =
   match binop with
@@ -93,6 +105,13 @@ and compile_binop_num (binop : Num.binop) : string =
   | `DivOp -> "Bigint.( / )"
   | `ModOp -> "Bigint.( % )"
   | `PowOp -> assert false
+
+(* Binary expression: [exp_l op exp_r]
+
+   ==>        ->  [(not expr_l) || expr_r]
+   &&, ||, == ->  [expr_l op expr_r]
+   **         ->  [Bigint.( ** ) expr_l (to_int expr_r)]
+   +,-,*,/,%  ->  [Bigint.op expr_l expr_r] *)
 
 and compile_binop_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
     (exp_l : exp) (exp_r : exp) : Ctx.t * Ml.expr =
@@ -115,7 +134,12 @@ and compile_binop_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
   in
   (ctx, expr_ml)
 
-(* Comparison expressions *)
+(* Comparison expression: [exp_l cmpop exp_r]
+
+   bool ==/!=     ->  [expr_l = expr_r] / [expr_l <> expr_r]
+   num ==         ->  [Bigint.equal expr_l expr_r]
+   num !=         ->  [not (Bigint.equal expr_l expr_r)]
+   num </>/<=/>=  ->  [Bigint.op expr_l expr_r] *)
 
 and compile_cmpop_bool (cmpop : Bool.cmpop) : string =
   match cmpop with `EqOp -> "=" | `NeOp -> "<>"
@@ -148,7 +172,9 @@ and compile_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (optyp : optyp) (exp_l : exp)
   in
   (ctx, expr_ml)
 
-(* Upcast expressions *)
+(* Upcast expression: [(T) exp]
+
+   [(expr :> T)] *)
 
 and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
   let ctx, expr_ml = compile_exp ctx exp in
@@ -158,7 +184,11 @@ and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
 
 (* Downcast expressions *)
 
-(* Type variable downcast *)
+(* Type variable downcast: [(T) exp]
+
+   T not variant   ->  [expr]
+   exp : T         ->  [(expr :> T)]
+   exp : S (super) ->  [match (expr : [< T_ctors]) with (`C _ | ...) as v -> v :> T | _ -> raise Unmatch] *)
 
 and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
     (exp : exp) : Ctx.t * Ml.expr =
@@ -201,7 +231,9 @@ and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
                 (Ml.WildP, Common.raise_unmatch "DownCastE: type mismatch");
               ] ) )
 
-(* Tuple downcast *)
+(* Tuple downcast: [(T1,..,Tn) exp]
+
+   [let (x1,..,xn) = expr in (dc(T1,x1), .., dc(Tn,xn))] *)
 
 and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
     Ctx.t * Ml.expr =
@@ -246,7 +278,9 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
   in
   (ctx, expr_ml)
 
-(* Iteration downcast *)
+(* Option downcast: [(T?) exp]
+
+   [Option.map (fun x -> dc(T, x)) expr] *)
 
 and compile_downcast_exp_iter_opt (ctx : Ctx.t) (typ : typ) (exp : exp) :
     Ctx.t * Ml.expr =
@@ -271,6 +305,10 @@ and compile_downcast_exp_iter_opt (ctx : Ctx.t) (typ : typ) (exp : exp) :
   let expr_lambda_ml = Ml.FunE ([ Ml.VarP id_stub_ml ], expr_elem_ml) in
   let expr_ml = Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_ml ]) in
   (ctx, expr_ml)
+
+(* List downcast: [(T* ) exp]
+
+   [List.map (fun x -> dc(T, x)) expr] *)
 
 and compile_downcast_exp_iter_list (ctx : Ctx.t) (typ : typ) (exp : exp) :
     Ctx.t * Ml.expr =
@@ -312,7 +350,9 @@ and compile_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr
 
 (* Subtyping check expressions *)
 
-(* Nat subtype check: [exp <: NumT `NatT] *)
+(* Nat subtype check: [exp <: NumT `NatT]
+
+   [Bigint.( >= ) expr 0] *)
 
 and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
   let ctx, expr_ml = compile_exp ctx exp in
@@ -320,7 +360,11 @@ and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
   let expr_ml = Ml.AppE (Ml.VarE "Bigint.( >= )", [ expr_ml; expr_zero_ml ]) in
   (ctx, expr_ml)
 
-(* Variable subtype check *)
+(* Variable subtype check helper: match against ctors_inter = ctors(T) & ctors(exp)
+
+   match (expr : [< C1 p.. | .. | Cn p..]) with
+   | `Ci pi.. -> sub(pi) && ..
+   | _        -> false *)
 
 and compile_sub_match (ctx : Ctx.t) (exp : exp)
     (ctors_inter : (Ml.ctor * Il.typ list) list) : Ctx.t * Ml.expr =
@@ -378,6 +422,12 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
   in
   (ctx, Ml.MatchE (expr_scrut_ml, arms_ml @ [ (Ml.WildP, Ml.BoolE false) ]))
 
+(* Variable subtype check (non-reflexive): [exp <: VarT T] where exp : S != T
+
+   T not variant            ->  true
+   ctors(S) & ctors(T) = {} ->  false
+   otherwise                ->  compile_sub_match on intersection *)
+
 and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
     (_targs : targ list) : Ctx.t * Ml.expr =
   let ctors_typ = Ctx.find_ctors ctx id in
@@ -397,13 +447,20 @@ and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
     if ctors_inter = [] then (ctx, Ml.BoolE false)
     else compile_sub_match ctx exp ctors_inter
 
+(* Variable subtype check: [exp <: VarT T]
+
+   exp : T  ->  true
+   exp : S  ->  compile_sub_exp_var_irreflexive *)
+
 and compile_sub_exp_var (ctx : Ctx.t) (exp : exp) (id : id) (targs : targ list)
     : Ctx.t * Ml.expr =
   match exp.note with
   | VarT (id', _) when id'.it = id.it -> (ctx, Ml.BoolE true)
   | _ -> compile_sub_exp_var_irreflexive ctx exp id targs
 
-(* Tuple subtype check: [exp <: (typ_1, ..., typ_n)] *)
+(* Tuple subtype check: [exp <: (typ_1, ..., typ_n)]
+
+   [let (x1,..,xn) = expr in sub(x1,T1) && .. && sub(xn,Tn)] *)
 
 and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
     Ctx.t * Ml.expr =
@@ -441,7 +498,9 @@ and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
 
 (* Iteration subtype check *)
 
-(* Option subtype check: [exp <: typ?] *)
+(* Option subtype check: [exp <: typ?]
+
+   [match expr with None -> true | Some x -> sub(x, T)] *)
 
 and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
     =
@@ -457,7 +516,9 @@ and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
       let arm_some = (Ml.OptP (Some (Ml.VarP id_stub_ml)), expr_cond_ml) in
       (ctx_inner, Ml.MatchE (expr_ml, [ arm_none; arm_some ]))
 
-(* List subtype check: [exp <: typ*] *)
+(* List subtype check: [exp <: typ*]
+
+   [List.for_all (fun x -> sub(x, T)) expr] *)
 
 and compile_sub_exp_list (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
     =
@@ -486,7 +547,14 @@ and compile_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr =
   | IterT (typ, iter) -> compile_sub_exp_iter ctx exp typ iter
   | _ -> (ctx, Ml.BoolE true)
 
-(* Match expressions *)
+(* Pattern match expression: [exp matches pattern]
+
+   CaseP op        ->  [match expr with `Ctor _ -> true | _ -> false]
+   ListP Cons      ->  [expr <> []]
+   ListP (Fixed n) ->  [List.length expr = n]
+   ListP Nil       ->  [expr = []]
+   OptP Some       ->  [Option.is_some expr]
+   OptP None       ->  [Option.is_none expr] *)
 
 and compile_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
     Ctx.t * Ml.expr =
@@ -516,14 +584,18 @@ and compile_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
   in
   (ctx, expr_ml)
 
-(* Tuple expressions *)
+(* Tuple expression: [(exp1, .., expn)]
+
+   [(expr1, .., exprn)] *)
 
 and compile_tuple_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
   let ctx, exprs_ml = compile_exps ctx exps in
   let expr_ml = Ml.TupleE exprs_ml in
   (ctx, expr_ml)
 
-(* Case expressions *)
+(* Case expression: [op(exp1, .., expn)]
+
+   [`Ctor(expr1, .., exprn)] *)
 
 and compile_case_exp (ctx : Ctx.t) (typ_exp : typ) (notexp : notexp) :
     Ctx.t * Ml.expr =
@@ -533,7 +605,9 @@ and compile_case_exp (ctx : Ctx.t) (typ_exp : typ) (notexp : notexp) :
   let expr_ml = Ml.VariantE (ctor_ml, exprs_ml) in
   (ctx, expr_ml)
 
-(* Record expressions *)
+(* Record expression: [{a1=exp1, .., an=expn}]
+
+   [({field1=expr1; ..; fieldn=exprn} : T)] *)
 
 and compile_str_exp (ctx : Ctx.t) (typ_exp : typ)
     (expfields : (atom * exp) list) : Ctx.t * Ml.expr =
@@ -551,7 +625,10 @@ and compile_str_exp (ctx : Ctx.t) (typ_exp : typ)
   let expr_ml = Ml.AnnotE (expr_ml, typ_ml) in
   (ctx, expr_ml)
 
-(* Option expressions *)
+(* Option expression: [exp?]
+
+   None    ->  [None]
+   Some e  ->  [Some expr] *)
 
 and compile_opt_exp (ctx : Ctx.t) (exp_opt : exp option) : Ctx.t * Ml.expr =
   match exp_opt with
@@ -563,14 +640,18 @@ and compile_opt_exp (ctx : Ctx.t) (exp_opt : exp option) : Ctx.t * Ml.expr =
       let expr_ml = Ml.OptE (Some expr_ml) in
       (ctx, expr_ml)
 
-(* List expressions *)
+(* List expression: [[exp1, .., expn]]
+
+   [[expr1; ..; exprn]] *)
 
 and compile_list_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
   let ctx, exprs_ml = compile_exps ctx exps in
   let expr_ml = Ml.ListE exprs_ml in
   (ctx, expr_ml)
 
-(* Cons expressions *)
+(* Cons expression: [exp_h :: exp_t]
+
+   [expr_h :: expr_t] *)
 
 and compile_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) : Ctx.t * Ml.expr
     =
@@ -579,7 +660,10 @@ and compile_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) : Ctx.t * Ml.expr
   let expr_ml = Ml.ConsE (expr_h_ml, expr_t_ml) in
   (ctx, expr_ml)
 
-(* Concatenation expressions *)
+(* Concatenation expression: [exp_l ++ exp_r]
+
+   text  ->  [expr_l ^ expr_r]
+   list  ->  [expr_l @ expr_r] *)
 
 and compile_cat_exp (ctx : Ctx.t) (typ_exp : typ) (exp_l : exp) (exp_r : exp) :
     Ctx.t * Ml.expr =
@@ -589,7 +673,9 @@ and compile_cat_exp (ctx : Ctx.t) (typ_exp : typ) (exp_l : exp) (exp_r : exp) :
   let expr_ml = Ml.BinopE (binop_ml, expr_l_ml, expr_r_ml) in
   (ctx, expr_ml)
 
-(* Membership expressions *)
+(* Membership expression: [exp_e <- exp_s]
+
+   [List.mem expr_e expr_s] *)
 
 and compile_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : Ctx.t * Ml.expr
     =
@@ -598,7 +684,10 @@ and compile_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : Ctx.t * Ml.expr
   let expr_ml = Ml.AppE (Ml.VarE "List.mem", [ expr_e_ml; expr_s_ml ]) in
   (ctx, expr_ml)
 
-(* Length expressions *)
+(* Length expression: [|exp|]
+
+   text  ->  [Bigint.of_int (String.length expr)]
+   list  ->  [Bigint.of_int (List.length expr)] *)
 
 and compile_len_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
   let ctx, expr_ml = compile_exp ctx exp in
@@ -611,7 +700,9 @@ and compile_len_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
   in
   (ctx, expr_ml)
 
-(* Field access expressions *)
+(* Field access expression: [exp_b.atom]
+
+   [expr_b.field] *)
 
 and compile_dot_exp (ctx : Ctx.t) (exp_b : exp) (atom : atom) : Ctx.t * Ml.expr
     =
@@ -620,7 +711,10 @@ and compile_dot_exp (ctx : Ctx.t) (exp_b : exp) (atom : atom) : Ctx.t * Ml.expr
   let expr_ml = Ml.FieldE (expr_b_ml, field_ml) in
   (ctx, expr_ml)
 
-(* Index expressions *)
+(* Index expression: [exp_b[exp_i]]
+
+   text  ->  [String.sub expr_b (to_int i) 1]
+   list  ->  [List.nth expr_b (to_int i)] *)
 
 and compile_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : Ctx.t * Ml.expr
     =
@@ -635,7 +729,10 @@ and compile_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : Ctx.t * Ml.expr
   in
   (ctx, expr_ml)
 
-(* Slice expressions *)
+(* Slice expression: [exp_b[exp_i : exp_n]]
+
+   text  ->  [String.sub expr_b (to_int i) (to_int n)]
+   list  ->  [List.filteri (fun j _ -> i <= j && j < i+n) expr_b] *)
 
 and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
     Ctx.t * Ml.expr =
@@ -678,7 +775,12 @@ and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
 
 (* Update expressions *)
 
-(* Accessing path *)
+(* Path read helper: [access(path, expr_b)]
+
+   RootP         ->  [expr_b]
+   DotP(p, f)    ->  [access(p, expr_b).field]
+   IdxP(p, i)    ->  [access(p, expr_b)[i]]
+   SliceP(p,i,n) ->  [access(p, expr_b)[i..i+n-1]] *)
 
 and compile_access_path_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
     (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
@@ -740,9 +842,17 @@ and compile_access_path (ctx : Ctx.t) (path : path) (expr_b_ml : Ml.expr) :
   | SliceP (path, exp_i, exp_n) ->
       compile_access_path_slice ctx path exp_i exp_n expr_b_ml
 
-(* Updating path *)
+(* Path write helper: [update(path, expr_b, expr_n)]
 
-(* String character update *)
+   RootP         ->  [expr_n]
+   DotP(p, f)    ->  [update(p, expr_b, {access(p, expr_b) with field=expr_n})]
+   IdxP(p, i)    ->  [update(p, expr_b, List.mapi ...)]
+   SliceP(p,i,n) ->  [update(p, expr_b, List.mapi ...)] *)
+
+(* Index update: [exp_b[i] <- exp_n]
+
+   text  ->  [expr_b[0..i-1] ^ expr_n ^ expr_b[i+1..]]
+   list  ->  [List.mapi (fun j x -> if j = i then expr_n else x) expr_b] *)
 
 and compile_upd_idx_text (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
     (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
@@ -764,8 +874,6 @@ and compile_upd_idx_text (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
   in
   (ctx, expr_ml)
 
-(* List element update *)
-
 and compile_upd_idx_list (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
     (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
   let ctx = Ctx.push ctx in
@@ -786,8 +894,6 @@ and compile_upd_idx_list (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
   in
   (ctx, expr_ml)
 
-(* Index update dispatcher *)
-
 and compile_upd_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
     (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
   let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
@@ -800,7 +906,10 @@ and compile_upd_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
   in
   compile_upd ctx path expr_b_ml expr_ml
 
-(* String slice update: String.sub splicing *)
+(* Slice update: [exp_b[i : n] <- exp_n]
+
+   text  ->  [expr_b[0..i-1] ^ expr_n ^ expr_b[i+n..]]
+   list  ->  [List.mapi (fun j x -> if i <= j && j < i+n then List.nth expr_n (j-i) else x) expr_b] *)
 
 and compile_upd_slice_text (ctx : Ctx.t) (expr_ml : Ml.expr)
     (expr_i_ml : Ml.expr) (expr_n_len_ml : Ml.expr) (expr_n_ml : Ml.expr) :
@@ -822,8 +931,6 @@ and compile_upd_slice_text (ctx : Ctx.t) (expr_ml : Ml.expr)
     Ml.BinopE ("^", Ml.BinopE ("^", expr_h_ml, expr_n_ml), expr_t_ml)
   in
   (ctx, expr_ml)
-
-(* List slice update: List.mapi *)
 
 and compile_upd_slice_list (ctx : Ctx.t) (expr_ml : Ml.expr)
     (expr_i_ml : Ml.expr) (expr_n_len_ml : Ml.expr) (expr_n_ml : Ml.expr) :
@@ -853,8 +960,6 @@ and compile_upd_slice_list (ctx : Ctx.t) (expr_ml : Ml.expr)
   in
   (ctx, expr_ml)
 
-(* Slice update dispatcher *)
-
 and compile_upd_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
     (exp_n_len : exp) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) :
     Ctx.t * Ml.expr =
@@ -873,7 +978,9 @@ and compile_upd_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
   in
   compile_upd ctx path expr_b_ml expr_ml
 
-(* Record field update *)
+(* Record field update: [exp_b.atom <- exp_n]
+
+   [update(p, expr_b, {access(p, expr_b) with field = expr_n})] *)
 
 and compile_upd_dot (ctx : Ctx.t) (path : path) (atom : atom)
     (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
@@ -899,7 +1006,9 @@ and compile_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_n : exp) :
   let ctx, expr_n_ml = compile_exp ctx exp_n in
   compile_upd ctx path expr_b_ml expr_n_ml
 
-(* Call expressions *)
+(* Call expressions: [id(args)]
+
+   [f_id expr_args] *)
 
 and compile_arg (ctx : Ctx.t) (arg : arg) : Ctx.t * Ml.expr =
   match arg.it with
@@ -926,6 +1035,11 @@ and compile_call_exp (ctx : Ctx.t) (id : id) (_targs : targ list)
   (ctx, expr_ml)
 
 (* Iterator expressions *)
+
+(* Option iterator expression: [exp{x?}]
+
+   single var  ->  [Option.map (fun x -> expr) x?]
+   multi-var   ->  [Option.map (fun (x,..) -> expr) (Option.combineN x? y? ..)] *)
 
 and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
@@ -985,6 +1099,11 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_opt_ml ])
   in
   (ctx, expr_ml)
+
+(* List iterator expression: [exp{x*}]
+
+   single var  ->  [List.map (fun x -> expr) x*]
+   multi-var   ->  [List.map (fun (x,..) -> expr) (List.combineN x* y* ..)] *)
 
 and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
