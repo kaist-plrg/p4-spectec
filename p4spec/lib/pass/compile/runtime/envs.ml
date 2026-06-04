@@ -49,3 +49,7 @@ module Bounds = struct
     in
     (bounds, id_ml)
 end
+
+(* Relation environment *)
+
+module Rels = MakeRIdEnv (Input)
