@@ -1,3 +1,4 @@
+open Domain
 open Lang
 open Util.Source
 
@@ -68,12 +69,16 @@ and compile_func_typ : Ml.typ = Ml.UnitT
 
 (* Compiling deftyps *)
 
-let rec compile_deftyp ~(tparams : string list) (deftyp : Sl.deftyp) : Ml.deftyp
-    =
+let rec compile_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
+    (deftyp : Sl.deftyp) : Ctx.t * Ml.deftyp =
   match deftyp.it with
-  | Il.PlainT typ -> compile_alias_deftyp ~tparams typ
-  | Il.StructT typfields -> compile_struct_deftyp ~tparams typfields
-  | Il.VariantT typcases -> compile_variant_deftyp ~tparams typcases
+  | Il.PlainT typ ->
+      let deftyp_ml = compile_alias_deftyp ~tparams typ in
+      (ctx, deftyp_ml)
+  | Il.StructT typfields ->
+      let deftyp_ml = compile_struct_deftyp ~tparams typfields in
+      (ctx, deftyp_ml)
+  | Il.VariantT typcases -> compile_variant_deftyp ~tparams ctx id typcases
 
 (* Compiling alias deftyps *)
 
@@ -124,7 +129,7 @@ and compile_typcase ~(tparams : string list) (typcases_all : Sl.typcase list)
   let typs_ml = compile_typs ~tparams typs_arg in
   (ctor_ml, typs_ml)
 
-and dedup_typcases_ml (typcases_ml : Ml.typcase list) =
+and dedup_typcases_ml (typcases_ml : Ml.typcase list) : Ml.typcase list =
   let ctor_seen = Hashtbl.create 16 in
   List.map
     (fun (ctor_ml, typs_ml) ->
@@ -140,29 +145,53 @@ and compile_typcases ~(tparams : string list) (typcases : Sl.typcase list) :
     Ml.typcase list =
   typcases |> List.map (compile_typcase ~tparams typcases) |> dedup_typcases_ml
 
-and compile_variant_deftyp ~(tparams : string list) (typcases : Sl.typcase list)
-    : Ml.deftyp =
+and compile_variant_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
+    (typcases : Sl.typcase list) : Ctx.t * Ml.deftyp =
   let typcases_ml = compile_typcases ~tparams typcases in
-  Ml.VariantTD typcases_ml
+  let deftyp_ml = Ml.VariantTD typcases_ml in
+  let ctx =
+    List.combine typcases typcases_ml
+    |> List.fold_left
+         (fun ctx (typcase, typcase_ml) ->
+           let nottyp, _, _ = typcase in
+           let mixop, _ = Mixfix.split nottyp.it in
+           let case = (id, mixop) in
+           let ctor, _ = typcase_ml in
+           Ctx.add_ctor ctx case ctor)
+         ctx
+  in
+  (ctx, deftyp_ml)
 
 (* Compiling defs *)
 
-let compile_def (def : Sl.def) : Ml.typdef option =
+let compile_def (ctx : Ctx.t) (def : Sl.def) : Ctx.t * Ml.typdef option =
   match def.it with
   | Sl.TypD (id, tparams, deftyp, _) ->
       let tparams_ml = List.map Names.var_of_id tparams in
       let id_ml = Names.var_of_id id in
-      let deftyp_ml =
+      let ctx, deftyp_ml =
         let tparams = List.map it tparams in
-        compile_deftyp ~tparams deftyp
+        compile_deftyp ~tparams ctx id deftyp
       in
-      Some (tparams_ml, id_ml, deftyp_ml)
+      let typdef_ml_opt = Some (tparams_ml, id_ml, deftyp_ml) in
+      (ctx, typdef_ml_opt)
   | Sl.ExternTypD (id, _) ->
       let id_ml = Names.var_of_id id in
       let deftyp_ml = Ml.AliasTD Ml.UnitT in
-      Some ([], id_ml, deftyp_ml)
-  | _ -> None
+      let typdef_ml_opt = Some ([], id_ml, deftyp_ml) in
+      (ctx, typdef_ml_opt)
+  | _ -> (ctx, None)
+
+let compile_defs (ctx : Ctx.t) (defs : Sl.def list) : Ctx.t * Ml.typdef list =
+  List.fold_left
+    (fun (ctx, defs_ml) def ->
+      let ctx, def_ml_opt = compile_def ctx def in
+      match def_ml_opt with
+      | None -> (ctx, defs_ml)
+      | Some def_ml -> (ctx, defs_ml @ [ def_ml ]))
+    (ctx, []) defs
 
 (* Compiling spec *)
 
-let compile_spec (spec : Sl.spec) = spec |> List.filter_map compile_def
+let compile_spec (ctx : Ctx.t) (spec : Sl.spec) : Ctx.t * Ml.typdef list =
+  compile_defs ctx spec

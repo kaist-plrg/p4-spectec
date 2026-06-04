@@ -2,11 +2,12 @@ open Lang
 
 let compile_spec (path_out : string) (spec : Sl.spec) =
   let spec_sl, _dispatch_table = Mono.monomorphize spec in
-  let ctx = Gen.Ctx.init () in
+  let ctx = Ctx.init spec in
   (* Type definitions *)
-  let toplevel_typdefs_ml =
-    let typdefs_ml = Gen.Type.compile_spec spec_sl in
-    Ml.TypeRec typdefs_ml
+  let ctx, toplevel_typdefs_ml =
+    let ctx, typdefs_ml = Gen.Type.compile_spec ctx spec_sl in
+    let toplevel_typdefs_ml = Ml.TypeRec typdefs_ml in
+    (ctx, toplevel_typdefs_ml)
   in
   (* Functor *)
   let ctx, toplevel_functor_ml =

@@ -1,7 +1,7 @@
 open Domain
 open Lib
 open Lang
-open Runtime.Dynamic_OCaml
+module Var = Runtime.Dynamic.Var
 open Util.Source
 
 (* Type variables *)

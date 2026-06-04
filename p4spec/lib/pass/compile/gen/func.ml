@@ -4,7 +4,7 @@ open Sl
 (* Compiling parameters *)
 
 let compile_exp_param ~(index : int option) (ctx : Ctx.t) (typ : typ)
-    (exp : exp) : Ctx.t * Ml.param * Bind.Binder.t =
+    (exp : exp) : Ctx.t * Ml.param * Chain.t =
   (* Create a stub expression for the parameter *)
   let id_stub_ml =
     "param__" ^ (index |> Option.map string_of_int |> Option.value ~default:"")
@@ -15,36 +15,33 @@ let compile_exp_param ~(index : int option) (ctx : Ctx.t) (typ : typ)
   (* Assemble the parameter *)
   let param_ml = (id_stub_ml, Some typ_ml) in
   (* Create bindings for the parameter *)
-  let ctx, binder = Bind.compile ctx expr_stub_ml exp in
-  (ctx, param_ml, binder)
+  let ctx, chain = Bind.compile ctx expr_stub_ml exp in
+  (ctx, param_ml, chain)
 
-let compile_def_param (ctx : Ctx.t) (id : id) : Ctx.t * Ml.param * Bind.Binder.t
-    =
+let compile_def_param (ctx : Ctx.t) (id : id) : Ctx.t * Ml.param * Chain.t =
   let id_ml = Names.func id in
   let ctx = Ctx.add_binding ctx (id, []) id_ml in
   let param_ml = (id_ml, None) in
-  let binder = Bind.Binder.nop in
-  (ctx, param_ml, binder)
+  let chain = Chain.nop in
+  (ctx, param_ml, chain)
 
 let compile_param ~(index : int option) (ctx : Ctx.t) (param : param) :
-    Ctx.t * Ml.param * Bind.Binder.t =
+    Ctx.t * Ml.param * Chain.t =
   match param.it with
   | ExpP (typ, exp) -> compile_exp_param ~index ctx typ exp
   | DefP (id, _, _, _) -> compile_def_param ctx id
 
 let compile_params (ctx : Ctx.t) (params : param list) :
-    Ctx.t * Ml.param list * Bind.Binder.t =
+    Ctx.t * Ml.param list * Chain.t =
   params
   |> List.mapi (fun idx param -> (idx, param))
   |> List.fold_left
-       (fun (ctx, params_ml, binder_acc) (idx, param) ->
-         let ctx, param_ml, binder =
-           compile_param ~index:(Some idx) ctx param
-         in
+       (fun (ctx, params_ml, chain_acc) (idx, param) ->
+         let ctx, param_ml, chain = compile_param ~index:(Some idx) ctx param in
          let params_ml = params_ml @ [ param_ml ] in
-         let binder = Bind.Binder.connect [ binder_acc; binder ] in
-         (ctx, params_ml, binder))
-       (ctx, [], Bind.Binder.nop)
+         let chain = Chain.connect [ chain_acc; chain ] in
+         (ctx, params_ml, chain))
+       (ctx, [], Chain.nop)
 
 (* Compiling defined functions *)
 
@@ -54,12 +51,12 @@ let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
   (* Compile parameters *)
-  let ctx, params_ml, binder = compile_params ctx params in
+  let ctx, params_ml, chain = compile_params ctx params in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
   let funcdef_main_ml =
-    let expr_ml = Bind.Binder.apply binder Ml.UnitE in
+    let expr_ml = Chain.apply chain Ml.UnitE in
     (id_main_ml, params_ml, None, expr_ml)
   in
   (* Compile else block *)

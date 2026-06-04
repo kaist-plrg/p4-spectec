@@ -11,6 +11,9 @@ let print_field (field : field) = field
 
 let print_tparam (tparam : tparam) = "'" ^ tparam
 
+let print_tparams (tparams : tparam list) =
+  tparams |> List.map print_tparam |> String.concat " "
+
 (* Types *)
 
 let rec print_typ typ =
