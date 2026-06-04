@@ -610,13 +610,121 @@ and compile_call_exp (ctx : Ctx.t) (id : id) (_targs : targ list)
 
 (* Iterator expressions *)
 
-and compile_iter_exp_opt (_ctx : Ctx.t) (_exp : exp) (_vars : var list) :
+and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
-  assert false
+  (* Fetch iteration target variables *)
+  let ids_opt_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.Opt ]))
+      vars
+  in
+  (* Enter nested block *)
+  let ctx = Ctx.push ctx in
+  (* Create stub variables for iterated elements *)
+  let n = List.length vars in
+  let ctx, ids_stub_ml = Stub.OCaml.iter_opts ctx n in
+  (* Temporarily add stub variables to context *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) stub -> Ctx.add_binding ctx (id, iters) stub)
+      ctx vars ids_stub_ml
+  in
+  (* Compile lambda expression *)
+  let ctx, expr_lambda_ml =
+    let pat_ml =
+      match ids_stub_ml with
+      | [ id ] -> Ml.VarP id
+      | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+    in
+    let ctx, expr_body_ml = compile_exp ctx exp in
+    let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
+    (ctx, expr_ml)
+  in
+  (* Remove stub variables from context *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) _ -> Ctx.remove_binding ctx (id, iters))
+      ctx vars ids_stub_ml
+  in
+  (* Exit nested block *)
+  let ctx = Ctx.pop ctx in
+  (* Combine iteration targets into a single option, then map over it *)
+  let ctx, expr_opt_ml =
+    match ids_opt_ml with
+    | [ id_ml ] ->
+        let expr_opt_ml = Ml.VarE id_ml in
+        (ctx, expr_opt_ml)
+    | _ ->
+        let ctx = Ctx.add_opt_arity ctx n in
+        let id_combine_ml = "Option.combine" ^ string_of_int n in
+        let exprs_arg_ml =
+          List.map (fun id_opt_ml -> Ml.VarE id_opt_ml) ids_opt_ml
+        in
+        let expr_opt_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
+        (ctx, expr_opt_ml)
+  in
+  let expr_ml =
+    Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_opt_ml ])
+  in
+  (ctx, expr_ml)
 
-and compile_iter_exp_list (_ctx : Ctx.t) (_exp : exp) (_vars : var list) :
+and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
-  assert false
+  (* Fetch iteration target variables *)
+  let ids_list_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.List ]))
+      vars
+  in
+  (* Enter nested block *)
+  let ctx = Ctx.push ctx in
+  (* Create stub variables for iterated elements *)
+  let n = List.length vars in
+  let ctx, ids_stub_ml = Stub.OCaml.iter_lists ctx n in
+  (* Temporarily add stub variables to context *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) stub -> Ctx.add_binding ctx (id, iters) stub)
+      ctx vars ids_stub_ml
+  in
+  (* Compile lambda expression *)
+  let ctx, expr_lambda_ml =
+    let pat_ml =
+      match ids_stub_ml with
+      | [ id ] -> Ml.VarP id
+      | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+    in
+    let ctx, expr_body_ml = compile_exp ctx exp in
+    let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
+    (ctx, expr_ml)
+  in
+  (* Remove stub variables from context *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) _ -> Ctx.remove_binding ctx (id, iters))
+      ctx vars ids_stub_ml
+  in
+  (* Exit nested block *)
+  let ctx = Ctx.pop ctx in
+  (* Combine iteration targets into a single list, then map over it *)
+  let ctx, expr_list_ml =
+    match ids_list_ml with
+    | [ id_ml ] ->
+        let expr_list_ml = Ml.VarE id_ml in
+        (ctx, expr_list_ml)
+    | _ ->
+        let ctx = Ctx.add_list_arity ctx n in
+        let id_combine_ml = "List.combine" ^ string_of_int n in
+        let exprs_arg_ml =
+          List.map (fun id_list_ml -> Ml.VarE id_list_ml) ids_list_ml
+        in
+        let expr_list_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
+        (ctx, expr_list_ml)
+  in
+  let expr_ml =
+    Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_list_ml ])
+  in
+  (ctx, expr_ml)
 
 and compile_iter_exp (ctx : Ctx.t) (typ_exp : typ) (exp : exp)
     (iterexp : iterexp) : Ctx.t * Ml.expr =

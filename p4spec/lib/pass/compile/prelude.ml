@@ -10,13 +10,52 @@ let make_opt_splitN (n : int) : string =
   Format.asprintf "let split%d = function\n| Some %s -> %s\n| None -> %s" n
     (tuple xs) somes nones
 
+let make_opt_combineN (n : int) : string =
+  assert (n >= 2);
+  let os = List.init n (fun i -> "o" ^ string_of_int i) in
+  let xs = List.init n (fun i -> "x" ^ string_of_int i) in
+  let tuple elems =
+    match elems with [ x ] -> x | _ -> "(" ^ String.concat ", " elems ^ ")"
+  in
+  if n = 2 then
+    Format.asprintf
+      "let combine2 o0 o1 = match o0, o1 with\n\
+       | Some x0, Some x1 -> Some (x0, x1)\n\
+       | None, None -> None\n\
+       | _ -> failwith \"mismatch in optionality of iterated variables\""
+  else
+    let prev_xs = List.filteri (fun i _ -> i < n - 1) xs in
+    let prev_os = List.filteri (fun i _ -> i < n - 1) os in
+    let last_o = "o" ^ string_of_int (n - 1) in
+    let last_x = "x" ^ string_of_int (n - 1) in
+    let prev_combine =
+      "combine" ^ string_of_int (n - 1) ^ " " ^ String.concat " " prev_os
+    in
+    Format.asprintf
+      "let combine%d %s = match %s, %s with\n\
+       | Some %s, Some %s -> Some %s\n\
+       | None, None -> None\n\
+       | _ -> failwith \"mismatch in optionality of iterated variables\"" n
+      (String.concat " " os) prev_combine last_o (tuple prev_xs) last_x
+      (tuple xs)
+
 let opt_prelude (ctx : Ctx.t) =
   let header = "module Option = struct\ninclude Option\n" in
   let opt_splitNs =
     ctx.preamble.opts |> List.map make_opt_splitN |> String.concat "\n"
   in
+  let opt_combineNs =
+    match ctx.preamble.opts with
+    | [] -> ""
+    | arities ->
+        let max_n = List.fold_left max 0 arities in
+        if max_n < 2 then ""
+        else
+          List.init (max_n - 1) (fun i -> make_opt_combineN (i + 2))
+          |> String.concat "\n"
+  in
   let footer = "\nend" in
-  header ^ opt_splitNs ^ footer
+  header ^ opt_splitNs ^ "\n" ^ opt_combineNs ^ footer
 
 let make_list_splitN (n : int) : string =
   let xs = List.init n (fun i -> "x" ^ string_of_int i) in
@@ -34,13 +73,43 @@ let make_list_splitN (n : int) : string =
       "let split%d xs =\n  List.fold_right (fun %s %s -> %s) xs %s" n elem_pat
       acc_pat cons init
 
+let make_list_combineN (n : int) : string =
+  assert (n >= 2);
+  let ls = List.init n (fun i -> "l" ^ string_of_int i) in
+  let xs = List.init n (fun i -> "x" ^ string_of_int i) in
+  let tuple elems =
+    match elems with [ x ] -> x | _ -> "(" ^ String.concat ", " elems ^ ")"
+  in
+  if n = 2 then "let combine2 l0 l1 = List.combine l0 l1"
+  else
+    let prev_xs = List.filteri (fun i _ -> i < n - 1) xs in
+    let prev_ls = List.filteri (fun i _ -> i < n - 1) ls in
+    let last_l = "l" ^ string_of_int (n - 1) in
+    let last_x = "x" ^ string_of_int (n - 1) in
+    let prev_combine =
+      "combine" ^ string_of_int (n - 1) ^ " " ^ String.concat " " prev_ls
+    in
+    Format.asprintf "let combine%d %s =\n  List.map2 (fun %s %s -> %s) (%s) %s"
+      n (String.concat " " ls) (tuple prev_xs) last_x (tuple xs) prev_combine
+      last_l
+
 let list_prelude (ctx : Ctx.t) =
   let header = "module List = struct\ninclude List\n" in
   let list_splitNs =
     ctx.preamble.lists |> List.map make_list_splitN |> String.concat "\n"
   in
+  let list_combineNs =
+    match ctx.preamble.lists with
+    | [] -> ""
+    | arities ->
+        let max_n = List.fold_left max 0 arities in
+        if max_n < 2 then ""
+        else
+          List.init (max_n - 1) (fun i -> make_list_combineN (i + 2))
+          |> String.concat "\n"
+  in
   let footer = "\nend" in
-  header ^ list_splitNs ^ footer
+  header ^ list_splitNs ^ "\n" ^ list_combineNs ^ footer
 
 let prelude (ctx : Ctx.t) =
   let common =

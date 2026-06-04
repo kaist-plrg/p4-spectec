@@ -49,7 +49,13 @@ module OCaml = struct
     let id_ml = "iter__opt" in
     Ctx.fresh ctx id_ml
 
+  let iter_opts (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
+    List.init n (fun idx -> "iter__opt" ^ string_of_int idx) |> create ctx
+
   let iter_list (ctx : Ctx.t) : Ctx.t * Ml.id =
     let id_ml = "iter__list" in
     Ctx.fresh ctx id_ml
+
+  let iter_lists (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
+    List.init n (fun idx -> "iter__list" ^ string_of_int idx) |> create ctx
 end
