@@ -58,4 +58,9 @@ module OCaml = struct
 
   let iter_lists (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
     List.init n (fun idx -> "iter__list" ^ string_of_int idx) |> create ctx
+
+  let upd (ctx : Ctx.t) : Ctx.t * Ml.id * Ml.id =
+    let ctx, id_idx_ml = Ctx.fresh ctx "upd_idx__" in
+    let ctx, id_elem_ml = Ctx.fresh ctx "upd_elem__" in
+    (ctx, id_idx_ml, id_elem_ml)
 end
