@@ -160,9 +160,46 @@ and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
 
 (* Type variable downcast *)
 
-and compile_downcast_exp_var (_ctx : Ctx.t) (_id : id) (_targs : targ list)
-    (_exp : exp) : Ctx.t * Ml.expr =
-  assert false
+and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
+    (exp : exp) : Ctx.t * Ml.expr =
+  let ctors_typ = Ctx.find_ctors ctx id in
+  let ctx, expr_ml = compile_exp ctx exp in
+  let typ_target_ml =
+    Type.compile_typ ~tparams:[] (Il.VarT (id, targs) $ no_region)
+  in
+  if ctors_typ = [] then (ctx, expr_ml)
+  else
+    match exp.note with
+    | VarT (id', _) when id'.it = id.it ->
+        (ctx, Ml.CoerceE (expr_ml, typ_target_ml))
+    | _ ->
+        let typrows_ml =
+          List.map
+            (fun (ctor_ml, typs) ->
+              (ctor_ml, Type.compile_typs ~tparams:[] typs))
+            ctors_typ
+        in
+        let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
+        let pats_ml =
+          List.map
+            (fun (ctor_ml, typs) ->
+              let pats = List.map (fun _ -> Ml.WildP) typs in
+              Ml.VariantP (`Poly (ctor_ml, pats)))
+            ctors_typ
+        in
+        let pat_or_ml = Ml.OrP pats_ml in
+        let ctx, id_downcast_val_ml = Stub.OCaml.downcast_val ctx in
+        let pat_as_ml = Ml.AsP (pat_or_ml, id_downcast_val_ml) in
+        let expr_coerce_ml =
+          Ml.CoerceE (Ml.VarE id_downcast_val_ml, typ_target_ml)
+        in
+        ( ctx,
+          Ml.MatchE
+            ( expr_scrut_ml,
+              [
+                (pat_as_ml, expr_coerce_ml);
+                (Ml.WildP, Common.raise_unmatch "DownCastE: type mismatch");
+              ] ) )
 
 (* Tuple downcast *)
 
@@ -285,17 +322,86 @@ and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
 
 (* Variable subtype check *)
 
-and compile_sub_match (_ctx : Ctx.t) (_exp : exp)
-    (_ctors_inter : (string * typ list) list) : Ctx.t * Ml.expr =
-  assert false
+and compile_sub_match (ctx : Ctx.t) (exp : exp)
+    (ctors_inter : (Ml.ctor * Il.typ list) list) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ctx exp in
+  let typrows_ml =
+    List.map
+      (fun (ctor_ml, typs) -> (ctor_ml, Type.compile_typs ~tparams:[] typs))
+      ctors_inter
+  in
+  let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
+  let ctx, arms_ml =
+    List.fold_left
+      (fun (ctx, arms) (ctor_ml, typs) ->
+        let n = List.length typs in
+        let ctx_inner = Ctx.push ctx in
+        let ctx_inner, ids_stub_ml = Stub.OCaml.sub_pays ctx_inner n in
+        let ctx_inner =
+          List.fold_left
+            (fun c id -> Ctx.add_binding c (id $ no_region, []) id)
+            ctx_inner ids_stub_ml
+        in
+        let ctx_inner, exprs_cond_ml =
+          List.combine ids_stub_ml typs
+          |> List.fold_left
+               (fun (c, conds) (id, typ) ->
+                 let exp_stub = Stub.SpecTec.var id typ in
+                 let c, expr_cond = compile_sub_exp c exp_stub typ in
+                 (c, conds @ [ expr_cond ]))
+               (ctx_inner, [])
+        in
+        let ctx = Ctx.pop ctx_inner in
+        let all_true =
+          List.for_all
+            (function Ml.BoolE true -> true | _ -> false)
+            exprs_cond_ml
+        in
+        let pat_ml, expr_sub_ml =
+          if all_true then
+            let pats = List.init n (fun _ -> Ml.WildP) in
+            (Ml.VariantP (`Poly (ctor_ml, pats)), Ml.BoolE true)
+          else
+            let pats = List.map (fun id -> Ml.VarP id) ids_stub_ml in
+            let expr =
+              List.fold_left
+                (fun acc e ->
+                  match e with
+                  | Ml.BoolE true -> acc
+                  | _ -> Ml.BinopE ("&&", acc, e))
+                (Ml.BoolE true) exprs_cond_ml
+            in
+            (Ml.VariantP (`Poly (ctor_ml, pats)), expr)
+        in
+        (ctx, arms @ [ (pat_ml, expr_sub_ml) ]))
+      (ctx, []) ctors_inter
+  in
+  (ctx, Ml.MatchE (expr_scrut_ml, arms_ml @ [ (Ml.WildP, Ml.BoolE false) ]))
 
-and compile_sub_exp_var_irreflexive (_ctx : Ctx.t) (_exp : exp) (_id : id)
+and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
     (_targs : targ list) : Ctx.t * Ml.expr =
-  assert false
+  let ctors_typ = Ctx.find_ctors ctx id in
+  if ctors_typ = [] then (ctx, Ml.BoolE true)
+  else
+    let ctors_exp =
+      match exp.note with
+      | VarT (id_exp, _) -> Ctx.find_ctors ctx id_exp
+      | _ -> []
+    in
+    let ctors_inter =
+      List.filter
+        (fun (ctor_ml, _) ->
+          List.exists (fun (ctor_ml', _) -> ctor_ml = ctor_ml') ctors_exp)
+        ctors_typ
+    in
+    if ctors_inter = [] then (ctx, Ml.BoolE false)
+    else compile_sub_match ctx exp ctors_inter
 
-and compile_sub_exp_var (_ctx : Ctx.t) (_exp : exp) (_id : id)
-    (_targs : targ list) : Ctx.t * Ml.expr =
-  assert false
+and compile_sub_exp_var (ctx : Ctx.t) (exp : exp) (id : id) (targs : targ list)
+    : Ctx.t * Ml.expr =
+  match exp.note with
+  | VarT (id', _) when id'.it = id.it -> (ctx, Ml.BoolE true)
+  | _ -> compile_sub_exp_var_irreflexive ctx exp id targs
 
 (* Tuple subtype check: [exp <: (typ_1, ..., typ_n)] *)
 
@@ -582,8 +688,7 @@ and compile_access_path_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
   let expr_ml =
     match path.note with
     | Il.TextT ->
-        Ml.AppE
-          (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; Ml.LitE "1" ])
+        Ml.AppE (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; Ml.LitE "1" ])
     | _ -> Ml.AppE (Ml.VarE "List.nth", [ expr_inner_ml; expr_i_ml ])
   in
   (ctx, expr_ml)
@@ -598,8 +703,8 @@ and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
   match path.note with
   | Il.TextT ->
       ( ctx,
-        Ml.AppE
-          (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; expr_n_ml ]) )
+        Ml.AppE (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; expr_n_ml ])
+      )
   | _ ->
       let ctx = Ctx.push ctx in
       let ctx, id_j_ml = Stub.OCaml.slice ctx in
@@ -607,7 +712,8 @@ and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
       let expr_ml =
         Ml.AppE
           ( Ml.VarE "List.filteri",
-            [ Ml.FunE
+            [
+              Ml.FunE
                 ( [ Ml.VarP id_j_ml; Ml.WildP ],
                   Ml.BinopE
                     ( "&&",
@@ -616,7 +722,8 @@ and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
                         ( "<",
                           Ml.VarE id_j_ml,
                           Ml.BinopE ("+", expr_i_ml, expr_n_ml) ) ) );
-              expr_inner_ml ] )
+              expr_inner_ml;
+            ] )
       in
       (ctx, expr_ml)
 

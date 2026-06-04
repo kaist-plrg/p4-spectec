@@ -11,7 +11,7 @@ module Ctors = struct
   module CaseMap = Map.Make (Case)
   include CaseMap
 
-  type t = Ml.ctor CaseMap.t
+  type t = Ctor.t CaseMap.t
 end
 
 (* Binding environment mapping SpecTec vars to OCaml vars *)

@@ -63,4 +63,9 @@ module OCaml = struct
     let ctx, id_idx_ml = Ctx.fresh ctx "upd_idx__" in
     let ctx, id_elem_ml = Ctx.fresh ctx "upd_elem__" in
     (ctx, id_idx_ml, id_elem_ml)
+
+  let downcast_val (ctx : Ctx.t) : Ctx.t * Ml.id = Ctx.fresh ctx "downcast_val_"
+
+  let sub_pays (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
+    List.init n (fun idx -> "sub_pay_" ^ string_of_int idx) |> create ctx
 end

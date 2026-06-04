@@ -1,3 +1,5 @@
 (* Constructor *)
 
-type t = Ml.ctor
+open Lang
+
+type t = Ml.ctor * Il.typ list

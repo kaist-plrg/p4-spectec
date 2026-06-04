@@ -61,11 +61,17 @@ let find_ctor (ctx : t) (typ : Typ.t) (mixop : Mixop.t) : Ml.ctor =
   match typ.it with
   | VarT (id, _) ->
       let case = (id, mixop) in
-      Ctors.find case ctx.ctors
+      let ctor_ml, _ = Ctors.find case ctx.ctors in
+      ctor_ml
   | _ ->
       error typ.at
         (Format.asprintf "%s is not a variant type"
            (Sl.Print.string_of_typ typ))
+
+let find_ctors (ctx : t) (id : TId.t) : (Ml.ctor * Il.typ list) list =
+  Ctors.fold
+    (fun (tid, _) ctor acc -> if Id.eq tid id then ctor :: acc else acc)
+    ctx.ctors []
 
 let find_binding (ctx : t) (var : Var.t) : Ml.id =
   Bindings.find var ctx.vars.bindings

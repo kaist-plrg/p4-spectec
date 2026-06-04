@@ -157,7 +157,8 @@ and compile_variant_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
            let mixop, _ = Mixfix.split nottyp.it in
            let case = (id, mixop) in
            let ctor, _ = typcase_ml in
-           Ctx.add_ctor ctx case ctor)
+           let typs_arg = Domain.Mixfix.args nottyp.it in
+           Ctx.add_ctor ctx case (ctor, typs_arg))
          ctx
   in
   (ctx, deftyp_ml)
