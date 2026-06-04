@@ -93,6 +93,12 @@ let add_binding (ctx : t) (var : Var.t) (id_ml : Ml.id) : t =
 let add_bindings (ctx : t) (vars : Var.t list) (ids_ml : Ml.id list) : t =
   List.fold_left2 add_binding ctx vars ids_ml
 
+(* Removers *)
+
+let remove_binding (ctx : t) (var : Var.t) : t =
+  let bindings = Bindings.remove var ctx.vars.bindings in
+  { ctx with vars = { ctx.vars with bindings } }
+
 (* Finders *)
 
 let find_ctor (ctx : t) (typ : Typ.t) (mixop : Mixop.t) : Ml.ctor =
@@ -106,3 +112,6 @@ let find_ctor (ctx : t) (typ : Typ.t) (mixop : Mixop.t) : Ml.ctor =
       error typ.at
         (Format.asprintf "%s is not a variant type"
            (Sl.Print.string_of_typ typ))
+
+let find_binding (ctx : t) (var : Var.t) : Ml.id =
+  Bindings.find var ctx.vars.bindings

@@ -1,5 +1,4 @@
 open Domain
-open Lib
 open Lang
 open Sl
 module Var = Runtime.Dynamic.Var
@@ -37,7 +36,8 @@ let rec compile_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp) :
   | OptE exp_opt -> compile_opt_binding ctx expr_stub_ml exp_opt
   | ListE exps -> compile_list_binding ctx expr_stub_ml exps
   | ConsE (exp_h, exp_t) -> compile_cons_binding ctx expr_stub_ml exp_h exp_t
-  | IterE (exp, iterexp) -> compile_iter_binding ctx expr_stub_ml exp iterexp
+  | IterE (exp, iterexp) ->
+      compile_iter_binding ctx typ_exp expr_stub_ml exp iterexp
   | _ ->
       error exp.at
         (Format.asprintf "unsupported binding expression: %s"
@@ -84,17 +84,9 @@ and compile_var_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (id : id) :
 and compile_tuple_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     (exps : exp list) : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expressions for tuple elements *)
-  let ctx_inner, ids_stub_ml =
-    exps
-    |> List.mapi (fun idx _ -> "tuple__" ^ string_of_int idx)
-    |> List.fold_left
-         (fun (ctx_inner, ids_ml) id_ml ->
-           let ctx_inner, id_ml = Ctx.fresh ctx_inner id_ml in
-           (ctx_inner, ids_ml @ [ id_ml ]))
-         (ctx_inner, [])
-  in
+  let ctx, ids_stub_ml = exps |> List.length |> Stub.OCaml.tuple ctx in
   let exprs_stub_ml =
     List.map (fun id_stub_ml -> Ml.VarE id_stub_ml) ids_stub_ml
   in
@@ -105,13 +97,11 @@ and compile_tuple_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     Chain.make_let pat_ml expr_stub_ml
   in
   (* Create chains for tuple elements *)
-  let ctx_inner, bindings, chain_elems =
-    compile_bindings ctx_inner exprs_stub_ml exps
-  in
+  let ctx, bindings, chain_elems = compile_bindings ctx exprs_stub_ml exps in
   (* Connect chains *)
   let chain = Chain.connect [ chain_tuple; chain_elems ] in
   (* Finish nested block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
     let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
@@ -141,17 +131,9 @@ and compile_case_binding (ctx : Ctx.t) (typ_exp : typ) (expr_stub_ml : Ml.expr)
     (notexp : notexp) : Ctx.t * Binding.t list * Chain.t =
   let mixop, exps = Mixfix.split notexp in
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expressions for case elements *)
-  let ctx_inner, ids_stub_ml =
-    exps
-    |> List.mapi (fun idx _ -> "payload__" ^ string_of_int idx)
-    |> List.fold_left
-         (fun (ctx_inner, ids_ml) id_ml ->
-           let ctx_inner, id_ml = Ctx.fresh ctx_inner id_ml in
-           (ctx_inner, ids_ml @ [ id_ml ]))
-         (ctx_inner, [])
-  in
+  let ctx, ids_stub_ml = exps |> List.length |> Stub.OCaml.case ctx in
   let exprs_stub_ml =
     List.map (fun id_stub_ml -> Ml.VarE id_stub_ml) ids_stub_ml
   in
@@ -163,13 +145,11 @@ and compile_case_binding (ctx : Ctx.t) (typ_exp : typ) (expr_stub_ml : Ml.expr)
     Chain.make_match expr_stub_ml pat_ml
   in
   (* Create chains for case elements *)
-  let ctx_inner, bindings, chain_elems =
-    compile_bindings ctx_inner exprs_stub_ml exps
-  in
+  let ctx, bindings, chain_elems = compile_bindings ctx exprs_stub_ml exps in
   (* Connect chains *)
   let chain = Chain.connect [ chain_match; chain_elems ] in
   (* Finish nested block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
     let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
@@ -209,15 +189,12 @@ and compile_str_binding (_ctx : Ctx.t) (_expr_stub_ml : Ml.expr)
 and compile_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     (exp_opt : exp option) : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   let ctx, bindings, expr_bind_ml =
     match exp_opt with
     | Some exp ->
         (* Create stub expression for option element *)
-        let ctx_inner, id_stub_ml =
-          let id_stub_ml = "opt__" in
-          Ctx.fresh ctx_inner id_stub_ml
-        in
+        let ctx, id_stub_ml = Stub.OCaml.opt ctx in
         let expr_stub_ml = Ml.VarE id_stub_ml in
         (* Create [match expr with Some expr_inner -> ...] *)
         let chain_some =
@@ -225,13 +202,11 @@ and compile_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
           Chain.make_match expr_stub_ml pat_then_ml
         in
         (* Create chain for option element *)
-        let ctx_inner, bindings, chain_then =
-          compile_binding ctx_inner expr_stub_ml exp
-        in
+        let ctx, bindings, chain_then = compile_binding ctx expr_stub_ml exp in
         (* Connect chains *)
         let chain = Chain.connect [ chain_some; chain_then ] in
         (* Finish nested block with bindings *)
-        let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+        let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
         (ctx, bindings, expr_bind_ml)
     | None ->
         (* Create [match expr with None -> ...] *)
@@ -240,7 +215,7 @@ and compile_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
           Chain.make_match expr_stub_ml pat_then_ml
         in
         (* Finish nested block with bindings *)
-        let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain_none [] in
+        let ctx, expr_bind_ml = compile_blk_footer ctx chain_none [] in
         (ctx, [], expr_bind_ml)
   in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
@@ -267,20 +242,12 @@ and compile_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
       in
     ] *)
 
-and compile_list_binding (_ctx : Ctx.t) (expr_stub_ml : Ml.expr)
+and compile_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     (exps : exp list) : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header _ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expressions for list elements *)
-  let ctx_inner, ids_stub_ml =
-    exps
-    |> List.mapi (fun idx _ -> "list__" ^ string_of_int idx)
-    |> List.fold_left
-         (fun (ctx_inner, ids_ml) id_ml ->
-           let ctx_inner, id_ml = Ctx.fresh ctx_inner id_ml in
-           (ctx_inner, ids_ml @ [ id_ml ]))
-         (ctx_inner, [])
-  in
+  let ctx, ids_stub_ml = exps |> List.length |> Stub.OCaml.list ctx in
   let exprs_stub_ml =
     List.map (fun id_stub_ml -> Ml.VarE id_stub_ml) ids_stub_ml
   in
@@ -291,13 +258,11 @@ and compile_list_binding (_ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     Chain.make_let pat_ml expr_stub_ml
   in
   (* Create chains for list elements *)
-  let ctx_inner, bindings, chain_elems =
-    compile_bindings ctx_inner exprs_stub_ml exps
-  in
+  let ctx, bindings, chain_elems = compile_bindings ctx exprs_stub_ml exps in
   (* Connect chains *)
   let chain = Chain.connect [ chain_list; chain_elems ] in
   (* Finish nested block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
     let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
@@ -324,16 +289,9 @@ and compile_list_binding (_ctx : Ctx.t) (expr_stub_ml : Ml.expr)
 and compile_cons_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp_h : exp)
     (exp_t : exp) : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expressions for head and tail *)
-  let ctx_inner, id_h_stub_ml =
-    let id_h_stub_ml = "cons__h" in
-    Ctx.fresh ctx_inner id_h_stub_ml
-  in
-  let ctx_inner, id_t_stub_ml =
-    let id_t_stub_ml = "cons__t" in
-    Ctx.fresh ctx_inner id_t_stub_ml
-  in
+  let ctx, id_h_stub_ml, id_t_stub_ml = Stub.OCaml.cons ctx in
   let expr_h_stub_ml = Ml.VarE id_h_stub_ml in
   let expr_t_stub_ml = Ml.VarE id_t_stub_ml in
   (* Create [match expr with expr_h :: expr_t -> ...] *)
@@ -342,15 +300,13 @@ and compile_cons_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp_h : exp)
     Chain.make_match expr_stub_ml pat_then_ml
   in
   (* Create chains for head and tail *)
-  let ctx_inner, bindings, chain_elems =
-    compile_bindings ctx_inner
-      [ expr_h_stub_ml; expr_t_stub_ml ]
-      [ exp_h; exp_t ]
+  let ctx, bindings, chain_elems =
+    compile_bindings ctx [ expr_h_stub_ml; expr_t_stub_ml ] [ exp_h; exp_t ]
   in
   (* Connect chains *)
   let chain = Chain.connect [ chain_cons; chain_elems ] in
   (* Finish nested block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [let (..._ah, ..., ..._at, ...) = ... in ...] *)
   let chain =
     let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
@@ -361,22 +317,6 @@ and compile_cons_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp_h : exp)
   (ctx, bindings, chain)
 
 (* Iter binding *)
-
-and is_iter_var_exp (exp : exp) : Var.t option =
-  match exp.it with
-  | VarE id_exp -> Some (id_exp, [])
-  | IterE (exp_inner, iterexp) -> (
-      match is_iter_var_exp exp_inner with
-      | Some (id_var, iters_var) -> (
-          match iterexp with
-          | iter, [ var ] ->
-              let id_iter, _, iters_iter = var in
-              if Id.eq id_var id_iter && iters_var = iters_iter then
-                Some (id_var, iters_var @ [ iter ])
-              else None
-          | _ -> None)
-      | None -> None)
-  | _ -> None
 
 (* Iter option binding: [exp?] on stub [expr]
 
@@ -395,23 +335,18 @@ and is_iter_var_exp (exp : exp) : Var.t option =
 and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expression for option element *)
-  let ctx_inner, id_stub_iter_ml =
-    let id_stub_iter_ml = "iter__opt" in
-    Ctx.fresh ctx_inner id_stub_iter_ml
-  in
+  let ctx, id_stub_iter_ml = Stub.OCaml.iter_opt ctx in
   let expr_stub_iter_ml = Ml.VarE id_stub_iter_ml in
   (* Create [Option.map (fun expr_stub_inner -> ...) expr] *)
   let chain_map = Chain.make_option_map expr_stub_ml id_stub_iter_ml in
   (* Create chains for option element *)
-  let ctx_inner, bindings, chain_elem =
-    compile_binding ctx_inner expr_stub_iter_ml exp
-  in
+  let ctx, bindings, chain_elem = compile_binding ctx expr_stub_iter_ml exp in
   (* Connect chains *)
   let chain = Chain.connect [ chain_map; chain_elem ] in
   (* Finish map block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [Option.splitN ...] *)
   let ctx, expr_split_ml =
     let arity = List.length bindings in
@@ -448,23 +383,18 @@ and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
 and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     : Ctx.t * Binding.t list * Chain.t =
   (* Create nested block *)
-  let ctx_inner = compile_blk_header ctx in
+  let ctx = compile_blk_header ctx in
   (* Create stub expression for list element *)
-  let ctx_inner, id_stub_iter_ml =
-    let id_stub_iter_ml = "iter__list" in
-    Ctx.fresh ctx_inner id_stub_iter_ml
-  in
+  let ctx, id_stub_iter_ml = Stub.OCaml.iter_list ctx in
   let expr_stub_iter_ml = Ml.VarE id_stub_iter_ml in
   (* Create [List.map (fun expr_stub_inner -> ...) expr] *)
   let chain_map = Chain.make_list_map expr_stub_ml id_stub_iter_ml in
   (* Create chains for list element *)
-  let ctx_inner, bindings, chain_elem =
-    compile_binding ctx_inner expr_stub_iter_ml exp
-  in
+  let ctx, bindings, chain_elem = compile_binding ctx expr_stub_iter_ml exp in
   (* Connect chains *)
   let chain = Chain.connect [ chain_map; chain_elem ] in
   (* Finish map block with bindings *)
-  let ctx, expr_bind_ml = compile_blk_footer ctx_inner chain bindings in
+  let ctx, expr_bind_ml = compile_blk_footer ctx chain bindings in
   (* Create [List.splitN ...] *)
   let ctx, expr_split_ml =
     let arity = List.length bindings in
@@ -484,9 +414,11 @@ and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
   in
   (ctx, bindings, chain)
 
-and compile_iter_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
-    (iterexp : iterexp) : Ctx.t * Binding.t list * Chain.t =
-  match is_iter_var_exp exp with
+and compile_iter_binding (ctx : Ctx.t) (typ_exp : typ) (expr_stub_ml : Ml.expr)
+    (exp : exp) (iterexp : iterexp) : Ctx.t * Binding.t list * Chain.t =
+  match
+    Common.is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
+  with
   | Some var ->
       let id_ml = Names.var_of_var var in
       let binding = (var, id_ml) in

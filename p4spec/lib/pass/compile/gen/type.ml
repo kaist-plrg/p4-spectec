@@ -2,7 +2,7 @@ open Domain
 open Lang
 open Util.Source
 
-(* Compiling typs *)
+(* Typs *)
 
 let rec compile_typ ~(tparams : string list) (typ : Sl.typ) : Ml.typ =
   match typ.it with
@@ -17,19 +17,19 @@ let rec compile_typ ~(tparams : string list) (typ : Sl.typ) : Ml.typ =
 and compile_typs ~(tparams : string list) (typs : Sl.typ list) : Ml.typ list =
   List.map (compile_typ ~tparams) typs
 
-(* Compiling boolean types *)
+(* Boolean types *)
 
 and compile_bool_typ : Ml.typ = Ml.BoolT
 
-(* Compiling number types *)
+(* Number types *)
 
 and compile_num_typ : Ml.typ = Ml.BigintT
 
-(* Compiling text types *)
+(* Text types *)
 
 and compile_text_typ : Ml.typ = Ml.StringT
 
-(* Compiling variable types *)
+(* Variable types *)
 
 and compile_var_typ ~(tparams : string list) (id : Sl.id) (targs : Sl.targ list)
     : Ml.typ =
@@ -45,13 +45,13 @@ and compile_var_typ ~(tparams : string list) (id : Sl.id) (targs : Sl.targ list)
       let targs_ml = compile_typs ~tparams targs in
       Ml.AppT (id_ml, targs_ml)
 
-(* Compiling tuple types *)
+(* Tuple types *)
 
 and compile_tuple_typ ~(tparams : string list) (typs : Sl.typ list) : Ml.typ =
   let typs_ml = compile_typs ~tparams typs in
   Ml.TupleT typs_ml
 
-(* Compiling iter types *)
+(* Iter types *)
 
 and compile_iter_typ ~(tparams : string list) (typ : Sl.typ) (iter : Sl.iter) :
     Ml.typ =
@@ -63,11 +63,11 @@ and compile_iter_typ ~(tparams : string list) (typ : Sl.typ) (iter : Sl.iter) :
       let typ_ml = compile_typ ~tparams typ in
       Ml.AppT ("list", [ typ_ml ])
 
-(* Compiling func types *)
+(* Func types *)
 
 and compile_func_typ : Ml.typ = Ml.UnitT
 
-(* Compiling deftyps *)
+(* Deftyps *)
 
 let rec compile_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
     (deftyp : Sl.deftyp) : Ctx.t * Ml.deftyp =
@@ -80,13 +80,13 @@ let rec compile_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
       (ctx, deftyp_ml)
   | Il.VariantT typcases -> compile_variant_deftyp ~tparams ctx id typcases
 
-(* Compiling alias deftyps *)
+(* Alias deftyps *)
 
 and compile_alias_deftyp ~(tparams : string list) (typ : Sl.typ) : Ml.deftyp =
   let typ_ml = compile_typ ~tparams typ in
   Ml.AliasTD typ_ml
 
-(* Compiling struct deftyps *)
+(* Struct deftyps *)
 
 and compile_typfield ~(tparams : string list) (typfield : Sl.typfield) :
     Ml.typfield =
@@ -104,7 +104,7 @@ and compile_struct_deftyp ~(tparams : string list)
   let typfields_ml = compile_typfields ~tparams typfields in
   Ml.RecordTD typfields_ml
 
-(* Compiling variant deftyps *)
+(* Variant deftyps *)
 
 and is_unique_variant (typcases_all : Sl.typcase list) (id : Sl.id) =
   let count =
@@ -162,7 +162,7 @@ and compile_variant_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
   in
   (ctx, deftyp_ml)
 
-(* Compiling defs *)
+(* Defs *)
 
 let compile_def (ctx : Ctx.t) (def : Sl.def) : Ctx.t * Ml.typdef option =
   match def.it with
@@ -191,7 +191,7 @@ let compile_defs (ctx : Ctx.t) (defs : Sl.def list) : Ctx.t * Ml.typdef list =
       | Some def_ml -> (ctx, defs_ml @ [ def_ml ]))
     (ctx, []) defs
 
-(* Compiling spec *)
+(* Spec *)
 
 let compile_spec (ctx : Ctx.t) (spec : Sl.spec) : Ctx.t * Ml.typdef list =
   compile_defs ctx spec

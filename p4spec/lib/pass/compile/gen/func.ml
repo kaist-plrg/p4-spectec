@@ -1,7 +1,7 @@
 open Lang
 open Sl
 
-(* Compiling parameters *)
+(* Parameters *)
 
 let compile_exp_param ~(index : int option) (ctx : Ctx.t) (typ : typ)
     (exp : exp) : Ctx.t * Ml.param * Chain.t =
@@ -43,7 +43,7 @@ let compile_params (ctx : Ctx.t) (params : param list) :
          (ctx, params_ml, chain))
        (ctx, [], Chain.nop)
 
-(* Compiling defined functions *)
+(* Defined functions *)
 
 let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (_block_main : block) (_elseblock_opt : block option) :
@@ -96,7 +96,7 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
   if tparams <> [] then (ctx, [])
   else compile_defined_func_mono ctx id params typ_ret block_main elseblock_opt
 
-(* Compiling defs *)
+(* Defs *)
 
 let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
@@ -113,6 +113,6 @@ let compile_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Ml.funcdef list =
       (ctx, funcdefs_ml_acc @ funcdefs_ml))
     (ctx, []) defs
 
-(* Compiling spec *)
+(* Spec *)
 
 let compile_spec (ctx : Ctx.t) (spec : spec) = compile_defs ctx spec
