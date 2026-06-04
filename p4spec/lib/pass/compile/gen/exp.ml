@@ -572,166 +572,219 @@ and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
 
 (* Update expressions *)
 
-and compile_access_path (ctx : Ctx.t) (path : path) (expr_b : Ml.expr) :
-    Ctx.t * Ml.expr =
-  match path.it with
-  | RootP -> (ctx, expr_b)
-  | DotP (path_inner, atom) ->
-      let ctx, expr = compile_access_path ctx path_inner expr_b in
-      (ctx, Ml.FieldE (expr, Names.field atom))
-  | IdxP (path_inner, exp_i) ->
-      let ctx, expr = compile_access_path ctx path_inner expr_b in
-      let ctx, expr_i = compile_exp ctx exp_i in
-      let expr_i = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i ]) in
+(* Accessing path *)
+
+and compile_access_path_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
+    (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_inner_ml = compile_access_path ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ctx exp_i in
+  let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
+  let expr_ml =
+    match path.note with
+    | Il.TextT ->
+        Ml.AppE
+          (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; Ml.LitE "1" ])
+    | _ -> Ml.AppE (Ml.VarE "List.nth", [ expr_inner_ml; expr_i_ml ])
+  in
+  (ctx, expr_ml)
+
+and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
+    (exp_n : exp) (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_inner_ml = compile_access_path ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ctx exp_i in
+  let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
+  let ctx, expr_n_ml = compile_exp ctx exp_n in
+  let expr_n_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_ml ]) in
+  match path.note with
+  | Il.TextT ->
+      ( ctx,
+        Ml.AppE
+          (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; expr_n_ml ]) )
+  | _ ->
+      let ctx = Ctx.push ctx in
+      let ctx, id_j_ml = Stub.OCaml.slice ctx in
+      let ctx = Ctx.pop ctx in
       let expr_ml =
-        match path_inner.note with
-        | Il.TextT ->
-            Ml.AppE (Ml.VarE "String.sub", [ expr; expr_i; Ml.LitE "1" ])
-        | _ -> Ml.AppE (Ml.VarE "List.nth", [ expr; expr_i ])
-      in
-      (ctx, expr_ml)
-  | SliceP (path_inner, exp_i, exp_n) ->
-      let ctx, expr = compile_access_path ctx path_inner expr_b in
-      let ctx, expr_i = compile_exp ctx exp_i in
-      let expr_i = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i ]) in
-      let ctx, expr_n = compile_exp ctx exp_n in
-      let expr_n = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n ]) in
-      let ctx, expr_ml =
-        match path_inner.note with
-        | Il.TextT ->
-            (ctx, Ml.AppE (Ml.VarE "String.sub", [ expr; expr_i; expr_n ]))
-        | _ ->
-            let ctx = Ctx.push ctx in
-            let ctx, id_j = Stub.OCaml.slice ctx in
-            let ctx = Ctx.pop ctx in
-            let expr_ml =
-              Ml.AppE
-                ( Ml.VarE "List.filteri",
-                  [ Ml.FunE
-                      ( [ Ml.VarP id_j; Ml.WildP ],
-                        Ml.BinopE
-                          ( "&&",
-                            Ml.BinopE ("<=", expr_i, Ml.VarE id_j),
-                            Ml.BinopE
-                              ( "<",
-                                Ml.VarE id_j,
-                                Ml.BinopE ("+", expr_i, expr_n) ) ) );
-                    expr ] )
-            in
-            (ctx, expr_ml)
+        Ml.AppE
+          ( Ml.VarE "List.filteri",
+            [ Ml.FunE
+                ( [ Ml.VarP id_j_ml; Ml.WildP ],
+                  Ml.BinopE
+                    ( "&&",
+                      Ml.BinopE ("<=", expr_i_ml, Ml.VarE id_j_ml),
+                      Ml.BinopE
+                        ( "<",
+                          Ml.VarE id_j_ml,
+                          Ml.BinopE ("+", expr_i_ml, expr_n_ml) ) ) );
+              expr_inner_ml ] )
       in
       (ctx, expr_ml)
 
-and compile_upd (ctx : Ctx.t) (path : path) (expr_b : Ml.expr)
-    (expr_n : Ml.expr) : Ctx.t * Ml.expr =
+and compile_access_path (ctx : Ctx.t) (path : path) (expr_b_ml : Ml.expr) :
+    Ctx.t * Ml.expr =
   match path.it with
-  | RootP -> (ctx, expr_n)
-  | DotP (path_inner, atom) ->
-      let ctx, expr_inner = compile_access_path ctx path_inner expr_b in
-      let expr_inner' =
-        Ml.RecordUpdateE (expr_inner, [ (Names.field atom, expr_n) ])
-      in
-      compile_upd ctx path_inner expr_b expr_inner'
-  | IdxP (path_inner, exp_i) ->
-      let ctx, expr_inner = compile_access_path ctx path_inner expr_b in
-      let ctx, expr_i = compile_exp ctx exp_i in
-      let expr_i = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i ]) in
-      let ctx, expr_inner' =
-        match path_inner.note with
-        | Il.TextT ->
-            let expr_len =
-              Ml.AppE (Ml.VarE "String.length", [ expr_inner ])
-            in
-            let expr_head =
-              Ml.AppE
-                (Ml.VarE "String.sub", [ expr_inner; Ml.LitE "0"; expr_i ])
-            in
-            let expr_tail =
-              Ml.AppE
-                ( Ml.VarE "String.sub",
-                  [ expr_inner;
-                    Ml.BinopE ("+", expr_i, Ml.LitE "1");
-                    Ml.BinopE
-                      ("-", Ml.BinopE ("-", expr_len, expr_i), Ml.LitE "1")
-                  ] )
-            in
-            ( ctx,
-              Ml.BinopE ("^", Ml.BinopE ("^", expr_head, expr_n), expr_tail)
-            )
-        | _ ->
-            let ctx = Ctx.push ctx in
-            let ctx, id_j, id_x = Stub.OCaml.upd ctx in
-            let ctx = Ctx.pop ctx in
-            let expr_ml =
-              Ml.AppE
-                ( Ml.VarE "List.mapi",
-                  [ Ml.FunE
-                      ( [ Ml.VarP id_j; Ml.VarP id_x ],
-                        Ml.IfE
-                          ( Ml.BinopE ("=", Ml.VarE id_j, expr_i),
-                            expr_n,
-                            Some (Ml.VarE id_x) ) );
-                    expr_inner ] )
-            in
-            (ctx, expr_ml)
-      in
-      compile_upd ctx path_inner expr_b expr_inner'
-  | SliceP (path_inner, exp_i, exp_n_len) ->
-      let ctx, expr_inner = compile_access_path ctx path_inner expr_b in
-      let ctx, expr_i = compile_exp ctx exp_i in
-      let expr_i = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i ]) in
-      let ctx, expr_n_len = compile_exp ctx exp_n_len in
-      let expr_n_len =
-        Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_len ])
-      in
-      let ctx, expr_inner' =
-        match path_inner.note with
-        | Il.TextT ->
-            let expr_len =
-              Ml.AppE (Ml.VarE "String.length", [ expr_inner ])
-            in
-            let expr_head =
-              Ml.AppE
-                (Ml.VarE "String.sub", [ expr_inner; Ml.LitE "0"; expr_i ])
-            in
-            let expr_tail =
-              Ml.AppE
-                ( Ml.VarE "String.sub",
-                  [ expr_inner;
-                    Ml.BinopE ("+", expr_i, expr_n_len);
-                    Ml.BinopE
-                      ("-", Ml.BinopE ("-", expr_len, expr_i), expr_n_len)
-                  ] )
-            in
-            ( ctx,
-              Ml.BinopE ("^", Ml.BinopE ("^", expr_head, expr_n), expr_tail)
-            )
-        | _ ->
-            let ctx = Ctx.push ctx in
-            let ctx, id_j, id_x = Stub.OCaml.upd ctx in
-            let ctx = Ctx.pop ctx in
-            let expr_idx_hi = Ml.BinopE ("+", expr_i, expr_n_len) in
-            let expr_ml =
-              Ml.AppE
-                ( Ml.VarE "List.mapi",
-                  [ Ml.FunE
-                      ( [ Ml.VarP id_j; Ml.VarP id_x ],
-                        Ml.IfE
-                          ( Ml.BinopE
-                              ( "&&",
-                                Ml.BinopE ("<=", expr_i, Ml.VarE id_j),
-                                Ml.BinopE ("<", Ml.VarE id_j, expr_idx_hi) ),
-                            Ml.AppE
-                              ( Ml.VarE "List.nth",
-                                [ expr_n;
-                                  Ml.BinopE ("-", Ml.VarE id_j, expr_i)
-                                ] ),
-                            Some (Ml.VarE id_x) ) );
-                    expr_inner ] )
-            in
-            (ctx, expr_ml)
-      in
-      compile_upd ctx path_inner expr_b expr_inner'
+  | RootP -> (ctx, expr_b_ml)
+  | DotP (path, atom) ->
+      let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+      let field_ml = Names.field atom in
+      let expr_ml = Ml.FieldE (expr_ml, field_ml) in
+      (ctx, expr_ml)
+  | IdxP (path, exp_i) -> compile_access_path_idx ctx path exp_i expr_b_ml
+  | SliceP (path, exp_i, exp_n) ->
+      compile_access_path_slice ctx path exp_i exp_n expr_b_ml
+
+(* Updating path *)
+
+(* String character update *)
+
+and compile_upd_idx_text (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
+    (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let expr_len_ml = Ml.AppE (Ml.VarE "String.length", [ expr_ml ]) in
+  let expr_h_ml =
+    Ml.AppE (Ml.VarE "String.sub", [ expr_ml; Ml.LitE "0"; expr_i_ml ])
+  in
+  let expr_t_ml =
+    Ml.AppE
+      ( Ml.VarE "String.sub",
+        [
+          expr_ml;
+          Ml.BinopE ("+", expr_i_ml, Ml.LitE "1");
+          Ml.BinopE ("-", Ml.BinopE ("-", expr_len_ml, expr_i_ml), Ml.LitE "1");
+        ] )
+  in
+  let expr_ml =
+    Ml.BinopE ("^", Ml.BinopE ("^", expr_h_ml, expr_n_ml), expr_t_ml)
+  in
+  (ctx, expr_ml)
+
+(* List element update *)
+
+and compile_upd_idx_list (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
+    (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx = Ctx.push ctx in
+  let ctx, id_j_ml, id_x_ml = Stub.OCaml.upd ctx in
+  let ctx = Ctx.pop ctx in
+  let expr_ml =
+    Ml.AppE
+      ( Ml.VarE "List.mapi",
+        [
+          Ml.FunE
+            ( [ Ml.VarP id_j_ml; Ml.VarP id_x_ml ],
+              Ml.IfE
+                ( Ml.BinopE ("=", Ml.VarE id_j_ml, expr_i_ml),
+                  expr_n_ml,
+                  Some (Ml.VarE id_x_ml) ) );
+          expr_ml;
+        ] )
+  in
+  (ctx, expr_ml)
+
+(* Index update dispatcher *)
+
+and compile_upd_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
+    (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ctx exp_i in
+  let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
+  let ctx, expr_ml =
+    match path.note with
+    | Il.TextT -> compile_upd_idx_text ctx expr_ml expr_i_ml expr_n_ml
+    | _ -> compile_upd_idx_list ctx expr_ml expr_i_ml expr_n_ml
+  in
+  compile_upd ctx path expr_b_ml expr_ml
+
+(* String slice update: String.sub splicing *)
+
+and compile_upd_slice_text (ctx : Ctx.t) (expr_ml : Ml.expr)
+    (expr_i_ml : Ml.expr) (expr_n_len_ml : Ml.expr) (expr_n_ml : Ml.expr) :
+    Ctx.t * Ml.expr =
+  let expr_len_ml = Ml.AppE (Ml.VarE "String.length", [ expr_ml ]) in
+  let expr_h_ml =
+    Ml.AppE (Ml.VarE "String.sub", [ expr_ml; Ml.LitE "0"; expr_i_ml ])
+  in
+  let expr_t_ml =
+    Ml.AppE
+      ( Ml.VarE "String.sub",
+        [
+          expr_ml;
+          Ml.BinopE ("+", expr_i_ml, expr_n_len_ml);
+          Ml.BinopE ("-", Ml.BinopE ("-", expr_len_ml, expr_i_ml), expr_n_len_ml);
+        ] )
+  in
+  let expr_ml =
+    Ml.BinopE ("^", Ml.BinopE ("^", expr_h_ml, expr_n_ml), expr_t_ml)
+  in
+  (ctx, expr_ml)
+
+(* List slice update: List.mapi *)
+
+and compile_upd_slice_list (ctx : Ctx.t) (expr_ml : Ml.expr)
+    (expr_i_ml : Ml.expr) (expr_n_len_ml : Ml.expr) (expr_n_ml : Ml.expr) :
+    Ctx.t * Ml.expr =
+  let ctx = Ctx.push ctx in
+  let ctx, id_j_ml, id_x_ml = Stub.OCaml.upd ctx in
+  let ctx = Ctx.pop ctx in
+  let expr_idx_hi_ml = Ml.BinopE ("+", expr_i_ml, expr_n_len_ml) in
+  let expr_ml =
+    Ml.AppE
+      ( Ml.VarE "List.mapi",
+        [
+          Ml.FunE
+            ( [ Ml.VarP id_j_ml; Ml.VarP id_x_ml ],
+              Ml.IfE
+                ( Ml.BinopE
+                    ( "&&",
+                      Ml.BinopE ("<=", expr_i_ml, Ml.VarE id_j_ml),
+                      Ml.BinopE ("<", Ml.VarE id_j_ml, expr_idx_hi_ml) ),
+                  Ml.AppE
+                    ( Ml.VarE "List.nth",
+                      [ expr_n_ml; Ml.BinopE ("-", Ml.VarE id_j_ml, expr_i_ml) ]
+                    ),
+                  Some (Ml.VarE id_x_ml) ) );
+          expr_ml;
+        ] )
+  in
+  (ctx, expr_ml)
+
+(* Slice update dispatcher *)
+
+and compile_upd_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
+    (exp_n_len : exp) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) :
+    Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ctx exp_i in
+  let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
+  let ctx, expr_n_len_ml = compile_exp ctx exp_n_len in
+  let expr_n_len_ml =
+    Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_len_ml ])
+  in
+  let ctx, expr_ml =
+    match path.note with
+    | Il.TextT ->
+        compile_upd_slice_text ctx expr_ml expr_i_ml expr_n_len_ml expr_n_ml
+    | _ -> compile_upd_slice_list ctx expr_ml expr_i_ml expr_n_len_ml expr_n_ml
+  in
+  compile_upd ctx path expr_b_ml expr_ml
+
+(* Record field update *)
+
+and compile_upd_dot (ctx : Ctx.t) (path : path) (atom : atom)
+    (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+  let expr_ml =
+    let field_ml = Names.field atom in
+    Ml.RecordUpdateE (expr_ml, [ (field_ml, expr_n_ml) ])
+  in
+  compile_upd ctx path expr_b_ml expr_ml
+
+and compile_upd (ctx : Ctx.t) (path : path) (expr_b_ml : Ml.expr)
+    (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+  match path.it with
+  | RootP -> (ctx, expr_n_ml)
+  | DotP (path, atom) -> compile_upd_dot ctx path atom expr_b_ml expr_n_ml
+  | IdxP (path, exp_i) -> compile_upd_idx ctx path exp_i expr_b_ml expr_n_ml
+  | SliceP (path, exp_i, exp_n_len) ->
+      compile_upd_slice ctx path exp_i exp_n_len expr_b_ml expr_n_ml
 
 and compile_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_n : exp) :
     Ctx.t * Ml.expr =
@@ -783,15 +836,16 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
   (* Temporarily add stub variables to context *)
   let ctx =
     List.fold_left2
-      (fun ctx (id, _, iters) stub -> Ctx.add_binding ctx (id, iters) stub)
+      (fun ctx (id, _, iters) id_stub_ml ->
+        Ctx.add_binding ctx (id, iters) id_stub_ml)
       ctx vars ids_stub_ml
   in
   (* Compile lambda expression *)
   let ctx, expr_lambda_ml =
     let pat_ml =
       match ids_stub_ml with
-      | [ id ] -> Ml.VarP id
-      | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+      | [ id_ml ] -> Ml.VarP id_ml
+      | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
     in
     let ctx, expr_body_ml = compile_exp ctx exp in
     let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
@@ -841,15 +895,16 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
   (* Temporarily add stub variables to context *)
   let ctx =
     List.fold_left2
-      (fun ctx (id, _, iters) stub -> Ctx.add_binding ctx (id, iters) stub)
+      (fun ctx (id, _, iters) id_stub_ml ->
+        Ctx.add_binding ctx (id, iters) id_stub_ml)
       ctx vars ids_stub_ml
   in
   (* Compile lambda expression *)
   let ctx, expr_lambda_ml =
     let pat_ml =
       match ids_stub_ml with
-      | [ id ] -> Ml.VarP id
-      | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+      | [ id_ml ] -> Ml.VarP id_ml
+      | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
     in
     let ctx, expr_body_ml = compile_exp ctx exp in
     let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
