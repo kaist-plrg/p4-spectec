@@ -1,22 +1,35 @@
 open Domain
+open Lib
 open Lang
+open Runtime.Dynamic_OCaml
 open Util.Source
 
 (* Type variables *)
 
-let tvar (name : string) = name |> Sanitize.apply |> String.lowercase_ascii
+let tvar (id : Id.t) = id.it |> Sanitize.apply |> String.lowercase_ascii
 
 (* Variables *)
 
-let var (name : string) = name |> Sanitize.apply
+let var_of_id (id : Id.t) = id.it |> Sanitize.apply
+
+let var_of_var (var_ : Var.t) =
+  let id, iters = var_ in
+  var_of_id
+    (id.it
+     ^ String.concat ""
+         (List.map
+            (fun iter ->
+              match iter with Il.Opt -> "__quest" | Il.List -> "__star")
+            iters)
+    $ no_region)
 
 (* Functions *)
 
-let func (name : string) = "f__" ^ var name
+let func (id : Id.t) = "f__" ^ var_of_id id
 
 (* Relations *)
 
-let rel (name : string) = "r__" ^ var name
+let rel (id : Id.t) = "r__" ^ var_of_id id
 
 (* Fields and constructors *)
 

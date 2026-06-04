@@ -125,7 +125,7 @@ type expr =
   (* `if` expr `then` expr `else` expr *)
   | IfE of expr * expr * expr option
   (* `match` expr `with` list(pattern = expr, `;`) `end` *)
-  | MatchE of expr * (pat * expr) list
+  | MatchE of expr * arm list
   (* `let` pattern `=` expr `in` expr *)
   | LetE of pat * expr * expr
   (* `try` expr `with` list(pattern -> expr, `|`) `end` *)

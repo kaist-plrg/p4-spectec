@@ -11,7 +11,5 @@ let make_var_exp (var : string) (typ : Sl.typ) : Sl.exp =
 
 (* Raise an Unmatch exception *)
 
-let raise_unmatch (msg : string) : Ml.Ast.expr =
-  Ml.Ast.AppE
-    ( Ml.Ast.VarE "raise",
-      [ Ml.Ast.AppE (Ml.Ast.VarE "Unmatch", [ Ml.Ast.StrE msg ]) ] )
+let raise_unmatch (msg : string) : Ml.expr =
+  Ml.AppE (Ml.VarE "raise", [ Ml.AppE (Ml.VarE "Unmatch", [ Ml.StrE msg ]) ])

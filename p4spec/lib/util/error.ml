@@ -6,6 +6,7 @@ exception RuntimeError of region * string
 exception ElabError of region * string
 exception StructError of region * string
 exception ProseError of region * string
+exception CompileError of region * string
 exception BuiltinError of region * string
 exception InterpError of region * string
 exception ExternError of region * string
@@ -48,6 +49,11 @@ let warn_struct (at : region) (msg : string) = warn at "struct" msg
 
 let error_prose (at : region) (msg : string) = raise (ProseError (at, msg))
 let warn_prose (at : region) (msg : string) = warn at "prose" msg
+
+(* Compilation errors *)
+
+let error_compile (at : region) (msg : string) = raise (CompileError (at, msg))
+let warn_compile (at : region) (msg : string) = warn at "compile" msg
 
 (* Builtin errors *)
 
