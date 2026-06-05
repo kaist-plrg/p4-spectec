@@ -44,11 +44,228 @@ and compile_case_instr (_ctx : Ctx.t) (_exp : exp) (_cases : case list) :
 and compile_group_instr (ctx : Ctx.t) (block : block) : Ctx.t * Ml.expr =
   compile_block ctx block
 
-(* Let instruction *)
+(* Let instruction (no iterinstrs): [let exp_l = exp_r in cont]
 
-and compile_let_instr (_ctx : Ctx.t) (_exp_l : exp) (_exp_r : exp)
-    (_iterinstrs : iterinstr list) (_block : block) : Ctx.t * Ml.expr =
-  failwith "compile_let_instr"
+   [
+     let <bind exp_l = compile_exp exp_r> in
+     <cont block>
+   ]
+
+   Let instruction (list iterinstrs): [let (a*, ..) = (e* where a* <- x*..) in cont]
+
+   [
+     let (a__star, ..) =
+       List.splitN (List.map (fun x -> <inner body producing (a,..)>) x__star)
+     in
+     <cont block>
+   ]
+
+   Opt iterinstrs: analogous with Option.map / Option.splitN *)
+
+and compile_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_rhs_ml = Exp.compile_exp ctx exp_r in
+  let ctx = Ctx.push ctx in
+  let ctx, chain = Bind.compile ctx expr_rhs_ml exp_l in
+  let ctx, expr_result_ml = cont ctx in
+  let ctx = Ctx.pop ctx in
+  (ctx, Chain.apply chain expr_result_ml)
+
+and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (vars_bound : var list) (vars_bind : var list) (rest : iterinstr list)
+    (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let n_bound = List.length vars_bound in
+  (* Fetch guiding option ML names from ctx *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.Opt ]))
+      vars_bound
+  in
+  (* Create fresh element stubs *)
+  let ctx, ids_elem_ml = Stub.OCaml.iter_opts ctx n_bound in
+  (* Build inner ctx with elem stubs at non-iterated level *)
+  let ctx_inner =
+    List.fold_left2
+      (fun ctx (id, _, iters) id_elem ->
+        Ctx.add_binding ctx (id, iters) id_elem)
+      ctx vars_bound ids_elem_ml
+  in
+  (* Inner continuation: extract vars_bind as tuple from ctx *)
+  let f_inner ctx =
+    let ids =
+      List.map
+        (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters))
+        vars_bind
+    in
+    ( ctx,
+      match ids with
+      | [] -> Ml.UnitE
+      | [ id ] -> Ml.VarE id
+      | ids -> Ml.TupleE (List.map (fun id -> Ml.VarE id) ids) )
+  in
+  (* Compile inner body *)
+  let ctx, expr_inner_ml =
+    compile_let_iter ctx_inner exp_l exp_r rest f_inner
+  in
+  (* Combine multiple option guides into a single option of tuple *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id ] -> (ctx, Ml.VarE id)
+    | ids ->
+        let ctx = Ctx.add_opt_arity ctx n_bound in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
+              List.map (fun id -> Ml.VarE id) ids ) )
+  in
+  (* Build element pattern for Option.map lambda *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id ] -> Ml.VarP id
+    | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+  in
+  (* Build Option.map expression *)
+  let expr_map_ml =
+    Ml.AppE
+      ( Ml.VarE "Option.map",
+        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  in
+  (* Name output vars with __quest suffix and register split arity *)
+  let m = List.length vars_bind in
+  let ctx = Ctx.add_opt_arity ctx m in
+  let ids_out_ml =
+    List.map
+      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
+      vars_bind
+  in
+  (* Build output pattern *)
+  let pat_out_ml =
+    match ids_out_ml with
+    | [ id ] -> Ml.VarP id
+    | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+  in
+  (* Build Option.split expression *)
+  let expr_split_ml =
+    Ml.AppE (Ml.VarE ("Option.split" ^ string_of_int m), [ expr_map_ml ])
+  in
+  (* Add output bindings to ctx *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) id_out ->
+        Ctx.add_binding ctx (id, iters @ [ Il.Opt ]) id_out)
+      ctx vars_bind ids_out_ml
+  in
+  (* Compile continuation *)
+  let ctx, expr_cont_ml = cont ctx in
+  (ctx, Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml))
+
+and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (vars_bound : var list) (vars_bind : var list) (rest : iterinstr list)
+    (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let n_bound = List.length vars_bound in
+  (* Fetch guiding list ML names from ctx *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.List ]))
+      vars_bound
+  in
+  (* Create fresh element stubs *)
+  let ctx, ids_elem_ml = Stub.OCaml.iter_lists ctx n_bound in
+  (* Build inner ctx with elem stubs at non-iterated level *)
+  let ctx_inner =
+    List.fold_left2
+      (fun ctx (id, _, iters) id_elem ->
+        Ctx.add_binding ctx (id, iters) id_elem)
+      ctx vars_bound ids_elem_ml
+  in
+  (* Inner continuation: extract vars_bind as tuple from ctx *)
+  let f_inner ctx =
+    let ids =
+      List.map
+        (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters))
+        vars_bind
+    in
+    ( ctx,
+      match ids with
+      | [] -> Ml.UnitE
+      | [ id ] -> Ml.VarE id
+      | ids -> Ml.TupleE (List.map (fun id -> Ml.VarE id) ids) )
+  in
+  (* Compile inner body *)
+  let ctx, expr_inner_ml =
+    compile_let_iter ctx_inner exp_l exp_r rest f_inner
+  in
+  (* Combine multiple list guides into a single list of tuple *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id ] -> (ctx, Ml.VarE id)
+    | ids ->
+        let ctx = Ctx.add_list_arity ctx n_bound in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
+              List.map (fun id -> Ml.VarE id) ids ) )
+  in
+  (* Build element pattern for List.map lambda *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id ] -> Ml.VarP id
+    | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+  in
+  (* Build List.map expression *)
+  let expr_map_ml =
+    Ml.AppE
+      ( Ml.VarE "List.map",
+        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  in
+  (* Name output vars with __star suffix and register split arity *)
+  let m = List.length vars_bind in
+  let ctx = Ctx.add_list_arity ctx m in
+  let ids_out_ml =
+    List.map
+      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.List ]))
+      vars_bind
+  in
+  (* Build output pattern *)
+  let pat_out_ml =
+    match ids_out_ml with
+    | [ id ] -> Ml.VarP id
+    | ids -> Ml.TupleP (List.map (fun id -> Ml.VarP id) ids)
+  in
+  (* Build List.split expression *)
+  let expr_split_ml =
+    Ml.AppE (Ml.VarE ("List.split" ^ string_of_int m), [ expr_map_ml ])
+  in
+  (* Add output bindings to ctx *)
+  let ctx =
+    List.fold_left2
+      (fun ctx (id, _, iters) id_out ->
+        Ctx.add_binding ctx (id, iters @ [ Il.List ]) id_out)
+      ctx vars_bind ids_out_ml
+  in
+  (* Compile continuation *)
+  let ctx, expr_cont_ml = cont ctx in
+  (ctx, Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml))
+
+and compile_let_iter (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (iterinstrs_rev : iterinstr list) (cont : Ctx.t -> Ctx.t * Ml.expr) :
+    Ctx.t * Ml.expr =
+  match iterinstrs_rev with
+  | [] -> compile_let ctx exp_l exp_r cont
+  | iterinstr_h :: iterinstrs_t -> (
+      let iter, vars_bound, vars_bind = iterinstr_h in
+      match iter with
+      | Il.Opt ->
+          compile_let_opt ctx exp_l exp_r vars_bound vars_bind iterinstrs_t cont
+      | Il.List ->
+          compile_let_list ctx exp_l exp_r vars_bound vars_bind iterinstrs_t
+            cont)
+
+and compile_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+    (iterinstrs : iterinstr list) (block_cont_ml : block) : Ctx.t * Ml.expr =
+  let iterinstrs_rev = List.rev iterinstrs in
+  let cont ctx = compile_block ctx block_cont_ml in
+  compile_let_iter ctx exp_l exp_r iterinstrs_rev cont
 
 (* Rule instruction *)
 

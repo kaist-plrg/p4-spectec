@@ -46,22 +46,34 @@ let compile_params (ctx : Ctx.t) (params : param list) :
 (* Defined functions *)
 
 let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
-    (typ_ret : typ) (_block_main : block) (_elseblock_opt : block option) :
+    (typ_ret : typ) (block_main : block) (elseblock_opt : block option) :
     Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
+  (* Enter nested scope *)
+  let ctx = Ctx.push ctx in
   (* Compile parameters *)
   let ctx, params_ml, chain = compile_params ctx params in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
-  let funcdef_main_ml =
-    let expr_ml = Chain.apply chain Ml.UnitE in
-    (id_main_ml, params_ml, None, expr_ml)
+  let ctx, funcdef_main_ml =
+    let ctx, expr_block_ml = Instr.compile_block ctx block_main in
+    let expr_ml = Chain.apply chain expr_block_ml in
+    let funcdef_main_ml = (id_main_ml, params_ml, None, expr_ml) in
+    (ctx, funcdef_main_ml)
   in
   (* Compile else block *)
   let id_else_ml = "else__" ^ id_ml in
-  let funcdef_else_ml_opt = None in
+  let ctx, funcdef_else_ml_opt =
+    match elseblock_opt with
+    | Some elseblock ->
+        let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
+        let expr_ml = Chain.apply chain expr_else_ml in
+        let funcdef_else_ml = (id_else_ml, params_ml, None, expr_ml) in
+        (ctx, Some funcdef_else_ml)
+    | None -> (ctx, None)
+  in
   (* Compile dispatcher *)
   let funcdef_dispatcher_ml =
     let exprs_param_ml =
@@ -80,9 +92,12 @@ let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     in
     (id_ml, params_ml, Some typ_ret_ml, exp_dispatcher_ml)
   in
+  (* Exit nested scope *)
+  let ctx = Ctx.pop ctx in
+  (* Collect function definitions *)
   let funcdefs_ml =
-    (funcdef_main_ml :: Option.value ~default:[] funcdef_else_ml_opt)
-    @ [ funcdef_dispatcher_ml ]
+    let else_list = Option.to_list funcdef_else_ml_opt in
+    (funcdef_main_ml :: else_list) @ [ funcdef_dispatcher_ml ]
   in
   (ctx, funcdefs_ml)
 
