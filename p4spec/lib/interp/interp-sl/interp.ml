@@ -1405,7 +1405,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Some ctx_sub ->
         let cond, value_cond = eval_hold_cond_iter ctx_sub id notexp iterexps in
         (cond, Some value_cond)
-    | None -> (false, None)
+    | None -> (true, None)
 
   and eval_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
       (vars : var list) (iterexps : iterexp list) : bool * value list =

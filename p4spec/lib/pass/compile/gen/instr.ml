@@ -139,11 +139,174 @@ and compile_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
     Ml.IfE (expr_cond_ml, expr_then_ml, Some (Common.raise_unmatch "if failed"))
   )
 
-(* Hold instruction *)
+(* Hold instruction: [if id(notexp) holds then block_hold else block_not_hold]
 
-and compile_hold_instr (_ctx : Ctx.t) (_id : id) (_notexp : notexp)
-    (_iterexps : iterexp list) (_holdcase : holdcase) : Ctx.t * Ml.expr =
-  failwith "compile_hold_instr"
+   Base case (no iterexps):
+   [
+     let holds__ =
+       try let _ = r__id(inputs) in true
+       with Unmatch _ -> false
+     in
+     if holds__ then <block_hold> else <block_not_hold / raise_unmatch>
+   ]
+
+   List iter: [List.for_all (fun elem -> <inner_hold>) guide__star]
+   Opt iter:  [match guide__quest with None -> true | Some elem -> <inner_hold>]
+   (None -> true: vacuously holds when element is absent, same as IfI) *)
+
+and compile_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) :
+    Ctx.t * Ml.expr =
+  let exps_input = Domain.Mixfix.args notexp in
+  let ctx, exprs_input_ml = Exp.compile_exps ctx exps_input in
+  let id_rel_ml = Names.rel id in
+  let expr_call_ml = Ml.AppE (Ml.VarE id_rel_ml, exprs_input_ml) in
+  let expr_hold_ml =
+    Ml.TryE
+      ( Ml.LetE (Ml.WildP, expr_call_ml, Ml.BoolE true),
+        [ (Ml.VariantP (`Mono ("Unmatch", [ Ml.WildP ])), Ml.BoolE false) ] )
+  in
+  (ctx, expr_hold_ml)
+
+and compile_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
+    (vars : var list) (iterexps_t : iterexp list) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  let n = List.length vars in
+  (* Fetch guiding list variables *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.List ]))
+      vars
+  in
+  (* Create stubs for element vars *)
+  let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_hold__" ctx vars in
+  (* Combine multiple list guides into a single list of tuples *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+    | _ ->
+        let ctx = Ctx.add_list_arity ctx n in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("List.combine" ^ string_of_int n),
+              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
+        )
+  in
+  (* Build element pattern for lambda *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+    | _ ->
+        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+  in
+  (* Compile inner hold condition with element vars bound *)
+  let ctx, expr_inner_ml = compile_hold_cond_iter ctx id notexp iterexps_t in
+  (* Promote preamble from inner scope *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Hold holds iff it holds for all list elements *)
+  let expr_ml =
+    Ml.AppE
+      ( Ml.VarE "List.for_all",
+        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  in
+  (ctx, expr_ml)
+
+and compile_hold_cond_opt (ctx : Ctx.t) (id : id) (notexp : notexp)
+    (vars : var list) (iterexps_t : iterexp list) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  let n = List.length vars in
+  (* Fetch guiding option variables *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.Opt ]))
+      vars
+  in
+  (* Create stubs for element vars *)
+  let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_hold__" ctx vars in
+  (* Combine multiple option guides into an option of a tuple *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+    | _ ->
+        let ctx = Ctx.add_opt_arity ctx n in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("Option.combine" ^ string_of_int n),
+              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
+        )
+  in
+  (* Build element pattern for Some branch *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+    | _ ->
+        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+  in
+  (* Compile inner hold condition with element vars bound *)
+  let ctx, expr_inner_ml = compile_hold_cond_iter ctx id notexp iterexps_t in
+  (* Promote preamble from inner scope *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Build match: None -> true (vacuous), Some -> inner hold condition *)
+  let expr_ml =
+    Ml.MatchE
+      ( expr_guide_ml,
+        [
+          (Ml.OptP None, Ml.BoolE true);
+          (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
+        ] )
+  in
+  (ctx, expr_ml)
+
+and compile_hold_cond_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
+    (iterexps_rev : iterexp list) : Ctx.t * Ml.expr =
+  match iterexps_rev with
+  | [] -> compile_hold_cond ctx id notexp
+  | (iter, vars) :: iterexps_t -> (
+      match iter with
+      | Il.List -> compile_hold_cond_list ctx id notexp vars iterexps_t
+      | Il.Opt -> compile_hold_cond_opt ctx id notexp vars iterexps_t)
+
+and compile_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
+    (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  (* Process iterexps innermost-first, matching interpreter's List.rev *)
+  let iterexps_rev = List.rev iterexps in
+  let ctx, expr_hold_ml = compile_hold_cond_iter ctx id notexp iterexps_rev in
+  (* Bind hold__ so holdcase branches can reference it *)
+  let ctx, id_hold_ml = Stub.OCaml.var ctx "hold__" in
+  let ctx, expr_body_ml =
+    match holdcase with
+    | BothH (block_hold, block_nothold) ->
+        (* Both branches reachable; no Unmatch on either path *)
+        let ctx, expr_hold_ml = compile_block ctx block_hold in
+        let ctx, expr_nothold_ml = compile_block ctx block_nothold in
+        let expr_body_ml =
+          Ml.IfE (Ml.VarE id_hold_ml, expr_hold_ml, Some expr_nothold_ml)
+        in
+        (ctx, expr_body_ml)
+    | HoldH (block_hold, _) ->
+        (* If condition does not hold: Unmatch -> fall through to next sibling *)
+        let ctx, expr_hold_ml = compile_block ctx block_hold in
+        let expr_body_ml =
+          Ml.IfE
+            ( Ml.VarE id_hold_ml,
+              expr_hold_ml,
+              Some (Common.raise_unmatch "hold failed") )
+        in
+        (ctx, expr_body_ml)
+    | NotHoldH (block_nothold, _) ->
+        (* If condition holds: Unmatch -> fall through to next sibling *)
+        let ctx, expr_nothold_ml = compile_block ctx block_nothold in
+        let expr_body_ml =
+          Ml.IfE
+            ( Ml.UnopE ("not", Ml.VarE id_hold_ml),
+              expr_nothold_ml,
+              Some (Common.raise_unmatch "not-hold failed") )
+        in
+        (ctx, expr_body_ml)
+  in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  let expr_ml = Ml.LetE (Ml.VarP id_hold_ml, expr_hold_ml, expr_body_ml) in
+  (ctx, expr_ml)
 
 (* Case instruction *)
 
