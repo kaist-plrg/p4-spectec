@@ -12,60 +12,32 @@ end
 (* Creating stub OCaml variables *)
 
 module OCaml = struct
-  let create (ctx : Ctx.t) (ids_ml : Ml.id list) : Ctx.t * Ml.id list =
-    List.fold_left
-      (fun (ctx, ids_ml) id_ml ->
-        let ctx, id_ml = Ctx.fresh ctx id_ml in
+  (* Variables *)
+
+  let var (ctx : Ctx.t) (id : string) : Ctx.t * Ml.id =
+    let id_ml = Ctx.fresh ctx id in
+    let ctx = Ctx.add_binding ctx (id $ no_region, []) id_ml in
+    (ctx, id_ml)
+
+  let vars (ctx : Ctx.t) (id : string) (n : int) : Ctx.t * Ml.id list =
+    List.init n (fun idx -> id ^ string_of_int idx)
+    |> List.fold_left
+         (fun (ctx, ids_ml) id ->
+           let ctx, id_ml = var ctx id in
+           (ctx, ids_ml @ [ id_ml ]))
+         (ctx, [])
+
+  (* Iterators *)
+
+  let iterator ~(prefix : string) (ctx : Ctx.t) (vars : Sl.var list) :
+      Ctx.t * Ml.id list =
+    let ids =
+      List.init (List.length vars) (fun idx -> prefix ^ string_of_int idx)
+    in
+    List.fold_left2
+      (fun (ctx, ids_ml) id (id_var, _, iters_var) ->
+        let id_ml = Ctx.fresh ctx id in
+        let ctx = Ctx.add_binding ctx (id_var, iters_var) id_ml in
         (ctx, ids_ml @ [ id_ml ]))
-      (ctx, []) ids_ml
-
-  let var (ctx : Ctx.t) (id : string) : Ctx.t * Ml.id = Ctx.fresh ctx id
-
-  let slice (ctx : Ctx.t) : Ctx.t * Ml.id =
-    let id_ml = "slice__" in
-    Ctx.fresh ctx id_ml
-
-  let tuple (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "tuple__" ^ string_of_int idx) |> create ctx
-
-  let case (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "payload__" ^ string_of_int idx) |> create ctx
-
-  let opt (ctx : Ctx.t) : Ctx.t * Ml.id =
-    let id_ml = "opt__" in
-    Ctx.fresh ctx id_ml
-
-  let list (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "list__" ^ string_of_int idx) |> create ctx
-
-  let cons (ctx : Ctx.t) : Ctx.t * Ml.id * Ml.id =
-    let id_h_ml = "cons__h" in
-    let ctx, id_h_ml = Ctx.fresh ctx id_h_ml in
-    let id_t_ml = "cons__t" in
-    let ctx, id_t_ml = Ctx.fresh ctx id_t_ml in
-    (ctx, id_h_ml, id_t_ml)
-
-  let iter_opt (ctx : Ctx.t) : Ctx.t * Ml.id =
-    let id_ml = "iter__opt" in
-    Ctx.fresh ctx id_ml
-
-  let iter_opts (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "iter__opt" ^ string_of_int idx) |> create ctx
-
-  let iter_list (ctx : Ctx.t) : Ctx.t * Ml.id =
-    let id_ml = "iter__list" in
-    Ctx.fresh ctx id_ml
-
-  let iter_lists (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "iter__list" ^ string_of_int idx) |> create ctx
-
-  let upd (ctx : Ctx.t) : Ctx.t * Ml.id * Ml.id =
-    let ctx, id_idx_ml = Ctx.fresh ctx "upd_idx__" in
-    let ctx, id_elem_ml = Ctx.fresh ctx "upd_elem__" in
-    (ctx, id_idx_ml, id_elem_ml)
-
-  let downcast_val (ctx : Ctx.t) : Ctx.t * Ml.id = Ctx.fresh ctx "downcast_val_"
-
-  let sub_pays (ctx : Ctx.t) (n : int) : Ctx.t * Ml.id list =
-    List.init n (fun idx -> "sub_pay_" ^ string_of_int idx) |> create ctx
+      (ctx, []) ids vars
 end

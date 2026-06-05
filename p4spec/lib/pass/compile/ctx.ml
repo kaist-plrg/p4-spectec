@@ -4,17 +4,14 @@ open Lang
 module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
 module Var = Runtime.Dynamic.Var
-open Compile_runtime
+open Runtime_compile
 open Envs
 open Error
+open Util.Source
 
 (* Preamble *)
 
 type preamble = { opts : int list; lists : int list }
-
-(* Variables *)
-
-type vars = { bounds : Bounds.t; bindings : Bindings.t }
 
 (* Context *)
 
@@ -23,35 +20,25 @@ type t = {
   typdefs : Typdefs.t;
   ctors : Ctors.t;
   rels : Rels.t;
-  vars : vars;
+  bindings : Bindings.t;
 }
 
 (* Adders *)
 
 let add_typdef (ctx : t) (tid : TId.t) (typdef : Typdef.t) : t =
-  let typdefs = Typdefs.add tid typdef ctx.typdefs in
-  { ctx with typdefs }
+  { ctx with typdefs = Typdefs.add tid typdef ctx.typdefs }
 
 let add_ctor (ctx : t) (case : Case.t) (ctor : Ctor.t) : t =
-  let ctors = Ctors.add case ctor ctx.ctors in
-  { ctx with ctors }
+  { ctx with ctors = Ctors.add case ctor ctx.ctors }
 
 let add_binding (ctx : t) (var : Var.t) (id_ml : Ml.id) : t =
-  let bindings = Bindings.add var id_ml ctx.vars.bindings in
-  { ctx with vars = { ctx.vars with bindings } }
+  { ctx with bindings = Bindings.add var id_ml ctx.bindings }
 
 let add_bindings (ctx : t) (vars : Var.t list) (ids_ml : Ml.id list) : t =
   List.fold_left2 add_binding ctx vars ids_ml
 
 let add_rel (ctx : t) (rid : RId.t) (input : Input.t) : t =
-  let rels = Rels.add rid input ctx.rels in
-  { ctx with rels }
-
-(* Removers *)
-
-let remove_binding (ctx : t) (var : Var.t) : t =
-  let bindings = Bindings.remove var ctx.vars.bindings in
-  { ctx with vars = { ctx.vars with bindings } }
+  { ctx with rels = Rels.add rid input ctx.rels }
 
 (* Finders *)
 
@@ -74,7 +61,10 @@ let find_ctors (ctx : t) (id : TId.t) : (Ml.ctor * Il.typ list) list =
     ctx.ctors []
 
 let find_binding (ctx : t) (var : Var.t) : Ml.id =
-  Bindings.find var ctx.vars.bindings
+  match Bindings.find_opt var ctx.bindings with
+  | Some id_ml -> id_ml
+  | None ->
+      error no_region (Format.asprintf "%s is not bound" (Var.to_string var))
 
 let find_rel (ctx : t) (rid : RId.t) : Input.t = Rels.find rid ctx.rels
 
@@ -104,7 +94,7 @@ let init (spec : Sl.spec) : t =
       typdefs = Typdefs.empty;
       ctors = Ctors.empty;
       rels = Rels.empty;
-      vars = { bounds = [ IdSet.empty ]; bindings = Bindings.empty };
+      bindings = Bindings.empty;
     }
   in
   load_defs ctx spec
@@ -125,17 +115,18 @@ let add_list_arity (ctx : t) (n : int) : t =
     let preamble = { preamble with lists = n :: preamble.lists } in
     { ctx with preamble }
 
-(* Block setters *)
+(* Scope *)
 
-let push (ctx : t) : t =
-  { ctx with vars = { ctx.vars with bounds = Bounds.push ctx.vars.bounds } }
+let promote_preamble (ctx_inner : t) (ctx_outer : t) : t =
+  { ctx_outer with preamble = ctx_inner.preamble }
 
-let pop (ctx : t) : t =
-  { ctx with vars = { ctx.vars with bounds = Bounds.pop ctx.vars.bounds } }
+(* Fresh: generate a unique OCaml id *)
 
-(* Fresh *)
-
-let fresh (ctx : t) (id_ml : Ml.id) : t * Ml.id =
-  let bounds, id_ml = Bounds.fresh ctx.vars.bounds id_ml in
-  let ctx = { ctx with vars = { ctx.vars with bounds } } in
-  (ctx, id_ml)
+let fresh (ctx : t) (id_ml : Ml.id) : Ml.id =
+  let is_used id =
+    Bindings.fold
+      (fun _ id_bound used -> used || id_bound = id)
+      ctx.bindings false
+  in
+  let rec gen id = if is_used id then gen (id ^ "_") else id in
+  gen id_ml

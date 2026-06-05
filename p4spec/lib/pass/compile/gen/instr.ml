@@ -82,13 +82,8 @@ and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
       vars_bound
   in
   (* Create stubs for iterators *)
-  let ctx, ids_elem_ml = Stub.OCaml.iter_opts ctx n_bound in
-  (* Temporarily add stubs to context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_elem_ml ->
-        Ctx.add_binding ctx (id, iters) id_elem_ml)
-      ctx vars_bound ids_elem_ml
+  let ctx, ids_elem_ml =
+    Stub.OCaml.iterator ~prefix:"elem_opt__" ctx vars_bound
   in
   (* Build inner continuation that extracts vars_bind as tuple from ctx *)
   let cont_inner ctx =
@@ -175,13 +170,8 @@ and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
       vars_bound
   in
   (* Create stubs for iterators *)
-  let ctx, ids_elem_ml = Stub.OCaml.iter_lists ctx n_bound in
-  (* Temporarily add stubs to context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_elem_ml ->
-        Ctx.add_binding ctx (id, iters) id_elem_ml)
-      ctx vars_bound ids_elem_ml
+  let ctx, ids_elem_ml =
+    Stub.OCaml.iterator ~prefix:"elem_list__" ctx vars_bound
   in
   (* Build inner continuation that extracts vars_bind as tuple from ctx *)
   let cont_inner ctx =

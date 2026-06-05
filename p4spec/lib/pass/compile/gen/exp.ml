@@ -218,7 +218,7 @@ and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
             ctors_typ
         in
         let pat_or_ml = Ml.OrP pats_ml in
-        let ctx, id_downcast_val_ml = Stub.OCaml.downcast_val ctx in
+        let ctx, id_downcast_val_ml = Stub.OCaml.var ctx "dc__" in
         let pat_as_ml = Ml.AsP (pat_or_ml, id_downcast_val_ml) in
         let expr_coerce_ml =
           Ml.CoerceE (Ml.VarE id_downcast_val_ml, typ_target_ml)
@@ -239,18 +239,10 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
     Ctx.t * Ml.expr =
   (* Compile expression *)
   let ctx, expr_ml = compile_exp ctx exp in
-  (* Enter nested scope *)
-  let ctx = Ctx.push ctx in
+  let ctx_outer = ctx in
   (* Create stub expression for tuple elements *)
-  let ctx, ids_stub_ml = typs |> List.length |> Stub.OCaml.tuple ctx in
+  let ctx, ids_stub_ml = Stub.OCaml.vars ctx "tup__" (List.length typs) in
   let exps_stub = List.map2 Stub.SpecTec.var ids_stub_ml typs in
-  (* Temporarily add bindings for stub expressions *)
-  let ctx =
-    List.fold_left
-      (fun ctx id_stub_ml ->
-        Ctx.add_binding ctx (id_stub_ml $ no_region, []) id_stub_ml)
-      ctx ids_stub_ml
-  in
   (* Compile downcast expression for tuple elements *)
   let ctx, expr_elems_ml =
     List.combine exps_stub typs
@@ -260,15 +252,8 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
            (ctx, expr_elems_ml @ [ expr_elem_ml ]))
          (ctx, [])
   in
-  (* Remove stub expressions from bindings *)
-  let ctx =
-    List.fold_left
-      (fun ctx id_stub_ml ->
-        Ctx.remove_binding ctx (id_stub_ml $ no_region, []))
-      ctx ids_stub_ml
-  in
-  (* Leave nested scope *)
-  let ctx = Ctx.pop ctx in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create expression *)
   let expr_ml =
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_stub_ml in
@@ -288,19 +273,14 @@ and compile_downcast_exp_iter_opt (ctx : Ctx.t) (typ : typ) (exp : exp) :
   let typ_src = match exp.note with IterT (typ, Opt) -> typ | _ -> typ in
   (* Compile expression *)
   let ctx, expr_ml = compile_exp ctx exp in
-  (* Enter nested scope *)
-  let ctx = Ctx.push ctx in
+  let ctx_outer = ctx in
   (* Create stub expression for option element *)
-  let ctx, id_stub_ml = Stub.OCaml.iter_opt ctx in
+  let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_opt__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ_src in
-  (* Temporarily add binding for stub expression *)
-  let ctx = Ctx.add_binding ctx (id_stub_ml $ no_region, []) id_stub_ml in
   (* Compile downcast expression for iterated element *)
   let ctx, expr_elem_ml = compile_downcast_exp ctx typ exp_stub in
-  (* Remove stub expression from binding *)
-  let ctx = Ctx.remove_binding ctx (id_stub_ml $ no_region, []) in
-  (* Leave nested scope *)
-  let ctx = Ctx.pop ctx in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create map on option *)
   let expr_lambda_ml = Ml.FunE ([ Ml.VarP id_stub_ml ], expr_elem_ml) in
   let expr_ml = Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_ml ]) in
@@ -316,19 +296,14 @@ and compile_downcast_exp_iter_list (ctx : Ctx.t) (typ : typ) (exp : exp) :
   let typ_src = match exp.note with IterT (typ, List) -> typ | _ -> typ in
   (* Compile expression *)
   let ctx, expr_ml = compile_exp ctx exp in
-  (* Enter nested scope *)
-  let ctx = Ctx.push ctx in
+  let ctx_outer = ctx in
   (* Create stub expression for list element *)
-  let ctx, id_stub_ml = Stub.OCaml.iter_list ctx in
+  let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_list__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ_src in
-  (* Temporarily add binding for stub expression *)
-  let ctx = Ctx.add_binding ctx (id_stub_ml $ no_region, []) id_stub_ml in
   (* Compile downcast expression for iterated element *)
   let ctx, expr_elem_ml = compile_downcast_exp ctx typ exp_stub in
-  (* Remove stub expression from binding *)
-  let ctx = Ctx.remove_binding ctx (id_stub_ml $ no_region, []) in
-  (* Leave nested scope *)
-  let ctx = Ctx.pop ctx in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create map on list *)
   let expr_lambda_ml = Ml.FunE ([ Ml.VarP id_stub_ml ], expr_elem_ml) in
   let expr_ml = Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_ml ]) in
@@ -368,6 +343,7 @@ and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
 
 and compile_sub_match (ctx : Ctx.t) (exp : exp)
     (ctors_inter : (Ml.ctor * Il.typ list) list) : Ctx.t * Ml.expr =
+  (* Compile expression with type annotation *)
   let ctx, expr_ml = compile_exp ctx exp in
   let typrows_ml =
     List.map
@@ -375,27 +351,26 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
       ctors_inter
   in
   let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
+  (* Compile match arms *)
   let ctx, arms_ml =
     List.fold_left
-      (fun (ctx, arms) (ctor_ml, typs) ->
+      (fun (ctx, arms_ml) (ctor_ml, typs) ->
+        let ctx_outer = ctx in
+        (* Create stub expression for case payloads *)
         let n = List.length typs in
-        let ctx_inner = Ctx.push ctx in
-        let ctx_inner, ids_stub_ml = Stub.OCaml.sub_pays ctx_inner n in
-        let ctx_inner =
-          List.fold_left
-            (fun c id -> Ctx.add_binding c (id $ no_region, []) id)
-            ctx_inner ids_stub_ml
-        in
-        let ctx_inner, exprs_cond_ml =
+        let ctx, ids_stub_ml = Stub.OCaml.vars ctx "pyld__" n in
+        (* Compile downcast expression for case payloads *)
+        let ctx, exprs_cond_ml =
           List.combine ids_stub_ml typs
           |> List.fold_left
-               (fun (c, conds) (id, typ) ->
+               (fun (ctx, exprs_cond_ml) (id, typ) ->
                  let exp_stub = Stub.SpecTec.var id typ in
-                 let c, expr_cond = compile_sub_exp c exp_stub typ in
-                 (c, conds @ [ expr_cond ]))
-               (ctx_inner, [])
+                 let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+                 (ctx, exprs_cond_ml @ [ expr_cond_ml ]))
+               (ctx, [])
         in
-        let ctx = Ctx.pop ctx_inner in
+        (* Promote preamble *)
+        let ctx = Ctx.promote_preamble ctx ctx_outer in
         let all_true =
           List.for_all
             (function Ml.BoolE true -> true | _ -> false)
@@ -403,24 +378,27 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
         in
         let pat_ml, expr_sub_ml =
           if all_true then
-            let pats = List.init n (fun _ -> Ml.WildP) in
-            (Ml.VariantP (`Poly (ctor_ml, pats)), Ml.BoolE true)
+            let pats_ml = List.init n (fun _ -> Ml.WildP) in
+            (Ml.VariantP (`Poly (ctor_ml, pats_ml)), Ml.BoolE true)
           else
-            let pats = List.map (fun id -> Ml.VarP id) ids_stub_ml in
-            let expr =
+            let pats_ml = List.map (fun id -> Ml.VarP id) ids_stub_ml in
+            let expr_ml =
               List.fold_left
-                (fun acc e ->
-                  match e with
-                  | Ml.BoolE true -> acc
-                  | _ -> Ml.BinopE ("&&", acc, e))
+                (fun expr_sub_ml expr_cond_ml ->
+                  match expr_cond_ml with
+                  | Ml.BoolE true -> expr_sub_ml
+                  | _ -> Ml.BinopE ("&&", expr_sub_ml, expr_cond_ml))
                 (Ml.BoolE true) exprs_cond_ml
             in
-            (Ml.VariantP (`Poly (ctor_ml, pats)), expr)
+            (Ml.VariantP (`Poly (ctor_ml, pats_ml)), expr_ml)
         in
-        (ctx, arms @ [ (pat_ml, expr_sub_ml) ]))
+        (ctx, arms_ml @ [ (pat_ml, expr_sub_ml) ]))
       (ctx, []) ctors_inter
   in
-  (ctx, Ml.MatchE (expr_scrut_ml, arms_ml @ [ (Ml.WildP, Ml.BoolE false) ]))
+  let expr_ml =
+    Ml.MatchE (expr_scrut_ml, arms_ml @ [ (Ml.WildP, Ml.BoolE false) ])
+  in
+  (ctx, expr_ml)
 
 (* Variable subtype check (non-reflexive): [exp <: VarT T] where exp : S != T
 
@@ -441,7 +419,7 @@ and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
     let ctors_inter =
       List.filter
         (fun (ctor_ml, _) ->
-          List.exists (fun (ctor_ml', _) -> ctor_ml = ctor_ml') ctors_exp)
+          List.exists (fun (ctor_exp_ml, _) -> ctor_ml = ctor_exp_ml) ctors_exp)
         ctors_typ
     in
     if ctors_inter = [] then (ctx, Ml.BoolE false)
@@ -455,7 +433,7 @@ and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
 and compile_sub_exp_var (ctx : Ctx.t) (exp : exp) (id : id) (targs : targ list)
     : Ctx.t * Ml.expr =
   match exp.note with
-  | VarT (id', _) when id'.it = id.it -> (ctx, Ml.BoolE true)
+  | VarT (id_exp_typ, _) when id_exp_typ.it = id.it -> (ctx, Ml.BoolE true)
   | _ -> compile_sub_exp_var_irreflexive ctx exp id targs
 
 (* Tuple subtype check: [exp <: (typ_1, ..., typ_n)]
@@ -464,28 +442,33 @@ and compile_sub_exp_var (ctx : Ctx.t) (exp : exp) (id : id) (targs : targ list)
 
 and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
     Ctx.t * Ml.expr =
+  (* Compile expression *)
   let ctx, expr_ml = compile_exp ctx exp in
-  let ctx_inner = Ctx.push ctx in
-  let ctx_inner, ids_stub_ml = Stub.OCaml.tuple ctx_inner (List.length typs) in
-  let ctx_inner =
-    List.fold_left
-      (fun c id_stub -> Ctx.add_binding c (id_stub $ no_region, []) id_stub)
-      ctx_inner ids_stub_ml
-  in
-  let ctx_inner, exprs_elem_ml =
+  (* Save context for promotion *)
+  let ctx_outer = ctx in
+  (* Create stub expression for tuple elements *)
+  let ctx, ids_stub_ml = Stub.OCaml.vars ctx "tup__" (List.length typs) in
+  (* Compile subtype check for tuple elements *)
+  let ctx, exprs_elem_ml =
     List.combine ids_stub_ml typs
     |> List.fold_left
-         (fun (c, exprs) (id_stub, typ) ->
+         (fun (ctx, exprs_elem_ml) (id_stub, typ) ->
            let exp_stub = Stub.SpecTec.var id_stub typ in
-           let c, expr_cond = compile_sub_exp c exp_stub typ in
-           (c, exprs @ [ expr_cond ]))
-         (ctx_inner, [])
+           let ctx, expr_ml = compile_sub_exp ctx exp_stub typ in
+           (ctx, exprs_elem_ml @ [ expr_ml ]))
+         (ctx, [])
   in
-  let expr_result =
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Create result expression *)
+  let expr_ml =
     match exprs_elem_ml with
     | [] -> Ml.BoolE true
     | _ ->
-        let pat_ml = Ml.TupleP (List.map (fun id -> Ml.VarP id) ids_stub_ml) in
+        let pat_ml =
+          Ml.TupleP
+            (List.map (fun id_stub_ml -> Ml.VarP id_stub_ml) ids_stub_ml)
+        in
         let expr_sub_ml =
           List.fold_left
             (fun acc e -> Ml.BinopE ("&&", acc, e))
@@ -493,8 +476,7 @@ and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
         in
         Ml.LetE (pat_ml, expr_ml, expr_sub_ml)
   in
-  let ctx = Ctx.pop ctx_inner in
-  (ctx, expr_result)
+  (ctx, expr_ml)
 
 (* Iteration subtype check *)
 
@@ -504,17 +486,27 @@ and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
 
 and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
     =
-  let ctx, id_stub_ml = Ctx.fresh ctx "sub_opt__" in
-  let ctx_inner = Ctx.add_binding ctx (id_stub_ml $ no_region, []) id_stub_ml in
+  (* Compile expression *)
+  let ctx, expr_ml = compile_exp ctx exp in
+  (* Save context for promotion *)
+  let ctx_outer = ctx in
+  (* Create stub expression for option element *)
+  let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_opt__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ in
-  let ctx_inner, expr_cond_ml = compile_sub_exp ctx_inner exp_stub typ in
-  match expr_cond_ml with
-  | Ml.BoolE true -> (ctx_inner, Ml.BoolE true)
-  | _ ->
-      let ctx_inner, expr_ml = compile_exp ctx_inner exp in
-      let arm_none = (Ml.OptP None, Ml.BoolE true) in
-      let arm_some = (Ml.OptP (Some (Ml.VarP id_stub_ml)), expr_cond_ml) in
-      (ctx_inner, Ml.MatchE (expr_ml, [ arm_none; arm_some ]))
+  (* Compile subtype check for option element *)
+  let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Create match expression *)
+  let expr_ml =
+    match expr_cond_ml with
+    | Ml.BoolE true -> Ml.BoolE true
+    | _ ->
+        let arm_none_ml = (Ml.OptP None, Ml.BoolE true) in
+        let arm_some_ml = (Ml.OptP (Some (Ml.VarP id_stub_ml)), expr_cond_ml) in
+        Ml.MatchE (expr_ml, [ arm_none_ml; arm_some_ml ])
+  in
+  (ctx, expr_ml)
 
 (* List subtype check: [exp <: typ*]
 
@@ -522,16 +514,26 @@ and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
 
 and compile_sub_exp_list (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
     =
-  let ctx, id_stub_ml = Ctx.fresh ctx "sub_elem__" in
-  let ctx_inner = Ctx.add_binding ctx (id_stub_ml $ no_region, []) id_stub_ml in
+  (* Compile expression *)
+  let ctx, expr_ml = compile_exp ctx exp in
+  (* Save context for promotion *)
+  let ctx_outer = ctx in
+  (* Create stub expression for list element *)
+  let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_list__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ in
-  let ctx_inner, expr_cond_ml = compile_sub_exp ctx_inner exp_stub typ in
-  match expr_cond_ml with
-  | Ml.BoolE true -> (ctx_inner, Ml.BoolE true)
-  | _ ->
-      let ctx_inner, expr_ml = compile_exp ctx_inner exp in
-      let lambda = Ml.FunE ([ Ml.VarP id_stub_ml ], expr_cond_ml) in
-      (ctx_inner, Ml.AppE (Ml.VarE "List.for_all", [ lambda; expr_ml ]))
+  (* Compile subtype check for list element *)
+  let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Create result expression *)
+  let expr_ml =
+    match expr_cond_ml with
+    | Ml.BoolE true -> Ml.BoolE true
+    | _ ->
+        let expr_lambda_ml = Ml.FunE ([ Ml.VarP id_stub_ml ], expr_cond_ml) in
+        Ml.AppE (Ml.VarE "List.for_all", [ expr_lambda_ml; expr_ml ])
+  in
+  (ctx, expr_ml)
 
 and compile_sub_exp_iter (ctx : Ctx.t) (exp : exp) (typ : typ) (iter : iter) :
     Ctx.t * Ml.expr =
@@ -748,11 +750,8 @@ and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
       in
       (ctx, expr_ml)
   | _ ->
-      (* Enter nested block *)
-      let ctx = Ctx.push ctx in
-      (* Create a stub variable for the index *)
-      let ctx, id_stub_ml = Stub.OCaml.slice ctx in
-      (* Compile list slice *)
+      let ctx_outer = ctx in
+      let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_list__" in
       let expr_ml =
         Ml.AppE
           ( Ml.VarE "List.filteri",
@@ -769,8 +768,7 @@ and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
               expr_b_ml;
             ] )
       in
-      (* Exit nested block *)
-      let ctx = Ctx.pop ctx in
+      let ctx = Ctx.promote_preamble ctx ctx_outer in
       (ctx, expr_ml)
 
 (* Update expressions *)
@@ -808,9 +806,9 @@ and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
         Ml.AppE (Ml.VarE "String.sub", [ expr_inner_ml; expr_i_ml; expr_n_ml ])
       )
   | _ ->
-      let ctx = Ctx.push ctx in
-      let ctx, id_j_ml = Stub.OCaml.slice ctx in
-      let ctx = Ctx.pop ctx in
+      let ctx_outer = ctx in
+      let ctx, id_j_ml = Stub.OCaml.var ctx "j" in
+      let ctx = Ctx.promote_preamble ctx ctx_outer in
       let expr_ml =
         Ml.AppE
           ( Ml.VarE "List.filteri",
@@ -876,9 +874,10 @@ and compile_upd_idx_text (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
 
 and compile_upd_idx_list (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
     (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
-  let ctx = Ctx.push ctx in
-  let ctx, id_j_ml, id_x_ml = Stub.OCaml.upd ctx in
-  let ctx = Ctx.pop ctx in
+  let ctx_outer = ctx in
+  let ctx, id_j_ml = Stub.OCaml.var ctx "j" in
+  let ctx, id_x_ml = Stub.OCaml.var ctx "x" in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   let expr_ml =
     Ml.AppE
       ( Ml.VarE "List.mapi",
@@ -935,9 +934,10 @@ and compile_upd_slice_text (ctx : Ctx.t) (expr_ml : Ml.expr)
 and compile_upd_slice_list (ctx : Ctx.t) (expr_ml : Ml.expr)
     (expr_i_ml : Ml.expr) (expr_n_len_ml : Ml.expr) (expr_n_ml : Ml.expr) :
     Ctx.t * Ml.expr =
-  let ctx = Ctx.push ctx in
-  let ctx, id_j_ml, id_x_ml = Stub.OCaml.upd ctx in
-  let ctx = Ctx.pop ctx in
+  let ctx_outer = ctx in
+  let ctx, id_j_ml = Stub.OCaml.var ctx "j" in
+  let ctx, id_x_ml = Stub.OCaml.var ctx "x" in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   let expr_idx_hi_ml = Ml.BinopE ("+", expr_i_ml, expr_n_len_ml) in
   let expr_ml =
     Ml.AppE
@@ -1049,18 +1049,9 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
       (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.Opt ]))
       vars
   in
-  (* Enter nested block *)
-  let ctx = Ctx.push ctx in
+  let ctx_outer = ctx in
   (* Create stub variables for iterated elements *)
-  let n = List.length vars in
-  let ctx, ids_stub_ml = Stub.OCaml.iter_opts ctx n in
-  (* Temporarily add stub variables to context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_stub_ml ->
-        Ctx.add_binding ctx (id, iters) id_stub_ml)
-      ctx vars ids_stub_ml
-  in
+  let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_opt__" ctx vars in
   (* Compile lambda expression *)
   let ctx, expr_lambda_ml =
     let pat_ml =
@@ -1072,14 +1063,6 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
     let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
     (ctx, expr_ml)
   in
-  (* Remove stub variables from context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) _ -> Ctx.remove_binding ctx (id, iters))
-      ctx vars ids_stub_ml
-  in
-  (* Exit nested block *)
-  let ctx = Ctx.pop ctx in
   (* Combine iteration targets into a single option, then map over it *)
   let ctx, expr_opt_ml =
     match ids_opt_ml with
@@ -1087,6 +1070,7 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
         let expr_opt_ml = Ml.VarE id_ml in
         (ctx, expr_opt_ml)
     | _ ->
+        let n = List.length ids_opt_ml in
         let ctx = Ctx.add_opt_arity ctx n in
         let id_combine_ml = "Option.combine" ^ string_of_int n in
         let exprs_arg_ml =
@@ -1095,6 +1079,8 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
         let expr_opt_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
         (ctx, expr_opt_ml)
   in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   let expr_ml =
     Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_opt_ml ])
   in
@@ -1107,24 +1093,16 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
 
 and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
+  (* Save outer context for promotion *)
+  let ctx_outer = ctx in
   (* Fetch iteration target variables *)
   let ids_list_ml =
     List.map
       (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.List ]))
       vars
   in
-  (* Enter nested block *)
-  let ctx = Ctx.push ctx in
   (* Create stub variables for iterated elements *)
-  let n = List.length vars in
-  let ctx, ids_stub_ml = Stub.OCaml.iter_lists ctx n in
-  (* Temporarily add stub variables to context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_stub_ml ->
-        Ctx.add_binding ctx (id, iters) id_stub_ml)
-      ctx vars ids_stub_ml
-  in
+  let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_list__" ctx vars in
   (* Compile lambda expression *)
   let ctx, expr_lambda_ml =
     let pat_ml =
@@ -1136,14 +1114,6 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
     let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
     (ctx, expr_ml)
   in
-  (* Remove stub variables from context *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) _ -> Ctx.remove_binding ctx (id, iters))
-      ctx vars ids_stub_ml
-  in
-  (* Exit nested block *)
-  let ctx = Ctx.pop ctx in
   (* Combine iteration targets into a single list, then map over it *)
   let ctx, expr_list_ml =
     match ids_list_ml with
@@ -1151,6 +1121,7 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
         let expr_list_ml = Ml.VarE id_ml in
         (ctx, expr_list_ml)
     | _ ->
+        let n = List.length ids_list_ml in
         let ctx = Ctx.add_list_arity ctx n in
         let id_combine_ml = "List.combine" ^ string_of_int n in
         let exprs_arg_ml =
@@ -1159,6 +1130,9 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
         let expr_list_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
         (ctx, expr_list_ml)
   in
+  (* Promote preamble *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Map over combined list *)
   let expr_ml =
     Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_list_ml ])
   in

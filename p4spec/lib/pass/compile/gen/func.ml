@@ -50,8 +50,7 @@ let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
-  (* Enter nested scope *)
-  let ctx = Ctx.push ctx in
+  let ctx_outer = ctx in
   (* Compile parameters *)
   let ctx, params_ml, chain = compile_params ctx params in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
@@ -74,6 +73,8 @@ let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
         (ctx, Some funcdef_else_ml)
     | None -> (ctx, None)
   in
+  (* Promote preamble to outer context *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Compile dispatcher *)
   let funcdef_dispatcher_ml =
     let exprs_param_ml =
@@ -92,8 +93,6 @@ let compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     in
     (id_ml, params_ml, Some typ_ret_ml, exp_dispatcher_ml)
   in
-  (* Exit nested scope *)
-  let ctx = Ctx.pop ctx in
   (* Collect function definitions *)
   let funcdefs_ml =
     let else_list = Option.to_list funcdef_else_ml_opt in
