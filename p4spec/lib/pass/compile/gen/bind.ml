@@ -364,7 +364,15 @@ and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_split_ml
   in
-  (ctx, bindings, chain)
+  (* Lift bindings *)
+  let bindings_lift =
+    List.map
+      (fun ((id, iters), _) ->
+        let id_ml = Names.var_of_var (id, iters @ [ Il.Opt ]) in
+        ((id, iters @ [ Il.Opt ]), id_ml))
+      bindings
+  in
+  (ctx, bindings_lift, chain)
 
 (* Iter list binding: [exp*] on stub [expr]
 
@@ -412,7 +420,15 @@ and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_split_ml
   in
-  (ctx, bindings, chain)
+  (* Lift bindings *)
+  let bindings_lift =
+    List.map
+      (fun ((id, iters), _) ->
+        let id_ml = Names.var_of_var (id, iters @ [ Il.List ]) in
+        ((id, iters @ [ Il.List ]), id_ml))
+      bindings
+  in
+  (ctx, bindings_lift, chain)
 
 and compile_iter_binding (ctx : Ctx.t) (typ_exp : typ) (expr_stub_ml : Ml.expr)
     (exp : exp) (iterexp : iterexp) : Ctx.t * Binding.t list * Chain.t =
