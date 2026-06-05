@@ -16,7 +16,7 @@ module OCaml = struct
 
   let var (ctx : Ctx.t) (id : string) : Ctx.t * Ml.id =
     let id_ml = Ctx.fresh ctx id in
-    let ctx = Ctx.add_binding ctx (id $ no_region, []) id_ml in
+    let ctx = Ctx.add_binding ctx (id_ml $ no_region, []) id_ml in
     (ctx, id_ml)
 
   let vars (ctx : Ctx.t) (id : string) (n : int) : Ctx.t * Ml.id list =

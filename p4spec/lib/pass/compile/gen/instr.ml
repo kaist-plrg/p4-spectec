@@ -346,13 +346,13 @@ and compile_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list) :
   (* Compile scrutinee and bind to a fresh variable so it is evaluated once *)
   let ctx, expr_scrut_ml = Exp.compile_exp ctx exp in
   let ctx, id_scrut_ml = Stub.OCaml.var ctx "case__" in
-  let exp_scrut_sl = Stub.SpecTec.var id_scrut_ml (exp.note $ exp.at) in
+  let exp_scrut = Stub.SpecTec.var id_scrut_ml (exp.note $ exp.at) in
   (* Build nested if-else chain: first case is outermost, last is innermost *)
   let ctx, expr_body_ml =
     List.fold_right
       (fun (guard, block) (ctx, expr_else_ml) ->
         (* Compile guard condition against the bound scrutinee *)
-        let ctx, expr_cond_ml = compile_guard ctx exp_scrut_sl guard in
+        let ctx, expr_cond_ml = compile_guard ctx exp_scrut guard in
         let ctx, expr_block_ml = compile_block ctx block in
         let expr_body_ml =
           Ml.IfE (expr_cond_ml, expr_block_ml, Some expr_else_ml)
@@ -888,11 +888,13 @@ and compile_debug_instr (ctx : Ctx.t) (_exp : exp) : Ctx.t * Ml.expr =
 (* Block: [[instr_h; instrs_t..]]
 
    []                    ->  [raise (Unmatch "empty block")]
+   [instr]               ->  [compile_instr instr]
    [instr_h :: instrs_t] ->  [try compile_instr instr_h with Unmatch _ -> compile_block instrs_t] *)
 
 and compile_block (ctx : Ctx.t) (block : block) : Ctx.t * Ml.expr =
   match block with
   | [] -> (ctx, Common.raise_unmatch "empty block")
+  | [ instr ] -> compile_instr ctx instr
   | instr_h :: instrs_t ->
       let ctx, expr_h_ml = compile_instr ctx instr_h in
       let ctx, expr_t_ml = compile_block ctx instrs_t in
