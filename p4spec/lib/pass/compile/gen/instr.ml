@@ -19,11 +19,125 @@ let rec compile_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Ml.expr =
   | ReturnI exp -> compile_return_instr ctx exp
   | DebugI exp -> compile_debug_instr ctx exp
 
-(* If instruction *)
+(* If instruction (no iterexps): [if exp_cond then block]
 
-and compile_if_instr (_ctx : Ctx.t) (_exp_cond : exp) (_iterexps : iterexp list)
-    (_block : block) : Ctx.t * Ml.expr =
-  failwith "compile_if_instr"
+   [if compile_exp exp_cond then <compile_block block> else raise (Unmatch "if failed")]
+
+   If instruction (list iterexps): iterexps wrapped in reverse order
+   List iter: [List.for_all (fun elem -> <inner cond>) guide__star]
+   Opt iter:  [match guide__quest with None -> true | Some elem -> <inner cond>] *)
+
+and compile_if_cond (ctx : Ctx.t) (exp_cond : exp) : Ctx.t * Ml.expr =
+  (* Base case: compile condition expression directly *)
+  Exp.compile_exp ctx exp_cond
+
+and compile_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
+    (iterexps_t : iterexp list) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  let n = List.length vars in
+  (* Fetch guiding list variables *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.List ]))
+      vars
+  in
+  (* Create stubs for element vars *)
+  let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_cond__" ctx vars in
+  (* Combine multiple list guides into a single list of tuples *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+    | _ ->
+        let ctx = Ctx.add_list_arity ctx n in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("List.combine" ^ string_of_int n),
+              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
+        )
+  in
+  (* Build element pattern for lambda *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+    | _ ->
+        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+  in
+  (* Compile inner condition with element vars bound *)
+  let ctx_inner, expr_inner_ml = compile_if_cond_iter ctx exp_cond iterexps_t in
+  (* Promote preamble from inner scope *)
+  let ctx = Ctx.promote_preamble ctx_inner ctx_outer in
+  (* Build List.for_all *)
+  let expr_ml =
+    Ml.AppE
+      ( Ml.VarE "List.for_all",
+        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  in
+  (ctx, expr_ml)
+
+and compile_if_cond_opt (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
+    (iterexps_t : iterexp list) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  let n = List.length vars in
+  (* Fetch guiding option variables *)
+  let ids_guide_ml =
+    List.map
+      (fun (id, _, iters) -> Ctx.find_binding ctx (id, iters @ [ Il.Opt ]))
+      vars
+  in
+  (* Create stubs for element vars *)
+  let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_cond__" ctx vars in
+  (* Combine multiple option guides into an option of a tuple *)
+  let ctx, expr_guide_ml =
+    match ids_guide_ml with
+    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+    | _ ->
+        let ctx = Ctx.add_opt_arity ctx n in
+        ( ctx,
+          Ml.AppE
+            ( Ml.VarE ("Option.combine" ^ string_of_int n),
+              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
+        )
+  in
+  (* Build element pattern for Some branch *)
+  let pat_elem_ml =
+    match ids_elem_ml with
+    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+    | _ ->
+        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+  in
+  (* Compile inner condition with element vars bound *)
+  let ctx_inner, expr_inner_ml = compile_if_cond_iter ctx exp_cond iterexps_t in
+  (* Promote preamble from inner scope *)
+  let ctx = Ctx.promote_preamble ctx_inner ctx_outer in
+  (* Build match: None -> true (vacuous), Some elem -> inner *)
+  let expr_ml =
+    Ml.MatchE
+      ( expr_guide_ml,
+        [
+          (Ml.OptP None, Ml.BoolE true);
+          (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
+        ] )
+  in
+  (ctx, expr_ml)
+
+and compile_if_cond_iter (ctx : Ctx.t) (exp_cond : exp)
+    (iterexps_rev : iterexp list) : Ctx.t * Ml.expr =
+  match iterexps_rev with
+  | [] -> compile_if_cond ctx exp_cond
+  | (iter, vars) :: iterexps_t -> (
+      match iter with
+      | Il.List -> compile_if_cond_list ctx exp_cond vars iterexps_t
+      | Il.Opt -> compile_if_cond_opt ctx exp_cond vars iterexps_t)
+
+and compile_if_instr (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
+    (block_then : block) : Ctx.t * Ml.expr =
+  let iterexps_rev = List.rev iterexps in
+  (* Compile condition, wrapping iterexps from innermost outward *)
+  let ctx, expr_cond_ml = compile_if_cond_iter ctx exp_cond iterexps_rev in
+  let ctx, expr_then_ml = compile_block ctx block_then in
+  ( ctx,
+    Ml.IfE (expr_cond_ml, expr_then_ml, Some (Common.raise_unmatch "if failed"))
+  )
 
 (* Hold instruction *)
 
@@ -73,6 +187,7 @@ and compile_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
 and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
     (vars_bound : var list) (vars_bind : var list) (iterinstrs : iterinstr list)
     (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
   let n_bound = List.length vars_bound in
   let n_bind = List.length vars_bind in
   (* Fetch guiding variables *)
@@ -155,12 +270,16 @@ and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   in
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
+  (* Promote preamble to outer ctx *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Build let expression *)
   let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
 and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
     (vars_bound : var list) (vars_bind : var list) (iterinstrs : iterinstr list)
     (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
   let n_bound = List.length vars_bound in
   let n_bind = List.length vars_bind in
   (* Fetch guiding variables *)
@@ -243,6 +362,9 @@ and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   in
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
+  (* Promote preamble to outer ctx *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Build let expression *)
   let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
@@ -287,6 +409,7 @@ and compile_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
 and compile_rule (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     (inputs : Hints.Input.t) (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr
     =
+  let ctx_outer = ctx in
   let exps = Domain.Mixfix.args notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   let ctx, exprs_input_ml = Exp.compile_exps ctx exps_input in
@@ -313,12 +436,15 @@ and compile_rule (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
         (ctx, Chain.connect [ chain_destructure; chain_binds ])
   in
   let ctx, expr_cont_ml = cont ctx in
-  (ctx, Chain.apply chain expr_cont_ml)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  let expr_ml = Chain.apply chain expr_cont_ml in
+  (ctx, expr_ml)
 
 and compile_rule_opt (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     (inputs : Hints.Input.t) (vars_bound : var list) (vars_bind : var list)
     (iterinstrs : iterinstr list) (cont : Ctx.t -> Ctx.t * Ml.expr) :
     Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
   let n_bound = List.length vars_bound in
   let n_bind = List.length vars_bind in
   (* Fetch guiding variables *)
@@ -401,6 +527,7 @@ and compile_rule_opt (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   in
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
@@ -408,6 +535,7 @@ and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     (inputs : Hints.Input.t) (vars_bound : var list) (vars_bind : var list)
     (iterinstrs : iterinstr list) (cont : Ctx.t -> Ctx.t * Ml.expr) :
     Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
   let n_bound = List.length vars_bound in
   let n_bind = List.length vars_bind in
   (* Fetch guiding variables *)
@@ -490,6 +618,7 @@ and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   in
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
   let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
   (ctx, expr_ml)
 

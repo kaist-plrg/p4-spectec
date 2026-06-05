@@ -1308,7 +1308,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Some ctx_sub ->
         let cond, value_cond = eval_if_cond_iter ctx_sub exp_cond iterexps in
         (cond, Some value_cond)
-    | None -> (false, None)
+    | None -> (true, None)
 
   and eval_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
       (iterexps : iterexp list) : bool * value list =
