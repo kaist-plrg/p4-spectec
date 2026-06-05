@@ -46,7 +46,22 @@ let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
   in
   let sidecondition = IfPr exp $ id.at in
   List.fold_left
-    (fun sidecondition iter -> IterPr (sidecondition, (iter, [], [])) $ id.at)
+    (fun sidecondition iter ->
+      match sidecondition.it with
+      | IfPr _ ->
+          let vars_bound =
+            List.map (fun id -> (id, typ, [])) (id :: id_rename :: ids_rename)
+          in
+          IterPr (sidecondition, (iter, vars_bound, [])) $ id.at
+      | IterPr (_, (iter_prev, vars_bound, [])) ->
+          let vars_bound =
+            List.map
+              (fun (id, typ, iters_prev) ->
+                (id, typ, iters_prev @ [ iter_prev ]))
+              vars_bound
+          in
+          IterPr (sidecondition, (iter, vars_bound, [])) $ id.at
+      | _ -> assert false)
     sidecondition iters
 
 let gen_sideconditions (benv : Bind.BEnv.t) (renv : REnv.t) : prem list =
@@ -65,6 +80,7 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
   match exp.it with
   | VarE id -> (
       match REnv.find_opt id renv with
+      (* Leftmost binding occurrence *)
       | Some ids_rename when IdSet.is_empty ids_rename ->
           let exp = VarE id $$ (at, note) in
           let renv =
@@ -72,6 +88,7 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
             REnv.add id ids_rename renv
           in
           (dctx, renv, exp)
+      (* Parallel binding occurrences *)
       | Some ids_rename ->
           let id_rename = Fresh.id dctx.frees id in
           let dctx = Dctx.add_free dctx id_rename in
@@ -115,7 +132,7 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
       let dctx, renv, exp_t = rename_exp dctx renv exp_t in
       let exp = ConsE (exp_h, exp_t) $$ (at, note) in
       (dctx, renv, exp)
-  (* vars already populated by dimension analysis — preserve them *)
+  (* TODO: vars may be renamed *)
   | IterE (exp, (iter, vars)) ->
       let dctx, renv, exp = rename_exp dctx renv exp in
       let exp = IterE (exp, (iter, vars)) $$ (at, note) in
