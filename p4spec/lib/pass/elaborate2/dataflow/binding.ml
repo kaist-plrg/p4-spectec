@@ -10,12 +10,12 @@ open Util.Source
 
 (* Binding analysis :
 
-   1. (collectbind.ml) Collect all binding occurrences of variables in IL construct
+   1. Collect all binding occurrences of variables in IL construct
       - Check that all binding occurrences reside in invertible constructs
-   2. (multibind.ml) Rename multi/parallel binding occurrences
+   2. Rename multi/parallel binding occurrences
       - e.g., -- let (int, int) = ... becomes
                 -- let (int, int') = ..., -- if int = int'
-   3. (partialbind.ml) Desugar partial bindings, occurring as either:
+   3. Desugar partial bindings, occurring as either:
       (1) Bound values occurring inside binder patterns
           - e.g., -- let PATTERN (a, 1 + 2) = ... becomes
                   -- let PATTERN (a, int) = ..., -- if int == 1 + 2
@@ -114,8 +114,8 @@ let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
   | IterPr (_, (_, _, vars_bind)) when not (List.is_empty vars_bind) ->
       error prem.at
         "iterated premise vars_bind should be empty before binding analysis"
-  | IterPr (prem_inner, (iter, _, _)) ->
-      analyze_iter_prem dctx prem.at prem_inner iter
+  | IterPr (prem_inner, iterprem) ->
+      analyze_iter_prem dctx prem.at prem_inner iterprem
   | DebugPr exp -> analyze_debug_prem dctx prem.at exp
 
 and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
@@ -200,17 +200,16 @@ and analyze_let_prem (dctx : Dctx.t) (exp_l : exp) (binds_l : BEnv.t)
   let prem = LetPr (exp_l, exp_r) in
   (dctx, venv, prem, prems)
 
-and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem) (iter : iter) :
-    Dctx.t * VEnv.t * prem * prem list =
+and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem)
+    (iterprem : Il.iterprem) : Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let dctx, venv, prem, extra_prems = analyze_prem dctx prem in
+  let iter, _vars_bound, _vars_bind = iterprem in
   let venv = VEnv.map (Typdim.add_iter iter) venv in
-  (* vars_bound / vars_bind are recomputed per split premise by
-     [Redimension.reannotate] once binding is complete. *)
   let extra_prems =
     List.map (fun ep -> IterPr (ep, (iter, [], [])) $ at) extra_prems
   in
-  let prem = IterPr (prem, (iter, [], [])) $ at in
+  let prem = IterPr (prem, iterprem) $ at in
   (dctx, venv, prem, extra_prems)
 
 and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :
@@ -222,10 +221,10 @@ and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :
 
 (* Clause binding analysis — entry point per clause *)
 
-let analyze_clause (menv : MEnv.t) (tdenv : TDEnv.t) (clause : clause) : clause
-    =
+let analyze_clause (dctx : Dctx.t) (clause : clause) : clause =
   let args, exp, prems = clause.it in
-  let dctx = Dctx.init_clause menv tdenv clause in
+  let frees = Free.free_clause clause in
+  let dctx = Dctx.add_frees dctx frees in
   let dctx, venv_args, args, prems_from_args = analyze_args_as_bind dctx args in
   let dctx = Dctx.add_bounds dctx venv_args in
   let dctx, prems_analyzed =
@@ -240,18 +239,22 @@ let analyze_clause (menv : MEnv.t) (tdenv : TDEnv.t) (clause : clause) : clause
   let final_prems = prems_from_args @ prems_analyzed in
   (* Recompute per-premise iteration annotations (vars_bound / vars_bind),
      now that all bindings are desugared and full dimensions are known. *)
-  let bounds = dctx.bounds in
-  let final_prems = List.map (Redimension.reannotate bounds) final_prems in
+  (* let bounds = dctx.bounds in
+     let final_prems = List.map (Redimension.reannotate bounds) final_prems in *)
   (args, exp, final_prems) $ clause.at
 
-let analyze_def (menv : MEnv.t) (tdenv : TDEnv.t) (def : def) : def =
+let analyze_def (dctx : Dctx.t) (def : def) : Dctx.t * def =
   match def.it with
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
-      let clauses = List.map (analyze_clause menv tdenv) clauses in
-      let elseclause_opt = Option.map (analyze_clause menv tdenv) elseclause_opt in
-      FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) $ def.at
-  | _ -> def
+      let clauses = List.map (analyze_clause dctx) clauses in
+      let elseclause_opt = Option.map (analyze_clause dctx) elseclause_opt in
+      let def =
+        FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
+        $ def.at
+      in
+      (dctx, def)
+  | _ -> (dctx, def)
 
 let analyze_spec (spec : spec) : spec =
-  let menv, tdenv = Dctx.build_spec_env spec in
-  List.map (analyze_def menv tdenv) spec
+  let dctx = Dctx.init spec in
+  List.fold_left_map analyze_def dctx spec |> snd

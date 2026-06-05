@@ -6,48 +6,52 @@ open Runtime.Static
 open Envs
 open Util.Source
 
-(* Context for binding analysis.
-   Built from the spec directly (no global Ctx.t available in elaborate2). *)
+(* Context for dataflow analysis. *)
 
 type t = {
-  (* Free identifiers over the clause — used for fresh name generation *)
+  (* Free identifiers over the entire definition *)
   frees : IdSet.t;
-  (* Variables bound so far *)
+  (* Bound variables so far *)
   bounds : VEnv.t;
-  (* Meta-variables (VarD entries) — needed for Fresh.var_from_exp *)
+  (* Metavariables so far *)
   menv : MEnv.t;
-  (* Type definitions — needed for is_singleton_case in partialbind *)
+  (* Typedefs so far *)
   tdenv : TDEnv.t;
 }
 
-(* Build menv and tdenv by scanning the spec once *)
+(* Constructors *)
 
-let build_spec_env (spec : spec) : MEnv.t * TDEnv.t =
+let empty =
+  {
+    frees = IdSet.empty;
+    bounds = VEnv.empty;
+    menv = MEnv.empty;
+    tdenv = TDEnv.empty;
+  }
+
+let init (spec : spec) : t =
   List.fold_left
-    (fun (menv, tdenv) def ->
+    (fun dctx def ->
       match def.it with
-      | VarD (id, typ, _) ->
-          let menv = MEnv.add id typ menv in
-          (menv, tdenv)
+      | VarD (id, typ, _) -> { dctx with menv = MEnv.add id typ dctx.menv }
       | TypD (id, tparams, deftyp, _) ->
-          let tdenv = TDEnv.add id (Typdef.Defined (tparams, deftyp)) tdenv in
-          (menv, tdenv)
+          {
+            dctx with
+            tdenv = TDEnv.add id (Typdef.Defined (tparams, deftyp)) dctx.tdenv;
+          }
       | ExternTypD (id, _) ->
-          let tdenv = TDEnv.add id Typdef.Extern tdenv in
-          (menv, tdenv)
-      | _ -> (menv, tdenv))
-    (MEnv.empty, TDEnv.empty) spec
-
-(* Init a fresh dctx for one clause *)
-
-let init_clause (menv : MEnv.t) (tdenv : TDEnv.t) (clause : clause) : t =
-  let frees = Free.free_clause clause in
-  { frees; bounds = VEnv.empty; menv; tdenv }
+          { dctx with tdenv = TDEnv.add id Typdef.Extern dctx.tdenv }
+      | _ -> dctx)
+    empty spec
 
 (* Adders *)
 
 let add_free (dctx : t) (id : Id.t) : t =
   let frees = IdSet.add id dctx.frees in
+  { dctx with frees }
+
+let add_frees (dctx : t) (ids : IdSet.t) : t =
+  let frees = IdSet.union ids dctx.frees in
   { dctx with frees }
 
 let add_bounds (dctx : t) (venv : VEnv.t) : t =
@@ -56,5 +60,4 @@ let add_bounds (dctx : t) (venv : VEnv.t) : t =
 
 (* Finders *)
 
-let find_typdef (dctx : t) (tid : TId.t) : Typdef.t =
-  TDEnv.find tid dctx.tdenv
+let find_typdef (dctx : t) (tid : TId.t) : Typdef.t = TDEnv.find tid dctx.tdenv
