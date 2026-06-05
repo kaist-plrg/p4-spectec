@@ -1,5 +1,6 @@
 open Lang
 open Sl
+open Util.Source
 
 (* Instructions *)
 
@@ -308,11 +309,63 @@ and compile_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
   let expr_ml = Ml.LetE (Ml.VarP id_hold_ml, expr_hold_ml, expr_body_ml) in
   (ctx, expr_ml)
 
-(* Case instruction *)
+(* Case instruction: [case exp { guard => block; ... }]
 
-and compile_case_instr (_ctx : Ctx.t) (_exp : exp) (_cases : case list) :
+   [
+     let case__ = <compile_exp exp> in
+     if <compile_guard guard0> then <compile_block block0>
+     else if <compile_guard guard1> then <compile_block block1>
+     ...
+     else raise (Unmatch "no case matched")
+   ]
+
+   Guard semantics:
+     BoolG true  ->  case__
+     BoolG false ->  not case__
+     CmpG(op,t,r)->  case__ op r
+     SubG typ    ->  case__ <: typ
+     MatchG pat  ->  case__ matches pat
+     MemG exp_s  ->  case__ in exp_s *)
+
+and compile_guard (ctx : Ctx.t) (exp_scrut : exp) (guard : guard) :
     Ctx.t * Ml.expr =
-  failwith "compile_case_instr"
+  match guard with
+  | BoolG b ->
+      let ctx, expr_ml = Exp.compile_exp ctx exp_scrut in
+      let expr_ml = if b then expr_ml else Ml.UnopE ("not", expr_ml) in
+      (ctx, expr_ml)
+  | CmpG (cmpop, optyp, exp_r) ->
+      Exp.compile_cmp_exp ctx cmpop optyp exp_scrut exp_r
+  | SubG typ -> Exp.compile_sub_exp ctx exp_scrut typ
+  | MatchG pattern -> Exp.compile_match_exp ctx exp_scrut pattern
+  | MemG exp_s -> Exp.compile_mem_exp ctx exp_scrut exp_s
+
+and compile_case_instr (ctx : Ctx.t) (exp : exp) (cases : case list) :
+    Ctx.t * Ml.expr =
+  let ctx_outer = ctx in
+  (* Compile scrutinee and bind to a fresh variable so it is evaluated once *)
+  let ctx, expr_scrut_ml = Exp.compile_exp ctx exp in
+  let ctx, id_scrut_ml = Stub.OCaml.var ctx "case__" in
+  let exp_scrut_sl = Stub.SpecTec.var id_scrut_ml (exp.note $ exp.at) in
+  (* Build nested if-else chain: first case is outermost, last is innermost *)
+  let ctx, expr_body_ml =
+    List.fold_right
+      (fun (guard, block) (ctx, expr_else_ml) ->
+        (* Compile guard condition against the bound scrutinee *)
+        let ctx, expr_cond_ml = compile_guard ctx exp_scrut_sl guard in
+        let ctx, expr_block_ml = compile_block ctx block in
+        let expr_body_ml =
+          Ml.IfE (expr_cond_ml, expr_block_ml, Some expr_else_ml)
+        in
+        (ctx, expr_body_ml))
+      cases
+      (ctx, Common.raise_unmatch "no case matched")
+  in
+  (* Promote preamble to outer context *)
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  (* Build let expression *)
+  let expr_ml = Ml.LetE (Ml.VarP id_scrut_ml, expr_scrut_ml, expr_body_ml) in
+  (ctx, expr_ml)
 
 (* Group instruction: [group { block }]
 
