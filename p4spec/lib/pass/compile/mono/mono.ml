@@ -5,13 +5,32 @@ module StringSet = Collect.StringSet
 
 (* ===== Dispatch table types ===== *)
 
-type dispatch_kind = Builtin | Extern
+type poly_instance = { mangled_name : string; concrete_targs : Il.typ list }
+type dispatch_table = (string, poly_instance list) Hashtbl.t
 
-type dispatch_info = {
-  original_name : string;
-  concrete_targs : Il.typ list;
-  kind : dispatch_kind;
-}
+(* ===== Poly func ADT ===== *)
+
+type poly_func =
+  | PFunc of Sl.definedfunc
+  | PBuiltin of Sl.builtinfunc
+  | PExtern of Sl.externfunc
+
+let tparams_of : poly_func -> Il.tparam list = function
+  | PFunc (_, tp, _, _, _, _, _) -> tp
+  | PBuiltin (_, tp, _, _, _) -> tp
+  | PExtern (_, tp, _, _, _) -> tp
+
+let specialize_poly pfunc theta ~new_name =
+  match pfunc with
+  | PFunc dfunc -> Specialize.specialize dfunc theta ~new_name
+  | PBuiltin bfunc -> Specialize.specialize_builtin bfunc theta ~new_name
+  | PExtern efunc -> Specialize.specialize_extern efunc theta ~new_name
+
+let add_instance (tbl : dispatch_table) ~(original : string) ~(mangled : string)
+    ~(targs : Il.typ list) : unit =
+  let inst = { mangled_name = mangled; concrete_targs = targs } in
+  let prev = try Hashtbl.find tbl original with Not_found -> [] in
+  Hashtbl.replace tbl original (inst :: prev)
 
 (* ===== Call-site rewriting ===== *)
 
@@ -166,8 +185,7 @@ let rewrite_spec (poly_funcs : StringSet.t) (spec : Sl.spec) : Sl.spec =
 
 (* ===== Worklist driver ===== *)
 
-let monomorphize (spec : Sl.spec) : Sl.spec * (string, dispatch_info) Hashtbl.t
-    =
+let monomorphize (spec : Sl.spec) : Sl.spec * dispatch_table =
   (* Step 1: collect all poly FuncDecD / BuiltinDecD / ExternDecD ids *)
   let poly_funcs =
     List.fold_left
@@ -182,31 +200,27 @@ let monomorphize (spec : Sl.spec) : Sl.spec * (string, dispatch_info) Hashtbl.t
         | _ -> acc)
       StringSet.empty spec
   in
-  let dispatch_table : (string, dispatch_info) Hashtbl.t = Hashtbl.create 16 in
+  let dispatch_table : dispatch_table = Hashtbl.create 16 in
   (* Fast path: no polymorphic functions *)
   if StringSet.is_empty poly_funcs then (spec, dispatch_table)
   else
-    (* Step 2: build function tables for each declaration kind *)
-    let func_table : (string, Sl.definedfunc) Hashtbl.t = Hashtbl.create 64 in
-    let builtin_table : (string, Sl.builtinfunc) Hashtbl.t =
-      Hashtbl.create 16
-    in
-    let extern_table : (string, Sl.externfunc) Hashtbl.t = Hashtbl.create 16 in
+    (* Step 2: build unified poly_table keyed by original name *)
+    let poly_table : (string, poly_func) Hashtbl.t = Hashtbl.create 64 in
     List.iter
       (fun def ->
         match def.it with
         | Sl.FuncDecD (id, tparams, params, typ_ret, block, elseblock, hints)
           when StringSet.mem id.it poly_funcs ->
-            Hashtbl.replace func_table id.it
-              (id, tparams, params, typ_ret, block, elseblock, hints)
+            Hashtbl.replace poly_table id.it
+              (PFunc (id, tparams, params, typ_ret, block, elseblock, hints))
         | Sl.BuiltinDecD (id, tparams, params, typ_ret, hints)
           when StringSet.mem id.it poly_funcs ->
-            Hashtbl.replace builtin_table id.it
-              (id, tparams, params, typ_ret, hints)
+            Hashtbl.replace poly_table id.it
+              (PBuiltin (id, tparams, params, typ_ret, hints))
         | Sl.ExternDecD (id, tparams, params, typ_ret, hints)
           when StringSet.mem id.it poly_funcs ->
-            Hashtbl.replace extern_table id.it
-              (id, tparams, params, typ_ret, hints)
+            Hashtbl.replace poly_table id.it
+              (PExtern (id, tparams, params, typ_ret, hints))
         | _ -> ())
       spec;
     (* Step 3: seed worklist from spec-wide call sites *)
@@ -224,46 +238,14 @@ let monomorphize (spec : Sl.spec) : Sl.spec * (string, dispatch_info) Hashtbl.t
       if not (Hashtbl.mem done_set mangled_key) then (
         Hashtbl.replace done_set mangled_key ();
         let new_def_opt =
-          match Hashtbl.find_opt func_table func_id with
-          | Some ((id, tparams, _, _, _, _, _) as dfunc) ->
-              let theta = Specialize.build_theta tparams targs in
+          match Hashtbl.find_opt poly_table func_id with
+          | None -> None
+          | Some pfunc ->
+              let theta = Specialize.build_theta (tparams_of pfunc) targs in
               let new_name = Name.mangle func_id targs in
-              let new_def = Specialize.specialize dfunc theta ~new_name in
-              ignore id;
-              Some new_def
-          | None -> (
-              match Hashtbl.find_opt builtin_table func_id with
-              | Some ((id, tparams, _, _, _) as bfunc) ->
-                  let theta = Specialize.build_theta tparams targs in
-                  let new_name = Name.mangle func_id targs in
-                  Hashtbl.replace dispatch_table new_name
-                    {
-                      original_name = func_id;
-                      concrete_targs = targs;
-                      kind = Builtin;
-                    };
-                  let new_def =
-                    Specialize.specialize_builtin bfunc theta ~new_name
-                  in
-                  ignore id;
-                  Some new_def
-              | None -> (
-                  match Hashtbl.find_opt extern_table func_id with
-                  | Some ((id, tparams, _, _, _) as efunc) ->
-                      let theta = Specialize.build_theta tparams targs in
-                      let new_name = Name.mangle func_id targs in
-                      Hashtbl.replace dispatch_table new_name
-                        {
-                          original_name = func_id;
-                          concrete_targs = targs;
-                          kind = Extern;
-                        };
-                      let new_def =
-                        Specialize.specialize_extern efunc theta ~new_name
-                      in
-                      ignore id;
-                      Some new_def
-                  | None -> None))
+              add_instance dispatch_table ~original:func_id ~mangled:new_name
+                ~targs;
+              Some (specialize_poly pfunc theta ~new_name)
         in
         match new_def_opt with
         | None -> ()
