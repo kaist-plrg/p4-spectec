@@ -276,7 +276,11 @@ let print_param (id, typ_opt) =
 (* Function definitions *)
 
 let print_funcdef (id, params, typ_ret_opt, expr_body) =
-  let str_params = String.concat " " (List.map print_param params) in
+  let str_params =
+    match params with
+    | [] -> "()"
+    | _ -> String.concat " " (List.map print_param params)
+  in
   let str_ret =
     match typ_ret_opt with None -> "" | Some typ -> " : " ^ print_typ typ
   in

@@ -118,6 +118,7 @@ let prelude (ctx : Ctx.t) =
 [@@@warning "-8-11-26-27-30-32-33-39"]
 
 open Domain
+open Lang
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
 module Run = Runtime.Dynamic_Runner.Signature
@@ -136,6 +137,11 @@ let make_case_
     (payload : Value.t list)
     (typ : Typ.t) : Value.t =
   Value.Make.(mixop <|! payload <<|! typ)
+
+let get_field_
+    (fields : (Atom.t phrase * 'a) list)
+    (s : string) : 'a =
+  snd (List.find (fun ({it; _}, _) -> it = Atom.Atom s) fields)
 
 |}
   in

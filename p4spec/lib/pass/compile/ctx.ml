@@ -55,9 +55,29 @@ let find_ctor (ctx : t) (typ : Typ.t) (mixop : Mixop.t) : Ml.ctor =
         (Format.asprintf "%s is not a variant type"
            (Sl.Print.string_of_typ typ))
 
+let find_typdef_opt (ctx : t) (id : TId.t) : Typdef.t option =
+  Typdefs.find_opt id ctx.typdefs
+
+let find_typdef (ctx : t) (id : TId.t) : Typdef.t =
+  match find_typdef_opt ctx id with
+  | Some typdef -> typdef
+  | None ->
+      error no_region (Format.asprintf "%s is not defined" (TId.to_string id))
+
+let fold_typdefs (f : TId.t -> Typdef.t -> 'a -> 'a) (ctx : t) (init : 'a) : 'a
+    =
+  Typdefs.fold f ctx.typdefs init
+
 let find_ctors (ctx : t) (id : TId.t) : (Ml.ctor * Il.typ list) list =
   Ctors.fold
     (fun (tid, _) ctor acc -> if Id.eq tid id then ctor :: acc else acc)
+    ctx.ctors []
+
+let find_ctors_full (ctx : t) (id : TId.t) :
+    (Mixop.t * Ml.ctor * Il.typ list) list =
+  Ctors.fold
+    (fun (tid, mixop) (ctor_ml, payload_typs) acc ->
+      if Id.eq tid id then (mixop, ctor_ml, payload_typs) :: acc else acc)
     ctx.ctors []
 
 let find_binding (ctx : t) (var : Var.t) : Ml.id =

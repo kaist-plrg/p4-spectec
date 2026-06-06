@@ -2,10 +2,19 @@ open Lang
 open Util.Source
 module Mixfix = Domain.Mixfix
 module StringSet = Collect.StringSet
+module Specialize = Specialize
+module Subst = Subst
 
 (* ===== Dispatch table types ===== *)
 
-type poly_instance = { mangled_name : string; concrete_targs : Il.typ list }
+type func_kind = Func | Builtin | Extern
+
+type poly_instance = {
+  mangled_name : string;
+  concrete_targs : Il.typ list;
+  kind : func_kind;
+}
+
 type dispatch_table = (string, poly_instance list) Hashtbl.t
 
 (* ===== Poly func ADT ===== *)
@@ -27,8 +36,8 @@ let specialize_poly pfunc theta ~new_name =
   | PExtern efunc -> Specialize.specialize_extern efunc theta ~new_name
 
 let add_instance (tbl : dispatch_table) ~(original : string) ~(mangled : string)
-    ~(targs : Il.typ list) : unit =
-  let inst = { mangled_name = mangled; concrete_targs = targs } in
+    ~(targs : Il.typ list) ~(kind : func_kind) : unit =
+  let inst = { mangled_name = mangled; concrete_targs = targs; kind } in
   let prev = try Hashtbl.find tbl original with Not_found -> [] in
   Hashtbl.replace tbl original (inst :: prev)
 
@@ -243,8 +252,14 @@ let monomorphize (spec : Sl.spec) : Sl.spec * dispatch_table =
           | Some pfunc ->
               let theta = Specialize.build_theta (tparams_of pfunc) targs in
               let new_name = Name.mangle func_id targs in
+              let kind =
+                match pfunc with
+                | PFunc _ -> Func
+                | PBuiltin _ -> Builtin
+                | PExtern _ -> Extern
+              in
               add_instance dispatch_table ~original:func_id ~mangled:new_name
-                ~targs;
+                ~targs ~kind;
               Some (specialize_poly pfunc theta ~new_name)
         in
         match new_def_opt with
