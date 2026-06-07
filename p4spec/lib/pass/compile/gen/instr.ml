@@ -266,6 +266,31 @@ and compile_hold_cond_iter (ctx : Ctx.t) (id : id) (notexp : notexp)
       | Il.List -> compile_hold_cond_list ctx id notexp vars iterexps_t
       | Il.Opt -> compile_hold_cond_opt ctx id notexp vars iterexps_t)
 
+and compile_hold_case (ctx : Ctx.t) (holdcase : holdcase) (id_hold_ml : string)
+    : Ctx.t * Ml.expr =
+  match holdcase with
+  | BothH (block_hold, block_nothold) ->
+      (* Both branches reachable; no Unmatch on either path *)
+      let ctx, expr_hold_ml = compile_block ctx block_hold in
+      let ctx, expr_nothold_ml = compile_block ctx block_nothold in
+      (ctx, Ml.IfE (Ml.VarE id_hold_ml, expr_hold_ml, Some expr_nothold_ml))
+  | HoldH (block_hold, _) ->
+      (* If condition does not hold: Unmatch -> fall through to next sibling *)
+      let ctx, expr_hold_ml = compile_block ctx block_hold in
+      ( ctx,
+        Ml.IfE
+          ( Ml.VarE id_hold_ml,
+            expr_hold_ml,
+            Some (Common.raise_unmatch "hold failed") ) )
+  | NotHoldH (block_nothold, _) ->
+      (* If condition holds: Unmatch -> fall through to next sibling *)
+      let ctx, expr_nothold_ml = compile_block ctx block_nothold in
+      ( ctx,
+        Ml.IfE
+          ( Ml.UnopE ("not", Ml.VarE id_hold_ml),
+            expr_nothold_ml,
+            Some (Common.raise_unmatch "not-hold failed") ) )
+
 and compile_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
     (iterexps : iterexp list) (holdcase : holdcase) : Ctx.t * Ml.expr =
   let ctx_outer = ctx in
@@ -274,40 +299,9 @@ and compile_hold_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
   let ctx, expr_hold_ml = compile_hold_cond_iter ctx id notexp iterexps_rev in
   (* Bind hold__ so holdcase branches can reference it *)
   let ctx, id_hold_ml = Stub.OCaml.var ctx "hold__" in
-  let ctx, expr_body_ml =
-    match holdcase with
-    | BothH (block_hold, block_nothold) ->
-        (* Both branches reachable; no Unmatch on either path *)
-        let ctx, expr_hold_ml = compile_block ctx block_hold in
-        let ctx, expr_nothold_ml = compile_block ctx block_nothold in
-        let expr_body_ml =
-          Ml.IfE (Ml.VarE id_hold_ml, expr_hold_ml, Some expr_nothold_ml)
-        in
-        (ctx, expr_body_ml)
-    | HoldH (block_hold, _) ->
-        (* If condition does not hold: Unmatch -> fall through to next sibling *)
-        let ctx, expr_hold_ml = compile_block ctx block_hold in
-        let expr_body_ml =
-          Ml.IfE
-            ( Ml.VarE id_hold_ml,
-              expr_hold_ml,
-              Some (Common.raise_unmatch "hold failed") )
-        in
-        (ctx, expr_body_ml)
-    | NotHoldH (block_nothold, _) ->
-        (* If condition holds: Unmatch -> fall through to next sibling *)
-        let ctx, expr_nothold_ml = compile_block ctx block_nothold in
-        let expr_body_ml =
-          Ml.IfE
-            ( Ml.UnopE ("not", Ml.VarE id_hold_ml),
-              expr_nothold_ml,
-              Some (Common.raise_unmatch "not-hold failed") )
-        in
-        (ctx, expr_body_ml)
-  in
+  let ctx, expr_body_ml = compile_hold_case ctx holdcase id_hold_ml in
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml = Ml.LetE (Ml.VarP id_hold_ml, expr_hold_ml, expr_body_ml) in
-  (ctx, expr_ml)
+  (ctx, Ml.LetE (Ml.VarP id_hold_ml, expr_hold_ml, expr_body_ml))
 
 (* Case instruction: [case exp { guard => block; ... }]
 

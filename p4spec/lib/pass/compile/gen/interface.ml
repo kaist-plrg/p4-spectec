@@ -1,26 +1,593 @@
+open Domain
 open Lang
-module Typ = Runtime.Type.Typ
+module Typdef = Runtime.Type.Typdef
+open Util.Source
 
-(* Collect all monomorphic types used in the spec *)
+(* Type-to-name mapping for generated function suffixes *)
 
-let collect_types (_ctx : Ctx.t) (_spec : Sl.spec) : Typ.t list = assert false
+let rec interface_name (typ : Sl.typ) : string =
+  match typ.it with
+  | BoolT -> "bool"
+  | NumT `NatT -> "nat"
+  | NumT `IntT -> "int"
+  | TextT -> "text"
+  | VarT (id, []) -> Names.var_of_id id
+  | VarT (id, targs) ->
+      Names.var_of_id id ^ "_"
+      ^ String.concat "_" (List.map interface_name targs)
+  | TupleT typs -> String.concat "_" (List.map interface_name typs) ^ "_tup"
+  | IterT (t, Il.Opt) -> interface_name t ^ "_opt"
+  | IterT (t, Il.List) -> interface_name t ^ "_list"
+  | FuncT _ -> "func"
 
-(* Compiling marshal interface *)
+(* Runtime Typ.t codegen *)
+
+let rec typ_make_expr (typ : Sl.typ) : Ml.expr =
+  match typ.it with
+  | BoolT -> Ml.LitE "Typ.Make.bool"
+  | NumT `NatT -> Ml.LitE "Typ.Make.nat"
+  | NumT `IntT -> Ml.LitE "Typ.Make.int"
+  | TextT -> Ml.LitE "Typ.Make.text"
+  | VarT (id, []) ->
+      Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE id.it; Ml.ListE [] ])
+  | VarT (id, targs) ->
+      Ml.AppE
+        ( Ml.LitE "make_typ_var_",
+          [ Ml.StrE id.it; Ml.ListE (List.map typ_make_expr targs) ] )
+  | TupleT typs ->
+      Ml.AppE
+        (Ml.LitE "Typ.Make.tuple", [ Ml.ListE (List.map typ_make_expr typs) ])
+  | IterT (t, Il.Opt) -> Ml.AppE (Ml.LitE "Typ.Make.opt", [ typ_make_expr t ])
+  | IterT (t, Il.List) -> Ml.AppE (Ml.LitE "Typ.Make.list", [ typ_make_expr t ])
+  | FuncT _ -> Ml.LitE "Typ.Make.bool"
+
+(* Runtime Atom.t/Mixop.t codegen, for marshalling *)
+
+let atom_it_lit (atom : Atom.t) : string =
+  match atom with
+  | Atom.Atom s -> Printf.sprintf "Atom.Atom \"%s\"" (String.escaped s)
+  | Atom.SilentAtom s ->
+      Printf.sprintf "Atom.SilentAtom \"%s\"" (String.escaped s)
+  | Atom.Sub -> "Atom.Sub"
+  | Atom.Sup -> "Atom.Sup"
+  | Atom.Turnstile -> "Atom.Turnstile"
+  | Atom.Tilesturn -> "Atom.Tilesturn"
+  | Atom.Tick -> "Atom.Tick"
+  | Atom.DoubleQuote -> "Atom.DoubleQuote"
+  | Atom.Underscore -> "Atom.Underscore"
+  | Atom.Arrow `Plain -> "Atom.Arrow `Plain"
+  | Atom.Arrow `Tick -> "Atom.Arrow `Tick"
+  | Atom.ArrowSub -> "Atom.ArrowSub"
+  | Atom.DoubleArrow -> "Atom.DoubleArrow"
+  | Atom.DoubleArrowSub -> "Atom.DoubleArrowSub"
+  | Atom.DoubleArrowLong -> "Atom.DoubleArrowLong"
+  | Atom.SqArrow -> "Atom.SqArrow"
+  | Atom.SqArrowStar -> "Atom.SqArrowStar"
+  | Atom.Dot `Plain -> "Atom.Dot `Plain"
+  | Atom.Dot `Tick -> "Atom.Dot `Tick"
+  | Atom.Dot2 `Plain -> "Atom.Dot2 `Plain"
+  | Atom.Dot2 `Tick -> "Atom.Dot2 `Tick"
+  | Atom.Dot3 `Plain -> "Atom.Dot3 `Plain"
+  | Atom.Dot3 `Tick -> "Atom.Dot3 `Tick"
+  | Atom.Comma -> "Atom.Comma"
+  | Atom.Semicolon `Plain -> "Atom.Semicolon `Plain"
+  | Atom.Semicolon `Tick -> "Atom.Semicolon `Tick"
+  | Atom.Colon `Plain -> "Atom.Colon `Plain"
+  | Atom.Colon `Tick -> "Atom.Colon `Tick"
+  | Atom.ColonEq `Plain -> "Atom.ColonEq `Plain"
+  | Atom.ColonEq `Tick -> "Atom.ColonEq `Tick"
+  | Atom.Hash -> "Atom.Hash"
+  | Atom.Dollar -> "Atom.Dollar"
+  | Atom.At -> "Atom.At"
+  | Atom.Quest -> "Atom.Quest"
+  | Atom.Bang -> "Atom.Bang"
+  | Atom.BangEq -> "Atom.BangEq"
+  | Atom.Tilde -> "Atom.Tilde"
+  | Atom.Tilde2 `Plain -> "Atom.Tilde2 `Plain"
+  | Atom.Tilde2 `Tick -> "Atom.Tilde2 `Tick"
+  | Atom.LAngle `Tick -> "Atom.LAngle `Tick"
+  | Atom.LAngle `Tick2 -> "Atom.LAngle `Tick2"
+  | Atom.LAngle2 -> "Atom.LAngle2"
+  | Atom.LAngleEq -> "Atom.LAngleEq"
+  | Atom.LAngle2Eq -> "Atom.LAngle2Eq"
+  | Atom.RAngle `Plain -> "Atom.RAngle `Plain"
+  | Atom.RAngle `Tick2 -> "Atom.RAngle `Tick2"
+  | Atom.RAngle2 -> "Atom.RAngle2"
+  | Atom.RAngleEq -> "Atom.RAngleEq"
+  | Atom.RAngle2Eq -> "Atom.RAngle2Eq"
+  | Atom.LParen -> "Atom.LParen"
+  | Atom.RParen -> "Atom.RParen"
+  | Atom.LBrack `Tick -> "Atom.LBrack `Tick"
+  | Atom.LBrack `Tick2 -> "Atom.LBrack `Tick2"
+  | Atom.RBrack `Plain -> "Atom.RBrack `Plain"
+  | Atom.RBrack `Tick2 -> "Atom.RBrack `Tick2"
+  | Atom.LBrace `Tick -> "Atom.LBrace `Tick"
+  | Atom.LBrace `Tick2 -> "Atom.LBrace `Tick2"
+  | Atom.LBraceHashRBrace -> "Atom.LBraceHashRBrace"
+  | Atom.RBrace `Plain -> "Atom.RBrace `Plain"
+  | Atom.RBrace `Tick2 -> "Atom.RBrace `Tick2"
+  | Atom.Plus -> "Atom.Plus"
+  | Atom.Plus2 -> "Atom.Plus2"
+  | Atom.PlusEq -> "Atom.PlusEq"
+  | Atom.PlusColon -> "Atom.PlusColon"
+  | Atom.Minus -> "Atom.Minus"
+  | Atom.MinusEq -> "Atom.MinusEq"
+  | Atom.Star -> "Atom.Star"
+  | Atom.StarEq -> "Atom.StarEq"
+  | Atom.Slash -> "Atom.Slash"
+  | Atom.SlashEq -> "Atom.SlashEq"
+  | Atom.Backslash -> "Atom.Backslash"
+  | Atom.Percent -> "Atom.Percent"
+  | Atom.PercentEq -> "Atom.PercentEq"
+  | Atom.Eq -> "Atom.Eq"
+  | Atom.Eq2 -> "Atom.Eq2"
+  | Atom.Amp -> "Atom.Amp"
+  | Atom.Amp2 -> "Atom.Amp2"
+  | Atom.Amp3 -> "Atom.Amp3"
+  | Atom.AmpEq -> "Atom.AmpEq"
+  | Atom.Up -> "Atom.Up"
+  | Atom.UpEq -> "Atom.UpEq"
+  | Atom.Bar -> "Atom.Bar"
+  | Atom.Bar2 -> "Atom.Bar2"
+  | Atom.BarEq -> "Atom.BarEq"
+  | Atom.SPlus -> "Atom.SPlus"
+  | Atom.SPlusEq -> "Atom.SPlusEq"
+  | Atom.SMinus -> "Atom.SMinus"
+  | Atom.SMinusEq -> "Atom.SMinusEq"
+
+let atom_phrase_lit (atom : Atom.t phrase) : string =
+  Printf.sprintf "{it = %s; at = no_region; note = ()}" (atom_it_lit atom.it)
+
+let rec mixop_lit (mixop : Mixop.t) : string =
+  match mixop with
+  | Mixfix.Arg () -> "Mixfix.Arg ()"
+  | Mixfix.Atom atom -> Printf.sprintf "Mixfix.Atom (%s)" (atom_phrase_lit atom)
+  | Mixfix.Brack (open_a, inner, close_a) ->
+      Printf.sprintf "Mixfix.Brack (%s, %s, %s)" (atom_phrase_lit open_a)
+        (mixop_lit inner) (atom_phrase_lit close_a)
+  | Mixfix.Infix (left, atom, right) ->
+      Printf.sprintf "Mixfix.Infix (%s, %s, %s)" (mixop_lit left)
+        (atom_phrase_lit atom) (mixop_lit right)
+  | Mixfix.Seq parts ->
+      Printf.sprintf "Mixfix.Seq [%s]"
+        (String.concat "; " (List.map mixop_lit parts))
+
+let mixop_expr (mixop : Mixop.t) : Ml.expr = Ml.LitE (mixop_lit mixop)
+
+(* Runtime Atom.t/Mixop.t codegen, for unmarshalling --- *)
+
+let atom_phrase_pat (atom : Atom.t phrase) : string =
+  Printf.sprintf "{it = %s; _}" (atom_it_lit atom.it)
+
+let rec mixop_pat_lit (mixop : Mixop.t) : string =
+  match mixop with
+  | Mixfix.Arg () -> "Mixfix.Arg _"
+  | Mixfix.Atom atom -> Printf.sprintf "Mixfix.Atom (%s)" (atom_phrase_pat atom)
+  | Mixfix.Brack (open_a, inner, close_a) ->
+      Printf.sprintf "Mixfix.Brack (%s, %s, %s)" (atom_phrase_pat open_a)
+        (mixop_pat_lit inner) (atom_phrase_pat close_a)
+  | Mixfix.Infix (left, atom, right) ->
+      Printf.sprintf "Mixfix.Infix (%s, %s, %s)" (mixop_pat_lit left)
+        (atom_phrase_pat atom) (mixop_pat_lit right)
+  | Mixfix.Seq parts ->
+      Printf.sprintf "Mixfix.Seq [%s]"
+        (String.concat "; " (List.map mixop_pat_lit parts))
+
+(* BFS over all types reachable from function signatures *)
+
+let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
+  let seen : (string, unit) Hashtbl.t = Hashtbl.create 32 in
+  let queue : Sl.typ Queue.t = Queue.create () in
+  let enqueue typ =
+    let name = interface_name typ in
+    if not (Hashtbl.mem seen name) then (
+      Hashtbl.replace seen name ();
+      Queue.push typ queue)
+  in
+  let enqueue_params params =
+    List.iter
+      (fun param ->
+        match param.it with Sl.ExpP (typ, _) -> enqueue typ | Sl.DefP _ -> ())
+      params
+  in
+  List.iter
+    (fun def ->
+      match def.it with
+      | Sl.FuncDecD (_, [], params, typ_ret, _, _, _) ->
+          enqueue_params params;
+          enqueue typ_ret
+      | Sl.BuiltinDecD (_, [], params, typ_ret, _) ->
+          enqueue_params params;
+          enqueue typ_ret
+      | Sl.ExternDecD (_, [], params, typ_ret, _) ->
+          enqueue_params params;
+          enqueue typ_ret
+      | Sl.TableDecD (_, params, typ_ret, _, _) ->
+          enqueue_params params;
+          enqueue typ_ret
+      | _ -> ())
+    spec;
+  let result = ref [] in
+  while not (Queue.is_empty queue) do
+    let typ = Queue.pop queue in
+    result := typ :: !result;
+    match typ.it with
+    | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> ()
+    | Il.TupleT typs -> List.iter enqueue typs
+    | Il.IterT (t, _) -> enqueue t
+    | Il.VarT (id, targs) -> (
+        match Ctx.find_typdef_opt ctx id with
+        | None
+        | Some Typdef.Extern
+        | Some Typdef.Param
+        | Some (Typdef.Defining _) ->
+            ()
+        | Some (Typdef.Defined (tparams, deftyp))
+          when List.length tparams = List.length targs -> (
+            let theta = Mono.Specialize.build_theta tparams targs in
+            let sub t = Mono.Subst.subst_typ theta t in
+            match deftyp.it with
+            | Il.PlainT t -> enqueue (sub t)
+            | Il.StructT typfields ->
+                List.iter (fun (_, t) -> enqueue (sub t)) typfields
+            | Il.VariantT typcases ->
+                List.iter
+                  (fun (nottyp, _, _) ->
+                    List.iter (fun t -> enqueue (sub t)) (Mixfix.args nottyp.it))
+                  typcases)
+        | _ -> ())
+  done;
+  List.rev !result
+
+(* Substitution theta from a typedef's tparams and caller's targs *)
+
+let build_theta ctx id targs =
+  match Ctx.find_typdef_opt ctx id with
+  | Some (Typdef.Defined (tparams, _) | Typdef.Defining tparams)
+    when List.length tparams = List.length targs ->
+      Mono.Specialize.build_theta tparams targs
+  | _ -> Mono.Specialize.build_theta [] []
+
+(* Marshalling *)
 
 module Marshal = struct
-  let compile (_ctx : Ctx.t) (_typ : Typ.t) : Ml.funcdef = assert false
+  (* Booleans *)
+
+  let compile_bool = Ml.AppE (Ml.LitE "Value.Make.bool", [ Ml.VarE "x" ])
+
+  (* Numbers *)
+
+  let compile_num = function
+    | `NatT -> Ml.AppE (Ml.LitE "Value.Make.nat", [ Ml.VarE "x" ])
+    | `IntT -> Ml.AppE (Ml.LitE "Value.Make.int", [ Ml.VarE "x" ])
+
+  (* Texts *)
+
+  let compile_text = Ml.AppE (Ml.LitE "Value.Make.text", [ Ml.VarE "x" ])
+
+  (* Variable types *)
+
+  (* Structs *)
+
+  let compile_struct (expr_typ_ml : Ml.expr) (subst : Sl.typ -> Sl.typ)
+      (typfields : Sl.typfield list) : Ml.expr =
+    let field_exprs =
+      List.map
+        (fun (atom, t) ->
+          let atom_str = Names.Ctor.atom atom in
+          let ocaml_field = Names.field atom in
+          Ml.TupleE
+            [
+              Ml.AppE (Ml.LitE "make_atom_", [ Ml.StrE atom_str ]);
+              Ml.AppE
+                ( Ml.VarE ("marshal_" ^ interface_name (subst t)),
+                  [ Ml.FieldE (Ml.VarE "x", ocaml_field) ] );
+            ])
+        typfields
+    in
+    Ml.LetE
+      ( Ml.VarP "typ_",
+        expr_typ_ml,
+        Ml.AppE
+          (Ml.LitE "Value.Make.str", [ Ml.VarE "typ_"; Ml.ListE field_exprs ])
+      )
+
+  (* Variants *)
+
+  let compile_variant (ctx : Ctx.t) (id : Sl.id) (expr_typ_ml : Ml.expr)
+      (subst : Sl.typ -> Sl.typ) : Ml.expr =
+    let ctors_info = Ctx.find_ctors_full ctx id in
+    let arms =
+      List.map
+        (fun (mixop, ctor_ml, payload_typs) ->
+          let payload_typs' = List.map subst payload_typs in
+          let n = List.length payload_typs' in
+          let pvars = List.init n (fun i -> "p_" ^ string_of_int i) in
+          let pat =
+            Ml.VariantP (`Poly (ctor_ml, List.map (fun v -> Ml.VarP v) pvars))
+          in
+          let marshal_calls =
+            List.mapi
+              (fun i t ->
+                Ml.AppE
+                  ( Ml.VarE ("marshal_" ^ interface_name t),
+                    [ Ml.VarE (List.nth pvars i) ] ))
+              payload_typs'
+          in
+          ( pat,
+            Ml.AppE
+              ( Ml.LitE "make_case_",
+                [ mixop_expr mixop; Ml.ListE marshal_calls; Ml.VarE "typ_" ] )
+          ))
+        ctors_info
+    in
+    Ml.LetE (Ml.VarP "typ_", expr_typ_ml, Ml.MatchE (Ml.VarE "x", arms))
+
+  let compile_var (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
+      (expr_typ_ml : Ml.expr) : Ml.expr =
+    let theta = build_theta ctx id targs in
+    let subst typ = Mono.Subst.subst_typ theta typ in
+    let td = Ctx.find_typdef ctx id in
+    match td with
+    | Typdef.Param | Typdef.Defining _ -> Ml.UnitE
+    | Typdef.Defined (_, deftyp) -> (
+        match deftyp.it with
+        | Il.PlainT typ_alias ->
+            Ml.AppE
+              ( Ml.VarE ("marshal_" ^ interface_name (subst typ_alias)),
+                [ Ml.VarE "x" ] )
+        | Il.StructT typfields -> compile_struct expr_typ_ml subst typfields
+        | Il.VariantT _ -> compile_variant ctx id expr_typ_ml subst)
+    | Typdef.Extern ->
+        Ml.AppE (Ml.LitE "Value.Make.extern", [ expr_typ_ml; Ml.VarE "x" ])
+
+  (* Tuples *)
+
+  let compile_tuple (expr_typ_ml : Ml.expr) (typs : Sl.typ list) : Ml.expr =
+    let n = List.length typs in
+    let vars = List.init n (fun i -> "x" ^ string_of_int i) in
+    let marshal_calls =
+      List.mapi
+        (fun i t ->
+          Ml.AppE
+            ( Ml.VarE ("marshal_" ^ interface_name t),
+              [ Ml.VarE (List.nth vars i) ] ))
+        typs
+    in
+    Ml.LetE
+      ( Ml.VarP "typ_",
+        expr_typ_ml,
+        Ml.LetE
+          ( Ml.TupleP (List.map (fun v -> Ml.VarP v) vars),
+            Ml.VarE "x",
+            Ml.AppE
+              ( Ml.LitE "Value.Make.tuple",
+                [ Ml.VarE "typ_"; Ml.ListE marshal_calls ] ) ) )
+
+  (* Iterations *)
+
+  let compile_iter_opt (expr_typ_ml : Ml.expr) (t : Sl.typ) : Ml.expr =
+    Ml.LetE
+      ( Ml.VarP "typ_",
+        expr_typ_ml,
+        Ml.AppE
+          ( Ml.LitE "Value.Make.opt",
+            [
+              Ml.VarE "typ_";
+              Ml.AppE
+                ( Ml.LitE "Option.map",
+                  [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
+            ] ) )
+
+  let compile_iter_list (expr_typ_ml : Ml.expr) (t : Sl.typ) : Ml.expr =
+    Ml.LetE
+      ( Ml.VarP "typ_",
+        expr_typ_ml,
+        Ml.AppE
+          ( Ml.LitE "Value.Make.list",
+            [
+              Ml.VarE "typ_";
+              Ml.AppE
+                ( Ml.LitE "List.map",
+                  [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
+            ] ) )
+
+  let compile_iter (expr_typ_ml : Ml.expr) (typ : Sl.typ) (iter : Sl.iter) :
+      Ml.expr =
+    match iter with
+    | Opt -> compile_iter_opt expr_typ_ml typ
+    | List -> compile_iter_list expr_typ_ml typ
+
+  let compile_body (ctx : Ctx.t) (typ : Sl.typ) : Ml.expr =
+    let expr_typ_ml = typ_make_expr typ in
+    match typ.it with
+    | Il.BoolT -> compile_bool
+    | Il.NumT numtyp -> compile_num numtyp
+    | Il.TextT -> compile_text
+    | Il.VarT (id, targs) -> compile_var ctx id targs expr_typ_ml
+    | Il.TupleT typs -> compile_tuple expr_typ_ml typs
+    | Il.IterT (typ, iter) -> compile_iter expr_typ_ml typ iter
+    | Il.FuncT _ -> Ml.UnitE
+
+  let compile (ctx : Ctx.t) (typ : Sl.typ) : Ml.funcdef =
+    let name = "marshal_" ^ interface_name typ in
+    let ml_typ = Type.compile_typ ~tparams:[] typ in
+    let body = compile_body ctx typ in
+    (name, [ ("x", Some ml_typ) ], Some (Ml.NameT "Value.t"), body)
 end
 
-(* Compiling unmarshal interface *)
+(* Unmarshalling *)
 
 module Unmarshal = struct
-  let compile (_ctx : Ctx.t) (_typ : Typ.t) : Ml.funcdef = assert false
-end
+  (* Booleans *)
 
-(* Entry point *)
+  let compile_bool = Ml.AppE (Ml.LitE "Value.Get.bool", [ Ml.VarE "v" ])
+
+  (* Numbers *)
+
+  let compile_num =
+    Ml.MatchE
+      ( Ml.AppE (Ml.LitE "Value.Get.num", [ Ml.VarE "v" ]),
+        [
+          (Ml.VariantP (`Poly ("Nat", [ Ml.VarP "n_" ])), Ml.VarE "n_");
+          (Ml.VariantP (`Poly ("Int", [ Ml.VarP "i_" ])), Ml.VarE "i_");
+        ] )
+
+  (* Texts *)
+
+  let compile_text = Ml.AppE (Ml.LitE "Value.Get.text", [ Ml.VarE "v" ])
+
+  (* Variable typs *)
+
+  (* Structs *)
+
+  let compile_struct (sub : Sl.typ -> Sl.typ) (typfields : Sl.typfield list) :
+      Ml.expr =
+    let field_bindings =
+      List.map
+        (fun (atom, t) ->
+          let atom_str = Names.Ctor.atom atom in
+          let ocaml_field = Names.field atom in
+          ( ocaml_field,
+            Ml.AppE
+              ( Ml.VarE ("unmarshal_" ^ interface_name (sub t)),
+                [
+                  Ml.AppE
+                    ( Ml.LitE "get_field_",
+                      [ Ml.VarE "fields_"; Ml.StrE atom_str ] );
+                ] ) ))
+        typfields
+    in
+    Ml.LetE
+      ( Ml.VarP "fields_",
+        Ml.AppE (Ml.LitE "Value.Get.str", [ Ml.VarE "v" ]),
+        Ml.RecordE field_bindings )
+
+  (* Variants *)
+
+  let compile_variant (ctx : Ctx.t) (id : Sl.id) (name : string)
+      (sub : Sl.typ -> Sl.typ) : Ml.expr =
+    let ctors_info = Ctx.find_ctors_full ctx id in
+    let ctor_arms =
+      List.map
+        (fun (mixop, ctor_ml, payload_typs) ->
+          let payload_typs' = List.map sub payload_typs in
+          let n = List.length payload_typs' in
+          let payload_exprs =
+            List.init n (fun i ->
+                Ml.AppE
+                  ( Ml.VarE
+                      ("unmarshal_" ^ interface_name (List.nth payload_typs' i)),
+                    [
+                      Ml.AppE
+                        ( Ml.LitE "List.nth",
+                          [ Ml.VarE "payload_"; Ml.LitE (string_of_int i) ] );
+                    ] ))
+          in
+          (Ml.LitP (mixop_pat_lit mixop), Ml.VariantE (ctor_ml, payload_exprs)))
+        ctors_info
+    in
+    let wild_arm =
+      ( Ml.WildP,
+        Common.raise_unmatch (Printf.sprintf "unmarshal_%s: unknown case" name)
+      )
+    in
+    Ml.MatchE
+      ( Ml.FieldE (Ml.VarE "v", "it"),
+        [
+          ( Ml.VariantP (`Mono ("CaseV", [ Ml.VarP "vc_" ])),
+            Ml.LetE
+              ( Ml.TupleP [ Ml.VarP "mixop_"; Ml.VarP "payload_" ],
+                Ml.AppE (Ml.LitE "Mixfix.split", [ Ml.VarE "vc_" ]),
+                Ml.MatchE (Ml.VarE "mixop_", ctor_arms @ [ wild_arm ]) ) );
+          (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
+        ] )
+
+  let compile_var (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
+      (name : string) : Ml.expr =
+    let theta = build_theta ctx id targs in
+    let subst typ = Mono.Subst.subst_typ theta typ in
+    let td = Ctx.find_typdef ctx id in
+    match td with
+    | Typdef.Param | Typdef.Defining _ ->
+        Common.raise_unmatch ("unmarshal_" ^ name)
+    | Typdef.Defined (_, deftyp) -> (
+        match deftyp.it with
+        | Il.PlainT typ_alias ->
+            Ml.AppE
+              ( Ml.VarE ("unmarshal_" ^ interface_name (subst typ_alias)),
+                [ Ml.VarE "v" ] )
+        | Il.StructT typfields -> compile_struct subst typfields
+        | Il.VariantT _ -> compile_variant ctx id name subst)
+    | Typdef.Extern -> Ml.AppE (Ml.LitE "Value.Get.extern", [ Ml.VarE "v" ])
+
+  (* Tuples *)
+
+  let compile_tuple (name : string) (typs : Sl.typ list) : Ml.expr =
+    let n = List.length typs in
+    let vars = List.init n (fun i -> "v" ^ string_of_int i) in
+    let unmarshal_calls =
+      List.mapi
+        (fun i t ->
+          Ml.AppE
+            ( Ml.VarE ("unmarshal_" ^ interface_name t),
+              [ Ml.VarE (List.nth vars i) ] ))
+        typs
+    in
+    Ml.MatchE
+      ( Ml.AppE (Ml.LitE "Value.Get.tuple", [ Ml.VarE "v" ]),
+        [
+          ( Ml.ListP (List.map (fun v -> Ml.VarP v) vars),
+            Ml.TupleE unmarshal_calls );
+          (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
+        ] )
+
+  (* Iterations *)
+
+  let compile_iter_opt (t : Sl.typ) : Ml.expr =
+    Ml.MatchE
+      ( Ml.AppE (Ml.LitE "Value.Get.opt", [ Ml.VarE "v" ]),
+        [
+          (Ml.OptP None, Ml.OptE None);
+          ( Ml.OptP (Some (Ml.VarP "v_inner_")),
+            Ml.OptE
+              (Some
+                 (Ml.AppE
+                    ( Ml.VarE ("unmarshal_" ^ interface_name t),
+                      [ Ml.VarE "v_inner_" ] ))) );
+        ] )
+
+  let compile_iter_list (t : Sl.typ) : Ml.expr =
+    Ml.AppE
+      ( Ml.LitE "List.map",
+        [
+          Ml.VarE ("unmarshal_" ^ interface_name t);
+          Ml.AppE (Ml.LitE "Value.Get.list", [ Ml.VarE "v" ]);
+        ] )
+
+  let compile_iter (t : Sl.typ) (iter : Sl.iter) : Ml.expr =
+    match iter with Opt -> compile_iter_opt t | List -> compile_iter_list t
+
+  let compile_body (ctx : Ctx.t) (typ : Sl.typ) : Ml.expr =
+    let name = interface_name typ in
+    match typ.it with
+    | Il.BoolT -> compile_bool
+    | Il.NumT _ -> compile_num
+    | Il.TextT -> compile_text
+    | Il.VarT (id, targs) -> compile_var ctx id targs name
+    | Il.TupleT typs -> compile_tuple name typs
+    | Il.IterT (t, iter) -> compile_iter t iter
+    | Il.FuncT _ -> Common.raise_unmatch "unmarshal_func"
+
+  let compile (ctx : Ctx.t) (typ : Sl.typ) : Ml.funcdef =
+    let name = "unmarshal_" ^ interface_name typ in
+    let ml_typ = Type.compile_typ ~tparams:[] typ in
+    let body = compile_body ctx typ in
+    (name, [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
+end
 
 let compile (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef list * Ml.funcdef list =
   let typs = collect_types ctx spec in
-  let funcdefs_marshal_ml = typs |> List.map (Marshal.compile ctx) in
-  let funcdefs_unmarshal_ml = typs |> List.map (Unmarshal.compile ctx) in
+  let funcdefs_marshal_ml = List.map (Marshal.compile ctx) typs in
+  let funcdefs_unmarshal_ml = List.map (Unmarshal.compile ctx) typs in
   (funcdefs_marshal_ml, funcdefs_unmarshal_ml)

@@ -178,7 +178,7 @@ let compile_def (ctx : Ctx.t) (def : Sl.def) : Ctx.t * Ml.typdef option =
       (ctx, typdef_ml_opt)
   | Sl.ExternTypD (id, _) ->
       let id_ml = Names.var_of_id id in
-      let deftyp_ml = Ml.AliasTD Ml.UnitT in
+      let deftyp_ml = Ml.AliasTD (Ml.NameT "Yojson.Safe.t") in
       let typdef_ml_opt = Some ([], id_ml, deftyp_ml) in
       (ctx, typdef_ml_opt)
   | _ -> (ctx, None)
