@@ -7,15 +7,31 @@ module Make
     (Extern : Run.EXTERN)
     () : Run.INTERP_ML = struct
 
+|}
+
+let cache_section (cache_ids : string list) : string =
+  let resets =
+    String.concat "\n      "
+      (List.map (fun id -> Printf.sprintf "Hashtbl.clear %s;" id) cache_ids)
+  in
+  Printf.sprintf
+    {|
+  let cache_enabled__ = ref false
+
   module Cache = struct
-    let cache_on () = ()
-    let cache_off () = ()
+    let cache_on () = cache_enabled__ := true
+    let cache_off () =
+      cache_enabled__ := false;
+      %s
   end
 
-  let init ~cache:_ ~det:_ ~guard:_ () = ()
-  let clear () = ()
+  let init ~cache ~det:_ ~guard:_ () =
+    if cache then Cache.cache_on ()
+
+  let clear () = Cache.cache_off ()
 
 |}
+    resets
 
 let footer =
   {|

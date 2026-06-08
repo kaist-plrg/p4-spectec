@@ -6,7 +6,7 @@ open Util.Source
 
 let compile_defined_rel (ctx : Ctx.t) (id : id) ((_, inputs) : rel_signature)
     (exps : exp list) (block_main : block) (elseblock_opt : block option) :
-    Ctx.t * Ml.funcdef list =
+    Ctx.t * Ml.funcdef list * Ml.id option =
   let id_ml = Names.rel id in
   let ctx_outer = ctx in
   (* Split into input / output expressions *)
@@ -50,33 +50,37 @@ let compile_defined_rel (ctx : Ctx.t) (id : id) ((_, inputs) : rel_signature)
   in
   (* Promote preamble to outer context *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Compile dispatcher: no return type annotation (inferred from ResultI) *)
-  let funcdef_dispatcher_ml =
-    let exprs_param_ml = List.map (fun id_p -> Ml.VarE id_p) ids_param_ml in
-    let expr_dispatcher_ml =
-      match funcdef_else_ml_opt with
-      | Some _ ->
-          Ml.TryE
-            ( Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml),
-              [
-                ( Ml.VariantP (`Mono ("Unmatch", [ Ml.WildP ])),
-                  Ml.AppE (Ml.VarE id_else_ml, exprs_param_ml) );
-              ] )
-      | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
-    in
-    (id_ml, params_ml, None, expr_dispatcher_ml)
+  (* Base dispatch expression *)
+  let exprs_param_ml = List.map (fun id_p -> Ml.VarE id_p) ids_param_ml in
+  let dispatch_ml =
+    match funcdef_else_ml_opt with
+    | Some _ ->
+        Ml.TryE
+          ( Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml),
+            [
+              ( Ml.VariantP (`Mono ("Unmatch", [ Ml.WildP ])),
+                Ml.AppE (Ml.VarE id_else_ml, exprs_param_ml) );
+            ] )
+    | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
   in
+  (* Compile dispatcher with cache (relations are always cacheable) *)
+  let cache_id_ml = "cache__" ^ id_ml in
+  let key_ml = Common.make_cache_key ids_param_ml in
+  let expr_dispatcher_ml =
+    Common.make_cache_dispatcher cache_id_ml key_ml dispatch_ml
+  in
+  let funcdef_dispatcher_ml = (id_ml, params_ml, None, expr_dispatcher_ml) in
   let funcdefs_ml =
     (funcdef_main_ml :: Option.to_list funcdef_else_ml_opt)
     @ [ funcdef_dispatcher_ml ]
   in
-  (ctx, funcdefs_ml)
+  (ctx, funcdefs_ml, Some cache_id_ml)
 
 (* Extern relations *)
 
 let compile_extern_rel (ctx : Ctx.t) (id : id)
     ((nottyp, inputs) : rel_signature) (exps : exp list) :
-    Ctx.t * Ml.funcdef list =
+    Ctx.t * Ml.funcdef list * Ml.id option =
   ignore exps;
   let id_ml = Names.rel id in
   (* Derive input/output types from nottyp (authoritative source) *)
@@ -144,23 +148,31 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (List.combine vars_marshal_ml exprs_marshal_ml)
       expr_result_ml
   in
-  (ctx, [ (id_ml, params_ml, None, expr_body_ml) ])
+  (ctx, [ (id_ml, params_ml, None, expr_body_ml) ], None)
 
 (* Defs *)
 
-let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
+let compile_def (ctx : Ctx.t) (def : def) :
+    Ctx.t * Ml.funcdef list * Ml.id option =
   match def.it with
   | RelD (id, rel_sig, exps, block, elseblock_opt, _) ->
       compile_defined_rel ctx id rel_sig exps block elseblock_opt
   | ExternRelD (id, rel_sig, exps, _) -> compile_extern_rel ctx id rel_sig exps
-  | _ -> (ctx, [])
+  | _ -> (ctx, [], None)
 
-let compile_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Ml.funcdef list =
+let compile_defs (ctx : Ctx.t) (defs : def list) :
+    Ctx.t * Ml.funcdef list * Ml.id list =
   List.fold_left
-    (fun (ctx, funcdefs_ml_acc) def ->
-      let ctx, funcdefs_ml = compile_def ctx def in
-      (ctx, funcdefs_ml_acc @ funcdefs_ml))
-    (ctx, []) defs
+    (fun (ctx, funcdefs_ml_acc, cache_ids_acc) def ->
+      let ctx, funcdefs_ml, cache_id_opt = compile_def ctx def in
+      let cache_ids_acc =
+        match cache_id_opt with
+        | Some id -> cache_ids_acc @ [ id ]
+        | None -> cache_ids_acc
+      in
+      (ctx, funcdefs_ml_acc @ funcdefs_ml, cache_ids_acc))
+    (ctx, [], []) defs
 
-let compile_spec (ctx : Ctx.t) (spec : spec) : Ctx.t * Ml.funcdef list =
+let compile_spec (ctx : Ctx.t) (spec : spec) :
+    Ctx.t * Ml.funcdef list * Ml.id list =
   compile_defs ctx spec

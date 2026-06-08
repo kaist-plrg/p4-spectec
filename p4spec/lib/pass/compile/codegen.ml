@@ -20,19 +20,29 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =
-    let ctx, funcdefs_ml = Gen.Func.compile_spec ctx spec dispatch_table in
-    let ctx, reldefs_ml = Gen.Rel.compile_spec ctx spec in
+    let ctx, funcdefs_ml, cache_ids_func =
+      Gen.Func.compile_spec ctx spec dispatch_table
+    in
+    let ctx, reldefs_ml, cache_ids_rel = Gen.Rel.compile_spec ctx spec in
+    let all_cache_ids = cache_ids_func @ cache_ids_rel in
     let funcdef_eval_func_ml =
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
+    let toplevels_cache_decls_ml =
+      List.map
+        (fun cache_id -> Ml.Let (cache_id, Ml.LitE "Hashtbl.create 256"))
+        all_cache_ids
+    in
     let toplevels_functor_ml =
-      [
-        Ml.Raw Template.Functor.header;
-        Ml.LetRec (funcdefs_ml @ reldefs_ml);
-        Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
-        Ml.Raw Template.Functor.footer;
-      ]
+      [ Ml.Raw Template.Functor.header ]
+      @ toplevels_cache_decls_ml
+      @ [
+          Ml.Raw (Template.Functor.cache_section all_cache_ids);
+          Ml.LetRec (funcdefs_ml @ reldefs_ml);
+          Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
+          Ml.Raw Template.Functor.footer;
+        ]
     in
     (ctx, toplevels_functor_ml)
   in
