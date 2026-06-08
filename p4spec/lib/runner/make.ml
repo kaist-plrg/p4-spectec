@@ -6,6 +6,7 @@ module Make_rec
     (MakeExtern : functor
       (Interp_IL : INTERP_IL)
       (Interp_SL : INTERP_SL)
+      (Interp_ML : INTERP_ML)
       -> EXTERN)
     (MakeInterp_IL : functor
       (Interface : INTERFACE)
@@ -27,7 +28,7 @@ module Make_rec
   (* Recursive instantiations *)
 
   module rec Extern : EXTERN = struct
-    include MakeExtern (Interp_IL) (Interp_SL)
+    include MakeExtern (Interp_IL) (Interp_SL) (Interp_ML)
   end
 
   and Interp_IL : INTERP_IL = struct

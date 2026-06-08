@@ -6,14 +6,16 @@ module Make () : RUNNER = struct
   module Spec_ = Backend_sim.Spec.Make ()
   module Placeholder = Backend_sim.Placeholder.Make (Spec_)
 
-  module MakeExtern (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) : EXTERN =
-  struct
+  module MakeExtern
+      (Interp_IL : INTERP_IL)
+      (Interp_SL : INTERP_SL)
+      (Interp_ML : INTERP_ML) : EXTERN = struct
     let init_mode mode_ =
       let call_func name typs values =
         (match mode_ with
         | IL_mode -> Interp_IL.eval_func name typs values
         | SL_mode -> Interp_SL.eval_func name typs values
-        | ML_mode -> Interp_SL.eval_func name typs values
+        | ML_mode -> Interp_ML.eval_func name typs values
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
@@ -23,7 +25,7 @@ module Make () : RUNNER = struct
         (match mode_ with
         | IL_mode -> Interp_IL.eval_rel name values
         | SL_mode -> Interp_SL.eval_rel name values
-        | ML_mode -> Interp_SL.eval_rel name values
+        | ML_mode -> Interp_ML.eval_rel name values
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
@@ -33,7 +35,7 @@ module Make () : RUNNER = struct
         (match mode_ with
         | IL_mode -> Interp_IL.eval_program relname includes filename
         | SL_mode -> Interp_SL.eval_program relname includes filename
-        | ML_mode -> Interp_SL.eval_program relname includes filename
+        | ML_mode -> Interp_ML.eval_program relname includes filename
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)

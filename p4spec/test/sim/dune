@@ -159,6 +159,67 @@
    (ignore-outputs
     (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual)))))
 
+;; ML aliases (no -det)
+
+(rule
+ (alias sim-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_ml.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_sl.expected sim_v1model_p4testgen_ml.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_ml.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_ml.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_ml.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_ml.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_ml.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_sl.expected sim_v1model_p4testgen_ml.actual)))))
+
+(rule
+ (alias sim-v1model-custom-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_ml.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_ml.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_ml.actual)))))
+
+(rule
+ (alias sim-psa-p4c-ml)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_ml.actual)))))
+
 ;; Slow aliases (with -det)
 
 (rule
@@ -936,6 +997,170 @@
      sim
      -sl
      -det
+     -arch
+     psa
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples)))))
+
+;; Rules to generate outputs (ML compiled interpreter)
+
+(rule
+ (target sim_v1model_p4c_ml.actual)
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_ml.actual
+   (with-stderr-to
+    sim_v1model_p4c_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
+     -arch
+     v1model
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_ml.actual)
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_ml.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
+     -arch
+     v1model
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../testdata/p4testgen
+     -p
+     ../../../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_ml.actual)
+ (action
+  (with-stdout-to
+   sim_v1model_custom_ml.actual
+   (with-stderr-to
+    sim_v1model_custom_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
+     -arch
+     v1model
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../testdata/custom
+     -stf-dir
+     ../../../../../testdata/custom
+     -p
+     ../../../../../patches/v1model)))))
+
+(rule
+ (target sim_ebpf_p4c_ml.actual)
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_ml.actual
+   (with-stderr-to
+    sim_ebpf_p4c_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
+     -arch
+     ebpf
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4testgen_ml.actual)
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_ml.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
+     -arch
+     ebpf
+     -s
+     ../../../../../spec
+     -i
+     ../../../../../p4c/p4include
+     -e
+     ../../../../../excludes/static
+     -e
+     ../../../../../excludes/dynamic
+     -p4-dir
+     ../../../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_psa_p4c_ml.actual)
+ (action
+  (with-stdout-to
+   sim_psa_p4c_ml.actual
+   (with-stderr-to
+    sim_psa_p4c_ml.err
+    (run
+     ./test.exe
+     sim
+     -ml
      -arch
      psa
      -s

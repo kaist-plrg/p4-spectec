@@ -117,6 +117,8 @@ let run_command =
            |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "ml" no_arg ~doc:"Run ML (compiled) interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b ML_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      in

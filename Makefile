@@ -4,7 +4,7 @@ COMP = p4spectec-comp
 
 # Compile
 
-.PHONY: build stat perf spec-test ensure-spec-compiled restore-stub build-compiled
+.PHONY: build stat perf spec-test ensure-spec-compiled restore-stub build-compiled test-run-ml test-run-ml-inc test-sim-ml test-sim-ml-inc
 
 # Executables
 
@@ -70,6 +70,33 @@ build-compiled: ensure-spec-compiled
 	cd p4spec && opam exec -- dune build bin/comp.exe && echo
 	ln -f $(EXECOMP) ./$(COMP)
 
+# Run ML-mode tests using the compiled spec.
+# Does NOT call restore-stub — generates OCaml then rebuilds test.exe.
+
+test-run-ml: gen-ocaml
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/run/test.exe && echo
+	cd p4spec && opam exec -- dune build @run-ml --profile=release && echo OK
+
+# Incremental: skip gen-ocaml, assume spec_compiled.ml already up to date.
+
+test-run-ml-inc:
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/run/test.exe && echo
+	cd p4spec && opam exec -- dune build @run-ml --profile=release && echo OK
+
+# sim ML-mode tests
+
+test-sim-ml: gen-ocaml
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/sim/test.exe && echo
+	cd p4spec && opam exec -- dune build @sim-ml --profile=release && echo OK
+
+test-sim-ml-inc:
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/sim/test.exe && echo
+	cd p4spec && opam exec -- dune build @sim-ml --profile=release && echo OK
+
 # Release build for EXESPEC and EXEBOOT
 
 release: restore-stub
@@ -125,6 +152,8 @@ test-$(1):
 endef
 
 # Fast tests (no -det)
+# NOTE: run-ml is intentionally excluded — it requires `make gen-ocaml` first (two-pass).
+#       Use `make gen-ocaml-test-ml` or `make test-run-ml` to run ML tests in isolation.
 TEST_ALIASES := \
   speclang \
   run run-il run-sl \
