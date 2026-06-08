@@ -19,7 +19,7 @@ let compile_spec (path_out : string) (spec : Sl.spec) =
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =
-    let ctx, funcdefs_ml = Gen.Func.compile_spec ctx spec in
+    let ctx, funcdefs_ml = Gen.Func.compile_spec ctx spec dispatch_table in
     let funcdef_eval_func_ml =
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
