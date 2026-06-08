@@ -789,9 +789,13 @@ let ocaml_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and path_out = flag "-o" (required string) ~doc:"output .ml file path" in
+     and path_out = flag "-o" (required string) ~doc:"output .ml file path"
+     and path_out_unparse =
+       flag "-o-unparse" (optional string)
+         ~doc:"output unparse_compiled .ml path (optional)"
+     in
      fun () ->
-       try Pass.compile paths_spec path_out with
+       try Pass.compile paths_spec path_out path_out_unparse with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))

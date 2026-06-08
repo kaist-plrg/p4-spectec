@@ -1,6 +1,7 @@
 open Lang
 
-let compile_spec (path_out : string) (spec : Sl.spec) =
+let compile_spec (path_out : string) (path_out_unparse : string option)
+    (spec : Sl.spec) =
   (* Monomorphize the spec *)
   let spec, dispatch_table = Mono.monomorphize spec in
   (* Initialize context *)
@@ -45,4 +46,8 @@ let compile_spec (path_out : string) (spec : Sl.spec) =
   let out_str = Ml.Print.print_file file_ml in
   let oc = open_out path_out in
   output_string oc out_str;
-  close_out oc
+  close_out oc;
+  Option.iter
+    (fun path_out_unparse ->
+      Gen.Unparse.compile_spec ctx spec ~path_out:path_out_unparse)
+    path_out_unparse

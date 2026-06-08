@@ -34,5 +34,6 @@ let prosify paths_spec =
 
 (* Compilation *)
 
-let compile paths_spec path_out =
-  paths_spec |> structure ~final:true |> Compile.Codegen.compile_spec path_out
+let compile paths_spec path_out path_out_unparse =
+  paths_spec |> structure ~final:true
+  |> Compile.Codegen.compile_spec path_out path_out_unparse

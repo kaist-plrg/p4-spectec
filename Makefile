@@ -16,11 +16,14 @@ EXECOMP = p4spec/_build/default/bin/comp.exe
 
 SPEC_COMPILED      = p4spec/lib/backend-ocaml/spec_compiled.ml
 SPEC_COMPILED_STUB = p4spec/lib/backend-ocaml/spec_compiled_stub.ml
+UNPARSE_COMPILED      = p4spec/lib/interface/p4/unparse_compiled.ml
+UNPARSE_COMPILED_STUB = p4spec/lib/interface/p4/unparse_compiled_stub.ml
 
 # Restore the compiled spec to a stub version
 
 restore-stub:
 	cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
+	cp $(UNPARSE_COMPILED_STUB) $(UNPARSE_COMPILED)
 
 # Build EXESPEC
 
@@ -53,7 +56,9 @@ _gen_ocaml_paths := $(SPEC_PATHS)
 endif
 
 gen-ocaml: restore-stub
-	./$(SPEC) ocaml $(_gen_ocaml_paths) -o $(SPEC_COMPILED)
+	./$(SPEC) ocaml $(_gen_ocaml_paths) \
+	  -o $(SPEC_COMPILED) \
+	  -o-unparse $(UNPARSE_COMPILED)
 
 # Build EXECOMP with SPEC_COMPILED
 
