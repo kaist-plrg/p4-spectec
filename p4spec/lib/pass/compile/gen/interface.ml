@@ -13,11 +13,11 @@ let rec interface_name (typ : Sl.typ) : string =
   | TextT -> "text"
   | VarT (id, []) -> Names.var_of_id id
   | VarT (id, targs) ->
-      Names.var_of_id id ^ "_"
-      ^ String.concat "_" (List.map interface_name targs)
+      Names.var_of_id id ^ "__"
+      ^ String.concat "__" (List.map interface_name targs)
   | TupleT typs -> String.concat "_" (List.map interface_name typs) ^ "_tup"
-  | IterT (t, Il.Opt) -> interface_name t ^ "_opt"
-  | IterT (t, Il.List) -> interface_name t ^ "_list"
+  | IterT (t, Il.Opt) -> interface_name t ^ "__opt"
+  | IterT (t, Il.List) -> interface_name t ^ "__list"
   | FuncT _ -> "func"
 
 (* Runtime Typ.t codegen *)
@@ -205,6 +205,12 @@ let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
       | Sl.TableDecD (_, params, typ_ret, _, _) ->
           enqueue_params params;
           enqueue typ_ret
+      | Sl.ExternRelD (_, (nottyp, inputs), _, _)
+      | Sl.RelD (_, (nottyp, inputs), _, _, _, _) ->
+          let typs_rel = Mixfix.args nottyp.it in
+          let typs_input, typs_output = Hints.Input.split inputs typs_rel in
+          List.iter enqueue typs_input;
+          List.iter enqueue typs_output
       | _ -> ())
     spec;
   let result = ref [] in

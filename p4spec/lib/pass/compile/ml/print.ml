@@ -150,7 +150,11 @@ let rec print_expr ~level expr =
   | TupleE [] -> "()"
   | TupleE [ expr ] -> print_expr ~level expr
   | TupleE exprs ->
-      "(" ^ String.concat ", " (List.map (print_expr ~level) exprs) ^ ")"
+      let print_tuple_elem expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
+      "(" ^ String.concat ", " (List.map print_tuple_elem exprs) ^ ")"
   | ListE exprs ->
       "[" ^ String.concat "; " (List.map (print_expr ~level) exprs) ^ "]"
   | ConsE (expr_hd, expr_tl) ->

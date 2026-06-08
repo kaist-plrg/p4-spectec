@@ -69,9 +69,16 @@ let fold_typdefs (f : TId.t -> Typdef.t -> 'a -> 'a) (ctx : t) (init : 'a) : 'a
   Typdefs.fold f ctx.typdefs init
 
 let find_ctors (ctx : t) (id : TId.t) : (Ml.ctor * Il.typ list) list =
-  Ctors.fold
-    (fun (tid, _) ctor acc -> if Id.eq tid id then ctor :: acc else acc)
-    ctx.ctors []
+  let find_typdef_opt (tid : TId.t) = Typdefs.find_opt tid ctx.typdefs in
+  let typ =
+    Runtime.Type.Expand.expand_typ find_typdef_opt (Il.VarT (id, []) $ no_region)
+  in
+  match typ.it with
+  | Il.VarT (id', _) ->
+      Ctors.fold
+        (fun (tid, _) ctor acc -> if Id.eq tid id' then ctor :: acc else acc)
+        ctx.ctors []
+  | _ -> []
 
 let find_ctors_full (ctx : t) (id : TId.t) :
     (Mixop.t * Ml.ctor * Il.typ list) list =

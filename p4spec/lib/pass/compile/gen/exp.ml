@@ -2,6 +2,7 @@ open Domain
 open Lang
 open Xl
 open Sl
+module Typdef = Runtime.Type.Typdef
 open Util.Source
 
 (* Compiling expressions *)
@@ -187,8 +188,11 @@ and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
 (* Type variable downcast: [(T) exp]
 
    T not variant   ->  [expr]
-   exp : T         ->  [(expr :> T)]
-   exp : S (super) ->  [match (expr : [< T_ctors]) with (`C _ | ...) as v -> v :> T | _ -> raise Unmatch] *)
+   otherwise       ->  [match (expr : [> T_ctors]) with (`C _ | ...) as v -> v :> T | _ -> raise Unmatch]
+
+   Note: the reflexive case (exp : T) is intentionally NOT short-circuited to a
+   plain (expr :> T). Inside iter bodies, the SL type is narrowed post-SubG but
+   the OCaml binding type is the wider guide type, so a plain coercion fails. *)
 
 and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
     (exp : exp) : Ctx.t * Ml.expr =
@@ -199,37 +203,41 @@ and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
   in
   if ctors_typ = [] then (ctx, expr_ml)
   else
-    match exp.note with
-    | VarT (id', _) when id'.it = id.it ->
-        (ctx, Ml.CoerceE (expr_ml, typ_target_ml))
-    | _ ->
-        let typrows_ml =
-          List.map
-            (fun (ctor_ml, typs) ->
-              (ctor_ml, Type.compile_typs ~tparams:[] typs))
-            ctors_typ
-        in
-        let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
-        let pats_ml =
-          List.map
-            (fun (ctor_ml, typs) ->
-              let pats = List.map (fun _ -> Ml.WildP) typs in
-              Ml.VariantP (`Poly (ctor_ml, pats)))
-            ctors_typ
-        in
-        let pat_or_ml = Ml.OrP pats_ml in
-        let ctx, id_downcast_val_ml = Stub.OCaml.var ctx "dc__" in
-        let pat_as_ml = Ml.AsP (pat_or_ml, id_downcast_val_ml) in
-        let expr_coerce_ml =
-          Ml.CoerceE (Ml.VarE id_downcast_val_ml, typ_target_ml)
-        in
-        ( ctx,
-          Ml.MatchE
-            ( expr_scrut_ml,
-              [
-                (pat_as_ml, expr_coerce_ml);
-                (Ml.WildP, Common.raise_unmatch "DownCastE: type mismatch");
-              ] ) )
+    let typrows_ml =
+      List.map
+        (fun (ctor_ml, typs) ->
+          let typs_inst =
+            let td = Ctx.find_typdef ctx id in
+            match td with
+            | Typdef.Defined (tparams, _) ->
+                let theta = Domain.Lib.TIdMap.of_lists tparams targs in
+                List.map (Mono.Subst.subst_typ theta) typs
+            | _ -> typs
+          in
+          (ctor_ml, Type.compile_typs ~tparams:[] typs_inst))
+        ctors_typ
+    in
+    let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
+    let pats_ml =
+      List.map
+        (fun (ctor_ml, typs) ->
+          let pats = List.map (fun _ -> Ml.WildP) typs in
+          Ml.VariantP (`Poly (ctor_ml, pats)))
+        ctors_typ
+    in
+    let pat_or_ml = Ml.OrP pats_ml in
+    let ctx, id_downcast_val_ml = Stub.OCaml.var ctx "dc__" in
+    let pat_as_ml = Ml.AsP (pat_or_ml, id_downcast_val_ml) in
+    let expr_coerce_ml =
+      Ml.CoerceE (Ml.VarE id_downcast_val_ml, typ_target_ml)
+    in
+    ( ctx,
+      Ml.MatchE
+        ( expr_scrut_ml,
+          [
+            (pat_as_ml, expr_coerce_ml);
+            (Ml.WildP, Common.raise_unmatch "DownCastE: type mismatch");
+          ] ) )
 
 (* Tuple downcast: [(T1,..,Tn) exp]
 
@@ -259,7 +267,7 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_stub_ml in
     let pat_ml = Ml.TupleP pats_ml in
     let expr_sub_ml = Ml.TupleE expr_elems_ml in
-    Ml.LetE (pat_ml, expr_sub_ml, expr_ml)
+    Ml.LetE (pat_ml, expr_ml, expr_sub_ml)
   in
   (ctx, expr_ml)
 
@@ -407,10 +415,21 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
    otherwise                ->  compile_sub_match on intersection *)
 
 and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
-    (_targs : targ list) : Ctx.t * Ml.expr =
+    (targs : targ list) : Ctx.t * Ml.expr =
   let ctors_typ = Ctx.find_ctors ctx id in
   if ctors_typ = [] then (ctx, Ml.BoolE true)
   else
+    let ctors_typ =
+      let td = Ctx.find_typdef ctx id in
+      match td with
+      | Typdef.Defined (tparams, _) ->
+          let theta = Domain.Lib.TIdMap.of_lists tparams targs in
+          List.map
+            (fun (ctor_ml, typs) ->
+              (ctor_ml, List.map (Mono.Subst.subst_typ theta) typs))
+            ctors_typ
+      | _ -> ctors_typ
+    in
     let ctors_exp =
       match exp.note with
       | VarT (id_exp, _) -> Ctx.find_ctors ctx id_exp

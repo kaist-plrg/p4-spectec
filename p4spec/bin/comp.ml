@@ -1,9 +1,5 @@
 open Runtime.Dynamic_Runner.Signature
-open Backend_boot.Config
 open Util.Error
-open Backend_boot.Error
-
-exception CommandError of string
 
 let run_command =
   Core.Command.basic
@@ -11,69 +7,23 @@ let run_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map relname =
-       flag "-rel" (optional string) ~doc:"relation to run (with -tec)"
-     and path_spectec =
-       flag "-tec" (optional string) ~doc:"SpecTec program (with -rel)"
-     and funcname =
-       flag "-func" (optional string) ~doc:"spec function to call directly"
-     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
-     and det = flag "-det" no_arg ~doc:"deterministic mode"
-     and guard =
-       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
-     and interface =
-       Command.Param.choose_one
-         [
-           flag "ili" no_arg ~doc:"IL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_interface);
-           flag "sli" no_arg ~doc:"SL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b SL_interface);
-         ]
-         ~if_nothing_chosen:(Default_to SL_interface)
-     in
+       flag "-rel" (required string) ~doc:"relation to run (with -p4)"
+     and path_p4 = flag "-p4" (required string) ~doc:"P4 program"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths" in
      fun () ->
        try
-         let cache = not no_cache in
-         let (module Interface_SpecTec) =
-           match interface with
-           | P4_interface -> error_no_region "P4 interface not supported"
-           | IL_interface ->
-               (module Interface.SpecTec_IL
-               : Backend_boot.Spectec.INTERFACE_SPECTEC)
-           | SL_interface ->
-               (module Interface.SpecTec_SL
-               : Backend_boot.Spectec.INTERFACE_SPECTEC)
+         let _spec_sim, (module Simulator) =
+           Backend_sim.Build.build ~cache:false ~det:false ~guard:false
+             ~final:true ML_mode []
          in
-         let (module Runner) =
-           (module Runner.Make.Make_rec
-                     (Interface_SpecTec)
-                     (Backend_boot.Spectec.Make_null (Interface_SpecTec))
-                     (Interp_il.Interp.Make)
-                     (Interp_sl.Interp.Make)
-                     (Backend_ocaml.Spec_compiled.Make) : RUNNER)
+         let result =
+           Simulator.Interp.eval_program relname includes_p4 path_p4
          in
-         Runner.init ~cache ~det ~guard (ML : spec);
-         let output =
-           match (funcname, relname, path_spectec) with
-           | Some fname, None, None -> (
-               match Runner.Interp.eval_func fname [] [] with
-               | Pass value ->
-                   Format.sprintf "result: %s" (Runtime.Value.to_string value)
-               | Fail (_, msg) -> Format.sprintf "runtime error: %s" msg)
-           | None, Some rname, Some path -> (
-               match Runner.Interp.eval_program rname [] path with
-               | Pass _ -> "passed"
-               | Fail (`Syntax (_, msg)) ->
-                   Format.sprintf "syntax error: %s" msg
-               | Fail (`Runtime (_, msg)) ->
-                   Format.sprintf "runtime error: %s" msg)
-           | _ ->
-               raise
-                 (CommandError
-                    "provide either -func NAME or both -rel NAME -tec PATH")
-         in
-         Format.printf "%s\n" output
+         match result with
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
-       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 

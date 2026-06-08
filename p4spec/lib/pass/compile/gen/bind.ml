@@ -27,7 +27,7 @@ let rec compile_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp) :
     Ctx.t * Binding.t list * Chain.t =
   let typ_exp = exp.note $ exp.at in
   match exp.it with
-  | VarE id -> compile_var_binding ctx expr_stub_ml id
+  | VarE id -> compile_var_binding ctx expr_stub_ml id typ_exp
   | TupleE exps -> compile_tuple_binding ctx expr_stub_ml exps
   | CaseE notexp -> compile_case_binding ctx typ_exp expr_stub_ml notexp
   | StrE expfields -> compile_str_binding ctx expr_stub_ml expfields
@@ -57,13 +57,29 @@ and compile_bindings (ctx : Ctx.t) (exprs_stub_ml : Ml.expr list)
 
 (* Variable binding: [x] on stub [expr]
 
-   Compiled to no-op *)
+   Annotates struct-typed stubs so OCaml can resolve record fields unambiguously.
+   Variant-typed bindings are left unannotated to preserve polymorphic-variant subtyping. *)
 
-and compile_var_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (id : id) :
-    Ctx.t * Binding.t list * Chain.t =
+and compile_var_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (id : id)
+    (typ : typ) : Ctx.t * Binding.t list * Chain.t =
   let id_ml = Names.var_of_id id in
   let binding = ((id, []), id_ml) in
-  let chain = Chain.make_let (Ml.VarP id_ml) expr_stub_ml in
+  let is_struct_typ =
+    match typ.it with
+    | Il.VarT (tid, _) -> (
+        match Ctx.find_typdef_opt ctx tid with
+        | Some (Runtime.Type.Typdef.Defined (_, deftyp)) -> (
+            match deftyp.it with Il.StructT _ -> true | _ -> false)
+        | _ -> false)
+    | _ -> false
+  in
+  let expr_final_ml =
+    if is_struct_typ then
+      let typ_ml = Type.compile_typ ~tparams:[] typ in
+      Ml.AnnotE (expr_stub_ml, typ_ml)
+    else expr_stub_ml
+  in
+  let chain = Chain.make_let (Ml.VarP id_ml) expr_final_ml in
   (ctx, [ binding ], chain)
 
 (* Tuple binding: [(exp_a, exp_b, ..., exp_z)] on stub [expr]
@@ -355,7 +371,9 @@ and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
   (* Create [let (..._ah, ..., ..._at, ...) = ... in ...] *)
   let chain =
     let ids_bind_ml =
-      List.map (fun (_, id_bind_ml) -> id_bind_ml ^ "__quest") bindings
+      List.map
+        (fun ((id, iters), _) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
+        bindings
     in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
@@ -410,7 +428,9 @@ and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
     let ids_bind_ml =
-      List.map (fun (_, id_bind_ml) -> id_bind_ml ^ "__star") bindings
+      List.map
+        (fun ((id, iters), _) -> Names.var_of_var (id, iters @ [ Il.List ]))
+        bindings
     in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
