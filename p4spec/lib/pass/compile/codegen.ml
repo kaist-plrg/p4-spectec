@@ -20,14 +20,16 @@ let compile_spec (path_out : string) (spec : Sl.spec) =
   (* Functor *)
   let ctx, toplevels_functor_ml =
     let ctx, funcdefs_ml = Gen.Func.compile_spec ctx spec dispatch_table in
+    let ctx, reldefs_ml = Gen.Rel.compile_spec ctx spec in
     let funcdef_eval_func_ml =
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
+    let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     let toplevels_functor_ml =
       [
         Ml.Raw Template.Functor.header;
-        Ml.LetRec funcdefs_ml;
-        Ml.LetRec [ funcdef_eval_func_ml ];
+        Ml.LetRec (funcdefs_ml @ reldefs_ml);
+        Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
         Ml.Raw Template.Functor.footer;
       ]
     in

@@ -201,3 +201,143 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
     ]
   in
   ("eval_func", params_ml, Some (Ml.NameT "Run.func_result"), try_expr)
+
+let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
+  ignore ctx;
+  (* Build rel_sigs: id.it -> (typs_input, typs_output) derived from nottyp *)
+  let rel_sigs : (string, Sl.typ list * Sl.typ list) Hashtbl.t =
+    Hashtbl.create 32
+  in
+  List.iter
+    (fun def ->
+      match def.it with
+      | RelD (id, (nottyp, inputs), _, _, _, _)
+      | ExternRelD (id, (nottyp, inputs), _, _) ->
+          let typs_rel = Domain.Mixfix.args nottyp.it in
+          let typs_input, typs_output = Hints.Input.split inputs typs_rel in
+          Hashtbl.replace rel_sigs id.it (typs_input, typs_output)
+      | _ -> ())
+    spec;
+  (* Arms for each relation *)
+  let arms =
+    List.filter_map
+      (fun def ->
+        let make_arm (id : Sl.id) =
+          match Hashtbl.find_opt rel_sigs id.it with
+          | None -> None
+          | Some (typs_input, typs_output) ->
+              let n_in = List.length typs_input in
+              let id_rel_ml = Names.rel id in
+              let unmarshal_lets =
+                List.mapi
+                  (fun i typ ->
+                    ( "a" ^ string_of_int i,
+                      Ml.AppE
+                        ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ),
+                          [
+                            Ml.AppE
+                              ( Ml.LitE "List.nth",
+                                [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ]
+                              );
+                          ] ) ))
+                  typs_input
+              in
+              let arg_vars =
+                List.init n_in (fun i -> Ml.VarE ("a" ^ string_of_int i))
+              in
+              let call_expr = Ml.AppE (Ml.VarE id_rel_ml, arg_vars) in
+              let body =
+                match typs_output with
+                | [] ->
+                    let seq =
+                      Ml.LetE
+                        ( Ml.WildP,
+                          call_expr,
+                          Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE [] ]) )
+                    in
+                    List.fold_right
+                      (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
+                      unmarshal_lets seq
+                | _ ->
+                    let n_out = List.length typs_output in
+                    let ids_out =
+                      List.init n_out (fun i -> "out" ^ string_of_int i)
+                    in
+                    let pat_out =
+                      match ids_out with
+                      | [ id_out ] -> Ml.VarP id_out
+                      | _ -> Ml.TupleP (List.map (fun s -> Ml.VarP s) ids_out)
+                    in
+                    let marshal_outs =
+                      List.mapi
+                        (fun i typ ->
+                          Ml.AppE
+                            ( Ml.VarE ("marshal_" ^ Interface.interface_name typ),
+                              [ Ml.VarE ("out" ^ string_of_int i) ] ))
+                        typs_output
+                    in
+                    let run_pass =
+                      Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE marshal_outs ])
+                    in
+                    let bind_out = Ml.LetE (pat_out, call_expr, run_pass) in
+                    List.fold_right
+                      (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
+                      unmarshal_lets bind_out
+              in
+              Some (Ml.LitP ("\"" ^ id.it ^ "\""), body)
+        in
+        match def.it with
+        | RelD (id, _, _, _, _, _) -> make_arm id
+        | ExternRelD (id, _, _, _) -> make_arm id
+        | _ -> None)
+      spec
+  in
+  (* Fallback arm *)
+  let wild_arm =
+    ( Ml.WildP,
+      Ml.AppE
+        ( Ml.LitE "Run.Fail",
+          [
+            Ml.TupleE
+              [
+                Ml.LitE "no_region";
+                Ml.AppE
+                  ( Ml.LitE "Printf.sprintf",
+                    [
+                      Ml.StrE "eval_rel: unknown relation: %s"; Ml.VarE "name__";
+                    ] );
+              ];
+          ] ) )
+  in
+  let match_expr = Ml.MatchE (Ml.VarE "name__", arms @ [ wild_arm ]) in
+  (* Unmatch handler *)
+  let fail_unmatch =
+    Ml.AppE
+      ( Ml.LitE "Run.Fail",
+        [
+          Ml.TupleE
+            [
+              Ml.LitE "no_region";
+              Ml.AppE
+                ( Ml.LitE "Printf.sprintf",
+                  [
+                    Ml.StrE "eval_rel: unmatch in %s: %s";
+                    Ml.VarE "name__";
+                    Ml.VarE "msg_";
+                  ] );
+            ];
+        ] )
+  in
+  let try_expr =
+    Ml.TryE
+      ( match_expr,
+        [ (Ml.VariantP (`Mono ("Unmatch", [ Ml.VarP "msg_" ])), fail_unmatch) ]
+      )
+  in
+  let params_ml =
+    [
+      ("name__", Some (Ml.NameT "string"));
+      ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
+    ]
+  in
+  ("eval_rel", params_ml, Some (Ml.NameT "Run.rel_result"), try_expr)

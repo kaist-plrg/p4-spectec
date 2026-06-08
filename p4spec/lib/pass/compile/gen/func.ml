@@ -117,11 +117,11 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     Ml.MatchE
       ( expr_call_ml,
         [
-          ( Ml.VariantP (`Poly ("Run.Pass", [ Ml.VarP "v_out__" ])),
+          ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
             Ml.AppE
               ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ_ret),
                 [ Ml.VarE "v_out__" ] ) );
-          ( Ml.VariantP (`Poly ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
+          ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
               ( Ml.LitE "raise",
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
@@ -242,7 +242,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
   let ctx, funcdef_main_ml =
     let ctx, expr_block_ml = Instr.compile_block ctx block_main in
     let expr_ml = Chain.apply chain expr_block_ml in
-    let funcdef_main_ml = (id_main_ml, params_ml, None, expr_ml) in
+    let funcdef_main_ml = (id_main_ml, params_ml, Some typ_ret_ml, expr_ml) in
     (ctx, funcdef_main_ml)
   in
   (* Compile else block *)
@@ -252,7 +252,9 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     | Some elseblock ->
         let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
         let expr_ml = Chain.apply chain expr_else_ml in
-        let funcdef_else_ml = (id_else_ml, params_ml, None, expr_ml) in
+        let funcdef_else_ml =
+          (id_else_ml, params_ml, Some typ_ret_ml, expr_ml)
+        in
         (ctx, Some funcdef_else_ml)
     | None -> (ctx, None)
   in

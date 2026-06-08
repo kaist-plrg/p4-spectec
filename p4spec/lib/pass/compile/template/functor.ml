@@ -19,11 +19,13 @@ module Make
 
 let footer =
   {|
-  let eval_rel (_name : string) (_args : Value.t list) : Run.rel_result =
-    Fail (no_region, "ML interpreter: eval_rel dispatch not yet wired (Phase 7)")
-
-  let eval_program (_relname : string) (_includes : string list)
-      (_path : string) : Run.program_result =
-    Fail (`Runtime (no_region, "ML interpreter: eval_program dispatch not yet wired (Phase 7)"))
+  let eval_program (relname__ : string) (includes__ : string list)
+      (path__ : string) : Run.program_result =
+    match Interface.parse_program includes__ [path__] with
+    | Run.Pass value_program -> (
+        match eval_rel relname__ [ value_program ] with
+        | Run.Pass values_output -> Run.Pass values_output
+        | Run.Fail (at, msg) -> Run.Fail (`Runtime (at, msg)))
+    | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
 end
 |}
