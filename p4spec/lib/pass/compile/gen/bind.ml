@@ -189,15 +189,15 @@ and compile_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     match exp_opt with
     | Some exp ->
         (* Create stub expression for option element *)
-        let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_opt__" in
-        let expr_stub_ml = Ml.VarE id_stub_ml in
+        let ctx, id_elem_ml = Stub.OCaml.var ctx "elem_opt__" in
+        let expr_elem_ml = Ml.VarE id_elem_ml in
         (* Create [match expr with Some expr_inner -> ...] *)
         let chain_some =
-          let pat_then_ml = Ml.OptP (Some (Ml.VarP id_stub_ml)) in
+          let pat_then_ml = Ml.OptP (Some (Ml.VarP id_elem_ml)) in
           Chain.make_match expr_stub_ml pat_then_ml
         in
         (* Create chain for option element *)
-        let ctx, bindings, chain_then = compile_binding ctx expr_stub_ml exp in
+        let ctx, bindings, chain_then = compile_binding ctx expr_elem_ml exp in
         (* Connect chains *)
         let chain = Chain.connect [ chain_some; chain_then ] in
         (* Finish nested block with bindings *)
