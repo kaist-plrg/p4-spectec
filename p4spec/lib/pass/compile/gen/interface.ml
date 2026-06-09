@@ -173,6 +173,36 @@ let rec mixop_pat_lit (mixop : Mixop.t) : string =
       Printf.sprintf "Mixfix.Seq [%s]"
         (String.concat "; " (List.map mixop_pat_lit parts))
 
+(* Pattern for value Mixfix.t: binds each Arg node to a named variable.
+   Returns (pattern_string, arg_var_names_in_left_to_right_order). *)
+let mixop_value_arg_pat (mixop : Mixop.t) : string * string list =
+  let counter = ref 0 in
+  let args_rev = ref [] in
+  let rec go = function
+    | Mixfix.Arg () ->
+        let i = !counter in
+        incr counter;
+        let name = "p" ^ string_of_int i in
+        args_rev := name :: !args_rev;
+        Printf.sprintf "Mixfix.Arg %s" name
+    | Mixfix.Atom atom ->
+        Printf.sprintf "Mixfix.Atom (%s)" (atom_phrase_pat atom)
+    | Mixfix.Brack (open_a, inner, close_a) ->
+        let s_inner = go inner in
+        Printf.sprintf "Mixfix.Brack (%s, %s, %s)" (atom_phrase_pat open_a)
+          s_inner (atom_phrase_pat close_a)
+    | Mixfix.Infix (left, atom, right) ->
+        let s_left = go left in
+        let s_right = go right in
+        Printf.sprintf "Mixfix.Infix (%s, %s, %s)" s_left (atom_phrase_pat atom)
+          s_right
+    | Mixfix.Seq parts ->
+        Printf.sprintf "Mixfix.Seq [%s]"
+          (String.concat "; " (List.map go parts))
+  in
+  let pat = go mixop in
+  (pat, List.rev !args_rev)
+
 (* BFS over all types reachable from function signatures *)
 
 let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
@@ -478,19 +508,16 @@ module Unmarshal = struct
       List.map
         (fun (mixop, ctor_ml, payload_typs) ->
           let payload_typs' = List.map sub payload_typs in
-          let n = List.length payload_typs' in
+          let pat_str, arg_vars = mixop_value_arg_pat mixop in
           let payload_exprs =
-            List.init n (fun i ->
+            List.map2
+              (fun typ arg_var ->
                 Ml.AppE
-                  ( Ml.VarE
-                      ("unmarshal_" ^ interface_name (List.nth payload_typs' i)),
-                    [
-                      Ml.AppE
-                        ( Ml.LitE "List.nth",
-                          [ Ml.VarE "payload_"; Ml.LitE (string_of_int i) ] );
-                    ] ))
+                  ( Ml.VarE ("unmarshal_" ^ interface_name typ),
+                    [ Ml.VarE arg_var ] ))
+              payload_typs' arg_vars
           in
-          (Ml.LitP (mixop_pat_lit mixop), Ml.VariantE (ctor_ml, payload_exprs)))
+          (Ml.LitP pat_str, Ml.VariantE (ctor_ml, payload_exprs)))
         ctors_info
     in
     let wild_arm =
@@ -502,10 +529,7 @@ module Unmarshal = struct
       ( Ml.FieldE (Ml.VarE "v", "it"),
         [
           ( Ml.VariantP (`Mono ("CaseV", [ Ml.VarP "vc_" ])),
-            Ml.LetE
-              ( Ml.TupleP [ Ml.VarP "mixop_"; Ml.VarP "payload_" ],
-                Ml.AppE (Ml.LitE "Mixfix.split", [ Ml.VarE "vc_" ]),
-                Ml.MatchE (Ml.VarE "mixop_", ctor_arms @ [ wild_arm ]) ) );
+            Ml.MatchE (Ml.VarE "vc_", ctor_arms @ [ wild_arm ]) );
           (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
         ] )
 
