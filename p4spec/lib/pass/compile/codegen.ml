@@ -8,7 +8,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   let ctx = Ctx.init spec in
   (* Type definitions — one Ml.TypeRec per SCC group *)
   let ctx, toplevel_typdefs_ml =
-    let type_groups = Scc.compute_types spec in
+    let type_groups = Scc.Type.compute spec in
     let ctx, typdef_groups_ml = Gen.Type.compile_spec_scc ctx type_groups in
     let tops =
       List.filter_map
@@ -31,7 +31,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =
-    let scc_groups = Scc.compute spec in
+    let scc_groups = Scc.Call.compute spec in
     let ctx, toplevels_groups_ml, all_cache_ids =
       List.fold_left
         (fun (ctx, tops_acc, cache_acc) group ->

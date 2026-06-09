@@ -639,7 +639,7 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
           deps;
         adj.(i) <- Hashtbl.fold (fun j () acc -> j :: acc) edges [])
       typs_arr;
-    let sccs = Scc.tarjan n adj in
+    let sccs = Scc.Tarjan.tarjan n adj in
     List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
 
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
