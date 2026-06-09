@@ -31,11 +31,11 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     let toplevels_cache_decls_ml =
       List.map
-        (fun cache_id -> Ml.Let (cache_id, Ml.LitE "Hashtbl.create 256"))
+        (fun cache_id -> Ml.Let (cache_id, Ml.LitE "H__.create 4096"))
         all_cache_ids
     in
     let toplevels_functor_ml =
-      [ Ml.Raw Template.Functor.header ]
+      [ Ml.Raw Template.Functor.header; Ml.Raw Template.Functor.h_module ]
       @ toplevels_cache_decls_ml
       @ [
           Ml.Raw (Template.Functor.cache_section all_cache_ids);

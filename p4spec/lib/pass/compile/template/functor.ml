@@ -9,10 +9,30 @@ module Make
 
 |}
 
+let h_module : string =
+  {|
+  module H__ = struct
+    type ('k, 'v) t = {
+      data: ('k * 'v) list array;
+      size: int;
+    }
+    let create n = { data = Array.make n []; size = n }
+    let hash k = (Hashtbl.hash_param 100 1000 k) land max_int
+    let find_opt h k =
+      let b = (hash k) mod h.size in
+      List.assoc_opt k h.data.(b)
+    let replace h k v =
+      let b = (hash k) mod h.size in
+      h.data.(b) <- (k, v) :: List.filter (fun (k2,_) -> k2 <> k) h.data.(b)
+    let clear h = Array.fill h.data 0 h.size []
+  end
+
+|}
+
 let cache_section (cache_ids : string list) : string =
   let resets =
     String.concat "\n      "
-      (List.map (fun id -> Printf.sprintf "Hashtbl.clear %s;" id) cache_ids)
+      (List.map (fun id -> Printf.sprintf "H__.clear %s;" id) cache_ids)
   in
   Printf.sprintf
     {|
