@@ -20,14 +20,16 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
   let toplevels_interface_ml =
-    let marshal_groups, unmarshal_groups = Gen.Interface.compile ctx spec in
+    let const_decls, marshal_groups, unmarshal_groups =
+      Gen.Interface.compile ctx spec
+    in
     let to_tops groups =
       List.filter_map
         (fun funcdefs ->
           match funcdefs with [] -> None | _ -> Some (Ml.LetRec funcdefs))
         groups
     in
-    to_tops marshal_groups @ to_tops unmarshal_groups
+    const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =

@@ -284,6 +284,43 @@ let build_theta ctx id targs =
       Mono.Specialize.build_theta tparams targs
   | _ -> Mono.Specialize.build_theta [] []
 
+(* Module-level constant pool for hoisting marshal templates out of function bodies *)
+
+type const_pool = {
+  mutable consts : (string * Ml.expr) list;
+  seen_mixops : (string, string) Hashtbl.t;
+  seen_typs : (string, string) Hashtbl.t;
+  mutable ctr : int;
+}
+
+let make_pool () =
+  {
+    consts = [];
+    seen_mixops = Hashtbl.create 128;
+    seen_typs = Hashtbl.create 128;
+    ctr = 0;
+  }
+
+let intern_mixop (pool : const_pool) (mixop : Mixop.t) : string =
+  let key = mixop_lit mixop in
+  match Hashtbl.find_opt pool.seen_mixops key with
+  | Some n -> n
+  | None ->
+      let n = Printf.sprintf "_mo_%d_" pool.ctr in
+      pool.ctr <- pool.ctr + 1;
+      Hashtbl.replace pool.seen_mixops key n;
+      pool.consts <- (n, mixop_expr mixop) :: pool.consts;
+      n
+
+let intern_typ (pool : const_pool) (key : string) (expr : Ml.expr) : string =
+  match Hashtbl.find_opt pool.seen_typs key with
+  | Some n -> n
+  | None ->
+      let n = "_ty_" ^ key ^ "_" in
+      Hashtbl.replace pool.seen_typs key n;
+      pool.consts <- (n, expr) :: pool.consts;
+      n
+
 (* Marshalling *)
 
 module Marshal = struct
@@ -305,7 +342,7 @@ module Marshal = struct
 
   (* Structs *)
 
-  let compile_struct (expr_typ_ml : Ml.expr) (subst : Sl.typ -> Sl.typ)
+  let compile_struct (typ_ref : string) (subst : Sl.typ -> Sl.typ)
       (typfields : Sl.typfield list) : Ml.expr =
     let field_exprs =
       List.map
@@ -321,46 +358,44 @@ module Marshal = struct
             ])
         typfields
     in
-    Ml.LetE
-      ( Ml.VarP "typ_",
-        expr_typ_ml,
-        Ml.AppE
-          (Ml.LitE "Value.Make.str", [ Ml.VarE "typ_"; Ml.ListE field_exprs ])
-      )
+    Ml.AppE
+      (Ml.LitE "Value.Make.str", [ Ml.VarE typ_ref; Ml.ListE field_exprs ])
 
   (* Variants *)
 
-  let compile_variant (ctx : Ctx.t) (id : Sl.id) (expr_typ_ml : Ml.expr)
-      (subst : Sl.typ -> Sl.typ) : Ml.expr =
+  let compile_variant (ctx : Ctx.t) (id : Sl.id) (typ_ref : string)
+      (subst : Sl.typ -> Sl.typ) (pool : const_pool) : Ml.expr =
     let ctors_info = Ctx.find_ctors_full ctx id in
     let arms =
       List.map
         (fun (mixop, ctor_ml, payload_typs) ->
           let payload_typs' = List.map subst payload_typs in
-          let n = List.length payload_typs' in
-          let pvars = List.init n (fun i -> "p_" ^ string_of_int i) in
+          let pvars =
+            List.mapi (fun i _ -> "p_" ^ string_of_int i) payload_typs'
+          in
           let pat =
             Ml.VariantP (`Poly (ctor_ml, List.map (fun v -> Ml.VarP v) pvars))
           in
           let marshal_calls =
-            List.mapi
-              (fun i t ->
+            List.map2
+              (fun t pvar ->
                 Ml.AppE
                   ( Ml.VarE ("marshal_" ^ interface_name t),
-                    [ Ml.VarE (List.nth pvars i) ] ))
-              payload_typs'
+                    [ Ml.VarE pvar ] ))
+              payload_typs' pvars
           in
+          let mo_ref = intern_mixop pool mixop in
           ( pat,
             Ml.AppE
               ( Ml.LitE "make_case_",
-                [ mixop_expr mixop; Ml.ListE marshal_calls; Ml.VarE "typ_" ] )
+                [ Ml.VarE mo_ref; Ml.ListE marshal_calls; Ml.VarE typ_ref ] )
           ))
         ctors_info
     in
-    Ml.LetE (Ml.VarP "typ_", expr_typ_ml, Ml.MatchE (Ml.VarE "x", arms))
+    Ml.MatchE (Ml.VarE "x", arms)
 
   let compile_var (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
-      (expr_typ_ml : Ml.expr) : Ml.expr =
+      (typ_ref : string) (pool : const_pool) : Ml.expr =
     let theta = build_theta ctx id targs in
     let subst typ = Mono.Subst.subst_typ theta typ in
     let td = Ctx.find_typdef ctx id in
@@ -372,83 +407,76 @@ module Marshal = struct
             Ml.AppE
               ( Ml.VarE ("marshal_" ^ interface_name (subst typ_alias)),
                 [ Ml.VarE "x" ] )
-        | Il.StructT typfields -> compile_struct expr_typ_ml subst typfields
-        | Il.VariantT _ -> compile_variant ctx id expr_typ_ml subst)
+        | Il.StructT typfields -> compile_struct typ_ref subst typfields
+        | Il.VariantT _ -> compile_variant ctx id typ_ref subst pool)
     | Typdef.Extern ->
-        Ml.AppE (Ml.LitE "Value.Make.extern", [ expr_typ_ml; Ml.VarE "x" ])
+        Ml.AppE (Ml.LitE "Value.Make.extern", [ Ml.VarE typ_ref; Ml.VarE "x" ])
 
   (* Tuples *)
 
-  let compile_tuple (expr_typ_ml : Ml.expr) (typs : Sl.typ list) : Ml.expr =
-    let n = List.length typs in
-    let vars = List.init n (fun i -> "x" ^ string_of_int i) in
+  let compile_tuple (typ_ref : string) (typs : Sl.typ list) : Ml.expr =
+    let vars = List.mapi (fun i _ -> "x" ^ string_of_int i) typs in
     let marshal_calls =
-      List.mapi
-        (fun i t ->
+      List.map2
+        (fun t v ->
           Ml.AppE
             ( Ml.VarE ("marshal_" ^ interface_name t),
-              [ Ml.VarE (List.nth vars i) ] ))
-        typs
+              [ Ml.VarE v ] ))
+        typs vars
     in
     Ml.LetE
-      ( Ml.VarP "typ_",
-        expr_typ_ml,
-        Ml.LetE
-          ( Ml.TupleP (List.map (fun v -> Ml.VarP v) vars),
-            Ml.VarE "x",
-            Ml.AppE
-              ( Ml.LitE "Value.Make.tuple",
-                [ Ml.VarE "typ_"; Ml.ListE marshal_calls ] ) ) )
+      ( Ml.TupleP (List.map (fun v -> Ml.VarP v) vars),
+        Ml.VarE "x",
+        Ml.AppE
+          ( Ml.LitE "Value.Make.tuple",
+            [ Ml.VarE typ_ref; Ml.ListE marshal_calls ] ) )
 
   (* Iterations *)
 
-  let compile_iter_opt (expr_typ_ml : Ml.expr) (t : Sl.typ) : Ml.expr =
-    Ml.LetE
-      ( Ml.VarP "typ_",
-        expr_typ_ml,
-        Ml.AppE
-          ( Ml.LitE "Value.Make.opt",
-            [
-              Ml.VarE "typ_";
-              Ml.AppE
-                ( Ml.LitE "Option.map",
-                  [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
-            ] ) )
+  let compile_iter_opt (typ_ref : string) (t : Sl.typ) : Ml.expr =
+    Ml.AppE
+      ( Ml.LitE "Value.Make.opt",
+        [
+          Ml.VarE typ_ref;
+          Ml.AppE
+            ( Ml.LitE "Option.map",
+              [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
+        ] )
 
-  let compile_iter_list (expr_typ_ml : Ml.expr) (t : Sl.typ) : Ml.expr =
-    Ml.LetE
-      ( Ml.VarP "typ_",
-        expr_typ_ml,
-        Ml.AppE
-          ( Ml.LitE "Value.Make.list",
-            [
-              Ml.VarE "typ_";
-              Ml.AppE
-                ( Ml.LitE "List.map",
-                  [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
-            ] ) )
+  let compile_iter_list (typ_ref : string) (t : Sl.typ) : Ml.expr =
+    Ml.AppE
+      ( Ml.LitE "Value.Make.list",
+        [
+          Ml.VarE typ_ref;
+          Ml.AppE
+            ( Ml.LitE "List.map",
+              [ Ml.VarE ("marshal_" ^ interface_name t); Ml.VarE "x" ] );
+        ] )
 
-  let compile_iter (expr_typ_ml : Ml.expr) (typ : Sl.typ) (iter : Sl.iter) :
+  let compile_iter (typ_ref : string) (typ : Sl.typ) (iter : Sl.iter) :
       Ml.expr =
     match iter with
-    | Opt -> compile_iter_opt expr_typ_ml typ
-    | List -> compile_iter_list expr_typ_ml typ
+    | Opt -> compile_iter_opt typ_ref typ
+    | List -> compile_iter_list typ_ref typ
 
-  let compile_body (ctx : Ctx.t) (typ : Sl.typ) : Ml.expr =
-    let expr_typ_ml = typ_make_expr typ in
+  let compile_body (ctx : Ctx.t) (pool : const_pool) (typ : Sl.typ) : Ml.expr =
     match typ.it with
     | Il.BoolT -> compile_bool
     | Il.NumT numtyp -> compile_num numtyp
     | Il.TextT -> compile_text
-    | Il.VarT (id, targs) -> compile_var ctx id targs expr_typ_ml
-    | Il.TupleT typs -> compile_tuple expr_typ_ml typs
-    | Il.IterT (typ, iter) -> compile_iter expr_typ_ml typ iter
     | Il.FuncT _ -> Ml.UnitE
+    | _ ->
+        let typ_ref = intern_typ pool (interface_name typ) (typ_make_expr typ) in
+        (match typ.it with
+        | Il.VarT (id, targs) -> compile_var ctx id targs typ_ref pool
+        | Il.TupleT typs -> compile_tuple typ_ref typs
+        | Il.IterT (t, iter) -> compile_iter typ_ref t iter
+        | _ -> assert false)
 
-  let compile (ctx : Ctx.t) (typ : Sl.typ) : Ml.funcdef =
+  let compile (ctx : Ctx.t) (pool : const_pool) (typ : Sl.typ) : Ml.funcdef =
     let name = "marshal_" ^ interface_name typ in
     let ml_typ = Type.compile_typ ~tparams:[] typ in
-    let body = compile_body ctx typ in
+    let body = compile_body ctx pool typ in
     (name, [ ("x", Some ml_typ) ], Some (Ml.NameT "Value.t"), body)
 end
 
@@ -667,9 +695,13 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
     List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
 
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
-    Ml.funcdef list list * Ml.funcdef list list =
+    Ml.toplevel list * Ml.funcdef list list * Ml.funcdef list list =
   let typs = collect_types ctx spec in
   let groups = compute_groups ctx typs in
-  let marshal_groups = List.map (List.map (Marshal.compile ctx)) groups in
+  let pool = make_pool () in
+  let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
-  (marshal_groups, unmarshal_groups)
+  let const_decls =
+    List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts
+  in
+  (const_decls, marshal_groups, unmarshal_groups)
