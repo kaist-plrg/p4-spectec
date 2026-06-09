@@ -199,8 +199,14 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       (List.combine vars_marshal_ml exprs_marshal_ml)
       expr_result_ml
   in
-  let funcdef_ml = (id_ml, params_ml, Some typ_ret_ml, expr_body_ml) in
-  (ctx, [ funcdef_ml ], None)
+  let ids_param_ml = List.map fst params_ml in
+  let cache_id_ml = "cache__" ^ id_ml in
+  let key_ml = Common.make_cache_key ids_param_ml in
+  let expr_cache_ml =
+    Common.make_cache_dispatcher cache_id_ml key_ml expr_body_ml
+  in
+  let funcdef_ml = (id_ml, params_ml, Some typ_ret_ml, expr_cache_ml) in
+  (ctx, [ funcdef_ml ], Some cache_id_ml)
 
 (* Table functions *)
 

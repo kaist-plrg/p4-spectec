@@ -102,9 +102,20 @@ let hash_of (v : value') : int =
             h := (!h * 31) + value_field.note.vhash)
           valuefields
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
-        h := (!h * 31) + Hashtbl.hash (Mixop.string_of_mixop mixop);
-        List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
+        let rec hash_shape = function
+          | Mixfix.Arg value -> h := (!h * 31) + value.note.vhash
+          | Mixfix.Atom atom -> h := (!h * 31) + Hashtbl.hash atom.it
+          | Mixfix.Brack (al, m, ar) ->
+              h := (!h * 31) + Hashtbl.hash al.it;
+              hash_shape m;
+              h := (!h * 31) + Hashtbl.hash ar.it
+          | Mixfix.Infix (ml, atom, mr) ->
+              hash_shape ml;
+              h := (!h * 31) + Hashtbl.hash atom.it;
+              hash_shape mr
+          | Mixfix.Seq ms -> List.iter hash_shape ms
+        in
+        hash_shape valuecase
     | TupleV values ->
         h := (!h * 31) + 1001;
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
