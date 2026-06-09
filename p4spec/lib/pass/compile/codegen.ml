@@ -20,11 +20,22 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =
-    let ctx, funcdefs_ml, cache_ids_func =
-      Gen.Func.compile_spec ctx spec dispatch_table
+    let scc_groups = Scc.compute spec in
+    let ctx, toplevels_groups_ml, all_cache_ids =
+      List.fold_left
+        (fun (ctx, tops_acc, cache_acc) group ->
+          let ctx, funcdefs_ml, cids_f =
+            Gen.Func.compile_group ctx group dispatch_table
+          in
+          let ctx, reldefs_ml, cids_r = Gen.Rel.compile_group ctx group in
+          let combined = funcdefs_ml @ reldefs_ml in
+          let tops_acc =
+            if combined = [] then tops_acc
+            else tops_acc @ [ Ml.LetRec combined ]
+          in
+          (ctx, tops_acc, cache_acc @ cids_f @ cids_r))
+        (ctx, [], []) scc_groups
     in
-    let ctx, reldefs_ml, cache_ids_rel = Gen.Rel.compile_spec ctx spec in
-    let all_cache_ids = cache_ids_func @ cache_ids_rel in
     let funcdef_eval_func_ml =
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
@@ -37,9 +48,9 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
     let toplevels_functor_ml =
       [ Ml.Raw Template.Functor.header; Ml.Raw Template.Functor.h_module ]
       @ toplevels_cache_decls_ml
+      @ [ Ml.Raw (Template.Functor.cache_section all_cache_ids) ]
+      @ toplevels_groups_ml
       @ [
-          Ml.Raw (Template.Functor.cache_section all_cache_ids);
-          Ml.LetRec (funcdefs_ml @ reldefs_ml);
           Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
           Ml.Raw Template.Functor.footer;
         ]

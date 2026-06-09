@@ -173,6 +173,10 @@ let compile_defs (ctx : Ctx.t) (defs : def list) :
       (ctx, funcdefs_ml_acc @ funcdefs_ml, cache_ids_acc))
     (ctx, [], []) defs
 
+let compile_group (ctx : Ctx.t) (group : def list) :
+    Ctx.t * Ml.funcdef list * Ml.id list =
+  compile_defs ctx group
+
 let compile_spec (ctx : Ctx.t) (spec : spec) :
     Ctx.t * Ml.funcdef list * Ml.id list =
-  compile_defs ctx spec
+  compile_group ctx spec

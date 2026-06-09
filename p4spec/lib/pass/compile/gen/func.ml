@@ -323,8 +323,13 @@ let compile_defs (ctx : Ctx.t) (defs : def list)
 
 (* Spec *)
 
-let compile_spec (ctx : Ctx.t) (spec : spec)
+let compile_group (ctx : Ctx.t) (group : def list)
     (dispatch_table : Mono.dispatch_table) :
     Ctx.t * Ml.funcdef list * Ml.id list =
   let reverse_dispatch = build_reverse_dispatch dispatch_table in
-  compile_defs ctx spec reverse_dispatch
+  compile_defs ctx group reverse_dispatch
+
+let compile_spec (ctx : Ctx.t) (spec : spec)
+    (dispatch_table : Mono.dispatch_table) :
+    Ctx.t * Ml.funcdef list * Ml.id list =
+  compile_group ctx spec dispatch_table
