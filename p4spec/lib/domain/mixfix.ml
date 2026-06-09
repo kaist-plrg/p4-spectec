@@ -279,7 +279,22 @@ let fill (mixop : mixop) (args : 'a list) : 'a t =
   | mixfix, [] -> mixfix
   | _, _ :: _ -> raise (Arity_mismatch "Mixfix.fill: too many arguments")
 
-let split (mixfix : 'a t) = (to_mixop mixfix, args mixfix)
+let split (mixfix : 'a t) : mixop * 'a list =
+  let args_rev = ref [] in
+  let rec go = function
+    | Arg v ->
+        args_rev := v :: !args_rev;
+        Arg ()
+    | Atom a -> Atom a
+    | Brack (l, m, r) -> Brack (l, go m, r)
+    | Infix (l, a, r) ->
+        let l' = go l in
+        let r' = go r in
+        Infix (l', a, r')
+    | Seq xs -> Seq (List.map go xs)
+  in
+  let mixop = go mixfix in
+  (mixop, List.rev !args_rev)
 
 (* Rendering *)
 
