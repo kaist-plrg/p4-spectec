@@ -592,8 +592,60 @@ module Unmarshal = struct
     (name, [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
-let compile (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef list * Ml.funcdef list =
+(* Direct dependencies of marshal/unmarshal for a given type:
+   the sub-types that marshal_T calls marshal_S for. *)
+let interface_typ_deps (ctx : Ctx.t) (typ : Sl.typ) : Sl.typ list =
+  match typ.it with
+  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> []
+  | Il.TupleT typs -> typs
+  | Il.IterT (t, _) -> [ t ]
+  | Il.VarT (id, targs) -> (
+      let theta = build_theta ctx id targs in
+      let sub t = Mono.Subst.subst_typ theta t in
+      match Ctx.find_typdef ctx id with
+      | Typdef.Param | Typdef.Defining _ | Typdef.Extern -> []
+      | Typdef.Defined (_, deftyp) -> (
+          match deftyp.it with
+          | Il.PlainT t -> [ sub t ]
+          | Il.StructT typfields -> List.map (fun (_, t) -> sub t) typfields
+          | Il.VariantT typcases ->
+              List.concat_map
+                (fun (nottyp, _, _) ->
+                  List.map sub (Domain.Mixfix.args nottyp.it))
+                typcases))
+
+(* Compute SCCs on the marshal/unmarshal call graph and return groups in
+   topological order (dependencies first). Each group becomes one Ml.LetRec. *)
+let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
+  let n = List.length typs in
+  if n = 0 then []
+  else
+    let typs_arr = Array.of_list typs in
+    let name_idx : (string, int) Hashtbl.t = Hashtbl.create (n * 2) in
+    Array.iteri
+      (fun i typ -> Hashtbl.replace name_idx (interface_name typ) i)
+      typs_arr;
+    let adj = Array.make n [] in
+    Array.iteri
+      (fun i typ ->
+        let deps = interface_typ_deps ctx typ in
+        let edges : (int, unit) Hashtbl.t = Hashtbl.create 4 in
+        List.iter
+          (fun dep ->
+            let dep_name = interface_name dep in
+            match Hashtbl.find_opt name_idx dep_name with
+            | Some j when j <> i -> Hashtbl.replace edges j ()
+            | _ -> ())
+          deps;
+        adj.(i) <- Hashtbl.fold (fun j () acc -> j :: acc) edges [])
+      typs_arr;
+    let sccs = Scc.tarjan n adj in
+    List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
+
+let compile (ctx : Ctx.t) (spec : Sl.spec) :
+    Ml.funcdef list list * Ml.funcdef list list =
   let typs = collect_types ctx spec in
-  let funcdefs_marshal_ml = List.map (Marshal.compile ctx) typs in
-  let funcdefs_unmarshal_ml = List.map (Unmarshal.compile ctx) typs in
-  (funcdefs_marshal_ml, funcdefs_unmarshal_ml)
+  let groups = compute_groups ctx typs in
+  let marshal_groups = List.map (List.map (Marshal.compile ctx)) groups in
+  let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
+  (marshal_groups, unmarshal_groups)

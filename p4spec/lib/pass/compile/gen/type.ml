@@ -196,3 +196,12 @@ let compile_defs (ctx : Ctx.t) (defs : Sl.def list) : Ctx.t * Ml.typdef list =
 
 let compile_spec (ctx : Ctx.t) (spec : Sl.spec) : Ctx.t * Ml.typdef list =
   compile_defs ctx spec
+
+(* SCC-aware compilation: each group becomes one Ml.TypeRec *)
+let compile_spec_scc (ctx : Ctx.t) (groups : Sl.def list list) :
+    Ctx.t * Ml.typdef list list =
+  List.fold_left
+    (fun (ctx, acc) group ->
+      let ctx, typdefs_ml = compile_defs ctx group in
+      (ctx, acc @ [ typdefs_ml ]))
+    (ctx, []) groups

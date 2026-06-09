@@ -6,17 +6,28 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   let spec, dispatch_table = Mono.monomorphize spec in
   (* Initialize context *)
   let ctx = Ctx.init spec in
-  (* Type definitions *)
+  (* Type definitions — one Ml.TypeRec per SCC group *)
   let ctx, toplevel_typdefs_ml =
-    let ctx, typdefs_ml = Gen.Type.compile_spec ctx spec in
-    (ctx, Ml.TypeRec typdefs_ml)
-  in
-  (* Marshal/unmarshal *)
-  let toplevels_interface_ml =
-    let funcdefs_marshal_ml, funcdefs_unmarshal_ml =
-      Gen.Interface.compile ctx spec
+    let type_groups = Scc.compute_types spec in
+    let ctx, typdef_groups_ml = Gen.Type.compile_spec_scc ctx type_groups in
+    let tops =
+      List.filter_map
+        (fun typdefs_ml ->
+          match typdefs_ml with [] -> None | _ -> Some (Ml.TypeRec typdefs_ml))
+        typdef_groups_ml
     in
-    [ Ml.LetRec funcdefs_marshal_ml; Ml.LetRec funcdefs_unmarshal_ml ]
+    (ctx, tops)
+  in
+  (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
+  let toplevels_interface_ml =
+    let marshal_groups, unmarshal_groups = Gen.Interface.compile ctx spec in
+    let to_tops groups =
+      List.filter_map
+        (fun funcdefs ->
+          match funcdefs with [] -> None | _ -> Some (Ml.LetRec funcdefs))
+        groups
+    in
+    to_tops marshal_groups @ to_tops unmarshal_groups
   in
   (* Functor *)
   let ctx, toplevels_functor_ml =
@@ -61,8 +72,8 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   let toplevel_prelude_ml = Ml.Raw (Template.Prelude.prelude ctx) in
   (* Assemble *)
   let file_ml =
-    [ toplevel_prelude_ml; toplevel_typdefs_ml ]
-    @ toplevels_interface_ml @ toplevels_functor_ml
+    [ toplevel_prelude_ml ] @ toplevel_typdefs_ml @ toplevels_interface_ml
+    @ toplevels_functor_ml
   in
   let out_str = Ml.Print.print_file file_ml in
   let oc = open_out path_out in
