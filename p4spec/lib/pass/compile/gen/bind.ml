@@ -337,14 +337,15 @@ and compile_cons_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp_h : exp)
    Compiled to
     [
       let ..._a, ..._b, ..., ..._z =
-        Option.map
+        Option.fold_1_M
           (fun expr_stub_inner ->
             ... compiled exp_inner on expr_stub_inner ...)
           expr
-        |> Option.splitN
       in
     ]
-    where N = number of bindings from compiling exp_inner on expr_inner *)
+    where M = number of bindings from compiling exp_inner on expr_inner.
+    For M >= 2 this fuses [Option.map f expr |> Option.splitN] into a single
+    [Option.fold_1_M]; M = 1 degenerates to a plain [Option.map]. *)
 
 and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     : Ctx.t * Binding.t list * Chain.t =
@@ -402,14 +403,15 @@ and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
    Compiled to
     [
       let ..._a, ..._b, ..., ..._z =
-        List.map
+        List.fold_left_1_M
           (fun expr_inner ->
             ... compiled exp_inner on expr_inner ...)
           expr
-        |> List.splitN
       in
     ]
-    where N = number of bindings from compiling exp_inner on expr_inner *)
+    where M = number of bindings from compiling exp_inner on expr_inner.
+    For M >= 2 this fuses [List.map f expr |> List.splitN] into a single
+    [List.fold_left_1_M]; M = 1 degenerates to a plain [List.map]. *)
 
 and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
     : Ctx.t * Binding.t list * Chain.t =

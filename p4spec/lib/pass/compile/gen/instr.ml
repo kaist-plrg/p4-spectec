@@ -26,7 +26,9 @@ let rec compile_instr (ctx : Ctx.t) (instr : instr) : Ctx.t * Ml.expr =
 
    If instruction (list iterexps): iterexps wrapped in reverse order
    List iter: [List.for_all (fun elem -> <inner cond>) guide__star]
-   Opt iter:  [match guide__quest with None -> true | Some elem -> <inner cond>] *)
+              (multi-guide fuses [for_all f (combineN ..)] into [List.for_all_N])
+   Opt iter:  [match guide__quest with None -> true | Some elem -> <inner cond>]
+              (multi-guide fuses into [Option.for_all_N]) *)
 
 and compile_if_cond (ctx : Ctx.t) (exp_cond : exp) : Ctx.t * Ml.expr =
   (* Base case: compile condition expression directly *)
@@ -364,12 +366,14 @@ and compile_group_instr (ctx : Ctx.t) (block : block) : Ctx.t * Ml.expr =
 
    [
      let (a__star, ..) =
-       List.splitN (List.map (fun x -> <inner body producing (a,..)>) x__star)
+       (* fuses [splitN (List.map f (combineN x*..))] *)
+       List.fold_left_N_M (fun x .. -> <inner body producing (a,..)>) x__star ..
      in
      <cont block>
    ]
+   (single guide and single output degenerate to a plain List.map.)
 
-   Opt iterinstrs: analogous with Option.map / Option.splitN *)
+   Opt iterinstrs: analogous with Option.fold_N_M *)
 
 and compile_let (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
     (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
@@ -609,12 +613,14 @@ and compile_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
 
    [
      let (out_a__star, ..) =
-       List.splitN (List.map (fun x -> <inner rule call producing (out_a, ..)>) x__star)
+       (* fuses [splitN (List.map f (combineN x*..))] *)
+       List.fold_left_N_M (fun x .. -> <inner rule call producing (out_a, ..)>) x__star ..
      in
      <cont block with out_a__star, .. in ctx>
    ]
+   (single guide and single output degenerate to a plain List.map.)
 
-   Opt iterinstrs: analogous with Option.map / Option.splitN *)
+   Opt iterinstrs: analogous with Option.fold_N_M *)
 
 and compile_rule (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     (inputs : Hints.Input.t) (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr

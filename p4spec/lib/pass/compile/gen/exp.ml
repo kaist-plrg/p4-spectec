@@ -1058,7 +1058,8 @@ and compile_call_exp (ctx : Ctx.t) (id : id) (_targs : targ list)
 (* Option iterator expression: [exp{x?}]
 
    single var  ->  [Option.map (fun x -> expr) x?]
-   multi-var   ->  [Option.map (fun (x,..) -> expr) (Option.combineN x? y? ..)] *)
+   multi-var   ->  [Option.fold_N_1 (fun x .. -> expr) x? y? ..]
+                   (fuses [Option.map f (Option.combineN x? y? ..)]) *)
 
 and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
@@ -1106,7 +1107,8 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
 (* List iterator expression: [exp{x*}]
 
    single var  ->  [List.map (fun x -> expr) x*]
-   multi-var   ->  [List.map (fun (x,..) -> expr) (List.combineN x* y* ..)] *)
+   multi-var   ->  [List.fold_left_N_1 (fun x .. -> expr) x* y* ..]
+                   (fuses [List.map f (List.combineN x* y* ..)]) *)
 
 and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
     Ctx.t * Ml.expr =
