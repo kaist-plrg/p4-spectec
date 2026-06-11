@@ -11,7 +11,17 @@ open Util.Source
 
 (* Preamble *)
 
-type preamble = { opts : int list; lists : int list }
+type lib = {
+  splits : int list; (* arities for splitN *)
+  combines : int list; (* arities for combineN *)
+  folds : (int * int) list; (* (n_in, n_out) arities for fused fold_N_M *)
+  foralls : int list; (* arities for fused for_all_N *)
+}
+
+type preamble = { opts : lib; lists : lib }
+
+let empty_lib = { splits = []; combines = []; folds = []; foralls = [] }
+let empty_preamble = { opts = empty_lib; lists = empty_lib }
 
 (* Context *)
 
@@ -117,7 +127,7 @@ let load_defs (ctx : t) (defs : Sl.def list) : t =
 let init (spec : Sl.spec) : t =
   let ctx =
     {
-      preamble = { opts = []; lists = [] };
+      preamble = empty_preamble;
       typdefs = Typdefs.empty;
       ctors = Ctors.empty;
       rels = Rels.empty;
@@ -128,19 +138,37 @@ let init (spec : Sl.spec) : t =
 
 (* Preamble setters *)
 
-let add_opt_arity (ctx : t) (n : int) : t =
-  let preamble = ctx.preamble in
-  if List.mem n preamble.opts then ctx
-  else
-    let preamble = { preamble with opts = n :: preamble.opts } in
-    { ctx with preamble }
+let update_opts (ctx : t) (f : lib -> lib) : t =
+  { ctx with preamble = { ctx.preamble with opts = f ctx.preamble.opts } }
 
-let add_list_arity (ctx : t) (n : int) : t =
-  let preamble = ctx.preamble in
-  if List.mem n preamble.lists then ctx
-  else
-    let preamble = { preamble with lists = n :: preamble.lists } in
-    { ctx with preamble }
+let update_lists (ctx : t) (f : lib -> lib) : t =
+  { ctx with preamble = { ctx.preamble with lists = f ctx.preamble.lists } }
+
+let add_split (n : int) (lib : lib) : lib =
+  if List.mem n lib.splits then lib else { lib with splits = n :: lib.splits }
+
+let add_combine (n : int) (lib : lib) : lib =
+  if List.mem n lib.combines then lib
+  else { lib with combines = n :: lib.combines }
+
+let add_fold (nm : int * int) (lib : lib) : lib =
+  if List.mem nm lib.folds then lib else { lib with folds = nm :: lib.folds }
+
+let add_forall (n : int) (lib : lib) : lib =
+  if List.mem n lib.foralls then lib
+  else { lib with foralls = n :: lib.foralls }
+
+let add_opt_split (ctx : t) (n : int) : t = update_opts ctx (add_split n)
+let add_opt_combine (ctx : t) (n : int) : t = update_opts ctx (add_combine n)
+let add_opt_fold (ctx : t) (nm : int * int) : t = update_opts ctx (add_fold nm)
+let add_opt_forall (ctx : t) (n : int) : t = update_opts ctx (add_forall n)
+let add_list_split (ctx : t) (n : int) : t = update_lists ctx (add_split n)
+let add_list_combine (ctx : t) (n : int) : t = update_lists ctx (add_combine n)
+
+let add_list_fold (ctx : t) (nm : int * int) : t =
+  update_lists ctx (add_fold nm)
+
+let add_list_forall (ctx : t) (n : int) : t = update_lists ctx (add_forall n)
 
 (* Scope *)
 

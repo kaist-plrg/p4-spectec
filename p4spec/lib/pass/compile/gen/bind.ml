@@ -360,13 +360,21 @@ and compile_iter_opt_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
   let chain = Chain.connect [ chain_map; chain_elem ] in
   (* Finish map block with bindings *)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
-  (* Create [Option.splitN ...] *)
+  (* Fuse [Option.map f src |> Option.splitM] into [Option.fold_1_M f src] when
+     there is a real split to eliminate (M >= 2); otherwise keep Option.map
+     (split1 is the identity). [expr_bind_ml] is [Option.map lambda src]. *)
   let ctx, expr_split_ml =
     let arity = List.length bindings in
-    let ctx = Ctx.add_opt_arity ctx arity in
-    let id_split_ml = "Option.split" ^ string_of_int arity in
-    let expr_split_ml = Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]) in
-    (ctx, expr_split_ml)
+    match expr_bind_ml with
+    | Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_src_ml ])
+      when arity >= 2 ->
+        let ctx = Ctx.add_opt_fold ctx (1, arity) in
+        let id_fold_ml = Printf.sprintf "Option.fold_1_%d" arity in
+        (ctx, Ml.AppE (Ml.VarE id_fold_ml, [ expr_lambda_ml; expr_src_ml ]))
+    | _ ->
+        let ctx = Ctx.add_opt_split ctx arity in
+        let id_split_ml = "Option.split" ^ string_of_int arity in
+        (ctx, Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]))
   in
   (* Create [let (..._ah, ..., ..._at, ...) = ... in ...] *)
   let chain =
@@ -417,13 +425,21 @@ and compile_iter_list_binding (ctx : Ctx.t) (expr_stub_ml : Ml.expr) (exp : exp)
   let chain = Chain.connect [ chain_map; chain_elem ] in
   (* Finish map block with bindings *)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
-  (* Create [List.splitN ...] *)
+  (* Fuse [List.map f src |> List.splitM] into [fold_left_1_M f src] when there
+     is a real split to eliminate (M >= 2); otherwise keep List.map (split1 is
+     the identity). [expr_bind_ml] is [List.map lambda src]. *)
   let ctx, expr_split_ml =
     let arity = List.length bindings in
-    let ctx = Ctx.add_list_arity ctx arity in
-    let id_split_ml = "List.split" ^ string_of_int arity in
-    let expr_split_ml = Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]) in
-    (ctx, expr_split_ml)
+    match expr_bind_ml with
+    | Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_src_ml ])
+      when arity >= 2 ->
+        let ctx = Ctx.add_list_fold ctx (1, arity) in
+        let id_fold_ml = Printf.sprintf "List.fold_left_1_%d" arity in
+        (ctx, Ml.AppE (Ml.VarE id_fold_ml, [ expr_lambda_ml; expr_src_ml ]))
+    | _ ->
+        let ctx = Ctx.add_list_split ctx arity in
+        let id_split_ml = "List.split" ^ string_of_int arity in
+        (ctx, Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]))
   in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =

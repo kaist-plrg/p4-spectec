@@ -44,34 +44,30 @@ and compile_if_cond_list (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
   in
   (* Create stubs for element vars *)
   let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_cond__" ctx vars in
-  (* Combine multiple list guides into a single list of tuples *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_list_arity ctx n in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("List.combine" ^ string_of_int n),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
-  in
-  (* Build element pattern for lambda *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
   (* Compile inner condition with element vars bound *)
   let ctx_inner, expr_inner_ml = compile_if_cond_iter ctx exp_cond iterexps_t in
   (* Promote preamble from inner scope *)
   let ctx = Ctx.promote_preamble ctx_inner ctx_outer in
-  (* Build List.for_all *)
-  let expr_ml =
-    Ml.AppE
-      ( Ml.VarE "List.for_all",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  (* Fuse [List.for_all f (combineN ..)] into [List.for_all_N f ..] when there
+     is a real combine to eliminate; otherwise a plain List.for_all. *)
+  let ctx, expr_ml =
+    if n >= 2 then
+      Common.make_list_forall ctx ids_guide_ml ids_elem_ml expr_inner_ml n
+    else
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ -> assert false
+      in
+      let expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        | _ -> assert false
+      in
+      ( ctx,
+        Ml.AppE
+          ( Ml.VarE "List.for_all",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] ) )
   in
   (ctx, expr_ml)
 
@@ -87,37 +83,34 @@ and compile_if_cond_opt (ctx : Ctx.t) (exp_cond : exp) (vars : var list)
   in
   (* Create stubs for element vars *)
   let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_cond__" ctx vars in
-  (* Combine multiple option guides into an option of a tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_opt_arity ctx n in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("Option.combine" ^ string_of_int n),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
-  in
-  (* Build element pattern for Some branch *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
   (* Compile inner condition with element vars bound *)
   let ctx_inner, expr_inner_ml = compile_if_cond_iter ctx exp_cond iterexps_t in
   (* Promote preamble from inner scope *)
   let ctx = Ctx.promote_preamble ctx_inner ctx_outer in
-  (* Build match: None -> true (vacuous), Some elem -> inner *)
-  let expr_ml =
-    Ml.MatchE
-      ( expr_guide_ml,
-        [
-          (Ml.OptP None, Ml.BoolE true);
-          (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
-        ] )
+  (* Fuse [match combineN .. with None -> true | Some (..) -> f ..] into
+     [Option.for_all_N f ..] when there is a real combine to eliminate;
+     otherwise a plain match. *)
+  let ctx, expr_ml =
+    if n >= 2 then
+      Common.make_opt_forall ctx ids_guide_ml ids_elem_ml expr_inner_ml n
+    else
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ -> assert false
+      in
+      let expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        | _ -> assert false
+      in
+      ( ctx,
+        Ml.MatchE
+          ( expr_guide_ml,
+            [
+              (Ml.OptP None, Ml.BoolE true);
+              (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
+            ] ) )
   in
   (ctx, expr_ml)
 
@@ -180,34 +173,30 @@ and compile_hold_cond_list (ctx : Ctx.t) (id : id) (notexp : notexp)
   in
   (* Create stubs for element vars *)
   let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_hold__" ctx vars in
-  (* Combine multiple list guides into a single list of tuples *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_list_arity ctx n in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("List.combine" ^ string_of_int n),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
-  in
-  (* Build element pattern for lambda *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
   (* Compile inner hold condition with element vars bound *)
   let ctx, expr_inner_ml = compile_hold_cond_iter ctx id notexp iterexps_t in
   (* Promote preamble from inner scope *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Hold holds iff it holds for all list elements *)
-  let expr_ml =
-    Ml.AppE
-      ( Ml.VarE "List.for_all",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+  (* Hold holds iff it holds for all list elements. Fuse the combine when there
+     is more than one guide; otherwise a plain List.for_all. *)
+  let ctx, expr_ml =
+    if n >= 2 then
+      Common.make_list_forall ctx ids_guide_ml ids_elem_ml expr_inner_ml n
+    else
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ -> assert false
+      in
+      let expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        | _ -> assert false
+      in
+      ( ctx,
+        Ml.AppE
+          ( Ml.VarE "List.for_all",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] ) )
   in
   (ctx, expr_ml)
 
@@ -223,37 +212,33 @@ and compile_hold_cond_opt (ctx : Ctx.t) (id : id) (notexp : notexp)
   in
   (* Create stubs for element vars *)
   let ctx, ids_elem_ml = Stub.OCaml.iterator ~prefix:"iter_hold__" ctx vars in
-  (* Combine multiple option guides into an option of a tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_opt_arity ctx n in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("Option.combine" ^ string_of_int n),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
-  in
-  (* Build element pattern for Some branch *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
   (* Compile inner hold condition with element vars bound *)
   let ctx, expr_inner_ml = compile_hold_cond_iter ctx id notexp iterexps_t in
   (* Promote preamble from inner scope *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Build match: None -> true (vacuous), Some -> inner hold condition *)
-  let expr_ml =
-    Ml.MatchE
-      ( expr_guide_ml,
-        [
-          (Ml.OptP None, Ml.BoolE true);
-          (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
-        ] )
+  (* Build match: None -> true (vacuous), Some -> inner hold condition. Fuse the
+     combine when there is more than one guide; otherwise a plain match. *)
+  let ctx, expr_ml =
+    if n >= 2 then
+      Common.make_opt_forall ctx ids_guide_ml ids_elem_ml expr_inner_ml n
+    else
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ -> assert false
+      in
+      let expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        | _ -> assert false
+      in
+      ( ctx,
+        Ml.MatchE
+          ( expr_guide_ml,
+            [
+              (Ml.OptP None, Ml.BoolE true);
+              (Ml.OptP (Some pat_elem_ml), expr_inner_ml);
+            ] ) )
   in
   (ctx, expr_ml)
 
@@ -429,33 +414,45 @@ and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   let ctx, expr_inner_ml =
     compile_let_iter ctx exp_l exp_r iterinstrs cont_inner
   in
-  (* Combine a tuple of options into an option of a tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_opt_arity ctx n_bound in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
+  (* Build bound RHS. Fuse [combineN |> Option.map f |> splitM] into a single
+     match [Option.fold_N_M] when there is a real combine or split to eliminate;
+     otherwise a plain Option.map (single guide, single output). *)
+  let ctx, expr_rhs_ml =
+    if n_bind >= 1 && (n_bound >= 2 || n_bind >= 2) then
+      Common.make_opt_fold ctx ids_guide_ml ids_elem_ml expr_inner_ml n_bound
+        n_bind
+    else
+      let ctx, expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | _ ->
+            let ctx = Ctx.add_opt_combine ctx n_bound in
+            ( ctx,
+              Ml.AppE
+                ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
+                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
+                ) )
+      in
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ ->
+            Ml.TupleP
+              (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+      in
+      let expr_map_ml =
+        Ml.AppE
+          ( Ml.VarE "Option.map",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+      in
+      let ctx = Ctx.add_opt_split ctx n_bind in
+      let expr_split_ml =
+        Ml.AppE
+          (Ml.VarE ("Option.split" ^ string_of_int n_bind), [ expr_map_ml ])
+      in
+      (ctx, expr_split_ml)
   in
-  (* Build lambda for Option.map *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
-  (* Build Option.map *)
-  let expr_map_ml =
-    Ml.AppE
-      ( Ml.VarE "Option.map",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
-  in
-  (* Name output vars with __quest suffix and register split arity *)
-  let ctx = Ctx.add_opt_arity ctx n_bind in
+  (* Name output vars with __quest suffix *)
   let ids_out_ml =
     List.map
       (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
@@ -466,10 +463,6 @@ and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
     match ids_out_ml with
     | [ id_out_ml ] -> Ml.VarP id_out_ml
     | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Split an option of a tuple into a tuple of options *)
-  let expr_split_ml =
-    Ml.AppE (Ml.VarE ("Option.split" ^ string_of_int n_bind), [ expr_map_ml ])
   in
   (* Add output bindings to ctx *)
   let ctx =
@@ -483,7 +476,7 @@ and compile_let_opt (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   (* Promote preamble to outer ctx *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Build let expression *)
-  let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
+  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
 and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
@@ -521,33 +514,44 @@ and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   let ctx, expr_inner_ml =
     compile_let_iter ctx exp_l exp_r iterinstrs cont_inner
   in
-  (* Combine multiple list guides into a single list of tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_list_arity ctx n_bound in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
+  (* Build bound RHS. Fuse [combineN |> List.map f |> splitM] into a single
+     tail-recursive [fold_left_N_M] when there is a real combine or split to
+     eliminate; otherwise a plain List.map (single guide, single output). *)
+  let ctx, expr_rhs_ml =
+    if n_bind >= 1 && (n_bound >= 2 || n_bind >= 2) then
+      Common.make_list_fold ctx ids_guide_ml ids_elem_ml expr_inner_ml n_bound
+        n_bind
+    else
+      let ctx, expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | _ ->
+            let ctx = Ctx.add_list_combine ctx n_bound in
+            ( ctx,
+              Ml.AppE
+                ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
+                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
+                ) )
+      in
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ ->
+            Ml.TupleP
+              (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+      in
+      let expr_map_ml =
+        Ml.AppE
+          ( Ml.VarE "List.map",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+      in
+      let ctx = Ctx.add_list_split ctx n_bind in
+      let expr_split_ml =
+        Ml.AppE (Ml.VarE ("List.split" ^ string_of_int n_bind), [ expr_map_ml ])
+      in
+      (ctx, expr_split_ml)
   in
-  (* Build lambda for List.map *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
-  (* Build List.map *)
-  let expr_map_ml =
-    Ml.AppE
-      ( Ml.VarE "List.map",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
-  in
-  (* Name output vars with __star suffix and register split arity *)
-  let ctx = Ctx.add_list_arity ctx n_bind in
+  (* Name output vars with __star suffix *)
   let ids_out_ml =
     List.map
       (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.List ]))
@@ -558,10 +562,6 @@ and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
     match ids_out_ml with
     | [ id_out_ml ] -> Ml.VarP id_out_ml
     | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Split a list of a tuple into a tuple of lists *)
-  let expr_split_ml =
-    Ml.AppE (Ml.VarE ("List.split" ^ string_of_int n_bind), [ expr_map_ml ])
   in
   (* Add output bindings to ctx *)
   let ctx =
@@ -575,7 +575,7 @@ and compile_let_list (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
   (* Promote preamble to outer ctx *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Build let expression *)
-  let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
+  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
 and compile_let_iter (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
@@ -686,33 +686,45 @@ and compile_rule_opt (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   let ctx, expr_inner_ml =
     compile_rule_iter ctx rel_id notexp inputs iterinstrs cont_inner
   in
-  (* Combine a tuple of options into an option of a tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_opt_arity ctx n_bound in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
+  (* Build bound RHS. Fuse [combineN |> Option.map f |> splitM] into a single
+     match [Option.fold_N_M] when there is a real combine or split to eliminate;
+     otherwise a plain Option.map (single guide, single output). *)
+  let ctx, expr_rhs_ml =
+    if n_bind >= 1 && (n_bound >= 2 || n_bind >= 2) then
+      Common.make_opt_fold ctx ids_guide_ml ids_elem_ml expr_inner_ml n_bound
+        n_bind
+    else
+      let ctx, expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | _ ->
+            let ctx = Ctx.add_opt_combine ctx n_bound in
+            ( ctx,
+              Ml.AppE
+                ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
+                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
+                ) )
+      in
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ ->
+            Ml.TupleP
+              (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+      in
+      let expr_map_ml =
+        Ml.AppE
+          ( Ml.VarE "Option.map",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+      in
+      let ctx = Ctx.add_opt_split ctx n_bind in
+      let expr_split_ml =
+        Ml.AppE
+          (Ml.VarE ("Option.split" ^ string_of_int n_bind), [ expr_map_ml ])
+      in
+      (ctx, expr_split_ml)
   in
-  (* Build lambda for Option.map *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
-  (* Build Option.map *)
-  let expr_map_ml =
-    Ml.AppE
-      ( Ml.VarE "Option.map",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
-  in
-  (* Name output vars with __quest suffix and register split arity *)
-  let ctx = Ctx.add_opt_arity ctx n_bind in
+  (* Name output vars with __quest suffix *)
   let ids_out_ml =
     List.map
       (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
@@ -724,10 +736,6 @@ and compile_rule_opt (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     | [ id_out_ml ] -> Ml.VarP id_out_ml
     | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
   in
-  (* Split an option of a tuple into a tuple of options *)
-  let expr_split_ml =
-    Ml.AppE (Ml.VarE ("Option.split" ^ string_of_int n_bind), [ expr_map_ml ])
-  in
   (* Add output bindings to ctx *)
   let ctx =
     List.fold_left2
@@ -738,7 +746,7 @@ and compile_rule_opt (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
+  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
 and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
@@ -777,33 +785,44 @@ and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   let ctx, expr_inner_ml =
     compile_rule_iter ctx rel_id notexp inputs iterinstrs cont_inner
   in
-  (* Combine multiple list guides into a single list of tuple *)
-  let ctx, expr_guide_ml =
-    match ids_guide_ml with
-    | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
-    | _ ->
-        let ctx = Ctx.add_list_arity ctx n_bound in
-        ( ctx,
-          Ml.AppE
-            ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
-              List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml )
-        )
+  (* Build bound RHS. Fuse [combineN |> List.map f |> splitM] into a single
+     tail-recursive [fold_left_N_M] when there is a real combine or split to
+     eliminate; otherwise a plain List.map (single guide, single output). *)
+  let ctx, expr_rhs_ml =
+    if n_bind >= 1 && (n_bound >= 2 || n_bind >= 2) then
+      Common.make_list_fold ctx ids_guide_ml ids_elem_ml expr_inner_ml n_bound
+        n_bind
+    else
+      let ctx, expr_guide_ml =
+        match ids_guide_ml with
+        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | _ ->
+            let ctx = Ctx.add_list_combine ctx n_bound in
+            ( ctx,
+              Ml.AppE
+                ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
+                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
+                ) )
+      in
+      let pat_elem_ml =
+        match ids_elem_ml with
+        | [ id_elem_ml ] -> Ml.VarP id_elem_ml
+        | _ ->
+            Ml.TupleP
+              (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
+      in
+      let expr_map_ml =
+        Ml.AppE
+          ( Ml.VarE "List.map",
+            [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
+      in
+      let ctx = Ctx.add_list_split ctx n_bind in
+      let expr_split_ml =
+        Ml.AppE (Ml.VarE ("List.split" ^ string_of_int n_bind), [ expr_map_ml ])
+      in
+      (ctx, expr_split_ml)
   in
-  (* Build lambda for List.map *)
-  let pat_elem_ml =
-    match ids_elem_ml with
-    | [ id_elem_ml ] -> Ml.VarP id_elem_ml
-    | _ ->
-        Ml.TupleP (List.map (fun id_elem_ml -> Ml.VarP id_elem_ml) ids_elem_ml)
-  in
-  (* Build List.map *)
-  let expr_map_ml =
-    Ml.AppE
-      ( Ml.VarE "List.map",
-        [ Ml.FunE ([ pat_elem_ml ], expr_inner_ml); expr_guide_ml ] )
-  in
-  (* Name output vars with __star suffix and register split arity *)
-  let ctx = Ctx.add_list_arity ctx n_bind in
+  (* Name output vars with __star suffix *)
   let ids_out_ml =
     List.map
       (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.List ]))
@@ -815,10 +834,6 @@ and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
     | [ id_out_ml ] -> Ml.VarP id_out_ml
     | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
   in
-  (* Split a list of a tuple into a tuple of lists *)
-  let expr_split_ml =
-    Ml.AppE (Ml.VarE ("List.split" ^ string_of_int n_bind), [ expr_map_ml ])
-  in
   (* Add output bindings to ctx *)
   let ctx =
     List.fold_left2
@@ -829,7 +844,7 @@ and compile_rule_list (ctx : Ctx.t) (rel_id : id) (notexp : notexp)
   (* Compile continuation *)
   let ctx, expr_cont_ml = cont ctx in
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml = Ml.LetE (pat_out_ml, expr_split_ml, expr_cont_ml) in
+  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
   (ctx, expr_ml)
 
 and compile_rule_iter (ctx : Ctx.t) (rel_id : id) (notexp : notexp)

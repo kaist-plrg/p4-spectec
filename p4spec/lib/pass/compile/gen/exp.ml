@@ -1071,38 +1071,36 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
   let ctx_outer = ctx in
   (* Create stub variables for iterated elements *)
   let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_opt__" ctx vars in
-  (* Compile lambda expression *)
-  let ctx, expr_lambda_ml =
-    let pat_ml =
-      match ids_stub_ml with
-      | [ id_ml ] -> Ml.VarP id_ml
-      | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
-    in
-    let ctx, expr_body_ml = compile_exp ctx exp in
-    let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
-    (ctx, expr_ml)
-  in
-  (* Combine iteration targets into a single option, then map over it *)
-  let ctx, expr_opt_ml =
-    match ids_opt_ml with
-    | [ id_ml ] ->
-        let expr_opt_ml = Ml.VarE id_ml in
-        (ctx, expr_opt_ml)
-    | _ ->
-        let n = List.length ids_opt_ml in
-        let ctx = Ctx.add_opt_arity ctx n in
-        let id_combine_ml = "Option.combine" ^ string_of_int n in
-        let exprs_arg_ml =
-          List.map (fun id_opt_ml -> Ml.VarE id_opt_ml) ids_opt_ml
-        in
-        let expr_opt_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
-        (ctx, expr_opt_ml)
+  let n = List.length ids_opt_ml in
+  (* Compile body expression *)
+  let ctx, expr_body_ml = compile_exp ctx exp in
+  let ctx, expr_ml =
+    if n >= 2 then
+      (* Fuse [Option.map f (combineN o0 ..)] into [Option.fold_N_1 f o0 ..] *)
+      Common.make_opt_fold ctx ids_opt_ml ids_stub_ml expr_body_ml n 1
+    else
+      (* Single guide: a plain Option.map, no combine to eliminate. *)
+      let pat_ml =
+        match ids_stub_ml with
+        | [ id_ml ] -> Ml.VarP id_ml
+        | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
+      in
+      let expr_lambda_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
+      let ctx, expr_opt_ml =
+        match ids_opt_ml with
+        | [ id_ml ] -> (ctx, Ml.VarE id_ml)
+        | _ ->
+            let ctx = Ctx.add_opt_combine ctx n in
+            let id_combine_ml = "Option.combine" ^ string_of_int n in
+            let exprs_arg_ml =
+              List.map (fun id_opt_ml -> Ml.VarE id_opt_ml) ids_opt_ml
+            in
+            (ctx, Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml))
+      in
+      (ctx, Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_opt_ml ]))
   in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml =
-    Ml.AppE (Ml.VarE "Option.map", [ expr_lambda_ml; expr_opt_ml ])
-  in
   (ctx, expr_ml)
 
 (* List iterator expression: [exp{x*}]
@@ -1122,39 +1120,36 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
   in
   (* Create stub variables for iterated elements *)
   let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_list__" ctx vars in
-  (* Compile lambda expression *)
-  let ctx, expr_lambda_ml =
-    let pat_ml =
-      match ids_stub_ml with
-      | [ id_ml ] -> Ml.VarP id_ml
-      | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
-    in
-    let ctx, expr_body_ml = compile_exp ctx exp in
-    let expr_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
-    (ctx, expr_ml)
-  in
-  (* Combine iteration targets into a single list, then map over it *)
-  let ctx, expr_list_ml =
-    match ids_list_ml with
-    | [ id_ml ] ->
-        let expr_list_ml = Ml.VarE id_ml in
-        (ctx, expr_list_ml)
-    | _ ->
-        let n = List.length ids_list_ml in
-        let ctx = Ctx.add_list_arity ctx n in
-        let id_combine_ml = "List.combine" ^ string_of_int n in
-        let exprs_arg_ml =
-          List.map (fun id_list_ml -> Ml.VarE id_list_ml) ids_list_ml
-        in
-        let expr_list_ml = Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml) in
-        (ctx, expr_list_ml)
+  let n = List.length ids_list_ml in
+  (* Compile body expression *)
+  let ctx, expr_body_ml = compile_exp ctx exp in
+  let ctx, expr_ml =
+    if n >= 2 then
+      (* Fuse [List.map f (combineN l0 ..)] into a single [fold_left_N_1 f l0 ..] *)
+      Common.make_list_fold ctx ids_list_ml ids_stub_ml expr_body_ml n 1
+    else
+      (* Single guide: a plain List.map, no combine to eliminate. *)
+      let pat_ml =
+        match ids_stub_ml with
+        | [ id_ml ] -> Ml.VarP id_ml
+        | ids_ml -> Ml.TupleP (List.map (fun id_ml -> Ml.VarP id_ml) ids_ml)
+      in
+      let expr_lambda_ml = Ml.FunE ([ pat_ml ], expr_body_ml) in
+      let ctx, expr_list_ml =
+        match ids_list_ml with
+        | [ id_ml ] -> (ctx, Ml.VarE id_ml)
+        | _ ->
+            let ctx = Ctx.add_list_combine ctx n in
+            let id_combine_ml = "List.combine" ^ string_of_int n in
+            let exprs_arg_ml =
+              List.map (fun id_list_ml -> Ml.VarE id_list_ml) ids_list_ml
+            in
+            (ctx, Ml.AppE (Ml.VarE id_combine_ml, exprs_arg_ml))
+      in
+      (ctx, Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_list_ml ]))
   in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Map over combined list *)
-  let expr_ml =
-    Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_list_ml ])
-  in
   (ctx, expr_ml)
 
 and compile_iter_exp (ctx : Ctx.t) (typ_exp : typ) (exp : exp)
