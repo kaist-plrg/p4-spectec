@@ -111,7 +111,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
   (* Unmarshal outputs from Pass value list *)
-  let unmarshal_body =
+  let expr_unmarshal_body_ml =
     let exprs_out_ml =
       List.mapi
         (fun i (typ : Sl.typ) ->
@@ -135,7 +135,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       ( expr_call_ml,
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "vs_out__" ])),
-            unmarshal_body );
+            expr_unmarshal_body_ml );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
               ( Ml.LitE "raise",

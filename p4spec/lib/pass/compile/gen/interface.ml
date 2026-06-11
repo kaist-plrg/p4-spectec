@@ -336,7 +336,7 @@ module Marshal = struct
 
   (* Texts *)
 
-  let compile_text = Ml.AppE (Ml.LitE "Value.Make.text", [ Ml.VarE "x" ])
+  let expr_text_ml = Ml.AppE (Ml.LitE "Value.Make.text", [ Ml.VarE "x" ])
 
   (* Variable types *)
 
@@ -458,7 +458,7 @@ module Marshal = struct
     match typ.it with
     | Il.BoolT -> compile_bool
     | Il.NumT numtyp -> compile_num numtyp
-    | Il.TextT -> compile_text
+    | Il.TextT -> expr_text_ml
     | Il.FuncT _ -> Ml.UnitE
     | _ -> (
         let typ_ref =
@@ -496,7 +496,7 @@ module Unmarshal = struct
 
   (* Texts *)
 
-  let compile_text = Ml.AppE (Ml.LitE "Value.Get.text", [ Ml.VarE "v" ])
+  let expr_text_ml = Ml.AppE (Ml.LitE "Value.Get.text", [ Ml.VarE "v" ])
 
   (* Variable typs *)
 
@@ -529,23 +529,23 @@ module Unmarshal = struct
   let compile_variant (ctx : Ctx.t) (id : Sl.id) (name : string)
       (sub : Sl.typ -> Sl.typ) : Ml.expr =
     let ctors_info = Ctx.find_ctors_full ctx id in
-    let ctor_arms =
+    let arms_ctor_ml =
       List.map
         (fun (mixop, ctor_ml, payload_typs) ->
           let payload_typs' = List.map sub payload_typs in
-          let pat_str, arg_vars = mixop_value_arg_pat mixop in
-          let payload_exprs =
+          let pat_str, ids_arg_ml = mixop_value_arg_pat mixop in
+          let exprs_payload_ml =
             List.map2
-              (fun typ arg_var ->
+              (fun typ id_arg_ml ->
                 Ml.AppE
                   ( Ml.VarE ("unmarshal_" ^ interface_name typ),
-                    [ Ml.VarE arg_var ] ))
-              payload_typs' arg_vars
+                    [ Ml.VarE id_arg_ml ] ))
+              payload_typs' ids_arg_ml
           in
-          (Ml.LitP pat_str, Ml.VariantE (ctor_ml, payload_exprs)))
+          (Ml.LitP pat_str, Ml.VariantE (ctor_ml, exprs_payload_ml)))
         ctors_info
     in
-    let wild_arm =
+    let arm_wild_ml =
       ( Ml.WildP,
         Common.raise_unmatch (Printf.sprintf "unmarshal_%s: unknown case" name)
       )
@@ -554,7 +554,7 @@ module Unmarshal = struct
       ( Ml.FieldE (Ml.VarE "v", "it"),
         [
           ( Ml.VariantP (`Mono ("CaseV", [ Ml.VarP "vc_" ])),
-            Ml.MatchE (Ml.VarE "vc_", ctor_arms @ [ wild_arm ]) );
+            Ml.MatchE (Ml.VarE "vc_", arms_ctor_ml @ [ arm_wild_ml ]) );
           (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
         ] )
 
@@ -628,7 +628,7 @@ module Unmarshal = struct
     match typ.it with
     | Il.BoolT -> compile_bool
     | Il.NumT _ -> compile_num
-    | Il.TextT -> compile_text
+    | Il.TextT -> expr_text_ml
     | Il.VarT (id, targs) -> compile_var ctx id targs name
     | Il.TupleT typs -> compile_tuple name typs
     | Il.IterT (t, iter) -> compile_iter t iter

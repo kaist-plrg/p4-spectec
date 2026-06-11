@@ -20,9 +20,6 @@ type lib = {
 
 type preamble = { opts : lib; lists : lib }
 
-let empty_lib = { splits = []; combines = []; folds = []; foralls = [] }
-let empty_preamble = { opts = empty_lib; lists = empty_lib }
-
 (* Context *)
 
 type t = {
@@ -106,6 +103,9 @@ let find_binding (ctx : t) (var : Var.t) : Ml.id =
 let find_rel (ctx : t) (rid : RId.t) : Input.t = Rels.find rid ctx.rels
 
 (* Initialization *)
+
+let empty_lib = { splits = []; combines = []; folds = []; foralls = [] }
+let empty_preamble = { opts = empty_lib; lists = empty_lib }
 
 let load_def (ctx : t) (def : Sl.def) : t =
   match def.it with
