@@ -45,7 +45,9 @@ boot: restore-stub
 
 # Build SPEC_COMPILED
 
-SPEC_PATHS ?= spec
+# gen-ocaml compiles via the ML backend, so it uses the compile-optimized
+# variant (defined-function stdlib maps). The interpreter test rules use spec/p4.
+SPEC_PATHS ?= spec/p4-comp
 
 ifeq ($(firstword $(MAKECMDGOALS)),gen-ocaml)
 _gen_ocaml_paths := $(or $(filter-out gen-ocaml,$(MAKECMDGOALS)),$(SPEC_PATHS))

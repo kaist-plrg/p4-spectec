@@ -1,0 +1,51 @@
+;;
+;; General map/assoc functions — DEFINED-function versions (compile-optimized).
+;;
+
+dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+  hint(prose_in "the value associated to" %0 "in" %1)
+def $assoc_<X, Y>(X, eps) = eps
+def $assoc_<X, Y>(X, (X_h, Y_h) :: (X_t, Y_t)*) = Y_h
+  -- if X_h = X
+def $assoc_<X, Y>(X, (X_h, Y_h) :: (X_t, Y_t)*)
+  = $assoc_<X, Y>(X, (X_t, Y_t)*)
+  -- if X_h =/= X
+
+dec $find_map<K, V>(map<K, V>, K) : V?
+  hint(prose_in "the value of" %1 "in map" %0)
+def $find_map<K, V>(`{ (K_m `: V_m)* }, K)
+  = $assoc_<K, V>(K, (K_m, V_m)*)
+
+dec $find_maps<K, V>(map<K, V>*, K) : V?
+  hint(prose_in "the value of" %1 "in maps" %0)
+def $find_maps<K, V>(eps, K) = eps
+def $find_maps<K, V>(`{ (K_h `: V_h)* } :: (`{ (K_t `: V_t)* })*, K)
+  = V
+  -- if V = $find_map<K, V>(`{ (K_h `: V_h)* }, K)
+def $find_maps<K, V>(`{ (K_h `: V_h)* } :: (`{ (K_t `: V_t)* })*, K)
+  = $find_maps<K, V>(`{ (K_t `: V_t)* }*, K)
+  -- if eps = $find_map<K, V>(`{ (K_h `: V_h)* }, K)
+
+dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in %0 "with" %1 "mapped to" %2)
+def $add_map<K, V>(`{ eps }, K, V) = `{ (K `: V) }
+def $add_map<K, V>(`{ (K_h `: V_h) :: (K_t `: V_t)* }, K, V)
+  = `{ (K `: V) :: (K_t `: V_t)* }
+  -- if K_h = K
+def $add_map<K, V>(`{ (K_h `: V_h) :: (K_t `: V_t)* }, K, V)
+  = `{ (K_h `: V_h) :: (K_n `: V_n)* }
+  -- if K_h =/= K
+  -- if `{ (K_n `: V_n)* } = $add_map<K, V>(`{ (K_t `: V_t)* }, K, V)
+
+dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  hint(prose_in %0 "where each of" %1 "to" %2 "are added")
+def $adds_map<K, V>(`{ (K `: V)* }, eps, eps) = `{ (K `: V)* }
+def $adds_map<K, V>(`{ (K `: V)* }, K_h :: K_t*, V_h :: V_t*)
+  = $adds_map<K, V>(`{ (K_a `: V_a)* }, K_t*, V_t*)
+  -- if `{ (K_a `: V_a)* } = $add_map<K, V>(`{ (K `: V)* }, K_h, V_h)
+
+dec $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V>
+def $extend_map<K, V>(`{ (K_a `: V_a)* }, `{ (K_b `: V_b)* })
+  = `{ (K_c `: V_c)* }
+  -- if `{ (K_c `: V_c)* }
+      = $adds_map<K, V>(`{ (K_a `: V_a)* }, K_b*, V_b*)
