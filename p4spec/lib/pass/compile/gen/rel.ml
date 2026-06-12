@@ -4,9 +4,10 @@ open Util.Source
 
 (* Defined relations *)
 
-let compile_defined_rel (ctx : Ctx.t) (id : id) ((_, inputs) : rel_signature)
-    (exps : exp list) (block_main : block) (elseblock_opt : block option) :
-    Ctx.t * Ml.funcdef list * Ml.id option =
+let compile_defined_rel (ctx : Ctx.t) (id : id)
+    ((nottyp, inputs) : rel_signature) (exps : exp list) (block_main : block)
+    (elseblock_opt : block option) :
+    Ctx.t * Ml.funcdef list * Common.cache_entry option =
   let id_ml = Names.rel id in
   let ctx_outer = ctx in
   (* Split into input / output expressions *)
@@ -74,13 +75,26 @@ let compile_defined_rel (ctx : Ctx.t) (id : id) ((_, inputs) : rel_signature)
     (funcdef_main_ml :: Option.to_list funcdef_else_ml_opt)
     @ [ funcdef_dispatcher_ml ]
   in
-  (ctx, funcdefs_ml, Some cache_id_ml)
+  (* Cache key/value types: key = tuple of input param types; value = tuple of
+     relation output types derived from [nottyp] (the authoritative shape
+     returned by [main__], matching [eval_rel]'s dispatch). *)
+  let key_typ_ml =
+    Common.cache_typ_of
+      (List.map (fun (_, t) -> Option.value ~default:Ml.UnitT t) params_ml)
+  in
+  let val_typ_ml =
+    let typs_rel = Domain.Mixfix.args nottyp.it in
+    let _typs_input, typs_output = Hints.Input.split inputs typs_rel in
+    Common.cache_typ_of
+      (List.map (fun typ -> Type.compile_typ ~tparams:[] typ) typs_output)
+  in
+  (ctx, funcdefs_ml, Some (cache_id_ml, key_typ_ml, val_typ_ml))
 
 (* Extern relations *)
 
 let compile_extern_rel (ctx : Ctx.t) (id : id)
     ((nottyp, inputs) : rel_signature) (exps : exp list) :
-    Ctx.t * Ml.funcdef list * Ml.id option =
+    Ctx.t * Ml.funcdef list * Common.cache_entry option =
   ignore exps;
   let id_ml = Names.rel id in
   (* Derive input/output types from nottyp (authoritative source) *)
@@ -128,7 +142,8 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
   in
   (* Call extern relation and match result *)
   let expr_call_ml =
-    Ml.AppE (Ml.LitE "Extern.eval_extern_rel", [ Ml.StrE id.it; exprs_arg_ml ])
+    Ml.AppE
+      (Common.extern_field "eval_extern_rel", [ Ml.StrE id.it; exprs_arg_ml ])
   in
   let expr_result_ml =
     Ml.MatchE
@@ -148,12 +163,12 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (List.combine vars_marshal_ml exprs_marshal_ml)
       expr_result_ml
   in
-  (ctx, [ (id_ml, params_ml, None, expr_body_ml) ], None)
+  (ctx, [ (id_ml, params_ml, None, Common.deref_ctx expr_body_ml) ], None)
 
 (* Defs *)
 
 let compile_def (ctx : Ctx.t) (def : def) :
-    Ctx.t * Ml.funcdef list * Ml.id option =
+    Ctx.t * Ml.funcdef list * Common.cache_entry option =
   match def.it with
   | RelD (id, rel_sig, exps, block, elseblock_opt, _) ->
       compile_defined_rel ctx id rel_sig exps block elseblock_opt
@@ -161,22 +176,22 @@ let compile_def (ctx : Ctx.t) (def : def) :
   | _ -> (ctx, [], None)
 
 let compile_defs (ctx : Ctx.t) (defs : def list) :
-    Ctx.t * Ml.funcdef list * Ml.id list =
+    Ctx.t * Ml.funcdef list * Common.cache_entry list =
   List.fold_left
-    (fun (ctx, funcdefs_ml_acc, cache_ids_acc) def ->
-      let ctx, funcdefs_ml, cache_id_opt = compile_def ctx def in
-      let cache_ids_acc =
-        match cache_id_opt with
-        | Some id -> cache_ids_acc @ [ id ]
-        | None -> cache_ids_acc
+    (fun (ctx, funcdefs_ml_acc, cache_acc) def ->
+      let ctx, funcdefs_ml, cache_opt = compile_def ctx def in
+      let cache_acc =
+        match cache_opt with
+        | Some entry -> cache_acc @ [ entry ]
+        | None -> cache_acc
       in
-      (ctx, funcdefs_ml_acc @ funcdefs_ml, cache_ids_acc))
+      (ctx, funcdefs_ml_acc @ funcdefs_ml, cache_acc))
     (ctx, [], []) defs
 
 let compile_group (ctx : Ctx.t) (group : def list) :
-    Ctx.t * Ml.funcdef list * Ml.id list =
+    Ctx.t * Ml.funcdef list * Common.cache_entry list =
   compile_defs ctx group
 
 let compile_spec (ctx : Ctx.t) (spec : spec) :
-    Ctx.t * Ml.funcdef list * Ml.id list =
+    Ctx.t * Ml.funcdef list * Common.cache_entry list =
   compile_group ctx spec

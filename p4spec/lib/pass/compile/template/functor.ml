@@ -1,48 +1,54 @@
-(* Functor header and footer for generated OCaml *)
+(* Thin functor shell + top-level program-dispatch entry for generated OCaml.
 
-let header =
+   The heavy logic lives at module top-level, reading the per-instance context
+   [cur__]. [Make] builds its own [ctx__] from the [Interface]/[Extern] functor
+   arguments and switches [cur__] to it across the three dispatch entry points
+   via [with_ctx]. Towers nest correctly because control crosses levels only
+   through [eval_rel] / [eval_func] / [eval_program]. *)
+
+(* Top-level program dispatch — reads the current instance's parser. *)
+let eval_program =
+  {|
+let eval_program (relname__ : string) (includes__ : string list)
+    (path__ : string) : Run.program_result =
+  match (!cur__).iface.parse_program includes__ [path__] with
+  | Run.Pass value_program -> (
+      match eval_rel relname__ [ value_program ] with
+      | Run.Pass values_output -> Run.Pass values_output
+      | Run.Fail (at, msg) -> Run.Fail (`Runtime (at, msg)))
+  | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
+|}
+
+(* The public functor contract, preserved structurally. *)
+let make =
   {|
 module Make
     (Interface : Run.INTERFACE)
     (Extern : Run.EXTERN)
     () : Run.INTERP_ML = struct
 
-|}
-
-let h_module : string =
-  {|
-  module H__ = struct
-    type ('k, 'v) t = {
-      data: ('k * 'v) list array;
-      size: int;
-    }
-    let create n = { data = Array.make n []; size = n }
-    let hash k = (Hashtbl.hash_param 100 1000 k) land max_int
-    let find_opt h k =
-      let b = (hash k) mod h.size in
-      List.assoc_opt k h.data.(b)
-    let replace h k v =
-      let b = (hash k) mod h.size in
-      h.data.(b) <- (k, v) :: List.filter (fun (k2,_) -> k2 <> k) h.data.(b)
-    let clear h = Array.fill h.data 0 h.size []
-  end
-
-|}
-
-let cache_section (cache_ids : string list) : string =
-  let resets =
-    String.concat "\n      "
-      (List.map (fun id -> Printf.sprintf "H__.clear %s;" id) cache_ids)
-  in
-  Printf.sprintf
-    {|
-  let cache_enabled__ = ref false
+  let my_ctx : ctx__ = {
+    iface = {
+      checkpoint = Interface.checkpoint;
+      seff = Interface.seff;
+      call_builtin = Interface.call_builtin;
+      parse_program = Interface.parse_program;
+    };
+    extern = {
+      checkpoint = Extern.checkpoint;
+      seff = Extern.seff;
+      eval_extern_rel = Extern.eval_extern_rel;
+      eval_extern_func = Extern.eval_extern_func;
+    };
+    cache_enabled = false;
+    caches = make_caches__ ();
+  }
 
   module Cache = struct
-    let cache_on () = cache_enabled__ := true
+    let cache_on () = my_ctx.cache_enabled <- true
     let cache_off () =
-      cache_enabled__ := false;
-      %s
+      my_ctx.cache_enabled <- false;
+      clear_caches__ my_ctx.caches
   end
 
   let init ~cache ~det:_ ~guard:_ () =
@@ -50,18 +56,11 @@ let cache_section (cache_ids : string list) : string =
 
   let clear () = Cache.cache_off ()
 
-|}
-    resets
-
-let footer =
-  {|
-  let eval_program (relname__ : string) (includes__ : string list)
-      (path__ : string) : Run.program_result =
-    match Interface.parse_program includes__ [path__] with
-    | Run.Pass value_program -> (
-        match eval_rel relname__ [ value_program ] with
-        | Run.Pass values_output -> Run.Pass values_output
-        | Run.Fail (at, msg) -> Run.Fail (`Runtime (at, msg)))
-    | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
+  let eval_func name__ typs__ args__ =
+    with_ctx my_ctx (fun () -> eval_func name__ typs__ args__)
+  let eval_rel name__ args__ =
+    with_ctx my_ctx (fun () -> eval_rel name__ args__)
+  let eval_program relname__ includes__ path__ =
+    with_ctx my_ctx (fun () -> eval_program relname__ includes__ path__)
 end
 |}

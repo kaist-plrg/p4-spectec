@@ -31,10 +31,15 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
     in
     const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
   in
-  (* Functor *)
-  let ctx, toplevels_functor_ml =
+  (* Logic + dispatch + thin functor.
+
+     The heavy code now lives at module top-level (no longer inside the functor),
+     reading the per-instance context [cur__]. Order: ctx glue, then the
+     ctx-routed logic groups (topo order), then [eval_func]/[eval_rel], the
+     top-level [eval_program], and finally the thin [Make] shell. *)
+  let ctx, toplevels_logic_ml =
     let scc_groups = Scc.Call.compute spec in
-    let ctx, toplevels_groups_ml, all_cache_ids =
+    let ctx, toplevels_groups_ml, all_cache_entries =
       List.fold_left
         (fun (ctx, tops_acc, cache_acc) group ->
           let ctx, funcdefs_ml, cids_f =
@@ -53,29 +58,23 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
-    let toplevels_cache_decls_ml =
-      List.map
-        (fun cache_id -> Ml.Let (cache_id, Ml.LitE "H__.create 4096"))
-        all_cache_ids
-    in
-    let toplevels_functor_ml =
-      [ Ml.Raw Template.Functor.header; Ml.Raw Template.Functor.h_module ]
-      @ toplevels_cache_decls_ml
-      @ [ Ml.Raw (Template.Functor.cache_section all_cache_ids) ]
+    let toplevels_logic_ml =
+      [ Ml.Raw (Template.Ctx_glue.glue all_cache_entries) ]
       @ toplevels_groups_ml
       @ [
           Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
-          Ml.Raw Template.Functor.footer;
+          Ml.Raw Template.Functor.eval_program;
+          Ml.Raw Template.Functor.make;
         ]
     in
-    (ctx, toplevels_functor_ml)
+    (ctx, toplevels_logic_ml)
   in
   (* Prelude *)
   let toplevel_prelude_ml = Ml.Raw (Template.Prelude.prelude ctx) in
   (* Assemble *)
   let file_ml =
     [ toplevel_prelude_ml ] @ toplevel_typdefs_ml @ toplevels_interface_ml
-    @ toplevels_functor_ml
+    @ toplevels_logic_ml
   in
   let out_str = Ml.Print.print_file file_ml in
   let oc = open_out path_out in
