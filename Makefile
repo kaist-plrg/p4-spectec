@@ -97,6 +97,29 @@ test-sim-ml-inc:
 	cd p4spec && opam exec -- dune build test/sim/test.exe && echo
 	cd p4spec && opam exec -- dune build @sim-ml --profile=release && echo OK
 
+# Per-arch/per-tool sim ML-mode tests.
+# test-sim-<arch>-<tool>-ml      runs gen-ocaml first (two-pass).
+# test-sim-<arch>-<tool>-ml-inc  skips gen-ocaml, assumes spec_compiled.ml up to date.
+define dune-sim-ml-test
+.PHONY: test-sim-$(1)-ml test-sim-$(1)-ml-inc
+test-sim-$(1)-ml: gen-ocaml
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/sim/test.exe && echo
+	cd p4spec && opam exec -- dune build @sim-$(1)-ml --profile=release && echo OK
+
+test-sim-$(1)-ml-inc:
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build test/sim/test.exe && echo
+	cd p4spec && opam exec -- dune build @sim-$(1)-ml --profile=release && echo OK
+endef
+
+SIM_ML_TARGETS := \
+  v1model-p4c v1model-p4testgen \
+  ebpf-p4c ebpf-p4testgen \
+  psa-p4c
+
+$(foreach t,$(SIM_ML_TARGETS),$(eval $(call dune-sim-ml-test,$(t))))
+
 # Release build for EXESPEC and EXEBOOT
 
 release: restore-stub
