@@ -21,6 +21,22 @@ let rec is_iter_var_exp (exp : Sl.exp) : Var.t option =
       | None -> None)
   | _ -> None
 
+(* Optional profiling instrumentation of dispatcher wrappers.
+   Enabled at gen time by SPEC_PROF_GEN=1: wraps a dispatcher body in
+   [Runtime.Prof.wrap "<id>" (fun _ -> <body>)] so the compiled binary records
+   per-func/relation exclusive time (runtime-gated by SPEC_PROF). *)
+let prof_gen_enabled =
+  match Sys.getenv_opt "SPEC_PROF_GEN" with
+  | Some ("1" | "true") -> true
+  | _ -> false
+
+let prof_wrap (id_ml : string) (expr : Ml.expr) : Ml.expr =
+  if prof_gen_enabled then
+    Ml.AppE
+      ( Ml.LitE "Runtime.Prof.wrap",
+        [ Ml.StrE id_ml; Ml.FunE ([ Ml.WildP ], expr) ] )
+  else expr
+
 (* Raise an Unmatch exception *)
 
 let raise_unmatch (msg : string) : Ml.expr =
