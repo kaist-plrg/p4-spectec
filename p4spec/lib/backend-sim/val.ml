@@ -18,6 +18,8 @@ open Util.Source
 module type VAL = sig
   type t
 
+  val to_string : t -> string
+
   module Get : sig
     val text : t -> string
     val num : t -> Num.t
@@ -27,6 +29,14 @@ module type VAL = sig
     val tuple : t -> t list
     val case : t -> t Mixfix.t
     val extern : t -> Yojson.Safe.t
+
+    (* extractors / case-nav operators *)
+    val nth : int -> t list -> t
+    val one : t list -> t
+    val two : t list -> t * t
+    val three : t list -> t * t * t
+    val ( |>> ) : t -> string -> t list
+    val ( |>>? ) : t -> string -> t list option
   end
 
   module Make : sig
@@ -49,6 +59,8 @@ end
 module V_value : VAL with type t = Value.t = struct
   type t = Value.t
 
+  let to_string = Value.to_string
+
   module Get = struct
     let text = Value.Get.text
     let num = Value.Get.num
@@ -58,6 +70,12 @@ module V_value : VAL with type t = Value.t = struct
     let tuple = Value.Get.tuple
     let case = Value.Get.case
     let extern = Value.Get.extern
+    let nth = Value.Get.nth
+    let one = Value.Get.one
+    let two = Value.Get.two
+    let three = Value.Get.three
+    let ( |>> ) = Value.Get.( |>> )
+    let ( |>>? ) = Value.Get.( |>>? )
   end
 
   module Make = struct

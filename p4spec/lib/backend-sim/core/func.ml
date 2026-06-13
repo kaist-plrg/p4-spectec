@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 open Spec.Unpack
 open Error
 open Util.Source
@@ -21,10 +22,10 @@ module Make (Spec_Func : Spec.Func.S) = struct
     let value_callResult =
       if check then
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       else
-        Value.Make.(
+        V.Make.(
           "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult")
     in
     (value_ctx, value_arch, value_callResult)

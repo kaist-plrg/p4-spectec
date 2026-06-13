@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
 open Spec.Unpack
@@ -58,7 +59,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let init_arch_state =
     () |> arch_state_to_yojson
-    |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
+    |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
   type extern =
     | PacketIn of Core.Object.PacketIn.t
@@ -67,7 +68,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let get_extern (value_arch : Value.t) (value_oid : Value.t) : extern =
     Spec.Func.find_objectState_e value_arch value_oid
-    |> Value.Get.extern |> extern_of_yojson |> Result.get_ok
+    |> V.Get.extern |> extern_of_yojson |> Result.get_ok
 
   (* Extern calls *)
 
@@ -78,7 +79,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           (value_name, value_type_args, value_args)
       | _ -> error_no_region "unexpected number of arguments to extern init"
     in
-    let name_extern = Value.Get.text value_name_extern in
+    let name_extern = V.Get.text value_name_extern in
     match name_extern with
     | "CounterArray" ->
         let counter_array =
@@ -86,8 +87,8 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
         in
         let counter_array = CounterArray counter_array in
         counter_array |> extern_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
-    | _ -> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+    | _ -> V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -99,9 +100,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
             "unexpected number of arguments to local compile-time known extern \
              function call"
     in
-    let name_func = Value.Get.text value_name_func in
+    let name_func = V.Get.text value_name_func in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->
@@ -124,9 +125,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           error_no_region
             "unexpected number of arguments to extern function call"
     in
-    let name_func = Value.Get.text value_name_func in
+    let name_func = V.Get.text value_name_func in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
@@ -155,9 +156,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           error_no_region "unexpected number of arguments to extern method call"
     in
     let extern = get_extern value_arch value_oid in
-    let name_method = Value.Get.text value_name_method in
+    let name_method = V.Get.text value_name_method in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     let extern, value_ctx, value_arch, value_callResult =
       match (extern, name_method, names_param) with
@@ -207,7 +208,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           (counter_array, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
-            value_oid |> Value.Get.list |> List.map Value.Get.text
+            value_oid |> V.Get.list |> List.map V.Get.text
             |> String.concat "."
           in
           error_no_region
@@ -217,7 +218,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     let value_extern =
       extern |> extern_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_oid value_extern
@@ -274,7 +275,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = extern_to_yojson packet_in in
     let value_packet_in_state =
-      Value.Make.extern
+      V.Make.extern
         (Typ.Make.var ("objectState" $ no_region) [])
         packet_in_state
     in
@@ -291,7 +292,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
     let drop =
-      Value.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
+      V.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
     in
     (value_ctx, value_arch, drop)
 

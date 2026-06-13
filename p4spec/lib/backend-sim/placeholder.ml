@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
 open Error
@@ -18,10 +19,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let init_arch_state =
     () |> arch_state_to_yojson
-    |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
+    |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
   let eval_extern_init (_values_input : Value.t list) : Value.t =
-    Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
+    V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -33,9 +34,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
             "unexpected number of arguments to local compile-time known extern \
              function call"
     in
-    let name_func = Value.Get.text value_name_func in
+    let name_func = V.Get.text value_name_func in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->

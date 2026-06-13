@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 open Util.Source
 
 type t = {
@@ -22,9 +23,9 @@ let empty =
 
 let to_value (t : t) =
   t |> to_yojson
-  |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
+  |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
-let of_value (v : Value.t) = v |> Value.Get.extern |> of_yojson |> Result.get_ok
+let of_value (v : Value.t) = v |> V.Get.extern |> of_yojson |> Result.get_ok
 
 (* Queue and mirror table setters *)
 

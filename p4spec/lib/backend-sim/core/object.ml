@@ -1,6 +1,7 @@
 module Mixfix = Domain.Mixfix
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 open Spec.Pack
 open Spec.Unpack
 open Util.Source
@@ -142,10 +143,10 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       if pkt.idx + size > pkt.len then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
@@ -158,8 +159,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         in
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-          let value_eps = Value.Make.opt typ None in
-          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          let value_eps = V.Make.opt typ None in
+          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -185,9 +186,9 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
       in
       let size_varsize =
-        value_variableFieldSizeInBits |> Value.Get.case |> Mixfix.args
+        value_variableFieldSizeInBits |> V.Get.case |> Mixfix.args
         |> fun values ->
-        List.nth values 1 |> Value.Get.num
+        List.nth values 1 |> V.Get.num
         |> (function `Nat n -> n | `Int i -> i)
         |> Bigint.to_int_exn
       in
@@ -195,32 +196,32 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       if alignment <> 0 then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR"
               <| [ text "ParserInvalidArgument" ]
               <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else if pkt.idx + size > pkt.len then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else if size > size_max then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
@@ -239,8 +240,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         in
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-          let value_eps = Value.Make.opt typ None in
-          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          let value_eps = V.Make.opt typ None in
+          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -257,10 +258,10 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       if pkt.idx + size > pkt.len then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
@@ -269,8 +270,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         let value_hdr = Spec_Func.write_value_from_bits value_hdr 0 bits in
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-          let value_hdr = Value.Make.opt typ (Some value_hdr) in
-          Value.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
+          let value_hdr = V.Make.opt typ (Some value_hdr) in
+          V.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -287,10 +288,10 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       if pkt.idx + size > pkt.len then
         let value_callResult =
           let value_err =
-            Value.Make.(
+            V.Make.(
               "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
           in
-          Value.Make.(
+          V.Make.(
             "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
@@ -298,8 +299,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
         let pkt = { pkt with idx = pkt.idx + size } in
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-          let value_eps = Value.Make.opt typ None in
-          Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          let value_eps = V.Make.opt typ None in
+          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -315,8 +316,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       in
       let value_callResult =
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_length_opt = Value.Make.opt typ (Some value_length) in
-        Value.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
+        let value_length_opt = V.Make.opt typ (Some value_length) in
+        V.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
   end
@@ -331,13 +332,13 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
       let value_hdr = Spec_Func.find_var_e_local value_ctx "hdr" in
       let bits =
         Spec_Func.write_bits_from_value value_hdr
-        |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
+        |> V.Get.list |> List.map V.Get.bool |> Array.of_list
       in
       let pkt = { bits = Array.append pkt.bits bits } in
       let value_callResult =
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (pkt, value_ctx, value_arch, value_callResult)
   end

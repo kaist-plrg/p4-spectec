@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
 open Spec.Unpack
@@ -69,13 +70,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
   let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
       object_state =
     Spec.Func.find_objectState_e value_arch value_objectId
-    |> Value.Get.extern |> object_state_of_yojson |> Result.get_ok
+    |> V.Get.extern |> object_state_of_yojson |> Result.get_ok
 
   let get_ingress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "ingress_packet_in" ]
+        [ V.Make.text "ingress_packet_in" ]
     in
     match get_object_state value_arch value_objectId with
     | PacketIn packet_in -> packet_in
@@ -83,9 +84,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let get_ingress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "ingress_packet_out" ]
+        [ V.Make.text "ingress_packet_out" ]
     in
     match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
@@ -93,9 +94,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let get_egress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "egress_packet_in" ]
+        [ V.Make.text "egress_packet_in" ]
     in
     match get_object_state value_arch value_objectId with
     | PacketIn packet_in -> packet_in
@@ -103,9 +104,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let get_egress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "egress_packet_out" ]
+        [ V.Make.text "egress_packet_out" ]
     in
     match get_object_state value_arch value_objectId with
     | PacketOut packet_out -> packet_out
@@ -114,9 +115,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
   let get_register (value_arch : Value.t) (reg_name : string) :
       Object.Register.t =
     let names = String.split_on_char '.' reg_name in
-    let values_name = List.map Value.Make.text names in
+    let values_name = List.map V.Make.text names in
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
         values_name
     in
@@ -127,15 +128,15 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
   let put_register (value_arch : Value.t) (reg_name : string)
       (reg : Object.Register.t) : Value.t =
     let names = String.split_on_char '.' reg_name in
-    let values_name = List.map Value.Make.text names in
+    let values_name = List.map V.Make.text names in
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
         values_name
     in
     let value_reg =
       Register reg |> object_state_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     Spec.Func.update_objectState_e value_arch value_objectId value_reg
 
@@ -148,36 +149,36 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           (value_name, value_type_args, value_args)
       | _ -> error_no_region "unexpected number of arguments to extern init"
     in
-    let name_extern = Value.Get.text value_name_extern in
+    let name_extern = V.Get.text value_name_extern in
     match name_extern with
     | "Counter" ->
         let counter = Object.Counter.init value_type_args value_args in
         let counter = Counter counter in
         counter |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Register" ->
         let register = Object.Register.init value_type_args value_args in
         let register = Register register in
         register |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Hash" ->
         let hash = Object.HashExtern.init value_type_args value_args in
         let hash = Hash hash in
         hash |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "InternetChecksum" ->
         let checksum =
           Object.InternetChecksum.init value_type_args value_args
         in
         let checksum = InternetChecksum checksum in
         checksum |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "Meter" ->
         let meter = Object.Meter.init value_type_args value_args in
         let meter = Meter meter in
         meter |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
-    | _ -> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+    | _ -> V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
   let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_name_func, value_names_param =
@@ -189,9 +190,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
             "unexpected number of arguments to local compile-time known extern \
              function call"
     in
-    let name_func = Value.Get.text value_name_func in
+    let name_func = V.Get.text value_name_func in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->
@@ -214,9 +215,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           error_no_region
             "unexpected number of arguments to extern function call"
     in
-    let name_func = Value.Get.text value_name_func in
+    let name_func = V.Get.text value_name_func in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
@@ -253,9 +254,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           error_no_region "unexpected number of arguments to extern method call"
     in
     let obj = get_object_state value_arch value_objectId in
-    let name_method = Value.Get.text value_name_method in
+    let name_method = V.Get.text value_name_method in
     let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
+      value_names_param |> V.Get.list |> List.map V.Get.text
     in
     let extern, value_ctx, value_arch, value_callResult =
       match (obj, name_method, names_param) with
@@ -377,7 +378,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           (meter, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
-            value_objectId |> Value.Get.list |> List.map Value.Get.text
+            value_objectId |> V.Get.list |> List.map V.Get.text
             |> String.concat "."
           in
           error_no_region
@@ -387,7 +388,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     let value_obj =
       extern |> object_state_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId value_obj
@@ -461,7 +462,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       else Spec.Func.default reg.typ
     in
     (* Print register value *)
-    (* Format.printf "%s[%d] = %s\n" reg_name index (Value.to_string value); *)
+    (* Format.printf "%s[%d] = %s\n" reg_name index (V.to_string value); *)
     value_arch
 
   let register_write (value_arch : Value.t) (reg_name : string) (index : int)
@@ -494,14 +495,14 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       | Egress -> "egress_packet_in"
     in
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text id_packet_in ]
+        [ V.Make.text id_packet_in ]
     in
     let value_packet_in =
       let packet_in = PacketIn packet_in in
       packet_in |> object_state_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     modify (fun (_, value_arch, txs) ->
         let value_arch =
@@ -518,13 +519,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       in
       let packet_in = PacketIn packet_in in
       let value_objectId =
-        Value.Make.list
+        V.Make.list
           (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-          [ Value.Make.text "ingress_packet_in" ]
+          [ V.Make.text "ingress_packet_in" ]
       in
       let value_packet_in =
         packet_in |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_in
     in
@@ -536,13 +537,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       let packet_out = Core.Object.PacketOut.init () in
       let packet_out = PacketOut packet_out in
       let value_objectId =
-        Value.Make.list
+        V.Make.list
           (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-          [ Value.Make.text "ingress_packet_out" ]
+          [ V.Make.text "ingress_packet_out" ]
       in
       let value_packet_out =
         packet_out |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
     in
@@ -554,13 +555,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       let packet_out = Core.Object.PacketOut.init () in
       let packet_out = PacketOut packet_out in
       let value_objectId =
-        Value.Make.list
+        V.Make.list
           (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-          [ Value.Make.text "egress_packet_out" ]
+          [ V.Make.text "egress_packet_out" ]
       in
       let value_packet_out =
         packet_out |> object_state_to_yojson
-        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+        |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
       in
       Spec.Func.update_objectState_e value_arch value_objectId value_packet_out
     in
@@ -781,12 +782,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let value_egress_packet_in =
       PacketIn (Core.Object.PacketIn.init egress_packet_in)
       |> object_state_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "egress_packet_in" ]
+        [ V.Make.text "egress_packet_in" ]
     in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId
@@ -812,12 +813,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           let value_egress_packet_in =
             PacketIn (Core.Object.PacketIn.init egress_packet_in)
             |> object_state_to_yojson
-            |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+            |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
           in
           let value_objectId =
-            Value.Make.list
+            V.Make.list
               (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-              [ Value.Make.text "egress_packet_in" ]
+              [ V.Make.text "egress_packet_in" ]
           in
           Spec.Func.update_objectState_e value_arch value_objectId
             value_egress_packet_in
@@ -855,13 +856,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
               let egress_packet_in = get_ingress_packet_in value_arch in
               let value_egress_packet_in =
                 PacketIn egress_packet_in |> object_state_to_yojson
-                |> Value.Make.extern
+                |> V.Make.extern
                      (Typ.Make.var ("objectState" $ no_region) [])
               in
               let value_objectId =
-                Value.Make.list
+                V.Make.list
                   (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-                  [ Value.Make.text "egress_packet_in" ]
+                  [ V.Make.text "egress_packet_in" ]
               in
               Spec.Func.update_objectState_e value_arch value_objectId
                 value_egress_packet_in
@@ -909,13 +910,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
               let value_egress_packet_in =
                 PacketIn (Core.Object.PacketIn.init egress_packet_in)
                 |> object_state_to_yojson
-                |> Value.Make.extern
+                |> V.Make.extern
                      (Typ.Make.var ("objectState" $ no_region) [])
               in
               let value_objectId =
-                Value.Make.list
+                V.Make.list
                   (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-                  [ Value.Make.text "egress_packet_in" ]
+                  [ V.Make.text "egress_packet_in" ]
               in
               Spec.Func.update_objectState_e value_arch_original value_objectId
                 value_egress_packet_in
@@ -957,12 +958,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let value_ingress_packet_in =
       PacketIn (Core.Object.PacketIn.init ingress_packet_in)
       |> object_state_to_yojson
-      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+      |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     in
     let value_objectId =
-      Value.Make.list
+      V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
-        [ Value.Make.text "ingress_packet_in" ]
+        [ V.Make.text "ingress_packet_in" ]
     in
     let value_arch =
       Spec.Func.update_objectState_e value_arch value_objectId
@@ -1001,7 +1002,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
     let packet_in_state = object_state_to_yojson packet_in in
     let value_packet_in_state =
-      Value.Make.extern
+      V.Make.extern
         (Typ.Make.var ("objectState" $ no_region) [])
         packet_in_state
     in
@@ -1018,7 +1019,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let packet_out = PacketOut (Core.Object.PacketOut.init ()) in
     let packet_out_state = object_state_to_yojson packet_out in
     let value_packet_out_state =
-      Value.Make.extern
+      V.Make.extern
         (Typ.Make.var ("objectState" $ no_region) [])
         packet_out_state
     in
@@ -1045,7 +1046,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let* value_parser_result = apply Spec.Rel.psa_ingress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      Value.Get.(
+      V.Get.(
         value_parser_result |>>? "REJECT errorValue" |> function
         | Some values ->
             let value_error = one values in
@@ -1087,7 +1088,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let* value_parser_result = apply Spec.Rel.psa_egress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      Value.Get.(
+      V.Get.(
         value_parser_result |>>? "REJECT errorValue" |> function
         | Some values ->
             let value_error = one values in

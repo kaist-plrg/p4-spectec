@@ -1,4 +1,5 @@
 module Value = Runtime.Value
+module V = Val.V_value
 module IO = Runtime.Sim.Io
 
 (* Helpers for invoking relations in the spec *)
@@ -17,8 +18,8 @@ module Make () = struct
   let lvalue_read_var (value_cursor : Value.t) (value_ctx : Value.t)
       (value_arch : Value.t) (name : string) : Value.t =
     let value_storageReference =
-      let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      let value_nameIR = V.Make.text name in
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     match
       !call "Lvalue_read"
@@ -29,18 +30,18 @@ module Make () = struct
 
   let lvalue_read_var_global (value_ctx : Value.t) (value_arch : Value.t)
       (name : string) : Value.t =
-    let value_cursor = Value.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_read_var value_cursor value_ctx value_arch name
 
   let lvalue_read_dot (value_cursor : Value.t) (value_ctx : Value.t)
       (value_arch : Value.t) (name : string) (member : string) : Value.t =
     let value_prefixedNameIR =
-      let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      let value_nameIR = V.Make.text name in
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     let value_storageReference =
-      let value_memberIR = Value.Make.text member in
-      Value.Make.(
+      let value_memberIR = V.Make.text member in
+      V.Make.(
         "storageReference `. nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
         <<| "storageReference")
@@ -54,7 +55,7 @@ module Make () = struct
 
   let lvalue_read_dot_global (value_ctx : Value.t) (value_arch : Value.t)
       (name : string) (member : string) : Value.t =
-    let value_cursor = Value.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_read_dot value_cursor value_ctx value_arch name member
 
   (* Lvalue_write *)
@@ -62,8 +63,8 @@ module Make () = struct
   let lvalue_write_var (value_cursor : Value.t) (value_ctx : Value.t)
       (value_arch : Value.t) (name : string) (value_val : Value.t) : Value.t =
     let value_prefixedNameIR =
-      let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      let value_nameIR = V.Make.text name in
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     match
       !call "Lvalue_write"
@@ -76,12 +77,12 @@ module Make () = struct
       (value_arch : Value.t) (name : string) (member : string)
       (value_val : Value.t) : Value.t =
     let value_prefixedNameIR =
-      let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      let value_nameIR = V.Make.text name in
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     let value_storageReference =
-      let value_memberIR = Value.Make.text member in
-      Value.Make.(
+      let value_memberIR = V.Make.text member in
+      V.Make.(
         "storageReference `. nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
         <<| "storageReference")
@@ -97,17 +98,17 @@ module Make () = struct
 
   let lvalue_write_var_local (value_ctx : Value.t) (value_arch : Value.t)
       (name : string) (value_val : Value.t) : Value.t =
-    let value_cursor = Value.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     lvalue_write_var value_cursor value_ctx value_arch name value_val
 
   let lvalue_write_dot_global (value_ctx : Value.t) (value_arch : Value.t)
       (name : string) (member : string) (value_val : Value.t) : Value.t =
-    let value_cursor = Value.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
   let lvalue_write_dot_local (value_ctx : Value.t) (value_arch : Value.t)
       (name : string) (member : string) (value_val : Value.t) : Value.t =
-    let value_cursor = Value.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
   (* V1Model_init_packet_in/out *)
@@ -134,7 +135,7 @@ module Make () = struct
 
   let v1model_init_globals (value_ctx : Value.t) (value_arch : Value.t)
       (port : IO.port) : Value.t =
-    let value_port = port |> Bigint.of_int |> Value.Make.int in
+    let value_port = port |> Bigint.of_int |> V.Make.int in
     match
       !call "V1Model_init_globals" [ value_ctx; value_arch; value_port ]
     with
@@ -252,8 +253,8 @@ module Make () = struct
 
   let psa_ingress_init_metadata (value_ctx : Value.t) (value_arch : Value.t)
       (port : IO.port) (path : string) : Value.t =
-    let value_port = port |> Bigint.of_int |> Value.Make.int in
-    let value_path = Value.Make.text path in
+    let value_port = port |> Bigint.of_int |> V.Make.int in
+    let value_path = V.Make.text path in
     match
       !call "PSA_ingress_init_metadata"
         [ value_ctx; value_arch; value_port; value_path ]
@@ -265,7 +266,7 @@ module Make () = struct
 
   let psa_ingress_init_globals (value_ctx : Value.t) (value_arch : Value.t)
       (port : IO.port) : Value.t =
-    let value_port = port |> Bigint.of_int |> Value.Make.int in
+    let value_port = port |> Bigint.of_int |> V.Make.int in
     match
       !call "PSA_ingress_init_globals" [ value_ctx; value_arch; value_port ]
     with
@@ -319,10 +320,10 @@ module Make () = struct
 
   let psa_egress_init_metadata (value_ctx : Value.t) (value_arch : Value.t)
       (port : IO.port) (path : string) (cos : int) (inst : int) : Value.t =
-    let value_port = port |> Bigint.of_int |> Value.Make.int in
-    let value_path = Value.Make.text path in
-    let value_cos = cos |> Bigint.of_int |> Value.Make.int in
-    let value_inst = inst |> Bigint.of_int |> Value.Make.int in
+    let value_port = port |> Bigint.of_int |> V.Make.int in
+    let value_path = V.Make.text path in
+    let value_cos = cos |> Bigint.of_int |> V.Make.int in
+    let value_inst = inst |> Bigint.of_int |> V.Make.int in
     match
       !call "PSA_egress_init_metadata"
         [ value_ctx; value_arch; value_port; value_path; value_cos; value_inst ]
@@ -334,7 +335,7 @@ module Make () = struct
 
   let psa_egress_init_globals (value_ctx : Value.t) (value_arch : Value.t)
       (port : IO.port) : Value.t =
-    let value_port = port |> Bigint.of_int |> Value.Make.int in
+    let value_port = port |> Bigint.of_int |> V.Make.int in
     match
       !call "PSA_egress_init_globals" [ value_ctx; value_arch; value_port ]
     with

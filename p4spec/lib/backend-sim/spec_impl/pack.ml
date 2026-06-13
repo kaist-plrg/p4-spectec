@@ -1,4 +1,5 @@
 module Value = Runtime.Value
+module V = Val.V_value
 
 (* Packs an IL value representing a P4 value from an OCaml type *)
 
@@ -9,15 +10,15 @@ module Value = Runtime.Value
 (* D int *)
 
 let pack_p4_arbitraryInt (i : Bigint.t) : Value.t =
-  let value_int = Value.Make.int i in
-  Value.Make.("D int" <| [ value_int ] <<| "value")
+  let value_int = V.Make.int i in
+  V.Make.("D int" <| [ value_int ] <<| "value")
 
 (* nat W int *)
 
 let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
-  let value_nat = Value.Make.nat width in
-  let value_int = Value.Make.int i in
-  Value.Make.("nat W int" <| [ value_nat; value_int ] <<| "value")
+  let value_nat = V.Make.nat width in
+  let value_int = V.Make.int i in
+  V.Make.("nat W int" <| [ value_nat; value_int ] <<| "value")
 
 (* nat S int *)
 (* nat `. nat V int *)
@@ -30,9 +31,9 @@ let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
 (* tid `. id *)
 
 let pack_p4_enum (type_id : string) (name : string) : Value.t =
-  let value_tid = Value.Make.text type_id in
-  let value_id = Value.Make.text name in
-  Value.Make.("tid `. id" <| [ value_tid; value_id ] <<| "value")
+  let value_tid = V.Make.text type_id in
+  let value_id = V.Make.text name in
+  V.Make.("tid `. id" <| [ value_tid; value_id ] <<| "value")
 
 (* tid `. id `. value *)
 (* objectReferenceValue = `! oid *)

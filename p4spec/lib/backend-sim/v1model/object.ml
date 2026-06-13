@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 open Spec.Pack
 open Spec.Unpack
 open Error
@@ -59,7 +60,7 @@ module Make (Spec : Spec.S) = struct
        counter(bit<32> size, CounterType type); *)
 
     let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_size, value_type =
         match values_arg with
         | [ value_size; value_type ] -> (value_size, value_type)
@@ -139,9 +140,9 @@ module Make (Spec : Spec.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -168,7 +169,7 @@ module Make (Spec : Spec.S) = struct
        register(bit<32> size); *)
 
     let init (value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_type_arg = Value.Get.list value_type_args in
+      let values_type_arg = V.Get.list value_type_args in
       let value_type =
         match values_type_arg with
         | [ value_type ] -> value_type
@@ -179,7 +180,7 @@ module Make (Spec : Spec.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_size =
         match values_arg with
         | [ value_size ] -> value_size
@@ -226,9 +227,9 @@ module Make (Spec : Spec.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (reg, value_ctx, value_arch, value_callResult)
 
@@ -269,9 +270,9 @@ module Make (Spec : Spec.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (reg, value_ctx, value_arch, value_callResult)
   end
@@ -319,7 +320,7 @@ module Make (Spec : Spec.S) = struct
        direct_counter(CounterType type); *)
 
     let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_type =
         match values_arg with
         | [ value_type ] -> value_type
@@ -372,9 +373,9 @@ module Make (Spec : Spec.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -410,7 +411,7 @@ module Make (Spec : Spec.S) = struct
        direct_meter(MeterType type); *)
 
     let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_type =
         match values_arg with
         | [ value_type ] -> value_type
@@ -471,9 +472,9 @@ module Make (Spec : Spec.S) = struct
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
 
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (meter, value_ctx, value_sto, value_callResult)
   end

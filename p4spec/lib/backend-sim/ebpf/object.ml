@@ -1,5 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+module V = Val.V_value
 open Spec.Unpack
 open Error
 open Util.Source
@@ -29,7 +30,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
        CounterArray(bit<32> max_index, bool sparse); *)
 
     let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_max_index, value_sparse =
         match values_arg with
         | [ value_max_index; value_sparse ] -> (value_max_index, value_sparse)
@@ -64,8 +65,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
       (* Create call result *)
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -93,9 +94,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
       in
       (counter_array, value_ctx, value_sto, value_callResult)
   end
