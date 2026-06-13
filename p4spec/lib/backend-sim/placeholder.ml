@@ -1,14 +1,16 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
 open Error
 open Util.Source
 
-module Make (Spec : Spec.S) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
+  module V = Spec.V
+
+  type vt = V.t
+
   module Core = struct
-    module Func = Core.Func.Make (Spec.Func)
+    module Func = Core.Func.Make (V) (Spec.Func)
   end
 
   let transform_stf_stmt = Fun.id
@@ -21,10 +23,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     () |> arch_state_to_yojson
     |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
-  let eval_extern_init (_values_input : Value.t list) : Value.t =
+  let eval_extern_init (_values_input : V.t list) : V.t =
     V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
-  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_func_lctk_call (values_input : V.t list) : V.t list =
     let value_ctx, value_name_func, value_names_param =
       match values_input with
       | [ value_ctx; value_name_func; value_names_param ] ->
@@ -50,11 +52,11 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           ^ String.concat ", " names_param
           ^ ")")
 
-  let eval_extern_func_call (_values_input : Value.t list) : Value.t list =
+  let eval_extern_func_call (_values_input : V.t list) : V.t list =
     error_no_region
       "eval_extern_func_call not implemented for the placeholder simulator"
 
-  let eval_extern_method_call (_values_input : Value.t list) : Value.t list =
+  let eval_extern_method_call (_values_input : V.t list) : V.t list =
     error_no_region
       "eval_extern_method_call not implemented for the placeholder simulator"
 
@@ -70,49 +72,50 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   (* Multicast interface *)
 
-  let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
+  let mc_mgrp_create (_value_arch : V.t) (_mgid : int) : V.t =
     error_no_region
       "mc_mgrp_create is not implemented for the placeholder simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_ports : int list) :
-      Value.t =
+  let mc_node_create (_value_arch : V.t) (_rid : int) (_ports : int list) :
+      V.t =
     error_no_region
       "mc_node_create is not implemented for the placeholder simulator"
 
-  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
-      Value.t =
+  let mc_node_associate (_value_arch : V.t) (_mgid : int) (_handle : int) :
+      V.t =
     error_no_region
       "mc_node_associate is not implemented for the placeholder simulator"
 
   (* Register interface *)
 
-  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
-      : Value.t =
+  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int)
+      : V.t =
     error_no_region
       "register_read is not implemented for the placeholder simulator"
 
-  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
-      (_value : int) : Value.t =
+  let register_write (_value_arch : V.t) (_reg_name : string) (_index : int)
+      (_value : int) : V.t =
     error_no_region
       "register_write is not implemented for the placeholder simulator"
 
-  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+  let register_reset (_value_arch : V.t) (_reg_name : string) : V.t =
     error_no_region
       "register_reset is not implemented for the placeholder simulator"
 
   (* Pipeline initializer *)
 
   let init_pipe (_includes_p4 : string list) (_filename_p4 : string) :
-      Value.t * Value.t =
+      V.t * V.t =
     error_no_region "init_pipe not implemented for the placeholder simulator"
 
   (* Pipeline driver *)
 
-  let drive_pipe (_value_ctx : Value.t) (_value_arch : Value.t) (_rx : IO.rx) :
-      Value.t * Value.t * IO.tx list =
+  let drive_pipe (_value_ctx : V.t) (_value_arch : V.t) (_rx : IO.rx) :
+      V.t * V.t * IO.tx list =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
 
-  include Extern.Make (struct
+  include Extern.Make (V) (struct
+    type vt = V.t
     let eval_extern_init = eval_extern_init
     let eval_extern_func_lctk_call = eval_extern_func_lctk_call
     let eval_extern_func_call = eval_extern_func_call

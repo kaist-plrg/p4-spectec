@@ -1,6 +1,12 @@
 module Value = Runtime.Value
-open Spec.Pack
-open Spec.Unpack
+
+(* Cold serialized state stays on [Value.t] (the [V_value] instantiation); the
+   pipe bridges its own [vt] to/from these helpers via [V.to_value]/[of_value]. *)
+module V = Val.V_value
+module Pack = Spec.Pack.Make (V)
+module Unpack = Spec.Unpack.Make (V)
+open Pack
+open Unpack
 
 (* Packet clones *)
 

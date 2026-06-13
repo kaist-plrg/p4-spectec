@@ -1,16 +1,19 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-module V = Val.V_value
-open Spec.Pack
-open Spec.Unpack
 open Error
 open Util.Source
 
 module Make (Spec : Spec.S) = struct
+  module V = Spec.V
+  module Pack = Spec_impl.Pack.Make (V)
+  module Unpack = Spec_impl.Unpack.Make (V)
+  open Pack
+  open Unpack
+
   (* Core externs *)
 
   module Core = struct
-    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+    module Object = Core.Object.Make (V) (Spec.Func) (Spec.Rel)
   end
 
   (* Extern objects *)
@@ -59,7 +62,7 @@ module Make (Spec : Spec.S) = struct
 
        counter(bit<32> size, CounterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
       let values_arg = V.Get.list value_args in
       let value_size, value_type =
         match values_arg with
@@ -97,9 +100,9 @@ module Make (Spec : Spec.S) = struct
 
        void count(in bit<32> index); *)
 
-    let count (value_ctx : Value.t) (value_arch : Value.t)
+    let count (value_ctx : V.t) (value_arch : V.t)
         (packet_in : Core.Object.PacketIn.t) (counter : t) :
-        t * Value.t * Value.t * Value.t =
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
@@ -168,7 +171,7 @@ module Make (Spec : Spec.S) = struct
 
        register(bit<32> size); *)
 
-    let init (value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (value_type_args : V.t) (value_args : V.t) : t =
       let values_type_arg = V.Get.list value_type_args in
       let value_type =
         match values_type_arg with
@@ -193,8 +196,10 @@ module Make (Spec : Spec.S) = struct
       let value_default = Spec.Func.default value_type in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
-      let values = List.init size (fun _ -> value_default) in
-      { typ = value_type; values }
+      (* Stored register state is cold [Value.t] (serialized to the objectState
+         node); bridge the hot [vt] type/default across via [V.to_value]. *)
+      let values = List.init size (fun _ -> V.to_value value_default) in
+      { typ = V.to_value value_type; values }
 
     (* read() reads the state of the register array stored at the
        specified index, and returns it as the value written to the
@@ -211,15 +216,15 @@ module Make (Spec : Spec.S) = struct
 
        void read(out T result, in bit<32> index); *)
 
-    let read (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
-        t * Value.t * Value.t * Value.t =
+    let read (value_ctx : V.t) (value_arch : V.t) (reg : t) :
+        t * V.t * V.t * V.t =
       let value_index_target = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value =
         if index_target < List.length reg.values then
-          List.nth reg.values index_target
-        else Spec.Func.default reg.typ
+          V.of_value (List.nth reg.values index_target)
+        else Spec.Func.default (V.of_value reg.typ)
       in
       let value_ctx =
         Spec.Rel.lvalue_write_var_local value_ctx value_arch "result" value
@@ -255,15 +260,16 @@ module Make (Spec : Spec.S) = struct
                     array element specified by index.
        void write(in bit<32> index, in T value); *)
 
-    let write (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
-        t * Value.t * Value.t * Value.t =
+    let write (value_ctx : V.t) (value_arch : V.t) (reg : t) :
+        t * V.t * V.t * V.t =
       let value_index_target = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value_target = Spec.Func.find_var_e_local value_ctx "value" in
       let values =
         List.mapi
-          (fun idx value -> if idx = index_target then value_target else value)
+          (fun idx value ->
+            if idx = index_target then V.to_value value_target else value)
           reg.values
       in
       let reg = { reg with values } in
@@ -319,7 +325,7 @@ module Make (Spec : Spec.S) = struct
 
        direct_counter(CounterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
       let values_arg = V.Get.list value_args in
       let value_type =
         match values_arg with
@@ -354,9 +360,9 @@ module Make (Spec : Spec.S) = struct
 
        void count(); *)
 
-    let count (value_ctx : Value.t) (value_arch : Value.t)
+    let count (value_ctx : V.t) (value_arch : V.t)
         (packet_in : Core.Object.PacketIn.t) (counter : t) :
-        t * Value.t * Value.t * Value.t =
+        t * V.t * V.t * V.t =
       (* Update counter *)
       let counter =
         match counter with
@@ -410,7 +416,7 @@ module Make (Spec : Spec.S) = struct
 
        direct_meter(MeterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
       let values_arg = V.Get.list value_args in
       let value_type =
         match values_arg with
@@ -452,9 +458,9 @@ module Make (Spec : Spec.S) = struct
 
        void read(out T result); *)
 
-    let read (value_ctx : Value.t) (value_sto : Value.t)
+    let read (value_ctx : V.t) (value_sto : V.t)
         (_packet_in : Core.Object.PacketIn.t) (meter : t) :
-        t * Value.t * Value.t * Value.t =
+        t * V.t * V.t * V.t =
       (* Get "T" *)
       let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
       (* Get size of "T" *)

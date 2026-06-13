@@ -1,26 +1,27 @@
 open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-module V = Val.V_value
 module IO = Runtime.Sim.Io
 open Error
 open Util.Source
 
 (* Helpers for invoking functions in the spec *)
 
-module Make () = struct
+module Make (V : Val.VAL) = struct
+  type vt = V.t
+
   (* A trampoline for calling functions in the spec, which will be registered at
      initialization time. *)
 
-  type call_func = string -> Sl.typ list -> Value.t list -> Value.t
+  type call_func = string -> Sl.typ list -> vt list -> vt
 
   let call : call_func ref = ref (fun _ _ _ -> assert false)
   let register f = call := f
 
   (* write_value_from_bits *)
 
-  let write_value_from_bits (value_target : Value.t) (varsize : int)
-      (bits : bool Array.t) : Value.t =
+  let write_value_from_bits (value_target : vt) (varsize : int)
+      (bits : bool Array.t) : vt =
     let value_varsize = varsize |> Bigint.of_int |> V.Make.nat in
     let typ_bits = Typ.Make.var ("bit" $ no_region) [] |> Typ.Make.list in
     let value_bits =
@@ -31,40 +32,40 @@ module Make () = struct
 
   (* write_bits_from_value *)
 
-  let write_bits_from_value (value_source : Value.t) : Value.t =
+  let write_bits_from_value (value_source : vt) : vt =
     !call "write_bits_from_value" [] [ value_source ]
 
   (* bitacc_range_op *)
 
-  let bitacc_range_op (value_base : Value.t) (value_hi : Value.t)
-      (value_lo : Value.t) : Value.t =
+  let bitacc_range_op (value_base : vt) (value_hi : vt)
+      (value_lo : vt) : vt =
     !call "bitacc_range_op" [] [ value_base; value_hi; value_lo ]
 
   (* default *)
 
-  let default (value_typ : Value.t) : Value.t = !call "default" [] [ value_typ ]
+  let default (value_typ : vt) : vt = !call "default" [] [ value_typ ]
 
   (* cast_op *)
 
-  let cast_op (value_typ : Value.t) (value_value : Value.t) : Value.t =
+  let cast_op (value_typ : vt) (value_value : vt) : vt =
     !call "cast_op" [] [ value_typ; value_value ]
 
   (* sizeof_min/maxSizeInBits *)
 
-  let sizeof_minSizeInBits' (value_typ : Value.t) : Bigint.t =
+  let sizeof_minSizeInBits' (value_typ : vt) : Bigint.t =
     !call "sizeof_minSizeInBits'" [] [ value_typ ] |> V.Get.num |> function
     | `Nat n -> n
     | `Int i -> i
 
-  let sizeof_maxSizeInBits' (value_typ : Value.t) : Bigint.t =
+  let sizeof_maxSizeInBits' (value_typ : vt) : Bigint.t =
     !call "sizeof_maxSizeInBits'" [] [ value_typ ] |> V.Get.num |> function
     | `Nat n -> n
     | `Int i -> i
 
   (* key_interface_of_tableObject *)
 
-  let key_interface_of_tableObject (value_tableObject : Value.t) :
-      (Value.t * Value.t * Value.t) list =
+  let key_interface_of_tableObject (value_tableObject : vt) :
+      (vt * vt * vt) list =
     !call "key_interface_of_tableObject" [] [ value_tableObject ]
     |> V.Get.list
     |> List.map (fun value ->
@@ -74,10 +75,10 @@ module Make () = struct
 
   (* tableObject_add_entry *)
 
-  let tableObject_add_entry (value_ctx : Value.t) (value_tableObject : Value.t)
-      (value_tableEntryPriorityInterface : Value.t)
-      (value_tableKeysetInterface : Value.t)
-      (value_tableActionInterface : Value.t) : Value.t option =
+  let tableObject_add_entry (value_ctx : vt) (value_tableObject : vt)
+      (value_tableEntryPriorityInterface : vt)
+      (value_tableKeysetInterface : vt)
+      (value_tableActionInterface : vt) : vt option =
     !call "tableObject_add_entry" []
       [
         value_ctx;
@@ -90,69 +91,69 @@ module Make () = struct
 
   (* tableObject_add_default_action *)
 
-  let tableObject_add_default_action (value_ctx : Value.t)
-      (value_tableObject : Value.t) (value_tableActionInterface : Value.t) :
-      Value.t =
+  let tableObject_add_default_action (value_ctx : vt)
+      (value_tableObject : vt) (value_tableActionInterface : vt) :
+      vt =
     !call "tableObject_add_default_action" []
       [ value_ctx; value_tableObject; value_tableActionInterface ]
 
   (* find/update_object_qualified_e/unqualified_e *)
 
-  let find_object_qualified_e (value_arch : Value.t) (value_objectId : Value.t)
-      : Value.t option =
+  let find_object_qualified_e (value_arch : vt) (value_objectId : vt)
+      : vt option =
     !call "find_object_qualified_e" [] [ value_arch; value_objectId ]
     |> V.Get.opt
 
-  let find_object_unqualified_e (value_arch : Value.t) (value_id : Value.t) :
-      Value.t option =
+  let find_object_unqualified_e (value_arch : vt) (value_id : vt) :
+      vt option =
     !call "find_object_unqualified_e" [] [ value_arch; value_id ]
     |> V.Get.opt
 
-  let update_object_qualified_e (value_arch : Value.t)
-      (value_objectId : Value.t) (value_object : Value.t) : Value.t =
+  let update_object_qualified_e (value_arch : vt)
+      (value_objectId : vt) (value_object : vt) : vt =
     !call "update_object_qualified_e" []
       [ value_arch; value_objectId; value_object ]
 
-  let update_object_unqualified_e (value_arch : Value.t) (value_id : Value.t)
-      (value_object : Value.t) : Value.t =
+  let update_object_unqualified_e (value_arch : vt) (value_id : vt)
+      (value_object : vt) : vt =
     !call "update_object_unqualified_e" []
       [ value_arch; value_id; value_object ]
 
   (* find/update_objectState_e *)
 
-  let find_objectState_e (value_arch : Value.t) (value_objectId : Value.t) :
-      Value.t =
+  let find_objectState_e (value_arch : vt) (value_objectId : vt) :
+      vt =
     !call "find_objectState_e" [] [ value_arch; value_objectId ]
     |> V.Get.opt |> Option.get
 
-  let update_objectState_e (value_arch : Value.t) (value_objectId : Value.t)
-      (value_objectState : Value.t) : Value.t =
+  let update_objectState_e (value_arch : vt) (value_objectId : vt)
+      (value_objectState : vt) : vt =
     !call "update_objectState_e" []
       [ value_arch; value_objectId; value_objectState ]
     |> V.Get.opt |> Option.get
 
-  let find_archState_e (value_arch : Value.t) : Value.t =
+  let find_archState_e (value_arch : vt) : vt =
     !call "find_archState_e" [] [ value_arch ]
 
-  let update_archState_e (value_arch : Value.t) (value_archState : Value.t) :
-      Value.t =
+  let update_archState_e (value_arch : vt) (value_archState : vt) :
+      vt =
     !call "update_archState_e" [] [ value_arch; value_archState ]
 
   (* find_type_e *)
 
-  let find_type_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string)
-      : Value.t =
+  let find_type_e (value_cursor : vt) (value_ctx : vt) (name : string)
+      : vt =
     let value_nameIR = V.Make.text name in
     !call "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
 
-  let find_type_e_local (value_ctx : Value.t) (name : string) : Value.t =
+  let find_type_e_local (value_ctx : vt) (name : string) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     find_type_e value_cursor value_ctx name |> V.Get.opt |> Option.get
 
   (* find_var_value_t *)
 
-  let find_var_value_t (value_cursor : Value.t) (value_ctx : Value.t)
-      (name : string) : Value.t =
+  let find_var_value_t (value_cursor : vt) (value_ctx : vt)
+      (name : string) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -160,41 +161,52 @@ module Make () = struct
     !call "find_var_value_t" []
       [ value_prefixedNameIR; value_cursor; value_ctx ]
 
-  let find_var_value_t_global (value_ctx : Value.t) (name : string) : Value.t =
+  let find_var_value_t_global (value_ctx : vt) (name : string) : vt =
     let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     find_var_value_t value_cursor value_ctx name
 
-  let find_var_value_t_local (value_ctx : Value.t) (name : string) : Value.t =
+  let find_var_value_t_local (value_ctx : vt) (name : string) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     find_var_value_t value_cursor value_ctx name
 
   (* find_var_e *)
 
-  let find_var_e (value_cursor : Value.t) (value_ctx : Value.t) (name : string)
-      : Value.t =
+  let find_var_e (value_cursor : vt) (value_ctx : vt) (name : string)
+      : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     !call "find_var_e" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
-  let find_var_e_global (value_ctx : Value.t) (name : string) : Value.t =
+  let find_var_e_global (value_ctx : vt) (name : string) : vt =
     let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     find_var_e value_cursor value_ctx name
 
-  let find_var_e_local (value_ctx : Value.t) (name : string) : Value.t =
+  let find_var_e_local (value_ctx : vt) (name : string) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     find_var_e value_cursor value_ctx name
 
   (* subst_type_e *)
 
-  let subst_type_e (value_cursor : Value.t) (value_ctx : Value.t)
-      (value_typ : Value.t) : Value.t =
+  let subst_type_e (value_cursor : vt) (value_ctx : vt)
+      (value_typ : vt) : vt =
     !call "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
 
-  let subst_type_e_local (value_ctx : Value.t) (value_typ : Value.t) : Value.t =
+  let subst_type_e_local (value_ctx : vt) (value_typ : vt) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     subst_type_e value_cursor value_ctx value_typ
 end
 
-module type S = module type of Make ()
+module type S = sig
+  type vt
+
+  (* Derive the trampoline surface generically in [vt]: instantiate [Make] at a
+     [V_value] sealed to [Val.VAL] (so its [t] stays abstract), then rebind that
+     abstract result type to [vt] via destructive substitution. *)
+  include
+    module type of Make (struct
+      include Val.V_value
+    end : Val.VAL)
+    with type vt := vt
+end

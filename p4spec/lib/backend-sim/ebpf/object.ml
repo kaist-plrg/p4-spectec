@@ -1,11 +1,10 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
-open Spec.Unpack
 open Error
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
+  module Unpack = Spec.Unpack.Make (V)
+  open Unpack
   (* Extern objects *)
 
   (* CounterArray *)
@@ -29,7 +28,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        CounterArray(bit<32> max_index, bool sparse); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
       let values_arg = V.Get.list value_args in
       let value_max_index, value_sparse =
         match values_arg with
@@ -50,8 +49,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void increment(in bit<32> index); *)
 
-    let increment (value_ctx : Value.t) (value_sto : Value.t)
-        (counter_array : t) : t * Value.t * Value.t * Value.t =
+    let increment (value_ctx : V.t) (value_sto : V.t)
+        (counter_array : t) : t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
@@ -74,8 +73,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void add(in bit<32> index, in bit<32> value) *)
 
-    let add (value_ctx : Value.t) (value_sto : Value.t) (counter_array : t) :
-        t * Value.t * Value.t * Value.t =
+    let add (value_ctx : V.t) (value_sto : V.t) (counter_array : t) :
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in

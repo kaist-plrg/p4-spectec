@@ -20,6 +20,14 @@ module type VAL = sig
 
   val to_string : t -> string
 
+  (* Cold bridge to/from the concrete [Value.t] representation. Used only at
+     boundaries where value-carrying state is serialized (arch-state / extern
+     object state stored as yojson [extern] nodes), never on the hot extern
+     call/callback path. For [V_value] both are the identity; for the later
+     [V_typed] they are the (rare) marshal/unmarshal at the state-persist edge. *)
+  val to_value : t -> Value.t
+  val of_value : Value.t -> t
+
   module Get : sig
     val text : t -> string
     val num : t -> Num.t
@@ -60,6 +68,8 @@ module V_value : VAL with type t = Value.t = struct
   type t = Value.t
 
   let to_string = Value.to_string
+  let to_value = Fun.id
+  let of_value = Fun.id
 
   module Get = struct
     let text = Value.Get.text

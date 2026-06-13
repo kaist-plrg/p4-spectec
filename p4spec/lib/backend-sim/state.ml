@@ -1,12 +1,16 @@
-module Value = Runtime.Value
 module IO = Runtime.Sim.Io
 
+(* The pipeline state monad threads the live evaluation context and arch value
+   (the hot path) plus the pending transmissions. Functored over [VAL] so the
+   ctx/arch flow as [vt] (O(1) cast under [V_typed]) rather than [Value.t]. *)
+
+module Make (V : Val.VAL) = struct
 (* The state consists of:
     - current evaluation context
     - current arch
     - list of transmissions to perform *)
 
-type s = Value.t * Value.t * IO.tx list
+type s = V.t * V.t * IO.tx list
 
 (* State monad with failure *)
 
@@ -58,7 +62,7 @@ let on_result (m : 'a state) ~(some : 'a -> 'b state) ~(none : unit -> 'b state)
 
 (* Apply: apply a function to the current context and arch, updating them *)
 
-let apply (f : Value.t -> Value.t -> Value.t * Value.t * 'a) : 'a state =
+let apply (f : V.t -> V.t -> V.t * V.t * 'a) : 'a state =
   let* value_ctx, value_arch, txs = get in
   let value_ctx, value_arch, result = f value_ctx value_arch in
   let+ () = put (value_ctx, value_arch, txs) in
@@ -71,3 +75,4 @@ let guard (cond : bool) : unit state =
 
 let empty : 'a state = fun s -> (None, s)
 let run (m : 'a state) (s : s) : 'a option * s = m s
+end

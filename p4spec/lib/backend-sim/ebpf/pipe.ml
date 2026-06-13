@@ -1,23 +1,26 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
-open Spec.Unpack
 open Util.Source
 open Error
 
-module Make (Spec : Spec.S) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
+  module V = Spec.V
+  module Unpack = Spec_impl.Unpack.Make (V)
+  open Unpack
+
+  type vt = V.t
+
   (* Core externs *)
 
   module Core = struct
-    module Func = Core.Func.Make (Spec.Func)
-    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+    module Func = Core.Func.Make (V) (Spec.Func)
+    module Object = Core.Object.Make (V) (Spec.Func) (Spec.Rel)
   end
 
   (* EBPF-specific externs *)
 
-  module Object = Object.Make (Spec.Func)
+  module Object = Object.Make (V) (Spec.Func)
 
   (* STF transformation *)
 
@@ -66,13 +69,13 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | CounterArray of Object.CounterArray.t
   [@@deriving yojson]
 
-  let get_extern (value_arch : Value.t) (value_oid : Value.t) : extern =
+  let get_extern (value_arch : V.t) (value_oid : V.t) : extern =
     Spec.Func.find_objectState_e value_arch value_oid
     |> V.Get.extern |> extern_of_yojson |> Result.get_ok
 
   (* Extern calls *)
 
-  let eval_extern_init (values_input : Value.t list) : Value.t =
+  let eval_extern_init (values_input : V.t list) : V.t =
     let value_name_extern, value_type_args, value_args =
       match values_input with
       | [ value_name; value_type_args; value_args ] ->
@@ -90,7 +93,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
         |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | _ -> V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
-  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_func_lctk_call (values_input : V.t list) : V.t list =
     let value_ctx, value_name_func, value_names_param =
       match values_input with
       | [ value_ctx; value_name_func; value_names_param ] ->
@@ -116,7 +119,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           ^ String.concat ", " names_param
           ^ ")")
 
-  let eval_extern_func_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_func_call (values_input : V.t list) : V.t list =
     let value_ctx, value_arch, value_name_func, value_names_param =
       match values_input with
       | [ value_ctx; value_arch; value_name_func; value_names_param ] ->
@@ -141,7 +144,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     [ value_ctx; value_arch; value_callResult ]
 
-  let eval_extern_method_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_method_call (values_input : V.t list) : V.t list =
     let value_ctx, value_arch, value_oid, value_name_method, value_names_param =
       match values_input with
       | [
@@ -235,41 +238,42 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     error_no_region
       "add_mirror_session_mc is not implemented for the ebpf simulator"
 
-  let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
+  let mc_mgrp_create (_value_arch : V.t) (_mgid : int) : V.t =
     error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int list) :
-      Value.t =
+  let mc_node_create (_value_arch : V.t) (_rid : int) (_port : int list) :
+      V.t =
     error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
-  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
-      Value.t =
+  let mc_node_associate (_value_arch : V.t) (_mgid : int) (_handle : int) :
+      V.t =
     error_no_region
       "mc_node_associate is not implemented for the ebpf simulator"
 
   (* Register interface *)
 
-  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
-      : Value.t =
+  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int)
+      : V.t =
     error_no_region "register_read is not implemented for the ebpf simulator"
 
-  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
-      (_value : int) : Value.t =
+  let register_write (_value_arch : V.t) (_reg_name : string) (_index : int)
+      (_value : int) : V.t =
     error_no_region "register_write is not implemented for the ebpf simulator"
 
-  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+  let register_reset (_value_arch : V.t) (_reg_name : string) : V.t =
     error_no_region "register_reset is not implemented for the ebpf simulator"
 
   (* Pipeline initializer *)
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) :
-      Value.t * Value.t =
-    Spec.Pgm.ebpf_init includes_p4 filename_p4
+      V.t * V.t =
+    let value_ctx, value_arch = Spec.Pgm.ebpf_init includes_p4 filename_p4 in
+    (V.of_value value_ctx, V.of_value value_arch)
 
   (* Pipeline driver *)
 
-  let setup_rx (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
-      Value.t * Value.t =
+  let setup_rx (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) :
+      V.t * V.t =
     let _, packet_in = rx in
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
@@ -286,8 +290,8 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let value_ctx = Spec.Rel.ebpf_init_globals value_ctx value_arch in
     (value_ctx, value_arch)
 
-  let drive_prs (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * bool =
+  let drive_prs (value_ctx : V.t) (value_arch : V.t) :
+      V.t * V.t * bool =
     let value_ctx, value_arch, value_parse_result =
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
@@ -296,12 +300,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     (value_ctx, value_arch, drop)
 
-  let drive_filt (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
+  let drive_filt (value_ctx : V.t) (value_arch : V.t) :
+      V.t * V.t * V.t =
     Spec.Rel.ebpf_filter value_ctx value_arch
 
-  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx list =
+  let drive_pipe (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) :
+      V.t * V.t * IO.tx list =
     (* Setup packet *)
     let value_ctx, value_arch = setup_rx value_ctx value_arch rx in
     (* Parse block *)
@@ -320,7 +324,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       if accept then (value_ctx, value_arch, [ rx ])
       else (value_ctx, value_arch, [])
 
-  include Extern.Make (struct
+  include Extern.Make (V) (struct
+    type vt = V.t
+
     let eval_extern_init = eval_extern_init
     let eval_extern_func_lctk_call = eval_extern_func_lctk_call
     let eval_extern_func_call = eval_extern_func_call

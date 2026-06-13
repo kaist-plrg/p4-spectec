@@ -1,25 +1,30 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
 module IO = Runtime.Sim.Io
 module Sim = Runtime.Sim.Signature
-open Spec.Unpack
-open Spec.Pack
-open State
 open Error
 open Util.Source
 
-module Make (Spec : Spec.S) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
+  module V = Spec.V
+  module Pack = Spec_impl.Pack.Make (V)
+  module Unpack = Spec_impl.Unpack.Make (V)
+  module State = State.Make (V)
+  open Pack
+  open Unpack
+  open State
+
+  type vt = V.t
+
   (* Core externs *)
 
   module Core = struct
-    module Func = Core.Func.Make (Spec.Func)
-    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+    module Func = Core.Func.Make (V) (Spec.Func)
+    module Object = Core.Object.Make (V) (Spec.Func) (Spec.Rel)
   end
 
   (* PSA-specific externs *)
 
-  module Object = Object.Make (Spec.Func)
+  module Object = Object.Make (V) (Spec.Func)
 
   (* STF transformation *)
 
@@ -42,16 +47,16 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   (* Architectural state *)
 
-  let init_arch_state = Arch.empty |> Arch.to_value
+  let init_arch_state = Arch.empty |> Arch.to_value |> V.of_value
 
   let get_arch_state : Arch.t state =
     let+ _, value_arch, _ = get in
-    value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+    value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
 
   let put_arch_state (arch_state : Arch.t) : unit state =
     modify (fun (value_ctx, value_arch, txs) ->
         let value_arch =
-          arch_state |> Arch.to_value |> Spec.Func.update_archState_e value_arch
+          arch_state |> Arch.to_value |> V.of_value |> Spec.Func.update_archState_e value_arch
         in
         (value_ctx, value_arch, txs))
 
@@ -67,12 +72,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | Meter of Object.Meter.t
   [@@deriving yojson]
 
-  let get_object_state (value_arch : Value.t) (value_objectId : Value.t) :
+  let get_object_state (value_arch : V.t) (value_objectId : V.t) :
       object_state =
     Spec.Func.find_objectState_e value_arch value_objectId
     |> V.Get.extern |> object_state_of_yojson |> Result.get_ok
 
-  let get_ingress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
+  let get_ingress_packet_in (value_arch : V.t) : Core.Object.PacketIn.t =
     let value_objectId =
       V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
@@ -82,7 +87,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "ingress_packet_in extern not found"
 
-  let get_ingress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
+  let get_ingress_packet_out (value_arch : V.t) : Core.Object.PacketOut.t =
     let value_objectId =
       V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
@@ -92,7 +97,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "ingress_packet_out extern not found"
 
-  let get_egress_packet_in (value_arch : Value.t) : Core.Object.PacketIn.t =
+  let get_egress_packet_in (value_arch : V.t) : Core.Object.PacketIn.t =
     let value_objectId =
       V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
@@ -102,7 +107,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | PacketIn packet_in -> packet_in
     | _ -> error_no_region "egress_packet_in extern not found"
 
-  let get_egress_packet_out (value_arch : Value.t) : Core.Object.PacketOut.t =
+  let get_egress_packet_out (value_arch : V.t) : Core.Object.PacketOut.t =
     let value_objectId =
       V.Make.list
         (Typ.Make.list (Typ.Make.var ("id" $ no_region) []))
@@ -112,7 +117,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | PacketOut packet_out -> packet_out
     | _ -> error_no_region "egress_packet_out extern not found"
 
-  let get_register (value_arch : Value.t) (reg_name : string) :
+  let get_register (value_arch : V.t) (reg_name : string) :
       Object.Register.t =
     let names = String.split_on_char '.' reg_name in
     let values_name = List.map V.Make.text names in
@@ -125,8 +130,8 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     | Register register -> register
     | _ -> error_no_region ("Register extern " ^ reg_name ^ " not found")
 
-  let put_register (value_arch : Value.t) (reg_name : string)
-      (reg : Object.Register.t) : Value.t =
+  let put_register (value_arch : V.t) (reg_name : string)
+      (reg : Object.Register.t) : V.t =
     let names = String.split_on_char '.' reg_name in
     let values_name = List.map V.Make.text names in
     let value_objectId =
@@ -142,7 +147,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   (* Extern calls *)
 
-  let eval_extern_init (values_input : Value.t list) : Value.t =
+  let eval_extern_init (values_input : V.t list) : V.t =
     let value_name_extern, value_type_args, value_args =
       match values_input with
       | [ value_name; value_type_args; value_args ] ->
@@ -180,7 +185,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
         |> V.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | _ -> V.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
-  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_func_lctk_call (values_input : V.t list) : V.t list =
     let value_ctx, value_name_func, value_names_param =
       match values_input with
       | [ value_ctx; value_name_func; value_names_param ] ->
@@ -206,7 +211,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           ^ String.concat ", " names_param
           ^ ")")
 
-  let eval_extern_func_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_func_call (values_input : V.t list) : V.t list =
     let value_ctx, value_arch, value_name_func, value_names_param =
       match values_input with
       | [ value_ctx; value_arch; value_name_func; value_names_param ] ->
@@ -231,7 +236,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     [ value_ctx; value_arch; value_callResult ]
 
-  let eval_extern_method_call (values_input : Value.t list) : Value.t list =
+  let eval_extern_method_call (values_input : V.t list) : V.t list =
     let ( value_ctx,
           value_arch,
           value_objectId,
@@ -401,10 +406,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     error_no_region
       "add_mirror_session is not implemented for the psa simulator"
 
-  let add_mirror_session_mc (value_arch : Value.t) (session : int)
-      (multicast_group : int) : Value.t =
+  let add_mirror_session_mc (value_arch : V.t) (session : int)
+      (multicast_group : int) : V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
     in
     let mirrortable =
       Mirror.Table.add session multicast_group arch_state.mirrortable
@@ -412,24 +417,24 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     arch_state
     |> Arch.with_mirrortable mirrortable
     |> Arch.to_value
-    |> Spec.Func.update_archState_e value_arch
+    |> V.of_value |> Spec.Func.update_archState_e value_arch
 
   (* Multicast interface *)
 
-  let mc_mgrp_create (value_arch : Value.t) (mgid : int) : Value.t =
+  let mc_mgrp_create (value_arch : V.t) (mgid : int) : V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
     in
     let multicast = Multicast.State.group_create mgid arch_state.multicast in
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
-    |> Spec.Func.update_archState_e value_arch
+    |> V.of_value |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (value_arch : Value.t) (instance : int) (ports : int list)
-      : Value.t =
+  let mc_node_create (value_arch : V.t) (instance : int) (ports : int list)
+      : V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
     in
     let multicast =
       Multicast.State.node_create instance ports arch_state.multicast
@@ -437,12 +442,12 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
-    |> Spec.Func.update_archState_e value_arch
+    |> V.of_value |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_associate (value_arch : Value.t) (mgid : int) (handle : int) :
-      Value.t =
+  let mc_node_associate (value_arch : V.t) (mgid : int) (handle : int) :
+      V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
     in
     let multicast =
       Multicast.State.node_associate mgid handle arch_state.multicast
@@ -450,38 +455,40 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     arch_state
     |> Arch.with_multicast multicast
     |> Arch.to_value
-    |> Spec.Func.update_archState_e value_arch
+    |> V.of_value |> Spec.Func.update_archState_e value_arch
 
   (* Register interface *)
 
-  let register_read (value_arch : Value.t) (reg_name : string) (index : int) :
-      Value.t =
+  let register_read (value_arch : V.t) (reg_name : string) (index : int) :
+      V.t =
     let reg = get_register value_arch reg_name in
     let _value =
-      if index < List.length reg.values then List.nth reg.values index
-      else Spec.Func.default reg.typ
+      if index < List.length reg.values then
+        V.of_value (List.nth reg.values index)
+      else Spec.Func.default (V.of_value reg.typ)
     in
     (* Print register value *)
     (* Format.printf "%s[%d] = %s\n" reg_name index (V.to_string value); *)
     value_arch
 
-  let register_write (value_arch : Value.t) (reg_name : string) (index : int)
-      (value : int) : Value.t =
+  let register_write (value_arch : V.t) (reg_name : string) (index : int)
+      (value : int) : V.t =
     let reg = get_register value_arch reg_name in
     let value_value = Bigint.of_int value |> pack_p4_arbitraryInt in
-    let value_value = Spec.Func.cast_op reg.typ value_value in
+    let value_value = Spec.Func.cast_op (V.of_value reg.typ) value_value in
     let values =
       List.mapi
-        (fun idx value -> if idx = index then value_value else value)
+        (fun idx value ->
+          if idx = index then V.to_value value_value else value)
         reg.values
     in
     let reg = { reg with values } in
     put_register value_arch reg_name reg
 
-  let register_reset (value_arch : Value.t) (reg_name : string) : Value.t =
+  let register_reset (value_arch : V.t) (reg_name : string) : V.t =
     let reg = get_register value_arch reg_name in
-    let value_default = Spec.Func.default reg.typ in
-    let values = List.map (fun _ -> value_default) reg.values in
+    let value_default = Spec.Func.default (V.of_value reg.typ) in
+    let values = List.map (fun _ -> V.to_value value_default) reg.values in
     let reg = { reg with values } in
     put_register value_arch reg_name reg
 
@@ -489,6 +496,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   let insert_packet (packet : Packet.t) : unit state =
     let { packet_in; value_ctx; entrypoint } : Packet.t = packet in
+    let value_ctx = V.of_value value_ctx in
     let id_packet_in =
       match entrypoint with
       | Ingress -> "ingress_packet_in"
@@ -646,8 +654,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
   (* Pipeline initializer *)
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) :
-      Value.t * Value.t =
-    Spec.Pgm.psa_init includes_p4 filename_p4
+      V.t * V.t =
+    let value_ctx, value_arch = Spec.Pgm.psa_init includes_p4 filename_p4 in
+    (V.of_value value_ctx, V.of_value value_arch)
 
   (* Prepare context *)
 
@@ -766,7 +775,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
       | Ingress -> get_ingress_packet_in value_arch
       | Egress -> get_egress_packet_in value_arch
     in
-    let packet = Packet.{ value_ctx; packet_in; entrypoint } in
+    let packet = Packet.{ value_ctx = V.to_value value_ctx; packet_in; entrypoint } in
     let* arch_state = get_arch_state in
     let queue = Scheduler.push_back packet arch_state.queue in
     arch_state |> Arch.with_queue queue |> put_arch_state
@@ -1056,10 +1065,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     put (value_ctx, value_arch, txs)
 
-  let drive_ig : Value.t state = apply Spec.Rel.psa_ingress
-  let drive_id : Value.t state = apply Spec.Rel.psa_ingress_deparser
+  let drive_ig : V.t state = apply Spec.Rel.psa_ingress
+  let drive_id : V.t state = apply Spec.Rel.psa_ingress_deparser
 
-  let drive_ingress_pipe : Value.t state =
+  let drive_ingress_pipe : V.t state =
     drive_ip >> drive_ig >> remove_ingress_packet_out >> drive_id
 
   (* Packet replication engine *)
@@ -1098,10 +1107,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     put (value_ctx, value_arch, txs)
 
-  let drive_eg : Value.t state = apply Spec.Rel.psa_egress
-  let drive_ed : Value.t state = apply Spec.Rel.psa_egress_deparser
+  let drive_eg : V.t state = apply Spec.Rel.psa_egress
+  let drive_ed : V.t state = apply Spec.Rel.psa_egress_deparser
 
-  let drive_egress_pipe : Value.t state =
+  let drive_egress_pipe : V.t state =
     drive_ep >> drive_eg >> remove_egress_packet_out >> drive_ed
 
   (* Buffering queueing engine *)
@@ -1135,8 +1144,8 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
         Arch.(arch_state |> with_queue queue)
         |> put_arch_state >> drive_packet packet >> run_scheduler ()
 
-  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
-      Value.t * Value.t * IO.tx list =
+  let drive_pipe (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) :
+      V.t * V.t * IO.tx list =
     let pipe : unit state =
       (* Setup port and packet *)
       setup_rx rx >> schedule_packet Ingress >> run_scheduler ()
@@ -1145,7 +1154,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
     (value_ctx, value_arch, List.rev txs)
 
-  include Extern.Make (struct
+  include Extern.Make (V) (struct
+    type vt = V.t
+
     let eval_extern_init = eval_extern_init
     let eval_extern_func_lctk_call = eval_extern_func_lctk_call
     let eval_extern_func_call = eval_extern_func_call

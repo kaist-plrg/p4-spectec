@@ -13,7 +13,9 @@
  * under the License.
  *)
 
-open Spec.Unpack
+module Value = Runtime.Value
+module Unpack = Spec.Unpack.Make (Val.V_value)
+open Unpack
 
 [@@@ocamlformat "disable"]
 

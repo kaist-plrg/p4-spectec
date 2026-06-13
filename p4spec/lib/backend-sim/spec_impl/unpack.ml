@@ -1,28 +1,29 @@
 module Num = Lang.Xl.Num
-module Value = Runtime.Value
-module V = Val.V_value
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 
-let first fs x = List.find_map (fun f -> f x) fs
+module Make (V : Val.VAL) = struct
+  type vt = V.t
+
+  let first fs x = List.find_map (fun f -> f x) fs
 
 (* boolValue = `B bool *)
 
-let unpack_p4_bool (value : Value.t) : bool =
+let unpack_p4_bool (value : vt) : bool =
   V.Get.(value |>> "`B bool" |> one |> bool)
 
 (* errorValue = ERROR `. id *)
 (* matchKindValue = MATCH_KIND `. id *)
 (* stringValue = stringLiteral *)
 
-let unpack_p4_string (value : Value.t) : string =
+let unpack_p4_string (value : vt) : string =
   V.Get.(value |>> "`\" text `\"" |> one |> text)
 
 (* D int *)
 
 (* nat W int *)
 
-let unpack_p4_fixedBit (value : Value.t) : Bigint.t * Bigint.t =
+let unpack_p4_fixedBit (value : vt) : Bigint.t * Bigint.t =
   V.Get.(
     value |>> "nat W int" |> two |> fun (value_width, value_int) ->
     let width = value_width |> num |> Num.to_int in
@@ -31,7 +32,7 @@ let unpack_p4_fixedBit (value : Value.t) : Bigint.t * Bigint.t =
 
 (* nat S int *)
 
-let unpack_p4_fixedInt (value : Value.t) : Bigint.t * Bigint.t =
+let unpack_p4_fixedInt (value : vt) : Bigint.t * Bigint.t =
   V.Get.(
     value |>> "nat S int" |> two |> fun (value_width, value_int) ->
     let width = value_width |> num |> Num.to_int in
@@ -40,7 +41,7 @@ let unpack_p4_fixedInt (value : Value.t) : Bigint.t * Bigint.t =
 
 (* nat `. nat V int *)
 
-let unpack_p4_variableBit (value : Value.t) : Bigint.t * Bigint.t * Bigint.t =
+let unpack_p4_variableBit (value : vt) : Bigint.t * Bigint.t * Bigint.t =
   V.Get.(
     value |>> "nat `. nat V int" |> three
     |> fun (value_width_max, value_width, value_int) ->
@@ -49,7 +50,7 @@ let unpack_p4_variableBit (value : Value.t) : Bigint.t * Bigint.t * Bigint.t =
     let int = value_int |> num |> Num.to_int in
     (width_max, width, int))
 
-let unpack_p4_precision_numberValue (value : Value.t) : Bigint.t * Bigint.t =
+let unpack_p4_precision_numberValue (value : vt) : Bigint.t * Bigint.t =
   try unpack_p4_fixedBit value
   with _ -> (
     try unpack_p4_fixedInt value
@@ -61,7 +62,7 @@ let unpack_p4_precision_numberValue (value : Value.t) : Bigint.t * Bigint.t =
 
 (* tupleValue = TUPLE `( value* ) *)
 
-let unpack_p4_tuple (value : Value.t) : Value.t list =
+let unpack_p4_tuple (value : vt) : vt list =
   V.Get.(value |>> "TUPLE `( value* )" |> one |> list)
 
 (* headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ] *)
@@ -71,7 +72,7 @@ let unpack_p4_tuple (value : Value.t) : Value.t list =
 
 (* tid `. id *)
 
-let unpack_p4_enum (value : Value.t) : string * string =
+let unpack_p4_enum (value : vt) : string * string =
   V.Get.(
     value |>> "tid `. id" |> two |> fun (value_tid, value_id) ->
     let tid = value_tid |> text in
@@ -85,7 +86,7 @@ let unpack_p4_enum (value : Value.t) : string * string =
 
 (* SEQ `( value* ) *)
 
-let unpack_p4_sequence (value : Value.t) : Value.t list =
+let unpack_p4_sequence (value : vt) : vt list =
   V.Get.(value |>> "SEQ `( value* )" |> one |> list)
 
 (* SEQ `( value* `, `... ) *)
@@ -97,3 +98,5 @@ let unpack_p4_sequence (value : Value.t) : Value.t list =
 (* SET `{ `... } *)
 (* TABLE_ENUM tid `. id *)
 (* TABLE_STRUCT tid `{ fieldValue* } *)
+
+end

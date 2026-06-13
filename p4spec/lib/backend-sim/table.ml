@@ -1,16 +1,14 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
   module Spec = struct
     module Func = Spec_Func
   end
 
   (* Match-action table interface *)
 
-  let find_table (value_arch : Value.t) (value_tableName : Value.t) : Value.t =
+  let find_table (value_arch : V.t) (value_tableName : V.t) : V.t =
     let find_table_unqualified table_name_unqualified =
       let value_tableName_unqualified =
         V.Make.text table_name_unqualified
@@ -35,8 +33,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
             let table_name_unqualified = names |> List.rev |> List.hd in
             find_table_unqualified table_name_unqualified)
 
-  let update_table (value_arch : Value.t) (value_tableName : Value.t)
-      (value_tableObject : Value.t) : Value.t =
+  let update_table (value_arch : V.t) (value_tableName : V.t)
+      (value_tableObject : V.t) : V.t =
     let update_table_unqualified table_name_unqualified =
       let value_tableName_unqualified =
         V.Make.text table_name_unqualified
@@ -65,10 +63,10 @@ module Make (Spec_Func : Spec.Func.S) = struct
           let table_name_unqualified = names |> List.rev |> List.hd in
           update_table_unqualified table_name_unqualified
 
-  let add_entry (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableEntryPriorityInterface : Value.t)
-      (value_tableKeysetInterface : Value.t)
-      (value_tableActionInterface : Value.t) : Value.t =
+  let add_entry (value_ctx : V.t) (value_arch : V.t)
+      (value_tableName : V.t) (value_tableEntryPriorityInterface : V.t)
+      (value_tableKeysetInterface : V.t)
+      (value_tableActionInterface : V.t) : V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
@@ -118,9 +116,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
     (* Update arch with modified table object *)
     update_table value_arch value_tableName value_tableObject
 
-  let add_default_action (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
-      Value.t =
+  let add_default_action (value_ctx : V.t) (value_arch : V.t)
+      (value_tableName : V.t) (value_tableActionInterface : V.t) :
+      V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)

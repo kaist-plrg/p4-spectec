@@ -9,7 +9,7 @@ open Util.Source
 
 module Make
     (Interface : INTERFACE)
-    (MakeArch : functor (Spec : Spec.S) -> ARCH)
+    (MakeArch : functor (Spec : Spec.S) -> ARCH with type vt = Spec.V.t)
     (MakeInterp_IL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
@@ -23,9 +23,12 @@ module Make
   (* Instantiations *)
   (* Spec_ is a trampoline to allow Arch/Table to call back into the Interp modules *)
 
-  module Spec_ = Spec.Make ()
+  (* C2b instantiates the whole extern layer at [V_value] (vt = Value.t), so the
+     IL/SL trampolines register against the existing Value.t dispatch unchanged.
+     C5 will instantiate the ML path at [V_typed]. *)
+  module Spec_ = Spec.Make (Val.V_value)
   module Arch = MakeArch (Spec_)
-  module Table = Table.Make (Spec_.Func)
+  module Table = Table.Make (Val.V_value) (Spec_.Func)
 
   module MakeExtern
       (Interp_IL : INTERP_IL)

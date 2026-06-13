@@ -1,9 +1,5 @@
 module Mixfix = Domain.Mixfix
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-module V = Val.V_value
-open Spec.Pack
-open Spec.Unpack
 open Util.Source
 
 (* Bit manipulation *)
@@ -123,7 +119,16 @@ end
 
 (* Functor providing spec-dependent methods *)
 
-module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
+module Make
+    (V : Val.VAL)
+    (Spec_Func : Spec.Func.S with type vt = V.t)
+    (Spec_Rel : Spec.Rel.S with type vt = V.t) =
+struct
+  module Pack = Spec.Pack.Make (V)
+  module Unpack = Spec.Unpack.Make (V)
+  open Pack
+  open Unpack
+
   module PacketIn = struct
     include PacketIn
 
@@ -133,8 +138,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
        void extract<T>(out T hdr); *)
 
-    let extract (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let extract (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
       let size =
         Spec_Func.subst_type_e_local value_ctx value_typ
@@ -166,8 +171,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
     (* void extract<T>(out T variableSizeHeader, in bit<32> variableFieldSizeInBits); *)
 
-    let extract_varsize (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let extract_varsize (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
       let value_typ_subst = Spec_Func.subst_type_e_local value_ctx value_typ in
       let size_min =
@@ -247,8 +252,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
     (* T lookahead<T>(); *)
 
-    let lookahead (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let lookahead (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let value_typ = Spec_Func.find_type_e_local value_ctx "T" in
       let size =
         Spec_Func.subst_type_e_local value_ctx value_typ
@@ -277,8 +282,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
     (* void advance(in bit<32> sizeInBits); *)
 
-    let advance (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let advance (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let value_sizeInBits =
         Spec_Func.find_var_e_local value_ctx "sizeInBits"
       in
@@ -306,8 +311,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
     (* bit<32> length(); *)
 
-    let length (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let length (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let length =
         if pkt.len mod 8 = 0 then pkt.len / 8 else (pkt.len / 8) + 1
       in
@@ -327,8 +332,8 @@ module Make (Spec_Func : Spec.Func.S) (Spec_Rel : Spec.Rel.S) = struct
 
     (* void emit<T>(in T hdr); *)
 
-    let emit (value_ctx : Value.t) (value_arch : Value.t) (pkt : t) :
-        t * Value.t * Value.t * Value.t =
+    let emit (value_ctx : V.t) (value_arch : V.t) (pkt : t) :
+        t * V.t * V.t * V.t =
       let value_hdr = Spec_Func.find_var_e_local value_ctx "hdr" in
       let bits =
         Spec_Func.write_bits_from_value value_hdr
