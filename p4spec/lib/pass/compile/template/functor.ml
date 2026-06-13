@@ -29,32 +29,25 @@ module Make
 
   let my_ctx : ctx__ = {
     iface = {
-      checkpoint = Interface.checkpoint;
-      seff = Interface.seff;
       call_builtin = Interface.call_builtin;
       parse_program = Interface.parse_program;
     };
     extern = {
-      checkpoint = Extern.checkpoint;
-      seff = Extern.seff;
       eval_extern_rel = Extern.eval_extern_rel;
       eval_extern_func = Extern.eval_extern_func;
     };
-    cache_enabled = false;
-    caches = make_caches__ ();
   }
 
+  (* The compiled backend never memoizes; [Cache] satisfies [INTERP_ML] with
+     no-ops. *)
   module Cache = struct
-    let cache_on () = my_ctx.cache_enabled <- true
-    let cache_off () =
-      my_ctx.cache_enabled <- false;
-      clear_caches__ my_ctx.caches
+    let cache_on () = ()
+    let cache_off () = ()
   end
 
-  let init ~cache ~det:_ ~guard:_ () =
-    if cache then Cache.cache_on ()
+  let init ~cache:_ ~det:_ ~guard:_ () = ()
 
-  let clear () = Cache.cache_off ()
+  let clear () = ()
 
   let eval_func name__ typs__ args__ =
     with_ctx my_ctx (fun () -> eval_func name__ typs__ args__)

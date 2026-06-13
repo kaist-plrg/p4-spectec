@@ -39,27 +39,27 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
      top-level [eval_program], and finally the thin [Make] shell. *)
   let ctx, toplevels_logic_ml =
     let scc_groups = Scc.Call.compute spec in
-    let ctx, toplevels_groups_ml, all_cache_entries =
+    let ctx, toplevels_groups_ml =
       List.fold_left
-        (fun (ctx, tops_acc, cache_acc) group ->
-          let ctx, funcdefs_ml, cids_f =
+        (fun (ctx, tops_acc) group ->
+          let ctx, funcdefs_ml =
             Gen.Func.compile_group ctx group dispatch_table
           in
-          let ctx, reldefs_ml, cids_r = Gen.Rel.compile_group ctx group in
+          let ctx, reldefs_ml = Gen.Rel.compile_group ctx group in
           let combined = funcdefs_ml @ reldefs_ml in
           let tops_acc =
             if combined = [] then tops_acc
             else tops_acc @ [ Ml.LetRec combined ]
           in
-          (ctx, tops_acc, cache_acc @ cids_f @ cids_r))
-        (ctx, [], []) scc_groups
+          (ctx, tops_acc))
+        (ctx, []) scc_groups
     in
     let funcdef_eval_func_ml =
       Gen.Dispatch.compile_eval_func ctx spec dispatch_table
     in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     let toplevels_logic_ml =
-      [ Ml.Raw (Template.Ctx_glue.glue all_cache_entries) ]
+      [ Ml.Raw (Template.Ctx_glue.glue ()) ]
       @ toplevels_groups_ml
       @ [
           Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
