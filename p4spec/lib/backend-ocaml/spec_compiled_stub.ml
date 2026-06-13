@@ -1,8 +1,26 @@
-(* Stub — overwritten by make gen-ocaml *)
-open Util.Source
+(* Stub thin shell — copied to spec_compiled.ml by `make restore-stub`,
+   overwritten by `make gen-ocaml`. Identical in shape to the generated shell;
+   it routes through the stub [spec_parts] (compiled_stub/), whose dispatch
+   entry points fail with "run `make gen-ocaml`". *)
 module Run = Runtime.Dynamic_Runner.Signature
+open Spec_parts.Ctx
 
-module Make (_ : Run.INTERFACE) (_ : Run.EXTERN) () : Run.INTERP_ML = struct
+module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
+  Run.INTERP_ML = struct
+  let my_ctx : ctx__ =
+    {
+      iface =
+        {
+          call_builtin = Interface.call_builtin;
+          parse_program = Interface.parse_program;
+        };
+      extern =
+        {
+          eval_extern_rel = Extern.eval_extern_rel;
+          eval_extern_func = Extern.eval_extern_func;
+        };
+    }
+
   module Cache = struct
     let cache_on () = ()
     let cache_off () = ()
@@ -11,17 +29,14 @@ module Make (_ : Run.INTERFACE) (_ : Run.EXTERN) () : Run.INTERP_ML = struct
   let init ~cache:_ ~det:_ ~guard:_ () = ()
   let clear () = ()
 
-  let eval_func (_name : string) (_typs : Runtime.Type.Typ.t list)
-      (_args : Runtime.Value.t list) : Run.func_result =
-    Fail (no_region, "ML interpreter: run `make gen-ocaml` to generate it")
+  let eval_func name__ typs__ args__ =
+    with_ctx my_ctx (fun () ->
+        Spec_parts.Dispatch.eval_func name__ typs__ args__)
 
-  let eval_rel (_name : string) (_args : Runtime.Value.t list) : Run.rel_result
-      =
-    Fail (no_region, "ML interpreter: run `make gen-ocaml` to generate it")
+  let eval_rel name__ args__ =
+    with_ctx my_ctx (fun () -> Spec_parts.Dispatch.eval_rel name__ args__)
 
-  let eval_program (_relname : string) (_includes : string list)
-      (_path : string) : Run.program_result =
-    Fail
-      (`Runtime
-        (no_region, "ML interpreter: run `make gen-ocaml` to generate it"))
+  let eval_program relname__ includes__ path__ =
+    with_ctx my_ctx (fun () ->
+        Spec_parts.Dispatch.eval_program relname__ includes__ path__)
 end

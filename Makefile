@@ -16,12 +16,18 @@ EXECOMP = p4spec/_build/default/bin/comp.exe
 
 SPEC_COMPILED      = p4spec/lib/backend-ocaml/spec_compiled.ml
 SPEC_COMPILED_STUB = p4spec/lib/backend-ocaml/spec_compiled_stub.ml
+# The heavy generated spec is split across a part-library directory; restore-stub
+# swaps in a tiny committed mirror so plain `make build` stays fast.
+SPEC_COMPILED_DIR      = p4spec/lib/backend-ocaml/compiled
+SPEC_COMPILED_STUB_DIR = p4spec/lib/backend-ocaml/compiled_stub
 UNPARSE_COMPILED      = p4spec/lib/interface/p4/unparse_compiled.ml
 UNPARSE_COMPILED_STUB = p4spec/lib/interface/p4/unparse_compiled_stub.ml
 
 # Restore the compiled spec to a stub version
 
 restore-stub:
+	rm -rf $(SPEC_COMPILED_DIR)
+	cp -R $(SPEC_COMPILED_STUB_DIR) $(SPEC_COMPILED_DIR)
 	cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
 	cp $(UNPARSE_COMPILED_STUB) $(UNPARSE_COMPILED)
 
@@ -65,6 +71,7 @@ gen-ocaml: restore-stub
 # Build EXECOMP with SPEC_COMPILED
 
 ensure-spec-compiled:
+	@test -d $(SPEC_COMPILED_DIR) || cp -R $(SPEC_COMPILED_STUB_DIR) $(SPEC_COMPILED_DIR)
 	@test -f $(SPEC_COMPILED) || cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
 
 build-compiled: ensure-spec-compiled

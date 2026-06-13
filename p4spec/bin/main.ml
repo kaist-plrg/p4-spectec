@@ -793,9 +793,13 @@ let ocaml_command =
      and path_out_unparse =
        flag "-o-unparse" (optional string)
          ~doc:"output unparse_compiled .ml path (optional)"
+     and split_lines =
+       flag "-split-lines"
+         (optional_with_default 5000 int)
+         ~doc:"target lines per generated part file (default 5000)"
      in
      fun () ->
-       try Pass.compile paths_spec path_out path_out_unparse with
+       try Pass.compile paths_spec path_out path_out_unparse split_lines with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg))
