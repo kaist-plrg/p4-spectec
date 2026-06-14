@@ -224,10 +224,11 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
       in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
-      (* Register state is cold [Value.t] (serialized to the objectState node);
-         bridge the hot [vt] type/initial value across via [V.to_value]. *)
-      let values = List.init size (fun _ -> V.to_value value_initial) in
-      { typ = V.to_value value_type; values }
+      (* Register state is a real [Value.t] (yojson-serialized into the
+         objectState node); marshal the [vt] values/type by spec type (elements
+         are [value]s, the element type is a [type_ir]). *)
+      let values = List.init size (fun _ -> V.marshal "value" value_initial) in
+      { typ = V.marshal "type_ir" value_type; values }
 
     (* T read(in S index); *)
 
@@ -238,8 +239,8 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
       let index_target = Bigint.to_int_exn index_target in
       let value =
         if index_target < List.length reg.values then
-          V.of_value (List.nth reg.values index_target)
-        else Spec_Func.default (V.of_value reg.typ)
+          V.unmarshal "value" (List.nth reg.values index_target)
+        else Spec_Func.default (V.unmarshal "type_ir" reg.typ)
       in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
@@ -259,7 +260,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
       let values =
         List.mapi
           (fun idx value ->
-            if idx = index_target then V.to_value value_target else value)
+            if idx = index_target then V.marshal "value" value_target else value)
           reg.values
       in
       let reg = { reg with values } in

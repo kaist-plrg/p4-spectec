@@ -1,4 +1,7 @@
 module Num = Lang.Xl.Num
+module Mixfix = Domain.Mixfix
+module Mixop = Domain.Mixop
+module Value = Runtime.Value
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 
@@ -51,12 +54,19 @@ let unpack_p4_variableBit (value : vt) : Bigint.t * Bigint.t * Bigint.t =
     (width_max, width, int))
 
 let unpack_p4_precision_numberValue (value : vt) : Bigint.t * Bigint.t =
-  try unpack_p4_fixedBit value
-  with _ -> (
-    try unpack_p4_fixedInt value
-    with _ ->
-      let _, width, int = unpack_p4_variableBit value in
-      (width, int))
+  (* Dispatch on the actual [value] constructor. [V_typed]'s [( |>> )] projects
+     by arity WITHOUT validating the constructor, so the previous
+     [try unpack_p4_fixedBit with _ -> ...] fallback is dead under [V_typed] and
+     silently mis-reads e.g. a variableBit ("nat `. nat V int", 3 args) as a
+     fixedBit ("nat W int", 2 args), yielding the wrong (width, value). *)
+  let mixop, _ = Mixfix.split (V.Get.case value "value") in
+  let canon s = Mixop.string_of_mixop (Value.Mixops.of_string s) in
+  let m = Mixop.string_of_mixop mixop in
+  if m = canon "nat W int" then unpack_p4_fixedBit value
+  else if m = canon "nat S int" then unpack_p4_fixedInt value
+  else
+    let _, width, int = unpack_p4_variableBit value in
+    (width, int)
 
 (* listValue = LIST `[ value* ] *)
 

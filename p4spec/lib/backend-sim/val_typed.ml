@@ -35,11 +35,20 @@ module V_typed : Val.VAL with type t = Obj.t = struct
   let to_string (x : t) : string =
     Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
-  (* Cold bridge to/from [Value.t] is an identity cast: under [V_typed] the whole
-     ML pipe carries typed [Obj.t] smuggled through the [Value.t]-typed interfaces,
-     so there is nothing to marshal at the state-persist edge (C5 decision 1). *)
+  (* Transient smuggle (handed straight back to compiled code, never decoded):
+     identity cast. *)
   let to_value (x : t) : Value.t = Obj.obj x
   let of_value (v : Value.t) : t = Obj.repr v
+
+  (* Persist bridge: the typed [Obj.t] is about to be stored in a concrete
+     [Value.t]-typed, yojson-serialized field, so it must become a REAL [Value.t].
+     Dispatch a per-type [marshal_<typ>]/[unmarshal_<typ>] by the caller-supplied
+     spec type name. *)
+  let marshal (typ : string) (x : t) : Value.t =
+    Spec_parts.Dispatch.marshal_typed typ x
+
+  let unmarshal (typ : string) (v : Value.t) : t =
+    Spec_parts.Dispatch.unmarshal_typed typ v
 
   module Get = struct
     let text (x : t) : string = (Obj.obj x : string)
@@ -58,9 +67,11 @@ module V_typed : Val.VAL with type t = Obj.t = struct
     let tuple (x : t) : t list =
       if Obj.is_int x then [] else List.init (Obj.size x) (fun i -> Obj.field x i)
 
-    (* The sole [Get.case] site ([extract_varsize]) inspects a [value]; the [VAL]
-       surface carries no typename, so pin it here until C5 threads the type. *)
-    let case (x : t) : t Mixfix.t = Spec_parts.Dispatch.case_of_typed x "value"
+    (* Shallow one-level destructure of the typed variant of spec type [typ] into
+       its mixop shell (args left as typed [Obj.t]). [typ] comes from the caller
+       (the extern knows the value's spec type statically). *)
+    let case (x : t) (typ : string) : t Mixfix.t =
+      Spec_parts.Dispatch.case_of_typed x typ
 
     let extern (x : t) : Yojson.Safe.t = (Obj.obj x : Yojson.Safe.t)
 
@@ -93,13 +104,16 @@ module V_typed : Val.VAL with type t = Obj.t = struct
     let ( |>> ) (x : t) (s_mixop : string) : t list =
       args_by_arity x (Mixop.arity (Value.Mixops.of_string s_mixop))
 
-    (* Sole site: [rejectTransitionResult] (spec 8.02 [REJECT errorValue]); shape
-       it via the shallow [case_of_typed] (args stay typed [Obj.t], un-recursed)
-       and match the expected mixop by its canonical string. *)
-    let ( |>>? ) (x : t) (s_mixop : string) : t list option =
+    (* Shape [x] (whose spec type is [typ], supplied by the caller) into its mixop
+       shell and test whether it is the [s_mixop] constructor. [typ] MUST be the
+       value's actual (possibly union) type, e.g. [transitionResult] — NOT the
+       leaf [rejectTransitionResult]: a single-ctor type compiles [case_of_typed]
+       to an unchecked projection that segfaults on a different runtime ctor. A
+       union type yields a checked match. [case_of_typed] is shallow, so the
+       returned args stay typed [Obj.t], un-recursed. *)
+    let ( |>>? ) (x : t) ((s_mixop, typ) : string * string) : t list option =
       let mixop, args =
-        Mixfix.split
-          (Spec_parts.Dispatch.case_of_typed x "rejectTransitionResult")
+        Mixfix.split (Spec_parts.Dispatch.case_of_typed x typ)
       in
       let canon = Mixop.string_of_mixop (Value.Mixops.of_string s_mixop) in
       if Mixop.string_of_mixop mixop = canon then Some args else None

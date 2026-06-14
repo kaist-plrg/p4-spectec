@@ -412,7 +412,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   let insert_packet (packet : Packet.t) : unit state =
     let { packet_in; value_ctx; _ } : Packet.t = packet in
-    let value_ctx = V.of_value value_ctx in
+    (* Inverse of [schedule_packet]: the queued ctx is a real [Value.t]. *)
+    let value_ctx = V.unmarshal "eval_context" value_ctx in
     let packet_in = PacketIn packet_in in
     let value_objectId =
       V.Make.list
@@ -536,7 +537,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
       V.Get.(
-        value_parser_result |>>? "REJECT errorValue" |> function
+        value_parser_result |>>? ("REJECT errorValue", "transitionResult")
+        |> function
         | Some values ->
             let value_error = one values in
             Spec.Rel.lvalue_write_dot_global value_ctx value_arch
@@ -674,7 +676,10 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
     let* value_ctx, value_arch, _ = get in
     let packet_in = get_packet_in value_arch in
-    let value_ctx_cold = V.to_value value_ctx in
+    (* The ctx is stored in the scheduler queue ([Packet.value_ctx : Value.t]),
+       which is yojson-serialized into the archState node — so it must be a real
+       [Value.t], marshaled under [V_typed]. *)
+    let value_ctx_cold = V.marshal "eval_context" value_ctx in
     let packet =
       Packet.{ value_ctx = value_ctx_cold; packet_in; entrypoint }
     in

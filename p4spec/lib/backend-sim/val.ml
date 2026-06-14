@@ -20,13 +20,21 @@ module type VAL = sig
 
   val to_string : t -> string
 
-  (* Cold bridge to/from the concrete [Value.t] representation. Used only at
-     boundaries where value-carrying state is serialized (arch-state / extern
-     object state stored as yojson [extern] nodes), never on the hot extern
-     call/callback path. For [V_value] both are the identity; for the later
-     [V_typed] they are the (rare) marshal/unmarshal at the state-persist edge. *)
+  (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
+     interface where the value is handed straight back to compiled code and never
+     decoded (the runner bridge, [init_pipe]). Identity under both reps. *)
   val to_value : t -> Value.t
   val of_value : Value.t -> t
+
+  (* [marshal]/[unmarshal]: the PERSIST bridge for a value of (statically known)
+     spec type [typ] that is STORED into a concrete [Value.t]-typed, yojson-
+     serialized field (scheduler [Packet.value_ctx], register payloads) and
+     decoded later. Identity under [V_value]; a REAL per-type
+     marshal/unmarshal under [V_typed], because the stored [Obj.t] must become an
+     honest [Value.t] before something serializes it (see Make.extern/to_yojson).
+     [typ] is the marshal interface name, e.g. "eval_context" / "value". *)
+  val marshal : string -> t -> Value.t
+  val unmarshal : string -> Value.t -> t
 
   module Get : sig
     val text : t -> string
@@ -35,7 +43,13 @@ module type VAL = sig
     val list : t -> t list
     val opt : t -> t option
     val tuple : t -> t list
-    val case : t -> t Mixfix.t
+
+    (* [case]/[( |>>? )] take the value's spec type name as well as the mixop.
+       [V_value] ignores it (every [Value.t] case carries its mixop tag at
+       runtime); [V_typed] needs it to pick the OCaml variant projection, since a
+       bare [Obj.t] is type-erased. [( |>>? )] takes [(mixop, typ)] as a pair so
+       it stays usable infix. *)
+    val case : t -> string -> t Mixfix.t
     val extern : t -> Yojson.Safe.t
 
     (* extractors / case-nav operators *)
@@ -44,7 +58,7 @@ module type VAL = sig
     val two : t list -> t * t
     val three : t list -> t * t * t
     val ( |>> ) : t -> string -> t list
-    val ( |>>? ) : t -> string -> t list option
+    val ( |>>? ) : t -> string * string -> t list option
   end
 
   module Make : sig
@@ -71,6 +85,11 @@ module V_value : VAL with type t = Value.t = struct
   let to_value = Fun.id
   let of_value = Fun.id
 
+  (* [V_value]'s values are already [Value.t], so the persist bridge is identity;
+     the spec type name is irrelevant. *)
+  let marshal (_typ : string) (x : t) : Value.t = x
+  let unmarshal (_typ : string) (v : Value.t) : t = v
+
   module Get = struct
     let text = Value.Get.text
     let num = Value.Get.num
@@ -78,14 +97,19 @@ module V_value : VAL with type t = Value.t = struct
     let list = Value.Get.list
     let opt = Value.Get.opt
     let tuple = Value.Get.tuple
-    let case = Value.Get.case
+
+    (* The [Value.t] case carries its own mixop tag, so the spec type name is
+       redundant here and ignored. *)
+    let case (x : t) (_typ : string) : t Mixfix.t = Value.Get.case x
     let extern = Value.Get.extern
     let nth = Value.Get.nth
     let one = Value.Get.one
     let two = Value.Get.two
     let three = Value.Get.three
     let ( |>> ) = Value.Get.( |>> )
-    let ( |>>? ) = Value.Get.( |>>? )
+
+    let ( |>>? ) (x : t) ((s_mixop, _typ) : string * string) : t list option =
+      Value.Get.( |>>? ) x s_mixop
   end
 
   module Make = struct

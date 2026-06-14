@@ -465,8 +465,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let reg = get_register value_arch reg_name in
     let _value =
       if index < List.length reg.values then
-        V.of_value (List.nth reg.values index)
-      else Spec.Func.default (V.of_value reg.typ)
+        V.unmarshal "value" (List.nth reg.values index)
+      else Spec.Func.default (V.unmarshal "type_ir" reg.typ)
     in
     (* Print register value *)
     (* Format.printf "%s[%d] = %s\n" reg_name index (V.to_string value); *)
@@ -476,11 +476,11 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
       (value : int) : V.t =
     let reg = get_register value_arch reg_name in
     let value_value = Bigint.of_int value |> pack_p4_arbitraryInt in
-    let value_value = Spec.Func.cast_op (V.of_value reg.typ) value_value in
+    let value_value = Spec.Func.cast_op (V.unmarshal "type_ir" reg.typ) value_value in
     let values =
       List.mapi
         (fun idx value ->
-          if idx = index then V.to_value value_value else value)
+          if idx = index then V.marshal "value" value_value else value)
         reg.values
     in
     let reg = { reg with values } in
@@ -488,8 +488,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   let register_reset (value_arch : V.t) (reg_name : string) : V.t =
     let reg = get_register value_arch reg_name in
-    let value_default = Spec.Func.default (V.of_value reg.typ) in
-    let values = List.map (fun _ -> V.to_value value_default) reg.values in
+    let value_default = Spec.Func.default (V.unmarshal "type_ir" reg.typ) in
+    let values = List.map (fun _ -> V.marshal "value" value_default) reg.values in
     let reg = { reg with values } in
     put_register value_arch reg_name reg
 
@@ -497,7 +497,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   let insert_packet (packet : Packet.t) : unit state =
     let { packet_in; value_ctx; entrypoint } : Packet.t = packet in
-    let value_ctx = V.of_value value_ctx in
+    let value_ctx = V.unmarshal "eval_context" value_ctx in
     let id_packet_in =
       match entrypoint with
       | Ingress -> "ingress_packet_in"
@@ -776,7 +776,9 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
       | Ingress -> get_ingress_packet_in value_arch
       | Egress -> get_egress_packet_in value_arch
     in
-    let packet = Packet.{ value_ctx = V.to_value value_ctx; packet_in; entrypoint } in
+    let packet =
+      Packet.{ value_ctx = V.marshal "eval_context" value_ctx; packet_in; entrypoint }
+    in
     let* arch_state = get_arch_state in
     let queue = Scheduler.push_back packet arch_state.queue in
     arch_state |> Arch.with_queue queue |> put_arch_state
@@ -1057,7 +1059,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       V.Get.(
-        value_parser_result |>>? "REJECT errorValue" |> function
+        value_parser_result |>>? ("REJECT errorValue", "transitionResult")
+        |> function
         | Some values ->
             let value_error = one values in
             Spec.Rel.lvalue_write_dot_global value_ctx value_arch
@@ -1099,7 +1102,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       V.Get.(
-        value_parser_result |>>? "REJECT errorValue" |> function
+        value_parser_result |>>? ("REJECT errorValue", "transitionResult")
+        |> function
         | Some values ->
             let value_error = one values in
             Spec.Rel.lvalue_write_dot_global value_ctx value_arch

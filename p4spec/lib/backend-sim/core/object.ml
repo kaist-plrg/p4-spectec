@@ -191,7 +191,7 @@ struct
         |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
       in
       let size_varsize =
-        value_variableFieldSizeInBits |> V.Get.case |> Mixfix.args
+        V.Get.case value_variableFieldSizeInBits "value" |> Mixfix.args
         |> fun values ->
         List.nth values 1 |> V.Get.num
         |> (function `Nat n -> n | `Int i -> i)

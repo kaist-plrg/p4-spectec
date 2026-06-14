@@ -842,6 +842,77 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
     let sccs = Scc.Tarjan.tarjan n adj in
     List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
 
+(* All non-parametric type references declared in the spec. The typed mixop
+   bridges ([make_case_typed]/[case_of_typed]) must cover every variant type an
+   extern may construct or inspect — not just the marshal-reachable closure
+   ([collect_types]), because extern-constructed result types (e.g.
+   [returnResult], [callResult]) need not appear as a marshaled field of any I/O
+   type and so are absent from that closure. [Typed.variant_ids] filters these to
+   the variant typedefs. *)
+let all_typ_refs (spec : Sl.spec) : Sl.typ list =
+  List.filter_map
+    (fun (def : Sl.def) ->
+      match def.it with
+      | Sl.TypD (id, [], _, _) -> Some (Il.VarT (id, []) $ id.at)
+      | _ -> None)
+    spec
+
+(* Typename-indexed marshal/unmarshal dispatch. The cold state-persist edge under
+   [V_typed] holds a typed [Obj.t] in a concrete [Value.t]-typed serialized field
+   (scheduler ctx, register payloads); to make that field an honest [Value.t]
+   before it is yojson-encoded, the pipe marshals it through here by the value's
+   (statically known) spec type name. [V_value] never calls these (its values are
+   already [Value.t]). *)
+let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
+  let inames =
+    let seen : (string, unit) Hashtbl.t = Hashtbl.create 256 in
+    List.filter_map
+      (fun typ ->
+        let n = interface_name typ in
+        if Hashtbl.mem seen n then None
+        else (
+          Hashtbl.replace seen n ();
+          Some n))
+      typs
+  in
+  let marshal_arms =
+    List.map
+      (fun n ->
+        ( Ml.LitP (Printf.sprintf "%S" n),
+          Ml.AppE
+            ( Ml.VarE ("marshal_" ^ n),
+              [ Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "x" ]) ] ) ))
+      inames
+  in
+  let unmarshal_arms =
+    List.map
+      (fun n ->
+        ( Ml.LitP (Printf.sprintf "%S" n),
+          Ml.AppE
+            ( Ml.LitE "Obj.repr",
+              [ Ml.AppE (Ml.VarE ("unmarshal_" ^ n), [ Ml.VarE "v" ]) ] ) ))
+      inames
+  in
+  let wild name =
+    ( Ml.WildP,
+      Ml.AppE
+        ( Ml.LitE "failwith",
+          [
+            Ml.BinopE
+              ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "typ");
+          ] ) )
+  in
+  [
+    ( "marshal_typed",
+      [ ("typ", Some Ml.StringT); ("x", Some (Ml.NameT "Obj.t")) ],
+      Some (Ml.NameT "Value.t"),
+      Ml.MatchE (Ml.VarE "typ", marshal_arms @ [ wild "marshal_typed" ]) );
+    ( "unmarshal_typed",
+      [ ("typ", Some Ml.StringT); ("v", Some (Ml.NameT "Value.t")) ],
+      Some (Ml.NameT "Obj.t"),
+      Ml.MatchE (Ml.VarE "typ", unmarshal_arms @ [ wild "unmarshal_typed" ]) );
+  ]
+
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
     Ml.toplevel list
     * Ml.funcdef list list
@@ -852,8 +923,10 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
-  (* Typed mixop bridges (C3). Reuses [pool] so [case_of_typed]'s interned
-     mixops join [const_decls] — computed below, after this. *)
-  let typed_bridges = Typed.compile ctx pool typs in
+  (* Typed mixop bridges (C3) over ALL spec variant types (see [all_typ_refs]).
+     Reuses [pool] so [case_of_typed]'s interned mixops join [const_decls]. *)
+  let typed_bridges =
+    Typed.compile ctx pool (all_typ_refs spec) @ compile_marshal_dispatch typs
+  in
   let const_decls = List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts in
   (const_decls, marshal_groups, unmarshal_groups, typed_bridges)

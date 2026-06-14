@@ -17,14 +17,19 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
     let value_toSignal = Spec_Func.find_var_e_local value_ctx "toSignal" in
     (* If check, return and otherwise reject *)
     let check = value_check |> unpack_p4_bool in
+    (* verify's result is a [callResult] (= abortResult | returnResult); name that
+       type, not a leaf. The typename only matters under [V_typed], where
+       [make_case_typed] builds the typed variant from it; [V_value] ignores it
+       (mixop-driven). "rejectResult" was a stale name that never existed as a
+       type — harmless under [V_value], a hard failure under [V_typed]. *)
     let value_callResult =
       if check then
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| "callResult")
       else
         V.Make.(
-          "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult")
+          "REJECT errorValue" <| [ value_toSignal ] <<| "callResult")
     in
     (value_ctx, value_arch, value_callResult)
 

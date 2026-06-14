@@ -110,6 +110,10 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
       (* [marshal_value] (C5d) — the lone real marshal [V_typed.to_string] uses to
          print a [value]; stable re-export so it binds at [Spec_parts.Dispatch.*]. *)
       Ml.Let ("marshal_value", Ml.VarE "marshal_value");
+      (* Typename-indexed marshal/unmarshal (C5) — the real cold state-persist
+         bridge [V_typed.marshal]/[unmarshal] dispatch through. *)
+      Ml.Let ("marshal_typed", Ml.VarE "marshal_typed");
+      Ml.Let ("unmarshal_typed", Ml.VarE "unmarshal_typed");
     ]
   in
   (* The whole topo-ordered stream that becomes the [part_NNN.ml] files: types,

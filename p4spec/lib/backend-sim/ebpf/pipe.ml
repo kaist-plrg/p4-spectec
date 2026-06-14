@@ -296,7 +296,9 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
     let drop =
-      V.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
+      V.Get.(
+        value_parse_result |>>? ("REJECT errorValue", "transitionResult")
+        |> Option.is_some)
     in
     (value_ctx, value_arch, drop)
 
