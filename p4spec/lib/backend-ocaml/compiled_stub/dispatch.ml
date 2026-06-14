@@ -19,3 +19,14 @@ let eval_program (_relname : string) (_includes : string list) (_path : string)
   Fail
     (`Runtime
        (no_region, "ML interpreter: run `make gen-ocaml` to generate it"))
+
+(* Typed mixop bridges (C3) — re-exported by the real Dispatch from the generated
+   parts. Stubbed here so the [spec_parts] surface stays stable when the stub is
+   in place (`make build`). *)
+
+let make_case_typed (_mixop : string) (_args : Obj.t list) (_typ : string) :
+    Obj.t =
+  failwith "ML interpreter: run `make gen-ocaml` to generate it"
+
+let case_of_typed (_x : Obj.t) (_typ : string) : Obj.t Domain.Mixfix.t =
+  failwith "ML interpreter: run `make gen-ocaml` to generate it"
