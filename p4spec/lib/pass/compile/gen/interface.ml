@@ -205,7 +205,12 @@ let mixop_value_arg_pat (mixop : Mixop.t) : string * string list =
 
 (* BFS over all types reachable from function signatures *)
 
-let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
+(* Transitive marshal/unmarshal dependency closure of [seeds] — the same sub-type
+   edges [marshal_T]/[unmarshal_T] recurse along. After the C5 typed flip,
+   marshal/unmarshal are reached only from [eval_program] (the program type) and
+   the persisted state types, so generation is seeded from those (C6) instead of
+   the whole func/rel I/O surface; everything outside this closure was dead. *)
+let close_types (ctx : Ctx.t) (seeds : Sl.typ list) : Sl.typ list =
   let seen : (string, unit) Hashtbl.t = Hashtbl.create 32 in
   let queue : Sl.typ Queue.t = Queue.create () in
   let enqueue typ =
@@ -214,35 +219,7 @@ let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
       Hashtbl.replace seen name ();
       Queue.push typ queue)
   in
-  let enqueue_params params =
-    List.iter
-      (fun param ->
-        match param.it with Sl.ExpP (typ, _) -> enqueue typ | Sl.DefP _ -> ())
-      params
-  in
-  List.iter
-    (fun def ->
-      match def.it with
-      | Sl.FuncDecD (_, [], params, typ_ret, _, _, _) ->
-          enqueue_params params;
-          enqueue typ_ret
-      | Sl.BuiltinDecD (_, [], params, typ_ret, _) ->
-          enqueue_params params;
-          enqueue typ_ret
-      | Sl.ExternDecD (_, [], params, typ_ret, _) ->
-          enqueue_params params;
-          enqueue typ_ret
-      | Sl.TableDecD (_, params, typ_ret, _, _) ->
-          enqueue_params params;
-          enqueue typ_ret
-      | Sl.ExternRelD (_, (nottyp, inputs), _, _)
-      | Sl.RelD (_, (nottyp, inputs), _, _, _, _) ->
-          let typs_rel = Mixfix.args nottyp.it in
-          let typs_input, typs_output = Hints.Input.split inputs typs_rel in
-          List.iter enqueue typs_input;
-          List.iter enqueue typs_output
-      | _ -> ())
-    spec;
+  List.iter enqueue seeds;
   let result = ref [] in
   while not (Queue.is_empty queue) do
     let typ = Queue.pop queue in
@@ -844,11 +821,10 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
 
 (* All non-parametric type references declared in the spec. The typed mixop
    bridges ([make_case_typed]/[case_of_typed]) must cover every variant type an
-   extern may construct or inspect — not just the marshal-reachable closure
-   ([collect_types]), because extern-constructed result types (e.g.
-   [returnResult], [callResult]) need not appear as a marshaled field of any I/O
-   type and so are absent from that closure. [Typed.variant_ids] filters these to
-   the variant typedefs. *)
+   extern may construct or inspect — not just the marshal-reachable closure,
+   because extern-constructed result types (e.g. [returnResult], [callResult])
+   need not appear as a marshaled field of any seed type and so are absent from
+   that closure. [Typed.variant_ids] filters these to the variant typedefs. *)
 let all_typ_refs (spec : Sl.spec) : Sl.typ list =
   List.filter_map
     (fun (def : Sl.def) ->
@@ -857,24 +833,21 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
       | _ -> None)
     spec
 
-(* Typename-indexed marshal/unmarshal dispatch. The cold state-persist edge under
-   [V_typed] holds a typed [Obj.t] in a concrete [Value.t]-typed serialized field
-   (scheduler ctx, register payloads); to make that field an honest [Value.t]
-   before it is yojson-encoded, the pipe marshals it through here by the value's
-   (statically known) spec type name. [V_value] never calls these (its values are
-   already [Value.t]). *)
-let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
-  let inames =
-    let seen : (string, unit) Hashtbl.t = Hashtbl.create 256 in
-    List.filter_map
-      (fun typ ->
-        let n = interface_name typ in
-        if Hashtbl.mem seen n then None
-        else (
-          Hashtbl.replace seen n ();
-          Some n))
-      typs
-  in
+(* Spec type names (marshal interface names) of the values that the simulator
+   persists into yojson-serialized [Value.t] state under [V_typed], and so must
+   round-trip through a real marshal. This MUST stay in sync with the [V.marshal]/
+   [V.unmarshal] call sites in backend-sim (scheduler [Packet.value_ctx] →
+   [eval_context]; register payloads → [value]; register element type →
+   [type_ir]). A name not listed here fails at runtime with a clear
+   "marshal_typed: unknown type" — not a silent miscast. *)
+let persist_interface_names = [ "eval_context"; "value"; "type_ir" ]
+
+(* Typename-indexed marshal/unmarshal dispatch over exactly the persisted types.
+   The cold state-persist edge under [V_typed] holds a typed [Obj.t] in a concrete
+   [Value.t]-typed serialized field; to make that field an honest [Value.t] before
+   it is yojson-encoded, the pipe marshals it through here by the value's
+   (statically known) spec type name. [V_value] never calls these. *)
+let compile_marshal_dispatch (inames : string list) : Ml.funcdef list =
   let marshal_arms =
     List.map
       (fun n ->
@@ -918,7 +891,35 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
     * Ml.funcdef list list
     * Ml.funcdef list list
     * Ml.funcdef list =
-  let typs = collect_types ctx spec in
+  let all_refs = all_typ_refs spec in
+  (* Marshal/unmarshal are generated only for the closure of the types that still
+     cross a Value.t boundary after the C5 flip:
+       - [eval_program]'s program type ([p4program]) and the persisted state types
+         (picked out of [all_refs] by interface name, no spec-id guessing);
+       - builtin I/O — [compile_builtin_func] still marshals args / unmarshals the
+         result across the [Value.t]-typed [Interface.call_builtin] boundary
+         (builtins are not part of the typed extern flip). *)
+  let marshal_seed_inames = "p4program" :: persist_interface_names in
+  let builtin_io_seeds =
+    List.concat_map
+      (fun (def : Sl.def) ->
+        match def.it with
+        | Sl.BuiltinDecD (_, _, params, typ_ret, _) ->
+            typ_ret
+            :: List.filter_map
+                 (fun (p : Sl.param) ->
+                   match p.it with Sl.ExpP (t, _) -> Some t | _ -> None)
+                 params
+        | _ -> [])
+      spec
+  in
+  let typs =
+    close_types ctx
+      (List.filter
+         (fun t -> List.mem (interface_name t) marshal_seed_inames)
+         all_refs
+      @ builtin_io_seeds)
+  in
   let groups = compute_groups ctx typs in
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
@@ -926,7 +927,8 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
   (* Typed mixop bridges (C3) over ALL spec variant types (see [all_typ_refs]).
      Reuses [pool] so [case_of_typed]'s interned mixops join [const_decls]. *)
   let typed_bridges =
-    Typed.compile ctx pool (all_typ_refs spec) @ compile_marshal_dispatch typs
+    Typed.compile ctx pool all_refs
+    @ compile_marshal_dispatch persist_interface_names
   in
   let const_decls = List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts in
   (const_decls, marshal_groups, unmarshal_groups, typed_bridges)
