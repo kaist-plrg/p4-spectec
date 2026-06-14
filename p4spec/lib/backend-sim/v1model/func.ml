@@ -7,6 +7,7 @@ module Make (Spec : Spec.S) = struct
   module Pack = Spec_impl.Pack.Make (V)
   module Unpack = Spec_impl.Unpack.Make (V)
   module Hash = Hash.Make (V)
+  module Packet = Packet.Make (V)
   open Pack
   open Unpack
 
@@ -416,7 +417,7 @@ module Make (Spec : Spec.S) = struct
     let value_arch_state =
       value_sto |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
       |> Arch.with_resubmit
-           (Packet.ResubmitInfo.of_value (V.to_value value_index))
+           (Packet.ResubmitInfo.of_value value_index)
       |> Arch.to_value |> V.of_value
     in
     let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
@@ -456,7 +457,7 @@ module Make (Spec : Spec.S) = struct
     let value_arch_state =
       value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
       |> Arch.with_recirculate
-           (Packet.RecirculateInfo.of_value (V.to_value value_index))
+           (Packet.RecirculateInfo.of_value value_index)
       |> Arch.to_value |> V.of_value
     in
     let value_arch = Spec.Func.update_archState_e value_arch value_arch_state in
@@ -511,8 +512,7 @@ module Make (Spec : Spec.S) = struct
     let value_session = Spec.Func.find_var_e_local value_ctx "session" in
     let value_index = Spec.Func.find_var_e_local value_ctx "index" in
     let packet_clone =
-      Packet.CloneInfo.of_value
-        (V.to_value value_type, V.to_value value_session, V.to_value value_index)
+      Packet.CloneInfo.of_value (value_type, value_session, value_index)
     in
     (* mark arch state with clone information *)
     let value_arch_state =

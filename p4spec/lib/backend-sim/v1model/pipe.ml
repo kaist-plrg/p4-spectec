@@ -9,6 +9,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   module Pack = Spec_impl.Pack.Make (V)
   module Unpack = Spec_impl.Unpack.Make (V)
   module State = State.Make (V)
+  module Packet_conv = Packet.Make (V)
   open Pack
   open Unpack
   open State
@@ -584,7 +585,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
       Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
-        (V.of_value (Packet.ResubmitInfo.to_value index))
+        (Packet_conv.ResubmitInfo.to_value index)
     in
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RESUBMIT *)
     let value_ctx =
@@ -628,7 +629,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
       Spec.Rel.v1model_setup_preserved_meta_fields value_ctx value_arch
-        (V.of_value (Packet.RecirculateInfo.to_value index))
+        (Packet_conv.RecirculateInfo.to_value index)
     in
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RECIRC *)
     let value_ctx =
