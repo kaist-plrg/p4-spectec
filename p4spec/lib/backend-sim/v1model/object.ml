@@ -101,8 +101,8 @@ module Make (Spec : Spec.S) = struct
        void count(in bit<32> index); *)
 
     let count (value_ctx : V.t) (value_arch : V.t)
-        (packet_in : Core.Object.PacketIn.t) (counter : t) :
-        t * V.t * V.t * V.t =
+        (packet_in : Core.Object.PacketIn.t) (counter : t) : t * V.t * V.t * V.t
+        =
       (* Get "index" *)
       let value_index = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
@@ -362,8 +362,8 @@ module Make (Spec : Spec.S) = struct
        void count(); *)
 
     let count (value_ctx : V.t) (value_arch : V.t)
-        (packet_in : Core.Object.PacketIn.t) (counter : t) :
-        t * V.t * V.t * V.t =
+        (packet_in : Core.Object.PacketIn.t) (counter : t) : t * V.t * V.t * V.t
+        =
       (* Update counter *)
       let counter =
         match counter with
@@ -460,8 +460,8 @@ module Make (Spec : Spec.S) = struct
        void read(out T result); *)
 
     let read (value_ctx : V.t) (value_sto : V.t)
-        (_packet_in : Core.Object.PacketIn.t) (meter : t) :
-        t * V.t * V.t * V.t =
+        (_packet_in : Core.Object.PacketIn.t) (meter : t) : t * V.t * V.t * V.t
+        =
       (* Get "T" *)
       let value_typ = Spec.Func.find_type_e_local value_ctx "T" in
       (* Get size of "T" *)

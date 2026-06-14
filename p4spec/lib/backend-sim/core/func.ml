@@ -27,9 +27,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
         let value_eps = V.Make.opt typ None in
         V.Make.("RETURN value?" <| [ value_eps ] <<| "callResult")
-      else
-        V.Make.(
-          "REJECT errorValue" <| [ value_toSignal ] <<| "callResult")
+      else V.Make.("REJECT errorValue" <| [ value_toSignal ] <<| "callResult")
     in
     (value_ctx, value_arch, value_callResult)
 

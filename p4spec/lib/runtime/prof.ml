@@ -10,7 +10,9 @@
 module Time = Util.Time
 
 let enabled =
-  match Sys.getenv_opt "SPEC_PROF" with Some ("1" | "true") -> true | _ -> false
+  match Sys.getenv_opt "SPEC_PROF" with
+  | Some ("1" | "true") -> true
+  | _ -> false
 
 type stat = {
   mutable count : int;
@@ -34,7 +36,7 @@ let get (name : string) : stat =
 
 let wrap (name : string) (f : unit -> 'a) : 'a =
   if not enabled then f ()
-  else begin
+  else
     let s = get name in
     let recursive = s.depth > 0 in
     s.depth <- s.depth + 1;
@@ -58,11 +60,10 @@ let wrap (name : string) (f : unit -> 'a) : 'a =
     | exception e ->
         finish ();
         raise e
-  end
 
 let dump () : unit =
   if not enabled then ()
-  else begin
+  else
     let rows =
       Hashtbl.fold (fun name s acc -> (name, s) :: acc) tbl []
       |> List.sort (fun (_, a) (_, b) -> Float.compare b.excl a.excl)
@@ -84,6 +85,5 @@ let dump () : unit =
       rows;
     flush oc;
     if oc != stderr then close_out oc
-  end
 
 let () = if enabled then at_exit dump

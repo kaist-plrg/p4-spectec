@@ -25,8 +25,7 @@ module Make (V : Val.VAL) = struct
     let value_varsize = varsize |> Bigint.of_int |> V.Make.nat in
     let typ_bits = Typ.Make.var ("bit" $ no_region) [] |> Typ.Make.list in
     let value_bits =
-      bits |> Array.to_list |> List.map V.Make.bool
-      |> V.Make.list typ_bits
+      bits |> Array.to_list |> List.map V.Make.bool |> V.Make.list typ_bits
     in
     !call "write_value_from_bits" [] [ value_target; value_varsize; value_bits ]
 
@@ -37,8 +36,7 @@ module Make (V : Val.VAL) = struct
 
   (* bitacc_range_op *)
 
-  let bitacc_range_op (value_base : vt) (value_hi : vt)
-      (value_lo : vt) : vt =
+  let bitacc_range_op (value_base : vt) (value_hi : vt) (value_lo : vt) : vt =
     !call "bitacc_range_op" [] [ value_base; value_hi; value_lo ]
 
   (* default *)
@@ -76,8 +74,7 @@ module Make (V : Val.VAL) = struct
   (* tableObject_add_entry *)
 
   let tableObject_add_entry (value_ctx : vt) (value_tableObject : vt)
-      (value_tableEntryPriorityInterface : vt)
-      (value_tableKeysetInterface : vt)
+      (value_tableEntryPriorityInterface : vt) (value_tableKeysetInterface : vt)
       (value_tableActionInterface : vt) : vt option =
     !call "tableObject_add_entry" []
       [
@@ -91,26 +88,23 @@ module Make (V : Val.VAL) = struct
 
   (* tableObject_add_default_action *)
 
-  let tableObject_add_default_action (value_ctx : vt)
-      (value_tableObject : vt) (value_tableActionInterface : vt) :
-      vt =
+  let tableObject_add_default_action (value_ctx : vt) (value_tableObject : vt)
+      (value_tableActionInterface : vt) : vt =
     !call "tableObject_add_default_action" []
       [ value_ctx; value_tableObject; value_tableActionInterface ]
 
   (* find/update_object_qualified_e/unqualified_e *)
 
-  let find_object_qualified_e (value_arch : vt) (value_objectId : vt)
-      : vt option =
+  let find_object_qualified_e (value_arch : vt) (value_objectId : vt) :
+      vt option =
     !call "find_object_qualified_e" [] [ value_arch; value_objectId ]
     |> V.Get.opt
 
-  let find_object_unqualified_e (value_arch : vt) (value_id : vt) :
-      vt option =
-    !call "find_object_unqualified_e" [] [ value_arch; value_id ]
-    |> V.Get.opt
+  let find_object_unqualified_e (value_arch : vt) (value_id : vt) : vt option =
+    !call "find_object_unqualified_e" [] [ value_arch; value_id ] |> V.Get.opt
 
-  let update_object_qualified_e (value_arch : vt)
-      (value_objectId : vt) (value_object : vt) : vt =
+  let update_object_qualified_e (value_arch : vt) (value_objectId : vt)
+      (value_object : vt) : vt =
     !call "update_object_qualified_e" []
       [ value_arch; value_objectId; value_object ]
 
@@ -121,8 +115,7 @@ module Make (V : Val.VAL) = struct
 
   (* find/update_objectState_e *)
 
-  let find_objectState_e (value_arch : vt) (value_objectId : vt) :
-      vt =
+  let find_objectState_e (value_arch : vt) (value_objectId : vt) : vt =
     !call "find_objectState_e" [] [ value_arch; value_objectId ]
     |> V.Get.opt |> Option.get
 
@@ -135,14 +128,12 @@ module Make (V : Val.VAL) = struct
   let find_archState_e (value_arch : vt) : vt =
     !call "find_archState_e" [] [ value_arch ]
 
-  let update_archState_e (value_arch : vt) (value_archState : vt) :
-      vt =
+  let update_archState_e (value_arch : vt) (value_archState : vt) : vt =
     !call "update_archState_e" [] [ value_arch; value_archState ]
 
   (* find_type_e *)
 
-  let find_type_e (value_cursor : vt) (value_ctx : vt) (name : string)
-      : vt =
+  let find_type_e (value_cursor : vt) (value_ctx : vt) (name : string) : vt =
     let value_nameIR = V.Make.text name in
     !call "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
 
@@ -152,8 +143,8 @@ module Make (V : Val.VAL) = struct
 
   (* find_var_value_t *)
 
-  let find_var_value_t (value_cursor : vt) (value_ctx : vt)
-      (name : string) : vt =
+  let find_var_value_t (value_cursor : vt) (value_ctx : vt) (name : string) : vt
+      =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -171,8 +162,7 @@ module Make (V : Val.VAL) = struct
 
   (* find_var_e *)
 
-  let find_var_e (value_cursor : vt) (value_ctx : vt) (name : string)
-      : vt =
+  let find_var_e (value_cursor : vt) (value_ctx : vt) (name : string) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -189,8 +179,7 @@ module Make (V : Val.VAL) = struct
 
   (* subst_type_e *)
 
-  let subst_type_e (value_cursor : vt) (value_ctx : vt)
-      (value_typ : vt) : vt =
+  let subst_type_e (value_cursor : vt) (value_ctx : vt) (value_typ : vt) : vt =
     !call "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
 
   let subst_type_e_local (value_ctx : vt) (value_typ : vt) : vt =
@@ -204,9 +193,10 @@ module type S = sig
   (* Derive the trampoline surface generically in [vt]: instantiate [Make] at a
      [V_value] sealed to [Val.VAL] (so its [t] stays abstract), then rebind that
      abstract result type to [vt] via destructive substitution. *)
-  include
-    module type of Make (struct
+  include module type of Make ((
+    struct
       include Val.V_value
-    end : Val.VAL)
+    end :
+      Val.VAL))
     with type vt := vt
 end

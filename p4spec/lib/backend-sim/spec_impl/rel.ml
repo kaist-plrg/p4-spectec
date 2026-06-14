@@ -15,8 +15,8 @@ module Make (V : Val.VAL) = struct
 
   (* Lvalue_read *)
 
-  let lvalue_read_var (value_cursor : vt) (value_ctx : vt)
-      (value_arch : vt) (name : string) : vt =
+  let lvalue_read_var (value_cursor : vt) (value_ctx : vt) (value_arch : vt)
+      (name : string) : vt =
     let value_storageReference =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -28,13 +28,13 @@ module Make (V : Val.VAL) = struct
     | [ value_value ] -> value_value
     | _ -> assert false
 
-  let lvalue_read_var_global (value_ctx : vt) (value_arch : vt)
-      (name : string) : vt =
+  let lvalue_read_var_global (value_ctx : vt) (value_arch : vt) (name : string)
+      : vt =
     let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_read_var value_cursor value_ctx value_arch name
 
-  let lvalue_read_dot (value_cursor : vt) (value_ctx : vt)
-      (value_arch : vt) (name : string) (member : string) : vt =
+  let lvalue_read_dot (value_cursor : vt) (value_ctx : vt) (value_arch : vt)
+      (name : string) (member : string) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -53,15 +53,15 @@ module Make (V : Val.VAL) = struct
     | [ value_value ] -> value_value
     | _ -> assert false
 
-  let lvalue_read_dot_global (value_ctx : vt) (value_arch : vt)
-      (name : string) (member : string) : vt =
+  let lvalue_read_dot_global (value_ctx : vt) (value_arch : vt) (name : string)
+      (member : string) : vt =
     let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_read_dot value_cursor value_ctx value_arch name member
 
   (* Lvalue_write *)
 
-  let lvalue_write_var (value_cursor : vt) (value_ctx : vt)
-      (value_arch : vt) (name : string) (value_val : vt) : vt =
+  let lvalue_write_var (value_cursor : vt) (value_ctx : vt) (value_arch : vt)
+      (name : string) (value_val : vt) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -73,9 +73,8 @@ module Make (V : Val.VAL) = struct
     | [ value_ctx ] -> value_ctx
     | _ -> assert false
 
-  let lvalue_write_dot (value_cursor : vt) (value_ctx : vt)
-      (value_arch : vt) (name : string) (member : string)
-      (value_val : vt) : vt =
+  let lvalue_write_dot (value_cursor : vt) (value_ctx : vt) (value_arch : vt)
+      (name : string) (member : string) (value_val : vt) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
       V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
@@ -96,18 +95,18 @@ module Make (V : Val.VAL) = struct
     | [ value_ctx ] -> value_ctx
     | _ -> assert false
 
-  let lvalue_write_var_local (value_ctx : vt) (value_arch : vt)
-      (name : string) (value_val : vt) : vt =
+  let lvalue_write_var_local (value_ctx : vt) (value_arch : vt) (name : string)
+      (value_val : vt) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     lvalue_write_var value_cursor value_ctx value_arch name value_val
 
-  let lvalue_write_dot_global (value_ctx : vt) (value_arch : vt)
-      (name : string) (member : string) (value_val : vt) : vt =
+  let lvalue_write_dot_global (value_ctx : vt) (value_arch : vt) (name : string)
+      (member : string) (value_val : vt) : vt =
     let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
-  let lvalue_write_dot_local (value_ctx : vt) (value_arch : vt)
-      (name : string) (member : string) (value_val : vt) : vt =
+  let lvalue_write_dot_local (value_ctx : vt) (value_arch : vt) (name : string)
+      (member : string) (value_val : vt) : vt =
     let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
@@ -133,8 +132,8 @@ module Make (V : Val.VAL) = struct
 
   (* V1Model_init_globals *)
 
-  let v1model_init_globals (value_ctx : vt) (value_arch : vt)
-      (port : IO.port) : vt =
+  let v1model_init_globals (value_ctx : vt) (value_arch : vt) (port : IO.port) :
+      vt =
     let value_port = port |> Bigint.of_int |> V.Make.int in
     match
       !call "V1Model_init_globals" [ value_ctx; value_arch; value_port ]
@@ -144,50 +143,44 @@ module Make (V : Val.VAL) = struct
 
   (* V1Model_parser/verify/ig/eg/ck/dep *)
 
-  let v1model_parser (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_parser (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_parser" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_verify (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_verify (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_verify" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_ingress (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_ingress (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_ingress" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_egress (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_egress (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_egress" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_check (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_check (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_check" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_deparse (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let v1model_deparse (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "V1Model_deparse" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let v1model_setup_preserved_meta_fields (value_ctx : vt)
-      (value_arch : vt) (value_index : vt) : vt =
+  let v1model_setup_preserved_meta_fields (value_ctx : vt) (value_arch : vt)
+      (value_index : vt) : vt =
     match
       !call "V1Model_setup_preserved_meta_fields"
         [ value_ctx; value_arch; value_index ]
@@ -215,15 +208,13 @@ module Make (V : Val.VAL) = struct
 
   (* EBPF_parse/filter *)
 
-  let ebpf_parse (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let ebpf_parse (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "EBPF_parse" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let ebpf_filter (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let ebpf_filter (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "EBPF_filter" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
@@ -275,22 +266,19 @@ module Make (V : Val.VAL) = struct
 
   (* PSA_ip/ig/id *)
 
-  let psa_ingress_parser (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_ingress_parser (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_ingress_parser" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let psa_ingress (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_ingress (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_ingress" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let psa_ingress_deparser (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_ingress_deparser (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_ingress_deparser" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
@@ -344,22 +332,19 @@ module Make (V : Val.VAL) = struct
 
   (* PSA_ep/eg/ed *)
 
-  let psa_egress_parser (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_egress_parser (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_egress_parser" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let psa_egress (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_egress (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_egress" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
 
-  let psa_egress_deparser (value_ctx : vt) (value_arch : vt) :
-      vt * vt * vt =
+  let psa_egress_deparser (value_ctx : vt) (value_arch : vt) : vt * vt * vt =
     match !call "PSA_egress_deparser" [ value_ctx; value_arch ] with
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
@@ -371,9 +356,10 @@ module type S = sig
 
   (* See [Func.S]: seal [V_value] to [Val.VAL] so the derived [vt] stays abstract
      and can be rebound by destructive substitution. *)
-  include
-    module type of Make (struct
+  include module type of Make ((
+    struct
       include Val.V_value
-    end : Val.VAL)
+    end :
+      Val.VAL))
     with type vt := vt
 end

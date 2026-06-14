@@ -57,7 +57,6 @@ module V_typed : Val.VAL with type t = Obj.t = struct
        collapses the tag (e.g. [Spec_Func.sizeof_*], [extract_varsize]), so an
        arbitrary tag is safe here. *)
     let num (x : t) : Num.t = `Int (Obj.obj x : Bigint.t)
-
     let bool (x : t) : bool = (Obj.obj x : bool)
     let list (x : t) : t list = (Obj.obj x : Obj.t list)
     let opt (x : t) : t option = (Obj.obj x : Obj.t option)
@@ -65,7 +64,8 @@ module V_typed : Val.VAL with type t = Obj.t = struct
     (* A typed tuple is a plain OCaml tuple block; project its fields (a nullary
        tuple is the immediate unit). *)
     let tuple (x : t) : t list =
-      if Obj.is_int x then [] else List.init (Obj.size x) (fun i -> Obj.field x i)
+      if Obj.is_int x then []
+      else List.init (Obj.size x) (fun i -> Obj.field x i)
 
     (* Shallow one-level destructure of the typed variant of spec type [typ] into
        its mixop shell (args left as typed [Obj.t]). [typ] comes from the caller

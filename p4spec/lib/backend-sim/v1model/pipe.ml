@@ -66,7 +66,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let put_arch_state (arch_state : Arch.t) : unit state =
     modify (fun (value_ctx, value_arch, txs) ->
         let value_arch =
-          arch_state |> Arch_conv.to_value |> Spec.Func.update_archState_e value_arch
+          arch_state |> Arch_conv.to_value
+          |> Spec.Func.update_archState_e value_arch
         in
         (value_ctx, value_arch, txs))
 
@@ -81,8 +82,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     | DirectMeter of Object.DirectMeter.t
   [@@deriving yojson]
 
-  let get_object_state (value_arch : V.t) (value_objectId : V.t) :
-      object_state =
+  let get_object_state (value_arch : V.t) (value_objectId : V.t) : object_state
+      =
     Spec.Func.find_objectState_e value_arch value_objectId
     |> V.Get.extern |> object_state_of_yojson |> Result.get_ok
 
@@ -152,9 +153,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
              function call"
     in
     let name_func = V.Get.text value_name_func in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->
         [ Core.Func.static_assert ~message:true value_ctx ]
@@ -177,9 +176,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
             "unexpected number of arguments to extern function call"
     in
     let name_func = V.Get.text value_name_func in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
@@ -242,9 +239,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     in
     let obj = get_object_state value_arch value_objectId in
     let name_method = V.Get.text value_name_method in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     let obj, value_ctx, value_arch, value_callResult =
       match (obj, name_method, names_param) with
       | PacketIn packet_in, "extract", [ "hdr" ] ->
@@ -340,8 +335,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   (* Mirror table interface *)
 
-  let add_mirror_session (value_arch : V.t) (session : int) (port : int) :
-      V.t =
+  let add_mirror_session (value_arch : V.t) (session : int) (port : int) : V.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
@@ -367,8 +361,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     |> Arch_conv.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_create (value_arch : V.t) (rid : int) (ports : int list) :
-      V.t =
+  let mc_node_create (value_arch : V.t) (rid : int) (ports : int list) : V.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
@@ -380,8 +373,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     |> Arch_conv.to_value
     |> Spec.Func.update_archState_e value_arch
 
-  let mc_node_associate (value_arch : V.t) (mgid : int) (handle : int) :
-      V.t =
+  let mc_node_associate (value_arch : V.t) (mgid : int) (handle : int) : V.t =
     let arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
@@ -395,8 +387,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   (* Register interface *)
 
-  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int)
-      : V.t =
+  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int) :
+      V.t =
     error_no_region "register_read is not implemented for the v1model simulator"
 
   let register_write (_value_arch : V.t) (_reg_name : string) (_index : int)
@@ -491,8 +483,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
-      V.t * V.t =
+  let init_pipe (includes_p4 : string list) (filename_p4 : string) : V.t * V.t =
     let value_ctx, value_arch = Spec.Pgm.v1model_init includes_p4 filename_p4 in
     (V.of_value value_ctx, V.of_value value_arch)
 
@@ -680,9 +671,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
        which is yojson-serialized into the archState node — so it must be a real
        [Value.t], marshaled under [V_typed]. *)
     let value_ctx_cold = V.marshal "eval_context" value_ctx in
-    let packet =
-      Packet.{ value_ctx = value_ctx_cold; packet_in; entrypoint }
-    in
+    let packet = Packet.{ value_ctx = value_ctx_cold; packet_in; entrypoint } in
     let* arch_state = get_arch_state in
     let queue =
       match entrypoint with
@@ -858,13 +847,16 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
     (value_ctx, value_arch, List.rev txs)
 
-  include Extern.Make (V) (struct
-    type vt = V.t
+  include
+    Extern.Make
+      (V)
+      (struct
+        type vt = V.t
 
-    let eval_extern_init = eval_extern_init
-    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
-    let eval_extern_func_call = eval_extern_func_call
-    let eval_extern_method_call = eval_extern_method_call
-    let init_arch_state = init_arch_state
-  end)
+        let eval_extern_init = eval_extern_init
+        let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+        let eval_extern_func_call = eval_extern_func_call
+        let eval_extern_method_call = eval_extern_method_call
+        let init_arch_state = init_arch_state
+      end)
 end

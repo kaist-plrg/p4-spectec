@@ -72,8 +72,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
     in
     (* Each typed bridge is one (non-recursive) top-level function. *)
     let typed_tops = List.map (fun fd -> Ml.LetRec [ fd ]) typed_bridges in
-    const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
-    @ typed_tops
+    const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups @ typed_tops
   in
   (* Logic groups — one Ml.LetRec per SCC group, in topo order. The heavy code
      lives at module top-level (no longer inside the functor), reading the

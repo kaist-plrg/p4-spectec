@@ -99,8 +99,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (fun i _typ ->
         ( "v__" ^ string_of_int i,
           Ml.AppE
-            ( Ml.LitE "Obj.magic",
-              [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
+            (Ml.LitE "Obj.magic", [ Ml.VarE ("param__" ^ string_of_int i) ]) ))
       typs_input
     |> List.split
   in
@@ -121,7 +120,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
                       ( Ml.LitE "List.nth",
                         [ Ml.VarE "vs_out__"; Ml.LitE (string_of_int i) ] );
                   ] ),
-              Type.compile_typ ~tparams:[] typ ) )
+              Type.compile_typ ~tparams:[] typ ))
         typs_output
     in
     match exprs_out_ml with [] -> Ml.UnitE | [ e ] -> e | es -> Ml.TupleE es
@@ -149,7 +148,13 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (List.combine vars_marshal_ml exprs_marshal_ml)
       expr_result_ml
   in
-  (ctx, [ (id_ml, params_ml, None, Common.prof_wrap id_ml (Common.deref_ctx expr_body_ml)) ])
+  ( ctx,
+    [
+      ( id_ml,
+        params_ml,
+        None,
+        Common.prof_wrap id_ml (Common.deref_ctx expr_body_ml) );
+    ] )
 
 (* Defs *)
 

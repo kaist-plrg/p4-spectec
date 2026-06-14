@@ -104,9 +104,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
              function call"
     in
     let name_func = V.Get.text value_name_func in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     match (name_func, names_param) with
     | "static_assert", [ "check"; "message" ] ->
         [ Core.Func.static_assert ~message:true value_ctx ]
@@ -129,9 +127,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
             "unexpected number of arguments to extern function call"
     in
     let name_func = V.Get.text value_name_func in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     let value_ctx, value_arch, value_callResult =
       match (name_func, names_param) with
       | "verify", [ "check"; "toSignal" ] ->
@@ -160,9 +156,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     in
     let extern = get_extern value_arch value_oid in
     let name_method = V.Get.text value_name_method in
-    let names_param =
-      value_names_param |> V.Get.list |> List.map V.Get.text
-    in
+    let names_param = value_names_param |> V.Get.list |> List.map V.Get.text in
     let extern, value_ctx, value_arch, value_callResult =
       match (extern, name_method, names_param) with
       | PacketIn packet_in, "extract", [ "hdr" ] ->
@@ -211,8 +205,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
           (counter_array, value_ctx, value_arch, value_callResult)
       | _ ->
           let oid =
-            value_oid |> V.Get.list |> List.map V.Get.text
-            |> String.concat "."
+            value_oid |> V.Get.list |> List.map V.Get.text |> String.concat "."
           in
           error_no_region
             ("unsupported extern method call: " ^ oid ^ "." ^ name_method ^ "("
@@ -241,19 +234,18 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let mc_mgrp_create (_value_arch : V.t) (_mgid : int) : V.t =
     error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
 
-  let mc_node_create (_value_arch : V.t) (_rid : int) (_port : int list) :
-      V.t =
+  let mc_node_create (_value_arch : V.t) (_rid : int) (_port : int list) : V.t =
     error_no_region "mc_node_create is not implemented for the ebpf simulator"
 
-  let mc_node_associate (_value_arch : V.t) (_mgid : int) (_handle : int) :
-      V.t =
+  let mc_node_associate (_value_arch : V.t) (_mgid : int) (_handle : int) : V.t
+      =
     error_no_region
       "mc_node_associate is not implemented for the ebpf simulator"
 
   (* Register interface *)
 
-  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int)
-      : V.t =
+  let register_read (_value_arch : V.t) (_reg_name : string) (_index : int) :
+      V.t =
     error_no_region "register_read is not implemented for the ebpf simulator"
 
   let register_write (_value_arch : V.t) (_reg_name : string) (_index : int)
@@ -265,15 +257,13 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   (* Pipeline initializer *)
 
-  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
-      V.t * V.t =
+  let init_pipe (includes_p4 : string list) (filename_p4 : string) : V.t * V.t =
     let value_ctx, value_arch = Spec.Pgm.ebpf_init includes_p4 filename_p4 in
     (V.of_value value_ctx, V.of_value value_arch)
 
   (* Pipeline driver *)
 
-  let setup_rx (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) :
-      V.t * V.t =
+  let setup_rx (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) : V.t * V.t =
     let _, packet_in = rx in
     (* Setup packet_in extern *)
     let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
@@ -290,20 +280,19 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let value_ctx = Spec.Rel.ebpf_init_globals value_ctx value_arch in
     (value_ctx, value_arch)
 
-  let drive_prs (value_ctx : V.t) (value_arch : V.t) :
-      V.t * V.t * bool =
+  let drive_prs (value_ctx : V.t) (value_arch : V.t) : V.t * V.t * bool =
     let value_ctx, value_arch, value_parse_result =
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
     let drop =
       V.Get.(
-        value_parse_result |>>? ("REJECT errorValue", "transitionResult")
+        value_parse_result
+        |>>? ("REJECT errorValue", "transitionResult")
         |> Option.is_some)
     in
     (value_ctx, value_arch, drop)
 
-  let drive_filt (value_ctx : V.t) (value_arch : V.t) :
-      V.t * V.t * V.t =
+  let drive_filt (value_ctx : V.t) (value_arch : V.t) : V.t * V.t * V.t =
     Spec.Rel.ebpf_filter value_ctx value_arch
 
   let drive_pipe (value_ctx : V.t) (value_arch : V.t) (rx : IO.rx) :
@@ -326,13 +315,16 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
       if accept then (value_ctx, value_arch, [ rx ])
       else (value_ctx, value_arch, [])
 
-  include Extern.Make (V) (struct
-    type vt = V.t
+  include
+    Extern.Make
+      (V)
+      (struct
+        type vt = V.t
 
-    let eval_extern_init = eval_extern_init
-    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
-    let eval_extern_func_call = eval_extern_func_call
-    let eval_extern_method_call = eval_extern_method_call
-    let init_arch_state = init_arch_state
-  end)
+        let eval_extern_init = eval_extern_init
+        let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+        let eval_extern_func_call = eval_extern_func_call
+        let eval_extern_method_call = eval_extern_method_call
+        let init_arch_state = init_arch_state
+      end)
 end

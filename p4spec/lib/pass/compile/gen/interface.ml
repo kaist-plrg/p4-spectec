@@ -675,8 +675,8 @@ module Typed = struct
                 in
                 ( Ml.LitP (Printf.sprintf "%S" canon),
                   Ml.AppE
-                    ( Ml.LitE "Obj.repr",
-                      [ Ml.VariantE (ctor_ml, arg_exprs) ] ) ))
+                    (Ml.LitE "Obj.repr", [ Ml.VariantE (ctor_ml, arg_exprs) ])
+                ))
               ctors
           in
           let inner_wild =
@@ -870,10 +870,8 @@ let compile_marshal_dispatch (inames : string list) : Ml.funcdef list =
     ( Ml.WildP,
       Ml.AppE
         ( Ml.LitE "failwith",
-          [
-            Ml.BinopE
-              ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "typ");
-          ] ) )
+          [ Ml.BinopE ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "typ") ]
+        ) )
   in
   [
     ( "marshal_typed",

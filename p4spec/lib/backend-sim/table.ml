@@ -10,9 +10,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
   let find_table (value_arch : V.t) (value_tableName : V.t) : V.t =
     let find_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified =
-        V.Make.text table_name_unqualified
-      in
+      let value_tableName_unqualified = V.Make.text table_name_unqualified in
       Spec.Func.find_object_unqualified_e value_arch value_tableName_unqualified
       |> Option.get
     in
@@ -36,9 +34,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
   let update_table (value_arch : V.t) (value_tableName : V.t)
       (value_tableObject : V.t) : V.t =
     let update_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified =
-        V.Make.text table_name_unqualified
-      in
+      let value_tableName_unqualified = V.Make.text table_name_unqualified in
       Spec.Func.update_object_unqualified_e value_arch
         value_tableName_unqualified value_tableObject
     in
@@ -63,10 +59,10 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
           let table_name_unqualified = names |> List.rev |> List.hd in
           update_table_unqualified table_name_unqualified
 
-  let add_entry (value_ctx : V.t) (value_arch : V.t)
-      (value_tableName : V.t) (value_tableEntryPriorityInterface : V.t)
-      (value_tableKeysetInterface : V.t)
-      (value_tableActionInterface : V.t) : V.t =
+  let add_entry (value_ctx : V.t) (value_arch : V.t) (value_tableName : V.t)
+      (value_tableEntryPriorityInterface : V.t)
+      (value_tableKeysetInterface : V.t) (value_tableActionInterface : V.t) :
+      V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
@@ -85,8 +81,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
             |> List.filter_map
                  (fun
                    (value_nameIR_key, value_nameIR_matchKind, _value_typeIR) ->
-                   if V.Get.text value_nameIR_matchKind = "selector" then
-                     None
+                   if V.Get.text value_nameIR_matchKind = "selector" then None
                    else Some value_nameIR_key)
           in
           let values_tableKeyInterface =
@@ -117,8 +112,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
     update_table value_arch value_tableName value_tableObject
 
   let add_default_action (value_ctx : V.t) (value_arch : V.t)
-      (value_tableName : V.t) (value_tableActionInterface : V.t) :
-      V.t =
+      (value_tableName : V.t) (value_tableActionInterface : V.t) : V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)

@@ -25,8 +25,7 @@ module Make (Spec : Spec.S) = struct
      @param T          Must be a type bit<W>
 
      extern void random<T>(out T result, in T lo, in T hi); *)
-  let _random (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t
-      =
+  let _random (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t =
     error_no_region "extern function random is not implemented"
 
   (* Calling digest causes a message containing the values specified in
@@ -52,8 +51,7 @@ module Make (Spec : Spec.S) = struct
      value of the receiver parameter.
 
      extern void digest<T>(in bit<32> receiver, in T data); *)
-  let digest (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let digest (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     (* no-op *)
     let value_callResult =
       let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
@@ -72,8 +70,7 @@ module Make (Spec : Spec.S) = struct
      packet to do something other than drop.
 
      extern void mark_to_drop(inout standard_metadata_t standard_metadata); *)
-  let mark_to_drop (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let mark_to_drop (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     let value_egress_spec =
       pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int 511)
     in
@@ -112,8 +109,7 @@ module Make (Spec : Spec.S) = struct
 
      extern void hash<O, T, D, M>(out O result, in HashAlgorithm algo,
                                   in T base, in D data, in M max); *)
-  let hash (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let hash (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     let base =
       Spec.Func.find_var_e_local value_ctx "base" |> unpack_p4_fixedBit |> snd
     in
@@ -181,8 +177,7 @@ module Make (Spec : Spec.S) = struct
                                                     in O checksum, HashAlgorithm algo); *)
 
   let do_verify_checksum ~(payload : Core.Object.PacketIn.t option)
-      (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t
-      =
+      (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
     let values = value_data |> unpack_p4_tuple in
@@ -226,8 +221,7 @@ module Make (Spec : Spec.S) = struct
     in
     (value_ctx, value_sto, value_callResult)
 
-  let verify_checksum (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let verify_checksum (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     (* Get "condition" in context *)
     let value_condition = Spec.Func.find_var_e_local value_ctx "condition" in
     let condition = value_condition |> unpack_p4_bool in
@@ -292,8 +286,7 @@ module Make (Spec : Spec.S) = struct
                                                     inout O checksum, HashAlgorithm algo); *)
 
   let do_update_checksum ~(payload : Core.Object.PacketIn.t option)
-      (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t
-      =
+      (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     (* Get "data" in context *)
     let value_data = Spec.Func.find_var_e_local value_ctx "data" in
     let values = value_data |> unpack_p4_tuple in
@@ -334,8 +327,7 @@ module Make (Spec : Spec.S) = struct
     in
     (value_ctx, value_sto, value_callResult)
 
-  let update_checksum (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let update_checksum (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     (* Get "condition" in context *)
     let condition =
       Spec.Func.find_var_e_local value_ctx "condition" |> unpack_p4_bool
@@ -411,14 +403,13 @@ module Make (Spec : Spec.S) = struct
      resubmit_preserving_field_list(2) will only preserve field y.
 
      extern void resubmit_preserving_field_list(bit<8> index); *)
-  let resubmit_preserving_field_list (value_ctx : V.t) (value_sto : V.t)
-      : V.t * V.t * V.t =
+  let resubmit_preserving_field_list (value_ctx : V.t) (value_sto : V.t) :
+      V.t * V.t * V.t =
     let value_index = Spec.Func.find_var_e_local value_ctx "index" in
     (* write resubmit index in arch state *)
     let value_arch_state =
       value_sto |> Spec.Func.find_archState_e |> Arch_conv.of_value
-      |> Arch.with_resubmit
-           (Packet.ResubmitInfo.of_value value_index)
+      |> Arch.with_resubmit (Packet.ResubmitInfo.of_value value_index)
       |> Arch_conv.to_value
     in
     let value_sto = Spec.Func.update_archState_e value_sto value_arch_state in
@@ -451,14 +442,13 @@ module Make (Spec : Spec.S) = struct
      for more details.
 
      extern void recirculate_preserving_field_list(bit<8> index); *)
-  let recirculate_preserving_field_list (value_ctx : V.t)
-      (value_arch : V.t) : V.t * V.t * V.t =
+  let recirculate_preserving_field_list (value_ctx : V.t) (value_arch : V.t) :
+      V.t * V.t * V.t =
     let value_index = Spec.Func.find_var_e_local value_ctx "index" in
     (* write recirculate index in arch state *)
     let value_arch_state =
       value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
-      |> Arch.with_recirculate
-           (Packet.RecirculateInfo.of_value value_index)
+      |> Arch.with_recirculate (Packet.RecirculateInfo.of_value value_index)
       |> Arch_conv.to_value
     in
     let value_arch = Spec.Func.update_archState_e value_arch value_arch_state in
@@ -528,8 +518,7 @@ module Make (Spec : Spec.S) = struct
     in
     (value_ctx, value_sto, value_callResult)
 
-  let _truncate (_value_ctx : V.t) (_value_sto : V.t) :
-      V.t * V.t =
+  let _truncate (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t =
     error_no_region "extern function truncate is not implemented"
 
   (* Calling assert when the argument is true has no effect, except any
@@ -556,8 +545,7 @@ module Make (Spec : Spec.S) = struct
      same way when assert statements are removed.
 
      extern void assert(in bool check); *)
-  let _assert_ (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t
-      =
+  let _assert_ (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t =
     error_no_region "extern function assert is not implemented"
 
   (* For the purposes of compiling and executing P4 programs on a target
@@ -593,8 +581,7 @@ module Make (Spec : Spec.S) = struct
      is likely that your assumption was wrong, and should be reexamined.
 
      extern void assume(in bool check); *)
-  let _assume (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t
-      =
+  let _assume (_value_ctx : V.t) (_value_sto : V.t) : V.t * V.t =
     error_no_region "extern function assume is not implemented"
 
   (* Log user defined messages
@@ -604,8 +591,7 @@ module Make (Spec : Spec.S) = struct
      extern void log_msg(string msg);
      extern void log_msg<T>(string msg, in T data); *)
 
-  let log_msg (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let log_msg (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     let msg = Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string in
     print_endline msg;
     (* Return void *)
@@ -646,8 +632,7 @@ module Make (Spec : Spec.S) = struct
     in
     walk 0 args
 
-  let log_msg_format (value_ctx : V.t) (value_sto : V.t) :
-      V.t * V.t * V.t =
+  let log_msg_format (value_ctx : V.t) (value_sto : V.t) : V.t * V.t * V.t =
     let msg = Spec.Func.find_var_e_local value_ctx "msg" |> unpack_p4_string in
     let data = Spec.Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple in
     format_braces msg data |> print_endline;

@@ -149,8 +149,8 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
        PSA_MeterColor_t execute(in S index, in PSA_MeterColor_t color); *)
 
-    let execute_color_aware (value_ctx : V.t) (value_arch : V.t)
-        (meter : t) : t * V.t * V.t * V.t =
+    let execute_color_aware (value_ctx : V.t) (value_arch : V.t) (meter : t) :
+        t * V.t * V.t * V.t =
       (* NOTE: returning GREEN for now *)
       let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
       let value_callResult =
@@ -166,8 +166,8 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
        PSA_MeterColor_t execute(in S index); *)
 
-    let execute_color_blind (value_ctx : V.t) (value_arch : V.t)
-        (meter : t) : t * V.t * V.t * V.t =
+    let execute_color_blind (value_ctx : V.t) (value_arch : V.t) (meter : t) :
+        t * V.t * V.t * V.t =
       (* NOTE: returning GREEN for now *)
       let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
       let value_callResult =
@@ -339,8 +339,8 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
        O get_hash<T, D>(in T base, in D data, in T max); *)
 
-    let get_hash_adjust (value_ctx : V.t) (value_arch : V.t) (hash : t)
-        : t * V.t * V.t * V.t =
+    let get_hash_adjust (value_ctx : V.t) (value_arch : V.t) (hash : t) :
+        t * V.t * V.t * V.t =
       let base =
         Spec_Func.find_var_e_local value_ctx "base" |> unpack_p4_fixedBit |> snd
       in
@@ -386,8 +386,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
        InternetChecksum(); *)
 
-    let init (_value_type_args : V.t) (_value_args : V.t) : t =
-      Bigint.zero
+    let init (_value_type_args : V.t) (_value_args : V.t) : t = Bigint.zero
 
     (* Reset internal state and prepare unit for computation. Every
        instance of an InternetChecksum object is automatically
@@ -464,8 +463,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ (Some value_checksum)
         in
-        V.Make.(
-          "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -483,8 +481,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ (Some value_checksum)
         in
-        V.Make.(
-          "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
       in
       (checksum, value_ctx, value_arch, value_callResult)
 

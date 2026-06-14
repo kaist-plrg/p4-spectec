@@ -31,8 +31,7 @@ module Make (V : Val.VAL) = struct
     let typ = Typ.Make.var ("archState" $ no_region) [] in
     t |> to_yojson |> V.Make.extern typ
 
-  let of_value (v : V.t) =
-    v |> V.Get.extern |> of_yojson |> Result.get_ok
+  let of_value (v : V.t) = v |> V.Get.extern |> of_yojson |> Result.get_ok
 end
 
 (* Queue and mirror table setters *)

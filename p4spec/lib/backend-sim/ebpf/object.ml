@@ -49,8 +49,8 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
 
        void increment(in bit<32> index); *)
 
-    let increment (value_ctx : V.t) (value_sto : V.t)
-        (counter_array : t) : t * V.t * V.t * V.t =
+    let increment (value_ctx : V.t) (value_sto : V.t) (counter_array : t) :
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in

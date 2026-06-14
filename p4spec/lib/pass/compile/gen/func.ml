@@ -89,8 +89,8 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     List.mapi
       (fun i _typ ->
         ( "v__" ^ string_of_int i,
-          Ml.AppE
-            ( Ml.LitE "Obj.magic", [ Ml.VarE ("p__" ^ string_of_int i) ] ) ))
+          Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE ("p__" ^ string_of_int i) ])
+        ))
       typs_param
     |> List.split
   in
@@ -110,8 +110,8 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
             (* Cast the smuggled output back to its OCaml type. *)
             Ml.AnnotE
-              ( Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]),
-                typ_ret_ml ) );
+              (Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]), typ_ret_ml)
+          );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
               ( Ml.LitE "raise",
