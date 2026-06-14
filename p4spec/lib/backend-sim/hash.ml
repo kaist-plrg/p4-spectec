@@ -13,10 +13,6 @@
  * under the License.
  *)
 
-module Value = Runtime.Value
-module Unpack = Spec.Unpack.Make (Val.V_value)
-open Unpack
-
 [@@@ocamlformat "disable"]
 
 (* CRC16-ARC table *)
@@ -242,19 +238,32 @@ let compute_hash (algo : string) ?(value_init : Bigint.t = Bigint.zero)
   | "identity" -> value
   | _ -> Format.asprintf "(TODO: compute_hash) %s" algo |> failwith
 
-let package (values : Value.t list) : Bigint.t * Bigint.t =
-  values
-  |> List.map unpack_p4_precision_numberValue
-  |> List.map (fun (width, value) -> (width, of_two_complement value width))
-  |> List.fold_left
-       (fun (width_pack, value_pack) (width, value) ->
-         let width_pack = Bigint.(width_pack + width) in
-         let value_pack = shift_bitstring_left value_pack width in
-         let value_pack = Bigint.(value_pack + value) in
-         (width_pack, value_pack))
-       (Bigint.zero, Bigint.zero)
-  |> pad_right_to_16
+(* The packing/checksum entry points consume spec values, so they are functorized
+   over [V]; the pure bitstring/CRC helpers above are representation-independent.
+   [adjust]/[bitwise_neg] are re-exported so a single [Hash.Make (V)] instance
+   serves callers that also use them. *)
 
-let compute_checksum (algo : string) ?(value_init : Bigint.t = Bigint.zero)
-    (values : Value.t list) : Bigint.t =
-  values |> package |> compute_hash algo ~value_init
+module Make (V : Val.VAL) = struct
+  module Unpack = Spec.Unpack.Make (V)
+  open Unpack
+
+  let package (values : V.t list) : Bigint.t * Bigint.t =
+    values
+    |> List.map unpack_p4_precision_numberValue
+    |> List.map (fun (width, value) -> (width, of_two_complement value width))
+    |> List.fold_left
+         (fun (width_pack, value_pack) (width, value) ->
+           let width_pack = Bigint.(width_pack + width) in
+           let value_pack = shift_bitstring_left value_pack width in
+           let value_pack = Bigint.(value_pack + value) in
+           (width_pack, value_pack))
+         (Bigint.zero, Bigint.zero)
+    |> pad_right_to_16
+
+  let compute_checksum (algo : string) ?(value_init : Bigint.t = Bigint.zero)
+      (values : V.t list) : Bigint.t =
+    values |> package |> compute_hash algo ~value_init
+
+  let adjust = adjust
+  let bitwise_neg = bitwise_neg
+end

@@ -6,6 +6,7 @@ module Make (Spec : Spec.S) = struct
   module V = Spec.V
   module Pack = Spec_impl.Pack.Make (V)
   module Unpack = Spec_impl.Unpack.Make (V)
+  module Hash = Hash.Make (V)
   open Pack
   open Unpack
 
@@ -126,7 +127,7 @@ module Make (Spec : Spec.S) = struct
     let result =
       match (id_enum, id_enum_field) with
       | "HashAlgorithm", algo ->
-          Hash.compute_checksum algo (List.map V.to_value values) |> Hash.adjust base max
+          Hash.compute_checksum algo values |> Hash.adjust base max
       | _ -> assert false
     in
     let value_typ_O = Spec.Func.find_type_e_local value_ctx "O" in
@@ -202,7 +203,7 @@ module Make (Spec : Spec.S) = struct
     let checksum_actual =
       match (id_enum, id_enum_field) with
       | "HashAlgorithm", algo ->
-          Hash.compute_checksum algo (List.map V.to_value (values @ values_payload))
+          Hash.compute_checksum algo (values @ values_payload)
       | _ -> assert false
     in
     let verified = Bigint.(checksum_expect = checksum_actual) in
@@ -310,7 +311,7 @@ module Make (Spec : Spec.S) = struct
     let checksum =
       match (id_enum, id_enum_field) with
       | "HashAlgorithm", algo ->
-          Hash.compute_checksum algo (List.map V.to_value (values @ values_payload))
+          Hash.compute_checksum algo (values @ values_payload)
       | _ -> assert false
     in
     (* Get "O" type in context *)

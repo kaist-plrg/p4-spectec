@@ -6,6 +6,7 @@ open Util.Source
 module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
   module Pack = Spec.Pack.Make (V)
   module Unpack = Spec.Unpack.Make (V)
+  module Hash = Hash.Make (V)
   open Pack
   open Unpack
   (* Extern objects *)
@@ -313,7 +314,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
       let values =
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
-      let result = Hash.compute_checksum hash (List.map V.to_value values) in
+      let result = Hash.compute_checksum hash values in
       let value_typ_O = Spec_Func.find_type_e_local value_ctx "O" in
       let value_result = pack_p4_arbitraryInt result in
       let value_result = Spec_Func.cast_op value_typ_O value_result in
@@ -348,7 +349,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
       let values =
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
-      let result = Hash.compute_checksum hash (List.map V.to_value values) in
+      let result = Hash.compute_checksum hash values in
       let result = Bigint.(base + (result % rmax)) in
       let value_typ_O = Spec_Func.find_type_e_local value_ctx "O" in
       let value_result = pack_p4_arbitraryInt result in
@@ -414,7 +415,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
       let checksum =
-        Hash.compute_checksum "csum16" ~value_init:checksum (List.map V.to_value values)
+        Hash.compute_checksum "csum16" ~value_init:checksum values
       in
       let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
       let value_callResult =
@@ -437,7 +438,7 @@ module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
       let checksum =
-        Hash.compute_checksum "csum16_sub" ~value_init:checksum (List.map V.to_value values)
+        Hash.compute_checksum "csum16_sub" ~value_init:checksum values
       in
       let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
       let value_callResult =
