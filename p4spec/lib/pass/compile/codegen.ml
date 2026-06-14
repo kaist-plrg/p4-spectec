@@ -61,7 +61,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
   let toplevels_interface_ml =
-    let const_decls, marshal_groups, unmarshal_groups =
+    let const_decls, marshal_groups, unmarshal_groups, typed_bridges =
       Gen.Interface.compile ctx spec
     in
     let to_tops groups =
@@ -70,7 +70,10 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
           match funcdefs with [] -> None | _ -> Some (Ml.LetRec funcdefs))
         groups
     in
+    (* Each typed bridge is one (non-recursive) top-level function. *)
+    let typed_tops = List.map (fun fd -> Ml.LetRec [ fd ]) typed_bridges in
     const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
+    @ typed_tops
   in
   (* Logic groups — one Ml.LetRec per SCC group, in topo order. The heavy code
      lives at module top-level (no longer inside the functor), reading the

@@ -641,6 +641,157 @@ module Unmarshal = struct
     (name, [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
+(* Shallow typed mixop bridges (C3) *)
+
+(* Two functions emitted into the compiled output, dead until C4/C5 wire them:
+   - [make_case_typed]: the typed mirror of [make_case_] (which builds a
+     [Value.t]). Given a canonical mixop string, an [Obj.t list] of already-typed
+     args, and the raw spec type id, it builds the typed variant directly
+     ([Obj.repr (`Ctor (..))]) with O(1) [Obj.obj] casts — no marshalling.
+   - [case_of_typed]: the shallow inverse of [make_case_typed]. It projects a
+     typed variant into its one-level [Obj.t Mixfix.t] shell, leaving the args as
+     [Obj.t] (un-recursed), so it never reintroduces deep conversion.
+
+   Scope: only non-generic [VarT] whose typedef is a [VariantT] — the value
+   shapes the externs construct/inspect. Keyed at runtime by the raw spec type id
+   ([id.it], what the externs pass), matched against the OCaml type ([var_of_id
+   id]). The inner key is the canonical mixop string ([Mixop.string_of_mixop]). *)
+module Typed = struct
+  let variant_ids (ctx : Ctx.t) (typs : Sl.typ list) : (Sl.id * Sl.typ) list =
+    List.filter_map
+      (fun typ ->
+        match typ.it with
+        | Il.VarT (id, []) -> (
+            match Ctx.find_typdef ctx id with
+            | Typdef.Defined ([], deftyp) -> (
+                match deftyp.it with
+                | Il.VariantT _ -> Some (id, typ)
+                | _ -> None)
+            | _ -> None)
+        | _ -> None)
+      typs
+
+  (* [Obj.obj (List.nth args i)] *)
+  let obj_obj_nth (i : int) : Ml.expr =
+    Ml.AppE
+      ( Ml.LitE "Obj.obj",
+        [
+          Ml.AppE
+            (Ml.LitE "List.nth", [ Ml.VarE "args"; Ml.LitE (string_of_int i) ]);
+        ] )
+
+  let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
+      Ml.funcdef =
+    let outer_arms =
+      List.map
+        (fun (id, _typ) ->
+          let ctors = Ctx.find_ctors_full ctx id in
+          let inner_arms =
+            List.map
+              (fun (mixop, ctor_ml, payload_typs) ->
+                let canon = Mixop.string_of_mixop mixop in
+                let arg_exprs =
+                  List.mapi
+                    (fun i pt ->
+                      Ml.AnnotE (obj_obj_nth i, Type.compile_typ ~tparams:[] pt))
+                    payload_typs
+                in
+                ( Ml.LitP (Printf.sprintf "%S" canon),
+                  Ml.AppE
+                    ( Ml.LitE "Obj.repr",
+                      [ Ml.VariantE (ctor_ml, arg_exprs) ] ) ))
+              ctors
+          in
+          let inner_wild =
+            ( Ml.WildP,
+              Ml.AppE
+                ( Ml.LitE "failwith",
+                  [
+                    Ml.BinopE
+                      ( "^",
+                        Ml.StrE
+                          ("make_case_typed: bad mixop for " ^ id.it ^ ": "),
+                        Ml.VarE "mixop" );
+                  ] ) )
+          in
+          ( Ml.LitP (Printf.sprintf "%S" id.it),
+            Ml.MatchE (Ml.VarE "mixop", inner_arms @ [ inner_wild ]) ))
+        variants
+    in
+    let outer_wild =
+      ( Ml.WildP,
+        Ml.AppE
+          ( Ml.LitE "failwith",
+            [
+              Ml.BinopE
+                ("^", Ml.StrE "make_case_typed: unknown typ ", Ml.VarE "typ");
+            ] ) )
+    in
+    ( "make_case_typed",
+      [
+        ("mixop", Some Ml.StringT);
+        ("args", Some (Ml.AppT ("list", [ Ml.NameT "Obj.t" ])));
+        ("typ", Some Ml.StringT);
+      ],
+      Some (Ml.NameT "Obj.t"),
+      Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) )
+
+  let compile_case_of (ctx : Ctx.t) (pool : const_pool)
+      (variants : (Sl.id * Sl.typ) list) : Ml.funcdef =
+    let outer_arms =
+      List.map
+        (fun (id, typ) ->
+          let ctors = Ctx.find_ctors_full ctx id in
+          let inner_arms =
+            List.map
+              (fun (mixop, ctor_ml, payload_typs) ->
+                let pvars =
+                  List.mapi (fun i _ -> "p" ^ string_of_int i) payload_typs
+                in
+                let pat =
+                  Ml.VariantP
+                    (`Poly (ctor_ml, List.map (fun v -> Ml.VarP v) pvars))
+                in
+                let mo_ref = intern_mixop pool mixop in
+                let repr_args =
+                  List.map
+                    (fun v -> Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE v ]))
+                    pvars
+                in
+                ( pat,
+                  Ml.AppE
+                    ( Ml.LitE "Mixfix.fill",
+                      [ Ml.VarE mo_ref; Ml.ListE repr_args ] ) ))
+              ctors
+          in
+          let scrut =
+            Ml.AnnotE
+              ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
+                Type.compile_typ ~tparams:[] typ )
+          in
+          (Ml.LitP (Printf.sprintf "%S" id.it), Ml.MatchE (scrut, inner_arms)))
+        variants
+    in
+    let outer_wild =
+      ( Ml.WildP,
+        Ml.AppE
+          ( Ml.LitE "failwith",
+            [
+              Ml.BinopE
+                ("^", Ml.StrE "case_of_typed: unknown typ ", Ml.VarE "typ");
+            ] ) )
+    in
+    ( "case_of_typed",
+      [ ("x", Some (Ml.NameT "Obj.t")); ("typ", Some Ml.StringT) ],
+      Some (Ml.AppT ("Mixfix.t", [ Ml.NameT "Obj.t" ])),
+      Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) )
+
+  let compile (ctx : Ctx.t) (pool : const_pool) (typs : Sl.typ list) :
+      Ml.funcdef list =
+    let variants = variant_ids ctx typs in
+    [ compile_make_case ctx variants; compile_case_of ctx pool variants ]
+end
+
 (* Direct dependencies of marshal/unmarshal for a given type:
    the sub-types that marshal_T calls marshal_S for. *)
 let interface_typ_deps (ctx : Ctx.t) (typ : Sl.typ) : Sl.typ list =
@@ -692,11 +843,17 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
     List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
 
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
-    Ml.toplevel list * Ml.funcdef list list * Ml.funcdef list list =
+    Ml.toplevel list
+    * Ml.funcdef list list
+    * Ml.funcdef list list
+    * Ml.funcdef list =
   let typs = collect_types ctx spec in
   let groups = compute_groups ctx typs in
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
+  (* Typed mixop bridges (C3). Reuses [pool] so [case_of_typed]'s interned
+     mixops join [const_decls] — computed below, after this. *)
+  let typed_bridges = Typed.compile ctx pool typs in
   let const_decls = List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts in
-  (const_decls, marshal_groups, unmarshal_groups)
+  (const_decls, marshal_groups, unmarshal_groups, typed_bridges)
