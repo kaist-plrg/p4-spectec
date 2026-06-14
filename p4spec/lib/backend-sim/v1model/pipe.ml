@@ -10,6 +10,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   module Unpack = Spec_impl.Unpack.Make (V)
   module State = State.Make (V)
   module Packet_conv = Packet.Make (V)
+  module Arch_conv = Arch.Make (V)
   open Pack
   open Unpack
   open State
@@ -56,16 +57,16 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   (* Architectural state *)
 
-  let init_arch_state = Arch.empty |> Arch.to_value |> V.of_value
+  let init_arch_state = Arch.empty |> Arch_conv.to_value
 
   let get_arch_state : Arch.t state =
     let+ _, value_arch, _ = get in
-    value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
+    value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
 
   let put_arch_state (arch_state : Arch.t) : unit state =
     modify (fun (value_ctx, value_arch, txs) ->
         let value_arch =
-          arch_state |> Arch.to_value |> V.of_value |> Spec.Func.update_archState_e value_arch
+          arch_state |> Arch_conv.to_value |> Spec.Func.update_archState_e value_arch
         in
         (value_ctx, value_arch, txs))
 
@@ -342,13 +343,13 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let add_mirror_session (value_arch : V.t) (session : int) (port : int) :
       V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
     let mirrortable = Mirror.Table.add session port arch_state.mirrortable in
     arch_state
     |> Arch.with_mirrortable mirrortable
-    |> Arch.to_value
-    |> V.of_value |> Spec.Func.update_archState_e value_arch
+    |> Arch_conv.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   let add_mirror_session_mc _session _multicast_group =
     error_no_region
@@ -358,39 +359,39 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   let mc_mgrp_create (value_arch : V.t) (mgid : int) : V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
     let multicast = Multicast.State.group_create mgid arch_state.multicast in
     arch_state
     |> Arch.with_multicast multicast
-    |> Arch.to_value
-    |> V.of_value |> Spec.Func.update_archState_e value_arch
+    |> Arch_conv.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   let mc_node_create (value_arch : V.t) (rid : int) (ports : int list) :
       V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
     let multicast =
       Multicast.State.node_create rid ports arch_state.multicast
     in
     arch_state
     |> Arch.with_multicast multicast
-    |> Arch.to_value
-    |> V.of_value |> Spec.Func.update_archState_e value_arch
+    |> Arch_conv.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   let mc_node_associate (value_arch : V.t) (mgid : int) (handle : int) :
       V.t =
     let arch_state =
-      value_arch |> Spec.Func.find_archState_e |> V.to_value |> Arch.of_value
+      value_arch |> Spec.Func.find_archState_e |> Arch_conv.of_value
     in
     let multicast =
       Multicast.State.node_associate mgid handle arch_state.multicast
     in
     arch_state
     |> Arch.with_multicast multicast
-    |> Arch.to_value
-    |> V.of_value |> Spec.Func.update_archState_e value_arch
+    |> Arch_conv.to_value
+    |> Spec.Func.update_archState_e value_arch
 
   (* Register interface *)
 

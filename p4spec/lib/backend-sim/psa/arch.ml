@@ -1,5 +1,4 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
 open Util.Source
 
 type t = {
@@ -18,14 +17,19 @@ let empty =
     multicast = Multicast.State.empty;
   }
 
-(* Value conversion *)
+(* Value conversion (functorized over [V]; the rest of the module is
+   representation-independent plain data, so callers keep using the top-level
+   [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
+   two conversions). *)
 
-let to_value (t : t) =
-  t |> to_yojson
-  |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
+module Make (V : Val.VAL) = struct
+  let to_value (t : t) =
+    t |> to_yojson
+    |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 
-let of_value (v : Value.t) =
-  v |> Value.Get.extern |> of_yojson |> Result.get_ok
+  let of_value (v : V.t) =
+    v |> V.Get.extern |> of_yojson |> Result.get_ok
+end
 
 (* Queue and mirror table setters *)
 

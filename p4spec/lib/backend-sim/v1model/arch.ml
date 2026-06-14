@@ -1,5 +1,4 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
 open Util.Source
 
 type t = {
@@ -22,14 +21,19 @@ let empty =
 
 let reset (t : t) = { t with action = Packet.empty_action }
 
-(* Value conversion *)
+(* Value conversion (functorized over [V]; the rest of the module is
+   representation-independent plain data, so callers keep using the top-level
+   [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
+   two conversions). *)
 
-let to_value (t : t) =
-  let typ = Typ.Make.var ("archState" $ no_region) [] in
-  t |> to_yojson |> Value.Make.extern typ
+module Make (V : Val.VAL) = struct
+  let to_value (t : t) =
+    let typ = Typ.Make.var ("archState" $ no_region) [] in
+    t |> to_yojson |> V.Make.extern typ
 
-let of_value (v : Value.t) =
-  v |> Value.Get.extern |> of_yojson |> Result.get_ok
+  let of_value (v : V.t) =
+    v |> V.Get.extern |> of_yojson |> Result.get_ok
+end
 
 (* Queue and mirror table setters *)
 
