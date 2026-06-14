@@ -107,6 +107,9 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
          depending on which (unstable) [part_NNN] they bucket into. *)
       Ml.Let ("make_case_typed", Ml.VarE "make_case_typed");
       Ml.Let ("case_of_typed", Ml.VarE "case_of_typed");
+      (* [marshal_value] (C5d) — the lone real marshal [V_typed.to_string] uses to
+         print a [value]; stable re-export so it binds at [Spec_parts.Dispatch.*]. *)
+      Ml.Let ("marshal_value", Ml.VarE "marshal_value");
     ]
   in
   (* The whole topo-ordered stream that becomes the [part_NNN.ml] files: types,

@@ -10,12 +10,14 @@
    the boxed [Obj.t] carries exactly the OCaml type a projection expects. A wrong
    cast fails fast and is caught by the sim suite (see API.md §4, §7).
 
-   STATUS (C4): defined but UNINSTANTIATED — [build.ml] still binds [V_value], so
-   nothing here runs yet. The straight typed projections/constructors are real;
-   the few ops that need a spec typename the [VAL] surface does not carry are left
-   as explicit C5 placeholders ([to_value]/[of_value] need per-type marshal
-   dispatch; [Get.( |>>? )] needs constructor identity; [to_string] needs a typed
-   printer). C5 wires them together with the per-mode extern topology. *)
+   STATUS (C5d): fully implemented but still UNINSTANTIATED — [build.ml] binds
+   [V_value], so nothing here runs yet. Every op is now real: [to_value]/[of_value]
+   are identity casts (C5 decision 1: typed [Obj.t] is smuggled through the
+   [Value.t]-typed interfaces, no marshal on the live path); [Get.( |>>? )] shapes
+   via the shallow [case_of_typed] and matches the mixop string; [to_string]
+   marshals the one [value] it prints back via the generated [marshal_value]
+   re-export. The per-mode extern topology that instantiates this at ML lands with
+   C5's codegen flip + [make.ml] rewrite (the atomic core). *)
 
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
@@ -27,17 +29,17 @@ open Util.Source
 module V_typed : Val.VAL with type t = Obj.t = struct
   type t = Obj.t
 
-  let todo_c5 (what : string) : 'a =
-    failwith ("V_typed." ^ what ^ ": wired in C5 (typed compiled path)")
+  (* [to_string] is used only by [log_msg] on a [value]; marshal that one value
+     back to the concrete [Value.t] (via the generated [marshal_value] re-export)
+     and print it. This is the lone real marshal in [V_typed], on a cold path. *)
+  let to_string (x : t) : string =
+    Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
-  (* Needs a typed printer / per-type marshal — deferred to C5. *)
-  let to_string (_ : t) : string = todo_c5 "to_string"
-
-  (* The cold bridge to/from [Value.t] is a per-type marshal/unmarshal at the
-     state-persist edge (API.md §3.1). A single generic [Obj.t <-> Value.t] cast
-     is unsound across spec types; the real routing lands with C5's topology. *)
-  let to_value (_ : t) : Value.t = todo_c5 "to_value"
-  let of_value (_ : Value.t) : t = todo_c5 "of_value"
+  (* Cold bridge to/from [Value.t] is an identity cast: under [V_typed] the whole
+     ML pipe carries typed [Obj.t] smuggled through the [Value.t]-typed interfaces,
+     so there is nothing to marshal at the state-persist edge (C5 decision 1). *)
+  let to_value (x : t) : Value.t = Obj.obj x
+  let of_value (v : Value.t) : t = Obj.repr v
 
   module Get = struct
     let text (x : t) : string = (Obj.obj x : string)
@@ -91,10 +93,16 @@ module V_typed : Val.VAL with type t = Obj.t = struct
     let ( |>> ) (x : t) (s_mixop : string) : t list =
       args_by_arity x (Mixop.arity (Value.Mixops.of_string s_mixop))
 
-    (* Detecting a constructor *mismatch* needs the value's tag vs the expected
-       constructor's poly-variant hash (derivable only with the compiler-side
-       OCaml ctor name). Deferred to C5. *)
-    let ( |>>? ) (_x : t) (_s_mixop : string) : t list option = todo_c5 "( |>>? )"
+    (* Sole site: [rejectTransitionResult] (spec 8.02 [REJECT errorValue]); shape
+       it via the shallow [case_of_typed] (args stay typed [Obj.t], un-recursed)
+       and match the expected mixop by its canonical string. *)
+    let ( |>>? ) (x : t) (s_mixop : string) : t list option =
+      let mixop, args =
+        Mixfix.split
+          (Spec_parts.Dispatch.case_of_typed x "rejectTransitionResult")
+      in
+      let canon = Mixop.string_of_mixop (Value.Mixops.of_string s_mixop) in
+      if Mixop.string_of_mixop mixop = canon then Some args else None
   end
 
   module Make = struct
