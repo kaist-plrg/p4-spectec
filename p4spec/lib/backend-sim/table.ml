@@ -1,7 +1,8 @@
 module Typ = Runtime.Type.Typ
 open Util.Source
 
-module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
+module Make (V : Valrep.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
   module Spec = struct
     module Func = Spec_Func
   end

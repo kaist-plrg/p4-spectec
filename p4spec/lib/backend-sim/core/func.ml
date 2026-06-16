@@ -2,7 +2,8 @@ module Typ = Runtime.Type.Typ
 open Error
 open Util.Source
 
-module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
+module Make (V : Valrep.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack
   (* Check a predicate @check in the parser; if the predicate is true do nothing,

@@ -26,7 +26,7 @@ module Mixop = Domain.Mixop
 module Num = Lang.Xl.Num
 open Util.Source
 
-module V_typed : Val.VAL with type t = Obj.t = struct
+module V_typed : Valrep.VAL with type t = Obj.t = struct
   type t = Obj.t
 
   (* [to_string] is used only by [log_msg] on a [value]; marshal that one value

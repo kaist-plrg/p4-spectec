@@ -4,7 +4,7 @@ module IO = Runtime.Sim.Io
    (the hot path) plus the pending transmissions. Functored over [VAL] so the
    ctx/arch flow as [vt] (O(1) cast under [V_typed]) rather than [Value.t]. *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   (* The state consists of:
       - current evaluation context
       - current arch

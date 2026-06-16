@@ -5,7 +5,7 @@ module Value = Runtime.Value
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   type vt = V.t
 
   let first fs x = List.find_map (fun f -> f x) fs

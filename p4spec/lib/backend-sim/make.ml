@@ -33,9 +33,9 @@ module Make
      [Spec_*] hold the trampolines that let [Arch_*]/[Table_*] call back into the
      interpreters. *)
 
-  module Spec_v = Spec.Make (Val.V_value)
+  module Spec_v = Spec.Make (Valrep.V_value)
   module Arch_v = MakeArch (Spec_v)
-  module Table_v = Table.Make (Val.V_value) (Spec_v.Func)
+  module Table_v = Table.Make (Valrep.V_value) (Spec_v.Func)
   module Spec_t = Spec.Make (Val_typed.V_typed)
   module Arch_t = MakeArch (Spec_t)
   module Table_t = Table.Make (Val_typed.V_typed) (Spec_t.Func)
@@ -219,7 +219,7 @@ module Make
      uses [V.Make.*] (typed [make_case_typed] under [V_typed]); the packet/expect
      queue bookkeeping above is representation-independent and stays shared. *)
   module RunStf
-      (V : Val.VAL)
+      (V : Valrep.VAL)
       (A : ARCH with type vt = V.t)
       (T : sig
         val add_entry : V.t -> V.t -> V.t -> V.t -> V.t -> V.t -> V.t
@@ -480,7 +480,7 @@ module Make
       | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
   end
 
-  module RunStf_v = RunStf (Val.V_value) (Arch_v) (Table_v)
+  module RunStf_v = RunStf (Valrep.V_value) (Arch_v) (Table_v)
   module RunStf_t = RunStf (Val_typed.V_typed) (Arch_t) (Table_t)
 
   (* Dispatch to the stack matching the active mode (ML drives the typed stack). *)

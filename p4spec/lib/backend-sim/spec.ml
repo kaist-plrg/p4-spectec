@@ -11,7 +11,7 @@ module Unpack = Spec_impl.Unpack
    concurrent runners do not share mutable call refs. *)
 
 module type S = sig
-  module V : Val.VAL
+  module V : Valrep.VAL
   module Func : Func.S with type vt = V.t
   module Rel : Rel.S with type vt = V.t
   module Pgm : Pgm.S
@@ -20,7 +20,7 @@ end
 (* Every application creates fresh mutable refs for the three
    trampoline families, independent of every other application. *)
 
-module Make (V : Val.VAL) : S with module V = V = struct
+module Make (V : Valrep.VAL) : S with module V = V = struct
   module V = V
   module Func = Func.Make (V)
   module Rel = Rel.Make (V)

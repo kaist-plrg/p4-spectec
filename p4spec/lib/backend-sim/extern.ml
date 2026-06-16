@@ -18,7 +18,7 @@ end
    runner. The (un)wrapping via [V.to_value]/[V.of_value] is the identity under
    [V_value]; under [V_typed] it is the marshal/unmarshal at the runner edge. *)
 
-module Make (V : Val.VAL) (A : IMPL with type vt = V.t) : Run.EXTERN = struct
+module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) : Run.EXTERN = struct
   let init_mode _ = ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after

@@ -7,7 +7,14 @@
        so boundary crossings are O(1) box/unbox instead of deep marshal/unmarshal.
 
    The surface is exactly what backend-sim uses (see survey): ~8 destructors and
-   ~8 constructors plus the case-construction operators. *)
+   ~8 constructors plus the case-construction operators.
+
+   This signature + the [V_value] interpreter instance live in their own [valrep]
+   lib (below [interface] and [backend-sim]) so that both the [builtin] lib (which
+   functorizes its builtins over [VAL]) and [backend-sim] (which defines [V_typed]
+   over the generated [Spec_parts]) can reference the same currency. [V_typed]
+   stays in [backend-sim] — it needs the generated symbols, which sit above this
+   lib. See API.md §10 (D1). *)
 
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ

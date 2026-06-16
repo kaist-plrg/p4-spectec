@@ -1,6 +1,6 @@
 (* Packs an IL value representing a P4 value from an OCaml type *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   type vt = V.t
 
   (* boolValue = B bool *)

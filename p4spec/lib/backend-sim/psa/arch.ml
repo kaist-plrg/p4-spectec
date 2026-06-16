@@ -22,7 +22,7 @@ let empty =
    [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
    two conversions). *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   let to_value (t : t) =
     t |> to_yojson |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 

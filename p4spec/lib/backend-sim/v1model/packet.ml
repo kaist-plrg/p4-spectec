@@ -54,7 +54,7 @@ type t = {
    functorized over [V]; callers instantiate [Packet.Make (V)] and pass their own
    [vt] directly instead of round-tripping through [V.to_value]/[V.of_value]. *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   module Pack = Spec.Pack.Make (V)
   module Unpack = Spec.Unpack.Make (V)
   open Pack

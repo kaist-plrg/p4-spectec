@@ -3,7 +3,8 @@ module Value = Runtime.Value
 open Error
 open Util.Source
 
-module Make (V : Val.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) = struct
+module Make (V : Valrep.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
   module Pack = Spec.Pack.Make (V)
   module Unpack = Spec.Unpack.Make (V)
   module Hash = Hash.Make (V)

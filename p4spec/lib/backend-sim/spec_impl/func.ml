@@ -7,7 +7,7 @@ open Util.Source
 
 (* Helpers for invoking functions in the spec *)
 
-module Make (V : Val.VAL) = struct
+module Make (V : Valrep.VAL) = struct
   type vt = V.t
 
   (* A trampoline for calling functions in the spec, which will be registered at
@@ -191,12 +191,12 @@ module type S = sig
   type vt
 
   (* Derive the trampoline surface generically in [vt]: instantiate [Make] at a
-     [V_value] sealed to [Val.VAL] (so its [t] stays abstract), then rebind that
+     [V_value] sealed to [Valrep.VAL] (so its [t] stays abstract), then rebind that
      abstract result type to [vt] via destructive substitution. *)
   include module type of Make ((
     struct
-      include Val.V_value
+      include Valrep.V_value
     end :
-      Val.VAL))
+      Valrep.VAL))
     with type vt := vt
 end
