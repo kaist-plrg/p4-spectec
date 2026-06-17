@@ -29,6 +29,15 @@ module type VAL = sig
 
   val to_string : t -> string
 
+  (* Total order / equality over values, for the set/map builtins ([Set.Make]
+     comparator, [map_find_opt]). [V_value] = [Value.compare]/[Value.eq];
+     [V_typed] marshals both operands to [Value.t] then compares (cold path:
+     only the set/map builtins, not packet arithmetic) — keeping the serialized
+     element order identical to [V_value]. No type arg (the [Set.Make]
+     comparator has none), so [V_typed] uses the universal [marshal_value]. *)
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+
   (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
      interface where the value is handed straight back to compiled code and never
      decoded (the runner bridge, [init_pipe]). Identity under both reps. *)
@@ -93,6 +102,8 @@ module V_value : VAL with type t = Value.t = struct
   type t = Value.t
 
   let to_string = Value.to_string
+  let compare = Value.compare
+  let equal = Value.eq
   let to_value = Fun.id
   let of_value = Fun.id
 

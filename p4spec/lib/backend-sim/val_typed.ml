@@ -36,6 +36,20 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
   let to_string (x : t) : string =
     Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
+  (* No type arg (the [Set.Make] comparator has none), so marshal each operand
+     via the universal [marshal_value] and compare as [Value.t]. Cold: only the
+     set/map builtins reach this, and it keeps the serialized set/map element
+     order identical to [V_value] (API.md D2). *)
+  let compare (a : t) (b : t) : int =
+    Value.compare
+      (Spec_parts.Dispatch.marshal_value (Obj.obj a))
+      (Spec_parts.Dispatch.marshal_value (Obj.obj b))
+
+  let equal (a : t) (b : t) : bool =
+    Value.eq
+      (Spec_parts.Dispatch.marshal_value (Obj.obj a))
+      (Spec_parts.Dispatch.marshal_value (Obj.obj b))
+
   (* Transient smuggle (handed straight back to compiled code, never decoded):
      identity cast. *)
   let to_value (x : t) : Value.t = Obj.obj x
