@@ -293,7 +293,7 @@ module Make
                            V.Make.(
                              "`HEX text"
                              <| [ text number_base ]
-                             <<| "tableKeyValueInterface")
+                             <<| Typs.table_key_value_interface)
                          else if String.starts_with ~prefix:"0b" number then
                            let number_base_len = String.length number - 2 in
                            let number_base =
@@ -302,12 +302,12 @@ module Make
                            V.Make.(
                              "`BIN text"
                              <| [ text number_base ]
-                             <<| "tableKeyValueInterface")
+                             <<| Typs.table_key_value_interface)
                          else
                            V.Make.(
                              "`DEC text"
                              <| [ text number ]
-                             <<| "tableKeyValueInterface")
+                             <<| Typs.table_key_value_interface)
                      | Slash (prefix, mask) ->
                          let value_prefix = V.Make.text prefix in
                          let mask = Bigint.of_int (int_of_string mask) in
@@ -315,7 +315,7 @@ module Make
                          V.Make.(
                            "text `SLASH nat"
                            <| [ value_prefix; value_mask ]
-                           <<| "tableKeyValueInterface")
+                           <<| Typs.table_key_value_interface)
                    in
                    V.Make.tuple typ_tableKeyInterface
                      [ value_table_key_name; value_table_key_value ])

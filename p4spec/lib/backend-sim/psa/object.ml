@@ -100,7 +100,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -157,7 +157,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_color_opt = V.Make.opt typ (Some value_color) in
-        V.Make.("RETURN value?" <| [ value_color_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_color_opt ] <<| Typs.return_result)
       in
       (meter, value_ctx, value_arch, value_callResult)
 
@@ -174,7 +174,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_color_opt = V.Make.opt typ (Some value_color) in
-        V.Make.("RETURN value?" <| [ value_color_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_color_opt ] <<| Typs.return_result)
       in
       (meter, value_ctx, value_arch, value_callResult)
   end
@@ -246,7 +246,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_opt = V.Make.opt typ (Some value) in
-        V.Make.("RETURN value?" <| [ value_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_opt ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
 
@@ -268,7 +268,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
   end
@@ -323,7 +323,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_result_opt = V.Make.opt typ (Some value_result) in
-        V.Make.("RETURN value?" <| [ value_result_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_result_opt ] <<| Typs.return_result)
       in
       (hash, value_ctx, value_arch, value_callResult)
 
@@ -361,7 +361,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ (Some value_result)
         in
-        V.Make.("RETURN value?" <| [ value_result_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_result_opt ] <<| Typs.return_result)
       in
       (hash, value_ctx, value_arch, value_callResult)
   end
@@ -402,7 +402,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (Bigint.zero, value_ctx, value_arch, value_callResult)
 
@@ -424,7 +424,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -447,7 +447,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -464,7 +464,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ (Some value_checksum)
         in
-        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -482,7 +482,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ (Some value_checksum)
         in
-        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_checksum_opt ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -504,7 +504,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum_state, value_ctx, value_arch, value_callResult)
   end

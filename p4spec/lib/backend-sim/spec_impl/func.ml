@@ -138,7 +138,7 @@ module Make (V : Valrep.VAL) = struct
     !call "find_type_e" [] [ value_cursor; value_ctx; value_nameIR ]
 
   let find_type_e_local (value_ctx : vt) (name : string) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     find_type_e value_cursor value_ctx name |> V.Get.opt |> Option.get
 
   (* find_var_value_t *)
@@ -147,17 +147,17 @@ module Make (V : Valrep.VAL) = struct
       =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     !call "find_var_value_t" []
       [ value_prefixedNameIR; value_cursor; value_ctx ]
 
   let find_var_value_t_global (value_ctx : vt) (name : string) : vt =
-    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| Typs.cursor) in
     find_var_value_t value_cursor value_ctx name
 
   let find_var_value_t_local (value_ctx : vt) (name : string) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     find_var_value_t value_cursor value_ctx name
 
   (* find_var_e *)
@@ -165,16 +165,16 @@ module Make (V : Valrep.VAL) = struct
   let find_var_e (value_cursor : vt) (value_ctx : vt) (name : string) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     !call "find_var_e" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 
   let find_var_e_global (value_ctx : vt) (name : string) : vt =
-    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| Typs.cursor) in
     find_var_e value_cursor value_ctx name
 
   let find_var_e_local (value_ctx : vt) (name : string) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     find_var_e value_cursor value_ctx name
 
   (* subst_type_e *)
@@ -183,7 +183,7 @@ module Make (V : Valrep.VAL) = struct
     !call "subst_type_e" [] [ value_cursor; value_ctx; value_typ ]
 
   let subst_type_e_local (value_ctx : vt) (value_typ : vt) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     subst_type_e value_cursor value_ctx value_typ
 end
 

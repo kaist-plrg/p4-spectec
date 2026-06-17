@@ -24,11 +24,11 @@ let eval_program (_relname : string) (_includes : string list) (_path : string)
    parts. Stubbed here so the [spec_parts] surface stays stable when the stub is
    in place (`make build`). *)
 
-let make_case_typed (_mixop : string) (_args : Obj.t list) (_typ : string) :
-    Obj.t =
+let make_case_typed (_mixop : Domain.Mixfix.mixop) (_args : Obj.t list)
+    (_typ : Typ.t) : Obj.t =
   failwith "ML interpreter: run `make gen-ocaml` to generate it"
 
-let case_of_typed (_x : Obj.t) (_typ : string) : Obj.t Domain.Mixfix.t =
+let case_of_typed (_x : Obj.t) (_typ : Typ.t) : Obj.t Domain.Mixfix.t =
   failwith "ML interpreter: run `make gen-ocaml` to generate it"
 
 (* Re-export of the generated [marshal_value] (C5d) — the one real marshal

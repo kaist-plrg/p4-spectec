@@ -19,7 +19,7 @@ module Make (V : Valrep.VAL) = struct
       (name : string) : vt =
     let value_storageReference =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     match
       !call "Lvalue_read"
@@ -30,21 +30,21 @@ module Make (V : Valrep.VAL) = struct
 
   let lvalue_read_var_global (value_ctx : vt) (value_arch : vt) (name : string)
       : vt =
-    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| Typs.cursor) in
     lvalue_read_var value_cursor value_ctx value_arch name
 
   let lvalue_read_dot (value_cursor : vt) (value_ctx : vt) (value_arch : vt)
       (name : string) (member : string) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     let value_storageReference =
       let value_memberIR = V.Make.text member in
       V.Make.(
         "storageReference `. nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
-        <<| "storageReference")
+        <<| Typs.storage_reference)
     in
     match
       !call "Lvalue_read"
@@ -55,7 +55,7 @@ module Make (V : Valrep.VAL) = struct
 
   let lvalue_read_dot_global (value_ctx : vt) (value_arch : vt) (name : string)
       (member : string) : vt =
-    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| Typs.cursor) in
     lvalue_read_dot value_cursor value_ctx value_arch name member
 
   (* Lvalue_write *)
@@ -64,7 +64,7 @@ module Make (V : Valrep.VAL) = struct
       (name : string) (value_val : vt) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     match
       !call "Lvalue_write"
@@ -77,14 +77,14 @@ module Make (V : Valrep.VAL) = struct
       (name : string) (member : string) (value_val : vt) : vt =
     let value_prefixedNameIR =
       let value_nameIR = V.Make.text name in
-      V.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      V.Make.("`` nameIR" <| [ value_nameIR ] <<| Typs.prefixed_name_ir)
     in
     let value_storageReference =
       let value_memberIR = V.Make.text member in
       V.Make.(
         "storageReference `. nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
-        <<| "storageReference")
+        <<| Typs.storage_reference)
     in
     match
       !call "Lvalue_write"
@@ -97,17 +97,17 @@ module Make (V : Valrep.VAL) = struct
 
   let lvalue_write_var_local (value_ctx : vt) (value_arch : vt) (name : string)
       (value_val : vt) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     lvalue_write_var value_cursor value_ctx value_arch name value_val
 
   let lvalue_write_dot_global (value_ctx : vt) (value_arch : vt) (name : string)
       (member : string) (value_val : vt) : vt =
-    let value_cursor = V.Make.("GLOBAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("GLOBAL" <| [] <<| Typs.cursor) in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
   let lvalue_write_dot_local (value_ctx : vt) (value_arch : vt) (name : string)
       (member : string) (value_val : vt) : vt =
-    let value_cursor = V.Make.("LOCAL" <| [] <<| "cursor") in
+    let value_cursor = V.Make.("LOCAL" <| [] <<| Typs.cursor) in
     lvalue_write_dot value_cursor value_ctx value_arch name member value_val
 
   (* V1Model_init_packet_in/out *)

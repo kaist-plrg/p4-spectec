@@ -214,8 +214,6 @@ xref:filter_[``X^{asterisk}^`` filtered by ``b^{asterisk}^``]
  .. Else:
   ... Return xref:filter_[``X~t~^{asterisk}^`` filtered by ``b~t~^{asterisk}^``].
 
-xref:assoc_[The value associated to ``X`` in ``(X,`` ``Y)^{asterisk}^``]
-
 xref:sort_[$sort_<X>((nat, X)^{asterisk}^)]
 
 xref:distinct_[The elements of ``K^{asterisk}^`` are distinct]
@@ -257,6 +255,10 @@ xref:codom_map[The codomain of the map ``+`{+`` ``(`` ``K`` ``+`:+`` ``V`` ``)^{
 
 . Return ``+`{+`` ``V^{asterisk}^`` ``+}+``.
 
+xref:update_map[The map ``map<K,`` ``V>`` with the value for ``K`` is updated to ``V``]
+
+xref:assoc_[The value associated to ``X`` in ``(X,`` ``Y)^{asterisk}^``]
+
 xref:find_map[The value of ``K`` in map ``map<K,`` ``V>``]
 
 xref:find_maps[The value of ``K`` in maps ``map<K,`` ``V>^{asterisk}^``]
@@ -264,8 +266,6 @@ xref:find_maps[The value of ``K`` in maps ``map<K,`` ``V>^{asterisk}^``]
 xref:add_map[``map<K,`` ``V>`` where ``K`` to ``V`` is added]
 
 xref:adds_map[``map<K,`` ``V>`` where each of ``K^{asterisk}^`` to ``V^{asterisk}^`` are added]
-
-xref:update_map[The map ``map<K,`` ``V>`` with the value for ``K`` is updated to ``V``]
 
 xref:extend_map[$extend_map<K, V>(+`{+ ( K~a~ +`:+ V~a~ )^{asterisk}^ +}+, +`{+ ( K~b~ +`:+ V~b~ )^{asterisk}^ +}+)]
 
@@ -1883,7 +1883,7 @@ xref:subst_typeIR'[``typeIR'`` substituted by a non-empty ``theta``]
  .. Let ``typeIR''^?^`` be xref:find_map[the value of ``typeId`` in map ``theta``].
  .. If let ``typeIR`` be ``typeIR''^?^``:
   ... Return ``typeIR``.
- .. If ``·`` is equal to xref:find_map[the value of ``typeId`` in map ``theta``]:
+ .. If xref:find_map[the value of ``typeId`` in map ``theta``] is none:
   ... Return ``typeId``.
 . Else if let ``+TYPEDEF+`` ``typeId`` ``typeIR`` be ``typeIR'``:
  .. Let ``typeIR~subst~`` be xref:subst_typeIR'[``typeIR`` substituted by a non-empty ``theta``].
@@ -2627,7 +2627,7 @@ xref:joins_ctk[The join of ``ctk'^{asterisk}^``]
  .. If let ``ctk~b~`` be ``ctk^{asterisk}^``:
   ... Return xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
  .. Else if let ``ctk~b~`` ``{two-colons}`` ``ctk~c~^{asterisk}^`` be ``ctk^{asterisk}^``:
-  ... Check that ``ctk~c~^{asterisk}^`` is not equal to ``·``.
+  ... Check that ``ctk~c~^{asterisk}^`` is a non-empty list.
   ... Let ``ctk~d~`` be xref:join_ctk[the join of ``ctk~a~`` and ``ctk~b~``].
   ... Return xref:joins_ctk[the join of ``ctk~d~`` ``{two-colons}`` ``ctk~c~^{asterisk}^``].
 
@@ -3655,7 +3655,7 @@ for each ``typeIR~f~`` in ``typeIR~f~^{asterisk}^``
  .. Let ``id^?^`` be xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].
  .. If let ``id~zero~`` be ``id^?^``:
   ... Return ``typeId`` ``+`.+`` ``id~zero~`` ``+`.+`` ``value~zero~``.
- .. If ``·`` is equal to xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``]:
+ .. If xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``] is none:
   ... Let ``id~zero~`` be ``"__UNSPECIFIED"``.
   ... Return ``typeId`` ``+`.+`` ``id~zero~`` ``+`.+`` ``value~zero~``.
 
@@ -4579,13 +4579,13 @@ xref:find_overloaded[Finding the item in ``+`{+`` ``(`` ``callableId`` ``+`:+`` 
 --
 +
 for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``
- .. If ``·`` is equal to xref:find_overloadeds_named[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+`(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]:
+ .. If xref:find_overloadeds_named[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+`(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``] is an empty list:
   ... Return ``·``.
  .. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+`(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. If let ``callableId~found~`` ``+`:+`` ``V~found~`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``:
   ... Return ``callableId~found~`` ``+`:+`` ``V~found~`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^``.
 . If ``id~arg~^?^`` is none, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``:
- .. If ``·`` is equal to xref:find_overloadeds_unnamed[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+`(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]:
+ .. If xref:find_overloadeds_unnamed[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+`(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``] is an empty list:
   ... Return ``·``.
  .. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+`{+`` ``(`` ``callableId`` ``+`:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+`(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
  .. If let ``callableId~found~`` ``+`:+`` ``V~found~`` ``+`#+`` ``id~omitted~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``:
@@ -4650,7 +4650,7 @@ xref:name_annotation_default[$name_annotation_default(annotationList, nameIR)]
 . Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
 . If let ``nameIR~found~`` be ``nameIR'^{asterisk}^``:
  .. Return ``nameIR~found~``.
-. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+. If ``xref:name_annotation[$name_annotation(annotationList)]`` is an empty list:
  .. Return ``nameIR``.
 
 xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
@@ -4669,7 +4669,7 @@ xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
 . If let ``annotationListNonEmpty'`` be ``annotationList``:
  .. Check that ``annotationListNonEmpty'`` matches pattern ``%`` ``%``.
  .. Let ``annotationListNonEmpty`` ``annotation`` be ``annotationListNonEmpty'``.
- .. If ``·`` is equal to ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``:
+ .. If ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]`` is none:
   ... Return ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationListNonEmpty)]``.
  .. Let ``annotation'^?^`` be ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.
  .. If let ``annotation~found~`` be ``annotation'^?^``:
@@ -5187,7 +5187,7 @@ xref:unflatten_constructorParameterList[$unflatten_constructorParameterList(cons
 
 . If ``constructorParameter^{asterisk}^`` is an empty list:
  .. Return ``+`EMPTY+``.
-. If ``constructorParameter^{asterisk}^`` is not equal to ``·``:
+. Else:
  .. Let ``parameterList`` be ``xref:unflatten_parameterList[$unflatten_parameterList(constructorParameter^{asterisk}^)]``.
  .. Return ``+`(+`` ``parameterList`` ``+)+``.
 
@@ -5353,7 +5353,7 @@ xref:unflatten_recordElementExpression[$unflatten_recordElementExpression(namedE
  .. Let ``name~h~`` ``+`=+`` ``expression~h~`` be ``namedExpression~h~``.
  .. Return ``name~h~`` ``+`=+`` ``expression~h~``.
 . Else if let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
- .. Check that ``namedExpression~t~^{asterisk}^`` is not equal to ``·``.
+ .. Check that ``namedExpression~t~^{asterisk}^`` is a non-empty list.
  .. Let ``name~h~`` ``+`=+`` ``expression~h~`` be ``namedExpression~h~``.
  .. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression~t~^{asterisk}^)]``.
  .. Return ``name~h~`` ``+`=+`` ``expression~h~`` ``+`,+`` ``namedExpressionList``.
@@ -5365,7 +5365,7 @@ xref:unflatten_recordElementExpression_with_default[$unflatten_recordElementExpr
  .. Let ``name~h~`` ``+`=+`` ``expression~h~`` be ``namedExpression~h~``.
  .. Return ``name~h~`` ``+`=+`` ``expression~h~`` ``+`,+`` ``+`...+``.
 . Else if let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
- .. Check that ``namedExpression~t~^{asterisk}^`` is not equal to ``·``.
+ .. Check that ``namedExpression~t~^{asterisk}^`` is a non-empty list.
  .. Let ``name~h~`` ``+`=+`` ``expression~h~`` be ``namedExpression~h~``.
  .. Let ``namedExpressionList`` be ``xref:unflatten_namedExpressionList[$unflatten_namedExpressionList(namedExpression~t~^{asterisk}^)]``.
  .. Return ``name~h~`` ``+`=+`` ``expression~h~`` ``+`,+`` ``namedExpressionList`` ``+`,+`` ``+`...+``.
@@ -5544,7 +5544,7 @@ xref:lift_callExpressionIR[$lift_callExpressionIR(callExpressionIR)]
   ... Let ``namedType`` be ``prefixedTypeName``.
   ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
   ... Return ``namedType`` ``+`(+`` ``argumentList`` ``+)+``.
- .. If ``typeArgumentIR^{asterisk}^`` is not equal to ``·``:
+ .. Else:
   ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
   ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
   ... Let ``namedType`` be ``prefixedTypeName`` ``+`<+`` ``typeArgumentList`` ``+>+``.
@@ -5557,7 +5557,7 @@ xref:lift_callExpressionIR[$lift_callExpressionIR(callExpressionIR)]
   ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
   ... Return ``expression`` ``+`(+`` ``argumentList`` ``+)+``.
  .. Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.
- .. If ``typeArgumentIR^{asterisk}^`` is not equal to ``·``:
+ .. If ``typeArgumentIR^{asterisk}^`` is a non-empty list:
   ... Let ``realTypeArgumentList`` be ``xref:lift_typeArgumentListIR_as_realTypeArgumentList[$lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR^{asterisk}^)]``.
   ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
   ... Return ``expression`` ``+`<+`` ``realTypeArgumentList`` ``+>+`` ``+`(+`` ``argumentList`` ``+)+``.
@@ -6191,7 +6191,7 @@ xref:lift_instantiationIR[$lift_instantiationIR(annotationList typeIR constructo
   ... Return ``annotationList`` ``type`` ``+`(+`` ``argumentList`` ``+)+`` ``name`` ``+`=+`` ``+`{+`` ``objectDeclarationList`` ``+}+`` ``+`;+``.
  .. If the length of ``typeArgumentIR^{asterisk}^`` is greater than ``0``:
   ... Let ``prefixedTypeName`` be ``xref:lift_prefixedNameIR_as_prefixedTypeName[$lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)]``.
-  ... Check that ``typeArgumentIR^{asterisk}^`` is not equal to ``·``.
+  ... Check that ``typeArgumentIR^{asterisk}^`` is a non-empty list.
   ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
   ... Let ``type`` be ``prefixedTypeName`` ``+`<+`` ``typeArgumentList`` ``+>+``.
   ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
@@ -7364,14 +7364,14 @@ xref:find_var_t[The type of variable ``prefixedNameIR`` from the ``p`` layer of 
   ... Let ``varTypeIR'^?^`` be xref:find_map[the value of ``id`` in map ``typeFrame``].
   ... If let ``varTypeIR`` be ``varTypeIR'^?^``:
    .... Return ``varTypeIR``.
-  ... If ``·`` is equal to xref:find_map[the value of ``id`` in map ``typeFrame``]:
+  ... If xref:find_map[the value of ``id`` in map ``typeFrame``] is none:
    .... Return xref:find_var_t[the type of variable ``id`` from the ``+GLOBAL+`` layer of ``TC``].
  .. Else:
   ... Let ``typeFrame^{asterisk}^`` be ``TC.+LOCAL+.+FRAMES+``.
   ... Let ``varTypeIR'^?^`` be xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``].
   ... If let ``varTypeIR`` be ``varTypeIR'^?^``:
    .... Return ``varTypeIR``.
-  ... If ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``]:
+  ... If xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``] is none:
    .... Return xref:find_var_t[the type of variable ``id`` from the ``+BLOCK+`` layer of ``TC``].
 
 xref:find_var_value_t[The value of variable ``prefixedNameIR`` from the ``p`` layer of ``TC``]
@@ -7400,7 +7400,7 @@ xref:find_typeDef_t[The type definition of ``prefixedNameIR`` from the ``p`` lay
  .. Let ``typeDefIR'^?^`` be xref:find_map[the value of ``typeId`` in map ``typeDefEnv``].
  .. If let ``typeDefIR`` be ``typeDefIR'^?^``:
   ... Return ``typeDefIR``.
- .. If ``·`` is equal to xref:find_map[the value of ``typeId`` in map ``typeDefEnv``]:
+ .. If xref:find_map[the value of ``typeId`` in map ``typeDefEnv``] is none:
   ... Return xref:find_typeDef_t[the type definition of ``typeId`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -7409,7 +7409,7 @@ xref:find_typeDef_t[The type definition of ``prefixedNameIR`` from the ``p`` lay
  .. Let ``typeDefIR'^?^`` be xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``].
  .. If let ``typeDefIR`` be ``typeDefIR'^?^``:
   ... Return ``typeDefIR``.
- .. If ``·`` is equal to xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``]:
+ .. If xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``] is none:
   ... Return xref:find_typeDef_t[the type definition of ``typeId`` from the ``+BLOCK+`` layer of ``TC``].
 
 xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``p`` layer of ``TC``]
@@ -7433,7 +7433,7 @@ xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefi
  .. Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
  .. If let ``callableId`` ``+`:+`` ``callableTypeDefIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``:
   ... Return ``callableId`` ``+`:+`` ``callableTypeDefIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^``.
- .. If ``·`` is equal to xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``]:
+ .. If xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``] is none:
   ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -7455,7 +7455,7 @@ xref:find_callableDef_non_overloaded_t[The non-overloaded callable definition of
  .. Let ``(callableId,`` ``callableTypeDefIR)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.
  .. If let ``(`` ``callableId,`` ``callableTypeDefIR`` ``)`` be ``(callableId,`` ``callableTypeDefIR)^?^``:
   ... Return ( ``callableId``, ``callableTypeDefIR`` ).
- .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``:
+ .. If ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]`` is none:
   ... Return xref:find_callableDef_non_overloaded_t[the non-overloaded callable definition of ``nameIR`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -7594,7 +7594,7 @@ xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priori
 
 
 . If ``TBLC.+MODE+`` is ``+NONE+``:
- .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
+ .. Check that xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``] is none, for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
  .. Return ``tableEntryIR^{asterisk}^``.
 . Let ``matchMode`` be ``TBLC.+MODE+``.
 . If ``matchMode`` matches pattern ``+LPM+`` ``%``:
@@ -7606,7 +7606,7 @@ xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priori
 --
 +
 for each ``TBLS`` in ``TBLS^{asterisk}^``
- .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
+ .. Check that xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``] is none, for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
  .. Check that the length of ``n~prefix~^{asterisk}^`` is equal to the length of ``tableEntryIR^{asterisk}^``.
  .. Let ``tableEntryIR~updated~^{asterisk}^`` be the list obtained by repeating:
 +
@@ -7622,8 +7622,8 @@ for each ``n~prefix~`` in ``n~prefix~^{asterisk}^`` and ``tableEntryIR`` in ``ta
 . Else:
  .. Let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
  .. Check that ``TBLC.+MODE+`` is ``+PRI+``.
- .. If ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``]:
-  ... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~t~``], for all ``tableEntryIR~t~`` in ``tableEntryIR~t~^{asterisk}^``.
+ .. If xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``] is none:
+  ... Check that xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~t~``] is none, for all ``tableEntryIR~t~`` in ``tableEntryIR~t~^{asterisk}^``.
   ... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
   ... Let ``n~size~`` be ``TBLC.+ENTRIES+.+SIZE+``.
   ... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
@@ -7647,7 +7647,7 @@ xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TB
  .. Return ``·``.
 . Else:
  .. Let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
- .. If ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``]:
+ .. If xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``] is none:
   ... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
   ... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
   ... Let ``i`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].
@@ -9028,9 +9028,10 @@ xref:TypeArguments_ok[TypeArguments_ok]:
 
 xref:TypeArguments_ok[Typing ``typeArgument^{asterisk}^``, under context ``TC`` at ``p``]:
 
-. If ``typeArgument^{asterisk}^`` is equal to ``·``:
+. If ``typeArgument^{asterisk}^`` is an empty list:
  .. Result in ``·`` and fresh type variables ``·``.
-. If let ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^`` be ``typeArgument^{asterisk}^``:
+. Else:
+ .. Let ``typeArgument~h~`` ``{two-colons}`` ``typeArgument~t~^{asterisk}^`` be ``typeArgument^{asterisk}^``.
  .. Let ``typeArgumentIR~h~`` and fresh type variables ``typeId~impl_h~^{asterisk}^`` be
 * the result of xref:TypeArgument_ok[typing ``typeArgument~h~``, under context ``TC`` at ``p``].
  .. Let ``typeArgumentIR~t~^{asterisk}^`` and fresh type variables ``typeId~impl_t~^{asterisk}^`` be
@@ -11295,9 +11296,10 @@ xref:TableKeys_ok[TableKeys_ok]:
 
 xref:TableKeys_ok[Typing ``tableKey^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
 
-. If ``tableKey^{asterisk}^`` is equal to ``·``:
+. If ``tableKey^{asterisk}^`` is an empty list:
  .. Result in table context ``TBLC`` and ``·``.
-. If let ``tableKey~h~`` ``{two-colons}`` ``tableKey~t~^{asterisk}^`` be ``tableKey^{asterisk}^``:
+. Else:
+ .. Let ``tableKey~h~`` ``{two-colons}`` ``tableKey~t~^{asterisk}^`` be ``tableKey^{asterisk}^``.
  .. Let table context ``TBLC~1~`` and ``tableKeyIR~h~`` be
 * the result of xref:TableKey_ok[typing ``tableKey~h~``, under context ``TC`` and table context ``TBLC``].
  .. Let table context ``TBLC~2~`` and ``tableKeyIR~t~^{asterisk}^`` be
@@ -11362,9 +11364,10 @@ xref:TableActions_ok[TableActions_ok]:
 
 xref:TableActions_ok[Typing ``tableAction^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
 
-. If ``tableAction^{asterisk}^`` is equal to ``·``:
+. If ``tableAction^{asterisk}^`` is an empty list:
  .. Result in table context ``TBLC`` and ``·``.
-. If let ``tableAction~h~`` ``{two-colons}`` ``tableAction~t~^{asterisk}^`` be ``tableAction^{asterisk}^``:
+. Else:
+ .. Let ``tableAction~h~`` ``{two-colons}`` ``tableAction~t~^{asterisk}^`` be ``tableAction^{asterisk}^``.
  .. Let table context ``TBLC~1~`` and ``tableActionIR~h~`` be
 * the result of xref:TableAction_ok[typing ``tableAction~h~``, under context ``TC`` and table context ``TBLC``].
  .. Let table context ``TBLC~2~`` and ``tableActionIR~t~^{asterisk}^`` be
@@ -11699,9 +11702,10 @@ xref:TableProperties_ok[TableProperties_ok]:
 
 xref:TableProperties_ok[Typing ``tableProperty^{asterisk}^``, under context ``TC`` and table context ``TBLC``]:
 
-. If ``tableProperty^{asterisk}^`` is equal to ``·``:
+. If ``tableProperty^{asterisk}^`` is an empty list:
  .. Result in table context ``TBLC`` and ``·``.
-. If let ``tableProperty~h~`` ``{two-colons}`` ``tableProperty~t~^{asterisk}^`` be ``tableProperty^{asterisk}^``:
+. Else:
+ .. Let ``tableProperty~h~`` ``{two-colons}`` ``tableProperty~t~^{asterisk}^`` be ``tableProperty^{asterisk}^``.
  .. Let table context ``TBLC~1~`` and ``tablePropertyIR~h~`` be
 * the result of xref:TableProperty_ok[typing ``tableProperty~h~``, under context ``TC`` and table context ``TBLC``].
  .. Let table context ``TBLC~2~`` and ``tablePropertyIR~t~^{asterisk}^`` be
@@ -12478,9 +12482,10 @@ xref:Decls_ok[Decls_ok]:
 
 xref:Decls_ok[Typing ``declaration^{asterisk}^`` under context ``TC``]:
 
-. If ``declaration^{asterisk}^`` is equal to ``·``:
+. If ``declaration^{asterisk}^`` is an empty list:
  .. Result in context ``TC`` and ``·``.
-. If let ``declaration~h~`` ``{two-colons}`` ``declaration~t~^{asterisk}^`` be ``declaration^{asterisk}^``:
+. Else:
+ .. Let ``declaration~h~`` ``{two-colons}`` ``declaration~t~^{asterisk}^`` be ``declaration^{asterisk}^``.
  .. Let context ``TC~1~`` and ``declarationIR~h~`` be
 * the result of xref:Decl_ok[typing ``declaration~h~`` under context ``TC``].
  .. Let context ``TC~2~`` and ``declarationIR~t~^{asterisk}^`` be
@@ -12562,10 +12567,11 @@ xref:Call_convention_ok[Call_convention_ok]:
 
 xref:Call_convention_ok[Checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR^{asterisk}^``, under context ``TC`` and action context ``actctxt`` at ``p``]:
 
-. If ``parameterIR^{asterisk}^`` is equal to ``·``:
- .. Check that ``argumentIR^{asterisk}^`` is equal to ``·``.
+. If ``parameterIR^{asterisk}^`` is an empty list:
+ .. Check that ``argumentIR^{asterisk}^`` is an empty list.
  .. Result in casted ``·``.
-. If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
+. Else:
+ .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Let casted ``argumentIR~h_cast~`` be
@@ -12974,7 +12980,7 @@ xref:ConstructorType_ok[ConstructorType_ok]:
 
 xref:ConstructorType_ok[Finding type of constructor call ``prefixedNameIR`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+``, under cursor ``p`` and context ``TC``]:
 
-. If ``·`` is equal to xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``]:
+. If xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``] is none:
  .. Let ``callableId`` ``+`:+`` ``constructorTypeDefIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_overloaded_t[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``TC``].
  .. Let ``(`` ``constructorTypeIR,`` ``typeId~impl~^{asterisk}^`` ``)`` be xref:specialize_constructorTypeDefIR[``constructorTypeDefIR`` specialized by ``typeArgumentIR'^{asterisk}^``].
  .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
@@ -12990,7 +12996,7 @@ xref:ConstructorType_ok[Finding type of constructor call ``prefixedNameIR`` ``+`
  .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+`{+`` ``typeId~impl~^{asterisk}^`` ``+}+``].
  .. Check that xref:ConstructorType_wf[``constructorTypeIR`` is a well-formed constructor type, with bound type variables ``B``].
  .. Result in ``constructorTypeIR`` with fresh type variables ``typeId~impl~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
-. If ``typeArgumentIR'^{asterisk}^`` is equal to ``·``:
+. If ``typeArgumentIR'^{asterisk}^`` is an empty list:
  .. Let ``typeDefIR'`` be xref:option_get[*!*] xref:find_typeDef_t[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``].
  .. Check that ``typeDefIR'`` has type ``typedefTypeIR``.
  .. Let ``+TYPEDEF+`` ``nameIR~alias~`` ``typeIR~alias~`` be ``typeDefIR'``.
@@ -13425,9 +13431,10 @@ xref:Parameters_ok[Parameters_ok]:
 
 xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC`` at ``p``]:
 
-. If ``parameter^{asterisk}^`` is equal to ``·``:
+. If ``parameter^{asterisk}^`` is an empty list:
  .. Result in context ``TC``, ``·``, and fresh type variables ``·``.
-. If let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``:
+. Else:
+ .. Let ``parameter~h~`` ``{two-colons}`` ``parameter~t~^{asterisk}^`` be ``parameter^{asterisk}^``.
  .. Let context ``TC~1~``, ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
 * the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC`` at ``p``].
  .. Let context ``TC~2~``, ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
@@ -13527,9 +13534,10 @@ xref:ForInitStmts_ok[ForInitStmts_ok]:
 
 xref:ForInitStmts_ok[Typing ``forInitStatement^{asterisk}^`` under context ``TC``]:
 
-. If ``forInitStatement^{asterisk}^`` is equal to ``·``:
+. If ``forInitStatement^{asterisk}^`` is an empty list:
  .. Result in context ``TC`` and ``·``.
-. If let ``forInitStatement~h~`` ``{two-colons}`` ``forInitStatement~t~^{asterisk}^`` be ``forInitStatement^{asterisk}^``:
+. Else:
+ .. Let ``forInitStatement~h~`` ``{two-colons}`` ``forInitStatement~t~^{asterisk}^`` be ``forInitStatement^{asterisk}^``.
  .. Let context ``TC~1~`` and ``forInitStatementIR~h~`` be
 * the result of xref:ForInitStmt_ok[typing ``forInitStatement~h~`` under context ``TC``].
  .. Let context ``TC~2~`` and ``forInitStatementIR~t~^{asterisk}^`` be
@@ -13654,9 +13662,10 @@ xref:SwitchCases_table_ok[SwitchCases_table_ok]:
 
 xref:SwitchCases_table_ok[Typing ``switchCase^{asterisk}^`` for table ``typeId~table~`` under context ``TC``]:
 
-. If ``switchCase^{asterisk}^`` is equal to ``·``:
+. If ``switchCase^{asterisk}^`` is an empty list:
  .. Result in context ``TC`` and ``·``.
-. If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
+. Else:
+ .. Let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``.
  .. Let context ``TC~1~`` and ``switchCaseIR~h~`` be
 * the result of xref:SwitchCase_table_ok[typing ``switchCase~h~`` for table ``typeId~table~`` under context ``TC``].
  .. Let context ``TC~2~`` and ``switchCaseIR~t~^{asterisk}^`` be
@@ -13735,9 +13744,10 @@ xref:SwitchCases_general_ok[SwitchCases_general_ok]:
 
 xref:SwitchCases_general_ok[Typing ``switchCase^{asterisk}^`` under context ``TC~0~`` with switch key type ``typeIR~switch~``]:
 
-. If ``switchCase^{asterisk}^`` is equal to ``·``:
+. If ``switchCase^{asterisk}^`` is an empty list:
  .. Result in context ``TC~0~`` and ``·``.
-. If let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``:
+. Else:
+ .. Let ``switchCase~h~`` ``{two-colons}`` ``switchCase~t~^{asterisk}^`` be ``switchCase^{asterisk}^``.
  .. Let context ``TC~1~`` and ``switchCaseIR~h~`` be
 * the result of xref:SwitchCase_general_ok[typing ``switchCase~h~`` under context ``TC~0~`` with switch key type ``typeIR~switch~``].
  .. Let context ``TC~2~`` and ``switchCaseIR~t~^{asterisk}^`` be
@@ -13790,9 +13800,10 @@ xref:BlockElementStmts_ok[BlockElementStmts_ok]:
 
 xref:BlockElementStmts_ok[Typing ``blockElementStatement^{asterisk}^`` under context ``TC``]:
 
-. If ``blockElementStatement^{asterisk}^`` is equal to ``·``:
+. If ``blockElementStatement^{asterisk}^`` is an empty list:
  .. Result in context ``TC`` and ``·``.
-. If let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``:
+. Else:
+ .. Let ``blockElementStatement~h~`` ``{two-colons}`` ``blockElementStatement~t~^{asterisk}^`` be ``blockElementStatement^{asterisk}^``.
  .. Let context ``TC~1~`` and ``blockElementStatementIR~h~`` be
 * the result of xref:BlockElementStmt_ok[typing ``blockElementStatement~h~`` under context ``TC``].
  .. Let context ``TC~2~`` and ``blockElementStatementIR~t~^{asterisk}^`` be
@@ -13869,9 +13880,10 @@ xref:ObjectDecls_ok[ObjectDecls_ok]:
 
 xref:ObjectDecls_ok[Typing ``objectDeclaration^{asterisk}^`` under context ``TC`` with ``typeFrame`` and ``externMethodTypeDefEnv`` at ``p``]:
 
-. If ``objectDeclaration^{asterisk}^`` is equal to ``·``:
+. If ``objectDeclaration^{asterisk}^`` is an empty list:
  .. Result in ``typeFrame`` and ``externMethodTypeDefEnv`` of the object declaration block and ``·``.
-. If let ``objectDeclaration~h~`` ``{two-colons}`` ``objectDeclaration~t~^{asterisk}^`` be ``objectDeclaration^{asterisk}^``:
+. Else:
+ .. Let ``objectDeclaration~h~`` ``{two-colons}`` ``objectDeclaration~t~^{asterisk}^`` be ``objectDeclaration^{asterisk}^``.
  .. Let ``typeFrame~1~`` and ``externMethodTypeDefEnv~1~`` of the object declaration and ``objectDeclarationIR~h~`` be
 * the result of xref:ObjectDecl_ok[typing ``objectDeclaration~h~`` under context ``TC`` with ``typeFrame`` and ``externMethodTypeDefEnv`` at ``p``].
  .. Let ``typeFrame~2~`` and ``externMethodTypeDefEnv~2~`` of the object declaration block and ``objectDeclarationIR~t~^{asterisk}^`` be
@@ -13993,9 +14005,10 @@ xref:Enum_serializable_fields_ok[Enum_serializable_fields_ok: ``TC`` ``nameIR~en
 
 xref:Enum_serializable_fields_ok[``TC`` ``nameIR~enum~`` ``typeIR`` ``+|-+`` ``namedExpression^{asterisk}^`` ``+:+`` ``%`` ``%``]:
 
-. If ``namedExpression^{asterisk}^`` is equal to ``·``:
+. If ``namedExpression^{asterisk}^`` is an empty list:
  .. Result in ``TC`` and ``·``.
-. If let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``:
+. Else:
+ .. Let ``namedExpression~h~`` ``{two-colons}`` ``namedExpression~t~^{asterisk}^`` be ``namedExpression^{asterisk}^``.
  .. Let context ``TC~1~`` and field value ``namedValueIR~h~`` be
 * the result of xref:Enum_serializable_field_ok[typing ``namedExpression~h~`` under typing context ``TC`` with enum name ``nameIR~enum~`` and underlying ``typeIR``].
  .. Let xref:Enum_serializable_fields_ok[``TC~1~`` ``nameIR~enum~`` ``typeIR`` ``+|-+`` ``namedExpression~t~^{asterisk}^`` ``+:+`` ``TC~2~`` ``namedValueIR~t~^{asterisk}^``].
@@ -14116,15 +14129,15 @@ xref:SelectCase_keyset_ok[Typing ``keysetExpression`` under context ``TC`` with 
   ... Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``+`_+`` under context ``TC`` with key type ``typeIR~key~``].
   ... Result in ``simpleKeysetExpressionIR``.
+. Else if ``typeIR^{asterisk}^`` is an empty list:
+ .. Check that ``keysetExpression`` is equal to ``+DEFAULT+``.
+ .. Result in ``+DEFAULT+``.
 . If let ``expression`` be ``keysetExpression``:
  .. Check that the length of ``typeIR^{asterisk}^`` is greater than ``1``.
  .. Let ``typeIR~key_tuple~`` be ``+TUPLE+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+>+``.
  .. Let ``simpleKeysetExpressionIR`` be
 * the result of xref:SelectCase_keyset_simple_ok[typing ``expression`` under context ``TC`` with key type ``typeIR~key_tuple~``].
  .. Result in ``simpleKeysetExpressionIR``.
-. If ``typeIR^{asterisk}^`` is equal to ``·``:
- .. Check that ``keysetExpression`` is equal to ``+DEFAULT+``.
- .. Result in ``+DEFAULT+``.
 . If ``keysetExpression`` is equal to ``+DEFAULT+``:
  .. Check that the length of ``typeIR^{asterisk}^`` is greater than ``1``.
  .. Let ``simpleKeysetExpressionIR`` be
@@ -14199,9 +14212,10 @@ xref:ParserStmts_ok[ParserStmts_ok]:
 
 xref:ParserStmts_ok[Typing ``parserStatement^{asterisk}^``, under context ``TC``]:
 
-. If ``parserStatement^{asterisk}^`` is equal to ``·``:
+. If ``parserStatement^{asterisk}^`` is an empty list:
  .. Result in the updated context ``TC`` and the typed parser statements ``·``.
-. If let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``:
+. Else:
+ .. Let ``parserStatement~h~`` ``{two-colons}`` ``parserStatement~t~^{asterisk}^`` be ``parserStatement^{asterisk}^``.
  .. Let context ``TC~1~`` and typed parser statement ``parserStatementIR~h~`` be
 * the result of xref:ParserStmt_ok[typing ``parserStatement~h~``, under context ``TC``].
  .. Let the updated context ``TC~2~`` and the typed parser statements ``parserStatementIR~t~^{asterisk}^`` be
@@ -14215,9 +14229,10 @@ xref:ParserLocalDecls_ok[ParserLocalDecls_ok]:
 
 xref:ParserLocalDecls_ok[Typing ``parserLocalDeclaration^{asterisk}^``, under context ``TC``]:
 
-. If ``parserLocalDeclaration^{asterisk}^`` is equal to ``·``:
+. If ``parserLocalDeclaration^{asterisk}^`` is an empty list:
  .. Result in the updated context ``TC`` and the typed parser local declarations ``·``.
-. If let ``parserLocalDeclaration~h~`` ``{two-colons}`` ``parserLocalDeclaration~t~^{asterisk}^`` be ``parserLocalDeclaration^{asterisk}^``:
+. Else:
+ .. Let ``parserLocalDeclaration~h~`` ``{two-colons}`` ``parserLocalDeclaration~t~^{asterisk}^`` be ``parserLocalDeclaration^{asterisk}^``.
  .. Let context ``TC~1~`` and ``parserLocalDeclarationIR~h~`` be
 * the result of xref:ParserLocalDecl_ok[typing ``parserLocalDeclaration~h~``, under context ``TC``].
  .. Let the updated context ``TC~2~`` and the typed parser local declarations ``parserLocalDeclarationIR~t~^{asterisk}^`` be
@@ -14413,10 +14428,11 @@ xref:TableEntry_keysets_simple_ok[TableEntry_keysets_simple_ok]:
 
 xref:TableEntry_keysets_simple_ok[Typing ``matchKey^{asterisk}^`` against ``simpleKeysetExpression^{asterisk}^`` under context ``TC``, table context ``TBLC``, and table entry state ``TBLS``]:
 
-. If ``matchKey^{asterisk}^`` is equal to ``·``:
- .. Check that ``simpleKeysetExpression^{asterisk}^`` is equal to ``·``.
+. If ``matchKey^{asterisk}^`` is an empty list:
+ .. Check that ``simpleKeysetExpression^{asterisk}^`` is an empty list.
  .. Result in table entry state ``TBLS`` and ``·``.
-. If let ``matchKey~h~`` ``{two-colons}`` ``matchKey~t~^{asterisk}^`` be ``matchKey^{asterisk}^``:
+. Else:
+ .. Let ``matchKey~h~`` ``{two-colons}`` ``matchKey~t~^{asterisk}^`` be ``matchKey^{asterisk}^``.
  .. Check that ``simpleKeysetExpression^{asterisk}^`` is a non-empty list.
  .. Let ``simpleKeysetExpression~h~`` ``{two-colons}`` ``simpleKeysetExpression~t~^{asterisk}^`` be ``simpleKeysetExpression^{asterisk}^``.
  .. Let table entry state ``TBLS~1~`` and ``simpleKeysetExpressionIR~h~`` be
@@ -14480,9 +14496,10 @@ xref:ControlLocalDecls_ok[ControlLocalDecls_ok]:
 
 xref:ControlLocalDecls_ok[Typing ``controlLocalDeclaration^{asterisk}^``, under context ``TC``]:
 
-. If ``controlLocalDeclaration^{asterisk}^`` is equal to ``·``:
+. If ``controlLocalDeclaration^{asterisk}^`` is an empty list:
  .. Result in the updated context ``TC`` and the typed control local declarations ``·``.
-. If let ``controlLocalDeclaration~h~`` ``{two-colons}`` ``controlLocalDeclaration~t~^{asterisk}^`` be ``controlLocalDeclaration^{asterisk}^``:
+. Else:
+ .. Let ``controlLocalDeclaration~h~`` ``{two-colons}`` ``controlLocalDeclaration~t~^{asterisk}^`` be ``controlLocalDeclaration^{asterisk}^``.
  .. Let context ``TC~1~`` and ``controlLocalDeclarationIR~h~`` be
 * the result of xref:ControlLocalDecl_ok[typing ``controlLocalDeclaration~h~``, under context ``TC``].
  .. Let the updated context ``TC~2~`` and the typed control local declarations ``controlLocalDeclarationIR~t~^{asterisk}^`` be
@@ -14499,7 +14516,7 @@ xref:infer[$infer(typeId^{asterisk}^, parameterIR^{asterisk}^, argumentIR^{aster
 
 . If ``typeId^{asterisk}^`` is an empty list:
  .. Return xref:empty_map[an empty map].
-. If ``typeId^{asterisk}^`` is not equal to ``·``:
+. Else:
  .. Let ``constraint~init~`` be ``xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]``.
  .. Check that the length of ``argumentIR^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
  .. Let ``constraint~pair~^{asterisk}^`` be the list obtained by repeating:
@@ -15159,7 +15176,7 @@ xref:find_callableDef_non_overload_i[The non-overloaded callable definition of `
 
 
 . If let ``+`.+`` ``nameIR`` be ``prefixedNameIR``:
- .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``:
+ .. If ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]`` is none:
   ... Return ``·``.
  .. Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.
  .. If let ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``:
@@ -15174,7 +15191,7 @@ xref:find_callableDef_non_overload_i[The non-overloaded callable definition of `
  .. Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.
  .. If let ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``:
   ... Return ( ``+BLOCK+``, ``callableId``, ``callableDef`` ).
- .. If ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``:
+ .. If ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]`` is none:
   ... Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -15216,13 +15233,13 @@ xref:find_var_i[The value of ``prefixedNameIR`` from the ``p`` layer of ``IC``]
   ... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``].
   ... If let ``value`` be ``value'^?^``:
    .... Return ``value``.
-  ... If ``·`` is equal to xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``]:
+  ... If xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``] is none:
    .... Return xref:find_var_i[the value of ``id`` from the ``+GLOBAL+`` layer of ``IC``].
  .. Else:
   ... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``].
   ... If let ``value`` be ``value'^?^``:
    .... Return ``value``.
-  ... If ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``]:
+  ... If xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``] is none:
    .... Return xref:find_var_i[the value of ``id`` from the ``+BLOCK+`` layer of ``IC``].
 
 xref:find_typeDef_i[The type definition of ``prefixedNameIR`` from the ``++_++`` layer of ``IC``]
@@ -15484,9 +15501,10 @@ xref:Exprs_inst[Exprs_inst]:
 
 xref:Exprs_inst[Compile-time evaluation of ``typedExpressionIR^{asterisk}^``, under context ``IC`` and store ``STO`` at ``p``]:
 
-. If ``typedExpressionIR^{asterisk}^`` is equal to ``·``:
+. If ``typedExpressionIR^{asterisk}^`` is an empty list:
  .. Result in store ``STO`` and ``·``.
-. If let ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``:
+. Else:
+ .. Let ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``.
  .. Let store ``STO~1~`` and ``value~h~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~h~``, under context ``IC`` and store ``STO`` at ``p``].
  .. Let store ``STO~2~`` and ``value~t~^{asterisk}^`` be
@@ -15649,9 +15667,10 @@ xref:BlockElementStmtList_inst[BlockElementStmtList_inst]:
 
 xref:BlockElementStmtList_inst[Compile-time evaluation of ``blockElementStatementIR^{asterisk}^``, under context ``IC``, and store ``STO``]:
 
-. If ``blockElementStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``blockElementStatementIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC``, store ``STO``, and ``·``.
-. If let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``.
  .. Let context ``IC~1~``, store ``STO~1~``, and ``blockElementStatementIR~h_inst~`` be
 * the result of xref:BlockElementStmt_inst[compile-time evaluation of ``blockElementStatementIR~h~``, under context ``IC``, and store ``STO``].
  .. Let context ``IC~2~``, store ``STO~2~``, and ``blockElementStatementIR~t_inst~^{asterisk}^`` be
@@ -15692,9 +15711,10 @@ xref:ExternMethods_inst[ExternMethods_inst]:
 
 xref:ExternMethods_inst[Compile-time evaluation of ``externMethodPrototypeIR^{asterisk}^``, under context ``IC``]:
 
-. If ``externMethodPrototypeIR^{asterisk}^`` is equal to ``·``:
+. If ``externMethodPrototypeIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC``.
-. If let ``externMethodPrototypeIR~h~`` ``{two-colons}`` ``externMethodPrototypeIR~t~^{asterisk}^`` be ``externMethodPrototypeIR^{asterisk}^``:
+. Else:
+ .. Let ``externMethodPrototypeIR~h~`` ``{two-colons}`` ``externMethodPrototypeIR~t~^{asterisk}^`` be ``externMethodPrototypeIR^{asterisk}^``.
  .. Let xref:ExternMethod_inst[``IC`` ``+|-+`` ``externMethodPrototypeIR~h~`` ``+:+`` ``IC~1~``].
  .. Let context ``IC~2~`` be
 * the result of xref:ExternMethods_inst[compile-time evaluation of ``externMethodPrototypeIR~t~^{asterisk}^``, under context ``IC~1~``].
@@ -15774,9 +15794,10 @@ xref:ParserStmts_inst[ParserStmts_inst]:
 
 xref:ParserStmts_inst[Compile-time evaluation of ``parserStatementIR^{asterisk}^``, under context ``IC`` and store ``STO``]:
 
-. If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``parserStatementIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC`` and store ``STO``.
-. If let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``.
  .. Let context ``IC~1~`` and store ``STO~1~`` be
 * the result of xref:ParserStmt_inst[compile-time evaluation of ``parserStatementIR~h~``, under context ``IC`` and store ``STO``].
  .. Let context ``IC~2~`` and store ``STO~2~`` be
@@ -15804,9 +15825,10 @@ xref:ParserStates_inst[ParserStates_inst]:
 
 xref:ParserStates_inst[Compile-time evaluation of ``parserStateIR^{asterisk}^``, under context ``IC`` and store ``STO``]:
 
-. If ``parserStateIR^{asterisk}^`` is equal to ``·``:
+. If ``parserStateIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC`` and store ``STO``.
-. If let ``parserStateIR~h~`` ``{two-colons}`` ``parserStateIR~t~^{asterisk}^`` be ``parserStateIR^{asterisk}^``:
+. Else:
+ .. Let ``parserStateIR~h~`` ``{two-colons}`` ``parserStateIR~t~^{asterisk}^`` be ``parserStateIR^{asterisk}^``.
  .. Let context ``IC~1~`` and store ``STO~1~`` be
 * the result of xref:ParserState_inst[compile-time evaluation of ``parserStateIR~h~``, under context ``IC`` and store ``STO``].
  .. Let context ``IC~2~`` and store ``STO~2~`` be
@@ -15856,9 +15878,10 @@ xref:ParserLocalDecls_inst[ParserLocalDecls_inst]:
 
 xref:ParserLocalDecls_inst[Compile-time evaluation of ``parserLocalDeclarationIR^{asterisk}^``, under context ``IC`` and store ``STO``]:
 
-. If ``parserLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
+. If ``parserLocalDeclarationIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC``, store ``STO``, and ``·``.
-. If let ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationIR~t~^{asterisk}^`` be ``parserLocalDeclarationIR^{asterisk}^``:
+. Else:
+ .. Let ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationIR~t~^{asterisk}^`` be ``parserLocalDeclarationIR^{asterisk}^``.
  .. Let context ``IC~1~``, store ``STO~1~``, and ``parserLocalDeclarationIR~h_inst~`` be
 * the result of xref:ParserLocalDecl_inst[compile-time evaluation of ``parserLocalDeclarationIR~h~``, under context ``IC`` and store ``STO``].
  .. Let context ``IC~2~``, store ``STO~2~``, and ``parserLocalDeclarationIR~t_inst~^{asterisk}^`` be
@@ -15891,7 +15914,7 @@ xref:TableAction_inst[Compile-time evaluation of ``annotationList`` ``tableActio
   ... Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentListIR`` ``+)+``.
   ... Let ``tableActionIR`` be ``annotationList`` ``tableActionReferenceIR'`` ``+`#+`` ``+`(+`` ``parameterListIR`` ``+`,+`` ``parameterListIR~control~`` ``+)+`` ``+`;+``.
   ... Result in store ``STO`` and ``tableActionIR``.
-. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``:
+. If ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]`` is an empty list:
  .. Let ``text`` be xref:join_text[the result of joining ``IC.+PATH+`` concatenated with ``nameIR`` with separator ``"."``].
  .. Let ``controlPlaneNameIR`` be xref:ite[``nameIR`` if ``cursor`` is equal to ``+GLOBAL+`` otherwise ``text``].
  .. Let ``tableActionReferenceIR'`` be ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentListIR`` ``+)+``.
@@ -15905,9 +15928,10 @@ xref:TableActions_inst[TableActions_inst]:
 
 xref:TableActions_inst[Compile-time evaluation of ``tableActionIR^{asterisk}^``, under context ``IC``and store ``STO``]:
 
-. If ``tableActionIR^{asterisk}^`` is equal to ``·``:
+. If ``tableActionIR^{asterisk}^`` is an empty list:
  .. Result in store ``STO`` and ``·``.
-. If let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``:
+. Else:
+ .. Let ``tableActionIR~h~`` ``{two-colons}`` ``tableActionIR~t~^{asterisk}^`` be ``tableActionIR^{asterisk}^``.
  .. Let store ``STO~1~`` and ``tableActionIR~h_inst~`` be
 * the result of xref:TableAction_inst[compile-time evaluation of ``tableActionIR~h~``, under context ``IC``and store ``STO``].
  .. Let store ``STO~2~`` and ``tableActionIR~t_inst~^{asterisk}^`` be
@@ -15958,9 +15982,10 @@ xref:TableProperties_inst[TableProperties_inst]:
 
 xref:TableProperties_inst[Compile-time evaluation of ``tablePropertyIR^{asterisk}^``, under context ``IC``and store ``STO``]:
 
-. If ``tablePropertyIR^{asterisk}^`` is equal to ``·``:
+. If ``tablePropertyIR^{asterisk}^`` is an empty list:
  .. Result in store ``STO`` and ``·``.
-. If let ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` be ``tablePropertyIR^{asterisk}^``:
+. Else:
+ .. Let ``tablePropertyIR~h~`` ``{two-colons}`` ``tablePropertyIR~t~^{asterisk}^`` be ``tablePropertyIR^{asterisk}^``.
  .. Let store ``STO~1~`` and ``tablePropertyIR~h_inst~`` be
 * the result of xref:TableProperty_inst[compile-time evaluation of ``tablePropertyIR~h~``, under context ``IC``and store ``STO``].
  .. Let store ``STO~2~`` and ``tablePropertyIR~t_inst~^{asterisk}^`` be
@@ -16008,7 +16033,7 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``+TABL
 . Let ``nameIR~object~`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
 . Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].
-. If ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``:
+. If ``xref:name_annotation[$name_annotation(annotationList)]`` is an empty list:
  .. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
  .. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+`=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+`;+``.
  .. Result in context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
@@ -16027,9 +16052,10 @@ xref:ControlLocalDecls_inst[ControlLocalDecls_inst]:
 
 xref:ControlLocalDecls_inst[Compile-time evaluation of ``controlLocalDeclarationIR^{asterisk}^``, under context ``IC``and store ``STO``]:
 
-. If ``controlLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
+. If ``controlLocalDeclarationIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC``, store ``STO``, and ``·``.
-. If let ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationIR~t~^{asterisk}^`` be ``controlLocalDeclarationIR^{asterisk}^``:
+. Else:
+ .. Let ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationIR~t~^{asterisk}^`` be ``controlLocalDeclarationIR^{asterisk}^``.
  .. Let context ``IC~1~``, store ``STO~1~``, and ``controlLocalDeclarationIR'^?^`` be
 * the result of xref:ControlLocalDecl_inst[compile-time evaluation of ``controlLocalDeclarationIR~h~``, under context ``IC``and store ``STO``].
  .. If ``controlLocalDeclarationIR'^?^`` is none:
@@ -16184,7 +16210,7 @@ xref:Decl_inst[Loading ``annotationList`` ``+EXTERN+`` ``typeIR`` ``nameIR`` ``+
 
 xref:Decl_inst[Loading ``annotationList`` ``+EXTERN+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+`,+`` ``+>+`` ``+`{+`` ``externConstructorPrototypeIR^{asterisk}^`` ``externMethodPrototypeIR^{asterisk}^`` ``+}+``, under context ``IC~0~``, and store ``STO``]:
 
-. If ``externConstructorPrototypeIR^{asterisk}^`` is equal to ``·``:
+. If ``externConstructorPrototypeIR^{asterisk}^`` is an empty list:
  .. Let ``callableId~method~^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -16407,9 +16433,10 @@ xref:Decls_inst[Decls_inst]:
 
 xref:Decls_inst[Loading ``declarationIR^{asterisk}^``, under context ``IC``, and store ``STO``]:
 
-. If ``declarationIR^{asterisk}^`` is equal to ``·``:
+. If ``declarationIR^{asterisk}^`` is an empty list:
  .. Result in context ``IC`` and store ``STO``.
-. If let ``declarationIR~h~`` ``{two-colons}`` ``declarationIR~t~^{asterisk}^`` be ``declarationIR^{asterisk}^``:
+. Else:
+ .. Let ``declarationIR~h~`` ``{two-colons}`` ``declarationIR~t~^{asterisk}^`` be ``declarationIR^{asterisk}^``.
  .. Let context ``IC~1~`` and store ``STO~1~`` be
 * the result of xref:Decl_inst[loading ``declarationIR~h~``, under context ``IC``, and store ``STO``].
  .. Let context ``IC~2~`` and store ``STO~2~`` be
@@ -16451,10 +16478,11 @@ xref:Copy_in_inst[Copy_in_inst]:
 
 xref:Copy_in_inst[Copy-in from ``IC~caller~`` at ``p~caller~`` with ``argumentIR^{asterisk}^`` to ``IC`` at ``p~callee~`` with ``id^{asterisk}^``, under store ``STO``]:
 
-. If ``argumentIR^{asterisk}^`` is equal to ``·``:
- .. Check that ``id^{asterisk}^`` is equal to ``·``.
+. If ``argumentIR^{asterisk}^`` is an empty list:
+ .. Check that ``id^{asterisk}^`` is an empty list.
  .. Result in store ``STO`` and context ``IC``.
-. If let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``:
+. Else:
+ .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Check that ``id^{asterisk}^`` is a non-empty list.
  .. Let ``id~h~`` ``{two-colons}`` ``id~t~^{asterisk}^`` be ``id^{asterisk}^``.
  .. Let store ``STO~1~`` and context ``IC~callee_1~`` be
@@ -16491,9 +16519,10 @@ xref:Copy_in_inst_default[Copy_in_inst_default]:
 
 xref:Copy_in_inst_default[Copying defaults ``parameterIR^{asterisk}^`` from ``p~caller~`` at ``IC~caller~`` to ``IC`` at ``p~callee~``, under store ``STO``]:
 
-. If ``parameterIR^{asterisk}^`` is equal to ``·``:
+. If ``parameterIR^{asterisk}^`` is an empty list:
  .. Result in store ``STO`` and context ``IC``.
-. If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
+. Else:
+ .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
  .. Let store ``STO~1~`` and context ``IC~callee_1~`` be
 * the result of xref:Copy_in_arg_inst_default[copying default ``parameterIR~h~`` from ``p~caller~`` at ``IC~caller~`` to ``IC`` at ``p~callee~``, under store ``STO``].
  .. Let store ``STO~2~`` and context ``IC~callee_2~`` be
@@ -16507,7 +16536,7 @@ xref:Constructor_inst[Constructor_inst]:
 
 xref:Constructor_inst[Finding constructor for ``prefixedNameIR`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` under context ``IC`` at ``p``]:
 
-. If ``·`` is equal to xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``]:
+. If xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``] is none:
  .. Let ``++_++`` ``+`:+`` ``constructorDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``IC``].
  .. Result in constructor ``constructorDef`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
 . Let ``typeDefIR'^?^`` be xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].
@@ -16515,7 +16544,7 @@ xref:Constructor_inst[Finding constructor for ``prefixedNameIR`` ``+`<+`` ``type
  .. Check that ``typeDefIR`` does not have type ``typedefTypeIR``.
  .. Let ``++_++`` ``+`:+`` ``constructorDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_constructorDef_i[the overloaded constructor definition of ``prefixedNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+`` in ``IC``].
  .. Result in constructor ``constructorDef`` ``+`<+`` ``typeArgumentIR'^{asterisk}^`` ``+>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``.
-. If ``typeArgumentIR'^{asterisk}^`` is equal to ``·``:
+. If ``typeArgumentIR'^{asterisk}^`` is an empty list:
  .. Let ``typeDefIR'`` be xref:option_get[*!*] xref:find_typeDef_i[the type definition of ``prefixedNameIR`` from the ``p`` layer of ``IC``].
  .. Check that ``typeDefIR'`` has type ``typedefTypeIR``.
  .. Let ``+TYPEDEF+`` ``nameIR~alias~`` ``typeIR~alias~`` be ``typeDefIR'``.
@@ -16702,9 +16731,10 @@ xref:SwitchCases_inst[SwitchCases_inst]:
 
 xref:SwitchCases_inst[Compile-time evaluation of ``switchCaseIR^{asterisk}^``, under context ``IC`` and store ``STO`` at ``p``]:
 
-. If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
+. If ``switchCaseIR^{asterisk}^`` is an empty list:
  .. Result in store ``STO`` and ``·``.
-. If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
+. Else:
+ .. Let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``.
  .. Let store ``STO~1~`` and ``switchCaseIR~h'~`` be
 * the result of xref:SwitchCase_inst[compile-time evaluation of ``switchCaseIR~h~``, under context ``IC`` and store ``STO`` at ``p``].
  .. Let store ``STO~2~`` and ``switchCaseIR~t'~^{asterisk}^`` be
@@ -16753,9 +16783,10 @@ xref:ObjectDecls_inst[ObjectDecls_inst]:
 
 xref:ObjectDecls_inst[Loading ``objectDeclarationIR^{asterisk}^`` under instantiation context ``IC`` and store ``STO``]:
 
-. If ``objectDeclarationIR^{asterisk}^`` is equal to ``·``:
+. If ``objectDeclarationIR^{asterisk}^`` is an empty list:
  .. Result in the updated instantiation context ``IC`` and store ``STO``.
-. If let ``objectDeclarationIR~h~`` ``{two-colons}`` ``objectDeclarationIR~t~^{asterisk}^`` be ``objectDeclarationIR^{asterisk}^``:
+. Else:
+ .. Let ``objectDeclarationIR~h~`` ``{two-colons}`` ``objectDeclarationIR~t~^{asterisk}^`` be ``objectDeclarationIR^{asterisk}^``.
  .. Let the updated instantiation context ``IC~1~`` and store ``STO~1~`` be
 * the result of xref:ObjectDecl_inst[loading ``objectDeclarationIR~h~`` under instantiation context ``IC`` and store ``STO``].
  .. Let the updated instantiation context ``IC~2~`` and store ``STO~2~`` be
@@ -16812,7 +16843,7 @@ xref:init_tableKeys[$init_tableKeys(tablePropertyIR^{asterisk}^)]
  .. Check that ``tableKeysPropertyIR'^{asterisk}^`` is a list of length 1.
  .. Let ``tableKeysPropertyIR`` be ``tableKeysPropertyIR'^{asterisk}^``.
  .. Return ``tableKeysPropertyIR``.
-. If ``·`` is equal to xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``]:
+. If xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``] is an empty list:
  .. Return ``+KEY+`` ``+`=+`` ``+`{+`` ``·`` ``+}+``.
 
 xref:init_tableEntries[$init_tableEntries(tablePropertyIR^{asterisk}^)]
@@ -16823,7 +16854,7 @@ xref:init_tableEntries[$init_tableEntries(tablePropertyIR^{asterisk}^)]
  .. Check that ``tableEntriesPropertyIR'^{asterisk}^`` is a list of length 1.
  .. Let ``tableEntriesPropertyIR`` be ``tableEntriesPropertyIR'^{asterisk}^``.
  .. Return ``tableEntriesPropertyIR``.
-. If ``·`` is equal to xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``]:
+. If xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``] is an empty list:
  .. Return ``+`EMPTY+`` ``·`` ``+ENTRIES+`` ``+`=+`` ``+`{+`` ``·`` ``+}+``.
 
 xref:enter_e[``EC`` with a new local frame]
@@ -16926,7 +16957,7 @@ xref:update_var_e[``EC`` where ``prefixedNameIR`` is updated to ``value`` from t
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
  .. Let ``id`` be ``prefixedNameIR``.
- .. If ``·`` is equal to ``EC.+LOCAL+.+FRAMES+``:
+ .. If ``EC.+LOCAL+.+FRAMES+`` is an empty list:
   ... Return xref:update_var_e[``EC`` where ``id`` is updated to ``value`` from the ``+BLOCK+`` layer].
  .. Let ``frame^{asterisk}^`` be ``EC.+LOCAL+.+FRAMES+``.
  .. If let ``frame~h~`` ``{two-colons}`` ``frame~t~^{asterisk}^`` be ``frame^{asterisk}^``:
@@ -16953,13 +16984,13 @@ xref:find_var_e[The value of ``prefixedNameIR`` from the ``p`` layer of ``EC``]
   ... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].
   ... If let ``value`` be ``value'^?^``:
    .... Return ``value``.
-  ... If ``·`` is equal to xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``]:
+  ... If xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``] is none:
    .... Return xref:find_var_e[the value of ``id`` from the ``+GLOBAL+`` layer of ``EC``].
  .. Else:
   ... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].
   ... If let ``value`` be ``value'^?^``:
    .... Return ``value``.
-  ... If ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``]:
+  ... If xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``] is none:
    .... Return xref:find_var_e[the value of ``id`` from the ``+BLOCK+`` layer of ``EC``].
 
 xref:find_typeDef_e[$find_typeDef_e(++_++, EC, prefixedNameIR)]
@@ -16980,7 +17011,7 @@ xref:find_type_e[$find_type_e(p, EC, nameIR)]
  .. Let ``typeIR'^?^`` be xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].
  .. If let ``typeIR`` be ``typeIR'^?^``:
   ... Return ``typeIR``.
- .. If ``·`` is equal to xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``]:
+ .. If xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``] is none:
   ... Return ``xref:find_type_e[$find_type_e(+BLOCK+,`` ``EC,`` ``nameIR)]``.
 
 xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefixedNameIR``( ``argumentIR^{asterisk}^`` ) in the ``p`` layer of ``EC``]
@@ -16992,7 +17023,7 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
   ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
   ... If let ``callableId`` ``+`:+`` ``callableDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
    .... Return ``callableId`` ``+`:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^``.
-  ... If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
+  ... If xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none:
    .... Return ``·``.
  .. Else:
   ... Let ``+`.+`` ``nameIR`` be ``prefixedNameIR``.
@@ -17000,7 +17031,7 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
   ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
   ... If let ``callableId`` ``+`:+`` ``callableDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
    .... Return ``callableId`` ``+`:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^``.
-  ... If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
+  ... If xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none:
    .... Return ``·``.
 . Else if ``p`` is ``+BLOCK+``:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -17009,7 +17040,7 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
  .. Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
  .. If let ``callableId`` ``+`:+`` ``callableDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``:
   ... Return ``callableId`` ``+`:+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^``.
- .. If ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``]:
+ .. If xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none:
   ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
 . Else:
  .. Check that ``prefixedNameIR`` matches pattern ``%``.
@@ -17111,7 +17142,7 @@ xref:update_archState_e[$update_archState_e(ARCH, archState)]
 xref:update_object_qualified_e[$update_object_qualified_e(ARCH~0~, objectId, object)]
 
 
-. Check that ``·`` is not equal to ``xref:find_object_qualified_e[$find_object_qualified_e(ARCH~0~,`` ``objectId)]``.
+. Check that ``xref:find_object_qualified_e[$find_object_qualified_e(ARCH~0~,`` ``objectId)]`` is defined.
 . Let ``ARCH~1~`` be ``xref:add_object_e[$add_object_e(ARCH~0~,`` ``objectId,`` ``object)]``.
 . Return ``ARCH~1~``.
 
@@ -17478,9 +17509,10 @@ xref:Exprs_eval[Exprs_eval]:
 
 xref:Exprs_eval[Evaluating ``typedExpressionIR^{asterisk}^``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
-. If ``typedExpressionIR^{asterisk}^`` is equal to ``·``:
+. If ``typedExpressionIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH`` and ``·``.
-. If let ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``:
+. Else:
+ .. Let ``typedExpressionIR~h~`` ``{two-colons}`` ``typedExpressionIR~t~^{asterisk}^`` be ``typedExpressionIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
 * the result of xref:Expr_eval[evaluating ``typedExpressionIR~h~``, under context ``EC`` and state ``ARCH`` at ``p``].
  .. If let ``abortResult`` be ``expressionResult``:
@@ -17991,9 +18023,10 @@ xref:BlockElementStmtList_eval[BlockElementStmtList_eval]:
 
 xref:BlockElementStmtList_eval[Runtime evaluation of ``blockElementStatementIR^{asterisk}^``, under context ``EC``, and state ``ARCH``]:
 
-. If ``blockElementStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``blockElementStatementIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``blockElementStatementIR~h~`` ``{two-colons}`` ``blockElementStatementIR~t~^{asterisk}^`` be ``blockElementStatementIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
 * the result of xref:BlockElementStmt_eval[runtime evaluation of ``blockElementStatementIR~h~``, under context ``EC``, and state ``ARCH``].
  .. If ``statementResult`` is not equal to ``+`EMPTY+``:
@@ -18101,9 +18134,10 @@ xref:ParserStmts_eval[ParserStmts_eval]:
 
 xref:ParserStmts_eval[Runtime evaluation of ``parserStatementIR^{asterisk}^``, under context ``EC`` and state ``ARCH``]:
 
-. If ``parserStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``parserStatementIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``parserStatementIR~h~`` ``{two-colons}`` ``parserStatementIR~t~^{asterisk}^`` be ``parserStatementIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult'`` be
 * the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~h~``, under context ``EC`` and state ``ARCH``].
  .. If let ``rejectTransitionResult`` be ``parserStatementResult'``:
@@ -18133,10 +18167,11 @@ xref:ParserSelect_eval[Runtime evaluation of ``selectExpressionIR``, under conte
   ... Result in context ``EC~2~``, state ``ARCH~2~``, and ``rejectTransitionResult``.
  .. Else:
   ... Let ``nameIR~state~^?^`` be ``selectCaseMatchResult``.
-  ... If ``·`` is equal to ``nameIR~state~^?^``:
+  ... If ``nameIR~state~^?^`` is none:
    .... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+`.+`` ``"NoMatch"``.
    .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``rejectTransitionResult``.
-  ... If let ``nameIR~state~`` be ``nameIR~state~^?^``:
+  ... Else:
+   .... Let ``nameIR~state~`` be ``nameIR~state~^?^``.
    .... Let context ``EC~3~``, state ``ARCH~3~``, and ``transitionResult`` be
 * the result of xref:ParserTransition_eval[runtime evaluation of ``+TRANSITION+`` ``nameIR~state~`` ``+`;+``, under context ``EC~2~`` and state ``ARCH~2~``].
    .... Result in context ``EC~3~``, state ``ARCH~3~``, and ``transitionResult``.
@@ -18227,9 +18262,10 @@ xref:ParserLocalDecls_eval[ParserLocalDecls_eval]:
 
 xref:ParserLocalDecls_eval[Evaluating parser local declarations ``parserLocalDeclarationIR^{asterisk}^``, under context ``EC``, and state ``ARCH``]:
 
-. If ``parserLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
+. If ``parserLocalDeclarationIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH``, and result ``+`EMPTY+``.
-. If let ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationListIR~t~`` be ``parserLocalDeclarationIR^{asterisk}^``:
+. Else:
+ .. Let ``parserLocalDeclarationIR~h~`` ``{two-colons}`` ``parserLocalDeclarationListIR~t~`` be ``parserLocalDeclarationIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``parserDeclarationResult`` be
 * the result of xref:ParserLocalDecl_eval[evaluating parser local declaration ``parserLocalDeclarationIR~h~``, under context ``EC``, and state ``ARCH``].
  .. If let ``rejectTransitionResult`` be ``parserDeclarationResult``:
@@ -18313,9 +18349,10 @@ xref:ControlLocalDecls_eval[ControlLocalDecls_eval]:
 
 xref:ControlLocalDecls_eval[Evaluating ``controlLocalDeclarationIR^{asterisk}^``, under context ``EC``, and state ``ARCH``]:
 
-. If ``controlLocalDeclarationIR^{asterisk}^`` is equal to ``·``:
+. If ``controlLocalDeclarationIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH``, and result ``+`EMPTY+``.
-. If let ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR^{asterisk}^``:
+. Else:
+ .. Let ``controlLocalDeclarationIR~h~`` ``{two-colons}`` ``controlLocalDeclarationListIR~t~`` be ``controlLocalDeclarationIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``controlLocalDeclarationResult'`` be
 * the result of xref:ControlLocalDecl_eval[evaluating ``controlLocalDeclarationIR~h~``, under context ``EC``, and state ``ARCH``].
  .. If let ``exitResult`` be ``controlLocalDeclarationResult'``:
@@ -18442,7 +18479,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"isValid"`` ``+
  .. Check that ``storageReferenceResult`` has type ``abortResult``.
  .. Let ``abortResult`` be ``storageReferenceResult``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. If ``argumentListIR`` is equal to ``·``:
+. If ``argumentListIR`` is an empty list:
  .. Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18462,7 +18499,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"setValid"`` ``
  .. Check that ``storageReferenceResult`` has type ``abortResult``.
  .. Let ``abortResult`` be ``storageReferenceResult``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. If ``argumentListIR`` is equal to ``·``:
+. If ``argumentListIR`` is an empty list:
  .. Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18482,7 +18519,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"setInvalid"`` 
  .. Check that ``storageReferenceResult`` has type ``abortResult``.
  .. Let ``abortResult`` be ``storageReferenceResult``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``abortResult``.
-. If ``argumentListIR`` is equal to ``·``:
+. If ``argumentListIR`` is an empty list:
  .. Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
 * the result of xref:Lvalue_eval[evaluating ``typedLvalueIR``, under context ``EC`` and state ``ARCH`` at ``p``].
@@ -18677,15 +18714,16 @@ xref:Copy_in[Copy_in]:
 
 xref:Copy_in[Copy-in from ``argumentIR^{asterisk}^`` at ``p~callee~`` of ``EC~callee_0~`` to ``parameterIR^{asterisk}^`` in ``p~caller~`` at ``EC``, under state ``ARCH`` at shared ``p~shared~``]:
 
-. If ``parameterIR^{asterisk}^`` is equal to ``·``:
- .. Check that ``argumentIR^{asterisk}^`` is equal to ``·``.
+. If ``parameterIR^{asterisk}^`` is an empty list:
+ .. Check that ``argumentIR^{asterisk}^`` is an empty list.
  .. Let ``EC~callee_1~`` be ``xref:copy_e[$copy_e(p~shared~,`` ``EC,`` ``EC~callee_0~)]``.
  .. Result in 
 * state ``ARCH``, 
 *  caller's context ``EC``, 
 *  callee's context ``EC~callee_1~``, 
 *  and copy-in result ``·``.
-. If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
+. Else:
+ .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
  .. Check that ``argumentIR^{asterisk}^`` is a non-empty list.
  .. Let ``argumentIR~h~`` ``{two-colons}`` ``argumentIR~t~^{asterisk}^`` be ``argumentIR^{asterisk}^``.
  .. Let state ``ARCH~1~``,  caller's context ``EC~caller_1~``,  callee's context ``EC~callee_1~``,  and copy-in result ``copyInArgumentResult`` be
@@ -19190,8 +19228,8 @@ xref:match_keysets[``value^{asterisk}^`` matches ``setValue'^{asterisk}^``]
 . Else if let ``setValue~h~`` ``{two-colons}`` ``setValue~t~^{asterisk}^`` be ``setValue'^{asterisk}^``:
  .. Check that ``value^{asterisk}^`` is a non-empty list.
  .. Let ``value~key_h~`` ``{two-colons}`` ``value~key_t~^{asterisk}^`` be ``value^{asterisk}^``.
- .. Check that ``setValue~t~^{asterisk}^`` is not equal to ``·``.
- .. Check that ``value~key_t~^{asterisk}^`` is not equal to ``·``.
+ .. Check that ``setValue~t~^{asterisk}^`` is a non-empty list.
+ .. Check that ``value~key_t~^{asterisk}^`` is a non-empty list.
  .. If ``xref:match_keyset[$match_keyset(setValue~h~,`` ``value~key_h~)]``:
   ... Return xref:match_keysets[``value~key_t~^{asterisk}^`` matches ``setValue~t~^{asterisk}^``].
  .. Else: return ``false``.
@@ -19288,9 +19326,10 @@ xref:Eval_keysets_simple[Eval_keysets_simple: ``EC`` ``ARCH`` ``+|-+`` ``simpleK
 
 xref:Eval_keysets_simple[``EC`` ``ARCH`` ``+|-+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+:+`` ``%`` ``%`` ``%``]:
 
-. If ``simpleKeysetExpressionIR^{asterisk}^`` is equal to ``·``:
+. If ``simpleKeysetExpressionIR^{asterisk}^`` is an empty list:
  .. Result in ``EC``, ``ARCH``, and ``·``.
-. If let ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``:
+. Else:
+ .. Let ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~``, and result ``simpleKeysetExpressionResult`` be
 * the result of xref:Eval_keyset_simple[evaluating ``simpleKeysetExpressionIR~h~``, under context ``EC`` and state ``ARCH``].
  .. If let ``abortResult`` be ``simpleKeysetExpressionResult``:
@@ -19333,10 +19372,11 @@ xref:ForUpdateStmts_eval[ForUpdateStmts_eval]:
 
 xref:ForUpdateStmts_eval[Runtime evaluation of ``forUpdateStatementIR^{asterisk}^``, under evaluation context ``EC`` and state ``ARCH``]:
 
-. If ``forUpdateStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``forUpdateStatementIR^{asterisk}^`` is an empty list:
  .. Result in 
 * the updated evaluation context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``forUpdateStatementIR~h~`` ``{two-colons}`` ``forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``forUpdateStatementIR~h~`` ``{two-colons}`` ``forUpdateStatementIR~t~^{asterisk}^`` be ``forUpdateStatementIR^{asterisk}^``.
  .. Let the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``statementResult'`` be
 * the result of xref:ForUpdateStmt_eval[runtime evaluation of ``forUpdateStatementIR~h~``, under evaluation context ``EC`` and state ``ARCH``].
  .. If let ``exitResult`` be ``statementResult'``:
@@ -19390,10 +19430,11 @@ xref:ForInitStmts_eval[ForInitStmts_eval]:
 
 xref:ForInitStmts_eval[Runtime evaluation of ``forInitStatementIR^{asterisk}^``, under evaluation context ``EC`` and state ``ARCH``]:
 
-. If ``forInitStatementIR^{asterisk}^`` is equal to ``·``:
+. If ``forInitStatementIR^{asterisk}^`` is an empty list:
  .. Result in 
 * the updated evaluation context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``:
+. Else:
+ .. Let ``forInitStatementIR~h~`` ``{two-colons}`` ``forInitStatementIR~t~^{asterisk}^`` be ``forInitStatementIR^{asterisk}^``.
  .. Let the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``statementResult'`` be
 * the result of xref:ForInitStmt_eval[runtime evaluation of ``forInitStatementIR~h~``, under evaluation context ``EC`` and state ``ARCH``].
  .. If let ``abortResult`` be ``statementResult'``:
@@ -19513,10 +19554,11 @@ xref:ForInStmt_eval[ForInStmt_eval]:
 
 xref:ForInStmt_eval[Looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC`` and state ``ARCH``]:
 
-. If ``value^{asterisk}^`` is equal to ``·``:
+. If ``value^{asterisk}^`` is an empty list:
  .. Result in 
 * the updated evaluation context ``EC``, state ``ARCH``, and ``+`EMPTY+``.
-. If let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``:
+. Else:
+ .. Let ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^`` be ``value^{asterisk}^``.
  .. Let ``EC~1~`` be xref:update_var_e[``EC`` where ``nameIR`` is updated to ``value~h~`` from the ``+LOCAL+`` layer].
  .. Let context ``EC~2~``, state ``ARCH~1~``, and ``statementResult'`` be
 * the result of xref:Stmt_eval[runtime evaluation of ``statementIR``, under context ``EC~1~`` and state ``ARCH`` at ``+LOCAL+``].
@@ -19570,9 +19612,10 @@ xref:SwitchCases_table_eval[SwitchCases_table_eval]:
 
 xref:SwitchCases_table_eval[Runtime evaluation of ``switchCaseIR^{asterisk}^`` for invocation of table ``id``]:
 
-. If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
+. If ``switchCaseIR^{asterisk}^`` is an empty list:
  .. Result in the matched block ``·``.
-. If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
+. Else:
+ .. Let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``.
  .. If let ``switchLabelIR~h~`` ``+`:+`` ``blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... If xref:match_switchLabelIR_table[``id`` matches ``switchLabelIR~h~``]:
    .... Result in the matched block ``blockStatementIR~h~``.
@@ -19654,10 +19697,11 @@ xref:SwitchCases_general_eval[SwitchCases_general_eval]:
 
 xref:SwitchCases_general_eval[Runtime evaluation of ``switchCaseIR^{asterisk}^``, under evaluation context ``+LOCAL+`` and state ``EC~0~`` with switch key ``value``]:
 
-. If ``switchCaseIR^{asterisk}^`` is equal to ``·``:
+. If ``switchCaseIR^{asterisk}^`` is an empty list:
  .. Result in 
 * the updated evaluation context ``EC~0~``, state ``ARCH~0~``, and ``·``.
-. If let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``:
+. Else:
+ .. Let ``switchCaseIR~h~`` ``{two-colons}`` ``switchCaseIR~t~^{asterisk}^`` be ``switchCaseIR^{asterisk}^``.
  .. If let ``switchLabelIR~h~`` ``+`:+`` ``blockStatementIR~h~`` be ``switchCaseIR~h~``:
   ... Let the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``expressionResult`` be
 * the result of xref:SwitchLabel_general_eval[runtime evaluation of ``ARCH~0~``, under evaluation context ``+LOCAL+`` and state ``EC~0~``].
@@ -19722,9 +19766,10 @@ xref:SelectCases_match[SelectCases_match]:
 
 xref:SelectCases_match[Matching ``value~key~^{asterisk}^`` against ``selectCaseIR^{asterisk}^`` under context ``EC`` and state ``ARCH``]:
 
-. If ``selectCaseIR^{asterisk}^`` is equal to ``·``:
+. If ``selectCaseIR^{asterisk}^`` is an empty list:
  .. Result in the updated context ``EC``, state ``ARCH``, and ``·``.
-. If let ``selectCaseIR~h~`` ``{two-colons}`` ``selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR^{asterisk}^``:
+. Else:
+ .. Let ``selectCaseIR~h~`` ``{two-colons}`` ``selectCaseIR~t~^{asterisk}^`` be ``selectCaseIR^{asterisk}^``.
  .. Let the updated context ``EC~1~``, state ``ARCH~1~``, and ``selectCaseMatchResult'`` be
 * the result of xref:SelectCase_match[matching ``value~key~^{asterisk}^`` against ``selectCaseIR~h~`` under context ``EC`` and state ``ARCH``].
  .. If let ``rejectTransitionResult`` be ``selectCaseMatchResult'``:
@@ -19761,9 +19806,10 @@ xref:TableKeys_eval[TableKeys_eval]:
 
 xref:TableKeys_eval[Evaluating ``tableKeyIR^{asterisk}^`` under context ``EC`` and state ``ARCH``]:
 
-. If ``tableKeyIR^{asterisk}^`` is equal to ``·``:
+. If ``tableKeyIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH`` , and result ``·``.
-. If let ``tableKeyIR~h~`` ``{two-colons}`` ``tableKeyIR~t~^{asterisk}^`` be ``tableKeyIR^{asterisk}^``:
+. Else:
+ .. Let ``tableKeyIR~h~`` ``{two-colons}`` ``tableKeyIR~t~^{asterisk}^`` be ``tableKeyIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~`` , and result ``tableKeyResult`` be
 * the result of xref:TableKey_eval[evaluating ``tableKeyIR~h~`` under context ``EC`` and state ``ARCH``].
  .. If let ``exitResult`` be ``tableKeyResult``:
@@ -19823,9 +19869,10 @@ xref:TableMatches_eval[TableMatches_eval]:
 
 xref:TableMatches_eval[Evaluating table matches for keys ``tableKeyValue^{asterisk}^`` against ``tableEntryIR^{asterisk}^``, under context ``EC`` and state ``ARCH``]:
 
-. If ``tableEntryIR^{asterisk}^`` is equal to ``·``:
+. If ``tableEntryIR^{asterisk}^`` is an empty list:
  .. Result in context ``EC``, state ``ARCH`` , and result ``·``.
-. If let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``:
+. Else:
+ .. Let ``tableEntryIR~h~`` ``{two-colons}`` ``tableEntryIR~t~^{asterisk}^`` be ``tableEntryIR^{asterisk}^``.
  .. Let context ``EC~1~``, state ``ARCH~1~`` , and result ``tableMatchResult`` be
 * the result of xref:TableMatch_eval[evaluating table match for keys ``tableKeyValue^{asterisk}^`` against ``tableEntryIR~h~``, under context ``EC`` and state ``ARCH``].
  .. If let ``exitResult`` be ``tableMatchResult``:
@@ -19860,7 +19907,7 @@ for each ``tableCustomPropertyIR`` in ``tableCustomPropertyIR^{asterisk}^``
  .. Check that ``value`` has type ``boolValue``.
  .. Let ``+`B+`` ``b`` be ``value``.
  .. Return ``b``.
-. If ``·`` is equal to xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``$is_largest_priority_wins(tableCustomPropertyIR)^{asterisk}^``]: return ``true``.
+. If xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``$is_largest_priority_wins(tableCustomPropertyIR)^{asterisk}^``] is an empty list: return ``true``.
 
 xref:is_largest_priority_wins[$is_largest_priority_wins(tableCustomPropertyIR)]
 
@@ -19913,10 +19960,11 @@ xref:Copy_out_inner[Copy_out_inner]:
 
 xref:Copy_out_inner[Copy-in from ``storageReference^?^^{asterisk}^`` at ``p~callee~`` of ``EC~callee~`` to ``parameterIR^{asterisk}^`` in ``p~caller~`` at ``EC``, under state ``ARCH``]:
 
-. If ``parameterIR^{asterisk}^`` is equal to ``·``:
- .. Check that ``storageReference^?^^{asterisk}^`` is equal to ``·``.
+. If ``parameterIR^{asterisk}^`` is an empty list:
+ .. Check that ``storageReference^?^^{asterisk}^`` is an empty list.
  .. Result in caller's context ``EC``.
-. If let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``:
+. Else:
+ .. Let ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^`` be ``parameterIR^{asterisk}^``.
  .. Let ``storageReference'^?^^{asterisk}^`` be ``storageReference^?^^{asterisk}^``.
  .. Check that ``storageReference'^?^^{asterisk}^`` is a non-empty list.
  .. Let ``storageReference~h~^?^`` ``{two-colons}`` ``storageReference~t~^?^^{asterisk}^`` be ``storageReference'^?^^{asterisk}^``.
@@ -20010,7 +20058,7 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
 . Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].
 . If let ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``:
  .. Return ``typedExpressionIR~cast~``.
-. If ``·`` is equal to xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``]:
+. If xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``] is none:
  .. If ``+BOOL+`` is equal to ``typeIR~to~``:
   ... Check that ``+INT+`` is equal to xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
   ... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
@@ -20354,7 +20402,7 @@ xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(
 . Let ``i'^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+`:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
 . If let ``i`` be ``i'^?^``:
  .. Return ``i``.
-. If ``·`` is equal to xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+`:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``]:
+. If xref:find_map[the value of ``nameIR~param~`` in map ``+`{+`` ``(`` ``id~arg~`` ``+`:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``] is none:
  .. Return ``0``.
 
 xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^, nameIR)]
@@ -20441,7 +20489,7 @@ for each ``typeIR~param~`` in ``typeIR~param~^{asterisk}^`` and ``typedExpressio
 for each ``typedExpressionIR^?^`` in ``typedExpressionIR^?^^{asterisk}^``
  .. Let ``argumentIR^{asterisk}^`` be ``argumentIR~data~^{asterisk}^`` concatenated with ``typedExpressionIR~arg_cast~^{asterisk}^``.
  .. Return ``nameIR~found~`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+``.
-. If ``·`` is equal to ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``:
+. If ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]`` is none:
  .. Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be xref:option_get[*!*] ``xref:find_tableActionIR_unqualified[$find_tableActionIR_unqualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
  .. Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+`(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+`#+`` ``+`(+`` ``++_++`` ``+`,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+`;+`` be ``tableActionIR~found~``.
  .. Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.
@@ -20883,9 +20931,10 @@ xref:V1Model_copy_meta_fields[V1Model_copy_meta_fields: ``EC~capture~`` ``EC~0~`
 
 xref:V1Model_copy_meta_fields[``EC~capture~`` ``EC~0~`` ``ARCH`` ``+|-+`` ``nameIR^{asterisk}^`` ``+:+`` ``%``]:
 
-. If ``nameIR^{asterisk}^`` is equal to ``·``:
+. If ``nameIR^{asterisk}^`` is an empty list:
  .. Result in ``EC~0~``.
-. If let ``nameIR~h~`` ``{two-colons}`` ``nameIR~t~^{asterisk}^`` be ``nameIR^{asterisk}^``:
+. Else:
+ .. Let ``nameIR~h~`` ``{two-colons}`` ``nameIR~t~^{asterisk}^`` be ``nameIR^{asterisk}^``.
  .. Let ``storageReference~h~`` be ``"meta"`` ``+`.+`` ``nameIR~h~``.
  .. Let value ``value~h~`` be
 * the result of xref:Lvalue_read[reading from ``storageReference~h~``, under context ``EC~capture~`` and state ``ARCH`` at ``+GLOBAL+``].

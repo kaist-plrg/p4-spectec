@@ -657,6 +657,21 @@ module Typed = struct
             (Ml.LitE "List.nth", [ Ml.VarE "args"; Ml.LitE (string_of_int i) ]);
         ] )
 
+  (* The bridges dispatch on a value's spec type, threaded from the (hand-written,
+     [VAL]-generic) extern as a structured [Il.typ] — not a bare string (which was
+     fragile: a stale typename only failed at runtime). The per-type arms still key
+     on the type's name, so we extract [id.it] from the [VarT] head once at the top
+     and let the existing string-keyed match stand:
+       [match typ.it with Il.VarT (id, _) -> id.it | _ -> ""]. *)
+  let typename_of_expr : Ml.expr =
+    Ml.MatchE
+      ( Ml.FieldE (Ml.VarE "typ", "it"),
+        [
+          ( Ml.VariantP (`Mono ("Il.VarT", [ Ml.VarP "id"; Ml.WildP ])),
+            Ml.FieldE (Ml.VarE "id", "it") );
+          (Ml.WildP, Ml.StrE "");
+        ] )
+
   let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
       Ml.funcdef =
     let outer_arms =
@@ -706,12 +721,18 @@ module Typed = struct
     in
     ( "make_case_typed",
       [
-        ("mixop", Some Ml.StringT);
+        ("mixop", Some (Ml.NameT "Il.mixop"));
         ("args", Some (Ml.AppT ("list", [ Ml.NameT "Obj.t" ])));
-        ("typ", Some Ml.StringT);
+        ("typ", Some (Ml.NameT "Il.typ"));
       ],
       Some (Ml.NameT "Obj.t"),
-      Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) )
+      Ml.LetE
+        ( Ml.VarP "typ",
+          typename_of_expr,
+          Ml.LetE
+            ( Ml.VarP "mixop",
+              Ml.AppE (Ml.LitE "Mixop.string_of_mixop", [ Ml.VarE "mixop" ]),
+              Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) ) ) )
 
   let compile_case_of (ctx : Ctx.t) (pool : const_pool)
       (variants : (Sl.id * Sl.typ) list) : Ml.funcdef =
@@ -759,9 +780,12 @@ module Typed = struct
             ] ) )
     in
     ( "case_of_typed",
-      [ ("x", Some (Ml.NameT "Obj.t")); ("typ", Some Ml.StringT) ],
+      [ ("x", Some (Ml.NameT "Obj.t")); ("typ", Some (Ml.NameT "Il.typ")) ],
       Some (Ml.AppT ("Mixfix.t", [ Ml.NameT "Obj.t" ])),
-      Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) )
+      Ml.LetE
+        ( Ml.VarP "typ",
+          typename_of_expr,
+          Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) ) )
 
   let compile (ctx : Ctx.t) (pool : const_pool) (typs : Sl.typ list) :
       Ml.funcdef list =

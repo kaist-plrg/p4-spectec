@@ -145,7 +145,7 @@ module Make (Spec : Spec.S) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -235,7 +235,7 @@ module Make (Spec : Spec.S) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
 
@@ -279,7 +279,7 @@ module Make (Spec : Spec.S) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
   end
@@ -382,7 +382,7 @@ module Make (Spec : Spec.S) = struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -481,7 +481,7 @@ module Make (Spec : Spec.S) = struct
 
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (meter, value_ctx, value_sto, value_callResult)
   end

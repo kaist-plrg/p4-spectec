@@ -149,10 +149,10 @@ struct
         let value_callResult =
           let value_err =
             V.Make.(
-              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else
@@ -165,7 +165,7 @@ struct
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
           let value_eps = V.Make.opt typ None in
-          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -191,7 +191,7 @@ struct
         |> unpack_p4_fixedBit |> snd |> Bigint.to_int_exn
       in
       let size_varsize =
-        V.Get.case value_variableFieldSizeInBits "value" |> Mixfix.args
+        V.Get.case value_variableFieldSizeInBits Typs.value |> Mixfix.args
         |> fun values ->
         List.nth values 1 |> V.Get.num
         |> (function `Nat n -> n | `Int i -> i)
@@ -204,30 +204,30 @@ struct
             V.Make.(
               "ERROR `. nameIR"
               <| [ text "ParserInvalidArgument" ]
-              <<| "errorValue")
+              <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else if pkt.idx + size > pkt.len then
         let value_callResult =
           let value_err =
             V.Make.(
-              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else if size > size_max then
         let value_callResult =
           let value_err =
             V.Make.(
-              "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| "errorValue")
+              "ERROR `. nameIR" <| [ text "HeaderTooShort" ] <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else
@@ -246,7 +246,7 @@ struct
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
           let value_eps = V.Make.opt typ None in
-          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -264,10 +264,10 @@ struct
         let value_callResult =
           let value_err =
             V.Make.(
-              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else
@@ -276,7 +276,7 @@ struct
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
           let value_hdr = V.Make.opt typ (Some value_hdr) in
-          V.Make.("RETURN value?" <| [ value_hdr ] <<| "returnResult")
+          V.Make.("RETURN value?" <| [ value_hdr ] <<| Typs.return_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -294,10 +294,10 @@ struct
         let value_callResult =
           let value_err =
             V.Make.(
-              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| "errorValue")
+              "ERROR `. nameIR" <| [ text "PacketTooShort" ] <<| Typs.error_value)
           in
           V.Make.(
-            "REJECT errorValue" <| [ value_err ] <<| "rejectTransitionResult")
+            "REJECT errorValue" <| [ value_err ] <<| Typs.reject_transition_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
       else
@@ -305,7 +305,7 @@ struct
         let value_callResult =
           let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
           let value_eps = V.Make.opt typ None in
-          V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+          V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
         in
         (pkt, value_ctx, value_arch, value_callResult)
 
@@ -322,7 +322,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
         let value_length_opt = V.Make.opt typ (Some value_length) in
-        V.Make.("RETURN value?" <| [ value_length_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_length_opt ] <<| Typs.return_result)
       in
       (pkt, value_ctx, value_arch, value_callResult)
   end
@@ -343,7 +343,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (pkt, value_ctx, value_arch, value_callResult)
   end

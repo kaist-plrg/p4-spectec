@@ -59,7 +59,7 @@ module Make (V : Valrep.VAL) = struct
        [try unpack_p4_fixedBit with _ -> ...] fallback is dead under [V_typed] and
        silently mis-reads e.g. a variableBit ("nat `. nat V int", 3 args) as a
        fixedBit ("nat W int", 2 args), yielding the wrong (width, value). *)
-    let mixop, _ = Mixfix.split (V.Get.case value "value") in
+    let mixop, _ = Mixfix.split (V.Get.case value Typs.value) in
     let canon s = Mixop.string_of_mixop (Value.Mixops.of_string s) in
     let m = Mixop.string_of_mixop mixop in
     if m = canon "nat W int" then unpack_p4_fixedBit value

@@ -287,7 +287,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let drop =
       V.Get.(
         value_parse_result
-        |>>? ("REJECT errorValue", "transitionResult")
+        |>>? (Typs.mo_reject_error_value, Typs.transition_result)
         |> Option.is_some)
     in
     (value_ctx, value_arch, drop)

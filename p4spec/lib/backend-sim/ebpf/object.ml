@@ -66,7 +66,7 @@ struct
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -96,7 +96,7 @@ struct
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
           V.Make.opt typ None
         in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter_array, value_ctx, value_sto, value_callResult)
   end

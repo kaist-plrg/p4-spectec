@@ -373,4 +373,11 @@ module Get = struct
         let mixop_expect = Mixops.of_string s_mixop in
         if Mixop.eq mixop mixop_expect then Some values else None
     | _ -> None
+
+  let ( |>>?! ) (value : t) (mixop_expect : Mixop.t) : value list option =
+    match value.it with
+    | CaseV valuecase ->
+        let mixop, values = Mixfix.split valuecase in
+        if Mixop.eq mixop mixop_expect then Some values else None
+    | _ -> None
 end

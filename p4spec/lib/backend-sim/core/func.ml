@@ -27,8 +27,8 @@ struct
       if check then
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
         let value_eps = V.Make.opt typ None in
-        V.Make.("RETURN value?" <| [ value_eps ] <<| "callResult")
-      else V.Make.("REJECT errorValue" <| [ value_toSignal ] <<| "callResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.call_result)
+      else V.Make.("REJECT errorValue" <| [ value_toSignal ] <<| Typs.call_result)
     in
     (value_ctx, value_arch, value_callResult)
 

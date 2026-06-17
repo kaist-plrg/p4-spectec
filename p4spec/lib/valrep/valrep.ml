@@ -19,6 +19,8 @@
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
 module Mixfix = Domain.Mixfix
+module Mixop = Domain.Mixop
+module Il = Lang.Il
 module Num = Lang.Xl.Num
 open Util.Source
 
@@ -51,12 +53,12 @@ module type VAL = sig
     val opt : t -> t option
     val tuple : t -> t list
 
-    (* [case]/[( |>>? )] take the value's spec type name as well as the mixop.
-       [V_value] ignores it (every [Value.t] case carries its mixop tag at
-       runtime); [V_typed] needs it to pick the OCaml variant projection, since a
-       bare [Obj.t] is type-erased. [( |>>? )] takes [(mixop, typ)] as a pair so
-       it stays usable infix. *)
-    val case : t -> string -> t Mixfix.t
+    (* [case]/[( |>>? )] take the value's spec type as a structured [Il.typ] (and
+       the mixop as a structured [Il.mixop]). [V_value] ignores the typ (every
+       [Value.t] case carries its mixop tag at runtime); [V_typed] needs it to
+       pick the OCaml variant projection, since a bare [Obj.t] is type-erased.
+       [( |>>? )] takes [(mixop, typ)] as a pair so it stays usable infix. *)
+    val case : t -> Il.typ -> t Mixfix.t
     val extern : t -> Yojson.Safe.t
 
     (* extractors / case-nav operators *)
@@ -65,7 +67,7 @@ module type VAL = sig
     val two : t list -> t * t
     val three : t list -> t * t * t
     val ( |>> ) : t -> string -> t list
-    val ( |>>? ) : t -> string * string -> t list option
+    val ( |>>? ) : t -> Il.mixop * Il.typ -> t list option
   end
 
   module Make : sig
@@ -78,9 +80,11 @@ module type VAL = sig
     val tuple : ?at:region -> Typ.t -> t list -> t
     val extern : ?at:region -> Typ.t -> Yojson.Safe.t -> t
 
-    (* case construction DSL: "mixop" <| args <<| "typename" *)
-    val ( <| ) : string -> t list -> string * t list
-    val ( <<| ) : string * t list -> string -> t
+    (* case construction DSL: "mixop" <| args <<| typ. [( <| )] parses the
+       readable mixop string into a structured [Il.mixop]; [( <<| )] takes the
+       value's spec type as a structured [Il.typ]. *)
+    val ( <| ) : string -> t list -> Il.mixop * t list
+    val ( <<| ) : Il.mixop * t list -> Il.typ -> t
   end
 end
 
@@ -105,9 +109,9 @@ module V_value : VAL with type t = Value.t = struct
     let opt = Value.Get.opt
     let tuple = Value.Get.tuple
 
-    (* The [Value.t] case carries its own mixop tag, so the spec type name is
+    (* The [Value.t] case carries its own mixop tag, so the spec type is
        redundant here and ignored. *)
-    let case (x : t) (_typ : string) : t Mixfix.t = Value.Get.case x
+    let case (x : t) (_typ : Il.typ) : t Mixfix.t = Value.Get.case x
     let extern = Value.Get.extern
     let nth = Value.Get.nth
     let one = Value.Get.one
@@ -115,8 +119,8 @@ module V_value : VAL with type t = Value.t = struct
     let three = Value.Get.three
     let ( |>> ) = Value.Get.( |>> )
 
-    let ( |>>? ) (x : t) ((s_mixop, _typ) : string * string) : t list option =
-      Value.Get.( |>>? ) x s_mixop
+    let ( |>>? ) (x : t) ((mixop, _typ) : Il.mixop * Il.typ) : t list option =
+      Value.Get.( |>>?! ) x mixop
   end
 
   module Make = struct
@@ -128,7 +132,20 @@ module V_value : VAL with type t = Value.t = struct
     let list = Value.Make.list
     let tuple = Value.Make.tuple
     let extern = Value.Make.extern
-    let ( <| ) = Value.Make.( <| )
-    let ( <<| ) = Value.Make.( <<| )
+
+    (* Parse the readable mixop string into a structured [Il.mixop]. *)
+    let ( <| ) (s_mixop : string) (args : t list) : Il.mixop * t list =
+      (Value.Mixops.of_string s_mixop, args)
+
+    (* Build the [Value.t] case from the structured mixop + spec type, deriving
+       the region from the args exactly as [Value.Make.( <<| )] did. *)
+    let ( <<| ) ((mixop, args) : Il.mixop * t list) (typ : Il.typ) : t =
+      let valuecase = Mixfix.fill mixop args in
+      let at =
+        args |> List.map at
+        |> List.filter (fun region -> region <> no_region)
+        |> over_region
+      in
+      Value.Make.case ~at typ valuecase
   end
 end

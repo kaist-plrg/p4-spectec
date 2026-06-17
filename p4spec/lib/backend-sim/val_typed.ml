@@ -23,6 +23,7 @@ module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
 module Mixfix = Domain.Mixfix
 module Mixop = Domain.Mixop
+module Il = Lang.Il
 module Num = Lang.Xl.Num
 open Util.Source
 
@@ -70,7 +71,7 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
     (* Shallow one-level destructure of the typed variant of spec type [typ] into
        its mixop shell (args left as typed [Obj.t]). [typ] comes from the caller
        (the extern knows the value's spec type statically). *)
-    let case (x : t) (typ : string) : t Mixfix.t =
+    let case (x : t) (typ : Il.typ) : t Mixfix.t =
       Spec_parts.Dispatch.case_of_typed x typ
 
     let extern (x : t) : Yojson.Safe.t = (Obj.obj x : Yojson.Safe.t)
@@ -111,12 +112,12 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
        to an unchecked projection that segfaults on a different runtime ctor. A
        union type yields a checked match. [case_of_typed] is shallow, so the
        returned args stay typed [Obj.t], un-recursed. *)
-    let ( |>>? ) (x : t) ((s_mixop, typ) : string * string) : t list option =
+    let ( |>>? ) (x : t) ((mixop_expect, typ) : Il.mixop * Il.typ) :
+        t list option =
       let mixop, args =
         Mixfix.split (Spec_parts.Dispatch.case_of_typed x typ)
       in
-      let canon = Mixop.string_of_mixop (Value.Mixops.of_string s_mixop) in
-      if Mixop.string_of_mixop mixop = canon then Some args else None
+      if Mixop.eq mixop mixop_expect then Some args else None
   end
 
   module Make = struct
@@ -158,12 +159,10 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
       ignore at;
       Obj.repr y
 
-    let ( <| ) (s_mixop : string) (args : t list) : string * t list =
-      (s_mixop, args)
+    let ( <| ) (s_mixop : string) (args : t list) : Il.mixop * t list =
+      (Value.Mixops.of_string s_mixop, args)
 
-    let ( <<| ) ((s_mixop, args) : string * t list) (typ : string) : t =
-      (* [make_case_typed] keys on the canonical mixop string. *)
-      let canon = Mixop.string_of_mixop (Value.Mixops.of_string s_mixop) in
-      Spec_parts.Dispatch.make_case_typed canon args typ
+    let ( <<| ) ((mixop, args) : Il.mixop * t list) (typ : Il.typ) : t =
+      Spec_parts.Dispatch.make_case_typed mixop args typ
   end
 end
