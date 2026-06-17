@@ -1,56 +1,58 @@
 open Lang
 open Xl
 open Il
-module V = Valrep.V_value
-open Util.Source
 
-(* Conversion between meta-numerics and OCaml numerics *)
+module Make (V : Valrep.VAL) = struct
+  open Util.Source
 
-let bigint_of_value (value : value) : Bigint.t =
-  value |> V.Get.num |> Num.to_int
+  (* Conversion between meta-numerics and OCaml numerics *)
 
-let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value = V.Make.int i in
-  add value;
-  value
+  let bigint_of_value (value : V.t) : Bigint.t =
+    value |> V.Get.num |> Num.to_int
 
-(* dec $sum_int(nat* ) : nat *)
+  let value_of_bigint (add : V.t -> unit) (i : Bigint.t) : V.t =
+    let value = V.Make.int i in
+    add value;
+    value
 
-let sum_int (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
-  in
-  let sum = List.fold_left Bigint.( + ) Bigint.zero values in
-  value_of_bigint add sum
+  (* dec $sum_int(nat* ) : nat *)
 
-(* dec $max_int(int* ) : int *)
+  let sum_int (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let sum = List.fold_left Bigint.( + ) Bigint.zero values in
+    value_of_bigint add sum
 
-let max_int (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
-  in
-  let max =
-    match values with
-    | [] -> Bigint.zero
-    | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
-  in
-  value_of_bigint add max
+  (* dec $max_int(int* ) : int *)
 
-(* dec $min_int(int* ) : int *)
+  let max_int (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let max =
+      match values with
+      | [] -> Bigint.zero
+      | value_h :: values_t -> List.fold_left Bigint.max value_h values_t
+    in
+    value_of_bigint add max
 
-let min_int (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
-  in
-  let min =
-    match values with
-    | [] -> Bigint.zero
-    | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
-  in
-  value_of_bigint add min
+  (* dec $min_int(int* ) : int *)
+
+  let min_int (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let min =
+      match values with
+      | [] -> Bigint.zero
+      | value_h :: values_t -> List.fold_left Bigint.min value_h values_t
+    in
+    value_of_bigint add min
+end

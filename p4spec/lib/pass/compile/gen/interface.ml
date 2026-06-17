@@ -740,8 +740,8 @@ module Typed = struct
               in
               ( pat,
                 Ml.AppE
-                  ( Ml.LitE "Mixfix.fill",
-                    [ Ml.VarE mo_ref; Ml.ListE repr_args ] ) ))
+                  (Ml.LitE "Mixfix.fill", [ Ml.VarE mo_ref; Ml.ListE repr_args ])
+              ))
             (parametric_ctors ctx head)
         in
         let scrut =
@@ -814,7 +814,8 @@ module Typed = struct
               Ml.AppE (Ml.LitE "Mixop.string_of_mixop", [ Ml.VarE "mixop" ]),
               Ml.MatchE
                 ( Ml.VarE "typ",
-                  outer_arms @ make_parametric_arms ctx @ [ outer_wild ] ) ) ) )
+                  outer_arms @ make_parametric_arms ctx @ [ outer_wild ] ) ) )
+    )
 
   let compile_case_of (ctx : Ctx.t) (pool : const_pool)
       (variants : (Sl.id * Sl.typ) list) : Ml.funcdef =

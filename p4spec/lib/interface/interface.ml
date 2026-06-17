@@ -57,7 +57,8 @@ module P4 = struct
     let entries = [ ("print_", print) ]
   end
 
-  module Builtin_P4 = Builtin.Call.Make (Builtin_P4_Ext) ()
+  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
+  module Builtin_P4 = Builtin_.Make (Builtin_P4_Ext) ()
 
   let call_builtin = Builtin_P4.invoke
 
@@ -125,7 +126,8 @@ module SpecTec_IL = struct
 
   (* Builtins *)
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
+  module Builtin_SpecTec = Builtin_.Make (Builtin_.No_ext) ()
 
   let call_builtin = Builtin_SpecTec.invoke
 
@@ -174,7 +176,8 @@ module SpecTec_SL = struct
 
   (* Builtins *)
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
+  module Builtin_SpecTec = Builtin_.Make (Builtin_.No_ext) ()
 
   let call_builtin = Builtin_SpecTec.invoke
 
