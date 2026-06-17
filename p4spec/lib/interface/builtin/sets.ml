@@ -7,15 +7,27 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* Value set, ordered by the value representation's own [compare]. *)
+  (* The element type name, threaded into [V.compare] so [V_typed] marshals the
+     element to a real [Value.t] before comparing (B5/D2). Set elements are always
+     named types ([set<K>], K a [VarT]). *)
+  let typename_of (typ : typ) : string =
+    match typ.it with VarT (id, _) -> id.it | _ -> ""
 
-  module VSet = Set.Make (struct
-    type t = V.t
+  (* A set is a [V.t list] kept sorted-and-deduped under a runtime comparator
+     [cmp = V.compare typename]. The comparator cannot be a module-level
+     [Set.Make] argument because the element type is only known per call, so the
+     ops are list-based; sets are small (ids in typing), so this is cheap and the
+     element order is canonical (= [V_value]'s [Value.compare] order). *)
 
-    let compare = V.compare
-  end)
+  let norm cmp xs = List.sort_uniq cmp xs
+  let mem cmp x ys = List.exists (fun y -> cmp x y = 0) ys
+  let inter cmp a b = List.filter (fun x -> mem cmp x b) a
+  let union cmp a b = norm cmp (a @ b)
+  let diff cmp a b = List.filter (fun x -> not (mem cmp x b)) a
+  let subset cmp a b = List.for_all (fun x -> mem cmp x b) a
 
-  type set = VSet.t
+  let equal cmp a b =
+    List.compare_lengths a b = 0 && List.for_all2 (fun x y -> cmp x y = 0) a b
 
   (* Conversion between meta-sets and OCaml lists, via the generic case DSL
      ([( <<| )] / [Get.case]) — under V_typed those route to the typed bridge's
@@ -26,17 +38,16 @@ module Make (V : Valrep.VAL) = struct
   let mixop_set = "`{ k }"
   let typ_set = Typ.Make.var ("set" $ no_region) []
 
-  let set_of_value (value : V.t) : set =
+  let set_of_value cmp (value : V.t) : V.t list =
     match Mixfix.args (V.Get.case value typ_set) with
-    | [ value_elements ] -> value_elements |> V.Get.list |> VSet.of_list
+    | [ value_elements ] -> value_elements |> V.Get.list |> norm cmp
     | _ ->
         error no_region
           (Format.asprintf "expected a set, but got %s" (V.to_string value))
 
-  let value_of_set (add : V.t -> unit) (typ_key : typ) (set : set) : V.t =
-    let values_element = VSet.elements set in
+  let value_of_set (add : V.t -> unit) (typ_key : typ) (set : V.t list) : V.t =
     let typ_list = Typ.Make.list typ_key in
-    let value_elements = V.Make.list typ_list values_element in
+    let value_elements = V.Make.list typ_list set in
     add value_elements;
     let value =
       let typ = Typ.Make.var ("set" $ no_region) [ typ_key ] in
@@ -50,49 +61,54 @@ module Make (V : Valrep.VAL) = struct
   let intersect_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_set_a, value_set_b = Extract.two at values_input in
-    let set_a = set_of_value value_set_a in
-    let set_b = set_of_value value_set_b in
-    VSet.inter set_a set_b |> value_of_set add typ_key
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    inter cmp set_a set_b |> value_of_set add typ_key
 
   (* dec $union_set<K>(set<K>, set<K>) : set<K> *)
 
   let union_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_set_a, value_set_b = Extract.two at values_input in
-    let set_a = set_of_value value_set_a in
-    let set_b = set_of_value value_set_b in
-    VSet.union set_a set_b |> value_of_set add typ_key
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    union cmp set_a set_b |> value_of_set add typ_key
 
   (* dec $unions_set<K>(set<K>* ) : set<K> *)
 
   let unions_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_sets = Extract.one at values_input in
-    let sets = value_sets |> V.Get.list |> List.map set_of_value in
-    sets |> List.fold_left VSet.union VSet.empty |> value_of_set add typ_key
+    let sets = value_sets |> V.Get.list |> List.map (set_of_value cmp) in
+    sets |> List.fold_left (union cmp) [] |> value_of_set add typ_key
 
   (* dec $diff_set<K>(set<K>, set<K>) : set<K> *)
 
   let diff_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_set_a, value_set_b = Extract.two at values_input in
-    let set_a = set_of_value value_set_a in
-    let set_b = set_of_value value_set_b in
-    VSet.diff set_a set_b |> value_of_set add typ_key
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    diff cmp set_a set_b |> value_of_set add typ_key
 
   (* dec $sub_set<K>(set<K>, set<K>) : bool *)
 
   let sub_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
-    let _typ_key = Extract.one at targs in
+    let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_set_a, value_set_b = Extract.two at values_input in
-    let set_a = set_of_value value_set_a in
-    let set_b = set_of_value value_set_b in
-    let value = V.Make.bool (VSet.subset set_a set_b) in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    let value = V.Make.bool (subset cmp set_a set_b) in
     add value;
     value
 
@@ -100,11 +116,12 @@ module Make (V : Valrep.VAL) = struct
 
   let eq_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
-    let _typ_key = Extract.one at targs in
+    let typ_key = Extract.one at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value_set_a, value_set_b = Extract.two at values_input in
-    let set_a = set_of_value value_set_a in
-    let set_b = set_of_value value_set_b in
-    let value = V.Make.bool (VSet.equal set_a set_b) in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    let value = V.Make.bool (equal cmp set_a set_b) in
     add value;
     value
 end

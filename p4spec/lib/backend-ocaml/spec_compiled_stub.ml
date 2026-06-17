@@ -11,7 +11,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     {
       iface =
         {
-          call_builtin = Interface.call_builtin;
           parse_program = Interface.parse_program;
         };
       extern =

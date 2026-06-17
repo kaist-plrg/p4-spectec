@@ -5,6 +5,10 @@ open Runtime.Sim.Signature
 open Error
 open Util.Source
 
+(* The [print_] EXT functor, aliased before the [Make] functor shadows the
+   [interface] library's [Interface] module with its [INTERFACE] parameter. *)
+module Builtin_print_ext = Interface.P4.Builtin_P4_Ext
+
 (* Functor to create a SIM from ARCH and INTERP implementations *)
 
 module Make
@@ -47,10 +51,13 @@ module Make
   (* Typed builtin instance for the compiled ML path. Builtins are arch-
      independent, so a single instance over [V_typed] serves [call_builtin]
      under ML (mirrors the typed extern stack). IL/SL keep the [V_value]
-     builtins of the [Interface] argument (shared [ctr], API.md D5). Defined but
-     unused until B5 flips [compile_builtin_func] off [iface.call_builtin]. *)
+     builtins of the [Interface] argument (shared [ctr], API.md D5). Gets the
+     same [print_] EXT as the interface, instantiated at [V_typed] (its [marshal]
+     re-encodes the argument before [!unparser]). *)
   module Builtin_t_funcs = Builtin.Call.Make_funcs (Val_typed.V_typed)
-  module Builtin_t = Builtin_t_funcs.Make (Builtin_t_funcs.No_ext) ()
+
+  module Builtin_t =
+    Builtin_t_funcs.Make (Builtin_print_ext (Val_typed.V_typed)) ()
 
   module MakeExtern
       (Interp_IL : INTERP_IL)

@@ -44,7 +44,6 @@ module Make
 
   let my_ctx : ctx__ = {
     iface = {
-      call_builtin = Interface.call_builtin;
       parse_program = Interface.parse_program;
     };
     extern = {

@@ -29,14 +29,16 @@ module type VAL = sig
 
   val to_string : t -> string
 
-  (* Total order / equality over values, for the set/map builtins ([Set.Make]
-     comparator, [map_find_opt]). [V_value] = [Value.compare]/[Value.eq];
-     [V_typed] marshals both operands to [Value.t] then compares (cold path:
-     only the set/map builtins, not packet arithmetic) — keeping the serialized
-     element order identical to [V_value]. No type arg (the [Set.Make]
-     comparator has none), so [V_typed] uses the universal [marshal_value]. *)
-  val compare : t -> t -> int
-  val equal : t -> t -> bool
+  (* Total order / equality over values of a (statically known) spec type, for
+     the set/map builtins. [V_value] = [Value.compare]/[Value.eq] (ignores the
+     type). [V_typed] marshals both operands to [Value.t] via the type name then
+     compares (cold path: only the set/map builtins, not packet arithmetic),
+     keeping the serialized element order identical to [V_value] (API.md D2). The
+     type name is required because a typed [Obj.t] is type-erased — it picks the
+     right [marshal_<typ>] (B5); the set/map builtins thread it from their
+     element-type targ. *)
+  val compare : string -> t -> t -> int
+  val equal : string -> t -> t -> bool
 
   (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
      interface where the value is handed straight back to compiled code and never
@@ -102,8 +104,8 @@ module V_value : VAL with type t = Value.t = struct
   type t = Value.t
 
   let to_string = Value.to_string
-  let compare = Value.compare
-  let equal = Value.eq
+  let compare _typ = Value.compare
+  let equal _typ = Value.eq
   let to_value = Fun.id
   let of_value = Fun.id
 

@@ -62,10 +62,22 @@ let compile_params (ctx : Ctx.t) (params : param list) :
          (ctx, params_ml, chain))
        (ctx, [], Chain.nop)
 
-(* Extern functions *)
+(* Extern + builtin functions — typed [Obj.t] bypass (C5/B5).
 
-let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
-    (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+   Both cross a [Value.t]-typed runtime boundary that, under the compiled (ML)
+   path, actually carries typed [Obj.t] smuggled values. So both [Obj.magic]
+   their args in and their result out instead of deep marshal/unmarshal. The only
+   per-kind differences are the call field, its extra leading args, and how the
+   result/error is shaped (D6) — captured by [make_result]. *)
+
+let compile_magic_bridge (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
+    (id : id) (params : param list) (typ_ret : typ)
+    ~(make_result :
+       name_orig_ml:string ->
+       exprs_targ_ml:Ml.expr ->
+       exprs_arg_ml:Ml.expr ->
+       typ_ret_ml:Ml.typ ->
+       Ml.expr) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
   let name_orig_ml, targs = lookup_dispatch_info reverse_dispatch id in
@@ -83,8 +95,7 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
         ("p__" ^ string_of_int i, Some typ_param_ml))
       typs_param
   in
-  (* C5 typed bypass: smuggle typed [Obj.t] inputs through the [Value.t list]
-     extern boundary ([Obj.magic]) instead of deep-marshal. *)
+  (* Smuggle typed [Obj.t] inputs through the [Value.t list] boundary. *)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i _typ ->
@@ -98,25 +109,8 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
   let exprs_targ_ml = Ml.ListE (List.map Interface.typ_make_expr targs) in
-  let expr_call_ml =
-    Ml.AppE
-      ( Common.extern_field "eval_extern_func",
-        [ Ml.StrE name_orig_ml; exprs_targ_ml; exprs_arg_ml ] )
-  in
   let expr_result_ml =
-    Ml.MatchE
-      ( expr_call_ml,
-        [
-          ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-            (* Cast the smuggled output back to its OCaml type. *)
-            Ml.AnnotE
-              (Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]), typ_ret_ml)
-          );
-          ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
-            Ml.AppE
-              ( Ml.LitE "raise",
-                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
-        ] )
+    make_result ~name_orig_ml ~exprs_targ_ml ~exprs_arg_ml ~typ_ret_ml
   in
   let expr_body_ml =
     List.fold_right
@@ -133,84 +127,72 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
   in
   (ctx, [ funcdef_ml ])
 
-(* Builtin functions *)
+(* Extern functions: [extern.eval_extern_func] returns a [Run.func_result]. *)
+
+let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
+    (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+  compile_magic_bridge ctx reverse_dispatch id params typ_ret
+    ~make_result:(fun ~name_orig_ml ~exprs_targ_ml ~exprs_arg_ml ~typ_ret_ml ->
+      let expr_call_ml =
+        Ml.AppE
+          ( Common.extern_field "eval_extern_func",
+            [ Ml.StrE name_orig_ml; exprs_targ_ml; exprs_arg_ml ] )
+      in
+      Ml.MatchE
+        ( expr_call_ml,
+          [
+            ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
+              (* Cast the smuggled output back to its OCaml type. *)
+              Ml.AnnotE
+                ( Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]),
+                  typ_ret_ml ) );
+            ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
+              Ml.AppE
+                ( Ml.LitE "raise",
+                  [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
+          ] ))
+
+(* Builtin functions: B5 routes them through the per-mode [extern.call_builtin]
+   (uniform with externs), which returns the result [Value.t] directly (the typed
+   [Obj.t] smuggled). [BuiltinError] from the underlying builtin propagates and is
+   mapped to [Unmatch] so the else-block fallback still works. *)
 
 let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
-  let id_ml = Names.func id in
-  let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
-  let name_orig_ml, targs = lookup_dispatch_info reverse_dispatch id in
-  let typs_param =
-    List.filter_map
-      (fun (param : param) ->
-        match param.it with ExpP (typ, _) -> Some typ | _ -> None)
-      params
-  in
-  let n = List.length typs_param in
-  let params_ml =
-    List.mapi
-      (fun i typ ->
-        let typ_param_ml = Type.compile_typ ~tparams:[] typ in
-        ("p__" ^ string_of_int i, Some typ_param_ml))
-      typs_param
-  in
-  let vars_marshal_ml, exprs_marshal_ml =
-    List.mapi
-      (fun i typ ->
-        ( "v__" ^ string_of_int i,
-          Ml.AppE
-            ( Ml.VarE ("marshal_" ^ Interface.interface_name typ),
-              [ Ml.VarE ("p__" ^ string_of_int i) ] ) ))
-      typs_param
-    |> List.split
-  in
-  let exprs_arg_ml =
-    Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
-  in
-  let exprs_targ_ml = Ml.ListE (List.map Interface.typ_make_expr targs) in
-  let name_orig_ml =
-    Ml.LitE
-      (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped name_orig_ml))
-  in
-  let expr_call_ml =
-    Ml.AppE
-      ( Common.iface_field "call_builtin",
-        [ Ml.LitE "(fun _ -> ())"; name_orig_ml; exprs_targ_ml; exprs_arg_ml ]
-      )
-  in
-  let expr_try_ml =
-    Ml.TryE
-      ( expr_call_ml,
-        [
-          ( Ml.VariantP
-              (`Mono ("Util.Error.BuiltinError", [ Ml.WildP; Ml.VarP "msg__" ])),
-            Ml.AppE
-              ( Ml.LitE "raise",
-                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
-        ] )
-  in
-  let expr_result_ml =
-    Ml.LetE
-      ( Ml.VarP "v_out__",
-        expr_try_ml,
+  compile_magic_bridge ctx reverse_dispatch id params typ_ret
+    ~make_result:(fun ~name_orig_ml ~exprs_targ_ml ~exprs_arg_ml ~typ_ret_ml ->
+      let name_lit_ml =
+        Ml.LitE
+          (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped name_orig_ml))
+      in
+      let expr_call_ml =
         Ml.AppE
-          ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ_ret),
-            [ Ml.VarE "v_out__" ] ) )
-  in
-  let expr_body_ml =
-    List.fold_right
-      (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
-        Ml.LetE (Ml.VarP var_marshal_ml, expr_marshal_ml, expr_body_ml))
-      (List.combine vars_marshal_ml exprs_marshal_ml)
-      expr_result_ml
-  in
-  let funcdef_ml =
-    ( id_ml,
-      params_ml,
-      Some typ_ret_ml,
-      Common.prof_wrap id_ml (Common.deref_ctx expr_body_ml) )
-  in
-  (ctx, [ funcdef_ml ])
+          ( Common.extern_field "call_builtin",
+            [
+              Ml.LitE "(fun _ -> ())";
+              name_lit_ml;
+              exprs_targ_ml;
+              exprs_arg_ml;
+            ] )
+      in
+      let expr_try_ml =
+        Ml.TryE
+          ( expr_call_ml,
+            [
+              ( Ml.VariantP
+                  (`Mono
+                     ("Util.Error.BuiltinError", [ Ml.WildP; Ml.VarP "msg__" ])),
+                Ml.AppE
+                  ( Ml.LitE "raise",
+                    [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
+            ] )
+      in
+      Ml.LetE
+        ( Ml.VarP "v_out__",
+          expr_try_ml,
+          Ml.AnnotE
+            (Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]), typ_ret_ml)
+        ))
 
 (* Table functions *)
 

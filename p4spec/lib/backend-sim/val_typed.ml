@@ -36,19 +36,22 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
   let to_string (x : t) : string =
     Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
-  (* No type arg (the [Set.Make] comparator has none), so marshal each operand
-     via the universal [marshal_value] and compare as [Value.t]. Cold: only the
-     set/map builtins reach this, and it keeps the serialized set/map element
-     order identical to [V_value] (API.md D2). *)
-  let compare (a : t) (b : t) : int =
+  (* Marshal both operands to a real [Value.t] by the caller-supplied spec type
+     name (the set/map builtins thread their element-type targ), then compare as
+     [Value.t]. The type is required: a typed [Obj.t] is type-erased, so the right
+     [marshal_<typ>] must be picked (B5; [marshal_value] is correct only for the
+     [value] type, not arbitrary set/map element types). Cold: only the set/map
+     builtins reach this. Keeps the serialized element order identical to
+     [V_value] (API.md D2). *)
+  let compare (typ : string) (a : t) (b : t) : int =
     Value.compare
-      (Spec_parts.Dispatch.marshal_value (Obj.obj a))
-      (Spec_parts.Dispatch.marshal_value (Obj.obj b))
+      (Spec_parts.Dispatch.marshal_typed typ a)
+      (Spec_parts.Dispatch.marshal_typed typ b)
 
-  let equal (a : t) (b : t) : bool =
+  let equal (typ : string) (a : t) (b : t) : bool =
     Value.eq
-      (Spec_parts.Dispatch.marshal_value (Obj.obj a))
-      (Spec_parts.Dispatch.marshal_value (Obj.obj b))
+      (Spec_parts.Dispatch.marshal_typed typ a)
+      (Spec_parts.Dispatch.marshal_typed typ b)
 
   (* Transient smuggle (handed straight back to compiled code, never decoded):
      identity cast. *)

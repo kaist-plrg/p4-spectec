@@ -62,7 +62,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
   let toplevels_interface_ml =
     let const_decls, marshal_groups, unmarshal_groups, typed_bridges =
-      Gen.Interface.compile ctx spec
+      Gen.Interface.compile ctx spec dispatch_table
     in
     let to_tops groups =
       List.filter_map

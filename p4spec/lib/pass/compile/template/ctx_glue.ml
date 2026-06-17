@@ -8,7 +8,6 @@
 let static =
   {|
 type iface__ = {
-  call_builtin  : (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t;
   parse_program : string list -> string list -> Run.parse_result;
 }
 
@@ -24,7 +23,6 @@ type ctx__ = {
 }
 
 let dummy_iface__ : iface__ = {
-  call_builtin = (fun _ _ _ _ -> failwith "spec_compiled: ctx not initialized");
   parse_program = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
 }
 

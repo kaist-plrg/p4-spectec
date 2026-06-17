@@ -6,7 +6,11 @@ module Typ = Runtime.Type.Typ
 module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
-  module Sets = Sets.Make (V)
+
+  (* Element type name, threaded into [V.compare] so [V_typed] marshals the
+     element before comparing (B5/D2). *)
+  let typename_of (typ : typ) : string =
+    match typ.it with VarT (id, _) -> id.it | _ -> ""
 
   (* dec $rev_<X>(X* ) : X* *)
 
@@ -36,10 +40,13 @@ module Make (V : Valrep.VAL) = struct
 
   let distinct_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
-    let _typ = Extract.one at targs in
+    let typ = Extract.one at targs in
+    let cmp = V.compare (typename_of typ) in
     let values = Extract.one at values_input |> V.Get.list in
-    let set = Sets.VSet.of_list values in
-    let value = V.Make.bool (Sets.VSet.cardinal set = List.length values) in
+    let value =
+      V.Make.bool
+        (List.length (List.sort_uniq cmp values) = List.length values)
+    in
     add value;
     value
 
@@ -70,7 +77,8 @@ module Make (V : Valrep.VAL) = struct
 
   let assoc_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
-    let _typ_key, typ_value = Extract.two at targs in
+    let typ_key, typ_value = Extract.two at targs in
+    let cmp = V.compare (typename_of typ_key) in
     let value, value_list = Extract.two at values_input in
     let values =
       value_list |> V.Get.list
@@ -85,7 +93,7 @@ module Make (V : Valrep.VAL) = struct
         (fun value_found (value_key, value_value) ->
           match value_found with
           | Some _ -> value_found
-          | None when V.compare value value_key = 0 -> Some value_value
+          | None when cmp value value_key = 0 -> Some value_value
           | None -> None)
         None values
     in
