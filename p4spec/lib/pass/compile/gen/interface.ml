@@ -672,6 +672,86 @@ module Typed = struct
           (Ml.WildP, Ml.StrE "");
         ] )
 
+  (* [set]/[pair]/[map] are parametric poly-variants ([`Set of 'k list],
+     [`Pair of 'k * 'v], [map = pair set]) absent from [variant_ids]: their decls
+     carry tparams, so the normal arm-builder's per-payload [compile_typ]
+     annotation would dangle a free type var. But the ctor is type-uniform —
+     'k/'v erase to [Obj.t] — so ONE annotation-free arm per head covers every
+     instantiation. The real ctor + mixop come from [Ctx] (keys then match the
+     spec, hence [V_typed]'s threaded mixop); [map]'s value is a [`Set] of pairs,
+     so it reuses the "set" ctor. *)
+  let parametric_heads = [ "set"; "pair"; "map" ]
+
+  let parametric_ctors (ctx : Ctx.t) (head : string) =
+    let src = if head = "map" then "set" else head in
+    Ctx.find_ctors_full ctx (src $ no_region)
+
+  (* set/map -> [Obj.t set], pair -> [(Obj.t, Obj.t) pair]. *)
+  let parametric_scrut_typ (head : string) : Ml.typ =
+    match head with
+    | "pair" -> Ml.AppT ("pair", [ Ml.NameT "Obj.t"; Ml.NameT "Obj.t" ])
+    | _ -> Ml.AppT ("set", [ Ml.NameT "Obj.t" ])
+
+  let make_parametric_arms (ctx : Ctx.t) : Ml.arm list =
+    List.map
+      (fun head ->
+        let inner_arms =
+          List.map
+            (fun (mixop, ctor_ml, payload_typs) ->
+              let canon = Mixop.string_of_mixop mixop in
+              let args = List.mapi (fun i _ -> obj_obj_nth i) payload_typs in
+              ( Ml.LitP (Printf.sprintf "%S" canon),
+                Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VariantE (ctor_ml, args) ]) ))
+            (parametric_ctors ctx head)
+        in
+        let wild =
+          ( Ml.WildP,
+            Ml.AppE
+              ( Ml.LitE "failwith",
+                [
+                  Ml.BinopE
+                    ( "^",
+                      Ml.StrE ("make_case_typed: bad mixop for " ^ head ^ ": "),
+                      Ml.VarE "mixop" );
+                ] ) )
+        in
+        ( Ml.LitP (Printf.sprintf "%S" head),
+          Ml.MatchE (Ml.VarE "mixop", inner_arms @ [ wild ]) ))
+      parametric_heads
+
+  let case_parametric_arms (ctx : Ctx.t) (pool : const_pool) : Ml.arm list =
+    List.map
+      (fun head ->
+        let inner_arms =
+          List.map
+            (fun (mixop, ctor_ml, payload_typs) ->
+              let pvars =
+                List.mapi (fun i _ -> "p" ^ string_of_int i) payload_typs
+              in
+              let pat =
+                Ml.VariantP
+                  (`Poly (ctor_ml, List.map (fun v -> Ml.VarP v) pvars))
+              in
+              let mo_ref = intern_mixop pool mixop in
+              let repr_args =
+                List.map
+                  (fun v -> Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE v ]))
+                  pvars
+              in
+              ( pat,
+                Ml.AppE
+                  ( Ml.LitE "Mixfix.fill",
+                    [ Ml.VarE mo_ref; Ml.ListE repr_args ] ) ))
+            (parametric_ctors ctx head)
+        in
+        let scrut =
+          Ml.AnnotE
+            ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
+              parametric_scrut_typ head )
+        in
+        (Ml.LitP (Printf.sprintf "%S" head), Ml.MatchE (scrut, inner_arms)))
+      parametric_heads
+
   let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
       Ml.funcdef =
     let outer_arms =
@@ -732,7 +812,9 @@ module Typed = struct
           Ml.LetE
             ( Ml.VarP "mixop",
               Ml.AppE (Ml.LitE "Mixop.string_of_mixop", [ Ml.VarE "mixop" ]),
-              Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) ) ) )
+              Ml.MatchE
+                ( Ml.VarE "typ",
+                  outer_arms @ make_parametric_arms ctx @ [ outer_wild ] ) ) ) )
 
   let compile_case_of (ctx : Ctx.t) (pool : const_pool)
       (variants : (Sl.id * Sl.typ) list) : Ml.funcdef =
@@ -785,7 +867,9 @@ module Typed = struct
       Ml.LetE
         ( Ml.VarP "typ",
           typename_of_expr,
-          Ml.MatchE (Ml.VarE "typ", outer_arms @ [ outer_wild ]) ) )
+          Ml.MatchE
+            ( Ml.VarE "typ",
+              outer_arms @ case_parametric_arms ctx pool @ [ outer_wild ] ) ) )
 
   let compile (ctx : Ctx.t) (pool : const_pool) (typs : Sl.typ list) :
       Ml.funcdef list =
