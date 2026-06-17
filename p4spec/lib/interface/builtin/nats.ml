@@ -1,17 +1,17 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime.Value
+module V = Valrep.V_value
 open Util.Source
 open Error
 
 (* Conversion between meta-numerics and OCaml numerics *)
 
 let bigint_of_value (value : value) : Bigint.t =
-  value |> Value.Get.num |> Num.to_int
+  value |> V.Get.num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (n : Bigint.t) : value =
-  let value = Value.Make.nat n in
+  let value = V.Make.nat n in
   add value;
   value
 
@@ -21,7 +21,7 @@ let sum_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
+    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
   in
   let sum = List.fold_left Bigint.( + ) Bigint.zero values in
   value_of_bigint add sum
@@ -32,7 +32,7 @@ let max_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
+    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
   in
   let max =
     match values with
@@ -47,7 +47,7 @@ let min_nat (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   Extract.zero at targs;
   let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
+    Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
   in
   let min =
     match values with

@@ -2,7 +2,7 @@ open Lang
 open Xl
 open Il
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
+module V = Valrep.V_value
 open Error
 open Util.Source
 
@@ -12,8 +12,8 @@ let rev_ (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let typ = Extract.one at targs in
   let typ_list = Typ.Make.list typ in
-  let values = Extract.one at values_input |> Value.Get.list in
-  let value = Value.Make.list typ_list (List.rev values) in
+  let values = Extract.one at values_input |> V.Get.list in
+  let value = V.Make.list typ_list (List.rev values) in
   add value;
   value
 
@@ -25,10 +25,10 @@ let concat_ (add : value -> unit) (at : region) (targs : targ list)
   let typ_list = Typ.Make.list typ in
   let values =
     Extract.one at values_input
-    |> Value.Get.list
-    |> List.concat_map Value.Get.list
+    |> V.Get.list
+    |> List.concat_map V.Get.list
   in
-  let value = Value.Make.list typ_list values in
+  let value = V.Make.list typ_list values in
   add value;
   value
 
@@ -37,9 +37,9 @@ let concat_ (add : value -> unit) (at : region) (targs : targ list)
 let distinct_ (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
   let _typ = Extract.one at targs in
-  let values = Extract.one at values_input |> Value.Get.list in
+  let values = Extract.one at values_input |> V.Get.list in
   let set = Sets.VSet.of_list values in
-  let value = Value.Make.bool (Sets.VSet.cardinal set = List.length values) in
+  let value = V.Make.bool (Sets.VSet.cardinal set = List.length values) in
   add value;
   value
 
@@ -50,19 +50,19 @@ let partition_ (add : value -> unit) (at : region) (targs : targ list)
   let typ = Extract.one at targs in
   let typ_list = Typ.Make.list typ in
   let value_list, value_len = Extract.two at values_input in
-  let values = Value.Get.list value_list in
-  let len = value_len |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
+  let values = V.Get.list value_list in
+  let len = value_len |> V.Get.num |> Num.to_int |> Bigint.to_int_exn in
   let values_left, values_right =
     values
     |> List.mapi (fun idx value -> (idx, value))
     |> List.partition (fun (idx, _) -> idx < len)
   in
-  let value_left = Value.Make.list typ_list (List.map snd values_left) in
+  let value_left = V.Make.list typ_list (List.map snd values_left) in
   add value_left;
-  let value_right = Value.Make.list typ_list (List.map snd values_right) in
+  let value_right = V.Make.list typ_list (List.map snd values_right) in
   add value_right;
   let typ_tuple = Typ.Make.tuple [ typ; typ ] in
-  let value = Value.Make.tuple typ_tuple [ value_left; value_right ] in
+  let value = V.Make.tuple typ_tuple [ value_left; value_right ] in
   add value;
   value
 
@@ -73,7 +73,7 @@ let assoc_ (add : value -> unit) (at : region) (targs : targ list)
   let _typ_key, typ_value = Extract.two at targs in
   let value, value_list = Extract.two at values_input in
   let values =
-    value_list |> Value.Get.list
+    value_list |> V.Get.list
     |> List.map (fun value ->
            match value.it with
            | TupleV [ value_key; value_value ] -> (value_key, value_value)
@@ -85,11 +85,11 @@ let assoc_ (add : value -> unit) (at : region) (targs : targ list)
       (fun value_found (value_key, value_value) ->
         match value_found with
         | Some _ -> value_found
-        | None when Value.compare value value_key = 0 -> Some value_value
+        | None when V.compare value value_key = 0 -> Some value_value
         | None -> None)
       None values
   in
-  let value = Value.Make.opt typ_opt value_opt in
+  let value = V.Make.opt typ_opt value_opt in
   add value;
   value
 
@@ -101,11 +101,11 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
   let typ = Typ.Make.tuple [ Typ.Make.nat; typ_value ] |> Typ.Make.list in
   let value_list = Extract.one at values_input in
   let values =
-    value_list |> Value.Get.list
+    value_list |> V.Get.list
     |> List.map (fun value ->
            match value.it with
            | TupleV [ value_key; value_value ] ->
-               let n_key = value_key |> Value.Get.num |> Num.to_int in
+               let n_key = value_key |> V.Get.num |> Num.to_int in
                (n_key, (value_key, value_value, value.at, value.note))
            | _ -> assert false)
   in
@@ -118,7 +118,7 @@ let sort_ (add : value -> unit) (at : region) (targs : targ list)
         TupleV [ value_key; value_value ] $$ (at, note))
       values
   in
-  let value = Value.Make.list typ values in
+  let value = V.Make.list typ values in
   add value;
   value
 
@@ -131,7 +131,7 @@ let transpose_ (add : value -> unit) (at : region) (targs : targ list)
   let typ_matrix = Typ.Make.list typ_list in
   let value = Extract.one at values_input in
   let value_matrix =
-    value |> Value.Get.list |> List.map (fun value -> value |> Value.Get.list)
+    value |> V.Get.list |> List.map (fun value -> value |> V.Get.list)
   in
   let value_matrix =
     match value_matrix with
@@ -154,10 +154,10 @@ let transpose_ (add : value -> unit) (at : region) (targs : targ list)
   let value =
     value_matrix
     |> List.map (fun values_row ->
-           let value_row = Value.Make.list typ_list values_row in
+           let value_row = V.Make.list typ_list values_row in
            add value_row;
            value_row)
-    |> Value.Make.list typ_matrix
+    |> V.Make.list typ_matrix
   in
   add value;
   value

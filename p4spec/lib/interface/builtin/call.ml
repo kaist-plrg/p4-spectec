@@ -19,13 +19,15 @@ module No_ext : EXT = struct
   let entries = []
 end
 
+(* Shared builtin state counter. Lifted to lib level (out of [Make]) so the
+   V_value (interface) and V_typed (backend-sim) instances increment the SAME
+   counter — modes never overlap, so a single ref is correct (API.md D5). Used
+   by [fresh_typeId] and by [checkpoint]/[seff] state-effect detection. *)
+let ctr : int ref = ref 0
+
 (* Create a BUILTIN from an EXT module containing extensions *)
 
 module Make (Ext : EXT) () = struct
-  (* States for builtins *)
-
-  let ctr : int ref = ref 0
-
   (* Initializer *)
 
   let init () : unit = ctr := 0

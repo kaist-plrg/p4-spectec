@@ -2,7 +2,7 @@ open Lang
 open Xl
 open Il
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
+module V = Valrep.V_value
 open Error
 open Util.Source
 
@@ -13,13 +13,13 @@ let max_bit_width = Bigint.of_int 2048
 (* Conversion between meta-bits and OCaml bool array *)
 
 let bits_of_value (value : value) : bool array =
-  value |> Value.Get.list |> List.map Value.Get.bool |> Array.of_list
+  value |> V.Get.list |> List.map V.Get.bool |> Array.of_list
 
 let value_of_bits (add : value -> unit) (bits : bool array) : value =
   let value =
     let typ = Typ.Make.var ("bit" $ no_region) [] in
-    let values_bit = Array.to_list bits |> List.map Value.Make.bool in
-    Value.Make.list typ values_bit
+    let values_bit = Array.to_list bits |> List.map V.Make.bool in
+    V.Make.list typ values_bit
   in
   add value;
   value
@@ -27,10 +27,10 @@ let value_of_bits (add : value -> unit) (bits : bool array) : value =
 (* Conversion between meta-numerics and OCaml numerics *)
 
 let bigint_of_value (value : value) : Bigint.t =
-  value |> Value.Get.num |> Num.to_int
+  value |> V.Get.num |> Num.to_int
 
 let value_of_bigint (add : value -> unit) (i : Bigint.t) : value =
-  let value = Value.Make.int i in
+  let value = V.Make.int i in
   add value;
   value
 
