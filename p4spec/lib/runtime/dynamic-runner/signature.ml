@@ -66,6 +66,14 @@ module type EXTERN = sig
   val eval_extern_rel : string -> Value.t list -> rel_result
   val eval_extern_func : string -> Typ.t list -> Value.t list -> func_result
 
+  (* Builtins. Per-mode (V_value vs V_typed) sibling of [eval_extern_func]:
+     under ML the [Value.t] args/result are typed [Obj.t] smuggled (API.md D3).
+     The interpreters keep [INTERFACE.call_builtin]; only the compiled ML target
+     routes through here. *)
+
+  val call_builtin :
+    (Value.t -> unit) -> Id.t -> Typ.t list -> Value.t list -> Value.t
+
   (* State management *)
 
   val checkpoint : unit -> int

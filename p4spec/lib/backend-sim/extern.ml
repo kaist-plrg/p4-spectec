@@ -16,9 +16,14 @@ end
 
 (* Bridge the [vt]-typed extern implementation to the [Value.t]-typed dynamic
    runner. The (un)wrapping via [V.to_value]/[V.of_value] is the identity under
-   [V_value]; under [V_typed] it is the marshal/unmarshal at the runner edge. *)
+   [V_value]; under [V_typed] it is the marshal/unmarshal at the runner edge.
 
-module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) : Run.EXTERN = struct
+   This is the per-arch extern bridge: it only produces [eval_extern_rel]/
+   [eval_extern_func] (consumed by [ARCH]). Builtins are arch-independent, so
+   [Run.EXTERN.call_builtin] lives in [make.ml]'s [MakeExtern], not here — hence
+   this is no longer sealed to the full [Run.EXTERN]. *)
+
+module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) = struct
   let init_mode _ = ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after

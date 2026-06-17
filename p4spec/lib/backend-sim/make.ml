@@ -44,6 +44,14 @@ module Make
      read by the extern dispatch and the STF runner to pick the stack. *)
   let sim_mode : mode ref = ref Empty_mode
 
+  (* Typed builtin instance for the compiled ML path. Builtins are arch-
+     independent, so a single instance over [V_typed] serves [call_builtin]
+     under ML (mirrors the typed extern stack). IL/SL keep the [V_value]
+     builtins of the [Interface] argument (shared [ctr], API.md D5). Defined but
+     unused until B5 flips [compile_builtin_func] off [iface.call_builtin]. *)
+  module Builtin_t_funcs = Builtin.Call.Make_funcs (Val_typed.V_typed)
+  module Builtin_t = Builtin_t_funcs.Make (Builtin_t_funcs.No_ext) ()
+
   module MakeExtern
       (Interp_IL : INTERP_IL)
       (Interp_SL : INTERP_SL)
@@ -129,6 +137,15 @@ module Make
       match !sim_mode with
       | ML_mode -> Arch_t.eval_extern_func name typs args
       | _ -> Arch_v.eval_extern_func name typs args
+
+    (* Builtin evaluation, per-mode like [eval_extern_func]. ML smuggles typed
+       [Obj.t] through the [Value.t] surface ([Obj.magic] box/unbox); IL/SL defer
+       to the [Value.t] [Interface] builtins. *)
+    let call_builtin add id typs args =
+      match !sim_mode with
+      | ML_mode ->
+          Obj.magic (Builtin_t.invoke (Obj.magic add) id typs (Obj.magic args))
+      | _ -> Interface.call_builtin add id typs args
   end
 
   include (

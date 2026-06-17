@@ -159,6 +159,10 @@ module Make_null
               (Format.asprintf "unimplemented extern function: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
+  (* Builtins — boot backend keeps the [Value.t] interface builtins. *)
+
+  let call_builtin = Interface_SpecTec.call_builtin
+
   (* State management *)
 
   let checkpoint () : int = 0
@@ -432,6 +436,10 @@ module Make_parametric
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+
+  (* Builtins — boot backend keeps the [Value.t] interface builtins. *)
+
+  let call_builtin = Interface_SpecTec.call_builtin
 
   (* State management *)
 

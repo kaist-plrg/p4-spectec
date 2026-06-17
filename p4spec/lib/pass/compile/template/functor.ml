@@ -50,6 +50,7 @@ module Make
     extern = {
       eval_extern_rel = Extern.eval_extern_rel;
       eval_extern_func = Extern.eval_extern_func;
+      call_builtin = Extern.call_builtin;
     };
   }
 

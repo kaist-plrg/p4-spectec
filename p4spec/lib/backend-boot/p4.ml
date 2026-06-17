@@ -57,6 +57,9 @@ module Make () : RUNNER = struct
 
     let eval_extern_rel = Placeholder.eval_extern_rel
     let eval_extern_func = Placeholder.eval_extern_func
+
+    (* Boot backend stays on the [Value.t] builtins; no typed bypass here. *)
+    let call_builtin = Interface.P4.call_builtin
   end
 
   include (
