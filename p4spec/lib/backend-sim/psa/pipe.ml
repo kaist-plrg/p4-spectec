@@ -1057,7 +1057,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       V.Get.(
-        value_parser_result |>>? (Typs.mo_reject_error_value, Typs.transition_result)
+        value_parser_result
+        |>>? (Typs.mo_reject_error_value, Typs.transition_result)
         |> function
         | Some values ->
             let value_error = one values in
@@ -1100,7 +1101,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
       V.Get.(
-        value_parser_result |>>? (Typs.mo_reject_error_value, Typs.transition_result)
+        value_parser_result
+        |>>? (Typs.mo_reject_error_value, Typs.transition_result)
         |> function
         | Some values ->
             let value_error = one values in

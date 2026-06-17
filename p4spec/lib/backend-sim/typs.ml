@@ -12,7 +12,6 @@ module Value = Runtime.Value
 open Util.Source
 
 let var (name : string) : Typ.t = Typ.Make.var (name $ no_region) []
-
 let call_result = var "callResult"
 let cursor = var "cursor"
 let error_value = var "errorValue"
