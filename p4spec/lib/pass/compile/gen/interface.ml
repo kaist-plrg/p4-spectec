@@ -969,7 +969,9 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
   in
   (* Match [typ.it] against the named-type constructor for each closure type. *)
   let scrut = Ml.FieldE (Ml.VarE "typ", "it") in
-  let var_pat key = Ml.LitP (Printf.sprintf "Il.VarT ({ it = %S; _ }, _)" key) in
+  let var_pat key =
+    Ml.LitP (Printf.sprintf "Il.VarT ({ it = %S; _ }, _)" key)
+  in
   let marshal_arms =
     List.map
       (fun (key, iname) ->

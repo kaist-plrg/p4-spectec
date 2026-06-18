@@ -46,8 +46,7 @@ module Make (V : Valrep.VAL) = struct
     let cmp = vcompare typ in
     let values = Extract.one at values_input |> V.Get.list in
     let value =
-      V.Make.bool
-        (List.length (List.sort_uniq cmp values) = List.length values)
+      V.Make.bool (List.length (List.sort_uniq cmp values) = List.length values)
     in
     add value;
     value

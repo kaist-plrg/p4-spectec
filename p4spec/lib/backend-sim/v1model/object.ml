@@ -199,7 +199,9 @@ module Make (Spec : Spec.S) = struct
       (* Stored register state is a real [Value.t] (yojson-serialized into the
          objectState node), so the [vt] type/values are marshaled by spec type:
          the elements are [value]s, the element type is a [type_ir]. *)
-      let values = List.init size (fun _ -> V.marshal Typs.value value_default) in
+      let values =
+        List.init size (fun _ -> V.marshal Typs.value value_default)
+      in
       { typ = V.marshal Typs.type_ir value_type; values }
 
     (* read() reads the state of the register array stored at the
@@ -270,7 +272,8 @@ module Make (Spec : Spec.S) = struct
       let values =
         List.mapi
           (fun idx value ->
-            if idx = index_target then V.marshal Typs.value value_target else value)
+            if idx = index_target then V.marshal Typs.value value_target
+            else value)
           reg.values
       in
       let reg = { reg with values } in

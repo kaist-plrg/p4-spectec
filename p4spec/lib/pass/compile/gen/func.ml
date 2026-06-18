@@ -169,10 +169,7 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
         Ml.AppE
           ( Common.extern_field "call_builtin",
             [
-              Ml.LitE "(fun _ -> ())";
-              name_lit_ml;
-              exprs_targ_ml;
-              exprs_arg_ml;
+              Ml.LitE "(fun _ -> ())"; name_lit_ml; exprs_targ_ml; exprs_arg_ml;
             ] )
       in
       let expr_try_ml =
@@ -181,7 +178,7 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
             [
               ( Ml.VariantP
                   (`Mono
-                     ("Util.Error.BuiltinError", [ Ml.WildP; Ml.VarP "msg__" ])),
+                    ("Util.Error.BuiltinError", [ Ml.WildP; Ml.VarP "msg__" ])),
                 Ml.AppE
                   ( Ml.LitE "raise",
                     [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
