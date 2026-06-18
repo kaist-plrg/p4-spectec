@@ -29,17 +29,6 @@ module type VAL = sig
 
   val to_string : t -> string
 
-  (* Total order / equality over values of a (statically known) spec type, for
-     the set/map builtins. [V_value] = [Value.compare]/[Value.eq] (ignores the
-     type). [V_typed] marshals both operands to [Value.t] via the type then
-     compares (cold path: only the set/map builtins, not packet arithmetic),
-     keeping the serialized element order identical to [V_value] (API.md D2). The
-     type is required because a typed [Obj.t] is type-erased — it picks the right
-     [marshal_<typ>] (B5); the set/map builtins thread it from their element-type
-     targ. *)
-  val compare : Typ.t -> t -> t -> int
-  val equal : Typ.t -> t -> t -> bool
-
   (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
      interface where the value is handed straight back to compiled code and never
      decoded (the runner bridge, [init_pipe]). Identity under both reps. *)
@@ -52,7 +41,12 @@ module type VAL = sig
      decoded later. Identity under [V_value]; a REAL per-type
      marshal/unmarshal under [V_typed], because the stored [Obj.t] must become an
      honest [Value.t] before something serializes it (see Make.extern/to_yojson).
-     [typ] is the value's spec type, e.g. [Typs.eval_context] / [Typs.value]. *)
+     [typ] is the value's spec type, e.g. [Typs.eval_context] / [Typs.value].
+
+     [marshal] is also the ONLY honest way to read a typed value's structure, so
+     the set/map builtins derive their element comparison from it
+     ([Value.compare]/[Value.eq] on [marshal typ a] / [marshal typ b]) — NOT from
+     [to_value], which is a type-erased identity cast under [V_typed]. *)
   val marshal : Typ.t -> t -> Value.t
   val unmarshal : Typ.t -> Value.t -> t
 
@@ -104,8 +98,6 @@ module V_value : VAL with type t = Value.t = struct
   type t = Value.t
 
   let to_string = Value.to_string
-  let compare _typ = Value.compare
-  let equal _typ = Value.eq
   let to_value = Fun.id
   let of_value = Fun.id
 

@@ -2,10 +2,17 @@ open Lang
 open Xl
 open Il
 module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 
 module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
+
+  (* Total order on values of spec type [typ], via a real [marshal] then
+     [Value.compare] (see [Sets]/API.md D2): [to_value] would mis-compare typed
+     [Obj.t] under [V_typed]. *)
+  let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
+    Value.compare (V.marshal typ a) (V.marshal typ b)
 
   (* dec $rev_<X>(X* ) : X* *)
 
@@ -36,7 +43,7 @@ module Make (V : Valrep.VAL) = struct
   let distinct_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ = Extract.one at targs in
-    let cmp = V.compare typ in
+    let cmp = vcompare typ in
     let values = Extract.one at values_input |> V.Get.list in
     let value =
       V.Make.bool
@@ -73,7 +80,7 @@ module Make (V : Valrep.VAL) = struct
   let assoc_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let cmp = V.compare typ_key in
+    let cmp = vcompare typ_key in
     let value, value_list = Extract.two at values_input in
     let values =
       value_list |> V.Get.list
