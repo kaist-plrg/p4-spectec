@@ -255,12 +255,6 @@ exception Unmatch of string
 let make_typ_var_ (s : string) (targs_ : Typ.t list) : Typ.t =
   Typ.Make.var {it = s; at = no_region; note = ()} targs_
 
-(* Inverse of [make_typ_var_]: the spec id of a (named) type, used by
-   [marshal_typed]/[unmarshal_typed] to key their dispatch. Entry-point types are
-   always named ([VarT]). *)
-let typ_name_ (typ : Typ.t) : string =
-  match typ.it with Il.VarT (id, _) -> id.it | _ -> Typ.to_string typ
-
 let make_atom_ (s : string) : Atom.t phrase =
   {it = Atom.Atom s; at = no_region; note = ()}
 

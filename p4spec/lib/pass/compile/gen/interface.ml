@@ -952,12 +952,11 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
 let persist_interface_names = [ "eval_context"; "value"; "type_ir" ]
 
 (* [marshal_typed]/[unmarshal_typed]: the per-type [V_typed] persist bridge.
-   Keyed by the value's spec type (a [Typ.t], so call sites pass the type they
-   already hold — backend-sim's [Typs.*], the builtins' element-type targ — with
-   no string convention). Total over the marshal closure [typs]: every named
-   ([VarT]) closure type gets a marshal and unmarshal arm, keyed by its raw spec
-   id ([id.it], extracted at runtime by [typ_name_]). No curated entry-point list,
-   so a new persist/builtin marshal target needs no codegen change. *)
+   Dispatched by matching the value's spec type [Typ.t] directly — call sites pass
+   the type they already hold (backend-sim's [Typs.*], the builtins' element-type
+   targ), no string convention. Total over the marshal closure [typs]: every named
+   ([VarT]) closure type gets a marshal and unmarshal arm. No curated entry-point
+   list, so a new persist/builtin marshal target needs no codegen change. *)
 let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
   let keys =
     List.filter_map
@@ -968,10 +967,13 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
       typs
     |> List.sort_uniq compare
   in
+  (* Match [typ.it] against the named-type constructor for each closure type. *)
+  let scrut = Ml.FieldE (Ml.VarE "typ", "it") in
+  let var_pat key = Ml.LitP (Printf.sprintf "Il.VarT ({ it = %S; _ }, _)" key) in
   let marshal_arms =
     List.map
       (fun (key, iname) ->
-        ( Ml.LitP (Printf.sprintf "%S" key),
+        ( var_pat key,
           Ml.AppE
             ( Ml.VarE ("marshal_" ^ iname),
               [ Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "x" ]) ] ) ))
@@ -980,7 +982,7 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
   let unmarshal_arms =
     List.map
       (fun (key, iname) ->
-        ( Ml.LitP (Printf.sprintf "%S" key),
+        ( var_pat key,
           Ml.AppE
             ( Ml.LitE "Obj.repr",
               [ Ml.AppE (Ml.VarE ("unmarshal_" ^ iname), [ Ml.VarE "v" ]) ] ) ))
@@ -992,30 +994,20 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
         ( Ml.LitE "failwith",
           [
             Ml.BinopE
-              ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "name__");
+              ( "^",
+                Ml.StrE (name ^ ": unknown type "),
+                Ml.AppE (Ml.LitE "Typ.to_string", [ Ml.VarE "typ" ]) );
           ] ) )
-  in
-  (* Resolve the [Typ.t] to its spec id once, then string-match (so the arms stay
-     simple literal patterns). [typ_name_] is in the generated [Ctx] prelude. *)
-  let body scrut_match =
-    Ml.LetE
-      ( Ml.VarP "name__",
-        Ml.AppE (Ml.VarE "typ_name_", [ Ml.VarE "typ" ]),
-        scrut_match )
   in
   [
     ( "marshal_typed",
       [ ("typ", Some (Ml.NameT "Typ.t")); ("x", Some (Ml.NameT "Obj.t")) ],
       Some (Ml.NameT "Value.t"),
-      body
-        (Ml.MatchE
-           (Ml.VarE "name__", marshal_arms @ [ wild "marshal_typed" ])) );
+      Ml.MatchE (scrut, marshal_arms @ [ wild "marshal_typed" ]) );
     ( "unmarshal_typed",
       [ ("typ", Some (Ml.NameT "Typ.t")); ("v", Some (Ml.NameT "Value.t")) ],
       Some (Ml.NameT "Obj.t"),
-      body
-        (Ml.MatchE
-           (Ml.VarE "name__", unmarshal_arms @ [ wild "unmarshal_typed" ])) );
+      Ml.MatchE (scrut, unmarshal_arms @ [ wild "unmarshal_typed" ]) );
   ]
 
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
