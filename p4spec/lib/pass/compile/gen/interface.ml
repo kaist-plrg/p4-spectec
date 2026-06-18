@@ -1035,32 +1035,19 @@ let compile (ctx : Ctx.t) (spec : Sl.spec)
     * Ml.funcdef list =
   let all_refs = all_typ_refs spec in
   (* Marshal/unmarshal are generated only for the closure of the types that still
-     cross a Value.t boundary after the C5 flip:
-       - [eval_program]'s program type ([p4program]) and the persisted state types
-         (picked out of [all_refs] by interface name, no spec-id guessing);
-       - builtin I/O — [compile_builtin_func] still marshals args / unmarshals the
-         result across the [Value.t]-typed [Interface.call_builtin] boundary
-         (builtins are not part of the typed extern flip). *)
+     cross a Value.t boundary after the typed flips (C5/B5): [eval_program]'s
+     program type ([p4program]) and the persisted state types (picked out of
+     [all_refs] by interface name, no spec-id guessing). Builtins are now on the
+     typed [Obj.t] bypass (B5), so there is no builtin I/O seed: the only builtin
+     types that still marshal are the [marshal_typed] dispatch targets ([print_]
+     argument + set/map compared keys), all reachable from this persist closure;
+     [builtin_arms] below is filtered to exactly those it contains. *)
   let marshal_seed_inames = "p4program" :: persist_interface_names in
-  let builtin_io_seeds =
-    List.concat_map
-      (fun (def : Sl.def) ->
-        match def.it with
-        | Sl.BuiltinDecD (_, _, params, typ_ret, _) ->
-            typ_ret
-            :: List.filter_map
-                 (fun (p : Sl.param) ->
-                   match p.it with Sl.ExpP (t, _) -> Some t | _ -> None)
-                 params
-        | _ -> [])
-      spec
-  in
   let typs =
     close_types ctx
       (List.filter
          (fun t -> List.mem (interface_name t) marshal_seed_inames)
-         all_refs
-      @ builtin_io_seeds)
+         all_refs)
   in
   let groups = compute_groups ctx typs in
   let pool = make_pool () in

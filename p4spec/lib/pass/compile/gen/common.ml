@@ -125,9 +125,7 @@ let make_list_forall (ctx : Ctx.t) (ids_in_ml : Ml.id list)
 let deref_ctx (body : Ml.expr) : Ml.expr =
   Ml.LetE (Ml.VarP "ctx__", Ml.UnopE ("!", Ml.VarE "cur__"), body)
 
-(* Field accessors on [ctx__]. *)
-let iface_field (f : Ml.field) : Ml.expr =
-  Ml.FieldE (Ml.FieldE (Ml.VarE "ctx__", "iface"), f)
-
+(* Field accessor on [ctx__]. ([iface.parse_program] is read directly in the
+   [eval_program] template; builtins moved off [iface] to [extern] in B5.) *)
 let extern_field (f : Ml.field) : Ml.expr =
   Ml.FieldE (Ml.FieldE (Ml.VarE "ctx__", "extern"), f)
