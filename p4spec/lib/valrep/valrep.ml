@@ -31,14 +31,14 @@ module type VAL = sig
 
   (* Total order / equality over values of a (statically known) spec type, for
      the set/map builtins. [V_value] = [Value.compare]/[Value.eq] (ignores the
-     type). [V_typed] marshals both operands to [Value.t] via the type name then
+     type). [V_typed] marshals both operands to [Value.t] via the type then
      compares (cold path: only the set/map builtins, not packet arithmetic),
      keeping the serialized element order identical to [V_value] (API.md D2). The
-     type name is required because a typed [Obj.t] is type-erased — it picks the
-     right [marshal_<typ>] (B5); the set/map builtins thread it from their
-     element-type targ. *)
-  val compare : string -> t -> t -> int
-  val equal : string -> t -> t -> bool
+     type is required because a typed [Obj.t] is type-erased — it picks the right
+     [marshal_<typ>] (B5); the set/map builtins thread it from their element-type
+     targ. *)
+  val compare : Typ.t -> t -> t -> int
+  val equal : Typ.t -> t -> t -> bool
 
   (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
      interface where the value is handed straight back to compiled code and never
@@ -52,9 +52,9 @@ module type VAL = sig
      decoded later. Identity under [V_value]; a REAL per-type
      marshal/unmarshal under [V_typed], because the stored [Obj.t] must become an
      honest [Value.t] before something serializes it (see Make.extern/to_yojson).
-     [typ] is the marshal interface name, e.g. "eval_context" / "value". *)
-  val marshal : string -> t -> Value.t
-  val unmarshal : string -> Value.t -> t
+     [typ] is the value's spec type, e.g. [Typs.eval_context] / [Typs.value]. *)
+  val marshal : Typ.t -> t -> Value.t
+  val unmarshal : Typ.t -> Value.t -> t
 
   module Get : sig
     val text : t -> string
@@ -110,9 +110,9 @@ module V_value : VAL with type t = Value.t = struct
   let of_value = Fun.id
 
   (* [V_value]'s values are already [Value.t], so the persist bridge is identity;
-     the spec type name is irrelevant. *)
-  let marshal (_typ : string) (x : t) : Value.t = x
-  let unmarshal (_typ : string) (v : Value.t) : t = v
+     the spec type is irrelevant. *)
+  let marshal (_typ : Typ.t) (x : t) : Value.t = x
+  let unmarshal (_typ : Typ.t) (v : Value.t) : t = v
 
   module Get = struct
     let text = Value.Get.text

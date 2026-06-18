@@ -7,14 +7,8 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* The element type name, threaded into [V.compare] so [V_typed] marshals the
-     element to a real [Value.t] before comparing (B5/D2). Set elements are always
-     named types ([set<K>], K a [VarT]). *)
-  let typename_of (typ : typ) : string =
-    match typ.it with VarT (id, _) -> id.it | _ -> ""
-
   (* A set is a [V.t list] kept sorted-and-deduped under a runtime comparator
-     [cmp = V.compare typename]. The comparator cannot be a module-level
+     [cmp = V.compare typ_key]. The comparator cannot be a module-level
      [Set.Make] argument because the element type is only known per call, so the
      ops are list-based; sets are small (ids in typing), so this is cheap and the
      element order is canonical (= [V_value]'s [Value.compare] order). *)
@@ -61,7 +55,7 @@ module Make (V : Valrep.VAL) = struct
   let intersect_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -72,7 +66,7 @@ module Make (V : Valrep.VAL) = struct
   let union_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -83,7 +77,7 @@ module Make (V : Valrep.VAL) = struct
   let unions_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_sets = Extract.one at values_input in
     let sets = value_sets |> V.Get.list |> List.map (set_of_value cmp) in
     sets |> List.fold_left (union cmp) [] |> value_of_set add typ_key
@@ -93,7 +87,7 @@ module Make (V : Valrep.VAL) = struct
   let diff_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -104,7 +98,7 @@ module Make (V : Valrep.VAL) = struct
   let sub_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -117,7 +111,7 @@ module Make (V : Valrep.VAL) = struct
   let eq_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = V.compare (typename_of typ_key) in
+    let cmp = V.compare typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in

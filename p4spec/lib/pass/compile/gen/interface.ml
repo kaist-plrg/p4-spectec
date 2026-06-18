@@ -942,93 +942,83 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
       | _ -> None)
     spec
 
-(* Spec type names (marshal interface names) of the values that the simulator
-   persists into yojson-serialized [Value.t] state under [V_typed], and so must
-   round-trip through a real marshal. This MUST stay in sync with the [V.marshal]/
-   [V.unmarshal] call sites in backend-sim (scheduler [Packet.value_ctx] →
-   [eval_context]; register payloads → [value]; register element type →
-   [type_ir]). A name not listed here fails at runtime with a clear
-   "marshal_typed: unknown type" — not a silent miscast. *)
+(* Spec types that still cross a [Value.t] boundary under [V_typed] and so seed
+   the marshal/unmarshal closure: [V.marshal]/[V.unmarshal] persist these into
+   yojson-serialized [Value.t] state in backend-sim (scheduler [Packet.value_ctx]
+   → [eval_context]; register payloads → [value]; register element type →
+   [type_ir]). This MUST stay in sync with the backend-sim call sites' [Typs.*]
+   constants. It is only a closure SEED; the dispatch below covers the whole
+   closure, so it is not a curated arm set. *)
 let persist_interface_names = [ "eval_context"; "value"; "type_ir" ]
 
-(* Typename-indexed marshal/unmarshal dispatch under [V_typed].
-
-   [inames] (persist edge): the cold state-persist types. The pipe holds a typed
-   [Obj.t] in a concrete [Value.t]-typed serialized field and marshals it honest
-   before yojson-encoding, by the value's (statically known) interface name. Both
-   marshal and unmarshal arms; keyed by interface name (= the call-site literal).
-
-   [print_arms] (B5): the [$print_<X>] builtin targets. Under [V_typed] the print
-   EXT marshals its argument to a real [Value.t] to feed [!unparser]. Marshal only
-   (print returns text, never unmarshals). Keyed by the RAW spec id ([id.it]) —
-   that is what the runtime targ carries ([typ_make_expr] embeds [id.it]), so the
-   EXT passes it directly with no compile-time [sanitize] available at runtime;
-   the arm body still calls [marshal_<interface_name>]. [V_value.marshal] ignores
-   the key (identity), so this is inert there.
-
-   A name not listed fails at runtime with a clear "marshal_typed: unknown type"
-   — not a silent miscast. *)
-let compile_marshal_dispatch (inames : string list)
-    (print_arms : (string * string) list) : Ml.funcdef list =
-  let mk_marshal_arm (key, iname) =
-    ( Ml.LitP (Printf.sprintf "%S" key),
-      Ml.AppE
-        ( Ml.VarE ("marshal_" ^ iname),
-          [ Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "x" ]) ] ) )
+(* [marshal_typed]/[unmarshal_typed]: the per-type [V_typed] persist bridge.
+   Keyed by the value's spec type (a [Typ.t], so call sites pass the type they
+   already hold — backend-sim's [Typs.*], the builtins' element-type targ — with
+   no string convention). Total over the marshal closure [typs]: every named
+   ([VarT]) closure type gets a marshal and unmarshal arm, keyed by its raw spec
+   id ([id.it], extracted at runtime by [typ_name_]). No curated entry-point list,
+   so a new persist/builtin marshal target needs no codegen change. *)
+let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
+  let keys =
+    List.filter_map
+      (fun (t : Sl.typ) ->
+        match t.it with
+        | Il.VarT (id, _) -> Some (id.it, interface_name t)
+        | _ -> None)
+      typs
+    |> List.sort_uniq compare
   in
   let marshal_arms =
-    List.map (fun n -> mk_marshal_arm (n, n)) inames
-    @ List.map mk_marshal_arm print_arms
+    List.map
+      (fun (key, iname) ->
+        ( Ml.LitP (Printf.sprintf "%S" key),
+          Ml.AppE
+            ( Ml.VarE ("marshal_" ^ iname),
+              [ Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "x" ]) ] ) ))
+      keys
   in
   let unmarshal_arms =
     List.map
-      (fun n ->
-        ( Ml.LitP (Printf.sprintf "%S" n),
+      (fun (key, iname) ->
+        ( Ml.LitP (Printf.sprintf "%S" key),
           Ml.AppE
             ( Ml.LitE "Obj.repr",
-              [ Ml.AppE (Ml.VarE ("unmarshal_" ^ n), [ Ml.VarE "v" ]) ] ) ))
-      inames
+              [ Ml.AppE (Ml.VarE ("unmarshal_" ^ iname), [ Ml.VarE "v" ]) ] ) ))
+      keys
   in
   let wild name =
     ( Ml.WildP,
       Ml.AppE
         ( Ml.LitE "failwith",
-          [ Ml.BinopE ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "typ") ]
-        ) )
+          [
+            Ml.BinopE
+              ("^", Ml.StrE (name ^ ": unknown type "), Ml.VarE "name__");
+          ] ) )
+  in
+  (* Resolve the [Typ.t] to its spec id once, then string-match (so the arms stay
+     simple literal patterns). [typ_name_] is in the generated [Ctx] prelude. *)
+  let body scrut_match =
+    Ml.LetE
+      ( Ml.VarP "name__",
+        Ml.AppE (Ml.VarE "typ_name_", [ Ml.VarE "typ" ]),
+        scrut_match )
   in
   [
     ( "marshal_typed",
-      [ ("typ", Some Ml.StringT); ("x", Some (Ml.NameT "Obj.t")) ],
+      [ ("typ", Some (Ml.NameT "Typ.t")); ("x", Some (Ml.NameT "Obj.t")) ],
       Some (Ml.NameT "Value.t"),
-      Ml.MatchE (Ml.VarE "typ", marshal_arms @ [ wild "marshal_typed" ]) );
+      body
+        (Ml.MatchE
+           (Ml.VarE "name__", marshal_arms @ [ wild "marshal_typed" ])) );
     ( "unmarshal_typed",
-      [ ("typ", Some Ml.StringT); ("v", Some (Ml.NameT "Value.t")) ],
+      [ ("typ", Some (Ml.NameT "Typ.t")); ("v", Some (Ml.NameT "Value.t")) ],
       Some (Ml.NameT "Obj.t"),
-      Ml.MatchE (Ml.VarE "typ", unmarshal_arms @ [ wild "unmarshal_typed" ]) );
+      body
+        (Ml.MatchE
+           (Ml.VarE "name__", unmarshal_arms @ [ wild "unmarshal_typed" ])) );
   ]
 
-(* Builtin target types reached through [V_typed.marshal]/[compare]/[equal] (B5):
-   [$print_<X>] marshals its argument to unparse it; the set/map/assoc builtins
-   marshal their element/key to compare it. Rather than enumerate which targ
-   position each builtin marshals, collect every concrete targ of every builtin's
-   mono instances — extra arms are inert (the dispatch only fires for types
-   actually marshalled) and the closure filter in [compile] drops any without a
-   generated [marshal_<typ>]. Keyed by RAW spec id ([id.it]) — the runtime targ
-   carries [id.it] ([typ_make_expr]) and the builtins pass it straight to
-   [V.compare]/[marshal]. *)
-let builtin_marshal_arms (dispatch_table : Mono.dispatch_table) :
-    (string * string) list =
-  Hashtbl.fold (fun _orig instances acc -> instances @ acc) dispatch_table []
-  |> List.filter (fun (i : Mono.poly_instance) -> i.kind = Mono.Builtin)
-  |> List.concat_map (fun (i : Mono.poly_instance) -> i.concrete_targs)
-  |> List.filter_map (fun (t : Sl.typ) ->
-         match t.it with
-         | Il.VarT (id, _) -> Some (id.it, interface_name t)
-         | _ -> None)
-  |> List.sort_uniq compare
-
-let compile (ctx : Ctx.t) (spec : Sl.spec)
-    (dispatch_table : Mono.dispatch_table) :
+let compile (ctx : Ctx.t) (spec : Sl.spec) :
     Ml.toplevel list
     * Ml.funcdef list list
     * Ml.funcdef list list
@@ -1055,18 +1045,8 @@ let compile (ctx : Ctx.t) (spec : Sl.spec)
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
   (* Typed mixop bridges (C3) over ALL spec variant types (see [all_typ_refs]).
      Reuses [pool] so [case_of_typed]'s interned mixops join [const_decls]. *)
-  (* Builtin marshal arms, restricted to types with a generated [marshal_<typ>]
-     (i.e. in the marshal closure) and not already a persist arm. *)
-  let closure_inames = List.map interface_name typs in
-  let builtin_arms =
-    builtin_marshal_arms dispatch_table
-    |> List.filter (fun (key, iname) ->
-           (not (List.mem key persist_interface_names))
-           && List.mem iname closure_inames)
-  in
   let typed_bridges =
-    Typed.compile ctx pool all_refs
-    @ compile_marshal_dispatch persist_interface_names builtin_arms
+    Typed.compile ctx pool all_refs @ compile_marshal_dispatch typs
   in
   let const_decls = List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts in
   (const_decls, marshal_groups, unmarshal_groups, typed_bridges)

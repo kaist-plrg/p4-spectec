@@ -7,11 +7,6 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* Key type name, threaded into [V.equal] so [V_typed] marshals the key before
-     comparing (B5/D2). Map keys are named types ([map<K, V>], K a [VarT]). *)
-  let typename_of (typ : typ) : string =
-    match typ.it with VarT (id, _) -> id.it | _ -> ""
-
   (* Value map. Built/inspected via the generic case DSL ([( <<| )] / [Get.case]),
      which under V_typed routes to the typed bridge's pair/map arms (API.md B2c).
      A map value is a [`{ k }] of [k `: v] pairs ([map = pair set]). Inspection
@@ -81,7 +76,7 @@ module Make (V : Valrep.VAL) = struct
   let find_map (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let eq = V.equal (typename_of typ_key) in
+    let eq = V.equal typ_key in
     let value_map, value_key = Extract.two at values_input in
     let map = map_of_value value_map in
     let typ_opt = Typ.Make.opt typ_value in
@@ -95,7 +90,7 @@ module Make (V : Valrep.VAL) = struct
   let find_maps (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let eq = V.equal (typename_of typ_key) in
+    let eq = V.equal typ_key in
     let value_maps, value_key = Extract.two at values_input in
     let maps = value_maps |> V.Get.list |> List.map map_of_value in
     let typ_opt = Typ.Make.opt typ_value in
@@ -116,7 +111,7 @@ module Make (V : Valrep.VAL) = struct
   let add_map (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let eq = V.equal (typename_of typ_key) in
+    let eq = V.equal typ_key in
     let value_map, value_key, value_value = Extract.three at values_input in
     let mk = make_pair add typ_key typ_value in
     map_of_value value_map
@@ -128,7 +123,7 @@ module Make (V : Valrep.VAL) = struct
   let adds_map (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let eq = V.equal (typename_of typ_key) in
+    let eq = V.equal typ_key in
     let value_map, value_keys, value_values = Extract.three at values_input in
     let map = map_of_value value_map in
     let values_key = value_keys |> V.Get.list in
@@ -145,7 +140,7 @@ module Make (V : Valrep.VAL) = struct
   let update_map (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let eq = V.equal (typename_of typ_key) in
+    let eq = V.equal typ_key in
     let value_map, value_key, value_value = Extract.three at values_input in
     let mk = make_pair add typ_key typ_value in
     map_of_value value_map

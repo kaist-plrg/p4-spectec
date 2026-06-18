@@ -37,18 +37,18 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
     Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
   (* Marshal both operands to a real [Value.t] by the caller-supplied spec type
-     name (the set/map builtins thread their element-type targ), then compare as
+     (the set/map builtins thread their element-type targ), then compare as
      [Value.t]. The type is required: a typed [Obj.t] is type-erased, so the right
      [marshal_<typ>] must be picked (B5; [marshal_value] is correct only for the
      [value] type, not arbitrary set/map element types). Cold: only the set/map
      builtins reach this. Keeps the serialized element order identical to
      [V_value] (API.md D2). *)
-  let compare (typ : string) (a : t) (b : t) : int =
+  let compare (typ : Typ.t) (a : t) (b : t) : int =
     Value.compare
       (Spec_parts.Dispatch.marshal_typed typ a)
       (Spec_parts.Dispatch.marshal_typed typ b)
 
-  let equal (typ : string) (a : t) (b : t) : bool =
+  let equal (typ : Typ.t) (a : t) (b : t) : bool =
     Value.eq
       (Spec_parts.Dispatch.marshal_typed typ a)
       (Spec_parts.Dispatch.marshal_typed typ b)
@@ -62,10 +62,10 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
      [Value.t]-typed, yojson-serialized field, so it must become a REAL [Value.t].
      Dispatch a per-type [marshal_<typ>]/[unmarshal_<typ>] by the caller-supplied
      spec type name. *)
-  let marshal (typ : string) (x : t) : Value.t =
+  let marshal (typ : Typ.t) (x : t) : Value.t =
     Spec_parts.Dispatch.marshal_typed typ x
 
-  let unmarshal (typ : string) (v : Value.t) : t =
+  let unmarshal (typ : Typ.t) (v : Value.t) : t =
     Spec_parts.Dispatch.unmarshal_typed typ v
 
   module Get = struct

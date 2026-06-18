@@ -228,8 +228,8 @@ struct
       (* Register state is a real [Value.t] (yojson-serialized into the
          objectState node); marshal the [vt] values/type by spec type (elements
          are [value]s, the element type is a [type_ir]). *)
-      let values = List.init size (fun _ -> V.marshal "value" value_initial) in
-      { typ = V.marshal "type_ir" value_type; values }
+      let values = List.init size (fun _ -> V.marshal Typs.value value_initial) in
+      { typ = V.marshal Typs.type_ir value_type; values }
 
     (* T read(in S index); *)
 
@@ -240,8 +240,8 @@ struct
       let index_target = Bigint.to_int_exn index_target in
       let value =
         if index_target < List.length reg.values then
-          V.unmarshal "value" (List.nth reg.values index_target)
-        else Spec_Func.default (V.unmarshal "type_ir" reg.typ)
+          V.unmarshal Typs.value (List.nth reg.values index_target)
+        else Spec_Func.default (V.unmarshal Typs.type_ir reg.typ)
       in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
@@ -261,7 +261,7 @@ struct
       let values =
         List.mapi
           (fun idx value ->
-            if idx = index_target then V.marshal "value" value_target else value)
+            if idx = index_target then V.marshal Typs.value value_target else value)
           reg.values
       in
       let reg = { reg with values } in

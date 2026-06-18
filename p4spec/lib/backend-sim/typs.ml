@@ -23,5 +23,10 @@ let table_key_value_interface = var "tableKeyValueInterface"
 let value = var "value"
 let transition_result = var "transitionResult"
 
+(* State-persist types, threaded to [V.marshal]/[V.unmarshal] so the typed
+   [Obj.t] becomes an honest [Value.t] before it is yojson-serialized (B5). *)
+let eval_context = var "evalContext"
+let type_ir = var "typeIR"
+
 (* The lone mixop threaded structurally (the [( |>>? )] REJECT test). *)
 let mo_reject_error_value = Value.Mixops.of_string "REJECT errorValue"

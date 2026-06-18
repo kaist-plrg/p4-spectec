@@ -199,8 +199,8 @@ module Make (Spec : Spec.S) = struct
       (* Stored register state is a real [Value.t] (yojson-serialized into the
          objectState node), so the [vt] type/values are marshaled by spec type:
          the elements are [value]s, the element type is a [type_ir]. *)
-      let values = List.init size (fun _ -> V.marshal "value" value_default) in
-      { typ = V.marshal "type_ir" value_type; values }
+      let values = List.init size (fun _ -> V.marshal Typs.value value_default) in
+      { typ = V.marshal Typs.type_ir value_type; values }
 
     (* read() reads the state of the register array stored at the
        specified index, and returns it as the value written to the
@@ -224,8 +224,8 @@ module Make (Spec : Spec.S) = struct
       let index_target = Bigint.to_int_exn index_target in
       let value =
         if index_target < List.length reg.values then
-          V.unmarshal "value" (List.nth reg.values index_target)
-        else Spec.Func.default (V.unmarshal "type_ir" reg.typ)
+          V.unmarshal Typs.value (List.nth reg.values index_target)
+        else Spec.Func.default (V.unmarshal Typs.type_ir reg.typ)
       in
       let value_ctx =
         Spec.Rel.lvalue_write_var_local value_ctx value_arch "result" value
@@ -270,7 +270,7 @@ module Make (Spec : Spec.S) = struct
       let values =
         List.mapi
           (fun idx value ->
-            if idx = index_target then V.marshal "value" value_target else value)
+            if idx = index_target then V.marshal Typs.value value_target else value)
           reg.values
       in
       let reg = { reg with values } in

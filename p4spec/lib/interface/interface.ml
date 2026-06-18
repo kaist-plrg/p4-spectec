@@ -45,18 +45,14 @@ module P4 = struct
      The body is uniform over [V]: marshal the argument to a real [Value.t]
      before [!unparser] (which walks a structural [Value.t]). Under [V_value]
      [marshal] is identity, so this is behaviour-preserving; under [V_typed] it
-     dispatches [marshal_typed] by the value's spec type — taken from the single
-     targ ([$print_<X>], so [targs = [X]]), whose runtime [Typ.t] carries the raw
-     spec id ([typ_make_expr] embeds [id.it]). *)
+     dispatches by the value's spec type — the single targ ([$print_<X>], so
+     [targs = [X]]). *)
   module Builtin_P4_Ext (V : Valrep.VAL) = struct
     let print (add : V.t -> unit) (at : region) (targs : Typ.t list)
         (values_input : V.t list) : V.t =
       let typ = Builtin.Extract.one at targs in
-      let typename =
-        match typ.it with Il.VarT (id, _) -> id.it | _ -> ""
-      in
       let value = Builtin.Extract.one at values_input in
-      let text = !unparser (V.marshal typename value) in
+      let text = !unparser (V.marshal typ value) in
       let value = V.Make.text text in
       add value;
       value
