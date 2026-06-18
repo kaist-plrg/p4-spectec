@@ -8,17 +8,17 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* Key equality on values of spec type [typ], via a real [marshal] then
-     [Value.eq] (see [Sets]/API.md D2): [to_value] would mis-compare typed
-     [Obj.t] keys under [V_typed]. *)
+  (* Key equality on values of spec type [typ], via [marshal] then [Value.eq]
+     (see [Sets]): [to_value] would mis-compare typed [Obj.t] keys under
+     [V_typed]. *)
   let veq (typ : typ) (a : V.t) (b : V.t) : bool =
     Value.eq (V.marshal typ a) (V.marshal typ b)
 
-  (* Value map. Built/inspected via the generic case DSL ([( <<| )] / [Get.case]),
-     which under V_typed routes to the typed bridge's pair/map arms (API.md B2c).
-     A map value is a [`{ k }] of [k `: v] pairs ([map = pair set]). Inspection
-     needs only the type head, so targ-less [pair]/[map] suffice ([case_of_typed]
-     ignores targs; V_value ignores the type). *)
+  (* Value map. Built/inspected via the generic case ops ([( <<| )] / [Get.case]),
+     which under [V_typed] route to the typed case bridge's pair/map arms. A map
+     value is a [`{ k }] of [k `: v] pairs ([map = pair set]). Inspection needs
+     only the type head, so targ-less [pair]/[map] suffice ([case_of_typed]
+     ignores targs; [V_value] ignores the type). *)
 
   type map = V.t list
 

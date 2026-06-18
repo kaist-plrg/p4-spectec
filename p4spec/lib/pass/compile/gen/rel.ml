@@ -91,9 +91,9 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
         ("param__" ^ string_of_int i, Some typ_ml))
       typs_input
   in
-  (* C5 typed bypass: pass inputs to the extern as typed [Obj.t] smuggled
-     through the [Value.t list] boundary ([Obj.magic]) instead of deep-marshal —
-     this drops the [marshal_eval_context]/[marshal_arch] that dominated. *)
+  (* Pass inputs to the extern as typed [Obj.t] through the [Value.t list]
+     boundary ([Obj.magic]) instead of converting — this drops the
+     [marshal_eval_context]/[marshal_arch] that dominated. *)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i _typ ->
@@ -107,7 +107,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  (* Cast outputs back from the smuggled [Value.t list] to their OCaml types. *)
+  (* Cast outputs back from the [Value.t list] to their OCaml types. *)
   let expr_unmarshal_body_ml =
     let exprs_out_ml =
       List.mapi

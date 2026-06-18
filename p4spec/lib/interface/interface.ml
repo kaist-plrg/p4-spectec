@@ -40,13 +40,12 @@ module P4 = struct
 
   (* Builtins *)
 
-  (* dec $print_<X>(X) : text — functorized over the value rep [V] (API.md D1).
+  (* dec $print_<X>(X) : text — generic over the value rep [V].
 
-     The body is uniform over [V]: marshal the argument to a real [Value.t]
+     The body is uniform over [V]: convert the argument to a real [Value.t]
      before [!unparser] (which walks a structural [Value.t]). Under [V_value]
-     [marshal] is identity, so this is behaviour-preserving; under [V_typed] it
-     dispatches by the value's spec type — the single targ ([$print_<X>], so
-     [targs = [X]]). *)
+     [marshal] is identity; under [V_typed] it dispatches by the value's spec
+     type — the single targ ([$print_<X>], so [targs = [X]]). *)
   module Builtin_P4_Ext (V : Valrep.VAL) = struct
     let print (add : V.t -> unit) (at : region) (targs : Typ.t list)
         (values_input : V.t list) : V.t =

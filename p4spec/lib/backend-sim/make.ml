@@ -24,17 +24,16 @@ module Make
       (Extern : EXTERN)
       ()
       -> INTERP_SL) : SIM = struct
-  (* Instantiations — two parallel extern stacks (C5 typed bypass).
+  (* Two parallel extern stacks.
 
      The IL/SL interpreters evaluate on [Value.t] natively, so they drive the
      [V_value] stack ([vt = Value.t]). The compiled ML interpreter passes typed
-     [Obj.t] values smuggled through the [Value.t] interfaces, so it drives a
-     second stack instantiated at [V_typed] ([vt = Obj.t]); its generated
-     dispatch + extern wrappers [Obj.magic]-cast instead of marshalling. One
-     simulator instance runs in exactly one mode, so [init_mode] registers only
-     the matching stack's trampolines.
+     [Obj.t] values through the [Value.t] interfaces, so it drives a second
+     stack at [V_typed] ([vt = Obj.t]); its dispatch and extern wrappers
+     [Obj.magic]-cast instead of converting. One simulator instance runs in one
+     mode, so [init_mode] registers only the matching stack's callbacks.
 
-     [Spec_*] hold the trampolines that let [Arch_*]/[Table_*] call back into the
+     [Spec_*] hold the callbacks that let [Arch_*]/[Table_*] call back into the
      interpreters. *)
 
   module Spec_v = Spec.Make (Valrep.V_value)
@@ -50,9 +49,8 @@ module Make
 
   (* Typed builtin instance for the compiled ML path. Builtins are arch-
      independent, so a single instance over [V_typed] serves [call_builtin]
-     under ML (mirrors the typed extern stack). IL/SL keep the [V_value]
-     builtins of the [Interface] argument (shared [ctr], API.md D5). Gets the
-     same [print_] EXT as the interface, instantiated at [V_typed] (its [marshal]
+     under ML. IL/SL keep the [V_value] builtins of the [Interface] argument.
+     Gets the same [print_] EXT as the interface, at [V_typed] (its [marshal]
      re-encodes the argument before [!unparser]). *)
   module Builtin_t_funcs = Builtin.Call.Make_funcs (Val_typed.V_typed)
 
@@ -63,7 +61,7 @@ module Make
       (Interp_IL : INTERP_IL)
       (Interp_SL : INTERP_SL)
       (Interp_ML : INTERP_ML) : EXTERN = struct
-    (* IL/SL trampolines: [Value.t] native, route to the matching interpreter. *)
+    (* IL/SL callbacks: [Value.t] native, route to the matching interpreter. *)
     let call_func_v name typs values =
       (match !sim_mode with
       | IL_mode -> Interp_IL.eval_func name typs values
@@ -82,7 +80,7 @@ module Make
       | Pass values -> values
       | Fail (at, msg) -> error at msg
 
-    (* ML trampolines: typed [Obj.t] smuggled through the [Value.t] dispatch. *)
+    (* ML callbacks: typed [Obj.t] passed through the [Value.t] dispatch. *)
     let call_func_t name typs (values : Obj.t list) : Obj.t =
       (match
          Interp_ML.eval_func name typs (Obj.magic values : Value.t list)
@@ -97,8 +95,8 @@ module Make
       | Fail (at, msg) -> error at msg)
       |> Obj.magic
 
-    (* Program init returns [Value.t * Value.t] for every mode (cold entry, not
-       the hot path); the ML pair is typed [Obj.t] smuggled as [Value.t]. *)
+    (* Program init returns [Value.t * Value.t] for every mode; the ML pair is
+       typed [Obj.t] passed as [Value.t]. *)
     let call_pgm relname includes path =
       (match !sim_mode with
       | IL_mode -> Interp_IL.eval_program relname includes path
@@ -133,8 +131,8 @@ module Make
     end
 
     (* Extern relation/function evaluation crosses to the active stack's [Arch];
-       for ML the [Value.t] args/results are typed [Obj.t] smuggled (the [Arch_t]
-       externs [Obj.obj]-project them). *)
+       for ML the [Value.t] args/results are typed [Obj.t] ([Arch_t]'s externs
+       [Obj.obj]-project them). *)
     let eval_extern_rel name args =
       match !sim_mode with
       | ML_mode -> Arch_t.eval_extern_rel name args
@@ -145,9 +143,9 @@ module Make
       | ML_mode -> Arch_t.eval_extern_func name typs args
       | _ -> Arch_v.eval_extern_func name typs args
 
-    (* Builtin evaluation, per-mode like [eval_extern_func]. ML smuggles typed
-       [Obj.t] through the [Value.t] surface ([Obj.magic] box/unbox); IL/SL defer
-       to the [Value.t] [Interface] builtins. *)
+    (* Builtin evaluation, per-mode like [eval_extern_func]. ML passes typed
+       [Obj.t] through the [Value.t] surface ([Obj.magic] box/unbox); IL/SL
+       defer to the [Value.t] [Interface] builtins. *)
     let call_builtin add id typs args =
       match !sim_mode with
       | ML_mode ->

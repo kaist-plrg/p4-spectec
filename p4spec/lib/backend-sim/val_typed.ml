@@ -1,23 +1,13 @@
-(* Typed value representation at the compiled-spec <-> extern boundary (C4).
+(* Typed value representation at the compiled-spec <-> extern boundary.
 
-   [t = Obj.t] holding the compiled spec's native OCaml typed values. Boundary
-   crossings become O(1) box/unbox ([Obj.repr]/[Obj.obj]) instead of the deep
-   marshal/unmarshal the [V_value] path pays — this is the currency the perf
-   flip (C5) routes the compiled (ML) extern calls through.
+   [t = Obj.t] holding the compiled spec's native OCaml values. A boundary
+   crossing is an O(1) box/unbox ([Obj.repr]/[Obj.obj]) instead of the deep
+   conversion the [V_value] path pays.
 
-   Soundness rests on the same invariant the generated [unmarshal] dispatch
-   already trusts: a given relation/function argument slot has one spec type, so
-   the boxed [Obj.t] carries exactly the OCaml type a projection expects. A wrong
-   cast fails fast and is caught by the sim suite (see API.md §4, §7).
-
-   STATUS (C5d): fully implemented but still UNINSTANTIATED — [build.ml] binds
-   [V_value], so nothing here runs yet. Every op is now real: [to_value]/[of_value]
-   are identity casts (C5 decision 1: typed [Obj.t] is smuggled through the
-   [Value.t]-typed interfaces, no marshal on the live path); [Get.( |>>? )] shapes
-   via the shallow [case_of_typed] and matches the mixop string; [to_string]
-   marshals the one [value] it prints back via the generated [marshal_value]
-   re-export. The per-mode extern topology that instantiates this at ML lands with
-   C5's codegen flip + [make.ml] rewrite (the atomic core). *)
+   Soundness rests on the invariant the generated code already relies on: a
+   given relation/function argument slot has one spec type, so the boxed [Obj.t]
+   carries exactly the OCaml type a projection expects. A wrong cast fails fast
+   and is caught by the sim suite. *)
 
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
@@ -30,21 +20,18 @@ open Util.Source
 module V_typed : Valrep.VAL with type t = Obj.t = struct
   type t = Obj.t
 
-  (* [to_string] is used only by [log_msg] on a [value]; marshal that one value
-     back to the concrete [Value.t] (via the generated [marshal_value] re-export)
-     and print it. This is the lone real marshal in [V_typed], on a cold path. *)
+  (* [to_string] is used only when logging a [value]: convert that one value
+     back to [Value.t] (via the generated [marshal_value]) and print it. *)
   let to_string (x : t) : string =
     Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
 
-  (* Transient smuggle (handed straight back to compiled code, never decoded):
-     identity cast. *)
+  (* Pass straight back to compiled code, never decoded: identity cast. *)
   let to_value (x : t) : Value.t = Obj.obj x
   let of_value (v : Value.t) : t = Obj.repr v
 
-  (* Persist bridge: the typed [Obj.t] is about to be stored in a concrete
-     [Value.t]-typed, yojson-serialized field, so it must become a REAL [Value.t].
-     Dispatch a per-type [marshal_<typ>]/[unmarshal_<typ>] by the caller-supplied
-     spec type name. *)
+  (* Convert to/from a real [Value.t] when the value is stored in a serialized
+     field. Dispatch a per-type [marshal_<typ>]/[unmarshal_<typ>] by the
+     caller-supplied spec type. *)
   let marshal (typ : Typ.t) (x : t) : Value.t =
     Spec_parts.Dispatch.marshal_typed typ x
 
@@ -54,9 +41,8 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
   module Get = struct
     let text (x : t) : string = (Obj.obj x : string)
 
-    (* Typed nums drop the Nat/Int tag (both compile to [Bigint.t]); every caller
-       collapses the tag (e.g. [Spec_Func.sizeof_*], [extract_varsize]), so an
-       arbitrary tag is safe here. *)
+    (* Typed nums drop the Nat/Int tag (both are [Bigint.t]); every caller
+       collapses the tag, so an arbitrary tag is safe. *)
     let num (x : t) : Num.t = `Int (Obj.obj x : Bigint.t)
     let bool (x : t) : bool = (Obj.obj x : bool)
     let list (x : t) : t list = (Obj.obj x : Obj.t list)
@@ -68,9 +54,8 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
       if Obj.is_int x then []
       else List.init (Obj.size x) (fun i -> Obj.field x i)
 
-    (* Shallow one-level destructure of the typed variant of spec type [typ] into
-       its mixop shell (args left as typed [Obj.t]). [typ] comes from the caller
-       (the extern knows the value's spec type statically). *)
+    (* Shallow one-level destructure of the typed variant of spec type [typ]
+       into its mixop shell (args left as typed [Obj.t]). *)
     let case (x : t) (typ : Il.typ) : t Mixfix.t =
       Spec_parts.Dispatch.case_of_typed x typ
 
@@ -105,13 +90,11 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
     let ( |>> ) (x : t) (s_mixop : string) : t list =
       args_by_arity x (Mixop.arity (Value.Mixops.of_string s_mixop))
 
-    (* Shape [x] (whose spec type is [typ], supplied by the caller) into its mixop
-       shell and test whether it is the [s_mixop] constructor. [typ] MUST be the
-       value's actual (possibly union) type, e.g. [transitionResult] — NOT the
-       leaf [rejectTransitionResult]: a single-ctor type compiles [case_of_typed]
-       to an unchecked projection that segfaults on a different runtime ctor. A
-       union type yields a checked match. [case_of_typed] is shallow, so the
-       returned args stay typed [Obj.t], un-recursed. *)
+    (* Shape [x] (spec type [typ]) into its mixop shell and test whether it is
+       the expected constructor. [typ] must be the value's actual (possibly
+       union) type, not a leaf single-ctor type: a single-ctor type compiles
+       [case_of_typed] to an unchecked projection that segfaults on a different
+       runtime ctor. Shallow, so returned args stay typed [Obj.t]. *)
     let ( |>>? ) (x : t) ((mixop_expect, typ) : Il.mixop * Il.typ) :
         t list option =
       let mixop, args =

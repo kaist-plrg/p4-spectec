@@ -8,9 +8,9 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* Total order on values of spec type [typ], via a real [marshal] then
-     [Value.compare] (see [Sets]/API.md D2): [to_value] would mis-compare typed
-     [Obj.t] under [V_typed]. *)
+  (* Total order on values of spec type [typ], via [marshal] then
+     [Value.compare] (see [Sets]): [to_value] would mis-compare typed [Obj.t]
+     under [V_typed]. *)
   let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
     Value.compare (V.marshal typ a) (V.marshal typ b)
 

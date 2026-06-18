@@ -1,20 +1,13 @@
 (* Abstract value representation at the compiled-spec <-> extern boundary.
 
-   Externs (and the Spec_Func/Spec_Rel trampolines) are functorized over [VAL]
-   so the same extern code runs against two representations:
-     - [V_value]: t = Value.t, for the IL/SL interpreter (native Value.t).
-     - V_typed (later): t = Obj.t boxed typed values, for the compiled spec,
-       so boundary crossings are O(1) box/unbox instead of deep marshal/unmarshal.
+   The extern and builtin layers are generic over [VAL] so the same code runs
+   against two value representations:
+     - [V_value]: t = Value.t, for the IL/SL interpreter.
+     - V_typed (in backend-sim): t = Obj.t holding native compiled values, so a
+       boundary crossing is an O(1) box/unbox instead of a deep conversion.
 
-   The surface is exactly what backend-sim uses (see survey): ~8 destructors and
-   ~8 constructors plus the case-construction operators.
-
-   This signature + the [V_value] interpreter instance live in their own [valrep]
-   lib (below [interface] and [backend-sim]) so that both the [builtin] lib (which
-   functorizes its builtins over [VAL]) and [backend-sim] (which defines [V_typed]
-   over the generated [Spec_parts]) can reference the same currency. [V_typed]
-   stays in [backend-sim] — it needs the generated symbols, which sit above this
-   lib. See API.md §10 (D1). *)
+   This lib sits below [interface] and [backend-sim] so both can share it.
+   [V_typed] stays in [backend-sim] because it needs the generated symbols. *)
 
 module Value = Runtime.Value
 module Typ = Runtime.Type.Typ
@@ -29,24 +22,20 @@ module type VAL = sig
 
   val to_string : t -> string
 
-  (* [to_value]/[of_value]: the TRANSIENT smuggle across a [Value.t]-typed
-     interface where the value is handed straight back to compiled code and never
-     decoded (the runner bridge, [init_pipe]). Identity under both reps. *)
+  (* [to_value]/[of_value]: pass a value across a [Value.t]-typed interface
+     straight back to compiled code, where it is never decoded. Identity under
+     both representations. *)
   val to_value : t -> Value.t
   val of_value : Value.t -> t
 
-  (* [marshal]/[unmarshal]: the PERSIST bridge for a value of (statically known)
-     spec type [typ] that is STORED into a concrete [Value.t]-typed, yojson-
-     serialized field (scheduler [Packet.value_ctx], register payloads) and
-     decoded later. Identity under [V_value]; a REAL per-type
-     marshal/unmarshal under [V_typed], because the stored [Obj.t] must become an
-     honest [Value.t] before something serializes it (see Make.extern/to_yojson).
-     [typ] is the value's spec type, e.g. [Typs.eval_context] / [Typs.value].
+  (* [marshal]/[unmarshal]: convert a value of (statically known) spec type
+     [typ] to/from a real [Value.t] when it must be stored in a serialized field
+     (scheduler [Packet.value_ctx], register payloads). Identity under
+     [V_value]; a real per-type conversion under [V_typed].
 
-     [marshal] is also the ONLY honest way to read a typed value's structure, so
-     the set/map builtins derive their element comparison from it
-     ([Value.compare]/[Value.eq] on [marshal typ a] / [marshal typ b]) — NOT from
-     [to_value], which is a type-erased identity cast under [V_typed]. *)
+     [marshal] is also the only way to read a typed value's structure, so the
+     set/map builtins derive element comparison from it, not from [to_value]
+     (a type-erased identity cast under [V_typed]). *)
   val marshal : Typ.t -> t -> Value.t
   val unmarshal : Typ.t -> Value.t -> t
 
@@ -58,10 +47,9 @@ module type VAL = sig
     val opt : t -> t option
     val tuple : t -> t list
 
-    (* [case]/[( |>>? )] take the value's spec type as a structured [Il.typ] (and
-       the mixop as a structured [Il.mixop]). [V_value] ignores the typ (every
-       [Value.t] case carries its mixop tag at runtime); [V_typed] needs it to
-       pick the OCaml variant projection, since a bare [Obj.t] is type-erased.
+    (* [case]/[( |>>? )] take the value's spec type as an [Il.typ] and the mixop
+       as an [Il.mixop]. [V_value] ignores the typ (each [Value.t] case carries
+       its mixop tag); [V_typed] needs it to pick the OCaml variant projection.
        [( |>>? )] takes [(mixop, typ)] as a pair so it stays usable infix. *)
     val case : t -> Il.typ -> t Mixfix.t
     val extern : t -> Yojson.Safe.t
@@ -85,9 +73,8 @@ module type VAL = sig
     val tuple : ?at:region -> Typ.t -> t list -> t
     val extern : ?at:region -> Typ.t -> Yojson.Safe.t -> t
 
-    (* case construction DSL: "mixop" <| args <<| typ. [( <| )] parses the
-       readable mixop string into a structured [Il.mixop]; [( <<| )] takes the
-       value's spec type as a structured [Il.typ]. *)
+    (* case construction: "mixop" <| args <<| typ. [( <| )] parses the mixop
+       string into an [Il.mixop]; [( <<| )] takes the spec type as an [Il.typ]. *)
     val ( <| ) : string -> t list -> Il.mixop * t list
     val ( <<| ) : Il.mixop * t list -> Il.typ -> t
   end
@@ -101,8 +88,8 @@ module V_value : VAL with type t = Value.t = struct
   let to_value = Fun.id
   let of_value = Fun.id
 
-  (* [V_value]'s values are already [Value.t], so the persist bridge is identity;
-     the spec type is irrelevant. *)
+  (* [V_value] is already [Value.t], so this is the identity and the spec type
+     is irrelevant. *)
   let marshal (_typ : Typ.t) (x : t) : Value.t = x
   let unmarshal (_typ : Typ.t) (v : Value.t) : t = v
 
@@ -115,7 +102,7 @@ module V_value : VAL with type t = Value.t = struct
     let tuple = Value.Get.tuple
 
     (* The [Value.t] case carries its own mixop tag, so the spec type is
-       redundant here and ignored. *)
+       ignored here. *)
     let case (x : t) (_typ : Il.typ) : t Mixfix.t = Value.Get.case x
     let extern = Value.Get.extern
     let nth = Value.Get.nth
@@ -142,8 +129,8 @@ module V_value : VAL with type t = Value.t = struct
     let ( <| ) (s_mixop : string) (args : t list) : Il.mixop * t list =
       (Value.Mixops.of_string s_mixop, args)
 
-    (* Build the [Value.t] case from the structured mixop + spec type, deriving
-       the region from the args exactly as [Value.Make.( <<| )] did. *)
+    (* Build the [Value.t] case from the mixop + spec type, taking the region
+       from the args. *)
     let ( <<| ) ((mixop, args) : Il.mixop * t list) (typ : Il.typ) : t =
       let valuecase = Mixfix.fill mixop args in
       let at =

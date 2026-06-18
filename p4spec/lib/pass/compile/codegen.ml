@@ -101,16 +101,16 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
     [
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.Raw Template.Functor.eval_program;
-      (* Stable re-exports of the typed mixop bridges (C3), so the typed value
-         layer (C4 [V_typed]) can bind them at [Spec_parts.Dispatch.*] without
-         depending on which (unstable) [part_NNN] they bucket into. *)
+      (* Stable re-exports of the typed mixop bridges, so [V_typed] can bind them
+         at [Spec_parts.Dispatch.*] without depending on which (unstable)
+         [part_NNN] they bucket into. *)
       Ml.Let ("make_case_typed", Ml.VarE "make_case_typed");
       Ml.Let ("case_of_typed", Ml.VarE "case_of_typed");
-      (* [marshal_value] (C5d) — the lone real marshal [V_typed.to_string] uses to
+      (* [marshal_value] — the one value conversion [V_typed.to_string] uses to
          print a [value]; stable re-export so it binds at [Spec_parts.Dispatch.*]. *)
       Ml.Let ("marshal_value", Ml.VarE "marshal_value");
-      (* Typename-indexed marshal/unmarshal (C5) — the real cold state-persist
-         bridge [V_typed.marshal]/[unmarshal] dispatch through. *)
+      (* Typename-indexed marshal/unmarshal — the state-persist bridge
+         [V_typed.marshal]/[unmarshal] dispatch through. *)
       Ml.Let ("marshal_typed", Ml.VarE "marshal_typed");
       Ml.Let ("unmarshal_typed", Ml.VarE "unmarshal_typed");
     ]

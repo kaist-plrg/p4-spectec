@@ -8,10 +8,10 @@ module Make (V : Valrep.VAL) = struct
   open Error
   open Util.Source
 
-  (* Total order on values of spec type [typ]: marshal both to a real [Value.t]
+  (* Total order on values of spec type [typ]: convert both to a real [Value.t]
      (identity under [V_value]; the type-directed [marshal_<typ>] under [V_typed],
      since a typed [Obj.t] is erased) then [Value.compare]. This keeps the element
-     order identical across reps (API.md D2). *)
+     order identical across representations. *)
   let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
     Value.compare (V.marshal typ a) (V.marshal typ b)
 
@@ -31,11 +31,11 @@ module Make (V : Valrep.VAL) = struct
   let equal cmp a b =
     List.compare_lengths a b = 0 && List.for_all2 (fun x y -> cmp x y = 0) a b
 
-  (* Conversion between meta-sets and OCaml lists, via the generic case DSL
-     ([( <<| )] / [Get.case]) — under V_typed those route to the typed bridge's
-     set arm (API.md B2c). The set mixop is [`{ k }]; inspection needs only the
-     type head, so a targ-less [set] suffices ([case_of_typed] ignores targs, and
-     V_value ignores the type entirely). *)
+  (* Conversion between meta-sets and OCaml lists, via the generic case ops
+     ([( <<| )] / [Get.case]) — under [V_typed] those route to the typed case
+     bridge's set arm. The set mixop is [`{ k }]; inspection needs only the type
+     head, so a targ-less [set] suffices ([case_of_typed] ignores targs, and
+     [V_value] ignores the type entirely). *)
 
   let mixop_set = "`{ k }"
   let typ_set = Typ.Make.var ("set" $ no_region) []

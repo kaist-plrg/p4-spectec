@@ -62,13 +62,13 @@ let compile_params (ctx : Ctx.t) (params : param list) :
          (ctx, params_ml, chain))
        (ctx, [], Chain.nop)
 
-(* Extern + builtin functions — typed [Obj.t] bypass (C5/B5).
+(* Extern + builtin functions.
 
    Both cross a [Value.t]-typed runtime boundary that, under the compiled (ML)
-   path, actually carries typed [Obj.t] smuggled values. So both [Obj.magic]
-   their args in and their result out instead of deep marshal/unmarshal. The only
-   per-kind differences are the call field, its extra leading args, and how the
-   result/error is shaped (D6) — captured by [make_result]. *)
+   path, actually carries typed [Obj.t] values. So both [Obj.magic] their args
+   in and their result out instead of converting. The only per-kind differences
+   are the call field, its extra leading args, and how the result/error is
+   shaped — captured by [make_result]. *)
 
 let compile_magic_bridge (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     (id : id) (params : param list) (typ_ret : typ)
@@ -95,7 +95,7 @@ let compile_magic_bridge (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
         ("p__" ^ string_of_int i, Some typ_param_ml))
       typs_param
   in
-  (* Smuggle typed [Obj.t] inputs through the [Value.t list] boundary. *)
+  (* Pass typed [Obj.t] inputs through the [Value.t list] boundary. *)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i _typ ->
@@ -142,7 +142,7 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
         ( expr_call_ml,
           [
             ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-              (* Cast the smuggled output back to its OCaml type. *)
+              (* Cast the output back to its OCaml type. *)
               Ml.AnnotE
                 ( Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]),
                   typ_ret_ml ) );
@@ -152,10 +152,10 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
                   [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
           ] ))
 
-(* Builtin functions: B5 routes them through the per-mode [extern.call_builtin]
-   (uniform with externs), which returns the result [Value.t] directly (the typed
-   [Obj.t] smuggled). [BuiltinError] from the underlying builtin propagates and is
-   mapped to [Unmatch] so the else-block fallback still works. *)
+(* Builtin functions: routed through the per-mode [extern.call_builtin] (uniform
+   with externs), which returns the result [Value.t] directly (a typed [Obj.t]
+   under ML). [BuiltinError] from the underlying builtin propagates and is mapped
+   to [Unmatch] so the else-block fallback still works. *)
 
 let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =

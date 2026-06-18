@@ -1,8 +1,8 @@
 module IO = Runtime.Sim.Io
 
-(* The pipeline state monad threads the live evaluation context and arch value
-   (the hot path) plus the pending transmissions. Functored over [VAL] so the
-   ctx/arch flow as [vt] (O(1) cast under [V_typed]) rather than [Value.t]. *)
+(* The pipeline state monad threads the current evaluation context and arch
+   value plus the pending transmissions. Generic over [VAL] so the ctx/arch flow
+   as [vt] (O(1) cast under [V_typed]) rather than [Value.t]. *)
 
 module Make (V : Valrep.VAL) = struct
   (* The state consists of:

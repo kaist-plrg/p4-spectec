@@ -13,9 +13,9 @@ let eval_program (relname__ : string) (includes__ : string list)
     (path__ : string) : Run.program_result =
   match (!cur__).iface.parse_program includes__ [path__] with
   | Run.Pass value_program -> (
-      (* C5: the parsed program is a real [Value.t] from the parser (external
-         edge), but [eval_rel] now [Obj.magic]-casts its smuggled inputs. So
-         unmarshal it ONCE here into the typed [p4program], then [Obj.repr] it. *)
+      (* The parsed program is a real [Value.t] from the parser, but [eval_rel]
+         [Obj.magic]-casts its inputs. So unmarshal it once here into the typed
+         [p4program], then [Obj.repr] it. *)
       let value_program : Value.t =
         Obj.magic (unmarshal_p4program value_program)
       in

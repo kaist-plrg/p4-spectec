@@ -126,6 +126,6 @@ let deref_ctx (body : Ml.expr) : Ml.expr =
   Ml.LetE (Ml.VarP "ctx__", Ml.UnopE ("!", Ml.VarE "cur__"), body)
 
 (* Field accessor on [ctx__]. ([iface.parse_program] is read directly in the
-   [eval_program] template; builtins moved off [iface] to [extern] in B5.) *)
+   [eval_program] template; builtins live on [extern], not [iface].) *)
 let extern_field (f : Ml.field) : Ml.expr =
   Ml.FieldE (Ml.FieldE (Ml.VarE "ctx__", "extern"), f)

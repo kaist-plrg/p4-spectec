@@ -1,11 +1,10 @@
-(* Spec type (and mixop) references threaded to the [VAL] case ops (B2a).
+(* Spec type references passed to the [VAL] case ops.
 
    The compiled<->extern case bridge ([make_case_typed]/[case_of_typed]) and the
-   [VAL] [Get.case]/[( <<| )]/[( |>>? )] surface take the value's spec type as a
-   structured [Il.typ], not a bare string (which was fragile: a stale typename
-   only failed at runtime — see API.md §9.3). These are the monomorphic spec
-   types the externs construct/inspect; defined once here and referenced across
-   backend-sim so each name lives in exactly one place. *)
+   [VAL] [Get.case]/[( <<| )]/[( |>>? )] surface take the value's spec type as an
+   [Il.typ], not a bare string (a stale typename only failed at runtime). These
+   are the monomorphic spec types the externs construct/inspect; defined once
+   here so each name lives in one place. *)
 
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
@@ -23,8 +22,8 @@ let table_key_value_interface = var "tableKeyValueInterface"
 let value = var "value"
 let transition_result = var "transitionResult"
 
-(* State-persist types, threaded to [V.marshal]/[V.unmarshal] so the typed
-   [Obj.t] becomes an honest [Value.t] before it is yojson-serialized (B5). *)
+(* State-persist types, passed to [V.marshal]/[V.unmarshal] so the typed
+   [Obj.t] becomes a real [Value.t] before it is yojson-serialized. *)
 let eval_context = var "evalContext"
 let type_ir = var "typeIR"
 

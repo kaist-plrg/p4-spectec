@@ -44,10 +44,10 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
           params
       in
       let n = List.length exp_typs in
-      (* C5 typed bypass: inputs arrive as typed [Obj.t] smuggled through the
-         [Value.t list] interface, so [Obj.magic]-cast them to the OCaml type the
-         callee expects instead of deep-[unmarshal]ing. The compiled dispatch is
-         ML-only, so this is unconditional. *)
+      (* Inputs arrive as typed [Obj.t] through the [Value.t list] interface, so
+         [Obj.magic]-cast them to the OCaml type the callee expects instead of
+         [unmarshal]ing. The compiled dispatch is ML-only, so this is
+         unconditional. *)
       let unmarshal_lets =
         List.mapi
           (fun i typ ->
@@ -67,7 +67,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
         List.init n (fun i -> Ml.VarE ("a" ^ string_of_int i))
       in
       let expr_call_ml = Ml.AppE (Ml.LitE ocaml_name, exprs_arg_ml) in
-      (* Output: [Obj.magic] back out as [Value.t] (smuggle) instead of marshal. *)
+      (* Output: [Obj.magic] back out as [Value.t] instead of marshalling. *)
       let expr_run_pass_ml =
         Ml.AppE
           ( Ml.LitE "Run.Pass",
@@ -238,8 +238,8 @@ let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
           | Some (typs_input, typs_output) ->
               let n_in = List.length typs_input in
               let id_rel_ml = Names.rel id in
-              (* C5 typed bypass: [Obj.magic]-cast smuggled typed inputs instead
-                 of deep-[unmarshal] (compiled dispatch is ML-only). *)
+              (* [Obj.magic]-cast typed inputs instead of [unmarshal]
+                 (compiled dispatch is ML-only). *)
               let unmarshal_lets =
                 List.mapi
                   (fun i typ ->
@@ -285,7 +285,7 @@ let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
                       | _ ->
                           Ml.TupleP (List.map (fun s -> Ml.VarP s) ids_out_ml)
                     in
-                    (* Output: [Obj.magic] smuggle back instead of marshal. *)
+                    (* Output: [Obj.magic] back instead of marshalling. *)
                     let exprs_marshal_out_ml =
                       List.mapi
                         (fun i _typ ->

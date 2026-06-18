@@ -206,10 +206,10 @@ let mixop_value_arg_pat (mixop : Mixop.t) : string * string list =
 (* BFS over all types reachable from function signatures *)
 
 (* Transitive marshal/unmarshal dependency closure of [seeds] — the same sub-type
-   edges [marshal_T]/[unmarshal_T] recurse along. After the C5 typed flip,
+   edges [marshal_T]/[unmarshal_T] recurse along. On the typed path,
    marshal/unmarshal are reached only from [eval_program] (the program type) and
-   the persisted state types, so generation is seeded from those (C6) instead of
-   the whole func/rel I/O surface; everything outside this closure was dead. *)
+   the persisted state types, so generation is seeded from those instead of the
+   whole func/rel I/O surface; everything outside this closure was dead. *)
 let close_types (ctx : Ctx.t) (seeds : Sl.typ list) : Sl.typ list =
   let seen : (string, unit) Hashtbl.t = Hashtbl.create 32 in
   let queue : Sl.typ Queue.t = Queue.create () in
@@ -618,9 +618,9 @@ module Unmarshal = struct
     (name, [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
-(* Shallow typed mixop bridges (C3) *)
+(* Shallow typed mixop bridges *)
 
-(* Two functions emitted into the compiled output, dead until C4/C5 wire them:
+(* Two functions emitted into the compiled output, used by [V_typed]:
    - [make_case_typed]: the typed mirror of [make_case_] (which builds a
      [Value.t]). Given a canonical mixop string, an [Obj.t list] of already-typed
      args, and the raw spec type id, it builds the typed variant directly
@@ -1019,13 +1019,13 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
     * Ml.funcdef list =
   let all_refs = all_typ_refs spec in
   (* Marshal/unmarshal are generated only for the closure of the types that still
-     cross a Value.t boundary after the typed flips (C5/B5): [eval_program]'s
-     program type ([p4program]) and the persisted state types (picked out of
-     [all_refs] by interface name, no spec-id guessing). Builtins are now on the
-     typed [Obj.t] bypass (B5), so there is no builtin I/O seed: the only builtin
-     types that still marshal are the [marshal_typed] dispatch targets ([print_]
-     argument + set/map compared keys), all reachable from this persist closure;
-     [builtin_arms] below is filtered to exactly those it contains. *)
+     cross a Value.t boundary on the typed path: [eval_program]'s program type
+     ([p4program]) and the persisted state types (picked out of [all_refs] by
+     interface name, no spec-id guessing). Builtins pass typed [Obj.t] directly,
+     so there is no builtin I/O seed: the only builtin types that still marshal
+     are the [marshal_typed] dispatch targets ([print_] argument + set/map
+     compared keys), all reachable from this persist closure; [builtin_arms]
+     below is filtered to exactly those it contains. *)
   let marshal_seed_inames = "p4program" :: persist_interface_names in
   let typs =
     close_types ctx
@@ -1037,7 +1037,7 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
-  (* Typed mixop bridges (C3) over ALL spec variant types (see [all_typ_refs]).
+  (* Typed mixop bridges over ALL spec variant types (see [all_typ_refs]).
      Reuses [pool] so [case_of_typed]'s interned mixops join [const_decls]. *)
   let typed_bridges =
     Typed.compile ctx pool all_refs @ compile_marshal_dispatch typs
