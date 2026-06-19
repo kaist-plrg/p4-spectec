@@ -15,15 +15,20 @@ module type IMPL = sig
 end
 
 (* Bridge the [vt]-typed extern implementation to the [Value.t]-typed dynamic
-   runner. The (un)wrapping via [V.to_value]/[V.of_value] is the identity under
-   [V_value]; under [V_typed] it is the marshal/unmarshal at the runner edge.
+   runner. The (un)wrapping via [R.to_value]/[R.of_value] is a zero-cost
+   reinterpret across the runner edge: the value rides through the [Value.t]-
+   typed signature and is handed back to compiled code undecoded (identity under
+   [V_value]; bare [Obj.obj]/[Obj.repr] under [V_native]).
+
+   This bridge needs nothing but that cast, so it takes [Valrep.RAW] rather than
+   the structural [SAFE] — making explicit that it touches no value structure.
 
    This is the per-arch extern bridge: it only produces [eval_extern_rel]/
    [eval_extern_func] (consumed by [ARCH]). Builtins are arch-independent, so
    [Run.EXTERN.call_builtin] lives in [make.ml]'s [MakeExtern], not here — hence
    this is no longer sealed to the full [Run.EXTERN]. *)
 
-module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) = struct
+module Make (R : Valrep.RAW) (A : IMPL with type vt = R.t) = struct
   let init_mode _ = ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after
@@ -36,10 +41,10 @@ module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) = struct
 
   let eval_extern_rel (name : string) (values_input : Value.t list) :
       Run.rel_result =
-    let values_input = List.map V.of_value values_input in
+    let values_input = List.map R.of_value values_input in
     try
       Run.Pass
-        (List.map V.to_value
+        (List.map R.to_value
            (match name with
            | "ExternFunctionCall_eval_lctk" ->
                A.eval_extern_func_lctk_call values_input
@@ -52,10 +57,10 @@ module Make (V : Valrep.VAL) (A : IMPL with type vt = V.t) = struct
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (values_input : Value.t list) : Run.func_result =
-    let values_input = List.map V.of_value values_input in
+    let values_input = List.map R.of_value values_input in
     try
       Run.Pass
-        (V.to_value
+        (R.to_value
            (match name with
            | "init_objectState" -> A.eval_extern_init values_input
            | "init_archState" -> A.init_arch_state

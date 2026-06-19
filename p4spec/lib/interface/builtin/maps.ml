@@ -4,18 +4,18 @@ open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   open Error
   open Util.Source
 
   (* Key equality on values of spec type [typ], via [marshal] then [Value.eq]
      (see [Sets]): [to_value] would mis-compare typed [Obj.t] keys under
-     [V_typed]. *)
+     [V_native]. *)
   let veq (typ : typ) (a : V.t) (b : V.t) : bool =
     Value.eq (V.marshal typ a) (V.marshal typ b)
 
   (* Value map. Built/inspected via the generic case ops ([( <<| )] / [Get.case]),
-     which under [V_typed] route to the typed case bridge's pair/map arms. A map
+     which under [V_native] route to the typed case bridge's pair/map arms. A map
      value is a [`{ k }] of [k `: v] pairs ([map = pair set]). Inspection needs
      only the type head, so targ-less [pair]/[map] suffice ([case_of_typed]
      ignores targs; [V_value] ignores the type). *)

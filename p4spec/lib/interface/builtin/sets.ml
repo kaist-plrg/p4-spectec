@@ -4,12 +4,12 @@ open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   open Error
   open Util.Source
 
   (* Total order on values of spec type [typ]: convert both to a real [Value.t]
-     (identity under [V_value]; the type-directed [marshal_<typ>] under [V_typed],
+     (identity under [V_value]; the type-directed [marshal_<typ>] under [V_native],
      since a typed [Obj.t] is erased) then [Value.compare]. This keeps the element
      order identical across representations. *)
   let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
@@ -32,7 +32,7 @@ module Make (V : Valrep.VAL) = struct
     List.compare_lengths a b = 0 && List.for_all2 (fun x y -> cmp x y = 0) a b
 
   (* Conversion between meta-sets and OCaml lists, via the generic case ops
-     ([( <<| )] / [Get.case]) — under [V_typed] those route to the typed case
+     ([( <<| )] / [Get.case]) — under [V_native] those route to the typed case
      bridge's set arm. The set mixop is [`{ k }]; inspection needs only the type
      head, so a targ-less [set] suffices ([case_of_typed] ignores targs, and
      [V_value] ignores the type entirely). *)

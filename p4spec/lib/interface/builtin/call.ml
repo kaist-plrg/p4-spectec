@@ -6,15 +6,15 @@ open Error
 open Util.Source
 
 (* Shared builtin state counter. Lifted to lib level (out of the functors) so the
-   V_value (interface) and V_typed (backend-sim) instances increment the same
+   V_value (interface) and V_native (backend-sim) instances increment the same
    counter — modes never overlap, so a single ref is correct. Used by
    [fresh_typeId] and by [checkpoint]/[seff] state-effect detection. *)
 let ctr : int ref = ref 0
 
 (* The builtin lib, generic over the value representation [V]. [interface]
    instantiates it at [Valrep.V_value] (IL/SL, Value.t); [backend-sim]
-   instantiates it at [V_typed] (the compiled ML path, Obj.t). *)
-module Make_funcs (V : Valrep.VAL) = struct
+   instantiates it at [V_native] (the compiled ML path, Obj.t). *)
+module Make_funcs (V : Valrep.SAFE) = struct
   module Nats = Nats.Make (V)
   module Ints = Ints.Make (V)
   module Texts = Texts.Make (V)

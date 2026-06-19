@@ -243,7 +243,7 @@ let compute_hash (algo : string) ?(value_init : Bigint.t = Bigint.zero)
    [adjust]/[bitwise_neg] are re-exported so a single [Hash.Make (V)] instance
    serves callers that also use them. *)
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack
 

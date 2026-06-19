@@ -32,7 +32,7 @@ let case_of_typed (_x : Obj.t) (_typ : Typ.t) : Obj.t Domain.Mixfix.t =
   failwith "ML interpreter: run `make gen-ocaml` to generate it"
 
 (* Re-export of the generated [marshal_value] — the one value conversion
-   [V_typed.to_string] needs to print a [value]. Stubbed here for the [build]
+   [V_native.to_string] needs to print a [value]. Stubbed here for the [build]
    surface. *)
 
 let marshal_value (_x : Obj.t) : Value.t =

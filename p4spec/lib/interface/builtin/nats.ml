@@ -2,7 +2,7 @@ open Lang
 open Xl
 open Il
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   open Util.Source
   open Error
 

@@ -11,6 +11,9 @@ module Unpack = Spec_impl.Unpack
    concurrent runners do not share mutable call refs. *)
 
 module type S = sig
+  (* [V] is [VAL], not [SAFE]: the pipe initializers reach the runner-edge cast
+     ([Raw.of_value]) through [Spec.V]. The generic [builtin] layer never sees a
+     [Spec], so it stays cast-free. *)
   module V : Valrep.VAL
   module Func : Func.S with type vt = V.t
   module Rel : Rel.S with type vt = V.t

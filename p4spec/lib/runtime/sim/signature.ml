@@ -11,7 +11,7 @@ type stf_result =
 
 module type ARCH = sig
   (* Abstract value representation crossing the compiled-spec <-> extern
-     boundary. [V_value] pins [vt = Value.t]; [V_typed] pins [vt = Obj.t]. *)
+     boundary. [V_value] pins [vt = Value.t]; [V_native] pins [vt = Obj.t]. *)
 
   type vt
 

@@ -4,13 +4,13 @@ open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   open Error
   open Util.Source
 
   (* Total order on values of spec type [typ], via [marshal] then
      [Value.compare] (see [Sets]): [to_value] would mis-compare typed [Obj.t]
-     under [V_typed]. *)
+     under [V_native]. *)
   let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
     Value.compare (V.marshal typ a) (V.marshal typ b)
 

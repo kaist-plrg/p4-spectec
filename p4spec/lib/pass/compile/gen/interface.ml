@@ -620,7 +620,7 @@ end
 
 (* Shallow typed mixop bridges *)
 
-(* Two functions emitted into the compiled output, used by [V_typed]:
+(* Two functions emitted into the compiled output, used by [V_native]:
    - [make_case_typed]: the typed mirror of [make_case_] (which builds a
      [Value.t]). Given a canonical mixop string, an [Obj.t list] of already-typed
      args, and the raw spec type id, it builds the typed variant directly
@@ -658,7 +658,7 @@ module Typed = struct
         ] )
 
   (* The bridges dispatch on a value's spec type, threaded from the (hand-written,
-     [VAL]-generic) extern as a structured [Il.typ] — not a bare string (which was
+     [SAFE]-generic) extern as a structured [Il.typ] — not a bare string (which was
      fragile: a stale typename only failed at runtime). The per-type arms still key
      on the type's name, so we extract [id.it] from the [VarT] head once at the top
      and let the existing string-keyed match stand:
@@ -678,7 +678,7 @@ module Typed = struct
      annotation would dangle a free type var. But the ctor is type-uniform —
      'k/'v erase to [Obj.t] — so ONE annotation-free arm per head covers every
      instantiation. The real ctor + mixop come from [Ctx] (keys then match the
-     spec, hence [V_typed]'s threaded mixop); [map]'s value is a [`Set] of pairs,
+     spec, hence [V_native]'s threaded mixop); [map]'s value is a [`Set] of pairs,
      so it reuses the "set" ctor. *)
   let parametric_heads = [ "set"; "pair"; "map" ]
 
@@ -942,7 +942,7 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
       | _ -> None)
     spec
 
-(* Spec types that still cross a [Value.t] boundary under [V_typed] and so seed
+(* Spec types that still cross a [Value.t] boundary under [V_native] and so seed
    the marshal/unmarshal closure: [V.marshal]/[V.unmarshal] persist these into
    yojson-serialized [Value.t] state in backend-sim (scheduler [Packet.value_ctx]
    → [eval_context]; register payloads → [value]; register element type →
@@ -951,7 +951,7 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
    closure, so it is not a curated arm set. *)
 let persist_interface_names = [ "eval_context"; "value"; "type_ir" ]
 
-(* [marshal_typed]/[unmarshal_typed]: the per-type [V_typed] persist bridge.
+(* [marshal_typed]/[unmarshal_typed]: the per-type [V_native] persist bridge.
    Dispatched by matching the value's spec type [Typ.t] directly — call sites pass
    the type they already hold (backend-sim's [Typs.*], the builtins' element-type
    targ), no string convention. Total over the marshal closure [typs]: every named

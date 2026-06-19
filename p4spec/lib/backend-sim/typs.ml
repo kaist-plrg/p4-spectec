@@ -1,7 +1,7 @@
-(* Spec type references passed to the [VAL] case ops.
+(* Spec type references passed to the [SAFE] case ops.
 
    The compiled<->extern case bridge ([make_case_typed]/[case_of_typed]) and the
-   [VAL] [Get.case]/[( <<| )]/[( |>>? )] surface take the value's spec type as an
+   [SAFE] [Get.case]/[( <<| )]/[( |>>? )] surface take the value's spec type as an
    [Il.typ], not a bare string (a stale typename only failed at runtime). These
    are the monomorphic spec types the externs construct/inspect; defined once
    here so each name lives in one place. *)

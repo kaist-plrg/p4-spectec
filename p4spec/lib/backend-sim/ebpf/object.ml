@@ -2,7 +2,7 @@ module Typ = Runtime.Type.Typ
 open Error
 open Util.Source
 
-module Make (V : Valrep.VAL) (Spec_Func : Spec.Func.S with type vt = V.t) =
+module Make (V : Valrep.SAFE) (Spec_Func : Spec.Func.S with type vt = V.t) =
 struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack

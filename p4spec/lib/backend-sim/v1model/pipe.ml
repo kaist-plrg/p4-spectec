@@ -670,7 +670,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let packet_in = get_packet_in value_arch in
     (* The ctx is stored in the scheduler queue ([Packet.value_ctx : Value.t]),
        which is yojson-serialized into the archState node — so it must be a real
-       [Value.t], marshaled under [V_typed]. *)
+       [Value.t], marshaled under [V_native]. *)
     let value_ctx_cold = V.marshal Typs.eval_context value_ctx in
     let packet = Packet.{ value_ctx = value_ctx_cold; packet_in; entrypoint } in
     let* arch_state = get_arch_state in

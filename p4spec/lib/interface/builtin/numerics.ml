@@ -3,7 +3,7 @@ open Xl
 open Il
 module Typ = Runtime.Type.Typ
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   open Error
   open Util.Source
 

@@ -120,7 +120,7 @@ end
 (* Functor providing spec-dependent methods *)
 
 module Make
-    (V : Valrep.VAL)
+    (V : Valrep.SAFE)
     (Spec_Func : Spec.Func.S with type vt = V.t)
     (Spec_Rel : Spec.Rel.S with type vt = V.t) =
 struct

@@ -26,7 +26,7 @@ let reset (t : t) = { t with action = Packet.empty_action }
    [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
    two conversions). *)
 
-module Make (V : Valrep.VAL) = struct
+module Make (V : Valrep.SAFE) = struct
   let to_value (t : t) =
     let typ = Typ.Make.var ("archState" $ no_region) [] in
     t |> to_yojson |> V.Make.extern typ

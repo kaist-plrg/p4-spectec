@@ -29,7 +29,7 @@ module Make
      The IL/SL interpreters evaluate on [Value.t] natively, so they drive the
      [V_value] stack ([vt = Value.t]). The compiled ML interpreter passes typed
      [Obj.t] values through the [Value.t] interfaces, so it drives a second
-     stack at [V_typed] ([vt = Obj.t]); its dispatch and extern wrappers
+     stack at [V_native] ([vt = Obj.t]); its dispatch and extern wrappers
      [Obj.magic]-cast instead of converting. One simulator instance runs in one
      mode, so [init_mode] registers only the matching stack's callbacks.
 
@@ -39,23 +39,25 @@ module Make
   module Spec_v = Spec.Make (Valrep.V_value)
   module Arch_v = MakeArch (Spec_v)
   module Table_v = Table.Make (Valrep.V_value) (Spec_v.Func)
-  module Spec_t = Spec.Make (Val_typed.V_typed)
+  module Spec_t = Spec.Make (Backend_ocaml.Val_native.V_native)
   module Arch_t = MakeArch (Spec_t)
-  module Table_t = Table.Make (Val_typed.V_typed) (Spec_t.Func)
+  module Table_t = Table.Make (Backend_ocaml.Val_native.V_native) (Spec_t.Func)
 
   (* Active mode, set by [MakeExtern.init_mode] (the runner calls it from [init]);
      read by the extern dispatch and the STF runner to pick the stack. *)
   let sim_mode : mode ref = ref Empty_mode
 
   (* Typed builtin instance for the compiled ML path. Builtins are arch-
-     independent, so a single instance over [V_typed] serves [call_builtin]
+     independent, so a single instance over [V_native] serves [call_builtin]
      under ML. IL/SL keep the [V_value] builtins of the [Interface] argument.
-     Gets the same [print_] EXT as the interface, at [V_typed] (its [marshal]
+     Gets the same [print_] EXT as the interface, at [V_native] (its [marshal]
      re-encodes the argument before [!unparser]). *)
-  module Builtin_t_funcs = Builtin.Call.Make_funcs (Val_typed.V_typed)
+  module Builtin_t_funcs =
+    Builtin.Call.Make_funcs (Backend_ocaml.Val_native.V_native)
 
   module Builtin_t =
-    Builtin_t_funcs.Make (Builtin_print_ext (Val_typed.V_typed)) ()
+    Builtin_t_funcs.Make
+      (Builtin_print_ext (Backend_ocaml.Val_native.V_native)) ()
 
   module MakeExtern
       (Interp_IL : INTERP_IL)
@@ -237,11 +239,11 @@ module Make
         (tx_output_queue, expect_queue)
 
   (* STF test runner, factored over the value representation so it drives the
-     [V_value] stack for IL/SL and the [V_typed] stack for ML. The table encoding
-     uses [V.Make.*] (typed [make_case_typed] under [V_typed]); the packet/expect
+     [V_value] stack for IL/SL and the [V_native] stack for ML. The table encoding
+     uses [V.Make.*] (typed [make_case_typed] under [V_native]); the packet/expect
      queue bookkeeping above is representation-independent and stays shared. *)
   module RunStf
-      (V : Valrep.VAL)
+      (V : Valrep.SAFE)
       (A : ARCH with type vt = V.t)
       (T : sig
         val add_entry : V.t -> V.t -> V.t -> V.t -> V.t -> V.t -> V.t
@@ -503,7 +505,9 @@ module Make
   end
 
   module RunStf_v = RunStf (Valrep.V_value) (Arch_v) (Table_v)
-  module RunStf_t = RunStf (Val_typed.V_typed) (Arch_t) (Table_t)
+
+  module RunStf_t =
+    RunStf (Backend_ocaml.Val_native.V_native) (Arch_t) (Table_t)
 
   (* Dispatch to the stack matching the active mode (ML drives the typed stack). *)
   let run_stf_test (includes_p4 : string list) (path_p4 : string)

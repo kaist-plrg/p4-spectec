@@ -1,4 +1,4 @@
-(* Typed value representation at the compiled-spec <-> extern boundary.
+(* Native value representation at the compiled-spec <-> extern boundary.
 
    [t = Obj.t] holding the compiled spec's native OCaml values. A boundary
    crossing is an O(1) box/unbox ([Obj.repr]/[Obj.obj]) instead of the deep
@@ -17,7 +17,7 @@ module Il = Lang.Il
 module Num = Lang.Xl.Num
 open Util.Source
 
-module V_typed : Valrep.VAL with type t = Obj.t = struct
+module V_native : Valrep.VAL with type t = Obj.t = struct
   type t = Obj.t
 
   (* [to_string] is used only when logging a [value]: convert that one value
@@ -41,21 +41,21 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
   module Get = struct
     let text (x : t) : string = (Obj.obj x : string)
 
-    (* Typed nums drop the Nat/Int tag (both are [Bigint.t]); every caller
+    (* Native nums drop the Nat/Int tag (both are [Bigint.t]); every caller
        collapses the tag, so an arbitrary tag is safe. *)
     let num (x : t) : Num.t = `Int (Obj.obj x : Bigint.t)
     let bool (x : t) : bool = (Obj.obj x : bool)
     let list (x : t) : t list = (Obj.obj x : Obj.t list)
     let opt (x : t) : t option = (Obj.obj x : Obj.t option)
 
-    (* A typed tuple is a plain OCaml tuple block; project its fields (a nullary
+    (* A native tuple is a plain OCaml tuple block; project its fields (a nullary
        tuple is the immediate unit). *)
     let tuple (x : t) : t list =
       if Obj.is_int x then []
       else List.init (Obj.size x) (fun i -> Obj.field x i)
 
-    (* Shallow one-level destructure of the typed variant of spec type [typ]
-       into its mixop shell (args left as typed [Obj.t]). *)
+    (* Shallow one-level destructure of the native variant of spec type [typ]
+       into its mixop shell (args left as native [Obj.t]). *)
     let case (x : t) (typ : Il.typ) : t Mixfix.t =
       Spec_parts.Dispatch.case_of_typed x typ
 
@@ -66,17 +66,17 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
 
     let one : t list -> t = function
       | [ x ] -> x
-      | _ -> failwith "V_typed.Get.one: expected exactly one value"
+      | _ -> failwith "V_native.Get.one: expected exactly one value"
 
     let two : t list -> t * t = function
       | [ a; b ] -> (a, b)
-      | _ -> failwith "V_typed.Get.two: expected exactly two values"
+      | _ -> failwith "V_native.Get.two: expected exactly two values"
 
     let three : t list -> t * t * t = function
       | [ a; b; c ] -> (a, b, c)
-      | _ -> failwith "V_typed.Get.three: expected exactly three values"
+      | _ -> failwith "V_native.Get.three: expected exactly three values"
 
-    (* Project a typed variant's args by arity, trusting the value is the
+    (* Project a native variant's args by arity, trusting the value is the
        expected constructor (well-typedness, same trust as [Obj.obj]). A poly
        variant with [n] args is [hash; arg] for n=1 and [hash; (a0..an-1)] for
        n>=2; a nullary one is the immediate hash. *)
@@ -94,7 +94,7 @@ module V_typed : Valrep.VAL with type t = Obj.t = struct
        the expected constructor. [typ] must be the value's actual (possibly
        union) type, not a leaf single-ctor type: a single-ctor type compiles
        [case_of_typed] to an unchecked projection that segfaults on a different
-       runtime ctor. Shallow, so returned args stay typed [Obj.t]. *)
+       runtime ctor. Shallow, so returned args stay native [Obj.t]. *)
     let ( |>>? ) (x : t) ((mixop_expect, typ) : Il.mixop * Il.typ) :
         t list option =
       let mixop, args =
