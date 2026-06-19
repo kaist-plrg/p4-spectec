@@ -456,8 +456,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let register_read (value_arch : V.t) (reg_name : string) (index : int) : V.t =
     let reg = get_register value_arch reg_name in
     let _value =
-      if index < List.length reg.values then
-        V.unmarshal Typs.value (List.nth reg.values index)
+      if index >= 0 && index < Array.length reg.values then
+        V.unmarshal Typs.value reg.values.(index)
       else Spec.Func.default (V.unmarshal Typs.type_ir reg.typ)
     in
     (* Print register value *)
@@ -471,20 +471,15 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
     let value_value =
       Spec.Func.cast_op (V.unmarshal Typs.type_ir reg.typ) value_value
     in
-    let values =
-      List.mapi
-        (fun idx value ->
-          if idx = index then V.marshal Typs.value value_value else value)
-        reg.values
-    in
-    let reg = { reg with values } in
+    if index >= 0 && index < Array.length reg.values then
+      reg.values.(index) <- V.marshal Typs.value value_value;
     put_register value_arch reg_name reg
 
   let register_reset (value_arch : V.t) (reg_name : string) : V.t =
     let reg = get_register value_arch reg_name in
     let value_default = Spec.Func.default (V.unmarshal Typs.type_ir reg.typ) in
     let values =
-      List.map (fun _ -> V.marshal Typs.value value_default) reg.values
+      Array.map (fun _ -> V.marshal Typs.value value_default) reg.values
     in
     let reg = { reg with values } in
     put_register value_arch reg_name reg

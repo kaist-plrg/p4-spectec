@@ -13,7 +13,9 @@ struct
   module CounterArray = struct
     (* Type *)
 
-    type t = int list [@@deriving yojson]
+    (* Flat [array] indexed by counter index, so increment/add touch a single
+       slot in O(1) instead of rebuilding a list. *)
+    type t = int array [@@deriving yojson]
 
     let pp fmt (_carr : t) = Format.fprintf fmt "counter array"
 
@@ -44,7 +46,7 @@ struct
       let _, max_index = unpack_p4_fixedBit value_max_index in
       let max_index = Bigint.to_int_exn max_index in
       let _sparse = unpack_p4_bool value_sparse in
-      List.init max_index (fun _ -> 0)
+      Array.init max_index (fun _ -> 0)
 
     (* Increment counter with specified index.
 
@@ -56,12 +58,9 @@ struct
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
-      (* Update counter *)
-      let counter_array =
-        List.mapi
-          (fun idx count -> if idx = index_target then count + 1 else count)
-          counter_array
-      in
+      (* Update counter in place; index >= size leaves the array untouched. *)
+      if index_target >= 0 && index_target < Array.length counter_array then
+        counter_array.(index_target) <- counter_array.(index_target) + 1;
       (* Create call result *)
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
@@ -84,12 +83,9 @@ struct
       let value_value = Spec_Func.find_var_e_local value_ctx "value" in
       let _, value = unpack_p4_fixedBit value_value in
       let value = Bigint.to_int_exn value in
-      (* Update counter *)
-      let counter_array =
-        List.mapi
-          (fun idx count -> if idx = index_target then count + value else count)
-          counter_array
-      in
+      (* Update counter in place; index >= size leaves the array untouched. *)
+      if index_target >= 0 && index_target < Array.length counter_array then
+        counter_array.(index_target) <- counter_array.(index_target) + value;
       (* Create call result *)
       let value_callResult =
         let value_eps =

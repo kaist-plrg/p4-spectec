@@ -23,25 +23,37 @@ module Make (Spec : Spec.S) = struct
   module Counter = struct
     (* Type *)
 
+    (* The counter state is a flat [array] indexed by counter index, so a
+       single [count] touches one slot in O(1) instead of rebuilding a list. *)
+
+    let bytes_pair_to_yojson ((packets, bytes) : Bigint.t * Bigint.t) :
+        Yojson.Safe.t =
+      `List
+        [ Util.Json.bigint_to_yojson packets; Util.Json.bigint_to_yojson bytes ]
+
+    let bytes_pair_of_yojson :
+        Yojson.Safe.t -> (Bigint.t * Bigint.t, string) result = function
+      | `List [ jp; jb ] -> (
+          match
+            (Util.Json.bigint_of_yojson jp, Util.Json.bigint_of_yojson jb)
+          with
+          | Ok packets, Ok bytes -> Ok (packets, bytes)
+          | Error e, _ | _, Error e -> Error e)
+      | _ -> Error "expected a counter (packets, bytes) pair"
+
     type t =
       | Packets of
-          (Bigint.t
-          [@to_yojson Util.Json.bigint_to_yojson]
-          [@of_yojson Util.Json.bigint_of_yojson])
-          list
+          (Bigint.t array
+          [@to_yojson Util.Json.array_to_yojson Util.Json.bigint_to_yojson]
+          [@of_yojson Util.Json.array_of_yojson Util.Json.bigint_of_yojson])
       | Bytes of
-          (Bigint.t
-          [@to_yojson Util.Json.bigint_to_yojson]
-          [@of_yojson Util.Json.bigint_of_yojson])
-          list
+          (Bigint.t array
+          [@to_yojson Util.Json.array_to_yojson Util.Json.bigint_to_yojson]
+          [@of_yojson Util.Json.array_of_yojson Util.Json.bigint_of_yojson])
       | PacketsAndBytes of
-          ((Bigint.t
-           [@to_yojson Util.Json.bigint_to_yojson]
-           [@of_yojson Util.Json.bigint_of_yojson])
-          * (Bigint.t
-            [@to_yojson Util.Json.bigint_to_yojson]
-            [@of_yojson Util.Json.bigint_of_yojson]))
-          list
+          ((Bigint.t * Bigint.t) array
+          [@to_yojson Util.Json.array_to_yojson bytes_pair_to_yojson]
+          [@of_yojson Util.Json.array_of_yojson bytes_pair_of_yojson])
     [@@deriving yojson]
 
     let pp fmt (_ctr : t) = Format.fprintf fmt "counter"
@@ -78,10 +90,11 @@ module Make (Spec : Spec.S) = struct
       let id_enum, id_type = unpack_p4_enum value_type in
       match (id_enum, id_type) with
       | "CounterType", "packets" ->
-          Packets (List.init size (fun _ -> Bigint.zero))
-      | "CounterType", "bytes" -> Bytes (List.init size (fun _ -> Bigint.zero))
+          Packets (Array.init size (fun _ -> Bigint.zero))
+      | "CounterType", "bytes" -> Bytes (Array.init size (fun _ -> Bigint.zero))
       | "CounterType", "packets_and_bytes" ->
-          PacketsAndBytes (List.init size (fun _ -> (Bigint.zero, Bigint.zero)))
+          PacketsAndBytes
+            (Array.init size (fun _ -> (Bigint.zero, Bigint.zero)))
       | _ ->
           error_no_region
             (Format.asprintf "invalid CounterType enum value: %s.%s" id_enum
@@ -107,38 +120,24 @@ module Make (Spec : Spec.S) = struct
       let value_index = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
-      (* Update counter *)
-      let counter =
-        match counter with
-        | Packets counts ->
-            let counts =
-              List.mapi
-                (fun index count ->
-                  if index = index_target then Bigint.(count + one) else count)
-                counts
-            in
-            Packets counts
-        | Bytes counts ->
-            let len = packet_in.len |> Bigint.of_int in
-            let counts =
-              List.mapi
-                (fun index count ->
-                  if index = index_target then Bigint.(count + len) else count)
-                counts
-            in
-            Bytes counts
-        | PacketsAndBytes counts ->
-            let len = packet_in.len |> Bigint.of_int in
-            let counts =
-              List.mapi
-                (fun index (count_packets, count_bytes) ->
-                  if index = index_target then
-                    (Bigint.(count_packets + one), Bigint.(count_bytes + len))
-                  else (count_packets, count_bytes))
-                counts
-            in
-            PacketsAndBytes counts
+      (* Update counter in place; index >= size leaves the array untouched. *)
+      let in_bounds counts =
+        index_target >= 0 && index_target < Array.length counts
       in
+      (match counter with
+      | Packets counts ->
+          if in_bounds counts then
+            counts.(index_target) <- Bigint.(counts.(index_target) + one)
+      | Bytes counts ->
+          let len = packet_in.len |> Bigint.of_int in
+          if in_bounds counts then
+            counts.(index_target) <- Bigint.(counts.(index_target) + len)
+      | PacketsAndBytes counts ->
+          let len = packet_in.len |> Bigint.of_int in
+          if in_bounds counts then
+            let count_packets, count_bytes = counts.(index_target) in
+            counts.(index_target) <-
+              (Bigint.(count_packets + one), Bigint.(count_bytes + len)));
       (* Create call result *)
       let value_callResult =
         let value_eps =
@@ -155,8 +154,9 @@ module Make (Spec : Spec.S) = struct
   module Register = struct
     (* Type *)
 
-    (* type t = { typ : Il.Ast.value; values : Il.Ast.value list } [@@deriving yojson] *)
-    type t = { typ : Value.t; values : Value.t list } [@@deriving yojson]
+    (* [values] is a flat [array] indexed by register index, so read/write
+       touch a single slot in O(1) instead of walking/rebuilding a list. *)
+    type t = { typ : Value.t; values : Value.t array } [@@deriving yojson]
 
     let pp fmt (_reg : t) = Format.fprintf fmt "Register"
 
@@ -200,7 +200,7 @@ module Make (Spec : Spec.S) = struct
          objectState node), so the [vt] type/values are marshaled by spec type:
          the elements are [value]s, the element type is a [type_ir]. *)
       let values =
-        List.init size (fun _ -> V.marshal Typs.value value_default)
+        Array.init size (fun _ -> V.marshal Typs.value value_default)
       in
       { typ = V.marshal Typs.type_ir value_type; values }
 
@@ -225,8 +225,8 @@ module Make (Spec : Spec.S) = struct
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value =
-        if index_target < List.length reg.values then
-          V.unmarshal Typs.value (List.nth reg.values index_target)
+        if index_target >= 0 && index_target < Array.length reg.values then
+          V.unmarshal Typs.value reg.values.(index_target)
         else Spec.Func.default (V.unmarshal Typs.type_ir reg.typ)
       in
       let value_ctx =
@@ -269,14 +269,9 @@ module Make (Spec : Spec.S) = struct
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value_target = Spec.Func.find_var_e_local value_ctx "value" in
-      let values =
-        List.mapi
-          (fun idx value ->
-            if idx = index_target then V.marshal Typs.value value_target
-            else value)
-          reg.values
-      in
-      let reg = { reg with values } in
+      (* index >= size leaves the register untouched. *)
+      if index_target >= 0 && index_target < Array.length reg.values then
+        reg.values.(index_target) <- V.marshal Typs.value value_target;
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
