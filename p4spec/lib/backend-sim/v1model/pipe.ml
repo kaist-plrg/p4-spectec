@@ -10,7 +10,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   module Unpack = Spec_impl.Unpack.Make (V)
   module State = State.Make (V)
   module Packet_conv = Packet.Make (V)
-  module Arch_conv = Arch.Make (V)
+  module Arch_conv = Arch.Make_conv (V)
   open Pack
   open Unpack
   open State
@@ -668,11 +668,8 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   let schedule_packet (entrypoint : Packet.entrypoint) : unit state =
     let* value_ctx, value_arch, _ = get in
     let packet_in = get_packet_in value_arch in
-    (* The ctx is stored in the scheduler queue ([Packet.value_ctx : Value.t]),
-       which is yojson-serialized into the archState node — so it must be a real
-       [Value.t], marshaled under [V_native]. *)
-    let value_ctx_cold = V.marshal Typs.eval_context value_ctx in
-    let packet = Packet.{ value_ctx = value_ctx_cold; packet_in; entrypoint } in
+    let value_ctx = V.marshal Typs.eval_context value_ctx in
+    let packet = Packet.{ value_ctx; packet_in; entrypoint } in
     let* arch_state = get_arch_state in
     let queue =
       match entrypoint with

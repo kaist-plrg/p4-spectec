@@ -8,18 +8,8 @@ module Make (V : Valrep.SAFE) = struct
   open Error
   open Util.Source
 
-  (* Total order on values of spec type [typ]: convert both to a real [Value.t]
-     (identity under [V_value]; the type-directed [marshal_<typ>] under [V_native],
-     since a typed [Obj.t] is erased) then [Value.compare]. This keeps the element
-     order identical across representations. *)
-  let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
-    Value.compare (V.marshal typ a) (V.marshal typ b)
-
-  (* A set is a [V.t list] kept sorted-and-deduped under a runtime comparator
-     [cmp = vcompare typ_key]. The comparator cannot be a module-level [Set.Make]
-     argument because the element type is only known per call, so the ops are
-     list-based; sets are small (ids in typing), so this is cheap and the element
-     order is canonical (= [V_value]'s [Value.compare] order). *)
+  let compare_v (typ : typ) (v_a : V.t) (v_b : V.t) : int =
+    Value.compare (V.marshal typ v_a) (V.marshal typ v_b)
 
   let norm cmp xs = List.sort_uniq cmp xs
   let mem cmp x ys = List.exists (fun y -> cmp x y = 0) ys
@@ -31,11 +21,7 @@ module Make (V : Valrep.SAFE) = struct
   let equal cmp a b =
     List.compare_lengths a b = 0 && List.for_all2 (fun x y -> cmp x y = 0) a b
 
-  (* Conversion between meta-sets and OCaml lists, via the generic case ops
-     ([( <<| )] / [Get.case]) — under [V_native] those route to the typed case
-     bridge's set arm. The set mixop is [`{ k }]; inspection needs only the type
-     head, so a targ-less [set] suffices ([case_of_typed] ignores targs, and
-     [V_value] ignores the type entirely). *)
+  (* Conversion between meta-sets and OCaml lists *)
 
   let mixop_set = "`{ k }"
   let typ_set = Typ.Make.var ("set" $ no_region) []
@@ -63,7 +49,7 @@ module Make (V : Valrep.SAFE) = struct
   let intersect_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -74,7 +60,7 @@ module Make (V : Valrep.SAFE) = struct
   let union_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -85,7 +71,7 @@ module Make (V : Valrep.SAFE) = struct
   let unions_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_sets = Extract.one at values_input in
     let sets = value_sets |> V.Get.list |> List.map (set_of_value cmp) in
     sets |> List.fold_left (union cmp) [] |> value_of_set add typ_key
@@ -95,7 +81,7 @@ module Make (V : Valrep.SAFE) = struct
   let diff_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -106,7 +92,7 @@ module Make (V : Valrep.SAFE) = struct
   let sub_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in
@@ -119,7 +105,7 @@ module Make (V : Valrep.SAFE) = struct
   let eq_set (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key = Extract.one at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value_set_a, value_set_b = Extract.two at values_input in
     let set_a = set_of_value cmp value_set_a in
     let set_b = set_of_value cmp value_set_b in

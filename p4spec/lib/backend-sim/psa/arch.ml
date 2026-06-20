@@ -17,12 +17,9 @@ let empty =
     multicast = Multicast.State.empty;
   }
 
-(* Value conversion (functorized over [V]; the rest of the module is
-   representation-independent plain data, so callers keep using the top-level
-   [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
-   two conversions). *)
+(* Value conversion *)
 
-module Make (V : Valrep.SAFE) = struct
+module Make_conv (V : Runtime.Valrep.SAFE) = struct
   let to_value (t : t) =
     t |> to_yojson |> V.Make.extern (Typ.Make.var ("archState" $ no_region) [])
 

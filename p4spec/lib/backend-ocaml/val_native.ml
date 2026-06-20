@@ -17,7 +17,7 @@ module Il = Lang.Il
 module Num = Lang.Xl.Num
 open Util.Source
 
-module V_native : Valrep.VAL with type t = Obj.t = struct
+module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
   type t = Obj.t
 
   (* [to_string] is used only when logging a [value]: convert that one value

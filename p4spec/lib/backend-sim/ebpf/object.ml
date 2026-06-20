@@ -2,7 +2,9 @@ module Typ = Runtime.Type.Typ
 open Error
 open Util.Source
 
-module Make (V : Valrep.SAFE) (Spec_Func : Spec.Func.S with type vt = V.t) =
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
 struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack
@@ -13,8 +15,6 @@ struct
   module CounterArray = struct
     (* Type *)
 
-    (* Flat [array] indexed by counter index, so increment/add touch a single
-       slot in O(1) instead of rebuilding a list. *)
     type t = int array [@@deriving yojson]
 
     let pp fmt (_carr : t) = Format.fprintf fmt "counter array"
@@ -58,7 +58,7 @@ struct
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
-      (* Update counter in place; index >= size leaves the array untouched. *)
+      (* Update counter *)
       if index_target >= 0 && index_target < Array.length counter_array then
         counter_array.(index_target) <- counter_array.(index_target) + 1;
       (* Create call result *)

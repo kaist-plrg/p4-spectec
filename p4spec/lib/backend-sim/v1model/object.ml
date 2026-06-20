@@ -23,9 +23,6 @@ module Make (Spec : Spec.S) = struct
   module Counter = struct
     (* Type *)
 
-    (* The counter state is a flat [array] indexed by counter index, so a
-       single [count] touches one slot in O(1) instead of rebuilding a list. *)
-
     let bytes_pair_to_yojson ((packets, bytes) : Bigint.t * Bigint.t) :
         Yojson.Safe.t =
       `List
@@ -120,7 +117,7 @@ module Make (Spec : Spec.S) = struct
       let value_index = Spec.Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
-      (* Update counter in place; index >= size leaves the array untouched. *)
+      (* Update counter *)
       let in_bounds counts =
         index_target >= 0 && index_target < Array.length counts
       in
@@ -154,8 +151,6 @@ module Make (Spec : Spec.S) = struct
   module Register = struct
     (* Type *)
 
-    (* [values] is a flat [array] indexed by register index, so read/write
-       touch a single slot in O(1) instead of walking/rebuilding a list. *)
     type t = { typ : Value.t; values : Value.t array } [@@deriving yojson]
 
     let pp fmt (_reg : t) = Format.fprintf fmt "Register"
@@ -196,9 +191,6 @@ module Make (Spec : Spec.S) = struct
       let value_default = Spec.Func.default value_type in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
-      (* Stored register state is a real [Value.t] (yojson-serialized into the
-         objectState node), so the [vt] type/values are marshaled by spec type:
-         the elements are [value]s, the element type is a [type_ir]. *)
       let values =
         Array.init size (fun _ -> V.marshal Typs.value value_default)
       in
@@ -269,7 +261,6 @@ module Make (Spec : Spec.S) = struct
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value_target = Spec.Func.find_var_e_local value_ctx "value" in
-      (* index >= size leaves the register untouched. *)
       if index_target >= 0 && index_target < Array.length reg.values then
         reg.values.(index_target) <- V.marshal Typs.value value_target;
       let value_callResult =

@@ -21,12 +21,9 @@ let empty =
 
 let reset (t : t) = { t with action = Packet.empty_action }
 
-(* Value conversion (functorized over [V]; the rest of the module is
-   representation-independent plain data, so callers keep using the top-level
-   [Arch] for setters/constructors and an [Arch.Make (V)] instance for these
-   two conversions). *)
+(* Value conversion *)
 
-module Make (V : Valrep.SAFE) = struct
+module Make_conv (V : Runtime.Valrep.SAFE) = struct
   let to_value (t : t) =
     let typ = Typ.Make.var ("archState" $ no_region) [] in
     t |> to_yojson |> V.Make.extern typ

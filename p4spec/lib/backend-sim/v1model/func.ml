@@ -8,7 +8,7 @@ module Make (Spec : Spec.S) = struct
   module Unpack = Spec_impl.Unpack.Make (V)
   module Hash = Hash.Make (V)
   module Packet = Packet.Make (V)
-  module Arch_conv = Arch.Make (V)
+  module Arch_conv = Arch.Make_conv (V)
   open Pack
   open Unpack
 

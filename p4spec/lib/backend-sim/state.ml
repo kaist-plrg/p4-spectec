@@ -1,10 +1,6 @@
 module IO = Runtime.Sim.Io
 
-(* The pipeline state monad threads the current evaluation context and arch
-   value plus the pending transmissions. Generic over [SAFE] so the ctx/arch flow
-   as [vt] (O(1) cast under [V_native]) rather than [Value.t]. *)
-
-module Make (V : Valrep.SAFE) = struct
+module Make (V : Runtime.Valrep.SAFE) = struct
   (* The state consists of:
       - current evaluation context
       - current arch

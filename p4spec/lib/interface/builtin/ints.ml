@@ -1,10 +1,9 @@
 open Lang
 open Xl
 open Il
+open Util.Source
 
 module Make (V : Valrep.SAFE) = struct
-  open Util.Source
-
   (* Conversion between meta-numerics and OCaml numerics *)
 
   let bigint_of_value (value : V.t) : Bigint.t =

@@ -2,10 +2,9 @@ open Lang
 open Xl
 open Il
 module Typ = Runtime.Type.Typ
+open Util.Source
 
 module Make (V : Valrep.SAFE) = struct
-  open Util.Source
-
   (* dec $text_to_int(text) : int *)
 
   let text_to_int (add : V.t -> unit) (at : region) (targs : targ list)

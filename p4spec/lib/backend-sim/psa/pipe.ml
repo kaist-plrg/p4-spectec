@@ -9,7 +9,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
   module Pack = Spec_impl.Pack.Make (V)
   module Unpack = Spec_impl.Unpack.Make (V)
   module State = State.Make (V)
-  module Arch_conv = Arch.Make (V)
+  module Arch_conv = Arch.Make_conv (V)
   open Pack
   open Unpack
   open State

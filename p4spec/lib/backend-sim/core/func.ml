@@ -2,7 +2,9 @@ module Typ = Runtime.Type.Typ
 open Error
 open Util.Source
 
-module Make (V : Valrep.SAFE) (Spec_Func : Spec.Func.S with type vt = V.t) =
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
 struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack
@@ -18,11 +20,6 @@ struct
     let value_toSignal = Spec_Func.find_var_e_local value_ctx "toSignal" in
     (* If check, return and otherwise reject *)
     let check = value_check |> unpack_p4_bool in
-    (* verify's result is a [callResult] (= abortResult | returnResult); name that
-       type, not a leaf. The typename only matters under [V_native], where
-       [make_case_typed] builds the typed variant from it; [V_value] ignores it
-       (mixop-driven). "rejectResult" was a stale name that never existed as a
-       type — harmless under [V_value], a hard failure under [V_native]. *)
     let value_callResult =
       if check then
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in

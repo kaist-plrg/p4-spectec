@@ -2,7 +2,7 @@ module IO = Runtime.Sim.Io
 
 (* Helpers for invoking relations in the spec *)
 
-module Make (V : Valrep.SAFE) = struct
+module Make (V : Runtime.Valrep.SAFE) = struct
   type vt = V.t
 
   (* A trampoline for calling relations in the spec, which will be registered at
@@ -354,12 +354,10 @@ end
 module type S = sig
   type vt
 
-  (* See [Func.S]: seal [V_value] to [Valrep.SAFE] so the derived [vt] stays abstract
-     and can be rebound by destructive substitution. *)
   include module type of Make ((
     struct
-      include Valrep.V_value
+      include Runtime.Valrep.V_value
     end :
-      Valrep.SAFE))
+      Runtime.Valrep.SAFE))
     with type vt := vt
 end

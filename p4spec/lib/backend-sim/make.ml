@@ -4,9 +4,6 @@ open Runtime.Sim.Io
 open Runtime.Sim.Signature
 open Error
 open Util.Source
-
-(* The [print_] EXT functor, aliased before the [Make] functor shadows the
-   [interface] library's [Interface] module with its [INTERFACE] parameter. *)
 module Builtin_print_ext = Interface.P4.Builtin_P4_Ext
 
 (* Functor to create a SIM from ARCH and INTERP implementations *)
@@ -36,9 +33,9 @@ module Make
      [Spec_*] hold the callbacks that let [Arch_*]/[Table_*] call back into the
      interpreters. *)
 
-  module Spec_v = Spec.Make (Valrep.V_value)
+  module Spec_v = Spec.Make (Runtime.Valrep.V_value)
   module Arch_v = MakeArch (Spec_v)
-  module Table_v = Table.Make (Valrep.V_value) (Spec_v.Func)
+  module Table_v = Table.Make (Runtime.Valrep.V_value) (Spec_v.Func)
   module Spec_t = Spec.Make (Backend_ocaml.Val_native.V_native)
   module Arch_t = MakeArch (Spec_t)
   module Table_t = Table.Make (Backend_ocaml.Val_native.V_native) (Spec_t.Func)
@@ -249,7 +246,7 @@ module Make
      uses [V.Make.*] (typed [make_case_typed] under [V_native]); the packet/expect
      queue bookkeeping above is representation-independent and stays shared. *)
   module RunStf
-      (V : Valrep.SAFE)
+      (V : Runtime.Valrep.SAFE)
       (A : ARCH with type vt = V.t)
       (T : sig
         val add_entry : V.t -> V.t -> V.t -> V.t -> V.t -> V.t -> V.t
@@ -510,7 +507,7 @@ module Make
       | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
   end
 
-  module RunStf_v = RunStf (Valrep.V_value) (Arch_v) (Table_v)
+  module RunStf_v = RunStf (Runtime.Valrep.V_value) (Arch_v) (Table_v)
 
   module RunStf_t =
     RunStf (Backend_ocaml.Val_native.V_native) (Arch_t) (Table_t)

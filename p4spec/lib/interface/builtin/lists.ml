@@ -3,16 +3,12 @@ open Xl
 open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
+open Error
+open Util.Source
 
 module Make (V : Valrep.SAFE) = struct
-  open Error
-  open Util.Source
-
-  (* Total order on values of spec type [typ], via [marshal] then
-     [Value.compare] (see [Sets]): [to_value] would mis-compare typed [Obj.t]
-     under [V_native]. *)
-  let vcompare (typ : typ) (a : V.t) (b : V.t) : int =
-    Value.compare (V.marshal typ a) (V.marshal typ b)
+  let compare_v (typ : typ) (v_a : V.t) (v_b : V.t) : int =
+    Value.compare (V.marshal typ v_a) (V.marshal typ v_b)
 
   (* dec $rev_<X>(X* ) : X* *)
 
@@ -43,7 +39,7 @@ module Make (V : Valrep.SAFE) = struct
   let distinct_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ = Extract.one at targs in
-    let cmp = vcompare typ in
+    let cmp = compare_v typ in
     let values = Extract.one at values_input |> V.Get.list in
     let value =
       V.Make.bool (List.length (List.sort_uniq cmp values) = List.length values)
@@ -79,7 +75,7 @@ module Make (V : Valrep.SAFE) = struct
   let assoc_ (add : V.t -> unit) (at : region) (targs : targ list)
       (values_input : V.t list) : V.t =
     let typ_key, typ_value = Extract.two at targs in
-    let cmp = vcompare typ_key in
+    let cmp = compare_v typ_key in
     let value, value_list = Extract.two at values_input in
     let values =
       value_list |> V.Get.list

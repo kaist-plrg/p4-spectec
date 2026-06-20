@@ -1,4 +1,3 @@
-open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
@@ -7,13 +6,13 @@ open Util.Source
 
 (* Helpers for invoking functions in the spec *)
 
-module Make (V : Valrep.SAFE) = struct
+module Make (V : Runtime.Valrep.SAFE) = struct
   type vt = V.t
 
-  (* A trampoline for calling functions in the spec, which will be registered at
-     initialization time. *)
+  (* A trampoline for calling functions in the spec,
+     which will be registered at initialization time. *)
 
-  type call_func = string -> Sl.typ list -> vt list -> vt
+  type call_func = string -> Typ.t list -> vt list -> vt
 
   let call : call_func ref = ref (fun _ _ _ -> assert false)
   let register f = call := f
@@ -190,13 +189,10 @@ end
 module type S = sig
   type vt
 
-  (* Derive the trampoline surface generically in [vt]: instantiate [Make] at a
-     [V_value] sealed to [Valrep.SAFE] (so its [t] stays abstract), then rebind that
-     abstract result type to [vt] via destructive substitution. *)
   include module type of Make ((
     struct
-      include Valrep.V_value
+      include Runtime.Valrep.V_value
     end :
-      Valrep.SAFE))
+      Runtime.Valrep.SAFE))
     with type vt := vt
 end

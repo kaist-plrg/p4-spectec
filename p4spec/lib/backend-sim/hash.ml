@@ -238,12 +238,7 @@ let compute_hash (algo : string) ?(value_init : Bigint.t = Bigint.zero)
   | "identity" -> value
   | _ -> Format.asprintf "(TODO: compute_hash) %s" algo |> failwith
 
-(* The packing/checksum entry points consume spec values, so they are functorized
-   over [V]; the pure bitstring/CRC helpers above are representation-independent.
-   [adjust]/[bitwise_neg] are re-exported so a single [Hash.Make (V)] instance
-   serves callers that also use them. *)
-
-module Make (V : Valrep.SAFE) = struct
+module Make (V : Runtime.Valrep.SAFE) = struct
   module Unpack = Spec.Unpack.Make (V)
   open Unpack
 

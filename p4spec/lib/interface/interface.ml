@@ -40,12 +40,8 @@ module P4 = struct
 
   (* Builtins *)
 
-  (* dec $print_<X>(X) : text — generic over the value rep [V].
+  (* dec $print_<X>(X) : text *)
 
-     The body is uniform over [V]: convert the argument to a real [Value.t]
-     before [!unparser] (which walks a structural [Value.t]). Under [V_value]
-     [marshal] is identity; under [V_native] it dispatches by the value's spec
-     type — the single targ ([$print_<X>], so [targs = [X]]). *)
   module Builtin_P4_Ext (V : Valrep.SAFE) = struct
     let print (add : V.t -> unit) (at : region) (targs : Typ.t list)
         (values_input : V.t list) : V.t =

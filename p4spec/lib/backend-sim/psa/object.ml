@@ -3,7 +3,9 @@ module Value = Runtime.Value
 open Error
 open Util.Source
 
-module Make (V : Valrep.SAFE) (Spec_Func : Spec.Func.S with type vt = V.t) =
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
 struct
   module Pack = Spec.Pack.Make (V)
   module Unpack = Spec.Unpack.Make (V)
@@ -16,9 +18,6 @@ struct
 
   module Counter = struct
     (* Type *)
-
-    (* The counter state is a flat [array] indexed by counter index, so a
-       single [count] touches one slot in O(1) instead of rebuilding a list. *)
 
     let bytes_pair_to_yojson ((packets, bytes) : Bigint.t * Bigint.t) :
         Yojson.Safe.t =
@@ -94,7 +93,7 @@ struct
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
-      (* Update counter in place; index >= size leaves the array untouched. *)
+      (* Update counter *)
       (match counter with
       | Packets counts ->
           if index_target >= 0 && index_target < Array.length counts then
@@ -192,8 +191,6 @@ struct
   module Register = struct
     (* Type *)
 
-    (* [values] is a flat [array] indexed by register index, so read/write
-       touch a single slot in O(1) instead of walking/rebuilding a list. *)
     type t = { typ : Value.t; values : Value.t array } [@@deriving yojson]
 
     let pp fmt (_reg : t) = Format.fprintf fmt "Register"
@@ -235,9 +232,6 @@ struct
       in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
-      (* Register state is a real [Value.t] (yojson-serialized into the
-         objectState node); marshal the [vt] values/type by spec type (elements
-         are [value]s, the element type is a [type_ir]). *)
       let values =
         Array.init size (fun _ -> V.marshal Typs.value value_initial)
       in
@@ -270,7 +264,6 @@ struct
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value_target = Spec_Func.find_var_e_local value_ctx "value" in
-      (* index >= size leaves the register untouched. *)
       if index_target >= 0 && index_target < Array.length reg.values then
         reg.values.(index_target) <- V.marshal Typs.value value_target;
       let value_callResult =

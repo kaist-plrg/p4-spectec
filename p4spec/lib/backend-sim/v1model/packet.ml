@@ -1,9 +1,5 @@
 module Value = Runtime.Value
 
-(* The data types below are cold serialized state (yojson, [Value.t]-based); only
-   the value<->info conversions touch spec values, so they are functorized over
-   [V] (see [Make] at the bottom). *)
-
 (* Packet clones *)
 
 module CloneInfo = struct
@@ -50,11 +46,9 @@ type t = {
 }
 [@@deriving yojson]
 
-(* The [of_value]/[to_value] conversions pack/unpack spec values, so they are
-   functorized over [V]; callers instantiate [Packet.Make (V)] and pass their own
-   [vt] directly instead of round-tripping through [V.to_value]/[V.of_value]. *)
+(* Functor parmeterized over value representation *)
 
-module Make (V : Valrep.SAFE) = struct
+module Make (V : Runtime.Valrep.SAFE) = struct
   module Pack = Spec.Pack.Make (V)
   module Unpack = Spec.Unpack.Make (V)
   open Pack

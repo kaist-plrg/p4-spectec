@@ -2,11 +2,10 @@ open Lang
 open Xl
 open Il
 module Typ = Runtime.Type.Typ
+open Error
+open Util.Source
 
 module Make (V : Valrep.SAFE) = struct
-  open Error
-  open Util.Source
-
   (* Maximum bit width *)
 
   let max_bit_width = Bigint.of_int 2048
