@@ -9,12 +9,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_ML = struct
   let my_ctx : ctx__ =
     {
-      iface = { parse_program = Interface.parse_program };
+      iface =
+        {
+          parse_program = Interface.parse_program;
+          call_builtin = Interface.call_builtin;
+        };
       extern =
         {
           eval_extern_rel = Extern.eval_extern_rel;
           eval_extern_func = Extern.eval_extern_func;
-          call_builtin = Extern.call_builtin;
         };
     }
 

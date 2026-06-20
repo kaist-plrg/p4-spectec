@@ -152,10 +152,10 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
                   [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
           ] ))
 
-(* Builtin functions: routed through the per-mode [extern.call_builtin] (uniform
-   with externs), which returns the result [Value.t] directly (a typed [Obj.t]
-   under ML). [BuiltinError] from the underlying builtin propagates and is mapped
-   to [Unmatch] so the else-block fallback still works. *)
+(* Builtin functions: routed through [iface.call_builtin], which returns the
+   result [Value.t] directly (a typed [Obj.t] under ML). [BuiltinError] from the
+   underlying builtin propagates and is mapped to [Unmatch] so the else-block
+   fallback still works. *)
 
 let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
@@ -167,7 +167,7 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       in
       let expr_call_ml =
         Ml.AppE
-          ( Common.extern_field "call_builtin",
+          ( Common.iface_field "call_builtin",
             [
               Ml.LitE "(fun _ -> ())"; name_lit_ml; exprs_targ_ml; exprs_arg_ml;
             ] )

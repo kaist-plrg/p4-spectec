@@ -59,6 +59,21 @@ module Make
     Builtin_t_funcs.Make
       (Builtin_print_ext (Backend_ocaml.Val_native.V_native)) ()
 
+  (* Mode-aware [Interface] for the runner. Builtins are part of the interface,
+     but the compiled ML path needs the typed [V_native] instance: under ML the
+     [Value.t] args/result are typed [Obj.t] passed through the [Value.t] surface
+     ([Obj.magic] box/unbox). IL/SL keep the wrapped [Interface]'s [V_value]
+     builtins. *)
+  module Interface_sim : INTERFACE = struct
+    include Interface
+
+    let call_builtin add id typs args =
+      match !sim_mode with
+      | ML_mode ->
+          Obj.magic (Builtin_t.invoke (Obj.magic add) id typs (Obj.magic args))
+      | _ -> Interface.call_builtin add id typs args
+  end
+
   module MakeExtern
       (Interp_IL : INTERP_IL)
       (Interp_SL : INTERP_SL)
@@ -144,19 +159,10 @@ module Make
       match !sim_mode with
       | ML_mode -> Arch_t.eval_extern_func name typs args
       | _ -> Arch_v.eval_extern_func name typs args
-
-    (* Builtin evaluation, per-mode like [eval_extern_func]. ML passes typed
-       [Obj.t] through the [Value.t] surface ([Obj.magic] box/unbox); IL/SL
-       defer to the [Value.t] [Interface] builtins. *)
-    let call_builtin add id typs args =
-      match !sim_mode with
-      | ML_mode ->
-          Obj.magic (Builtin_t.invoke (Obj.magic add) id typs (Obj.magic args))
-      | _ -> Interface.call_builtin add id typs args
   end
 
   include (
-    Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_IL)
+    Runner.Make.Make_rec (Interface_sim) (MakeExtern) (MakeInterp_IL)
       (MakeInterp_SL)
       (Backend_ocaml.Spec_compiled.Make) :
         RUNNER)

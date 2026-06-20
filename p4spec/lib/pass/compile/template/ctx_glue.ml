@@ -9,12 +9,12 @@ let static =
   {|
 type iface__ = {
   parse_program : string list -> string list -> Run.parse_result;
+  call_builtin  : (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t;
 }
 
 type extern__ = {
   eval_extern_rel  : string -> Value.t list -> Run.rel_result;
   eval_extern_func : string -> Typ.t list -> Value.t list -> Run.func_result;
-  call_builtin     : (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t;
 }
 
 type ctx__ = {
@@ -24,12 +24,12 @@ type ctx__ = {
 
 let dummy_iface__ : iface__ = {
   parse_program = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
+  call_builtin = (fun _ _ _ _ -> failwith "spec_compiled: ctx not initialized");
 }
 
 let dummy_extern__ : extern__ = {
   eval_extern_rel = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
   eval_extern_func = (fun _ _ _ -> failwith "spec_compiled: ctx not initialized");
-  call_builtin = (fun _ _ _ _ -> failwith "spec_compiled: ctx not initialized");
 }
 
 let dummy__ : ctx__ = {
