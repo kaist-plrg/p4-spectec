@@ -118,11 +118,9 @@ $ docker build -f p4spectec_p4c.dockerfile -t p4spectec_with_p4c:latest .
 
 ## P4-SpecTec: A language specification framework for P4
 
-The spec source files are located in the `spec/p4` directory. A compile-optimized
-variant lives in `spec/p4-comp`, which shares `spec/p4` via symlinks and overrides
-only the stdlib map functions (defined-function versions for the ML compiler; see
-`docs/superpowers/specs/2026-06-12-dual-spec-symlink-design.md`). Use `spec/p4` for
-the interpreter and `spec/p4-comp` when compiling.
+The spec source files are located in the `spec` directory. The same tree is used
+by both the interpreter and the ML compiler; stdlib map functions are native
+builtins under the VAL abstraction, so no compile-optimized variant is needed.
 
 ### Processing the specification
 
@@ -166,12 +164,12 @@ Given a P4 program, below command runs a particular relation on it.
 
 ```shell
 # To run the IL
-$ ./p4spectec run spec/p4 -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
+$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
 # To run the SL
-$ ./p4spectec run spec/p4 -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
+$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
 ```
 
-e.g., `$ ./p4spectec run spec/p4/*/*.watsup -rel Program_ok -i
+e.g., `$ ./p4spectec run spec/*/*.watsup -rel Program_ok -i
 p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -sl` type
 checks the `basic_routing-bmv2.p4` program using the relation `Program_ok`
 specified in the spec.
@@ -183,12 +181,12 @@ We currently support the V1Model and eBPF architectures, and the STF format for 
 
 ```shell
 # To run the IL
-$ ./p4spectec sim spec/p4 -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
+$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
 # To run the SL
-$ ./p4spectec sim spec/p4 -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
+$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
 ```
 
-e.g., `$ ./p4spectec sim spec/p4/*/*.watsup -arch v1model -i
+e.g., `$ ./p4spectec sim spec/*/*.watsup -arch v1model -i
 p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -stf
 testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf -sl` runs the
 `basic_routing-bmv2.p4` program on the input packet specified in
