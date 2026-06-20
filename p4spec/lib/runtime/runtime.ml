@@ -1,5 +1,6 @@
 module Type = Type
 module Value = Value
+module Valrep = Valrep
 module Static = Static
 module Dynamic = Dynamic
 module Dynamic_Il = Dynamic_il

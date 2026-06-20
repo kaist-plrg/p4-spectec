@@ -17,8 +17,8 @@
    [interface], and [backend-sim] can all be functors over them. [V_native]
    stays in [backend-ocaml] because its body needs the generated symbols. *)
 
-module Value = Runtime.Value
-module Typ = Runtime.Type.Typ
+module Value = Value
+module Typ = Type.Typ
 module Mixfix = Domain.Mixfix
 module Mixop = Domain.Mixop
 module Il = Lang.Il

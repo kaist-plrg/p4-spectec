@@ -1,7 +1,7 @@
 (* Interpreter representation: t = Value.t, ops alias the existing Value API. *)
 
-module Value = Runtime.Value
-module Typ = Runtime.Type.Typ
+module Value = Value
+module Typ = Type.Typ
 module Mixfix = Domain.Mixfix
 module Il = Lang.Il
 module Num = Lang.Xl.Num
