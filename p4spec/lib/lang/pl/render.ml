@@ -639,22 +639,33 @@ let rec render_instr ?(level = 0) ?(unordered = false)
             (render_instrs ~level:(level + 1) ~backtrack block_hold)
             bullet
             (render_instrs ~level:(level + 1) ~backtrack block_nothold))
-  | CaseI (exp_scrut, cases, _dangle) ->
-      let block = BlockLabel.fresh () in
-      let arm_level = level + 1 in
-      let body_level = level + 2 in
-      let total = List.length cases in
-      let render_arm idx ((guard, arm_body) : case) =
-        let bt = arm_backtrack_ctx ~block ~arm_level ~total idx in
-        let anchor = arm_anchor ~block ~arm_level idx in
-        F.asprintf "%sIf %s:%s%s"
-          (adoc_ordered_bullet arm_level)
-          (render_guard in_prose exp_scrut guard)
-          anchor
-          (render_instrs ~level:body_level ~backtrack:(Some bt) arm_body)
-      in
-      F.asprintf "%sTry %s:\n%s" bullet (render_block_label block)
-        (String.concat "\n" (List.mapi render_arm cases))
+  | CaseI (exp_scrut, cases, dangle) -> (
+      let total = not dangle in
+      let n = List.length cases in
+      match cases with
+      | [ (guard, block_then) ] ->
+          let check_line =
+            F.asprintf "%sCheck that %s." bullet
+              (render_guard in_prose exp_scrut guard)
+          in
+          if block_then = [] then check_line
+          else
+            check_line ^ "\n"
+            ^ (block_then
+              |> List.map (render_instr ~level ~backtrack)
+              |> String.concat "\n")
+      | _ ->
+          cases
+          |> List.mapi (fun idx (guard, block_then) ->
+                 if idx = n - 1 && total then
+                   F.asprintf "%sElse:%s" bullet
+                     (render_instrs ~level:(level + 1) ~backtrack block_then)
+                 else
+                   let keyword = if idx = 0 then "If" else "Else if" in
+                   F.asprintf "%s%s %s:%s" bullet keyword
+                     (render_guard in_prose exp_scrut guard)
+                     (render_instrs ~level:(level + 1) ~backtrack block_then))
+          |> String.concat "\n")
   | GroupI (_id_rulegroup, id_rel, rel_signature, exps, block) ->
       let hint_in = hints.Annot.prose_in in
       let hint_true = hints.Annot.prose_true in
