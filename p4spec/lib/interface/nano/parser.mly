@@ -602,12 +602,14 @@ typeFieldList:
 
 structTypeDeclaration:
   | STRUCT n = name tpl = typeParameterListOpt L_BRACE fl = typeFieldList R_BRACE
-    { "STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "structTypeDeclaration" <<<| (at $sloc) }
+    { declare_type (id_of_name n);
+      "STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "structTypeDeclaration" <<<| (at $sloc) }
 ;
 
 headerTypeDeclaration:
   | HEADER n = name tpl = typeParameterListOpt L_BRACE fl = typeFieldList R_BRACE
-    { "HEADER name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "headerTypeDeclaration" <<<| (at $sloc) }
+    { declare_type (id_of_name n);
+      "HEADER name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "headerTypeDeclaration" <<<| (at $sloc) }
 ;
 
 derivedTypeDeclaration:
@@ -682,7 +684,8 @@ transitionStatement:
 parserTypeDeclaration:
   | PARSER n = name push_scope tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "PARSER name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "parserTypeDeclaration" <<<| (at $sloc) }
+    { declare_type (id_of_name n);
+      "PARSER name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "parserTypeDeclaration" <<<| (at $sloc) }
 ;
 
 parserBlockStatement:
@@ -797,7 +800,8 @@ tableDeclaration:
 controlTypeDeclaration:
   | CONTROL n = name push_scope tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "controlTypeDeclaration" <<<| (at $sloc) }
+    { declare_type (id_of_name n);
+      "CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "controlTypeDeclaration" <<<| (at $sloc) }
 ;
 
 controlBody:
@@ -830,7 +834,8 @@ controlDeclaration:
 packageTypeDeclaration:
   | PACKAGE n = name push_scope tpl = typeParameterListOpt
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
-    { "PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "packageTypeDeclaration" <<<| (at $sloc) }
+    { declare_type (id_of_name n);
+      "PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "packageTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* Type declarations *)
