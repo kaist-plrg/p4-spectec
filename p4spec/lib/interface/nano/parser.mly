@@ -754,8 +754,8 @@ parserDeclaration:
 
 (* Control declarations *)
 tableKey:
-  | L_BRACE e = expression COLON n = name R_BRACE
-    { "`{ expression `: name }" <| [ e; n ] <<| "tableKey" <<<| (at $sloc) }
+  | L_BRACE e = expression COLON n = name SEMICOLON R_BRACE
+    { "`{ expression `: name `; }" <| [ e; n ] <<| "tableKey" <<<| (at $sloc) }
 ;
 
 tableActionReference:
