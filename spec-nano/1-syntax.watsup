@@ -1,0 +1,662 @@
+;;
+;; Misc
+;;
+
+syntax trailingCommaOpt =
+  | `EMPTY
+  | `,
+
+;;
+;; Booleans
+;;
+
+syntax booleanLiteral =
+  | TRUE
+  | FALSE
+
+;;
+;; Integers
+;;
+
+syntax integerLiteral =
+  | D int
+  | nat W int
+  | nat S int
+
+;;
+;; Strings
+;;
+
+syntax stringLiteral = `" text `"
+
+;;
+;; Names
+;;
+
+;;; The grammar is actually ambiguous,
+;;; so the lexer and the parser must collaborate for parsing the language.
+;;; In particular, the lexer must be able to distinguish two kinds of identifiers:
+;;;
+;;; * Type names previously introduced (TYPE_IDENTIFIER tokens)
+;;; * Regular identifiers (IDENTIFIER token)
+
+syntax identifier = `ID text
+syntax typeIdentifier = `TID text
+
+;;
+;;;; Non-type names
+;;
+
+syntax nonTypeName =
+  | identifier
+  | APPLY | KEY | ACTIONS | STATE
+
+;;
+;;;; Type names
+;;
+
+syntax typeName = typeIdentifier
+
+;;
+;;;; Names
+;;
+
+syntax name =
+  | nonTypeName
+  | typeName
+  | LIST
+
+syntax nameList =
+  | name
+  | nameList `, name
+
+syntax member = name
+
+;;
+;; Directions
+;;
+
+syntax direction = `EMPTY | IN | OUT | INOUT
+
+;;
+;; Types
+;;
+
+;;
+;;;; Base types
+;;
+
+syntax expression
+
+syntax baseType =
+  | BOOL
+  | ERROR
+  | MATCH_KIND
+  | STRING
+  | INT
+  | INT `< int >
+  | BIT
+  | BIT `< int >
+
+;;
+;;;; Named types
+;;
+
+syntax typeArgumentList
+
+syntax specializedType = typeName `< typeArgumentList >
+
+syntax namedType =
+  | typeName
+  | specializedType
+
+syntax typeArgument
+
+;;
+;;;; Types
+;;
+
+syntax type =
+  | baseType
+  | namedType
+
+syntax typeOrVoid =
+  | type
+  | VOID
+  | identifier
+
+;;
+;; Type parameters
+;;
+
+syntax typeParameter = name
+
+syntax typeParameterList =
+  | typeParameter
+  | typeParameterList `, typeParameter
+
+syntax typeParameterListOpt =
+  | `EMPTY
+  | `< typeParameterList >
+
+;;
+;; Parameters
+;;
+
+syntax initializerOpt
+
+syntax parameter =
+  direction type name initializerOpt
+
+syntax nonEmptyParameterList =
+  | parameter
+  | nonEmptyParameterList `, parameter
+
+syntax parameterList =
+  | `EMPTY
+  | nonEmptyParameterList
+
+;;
+;; Constructor parameters
+;;
+
+syntax constructorParameterListOpt =
+  | `EMPTY
+  | `( parameterList )
+
+;;
+;; Expression key-value pairs
+;;
+
+syntax namedExpression = name `= expression
+
+syntax namedExpressionList =
+  | namedExpression
+  | namedExpressionList `, namedExpression
+
+;;
+;; Expressions
+;;
+
+;;
+;;;; Literal expressions
+;;
+
+syntax literalExpression =
+  | booleanLiteral
+  | integerLiteral
+  | stringLiteral
+
+;;
+;;;; Reference expressions
+;;
+
+syntax referenceExpression = nonTypeName
+
+;;
+;;;; Unary, binary, and ternary expressions
+;;
+
+syntax unop = `! | `~ | `- | `+
+
+syntax unaryExpression = unop expression
+
+syntax binop =
+  | `* | `/ | `% | `+ | `- | `<< | `>>
+  | `<= | `>= | ``< | ``> | `!= | `==
+  | `& | `^ | `| | `++ | `&& | `||
+
+syntax binaryExpression = expression binop expression
+
+syntax ternaryExpression =
+  expression `? expression `: expression
+
+;;
+;;;; Member access expressions
+;;
+
+syntax memberAccessBase
+
+syntax errorAccessExpression =
+  ERROR `. member
+
+syntax memberAccessExpression =
+  memberAccessBase `. member
+
+syntax accessExpression =
+  | errorAccessExpression
+  | memberAccessExpression
+
+;;
+;;;; Call expressions
+;;
+
+syntax callTarget
+syntax argumentList
+
+;; TODO: callTarget with type argument
+syntax callExpression = callTarget `( argumentList )
+
+;;
+;;;; Parenthesized expressions
+;;
+
+syntax parenthesizedExpression = `( expression )
+
+;;
+;;;; Expressions
+;;
+
+syntax expression =
+  | literalExpression
+  | referenceExpression
+  | unaryExpression
+  | binaryExpression
+  | ternaryExpression
+  | accessExpression
+  | callExpression
+  | parenthesizedExpression
+
+syntax expressionList =
+  | `EMPTY
+  | expression
+  | expressionList `, expression
+
+syntax memberAccessBase =
+  | typeName
+  | expression
+
+syntax callTarget = namedType
+
+;;
+;; Type arguments
+;;
+
+syntax realTypeArgument =
+  | type
+  | VOID
+  | `_
+
+syntax typeArgument =
+  | realTypeArgument
+  | nonTypeName
+
+syntax typeArgumentList =
+  | `EMPTY
+  | typeArgument
+  | typeArgumentList `, typeArgument
+
+;;
+;; Arguments
+;;
+
+syntax argument =
+  | expression
+  | name `= expression
+  | name `= `_
+  | `_
+
+syntax argumentListNonEmpty =
+  | argument
+  | argumentListNonEmpty `, argument
+
+syntax argumentList =
+  | `EMPTY
+  | argumentListNonEmpty
+
+;;
+;; L-values
+;;
+
+syntax lvalue =
+  | referenceExpression
+  | lvalue `. member
+  | `( lvalue )
+
+;;
+;; Statements
+;;
+
+;;
+;;;; Empty statements
+;;
+
+syntax emptyStatement = `;
+
+;;
+;;;; Assignment statement
+;;
+
+syntax assignmentStatement = lvalue `= expression `;
+
+;;
+;;;; Call statements
+;;
+
+syntax callStatement =
+  | lvalue `( argumentList ) `;
+  | lvalue `< typeArgumentList > `( argumentList ) `;
+
+;;
+;;;; Block statements
+;;
+
+syntax blockElementStatementList
+
+syntax blockStatement = `{ blockElementStatementList }
+
+;;
+;;;; Conditional statements
+;;
+
+syntax statement
+
+syntax conditionalStatement =
+  | IF `( expression ) statement
+  | IF `( expression ) statement ELSE statement
+
+;;
+;;;; Statements
+;;
+
+syntax statement =
+  | emptyStatement
+  | assignmentStatement
+  | callStatement
+  | blockStatement
+  | conditionalStatement
+
+;;
+;; Declarations
+;;
+
+;;
+;;;; Constant and variable declarations
+;;
+
+syntax initializer = `= expression
+
+syntax constantDeclaration =
+  CONST type name initializer `;
+
+syntax initializerOpt =
+  | `EMPTY
+  | initializer
+
+syntax variableDeclaration =
+  type name initializerOpt `;
+
+syntax blockElementStatement =
+  | constantDeclaration
+  | variableDeclaration
+  | statement
+
+syntax blockElementStatementList =
+  | `EMPTY
+  | blockElementStatementList blockElementStatement
+
+;;
+;;;; Function declarations
+;;
+
+syntax functionPrototype =
+  typeOrVoid name typeParameterListOpt `( parameterList )
+
+;;
+;;;; Action declarations
+;;
+
+syntax actionDeclaration =
+  ACTION name `( parameterList ) blockStatement
+
+;;
+;;;; Instantiations
+;;
+
+syntax instantiation = type `( argumentList ) name `;
+
+;;
+;;;; Error declarations
+;;
+
+syntax errorDeclaration = ERROR `{ nameList }
+
+;;
+;;;; Match kind declarations
+;;
+
+syntax matchKindDeclaration = MATCH_KIND `{ nameList trailingCommaOpt }
+
+;;
+;;;; Derived type declarations
+;;
+
+;;
+;;;;;; Struct, header, and union type declarations
+;;
+
+syntax typeField = type name `;
+
+syntax typeFieldList =
+  | `EMPTY
+  | typeFieldList typeField
+
+syntax structTypeDeclaration =
+  STRUCT name typeParameterListOpt `{ typeFieldList }
+
+syntax headerTypeDeclaration =
+  HEADER name typeParameterListOpt `{ typeFieldList }
+
+syntax derivedTypeDeclaration =
+  | structTypeDeclaration
+  | headerTypeDeclaration
+
+;;
+;;;; Extern declarations
+;;
+
+syntax externFunctionDeclaration =
+  EXTERN functionPrototype `;
+
+syntax externMethodPrototype =
+  functionPrototype `;
+
+syntax externMethodPrototypeList =
+  | `EMPTY
+  | externMethodPrototypeList
+      externMethodPrototype
+
+syntax externObjectDeclaration =
+  EXTERN nonTypeName
+    typeParameterListOpt `{ externMethodPrototypeList }
+
+syntax externDeclaration =
+  | externFunctionDeclaration
+  | externObjectDeclaration
+
+;;
+;;;; Parser statements and declarations
+;;
+
+;;
+;;;;;; Select expressions
+;;
+
+syntax selectCase = expression `: name `;
+
+syntax selectCaseList =
+  | `EMPTY
+  | selectCaseList selectCase
+
+syntax selectExpression = SELECT `( expression ) `{ selectCaseList }
+
+;;
+;;;;;; Transition statements
+;;
+
+syntax stateExpression =
+  | name `;
+  | selectExpression
+
+syntax transitionStatement =
+  | `EMPTY
+  | TRANSITION stateExpression
+
+;;
+;;;;;; Parser type declarations
+;;
+
+syntax parserTypeDeclaration =
+  PARSER name typeParameterListOpt `( parameterList ) `;
+
+;;
+;;;;;; Parser declarations
+;;
+
+syntax parserStatement, parserStatementList
+
+syntax parserBlockStatement = `{ parserStatementList }
+
+syntax parserConditionalStatement =
+  | IF `( expression ) parserStatement
+  | IF `( expression ) parserStatement ELSE parserStatement
+
+syntax parserStatement =
+  | constantDeclaration
+  | variableDeclaration
+  | emptyStatement
+  | assignmentStatement
+  | callStatement
+  | parserBlockStatement
+  | parserConditionalStatement
+
+syntax parserStatementList =
+  | `EMPTY
+  | parserStatementList parserStatement
+
+syntax parserState =
+  STATE name `{ parserStatementList transitionStatement }
+
+syntax parserStateList =
+  | parserState
+  | parserStateList parserState
+
+syntax parserLocalDeclaration =
+  | constantDeclaration
+  | variableDeclaration
+
+syntax parserLocalDeclarationList =
+  | `EMPTY
+  | parserLocalDeclarationList parserLocalDeclaration
+
+syntax parserDeclaration =
+  PARSER name typeParameterListOpt
+    `( parameterList ) constructorParameterListOpt
+    `{ parserLocalDeclarationList parserStateList }
+
+;;
+;;;; Control statements and declarations
+;;
+
+;;
+;;;;;;;; Table key property
+;;
+
+syntax tableKey = expression `: name `;
+
+;;
+;;;;;;;; Table actions property
+;;
+
+syntax tableActionReference =
+  | nonTypeName
+  | nonTypeName `( argumentList )
+
+syntax tableAction = tableActionReference `;
+
+syntax tableActionList =
+  | `EMPTY
+  | tableActionList tableAction
+
+;;
+;;;;;;;; Table properties
+;;
+
+syntax tableProperty =
+  | KEY `= tableKey
+  | ACTIONS `= `{ tableActionList }
+
+syntax tablePropertyList =
+  | `EMPTY
+  | tablePropertyList tableProperty
+
+syntax tableDeclaration =
+  TABLE name `{ tablePropertyList }
+
+;;
+;;;;;; Control type declarations
+;;
+
+syntax controlTypeDeclaration =
+  CONTROL name typeParameterListOpt `( parameterList ) `;
+
+;;
+;;;;;; Control declarations
+;;
+
+syntax controlBody = blockStatement
+
+syntax controlLocalDeclaration =
+  | constantDeclaration
+  | variableDeclaration
+  | tableDeclaration
+
+syntax controlLocalDeclarationList =
+  | `EMPTY
+  | controlLocalDeclarationList controlLocalDeclaration
+
+syntax controlDeclaration =
+  CONTROL name typeParameterListOpt
+    `( parameterList ) constructorParameterListOpt
+    `{ controlLocalDeclarationList APPLY controlBody }
+
+;;
+;;;; Package type declarations
+;;
+
+syntax packageTypeDeclaration =
+  PACKAGE name typeParameterListOpt `( parameterList ) `;
+
+;;
+;;;; Type declarations
+;;
+
+syntax typeDeclaration =
+  | derivedTypeDeclaration
+  | parserTypeDeclaration
+  | controlTypeDeclaration
+  | packageTypeDeclaration
+
+;;
+;;;; Declaration
+;;
+
+syntax declaration =
+  | constantDeclaration
+  | instantiation
+  | actionDeclaration
+  | errorDeclaration
+  | matchKindDeclaration
+  | externDeclaration
+  | parserDeclaration
+  | controlDeclaration
+  | typeDeclaration
+
+;;
+;; P4 program
+;;
+
+syntax p4program =
+  | `EMPTY
+  | p4program declaration
+  | p4program `;
