@@ -57,8 +57,14 @@ module P4 = struct
     let entries = [ ("print_", print) ]
   end
 
-  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
-  module Builtin_P4 = Builtin_.Make (Builtin_P4_Ext (Valrep.V_value)) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (Builtin_P4_Ext (V)) ()
+  end
+
+  module Builtin_P4 = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_P4.invoke
 
@@ -126,8 +132,14 @@ module SpecTec_IL = struct
 
   (* Builtins *)
 
-  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
-  module Builtin_SpecTec = Builtin_.Make (Builtin_.No_ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (F.No_ext) ()
+  end
+
+  module Builtin_SpecTec = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_SpecTec.invoke
 
@@ -176,8 +188,14 @@ module SpecTec_SL = struct
 
   (* Builtins *)
 
-  module Builtin_ = Builtin.Call.Make_funcs (Valrep.V_value)
-  module Builtin_SpecTec = Builtin_.Make (Builtin_.No_ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (F.No_ext) ()
+  end
+
+  module Builtin_SpecTec = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_SpecTec.invoke
 

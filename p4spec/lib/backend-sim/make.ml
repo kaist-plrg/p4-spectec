@@ -4,7 +4,6 @@ open Runtime.Sim.Io
 open Runtime.Sim.Signature
 open Error
 open Util.Source
-module Builtin_print_ext = Interface.P4.Builtin_P4_Ext
 
 (* Functor to create a SIM from ARCH and INTERP implementations *)
 
@@ -21,24 +20,16 @@ module Make
       (Extern : EXTERN)
       ()
       -> INTERP_SL) : SIM = struct
-  (* Two parallel extern stacks.
+  (* Two parallel extern stacks *)
 
-     The IL/SL interpreters evaluate on [Value.t] natively, so they drive the
-     [V_value] stack ([vt = Value.t]). The compiled ML interpreter passes typed
-     [Obj.t] values through the [Value.t] interfaces, so it drives a second
-     stack at [V_native] ([vt = Obj.t]); its dispatch and extern wrappers
-     [Obj.magic]-cast instead of converting. One simulator instance runs in one
-     mode, so [init_mode] registers only the matching stack's callbacks.
+  module MakeStack (V : Runtime.Valrep.VAL) = struct
+    module Spec = Spec.Make (V)
+    module Arch = MakeArch (Spec)
+    module Table = Table.Make (V) (Spec.Func)
+  end
 
-     [Spec_*] hold the callbacks that let [Arch_*]/[Table_*] call back into the
-     interpreters. *)
-
-  module Spec_v = Spec.Make (Runtime.Valrep.V_value)
-  module Arch_v = MakeArch (Spec_v)
-  module Table_v = Table.Make (Runtime.Valrep.V_value) (Spec_v.Func)
-  module Spec_t = Spec.Make (Backend_ocaml.Val_native.V_native)
-  module Arch_t = MakeArch (Spec_t)
-  module Table_t = Table.Make (Backend_ocaml.Val_native.V_native) (Spec_t.Func)
+  module Stack_v = MakeStack (Runtime.Valrep.V_value)
+  module Stack_n = MakeStack (Backend_ocaml.Val_native.V_native)
 
   (* Active mode, set by [MakeExtern.init_mode] (the runner calls it from [init]);
      read by the extern dispatch and the STF runner to pick the stack. *)
@@ -47,14 +38,10 @@ module Make
   (* Typed builtin instance for the compiled ML path. Builtins are arch-
      independent, so a single instance over [V_native] serves [call_builtin]
      under ML. IL/SL keep the [V_value] builtins of the [Interface] argument.
-     Gets the same [print_] EXT as the interface, at [V_native] (its [marshal]
-     re-encodes the argument before [!unparser]). *)
-  module Builtin_t_funcs =
-    Builtin.Call.Make_funcs (Backend_ocaml.Val_native.V_native)
-
-  module Builtin_t =
-    Builtin_t_funcs.Make
-      (Builtin_print_ext (Backend_ocaml.Val_native.V_native)) ()
+     [Interface.Builtins] hands out the interface's own builtin set + EXT at any
+     rep, so the [V_native] instance matches whatever [Interface] uses at
+     [V_value] (no reach-in to the builtin library or a hardcoded EXT). *)
+  module Builtin_t = Interface.Builtins (Backend_ocaml.Val_native.V_native)
 
   (* Mode-aware [Interface] for the runner. Builtins are part of the interface,
      but the compiled ML path needs the typed [V_native] instance: under ML the
@@ -126,13 +113,13 @@ module Make
       sim_mode := mode_;
       match mode_ with
       | ML_mode ->
-          Spec_t.Func.register call_func_t;
-          Spec_t.Rel.register call_rel_t;
-          Spec_t.Pgm.register call_pgm
+          Stack_n.Spec.Func.register call_func_t;
+          Stack_n.Spec.Rel.register call_rel_t;
+          Stack_n.Spec.Pgm.register call_pgm
       | IL_mode | SL_mode ->
-          Spec_v.Func.register call_func_v;
-          Spec_v.Rel.register call_rel_v;
-          Spec_v.Pgm.register call_pgm
+          Stack_v.Spec.Func.register call_func_v;
+          Stack_v.Spec.Rel.register call_rel_v;
+          Stack_v.Spec.Pgm.register call_pgm
       | Empty_mode -> assert false
 
     let checkpoint () : int = 0
@@ -145,17 +132,17 @@ module Make
     end
 
     (* Extern relation/function evaluation crosses to the active stack's [Arch];
-       for ML the [Value.t] args/results are typed [Obj.t] ([Arch_t]'s externs
+       for ML the [Value.t] args/results are typed [Obj.t] ([Stack_n.Arch]'s externs
        [Obj.obj]-project them). *)
     let eval_extern_rel name args =
       match !sim_mode with
-      | ML_mode -> Arch_t.eval_extern_rel name args
-      | _ -> Arch_v.eval_extern_rel name args
+      | ML_mode -> Stack_n.Arch.eval_extern_rel name args
+      | _ -> Stack_v.Arch.eval_extern_rel name args
 
     let eval_extern_func name typs args =
       match !sim_mode with
-      | ML_mode -> Arch_t.eval_extern_func name typs args
-      | _ -> Arch_v.eval_extern_func name typs args
+      | ML_mode -> Stack_n.Arch.eval_extern_func name typs args
+      | _ -> Stack_v.Arch.eval_extern_func name typs args
   end
 
   include (
@@ -507,10 +494,11 @@ module Make
       | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
   end
 
-  module RunStf_v = RunStf (Runtime.Valrep.V_value) (Arch_v) (Table_v)
+  module RunStf_v =
+    RunStf (Runtime.Valrep.V_value) (Stack_v.Arch) (Stack_v.Table)
 
   module RunStf_t =
-    RunStf (Backend_ocaml.Val_native.V_native) (Arch_t) (Table_t)
+    RunStf (Backend_ocaml.Val_native.V_native) (Stack_n.Arch) (Stack_n.Table)
 
   (* Dispatch to the stack matching the active mode (ML drives the typed stack). *)
   let run_stf_test (includes_p4 : string list) (path_p4 : string)
