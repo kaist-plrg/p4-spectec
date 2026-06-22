@@ -5,6 +5,8 @@ open Il
 module Type = Runtime.Type
 open Util.Source
 
+(* Helper for identifying singleton case *)
+
 let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
   match typ.it with
   | VarT (tid, targs) -> (
@@ -21,27 +23,12 @@ let rec is_singleton_case (dctx : Dctx.t) (typ : typ) : bool =
       | _ -> false)
   | _ -> false
 
+(* Rename for an expression *)
+
 module To = struct
   include Var
 
-  (* Produce a dimension-annotated expression, matching what dimension
-     analysis would generate: each iterexp var carries the element type
-     and the iters accumulated below it (cf. [collect_itervars] in
-     dimension.ml). This is needed because in elaborate2 dimension analysis
-     runs *before* binding, so freshly generated variables would otherwise
-     have empty iterexp annotations. *)
-  let as_exp ((id, typ, iters) : Var.t) : exp =
-    let exp_base = VarE id $$ (id.at, typ.it) in
-    let exp, _ =
-      List.fold_left
-        (fun (exp, iters_acc) iter ->
-          let var = (id, exp.note $ exp.at, iters_acc) in
-          let typ' = IterT (exp.note $ exp.at, iter) $ typ.at in
-          let exp = IterE (exp, (iter, [ var ])) $$ (exp.at, typ'.it) in
-          (exp, iters_acc @ [ iter ]))
-        (exp_base, []) iters
-    in
-    exp
+  let as_exp = Var.as_exp ~dim:true
 end
 
 module From = struct
@@ -54,7 +41,11 @@ end
 module REnv = struct
   type t = (To.t * From.t * iter list) list
 
+  (* Construstor *)
+
   let empty : t = []
+
+  (* Adder and updater *)
 
   let add renv to_ from_ = (to_, from_, []) :: renv
 
@@ -71,6 +62,8 @@ module REnv = struct
         else (to_, from_, iters))
       renv_post
 end
+
+(* Generate premises *)
 
 let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
     (iters : iter list) : prem =
@@ -175,6 +168,10 @@ let check_upcast_terminal (exp : exp) : bool =
 let rec rename_exp (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (exp : exp)
     : Dctx.t * REnv.t * exp =
   let frees = Free.free_exp exp in
+  (* If the expression contains no bindings, rename it
+     Yet, skip upcast on terminals to enforce case-analysis,
+     which helps with the later structuring phase
+     e.g., patterns like let typ = (VoidT as typ) *)
   if
     IdSet.inter binds frees |> IdSet.is_empty && not (check_upcast_terminal exp)
   then rename_exp_bound dctx renv exp
@@ -254,6 +251,8 @@ and rename_exps (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)
       let dctx, renv_post, exp = rename_exp dctx binds REnv.empty exp in
       (dctx, renv_pre @ renv_post, exps @ [ exp ]))
     (dctx, renv, []) exps
+
+(* Arguments *)
 
 and rename_arg (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (arg : arg) :
     Dctx.t * REnv.t * arg =

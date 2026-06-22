@@ -50,8 +50,8 @@ let update_venv_partial (venv : VEnv.t) (renv_partial : Partialbind.REnv.t) :
 
 (* Expression binding analysis *)
 
-let analyze_exps_as_bind (dctx : Dctx.t) (exps : exp list) :
-    Dctx.t * VEnv.t * exp list * prem list =
+let analyze_exps_as_bind (dctx : Dctx.t) (iterctx : Iterctx.t) (exps : exp list)
+    : Dctx.t * VEnv.t * exp list * prem list =
   let binds = Collectbind.collect_exps dctx exps in
   let venv = BEnv.flatten binds in
   let dctx, renv_multi, exps =
@@ -59,7 +59,9 @@ let analyze_exps_as_bind (dctx : Dctx.t) (exps : exp list) :
     Multibind.rename_exps dctx renv_multi exps
   in
   let venv = update_venv_multi venv renv_multi in
-  let sideconditions_multi = Multibind.gen_sideconditions binds renv_multi in
+  let sideconditions_multi =
+    Multibind.gen_sideconditions binds iterctx renv_multi
+  in
   let dctx, renv_partial, exps =
     Partialbind.rename_exps dctx (VEnv.dom venv) Partialbind.REnv.empty exps
   in
@@ -89,7 +91,9 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
     Multibind.rename_args dctx renv_multi args
   in
   let venv = update_venv_multi venv renv_multi in
-  let sideconditions_multi = Multibind.gen_sideconditions binds renv_multi in
+  let sideconditions_multi =
+    Multibind.gen_sideconditions binds Iterctx.empty renv_multi
+  in
   let dctx, renv_partial, args =
     Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty args
   in
@@ -100,89 +104,97 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
 
 (* Premise binding analysis *)
 
-let rec analyze_prem (dctx : Dctx.t) (prem : prem) :
+let rec analyze_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (prem : prem) :
     Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   match prem.it with
   | RulePr (id, notexp, inputs) ->
-      analyze_rule_prem dctx prem.at id notexp inputs
-  | IfPr exp -> analyze_if_prem dctx prem.at exp
-  | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx prem.at id notexp
-  | IfNotHoldPr (id, notexp) -> analyze_if_not_hold_prem dctx prem.at id notexp
+      analyze_rule_prem dctx iterctx prem.at id notexp inputs
+  | IfPr exp -> analyze_if_prem dctx iterctx prem.at exp
+  | IfHoldPr (id, notexp) -> analyze_if_hold_prem dctx iterctx prem.at id notexp
+  | IfNotHoldPr (id, notexp) ->
+      analyze_if_not_hold_prem dctx iterctx prem.at id notexp
   | LetPr _ ->
       error prem.at "let premise should appear only after bind analysis"
-  | IterPr (_, (_, _, vars_bind)) when not (List.is_empty vars_bind) ->
+  | IterPr (prem, (iter, vars_bound, [])) ->
+      analyze_iter_prem dctx iterctx prem iter vars_bound
+  | IterPr _ ->
       error prem.at
         "iterated premise vars_bind should be empty before binding analysis"
-  | IterPr (prem_inner, iterprem) ->
-      analyze_iter_prem dctx prem.at prem_inner iterprem
-  | DebugPr exp -> analyze_debug_prem dctx prem.at exp
+  | DebugPr exp -> analyze_debug_prem dctx iterctx prem.at exp
 
-and analyze_rule_prem (dctx : Dctx.t) (at : region) (id : id) (notexp : notexp)
-    (inputs : Hints.Input.t) : Dctx.t * VEnv.t * prem * prem list =
+and analyze_rule_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
+    (id : id) (notexp : notexp) (inputs : Hints.Input.t) :
+    Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let mixop, exps = Mixfix.split notexp in
   let exps_input, exps_output = Hints.Input.split inputs exps in
   analyze_exps_as_bound dctx exps_input;
   let dctx, venv, exps_output, sideconditions =
-    analyze_exps_as_bind dctx exps_output
+    analyze_exps_as_bind dctx iterctx exps_output
   in
   let exps = Hints.Input.combine inputs exps_input exps_output in
   let notexp = Mixfix.fill mixop exps in
   let prem = RulePr (id, notexp, inputs) $ at in
   (dctx, venv, prem, sideconditions)
 
-and analyze_if_eq_prem (dctx : Dctx.t) (at : region) (note : typ')
-    (optyp : optyp) (exp_l : exp) (exp_r : exp) :
-    Dctx.t * VEnv.t * prem' * prem list =
+and analyze_if_eq_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at_prem : region)
+    (at : region) (note : typ') (optyp : optyp) (exp_l : exp) (exp_r : exp) :
+    Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let binds_l = Collectbind.collect_exp dctx exp_l in
   let binds_r = Collectbind.collect_exp dctx exp_r in
   match (BEnv.is_empty binds_l, BEnv.is_empty binds_r) with
   | true, true ->
-      let prem = IfPr (CmpE (`EqOp, optyp, exp_l, exp_r) $$ (at, note)) in
+      let prem =
+        IfPr (CmpE (`EqOp, optyp, exp_l, exp_r) $$ (at, note)) $ at_prem
+      in
+      let prem = Iterctx.iterate_prem prem iterctx in
       (dctx, VEnv.empty, prem, [])
-  | false, true -> analyze_let_prem dctx exp_l binds_l exp_r
-  | true, false -> analyze_let_prem dctx exp_r binds_r exp_l
+  | false, true -> analyze_let_prem dctx at_prem iterctx exp_l binds_l exp_r
+  | true, false -> analyze_let_prem dctx at_prem iterctx exp_r binds_r exp_l
   | false, false ->
       error at
         (Format.asprintf
            "cannot bind on both sides of an equality: (left) %s, (right) %s"
            (BEnv.to_string binds_l) (BEnv.to_string binds_r))
 
-and analyze_if_prem (dctx : Dctx.t) (at : region) (exp : exp) :
-    Dctx.t * VEnv.t * prem * prem list =
+and analyze_if_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
+    (exp : exp) : Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   match exp.it with
   | CmpE (`EqOp, optyp, exp_l, exp_r) ->
       let dctx, venv, prem, prems =
-        analyze_if_eq_prem dctx exp.at exp.note optyp exp_l exp_r
+        analyze_if_eq_prem dctx iterctx at exp.at exp.note optyp exp_l exp_r
       in
-      let prem = prem $ at in
       (dctx, venv, prem, prems)
   | _ ->
       analyze_exp_as_bound dctx exp;
       let prem = IfPr exp $ at in
+      let prem = Iterctx.iterate_prem prem iterctx in
       (dctx, VEnv.empty, prem, [])
 
-and analyze_if_hold_prem (dctx : Dctx.t) (at : region) (id : id)
-    (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
+and analyze_if_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
+    (id : id) (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let exps = Mixfix.args notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfHoldPr (id, notexp) $ at in
+  let prem = Iterctx.iterate_prem prem iterctx in
   (dctx, VEnv.empty, prem, [])
 
-and analyze_if_not_hold_prem (dctx : Dctx.t) (at : region) (id : id)
-    (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
+and analyze_if_not_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
+    (id : id) (notexp : notexp) : Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let exps = Mixfix.args notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfNotHoldPr (id, notexp) $ at in
+  let prem = Iterctx.iterate_prem prem iterctx in
   (dctx, VEnv.empty, prem, [])
 
-and analyze_let_prem (dctx : Dctx.t) (exp_l : exp) (binds_l : BEnv.t)
-    (exp_r : exp) : Dctx.t * VEnv.t * prem' * prem list =
+and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
+    (exp_l : exp) (binds_l : BEnv.t) (exp_r : exp) :
+    Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   let venv = BEnv.flatten binds_l in
   let dctx, renv_multi, exp_l =
@@ -190,36 +202,48 @@ and analyze_let_prem (dctx : Dctx.t) (exp_l : exp) (binds_l : BEnv.t)
     Multibind.rename_exp dctx renv_multi exp_l
   in
   let venv = update_venv_multi venv renv_multi in
-  let sideconditions_multi = Multibind.gen_sideconditions binds_l renv_multi in
+  let sideconditions_multi =
+    Multibind.gen_sideconditions binds_l iterctx renv_multi
+  in
   let dctx, renv_partial, exp_l =
     Partialbind.rename_exp dctx (VEnv.dom venv) Partialbind.REnv.empty exp_l
   in
   let venv = update_venv_partial venv renv_partial in
   let prems_partial = Partialbind.gen_prems dctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
-  let prem = LetPr (exp_l, exp_r) in
+  let prem = LetPr (exp_l, exp_r) $ at in
+  let venv_l = Collectbind.collect_exp dctx exp_l |> BEnv.flatten in
+  let _, iterctx =
+    List.fold_left_map
+      (fun venv_l (iter, vars_bound, _) ->
+        let vars_bound =
+          List.filter (fun (id, _, _) -> not (VEnv.mem id venv)) vars_bound
+        in
+        let vars_bind =
+          venv_l |> VEnv.bindings
+          |> List.map (fun (id, (typ, iters)) -> (id, typ, iters))
+        in
+        let venv_l = VEnv.map (Typdim.add_iter iter) venv_l in
+        (venv_l, (iter, vars_bound, vars_bind)))
+      venv_l iterctx
+  in
+  let prem = Iterctx.iterate_prem prem iterctx in
   (dctx, venv, prem, prems)
 
-and analyze_iter_prem (dctx : Dctx.t) (at : region) (prem : prem)
-    (iterprem : Il.iterprem) : Dctx.t * VEnv.t * prem * prem list =
-  let open Il in
-  let dctx, venv, prem, extra_prems = analyze_prem dctx prem in
-  let iter, _vars_bound, _vars_bind = iterprem in
-  let venv = VEnv.map (Typdim.add_iter iter) venv in
-  let extra_prems =
-    List.map (fun ep -> IterPr (ep, (iter, [], [])) $ at) extra_prems
-  in
-  let prem = IterPr (prem, iterprem) $ at in
-  (dctx, venv, prem, extra_prems)
+and analyze_iter_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (prem : prem)
+    (iter : iter) (vars : var list) : Dctx.t * VEnv.t * prem * prem list =
+  let iterctx = (iter, vars, []) :: iterctx in
+  analyze_prem dctx iterctx prem
 
-and analyze_debug_prem (dctx : Dctx.t) (at : region) (exp : exp) :
-    Dctx.t * VEnv.t * prem * prem list =
+and analyze_debug_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
+    (exp : exp) : Dctx.t * VEnv.t * prem * prem list =
   let open Il in
   analyze_exp_as_bound dctx exp;
   let prem = DebugPr exp $ at in
+  let prem = Iterctx.iterate_prem prem iterctx in
   (dctx, VEnv.empty, prem, [])
 
-(* Clause binding analysis — entry point per clause *)
+(* Clause binding analysis *)
 
 let analyze_clause (dctx : Dctx.t) (clause : clause) : clause =
   let args, exp, prems = clause.it in
@@ -230,20 +254,18 @@ let analyze_clause (dctx : Dctx.t) (clause : clause) : clause =
   let dctx, prems_analyzed =
     List.fold_left
       (fun (dctx, acc) prem ->
-        let dctx, venv, prem, extra_prems = analyze_prem dctx prem in
+        let dctx, venv, prem, extra_prems =
+          analyze_prem dctx Iterctx.empty prem
+        in
         let dctx = Dctx.add_bounds dctx venv in
         (dctx, acc @ [ prem ] @ extra_prems))
       (dctx, []) prems
   in
   analyze_exp_as_bound dctx exp;
   let final_prems = prems_from_args @ prems_analyzed in
-  (* Recompute per-premise iteration annotations (vars_bound / vars_bind),
-     now that all bindings are desugared and full dimensions are known. *)
-  (* let bounds = dctx.bounds in
-     let final_prems = List.map (Redimension.reannotate bounds) final_prems in *)
   (args, exp, final_prems) $ clause.at
 
-let analyze_def (dctx : Dctx.t) (def : def) : Dctx.t * def =
+let analyze_def (dctx : Dctx.t) (def : def) : def =
   match def.it with
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause dctx) clauses in
@@ -252,9 +274,9 @@ let analyze_def (dctx : Dctx.t) (def : def) : Dctx.t * def =
         FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
         $ def.at
       in
-      (dctx, def)
-  | _ -> (dctx, def)
+      def
+  | _ -> def
 
 let analyze_spec (spec : spec) : spec =
   let dctx = Dctx.init spec in
-  List.fold_left_map analyze_def dctx spec |> snd
+  List.map (analyze_def dctx) spec

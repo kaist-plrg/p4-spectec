@@ -22,8 +22,8 @@ module REnv = struct
       benv empty
 end
 
-let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
-    prem =
+let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
+    (ids_rename : Ids.t) : prem =
   let typ, iters = Bind.BEnv.find id benv |> Bind.Occ.strip in
   let id_rename, ids_rename =
     ids_rename |> IdSet.elements |> fun ids -> (List.hd ids, List.tl ids)
@@ -45,6 +45,7 @@ let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
       exp ids_rename
   in
   let sidecondition = IfPr exp $ id.at in
+  let iters = iters @ List.map (fun (iter, _, _) -> iter) iterctx in
   List.fold_left
     (fun sidecondition iter ->
       match sidecondition.it with
@@ -64,13 +65,14 @@ let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
       | _ -> assert false)
     sidecondition iters
 
-let gen_sideconditions (benv : Bind.BEnv.t) (renv : REnv.t) : prem list =
+let gen_sideconditions (benv : Bind.BEnv.t) (iterctx : Iterctx.t)
+    (renv : REnv.t) : prem list =
   let renv = REnv.mapi Ids.remove renv in
   REnv.fold
     (fun id ids_rename sideconditions ->
       if Ids.is_empty ids_rename then sideconditions
       else
-        let sidecondition = gen_sidecondition benv id ids_rename in
+        let sidecondition = gen_sidecondition benv iterctx id ids_rename in
         sideconditions @ [ sidecondition ])
     renv []
 
