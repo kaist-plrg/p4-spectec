@@ -89,6 +89,42 @@ module P4 = struct
     unparser := printer
 end
 
+(* Nano-P4 *)
+
+module NanoP4 = struct
+  let parse_program (_includes : string list) (paths : string list) :
+      Run.parse_result =
+    try
+      match paths with
+      | [ path ] ->
+          let value_program = Nano.Parse.parse_file path in
+          Run.Pass value_program
+      | _ ->
+          Run.Fail (`Syntax (no_region, "exactly one nano-P4 file must be provided"))
+    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  let parse_string (path : string) (str : string) : Run.parse_result =
+    try
+      let value_program = Nano.Parse.parse_string path str in
+      Run.Pass value_program
+    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  let unparse_program (_value_program : Value.t) : string = "<nano-p4>"
+
+  module Builtin_NanoP4 = Builtin.Call.Make (Builtin.Call.No_ext) ()
+
+  let call_builtin = Builtin_NanoP4.invoke
+  let checkpoint = Builtin_NanoP4.checkpoint
+  let seff = Builtin_NanoP4.seff
+
+  module Cache = struct
+    let cache_on () = ()
+    let cache_off () = ()
+  end
+
+  let init (_spec : Run.spec) : unit = ()
+end
+
 (* SpecTec IL *)
 
 module SpecTec_IL = struct
