@@ -4,6 +4,10 @@ open Util.Error
 let error = error_parse
 let error_no_region = error_parse_no_region
 
+let preprocess (includes : string list) (path : string) =
+  try Preprocessor.preprocess includes path
+  with _ -> "preprocessor error" |> error_no_region
+
 let lex (path : string) (file : string) =
   try
     let () = Lexer.reset () in
@@ -28,17 +32,11 @@ let parse_string (path : string) (str : string) : Value.t =
   let tokens = lex path str in
   parse tokens
 
-let parse_file (path : string) : Value.t =
-  let ic = open_in path in
-  let content =
-    let n = in_channel_length ic in
-    let s = Bytes.create n in
-    really_input ic s 0 n;
-    close_in ic;
-    Bytes.to_string s
-  in
-  parse_string path content
+let parse_file (includes : string list) (path : string) : Value.t =
+  let program = preprocess includes path in
+  (* print_endline program; *)
+  parse_string path program
 
-let parse_file_fresh (path : string) : Value.t =
+let parse_file_fresh (includes : string list) (path : string) : Value.t =
   Value.Fresh_.refresh ();
-  parse_file path
+  parse_file includes path

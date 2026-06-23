@@ -94,6 +94,8 @@ rule tokenize = parse
       }
   | whitespace
       { tokenize lexbuf }
+  | '#'
+      { preprocessor lexbuf; tokenize lexbuf }
   | hex_number as n
       { NUMBER_INT (parse_int (at lexbuf) n, n) }
   | dec_number as n
@@ -248,6 +250,42 @@ rule tokenize = parse
   | _
       { let text = lexeme lexbuf in
         raise (Error (Printf.sprintf "unexpected character: %s" text)) }
+
+and preprocessor = parse
+  | ' '
+      { preprocessor lexbuf }
+  | int
+      { let line = int_of_string (Lexing.lexeme lexbuf) in
+        let pos = lexbuf.Lexing.lex_curr_p in
+        lexbuf.Lexing.lex_curr_p <- { pos with Lexing.pos_lnum = line };
+        preprocessor lexbuf }
+  | '"'
+      { preprocessor_string lexbuf }
+  | '\n'
+       { let bol = Lexing.lexeme_end lexbuf in
+         let pos = lexbuf.Lexing.lex_curr_p in
+         lexbuf.Lexing.lex_curr_p <- { pos with Lexing.pos_bol = bol } }
+  | _
+      { preprocessor lexbuf }
+  | eof
+      { () }
+
+and preprocessor_string = parse
+  | [^ '"'] * '"'
+    { let path = Lexing.lexeme lexbuf in
+      let path = String.sub path 0 (String.length path - 1) in
+      Lexing.set_filename lexbuf path;
+      preprocessor_rest lexbuf }
+
+and preprocessor_rest = parse
+  | '\n'
+    { let bol = Lexing.lexeme_end lexbuf in
+      let pos = lexbuf.Lexing.lex_curr_p in
+      lexbuf.Lexing.lex_curr_p <- { pos with Lexing.pos_bol = bol } }
+  | eof
+    { () }
+  | _
+    { preprocessor_rest lexbuf }
 
 and string = parse
   | eof

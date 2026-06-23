@@ -92,15 +92,16 @@ end
 (* Nano-P4 *)
 
 module NanoP4 = struct
-  let parse_program (_includes : string list) (paths : string list) :
+  let parse_program (includes : string list) (paths : string list) :
       Run.parse_result =
     try
       match paths with
       | [ path ] ->
-          let value_program = Nano.Parse.parse_file path in
+          let value_program = Nano.Parse.parse_file includes path in
           Run.Pass value_program
       | _ ->
-          Run.Fail (`Syntax (no_region, "exactly one nano-P4 file must be provided"))
+          Run.Fail
+            (`Syntax (no_region, "exactly one nano-P4 file must be provided"))
     with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =

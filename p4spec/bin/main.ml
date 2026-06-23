@@ -659,11 +659,12 @@ let parse_nano_command =
   Core.Command.basic ~summary:"parse a nano-P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map path_p4 = flag "-p" (required string) ~doc:"nano-P4 program"
-     and tree = flag "-t" no_arg ~doc:"print as tree" in
+     let%map path_p4 = flag "-p" (required string) ~doc:"Nano-P4 program"
+     and tree = flag "-t" no_arg ~doc:"print as tree"
+     and includes_p4 = flag "-i" (listed string) ~doc:"Nano-P4 include paths" in
      fun () ->
        try
-         let value_program = Nano.Parse.parse_file path_p4 in
+         let value_program = Nano.Parse.parse_file includes_p4 path_p4 in
          if tree then Nano.Print.print_tree value_program
          else Format.printf "%s\n" (Lang.Il.Print.string_of_value value_program)
        with
