@@ -107,9 +107,7 @@ let frontend specdir =
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
 
-let prosify specdir =
-  specdir |> structure |> Annotate.Expand.expand_spec |> Annotate.annotate_spec
-  |> Pl.Shorthand.shorten_defs
+let annotate specdir = specdir |> structure |> Annotate.annotate_spec
 
 let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =
@@ -121,7 +119,7 @@ let driver ?(det = false) ?(arch : string option) mode specdir =
         let spec_sl = structure specdir in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
     | `PL ->
-        let spec_pl = specdir |> structure |> Annotate.annotate_spec in
+        let spec_pl = annotate specdir in
         (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =

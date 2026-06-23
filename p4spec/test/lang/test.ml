@@ -37,7 +37,7 @@ let structure_command =
 (* Annotate test *)
 
 let annotate_test specdir =
-  let spec_pl = prosify specdir in
+  let spec_pl = annotate specdir in
   Pl.Render.render_spec spec_pl |> print_endline
 
 let annotate_command =

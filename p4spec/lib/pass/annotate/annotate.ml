@@ -402,7 +402,10 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
 
 (* Entry point *)
 
-let annotate_spec (spec : spec) : Pl.spec =
+let annotate_defs (spec : spec) : Pl.spec =
   let ctx = Ctx.init () in
   let ctx = Ctx.load_spec ctx spec in
   List.map (annotate_def ctx) spec
+
+let annotate_spec (spec : spec) : Pl.spec =
+  spec |> Expand.expand_spec |> annotate_defs |> Pl.Shorthand.shorten_defs
