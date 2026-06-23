@@ -213,19 +213,10 @@ and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
   let prems = prems_partial @ sideconditions_multi in
   let prem = LetPr (exp_l, exp_r) $ at in
   let venv_l = Collectbind.collect_exp dctx exp_l |> BEnv.flatten in
-  let _, iterctx =
-    List.fold_left_map
-      (fun venv_l (iter, vars_bound, _) ->
-        let vars_bound =
-          List.filter (fun (id, _, _) -> not (VEnv.mem id venv)) vars_bound
-        in
-        let vars_bind =
-          venv_l |> VEnv.bindings
-          |> List.map (fun (id, (typ, iters)) -> (id, typ, iters))
-        in
-        let venv_l = VEnv.map (Typdim.add_iter iter) venv_l in
-        (venv_l, (iter, vars_bound, vars_bind)))
-      venv_l iterctx
+  let iterctx =
+    iterctx
+    |> Iterctx.filter (fun id -> not (VEnv.mem id venv))
+    |> Iterctx.add_vars_bind venv_l
   in
   let prem = Iterctx.iterate_prem prem iterctx in
   (dctx, venv, prem, prems)

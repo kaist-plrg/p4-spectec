@@ -1,6 +1,8 @@
 open Domain.Lib
 open Lang
 open Il2
+open Runtime.Static
+open Envs
 module Mixfix = Domain.Mixfix
 open Util.Source
 
@@ -46,25 +48,15 @@ let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
       exp ids_rename
   in
   let sidecondition = IfPr exp $ id.at in
-  let iters = iters @ List.map (fun (iter, _, _) -> iter) iterctx in
-  List.fold_left
-    (fun sidecondition iter ->
-      match sidecondition.it with
-      | IfPr _ ->
-          let vars_bound =
-            List.map (fun id -> (id, typ, [])) (id :: id_rename :: ids_rename)
-          in
-          IterPr (sidecondition, (iter, vars_bound, [])) $ id.at
-      | IterPr (_, (iter_prev, vars_bound, [])) ->
-          let vars_bound =
-            List.map
-              (fun (id, typ, iters_prev) ->
-                (id, typ, iters_prev @ [ iter_prev ]))
-              vars_bound
-          in
-          IterPr (sidecondition, (iter, vars_bound, [])) $ id.at
-      | _ -> assert false)
-    sidecondition iters
+  let iterctx =
+    let iters = iters @ List.map (fun (iter, _, _) -> iter) iterctx in
+    let venv =
+      List.map (fun id -> (id, (typ, []))) (id :: id_rename :: ids_rename)
+      |> VEnv.of_list
+    in
+    List.map (fun iter -> (iter, [], [])) iters |> Iterctx.add_vars_bound venv
+  in
+  Iterctx.iterate_prem sidecondition iterctx
 
 let gen_sideconditions (benv : Bind.BEnv.t) (iterctx : Iterctx.t)
     (renv : REnv.t) : prem list =
