@@ -601,15 +601,15 @@ typeFieldList:
 ;
 
 structTypeDeclaration:
-  | STRUCT n = name tpl = typeParameterListOpt L_BRACE fl = typeFieldList R_BRACE
+  | STRUCT n = name L_BRACE fl = typeFieldList R_BRACE
     { declare_type (id_of_name n);
-      "STRUCT name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "structTypeDeclaration" <<<| (at $sloc) }
+      "STRUCT name `{ typeFieldList }" <| [ n; fl ] <<| "structTypeDeclaration" <<<| (at $sloc) }
 ;
 
 headerTypeDeclaration:
-  | HEADER n = name tpl = typeParameterListOpt L_BRACE fl = typeFieldList R_BRACE
+  | HEADER n = name L_BRACE fl = typeFieldList R_BRACE
     { declare_type (id_of_name n);
-      "HEADER name typeParameterListOpt `{ typeFieldList }" <| [ n; tpl; fl ] <<| "headerTypeDeclaration" <<<| (at $sloc) }
+      "HEADER name `{ typeFieldList }" <| [ n; fl ] <<| "headerTypeDeclaration" <<<| (at $sloc) }
 ;
 
 derivedTypeDeclaration:
