@@ -149,8 +149,6 @@ trailingCommaOpt:
 
 (* Integers *)
 integerLiteral:
-  | int = int
-    { "D int" <| [ int ] <<| "integerLiteral" <<<| (at $sloc) }
   | number = NUMBER
     { fst number }
 ;

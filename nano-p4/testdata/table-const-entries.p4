@@ -30,9 +30,9 @@ control Filter(inout Header hdr, out bool pass) {
         key = { hdr.eth.ethertype : exact; }
         actions = { drop; fwd; }
         const entries = {
-            (0x0800) : fwd(pass);
-            (0x0806) : fwd(pass);
-            (0xDEAD) : drop(pass);
+            (16w0x0800) : fwd(pass);
+            (16w0x0806) : fwd(pass);
+            (16w0xDEAD) : drop(pass);
         }
     }
     apply {

@@ -29,8 +29,8 @@ control Filter(inout Header hdr, out bool pass) {
         }
 
         const entries = {
-            (0x0800) : match(pass, true);
-            (0xD000) : match(pass, false);
+            (16w0x0800) : match(pass, true);
+            (16w0xD000) : match(pass, false);
         }
     }
 
