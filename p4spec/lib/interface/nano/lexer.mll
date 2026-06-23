@@ -132,6 +132,8 @@ rule tokenize = parse
       { CONTROL }
   | "else"
       { ELSE }
+  | "entries"
+      { ENTRIES }
   | "error"
       { ERROR }
   | "extern"

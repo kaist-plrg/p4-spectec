@@ -570,12 +570,23 @@ syntax tableActionList =
   | tableActionList tableAction
 
 ;;
+;;;;;;;; Table entries property
+;;
+
+syntax tableEntry = `( expression ) `: tableActionReference `;
+
+syntax tableEntryList =
+  | `EMPTY
+  | tableEntryList tableEntry
+
+;;
 ;;;;;;;; Table properties
 ;;
 
 syntax tableProperty =
   | KEY `= tableKey
   | ACTIONS `= `{ tableActionList }
+  | CONST ENTRIES `= `{ tableEntryList }
 
 syntax tablePropertyList =
   | `EMPTY

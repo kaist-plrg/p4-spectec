@@ -48,7 +48,7 @@
 %token DONTCARE
 %token TRUE FALSE
 %token ACTION ACTIONS APPLY BOOL BIT CONST CONTROL
-%token ELSE ERROR EXTERN HEADER IF IN INOUT
+%token ELSE ENTRIES ERROR EXTERN HEADER IF IN INOUT
 %token INT KEY LIST SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRING STRUCT
 %token TABLE TRANSITION VOID
 
@@ -105,6 +105,7 @@
   parserState parserStateList
   parserLocalDeclaration parserLocalDeclarationList parserDeclaration
   tableKey tableActionReference tableAction tableActionList
+  tableEntry tableEntryList
   tableProperty tablePropertyList tableDeclaration
   controlTypeDeclaration controlBody
   controlLocalDeclaration controlLocalDeclarationList controlDeclaration
@@ -780,12 +781,26 @@ tableActionList:
     { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" <<<| (at $sloc) }
 ;
 
+tableEntry:
+  | L_PAREN e = expression R_PAREN COLON ac = tableActionReference SEMICOLON
+    { "`( expression ) `: tableActionReference `;" <| [ e; ac ] <<| "tableEntry" <<<| (at $sloc) }
+;
+
+tableEntryList:
+  | (* empty *)
+    { "`EMPTY" <| [] <<| "tableEntryList" <<<| (at $sloc) }
+  | el = tableEntryList e = tableEntry
+    { "tableEntryList tableEntry" <| [ el; e ] <<| "tableEntryList" <<<| (at $sloc) }
+;
+
 tableProperty:
   | KEY ASSIGN tableKey
     { let k = $3 in
       "KEY `= tableKey" <| [ k ] <<| "tableProperty" <<<| (at $sloc) }
   | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
     { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableProperty" <<<| (at $sloc) }
+  | CONST ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
+    { "CONST ENTRIES `= `{ tableEntryList }" <| [ el ] <<| "tableProperty" <<<| (at $sloc) }
 ;
 
 tablePropertyList:
