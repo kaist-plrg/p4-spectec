@@ -20,6 +20,18 @@
 
   let at ((position_left, position_right) : Lexing.position * Lexing.position)
     = positions_to_region position_left position_right
+
+  let rec declare_types_of_il (value : Value.t) : unit =
+    Value.Get.mtch value
+      [
+        ("typeParameterList `, typeParameter",
+          fun values ->
+            declare_types_of_il (List.nth values 0);
+            declare_type (id_of_name (List.nth values 1)));
+        ("`ID text", fun _ -> declare_type (id_of_name value));
+        ("`TID text", fun _ -> declare_type (id_of_name value));
+      ]
+      (fun _ -> ())
 %}
 
 (**************************** TOKENS ******************************)
@@ -271,7 +283,7 @@ typeParameterListOpt:
   | (* empty *)
     { "`EMPTY" <| [] <<| "typeParameterListOpt" <<<| (at $sloc) }
   | L_ANGLE tps = typeParameterList R_ANGLE
-    { (* declare type params into scope *)
+    { declare_types_of_il tps;
       "`< typeParameterList >" <| [ tps ] <<| "typeParameterListOpt" <<<| (at $sloc) }
 ;
 
