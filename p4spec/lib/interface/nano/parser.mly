@@ -81,7 +81,6 @@
   baseType specializedType namedType type_ typeOrVoid
   typeParameter typeParameterList typeParameterListOpt
   parameter nonEmptyParameterList parameterList
-  constructorParameterListOpt
   literalExpression referenceExpression
   unop unaryExpression binop binaryExpression ternaryExpression
   errorAccessExpression memberAccessExpression accessExpression
@@ -306,14 +305,6 @@ parameterList:
     { "`EMPTY" <| [] <<| "parameterList" <<<| (at $sloc) }
   | ps = nonEmptyParameterList
     { ps }
-;
-
-(* Constructor parameters *)
-constructorParameterListOpt:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "constructorParameterListOpt" <<<| (at $sloc) }
-  | L_PAREN ps = parameterList R_PAREN
-    { "`( parameterList )" <| [ ps ] <<| "constructorParameterListOpt" <<<| (at $sloc) }
 ;
 
 (* Expressions *)
@@ -758,10 +749,10 @@ parserLocalDeclarationList:
 
 parserDeclaration:
   | PARSER n = name push_scope tpl = typeParameterListOpt
-    L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
+    L_PAREN pl = parameterList R_PAREN
     L_BRACE dl = parserLocalDeclarationList sl = parserStateList R_BRACE pop_scope
     { declare_type (id_of_name n);
-      "PARSER name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList }" <| [ n; tpl; pl; cpl; dl; sl ] <<| "parserDeclaration" <<<| (at $sloc) }
+      "PARSER name typeParameterListOpt `( parameterList ) `{ parserLocalDeclarationList parserStateList }" <| [ n; tpl; pl; dl; sl ] <<| "parserDeclaration" <<<| (at $sloc) }
 ;
 
 (* Control declarations *)
@@ -836,10 +827,10 @@ controlLocalDeclarationList:
 
 controlDeclaration:
   | CONTROL n = name push_scope tpl = typeParameterListOpt
-    L_PAREN pl = parameterList R_PAREN cpl = constructorParameterListOpt
+    L_PAREN pl = parameterList R_PAREN
     L_BRACE dl = controlLocalDeclarationList APPLY b = controlBody R_BRACE pop_scope
     { declare_type (id_of_name n);
-      "CONTROL name typeParameterListOpt `( parameterList ) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody }" <| [ n; tpl; pl; cpl; dl; b ] <<| "controlDeclaration" <<<| (at $sloc) }
+      "CONTROL name typeParameterListOpt `( parameterList ) `{ controlLocalDeclarationList APPLY controlBody }" <| [ n; tpl; pl; dl; b ] <<| "controlDeclaration" <<<| (at $sloc) }
 ;
 
 (* Package type declarations *)
