@@ -1,21 +1,25 @@
 #include <nano_model.p4>
 
-struct Header {}
+header Ethernet {
+    bit<48> dst;
+    bit<48> src;
+    bit<16> ethertype;
+}
 
-action reject(out bool pass, bool rej) {
-    pass = !rej;
+struct Header {
+    Ethernet eth;
 }
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
+        pkt.extract<Ethernet>(hdr.eth);
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool x = true;
-        reject(pass, x);
+        pass = hdr.eth.src != hdr.eth.dst;
     }
 }
 

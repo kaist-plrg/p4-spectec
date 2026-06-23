@@ -1,7 +1,7 @@
 #include <nano_model.p4>
 
 header Nanonet {
-    bool ignore;
+    bool drop;
     bit<7> packetType;
     bit<8> src;
     bit<8> dst;
@@ -11,6 +11,14 @@ struct Header {
     Nanonet nanonet;
 }
 
+action reject(out bool pass, bit<8> rej) {
+    if (rej == 8w0) {
+        pass = true;
+    } else {
+        pass = false;
+    }
+}
+
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
         transition accept;
@@ -18,26 +26,18 @@ parser Parser(packet_in pkt, out Header hdr) {
 }
 
 control Filter(inout Header hdr, out bool pass) {
-    action reject(bit<8> rej) {
-        if (rej == 0) {
-            pass = true;
-        } else {
-            pass = false;
-        }
-    }
     table t {
-        key = { hdr.nanonet.ignore : exact; }
+        key = { hdr.nanonet.drop : exact; }
         actions = { reject; }
 
         const entries = {
-            (true) : reject(8w1);
-            (false) : reject(8w0);
+            (true) : reject(pass, 8w1);
+            (false) : reject(pass, 8w0);
         }
     }
     apply {
-        bool x = true;
         t.apply();
     }
 }
 
-NanoSwitch(NanoParser(), NanoFilter()) main;
+NanoSwitch(Parser(), Filter()) main;

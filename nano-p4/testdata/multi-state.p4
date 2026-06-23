@@ -15,12 +15,12 @@ struct Header {
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
-        pkt.extract(hdr.first);
+        pkt.extract<test_header>(hdr.first);
         transition parse_next;
     }
 
     state parse_next {
-        pkt.extract(hdr.next);
+        pkt.extract<next_header>(hdr.next);
         transition accept;
     }
 }

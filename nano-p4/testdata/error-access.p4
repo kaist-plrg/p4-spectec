@@ -2,10 +2,6 @@
 
 struct Header {}
 
-action reject(out bool pass, bool rej) {
-    pass = !rej;
-}
-
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
         transition accept;
@@ -14,8 +10,8 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool x = true;
-        reject(pass, x);
+        error e = error.NoError;
+        pass = e == error.NoError;
     }
 }
 

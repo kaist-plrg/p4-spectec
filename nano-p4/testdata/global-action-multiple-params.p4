@@ -2,8 +2,8 @@
 
 struct Header {}
 
-action reject(out bool pass, bool rej) {
-    pass = !rej;
+action compute(out bool pass, bit<8> a, bit<8> b) {
+    pass = a < b;
 }
 
 parser Parser(packet_in pkt, out Header hdr) {
@@ -14,8 +14,9 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool x = true;
-        reject(pass, x);
+        bit<8> x = 8w10;
+        bit<8> y = 8w20;
+        compute(pass, x, y);
     }
 }
 

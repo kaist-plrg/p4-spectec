@@ -1,21 +1,27 @@
 #include <nano_model.p4>
 
-struct Header {}
+header Inner {
+    bit<8> value;
+}
 
-action reject(out bool pass, bool rej) {
-    pass = !rej;
+struct Outer {
+    Inner inner;
+}
+
+struct Header {
+    Outer outer;
 }
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
+        pkt.extract<Inner>(hdr.outer.inner);
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool x = true;
-        reject(pass, x);
+        pass = hdr.outer.inner.value == 8w42;
     }
 }
 

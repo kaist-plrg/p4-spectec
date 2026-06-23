@@ -2,8 +2,8 @@
 
 struct Header {}
 
-action reject(out bool pass, bool rej) {
-    pass = !rej;
+action set_pass(out bool pass, bool val) {
+    pass = val;
 }
 
 parser Parser(packet_in pkt, out Header hdr) {
@@ -14,8 +14,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool x = true;
-        reject(pass, x);
+        set_pass(pass, true);
     }
 }
 

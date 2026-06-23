@@ -10,18 +10,18 @@ struct Header {
     Ethernet ethernet;
 }
 
+action match(out bool pass, bool act) {
+    pass = act;
+}
+
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
-        pkt.extract(hdr.ethernet);
+        pkt.extract<Ethernet>(hdr.ethernet);
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
-    action match(bool act) {
-        pass = act;
-    }
-
     table tbl {
         key = { hdr.ethernet.protocol : exact; }
         actions = {
@@ -29,8 +29,8 @@ control Filter(inout Header hdr, out bool pass) {
         }
 
         const entries = {
-            (0x0800) : match(true);
-            (0xD000) : match(false);
+            (0x0800) : match(pass, true);
+            (0xD000) : match(pass, false);
         }
     }
 
