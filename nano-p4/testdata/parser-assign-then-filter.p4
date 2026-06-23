@@ -27,4 +27,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch(Parser(), Filter()) main;
+NanoSwitch<Header>(Parser<Header>(), Filter<Header>()) main;
