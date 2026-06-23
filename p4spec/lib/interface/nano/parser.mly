@@ -69,7 +69,7 @@
 %right PREFIX
 %left DOT
 
-%start p4program
+%start program
 
 (**************************** TYPES ******************************)
 %type <Lang.Il.value>
@@ -109,7 +109,7 @@
   controlTypeDeclaration controlBody
   controlLocalDeclaration controlLocalDeclarationList controlDeclaration
   packageTypeDeclaration
-  typeDeclaration declaration declarationList p4program
+  typeDeclaration declaration declarationList program
 %type <unit> push_scope pop_scope
 %%
 
@@ -874,7 +874,7 @@ declarationList:
 ;
 
 (* P4 program *)
-p4program:
+program:
   | dl = declarationList END
-    { dl #@@ "p4program" }
+    { dl #@@ "program" }
 ;

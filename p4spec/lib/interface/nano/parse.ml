@@ -17,7 +17,7 @@ let lex (path : string) (file : string) =
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error_no_region
 
 let parse (lexbuf : Lexing.lexbuf) : Value.t =
-  try Parser.p4program Lexer.lexer lexbuf with
+  try Parser.program Lexer.lexer lexbuf with
   | Lexer.Error s ->
       let at = Lexer.at lexbuf in
       let msg = Format.asprintf "lexer error: %s" s in
