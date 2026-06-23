@@ -1,7 +1,7 @@
 open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
-open Il
+open Il2
 module Type = Runtime.Type
 open Util.Source
 
@@ -67,6 +67,7 @@ end
 
 let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
     (iters : iter list) : prem =
+  let open Il in
   let exp_cond =
     let exp_l = To.as_exp to_ in
     match exp_from.it with
@@ -89,6 +90,7 @@ let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
 
 let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
     (iters : iter list) : prem list =
+  let open Il in
   let exp_to = To.as_exp to_ in
   let prems =
     let exp_guard_match = MatchE (exp_to, pattern) $$ (exp_from.at, BoolT) in
@@ -105,6 +107,7 @@ let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
 
 let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
     (exp_from : exp) (iters : iter list) : prem list =
+  let open Il in
   let exp_to = To.as_exp to_ in
   let prems =
     let exp_guard_sub = SubE (exp_to, typ_sub) $$ (exp_from.at, BoolT) in
@@ -191,6 +194,7 @@ and rename_exp_bound (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
 
 and rename_exp_bind (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)
     (exp : exp) : Dctx.t * REnv.t * exp =
+  let open Il in
   let at, note = (exp.at, exp.note) in
   match exp.it with
   | UpCastE (typ, exp) ->
@@ -260,7 +264,7 @@ and rename_arg (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t) (arg : arg) :
   match arg.it with
   | ExpA exp ->
       let dctx, renv, exp = rename_exp dctx binds renv exp in
-      let arg = ExpA exp $ at in
+      let arg = Il.ExpA exp $ at in
       (dctx, renv, arg)
   | _ -> (dctx, renv, arg)
 

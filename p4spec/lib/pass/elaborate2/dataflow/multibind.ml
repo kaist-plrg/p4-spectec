@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-open Il
+open Il2
 module Mixfix = Domain.Mixfix
 open Util.Source
 
@@ -24,6 +24,7 @@ end
 
 let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
     (ids_rename : Ids.t) : prem =
+  let open Il in
   let typ, iters = Bind.BEnv.find id benv |> Bind.Occ.strip in
   let id_rename, ids_rename =
     ids_rename |> IdSet.elements |> fun ids -> (List.hd ids, List.tl ids)
@@ -78,6 +79,7 @@ let gen_sideconditions (benv : Bind.BEnv.t) (iterctx : Iterctx.t)
 
 let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
     Dctx.t * REnv.t * exp =
+  let open Il in
   let at, note = (exp.at, exp.note) in
   match exp.it with
   | VarE id -> (
@@ -155,7 +157,7 @@ and rename_arg (dctx : Dctx.t) (renv : REnv.t) (arg : arg) :
   match arg.it with
   | ExpA exp ->
       let dctx, renv, exp = rename_exp dctx renv exp in
-      let arg = ExpA exp $ at in
+      let arg = Il.ExpA exp $ at in
       (dctx, renv, arg)
   | DefA _ -> (dctx, renv, arg)
 

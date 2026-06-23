@@ -1,5 +1,5 @@
 open Lang
-open Il
+open Il2
 module Mixfix = Domain.Mixfix
 open Error
 open Runtime.Static.Envs
