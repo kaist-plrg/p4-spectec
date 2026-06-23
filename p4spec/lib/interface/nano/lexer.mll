@@ -154,8 +154,6 @@ rule tokenize = parse
       { INT }
   | "key"
       { KEY }
-  | "list"
-      { LIST }
   | "match_kind"
       { MATCH_KIND }
   | "out"

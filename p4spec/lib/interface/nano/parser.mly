@@ -49,7 +49,7 @@
 %token TRUE FALSE
 %token ACTION ACTIONS APPLY BOOL BIT CONST CONTROL
 %token ELSE ENTRIES ERROR EXTERN HEADER IF IN INOUT
-%token INT KEY LIST SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRING STRUCT
+%token INT KEY SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRING STRUCT
 %token TABLE TRANSITION VOID
 
 (**************************** PRIORITY AND ASSOCIATIVITY ******************************)
@@ -191,8 +191,6 @@ name:
   | n = nonTypeName
   | n = typeName
     { n }
-  | LIST
-    { "LIST" <| [] <<| "name" <<<| (at $sloc) }
 ;
 
 nameList:
