@@ -67,7 +67,7 @@ let analyze_exps_as_bind (dctx : Dctx.t) (iterctx : Iterctx.t) (exps : exp list)
       Iterctx.empty exps
   in
   let venv = update_venv_partial venv renv_partial in
-  let prems_partial = Partialbind.gen_prems dctx renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx iterctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   (dctx, venv, exps, prems)
 
@@ -100,7 +100,7 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
       Iterctx.empty args
   in
   let venv = update_venv_partial venv renv_partial in
-  let prems_partial = Partialbind.gen_prems dctx renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx Iterctx.empty renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   (dctx, venv, args, prems)
 
@@ -212,11 +212,11 @@ and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
       Iterctx.empty exp_l
   in
   let venv = update_venv_partial venv renv_partial in
-  let prems_partial = Partialbind.gen_prems dctx renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx iterctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   let prem = LetPr (exp_l, exp_r) $ at in
   let venv_l = Collectbind.collect_exp dctx exp_l |> BEnv.flatten in
-  let venv_r = Collectbind.collect_exp dctx exp_r |> BEnv.flatten in
+  let venv_r = Collectbind.collect_exp Dctx.empty exp_r |> BEnv.flatten in
   let iterctx =
     iterctx
     |> Iterctx.filter_bound (fun id typ iters ->

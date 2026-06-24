@@ -3,6 +3,9 @@ module Mixfix = Domain.Mixfix
 open Lang
 open Il2
 module Type = Runtime.Type
+open Runtime.Static
+open Envs
+open Bind
 open Util.Source
 
 (* Helper for identifying singleton case *)
@@ -53,7 +56,7 @@ end
 (* Generate premises *)
 
 let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
-    (iterctx_exp : Iterctx.t) : prem =
+    (iterctx : Iterctx.t) : prem =
   let open Il in
   let exp_cond =
     let exp_l = To.as_exp to_ in
@@ -70,60 +73,94 @@ let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
         CmpE (`EqOp, `BoolT, exp_l, exp_r) $$ (exp_from.at, BoolT)
   in
   let sidecondition = IfPr exp_cond $ exp_from.at in
-  List.fold_left
-    (fun sidecondition (iter, _, _) ->
-      IterPr (sidecondition, (iter, [], [])) $ exp_from.at)
-    sidecondition iterctx_exp
+  let iterctx =
+    let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+    let id, typ, iters = to_ in
+    iterctx
+    |> Iterctx.filter_bound (fun id typ_iter iters_iter ->
+           VEnv.find_opt id venv
+           |> Option.map (fun (typ, iters) ->
+                  Typdim.sub (typ, iters) (typ_iter, iters_iter))
+           |> Option.value ~default:false)
+    |> Iterctx.add_var_bound id typ iters
+  in
+  Iterctx.iterate_prem iterctx sidecondition
 
 let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
-    (iterctx_exp : Iterctx.t) : prem list =
+    (iterctx : Iterctx.t) : prem list =
   let open Il in
+  let id, typ, iters = to_ in
   let exp_to = To.as_exp to_ in
-  let prems =
+  let sidecondition_guard_match =
     let exp_guard_match = MatchE (exp_to, pattern) $$ (exp_from.at, BoolT) in
     let sidecondition_guard_match = IfPr exp_guard_match $ exp_from.at in
-    let prem_bind = LetPr (exp_from, exp_to) $ exp_from.at in
-    [ sidecondition_guard_match; prem_bind ]
+    let iterctx =
+      iterctx
+      |> List.map (fun (iter, _, _) -> (iter, [], []))
+      |> Iterctx.add_var_bound id typ iters
+    in
+    Iterctx.iterate_prem iterctx sidecondition_guard_match
   in
-  List.map
-    (fun prem ->
-      List.fold_left
-        (fun prem (iter, _, _) -> IterPr (prem, (iter, [], [])) $ exp_from.at)
-        prem iterctx_exp)
-    prems
+  let prem_bind =
+    let prem_bind = LetPr (exp_from, exp_to) $ exp_from.at in
+    let iterctx =
+      (* TODO: use dimension inference instead of collectbind *)
+      let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+      iterctx
+      |> List.map (fun (iter, _, _) -> (iter, [], []))
+      |> Iterctx.add_vars_bind venv
+      |> Iterctx.add_var_bound id typ iters
+    in
+    Iterctx.iterate_prem iterctx prem_bind
+  in
+  [ sidecondition_guard_match; prem_bind ]
 
 let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
-    (exp_from : exp) (iterctx_exp : Iterctx.t) : prem list =
+    (exp_from : exp) (iterctx : Iterctx.t) : prem list =
   let open Il in
+  let id, typ, iters = to_ in
   let exp_to = To.as_exp to_ in
-  let prems =
+  let sidecondition_guard_sub =
     let exp_guard_sub = SubE (exp_to, typ_sub) $$ (exp_from.at, BoolT) in
     let sidecondition_guard_sub = IfPr exp_guard_sub $ exp_from.at in
+    let iterctx =
+      iterctx
+      |> List.map (fun (iter, _, _) -> (iter, [], []))
+      |> Iterctx.add_var_bound id typ iters
+    in
+    Iterctx.iterate_prem iterctx sidecondition_guard_sub
+  in
+  let prem_bind =
     let exp_downcast =
       DownCastE (typ_sub, exp_to) $$ (exp_from.at, typ_sub.it)
     in
     let prem_bind = LetPr (exp_sub, exp_downcast) $ exp_from.at in
-    [ sidecondition_guard_sub; prem_bind ]
+    let iterctx =
+      (* TODO: use dimension inference instead of collectbind *)
+      let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+      iterctx
+      |> List.map (fun (iter, _, _) -> (iter, [], []))
+      |> Iterctx.add_vars_bind venv
+      |> Iterctx.add_var_bound id typ iters
+    in
+    Iterctx.iterate_prem iterctx prem_bind
   in
-  List.map
-    (fun prem ->
-      List.fold_left
-        (fun prem (iter, _, _) -> IterPr (prem, (iter, [], [])) $ exp_from.at)
-        prem iterctx_exp)
-    prems
+  [ sidecondition_guard_sub; prem_bind ]
 
-let gen_prem (dctx : Dctx.t) (to_ : To.t) (from : From.t)
-    (iterctx_exp : Iterctx.t) : prem list =
+let gen_prem (dctx : Dctx.t) (to_ : To.t) (from : From.t) (iterctx : Iterctx.t)
+    : prem list =
   match from with
-  | Bound { exp_from } -> [ gen_prem_bound dctx to_ exp_from iterctx_exp ]
+  | Bound { exp_from } -> [ gen_prem_bound dctx to_ exp_from iterctx ]
   | Bindmatch { pattern; exp_from } ->
-      gen_prem_bind_match to_ pattern exp_from iterctx_exp
+      gen_prem_bind_match to_ pattern exp_from iterctx
   | Bindsub { typ_sub; exp_sub; exp_from } ->
-      gen_prem_bind_sub to_ typ_sub exp_sub exp_from iterctx_exp
+      gen_prem_bind_sub to_ typ_sub exp_sub exp_from iterctx
 
-let gen_prems (dctx : Dctx.t) (renv : REnv.t) : prem list =
+let gen_prems (dctx : Dctx.t) (iterctx_prem : Iterctx.t) (renv : REnv.t) :
+    prem list =
   List.concat_map
-    (fun (to_, from_, iterctx_exp) -> gen_prem dctx to_ from_ iterctx_exp)
+    (fun (to_, from_, iterctx_exp) ->
+      gen_prem dctx to_ from_ (iterctx_exp @ iterctx_prem))
     renv
 
 let rename_exp_bind_match (dctx : Dctx.t) (renv : REnv.t)
