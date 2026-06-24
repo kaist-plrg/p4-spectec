@@ -42,9 +42,9 @@ let update_venv_multi (venv : VEnv.t) (renv_multi : Multibind.REnv.t) : VEnv.t =
 let update_venv_partial (venv : VEnv.t) (renv_partial : Partialbind.REnv.t) :
     VEnv.t =
   List.fold_left
-    (fun venv (to_, _, iters) ->
+    (fun venv (to_, _, iterctx) ->
       let id_to, typ_to, iters_to = to_ in
-      let iters = iters_to @ iters in
+      let iters = iters_to @ Iterctx.iters_of iterctx in
       VEnv.add id_to (typ_to, iters) venv)
     venv renv_partial
 
@@ -62,8 +62,9 @@ let analyze_exps_as_bind (dctx : Dctx.t) (iterctx : Iterctx.t) (exps : exp list)
   let sideconditions_multi =
     Multibind.gen_sideconditions binds iterctx renv_multi
   in
-  let dctx, renv_partial, exps =
-    Partialbind.rename_exps dctx (VEnv.dom venv) Partialbind.REnv.empty exps
+  let dctx, renv_partial, _, exps =
+    Partialbind.rename_exps dctx (VEnv.dom venv) Partialbind.REnv.empty
+      Iterctx.empty exps
   in
   let venv = update_venv_partial venv renv_partial in
   let prems_partial = Partialbind.gen_prems dctx renv_partial in
@@ -94,8 +95,9 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
   let sideconditions_multi =
     Multibind.gen_sideconditions binds Iterctx.empty renv_multi
   in
-  let dctx, renv_partial, args =
-    Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty args
+  let dctx, renv_partial, _, args =
+    Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty
+      Iterctx.empty args
   in
   let venv = update_venv_partial venv renv_partial in
   let prems_partial = Partialbind.gen_prems dctx renv_partial in
@@ -149,7 +151,7 @@ and analyze_if_eq_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at_prem : region)
       let prem =
         IfPr (CmpE (`EqOp, optyp, exp_l, exp_r) $$ (at, note)) $ at_prem
       in
-      let prem = Iterctx.iterate_prem prem iterctx in
+      let prem = Iterctx.iterate_prem iterctx prem in
       (dctx, VEnv.empty, prem, [])
   | false, true -> analyze_let_prem dctx at_prem iterctx exp_l binds_l exp_r
   | true, false -> analyze_let_prem dctx at_prem iterctx exp_r binds_r exp_l
@@ -171,7 +173,7 @@ and analyze_if_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
   | _ ->
       analyze_exp_as_bound dctx exp;
       let prem = IfPr exp $ at in
-      let prem = Iterctx.iterate_prem prem iterctx in
+      let prem = Iterctx.iterate_prem iterctx prem in
       (dctx, VEnv.empty, prem, [])
 
 and analyze_if_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
@@ -180,7 +182,7 @@ and analyze_if_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
   let exps = Mixfix.args notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfHoldPr (id, notexp) $ at in
-  let prem = Iterctx.iterate_prem prem iterctx in
+  let prem = Iterctx.iterate_prem iterctx prem in
   (dctx, VEnv.empty, prem, [])
 
 and analyze_if_not_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
@@ -189,7 +191,7 @@ and analyze_if_not_hold_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
   let exps = Mixfix.args notexp in
   analyze_exps_as_bound dctx exps;
   let prem = IfNotHoldPr (id, notexp) $ at in
-  let prem = Iterctx.iterate_prem prem iterctx in
+  let prem = Iterctx.iterate_prem iterctx prem in
   (dctx, VEnv.empty, prem, [])
 
 and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
@@ -205,20 +207,26 @@ and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
   let sideconditions_multi =
     Multibind.gen_sideconditions binds_l iterctx renv_multi
   in
-  let dctx, renv_partial, exp_l =
-    Partialbind.rename_exp dctx (VEnv.dom venv) Partialbind.REnv.empty exp_l
+  let dctx, renv_partial, _, exp_l =
+    Partialbind.rename_exp dctx (VEnv.dom venv) Partialbind.REnv.empty
+      Iterctx.empty exp_l
   in
   let venv = update_venv_partial venv renv_partial in
   let prems_partial = Partialbind.gen_prems dctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   let prem = LetPr (exp_l, exp_r) $ at in
   let venv_l = Collectbind.collect_exp dctx exp_l |> BEnv.flatten in
+  let venv_r = Collectbind.collect_exp dctx exp_r |> BEnv.flatten in
   let iterctx =
     iterctx
-    |> Iterctx.filter (fun id -> not (VEnv.mem id venv))
+    |> Iterctx.filter_bound (fun id typ iters ->
+           VEnv.find_opt id venv_r
+           |> Option.map (fun (typ_r, iters_r) ->
+                  Typdim.sub (typ_r, iters_r) (typ, iters))
+           |> Option.value ~default:false)
     |> Iterctx.add_vars_bind venv_l
   in
-  let prem = Iterctx.iterate_prem prem iterctx in
+  let prem = Iterctx.iterate_prem iterctx prem in
   (dctx, venv, prem, prems)
 
 and analyze_iter_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (prem : prem)
@@ -231,7 +239,7 @@ and analyze_debug_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
   let open Il in
   analyze_exp_as_bound dctx exp;
   let prem = DebugPr exp $ at in
-  let prem = Iterctx.iterate_prem prem iterctx in
+  let prem = Iterctx.iterate_prem iterctx prem in
   (dctx, VEnv.empty, prem, [])
 
 (* Clause binding analysis *)

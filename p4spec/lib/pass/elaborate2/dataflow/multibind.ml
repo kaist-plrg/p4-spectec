@@ -49,14 +49,14 @@ let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
   in
   let sidecondition = IfPr exp $ id.at in
   let iterctx =
-    let iters = iters @ List.map (fun (iter, _, _) -> iter) iterctx in
+    let iters = iters @ Iterctx.iters_of iterctx in
     let venv =
       List.map (fun id -> (id, (typ, []))) (id :: id_rename :: ids_rename)
       |> VEnv.of_list
     in
     List.map (fun iter -> (iter, [], [])) iters |> Iterctx.add_vars_bound venv
   in
-  Iterctx.iterate_prem sidecondition iterctx
+  Iterctx.iterate_prem iterctx sidecondition
 
 let gen_sideconditions (benv : Bind.BEnv.t) (iterctx : Iterctx.t)
     (renv : REnv.t) : prem list =

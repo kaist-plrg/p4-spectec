@@ -105,7 +105,6 @@ let rec collect_exp (dctx : Dctx.t) (exp : exp) : Bind.BEnv.t =
       let binds = collect_args dctx args in
       collect_noninvertible exp.at "call operator" binds;
       Bind.BEnv.empty
-  (* vars already populated by dimension analysis — ignore them for collection *)
   | IterE (exp, (iter, _vars)) ->
       let binds = collect_exp dctx exp in
       let binds = Bind.BEnv.map (Bind.Occ.add_iter iter) binds in
