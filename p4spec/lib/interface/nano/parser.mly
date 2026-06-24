@@ -285,9 +285,9 @@ typeParameterListOpt:
 
 (* Parameters *)
 parameter:
-  | dir = direction t = type_ n = name i = initializerOpt
+  | dir = direction t = type_ n = name
     { declare_var (id_of_name n);
-      "direction type name initializerOpt" <| [ dir; t; n; i ] <<| "parameter" <<<| (at $sloc) }
+      "direction type name" <| [ dir; t; n ] <<| "parameter" <<<| (at $sloc) }
 ;
 
 nonEmptyParameterList:
