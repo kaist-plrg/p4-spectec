@@ -26,7 +26,7 @@ stat:
 
 perf:
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/perf.exe && echo
+	cd p4spec && opam exec -- dune build --profile=release bin/perf.exe && echo
 	ln -f $(EXEPERF) ./$(PERF)
 
 spec-test:
