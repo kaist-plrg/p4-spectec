@@ -248,30 +248,81 @@ and analyze_debug_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (at : region)
   let prem = Iterctx.iterate_prem iterctx prem in
   (dctx, VEnv.empty, prem, [])
 
+(* Rule binding analysis *)
+
+let analyze_rule (dctx : Dctx.t) (inputs : Hints.Input.t) (rule : rule) : rule =
+  let id, notexp, prems = rule.it in
+  let frees = Free.free_rule rule in
+  let dctx = Dctx.add_frees dctx frees in
+  let mixop, exps = Mixfix.split notexp in
+  let exps_input, exps_output = Hints.Input.split inputs exps in
+  let dctx, venv, exps_input, sideconditions =
+    analyze_exps_as_bind dctx Iterctx.empty exps_input
+  in
+  let dctx = Dctx.add_bounds dctx venv in
+  let dctx, prems =
+    List.fold_left
+      (fun (dctx, prems_acc) prem ->
+        let dctx, venv, prem, sideconditions =
+          analyze_prem dctx Iterctx.empty prem
+        in
+        let dctx = Dctx.add_bounds dctx venv in
+        (dctx, prems_acc @ [ prem ] @ sideconditions))
+      (dctx, []) prems
+  in
+  analyze_exps_as_bound dctx exps_output;
+  let exps = Hints.Input.combine inputs exps_input exps_output in
+  let notexp = Mixfix.fill mixop exps in
+  let prems = sideconditions @ prems in
+  (id, notexp, prems) $ rule.at
+
+let analyze_rulegroup (dctx : Dctx.t) (inputs : Hints.Input.t)
+    (rulegroup : rulegroup) : rulegroup =
+  let id, rules = rulegroup.it in
+  let rules = List.map (analyze_rule dctx inputs) rules in
+  (id, rules) $ rulegroup.at
+
+let analyze_elsegroup (dctx : Dctx.t) (inputs : Hints.Input.t)
+    (elsegroup : elsegroup) : elsegroup =
+  let id, rule = elsegroup.it in
+  let rule = analyze_rule dctx inputs rule in
+  (id, rule) $ elsegroup.at
+
 (* Clause binding analysis *)
 
 let analyze_clause (dctx : Dctx.t) (clause : clause) : clause =
   let args, exp, prems = clause.it in
   let frees = Free.free_clause clause in
   let dctx = Dctx.add_frees dctx frees in
-  let dctx, venv_args, args, prems_from_args = analyze_args_as_bind dctx args in
-  let dctx = Dctx.add_bounds dctx venv_args in
-  let dctx, prems_analyzed =
+  let dctx, venv, args, sideconditions = analyze_args_as_bind dctx args in
+  let dctx = Dctx.add_bounds dctx venv in
+  let dctx, prems =
     List.fold_left
-      (fun (dctx, acc) prem ->
-        let dctx, venv, prem, extra_prems =
+      (fun (dctx, prems_acc) prem ->
+        let dctx, venv, prem, sideconditions =
           analyze_prem dctx Iterctx.empty prem
         in
         let dctx = Dctx.add_bounds dctx venv in
-        (dctx, acc @ [ prem ] @ extra_prems))
+        (dctx, prems_acc @ [ prem ] @ sideconditions))
       (dctx, []) prems
   in
   analyze_exp_as_bound dctx exp;
-  let final_prems = prems_from_args @ prems_analyzed in
-  (args, exp, final_prems) $ clause.at
+  let prems = sideconditions @ prems in
+  (args, exp, prems) $ clause.at
+
+(* Definition binding analysis *)
 
 let analyze_def (dctx : Dctx.t) (def : def) : def =
   match def.it with
+  | RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) ->
+      let rulegroups = List.map (analyze_rulegroup dctx inputs) rulegroups in
+      let elsegroup_opt =
+        Option.map (analyze_elsegroup dctx inputs) elsegroup_opt
+      in
+      let def =
+        RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) $ def.at
+      in
+      def
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause dctx) clauses in
       let elseclause_opt = Option.map (analyze_clause dctx) elseclause_opt in
