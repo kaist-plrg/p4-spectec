@@ -5,7 +5,6 @@ open Il2
 module Type = Runtime.Type
 open Runtime.Static
 open Envs
-open Bind
 open Util.Source
 
 (* Helper for identifying singleton case *)
@@ -74,7 +73,10 @@ let gen_prem_bound (dctx : Dctx.t) (to_ : To.t) (exp_from : exp)
   in
   let sidecondition = IfPr exp_cond $ exp_from.at in
   let iterctx =
-    let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+    let venv =
+      Dimension.infer_exp exp_from [] Dimension.Dimctx.empty
+      |> Dimension.Dimctx.infer
+    in
     let id, typ, iters = to_ in
     iterctx
     |> Iterctx.filter_bound (fun id typ_iter iters_iter ->
@@ -104,8 +106,10 @@ let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
   let prem_bind =
     let prem_bind = LetPr (exp_from, exp_to) $ exp_from.at in
     let iterctx =
-      (* TODO: use dimension inference instead of collectbind *)
-      let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+      let venv =
+        Dimension.infer_exp exp_from [] Dimension.Dimctx.empty
+        |> Dimension.Dimctx.infer
+      in
       iterctx
       |> List.map (fun (iter, _, _) -> (iter, [], []))
       |> Iterctx.add_vars_bind venv
@@ -136,8 +140,10 @@ let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
     in
     let prem_bind = LetPr (exp_sub, exp_downcast) $ exp_from.at in
     let iterctx =
-      (* TODO: use dimension inference instead of collectbind *)
-      let venv = Collectbind.collect_exp Dctx.empty exp_from |> BEnv.flatten in
+      let venv =
+        Dimension.infer_exp exp_from [] Dimension.Dimctx.empty
+        |> Dimension.Dimctx.infer
+      in
       iterctx
       |> List.map (fun (iter, _, _) -> (iter, [], []))
       |> Iterctx.add_vars_bind venv
@@ -300,8 +306,11 @@ and rename_exp_bind (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)
       let dctx, renv, iterctx_exp, exp =
         rename_exp dctx binds renv iterctx_exp exp
       in
-      let exp = Iterctx.iterate_exp iterctx_exp exp in
-      (dctx, renv, iterctx_exp, exp)
+      let iterctx_exp_h, iterctx_exp_t =
+        ([ List.hd iterctx_exp ], List.tl iterctx_exp)
+      in
+      let exp = Iterctx.iterate_exp iterctx_exp_h exp in
+      (dctx, renv, iterctx_exp_t, exp)
   | _ -> (dctx, renv, iterctx_exp, exp)
 
 and rename_exps (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)

@@ -215,8 +215,14 @@ and analyze_let_prem (dctx : Dctx.t) (at : region) (iterctx : Iterctx.t)
   let prems_partial = Partialbind.gen_prems dctx iterctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   let prem = LetPr (exp_l, exp_r) $ at in
-  let venv_l = Collectbind.collect_exp dctx exp_l |> BEnv.flatten in
-  let venv_r = Collectbind.collect_exp Dctx.empty exp_r |> BEnv.flatten in
+  let venv_l =
+    Dimension.infer_exp exp_l [] Dimension.Dimctx.empty
+    |> Dimension.Dimctx.infer
+  in
+  let venv_r =
+    Dimension.infer_exp exp_r [] Dimension.Dimctx.empty
+    |> Dimension.Dimctx.infer
+  in
   let iterctx =
     iterctx
     |> Iterctx.filter_bound (fun id typ iters ->

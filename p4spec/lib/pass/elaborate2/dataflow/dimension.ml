@@ -70,13 +70,7 @@ let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
       dctx |> infer_exp exp_b iters |> infer_path path iters
       |> infer_exp exp_f iters
   | CallE (_, _, args) -> infer_args args iters dctx
-  | IterE (_, ((_, _ :: _) as iterexp)) ->
-      error at
-        (Format.asprintf
-           "iterated expression should initially have no annotations, but got \
-            %s"
-           (Print.string_of_iterexp iterexp))
-  | IterE (exp, (iter, [])) -> infer_exp exp (iter :: iters) dctx
+  | IterE (exp, (iter, _)) -> infer_exp exp (iter :: iters) dctx
 
 and infer_exps (exps : exp list) (iters : iter list) (dctx : Dimctx.t) :
     Dimctx.t =
