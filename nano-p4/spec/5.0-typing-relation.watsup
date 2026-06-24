@@ -10,6 +10,9 @@ syntax typeDef =
 syntax typeId = id
 syntax typeDefEnv = map<typeId, typeDef>
 
+dec $empty_typeDefEnv : map<typeId, typeDef>
+def $empty_typeDefEnv = $empty_map<typeId, typeDef>
+
 ;;
 ;; Callable type definition environment
 ;; : callable name -> callable type
@@ -20,12 +23,18 @@ syntax callableTypeDef = actionDeclaration
 syntax callableId = id
 syntax callableTypeDefEnv = map<callableId, callableTypeDef>
 
+dec $empty_callableTypeDef : map<callableId, callableTypeDef>
+def $empty_callableTypeDef = $empty_map<callableId, callableTypeDef>
+
 ;;
 ;; Type frame
 ;; : variable name -> variable type
 ;;
 
 syntax typeFrame = map<id, type>
+
+dec $empty_typeFrame : map<id, type>
+def $empty_typeFrame = $empty_map<id, type>
 
 ;;
 ;; Typing context
@@ -35,6 +44,14 @@ syntax typingContext =
   { TYPE typeDefEnv,
     CALLABLE callableTypeDefEnv,
     FRAME typeFrame }
+
+dec $empty_typingContext : typingContext
+def $empty_typingContext =
+  { TYPE $empty_typeDefEnv,
+    CALLABLE $empty_callableTypeDef,
+    FRAME $empty_typeFrame }
+
+var TC : typingContext
 
 ;;
 ;; Expression typing

@@ -660,3 +660,10 @@ syntax program =
   | `EMPTY
   | program declaration
   | program `;
+
+dec $flatten_program(program) : declaration*
+def $flatten_program(`EMPTY) = eps
+def $flatten_program(program declaration)
+  = $flatten_program(program) ++ [ declaration ]
+def $flatten_program(program `;)
+  = $flatten_program(program)
