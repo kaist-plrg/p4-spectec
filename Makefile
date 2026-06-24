@@ -91,6 +91,7 @@ $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
 
 # Det tests (slow, with -det)
 DET_ALIASES := \
+  micro-det \
   run-det run-il-det run-sl-det \
   sim-il-det sim-sl-det sim-pl-det \
   sim-v1model-p4c-il-det sim-v1model-p4c-sl-det sim-v1model-p4c-pl-det \
@@ -101,6 +102,15 @@ DET_ALIASES := \
   sim-psa-p4c-il-det sim-psa-p4c-sl-det sim-psa-p4c-pl-det
 
 $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
+
+# Micro tier: fast shallow coverage of every test category.
+.PHONY: test-micro
+test-micro:
+	echo "#### Running (dune build @speclang @micro @micro-det)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
+	  (echo "####>" Failure running dune build @speclang @micro @micro-det. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-fast
 test-fast:
