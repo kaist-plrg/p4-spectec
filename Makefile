@@ -7,10 +7,10 @@ SPECTEST = p4spectec-test
 
 .PHONY: build stat perf spec-test
 
-EXESPEC = p4spec/_build/default/bin/main.exe
-EXESTAT = p4spec/_build/default/bin/stat.exe
-EXEPERF = p4spec/_build/default/bin/perf.exe
-EXESPECTEST = p4spec/_build/default/bin/test.exe
+EXESPEC = _build/default/p4spec/bin/main.exe
+EXESTAT = _build/default/p4spec/bin/stat.exe
+EXEPERF = _build/default/p4spec/bin/perf.exe
+EXESPECTEST = _build/default/p4spec/bin/test.exe
 
 build:
 	rm -f ./$(SPEC)
