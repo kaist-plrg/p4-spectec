@@ -1,4 +1,42 @@
 ;;
+;; Type definition environment
+;; : type name -> type definition
+;;
+
+syntax typeDef =
+  | derivedTypeDeclaration
+  | externDeclaration
+
+syntax typeId = id
+syntax typeDefEnv = map<typeId, typeDef>
+
+;;
+;; Callable type definition environment
+;; : callable name -> callable type
+;;
+
+syntax callableTypeDef = actionDeclaration
+
+syntax callableId = id
+syntax callableTypeDefEnv = map<callableId, callableTypeDef>
+
+;;
+;; Type frame
+;; : variable name -> variable type
+;;
+
+syntax typeFrame = map<id, type>
+
+;;
+;; Typing context
+;;
+
+syntax typingContext =
+  { TYPE typeDefEnv,
+    CALLABLE callableTypeDefEnv,
+    FRAME typeFrame }
+
+;;
 ;; Expression typing
 ;;
 

@@ -1,0 +1,34 @@
+;;
+;; Meta variables
+;;
+
+var b : bool
+
+var i : int
+
+var n : nat
+var w : nat
+
+;;
+;; Map
+;;
+
+syntax pair<K, V> = K -> V
+syntax map<K, V> = (pair<K, V>)*
+
+dec $empty_map<K, V> : map<K, V>
+def $empty_map<K, V> = eps
+
+dec $find_map<K, V>(map<K, V>, K) : V?
+def $find_map<K, V>(eps, K_query) = eps
+def $find_map<K, V>(
+    (K_h -> V_h)::(K_t -> V_t)*,
+    K_query
+  ) = V_h
+  -- if K_h = K_query
+def $find_map<K, V>(
+    (K_h -> V_h)::(K_t -> V_t)*,
+    K_query
+  )
+  = $find_map<K, V>((K_t -> V_t)*, K_query)
+  -- if K_h =/= K_query
