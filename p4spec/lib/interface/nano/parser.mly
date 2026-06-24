@@ -28,8 +28,8 @@
           fun values ->
             declare_types_of_il (List.nth values 0);
             declare_type (id_of_name (List.nth values 1)));
-        ("`ID text", fun _ -> declare_type (id_of_name value));
-        ("`TID text", fun _ -> declare_type (id_of_name value));
+        ("ID text", fun _ -> declare_type (id_of_name value));
+        ("TID text", fun _ -> declare_type (id_of_name value));
       ]
       (fun _ -> ())
 %}
@@ -162,12 +162,12 @@ stringLiteral:
 (* Names *)
 identifier:
   | text = NAME IDENTIFIER
-    { "`ID text" <| [ text ] <<| "identifier" <<<| (at $sloc) }
+    { "ID text" <| [ text ] <<| "identifier" <<<| (at $sloc) }
 ;
 
 typeIdentifier:
   | text = NAME TYPENAME
-    { "`TID text" <| [ text ] <<| "typeIdentifier" <<<| (at $sloc) }
+    { "TID text" <| [ text ] <<| "typeIdentifier" <<<| (at $sloc) }
 ;
 
 nonTypeName:
