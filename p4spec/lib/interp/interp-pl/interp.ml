@@ -1157,16 +1157,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
         with Backtrace (Unmatch _) -> eval_try_sequential ctx rest)
 
   and eval_try_deterministic (ctx : Ctx.t) (arms : block list) : Flow.t =
-    let try_arm (arm : block) : Flow.t option =
+    let eval_arm_deterministic (flow_pre : Flow.t) (arm : block) : Flow.t =
+      let at = match arm with instr :: _ -> instr.node.at | [] -> no_region in
+      let open Flow in
       try
-        match eval_block ctx arm with Flow.Cont _ -> None | flow -> Some flow
-      with Backtrace (Unmatch _) -> None
+        let flow_post = eval_block ctx arm in
+        match flow_pre with
+        | Cont traces_pre -> (
+            match flow_post with
+            | Cont traces_post -> Cont (traces_pre @ traces_post)
+            | _ -> flow_post)
+        | Res _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ -> nondet at
+            | Ret _ -> back_err at "cannot have both result and return")
+        | Ret _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ -> back_err at "cannot have both return and result"
+            | Ret _ -> nondet at)
+      with Backtrace (Unmatch _) -> flow_pre
     in
-    let results = List.filter_map try_arm arms in
-    match results with
-    | [] -> Flow.Cont []
-    | [ flow ] -> flow
-    | _ :: _ :: _ -> nondet no_region
+    try List.fold_left eval_arm_deterministic (Flow.Cont []) arms
+    with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
   and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
