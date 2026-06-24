@@ -417,7 +417,7 @@ and string_of_targs targs = Sl.Print.string_of_targs targs
 and render_param ctx (param : param) =
   match param.it with
   | ExpP (_typ, exp) -> render_exp ctx exp
-  | DefP defid -> string_of_defid defid |> adoc_as_code ctx
+  | DefP (defid, _, _, _) -> string_of_defid defid |> adoc_as_code ctx
 
 and render_params ctx params =
   match params with

@@ -90,7 +90,7 @@ and arg' =
 and param = param' phrase
 and param' =
   | ExpP of typ * exp
-  | DefP of id
+  | DefP of id * tparam list * param list * typ
 
 (* Guards and blocks *)
 

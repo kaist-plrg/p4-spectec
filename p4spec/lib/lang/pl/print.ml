@@ -128,7 +128,7 @@ and string_of_args args =
 and string_of_param param =
   match param.it with
   | ExpP (_typ, exp) -> string_of_exp exp
-  | DefP defid -> string_of_defid defid
+  | DefP (defid, _, _, _) -> string_of_defid defid
 
 and string_of_params params =
   match params with

@@ -321,15 +321,16 @@ and annotate_block (ctx : Ctx.t) (block : block) : Pl.block =
 
 (* Definitions *)
 
-let annotate_param (ctx : Ctx.t) (param : param) : Pl.param =
+let rec annotate_param (ctx : Ctx.t) (param : param) : Pl.param =
   let it' =
     match param.it with
     | ExpP (typ, exp) -> Pl.ExpP (typ, annotate_exp ctx exp)
-    | DefP (id, _, _, _) -> Pl.DefP id
+    | DefP (id, tparams, params, typ) ->
+        Pl.DefP (id, tparams, annotate_params ctx params, typ)
   in
   it' $ param.at
 
-let annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
+and annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
   List.map (annotate_param ctx) params
 
 let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
