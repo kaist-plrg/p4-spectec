@@ -128,9 +128,22 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
       let dctx, renv, exp_t = rename_exp dctx renv exp_t in
       let exp = ConsE (exp_h, exp_t) $$ (at, note) in
       (dctx, renv, exp)
-  (* TODO: vars may be renamed *)
   | IterE (exp, (iter, vars)) ->
       let dctx, renv, exp = rename_exp dctx renv exp in
+      let vars =
+        let frees = Free.free_exp exp in
+        vars
+        |> List.map (fun (id, typ, iters) ->
+               match REnv.find_opt id renv with
+               | None -> [ (id, typ, iters) ]
+               | Some ids_rename when IdSet.is_empty ids_rename ->
+                   [ (id, typ, iters) ]
+               | Some ids_rename ->
+                   let ids = IdSet.inter frees ids_rename in
+                   ids |> IdSet.elements
+                   |> List.map (fun id_rename -> (id_rename, typ, iters)))
+        |> List.flatten
+      in
       let exp = IterE (exp, (iter, vars)) $$ (at, note) in
       (dctx, renv, exp)
   | _ -> (dctx, renv, exp)

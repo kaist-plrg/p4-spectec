@@ -306,11 +306,10 @@ and rename_exp_bind (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)
       let dctx, renv, iterctx_exp, exp =
         rename_exp dctx binds renv iterctx_exp exp
       in
-      let iterctx_exp_h, iterctx_exp_t =
-        ([ List.hd iterctx_exp ], List.tl iterctx_exp)
-      in
-      let exp = Iterctx.iterate_exp iterctx_exp_h exp in
-      (dctx, renv, iterctx_exp_t, exp)
+      let iter, vars, _ = List.hd iterctx_exp in
+      let iterctx_exp = List.tl iterctx_exp in
+      let exp = IterE (exp, (iter, vars)) $$ (at, note) in
+      (dctx, renv, iterctx_exp, exp)
   | _ -> (dctx, renv, iterctx_exp, exp)
 
 and rename_exps (dctx : Dctx.t) (binds : IdSet.t) (renv : REnv.t)

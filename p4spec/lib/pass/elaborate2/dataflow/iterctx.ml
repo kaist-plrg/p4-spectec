@@ -66,14 +66,7 @@ let filter_bound (f : Id.t -> typ -> iter list -> bool) (iterctx : t) : t =
       (iter, vars_bound, vars_bind))
     iterctx
 
-(* Construction of iterated expressions and premises *)
-
-let iterate_exp (iterctx : t) (exp : exp) : exp =
-  List.fold_left
-    (fun exp (iter, vars_bound, _) ->
-      let iterexp = (iter, vars_bound) in
-      Il.IterE (exp, iterexp) $$ (exp.at, exp.note))
-    exp iterctx
+(* Construction of iterated premises *)
 
 let iterate_prem (iterctx : t) (prem : prem) : prem =
   List.fold_left
