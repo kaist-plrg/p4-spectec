@@ -3,33 +3,34 @@ set -euo pipefail
 
 TIMEFORMAT='%R'
 
-echo ""
-echo "=== Running POS-IL-det ==="
-{ pos_il_det_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
-    -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -il -det \
-    > output_pos_il_det.log; } 2>&1 ); } 2>/dev/null
-echo "POS-IL-det runtime: ${pos_il_det_time}s"
-echo "POS-IL-det runtime: ${pos_il_det_time}s" >> time.log
-
-echo ""
-echo "=== Running POS-IL ==="
-{ pos_il_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
-    -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -il \
-    > output_pos_il.log; } 2>&1 ); } 2>/dev/null
-echo "POS-IL runtime: ${pos_il_time}s"
-echo "POS-IL runtime: ${pos_il_time}s" >> time.log
-
-echo "=== Running POS-SL-det ==="
-{ pos_sl_det_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
-    -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -sl -det \
-    > output_pos_sl_det.log; } 2>&1 ); } 2>/dev/null
-echo "POS-SL-det runtime: ${pos_sl_det_time}s"
-echo "POS-SL-det runtime: ${pos_sl_det_time}s" >> time.log
+# echo ""
+# echo "=== Running POS-IL-det ==="
+# { pos_il_det_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
+#     -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -il -det \
+#     > output_pos_il_det.log; } 2>&1 ); } 2>/dev/null
+# echo "POS-IL-det runtime: ${pos_il_det_time}s"
+# echo "POS-IL-det runtime: ${pos_il_det_time}s" >> time.log
+# 
+# echo ""
+# echo "=== Running POS-IL ==="
+# { pos_il_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
+#     -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -il \
+#     > output_pos_il.log; } 2>&1 ); } 2>/dev/null
+# echo "POS-IL runtime: ${pos_il_time}s"
+# echo "POS-IL runtime: ${pos_il_time}s" >> time.log
+# 
+# echo "=== Running POS-SL-det ==="
+# { pos_sl_det_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
+#     -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -sl -det \
+#     > output_pos_sl_det.log; } 2>&1 ); } 2>/dev/null
+# echo "POS-SL-det runtime: ${pos_sl_det_time}s"
+# echo "POS-SL-det runtime: ${pos_sl_det_time}s" >> time.log
 
 echo "=== Running POS-SL ==="
 { pos_sl_time=$( { time ./p4perf run -s spec-concrete -i p4c/p4include -e excludes \
     -p4-dir p4c/testdata/p4_16_samples -rel Program_inst -sl \
     > output_pos_sl.log; } 2>&1 ); } 2>/dev/null
+echo "POS-SL runtime: ${pos_sl_time}s"
 echo "POS-SL runtime: ${pos_sl_time}s" >> time.log
 
 echo ""
