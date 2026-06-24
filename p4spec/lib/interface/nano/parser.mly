@@ -880,8 +880,6 @@ declarationList:
     { "`EMPTY" <| [] <<| "declarationList" <<<| (at $sloc) }
   | ds = declarationList d = declaration
     { "declarationList declaration" <| [ ds; d ] <<| "declarationList" <<<| (at $sloc) }
-  | ds = declarationList SEMICOLON
-    { ds }
 ;
 
 (* P4 program *)
