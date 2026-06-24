@@ -408,4 +408,4 @@ let annotate_defs (spec : spec) : Pl.spec =
   List.map (annotate_def ctx) spec
 
 let annotate_spec (spec : spec) : Pl.spec =
-  spec |> Expand.expand_spec |> annotate_defs |> Pl.Shorthand.shorten_defs
+  spec |> Expand.expand_spec |> annotate_defs |> Shorthand.shorten_defs

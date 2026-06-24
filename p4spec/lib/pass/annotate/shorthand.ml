@@ -1,6 +1,7 @@
 open Domain
 open Lib
-open Ast
+open Lang
+open Pl
 open Util.Source
 
 (* True iff [a] and [b] denote the same variable, peeling [IterE] wrappers. *)
