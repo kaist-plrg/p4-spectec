@@ -48,7 +48,7 @@
 %token DONTCARE
 %token TRUE FALSE
 %token ACTION ACTIONS APPLY BOOL BIT CONST CONTROL
-%token ELSE ENTRIES ERROR EXTERN HEADER IF IN INOUT
+%token ELSE ENTRIES EXTERN HEADER IF IN INOUT
 %token INT KEY SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRING STRUCT
 %token TABLE TRANSITION VOID
 
@@ -83,7 +83,7 @@
   parameter nonEmptyParameterList parameterList
   literalExpression referenceExpression
   unop unaryExpression binop binaryExpression ternaryExpression
-  errorAccessExpression memberAccessExpression accessExpression
+  memberAccessExpression accessExpression
   callExpression parenthesizedExpression
   expression memberAccessBase
   typeArgument typeArgumentList argument argumentListNonEmpty argumentList
@@ -94,7 +94,7 @@
   functionPrototype
   actionDeclaration
   instantiation
-  errorDeclaration matchKindDeclaration
+  matchKindDeclaration
   typeField typeFieldList structTypeDeclaration headerTypeDeclaration derivedTypeDeclaration
   externFunctionDeclaration externMethodPrototype externMethodPrototypeList
   externObjectDeclaration externDeclaration
@@ -221,8 +221,6 @@ direction:
 baseType:
   | BOOL
     { "BOOL" <| [] <<| "baseType" <<<| (at $sloc) }
-  | ERROR
-    { "ERROR" <| [] <<| "baseType" <<<| (at $sloc) }
   | MATCH_KIND
     { "MATCH_KIND" <| [] <<| "baseType" <<<| (at $sloc) }
   | STRING
@@ -383,18 +381,12 @@ parameterList:
     { "expression `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpression" <<<| (at $sloc) }
 ;
 
-%inline errorAccessExpression:
-  | ERROR DOT m = member
-    { "ERROR `. member" <| [ m ] <<| "errorAccessExpression" <<<| (at $sloc) }
-;
-
 %inline memberAccessExpression:
   | e = memberAccessBase DOT m = member
     { "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" <<<| (at $sloc) }
 ;
 
 %inline accessExpression:
-  | e = errorAccessExpression
   | e = memberAccessExpression
     { e }
 ;
@@ -573,12 +565,6 @@ actionDeclaration:
 instantiation:
   | t = type_ L_PAREN args = argumentList R_PAREN n = name SEMICOLON
     { "type `( argumentList ) name `;" <| [ t; args; n ] <<| "instantiation" <<<| (at $sloc) }
-;
-
-(* Error declarations *)
-errorDeclaration:
-  | ERROR L_BRACE nl = nameList R_BRACE
-    { "ERROR `{ nameList }" <| [ nl ] <<| "errorDeclaration" <<<| (at $sloc) }
 ;
 
 (* Match kind declarations *)
@@ -866,7 +852,6 @@ declaration:
   | d = constantDeclaration
   | d = instantiation
   | d = actionDeclaration
-  | d = errorDeclaration
   | d = matchKindDeclaration
   | d = externDeclaration
   | d = parserDeclaration

@@ -88,7 +88,6 @@ syntax expression
 
 syntax baseType =
   | BOOL
-  | ERROR
   | MATCH_KIND
   | STRING
   | INT
@@ -152,6 +151,12 @@ syntax parameterList =
   | `EMPTY
   | nonEmptyParameterList
 
+dec $flatten_parameterList(parameterList) : parameter*
+def $flatten_parameterList(`EMPTY) = eps
+def $flatten_parameterList(parameter) = [ parameter ]
+def $flatten_parameterList(nonEmptyParameterList `, parameter)
+  = $flatten_parameterList(nonEmptyParameterList) ++ [ parameter ]
+
 ;;
 ;; Expression key-value pairs
 ;;
@@ -205,15 +210,7 @@ syntax ternaryExpression =
 
 syntax memberAccessBase
 
-syntax errorAccessExpression =
-  ERROR `. member
-
-syntax memberAccessExpression =
-  memberAccessBase `. member
-
-syntax accessExpression =
-  | errorAccessExpression
-  | memberAccessExpression
+syntax memberAccessExpression = memberAccessBase `. member
 
 ;;
 ;;;; Call expressions
@@ -240,7 +237,7 @@ syntax expression =
   | unaryExpression
   | binaryExpression
   | ternaryExpression
-  | accessExpression
+  | memberAccessExpression
   | callExpression
   | parenthesizedExpression
 
@@ -382,6 +379,16 @@ syntax blockElementStatementList =
   | `EMPTY
   | blockElementStatementList blockElementStatement
 
+dec $flatten_blockElementStatementList(blockElementStatementList)
+  : blockElementStatement*
+def $flatten_blockElementStatementList(`EMPTY) = eps
+def $flatten_blockElementStatementList(
+    blockElementStatementList blockElementStatement
+  )
+  = $flatten_blockElementStatementList(
+      blockElementStatementList
+    ) ++ [ blockElementStatement ]
+
 ;;
 ;;;; Function declarations
 ;;
@@ -401,12 +408,6 @@ syntax actionDeclaration =
 ;;
 
 syntax instantiation = type `( argumentList ) name `;
-
-;;
-;;;; Error declarations
-;;
-
-syntax errorDeclaration = ERROR `{ nameList }
 
 ;;
 ;;;; Match kind declarations
@@ -643,7 +644,6 @@ syntax declaration =
   | constantDeclaration
   | instantiation
   | actionDeclaration
-  | errorDeclaration
   | matchKindDeclaration
   | externDeclaration
   | parserDeclaration

@@ -134,8 +134,6 @@ rule tokenize = parse
       { ELSE }
   | "entries"
       { ENTRIES }
-  | "error"
-      { ERROR }
   | "extern"
       { EXTERN }
   | "header"
