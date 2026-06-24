@@ -1969,4 +1969,4 @@ let elab_spec (spec : spec) : Il2.spec =
   let ctx, spec_il = elab_defs ctx spec in
   populate_typs ctx;
   spec_il |> populate_rules ctx |> populate_clauses ctx
-  |> Dimension.analyze_spec |> Dataflow.Binding.analyze_spec
+  |> Dataflow.Dimension.analyze_spec |> Dataflow.Binding.analyze_spec

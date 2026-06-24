@@ -9,7 +9,7 @@ open Util.Source
 
 (* Context for dimension analysis *)
 
-module Dctx = struct
+module Dimctx = struct
   include MakeIdEnv (struct
     type t = Typdim.t list
 
@@ -36,11 +36,11 @@ end
 
 (* Expression inference *)
 
-let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
   let typ', at = (exp.note, exp.at) in
   match exp.it with
   | BoolE _ | NumE _ | TextE _ -> dctx
-  | VarE id -> Dctx.add_to_list id (typ' $ at, iters) dctx
+  | VarE id -> Dimctx.add_to_list id (typ' $ at, iters) dctx
   | UnE (_, _, exp)
   | UpCastE (_, exp)
   | DownCastE (_, exp)
@@ -78,17 +78,18 @@ let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
            (Print.string_of_iterexp iterexp))
   | IterE (exp, (iter, [])) -> infer_exp exp (iter :: iters) dctx
 
-and infer_exps (exps : exp list) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+and infer_exps (exps : exp list) (iters : iter list) (dctx : Dimctx.t) :
+    Dimctx.t =
   List.fold_left (fun dctx exp -> infer_exp exp iters dctx) dctx exps
 
-and infer_notexp (notexp : notexp) (iters : iter list) (dctx : Dctx.t) : Dctx.t
-    =
+and infer_notexp (notexp : notexp) (iters : iter list) (dctx : Dimctx.t) :
+    Dimctx.t =
   let exps = Mixfix.args notexp in
   infer_exps exps iters dctx
 
 (* Path inference *)
 
-and infer_path (path : path) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+and infer_path (path : path) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
   match path.it with
   | RootP -> dctx
   | IdxP (path, exp) -> dctx |> infer_path path iters |> infer_exp exp iters
@@ -99,15 +100,17 @@ and infer_path (path : path) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
 
 (* Argument inference *)
 
-and infer_arg (arg : arg) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+and infer_arg (arg : arg) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
   match arg.it with ExpA exp -> infer_exp exp iters dctx | DefA _ -> dctx
 
-and infer_args (args : arg list) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+and infer_args (args : arg list) (iters : iter list) (dctx : Dimctx.t) :
+    Dimctx.t =
   List.fold_left (fun dctx arg -> infer_arg arg iters dctx) dctx args
 
 (* Premise inference *)
 
-let rec infer_prem (prem : prem) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
+let rec infer_prem (prem : prem) (iters : iter list) (dctx : Dimctx.t) :
+    Dimctx.t =
   match prem.it with
   | RulePr (_, notexp, _) -> infer_notexp notexp iters dctx
   | IfPr exp -> infer_exp exp iters dctx
@@ -124,26 +127,26 @@ let rec infer_prem (prem : prem) (iters : iter list) (dctx : Dctx.t) : Dctx.t =
   | IterPr (prem, (iter, _, _)) -> infer_prem prem (iter :: iters) dctx
   | DebugPr exp -> infer_exp exp iters dctx
 
-let infer_prems (prems : prem list) (dctx : Dctx.t) : Dctx.t =
+let infer_prems (prems : prem list) (dctx : Dimctx.t) : Dimctx.t =
   List.fold_left (fun dctx prem -> infer_prem prem [] dctx) dctx prems
 
 (* Rule inference *)
 
-let infer_rule (rule : rule) : Dctx.t =
+let infer_rule (rule : rule) : Dimctx.t =
   let _, notexp, prems = rule.it in
-  Dctx.empty |> infer_notexp notexp [] |> infer_prems prems
+  Dimctx.empty |> infer_notexp notexp [] |> infer_prems prems
 
 (* Clause inference *)
 
-let infer_clause (clause : clause) : Dctx.t =
+let infer_clause (clause : clause) : Dimctx.t =
   let args, exp, prems = clause.it in
-  Dctx.empty |> infer_args args [] |> infer_prems prems |> infer_exp exp []
+  Dimctx.empty |> infer_args args [] |> infer_prems prems |> infer_exp exp []
 
 (* Table row inference *)
 
-let infer_tablerow (tablerow : tablerow) : Dctx.t =
+let infer_tablerow (tablerow : tablerow) : Dimctx.t =
   let args, exp = tablerow.it in
-  Dctx.empty |> infer_args args [] |> infer_exp exp []
+  Dimctx.empty |> infer_args args [] |> infer_exp exp []
 
 (* Occurence constructors *)
 
@@ -464,7 +467,7 @@ let annotate_tablerow (bounds : VEnv.t) (tablerow : tablerow) : tablerow =
 (* Analysis *)
 
 let analyze_rule (rule : rule) : rule =
-  let bounds = Dctx.infer (infer_rule rule) in
+  let bounds = Dimctx.infer (infer_rule rule) in
   annotate_rule bounds rule
 
 let analyze_rulegroup (rulegroup : rulegroup) : rulegroup =
@@ -478,11 +481,11 @@ let analyze_elsegroup (elsegroup : elsegroup) : elsegroup =
   (id, rule) $ elsegroup.at
 
 let analyze_tablerow (tablerow : tablerow) : tablerow =
-  let bounds = Dctx.infer (infer_tablerow tablerow) in
+  let bounds = Dimctx.infer (infer_tablerow tablerow) in
   annotate_tablerow bounds tablerow
 
 let analyze_clause (clause : clause) : clause =
-  let bounds = Dctx.infer (infer_clause clause) in
+  let bounds = Dimctx.infer (infer_clause clause) in
   annotate_clause bounds clause
 
 let analyze_def (def : def) : def =
