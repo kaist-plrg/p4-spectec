@@ -28,7 +28,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     table classify {
         key = { hdr.eth.ethertype : exact; }
-        actions = { drop; fwd; NoAction; }
+        actions = { drop(pass); fwd(pass); NoAction; }
     }
     apply {
         pass = true;

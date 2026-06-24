@@ -25,7 +25,7 @@ control Filter(inout Header hdr, out bool pass) {
     table tbl {
         key = { hdr.ethernet.protocol : exact; }
         actions = {
-            match; NoAction;
+            match(pass); NoAction;
         }
 
         const entries = {

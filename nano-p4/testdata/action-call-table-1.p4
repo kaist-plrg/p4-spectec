@@ -28,7 +28,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     table t {
         key = { hdr.nanonet.drop : exact; }
-        actions = { reject; }
+        actions = { reject(pass); }
 
         const entries = {
             (true) : reject(pass, 8w1);

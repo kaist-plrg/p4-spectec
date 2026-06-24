@@ -29,7 +29,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     table dispatch {
         key = { hdr.nanonet.packetType : exact; }
-        actions = { allow; deny; }
+        actions = { allow(pass); deny(pass); }
         const entries = {
             (7w1) : allow(pass);
             (7w2) : allow(pass);

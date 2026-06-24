@@ -52,7 +52,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     table protocol_filter {
         key = { hdr.ipv4.protocol : exact; }
-        actions = { allow; deny; }
+        actions = { allow(pass); deny(pass); }
         const entries = {
             (6)   : allow(pass);
             (17)  : allow(pass);

@@ -24,7 +24,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     table filter_table {
         key = { hdr.eth.ethertype : exact; }
-        actions = { set_result; NoAction; }
+        actions = { set_result(pass); NoAction; }
         const entries = {
             (0x0800) : set_result(pass, true);
             (0x0806) : set_result(pass, true);
