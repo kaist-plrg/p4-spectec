@@ -117,28 +117,24 @@ and instr' =
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * dangle
   | GroupI of id * id * rel_signature * exp list * block
-  | TryI of block list
+  | TryI of arm list
   | LetI of exp * exp * iterinstr list
   | RuleI of id * notexp * Hints.Input.t * iterinstr list
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   | DebugI of exp
   (* Shorthands *)
-  (* DestructI (fields, exp_source): at runtime, destructure [exp_source]
-     (a CaseV) positionally against [fields]. Each field is [(name_opt,
-     exp_target)]: the renderer formats visible (Some) fields and skips
-     underscore (None) ones; the interpreter assigns each [exp_target]
-     to the corresponding CaseV value regardless. *)
+  (* Positionally destructure [exp_source] against [fields], each a
+     [(name_opt, exp_target)] pair. The renderer skips unnamed (None)
+     fields; the interpreter assigns every [exp_target]. *)
   | DestructI of (string option * exp) list * exp
-  (* CheckLetI (exp_target, exp_source, body): bind [exp_target] to
-     [exp_source] after a subtype-or-match check on [exp_source], then
-     run [body]. *)
+  (* Bind [exp_target] to [exp_source] after a subtype-or-match check, then run [body]. *)
   | CheckLetI of exp * exp * block
-  (* OptionGetI (exp_target, exp_source): bind [exp_target] to the
-     inner value of [exp_source], asserting [exp_source] is [Some _]. *)
+  (* Bind [exp_target] to the inner value of [exp_source], asserting it is [Some _]. *)
   | OptionGetI of exp * exp
 
 and block = instr list
+and arm = block
 and elseblock = instr list
 
 (* Definitions *)

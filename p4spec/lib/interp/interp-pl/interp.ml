@@ -1142,18 +1142,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             match flow with Flow.Cont _ -> eval_block ctx rest | _ -> flow))
 
   and eval_try (ctx : Ctx.t) (arms : block list) : Flow.t =
-    if !Ctx.is_det then eval_try_det ctx arms else eval_try_seq ctx arms
+    if !Ctx.is_det then eval_try_deterministic ctx arms
+    else eval_try_sequential ctx arms
 
-  and eval_try_seq (ctx : Ctx.t) (arms : block list) : Flow.t =
+  and eval_try_sequential (ctx : Ctx.t) (arms : block list) : Flow.t =
     match arms with
     | [] -> Flow.Cont []
     | arm :: rest -> (
         try
           let flow = eval_block ctx arm in
-          match flow with Flow.Cont _ -> eval_try_seq ctx rest | _ -> flow
-        with Backtrace (Unmatch _) -> eval_try_seq ctx rest)
+          match flow with
+          | Flow.Cont _ -> eval_try_sequential ctx rest
+          | _ -> flow
+        with Backtrace (Unmatch _) -> eval_try_sequential ctx rest)
 
-  and eval_try_det (ctx : Ctx.t) (arms : block list) : Flow.t =
+  and eval_try_deterministic (ctx : Ctx.t) (arms : block list) : Flow.t =
     let try_arm (arm : block) : Flow.t option =
       try
         match eval_block ctx arm with Flow.Cont _ -> None | flow -> Some flow

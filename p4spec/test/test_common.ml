@@ -106,7 +106,6 @@ let frontend specdir =
 
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-
 let annotate specdir = specdir |> structure |> Annotate.annotate_spec
 
 let driver ?(det = false) ?(arch : string option) mode specdir =

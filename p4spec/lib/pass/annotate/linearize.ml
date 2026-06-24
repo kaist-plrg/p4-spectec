@@ -70,14 +70,13 @@ and is_branching (instr : Ll.Ast.instr) : bool =
 and wrap_try_arms (instrs : Ll.Ast.block) : Ll.Ast.block =
   match split_leading_branches instrs with
   | [], [] -> []
-  | [], head :: rest -> head :: wrap_try_arms rest
+  | [], instr :: instrs -> instr :: wrap_try_arms instrs
   | [ single ], remainder -> single :: wrap_try_arms remainder
   | branches, remainder ->
       let arms = List.map (fun i -> [ i ]) branches in
       let wrapped = Ll.Ast.TryI arms $$ (no_region, { iid = -1 }) in
       wrapped :: wrap_try_arms remainder
 
-(* Returns (leading run of branching instructions, the rest). *)
 and split_leading_branches (instrs : Ll.Ast.block) :
     Ll.Ast.instr list * Ll.Ast.block =
   match instrs with

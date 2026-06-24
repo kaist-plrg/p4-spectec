@@ -13,7 +13,7 @@ and instr' =
   | CaseI of exp * case list * dangle
   | OtherwiseI of block
   | GroupI of id * rel_signature * exp list * block
-  | TryI of block list
+  | TryI of arm list
   | DebugI of exp
   | LetI of exp * exp * iterinstr list
   | RuleI of id * notexp * Hints.Input.t * iterinstr list
@@ -21,6 +21,7 @@ and instr' =
   | ReturnI of exp
 
 and block = instr list
+and arm = block
 
 and holdcase =
   | BothH of block * block

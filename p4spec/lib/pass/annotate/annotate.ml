@@ -104,8 +104,6 @@ let hints_of_func_def (ctx : Ctx.t) (id_func : id) : Annot.hints =
 
 (* Hint validation *)
 
-(* `validate_hint_alter` only inspects the length of its items list, so we
-   pass a unit list of the desired arity. *)
 let validate_hint_at (at : region) (n : int) : Hints.Alter.t option -> unit =
   let slots = List.init n (fun _ -> ()) in
   function None -> () | Some h -> Ctx.validate_hint_alter at h slots
