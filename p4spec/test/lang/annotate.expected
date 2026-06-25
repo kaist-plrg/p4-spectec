@@ -976,19 +976,23 @@ for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-
 +
 for each ``value~field~`` in ``value~field~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
    .... Return ``xref:concat_[$concat_<bool>(bool'^{asterisk}^^{asterisk}^)]``.
-  ... Else if let ``+HEADER+`` ``++_++`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``:
-   .... Check that ``b`` is equal to ``true``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+  ... Else if ``value'`` has type ``headerValue``:
+   .... Try pass:[<strong id="bk-write_bits_from_value-2" class="bk-label">#2</strong>]:
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-write_bits_from_value-2-I"></span>+++
+     ...... Let ``+HEADER+`` ``++_++`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-2-II">else #2-II</a>]</sub>+++
+     ...... Check that ``b`` is equal to ``true``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-2-II">else #2-II</a>]</sub>+++
+     ...... Let ``bool''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``bool''^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value~field~)]``.
+      ******* Let ``bool''^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value~field~)]``.
 --
 +
-for each ``value~field~`` in ``value~field~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:concat_[$concat_<bool>(bool''^{asterisk}^^{asterisk}^)]``.
-   .... Let ``+HEADER+`` ``++_++`` ``+{+`` ``b`` ``+;+`` ``++_++^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``b`` is equal to ``false``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
-   .... Return ``·``.
+for each ``value~field~`` in ``value~field~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-2-II">else #2-II</a>]</sub>+++
+     ...... Return ``xref:concat_[$concat_<bool>(bool''^{asterisk}^^{asterisk}^)]``.
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-write_bits_from_value-2-II"></span>+++
+     ...... Let ``+HEADER+`` ``++_++`` ``+{+`` ``b`` ``+;+`` ``++_++^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-2">fail #2</a>]</sub>+++
+     ...... Check that ``b`` is equal to ``false``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-2">fail #2</a>]</sub>+++
+     ...... Return ``·``.
   ... Else if let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value`` ``id`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``:
    .... Let ``bool'''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
@@ -1729,10 +1733,9 @@ xref:subst_typeIR'[``typeIR'`` substituted by a non-empty ``theta``]
 . If let ``baseTypeIR`` be ``typeIR'``:
  .. Return ``baseTypeIR``.
 . Else if let ``typeId`` be ``typeIR'``:
- .. Let ``typeIR''^?^`` be xref:find_map[the value of ``typeId`` in map ``theta``].
  .. Try pass:[<strong id="bk-subst_typeIR'-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-subst_typeIR'-1-i"></span>+++
-   .... Let!~type~ ``typeIR`` be ``typeIR''^?^``.+++<sub class="bk-mark">[<a href="#bk-subst_typeIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:find_map[the value of ``typeId`` in map ``theta``].+++<sub class="bk-mark">[<a href="#bk-subst_typeIR'-1-ii">else #1-ii</a>]</sub>+++
    .... Return ``typeIR``.
   ... {empty}+++<span class="bk-arm-anchor" id="bk-subst_typeIR'-1-ii"></span>+++
    .... Check that ``·`` is equal to xref:find_map[the value of ``typeId`` in map ``theta``].+++<sub class="bk-mark">[<a href="#bk-subst_typeIR'-1">fail #1</a>]</sub>+++
@@ -3340,10 +3343,9 @@ for each ``typeIR~f~`` in ``typeIR~f~^{asterisk}^``.
  .. Return ``typeId`` ``+.+`` ``id~f_h~``.
 . Else if let ``+ENUM+`` ``typeId`` ``+<+`` ``typeIR`` ``+>+`` ``+{+`` ``(`` ``nameIR~field~`` ``+=+`` ``value~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Let ``value~zero~`` be xref:cast_int[``+D+`` ``0`` casted to type ``typeIR``].
- .. Let ``id^?^`` be xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].
  .. Try pass:[<strong id="bk-default-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-default-1-i"></span>+++
-   .... Let!~type~ ``id~zero~`` be ``id^?^``.+++<sub class="bk-mark">[<a href="#bk-default-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``id~zero~`` be xref:option_get[*!*] xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-default-1-ii">else #1-ii</a>]</sub>+++
    .... Return ``typeId`` ``+.+`` ``id~zero~`` ``+.+`` ``value~zero~``.
   ... {empty}+++<span class="bk-arm-anchor" id="bk-default-1-ii"></span>+++
    .... Check that ``·`` is equal to xref:assoc_[the value associated to ``value~zero~`` in ``(`` ``value~field~,`` ``nameIR~field~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-default-1">fail #1</a>]</sub>+++
@@ -3370,9 +3372,9 @@ xref:cast_to_enum'[$cast_to_enum'(typeId, typeIR, valueFieldIR^{asterisk}^, valu
 
 xref:cast_bool[``boolValue`` casted to type ``typeIR'``]
 
-. Let ``+`B+`` ``b`` be ``boolValue``.
 . Try pass:[<strong id="bk-cast_bool-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_bool-1-a"></span>+++
+  ... Let ``+`B+`` ``b`` be ``boolValue``.+++<sub class="bk-mark">[<a href="#bk-cast_bool-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``boolTypeIR`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-cast_bool-1-b">else #1-b</a>]</sub>+++
   ... Return ``+`B+`` ``b``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_bool-1-b"></span>+++
@@ -3460,9 +3462,9 @@ xref:cast_int[``integerValue`` casted to type ``typeIR'``]
 
 xref:cast_error[``errorValue`` casted to type ``typeIR'``]
 
-. Let ``+ERROR+`` ``+.+`` ``nameIR`` be ``errorValue``.
 . Try pass:[<strong id="bk-cast_error-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_error-1-a"></span>+++
+  ... Let ``+ERROR+`` ``+.+`` ``nameIR`` be ``errorValue``.+++<sub class="bk-mark">[<a href="#bk-cast_error-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``errorTypeIR`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-cast_error-1-b">else #1-b</a>]</sub>+++
   ... Return ``+ERROR+`` ``+.+`` ``nameIR``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_error-1-b"></span>+++
@@ -3953,9 +3955,9 @@ xref:switchLabelIR_of_switchCaseIR[The label of ``switchCaseIR``]
 
 xref:flatten_objectInitializerOptIR[The list of object declarations in ``objectInitializerOptIR``]
 
-. Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.
 . Try pass:[<strong id="bk-flatten_objectInitializerOptIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-flatten_objectInitializerOptIR-1-a"></span>+++
+  ... Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.+++<sub class="bk-mark">[<a href="#bk-flatten_objectInitializerOptIR-1-b">else #1-b</a>]</sub>+++
   ... Check that ``objectInitializerIR^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-flatten_objectInitializerOptIR-1-b">else #1-b</a>]</sub>+++
   ... Return ``·``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-flatten_objectInitializerOptIR-1-b"></span>+++
@@ -4049,45 +4051,48 @@ xref:match_overloaded_named[Matching ``callTargetId`` ``+:+`` ``V`` against name
 . Let ``parameterIR^{asterisk}^`` be ``xref:get_parameterListIR[$get_parameterListIR(V)]``.
 . Check that the length of ``id~param~^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
 . Check that ``id~param~`` is equal to xref:id_of_parameterIR[the identifier of ``parameterIR``], for all ``id~param~`` in ``id~param~^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``.
-. Check that the length of ``id~param~^{asterisk}^`` is equal to the length of ``id~arg~^{asterisk}^``.
-. Let ``bool`` be xref:eq_set[``+{+`` ``id~param~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].
-. Return xref:ite[``+MATCH+`` with defaults ``·`` and optionals ``·`` if ``bool`` otherwise ``+NOMATCH+``].
-. Let ``b~default~^{asterisk}^`` be the list obtained by repeating:
+. Try pass:[<strong id="bk-match_overloaded_named-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-match_overloaded_named-1-a"></span>+++
+  ... Check that the length of ``id~param~^{asterisk}^`` is equal to the length of ``id~arg~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1-b">else #1-b</a>]</sub>+++
+  ... Let ``bool`` be xref:eq_set[``+{+`` ``id~param~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1-b">else #1-b</a>]</sub>+++
+  ... Return xref:ite[``+MATCH+`` with defaults ``·`` and optionals ``·`` if ``bool`` otherwise ``+NOMATCH+``].
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-match_overloaded_named-1-b"></span>+++
+  ... Let ``b~default~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
+   **** Let ``b~default~`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
-. Let ``b~optional~^{asterisk}^`` be the list obtained by repeating:
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``b~optional~^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
+   **** Let ``b~optional~`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
-. Check that the length of ``id~param~^{asterisk}^`` is greater than the length of ``id~arg~^{asterisk}^``.
-. Let ``+{+`` ``id~param_omitted~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~param~^{asterisk}^`` ``+}+`` and ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].
-. Let ``bool''^{asterisk}^`` be the list obtained by repeating:
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Check that the length of ``id~param~^{asterisk}^`` is greater than the length of ``id~arg~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``+{+`` ``id~param_omitted~^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``+{+`` ``id~param~^{asterisk}^`` ``+}+`` and ``+{+`` ``id~arg~^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``bool''^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``bool''`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
+   **** Let ``bool''`` be xref:is_default_parameterIR[``parameterIR`` is a parameter with a default value].
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
-. Let ``id~default_param~^{asterisk}^`` be xref:filter_[``id~param~^{asterisk}^`` filtered by ``bool''^{asterisk}^``].
-. Let ``id~default~^{asterisk}^`` be xref:filter_[``id~param_omitted~^{asterisk}^`` filtered by ``(`` ``id~param_omitted~`` ``is`` ``in`` ``id~default_param~^{asterisk}^`` ``)^{asterisk}^``].
-. Let ``bool'^{asterisk}^`` be the list obtained by repeating:
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``id~default_param~^{asterisk}^`` be xref:filter_[``id~param~^{asterisk}^`` filtered by ``bool''^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``id~default~^{asterisk}^`` be xref:filter_[``id~param_omitted~^{asterisk}^`` filtered by ``(`` ``id~param_omitted~`` ``is`` ``in`` ``id~default_param~^{asterisk}^`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``bool'^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``bool'`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
+   **** Let ``bool'`` be xref:is_optional_parameterIR[``parameterIR`` is an optional parameter].
 --
 +
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
-. Let ``id~optional_param~^{asterisk}^`` be xref:filter_[``id~param~^{asterisk}^`` filtered by ``bool'^{asterisk}^``].
-. Let ``id~optional~^{asterisk}^`` be xref:filter_[``id~param_omitted~^{asterisk}^`` filtered by ``(`` ``id~param_omitted~`` ``is`` ``in`` ``id~optional_param~^{asterisk}^`` ``)^{asterisk}^``].
-. Check that xref:eq_set[``+{+`` ``id~default~^{asterisk}^`` ``{pp}`` ``id~optional~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~param_omitted~^{asterisk}^`` ``+}+``].
-. Return xref:callTargetMatch[``+MATCH+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``].
+for each ``parameterIR`` in ``parameterIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``id~optional_param~^{asterisk}^`` be xref:filter_[``id~param~^{asterisk}^`` filtered by ``bool'^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Let ``id~optional~^{asterisk}^`` be xref:filter_[``id~param_omitted~^{asterisk}^`` filtered by ``(`` ``id~param_omitted~`` ``is`` ``in`` ``id~optional_param~^{asterisk}^`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Check that xref:eq_set[``+{+`` ``id~default~^{asterisk}^`` ``{pp}`` ``id~optional~^{asterisk}^`` ``+}+`` is equal to ``+{+`` ``id~param_omitted~^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-match_overloaded_named-1">fail #1</a>]</sub>+++
+  ... Return xref:callTargetMatch[``+MATCH+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``].
 
 . Otherwise:
  .. Return ``+NOMATCH+``.
@@ -4148,29 +4153,41 @@ for each ``parameterIR~omitted~`` in ``parameterIR~omitted~^{asterisk}^``.+++<su
 
 xref:find_overloadeds_named[Finding all items in ``set<pair<callableId,`` ``V>>`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]
 
-. Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``·``.
-. Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.
-. Let!~type~ ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.
-. Check that xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``.
-. Return xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Let ``callTargetMatch`` be xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Let!~type~ ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``.
-. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
+. Try pass:[<strong id="bk-find_overloadeds_named-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_named-1-a"></span>+++
+  ... Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-1-b">else #1-b</a>]</sub>+++
+  ... Return ``·``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_named-1-b"></span>+++
+  ... Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-1">fail #1</a>]</sub>+++
+  ... Try pass:[<strong id="bk-find_overloadeds_named-2" class="bk-label">#2</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_named-2-A"></span>+++
+    ..... Check that xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-2-B">else #2-B</a>]</sub>+++
+    ..... Return xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_named-2-B"></span>+++
+    ..... Let ``callTargetMatch`` be xref:match_overloaded_named[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-2">fail #2</a>]</sub>+++
+    ..... Let!~type~ ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-2">fail #2</a>]</sub>+++
+    ..... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_named-2">fail #2</a>]</sub>+++
+    ..... Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
 
 xref:find_overloadeds_unnamed[Finding all items in ``set<pair<callableId,`` ``V>>`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``]
 
-. Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``·``.
-. Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.
-. Let!~type~ ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.
-. Check that xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``.
-. Return xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Let ``callTargetMatch`` be xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Let!~type~ ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``.
-. Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
-. Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
+. Try pass:[<strong id="bk-find_overloadeds_unnamed-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_unnamed-1-a"></span>+++
+  ... Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-1-b">else #1-b</a>]</sub>+++
+  ... Return ``·``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_unnamed-1-b"></span>+++
+  ... Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``callTargetId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-1">fail #1</a>]</sub>+++
+  ... Try pass:[<strong id="bk-find_overloadeds_unnamed-2" class="bk-label">#2</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_unnamed-2-A"></span>+++
+    ..... Check that xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``] is ``+NOMATCH+``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-2-B">else #2-B</a>]</sub>+++
+    ..... Return xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloadeds_unnamed-2-B"></span>+++
+    ..... Let ``callTargetMatch`` be xref:match_overloaded_unnamed[matching ``callTargetId~h~`` ``+:+`` ``V~h~`` against unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-2">fail #2</a>]</sub>+++
+    ..... Let!~type~ ``+MATCH+`` ``id~default~^{asterisk}^`` ``id~optional~^{asterisk}^`` be ``callTargetMatch``.+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-2">fail #2</a>]</sub>+++
+    ..... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callTargetId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``nat`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloadeds_unnamed-2">fail #2</a>]</sub>+++
+    ..... Return ``callTargetId~h~`` ``+:+`` ``V~h~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` ``{two-colons}`` ``callResolution<V>^{asterisk}^``.
 
 xref:find_overloaded[Finding the item in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching ``nameIR~f~`` ``+(+`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``]
 
@@ -4185,18 +4202,24 @@ xref:find_overloaded[Finding the item in ``+{+`` ``(`` ``callableId`` ``+:+`` ``
 --
 +
 for each ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1-b">else #1-b</a>]</sub>+++
-  ... Check that ``·`` is equal to xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1-b">else #1-b</a>]</sub>+++
-  ... Return ``·``.
-  ... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1-b">else #1-b</a>]</sub>+++
-  ... Let!~type~ ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1-b">else #1-b</a>]</sub>+++
-  ... Return ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
+  ... Try pass:[<strong id="bk-find_overloaded-2" class="bk-label">#2</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloaded-2-A"></span>+++
+    ..... Check that ``·`` is equal to xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-2-B">else #2-B</a>]</sub>+++
+    ..... Return ``·``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloaded-2-B"></span>+++
+    ..... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_named[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching named key ``nameIR~f~`` ``+(+`` ``id~arg_inner~^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-2">fail #2</a>]</sub>+++
+    ..... Let!~type~ ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-2">fail #2</a>]</sub>+++
+    ..... Return ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_overloaded-1-b"></span>+++
   ... Check that ``id~arg~^?^`` is none, for all ``id~arg~^?^`` in ``id~arg~^?^^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1">fail #1</a>]</sub>+++
-  ... Check that ``·`` is equal to xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1">fail #1</a>]</sub>+++
-  ... Return ``·``.
-  ... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1">fail #1</a>]</sub>+++
-  ... Let!~type~ ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~omitted~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-1">fail #1</a>]</sub>+++
-  ... Return ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~omitted~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
+  ... Try pass:[<strong id="bk-find_overloaded-3" class="bk-label">#3</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloaded-3-A"></span>+++
+    ..... Check that ``·`` is equal to xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-3-B">else #3-B</a>]</sub>+++
+    ..... Return ``·``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_overloaded-3-B"></span>+++
+    ..... Let ``callResolution<V>^{asterisk}^`` be xref:find_overloadeds_unnamed[finding all items in ``+{+`` ``(`` ``callableId`` ``+:+`` ``V`` ``)^{asterisk}^`` ``+}+`` matching unnamed key ``nameIR~f~`` ``+(+`` ``the`` ``length`` ``of`` ``id~arg~^?^^{asterisk}^`` ``+)+`` using parameter getter ``$get_parameterListIR``].+++<sub class="bk-mark">[<a href="#bk-find_overloaded-3">fail #3</a>]</sub>+++
+    ..... Let!~type~ ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~omitted~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_overloaded-3">fail #3</a>]</sub>+++
+    ..... Return ``callableId~found~`` ``+:+`` ``V~found~`` ``+#+`` ``id~omitted~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
 
 xref:find_non_overloaded[$find_non_overloaded<V>(+{+ ( callableId +:+ V )^{asterisk}^ +}+, nameIR~f~)]
 
@@ -4209,17 +4232,20 @@ xref:find_non_overloaded[$find_non_overloaded<V>(+{+ ( callableId +:+ V )^{aster
 
 xref:find_non_overloadeds[$find_non_overloadeds<V>(set<pair<callableId, V>>, nameIR~f~)]
 
-. Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``·``.
-. Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.
-. Let!~type~ ``callableId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.
-. Let ``nameIR`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId~h~``.
-. If ``nameIR`` is equal to ``nameIR~f~``:
- .. Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
- .. Return ``(`` ``callableId~h~,`` ``V~h~`` ``)`` ``{two-colons}`` ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
-. Else:
- .. Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.
- .. Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
+. Try pass:[<strong id="bk-find_non_overloadeds-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_non_overloadeds-1-a"></span>+++
+  ... Check that ``set<pair<callableId,`` ``V>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1-b">else #1-b</a>]</sub>+++
+  ... Return ``·``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_non_overloadeds-1-b"></span>+++
+  ... Let ``+{+`` ``pair<callableId,`` ``V>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``V>>``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``callableId~h~`` ``+:+`` ``V~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``V>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1">fail #1</a>]</sub>+++
+  ... Let ``nameIR`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId~h~``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1">fail #1</a>]</sub>+++
+  ... If ``nameIR`` is equal to ``nameIR~f~``:
+   .... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1">fail #1</a>]</sub>+++
+   .... Return ``(`` ``callableId~h~,`` ``V~h~`` ``)`` ``{two-colons}`` ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
+  ... Else:
+   .... Let ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^`` be ``xref:find_non_overloadeds[$find_non_overloadeds<V>(+{+`` ``(`` ``callableId~t~`` ``+:+`` ``V~t~`` ``)^{asterisk}^`` ``+}+,`` ``nameIR~f~)]``.+++<sub class="bk-mark">[<a href="#bk-find_non_overloadeds-1">fail #1</a>]</sub>+++
+   .... Return ``(`` ``callableId~t_found~,`` ``V~t_found~`` ``)^{asterisk}^``.
 
 xref:name_annotation[$name_annotation(annotationList)]
 
@@ -4250,9 +4276,9 @@ xref:name_annotation_opt[$name_annotation_opt(annotation)]
 
 xref:name_annotation_default[$name_annotation_default(annotationList, nameIR)]
 
-. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
 . Try pass:[<strong id="bk-name_annotation_default-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-name_annotation_default-1-a"></span>+++
+  ... Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.+++<sub class="bk-mark">[<a href="#bk-name_annotation_default-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``nameIR~found~`` be ``nameIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-name_annotation_default-1-b">else #1-b</a>]</sub>+++
   ... Return ``nameIR~found~``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-name_annotation_default-1-b"></span>+++
@@ -4274,10 +4300,13 @@ xref:find_name_annotation_opt[$find_name_annotation_opt(annotationList)]
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_name_annotation_opt-1-b"></span>+++
   ... Let!~type~ ``annotationListNonEmpty'`` be ``annotationList``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-1">fail #1</a>]</sub>+++
   ... Let!~type~ ``annotationListNonEmpty`` ``annotation`` be ``annotationListNonEmpty'``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-1">fail #1</a>]</sub>+++
-  ... Check that ``·`` is equal to ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-1">fail #1</a>]</sub>+++
-  ... Return ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationListNonEmpty)]``.
-  ... Let ``annotation~found~`` be xref:option_get[*!*] ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-1">fail #1</a>]</sub>+++
-  ... Return ``annotation~found~``.
+  ... Try pass:[<strong id="bk-find_name_annotation_opt-2" class="bk-label">#2</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_name_annotation_opt-2-A"></span>+++
+    ..... Check that ``·`` is equal to ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-2-B">else #2-B</a>]</sub>+++
+    ..... Return ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotationListNonEmpty)]``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_name_annotation_opt-2-B"></span>+++
+    ..... Let ``annotation~found~`` be xref:option_get[*!*] ``xref:find_name_annotation_opt[$find_name_annotation_opt(annotation)]``.+++<sub class="bk-mark">[<a href="#bk-find_name_annotation_opt-2">fail #2</a>]</sub>+++
+    ..... Return ``annotation~found~``.
 
 . Otherwise:
  .. Return ``·``.
@@ -4511,8 +4540,11 @@ xref:lift_baseTypeIR[$lift_baseTypeIR(baseTypeIR)]
 . If let ``boolTypeIR`` be ``baseTypeIR``:
  .. Return ``+BOOL+``.
 . Else if let ``errorTypeIR`` be ``baseTypeIR``:
- .. Return ``+ERROR+``.
- .. Return ``+ERROR+``.
+ .. Try pass:[<strong id="bk-lift_baseTypeIR-1" class="bk-label">#1</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-lift_baseTypeIR-1-i"></span>+++
+   .... Return ``+ERROR+``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-lift_baseTypeIR-1-ii"></span>+++
+   .... Return ``+ERROR+``.
 . Else if let ``matchKindTypeIR`` be ``baseTypeIR``:
  .. Return ``+MATCH_KIND+``.
 . Else if let ``stringTypeIR`` be ``baseTypeIR``:
@@ -5074,15 +5106,18 @@ xref:lift_callExpressionIR[$lift_callExpressionIR(callExpressionIR)]
    .... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-1">fail #1</a>]</sub>+++
    .... Return ``namedType`` ``+(+`` ``argumentList`` ``+)+``.
 . Else:
- .. Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
- .. Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.
- .. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
- .. Return ``expression`` ``+(+`` ``argumentList`` ``+)+``.
- .. Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.
- .. Check that ``typeArgumentIR^{asterisk}^`` is not equal to ``·``.
- .. Let ``realTypeArgumentList`` be ``xref:lift_typeArgumentListIR_as_realTypeArgumentList[$lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR^{asterisk}^)]``.
- .. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
- .. Return ``expression`` ``+<+`` ``realTypeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+``.
+ .. Try pass:[<strong id="bk-lift_callExpressionIR-2" class="bk-label">#2</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-lift_callExpressionIR-2-i"></span>+++
+   .... Check that ``typeArgumentIR^{asterisk}^`` is an empty list.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2-ii">else #2-ii</a>]</sub>+++
+   .... Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2-ii">else #2-ii</a>]</sub>+++
+   .... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2-ii">else #2-ii</a>]</sub>+++
+   .... Return ``expression`` ``+(+`` ``argumentList`` ``+)+``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-lift_callExpressionIR-2-ii"></span>+++
+   .... Let ``expression`` be ``xref:lift_callableTargetIR_as_expression[$lift_callableTargetIR_as_expression(callableTargetIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2">fail #2</a>]</sub>+++
+   .... Check that ``typeArgumentIR^{asterisk}^`` is not equal to ``·``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2">fail #2</a>]</sub>+++
+   .... Let ``realTypeArgumentList`` be ``xref:lift_typeArgumentListIR_as_realTypeArgumentList[$lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2">fail #2</a>]</sub>+++
+   .... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callExpressionIR-2">fail #2</a>]</sub>+++
+   .... Return ``expression`` ``+<+`` ``realTypeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+``.
 
 xref:lift_parenthesizedExpressionIR[$lift_parenthesizedExpressionIR(+(+ typedExpressionIR +)+)]
 
@@ -5182,9 +5217,9 @@ xref:unflatten_simpleKeysetExpressionList'[$unflatten_simpleKeysetExpressionList
 
 xref:lift_tupleKeysetExpressionIR[$lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR)]
 
-. Let ``+(+`` ``simpleKeysetExpressionListIR`` ``+)+`` be ``tupleKeysetExpressionIR``.
 . Try pass:[<strong id="bk-lift_tupleKeysetExpressionIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_tupleKeysetExpressionIR-1-a"></span>+++
+  ... Let ``+(+`` ``simpleKeysetExpressionListIR`` ``+)+`` be ``tupleKeysetExpressionIR``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``simpleKeysetExpressionIR`` be ``simpleKeysetExpressionListIR``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1-b">else #1-b</a>]</sub>+++
   ... If let ``typedExpressionIR~base~`` ``+&&&+`` ``typedExpressionIR~mask~`` be ``simpleKeysetExpressionIR``:
    .... Let ``expression~base~`` be ``xref:lift_typedExpressionIR[$lift_typedExpressionIR(typedExpressionIR~base~)]``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1-b">else #1-b</a>]</sub>+++
@@ -5199,12 +5234,13 @@ xref:lift_tupleKeysetExpressionIR[$lift_tupleKeysetExpressionIR(tupleKeysetExpre
    .... Return ``+(+`` ``+DEFAULT+`` ``+)+``.
   ... Else if ``tupleKeysetExpressionIR`` is equal to ``+(+`` ``+_+`` ``+)+``:
    .... Return ``+(+`` ``+_+`` ``+)+``.
-. Let ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+`` be ``tupleKeysetExpressionIR``.
-. Check that the length of ``simpleKeysetExpressionIR^{asterisk}^`` is greater than ``1``.
-. Let!~type~ ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``.
-. Let ``simpleKeysetExpression~h~`` be ``xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR~h~)]``.
-. Let ``simpleKeysetExpressionList~t~`` be ``xref:lift_simpleKeysetExpressionListIR[$lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR~t~^{asterisk}^)]``.
-. Return ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` ``simpleKeysetExpressionList~t~`` ``+)+``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_tupleKeysetExpressionIR-1-c"></span>+++
+  ... Let ``+(+`` ``simpleKeysetExpressionIR^{asterisk}^`` ``+)+`` be ``tupleKeysetExpressionIR``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1">fail #1</a>]</sub>+++
+  ... Check that the length of ``simpleKeysetExpressionIR^{asterisk}^`` is greater than ``1``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR~t~^{asterisk}^`` be ``simpleKeysetExpressionIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1">fail #1</a>]</sub>+++
+  ... Let ``simpleKeysetExpression~h~`` be ``xref:lift_simpleKeysetExpressionIR[$lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR~h~)]``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1">fail #1</a>]</sub>+++
+  ... Let ``simpleKeysetExpressionList~t~`` be ``xref:lift_simpleKeysetExpressionListIR[$lift_simpleKeysetExpressionListIR(simpleKeysetExpressionIR~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_tupleKeysetExpressionIR-1">fail #1</a>]</sub>+++
+  ... Return ``+(+`` ``simpleKeysetExpression~h~`` ``+,+`` ``simpleKeysetExpressionList~t~`` ``+)+``.
 
 xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]
 
@@ -5406,14 +5442,17 @@ xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTa
 
 xref:lift_callStatementIR[$lift_callStatementIR(callableTargetIR +<+ typeArgumentIR^{asterisk}^ +>+ +(+ argumentIR^{asterisk}^ +)+ +;+)]
 
-. Check that ``typeArgumentIR^{asterisk}^`` is an empty list.
-. Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.
-. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
-. Return ``lvalue`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
-. Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.
-. Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.
-. Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.
-. Return ``lvalue`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+. Try pass:[<strong id="bk-lift_callStatementIR-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_callStatementIR-1-a"></span>+++
+  ... Check that ``typeArgumentIR^{asterisk}^`` is an empty list.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1-b">else #1-b</a>]</sub>+++
+  ... Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1-b">else #1-b</a>]</sub>+++
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1-b">else #1-b</a>]</sub>+++
+  ... Return ``lvalue`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_callStatementIR-1-b"></span>+++
+  ... Let ``lvalue`` be ``xref:lift_callableTargetIR_as_lvalue[$lift_callableTargetIR_as_lvalue(callableTargetIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1">fail #1</a>]</sub>+++
+  ... Let ``typeArgumentList`` be ``xref:lift_typeArgumentListIR[$lift_typeArgumentListIR(typeArgumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1">fail #1</a>]</sub>+++
+  ... Let ``argumentList`` be ``xref:lift_argumentListIR[$lift_argumentListIR(argumentIR^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-lift_callStatementIR-1">fail #1</a>]</sub>+++
+  ... Return ``lvalue`` ``+<+`` ``typeArgumentList`` ``+>+`` ``+(+`` ``argumentList`` ``+)+`` ``+;+``.
 
 xref:lift_directApplicationStatementIR[$lift_directApplicationStatementIR(constructorTargetIR +.+ +APPLY+ +(+ argumentIR^{asterisk}^ +)+ +;+)]
 
@@ -5623,9 +5662,9 @@ for each ``objectDeclarationIR`` in ``objectDeclarationIR^{asterisk}^``.
 
 xref:lift_instantiationIR[$lift_instantiationIR(annotationList typeIR constructorTargetIR +(+ argumentIR^{asterisk}^ +)+ nameIR objectInitializerOptIR +;+)]
 
-. Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.
 . Try pass:[<strong id="bk-lift_instantiationIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_instantiationIR-1-a"></span>+++
+  ... Let ``objectInitializerIR^?^`` be ``objectInitializerOptIR``.+++<sub class="bk-mark">[<a href="#bk-lift_instantiationIR-1-b">else #1-b</a>]</sub>+++
   ... Check that ``objectInitializerIR^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-lift_instantiationIR-1-b">else #1-b</a>]</sub>+++
   ... Let ``prefixedNameIR`` ``+<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` be ``constructorTargetIR``.+++<sub class="bk-mark">[<a href="#bk-lift_instantiationIR-1-b">else #1-b</a>]</sub>+++
   ... Try pass:[<strong id="bk-lift_instantiationIR-2" class="bk-label">#2</strong>]:
@@ -6100,9 +6139,9 @@ xref:lift_parserDeclarationIR[$lift_parserDeclarationIR(annotationList +PARSER+ 
 
 xref:lift_constOptIR[$lift_constOptIR(constOptIR)]
 
-. Let ``constIR^?^`` be ``constOptIR``.
 . Try pass:[<strong id="bk-lift_constOptIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_constOptIR-1-a"></span>+++
+  ... Let ``constIR^?^`` be ``constOptIR``.+++<sub class="bk-mark">[<a href="#bk-lift_constOptIR-1-b">else #1-b</a>]</sub>+++
   ... Check that ``constIR^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-lift_constOptIR-1-b">else #1-b</a>]</sub>+++
   ... Return ``+`EMPTY+``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_constOptIR-1-b"></span>+++
@@ -6185,9 +6224,9 @@ xref:lift_tableEntryPriorityIR[$lift_tableEntryPriorityIR(+PRIORITY+ +=+ integer
 
 xref:lift_tableEntryIR[$lift_tableEntryIR(constOptIR tableEntryPriorityOptIR keysetExpressionIR +:+ tableActionReferenceIR annotationList +;+)]
 
-. Let ``tableEntryPriorityIR^?^`` be ``tableEntryPriorityOptIR``.
 . Try pass:[<strong id="bk-lift_tableEntryIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-lift_tableEntryIR-1-a"></span>+++
+  ... Let ``tableEntryPriorityIR^?^`` be ``tableEntryPriorityOptIR``.+++<sub class="bk-mark">[<a href="#bk-lift_tableEntryIR-1-b">else #1-b</a>]</sub>+++
   ... Check that ``tableEntryPriorityIR^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-lift_tableEntryIR-1-b">else #1-b</a>]</sub>+++
   ... Let ``constOpt`` be ``xref:lift_constOptIR[$lift_constOptIR(constOptIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_tableEntryIR-1-b">else #1-b</a>]</sub>+++
   ... Let ``keysetExpression`` be ``xref:lift_keysetExpressionIR[$lift_keysetExpressionIR(keysetExpressionIR)]``.+++<sub class="bk-mark">[<a href="#bk-lift_tableEntryIR-1-b">else #1-b</a>]</sub>+++
@@ -6694,20 +6733,18 @@ xref:find_var_t[The type of variable ``prefixedNameIR`` from the ``p`` layer of 
   ... Return xref:find_map[the value of ``id`` in map ``typeFrame``].
  .. Else if ``p`` matches pattern ``+BLOCK+``:
   ... Let ``typeFrame`` be ``TC.+BLOCK+.+FRAME+``.
-  ... Let ``varTypeIR'^?^`` be xref:find_map[the value of ``id`` in map ``typeFrame``].
   ... Try pass:[<strong id="bk-find_var_t-1" class="bk-label">#1</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_t-1-A"></span>+++
-    ..... Let!~type~ ``varTypeIR`` be ``varTypeIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_t-1-B">else #1-B</a>]</sub>+++
+    ..... Let ``varTypeIR`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``typeFrame``].+++<sub class="bk-mark">[<a href="#bk-find_var_t-1-B">else #1-B</a>]</sub>+++
     ..... Return ``varTypeIR``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_t-1-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_map[the value of ``id`` in map ``typeFrame``].+++<sub class="bk-mark">[<a href="#bk-find_var_t-1">fail #1</a>]</sub>+++
     ..... Return xref:find_var_t[the type of variable ``id`` from the ``+GLOBAL+`` layer of ``TC``].
  .. Else:
   ... Let ``typeFrame^{asterisk}^`` be ``TC.+LOCAL+.+FRAMES+``.
-  ... Let ``varTypeIR'^?^`` be xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``].
   ... Try pass:[<strong id="bk-find_var_t-2" class="bk-label">#2</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_t-2-A"></span>+++
-    ..... Let!~type~ ``varTypeIR`` be ``varTypeIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_t-2-B">else #2-B</a>]</sub>+++
+    ..... Let ``varTypeIR`` be xref:option_get[*!*] xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-find_var_t-2-B">else #2-B</a>]</sub>+++
     ..... Return ``varTypeIR``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_t-2-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``typeFrame^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-find_var_t-2">fail #2</a>]</sub>+++
@@ -6734,10 +6771,9 @@ xref:find_typeDef_t[The type definition of ``prefixedNameIR`` from the ``p`` lay
   ... Else if ``p`` matches pattern ``+BLOCK+``:
    .... Let!~type~ ``typeId`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
    .... Let ``typeDefEnv`` be ``TC.+BLOCK+.+TYPE+``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
-   .... Let ``typeDefIR'^?^`` be xref:find_map[the value of ``typeId`` in map ``typeDefEnv``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
    .... Try pass:[<strong id="bk-find_typeDef_t-2" class="bk-label">#2</strong>]:
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_typeDef_t-2-I"></span>+++
-     ...... Let!~type~ ``typeDefIR`` be ``typeDefIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-2-II">else #2-II</a>]</sub>+++
+     ...... Let ``typeDefIR`` be xref:option_get[*!*] xref:find_map[the value of ``typeId`` in map ``typeDefEnv``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-2-II">else #2-II</a>]</sub>+++
      ...... Return ``typeDefIR``.
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_typeDef_t-2-II"></span>+++
      ...... Check that ``·`` is equal to xref:find_map[the value of ``typeId`` in map ``typeDefEnv``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-2">fail #2</a>]</sub>+++
@@ -6745,10 +6781,9 @@ xref:find_typeDef_t[The type definition of ``prefixedNameIR`` from the ``p`` lay
   ... Else:
    .... Let!~type~ ``typeId`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
    .... Let ``typeDefEnv^{asterisk}^`` be ``TC.+LOCAL+.+TYPE+``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
-   .... Let ``typeDefIR'^?^`` be xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-1">fail #1</a>]</sub>+++
    .... Try pass:[<strong id="bk-find_typeDef_t-3" class="bk-label">#3</strong>]:
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_typeDef_t-3-I"></span>+++
-     ...... Let!~type~ ``typeDefIR`` be ``typeDefIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-3-II">else #3-II</a>]</sub>+++
+     ...... Let ``typeDefIR`` be xref:option_get[*!*] xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-3-II">else #3-II</a>]</sub>+++
      ...... Return ``typeDefIR``.
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_typeDef_t-3-II"></span>+++
      ...... Check that ``·`` is equal to xref:find_maps[the value of ``typeId`` in maps ``typeDefEnv^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-find_typeDef_t-3">fail #3</a>]</sub>+++
@@ -6769,10 +6804,9 @@ xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefi
  .. Let!~type~ ``nameIR`` be ``prefixedNameIR``.
  .. Let ``callableTypeDefEnv`` be ``TC.+BLOCK+.+CALLABLE+``.
  .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
- .. Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
  .. Try pass:[<strong id="bk-find_callableDef_overloaded_t-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_t-1-i"></span>+++
-   .... Let!~type~ ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_t-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_t-1-ii">else #1-ii</a>]</sub>+++
    .... Return ``callableId`` ``+:+`` ``callableTypeDefIR`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_t-1-ii"></span>+++
    .... Check that ``·`` is equal to xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_t-1">fail #1</a>]</sub>+++
@@ -6793,10 +6827,9 @@ xref:find_callableDef_non_overloaded_t[The non-overloaded callable definition of
    .... Return ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.
   ... Else if ``p`` matches pattern ``+BLOCK+``:
    .... Let!~type~ ``nameIR`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overloaded_t-1">fail #1</a>]</sub>+++
-   .... Let ``(callableId,`` ``callableTypeDefIR)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overloaded_t-1">fail #1</a>]</sub>+++
    .... Try pass:[<strong id="bk-find_callableDef_non_overloaded_t-2" class="bk-label">#2</strong>]:
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overloaded_t-2-I"></span>+++
-     ...... Let!~type~ ``(`` ``callableId,`` ``callableTypeDefIR`` ``)`` be ``(callableId,`` ``callableTypeDefIR)^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overloaded_t-2-II">else #2-II</a>]</sub>+++
+     ...... Let ``(`` ``callableId,`` ``callableTypeDefIR`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overloaded_t-2-II">else #2-II</a>]</sub>+++
      ...... Return ( ``callableId``, ``callableTypeDefIR`` ).
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overloaded_t-2-II"></span>+++
      ...... Check that ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableTypeDefIR>(TC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overloaded_t-2">fail #2</a>]</sub>+++
@@ -6816,26 +6849,25 @@ xref:find_constructorDef_overloaded_t[The overloaded constructor definition of `
 
 xref:find_local_return_type_t[The expected return type in ``TC``]
 
-. Let ``localKind`` be ``TC.+LOCAL+.+KIND+``.
 . Try pass:[<strong id="bk-find_local_return_type_t-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-1-a"></span>+++
+  ... Let ``localKind`` be ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1-b">else #1-b</a>]</sub>+++
   ... If let ``+FUNCTION+`` ``+:+`` ``typeIR~ret~`` be ``localKind``:
    .... Return ``typeIR~ret~``.
   ... Else:
    .... Return ``typeIR~ret~``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-1-b"></span>+++
-  ... Check that ``+ACTION+`` is equal to ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1">fail #1</a>]</sub>+++
+  ... Check that ``+ACTION+`` is equal to ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1-c">else #1-c</a>]</sub>+++
   ... Return ``+VOID+``.
-. Let ``localKind`` be ``TC.+LOCAL+.+KIND+``.
-. Try pass:[<strong id="bk-find_local_return_type_t-2" class="bk-label">#2</strong>]:
- .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-2-a"></span>+++
-  ... Let!~type~ ``externMethodLocalKind`` be ``localKind``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-2-b">else #2-b</a>]</sub>+++
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-1-c"></span>+++
+  ... Let ``localKind`` be ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1-d">else #1-d</a>]</sub>+++
+  ... Let!~type~ ``externMethodLocalKind`` be ``localKind``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1-d">else #1-d</a>]</sub>+++
   ... If let ``+EXTERN_METHOD+`` ``+:+`` ``typeIR~ret~`` be ``externMethodLocalKind``:
    .... Return ``typeIR~ret~``.
   ... Else:
    .... Return ``typeIR~ret~``.
- .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-2-b"></span>+++
-  ... Check that ``+CONTROL_APPLY_METHOD+`` is equal to ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-2">fail #2</a>]</sub>+++
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-find_local_return_type_t-1-d"></span>+++
+  ... Check that ``+CONTROL_APPLY_METHOD+`` is equal to ``TC.+LOCAL+.+KIND+``.+++<sub class="bk-mark">[<a href="#bk-find_local_return_type_t-1">fail #1</a>]</sub>+++
   ... Return ``+VOID+``.
 
 . Otherwise:
@@ -6899,9 +6931,9 @@ for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``.
 --
 +
 for each ``tableKeyIR`` in ``tableKeyIR^{asterisk}^``.
- .. Let ``tableKeyIR'^{asterisk}^`` be xref:filter_[``tableKeyIR^{asterisk}^`` filtered by ``b~lpm~^{asterisk}^``].
  .. Try pass:[<strong id="bk-update_mode_tbl-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-update_mode_tbl-1-i"></span>+++
+   .... Let ``tableKeyIR'^{asterisk}^`` be xref:filter_[``tableKeyIR^{asterisk}^`` filtered by ``b~lpm~^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-update_mode_tbl-1-ii">else #1-ii</a>]</sub>+++
    .... Let!~type~ ``tableKeyIR~lpm~`` be ``tableKeyIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-update_mode_tbl-1-ii">else #1-ii</a>]</sub>+++
    .... Let ``typedExpressionIR`` ``+#+`` ``++_++`` ``+:+`` ``t`` ``++_++`` ``+;+`` be ``tableKeyIR~lpm~``.+++<sub class="bk-mark">[<a href="#bk-update_mode_tbl-1-ii">else #1-ii</a>]</sub>+++
    .... Check that ``t`` is equal to ``"lpm"``.+++<sub class="bk-mark">[<a href="#bk-update_mode_tbl-1-ii">else #1-ii</a>]</sub>+++
@@ -6931,32 +6963,33 @@ xref:find_action'[$find_action'(matchAction^{asterisk}^, prefixedNameIR)]
 
 xref:set_priorities_of_tableEntryListIR[``tableEntryIR^{asterisk}^`` with priorities set based on table context ``TBLC`` and entry states ``TBLS^{asterisk}^``]
 
-. Check that ``TBLC.+MODE+`` is ``+NONE+``.
-. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.
-. Return ``tableEntryIR^{asterisk}^``.
-. Let ``matchMode`` be ``TBLC.+MODE+``.
 . Try pass:[<strong id="bk-set_priorities_of_tableEntryListIR-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR-1-a"></span>+++
-  ... Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
-  ... Check that ``TBLS`` matches pattern ``+LPM+`` ``%``, for all ``TBLS`` in ``TBLS^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
+  ... Check that ``TBLC.+MODE+`` is ``+NONE+``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
+  ... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
+  ... Return ``tableEntryIR^{asterisk}^``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR-1-b"></span>+++
+  ... Let ``matchMode`` be ``TBLC.+MODE+``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
+  ... Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
+  ... Check that ``TBLS`` matches pattern ``+LPM+`` ``%``, for all ``TBLS`` in ``TBLS^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
   ... Let ``n~prefix~^{asterisk}^`` be the list obtained by repeating:
 +
 --
    **** Let ``+LPM+`` ``n~prefix~`` be ``TBLS``.
 --
 +
-for each ``TBLS`` in ``TBLS^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
-  ... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
-  ... Check that the length of ``n~prefix~^{asterisk}^`` is equal to the length of ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
+for each ``TBLS`` in ``TBLS^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
+  ... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR``], for all ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
+  ... Check that the length of ``n~prefix~^{asterisk}^`` is equal to the length of ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
   ... Let ``tableEntryIR~updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
    **** Let ``tableEntryIR~updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR,`` ``n~prefix~)]``.
 --
 +
-for each ``n~prefix~`` in ``n~prefix~^{asterisk}^`` and ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-b">else #1-b</a>]</sub>+++
+for each ``n~prefix~`` in ``n~prefix~^{asterisk}^`` and ``tableEntryIR`` in ``tableEntryIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1-c">else #1-c</a>]</sub>+++
   ... Return ``tableEntryIR~updated~^{asterisk}^``.
- .. {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR-1-b"></span>+++
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR-1-c"></span>+++
   ... If ``tableEntryIR^{asterisk}^`` matches pattern ``[]``:
    .... Check that ``TBLC.+MODE+`` is ``+PRI+``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-1">fail #1</a>]</sub>+++
    .... Return ``·``.
@@ -6988,20 +7021,23 @@ xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TB
 . If ``tableEntryIR^{asterisk}^`` matches pattern ``[]``:
  .. Return ``·``.
 . Else:
- .. Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].
- .. Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
- .. Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
- .. Let ``i`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].
- .. Let!~type~ ``n`` be ``i``.
- .. Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
- .. Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
- .. Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
- .. Let ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+`` be xref:option_get[*!*] xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].
- .. Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].
- .. Let!~type~ ``n`` be ``nat^?^``.
- .. Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.
- .. Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.
- .. Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+ .. Try pass:[<strong id="bk-set_priorities_of_tableEntryListIR'-1" class="bk-label">#1</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR'-1-i"></span>+++
+   .... Check that ``·`` is equal to xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``i`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let!~type~ ``n`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-ii">else #1-ii</a>]</sub>+++
+   .... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-set_priorities_of_tableEntryListIR'-1-ii"></span>+++
+   .... Let ``+PRIORITY+`` ``+=+`` ``integerLiteral`` ``+:+`` be xref:option_get[*!*] xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1">fail #1</a>]</sub>+++
+   .... Let ``nat^?^`` be xref:nat_of_integerValue[the natural number representation of  ``integerLiteral``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1">fail #1</a>]</sub>+++
+   .... Let!~type~ ``n`` be ``nat^?^``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1">fail #1</a>]</sub>+++
+   .... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1">fail #1</a>]</sub>+++
+   .... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1">fail #1</a>]</sub>+++
+   .... Return ``tableEntryIR~h_updated~`` ``{two-colons}`` ``tableEntryIR~t_updated~^{asterisk}^``.
 
 xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR, n)]
 
@@ -9465,57 +9501,61 @@ xref:Expr_ok[Typing ``expression~base~`` ``+.+`` ``member``, under context ``TC`
 . Let ``typedExpressionIR~base~`` be
 * the result of xref:Expr_ok[typing ``expression~base~``, under context ``TC`` at ``p``].
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Let!~type~ ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``.
 . Try pass:[<strong id="bk-Expr_ok-2" class="bk-label">#2</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-2-a"></span>+++
-  ... Check that ``"size"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-b">else #2-b</a>]</sub>+++
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+<+`` ``32`` ``+>+`` and compile-time known-ness ``+LCTK+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-b">else #2-b</a>]</sub>+++
-  ... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"size"`` annotated with ``expressionNoteIR``].
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-b">else #2-b</a>]</sub>+++
+  ... Let!~type~ ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-b">else #2-b</a>]</sub>+++
+  ... Try pass:[<strong id="bk-Expr_ok-3" class="bk-label">#3</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-3-A"></span>+++
+    ..... Check that ``"size"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+<+`` ``32`` ``+>+`` and compile-time known-ness ``+LCTK+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-B">else #3-B</a>]</sub>+++
+    ..... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"size"`` annotated with ``expressionNoteIR``].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-3-B"></span>+++
+    ..... Check that ``"lastIndex"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-C">else #3-C</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-C">else #3-C</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+<+`` ``32`` ``+>+`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-C">else #3-C</a>]</sub>+++
+    ..... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"lastIndex"`` annotated with ``expressionNoteIR``].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-3-C"></span>+++
+    ..... Check that ``"last"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-D">else #3-D</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-D">else #3-D</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3-D">else #3-D</a>]</sub>+++
+    ..... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"last"`` annotated with ``expressionNoteIR``].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-3-D"></span>+++
+    ..... Check that ``"next"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3">fail #3</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3">fail #3</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-3">fail #3</a>]</sub>+++
+    ..... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"next"`` annotated with ``expressionNoteIR``].
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-2-b"></span>+++
-  ... Check that ``"lastIndex"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
-  ... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+<+`` ``32`` ``+>+`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
-  ... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"lastIndex"`` annotated with ``expressionNoteIR``].
+  ... Let ``ctk~base~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+  ... If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
+  ... Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
+  ... Else if let ``+HEADER_UNION+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-c">else #2-c</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-2-c"></span>+++
-  ... Check that ``"last"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-d">else #2-d</a>]</sub>+++
-  ... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-d">else #2-d</a>]</sub>+++
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2-d">else #2-d</a>]</sub>+++
-  ... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"last"`` annotated with ``expressionNoteIR``].
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-2-d"></span>+++
-  ... Check that ``"next"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
-  ... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
-  ... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``"next"`` annotated with ``expressionNoteIR``].
-. Let ``ctk~base~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base~``].
-. Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. If let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
- .. Let ``nameIR`` be xref:name[the name of ``member``].
- .. Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Else if let ``+HEADER+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
- .. Let ``nameIR`` be xref:name[the name of ``member``].
- .. Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Else if let ``+HEADER_UNION+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
- .. Let ``nameIR`` be xref:name[the name of ``member``].
- .. Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Let!~type~ ``+TABLE_STRUCT+`` ``++_++`` ``+{+`` ``+HIT+`` ``boolTypeIR`` ``+;+`` ``+MISS+`` ``++_++`` ``+;+`` ``+ACTION_RUN+`` ``++_++`` ``+;+`` ``+}+`` be ``typeIR``.
-. Let ``nameIR`` be xref:name[the name of ``member``].
-. If ``nameIR`` is equal to ``"hit"``:
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``boolTypeIR`` and compile-time known-ness ``+DYN+``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Else if ``nameIR`` is equal to ``"miss"``:
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
-. Else if ``nameIR`` is equal to ``"action_run"``:
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].
- .. Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
+  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+  ... Let!~type~ ``+TABLE_STRUCT+`` ``++_++`` ``+{+`` ``+HIT+`` ``boolTypeIR`` ``+;+`` ``+MISS+`` ``++_++`` ``+;+`` ``+ACTION_RUN+`` ``++_++`` ``+;+`` ``+}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+  ... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+  ... If ``nameIR`` is equal to ``"hit"``:
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``boolTypeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
+  ... Else if ``nameIR`` is equal to ``"miss"``:
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
+  ... Else if ``nameIR`` is equal to ``"action_run"``:
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-2">fail #2</a>]</sub>+++
+   .... Result in xref:typedExpressionIR[``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotated with ``expressionNoteIR``].
 
 <<Expr_ok,Typing ``expression~base~`` ``+[+`` ``expression~index~`` ``+]+``, under context ``TC`` at ``p``>>:
 
@@ -10104,9 +10144,9 @@ xref:Stmt_ok[Typing ``+SWITCH+`` ``+(+`` ``expression~switch~`` ``+)+`` ``+{+`` 
 . Let ``typedExpressionIR~switch~`` be
 * the result of xref:Expr_ok[typing ``expression~switch~``, under context ``TC`` at ``+LOCAL+``].
 . Let ``typeIR~switch~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~switch~``].
-. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~switch~`` with typedefs unrolled].
 . Try pass:[<strong id="bk-Stmt_ok-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Stmt_ok-1-a"></span>+++
+  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~switch~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Stmt_ok-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``+TABLE_ENUM+`` ``typeId~table_enum~`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Stmt_ok-1-b">else #1-b</a>]</sub>+++
   ... Let context ``TC~1~`` and ``switchCaseIR^{asterisk}^`` be
   *** the result of xref:Switch_table_ok[typing ``+SWITCH+`` ``+(+`` ``typeId~table_enum~`` ``+)+`` ``+{+`` ``switchCaseList`` ``+}+`` under context ``TC``].+++<sub class="bk-mark">[<a href="#bk-Stmt_ok-1-b">else #1-b</a>]</sub>+++
@@ -10806,9 +10846,9 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
 xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``]:
 
 . If ``keysetExpression`` is equal to ``+DEFAULT+``:
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Try pass:[<strong id="bk-TableEntry_keyset_ok-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-TableEntry_keyset_ok-1-i"></span>+++
+   .... Let ``matchMode`` be ``TBLC.+MODE+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-1-ii">else #1-ii</a>]</sub>+++
    .... Let!~type~ ``+LPM+`` ``n`` be ``matchMode``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-1-ii">else #1-ii</a>]</sub>+++
    .... Let ``TBLS`` be ``+LPM+`` ``n``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-1-ii">else #1-ii</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
@@ -10817,9 +10857,9 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
    .... Let ``TBLS`` be ``+NON_LPM+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-1">fail #1</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+DEFAULT+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+DEFAULT+`` ``+)+``:
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Try pass:[<strong id="bk-TableEntry_keyset_ok-2" class="bk-label">#2</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-TableEntry_keyset_ok-2-i"></span>+++
+   .... Let ``matchMode`` be ``TBLC.+MODE+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-2-ii">else #2-ii</a>]</sub>+++
    .... Let!~type~ ``+LPM+`` ``n`` be ``matchMode``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-2-ii">else #2-ii</a>]</sub>+++
    .... Let ``TBLS`` be ``+LPM+`` ``n``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-2-ii">else #2-ii</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+(+`` ``+DEFAULT+`` ``+)+``.
@@ -10831,9 +10871,9 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
 xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and table context ``TBLC``]:
 
 . If ``keysetExpression`` is equal to ``+_+``:
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Try pass:[<strong id="bk-TableEntry_keyset_ok-3" class="bk-label">#3</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-TableEntry_keyset_ok-3-i"></span>+++
+   .... Let ``matchMode`` be ``TBLC.+MODE+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-3-ii">else #3-ii</a>]</sub>+++
    .... Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-3-ii">else #3-ii</a>]</sub>+++
    .... Let ``TBLS`` be ``+LPM+`` ``0``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-3-ii">else #3-ii</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+_+``.
@@ -10842,9 +10882,9 @@ xref:TableEntry_keyset_ok[Typing ``keysetExpression``, under context ``TC`` and 
    .... Let ``TBLS`` be ``+NON_LPM+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-3">fail #3</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+_+``.
 . Else if ``keysetExpression`` is equal to ``+(+`` ``+_+`` ``+)+``:
- .. Let ``matchMode`` be ``TBLC.+MODE+``.
  .. Try pass:[<strong id="bk-TableEntry_keyset_ok-4" class="bk-label">#4</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-TableEntry_keyset_ok-4-i"></span>+++
+   .... Let ``matchMode`` be ``TBLC.+MODE+``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-4-ii">else #4-ii</a>]</sub>+++
    .... Check that ``matchMode`` matches pattern ``+LPM+`` ``%``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-4-ii">else #4-ii</a>]</sub>+++
    .... Let ``TBLS`` be ``+LPM+`` ``0``.+++<sub class="bk-mark">[<a href="#bk-TableEntry_keyset_ok-4-ii">else #4-ii</a>]</sub>+++
    .... Result in table entry state ``TBLS`` and ``+(+`` ``+_+`` ``+)+``.
@@ -12363,9 +12403,9 @@ xref:reduce_serenum_binary[The result of reducing serializable enums in ``typedE
 . If ``xref:check[$check(typeIR~l~,`` ``typeIR~r~)]``:
  .. Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r~`` ).
 . Else:
- .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~l~`` with typedefs unrolled].
  .. Try pass:[<strong id="bk-reduce_serenum_binary-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-reduce_serenum_binary-1-i"></span>+++
+   .... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~l~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-reduce_serenum_binary-1-ii">else #1-ii</a>]</sub>+++
    .... Let!~type~ ``+ENUM+`` ``++_++`` ``+<+`` ``typeIR~l_underlying~`` ``+>+`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-reduce_serenum_binary-1-ii">else #1-ii</a>]</sub>+++
    .... Let ``typedExpressionIR~l_cast~`` be xref:typedExpressionIR[``+(+`` ``typeIR~l_underlying~`` ``+)+`` ``typedExpressionIR~l~`` annotated with a pair of type ``typeIR~l_underlying~`` and compile-time known-ness ``++_++``].+++<sub class="bk-mark">[<a href="#bk-reduce_serenum_binary-1-ii">else #1-ii</a>]</sub>+++
    .... Return xref:reduce_serenum_binary[the result of reducing serializable enums in ``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` until ``$check`` is satisfied].
@@ -13180,17 +13220,20 @@ xref:ObjectDeclList_ok[Typing ``objectDeclarationList`` under context ``TC`` at 
 
 xref:subst_externMethodTypeDefEnv[Substitution of abstract methods in ``externMethodTypeDefEnv~extern~`` by implementations in ``set<pair<callableId,`` ``externMethodTypeDefIR>>``]
 
-. Check that ``set<pair<callableId,`` ``externMethodTypeDefIR>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``externMethodTypeDefEnv~extern~``.
-. Let ``+{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``externMethodTypeDefIR>>``.
-. Let!~type~ ``callableId~init_h~`` ``+:+`` ``externMethodTypeDefIR~init_h~`` ``{two-colons}`` ``(`` ``callableId~init_t~`` ``+:+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^``.
-. Let ``nameIR~init_h~`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId~init_h~``.
-. Let ``(`` ``callableId,`` ``externMethodTypeDefIR~abstract~`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv~extern~,`` ``nameIR~init_h~)]``.
-. Let!~type~ ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeDefIR~abstract~``.
-. Let ``externMethodTypeDefIR~concrete~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.
-. If xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~concrete~`` and ``externMethodTypeDefIR~init_h~`` are the same type]:
- .. Let ``externMethodTypeDefEnv~extern_subst~`` be xref:update_map[the map ``externMethodTypeDefEnv~extern~`` with the value for ``callableId`` is updated to ``externMethodTypeDefIR~concrete~``].
- .. Return xref:subst_externMethodTypeDefEnv[substitution of abstract methods in ``externMethodTypeDefEnv~extern_subst~`` by implementations in ``+{+`` ``(`` ``callableId~init_t~`` ``+:+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` ``+}+``].
+. Try pass:[<strong id="bk-subst_externMethodTypeDefEnv-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-subst_externMethodTypeDefEnv-1-a"></span>+++
+  ... Check that ``set<pair<callableId,`` ``externMethodTypeDefIR>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1-b">else #1-b</a>]</sub>+++
+  ... Return ``externMethodTypeDefEnv~extern~``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-subst_externMethodTypeDefEnv-1-b"></span>+++
+  ... Let ``+{+`` ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``externMethodTypeDefIR>>``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``callableId~init_h~`` ``+:+`` ``externMethodTypeDefIR~init_h~`` ``{two-colons}`` ``(`` ``callableId~init_t~`` ``+:+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``externMethodTypeDefIR>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... Let ``nameIR~init_h~`` ``+(+`` ``++_++^{asterisk}^`` ``+)+`` be ``callableId~init_h~``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... Let ``(`` ``callableId,`` ``externMethodTypeDefIR~abstract~`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<externMethodTypeDefIR>(externMethodTypeDefEnv~extern~,`` ``nameIR~init_h~)]``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~`` be ``externMethodTypeDefIR~abstract~``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... Let ``externMethodTypeDefIR~concrete~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeId~expl~^{asterisk}^`` ``+,+`` ``typeId~impl~^{asterisk}^`` ``+>+`` ``+(+`` ``parameterIR^{asterisk}^`` ``+)+`` ``+:+`` ``typeIR~ret~``.+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+  ... If xref:ExternMethodTypeDef_alpha[``externMethodTypeDefIR~concrete~`` and ``externMethodTypeDefIR~init_h~`` are the same type]:
+   .... Let ``externMethodTypeDefEnv~extern_subst~`` be xref:update_map[the map ``externMethodTypeDefEnv~extern~`` with the value for ``callableId`` is updated to ``externMethodTypeDefIR~concrete~``].+++<sub class="bk-mark">[<a href="#bk-subst_externMethodTypeDefEnv-1">fail #1</a>]</sub>+++
+   .... Return xref:subst_externMethodTypeDefEnv[substitution of abstract methods in ``externMethodTypeDefEnv~extern_subst~`` by implementations in ``+{+`` ``(`` ``callableId~init_t~`` ``+:+`` ``externMethodTypeDefIR~init_t~`` ``)^{asterisk}^`` ``+}+``].
 
 xref:InstDecl_objectInitializer_ok[InstDecl_objectInitializer_ok]:
 
@@ -13977,28 +14020,37 @@ xref:merge_constraint'[$merge_constraint'(constraint~pre~, constraint~post~, typ
 . If ``typeId^{asterisk}^`` matches pattern ``[]``:
  .. Return ``constraint``.
 . Else:
- .. Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``].
- .. Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
- .. Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+UNKNOWN+``].
- .. Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
- .. Let ``infer`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
- .. Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer``.
- .. Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].
- .. Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
- .. Let ``infer`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``].
- .. Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` be ``infer``.
- .. Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
- .. Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].
- .. Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
- .. Let ``infer''`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].
- .. Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer''``.
- .. If xref:Cast_impl[``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``]:
-  ... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].
-  ... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
- .. Else:
-  ... If xref:Cast_impl[``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``]:
-   .... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].
-   .... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+ .. Try pass:[<strong id="bk-merge_constraint'-1" class="bk-label">#1</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-1-i"></span>+++
+   .... Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-1-ii">else #1-ii</a>]</sub>+++
+   .... Try pass:[<strong id="bk-merge_constraint'-2" class="bk-label">#2</strong>]:
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-2-I"></span>+++
+     ...... Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-2-II">else #2-II</a>]</sub>+++
+     ...... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+UNKNOWN+``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-2-II">else #2-II</a>]</sub>+++
+     ...... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-2-II"></span>+++
+     ...... Let ``infer`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-2">fail #2</a>]</sub>+++
+     ...... Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer``.+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-2">fail #2</a>]</sub>+++
+     ...... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-2">fail #2</a>]</sub>+++
+     ...... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-1-ii"></span>+++
+   .... Let ``infer`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-1">fail #1</a>]</sub>+++
+   .... Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~pre~`` be ``infer``.+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-1">fail #1</a>]</sub>+++
+   .... Try pass:[<strong id="bk-merge_constraint'-3" class="bk-label">#3</strong>]:
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-3-I"></span>+++
+     ...... Check that ``+UNKNOWN+`` is equal to xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3-II">else #3-II</a>]</sub>+++
+     ...... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3-II">else #3-II</a>]</sub>+++
+     ...... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-3-II"></span>+++
+     ...... Let ``infer''`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+     ...... Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer''``.+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+     ...... If xref:Cast_impl[``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``]:
+      ....... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+      ....... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+     ...... Else:
+      ....... If xref:Cast_impl[``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``]:
+       ........ Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+       ........ Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
 
 xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}^)]
 
@@ -14011,20 +14063,23 @@ xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}
 
 xref:resolve_constraint[$resolve_constraint(set<pair<typeId, infer>>)]
 
-. Check that ``set<pair<typeId,`` ``infer>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``+{+`` ``·`` ``+}+``.
-. Let ``+{+`` ``pair<typeId,`` ``infer>^{asterisk}^`` ``+}+`` be ``set<pair<typeId,`` ``infer>>``.
-. Let!~type~ ``typeId~h~`` ``+:+`` ``infer~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` be ``pair<typeId,`` ``infer>^{asterisk}^``.
-. If let ``+KNOWN+`` ``+AS+`` ``typeIR~h~`` be ``infer~h~``:
- .. Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.
- .. Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.
- .. Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.
- .. Return ``+{+`` ``typeId~h~`` ``+:+`` ``typeIR~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
-. Else:
- .. Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.
- .. Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.
- .. Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.
- .. Return ``+{+`` ``typeId~h~`` ``+:+`` ``+BOOL+`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
+. Try pass:[<strong id="bk-resolve_constraint-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-resolve_constraint-1-a"></span>+++
+  ... Check that ``set<pair<typeId,`` ``infer>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1-b">else #1-b</a>]</sub>+++
+  ... Return ``+{+`` ``·`` ``+}+``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-resolve_constraint-1-b"></span>+++
+  ... Let ``+{+`` ``pair<typeId,`` ``infer>^{asterisk}^`` ``+}+`` be ``set<pair<typeId,`` ``infer>>``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``typeId~h~`` ``+:+`` ``infer~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` be ``pair<typeId,`` ``infer>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+  ... If let ``+KNOWN+`` ``+AS+`` ``typeIR~h~`` be ``infer~h~``:
+   .... Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Return ``+{+`` ``typeId~h~`` ``+:+`` ``typeIR~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
+  ... Else:
+   .... Let ``+{+`` ``(`` ``typeId`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+`` be ``xref:resolve_constraint[$resolve_constraint(+{+`` ``(`` ``typeId~t~`` ``+:+`` ``infer~t~`` ``)^{asterisk}^`` ``+}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Check that the length of ``typeId^{asterisk}^`` is equal to the length of ``typeId~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId`` in ``typeId^{asterisk}^`` and ``typeId~t~`` in ``typeId~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Return ``+{+`` ``typeId~h~`` ``+:+`` ``+BOOL+`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+:+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+}+``.
 
 xref:resolve_type_alias[Type alias in ``typeIR`` resolved to aliased name and type arguments]
 
@@ -14396,23 +14451,25 @@ xref:find_callableDef_non_overload_i[The non-overloaded callable definition of `
 . Try pass:[<strong id="bk-find_callableDef_non_overload_i-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-1-a"></span>+++
   ... Let!~type~ ``+.+`` ``nameIR`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1-b">else #1-b</a>]</sub>+++
-  ... Check that ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1-b">else #1-b</a>]</sub>+++
-  ... Return ``·``.
-  ... Let ``(`` ``callableId,`` ``callableDef`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1-b">else #1-b</a>]</sub>+++
-  ... Return ( ``+GLOBAL+``, ``callableId``, ``callableDef`` ).
+  ... Try pass:[<strong id="bk-find_callableDef_non_overload_i-2" class="bk-label">#2</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-2-A"></span>+++
+    ..... Check that ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-2-B">else #2-B</a>]</sub>+++
+    ..... Return ``·``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-2-B"></span>+++
+    ..... Let ``(`` ``callableId,`` ``callableDef`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+GLOBAL+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-2">fail #2</a>]</sub>+++
+    ..... Return ( ``+GLOBAL+``, ``callableId``, ``callableDef`` ).
  .. {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-1-b"></span>+++
   ... If ``p`` matches pattern ``+GLOBAL+``:
    .... Let!~type~ ``nameIR`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1">fail #1</a>]</sub>+++
    .... Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``+.+`` ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
   ... Else if ``p`` matches pattern ``+BLOCK+``:
    .... Let!~type~ ``nameIR`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1">fail #1</a>]</sub>+++
-   .... Let ``(callableId,`` ``callableDef)^?^`` be ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1">fail #1</a>]</sub>+++
-   .... Try pass:[<strong id="bk-find_callableDef_non_overload_i-2" class="bk-label">#2</strong>]:
-    ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-2-I"></span>+++
-     ...... Let!~type~ ``(`` ``callableId,`` ``callableDef`` ``)`` be ``(callableId,`` ``callableDef)^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-2-II">else #2-II</a>]</sub>+++
+   .... Try pass:[<strong id="bk-find_callableDef_non_overload_i-3" class="bk-label">#3</strong>]:
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-3-I"></span>+++
+     ...... Let ``(`` ``callableId,`` ``callableDef`` ``)`` be xref:option_get[*!*] ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-3-II">else #3-II</a>]</sub>+++
      ...... Return ( ``+BLOCK+``, ``callableId``, ``callableDef`` ).
-    ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-2-II"></span>+++
-     ...... Check that ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-2">fail #2</a>]</sub>+++
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_non_overload_i-3-II"></span>+++
+     ...... Check that ``·`` is equal to ``xref:find_non_overloaded[$find_non_overloaded<callableDef>(IC.+BLOCK+.+CALLABLE+,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-3">fail #3</a>]</sub>+++
      ...... Return xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``nameIR`` from the ``+GLOBAL+`` layer of ``IC``].
   ... Else:
    .... Let!~type~ ``nameIR`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_non_overload_i-1">fail #1</a>]</sub>+++
@@ -14444,19 +14501,17 @@ xref:find_var_i[The value of ``prefixedNameIR`` from the ``p`` layer of ``IC``]
   ... Let ``value`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``IC.+GLOBAL+.+FRAME+``].
   ... Return ``value``.
  .. Else if ``p`` matches pattern ``+BLOCK+``:
-  ... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``].
   ... Try pass:[<strong id="bk-find_var_i-1" class="bk-label">#1</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_i-1-A"></span>+++
-    ..... Let!~type~ ``value`` be ``value'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_i-1-B">else #1-B</a>]</sub>+++
+    ..... Let ``value`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-find_var_i-1-B">else #1-B</a>]</sub>+++
     ..... Return ``value``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_i-1-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_map[the value of ``id`` in map ``IC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-find_var_i-1">fail #1</a>]</sub>+++
     ..... Return xref:find_var_i[the value of ``id`` from the ``+GLOBAL+`` layer of ``IC``].
  .. Else:
-  ... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``].
   ... Try pass:[<strong id="bk-find_var_i-2" class="bk-label">#2</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_i-2-A"></span>+++
-    ..... Let!~type~ ``value`` be ``value'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_i-2-B">else #2-B</a>]</sub>+++
+    ..... Let ``value`` be xref:option_get[*!*] xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-find_var_i-2-B">else #2-B</a>]</sub>+++
     ..... Return ``value``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_i-2-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``IC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-find_var_i-2">fail #2</a>]</sub>+++
@@ -14669,8 +14724,11 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+.+`` ``
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC`` and store ``STO~1~`` at ``p``].
 . Let store ``STO~3~`` and ``value~lo~`` be
 * the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR'``, under context ``IC`` and store ``STO~2~`` at ``p``].
-. Result in store ``STO~3~`` and <<bitacc_range_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``>>.
-. Result in store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~hi~`` ``++:+`` ``value~lo~`` ``+]+``>>.
+. Try pass:[<strong id="bk-Expr_inst-3" class="bk-label">#3</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_inst-3-a"></span>+++
+  ... Result in store ``STO~3~`` and <<bitacc_range_op,``value~base~`` ``+[+`` ``value~hi~`` ``+:+`` ``value~lo~`` ``+]+``>>.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_inst-3-b"></span>+++
+  ... Result in store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+[+`` ``value~hi~`` ``++:+`` ``value~lo~`` ``+]+``>>.
 
 xref:Expr_inst[Compile-time evaluation of ``prefixedNameIR`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``]:
 
@@ -15141,9 +15199,9 @@ xref:TableAction_inst[Compile-time evaluation of ``annotationList`` ``tableActio
 . Let ``(`` ``cursor,`` ``++_++,`` ``callableDef`` ``)`` be xref:option_get[*!*] xref:find_callableDef_non_overload_i[the non-overloaded callable definition of ``prefixedNameIR`` from the ``+LOCAL+`` layer of ``IC``].
 . Let!~type~ ``actionDef`` be ``callableDef``.
 . Let ``annotationList~actionDef~`` ``+ACTION+`` ``nameIR`` ``+(+`` ``++_++`` ``+)+`` ``++_++`` be ``actionDef``.
-. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``.
 . Try pass:[<strong id="bk-TableAction_inst-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-TableAction_inst-1-a"></span>+++
+  ... Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList~actionDef~)]``.+++<sub class="bk-mark">[<a href="#bk-TableAction_inst-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``nameIR~anno~`` be ``nameIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-TableAction_inst-1-b">else #1-b</a>]</sub>+++
   ... If xref:starts_with[the text ``nameIR~anno~`` starts with ``"."``]:
    .... Let ``text`` be xref:strip_prefix[the text ``nameIR~anno~`` with the prefix ``"."`` removed].+++<sub class="bk-mark">[<a href="#bk-TableAction_inst-1-b">else #1-b</a>]</sub>+++
@@ -15279,17 +15337,20 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``+TABL
 . Let ``nameIR~object~`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
 . Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~object~``.
 . Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object~table~`` is added].
-. Check that ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``.
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
-. Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.
-. Let!~type~ ``nameIR~annotation~`` be ``nameIR'^{asterisk}^``.
-. Let ``objectId~annotation~`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~annotation~``.
-. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in context ``IC~1~``, store ``STO~3~``, and ``constantDeclarationIR``.
+. Try pass:[<strong id="bk-ControlLocalDecl_inst-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-ControlLocalDecl_inst-1-a"></span>+++
+  ... Check that ``·`` is equal to ``xref:name_annotation[$name_annotation(annotationList)]``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Result in context ``IC~1~``, store ``STO~2~``, and ``constantDeclarationIR``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-ControlLocalDecl_inst-1-b"></span>+++
+  ... Let ``nameIR'^{asterisk}^`` be ``xref:name_annotation[$name_annotation(annotationList)]``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``nameIR~annotation~`` be ``nameIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``objectId~annotation~`` be ``IC~0~.+PATH+`` concatenated with ``nameIR~annotation~``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId~annotation~`` to ``object~table~`` is added].+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``+BLOCK+`` layer].+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.+++<sub class="bk-mark">[<a href="#bk-ControlLocalDecl_inst-1">fail #1</a>]</sub>+++
+  ... Result in context ``IC~1~``, store ``STO~3~``, and ``constantDeclarationIR``.
 
 xref:ControlLocalDecls_inst[ControlLocalDecls_inst]:
 
@@ -15335,32 +15396,35 @@ xref:InstDecl_inst[Loading ``annotationList`` ``typeIR`` ``constructorTargetIR``
 . Let ``prefixedNameIR`` ``+<+`` ``typeArgumentListIR`` ``+>+`` be ``constructorTargetIR``.
 . Let constructor ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` be
 * the result of xref:Constructor_inst[finding constructor for ``prefixedNameIR`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` under context ``IC~0~`` at ``p``].
-. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR`` added to the path].
-. Let store ``STO~1~`` and instantiated ``object`` be
-* the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].
-. Let!~type~ ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object``.
-. Let ``IC~decl~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+GLOBAL+`` layer].
-. Let ``objectDeclarationListIR`` be xref:flatten_objectInitializerOptIR[the list of object declarations in ``objectInitializerOptIR``].
-. Let the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be
-* the result of xref:ObjectDecls_inst[loading ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``].
-. Let ``frame~merged~`` be xref:merge_frames[the merged frame of ``frame`` and ``IC~decl_post~.+BLOCK+.+FRAME+``].
-. Let ``externMethodDefEnv~merged~`` be xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.+BLOCK+.+CALLABLE+``].
-. Let ``object~merged~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``+}+``.
-. Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.
-. Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId`` to ``object~merged~`` is added].
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in context ``IC~1~``, store ``STO~3~``, and reference to object ``constantDeclarationIR``.
-. Let ``nameIR'`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.
-. Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR'`` added to the path].
-. Let store ``STO~1~`` and instantiated ``object`` be
-* the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].
-. Check that ``object`` does not have type ``externObject``.
-. Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.
-. Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object`` is added].
-. Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].
-. Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.
-. Result in context ``IC~1~``, store ``STO~2~``, and reference to object ``constantDeclarationIR``.
+. Try pass:[<strong id="bk-InstDecl_inst-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-InstDecl_inst-1-a"></span>+++
+  ... Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR`` added to the path].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let store ``STO~1~`` and instantiated ``object`` be
+  *** the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let!~type~ ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``IC~decl~`` be xref:inherit_i[an instantiation context same as ``IC~0~`` up to the ``+GLOBAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``objectDeclarationListIR`` be xref:flatten_objectInitializerOptIR[the list of object declarations in ``objectInitializerOptIR``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let the updated instantiation context ``IC~decl_post~`` and store ``STO~2~`` be
+  *** the result of xref:ObjectDecls_inst[loading ``objectDeclarationListIR`` under instantiation context ``IC~decl~`` and store ``STO~1~``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``frame~merged~`` be xref:merge_frames[the merged frame of ``frame`` and ``IC~decl_post~.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``externMethodDefEnv~merged~`` be xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv`` and ``IC~decl_post~.+BLOCK+.+CALLABLE+``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``object~merged~`` be ``+EXTERN+`` ``typeId`` ``+<+`` ``theta`` ``+>+`` ``+{+`` ``objectState`` ``frame~merged~`` ``externMethodDefEnv~merged~`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``STO~3~`` be xref:add_store[``STO~2~`` where ``objectId`` to ``object~merged~`` is added].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1-b">else #1-b</a>]</sub>+++
+  ... Result in context ``IC~1~``, store ``STO~3~``, and reference to object ``constantDeclarationIR``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-InstDecl_inst-1-b"></span>+++
+  ... Let ``nameIR'`` be ``xref:name_annotation_default[$name_annotation_default(annotationList,`` ``nameIR)]``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``IC~inner~`` be xref:enter_path_i[``IC~0~`` with ``nameIR'`` added to the path].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let store ``STO~1~`` and instantiated ``object`` be
+  *** the result of xref:Constructor_call[instantiating ``constructorDef`` ``+<+`` ``typeArgumentListIR~inst~`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+`` with defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under context ``IC~inner~`` and store ``STO~0~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Check that ``object`` does not have type ``externObject``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``objectId`` be ``IC~0~.+PATH+`` concatenated with ``nameIR``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``STO~2~`` be xref:add_store[``STO~1~`` where ``objectId`` to ``object`` is added].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``+REF+`` ``objectId`` is added to the ``p`` layer].+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Let ``constantDeclarationIR`` be ``+`EMPTY+`` ``+CONST+`` ``typeIR`` ``nameIR`` ``+=+`` ``+`VALUE+`` ``+REF+`` ``objectId`` ``+;+``.+++<sub class="bk-mark">[<a href="#bk-InstDecl_inst-1">fail #1</a>]</sub>+++
+  ... Result in context ``IC~1~``, store ``STO~2~``, and reference to object ``constantDeclarationIR``.
 
 xref:FuncDecl_inst[FuncDecl_inst]:
 
@@ -15997,14 +16061,17 @@ xref:merge_frames[The merged frame of ``frame`` and ``+{+`` ``(`` ``id`` ``+:+``
 
 xref:merge_externMethodDefEnvs[The merged extern method definition environment of ``externMethodDefEnv`` and ``set<pair<callableId,`` ``callableDef>>``]
 
-. Check that ``set<pair<callableId,`` ``callableDef>>`` is equal to ``+{+`` ``·`` ``+}+``.
-. Return ``externMethodDefEnv``.
-. Let ``+{+`` ``pair<callableId,`` ``callableDef>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``callableDef>>``.
-. Let!~type~ ``callableId~h~`` ``+:+`` ``callableDef~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+:+`` ``callableDef~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``callableDef>^{asterisk}^``.
-. Let!~type~ ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR`` be ``callableDef~h~``.
-. Let ``externMethodDef~h~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``.
-. Let ``externMethodDefEnv~post~`` be xref:update_map[the map ``externMethodDefEnv`` with the value for ``callableId~h~`` is updated to ``externMethodDef~h~``].
-. Return xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv~post~`` and ``+{+`` ``(`` ``callableId~t~`` ``+:+`` ``callableDef~t~`` ``)^{asterisk}^`` ``+}+``].
+. Try pass:[<strong id="bk-merge_externMethodDefEnvs-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-merge_externMethodDefEnvs-1-a"></span>+++
+  ... Check that ``set<pair<callableId,`` ``callableDef>>`` is equal to ``+{+`` ``·`` ``+}+``.+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1-b">else #1-b</a>]</sub>+++
+  ... Return ``externMethodDefEnv``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-merge_externMethodDefEnvs-1-b"></span>+++
+  ... Let ``+{+`` ``pair<callableId,`` ``callableDef>^{asterisk}^`` ``+}+`` be ``set<pair<callableId,`` ``callableDef>>``.+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``callableId~h~`` ``+:+`` ``callableDef~h~`` ``{two-colons}`` ``(`` ``callableId~t~`` ``+:+`` ``callableDef~t~`` ``)^{asterisk}^`` be ``pair<callableId,`` ``callableDef>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``+FUNCTION+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR`` be ``callableDef~h~``.+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1">fail #1</a>]</sub>+++
+  ... Let ``externMethodDef~h~`` be ``+EXTERN_METHOD+`` ``nameIR`` ``+<+`` ``typeParameterListIR`` ``+>+`` ``+(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR``.+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1">fail #1</a>]</sub>+++
+  ... Let ``externMethodDefEnv~post~`` be xref:update_map[the map ``externMethodDefEnv`` with the value for ``callableId~h~`` is updated to ``externMethodDef~h~``].+++<sub class="bk-mark">[<a href="#bk-merge_externMethodDefEnvs-1">fail #1</a>]</sub>+++
+  ... Return xref:merge_externMethodDefEnvs[the merged extern method definition environment of ``externMethodDefEnv~post~`` and ``+{+`` ``(`` ``callableId~t~`` ``+:+`` ``callableDef~t~`` ``)^{asterisk}^`` ``+}+``].
 
 xref:ObjectDecl_inst[ObjectDecl_inst]:
 
@@ -16075,9 +16142,9 @@ xref:init_table[$init_table(tablePropertyIR^{asterisk}^)]
 
 xref:init_tableKeys[$init_tableKeys(tablePropertyIR^{asterisk}^)]
 
-. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``].
 . Try pass:[<strong id="bk-init_tableKeys-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-init_tableKeys-1-a"></span>+++
+  ... Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableKeysPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-init_tableKeys-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``tableKeysPropertyIR'^{asterisk}^`` be ``tablePropertyIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-init_tableKeys-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``tableKeysPropertyIR`` be ``tableKeysPropertyIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-init_tableKeys-1-b">else #1-b</a>]</sub>+++
   ... Return ``tableKeysPropertyIR``.
@@ -16087,9 +16154,9 @@ xref:init_tableKeys[$init_tableKeys(tablePropertyIR^{asterisk}^)]
 
 xref:init_tableEntries[$init_tableEntries(tablePropertyIR^{asterisk}^)]
 
-. Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``].
 . Try pass:[<strong id="bk-init_tableEntries-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-init_tableEntries-1-a"></span>+++
+  ... Let ``tablePropertyIR'^{asterisk}^`` be xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-init_tableEntries-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``tableEntriesPropertyIR'^{asterisk}^`` be ``tablePropertyIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-init_tableEntries-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``tableEntriesPropertyIR`` be ``tableEntriesPropertyIR'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-init_tableEntries-1-b">else #1-b</a>]</sub>+++
   ... Return ``tableEntriesPropertyIR``.
@@ -16183,17 +16250,20 @@ xref:update_var_e[``EC`` where ``prefixedNameIR`` is updated to ``value`` from t
     ..... Return xref:update_var_e[``EC`` where ``id`` is updated to ``value`` from the ``+GLOBAL+`` layer].
   ... Else:
    .... Let!~type~ ``id`` be ``prefixedNameIR``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-   .... Check that ``·`` is equal to ``EC.+LOCAL+.+FRAMES+``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-   .... Return xref:update_var_e[``EC`` where ``id`` is updated to ``value`` from the ``+BLOCK+`` layer].
-   .... Let ``frame^{asterisk}^`` be ``EC.+LOCAL+.+FRAMES+``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-   .... Let!~type~ ``frame~h~`` ``{two-colons}`` ``frame~t~^{asterisk}^`` be ``frame^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-   .... If xref:in_set[``id`` is an element of the set the domain of the map ``frame~h~``]:
-    ..... Let ``frame~h'~`` be xref:update_map[the map ``frame~h~`` with the value for ``id`` is updated to ``value``].+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-    ..... Return ``EC`` with ``+LOCAL+.+FRAMES+`` set to ``frame~h'~`` ``{two-colons}`` ``frame~t~^{asterisk}^``.
-   .... Else:
-    ..... Let ``EC~pop~`` be ``EC`` with ``+LOCAL+.+FRAMES+`` set to ``frame~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-    ..... Let ``EC~pop'~`` be xref:update_var_e[``EC~pop~`` where ``id`` is updated to ``value`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-update_var_e-1">fail #1</a>]</sub>+++
-    ..... Return ``EC~pop'~`` with ``+LOCAL+.+FRAMES+`` set to ``frame~h~`` ``{two-colons}`` ``EC~pop'~.+LOCAL+.+FRAMES+``.
+   .... Try pass:[<strong id="bk-update_var_e-2" class="bk-label">#2</strong>]:
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-update_var_e-2-I"></span>+++
+     ...... Check that ``·`` is equal to ``EC.+LOCAL+.+FRAMES+``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-2-II">else #2-II</a>]</sub>+++
+     ...... Return xref:update_var_e[``EC`` where ``id`` is updated to ``value`` from the ``+BLOCK+`` layer].
+    ..... {empty}+++<span class="bk-arm-anchor" id="bk-update_var_e-2-II"></span>+++
+     ...... Let ``frame^{asterisk}^`` be ``EC.+LOCAL+.+FRAMES+``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-2">fail #2</a>]</sub>+++
+     ...... Let!~type~ ``frame~h~`` ``{two-colons}`` ``frame~t~^{asterisk}^`` be ``frame^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-2">fail #2</a>]</sub>+++
+     ...... If xref:in_set[``id`` is an element of the set the domain of the map ``frame~h~``]:
+      ....... Let ``frame~h'~`` be xref:update_map[the map ``frame~h~`` with the value for ``id`` is updated to ``value``].+++<sub class="bk-mark">[<a href="#bk-update_var_e-2">fail #2</a>]</sub>+++
+      ....... Return ``EC`` with ``+LOCAL+.+FRAMES+`` set to ``frame~h'~`` ``{two-colons}`` ``frame~t~^{asterisk}^``.
+     ...... Else:
+      ....... Let ``EC~pop~`` be ``EC`` with ``+LOCAL+.+FRAMES+`` set to ``frame~t~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-update_var_e-2">fail #2</a>]</sub>+++
+      ....... Let ``EC~pop'~`` be xref:update_var_e[``EC~pop~`` where ``id`` is updated to ``value`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-update_var_e-2">fail #2</a>]</sub>+++
+      ....... Return ``EC~pop'~`` with ``+LOCAL+.+FRAMES+`` set to ``frame~h~`` ``{two-colons}`` ``EC~pop'~.+LOCAL+.+FRAMES+``.
 
 xref:find_var_e[The value of ``prefixedNameIR`` from the ``p`` layer of ``EC``]
 
@@ -16205,19 +16275,17 @@ xref:find_var_e[The value of ``prefixedNameIR`` from the ``p`` layer of ``EC``]
   ... Let ``value`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``EC.+GLOBAL+.+FRAME+``].
   ... Return ``value``.
  .. Else if ``p`` matches pattern ``+BLOCK+``:
-  ... Let ``value'^?^`` be xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].
   ... Try pass:[<strong id="bk-find_var_e-1" class="bk-label">#1</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_e-1-A"></span>+++
-    ..... Let!~type~ ``value`` be ``value'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_e-1-B">else #1-B</a>]</sub>+++
+    ..... Let ``value`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-find_var_e-1-B">else #1-B</a>]</sub>+++
     ..... Return ``value``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_e-1-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_map[the value of ``id`` in map ``EC.+BLOCK+.+FRAME+``].+++<sub class="bk-mark">[<a href="#bk-find_var_e-1">fail #1</a>]</sub>+++
     ..... Return xref:find_var_e[the value of ``id`` from the ``+GLOBAL+`` layer of ``EC``].
  .. Else:
-  ... Let ``value'^?^`` be xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].
   ... Try pass:[<strong id="bk-find_var_e-2" class="bk-label">#2</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_e-2-A"></span>+++
-    ..... Let!~type~ ``value`` be ``value'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_var_e-2-B">else #2-B</a>]</sub>+++
+    ..... Let ``value`` be xref:option_get[*!*] xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-find_var_e-2-B">else #2-B</a>]</sub>+++
     ..... Return ``value``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_var_e-2-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_maps[the value of ``id`` in maps ``EC.+LOCAL+.+FRAMES+``].+++<sub class="bk-mark">[<a href="#bk-find_var_e-2">fail #2</a>]</sub>+++
@@ -16235,10 +16303,9 @@ xref:find_type_e[$find_type_e(p, EC, nameIR)]
 . If ``p`` matches pattern ``+BLOCK+``:
  .. Return xref:find_map[the value of ``nameIR`` in map ``EC.+BLOCK+.+TYPE+``].
 . Else if ``p`` matches pattern ``+LOCAL+``:
- .. Let ``typeIR'^?^`` be xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].
  .. Try pass:[<strong id="bk-find_type_e-1" class="bk-label">#1</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_type_e-1-i"></span>+++
-   .... Let!~type~ ``typeIR`` be ``typeIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-find_type_e-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].+++<sub class="bk-mark">[<a href="#bk-find_type_e-1-ii">else #1-ii</a>]</sub>+++
    .... Return ``typeIR``.
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_type_e-1-ii"></span>+++
    .... Check that ``·`` is equal to xref:find_map[the value of ``nameIR`` in map ``EC.+LOCAL+.+TYPE+``].+++<sub class="bk-mark">[<a href="#bk-find_type_e-1">fail #1</a>]</sub>+++
@@ -16249,20 +16316,18 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
 . If ``p`` matches pattern ``+GLOBAL+``:
  .. If let ``nameIR`` be ``prefixedNameIR``:
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
   ... Try pass:[<strong id="bk-find_callableDef_overloaded_e-1" class="bk-label">#1</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-1-A"></span>+++
-    ..... Let!~type~ ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-1-B">else #1-B</a>]</sub>+++
+    ..... Let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-1-B">else #1-B</a>]</sub>+++
     ..... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-1-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-1">fail #1</a>]</sub>+++
     ..... Return ``·``.
  .. Else:
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
   ... Try pass:[<strong id="bk-find_callableDef_overloaded_e-2" class="bk-label">#2</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-2-A"></span>+++
-    ..... Let!~type~ ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-2-B">else #2-B</a>]</sub>+++
+    ..... Let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-2-B">else #2-B</a>]</sub>+++
     ..... Return ``callableId`` ``+:+`` ``(`` ``+GLOBAL+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-2-B"></span>+++
     ..... Check that ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-2">fail #2</a>]</sub>+++
@@ -16270,10 +16335,9 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
 . Else if ``p`` matches pattern ``+BLOCK+``:
  .. Let!~type~ ``nameIR`` be ``prefixedNameIR``.
  .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+(+`` ``argumentIR^{asterisk}^`` ``+)+``].
- .. Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
  .. Try pass:[<strong id="bk-find_callableDef_overloaded_e-3" class="bk-label">#3</strong>]:
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-3-i"></span>+++
-   .... Let!~type~ ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-3-ii">else #3-ii</a>]</sub>+++
+   .... Let ``callableId`` ``+:+`` ``callableDef`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-3-ii">else #3-ii</a>]</sub>+++
    .... Return ``callableId`` ``+:+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+#+`` ``id~default~^{asterisk}^`` ``+#+`` ``id~optional~^{asterisk}^``.
   ... {empty}+++<span class="bk-arm-anchor" id="bk-find_callableDef_overloaded_e-3-ii"></span>+++
    .... Check that ``·`` is equal to xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].+++<sub class="bk-mark">[<a href="#bk-find_callableDef_overloaded_e-3">fail #3</a>]</sub>+++
@@ -18576,23 +18640,27 @@ xref:ForInitStmt_eval[ForInitStmt_eval]:
 
 xref:ForInitStmt_eval[Runtime evaluation of ``forInitStatementIR``, under evaluation context ``EC~0~`` and state ``ARCH``]:
 
-. If let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerIR^?^`` be ``forInitStatementIR``:
- .. Check that ``initializerIR^?^`` is none.
- .. Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``+LOCAL+`` layer].
- .. Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].
- .. Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].
- .. Result in 
+. If ``forInitStatementIR`` matches pattern ``%`` ``%`` ``%`` ``%``:
+ .. Try pass:[<strong id="bk-ForInitStmt_eval-1" class="bk-label">#1</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-ForInitStmt_eval-1-i"></span>+++
+   .... Let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerIR^?^`` be ``forInitStatementIR``.+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1-ii">else #1-ii</a>]</sub>+++
+   .... Check that ``initializerIR^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC~0~`` from the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``EC~1~`` be xref:add_var_e[``EC~0~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1-ii">else #1-ii</a>]</sub>+++
+   .... Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH``, and ``+`EMPTY+``.
- .. Let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerOptIR`` be ``forInitStatementIR``.
- .. Let!~type~ ``+=+`` ``typedExpressionIR~init~`` be ``initializerOptIR``.
- .. Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
- ** the result of xref:Expr_eval[evaluating ``typedExpressionIR~init~``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].
- .. If let ``abortResult`` be ``expressionResult``:
-  ... Result in 
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-ForInitStmt_eval-1-ii"></span>+++
+   .... Let ``annotationList`` ``typeIR`` ``nameIR`` ``initializerOptIR`` be ``forInitStatementIR``.+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1">fail #1</a>]</sub>+++
+   .... Let!~type~ ``+=+`` ``typedExpressionIR~init~`` be ``initializerOptIR``.+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1">fail #1</a>]</sub>+++
+   .... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult`` be
+   **** the result of xref:Expr_eval[evaluating ``typedExpressionIR~init~``, under context ``EC~0~`` and state ``ARCH`` at ``+LOCAL+``].+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1">fail #1</a>]</sub>+++
+   .... If let ``abortResult`` be ``expressionResult``:
+    ..... Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``abortResult``.
- .. Else:
-  ... Let ``EC~2~`` be xref:add_var_e[``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].
-  ... Result in 
+   .... Else:
+    ..... Let ``EC~2~`` be xref:add_var_e[``EC~1~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].+++<sub class="bk-mark">[<a href="#bk-ForInitStmt_eval-1">fail #1</a>]</sub>+++
+    ..... Result in 
 * the updated evaluation context ``EC~2~``, state ``ARCH~1~``, and ``+`EMPTY+``.
 . Else:
  .. Let the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``statementResult`` be
@@ -19073,16 +19141,16 @@ xref:TableMatches_eval[Evaluating table matches for keys ``tableKeyValue^{asteri
 xref:largest_priority_wins[``TBL`` has largest_priority_wins property]
 
 . Let ``tableCustomPropertyIR^{asterisk}^`` be ``TBL.+CUSTOMS+``.
-. Let ``bool^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``bool`` be ``xref:is_largest_priority_wins[$is_largest_priority_wins(tableCustomPropertyIR)]``.
---
-+
-for each ``tableCustomPropertyIR`` in ``tableCustomPropertyIR^{asterisk}^``.
-. Let ``tableCustomPropertyIR''^{asterisk}^`` be xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``bool^{asterisk}^``].
 . Try pass:[<strong id="bk-largest_priority_wins-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-largest_priority_wins-1-a"></span>+++
+  ... Let ``bool^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``bool`` be ``xref:is_largest_priority_wins[$is_largest_priority_wins(tableCustomPropertyIR)]``.
+--
++
+for each ``tableCustomPropertyIR`` in ``tableCustomPropertyIR^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-largest_priority_wins-1-b">else #1-b</a>]</sub>+++
+  ... Let ``tableCustomPropertyIR''^{asterisk}^`` be xref:filter_[``tableCustomPropertyIR^{asterisk}^`` filtered by ``bool^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-largest_priority_wins-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``tableCustomPropertyIR'`` be ``tableCustomPropertyIR''^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-largest_priority_wins-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``++_++`` ``++_++`` ``+CUSTOM_CONST+`` ``++_++`` ``+=+`` ``+`VALUE+`` ``value`` ``+;+`` be ``tableCustomPropertyIR'``.+++<sub class="bk-mark">[<a href="#bk-largest_priority_wins-1-b">else #1-b</a>]</sub>+++
   ... Let!~type~ ``+`B+`` ``b`` be ``value``.+++<sub class="bk-mark">[<a href="#bk-largest_priority_wins-1-b">else #1-b</a>]</sub>+++
@@ -19240,10 +19308,9 @@ xref:Program_init[Initializing the evaluation context and store for ``p4program`
 
 xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeIR~to~`` in ``EC``]
 
-. Let ``typedExpressionIR'^?^`` be xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].
 . Try pass:[<strong id="bk-cast_control_plane-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_control_plane-1-a"></span>+++
-  ... Let!~type~ ``typedExpressionIR~cast~`` be ``typedExpressionIR'^?^``.+++<sub class="bk-mark">[<a href="#bk-cast_control_plane-1-b">else #1-b</a>]</sub>+++
+  ... Let ``typedExpressionIR~cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].+++<sub class="bk-mark">[<a href="#bk-cast_control_plane-1-b">else #1-b</a>]</sub>+++
   ... Return ``typedExpressionIR~cast~``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_control_plane-1-b"></span>+++
   ... Check that ``·`` is equal to xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``].+++<sub class="bk-mark">[<a href="#bk-cast_control_plane-1">fail #1</a>]</sub>+++
@@ -19299,16 +19366,19 @@ xref:reverse_bytes_of_hex[$reverse_bytes_of_hex(t)]
 
 xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t)]
 
-. Check that the length of ``t`` is less than or equal to ``2``.
-. Return ``t``.
-. Let ``n~len~`` be the length of ``t``.
-. Check that ``n~len~`` is greater than ``2``.
-. Let ``t~byte~`` be ``t[0`` ``:`` ``2]``.
-. Let ``i`` be ``n~len~`` ``-`` ``2``.
-. Let!~type~ ``n~len_bytes~`` be ``i``.
-. Let ``t~bytes~`` be ``t[2`` ``:`` ``n~len_bytes~]``.
-. Let ``t~bytes_rev~`` be ``xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t~bytes~)]``.
-. Return ``t~bytes_rev~`` concatenated with ``t~byte~``.
+. Try pass:[<strong id="bk-reverse_bytes_of_hex'-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-reverse_bytes_of_hex'-1-a"></span>+++
+  ... Check that the length of ``t`` is less than or equal to ``2``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1-b">else #1-b</a>]</sub>+++
+  ... Return ``t``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-reverse_bytes_of_hex'-1-b"></span>+++
+  ... Let ``n~len~`` be the length of ``t``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Check that ``n~len~`` is greater than ``2``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Let ``t~byte~`` be ``t[0`` ``:`` ``2]``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Let ``i`` be ``n~len~`` ``-`` ``2``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``n~len_bytes~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Let ``t~bytes~`` be ``t[2`` ``:`` ``n~len_bytes~]``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Let ``t~bytes_rev~`` be ``xref:reverse_bytes_of_hex'[$reverse_bytes_of_hex'(t~bytes~)]``.+++<sub class="bk-mark">[<a href="#bk-reverse_bytes_of_hex'-1">fail #1</a>]</sub>+++
+  ... Return ``t~bytes_rev~`` concatenated with ``t~byte~``.
 
 xref:text_of_number_tableKeyValueInterface[$text_of_number_tableKeyValueInterface(tableKeyValueInterface)]
 
@@ -19323,9 +19393,9 @@ xref:text_of_number_tableKeyValueInterface[$text_of_number_tableKeyValueInterfac
 
 xref:tableObject_create_entry_priority[$tableObject_create_entry_priority(tableEntryPriorityInterface)]
 
-. Let ``i^?^`` be ``tableEntryPriorityInterface``.
 . Try pass:[<strong id="bk-tableObject_create_entry_priority-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-tableObject_create_entry_priority-1-a"></span>+++
+  ... Let ``i^?^`` be ``tableEntryPriorityInterface``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_priority-1-b">else #1-b</a>]</sub>+++
   ... Check that ``i^?^`` is none.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_priority-1-b">else #1-b</a>]</sub>+++
   ... Return ``·``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-tableObject_create_entry_priority-1-b"></span>+++
@@ -19452,13 +19522,16 @@ xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC, ( nameIR~key
 
 xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC, (nameIR, nameIR, typeIR)^{asterisk}^, tableKeysetInterface)]
 
-. Check that ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list.
-. Return ``·``.
-. Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.
-. Let!~type~ ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``.
-. Let ``simpleKeysetExpressionIR~h~`` be ``xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC,`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)]``.
-. Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.
-. Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
+. Try pass:[<strong id="bk-tableObject_create_entry_keys-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-tableObject_create_entry_keys-1-a"></span>+++
+  ... Check that ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^`` is an empty list.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_keys-1-b">else #1-b</a>]</sub>+++
+  ... Return ``·``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-tableObject_create_entry_keys-1-b"></span>+++
+  ... Let ``tableKeyInterface^{asterisk}^`` be ``tableKeysetInterface``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_keys-1">fail #1</a>]</sub>+++
+  ... Let!~type~ ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``)`` ``{two-colons}`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^`` be ``(nameIR,`` ``nameIR,`` ``typeIR)^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_keys-1">fail #1</a>]</sub>+++
+  ... Let ``simpleKeysetExpressionIR~h~`` be ``xref:tableObject_create_entry_key[$tableObject_create_entry_key(EC,`` ``(`` ``nameIR~key_h~,`` ``nameIR~matchKind_h~,`` ``typeIR~h~`` ``),`` ``tableKeyInterface^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_keys-1">fail #1</a>]</sub>+++
+  ... Let ``simpleKeysetExpressionIR^{asterisk}^`` be ``xref:tableObject_create_entry_keys[$tableObject_create_entry_keys(EC,`` ``(`` ``nameIR~key_t~,`` ``nameIR~matchKind_t~,`` ``typeIR~t~`` ``)^{asterisk}^,`` ``tableKeyInterface^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_keys-1">fail #1</a>]</sub>+++
+  ... Return ``simpleKeysetExpressionIR~h~`` ``{two-colons}`` ``simpleKeysetExpressionIR^{asterisk}^``.
 
 xref:interface_of_tableKeyIR[$interface_of_tableKeyIR(typedExpressionIR +#+ nameIR~key~ +:+ nameIR~matchKind~ annotationList +;+)]
 
@@ -19578,10 +19651,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
 
 xref:align_tableActionArgumentInterfaces'[$align_tableActionArgumentInterfaces'(+{+ ( id~arg~ +:+ i~arg~ )^{asterisk}^ +}+, ++_++ ++_++ ++_++ nameIR~param~ ++_++)]
 
-. Let ``i'^?^`` be xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].
 . Try pass:[<strong id="bk-align_tableActionArgumentInterfaces'-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-align_tableActionArgumentInterfaces'-1-a"></span>+++
-  ... Let!~type~ ``i`` be ``i'^?^``.+++<sub class="bk-mark">[<a href="#bk-align_tableActionArgumentInterfaces'-1-b">else #1-b</a>]</sub>+++
+  ... Let ``i`` be xref:option_get[*!*] xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-align_tableActionArgumentInterfaces'-1-b">else #1-b</a>]</sub>+++
   ... Return ``i``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-align_tableActionArgumentInterfaces'-1-b"></span>+++
   ... Check that ``·`` is equal to xref:find_map[the value of ``nameIR~param~`` in map ``+{+`` ``(`` ``id~arg~`` ``+:+`` ``i~arg~`` ``)^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-align_tableActionArgumentInterfaces'-1">fail #1</a>]</sub>+++
@@ -19633,10 +19705,9 @@ xref:find_tableActionIR_unqualified'[$find_tableActionIR_unqualified'(tableActio
 
 xref:tableObject_create_entry_action[$tableObject_create_entry_action(EC, +ACTIONS+ +=+ +{+ tableActionIR^{asterisk}^ +}+, ( nameIR~action_update~, tableActionArgumentInterface~update~^{asterisk}^ ))]
 
-. Let ``(nameIR,`` ``tableActionIR)^?^`` be ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.
 . Try pass:[<strong id="bk-tableObject_create_entry_action-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-tableObject_create_entry_action-1-a"></span>+++
-  ... Let!~type~ ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be ``(nameIR,`` ``tableActionIR)^?^``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_action-1-b">else #1-b</a>]</sub>+++
+  ... Let ``(`` ``nameIR~found~,`` ``tableActionIR~found~`` ``)`` be xref:option_get[*!*] ``xref:find_tableActionIR_qualified[$find_tableActionIR_qualified(tableActionIR^{asterisk}^,`` ``nameIR~action_update~)]``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_action-1-b">else #1-b</a>]</sub>+++
   ... Let ``annotationList`` ``prefixedNameIR`` ``controlPlaneNameIR`` ``+(+`` ``argumentIR~data~^{asterisk}^`` ``+)+`` ``+#+`` ``+(+`` ``++_++`` ``+,+`` ``parameterIR~control~^{asterisk}^`` ``+)+`` ``+;+`` be ``tableActionIR~found~``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_action-1-b">else #1-b</a>]</sub>+++
   ... Let ``i~arg_aligned~^{asterisk}^`` be ``xref:align_tableActionArgumentInterfaces[$align_tableActionArgumentInterfaces(parameterIR~control~^{asterisk}^,`` ``tableActionArgumentInterface~update~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-tableObject_create_entry_action-1-b">else #1-b</a>]</sub>+++
   ... Let ``typeIR~param~^{asterisk}^`` be the list obtained by repeating:
