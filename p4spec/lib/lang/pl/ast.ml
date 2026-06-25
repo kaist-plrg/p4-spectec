@@ -67,7 +67,7 @@ and exp' =
   | CallE of id * targ list * arg list
   | IterE of exp * iterexp
 
-and notexp = mixop * exp list
+and notexp = exp Domain.Mixfix.t
 
 (* Paths *)
 
@@ -111,6 +111,8 @@ and guard =
   | CheckLetSubG of typ * exp        (* scrut <: typ, bind scrut as exp *)
   | CheckLetMatchG of pattern * exp  (* scrut matches pattern, bind scrut as exp *)
 
+(* LetI/RuleI/DebugI/DestructI/OptionGetI are linearized, so their binding
+   scope is the rest of the block. *)
 and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =
   | IfI of exp * iterexp list * block * dangle

@@ -27,16 +27,12 @@ let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
 module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
-  let annot (node : ('a, 'b) Util.Source.note_phrase) :
-      ('a, 'b) Util.Source.note_phrase Annot.t =
-    { Annot.node; hints = Annot.empty }
-
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
       unit =
     let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-    let typs = Mixfix.args (nottyp |> it) in
+    let typs = Mixfix.args nottyp.it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
@@ -48,7 +44,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
-    let typs = Mixfix.args (nottyp |> it) in
+    let typs = Mixfix.args nottyp.it in
     let typs =
       typs
       |> List.mapi (fun idx typ ->
@@ -114,8 +110,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             Hook.on_value_dependency value_inner value Dep.Edges.Assign)
           values_inner;
         ctx
-    | CaseE (_, exps_inner), CaseV valuecase_inner ->
-        let values_inner = Mixfix.args valuecase_inner in
+    | CaseE notexp, CaseV valuecase ->
+        let exps_inner = Mixfix.args notexp in
+        let values_inner = Mixfix.args valuecase in
         let ctx = assign_exps ctx exps_inner values_inner in
         List.iter
           (fun value_inner ->
@@ -533,8 +530,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     let value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
-      | CaseP mixop_p, CaseV valuecase_v ->
-          Mixop.eq mixop_p (Mixfix.to_mixop valuecase_v)
+      | CaseP mixop_p, CaseV valuecase -> Mixfix.eq_mixop mixop_p valuecase
       | ListP listpattern, ListV values -> (
           let len_v = List.length values in
           match listpattern with
@@ -566,7 +562,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
   (* Case expression evaluation *)
 
   and eval_case_exp (typ_note : typ) (ctx : Ctx.t) (notexp : notexp) : value =
-    let mixop, exps = notexp in
+    let mixop, exps = Mixfix.split notexp in
     let values = eval_exps ctx exps in
     let value_res = Value.Make.case typ_note (Mixfix.fill mixop values) in
     Hook.on_value value_res;
@@ -1045,116 +1041,55 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
 
   (* Instruction evaluation *)
 
-  and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
-    try eval_instr' ctx instr
-    with Backtrace backtrace ->
-      backtrace
-      |> back_nest instr.node.at
-           (F.asprintf "%s failed" (Pl.Print.string_of_instr instr))
-
-  and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
-    let iid = instr.node.note.iid in
-    match instr.node.it with
-    | IfI (exp_cond, iterexps, block_then, dangle) ->
-        eval_if_instr iid ctx exp_cond iterexps block_then dangle
-    | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr iid ctx id notexp iterexps holdcase
-    | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
-    | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
-        eval_group_instr ctx id_group rel_signature exps_group block
-    | TryI arms -> eval_try ctx arms
-    | CheckLetI (exp_l, exp_r, block_inner) ->
-        let value = eval_exp ctx exp_r in
-        let case_ok =
-          match (exp_l.node.it, value.it) with
-          | CaseE (mixop_e, _), CaseV valuecase_v ->
-              Mixop.eq mixop_e (Mixfix.to_mixop valuecase_v)
-          | _ -> true
-        in
-        let typ_target = exp_l.node.note $ exp_l.node.at in
-        let sub =
-          Value.Match.sub (Ctx.find_typdef_opt ctx)
-            (Ctx.find_func_signature ctx)
-            typ_target value
-        in
-        if case_ok && sub then
-          let value' = downcast ctx typ_target value in
-          match
-            try Some (assign_exp ctx exp_l value')
-            with Backtrace (Err _) -> None
-          with
-          | Some ctx -> eval_block ctx block_inner
-          | None -> Cont []
-        else Cont []
-    | LetI _ | RuleI _ | DebugI _ | DestructI _ | OptionGetI _ -> assert false
-    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
-    | ReturnI exp -> eval_return_instr ctx exp
-
   and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
     match block with
     | [] -> Flow.Cont []
-    | instr :: rest -> (
+    | instr :: block_rest -> (
+        let eval_nested (eval : unit -> Flow.t) : Flow.t =
+          let flow =
+            try eval ()
+            with Backtrace backtrace ->
+              backtrace
+              |> back_nest instr.node.at
+                   (F.asprintf "%s failed" (Pl.Print.string_of_instr instr))
+          in
+          match flow with Flow.Cont _ -> eval_block ctx block_rest | _ -> flow
+        in
+        let iid = instr.node.note.iid in
         match instr.node.it with
-        | LetI (exp_l, exp_r, iterinstrs) -> (
-            try
-              let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
-              eval_block ctx rest
-            with Backtrace (Unmatch traces) -> Flow.Cont traces)
-        | RuleI (id, notexp, inputs, iterinstrs) -> (
-            try
-              let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-              eval_block ctx rest
-            with Backtrace (Unmatch traces) -> Flow.Cont traces)
-        | DebugI exp ->
-            let value = eval_exp ctx exp in
-            string_of_region exp.node.at ^ ": " ^ Pl.Print.string_of_exp exp
-            |> print_endline;
-            let region = string_of_region value.at in
-            (if region = "" then "" else region ^ ": ")
-            ^ Il.Print.string_of_value value
-            |> print_endline;
-            eval_block ctx rest
-        | OptionGetI (exp_l, exp_r) -> (
-            let value = eval_exp ctx exp_r in
-            match value.it with
-            | OptV (Some value_inner) ->
-                let ctx = assign_exp ctx exp_l value_inner in
-                eval_block ctx rest
-            | _ -> Cont [])
-        | DestructI (fields, exp_source) -> (
-            let value = eval_exp ctx exp_source in
-            match value.it with
-            | CaseV valuecase
-              when List.length fields = List.length (Mixfix.args valuecase) ->
-                let values = Mixfix.args valuecase in
-                let ctx =
-                  List.fold_left2
-                    (fun ctx (_, exp_target) v -> assign_exp ctx exp_target v)
-                    ctx fields values
-                in
-                eval_block ctx rest
-            | _ ->
-                back_err exp_source.node.at
-                  (F.asprintf "destructure failed: %s"
-                     (Sl.Print.string_of_value ~short:true value)))
-        | _ -> (
-            let flow = eval_instr ctx instr in
-            match flow with Flow.Cont _ -> eval_block ctx rest | _ -> flow))
+        (* linearized instructions: thread block_rest for binding scope *)
+        | LetI (exp_l, exp_r, iterinstrs) ->
+            eval_let_instr ctx exp_l exp_r iterinstrs block_rest
+        | RuleI (id, notexp, inputs, iterinstrs) ->
+            eval_rule_instr ctx id notexp inputs iterinstrs block_rest
+        | DebugI exp -> eval_debug_instr ctx exp block_rest
+        | OptionGetI (exp_l, exp_r) ->
+            eval_option_get_instr ctx exp_l exp_r block_rest
+        | DestructI (fields, exp_source) ->
+            eval_destruct_instr ctx fields exp_source block_rest
+        (* nested instructions *)
+        | IfI (exp_cond, iterexps, block_then, dangle) ->
+            eval_nested (fun () ->
+                eval_if_instr iid ctx exp_cond iterexps block_then dangle)
+        | HoldI (id, notexp, iterexps, holdcase) ->
+            eval_nested (fun () ->
+                eval_hold_instr iid ctx id notexp iterexps holdcase)
+        | CaseI (exp, cases, dangle) ->
+            eval_nested (fun () -> eval_case_instr iid ctx exp cases dangle)
+        | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
+            eval_nested (fun () ->
+                eval_group_instr ctx id_group rel_signature exps_group block)
+        | TryI arms -> eval_nested (fun () -> eval_try ctx arms)
+        | CheckLetI (exp_l, exp_r, block_inner) ->
+            eval_nested (fun () ->
+                eval_check_let_instr ctx exp_l exp_r block_inner)
+        | ResultI (rel_signature, exps) ->
+            eval_nested (fun () -> eval_result_instr ctx rel_signature exps)
+        | ReturnI exp -> eval_nested (fun () -> eval_return_instr ctx exp))
 
   and eval_try (ctx : Ctx.t) (arms : block list) : Flow.t =
     if !Ctx.is_det then eval_try_deterministic ctx arms
     else eval_try_sequential ctx arms
-
-  and eval_try_sequential (ctx : Ctx.t) (arms : block list) : Flow.t =
-    match arms with
-    | [] -> Flow.Cont []
-    | arm :: rest -> (
-        try
-          let flow = eval_block ctx arm in
-          match flow with
-          | Flow.Cont _ -> eval_try_sequential ctx rest
-          | _ -> flow
-        with Backtrace (Unmatch _) -> eval_try_sequential ctx rest)
 
   and eval_try_deterministic (ctx : Ctx.t) (arms : block list) : Flow.t =
     let eval_arm_deterministic (flow_pre : Flow.t) (arm : block) : Flow.t =
@@ -1181,6 +1116,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     in
     try List.fold_left eval_arm_deterministic (Flow.Cont []) arms
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
+
+  and eval_try_sequential (ctx : Ctx.t) (arms : block list) : Flow.t =
+    List.fold_left
+      (fun flow_pre arm ->
+        match flow_pre with Flow.Cont _ -> eval_block ctx arm | _ -> flow_pre)
+      (Flow.Cont []) arms
 
   and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
@@ -1276,7 +1217,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
   (* Hold instruction evaluation *)
 
   and eval_hold_cond (ctx : Ctx.t) (id : id) (notexp : notexp) : bool * value =
-    let _, exps_input = notexp in
+    let exps_input = Mixfix.args notexp in
     let values_input = eval_exps ctx exps_input in
     let hold =
       try
@@ -1390,8 +1331,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     let value_exp = eval_exp ctx exp in
     let id_tmp = "~case" $ no_region in
     let ctx = Ctx.add_value ctx (id_tmp, []) value_exp in
-    let exp_inner = Pl.VarE id_tmp $$ (exp.node.at, exp.node.note) in
-    let exp = annot exp_inner in
+    let exp =
+      Pl.VarE id_tmp $$ (exp.node.at, exp.node.note) |> Annot.no_hints
+    in
     let bind_target (ctx : Ctx.t) (guard : guard) : Ctx.t =
       match guard with
       | CheckLetSubG (_, target) ->
@@ -1418,7 +1360,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
                     Pl.MatchE (exp, pattern)
                 | MemG exp_s -> Pl.MemE (exp, exp_s)
               in
-              let exp_cond = annot (exp_cond $$ (exp.node.at, Il.BoolT)) in
+              let exp_cond =
+                exp_cond $$ (exp.node.at, Il.BoolT) |> Annot.no_hints
+              in
               let value_cond = eval_exp ctx exp_cond in
               let values_cond_rev = value_cond :: values_cond_rev in
               let cond = Value.Get.bool value_cond in
@@ -1587,11 +1531,18 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_let_iter' ctx exp_l exp_r iterinstrs
 
+  and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+      (iterinstrs : iterinstr list) (block : block) : Flow.t =
+    try
+      let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
+      eval_block ctx block
+    with Backtrace (Unmatch traces) -> Cont traces
+
   (* Rule instruction evaluation *)
 
   and eval_rule (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) : Ctx.t =
-    let _, exps = notexp in
+    let exps = Mixfix.args notexp in
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let values_input = eval_exps ctx exps_input in
     let values_output = invoke_rel ctx id values_input in
@@ -1711,6 +1662,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_rule_iter' ctx id notexp inputs iterinstrs
 
+  and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
+      (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
+      Flow.t =
+    try
+      let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+      eval_block ctx block
+    with Backtrace (Unmatch traces) -> Cont traces
+
   (* Result instruction evaluation *)
 
   and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
@@ -1727,6 +1686,75 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       let value = eval_exp ctx exp in
       Flow.Ret value
     with Backtrace (Unmatch traces) -> Flow.Cont traces
+
+  (* Debug instruction evaluation *)
+
+  and eval_debug_instr (ctx : Ctx.t) (exp : exp) (block : block) : Flow.t =
+    try
+      let value = eval_exp ctx exp in
+      string_of_region exp.node.at ^ ": " ^ Pl.Print.string_of_exp exp
+      |> print_endline;
+      let region = string_of_region value.at in
+      (if region = "" then "" else region ^ ": ")
+      ^ Il.Print.string_of_value value
+      |> print_endline;
+      eval_block ctx block
+    with Backtrace (Unmatch traces) -> Flow.Cont traces
+
+  (* Check-let instruction evaluation *)
+
+  and eval_check_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+      (block_inner : block) : Flow.t =
+    let value = eval_exp ctx exp_r in
+    let case_ok =
+      match (exp_l.node.it, value.it) with
+      | CaseE notexp_e, CaseV valuecase_v -> Mixfix.eq_mixop notexp_e valuecase_v
+      | _ -> true
+    in
+    let typ_target = exp_l.node.note $ exp_l.node.at in
+    let sub =
+      Value.Match.sub (Ctx.find_typdef_opt ctx)
+        (Ctx.find_func_signature ctx)
+        typ_target value
+    in
+    if case_ok && sub then
+      let value' = downcast ctx typ_target value in
+      match
+        try Some (assign_exp ctx exp_l value') with Backtrace (Err _) -> None
+      with
+      | Some ctx -> eval_block ctx block_inner
+      | None -> Flow.Cont []
+    else Flow.Cont []
+
+  (* Option-get instruction evaluation *)
+
+  and eval_option_get_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+      (block : block) : Flow.t =
+    let value = eval_exp ctx exp_r in
+    match value.it with
+    | OptV (Some value_inner) ->
+        eval_block (assign_exp ctx exp_l value_inner) block
+    | _ -> Flow.Cont []
+
+  (* Destructure instruction evaluation *)
+
+  and eval_destruct_instr (ctx : Ctx.t) (fields : (string option * exp) list)
+      (exp_source : exp) (block : block) : Flow.t =
+    let value = eval_exp ctx exp_source in
+    match value.it with
+    | CaseV valuecase
+      when List.length fields = List.length (Mixfix.args valuecase) ->
+        let values = Mixfix.args valuecase in
+        let ctx =
+          List.fold_left2
+            (fun ctx (_, exp_target) v -> assign_exp ctx exp_target v)
+            ctx fields values
+        in
+        eval_block ctx block
+    | _ ->
+        back_err exp_source.node.at
+          (F.asprintf "destructure failed: %s"
+             (Sl.Print.string_of_value ~short:true value))
 
   (* Invoke a relation *)
 

@@ -243,17 +243,17 @@ let rec render_exp ctx (exp : exp) : string =
       F.asprintf "%s matches pattern %s" (render_exp ctx exp_inner)
         (code_of_pattern pattern |> adoc_as_code ctx)
   | TupleE exps -> "( " ^ render_exps ctx ~sep:", " exps ^ " )"
-  | CaseE (mixop, exps) -> (
-      if ctx.in_code then code_of_notexp ctx (mixop, exps)
+  | CaseE notexp -> (
+      if ctx.in_code then code_of_notexp ctx notexp
       else
         let hint_opt = exp.hints.Annot.prose in
         let link_opt = tid_of_typ exp.node.note in
         match (hint_opt, link_opt) with
         | Some hints, Some tid ->
             render_alter_hint (ctx |> link) hints (reindent_lines ~level:0)
-              render_exp exps
+              render_exp (Mixfix.args notexp)
             |> adoc_as_link ctx ~link:tid.it
-        | _ -> code_of_notexp ctx (mixop, exps))
+        | _ -> code_of_notexp ctx notexp)
   | StrE expfields ->
       "+{+"
       ^ String.concat ", "
@@ -377,7 +377,8 @@ and render_exps ctx ?sep (exps : exp list) =
   | true, None -> String.concat ", " (List.map (render_exp ctx) exps)
   | false, None -> render_list (List.map (render_exp ctx) exps)
 
-and code_of_notexp ctx (mixop, exps) =
+and code_of_notexp ctx notexp =
+  let mixop, exps = Mixfix.split notexp in
   let sexps = List.map (render_exp in_code) exps in
   Mixop.assemble ~string_of_atom:code_of_atom mixop sexps |> adoc_as_code ctx
 
@@ -542,7 +543,7 @@ let render_guard ctx (exp_scrut : exp) (guard : guard) : string =
       let neg_inner =
         UnE (`NotOp, `BoolT, exp_scrut) $$ (scrut_node.at, scrut_node.note)
       in
-      render_exp ctx { Annot.node = neg_inner; hints = Annot.empty }
+      render_exp ctx (Annot.no_hints neg_inner)
   | CmpG (cmpop, _, e) ->
       render_exp ctx exp_scrut ^ " " ^ render_cmpop ctx cmpop ^ " "
       ^ render_exp ctx e
@@ -607,7 +608,8 @@ let rec render_instr ?(level = 0) ?(unordered = false)
         ^ (block_then
           |> List.map (render_instr ~level ~backtrack)
           |> String.concat "\n")
-  | HoldI (id_rel, (mixop, exps), iterexps, holdcase) -> (
+  | HoldI (id_rel, notexp, iterexps, holdcase) -> (
+      let exps = Mixfix.args notexp in
       let hint_true = hints.Annot.prose_true in
       let hint_false = hints.Annot.prose_false in
       let iter_suffix = render_iterexp_suffix in_prose iterexps in
@@ -621,7 +623,7 @@ let rec render_instr ?(level = 0) ?(unordered = false)
             |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
         | None ->
             let math =
-              code_of_notexp in_prose (mixop, exps)
+              code_of_notexp in_prose notexp
               |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
             in
             math ^ fallback_verb
@@ -728,7 +730,8 @@ let rec render_instr ?(level = 0) ?(unordered = false)
           body
           (render_in_itervars in_prose vars_in_all)
           fallthrough
-  | RuleI (id_rel, (mixop, exps), input_hint, iterinstrs) ->
+  | RuleI (id_rel, notexp, input_hint, iterinstrs) ->
+      let exps = Mixfix.args notexp in
       let fallthrough = render_fallthrough_link backtrack in
       let exps_in, exps_out = Hints.Input.split input_hint exps in
       let hint_in = hints.Annot.prose_in in
@@ -759,7 +762,7 @@ let rec render_instr ?(level = 0) ?(unordered = false)
                 prose_in
         | _ ->
             F.asprintf "Let %s"
-              (code_of_notexp in_prose (mixop, exps)
+              (code_of_notexp in_prose notexp
               |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
       in
       if vars_out_visible = [] then
@@ -860,7 +863,7 @@ let rec lift_synthesized_exp (exp : Sl.exp) : exp =
         IterE (lift_synthesized_exp exp_inner, (iter, vars))
     | _ -> assert false
   in
-  { Annot.node = it' $$ (exp.at, exp.note); hints = Annot.empty }
+  Annot.no_hints (it' $$ (exp.at, exp.note))
 
 let render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =

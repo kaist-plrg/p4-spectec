@@ -24,3 +24,6 @@ let empty : hints =
   }
 
 type 'a t = { node : 'a; hints : hints }
+
+(* Wrap a node with no prose hints. *)
+let no_hints (node : 'a) : 'a t = { node; hints = empty }

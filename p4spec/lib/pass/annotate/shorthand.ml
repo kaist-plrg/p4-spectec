@@ -95,8 +95,9 @@ let shorten_destruct (instr : instr) : instr option =
   match instr.node.it with
   | LetI (exp_l, exp_r, []) -> (
       match (exp_l.node.it, instr.hints.prose_fields) with
-      | CaseE (_mixop, exps_l), Some fields
-        when List.length exps_l = List.length fields ->
+      | CaseE notexp_l, Some fields
+        when List.length (Mixfix.args notexp_l) = List.length fields ->
+          let exps_l = Mixfix.args notexp_l in
           let destruct_fields =
             List.combine exps_l fields
             |> List.map (fun ((e : exp), name) ->

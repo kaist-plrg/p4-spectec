@@ -95,7 +95,7 @@ let rec string_of_exp exp =
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
-  let mixop, exps = notexp in
+  let mixop, exps = Mixfix.split notexp in
   let sexps = List.map string_of_exp exps in
   Mixop.assemble ~string_of_atom mixop sexps
 

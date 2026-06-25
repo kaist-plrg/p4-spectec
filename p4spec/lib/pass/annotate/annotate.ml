@@ -158,11 +158,11 @@ and annotate_exp' (ctx : Ctx.t) (exp : exp) : Pl.exp' * Annot.hints =
   | Il.TupleE exps -> (Pl.TupleE (List.map (annotate_exp ctx) exps), Annot.empty)
   | Il.CaseE notexp ->
       let mixop, exps = Mixfix.split notexp in
-      let exps_pl = List.map (annotate_exp ctx) exps in
+      let notexp_pl = annotate_notexp ctx notexp in
       let hints = hints_of_case_exp ctx note mixop in
-      validate_annot_alter at hints (List.length exps_pl);
-      validate_annot_fields at hints (List.length exps_pl);
-      (Pl.CaseE (mixop, exps_pl), hints)
+      validate_annot_alter at hints (List.length exps);
+      validate_annot_fields at hints (List.length exps);
+      (Pl.CaseE notexp_pl, hints)
   | Il.StrE expfields ->
       let expfields_pl =
         List.map (fun (atom, exp) -> (atom, annotate_exp ctx exp)) expfields
@@ -226,8 +226,7 @@ and annotate_arg (ctx : Ctx.t) (arg : arg) : Pl.arg =
   it $ arg.at
 
 and annotate_notexp (ctx : Ctx.t) (notexp : notexp) : Pl.notexp =
-  let mixop, exps = Mixfix.split notexp in
-  (mixop, List.map (annotate_exp ctx) exps)
+  Mixfix.map (annotate_exp ctx) notexp
 
 (* Guards / cases / holdcases *)
 
