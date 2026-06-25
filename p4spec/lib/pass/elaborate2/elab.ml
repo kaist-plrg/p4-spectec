@@ -1970,3 +1970,4 @@ let elab_spec (spec : spec) : Il.spec =
   populate_typs ctx;
   spec_il |> populate_rules ctx |> populate_clauses ctx
   |> Dataflow.Dimension.analyze_spec |> Dataflow.Binding.analyze_spec
+  |> Sidecondition.Guard.insert_spec
