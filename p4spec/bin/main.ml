@@ -231,7 +231,7 @@ let elab2_command =
      fun () ->
        try
          let spec_il = elab2 filenames_spec in
-         Format.printf "%s\n" (Il2.Print.string_of_spec spec_il);
+         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
          ()
        with
        | CommandError msg -> Format.printf "%s\n" msg

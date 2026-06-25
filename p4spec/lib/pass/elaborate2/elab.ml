@@ -1964,7 +1964,7 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il2.spec) : Il2.spec =
 
 (* Entry point *)
 
-let elab_spec (spec : spec) : Il2.spec =
+let elab_spec (spec : spec) : Il.spec =
   let ctx = Ctx.init () in
   let ctx, spec_il = elab_defs ctx spec in
   populate_typs ctx;
