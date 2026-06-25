@@ -19,13 +19,19 @@ let count_call_e (seen_calls : call_e_count) e =
   | Il.IterE _ -> seen_calls
   | _ -> Yes
 
-let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
-    (exp * iter_state) option =
+(* True if any argument's free variables include a name in [iter_locals]. *)
+let args_reference_any (iter_locals : IdSet.t) (args : arg list) : bool =
+  Vars.free_args args |> VarSet.elements
+  |> List.exists (fun (id, _, _) ->
+         IdSet.exists (fun id' -> String.equal id'.it id.it) iter_locals)
+
+let rewriter_call_e (iter_locals : IdSet.t) ids_used
+    (call_e_count : call_e_count) (exp : exp) : (exp * iter_state) option =
   match call_e_count with
   | Yes -> (
       match exp.it with
       | CallE (_, _, []) -> None
-      | CallE (_, _, args) ->
+      | CallE (_, _, args) when not (args_reference_any iter_locals args) ->
           let id_new, typ_new, iters_new =
             Il.Fresh.var_from_exp TIdMap.empty ids_used exp
           in
@@ -47,8 +53,10 @@ let rewriter_call_e ids_used (call_e_count : call_e_count) (exp : exp) :
       | _ -> None)
   | _ -> None
 
-let transformer_call_e ids_used =
-  Transform.transform_first_with_iters (rewriter_call_e ids_used) count_call_e
+let transformer_call_e iter_locals ids_used =
+  Transform.transform_first_with_iters
+    (rewriter_call_e iter_locals ids_used)
+    count_call_e
 
 (* replacement for List.drop, added in OCaml 5.3 *)
 let drop (n : int) (l : 'a list) : 'a list =
@@ -58,15 +66,28 @@ let drop (n : int) (l : 'a list) : 'a list =
   if n < 0 then invalid_arg "List.drop";
   drop' 0 l
 
-let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
-    (exp : exp) : ((instr -> instr) * exp * IdSet.t) option =
-  match transformer_call_e ids_used call_e_count exp with
+(* replacement for List.take, added in OCaml 5.3 *)
+let take (n : int) (l : 'a list) : 'a list =
+  let rec take' (i : int) (acc : 'a list) (l : 'a list) : 'a list =
+    match l with
+    | x :: l when i < n -> take' (i + 1) (x :: acc) l
+    | _ -> List.rev acc
+  in
+  if n < 0 then invalid_arg "List.take";
+  take' 0 [] l
+
+let replace_call_exp ~(call_e_count : call_e_count) ?(iter_locals = IdSet.empty)
+    (ids_used : IdSet.t) (exp : exp) : ((instr -> instr) * exp * IdSet.t) option
+    =
+  match transformer_call_e iter_locals ids_used call_e_count exp with
   | Some (exp_new_full, iter_state) ->
       let { var_new; iterexps; exp_orig; exp_new; ids_used; _ } = iter_state in
       let id, typ, iters = var_new in
-      let iters_enclosing =
-        drop (List.length iters - List.length iterexps) iters
-      in
+      (* [iters] is callee's return dimensions, followed by one level per
+         IterE the call was lifted out of. *)
+      let n_enclosing = List.length iters - List.length iterexps in
+      let iters_enclosing = drop n_enclosing iters in
+      let iters_callee = take n_enclosing iters in
       let iter_combined = List.combine iters_enclosing iterexps in
       let iterinstrs, _ =
         List.fold_left
@@ -78,7 +99,7 @@ let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
               (id, typ, iters @ [ iter_enclosing ])
             in
             (iterinstrs @ [ iterinstr ], var_bind))
-          ([], (id, typ, []))
+          ([], (id, typ, iters_callee))
           iter_combined
       in
       let wrap_in_let body =
@@ -89,44 +110,61 @@ let replace_call_exp ~(call_e_count : call_e_count) (ids_used : IdSet.t)
   | None -> None
 
 let rec replace_call_exps_first ~(call_e_count : call_e_count)
-    (ids_used : IdSet.t) (exps : exp list) :
+    ?(iter_locals = IdSet.empty) (ids_used : IdSet.t) (exps : exp list) :
     ((instr -> instr) * exp list * IdSet.t) option =
   match exps with
   | [] -> None
   | exp_h :: exps_t -> (
-      match replace_call_exp ~call_e_count ids_used exp_h with
+      match replace_call_exp ~call_e_count ~iter_locals ids_used exp_h with
       | Some (wrap_in_let, exp_h', ids') ->
           Some (wrap_in_let, exp_h' :: exps_t, ids')
       | None ->
-          replace_call_exps_first ~call_e_count ids_used exps_t
+          replace_call_exps_first ~call_e_count ~iter_locals ids_used exps_t
           |> Option.map (fun (wrap_in_let, exps_t', ids') ->
                  (wrap_in_let, exp_h :: exps_t', ids')))
+
+let ids_of_vars (vars : Il.var list) : IdSet.t =
+  List.fold_left (fun s (id, _, _) -> IdSet.add id s) IdSet.empty vars
+
+let iter_locals_of_iterinstrs (iterinstrs : iterinstr list) : IdSet.t =
+  List.fold_left
+    (fun s (_, vars_bound, _) -> IdSet.union s (ids_of_vars vars_bound))
+    IdSet.empty iterinstrs
+
+let iter_locals_of_iterexps (iterexps : iterexp list) : IdSet.t =
+  List.fold_left
+    (fun s (_, vars) -> IdSet.union s (ids_of_vars vars))
+    IdSet.empty iterexps
 
 let expand_nested_calls (ids_used : IdSet.t) (instr : instr) :
     ((instr -> instr) * instr * IdSet.t) option =
   let { it; at; note } = instr in
   let mk it' = it' $$ (at, note) in
   match it with
-  | LetI (exp_l, exp_r, iterexps, body) ->
+  | LetI (exp_l, exp_r, iterinstrs, body) ->
+      let iter_locals = iter_locals_of_iterinstrs iterinstrs in
       let* wrap_in_let, exp_r', ids' =
-        replace_call_exp ~call_e_count:No ids_used exp_r
+        replace_call_exp ~call_e_count:No ~iter_locals ids_used exp_r
       in
-      Some (wrap_in_let, mk (LetI (exp_l, exp_r', iterexps, body)), ids')
-  | RuleI (id, notexp, inputs, iterexps, body) ->
+      Some (wrap_in_let, mk (LetI (exp_l, exp_r', iterinstrs, body)), ids')
+  | RuleI (id, notexp, inputs, iterinstrs, body) ->
+      let iter_locals = iter_locals_of_iterinstrs iterinstrs in
       let mixop, exps = Mixfix.split notexp in
       let exps_input, exps_output = Hints.Input.split inputs exps in
       let* wrap_in_let, exps_input', ids' =
-        replace_call_exps_first ~call_e_count:SkipOne ids_used exps_input
+        replace_call_exps_first ~call_e_count:SkipOne ~iter_locals ids_used
+          exps_input
       in
       let exps' = Hints.Input.combine inputs exps_input' exps_output in
       Some
         ( wrap_in_let,
-          mk (RuleI (id, Mixfix.fill mixop exps', inputs, iterexps, body)),
+          mk (RuleI (id, Mixfix.fill mixop exps', inputs, iterinstrs, body)),
           ids' )
   | HoldI (id, notexp, iterexps, holdcase) ->
+      let iter_locals = iter_locals_of_iterexps iterexps in
       let mixop, exps = Mixfix.split notexp in
       let* wrap_in_let, exps', ids' =
-        replace_call_exps_first ~call_e_count:SkipOne ids_used exps
+        replace_call_exps_first ~call_e_count:SkipOne ~iter_locals ids_used exps
       in
       Some
         ( wrap_in_let,
@@ -185,9 +223,9 @@ and expand_sub_blocks (ids_used : IdSet.t) (at : Util.Source.region)
           ids_used cases
       in
       (ids', CaseI (exp, cases', dangle) $$ (at, note))
-  | GroupI (id, sg, exps, body) ->
+  | GroupI (id, rel_signature, exps, body) ->
       let ids', body' = expand_block ids_used body in
-      (ids', GroupI (id, sg, exps, body') $$ (at, note))
+      (ids', GroupI (id, rel_signature, exps, body') $$ (at, note))
   | DebugI (exp, instr_inner) ->
       let ids', instr_inner' = expand_instr ids_used instr_inner in
       (ids', DebugI (exp, instr_inner') $$ (at, note))
@@ -216,7 +254,7 @@ let expand_def (def : def) : def =
   let { it; at; _ } = def in
   let it' =
     match it with
-    | RelD (id, sig_, exps, body, elseblock_opt, hints) ->
+    | RelD (id, rel_signature, exps, body, elseblock_opt, hints) ->
         let frees =
           IdSet.union (Sl.Free.free_exps exps) (Sl.Free.free_block body)
         in
@@ -229,7 +267,7 @@ let expand_def (def : def) : def =
         let elseblock_opt' =
           Option.map (expand_block_top frees) elseblock_opt
         in
-        RelD (id, sig_, exps, body', elseblock_opt', hints)
+        RelD (id, rel_signature, exps, body', elseblock_opt', hints)
     | TableDecD (id, params, typ, tablerows, hints) ->
         let tablerows' =
           List.map

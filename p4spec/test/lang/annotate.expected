@@ -959,7 +959,7 @@ xref:write_bits_from_value[$write_bits_from_value(value')]
    .... Else if let ``w`` ``+W+`` ``i`` be ``integerLiteral``:
     ..... Return ``xref:int_to_bits_unsigned[$int_to_bits_unsigned(w,`` ``i)]``.
   ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value'``:
-   .... Let ``bool^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value~element~)]``.
@@ -968,7 +968,7 @@ xref:write_bits_from_value[$write_bits_from_value(value')]
 for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
    .... Return ``xref:concat_[$concat_<bool>(bool^{asterisk}^^{asterisk}^)]``.
   ... Else if let ``+STRUCT+`` ``++_++`` ``+{+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``:
-   .... Let ``bool'^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value~field~)]``.
@@ -978,7 +978,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``.+++<sub class="bk-mark
    .... Return ``xref:concat_[$concat_<bool>(bool'^{asterisk}^^{asterisk}^)]``.
   ... Else if let ``+HEADER+`` ``++_++`` ``+{+`` ``b`` ``+;+`` ``(`` ``value~field~`` ``id~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``:
    .... Check that ``b`` is equal to ``true``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool''^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value~field~)]``.
@@ -990,7 +990,7 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``.+++<sub class="bk-mark
    .... Check that ``b`` is equal to ``false``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
    .... Return ``·``.
   ... Else if let ``+HEADER_UNION+`` ``++_++`` ``+{+`` ``(`` ``value`` ``id`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``value'``:
-   .... Let ``bool'''^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'''^{asterisk}^`` be ``xref:write_bits_from_value[$write_bits_from_value(value)]``.
@@ -2993,7 +2993,7 @@ xref:bin_eq[``value`` ``+==+`` ``value'``]
   ... Else if let ``+LIST+`` ``+[+`` ``value~a~^{asterisk}^`` ``+]+`` be ``value``:
    .... Let!~type~ ``+LIST+`` ``+[+`` ``value~b~^{asterisk}^`` ``+]+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'^{asterisk}^`` be the list and ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'`` be xref:bin_eq[``value~a~`` ``+==+`` ``value~b~``].
@@ -3005,7 +3005,7 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
   ... Else if let ``+TUPLE+`` ``+(+`` ``value~a~^{asterisk}^`` ``+)+`` be ``value``:
    .... Let!~type~ ``+TUPLE+`` ``+(+`` ``value~b~^{asterisk}^`` ``+)+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''^{asterisk}^`` be the list and ``bool'''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'''^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'''`` be xref:bin_eq[``value~a~`` ``+==+`` ``value~b~``].
@@ -3017,7 +3017,7 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
   ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~a~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_a~`` ``+)+`` ``+]+`` be ``value``:
    .... Let!~type~ ``+HEADER_STACK+`` ``+[+`` ``value~b~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_b~`` ``+)+`` ``+]+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''^{asterisk}^`` be the list and ``bool'''''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'''''`` be xref:bin_eq[``value~a~`` ``+==+`` ``value~b~``].
@@ -3044,7 +3044,7 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''^{asterisk}^`` be the list and ``bool''''''''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
@@ -3072,7 +3072,7 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''''''''^{asterisk}^`` be the list and ``bool'''''''''''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'''''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool'''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
@@ -3100,7 +3100,7 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''''''''^{asterisk}^`` be the list and ``bool''''''''''''''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool''''''''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
     ***** Let ``bool''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
@@ -3535,7 +3535,7 @@ for each ``value`` in ``value^{asterisk}^``.
 . Else if let ``+TUPLE+`` ``+<+`` ``typeIR^{asterisk}^`` ``+>+`` be ``typeIR'``:
  .. Let!~type~ ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
  .. Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
- .. Let ``value''^{asterisk}^`` be the list and ``value''^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
+ .. Let ``value''^{asterisk}^`` be the list obtained by repeating:
 +
 --
   *** Let ``value''`` be xref:cast_op[``value`` casted to type ``typeIR``].
@@ -4454,11 +4454,10 @@ xref:lift_nameIR_as_tableCustomName[$lift_nameIR_as_tableCustomName(t)]
 
 xref:lift_nameListIR_as_nonTypeNameList[$lift_nameListIR_as_nonTypeNameList(nameIR^{asterisk}^)]
 
-. Let ``nonTypeName`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
 . Let ``name^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``name`` be ``nonTypeName``.
+ ** Let ``name`` be ``xref:lift_nameIR_as_nonTypeName[$lift_nameIR_as_nonTypeName(nameIR)]``.
 --
 +
 for each ``nameIR`` in ``nameIR^{asterisk}^``.
@@ -16333,11 +16332,10 @@ xref:find_object_qualified_e[$find_object_qualified_e(ARCH, objectId)]
 xref:find_object_unqualified_e[$find_object_unqualified_e(ARCH, id)]
 
 . Let ``+{+`` ``(`` ``objectId`` ``+:+`` ``object`` ``)^{asterisk}^`` ``+}+`` be ``ARCH.+STORE+``.
-. Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
 . Let ``object~id~^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``object~id~^?^`` be xref:ite[``object`` if ``bool`` otherwise ``·``].
+ ** Let ``object~id~^?^`` be xref:ite[``object`` if ``objectId`` is an object name that ends with ``id`` otherwise ``·``].
 --
 +
 for each ``object`` in ``object^{asterisk}^`` and ``objectId`` in ``objectId^{asterisk}^``.
@@ -16372,11 +16370,10 @@ xref:update_object_qualified_e[$update_object_qualified_e(ARCH~0~, objectId, obj
 xref:update_object_unqualified_e[$update_object_unqualified_e(ARCH~0~, id, object)]
 
 . Let ``+{+`` ``(`` ``objectId`` ``+:+`` ``++_++`` ``)^{asterisk}^`` ``+}+`` be ``ARCH~0~.+STORE+``.
-. Let ``bool`` be xref:objectId_ends_with[``objectId`` is an object name that ends with ``id``].
 . Let ``objectId~id~^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
- ** Let ``objectId~id~^?^`` be xref:ite[``objectId`` if ``bool`` otherwise ``·``].
+ ** Let ``objectId~id~^?^`` be xref:ite[``objectId`` if ``objectId`` is an object name that ends with ``id`` otherwise ``·``].
 --
 +
 for each ``objectId`` in ``objectId^{asterisk}^``.
