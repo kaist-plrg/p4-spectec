@@ -551,8 +551,8 @@ blockElementStatementList:
 
 (* Function prototype *)
 functionPrototype:
-  | t = typeOrVoid n = name push_scope tpl = typeParameterListOpt L_PAREN pl = parameterList R_PAREN
-    { "typeOrVoid name typeParameterListOpt `( parameterList )" <| [ t; n; tpl; pl ] <<| "functionPrototype" <<<| (at $sloc) }
+  | VOID n = name push_scope tpl = typeParameterListOpt L_PAREN pl = parameterList R_PAREN
+    { "VOID name typeParameterListOpt `( parameterList )" <| [ n; tpl; pl ] <<| "functionPrototype" <<<| (at $sloc) }
 ;
 
 (* Action declarations *)
