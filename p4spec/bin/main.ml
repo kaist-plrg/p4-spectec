@@ -25,6 +25,9 @@ let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 let structure filenames_spec =
   filenames_spec |> elab |> Structure.Struct.struct_spec
 
+let annotate filenames_spec =
+  filenames_spec |> structure |> Annotate.annotate_spec
+
 let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     filenames_spec =
   let spec_sim =
@@ -36,7 +39,7 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
     | `PL ->
-        let spec_pl = filenames_spec |> structure |> Annotate.annotate_spec in
+        let spec_pl = annotate filenames_spec in
         (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
@@ -243,7 +246,7 @@ let annotate_command =
      in
      fun () ->
        try
-         let spec_pl = structure filenames_spec |> Annotate.annotate_spec in
+         let spec_pl = annotate filenames_spec in
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
@@ -659,7 +662,7 @@ let splice_command =
            else List.combine filenames_input filenames_output
          in
          let spec = frontend filenames_spec in
-         let spec_pl = structure filenames_spec |> Annotate.annotate_spec in
+         let spec_pl = annotate filenames_spec in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
