@@ -4,34 +4,36 @@ open Ast
 open Annot
 open Util.Source
 
-(* Leaf types *)
+(* Numbers *)
 
-let string_of_num = Sl.Print.string_of_num
-let string_of_text = Sl.Print.string_of_text
-let string_of_varid = Sl.Print.string_of_varid
-let string_of_typid = Sl.Print.string_of_typid
-let string_of_relid = Sl.Print.string_of_relid
-let string_of_defid = Sl.Print.string_of_defid
-let string_of_atom = Sl.Print.string_of_atom
-let string_of_mixop = Sl.Print.string_of_mixop
-let string_of_iter = Sl.Print.string_of_iter
-let string_of_iterexp = Sl.Print.string_of_iterexp
-let string_of_iterexps = Sl.Print.string_of_iterexps
-let string_of_var = Sl.Print.string_of_var
-let string_of_typ = Sl.Print.string_of_typ
-let string_of_typs = Sl.Print.string_of_typs
-let string_of_nottyp = Sl.Print.string_of_nottyp
-let string_of_deftyp = Sl.Print.string_of_deftyp
-let string_of_pattern = Sl.Print.string_of_pattern
-let string_of_value = Sl.Print.string_of_value
-let string_of_unop = Sl.Print.string_of_unop
-let string_of_binop = Sl.Print.string_of_binop
-let string_of_cmpop = Sl.Print.string_of_cmpop
-let string_of_tparam = Sl.Print.string_of_tparam
-let string_of_tparams = Sl.Print.string_of_tparams
-let string_of_targ = Sl.Print.string_of_targ
-let string_of_targs = Sl.Print.string_of_targs
-let string_of_dangle iid = Format.asprintf "Dangling#%d" iid
+let string_of_num num = Sl.Print.string_of_num num
+
+(* Texts *)
+
+let string_of_text text = Sl.Print.string_of_text text
+
+(* Identifiers *)
+
+let string_of_varid varid = Sl.Print.string_of_varid varid
+let string_of_typid typid = Sl.Print.string_of_typid typid
+let string_of_relid relid = Sl.Print.string_of_relid relid
+let string_of_relpathid relpathid = Sl.Print.string_of_relpathid relpathid
+let string_of_defid defid = Sl.Print.string_of_defid defid
+
+(* Atoms *)
+
+let string_of_atom atom = Sl.Print.string_of_atom atom
+let string_of_atoms atoms = atoms |> List.map string_of_atom |> String.concat ""
+
+(* Mixfix operators *)
+
+let string_of_mixop mixop = Sl.Print.string_of_mixop mixop
+
+(* Iterators *)
+
+let string_of_iter iter = Sl.Print.string_of_iter iter
+let string_of_iterexp iterexp = Sl.Print.string_of_iterexp iterexp
+let string_of_iterexps iterexps = Sl.Print.string_of_iterexps iterexps
 
 let string_of_iterated string_of_item item iterexps =
   match iterexps with
@@ -39,6 +41,37 @@ let string_of_iterated string_of_item item iterexps =
   | _ ->
       Format.asprintf "(%s)%s" (string_of_item item)
         (string_of_iterexps iterexps)
+
+(* Variables *)
+
+let string_of_var var = Sl.Print.string_of_var var
+
+(* Types *)
+
+let string_of_typ typ = Sl.Print.string_of_typ typ
+let string_of_typs sep typs = Sl.Print.string_of_typs sep typs
+let string_of_nottyp nottyp = Sl.Print.string_of_nottyp nottyp
+let string_of_deftyp deftyp = Sl.Print.string_of_deftyp deftyp
+let string_of_typfield typfield = Sl.Print.string_of_typfield typfield
+
+let string_of_typfields sep typfields =
+  Sl.Print.string_of_typfields sep typfields
+
+let string_of_typcase typcase = Sl.Print.string_of_typcase typcase
+let string_of_typcases sep typcases = Sl.Print.string_of_typcases sep typcases
+
+(* Values *)
+
+let string_of_vid vid = Sl.Print.string_of_vid vid
+
+let string_of_value ?(short = false) ?(level = 0) value =
+  Sl.Print.string_of_value ~short ~level value
+
+(* Operators *)
+
+let string_of_unop unop = Sl.Print.string_of_unop unop
+let string_of_binop binop = Sl.Print.string_of_binop binop
+let string_of_cmpop cmpop = Sl.Print.string_of_cmpop cmpop
 
 (* Expressions *)
 
@@ -65,14 +98,14 @@ let rec string_of_exp exp =
       "(" ^ string_of_exp exp ^ " matches pattern " ^ string_of_pattern pattern
       ^ ")"
   | TupleE exps -> "(" ^ string_of_exps ", " exps ^ ")"
-  | CaseE notexp -> string_of_notexp notexp
+  | CaseE notexp -> "(" ^ string_of_notexp notexp ^ ")"
   | StrE fields ->
-      "{ "
+      "{"
       ^ String.concat ", "
           (List.map
              (fun (atom, exp) -> string_of_atom atom ^ " " ^ string_of_exp exp)
              fields)
-      ^ " }"
+      ^ "}"
   | OptE None -> "?()"
   | OptE (Some exp) -> "?(" ^ string_of_exp exp ^ ")"
   | ListE exps -> "[" ^ string_of_exps ", " exps ^ "]"
@@ -95,9 +128,11 @@ let rec string_of_exp exp =
 and string_of_exps sep exps = String.concat sep (List.map string_of_exp exps)
 
 and string_of_notexp notexp =
-  let mixop, exps = Mixfix.split notexp in
-  let sexps = List.map string_of_exp exps in
-  Mixop.assemble ~string_of_atom mixop sexps
+  Mixfix.render ~string_of_atom ~string_of_arg:string_of_exp notexp
+
+(* Patterns *)
+
+and string_of_pattern pattern = Sl.Print.string_of_pattern pattern
 
 (* Paths *)
 
@@ -111,6 +146,25 @@ and string_of_path path =
   | DotP ({ it = RootP; _ }, atom) -> string_of_atom atom
   | DotP (path, atom) -> string_of_path path ^ "." ^ string_of_atom atom
 
+(* Parameters *)
+
+and string_of_param param =
+  match param.it with
+  | ExpP (_typ, exp) -> string_of_exp exp
+  | DefP (defid, tparams, params, typ) ->
+      string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_params params ^ " : " ^ string_of_typ typ
+
+and string_of_params params =
+  match params with
+  | [] -> ""
+  | params -> "(" ^ String.concat ", " (List.map string_of_param params) ^ ")"
+
+(* Type parameters *)
+
+and string_of_tparam tparam = Sl.Print.string_of_tparam tparam
+and string_of_tparams tparams = Sl.Print.string_of_tparams tparams
+
 (* Arguments *)
 
 and string_of_arg arg =
@@ -123,19 +177,28 @@ and string_of_args args =
   | [] -> ""
   | args -> "(" ^ String.concat ", " (List.map string_of_arg args) ^ ")"
 
-(* Parameters *)
+(* Type arguments *)
 
-and string_of_param param =
-  match param.it with
-  | ExpP (_typ, exp) -> string_of_exp exp
-  | DefP (defid, _, _, _) -> string_of_defid defid
+and string_of_targ targ = Sl.Print.string_of_targ targ
+and string_of_targs targs = Sl.Print.string_of_targs targs
 
-and string_of_params params =
-  match params with
-  | [] -> ""
-  | params -> "(" ^ String.concat ", " (List.map string_of_param params) ^ ")"
+(* Danglings *)
+
+and string_of_dangle iid = Format.asprintf "Dangling#%d" iid
 
 (* Case analysis *)
+
+and string_of_case ?(level = 0) ?(index = 0) case =
+  let indent = String.make (level * 2) ' ' in
+  let order = Format.asprintf "%s%d. " indent index in
+  let guard, block = case in
+  Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
+    (string_of_block ~level:(level + 1) block)
+
+and string_of_cases ?(level = 0) cases =
+  cases
+  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) case)
+  |> String.concat "\n\n"
 
 and string_of_guard guard =
   match guard with
@@ -151,18 +214,6 @@ and string_of_guard guard =
   | CheckLetMatchG (pattern, exp) ->
       "(let " ^ string_of_exp exp ^ " be %, % matches pattern "
       ^ string_of_pattern pattern ^ ")"
-
-and string_of_case ?(level = 0) ?(index = 0) case =
-  let indent = String.make (level * 2) ' ' in
-  let order = Format.asprintf "%s%d. " indent index in
-  let guard, block = case in
-  Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
-    (string_of_block ~level:(level + 1) block)
-
-and string_of_cases ?(level = 0) cases =
-  cases
-  |> List.mapi (fun idx case -> string_of_case ~level ~index:(idx + 1) case)
-  |> String.concat "\n\n"
 
 (* Instructions *)
 
@@ -288,25 +339,34 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
         Format.asprintf "(Destruct (%s) = %s)" targets (string_of_exp exp_r)
       in
       if short then s_short else Format.asprintf "%s%s" order s_short
-  | CheckLetSubI (typ, exp_l, exp_r, _block) ->
+  | CheckLetSubI (typ, exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be %s, %s has type %s)" (string_of_exp exp_l)
           (string_of_exp exp_r) (string_of_exp exp_r) (string_of_typ typ)
       in
-      if short then s_short else Format.asprintf "%s%s" order s_short
-  | CheckLetMatchI (pattern, exp_l, exp_r, _block) ->
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_block ~level:(level + 1) block)
+  | CheckLetMatchI (pattern, exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be %s, %s matches pattern %s)"
           (string_of_exp exp_l) (string_of_exp exp_r) (string_of_exp exp_r)
           (string_of_pattern pattern)
       in
-      if short then s_short else Format.asprintf "%s%s" order s_short
-  | OptionGetI (exp_l, exp_r, _block) ->
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_block ~level:(level + 1) block)
+  | OptionGetI (exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be ! %s)" (string_of_exp exp_l)
           (string_of_exp exp_r)
       in
-      if short then s_short else Format.asprintf "%s%s" order s_short
+      if short then s_short
+      else
+        Format.asprintf "%s%s\n\n%s" order s_short
+          (string_of_block ~level:(level + 1) block)
 
 and string_of_block ?(level = 0) ?(index = 0) block =
   block
@@ -336,32 +396,31 @@ and string_of_iterinstrs iterinstrs =
 
 and string_of_relinput rel_signature exps_input =
   let nottyp, inputs = rel_signature in
-  let mixop = Mixfix.to_mixop nottyp.it in
+  let arity = Mixfix.arity nottyp.it in
   let exps_input = List.combine inputs exps_input in
   let sexps =
-    List.init (Mixop.arity mixop) (fun idx ->
+    List.init arity (fun idx ->
         match List.assoc_opt idx exps_input with
         | Some exp_input -> string_of_exp exp_input
         | None -> "%")
   in
-  Mixop.assemble ~string_of_atom mixop sexps
+  Mixop.assemble ~string_of_atom (Mixfix.to_mixop nottyp.it) sexps
 
 and string_of_reloutput rel_signature exps_output =
   let nottyp, inputs = rel_signature in
-  let mixop = Mixfix.to_mixop nottyp.it in
+  let arity = Mixfix.arity nottyp.it in
   let outputs =
-    List.init (Mixop.arity mixop) (fun idx ->
-        if List.mem idx inputs then None else Some idx)
+    List.init arity (fun idx -> if List.mem idx inputs then None else Some idx)
     |> List.filter_map Fun.id
   in
   let exps_output = List.combine outputs exps_output in
   let sexps =
-    List.init (Mixop.arity mixop) (fun idx ->
+    List.init arity (fun idx ->
         match List.assoc_opt idx exps_output with
         | Some exp_output -> string_of_exp exp_output
         | None -> "%")
   in
-  Mixop.assemble ~string_of_atom mixop sexps
+  Mixop.assemble ~string_of_atom (Mixfix.to_mixop nottyp.it) sexps
 
 and string_of_extern_rel (externrel : externrel) =
   let relid, rel_signature, exps_match = externrel in
