@@ -114,7 +114,7 @@ test-fast:
 test-pl:
 	echo "#### Running PL-only tests (sim-pl)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @sim-pl --profile=release && echo OK || \
+	cd p4spec && opam exec -- dune build @run-pl @sim-pl --profile=release && echo OK || \
 	  (echo "####>" Failure running PL tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 

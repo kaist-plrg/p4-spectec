@@ -111,7 +111,7 @@ and guard =
   | CheckLetSubG of typ * exp        (* scrut <: typ, bind scrut as exp *)
   | CheckLetMatchG of pattern * exp  (* scrut matches pattern, bind scrut as exp *)
 
-(* LetI/RuleI/DebugI/DestructI/OptionGetI are linearized, so their binding
+(* LetI/RuleI/DebugI/DestructI are linearized, so their binding
    scope is the rest of the block. *)
 and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =
@@ -130,10 +130,14 @@ and instr' =
      [(name_opt, exp_target)] pair. The renderer skips unnamed (None)
      fields; the interpreter assigns every [exp_target]. *)
   | DestructI of (string option * exp) list * exp
-  (* Bind [exp_target] to [exp_source] after a subtype-or-match check, then run [body]. *)
-  | CheckLetI of exp * exp * block
+  (* Bind [exp_target] to [exp_scrut] after a subtype check (scrut <: typ),
+     then run [body]. *)
+  | CheckLetSubI of typ * exp * exp * block
+  (* Bind [exp_target] to [exp_scrut] after a match check (scrut matches pattern),
+     then run [body]. *)
+  | CheckLetMatchI of pattern * exp * exp * block
   (* Bind [exp_target] to the inner value of [exp_source], asserting it is [Some _]. *)
-  | OptionGetI of exp * exp
+  | OptionGetI of exp * exp * block
 
 and block = instr list
 and arm = block

@@ -11,7 +11,6 @@ and instr' =
   | IfI of exp * iterexp list * block * dangle
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * dangle
-  | OtherwiseI of block
   | GroupI of id * rel_signature * exp list * block
   | TryI of arm list
   | DebugI of exp

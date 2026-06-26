@@ -53,18 +53,28 @@ let strip_leading_rename (exp_scrut : exp) (block : block) :
   | _ -> None
 
 let shorten_check_let (instr : instr) : instr option =
-  let try_lift (exp_scrut : exp) (block : block) : instr option =
+  let try_lift (mk : exp -> exp -> block -> instr') (exp_scrut : exp)
+      (block : block) : instr option =
     strip_leading_rename exp_scrut block
     |> Option.map (fun (exp_target, rest) ->
-           mk_instr instr (CheckLetI (exp_target, exp_scrut, rest)))
+           mk_instr instr (mk exp_target exp_scrut rest))
+  in
+  let mk_sub typ exp_target exp_scrut rest =
+    CheckLetSubI (typ, exp_target, exp_scrut, rest)
+  in
+  let mk_match patt exp_target exp_scrut rest =
+    CheckLetMatchI (patt, exp_target, exp_scrut, rest)
   in
   match instr.node.it with
   | IfI (exp_cond, [], block, _dangle) -> (
       match exp_cond.node.it with
-      | SubE (exp_scrut, _) | MatchE (exp_scrut, _) -> try_lift exp_scrut block
+      | SubE (exp_scrut, typ) -> try_lift (mk_sub typ) exp_scrut block
+      | MatchE (exp_scrut, patt) -> try_lift (mk_match patt) exp_scrut block
       | _ -> None)
-  | CaseI (exp_scrut, [ ((SubG _ | MatchG _), block) ], _dangle) ->
-      try_lift exp_scrut block
+  | CaseI (exp_scrut, [ (SubG typ, block) ], _dangle) ->
+      try_lift (mk_sub typ) exp_scrut block
+  | CaseI (exp_scrut, [ (MatchG patt, block) ], _dangle) ->
+      try_lift (mk_match patt) exp_scrut block
   | _ -> None
 
 (* Shorthand for an arm of a multi-arm CaseI:
@@ -154,8 +164,10 @@ let shorten_option_get (instrs : instr list) : (instr list * instr list) option
                   match exp_target.node.it with
                   | OptE (Some exp_inner) ->
                       Some
-                        ( mk_instr i1 (OptionGetI (exp_inner, exp_call))
-                          :: body_rest,
+                        ( [
+                            mk_instr i1
+                              (OptionGetI (exp_inner, exp_call, body_rest));
+                          ],
                           rest )
                   | _ -> None)
               | _ -> None)
@@ -195,10 +207,13 @@ and recurse_into_nested (instr : instr) : instr =
     | TryI arms -> TryI (List.map shorten_block arms)
     | GroupI (id_rg, id_rel, rsig, exps, block) ->
         GroupI (id_rg, id_rel, rsig, exps, shorten_block block)
-    | CheckLetI (e_l, e_r, block_inner) ->
-        CheckLetI (e_l, e_r, shorten_block block_inner)
-    | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _
-    | OptionGetI _ ->
+    | CheckLetSubI (typ, e_l, e_r, block_inner) ->
+        CheckLetSubI (typ, e_l, e_r, shorten_block block_inner)
+    | CheckLetMatchI (patt, e_l, e_r, block_inner) ->
+        CheckLetMatchI (patt, e_l, e_r, shorten_block block_inner)
+    | OptionGetI (e_l, e_r, block_inner) ->
+        OptionGetI (e_l, e_r, shorten_block block_inner)
+    | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ ->
         instr.node.it
   in
   { instr with node = it' $$ (instr.node.at, instr.node.note) }

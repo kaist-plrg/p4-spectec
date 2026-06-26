@@ -26,7 +26,6 @@ let rec free_instr (instr : instr) : t =
   | HoldI (_, notexp, _, holdcase) ->
       free_exps (Mixfix.args notexp) + free_holdcase holdcase
   | CaseI (exp, cases, _) -> free_exp exp + free_cases cases
-  | OtherwiseI block -> free_block block
   | GroupI (_, _, exps, block) -> free_exps exps + free_block block
   | TryI arms -> arms |> List.map free_block |> List.fold_left ( + ) empty
   | DebugI _ -> empty

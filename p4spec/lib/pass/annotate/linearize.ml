@@ -53,16 +53,7 @@ let rec linearize_instr (instr : instr) : Ll.Ast.block =
 and linearize_block (block : block) : Ll.Ast.block =
   match block with
   | [] -> []
-  | [ single ] -> linearize_instr single
-  | alternatives ->
-      let arms = List.map linearize_instr alternatives in
+  | [ instr ] -> linearize_instr instr
+  | _ ->
+      let arms = List.map linearize_instr block in
       [ Ll.Ast.TryI arms $$ (no_region, { iid = -1 }) ]
-
-let linearize_elseblock (elseblock : elseblock) : Ll.Ast.block =
-  let block_ll = linearize_block elseblock in
-  [ Ll.Ast.OtherwiseI block_ll $$ (no_region, { iid = -1 }) ]
-
-let linearize_elseblock_opt (elseblock_opt : elseblock option) : Ll.Ast.block =
-  match elseblock_opt with
-  | Some elseblock -> linearize_elseblock elseblock
-  | None -> []

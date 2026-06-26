@@ -277,7 +277,6 @@ and annotate_instr' (ctx : Ctx.t) (instr : instr) : Pl.instr' * Annot.hints =
       ( Pl.CaseI
           (annotate_exp ctx exp, List.map (annotate_case ctx) cases, dangle),
         Annot.empty )
-  | OtherwiseI _block -> assert false
   | GroupI (id_rulegroup, rel_signature, exps, block) ->
       let id_rel = Ctx.get_namespace ctx in
       let exps_pl = List.map (annotate_exp ctx) exps in

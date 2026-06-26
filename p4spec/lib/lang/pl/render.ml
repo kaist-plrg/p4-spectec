@@ -428,7 +428,7 @@ and render_params ctx params =
 
 (* Backtracking blocks (CaseI / TryI).
    Fallthrough markers emitted only on instructions that may raise Unmatch:
-   IfI, LetI, RuleI, CheckLetI, and OptionGetI. *)
+   IfI, LetI, RuleI, CheckLetSubI, CheckLetMatchI, and OptionGetI. *)
 
 module BlockLabel : sig
   type t = { id : string; display : string }
@@ -819,7 +819,8 @@ let rec render_instr ?(level = 0) ?(unordered = false)
             (render_exps in_prose exps_target)
             (render_list (List.map (fun s -> "the " ^ s) names))
             (render_exp in_prose exp_source))
-  | CheckLetI (exp_l, exp_r, block_inner) ->
+  | CheckLetSubI (_, exp_l, exp_r, block_inner)
+  | CheckLetMatchI (_, exp_l, exp_r, block_inner) ->
       let fallthrough = render_fallthrough_link backtrack in
       let head =
         F.asprintf "%sLet!~type~ %s be %s.%s" bullet
@@ -833,13 +834,21 @@ let rec render_instr ?(level = 0) ?(unordered = false)
         ^ (block_inner
           |> List.map (render_instr ~level ~backtrack)
           |> String.concat "\n")
-  | OptionGetI (exp_l, exp_r) ->
+  | OptionGetI (exp_l, exp_r, block_inner) ->
       let fallthrough = render_fallthrough_link backtrack in
-      F.asprintf "%sLet %s be %s %s.%s" bullet
-        (render_exp_as_code in_prose exp_l)
-        (adoc_link ~link:"option_get" "*!*")
-        (render_exp in_prose exp_r)
-        fallthrough
+      let head =
+        F.asprintf "%sLet %s be %s %s.%s" bullet
+          (render_exp_as_code in_prose exp_l)
+          (adoc_link ~link:"option_get" "*!*")
+          (render_exp in_prose exp_r)
+          fallthrough
+      in
+      if block_inner = [] then head
+      else
+        head ^ "\n"
+        ^ (block_inner
+          |> List.map (render_instr ~level ~backtrack)
+          |> String.concat "\n")
 
 and render_instrs ?(level = 0) ?(backtrack : backtrack_ctx option = None)
     (instrs : block) : string =
@@ -958,11 +967,12 @@ let rec collect_groups_instr (instr : instr) : instr list =
       cases
       |> List.concat_map (fun (_guard, block) -> collect_groups_block block)
   | TryI arms -> arms |> List.concat_map collect_groups_block
-  | CheckLetI (_, _, block_inner) -> collect_groups_block block_inner
+  | CheckLetSubI (_, _, _, block_inner) | CheckLetMatchI (_, _, _, block_inner)
+    ->
+      collect_groups_block block_inner
+  | OptionGetI (_, _, block_inner) -> collect_groups_block block_inner
   | GroupI _ -> [ instr ]
-  | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _
-  | OptionGetI _ ->
-      []
+  | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
 
 and collect_groups_block (block : block) : instr list =
   block |> List.concat_map collect_groups_instr
