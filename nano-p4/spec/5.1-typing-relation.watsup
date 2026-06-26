@@ -1,0 +1,87 @@
+;;
+;; Expression typing
+;;
+
+relation Expr_ok:
+  typingContext |- expression : type
+  hint(input %0 %1)
+
+;;
+;; Lvalue typing
+;;
+
+relation Lvalue_ok:
+  typingContext |- lvalue : type
+  hint(input %0 %1)
+
+;;
+;; Statement typing
+;;
+
+relation Statement_ok:
+  typingContext |- statement -| typingContext
+  hint(input %0 %1)
+
+relation BlockElementStatement_ok:
+  typingContext |- blockElementStatement -| typingContext
+  hint(input %0 %1)
+
+relation BlockElementStatements_ok:
+  typingContext |- blockElementStatement* -| typingContext
+  hint(input %0 %1)
+
+relation Block_ok:
+  typingContext |- blockStatement
+  hint(input %0 %1)
+
+;;
+;; Parameter typing
+;;
+
+relation Parameter_ok:
+  typingContext |- parameter -| typingContext
+  hint(input %0 %1)
+
+relation Parameters_ok:
+  typingContext |- parameter* -| typingContext
+  hint(input %0 %1)
+
+;;
+;; Declaration typing
+;;
+
+relation ConstDecl_ok:
+  scope typingContext |- constantDeclaration -| typingContext
+  hint(input %0 %1 %2)
+
+relation VarDecl_ok:
+  scope typingContext |- variableDeclaration -| typingContext
+  hint(input %0 %1 %2)
+
+relation ActionDecl_ok:
+  typingContext |- actionDeclaration -| typingContext
+  hint(input %0 %1)
+
+relation ExternDecl_ok:
+  typingContext |- externDeclaration -| typingContext
+  hint(input %0 %1)
+
+relation TypeDecl_ok:
+  typingContext |- typeDeclaration -| typingContext
+  hint(input %0 %1)
+
+relation Decl_ok:
+  typingContext |- declaration -| typingContext
+  hint(input %0 %1)
+
+relation Decls_ok:
+  typingContext |- declaration* -| typingContext
+  hint(input %0 %1)
+
+;;
+;; Program typing
+;;
+
+relation Program_ok:
+  |- program -| typingContext
+  hint(input %0)

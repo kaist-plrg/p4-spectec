@@ -68,6 +68,12 @@ syntax nameList =
   | name
   | nameList `, name
 
+dec $flatten_nameList(nameList) : name*
+  hint(prose_in %0 "flattened")
+def $flatten_nameList(name) = name
+def $flatten_nameList(nameList `, name) =
+  $flatten_nameList(nameList) ++ [ name ]
+
 syntax member = name
 
 ;;
@@ -132,9 +138,21 @@ syntax typeParameterList =
   | typeParameter
   | typeParameterList `, typeParameter
 
+dec $flatten_typeParameterList(typeParameterList) : typeParameter*
+  hint(prose_in %0 "flattened")
+def $flatten_typeParameterList(typeParameter) = typeParameter
+def $flatten_typeParameterList(typeParameterList `, typeParameter) =
+  $flatten_typeParameterList(typeParameterList) ++ [ typeParameter ]
+
 syntax typeParameterListOpt =
   | `EMPTY
   | `< typeParameterList >
+
+dec $flatten_typeParameterListOpt(typeParameterListOpt) : typeParameter*
+  hint(prose_in %0 "flattened")
+def $flatten_typeParameterListOpt(`EMPTY) = eps
+def $flatten_typeParameterListOpt(`< typeParameterList >)
+  = $flatten_typeParameterList(typeParameterList)
 
 ;;
 ;; Parameters

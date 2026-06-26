@@ -1,0 +1,27 @@
+rulegroup Parameter_ok {
+
+  rule Parameter_ok/baseType:
+    TC_0 |- direction baseType name -| TC_1
+    -- if id = $id(name)
+    -- if TC_1 = $add_var_t(LOCAL, TC_0, id, direction baseType)
+
+}
+
+;; rule Parameter_ok:
+;;   TC_0 |- direction type name -| TC_1
+;;   -- if Type_wf: type
+
+
+rulegroup Parameters_ok {
+
+  rule Parameters_ok/nil:
+    TC |- eps -| TC
+
+  rule Parameters_ok/cons:
+    TC_0 |- parameter_h :: parameter_t* -| TC_2
+    -- Parameter_ok:
+        TC_0 |- parameter_h -| TC_1
+    -- Parameters_ok:
+        TC_1 |- parameter_t* -| TC_2
+
+}

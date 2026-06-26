@@ -1,0 +1,65 @@
+syntax id = text
+
+dec $id(name) : text
+def $id(name) = $print_<name>(name)
+
+syntax scope = GLOBAL | BLOCK | LOCAL
+
+syntax typeId = id
+
+syntax typeIR
+
+;;
+;; Base types
+;;
+
+syntax baseTypeIR = baseType
+
+;;
+;; User defined data types
+;;
+
+syntax fieldTypeIR = typeIR id `;
+
+syntax structType = STRUCT id `{ fieldTypeIR* }
+syntax headerType = HEADER id `{ fieldTypeIR* }
+
+syntax dataTypeIR =
+  | structType
+  | headerType
+
+;;
+;; Type variables
+;;
+
+syntax namedTypeIR = TYPEVAR typeId
+
+;;
+;; Object types
+;;
+
+syntax parameterIR = direction typeIR name
+
+syntax parserObjectTypeIR =
+  PARSER typeId `( parameterIR* )
+
+syntax controlObjectTypeIR =
+  CONTROL typeId `( parameterIR* )
+
+syntax packageObjectTypeIR =
+  PACKAGE typeId `( parameterIR* )
+
+syntax objectTypeIR =
+  | parserObjectTypeIR
+  | controlObjectTypeIR
+  | packageObjectTypeIR
+
+;;
+;; Internal type representation
+;;
+
+syntax typeIR =
+  | baseTypeIR
+  | dataTypeIR
+  | namedTypeIR
+  | objectTypeIR

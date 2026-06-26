@@ -1,0 +1,39 @@
+rulegroup BlockElementStatement_ok {
+
+  rule BlockElementStatement_ok/constantDeclaration:
+    TC_0 |- constantDeclaration -| TC_1
+    -- ConstDecl_ok:
+        LOCAL TC_0 |- constantDeclaration -| TC_1
+
+  rule BlockElementStatement_ok/variableDeclaration:
+    TC_0 |- variableDeclaration -| TC_1
+    -- VarDecl_ok:
+        LOCAL TC_0 |- variableDeclaration -| TC_1
+
+  rule BlockElementStatement_ok/statement:
+    TC_0 |- statement -| TC_1
+    -- Statement_ok:
+        TC_0 |- statement -| TC_1
+
+}
+
+rulegroup BlockElementStatements_ok {
+
+  rule BlockElementStatements_ok/nil:
+    TC_0 |- eps -| TC_0
+
+  rule BlockElementStatements_ok/cons:
+    TC_0 |- blockElementStatement_h :: blockElementStatement_t* -| TC_2
+    -- BlockElementStatement_ok:
+        TC_0 |- blockElementStatement_h -| TC_1
+    -- BlockElementStatements_ok:
+        TC_1 |- blockElementStatement_t* -| TC_2
+
+}
+
+rule Block_ok:
+  TC_0 |- `{ blockElementStatementList }
+  -- if blockElementStatement* =
+      $flatten_blockElementStatementList(blockElementStatementList)
+  -- BlockElementStatements_ok: TC_0 |- blockElementStatement* -| TC_1
+

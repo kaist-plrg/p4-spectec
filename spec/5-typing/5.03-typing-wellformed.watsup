@@ -113,7 +113,7 @@ tbl def $nestable_new =
 rule Type_wf/newTypeIR:
   B |- TYPE _ typeIR
   -- if $nestable_new(typeIR)
-  -- Type_wf: B |- typeIR 
+  -- Type_wf: B |- typeIR
 
 ;;; Data types
 
@@ -402,7 +402,7 @@ rulegroup Type_wf/tableMetadataTypeIR {
                                MISS _ `;
                                ACTION_RUN tableMetadataEnumTypeIR `; }
     -- Type_wf: B |- tableMetadataEnumTypeIR
-  
+
 }
 
 ;;
@@ -518,11 +518,16 @@ tbl def $nestable_definedFunction =
 
 rule CallableType_wf/definedFunctionTypeIR:
   B |- FUNCTION _ `( parameterIR* ) `: typeIR_ret
+  -- debug "definedFunctionTypeIR 1"
   -- (ParameterType_wf: B |- parameterIR)*
+  -- debug "definedFunctionTypeIR 2"
   -- if (~$is_optional_parameterIR(parameterIR))*
-  -- if (_ _ typeIR _ _ = parameterIR)* 
+  -- debug "definedFunctionTypeIR 3"
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_definedFunction(typeIR)*
+  -- debug "definedFunctionTypeIR 4"
   -- ReturnType_wf: B |- typeIR_ret
+  -- debug "definedFunctionTypeIR 5"
 
 tbl dec $nestable_externFunction(typeIR) : bool
   hint(prose_true %0 "can be used in an extern function type")
@@ -539,7 +544,7 @@ tbl def $nestable_externFunction =
 rule CallableType_wf/externFunctionTypeIR:
   B |- EXTERN_FUNCTION _ `( parameterIR* ) `: typeIR_ret
   -- (ParameterType_wf: B |- parameterIR)*
-  -- if (_ _ typeIR _ _ = parameterIR)* 
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_externFunction(typeIR)*
   -- ReturnType_wf: B |- typeIR_ret
 
@@ -568,7 +573,7 @@ rulegroup CallableType_wf/externMethodTypeIR {
   rule CallableType_wf/non-abstract:
     B |- EXTERN_METHOD _ `( parameterIR* ) `: typeIR_ret
     -- (ParameterType_wf: B |- parameterIR)*
-    -- if (_ _ typeIR _ _ = parameterIR)* 
+    -- if (_ _ typeIR _ _ = parameterIR)*
     -- if $nestable_externMethod(typeIR)*
     -- ReturnType_wf: B |- typeIR_ret
 
@@ -576,7 +581,7 @@ rulegroup CallableType_wf/externMethodTypeIR {
     B |- EXTERN_METHOD ABSTRACT _ `( parameterIR* ) `: typeIR_ret
     -- (ParameterType_wf: B |- parameterIR)*
     -- if (~$is_optional_parameterIR(parameterIR))*
-    -- if (_ _ typeIR _ _ = parameterIR)* 
+    -- if (_ _ typeIR _ _ = parameterIR)*
     -- if $nestable_externMethod(typeIR)*
     -- ReturnType_wf: B |- typeIR_ret
 
@@ -598,7 +603,7 @@ rule CallableType_wf/parserApplyMethodTypeIR:
   B |- PARSER_APPLY `( parameterIR* )
   -- (ParameterType_wf: B |- parameterIR)*
   -- if (~$is_optional_parameterIR(parameterIR))*
-  -- if (_ _ typeIR _ _ = parameterIR)* 
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_parserApplyMethod(typeIR)*
 
 tbl dec $nestable_controlApplyMethod(typeIR) : bool
@@ -616,7 +621,7 @@ rule CallableType_wf/controlApplyMethodTypeIR:
   B |- CONTROL_APPLY `( parameterIR* )
   -- (ParameterType_wf: B |- parameterIR)*
   -- if (~$is_optional_parameterIR(parameterIR))*
-  -- if (_ _ typeIR _ _ = parameterIR)* 
+  -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_controlApplyMethod(typeIR)*
 
 rule CallableType_wf/tableApplyMethodTypeIR:
@@ -637,7 +642,11 @@ rule CallableTypeDef_wf:
       = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
   -- if B_inner
       = $union_set<typeId>(B, `{ typeParameterIR* })
+  -- debug "CallableTypeDef_wf"
+  -- debug callableTypeDefIR
+  -- debug B_inner
   -- CallableType_wf: B_inner |- callableTypeIR_base
+  -- debug "CallableTypeDef_wf after"
 
 ;;
 ;;;; Well-formedness of constructor paramter types
@@ -751,7 +760,7 @@ tbl def $definable_constructor =
 rule ConstructorTypeDef_wf:
   B |- constructorTypeDefIR
   -- if CONSTRUCTOR `< typeParameterIR_expl* `, typeParameterIR_impl* >
-          `( parameterIR* ) `: typeIR_object 
+          `( parameterIR* ) `: typeIR_object
       = constructorTypeDefIR
   -- if $definable_constructor(typeIR_object)
   -- if typeParameterIR*
