@@ -731,11 +731,11 @@ parserLocalDeclarationList:
 ;
 
 parserDeclaration:
-  | PARSER n = name push_scope tpl = typeParameterListOpt
+  | PARSER n = name push_scope
     L_PAREN pl = parameterList R_PAREN
     L_BRACE dl = parserLocalDeclarationList sl = parserStateList R_BRACE pop_scope
     { declare_type (id_of_name n);
-      "PARSER name typeParameterListOpt `( parameterList ) `{ parserLocalDeclarationList parserStateList }" <| [ n; tpl; pl; dl; sl ] <<| "parserDeclaration" <<<| (at $sloc) }
+      "PARSER name `( parameterList ) `{ parserLocalDeclarationList parserStateList }" <| [ n; pl; dl; sl ] <<| "parserDeclaration" <<<| (at $sloc) }
 ;
 
 (* Control declarations *)
@@ -823,11 +823,11 @@ controlLocalDeclarationList:
 ;
 
 controlDeclaration:
-  | CONTROL n = name push_scope tpl = typeParameterListOpt
+  | CONTROL n = name push_scope
     L_PAREN pl = parameterList R_PAREN
     L_BRACE dl = controlLocalDeclarationList APPLY b = controlBody R_BRACE pop_scope
     { declare_type (id_of_name n);
-      "CONTROL name typeParameterListOpt `( parameterList ) `{ controlLocalDeclarationList APPLY controlBody }" <| [ n; tpl; pl; dl; b ] <<| "controlDeclaration" <<<| (at $sloc) }
+      "CONTROL name `( parameterList ) `{ controlLocalDeclarationList APPLY controlBody }" <| [ n; pl; dl; b ] <<| "controlDeclaration" <<<| (at $sloc) }
 ;
 
 (* Package type declarations *)
