@@ -2,39 +2,58 @@ open Util.Source
 
 [@@@ocamlformat "disable"]
 
+(* Numbers *)
+
 type num = Sl.num
+
+(* Texts *)
+
 type text = Sl.text
+
+(* Identifiers *)
+
 type id = Sl.id
+
+(* Atoms *)
+
 type atom = Sl.atom
+
+(* Mixfix operators *)
+
 type mixop = Sl.mixop
+
+(* Iterators *)
+
 type iter = Sl.iter
+
+(* Variables *)
+
 type var = Sl.var
 
-type value = Sl.value
+(* Types *)
 
 type typ = Sl.typ
 type typ' = Sl.typ'
+
 type nottyp = Sl.nottyp
 type nottyp' = Sl.nottyp'
+
 type deftyp = Sl.deftyp
 type deftyp' = Sl.deftyp'
+
 type typfield = Sl.typfield
 type typcase = Sl.typcase
+
+(* Values *)
+
+type value = Sl.value
+
+(* Operators *)
 
 type unop = Sl.unop
 type binop = Sl.binop
 type cmpop = Sl.cmpop
 type optyp = Sl.optyp
-
-type pattern = Sl.pattern
-type tparam = Sl.tparam
-type targ = Sl.targ
-type iterexp = Sl.iterexp
-type iterinstr = Sl.iterinstr
-type dangle = Sl.dangle
-type iid = Sl.iid
-type inote = Sl.inote
-type rel_signature = Sl.rel_signature
 
 (* Expressions *)
 
@@ -68,8 +87,13 @@ and exp' =
   | IterE of exp * iterexp
 
 and notexp = exp Domain.Mixfix.t
+and iterexp = Sl.iterexp
 
-(* Paths *)
+(* Patterns *)
+
+and pattern = Sl.pattern
+
+(* Path *)
 
 and path = (path', typ') note_phrase
 and path' =
@@ -78,12 +102,9 @@ and path' =
   | SliceP of path * exp * exp
   | DotP of path * atom
 
-(* Arguments *)
+(* Type parameters *)
 
-and arg = arg' phrase
-and arg' =
-  | ExpA of exp
-  | DefA of id
+and tparam = Sl.tparam
 
 (* Parameters *)
 
@@ -92,12 +113,29 @@ and param' =
   | ExpP of typ * exp
   | DefP of id * tparam list * param list * typ
 
-(* Guards and blocks *)
+(* Type arguments *)
+
+and targ = Sl.targ
+
+(* Arguments *)
+
+and arg = arg' phrase
+and arg' =
+  | ExpA of exp
+  | DefA of id
+
+(* Dangling *)
+
+type dangle = Sl.dangle
+
+(* Holding conditions *)
 
 and holdcase =
   | BothH of block * block
   | HoldH of block * dangle
   | NotHoldH of block * dangle
+
+(* Case analysis *)
 
 and case = guard * block
 
@@ -107,12 +145,15 @@ and guard =
   | SubG of typ
   | MatchG of pattern
   | MemG of exp
-  (* Shorthands — only emitted by the shorten pass. *)
-  | CheckLetSubG of typ * exp        (* scrut <: typ, bind scrut as exp *)
-  | CheckLetMatchG of pattern * exp  (* scrut matches pattern, bind scrut as exp *)
+  (* Shorthands *)
+  | CheckLetSubG of typ * exp
+  | CheckLetMatchG of pattern * exp
 
-(* LetI/RuleI/DebugI/DestructI are linearized, so their binding
-   scope is the rest of the block. *)
+(* Instructions *)
+
+and iid = Sl.iid
+and inote = Sl.inote
+
 and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =
   | IfI of exp * iterexp list * block * dangle
@@ -126,35 +167,40 @@ and instr' =
   | ReturnI of exp
   | DebugI of exp
   (* Shorthands *)
-  (* Positionally destructure [exp_source] against [fields], each a
-     [(name_opt, exp_target)] pair. The renderer skips unnamed (None)
-     fields; the interpreter assigns every [exp_target]. *)
   | DestructI of (string option * exp) list * exp
-  (* Bind [exp_target] to [exp_scrut] after a subtype check (scrut <: typ),
-     then run [body]. *)
   | CheckLetSubI of typ * exp * exp * block
-  (* Bind [exp_target] to [exp_scrut] after a match check (scrut matches pattern),
-     then run [body]. *)
   | CheckLetMatchI of pattern * exp * exp * block
-  (* Bind [exp_target] to the inner value of [exp_source], asserting it is [Some _]. *)
   | OptionGetI of exp * exp * block
 
 and block = instr list
-and arm = block
 and elseblock = instr list
 
-(* Definitions *)
+and arm = block
+
+and iterinstr = Sl.iterinstr
+
+(* Relations *)
+
+and rel_signature = Sl.rel_signature
 
 type externrel = id * rel_signature * exp list
+
 type rel = id * rel_signature * exp list * block * elseblock option
 
+(* Functions *)
+
 type externfunc = id * tparam list * param list * typ
+
 type builtinfunc = id * tparam list * param list * typ
+
 type tablerow = exp list * exp * block
+
 type tablefunc = id * param list * typ * tablerow list
+
 type definedfunc =
   id * tparam list * param list * typ * block * elseblock option
 
+(* Definitions *)
 
 type def = (def' phrase) Annot.t
 and def' =
@@ -167,5 +213,7 @@ and def' =
   | BuiltinDecD of builtinfunc
   | TableDecD of tablefunc
   | FuncDecD of definedfunc
+
+(* Spec *)
 
 type spec = def list
