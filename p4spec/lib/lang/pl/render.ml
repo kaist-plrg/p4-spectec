@@ -197,6 +197,42 @@ let adoc_as_link (ctx : t) ~link (s : string) : string =
 let adoc_attach_block = "+\n"
 let adoc_open_block (s : string) = F.asprintf "--\n%s\n--" s
 
+(* Inline document
+
+   A structured representation of inline asciidoc content, serialized once by
+   [to_adoc]. A [Code]/[Link] wrapper is emitted only when one of the same kind
+   is not already open, so nested wrappers collapse structurally -- this
+   replaces the old [in_code]/[in_link] suppression booleans. *)
+
+module Inline = struct
+  type t =
+    | Text of string
+    | Seq of t list
+    | Code of t
+    | Link of string * t (* target, body *)
+
+  let text (s : string) : t = Text s
+  let seq (ts : t list) : t = Seq ts
+  let code (t : t) : t = Code t
+  let link ~(target : string) (t : t) : t = Link (target, t)
+  let empty : t = Seq []
+  let ( ++ ) (a : t) (b : t) : t = Seq [ a; b ]
+
+  let to_adoc (t : t) : string =
+    let rec go ~(in_code : bool) ~(in_link : bool) (t : t) : string =
+      match t with
+      | Text s -> s
+      | Seq ts -> String.concat "" (List.map (go ~in_code ~in_link) ts)
+      | Code inner ->
+          let s = go ~in_code:true ~in_link inner in
+          if in_code then s else adoc_mono_chopped s
+      | Link (target, inner) ->
+          let s = go ~in_code ~in_link:true inner in
+          if in_link then s else adoc_link ~link:target s
+    in
+    go ~in_code:false ~in_link:false t
+end
+
 let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n" ^ adoc_unordered_bullet level) lines
