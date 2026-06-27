@@ -86,31 +86,32 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let rec collect_groups_instr (instr : Pl.instr) : Pl.instr list =
+    let rec collect_instr (instr : Pl.instr) : Pl.instr list =
       match instr.node.it with
-      | IfI (_, _, block_then, _) -> collect_groups_block block_then
+      | IfI (_, _, block_then, _) -> collect_block block_then
       | HoldI (_, _, _, holdcase) -> (
           match holdcase with
-          | BothH (b1, b2) -> collect_groups_block b1 @ collect_groups_block b2
-          | HoldH (b, _) | NotHoldH (b, _) -> collect_groups_block b)
+          | BothH (block_hold, block_nothold) ->
+              collect_block block_hold @ collect_block block_nothold
+          | HoldH (block_hold, _) -> collect_block block_hold
+          | NotHoldH (block_nothold, _) -> collect_block block_nothold)
       | CaseI (_, cases, _) ->
-          cases
-          |> List.concat_map (fun (_guard, block) -> collect_groups_block block)
-      | TryI arms -> arms |> List.concat_map collect_groups_block
-      | CheckLetSubI (_, _, _, block_inner)
-      | CheckLetMatchI (_, _, _, block_inner) ->
-          collect_groups_block block_inner
-      | OptionGetI (_, _, block_inner) -> collect_groups_block block_inner
+          cases |> List.concat_map (fun (_, block) -> collect_block block)
       | GroupI _ -> [ instr ]
+      | TryI arms -> arms |> List.concat_map collect_block
       | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
+      | CheckLetSubI (_, _, _, block_then)
+      | CheckLetMatchI (_, _, _, block_then)
+      | OptionGetI (_, _, block_then) ->
+          collect_block block_then
 
-    and collect_groups_block (block : Pl.block) : Pl.instr list =
-      block |> List.concat_map collect_groups_instr
+    and collect_block (block : Pl.block) : Pl.instr list =
+      block |> List.concat_map collect_instr
 
-    let init_def (def_pl : Pl.def) : (key * value) list =
-      match def_pl.node.it with
+    let init_def (def : Pl.def) : (key * value) list =
+      match def.node.it with
       | RelD (id_rel, _, _, block, _) ->
-          collect_groups_block block
+          block |> collect_block
           |> List.filter_map (fun (instr : Pl.instr) ->
                  match instr.node.it with
                  | GroupI (id_rulegroup, _, _, _, _) ->
