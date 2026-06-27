@@ -108,7 +108,7 @@ let parser_test_ stat includes_p4 excludes_p4 filename_p4 spec =
 let parser_test_driver includes_p4 excludes_p4 testdirs_p4 specdir =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let filenames_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")

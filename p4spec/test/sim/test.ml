@@ -103,11 +103,11 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
   let excludes_by_subdir =
     Test.collect_excludes_by_subdir excludes_p4
     |> List.map (fun (label, entries) ->
-           (label, List.map (fun e -> "../../../../../" ^ e) entries))
+           (label, List.map (fun e -> "../../../" ^ e) entries))
   in
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let filename_pairs =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
@@ -167,7 +167,7 @@ let cover_sim mode arch specdir includes_p4 excludesdir testdirs_p4 testdirs_stf
     patchdirs =
   let excludes =
     excludesdir |> Test.collect_excludes
-    |> List.map (fun exclude -> "../../../../../" ^ exclude)
+    |> List.map (fun exclude -> "../../../" ^ exclude)
   in
   let filenames_p4, filenames_stf =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
