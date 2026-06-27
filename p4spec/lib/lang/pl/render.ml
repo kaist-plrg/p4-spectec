@@ -1027,13 +1027,16 @@ and render_hold_instr ~(level : int) ~(bullet : string)
     let fallback_verb = if hold then " holds" else " does not hold" in
     match hint_opt with
     | Some hint ->
-        render_alter_hint Prose hint (reindent_lines ~level:0)
-          (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+        Inline.to_adoc
+          (Inline.link ~target:(string_of_relid id_rel)
+             (Inline.text
+                (render_alter_hint Prose hint (reindent_lines ~level:0)
+                   (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps)))
     | None ->
         let math =
-          code_of_notexp_s Prose notexp
-          |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+          Inline.to_adoc
+            (Inline.link ~target:(string_of_relid id_rel)
+               (Inline.text (code_of_notexp_s Prose notexp)))
         in
         math ^ fallback_verb
   in
@@ -1093,12 +1096,15 @@ and render_group_instr ~(level : int) ~(bullet : string)
   let title =
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
-        render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-          (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+        Inline.to_adoc
+          (Inline.link ~target:(string_of_relid id_rel)
+             (Inline.text
+                (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+                   (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps)))
     | None, None ->
-        render_rel_title_math Prose rel_signature exps
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+        Inline.to_adoc
+          (Inline.link ~target:(string_of_relid id_rel)
+             (Inline.text (render_rel_title_math Prose rel_signature exps)))
   in
   F.asprintf "%s%s:%s" bullet title
     (render_instrs ~level:(level + 1) ~backtrack block)
@@ -1184,9 +1190,12 @@ and render_rule_instr ~(level : int) ~(bullet : string)
             (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps_out
         in
         let prose_in =
-          render_alter_hint Prose hint_in unindent_lines
-            (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps_in
-          |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+          Inline.to_adoc
+            (Inline.link ~target:(string_of_relid id_rel)
+               (Inline.text
+                  (render_alter_hint Prose hint_in unindent_lines
+                     (fun e -> Inline.to_adoc_in_link (render_exp Prose e))
+                     exps_in)))
         in
         if adoc_fits_in_width_short prose_in then
           F.asprintf "Let %s be the result of %s" prose_out prose_in
@@ -1196,8 +1205,9 @@ and render_rule_instr ~(level : int) ~(bullet : string)
             prose_in
     | _ ->
         F.asprintf "Let %s"
-          (code_of_notexp_s Prose notexp
-          |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+          (Inline.to_adoc
+             (Inline.link ~target:(string_of_relid id_rel)
+                (Inline.text (code_of_notexp_s Prose notexp))))
   in
   if vars_out_visible = [] then
     F.asprintf "%s%s%s.%s" bullet rule_body
@@ -1342,12 +1352,17 @@ and render_group (instr : instr) : string =
       let title =
         match (hint_in, hint_true) with
         | Some hint, _ | _, Some hint ->
-            render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-              (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
-            |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+            Inline.to_adoc
+              (Inline.link ~target:(string_of_relid id_rel)
+                 (Inline.text
+                    (render_alter_hint ~caps:true Prose hint
+                       (reindent_lines ~level:0)
+                       (fun e -> Inline.to_adoc_in_link (render_exp Prose e))
+                       exps)))
         | None, None ->
-            render_rel_title_math Prose rel_signature exps
-            |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+            Inline.to_adoc
+              (Inline.link ~target:(string_of_relid id_rel)
+                 (Inline.text (render_rel_title_math Prose rel_signature exps)))
       in
       title ^ ":\n" ^ render_instrs block
   | _ -> assert false
