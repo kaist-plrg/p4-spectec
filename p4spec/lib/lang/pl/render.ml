@@ -218,19 +218,29 @@ module Inline = struct
   let empty : t = Seq []
   let ( ++ ) (a : t) (b : t) : t = Seq [ a; b ]
 
-  let to_adoc (t : t) : string =
-    let rec go ~(in_code : bool) ~(in_link : bool) (t : t) : string =
-      match t with
-      | Text s -> s
-      | Seq ts -> String.concat "" (List.map (go ~in_code ~in_link) ts)
-      | Code inner ->
-          let s = go ~in_code:true ~in_link inner in
-          if in_code then s else adoc_mono_chopped s
-      | Link (target, inner) ->
-          let s = go ~in_code ~in_link:true inner in
-          if in_link then s else adoc_link ~link:target s
-    in
-    go ~in_code:false ~in_link:false t
+  let rec serialize ~(in_code : bool) ~(in_link : bool) (t : t) : string =
+    match t with
+    | Text s -> s
+    | Seq ts -> String.concat "" (List.map (serialize ~in_code ~in_link) ts)
+    | Code inner ->
+        let s = serialize ~in_code:true ~in_link inner in
+        if in_code then s else adoc_mono_chopped s
+    | Link (target, inner) ->
+        let s = serialize ~in_code ~in_link:true inner in
+        if in_link then s else adoc_link ~link:target s
+
+  (* Serialize at the top level: neither a code span nor a link is open. *)
+  let to_adoc (t : t) : string = serialize ~in_code:false ~in_link:false t
+
+  (* Serialize as if already inside a code span (no extra mono-wrapping of the
+     whole, leaves stay raw) -- the structural equivalent of the old
+     [render_exp in_code] used to build raw fragments for string assembly. *)
+  let to_adoc_code (t : t) : string = serialize ~in_code:true ~in_link:false t
+
+  (* Serialize as if already inside a link (nested links suppressed) -- the
+     structural equivalent of the old [render_exp in_link] used inside hint
+     alternations whose whole result is then wrapped in one outer link. *)
+  let to_adoc_in_link (t : t) : string = serialize ~in_code:false ~in_link:true t
 end
 
 let reindent_lines ?(level = 0) (s : string) : string =
@@ -254,15 +264,29 @@ let render_list (items : string list) : string =
       in
       String.concat ", " items ^ ", and " ^ item_last
 
-let render_alter_hint ?(caps = false) (ctx : t) (hints : Hints.Alter.t)
-    (render_base : string -> string) (render : t -> 'a -> string)
-    (items : 'a list) : string =
+(* Rendering mode: prose words vs. math/code symbols (the one remaining
+   contextual concern after wrapping became structural via [Inline]). *)
+
+type mode = Prose | Code
+
+(* Wrap as a code span only in prose mode; in code mode the value is already
+   inside an enclosing code span, so leave it alone. The structural equivalent
+   of the old [_ |> adoc_as_code ctx] on an [Inline.t] that must not be
+   unconditionally re-wrapped. *)
+
+let as_code_in (mode : mode) (t : Inline.t) : Inline.t =
+  match mode with Prose -> Inline.code t | Code -> t
+
+let render_alter_hint ?(caps = false) (mode : mode) (hints : Hints.Alter.t)
+    (render_base : string -> string) (render : 'a -> string) (items : 'a list) :
+    string =
   let render_atom (atom : atom) : string =
-    "+" ^ (atom.it |> Atom.string_of_atom) ^ "+" |> adoc_as_code ctx
+    let raw = "+" ^ (atom.it |> Atom.string_of_atom) ^ "+" in
+    match mode with Code -> raw | Prose -> adoc_mono_chopped raw
   in
   items
   |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hints
-       (fun a -> render ctx a)
+       render
   |> fun s -> if caps then String.capitalize_ascii s else s
 
 (* Numbers *)
@@ -282,16 +306,17 @@ let string_of_defid ?(link = false) (defid : id) =
   if link then Il.Print.string_of_varid defid
   else Il.Print.string_of_defid defid
 
-let render_varid (ctx : t) (id_var : id) =
-  if Id.is_underscored id_var then "++_++" |> adoc_as_code ctx
+let render_varid (_mode : mode) (id_var : id) : Inline.t =
+  if Id.is_underscored id_var then Inline.code (Inline.text "++_++")
   else
     let var_slices = String.split_on_char '_' id_var.it in
     match var_slices with
     | [] -> assert false
-    | [ var_type ] -> var_type |> adoc_as_code ctx
+    | [ var_type ] -> Inline.code (Inline.text var_type)
     | var_type :: var_subscripts ->
-        var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)
-        |> adoc_as_code ctx
+        Inline.code
+          (Inline.text
+             (var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript)))
 
 (* Atoms *)
 
@@ -321,19 +346,26 @@ let code_of_iterexp ((iter, _) : iterexp) = code_of_iter iter
 
 (* Variables *)
 
-let render_var (ctx : t) ((id, _typ, iters) : var) =
-  if Id.is_underscored id then "++_++" |> adoc_as_code ctx
-  else render_varid ctx id ^ String.concat "" (List.map code_of_iter iters)
+let render_var (mode : mode) ((id, _typ, iters) : var) : Inline.t =
+  if Id.is_underscored id then Inline.code (Inline.text "++_++")
+  else
+    Inline.code
+      (Inline.seq
+         [ render_varid mode id;
+           Inline.text (String.concat "" (List.map code_of_iter iters)) ])
 
-let render_in_itervars (ctx : t) (vars : var list) : string =
+let render_in_itervars (mode : mode) (vars : var list) : string =
   let render_in_var var =
     F.asprintf "%s in %s"
-      (render_var in_code var |> adoc_as_code ctx)
-      (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx)
+      (Inline.to_adoc (as_code_in mode (render_var Code var)))
+      (Inline.to_adoc
+         (as_code_in mode
+            (Inline.seq
+               [ render_var Code var; Inline.text (code_of_iter List) ])))
   in
   vars |> List.map render_in_var |> render_list
 
-let render_out_itervars (ctx : t) (vars : var list) : string =
+let render_out_itervars (mode : mode) (vars : var list) : string =
   vars
   |> List.filter_map (fun var ->
          let id, _, _ = var in
@@ -341,13 +373,16 @@ let render_out_itervars (ctx : t) (vars : var list) : string =
          else
            Some
              (F.asprintf "%s be the list"
-                (render_var in_code var ^ code_of_iter List |> adoc_as_code ctx)))
+                (Inline.to_adoc
+                   (as_code_in mode
+                      (Inline.seq
+                         [ render_var Code var; Inline.text (code_of_iter List) ])))))
   |> render_list
 
 (* Types *)
 
-let code_of_typ (ctx : t) (typ : typ) : string =
-  Sl.Print.string_of_typ typ |> adoc_as_code ctx
+let code_of_typ (_mode : mode) (typ : typ) : Inline.t =
+  Inline.code (Inline.text (Sl.Print.string_of_typ typ))
 
 let tid_of_typ (typ' : typ') : id option =
   match typ' with Il.VarT (id, _) -> Some id | _ -> None
@@ -356,335 +391,410 @@ let tid_of_typ (typ' : typ') : id option =
 
 let render_unop = Sl.Print.string_of_unop
 
-let render_binop (ctx : t) (binop : binop) =
-  if ctx.in_code then Sl.Print.string_of_binop binop
-  else
-    match binop with
-    | `AndOp -> "and"
-    | `OrOp -> "or"
-    | `ImplOp -> "implies"
-    | `EquivOp -> "is equivalent to"
-    | _ -> Sl.Print.string_of_binop binop
+let render_binop_word (mode : mode) (binop : binop) : string =
+  match mode with
+  | Code -> Sl.Print.string_of_binop binop
+  | Prose -> (
+      match binop with
+      | `AndOp -> "and"
+      | `OrOp -> "or"
+      | `ImplOp -> "implies"
+      | `EquivOp -> "is equivalent to"
+      | _ -> Sl.Print.string_of_binop binop)
 
-let render_cmpop (ctx : t) (cmpop : cmpop) =
-  if ctx.in_code then Sl.Print.string_of_cmpop cmpop
-  else
-    match cmpop with
-    | `EqOp -> "is equal to"
-    | `NeOp -> "is not equal to"
-    | `LtOp -> "is less than"
-    | `GtOp -> "is greater than"
-    | `LeOp -> "is less than or equal to"
-    | `GeOp -> "is greater than or equal to"
+let render_cmpop_word (mode : mode) (cmpop : cmpop) : string =
+  match mode with
+  | Code -> Sl.Print.string_of_cmpop cmpop
+  | Prose -> (
+      match cmpop with
+      | `EqOp -> "is equal to"
+      | `NeOp -> "is not equal to"
+      | `LtOp -> "is less than"
+      | `GtOp -> "is greater than"
+      | `LeOp -> "is less than or equal to"
+      | `GeOp -> "is greater than or equal to")
 
 (* Expressions *)
 
-let rec render_exp (ctx : t) (exp : exp) : string =
+let rec render_exp (mode : mode) (exp : exp) : Inline.t =
   match exp.node.it with
-  | BoolE b -> render_bool_exp ctx b
-  | NumE n -> render_num_exp ctx n
-  | TextE text -> render_text_exp ctx text
-  | VarE id_var -> render_var_exp ctx id_var
-  | UnE (unop, _, exp_inner) -> render_un_exp ctx unop exp_inner
-  | BinE (binop, _, exp_l, exp_r) -> render_bin_exp ctx binop exp_l exp_r
-  | CmpE (cmpop, _, exp_l, exp_r) -> render_cmp_exp ctx cmpop exp_l exp_r
+  | BoolE b -> render_bool_exp mode b
+  | NumE n -> render_num_exp mode n
+  | TextE text -> render_text_exp mode text
+  | VarE id_var -> render_var_exp mode id_var
+  | UnE (unop, _, exp_inner) -> render_un_exp mode unop exp_inner
+  | BinE (binop, _, exp_l, exp_r) -> render_bin_exp mode binop exp_l exp_r
+  | CmpE (cmpop, _, exp_l, exp_r) -> render_cmp_exp mode cmpop exp_l exp_r
   | UpCastE (_typ, exp_inner) | DownCastE (_typ, exp_inner) ->
-      render_cast_exp ctx exp_inner
-  | SubE (exp_inner, typ) -> render_sub_exp ctx exp_inner typ
-  | MatchE (exp_inner, pattern) -> render_match_exp ctx exp_inner pattern
-  | TupleE exps -> render_tuple_exp ctx exps
-  | CaseE notexp -> render_case_exp ctx exp notexp
-  | StrE expfields -> render_str_exp ctx expfields
-  | OptE exp_opt -> render_opt_exp ctx exp_opt
-  | ListE exps -> render_list_exp ctx exps
-  | ConsE (exp_h, exp_t) -> render_cons_exp ctx exp_h exp_t
-  | CatE (exp_l, exp_r) -> render_cat_exp ctx exp_l exp_r
-  | MemE (exp_e, exp_s) -> render_mem_exp ctx exp_e exp_s
-  | LenE exp_inner -> render_len_exp ctx exp_inner
-  | DotE (exp_b, atom) -> render_dot_exp ctx exp_b atom
-  | IdxE (exp_b, exp_i) -> render_idx_exp ctx exp_b exp_i
-  | SliceE (exp_b, exp_l, exp_h) -> render_slice_exp ctx exp_b exp_l exp_h
-  | UpdE (exp_b, path, exp_f) -> render_upd_exp ctx exp_b path exp_f
-  | CallE (id, targs, args) -> render_call_exp ctx exp id targs args
-  | IterE (exp_inner, iterexp) -> render_iter_exp ctx exp_inner iterexp
+      render_cast_exp mode exp_inner
+  | SubE (exp_inner, typ) -> render_sub_exp mode exp_inner typ
+  | MatchE (exp_inner, pattern) -> render_match_exp mode exp_inner pattern
+  | TupleE exps -> render_tuple_exp mode exps
+  | CaseE notexp -> render_case_exp mode exp notexp
+  | StrE expfields -> render_str_exp mode expfields
+  | OptE exp_opt -> render_opt_exp mode exp_opt
+  | ListE exps -> render_list_exp mode exps
+  | ConsE (exp_h, exp_t) -> render_cons_exp mode exp_h exp_t
+  | CatE (exp_l, exp_r) -> render_cat_exp mode exp_l exp_r
+  | MemE (exp_e, exp_s) -> render_mem_exp mode exp_e exp_s
+  | LenE exp_inner -> render_len_exp mode exp_inner
+  | DotE (exp_b, atom) -> render_dot_exp mode exp_b atom
+  | IdxE (exp_b, exp_i) -> render_idx_exp mode exp_b exp_i
+  | SliceE (exp_b, exp_l, exp_h) -> render_slice_exp mode exp_b exp_l exp_h
+  | UpdE (exp_b, path, exp_f) -> render_upd_exp mode exp_b path exp_f
+  | CallE (id, targs, args) -> render_call_exp mode exp id targs args
+  | IterE (exp_inner, iterexp) -> render_iter_exp mode exp_inner iterexp
 
-and render_exps (ctx : t) ?(sep : string option) (exps : exp list) =
-  match (ctx.in_code, sep) with
-  | _, Some s -> String.concat s (List.map (render_exp ctx) exps)
-  | true, None -> String.concat ", " (List.map (render_exp ctx) exps)
-  | false, None -> render_list (List.map (render_exp ctx) exps)
+and render_exps (mode : mode) ?(sep : string option) (exps : exp list) :
+    Inline.t =
+  match (mode, sep) with
+  | _, Some s ->
+      Inline.seq
+        (List.mapi
+           (fun i e ->
+             if i = 0 then render_exp mode e
+             else Inline.seq [ Inline.text s; render_exp mode e ])
+           exps)
+  | Code, None ->
+      Inline.seq
+        (List.mapi
+           (fun i e ->
+             if i = 0 then render_exp mode e
+             else Inline.seq [ Inline.text ", "; render_exp mode e ])
+           exps)
+  | Prose, None ->
+      Inline.text
+        (render_list (List.map (fun e -> Inline.to_adoc (render_exp mode e)) exps))
 
-and render_exp_as_code (ctx : t) (exp : exp) =
-  render_exp (code ctx) exp |> adoc_as_code ctx
+and render_exp_as_code (_mode : mode) (exp : exp) : Inline.t =
+  Inline.code (render_exp Code exp)
 
-and code_of_notexp (ctx : t) (notexp : notexp) =
+and code_of_notexp (_mode : mode) (notexp : notexp) : Inline.t =
   let mixop, exps = Mixfix.split notexp in
-  let sexps = List.map (render_exp in_code) exps in
-  Mixop.assemble ~string_of_atom:code_of_atom mixop sexps |> adoc_as_code ctx
+  let sexps = List.map (fun e -> Inline.to_adoc_code (render_exp Code e)) exps in
+  Inline.code
+    (Inline.text (Mixop.assemble ~string_of_atom:code_of_atom mixop sexps))
 
 (* Boolean expression rendering *)
 
-and render_bool_exp (ctx : t) (b : bool) : string =
-  string_of_bool b |> adoc_as_code ctx
+and render_bool_exp (_mode : mode) (b : bool) : Inline.t =
+  Inline.code (Inline.text (string_of_bool b))
 
 (* Numeric expression rendering *)
 
-and render_num_exp (ctx : t) (n : num) : string =
-  string_of_num n |> adoc_as_code ctx
+and render_num_exp (_mode : mode) (n : num) : Inline.t =
+  Inline.code (Inline.text (string_of_num n))
 
 (* Text expression rendering *)
 
-and render_text_exp (ctx : t) (text : string) : string =
-  "\"" ^ String.escaped text ^ "\"" |> adoc_as_code ctx
+and render_text_exp (_mode : mode) (text : string) : Inline.t =
+  Inline.code (Inline.text ("\"" ^ String.escaped text ^ "\""))
 
 (* Variable expression rendering *)
 
-and render_var_exp (ctx : t) (id_var : id) : string =
-  render_varid (code ctx) id_var |> adoc_as_code ctx
+and render_var_exp (_mode : mode) (id_var : id) : Inline.t =
+  Inline.code (render_varid Code id_var)
 
 (* Unary expression rendering *)
 
-and render_negated_exp_opt (ctx : t) (exp_inner : exp) : string option =
+and render_negated_exp_opt (mode : mode) (exp_inner : exp) : Inline.t option =
   match exp_inner.node.it with
   | MatchE (exp_e, pattern) ->
       Some
-        (F.asprintf "%s does not match pattern %s" (render_exp ctx exp_e)
-           (code_of_pattern pattern |> adoc_as_code ctx))
+        (Inline.seq
+           [ render_exp mode exp_e;
+             Inline.text " does not match pattern ";
+             Inline.code (Inline.text (code_of_pattern pattern)) ])
   | SubE (exp_e, typ) ->
       Some
-        (F.asprintf "%s does not have type %s"
-           (render_exp_as_code ctx exp_e)
-           (code_of_typ ctx typ))
+        (Inline.seq
+           [ render_exp_as_code mode exp_e;
+             Inline.text " does not have type "; code_of_typ mode typ ])
   | MemE (exp_e, exp_s) ->
       Some
-        (F.asprintf "%s is not in %s"
-           (render_exp_as_code ctx exp_e)
-           (render_exp_as_code ctx exp_s))
-  | CallE (id, _targs, args) when not ctx.in_code -> (
+        (Inline.seq
+           [ render_exp_as_code mode exp_e; Inline.text " is not in ";
+             render_exp_as_code mode exp_s ])
+  | CallE (id, _targs, args) when mode = Prose -> (
       let hint_false_opt = exp_inner.hints.Annot.prose_false in
       match hint_false_opt with
       | Some hints ->
           Some
-            (render_alter_hint (link ctx) hints (reindent_lines ~level:0)
-               render_arg args
-            |> adoc_as_link ctx ~link:id.it)
+            (Inline.link ~target:id.it
+               (Inline.text
+                  (render_alter_hint mode hints (reindent_lines ~level:0)
+                     (fun a -> Inline.to_adoc_in_link (render_arg Prose a))
+                     args)))
       | None ->
           Some
-            (render_unop `NotOp ^ render_exp (code ctx) exp_inner
-            |> adoc_as_code ctx))
+            (Inline.code
+               (Inline.seq
+                  [ Inline.text (render_unop `NotOp);
+                    render_exp Code exp_inner ])))
   | _ -> None
 
-and render_un_exp (ctx : t) (unop : unop) (exp_inner : exp) : string =
+and render_un_exp (mode : mode) (unop : unop) (exp_inner : exp) : Inline.t =
   match unop with
   | #Bool.unop -> (
-      match render_negated_exp_opt ctx exp_inner with
-      | Some s -> s
+      match render_negated_exp_opt mode exp_inner with
+      | Some t -> t
       | None ->
-          render_unop unop ^ render_exp (code ctx) exp_inner |> adoc_as_code ctx
-      )
-  | _ -> render_unop unop ^ render_exp (code ctx) exp_inner |> adoc_as_code ctx
+          Inline.code
+            (Inline.seq
+               [ Inline.text (render_unop unop); render_exp Code exp_inner ]))
+  | _ ->
+      Inline.code
+        (Inline.seq [ Inline.text (render_unop unop); render_exp Code exp_inner ])
 
 (* Binary expression rendering *)
 
-and render_bin_exp (ctx : t) (binop : binop) (exp_l : exp) (exp_r : exp) :
-    string =
+and render_bin_exp (mode : mode) (binop : binop) (exp_l : exp) (exp_r : exp) :
+    Inline.t =
   match binop with
-  | `ImplOp when not ctx.in_code ->
-      "if " ^ render_exp ctx exp_l ^ ", then " ^ render_exp ctx exp_r
+  | `ImplOp when mode = Prose ->
+      Inline.seq
+        [ Inline.text "if "; render_exp mode exp_l; Inline.text ", then ";
+          render_exp mode exp_r ]
   | #Bool.binop ->
-      render_exp ctx exp_l ^ " " ^ render_binop ctx binop ^ " "
-      ^ render_exp ctx exp_r
+      Inline.seq
+        [ render_exp mode exp_l; Inline.text " ";
+          Inline.text (render_binop_word mode binop); Inline.text " ";
+          render_exp mode exp_r ]
   | #Num.binop ->
-      render_exp (code ctx) exp_l
-      ^ " "
-      ^ render_binop (code ctx) binop
-      ^ " "
-      ^ render_exp (code ctx) exp_r
-      |> adoc_as_code ctx
+      Inline.code
+        (Inline.seq
+           [ render_exp Code exp_l;
+             Inline.text (" " ^ Sl.Print.string_of_binop binop ^ " ");
+             render_exp Code exp_r ])
 
 (* Comparison expression rendering *)
 
-and render_cmp_exp (ctx : t) (cmpop : cmpop) (exp_l : exp) (exp_r : exp) :
-    string =
-  render_exp ctx exp_l ^ " " ^ render_cmpop ctx cmpop ^ " "
-  ^ render_exp ctx exp_r
+and render_cmp_exp (mode : mode) (cmpop : cmpop) (exp_l : exp) (exp_r : exp) :
+    Inline.t =
+  Inline.seq
+    [ render_exp mode exp_l; Inline.text " ";
+      Inline.text (render_cmpop_word mode cmpop); Inline.text " ";
+      render_exp mode exp_r ]
 
 (* Cast expression rendering *)
 
-and render_cast_exp (ctx : t) (exp_inner : exp) : string =
-  render_exp_as_code ctx exp_inner
+and render_cast_exp (mode : mode) (exp_inner : exp) : Inline.t =
+  render_exp_as_code mode exp_inner
 
 (* Subtype check expression rendering *)
 
-and render_sub_exp (ctx : t) (exp_inner : exp) (typ : typ) : string =
-  F.asprintf "%s has type %s"
-    (render_exp_as_code ctx exp_inner)
-    (code_of_typ ctx typ)
+and render_sub_exp (mode : mode) (exp_inner : exp) (typ : typ) : Inline.t =
+  Inline.seq
+    [ render_exp_as_code mode exp_inner; Inline.text " has type ";
+      code_of_typ mode typ ]
 
 (* Pattern match check expression rendering *)
 
-and render_match_exp (ctx : t) (exp_inner : exp) (pattern : pattern) : string =
+and render_match_exp (mode : mode) (exp_inner : exp) (pattern : pattern) :
+    Inline.t =
   match pattern with
   | Il.CaseP mixop when Mixop.arity mixop = 0 ->
-      F.asprintf "%s is %s" (render_exp ctx exp_inner)
-        (code_of_pattern (Il.CaseP mixop) |> adoc_as_code ctx)
-  | Il.ListP `Nil -> F.asprintf "%s is an empty list" (render_exp ctx exp_inner)
+      Inline.seq
+        [ render_exp mode exp_inner; Inline.text " is ";
+          Inline.code (Inline.text (code_of_pattern (Il.CaseP mixop))) ]
+  | Il.ListP `Nil ->
+      Inline.seq [ render_exp mode exp_inner; Inline.text " is an empty list" ]
   | Il.ListP `Cons ->
-      F.asprintf "%s is a non-empty list" (render_exp ctx exp_inner)
+      Inline.seq
+        [ render_exp mode exp_inner; Inline.text " is a non-empty list" ]
   | Il.ListP (`Fixed len) ->
-      F.asprintf "%s is a list of length %d" (render_exp ctx exp_inner) len
-  | Il.OptP `None -> F.asprintf "%s is none" (render_exp ctx exp_inner)
-  | Il.OptP `Some -> F.asprintf "%s is defined" (render_exp ctx exp_inner)
+      Inline.seq
+        [ render_exp mode exp_inner;
+          Inline.text (F.asprintf " is a list of length %d" len) ]
+  | Il.OptP `None ->
+      Inline.seq [ render_exp mode exp_inner; Inline.text " is none" ]
+  | Il.OptP `Some ->
+      Inline.seq [ render_exp mode exp_inner; Inline.text " is defined" ]
   | pattern ->
-      F.asprintf "%s matches pattern %s" (render_exp ctx exp_inner)
-        (code_of_pattern pattern |> adoc_as_code ctx)
+      Inline.seq
+        [ render_exp mode exp_inner; Inline.text " matches pattern ";
+          Inline.code (Inline.text (code_of_pattern pattern)) ]
 
 (* Tuple expression rendering *)
 
-and render_tuple_exp (ctx : t) (exps : exp list) : string =
-  "( " ^ render_exps ctx ~sep:", " exps ^ " )"
+and render_tuple_exp (mode : mode) (exps : exp list) : Inline.t =
+  Inline.seq
+    [ Inline.text "( "; render_exps mode ~sep:", " exps; Inline.text " )" ]
 
 (* Case expression rendering *)
 
-and render_case_exp (ctx : t) (exp : exp) (notexp : notexp) : string =
-  if ctx.in_code then code_of_notexp ctx notexp
-  else
-    let hint_opt = exp.hints.Annot.prose in
-    let link_opt = tid_of_typ exp.node.note in
-    match (hint_opt, link_opt) with
-    | Some hints, Some tid ->
-        render_alter_hint (ctx |> link) hints (reindent_lines ~level:0)
-          render_exp (Mixfix.args notexp)
-        |> adoc_as_link ctx ~link:tid.it
-    | _ -> code_of_notexp ctx notexp
+and render_case_exp (mode : mode) (exp : exp) (notexp : notexp) : Inline.t =
+  match mode with
+  | Code -> code_of_notexp mode notexp
+  | Prose -> (
+      let hint_opt = exp.hints.Annot.prose in
+      let link_opt = tid_of_typ exp.node.note in
+      match (hint_opt, link_opt) with
+      | Some hints, Some tid ->
+          Inline.link ~target:tid.it
+            (Inline.text
+               (render_alter_hint mode hints (reindent_lines ~level:0)
+                  (fun e -> Inline.to_adoc_in_link (render_exp Prose e))
+                  (Mixfix.args notexp)))
+      | _ -> code_of_notexp mode notexp)
 
 (* Struct expression rendering *)
 
-and render_str_exp (ctx : t) (expfields : (atom * exp) list) : string =
-  "+{+"
-  ^ String.concat ", "
-      (List.map
-         (fun (atom, exp_f) -> code_of_atom atom ^ " " ^ render_exp ctx exp_f)
-         expfields)
-  ^ "+}+"
+and render_str_exp (mode : mode) (expfields : (atom * exp) list) : Inline.t =
+  Inline.seq
+    [ Inline.text "+{+";
+      Inline.seq
+        (List.mapi
+           (fun i (atom, exp_f) ->
+             let field =
+               Inline.seq
+                 [ Inline.text (code_of_atom atom); Inline.text " ";
+                   render_exp mode exp_f ]
+             in
+             if i = 0 then field else Inline.seq [ Inline.text ", "; field ])
+           expfields);
+      Inline.text "+}+" ]
 
 (* Option expression rendering *)
 
-and render_opt_exp (ctx : t) (exp_opt : exp option) : string =
+and render_opt_exp (mode : mode) (exp_opt : exp option) : Inline.t =
   match exp_opt with
-  | Some exp_inner -> "" ^ render_exp ctx exp_inner ^ ""
-  | None -> "·" |> adoc_as_code ctx
+  | Some exp_inner -> render_exp mode exp_inner
+  | None -> Inline.code (Inline.text "·")
 
 (* List expression rendering *)
 
-and render_list_exp (ctx : t) (exps : exp list) : string =
+and render_list_exp (_mode : mode) (exps : exp list) : Inline.t =
   match exps with
-  | [] -> "·" |> adoc_as_code ctx
-  | [ exp_inner ] -> render_exp (code ctx) exp_inner |> adoc_as_code ctx
+  | [] -> Inline.code (Inline.text "·")
+  | [ exp_inner ] -> Inline.code (render_exp Code exp_inner)
   | exps ->
-      "+[+ " ^ render_exps (code ctx) ~sep:", " exps ^ " +]+"
-      |> adoc_as_code ctx
+      Inline.code
+        (Inline.seq
+           [ Inline.text "+[+ "; render_exps Code ~sep:", " exps;
+             Inline.text " +]+" ])
 
 (* Cons expression rendering *)
 
-and render_cons_exp (ctx : t) (exp_h : exp) (exp_t : exp) : string =
-  render_exp (code ctx) exp_h ^ " {two-colons} " ^ render_exp (code ctx) exp_t
-  |> adoc_as_code ctx
+and render_cons_exp (_mode : mode) (exp_h : exp) (exp_t : exp) : Inline.t =
+  Inline.code
+    (Inline.seq
+       [ render_exp Code exp_h; Inline.text " {two-colons} ";
+         render_exp Code exp_t ])
 
 (* Concatenation expression rendering *)
 
-and render_cat_exp (ctx : t) (exp_l : exp) (exp_r : exp) : string =
-  if ctx.in_code then render_exp ctx exp_l ^ " {pp} " ^ render_exp ctx exp_r
-  else render_exp ctx exp_l ^ " concatenated with " ^ render_exp ctx exp_r
+and render_cat_exp (mode : mode) (exp_l : exp) (exp_r : exp) : Inline.t =
+  match mode with
+  | Code ->
+      Inline.seq
+        [ render_exp mode exp_l; Inline.text " {pp} "; render_exp mode exp_r ]
+  | Prose ->
+      Inline.seq
+        [ render_exp mode exp_l; Inline.text " concatenated with ";
+          render_exp mode exp_r ]
 
 (* Membership expression rendering *)
 
-and render_mem_exp (ctx : t) (exp_e : exp) (exp_s : exp) : string =
-  render_exp ctx exp_e ^ " is in " ^ render_exp ctx exp_s
+and render_mem_exp (mode : mode) (exp_e : exp) (exp_s : exp) : Inline.t =
+  Inline.seq
+    [ render_exp mode exp_e; Inline.text " is in "; render_exp mode exp_s ]
 
 (* Length expression rendering *)
 
-and render_len_exp (ctx : t) (exp_inner : exp) : string =
-  "the length of " ^ render_exp ctx exp_inner
+and render_len_exp (mode : mode) (exp_inner : exp) : Inline.t =
+  Inline.seq [ Inline.text "the length of "; render_exp mode exp_inner ]
 
 (* Dot expression rendering *)
 
-and render_dot_exp (ctx : t) (exp_b : exp) (atom : atom) : string =
-  render_exp (code ctx) exp_b ^ "." ^ code_of_atom atom |> adoc_as_code ctx
+and render_dot_exp (_mode : mode) (exp_b : exp) (atom : atom) : Inline.t =
+  Inline.code
+    (Inline.seq
+       [ render_exp Code exp_b; Inline.text "."; Inline.text (code_of_atom atom) ])
 
 (* Index expression rendering *)
 
-and render_idx_exp (ctx : t) (exp_b : exp) (exp_i : exp) : string =
-  render_exp (code ctx) exp_b ^ "[" ^ render_exp (code ctx) exp_i ^ "]"
-  |> adoc_as_code ctx
+and render_idx_exp (_mode : mode) (exp_b : exp) (exp_i : exp) : Inline.t =
+  Inline.code
+    (Inline.seq
+       [ render_exp Code exp_b; Inline.text "["; render_exp Code exp_i;
+         Inline.text "]" ])
 
 (* Slice expression rendering *)
 
-and render_slice_exp (ctx : t) (exp_b : exp) (exp_l : exp) (exp_h : exp) :
-    string =
-  render_exp (code ctx) exp_b
-  ^ "["
-  ^ render_exp (code ctx) exp_l
-  ^ " : "
-  ^ render_exp (code ctx) exp_h
-  ^ "]"
-  |> adoc_as_code ctx
+and render_slice_exp (_mode : mode) (exp_b : exp) (exp_l : exp) (exp_h : exp) :
+    Inline.t =
+  Inline.code
+    (Inline.seq
+       [ render_exp Code exp_b; Inline.text "["; render_exp Code exp_l;
+         Inline.text " : "; render_exp Code exp_h; Inline.text "]" ])
 
 (* Update expression rendering *)
 
-and render_upd_exp (ctx : t) (exp_b : exp) (path : path) (exp_f : exp) : string
-    =
-  if ctx.in_code then
-    render_exp (code ctx) exp_b
-    ^ "["
-    ^ render_path (code ctx) path
-    ^ " = "
-    ^ render_exp (code ctx) exp_f
-    ^ "]"
-    |> adoc_as_code ctx
-  else
-    (render_exp (code ctx) exp_b |> adoc_as_code ctx)
-    ^ " with "
-    ^ (render_path (code ctx) path |> adoc_as_code ctx)
-    ^ " set to "
-    ^ (render_exp (code ctx) exp_f |> adoc_as_code ctx)
+and render_upd_exp (mode : mode) (exp_b : exp) (path : path) (exp_f : exp) :
+    Inline.t =
+  match mode with
+  | Code ->
+      Inline.code
+        (Inline.seq
+           [ render_exp Code exp_b; Inline.text "["; render_path Code path;
+             Inline.text " = "; render_exp Code exp_f; Inline.text "]" ])
+  | Prose ->
+      Inline.seq
+        [ Inline.code (render_exp Code exp_b); Inline.text " with ";
+          Inline.code (render_path Code path); Inline.text " set to ";
+          Inline.code (render_exp Code exp_f) ]
 
 (* Function call expression rendering *)
 
-and render_call_exp (ctx : t) (exp : exp) (id : id) (targs : targ list)
-    (args : arg list) : string =
+and render_call_exp (mode : mode) (exp : exp) (id : id) (targs : targ list)
+    (args : arg list) : Inline.t =
   let hint_in = exp.hints.Annot.prose_in in
   let hint_true = exp.hints.Annot.prose_true in
-  if ctx.in_code then
-    string_of_defid id ^ string_of_targs targs
-    ^ render_args (ctx |> link |> code) args
-    |> adoc_as_link ctx ~link:id.it
-    |> adoc_as_code ctx
-  else
-    match (hint_in, hint_true) with
-    | Some hints, _ | _, Some hints ->
-        render_alter_hint (link ctx) hints (reindent_lines ~level:0) render_arg
-          args
-        |> adoc_as_link ctx ~link:id.it
-    | None, None ->
-        string_of_defid id ^ string_of_targs targs
-        ^ render_args (ctx |> link |> code) args
-        |> adoc_as_link ctx ~link:id.it
-        |> adoc_as_code ctx
+  match mode with
+  | Code ->
+      Inline.code
+        (Inline.link ~target:id.it
+           (Inline.seq
+              [ Inline.text (string_of_defid id);
+                Inline.text (string_of_targs targs); render_args Code args ]))
+  | Prose -> (
+      match (hint_in, hint_true) with
+      | Some hints, _ | _, Some hints ->
+          Inline.link ~target:id.it
+            (Inline.text
+               (render_alter_hint mode hints (reindent_lines ~level:0)
+                  (fun a -> Inline.to_adoc_in_link (render_arg Prose a)) args))
+      | None, None ->
+          Inline.code
+            (Inline.link ~target:id.it
+               (Inline.seq
+                  [ Inline.text (string_of_defid id);
+                    Inline.text (string_of_targs targs); render_args Code args ])))
 
 (* Iterated expression rendering *)
 
-and render_iter_exp (ctx : t) (exp_inner : exp) (iterexp : iterexp) : string =
+and render_iter_exp (mode : mode) (exp_inner : exp) (iterexp : iterexp) :
+    Inline.t =
   match (exp_inner.node.it, iterexp) with
-  | _, (_, []) -> render_exp ctx exp_inner
+  | _, (_, []) -> render_exp mode exp_inner
   | (VarE _ | TupleE _), _ ->
-      render_exp (code ctx) exp_inner ^ code_of_iterexp iterexp
-      |> adoc_as_code ctx
+      Inline.code
+        (Inline.seq
+           [ render_exp Code exp_inner; Inline.text (code_of_iterexp iterexp) ])
   | _ ->
-      let sexp = render_exp (code ctx) exp_inner in
+      let inner = render_exp Code exp_inner in
+      (* The space-test only decides parenthesization; the inner is emitted
+         structurally so the surrounding link/code context is preserved. *)
+      let sexp = Inline.to_adoc_code inner in
       if String.contains sexp ' ' then
-        "( " ^ sexp ^ " )" ^ code_of_iterexp iterexp |> adoc_as_code ctx
-      else sexp ^ code_of_iterexp iterexp |> adoc_as_code ctx
+        Inline.code
+          (Inline.seq
+             [ Inline.text "( "; inner;
+               Inline.text (" )" ^ code_of_iterexp iterexp) ])
+      else
+        Inline.code
+          (Inline.seq [ inner; Inline.text (code_of_iterexp iterexp) ])
 
 (* Patterns *)
 
@@ -699,28 +809,42 @@ and code_of_pattern (pattern : pattern) =
 
 (* Path *)
 
-and render_path (ctx : t) (path : path) =
+and render_path (mode : mode) (path : path) : Inline.t =
   match path.it with
-  | RootP -> ""
-  | IdxP (path, e) -> render_path ctx path ^ "[" ^ render_exp ctx e ^ "]"
+  | RootP -> Inline.empty
+  | IdxP (path, e) ->
+      Inline.seq
+        [ render_path mode path; Inline.text "["; render_exp mode e;
+          Inline.text "]" ]
   | SliceP (path, e_l, e_h) ->
-      render_path ctx path ^ "[" ^ render_exp ctx e_l ^ " : "
-      ^ render_exp ctx e_h ^ "]"
-  | DotP ({ it = RootP; _ }, atom) -> code_of_atom atom
-  | DotP (path, atom) -> render_path ctx path ^ "." ^ code_of_atom atom
+      Inline.seq
+        [ render_path mode path; Inline.text "["; render_exp mode e_l;
+          Inline.text " : "; render_exp mode e_h; Inline.text "]" ]
+  | DotP ({ it = RootP; _ }, atom) -> Inline.text (code_of_atom atom)
+  | DotP (path, atom) ->
+      Inline.seq
+        [ render_path mode path; Inline.text "."; Inline.text (code_of_atom atom) ]
 
 (* Parameters *)
 
-and render_param (ctx : t) (param : param) =
+and render_param (mode : mode) (param : param) : Inline.t =
   match param.it with
-  | ExpP (_typ, exp) -> render_exp ctx exp
-  | DefP (defid, _, _, _) -> string_of_defid defid |> adoc_as_code ctx
+  | ExpP (_typ, exp) -> render_exp mode exp
+  | DefP (defid, _, _, _) -> Inline.code (Inline.text (string_of_defid defid))
 
-and render_params (ctx : t) (params : param list) =
+and render_params (mode : mode) (params : param list) : Inline.t =
   match params with
-  | [] -> ""
+  | [] -> Inline.empty
   | params ->
-      "(" ^ String.concat ", " (List.map (render_param ctx) params) ^ ")"
+      Inline.seq
+        [ Inline.text "(";
+          Inline.seq
+            (List.mapi
+               (fun i p ->
+                 if i = 0 then render_param mode p
+                 else Inline.seq [ Inline.text ", "; render_param mode p ])
+               params);
+          Inline.text ")" ]
 
 (* Type arguments *)
 
@@ -728,42 +852,81 @@ and string_of_targs (targs : targ list) = Sl.Print.string_of_targs targs
 
 (* Arguments *)
 
-and render_arg (ctx : t) (arg : arg) =
+and render_arg (mode : mode) (arg : arg) : Inline.t =
   match arg.it with
-  | ExpA exp -> render_exp ctx exp
-  | DefA defid -> string_of_defid defid |> adoc_as_code ctx
+  | ExpA exp -> render_exp mode exp
+  | DefA defid -> Inline.code (Inline.text (string_of_defid defid))
 
-and render_args (ctx : t) (args : arg list) =
+and render_args (mode : mode) (args : arg list) : Inline.t =
   match args with
-  | [] -> ""
-  | args -> "(" ^ String.concat ", " (List.map (render_arg ctx) args) ^ ")"
+  | [] -> Inline.empty
+  | args ->
+      Inline.seq
+        [ Inline.text "(";
+          Inline.seq
+            (List.mapi
+               (fun i a ->
+                 if i = 0 then render_arg mode a
+                 else Inline.seq [ Inline.text ", "; render_arg mode a ])
+               args);
+          Inline.text ")" ]
 
 (* Case analysis *)
 
-let render_guard (ctx : t) (exp_scrut : exp) (guard : guard) : string =
+let render_guard (mode : mode) (exp_scrut : exp) (guard : guard) : Inline.t =
   match guard with
-  | BoolG true -> render_exp ctx exp_scrut
+  | BoolG true -> render_exp mode exp_scrut
   | BoolG false ->
       let node_scrut = exp_scrut.node in
       let neg_inner =
         UnE (`NotOp, `BoolT, exp_scrut) $$ (node_scrut.at, node_scrut.note)
       in
-      render_exp ctx (Annot.no_hints neg_inner)
+      render_exp mode (Annot.no_hints neg_inner)
   | CmpG (cmpop, _, exp) ->
-      render_exp ctx exp_scrut ^ " " ^ render_cmpop ctx cmpop ^ " "
-      ^ render_exp ctx exp
+      Inline.seq
+        [ render_exp mode exp_scrut; Inline.text " ";
+          Inline.text (render_cmpop_word mode cmpop); Inline.text " ";
+          render_exp mode exp ]
   | SubG typ ->
-      F.asprintf "%s has type %s"
-        (render_exp_as_code ctx exp_scrut)
-        (code_of_typ ctx typ)
+      Inline.seq
+        [ render_exp_as_code mode exp_scrut; Inline.text " has type ";
+          code_of_typ mode typ ]
   | MatchG pattern ->
-      F.asprintf "%s matches pattern %s" (render_exp ctx exp_scrut)
-        (code_of_pattern pattern |> adoc_as_code ctx)
-  | MemG exp -> render_exp ctx exp_scrut ^ " is in " ^ render_exp ctx exp
+      Inline.seq
+        [ render_exp mode exp_scrut; Inline.text " matches pattern ";
+          Inline.code (Inline.text (code_of_pattern pattern)) ]
+  | MemG exp ->
+      Inline.seq
+        [ render_exp mode exp_scrut; Inline.text " is in "; render_exp mode exp ]
   | CheckLetSubG (_, target) | CheckLetMatchG (_, target) ->
-      F.asprintf "let %s be %s"
-        (render_exp_as_code ctx target)
-        (render_exp ctx exp_scrut)
+      Inline.seq
+        [ Inline.text "let "; render_exp_as_code mode target; Inline.text " be ";
+          render_exp mode exp_scrut ]
+
+(* Boundary shims: serialize an [Inline.t] to a string for the not-yet-migrated
+   instruction and definition renderers (removed in a later session). *)
+
+let render_exp_s (mode : mode) (exp : exp) : string =
+  Inline.to_adoc (render_exp mode exp)
+
+let render_exps_s (mode : mode) ?(sep : string option) (exps : exp list) :
+    string =
+  Inline.to_adoc (render_exps mode ?sep exps)
+
+let render_exp_as_code_s (mode : mode) (exp : exp) : string =
+  Inline.to_adoc (render_exp_as_code mode exp)
+
+let render_guard_s (mode : mode) (exp_scrut : exp) (guard : guard) : string =
+  Inline.to_adoc (render_guard mode exp_scrut guard)
+
+let render_param_s (mode : mode) (param : param) : string =
+  Inline.to_adoc (render_param mode param)
+
+let render_params_s (mode : mode) (params : param list) : string =
+  Inline.to_adoc (render_params mode params)
+
+let code_of_notexp_s (mode : mode) (notexp : notexp) : string =
+  Inline.to_adoc (code_of_notexp mode notexp)
 
 (* Instructions *)
 
@@ -809,20 +972,20 @@ and render_instrs ?(level : int = 0) ?(backtrack : Backtrack.ctx option = None)
    ({ node = { it = ReturnI ({ node = { it = BoolE _; _ }; _ } as e); _ }; _ } :
      instr);
   ] ->
-      F.asprintf " return %s." (render_exp_as_code in_prose e)
+      F.asprintf " return %s." (render_exp_as_code_s Prose e)
   | _ ->
       "\n"
       ^ (List.map (render_instr ~level ~backtrack) instrs |> String.concat "\n")
 
-and render_iterexp_suffix (ctx : t) (iterexps : iterexp list) : string =
+and render_iterexp_suffix (mode : mode) (iterexps : iterexp list) : string =
   match iterexps with
   | [] -> ""
   | _ ->
       let vars = List.concat_map (fun (_, vars) -> vars) iterexps in
       if vars = [] then ""
-      else F.asprintf ", for all %s" (render_in_itervars ctx vars)
+      else F.asprintf ", for all %s" (render_in_itervars mode vars)
 
-and render_iterinstr_suffix (ctx : t) (iterinstrs : iterinstr list) : string =
+and render_iterinstr_suffix (mode : mode) (iterinstrs : iterinstr list) : string =
   match iterinstrs with
   | [] -> ""
   | _ ->
@@ -830,7 +993,7 @@ and render_iterinstr_suffix (ctx : t) (iterinstrs : iterinstr list) : string =
         List.concat_map (fun (_, vars_in, _vars_out) -> vars_in) iterinstrs
       in
       if vars = [] then ""
-      else F.asprintf ", for each %s" (render_in_itervars ctx vars)
+      else F.asprintf ", for each %s" (render_in_itervars mode vars)
 
 (* If instruction rendering *)
 
@@ -839,8 +1002,8 @@ and render_if_instr ~(level : int) ~(bullet : string)
     (block_then : block) : string =
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let check_line =
-    F.asprintf "%sCheck that %s%s.%s" bullet (render_exp in_prose cond)
-      (render_iterexp_suffix in_prose iterexps)
+    F.asprintf "%sCheck that %s%s.%s" bullet (render_exp_s Prose cond)
+      (render_iterexp_suffix Prose iterexps)
       fallthrough
   in
   if block_then = [] then check_line
@@ -858,17 +1021,18 @@ and render_hold_instr ~(level : int) ~(bullet : string)
   let exps = Mixfix.args notexp in
   let hint_true = hints.Annot.prose_true in
   let hint_false = hints.Annot.prose_false in
-  let iter_suffix = render_iterexp_suffix in_prose iterexps in
+  let iter_suffix = render_iterexp_suffix Prose iterexps in
   let render_head ~(hold : bool) : string =
     let hint_opt = if hold then hint_true else hint_false in
     let fallback_verb = if hold then " holds" else " does not hold" in
     match hint_opt with
     | Some hint ->
-        render_alter_hint in_link hint (reindent_lines ~level:0) render_exp exps
+        render_alter_hint Prose hint (reindent_lines ~level:0)
+          (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
     | None ->
         let math =
-          code_of_notexp in_prose notexp
+          code_of_notexp_s Prose notexp
           |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
         in
         math ^ fallback_verb
@@ -898,7 +1062,7 @@ and render_case_instr ~(level : int) ~(bullet : string)
   | [ (guard, block_then) ] ->
       let check_line =
         F.asprintf "%sCheck that %s." bullet
-          (render_guard in_prose exp_scrut guard)
+          (render_guard_s Prose exp_scrut guard)
       in
       if block_then = [] then check_line
       else
@@ -915,7 +1079,7 @@ and render_case_instr ~(level : int) ~(bullet : string)
              else
                let keyword = if idx = 0 then "If" else "Else if" in
                F.asprintf "%s%s %s:%s" bullet keyword
-                 (render_guard in_prose exp_scrut guard)
+                 (render_guard_s Prose exp_scrut guard)
                  (render_instrs ~level:(level + 1) ~backtrack block_then))
       |> String.concat "\n"
 
@@ -929,11 +1093,11 @@ and render_group_instr ~(level : int) ~(bullet : string)
   let title =
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
-        render_alter_hint ~caps:true in_link hint (reindent_lines ~level:0)
-          render_exp exps
+        render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+          (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
     | None, None ->
-        render_rel_title_math in_prose rel_signature exps
+        render_rel_title_math Prose rel_signature exps
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
   in
   F.asprintf "%s%s:%s" bullet title
@@ -975,22 +1139,22 @@ and render_let_instr ~(level : int) ~(bullet : string)
   in
   if vars_out_visible = [] then
     F.asprintf "%sLet %s be %s%s.%s" bullet
-      (render_exp_as_code in_prose exp_l)
-      (render_exp in_prose exp_r)
-      (render_iterinstr_suffix in_prose iterinstrs)
+      (render_exp_as_code_s Prose exp_l)
+      (render_exp_s Prose exp_r)
+      (render_iterinstr_suffix Prose iterinstrs)
       fallthrough
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
     let body =
       F.asprintf "%sLet %s be %s." bullet_inner
-        (render_exp_as_code in_prose exp_l)
-        (render_exp in_prose exp_r)
+        (render_exp_as_code_s Prose exp_l)
+        (render_exp_s Prose exp_r)
     in
     F.asprintf
       "%sLet %s obtained by repeating:\n+\n--\n%s\n--\n+\nfor each %s.%s" bullet
-      (render_out_itervars in_prose vars_out_visible)
+      (render_out_itervars Prose vars_out_visible)
       body
-      (render_in_itervars in_prose vars_in_all)
+      (render_in_itervars Prose vars_in_all)
       fallthrough
 
 (* Rule instruction rendering *)
@@ -1016,10 +1180,12 @@ and render_rule_instr ~(level : int) ~(bullet : string)
     match (hint_in, hint_out) with
     | Some hint_in, Some hint_out ->
         let prose_out =
-          render_alter_hint in_link hint_out unindent_lines render_exp exps_out
+          render_alter_hint Prose hint_out unindent_lines
+            (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps_out
         in
         let prose_in =
-          render_alter_hint in_link hint_in unindent_lines render_exp exps_in
+          render_alter_hint Prose hint_in unindent_lines
+            (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps_in
           |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
         in
         if adoc_fits_in_width_short prose_in then
@@ -1030,21 +1196,21 @@ and render_rule_instr ~(level : int) ~(bullet : string)
             prose_in
     | _ ->
         F.asprintf "Let %s"
-          (code_of_notexp in_prose notexp
+          (code_of_notexp_s Prose notexp
           |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
   in
   if vars_out_visible = [] then
     F.asprintf "%s%s%s.%s" bullet rule_body
-      (render_iterinstr_suffix in_prose iterinstrs)
+      (render_iterinstr_suffix Prose iterinstrs)
       fallthrough
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
     F.asprintf
       "%sLet %s obtained by repeating:\n+\n--\n%s%s.\n--\n+\nfor each %s.%s"
       bullet
-      (render_out_itervars in_prose vars_out_visible)
+      (render_out_itervars Prose vars_out_visible)
       bullet_inner rule_body
-      (render_in_itervars in_prose vars_in_all)
+      (render_in_itervars Prose vars_in_all)
       fallthrough
 
 (* Result instruction rendering *)
@@ -1059,20 +1225,20 @@ and render_result_instr ~(bullet : string) (hints : Annot.hints)
     match (hints.Annot.prose_out, exps) with
     | Some hint, _ ->
         F.asprintf "%sResult in %s." bullet
-          (render_alter_hint in_prose hint (reindent_lines ~level:0) render_exp
-             exps)
+          (render_alter_hint Prose hint (reindent_lines ~level:0)
+             (fun e -> render_exp_s Prose e) exps)
     | None, [] -> bullet ^ "The relation holds."
-    | None, _ -> F.asprintf "%sResult in %s." bullet (render_exps in_prose exps)
+    | None, _ -> F.asprintf "%sResult in %s." bullet (render_exps_s Prose exps)
 
 (* Return instruction rendering *)
 
 and render_return_instr ~(bullet : string) (exp : exp) : string =
-  F.asprintf "%sReturn %s." bullet (render_exp in_prose exp)
+  F.asprintf "%sReturn %s." bullet (render_exp_s Prose exp)
 
 (* Debug instruction rendering *)
 
 and render_debug_instr ~(bullet : string) (exp : exp) : string =
-  F.asprintf "%s(debug: %s)" bullet (render_exp in_prose exp)
+  F.asprintf "%s(debug: %s)" bullet (render_exp_s Prose exp)
 
 (* Destruct instruction rendering *)
 
@@ -1087,15 +1253,15 @@ and render_destruct_instr ~(bullet : string)
   match projections with
   | [ (name, exp_target) ] ->
       F.asprintf "%sLet %s be the %s of %s." bullet
-        (render_exp in_prose exp_target)
+        (render_exp_s Prose exp_target)
         name
-        (render_exp in_prose exp_source)
+        (render_exp_s Prose exp_source)
   | _ ->
       let names, exps_target = List.split projections in
       F.asprintf "%sLet %s be %s of %s." bullet
-        (render_exps in_prose exps_target)
+        (render_exps_s Prose exps_target)
         (render_list (List.map (fun s -> "the " ^ s) names))
-        (render_exp in_prose exp_source)
+        (render_exp_s Prose exp_source)
 
 (* Check-let instruction rendering (CheckLetSubI / CheckLetMatchI) *)
 
@@ -1105,8 +1271,8 @@ and render_check_let_instr ~(level : int) ~(bullet : string)
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let head =
     F.asprintf "%sLet!~type~ %s be %s.%s" bullet
-      (render_exp_as_code in_prose exp_l)
-      (render_exp in_prose exp_r)
+      (render_exp_as_code_s Prose exp_l)
+      (render_exp_s Prose exp_r)
       fallthrough
   in
   if block_inner = [] then head
@@ -1124,9 +1290,9 @@ and render_option_get_instr ~(level : int) ~(bullet : string)
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let head =
     F.asprintf "%sLet %s be %s %s.%s" bullet
-      (render_exp_as_code in_prose exp_l)
+      (render_exp_as_code_s Prose exp_l)
       (adoc_link ~link:"option_get" "*!*")
-      (render_exp in_prose exp_r)
+      (render_exp_s Prose exp_r)
       fallthrough
   in
   if block_inner = [] then head
@@ -1176,11 +1342,11 @@ and render_group (instr : instr) : string =
       let title =
         match (hint_in, hint_true) with
         | Some hint, _ | _, Some hint ->
-            render_alter_hint ~caps:true in_link hint (reindent_lines ~level:0)
-              render_exp exps
+            render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+              (fun e -> Inline.to_adoc_in_link (render_exp Prose e)) exps
             |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
         | None, None ->
-            render_rel_title_math in_prose rel_signature exps
+            render_rel_title_math Prose rel_signature exps
             |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
       in
       title ^ ":\n" ^ render_instrs block
@@ -1205,15 +1371,17 @@ and lift_synthesized_exp (exp : Sl.exp) : exp =
   in
   Annot.no_hints (it' $$ (exp.at, exp.note))
 
-and render_rel_title_math (ctx : t) (rel_signature : rel_signature)
+and render_rel_title_math (mode : mode) (rel_signature : rel_signature)
     (exps : exp list) : string =
   let nottyp, inputs = rel_signature in
   let mixop = Mixfix.to_mixop nottyp.it in
-  let sexps = List.map (render_exp in_code) exps in
+  let sexps = List.map (fun e -> Inline.to_adoc_code (render_exp Code e)) exps in
   let num_outputs = Mixop.arity mixop - List.length sexps in
   let holes = List.init num_outputs (fun _ -> "%") in
   let padded = Hints.Input.combine inputs sexps holes in
-  Mixop.assemble ~string_of_atom:code_of_atom mixop padded |> adoc_as_code ctx
+  Inline.to_adoc
+    (as_code_in mode
+       (Inline.text (Mixop.assemble ~string_of_atom:code_of_atom mixop padded)))
 
 and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =
@@ -1232,30 +1400,30 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
         (Sl.Print.string_of_relid id_rel
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint_in (reindent_lines ~level:1)
-           render_exp exps_in_title)
+        (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
+           (fun e -> render_exp_s Prose e) exps_in_title)
         (adoc_unordered_bullet 0)
         ("Result in "
-        ^ render_alter_hint ~caps:false in_prose hint_out
-            (reindent_lines ~level:1) render_exp exps_out)
+        ^ render_alter_hint ~caps:false Prose hint_out
+            (reindent_lines ~level:1) (fun e -> render_exp_s Prose e) exps_out)
   | Some hint_in, _, _, _ ->
       F.asprintf "%s:\n\n%s%s."
         (Sl.Print.string_of_relid id_rel
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint_in (reindent_lines ~level:1)
-           render_exp exps_in_title)
+        (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
+           (fun e -> render_exp_s Prose e) exps_in_title)
   | _, _, _, Some hint_true ->
       F.asprintf "%s:\n\n%s%s"
         (Sl.Print.string_of_relid id_rel
         |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint_true
-           (reindent_lines ~level:0) render_exp exps)
+        (render_alter_hint ~caps:true Prose hint_true
+           (reindent_lines ~level:0) (fun e -> render_exp_s Prose e) exps)
   | _ ->
       F.asprintf "%s: %s"
         (Sl.Print.string_of_relid id_rel)
-        (render_rel_title_math in_prose rel_signature exps)
+        (render_rel_title_math Prose rel_signature exps)
       |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
 
 let render_extern_rel_def (hints : Annot.hints) (externrel : externrel) : string
@@ -1280,25 +1448,25 @@ let render_func_title_adoc (hints : Annot.hints) (id_func : id)
         (string_of_defid id_func
         |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
         (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true in_prose hint (reindent_lines ~level:0)
-           render_param params)
+        (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+           (fun p -> render_param_s Prose p) params)
   | None, None ->
       (string_of_defid id_func
       |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
       ^ Sl.Print.string_of_tparams tparams
-      ^ render_params (in_link |> code) params
+      ^ Inline.serialize ~in_code:true ~in_link:true (render_params Code params)
 
 let render_func_header (hints : Annot.hints) (id_func : id)
     (tparams : tparam list) (params : param list) : string =
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
-      render_alter_hint ~caps:true in_prose hint (reindent_lines ~level:0)
-        render_param params
+      render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+        (fun p -> render_param_s Prose p) params
       |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
   | None, None ->
       string_of_defid id_func
       ^ Sl.Print.string_of_tparams tparams
-      ^ render_params (in_link |> code) params
+      ^ Inline.serialize ~in_code:true ~in_link:true (render_params Code params)
       |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
 
 let render_extern_func_def (hints : Annot.hints) (externfunc : externfunc) :
@@ -1320,14 +1488,14 @@ let render_table_func_def (hints : Annot.hints) (tablefunc : tablefunc) : string
     ^ "\", options=\"header\"]\n"
   in
   let table_header =
-    "|===" ^ "\n" ^ "| " ^ render_params in_prose params ^ " | " ^ "Result \n\n"
+    "|===" ^ "\n" ^ "| " ^ render_params_s Prose params ^ " | " ^ "Result \n\n"
   in
   let table_rows =
     tablerows
     |> List.map (fun tablerow ->
            let exps_sig, exp_res, _ = tablerow in
-           let row_output = render_exp in_code exp_res in
-           let row_input = render_exps in_code exps_sig in
+           let row_output = Inline.to_adoc_code (render_exp Code exp_res) in
+           let row_input = Inline.to_adoc_code (render_exps Code exps_sig) in
            "| " ^ row_input ^ " | " ^ row_output)
     |> String.concat "\n"
   in
