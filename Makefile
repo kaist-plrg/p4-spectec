@@ -77,14 +77,14 @@ endef
 # Fast tests (no -det)
 TEST_ALIASES := \
   speclang \
-  run run-il run-sl \
-  sim-il sim-sl \
-  sim-v1model-p4c-il sim-v1model-p4c-sl \
-  sim-v1model-p4testgen-il sim-v1model-p4testgen-sl \
-  sim-v1model-custom-il sim-v1model-custom-sl \
-  sim-ebpf-p4c-il sim-ebpf-p4c-sl \
-  sim-ebpf-p4testgen-il sim-ebpf-p4testgen-sl \
-  sim-psa-p4c-il sim-psa-p4c-sl \
+  run run-il run-sl run-pl \
+  sim-il sim-sl sim-pl \
+  sim-v1model-p4c-il sim-v1model-p4c-sl sim-v1model-p4c-pl \
+  sim-v1model-p4testgen-il sim-v1model-p4testgen-sl sim-v1model-p4testgen-pl \
+  sim-v1model-custom-il sim-v1model-custom-sl sim-v1model-custom-pl \
+  sim-ebpf-p4c-il sim-ebpf-p4c-sl sim-ebpf-p4c-pl \
+  sim-ebpf-p4testgen-il sim-ebpf-p4testgen-sl sim-ebpf-p4testgen-pl \
+  sim-psa-p4c-il sim-psa-p4c-sl sim-psa-p4c-pl \
   p4parse
 
 $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
@@ -92,13 +92,13 @@ $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
 # Det tests (slow, with -det)
 DET_ALIASES := \
   run-det run-il-det run-sl-det \
-  sim-il-det sim-sl-det \
-  sim-v1model-p4c-il-det sim-v1model-p4c-sl-det \
-  sim-v1model-p4testgen-il-det sim-v1model-p4testgen-sl-det \
-  sim-v1model-custom-il-det sim-v1model-custom-sl-det \
-  sim-ebpf-p4c-il-det sim-ebpf-p4c-sl-det \
-  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det \
-  sim-psa-p4c-il-det sim-psa-p4c-sl-det
+  sim-il-det sim-sl-det sim-pl-det \
+  sim-v1model-p4c-il-det sim-v1model-p4c-sl-det sim-v1model-p4c-pl-det \
+  sim-v1model-p4testgen-il-det sim-v1model-p4testgen-sl-det sim-v1model-p4testgen-pl-det \
+  sim-v1model-custom-il-det sim-v1model-custom-sl-det sim-v1model-custom-pl-det \
+  sim-ebpf-p4c-il-det sim-ebpf-p4c-sl-det sim-ebpf-p4c-pl-det \
+  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det sim-ebpf-p4testgen-pl-det \
+  sim-psa-p4c-il-det sim-psa-p4c-sl-det sim-psa-p4c-pl-det
 
 $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
 
@@ -108,6 +108,14 @@ test-fast:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
 	  (echo "####>" Failure running fast tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+.PHONY: test-pl
+test-pl:
+	echo "#### Running PL-only tests (sim-pl)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @run-pl @sim-pl --profile=release && echo OK || \
+	  (echo "####>" Failure running PL tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all

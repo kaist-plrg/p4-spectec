@@ -152,6 +152,8 @@ let sim_command =
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           flag "pl" no_arg ~doc:"Run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `PL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
      in

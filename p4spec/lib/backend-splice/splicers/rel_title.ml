@@ -65,7 +65,9 @@ end
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = ExternP of Pl.rel_title | DefinedP of Pl.rel_title
+  type prose =
+    | ExternP of Pl.Annot.hints * Pl.externrel
+    | DefinedP of Pl.Annot.hints * Pl.rel
 
   module Value = struct
     type t = prose
@@ -73,12 +75,11 @@ module Prose = struct
     let render (values : t list) : string =
       values
       |> List.map (fun value ->
-             let rel_title =
-               match value with
-               | ExternP rel_title -> rel_title
-               | DefinedP rel_title -> rel_title
-             in
-             Pl.Render.render_rel_title rel_title)
+             match value with
+             | ExternP (hints, externrel) ->
+                 Pl.Render.render_extern_rel_def hints externrel
+             | DefinedP (hints, (id_rel, rel_signature, exps, _, _)) ->
+                 Pl.Render.render_rel_title_adoc hints id_rel rel_signature exps)
       |> String.concat "\n\n"
   end
 
@@ -86,22 +87,14 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let id_of_rel_title = function
-      | Pl.ProseRelTitle (`Hold (id_rel, _, _))
-      | Pl.ProseRelTitle (`Yield (id_rel, _, _, _, _))
-      | Pl.MathRelTitle (id_rel, _, _) ->
-          id_rel
-
     let init_def (def_pl : Pl.def) : (key * value) option =
-      match def_pl.it with
-      | ExternRelD rel_title ->
-          let id = id_of_rel_title rel_title in
-          let rel_title = ExternP rel_title in
-          Some (id.it, rel_title)
-      | RelD (rel_title, _) ->
-          let id = id_of_rel_title rel_title in
-          let rel_title = DefinedP rel_title in
-          Some (id.it, rel_title)
+      match def_pl.node.it with
+      | ExternRelD externrel ->
+          let id, _, _ = externrel in
+          Some (id.it, ExternP (def_pl.hints, externrel))
+      | RelD rel ->
+          let id, _, _, _, _ = rel in
+          Some (id.it, DefinedP (def_pl.hints, rel))
       | _ -> None
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =

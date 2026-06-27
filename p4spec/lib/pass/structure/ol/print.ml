@@ -69,7 +69,9 @@ and string_of_instr ?(level = 0) ?(index = 0) (instr : instr) : string =
       Format.asprintf "%sResult in %s" order
         (string_of_reloutput rel_signature exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" order (string_of_exp exp)
-  | DebugI exp -> Format.asprintf "%sDebug: %s" order (string_of_exp exp)
+  | DebugI (exp, instr) ->
+      Format.asprintf "%sDebug: %s\n%s" order (string_of_exp exp)
+        (string_of_instr instr)
 
 and string_of_instrs ?(level = 0) (instrs : instr list) : string =
   instrs

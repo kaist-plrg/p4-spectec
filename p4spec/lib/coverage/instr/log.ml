@@ -74,7 +74,9 @@ and log_instr ?(level = 0) ?(index = 0) (cover : Multi.t) (instr : instr) :
       Format.asprintf "%sResult in: %s" header
         (string_of_reloutput rel_signature exps)
   | ReturnI exp -> Format.asprintf "%sReturn %s" header (string_of_exp exp)
-  | DebugI exp -> Format.asprintf "%sDebug: %s" header (string_of_exp exp)
+  | DebugI (exp, instr) ->
+      Format.asprintf "%sDebug: %s\n%s" header (string_of_exp exp)
+        (log_instr ~level ~index:(index + 1) cover instr)
 
 and log_block ?(level = 0) ?(index = 0) (cover : Multi.t) (block : block) :
     string =
