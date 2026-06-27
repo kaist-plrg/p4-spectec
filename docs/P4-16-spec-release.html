@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.26">
+<meta name="generator" content="Asciidoctor 2.0.23">
 <title>P416 Language Specification : The P4 Language Consortium</title>
 <style>
 @import url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.0/css/font-awesome.css);
@@ -912,7 +912,7 @@ span.bk-arm-anchor {
 <h1>P4<sub>16</sub> Language Specification : The P4 Language Consortium</h1>
 <div class="details">
 <span id="revnumber">version v1.2.5,</span>
-<span id="revdate">2026-05-12</span>
+<span id="revdate">2026-06-24</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Contents</div>
@@ -26597,10 +26597,7 @@ abortResult
 <p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>lo_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>hi_reduced</sub></code> and compile-time known-ness <code>ctk<sub>hi_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>hi_reduced</sub></code>.</p>
@@ -26711,10 +26708,7 @@ abortResult
 <p>Let <code>typedExpressionIR<sub>l_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l</sub></code> until <code>$compat_bitslice_offset_index</code> is satisfied</a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>w</sub></code> until <code>$compat_bitslice_offset_width</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>w_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>w_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>w</sub></code> until <code>$compat_bitslice_offset_width</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>w_reduced</sub></code> and compile-time known-ness <code>ctk<sub>w_reduced</sub></code></a> be the note of <code>typedExpressionIR<sub>w_reduced</sub></code>.</p>
@@ -27695,10 +27689,7 @@ operators, logical operators, concat, range, or mask operators.</p>
 <p>Let <code>(</code> <code>typeIR<sub>lvalue</sub></code> <code>)</code> be the note of <code>typedLvalueIR</code>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>binary</sub></code> implicitly cast to <code>typeIR<sub>lvalue</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>expressionIR</code> <code>#</code> <code>_</code> be <code>typedExpressionIR<sup>?</sup></code>.</p>
+<p>Let <code>expressionIR</code> <code>#</code> <code>_</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>binary</sub></code> implicitly cast to <code>typeIR<sub>lvalue</sub></code></a>.</p>
 </li>
 <li>
 <p>Let!<sub>type</sub> <code>_</code> <code>binop''</code> <code>typedExpressionIR<sub>cast</sub></code> be <code>expressionIR</code>.</p>
@@ -28844,10 +28835,7 @@ See <a href="#sec-call-convention">Section 19.4</a> for details on copy-out beha
 <p>Let <code>typeIR<sub>ret</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#find_local_return_type_t">the expected return type in <code>TC</code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>ret</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR</code> implicitly cast to <code>typeIR<sub>ret</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>TC<sub>1</sub></code> be <a href="#set_control_t"><code>TC</code> with control flow set to <code>RET</code></a>.</p>
@@ -33328,10 +33316,7 @@ forCollectionExpressionIR
 <p>Let <code>typedExpressionIR<sub>l_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l</sub></code> implicitly cast to <code>typeIR<sub>var</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>var</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_casted</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>var</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>l</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_casted</sub></code></a>.</p>
@@ -39304,10 +39289,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_plusminusmult</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_plusminusmult</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -39395,10 +39377,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_satplusminus</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_satplusminus</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -39503,10 +39482,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_divmod</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_divmod</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -39879,10 +39855,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_compare</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_compare</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -39970,10 +39943,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_bitwise</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_bitwise</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -40153,10 +40123,7 @@ evaluated. Note that logical operators (&amp;&amp;, ||) use short-circuit evalua
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_logical</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_logical</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -45253,10 +45220,7 @@ follows:</p>
 <p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>hi_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>hi_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>hi</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>lo_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>lo</sub></code> until <code>$compat_bitslice_range_index</code> is satisfied</a>.</p>
@@ -45376,10 +45340,7 @@ follows:</p>
 <p>Let <code>ctk<sub>base_reduced</sub></code> be <a href="#ctk_of_typedExpressionIR">the compile-time known-ness of <code>typedExpressionIR<sub>base_reduced</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l</sub></code> until <code>$compat_bitslice_offset_index</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>l_reduced</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>l_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l</sub></code> until <code>$compat_bitslice_offset_index</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typedExpressionIR<sub>w_reduced</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_unary">the result of reducing serializable enums in <code>typedExpressionIR<sub>w</sub></code> until <code>$compat_bitslice_offset_width</code> is satisfied</a>.</p>
@@ -55189,10 +55150,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_mask</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_mask</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -55201,10 +55159,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>typedExpressionIR<sub>l_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_casted</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>l_casted</sub></code> <code>&amp;&amp;&amp;</code> <code>typedExpressionIR<sub>r_casted</sub></code>.</p>
@@ -55270,10 +55225,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_cast</sub>,</code> <code>typedExpressionIR<sub>r_cast</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_binary"><code>typedExpressionIR<sub>l</sub></code> and <code>typedExpressionIR<sub>r</sub></code> implicitly cast to equal types</a>.</p>
 </li>
 <li>
-<p>Let <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code> be <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_range</code> is satisfied</a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <code>(typedExpressionIR,</code> <code>typedExpressionIR)'<sup>?</sup></code>.</p>
+<p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_range</code> is satisfied</a>.</p>
 </li>
 <li>
 <p>Let <code>typeIR<sub>reduced</sub></code> be <a href="#type_of_typedExpressionIR">the type of <code>typedExpressionIR<sub>l_reduced</sub></code></a>.</p>
@@ -55285,10 +55237,7 @@ simple keyset expression is visited in turn.</p>
 <p>Let <code>typedExpressionIR<sub>l_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_casted</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_casted</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r_reduced</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
 <p>Result in <code>typedExpressionIR<sub>l_casted</sub></code> <code>..</code> <code>typedExpressionIR<sub>r_casted</sub></code>.</p>
@@ -62446,10 +62395,7 @@ keysets.</p>
 <p>Let <code>typedExpressionIR<sub>l_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_mask</code> is satisfied</a>.</p>
@@ -62516,10 +62462,7 @@ keysets.</p>
 <p>Let <code>typedExpressionIR<sub>l_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_mask</code> is satisfied</a>.</p>
@@ -62682,10 +62625,7 @@ keysets.</p>
 <p>Let <code>typedExpressionIR<sub>l_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>l</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
-<p>Let <code>typedExpressionIR'<sup>?</sup></code> be <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
-</li>
-<li>
-<p>Let!<sub>type</sub> <code>typedExpressionIR<sub>r_cast</sub></code> be <code>typedExpressionIR'<sup>?</sup></code>.</p>
+<p>Let <code>typedExpressionIR<sub>r_cast</sub></code> be <a href="#option_get"><strong>!</strong></a> <a href="#cast_unary"><code>typedExpressionIR<sub>r</sub></code> implicitly cast to <code>typeIR<sub>key</sub></code></a>.</p>
 </li>
 <li>
 <p>Let <code>(</code> <code>typedExpressionIR<sub>l_reduced</sub>,</code> <code>typedExpressionIR<sub>r_reduced</sub></code> <code>)</code> be <a href="#option_get"><strong>!</strong></a> <a href="#reduce_serenum_binary">the result of reducing serializable enums in <code>typedExpressionIR<sub>l_cast</sub></code> and <code>typedExpressionIR<sub>r_cast</sub></code> until <code>$compat_range</code> is satisfied</a>.</p>
@@ -87155,7 +87095,7 @@ p4programIR
 <div id="footer">
 <div id="footer-text">
 Version v1.2.5<br>
-Last updated 2026-05-12 23:08:32 +0900
+Last updated 2026-06-24 21:19:07 +0900
 </div>
 </div>
 </body>
