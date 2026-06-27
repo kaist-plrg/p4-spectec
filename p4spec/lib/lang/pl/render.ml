@@ -1412,8 +1412,9 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
   | Some hint_in, Some hint_out, Some exps_out_sl, _ ->
       let exps_out = List.map lift_synthesized_exp exps_out_sl in
       F.asprintf "%s:\n\n%s%s:\n%s%s."
-        (Sl.Print.string_of_relid id_rel
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+        (Inline.to_adoc
+           (Inline.link ~target:(string_of_relid id_rel)
+              (Inline.text (Sl.Print.string_of_relid id_rel))))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
            (fun e -> render_exp_s Prose e) exps_in_title)
@@ -1423,23 +1424,27 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
             (reindent_lines ~level:1) (fun e -> render_exp_s Prose e) exps_out)
   | Some hint_in, _, _, _ ->
       F.asprintf "%s:\n\n%s%s."
-        (Sl.Print.string_of_relid id_rel
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+        (Inline.to_adoc
+           (Inline.link ~target:(string_of_relid id_rel)
+              (Inline.text (Sl.Print.string_of_relid id_rel))))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
            (fun e -> render_exp_s Prose e) exps_in_title)
   | _, _, _, Some hint_true ->
       F.asprintf "%s:\n\n%s%s"
-        (Sl.Print.string_of_relid id_rel
-        |> adoc_as_link in_prose ~link:(string_of_relid id_rel))
+        (Inline.to_adoc
+           (Inline.link ~target:(string_of_relid id_rel)
+              (Inline.text (Sl.Print.string_of_relid id_rel))))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true Prose hint_true
            (reindent_lines ~level:0) (fun e -> render_exp_s Prose e) exps)
   | _ ->
-      F.asprintf "%s: %s"
-        (Sl.Print.string_of_relid id_rel)
-        (render_rel_title_math Prose rel_signature exps)
-      |> adoc_as_link in_prose ~link:(string_of_relid id_rel)
+      Inline.to_adoc
+        (Inline.link ~target:(string_of_relid id_rel)
+           (Inline.text
+              (F.asprintf "%s: %s"
+                 (Sl.Print.string_of_relid id_rel)
+                 (render_rel_title_math Prose rel_signature exps))))
 
 let render_extern_rel_def (hints : Annot.hints) (externrel : externrel) : string
     =
@@ -1460,14 +1465,16 @@ let render_func_title_adoc (hints : Annot.hints) (id_func : id)
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
       F.asprintf "%s:\n\n%s%s"
-        (string_of_defid id_func
-        |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
+        (Inline.to_adoc
+           (Inline.link ~target:(string_of_defid ~link:true id_func)
+              (Inline.text (string_of_defid id_func))))
         (adoc_unordered_bullet 0)
         (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
            (fun p -> render_param_s Prose p) params)
   | None, None ->
-      (string_of_defid id_func
-      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func))
+      Inline.to_adoc
+        (Inline.link ~target:(string_of_defid ~link:true id_func)
+           (Inline.text (string_of_defid id_func)))
       ^ Sl.Print.string_of_tparams tparams
       ^ Inline.serialize ~in_code:true ~in_link:true (render_params Code params)
 
@@ -1475,14 +1482,19 @@ let render_func_header (hints : Annot.hints) (id_func : id)
     (tparams : tparam list) (params : param list) : string =
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
-      render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-        (fun p -> render_param_s Prose p) params
-      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
+      Inline.to_adoc
+        (Inline.link ~target:(string_of_defid ~link:true id_func)
+           (Inline.text
+              (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+                 (fun p -> render_param_s Prose p) params)))
   | None, None ->
-      string_of_defid id_func
-      ^ Sl.Print.string_of_tparams tparams
-      ^ Inline.serialize ~in_code:true ~in_link:true (render_params Code params)
-      |> adoc_as_link in_prose ~link:(string_of_defid ~link:true id_func)
+      Inline.to_adoc
+        (Inline.link ~target:(string_of_defid ~link:true id_func)
+           (Inline.text
+              (string_of_defid id_func
+              ^ Sl.Print.string_of_tparams tparams
+              ^ Inline.serialize ~in_code:true ~in_link:true
+                  (render_params Code params))))
 
 let render_extern_func_def (hints : Annot.hints) (externfunc : externfunc) :
     string =
