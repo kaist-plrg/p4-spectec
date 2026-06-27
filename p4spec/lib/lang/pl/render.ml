@@ -5,20 +5,6 @@ open Ast
 open Util.Source
 module F = Format
 
-(* Asciidoc rendering context *)
-
-module Ctx = struct
-  type t = { in_code : bool; in_link : bool }
-
-  let in_prose = { in_code = false; in_link = false }
-  let in_code = { in_code = true; in_link = false }
-  let in_link = { in_code = false; in_link = true }
-  let code (context : t) = { context with in_code = true }
-  let link (context : t) = { context with in_link = true }
-end
-
-open Ctx
-
 (* Backtrack utils *)
 
 module Backtrack = struct
@@ -168,9 +154,6 @@ let adoc_mono (s : string) = "``" ^ s ^ "``"
 let adoc_mono_chopped (s : string) =
   s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
 
-let adoc_as_code (ctx : t) (s : string) : string =
-  if ctx.in_code then s else adoc_mono_chopped s
-
 let adoc_ordered_bullet (level : int) =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')
 
@@ -190,9 +173,6 @@ let adoc_link ~(link : string) (text : string) : string =
          \t%s\n"
         text;
       text
-
-let adoc_as_link (ctx : t) ~link (s : string) : string =
-  if ctx.in_link then s else adoc_link ~link s
 
 let adoc_attach_block = "+\n"
 let adoc_open_block (s : string) = F.asprintf "--\n%s\n--" s
