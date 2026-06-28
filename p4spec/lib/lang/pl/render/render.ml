@@ -780,16 +780,18 @@ let rec render_instr ?(level : int = 0) ?(unordered : bool = false)
       render_rule_instr ~level ~bullet ~backtrack hints id_rel notexp hint_input
         iterinstrs
   | ResultI (rel_signature, exps) ->
-      render_result_instr ~bullet hints rel_signature exps
-  | ReturnI exp -> render_return_instr ~bullet exp
-  | DebugI exp -> render_debug_instr ~bullet exp
+      Block.serialize (render_result_instr ~bullet hints rel_signature exps)
+  | ReturnI exp -> Block.serialize (render_return_instr ~bullet exp)
+  | DebugI exp -> Block.serialize (render_debug_instr ~bullet exp)
   | DestructI (fields, exp_source) ->
-      render_destruct_instr ~bullet fields exp_source
+      Block.serialize (render_destruct_instr ~bullet fields exp_source)
   | CheckLetSubI (_, exp_l, exp_r, block_inner)
   | CheckLetMatchI (_, exp_l, exp_r, block_inner) ->
-      render_check_let_instr ~level ~bullet ~backtrack exp_l exp_r block_inner
+      Block.serialize
+        (render_check_let_instr ~level ~bullet ~backtrack exp_l exp_r block_inner)
   | OptionGetI (exp_l, exp_r, block_inner) ->
-      render_option_get_instr ~level ~bullet ~backtrack exp_l exp_r block_inner
+      Block.serialize
+        (render_option_get_instr ~level ~bullet ~backtrack exp_l exp_r block_inner)
 
 and render_instrs ?(level : int = 0) ?(backtrack : Backtrack.ctx option = None)
     (instrs : block) : string =
@@ -1057,94 +1059,156 @@ and render_rule_instr ~(level : int) ~(bullet : string)
 (* Result instruction rendering *)
 
 and render_result_instr ~(bullet : string) (hints : Annot.hints)
-    (rel_signature : rel_signature) (exps : exp list) : string =
+    (rel_signature : rel_signature) (exps : exp list) : Block.t =
   let nottyp, hint_input = rel_signature in
   let typs = Mixfix.args nottyp.it in
   let is_conditional = Hints.Input.is_conditional hint_input typs in
-  if is_conditional then bullet ^ "Then, the relation holds."
+  let line doc = Block.concat [ Block.raw bullet; Block.inline doc ] in
+  if is_conditional then line (Doc.text "Then, the relation holds.")
   else
     match (hints.Annot.prose_out, exps) with
     | Some hint, _ ->
-        F.asprintf "%sResult in %s." bullet
-          (render_alter_hint Prose hint (reindent_lines ~level:0)
-             (fun e -> Doc.to_adoc (render_exp Prose e))
-             exps)
-    | None, [] -> bullet ^ "The relation holds."
+        line
+          (Doc.seq
+             [
+               Doc.text "Result in ";
+               Doc.text
+                 (render_alter_hint Prose hint (reindent_lines ~level:0)
+                    (fun e -> Doc.to_adoc (render_exp Prose e))
+                    exps);
+               Doc.text ".";
+             ])
+    | None, [] -> line (Doc.text "The relation holds.")
     | None, _ ->
-        F.asprintf "%sResult in %s." bullet
-          (Doc.to_adoc (render_exps Prose exps))
+        line
+          (Doc.seq
+             [ Doc.text "Result in "; render_exps Prose exps; Doc.text "." ])
 
 (* Return instruction rendering *)
 
-and render_return_instr ~(bullet : string) (exp : exp) : string =
-  F.asprintf "%sReturn %s." bullet (Doc.to_adoc (render_exp Prose exp))
+and render_return_instr ~(bullet : string) (exp : exp) : Block.t =
+  Block.concat
+    [
+      Block.raw bullet;
+      Block.inline
+        (Doc.seq [ Doc.text "Return "; render_exp Prose exp; Doc.text "." ]);
+    ]
 
 (* Debug instruction rendering *)
 
-and render_debug_instr ~(bullet : string) (exp : exp) : string =
-  F.asprintf "%s(debug: %s)" bullet (Doc.to_adoc (render_exp Prose exp))
+and render_debug_instr ~(bullet : string) (exp : exp) : Block.t =
+  Block.concat
+    [
+      Block.raw bullet;
+      Block.inline
+        (Doc.seq [ Doc.text "(debug: "; render_exp Prose exp; Doc.text ")" ]);
+    ]
 
 (* Destruct instruction rendering *)
 
 and render_destruct_instr ~(bullet : string)
-    (fields : (string option * exp) list) (exp_source : exp) : string =
+    (fields : (string option * exp) list) (exp_source : exp) : Block.t =
   let projections =
     List.filter_map
       (fun (name_opt, exp_target) ->
         Option.map (fun name -> (name, exp_target)) name_opt)
       fields
   in
+  let line doc = Block.concat [ Block.raw bullet; Block.inline doc ] in
   match projections with
   | [ (name, exp_target) ] ->
-      F.asprintf "%sLet %s be the %s of %s." bullet
-        (Doc.to_adoc (render_exp Prose exp_target))
-        name
-        (Doc.to_adoc (render_exp Prose exp_source))
+      line
+        (Doc.seq
+           [
+             Doc.text "Let ";
+             render_exp Prose exp_target;
+             Doc.text (F.asprintf " be the %s of " name);
+             render_exp Prose exp_source;
+             Doc.text ".";
+           ])
   | _ ->
       let names, exps_target = List.split projections in
-      F.asprintf "%sLet %s be %s of %s." bullet
-        (Doc.to_adoc (render_exps Prose exps_target))
-        (render_list (List.map (fun s -> "the " ^ s) names))
-        (Doc.to_adoc (render_exp Prose exp_source))
+      line
+        (Doc.seq
+           [
+             Doc.text "Let ";
+             render_exps Prose exps_target;
+             Doc.text " be ";
+             Doc.text (render_list (List.map (fun s -> "the " ^ s) names));
+             Doc.text " of ";
+             render_exp Prose exp_source;
+             Doc.text ".";
+           ])
 
 (* Check-let instruction rendering (CheckLetSubI / CheckLetMatchI) *)
 
 and render_check_let_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (exp_l : exp) (exp_r : exp)
-    (block_inner : block) : string =
+    (block_inner : block) : Block.t =
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let head =
-    F.asprintf "%sLet!~type~ %s be %s.%s" bullet
-      (Doc.to_adoc (render_exp_as_code Prose exp_l))
-      (Doc.to_adoc (render_exp Prose exp_r))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Let!~type~ ";
+               render_exp_as_code Prose exp_l;
+               Doc.text " be ";
+               render_exp Prose exp_r;
+               Doc.text ".";
+               Doc.text fallthrough;
+             ]);
+      ]
   in
   if block_inner = [] then head
   else
-    head ^ "\n"
-    ^ (block_inner
-      |> List.map (render_instr ~level ~backtrack)
-      |> String.concat "\n")
+    Block.concat
+      [
+        head;
+        Block.raw "\n";
+        Block.raw
+          (block_inner
+          |> List.map (render_instr ~level ~backtrack)
+          |> String.concat "\n");
+      ]
 
 (* Option-get instruction rendering *)
 
 and render_option_get_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (exp_l : exp) (exp_r : exp)
-    (block_inner : block) : string =
+    (block_inner : block) : Block.t =
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let head =
-    F.asprintf "%sLet %s be %s %s.%s" bullet
-      (Doc.to_adoc (render_exp_as_code Prose exp_l))
-      (adoc_link ~link:"option_get" "*!*")
-      (Doc.to_adoc (render_exp Prose exp_r))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Let ";
+               render_exp_as_code Prose exp_l;
+               Doc.text " be ";
+               Doc.text (adoc_link ~link:"option_get" "*!*");
+               Doc.text " ";
+               render_exp Prose exp_r;
+               Doc.text ".";
+               Doc.text fallthrough;
+             ]);
+      ]
   in
   if block_inner = [] then head
   else
-    head ^ "\n"
-    ^ (block_inner
-      |> List.map (render_instr ~level ~backtrack)
-      |> String.concat "\n")
+    Block.concat
+      [
+        head;
+        Block.raw "\n";
+        Block.raw
+          (block_inner
+          |> List.map (render_instr ~level ~backtrack)
+          |> String.concat "\n");
+      ]
 
 (* Definitions *)
 
