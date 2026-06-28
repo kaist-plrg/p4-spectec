@@ -189,6 +189,37 @@ let render_cmpop_word (mode : mode) (cmpop : cmpop) : string =
       | `LeOp -> "is less than or equal to"
       | `GeOp -> "is greater than or equal to")
 
+(* Doc-producing fold over a mixfix tree -- the [Doc.t] analogue of
+   [Mixop.assemble]. Arguments stay [Doc.t] (rather than being serialized to
+   strings first), so [in_code]/[in_link] propagate structurally and no
+   [to_adoc_code] is needed at the boundary. Mirrors [Mixfix.render]: pieces are
+   joined by a space and empty atoms (e.g. Tick) are dropped. *)
+
+let assemble_doc ~(atom : atom -> string) (mixop : Mixop.t) (args : Doc.t list) :
+    Doc.t =
+  let atom_opt (a : atom) : Doc.t option =
+    match atom a with "" -> None | s -> Some (Doc.text s)
+  in
+  let join (pieces : Doc.t option list) : Doc.t option =
+    match List.filter_map Fun.id pieces with
+    | [] -> None
+    | docs ->
+        Some
+          (Doc.seq
+             (List.mapi
+                (fun i d -> if i = 0 then d else Doc.seq [ Doc.text " "; d ])
+                docs))
+  in
+  let rec go (m : Doc.t Mixfix.t) : Doc.t option =
+    match m with
+    | Mixfix.Arg d -> Some d
+    | Mixfix.Atom a -> atom_opt a
+    | Mixfix.Brack (l, m, r) -> join [ atom_opt l; go m; atom_opt r ]
+    | Mixfix.Infix (l, a, r) -> join [ go l; atom_opt a; go r ]
+    | Mixfix.Seq ms -> join (List.map go ms)
+  in
+  go (Mixfix.fill mixop args) |> Option.value ~default:Doc.empty
+
 (* Expressions *)
 
 let rec render_exp (mode : mode) (exp : exp) : Doc.t =
@@ -246,8 +277,8 @@ and render_exp_as_code (_mode : mode) (exp : exp) : Doc.t =
 
 and code_of_notexp (notexp : notexp) : Doc.t =
   let mixop, exps = Mixfix.split notexp in
-  let sexps = List.map (fun e -> Doc.to_adoc_code (render_exp Code e)) exps in
-  Doc.code (Doc.text (Mixop.assemble ~string_of_atom:code_of_atom mixop sexps))
+  let dexps = List.map (render_exp Code) exps in
+  Doc.code (assemble_doc ~atom:code_of_atom mixop dexps)
 
 (* Boolean expression rendering *)
 
@@ -1393,11 +1424,11 @@ and render_rel_title_math (rel_signature : rel_signature) (exps : exp list) :
     Doc.t =
   let nottyp, inputs = rel_signature in
   let mixop = Mixfix.to_mixop nottyp.it in
-  let sexps = List.map (fun e -> Doc.to_adoc_code (render_exp Code e)) exps in
-  let num_outputs = Mixop.arity mixop - List.length sexps in
-  let holes = List.init num_outputs (fun _ -> "%") in
-  let padded = Hints.Input.combine inputs sexps holes in
-  Doc.code (Doc.text (Mixop.assemble ~string_of_atom:code_of_atom mixop padded))
+  let dexps = List.map (render_exp Code) exps in
+  let num_outputs = Mixop.arity mixop - List.length dexps in
+  let holes = List.init num_outputs (fun _ -> Doc.text "%") in
+  let padded = Hints.Input.combine inputs dexps holes in
+  Doc.code (assemble_doc ~atom:code_of_atom mixop padded)
 
 and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =
