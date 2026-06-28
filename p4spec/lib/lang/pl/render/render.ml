@@ -757,59 +757,56 @@ let render_guard (mode : mode) (exp_scrut : exp) (guard : guard) : Doc.t =
 (* Instructions *)
 
 let rec render_instr ?(level : int = 0) ?(unordered : bool = false)
-    ?(backtrack : Backtrack.ctx option = None) (instr : instr) : string =
+    ?(backtrack : Backtrack.ctx option = None) (instr : instr) : Block.t =
   let bullet =
     if unordered then adoc_unordered_bullet level else adoc_ordered_bullet level
   in
   let hints = instr.hints in
   match instr.node.it with
   | IfI (cond, iterexps, block_then, _) ->
-      Block.serialize
-        (render_if_instr ~level ~bullet ~backtrack cond iterexps block_then)
+      render_if_instr ~level ~bullet ~backtrack cond iterexps block_then
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
-      Block.serialize
-        (render_hold_instr ~level ~bullet ~backtrack hints id_rel notexp iterexps
-           holdcase)
+      render_hold_instr ~level ~bullet ~backtrack hints id_rel notexp iterexps
+        holdcase
   | CaseI (exp_scrut, cases, dangle) ->
-      Block.serialize
-        (render_case_instr ~level ~bullet ~backtrack exp_scrut cases dangle)
+      render_case_instr ~level ~bullet ~backtrack exp_scrut cases dangle
   | GroupI (_id_rulegroup, id_rel, rel_signature, exps, block) ->
-      Block.serialize
-        (render_group_instr ~level ~bullet ~backtrack hints id_rel rel_signature
-           exps block)
-  | TryI arms -> Block.serialize (render_try_instr ~level ~bullet arms)
+      render_group_instr ~level ~bullet ~backtrack hints id_rel rel_signature
+        exps block
+  | TryI arms -> render_try_instr ~level ~bullet arms
   | LetI (exp_l, exp_r, iterinstrs) ->
-      Block.serialize
-        (render_let_instr ~level ~bullet ~backtrack exp_l exp_r iterinstrs)
+      render_let_instr ~level ~bullet ~backtrack exp_l exp_r iterinstrs
   | RuleI (id_rel, notexp, hint_input, iterinstrs) ->
-      Block.serialize
-        (render_rule_instr ~level ~bullet ~backtrack hints id_rel notexp
-           hint_input iterinstrs)
+      render_rule_instr ~level ~bullet ~backtrack hints id_rel notexp hint_input
+        iterinstrs
   | ResultI (rel_signature, exps) ->
-      Block.serialize (render_result_instr ~bullet hints rel_signature exps)
-  | ReturnI exp -> Block.serialize (render_return_instr ~bullet exp)
-  | DebugI exp -> Block.serialize (render_debug_instr ~bullet exp)
+      render_result_instr ~bullet hints rel_signature exps
+  | ReturnI exp -> render_return_instr ~bullet exp
+  | DebugI exp -> render_debug_instr ~bullet exp
   | DestructI (fields, exp_source) ->
-      Block.serialize (render_destruct_instr ~bullet fields exp_source)
+      render_destruct_instr ~bullet fields exp_source
   | CheckLetSubI (_, exp_l, exp_r, block_inner)
   | CheckLetMatchI (_, exp_l, exp_r, block_inner) ->
-      Block.serialize
-        (render_check_let_instr ~level ~bullet ~backtrack exp_l exp_r block_inner)
+      render_check_let_instr ~level ~bullet ~backtrack exp_l exp_r block_inner
   | OptionGetI (exp_l, exp_r, block_inner) ->
-      Block.serialize
-        (render_option_get_instr ~level ~bullet ~backtrack exp_l exp_r block_inner)
+      render_option_get_instr ~level ~bullet ~backtrack exp_l exp_r block_inner
 
 and render_instrs ?(level : int = 0) ?(backtrack : Backtrack.ctx option = None)
-    (instrs : block) : string =
+    (instrs : block) : Block.t =
   match instrs with
   | [
    ({ node = { it = ReturnI ({ node = { it = BoolE _; _ }; _ } as e); _ }; _ } :
      instr);
   ] ->
-      F.asprintf " return %s." (Doc.to_adoc (render_exp_as_code Prose e))
+      Block.inline
+        (Doc.seq
+           [ Doc.text " return "; render_exp_as_code Prose e; Doc.text "." ])
   | _ ->
-      "\n"
-      ^ (List.map (render_instr ~level ~backtrack) instrs |> String.concat "\n")
+      Block.concat
+        [
+          Block.raw "\n";
+          Block.vseq (List.map (render_instr ~level ~backtrack) instrs);
+        ]
 
 and render_iterexp_suffix (iterexps : iterexp list) : Doc.t =
   match iterexps with
@@ -833,8 +830,7 @@ and render_iterinstr_suffix (iterinstrs : iterinstr list) : Doc.t =
 
 and render_children ~(level : int) ~(backtrack : Backtrack.ctx option)
     (block : block) : Block.t =
-  Block.raw
-    (block |> List.map (render_instr ~level ~backtrack) |> String.concat "\n")
+  Block.vseq (List.map (render_instr ~level ~backtrack) block)
 
 and render_if_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (cond : exp) (iterexps : iterexp list)
@@ -907,23 +903,23 @@ and render_hold_instr ~(level : int) ~(bullet : string)
       Block.concat
         [
           if_head ~hold:true;
-          Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+          render_instrs ~level:(level + 1) ~backtrack block;
         ]
   | NotHoldH (block, _dangle) ->
       Block.concat
         [
           if_head ~hold:false;
-          Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+          render_instrs ~level:(level + 1) ~backtrack block;
         ]
   | BothH (block_hold, block_nothold) ->
       Block.concat
         [
           if_head ~hold:true;
-          Block.raw (render_instrs ~level:(level + 1) ~backtrack block_hold);
+          render_instrs ~level:(level + 1) ~backtrack block_hold;
           Block.raw "\n";
           Block.raw bullet;
           Block.inline (Doc.text "Else:");
-          Block.raw (render_instrs ~level:(level + 1) ~backtrack block_nothold);
+          render_instrs ~level:(level + 1) ~backtrack block_nothold;
         ]
 
 (* Case analysis instruction rendering *)
@@ -961,8 +957,7 @@ and render_case_instr ~(level : int) ~(bullet : string)
                    [
                      Block.raw bullet;
                      Block.inline (Doc.text "Else:");
-                     Block.raw
-                       (render_instrs ~level:(level + 1) ~backtrack block_then);
+                     render_instrs ~level:(level + 1) ~backtrack block_then;
                    ]
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
@@ -976,8 +971,7 @@ and render_case_instr ~(level : int) ~(bullet : string)
                             render_guard Prose exp_scrut guard;
                             Doc.text ":";
                           ]);
-                     Block.raw
-                       (render_instrs ~level:(level + 1) ~backtrack block_then);
+                     render_instrs ~level:(level + 1) ~backtrack block_then;
                    ]))
 
 (* Group instruction rendering *)
@@ -1003,7 +997,7 @@ and render_group_instr ~(level : int) ~(bullet : string)
     [
       Block.raw bullet;
       Block.inline (Doc.seq [ title; Doc.text ":" ]);
-      Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+      render_instrs ~level:(level + 1) ~backtrack block;
     ]
 
 (* Try instruction rendering *)
@@ -1017,10 +1011,12 @@ and render_try_instr ~(level : int) ~(bullet : string) (arms : arm list) :
   let render_arm idx arm =
     let backtrack = Backtrack.arm_backtrack_ctx ~block ~level_arm ~total idx in
     let anchor = Backtrack.arm_anchor ~block ~level_arm idx in
-    F.asprintf "%s{empty}%s%s"
-      (adoc_ordered_bullet level_arm)
-      anchor
-      (render_instrs ~level:level_body ~backtrack:(Some backtrack) arm)
+    Block.concat
+      [
+        Block.raw
+          (F.asprintf "%s{empty}%s" (adoc_ordered_bullet level_arm) anchor);
+        render_instrs ~level:level_body ~backtrack:(Some backtrack) arm;
+      ]
   in
   Block.concat
     [
@@ -1033,7 +1029,7 @@ and render_try_instr ~(level : int) ~(bullet : string) (arms : arm list) :
              Doc.text ":";
            ]);
       Block.raw "\n";
-      Block.raw (String.concat "\n" (List.mapi render_arm arms));
+      Block.vseq (List.mapi render_arm arms);
     ]
 
 (* Let instruction rendering *)
@@ -1288,14 +1284,7 @@ and render_check_let_instr ~(level : int) ~(bullet : string)
   if block_inner = [] then head
   else
     Block.concat
-      [
-        head;
-        Block.raw "\n";
-        Block.raw
-          (block_inner
-          |> List.map (render_instr ~level ~backtrack)
-          |> String.concat "\n");
-      ]
+      [ head; Block.raw "\n"; render_children ~level ~backtrack block_inner ]
 
 (* Option-get instruction rendering *)
 
@@ -1324,14 +1313,7 @@ and render_option_get_instr ~(level : int) ~(bullet : string)
   if block_inner = [] then head
   else
     Block.concat
-      [
-        head;
-        Block.raw "\n";
-        Block.raw
-          (block_inner
-          |> List.map (render_instr ~level ~backtrack)
-          |> String.concat "\n");
-      ]
+      [ head; Block.raw "\n"; render_children ~level ~backtrack block_inner ]
 
 (* Definitions *)
 
@@ -1385,7 +1367,7 @@ and render_group (instr : instr) : string =
               (Doc.link ~target:(string_of_relid id_rel)
                  (render_rel_title_math rel_signature exps))
       in
-      title ^ ":\n" ^ render_instrs block
+      title ^ ":\n" ^ Block.serialize (render_instrs block)
   | _ -> assert false
 
 and render_elseblock (elseblock_opt : elseblock option) : string =
@@ -1393,7 +1375,7 @@ and render_elseblock (elseblock_opt : elseblock option) : string =
   | None | Some [] -> ""
   | Some block ->
       "\n\n" ^ adoc_ordered_bullet 0 ^ "Otherwise:"
-      ^ render_instrs ~level:1 block
+      ^ Block.serialize (render_instrs ~level:1 block)
 
 (* Relations *)
 
@@ -1567,7 +1549,7 @@ let render_defined_func_def (hints : Annot.hints) (func : definedfunc) : string
   let id_func, tparams, params, _typ, block, elseblock_opt = func in
   render_func_header hints id_func tparams params
   ^ "\n\n"
-  ^ strip_leading_newline (render_instrs block)
+  ^ strip_leading_newline (Block.serialize (render_instrs block))
   ^ render_elseblock elseblock_opt
 
 (* Definitions *)
