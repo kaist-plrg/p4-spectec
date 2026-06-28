@@ -45,52 +45,6 @@ let adoc_link ~(link : string) (text : string) : string =
 let adoc_attach_block = "+\n"
 let adoc_open_block (s : string) = F.asprintf "--\n%s\n--" s
 
-(* Inline document
-
-   A structured representation of inline asciidoc content, serialized once by
-   [to_adoc]. A [Code]/[Link] wrapper is emitted only when one of the same kind
-   is not already open, so nested wrappers collapse structurally -- this
-   replaces the old [in_code]/[in_link] suppression booleans. *)
-
-module Inline = struct
-  type t =
-    | Text of string
-    | Seq of t list
-    | Code of t
-    | Link of string * t (* target, body *)
-
-  let text (s : string) : t = Text s
-  let seq (ts : t list) : t = Seq ts
-  let code (t : t) : t = Code t
-  let link ~(target : string) (t : t) : t = Link (target, t)
-  let empty : t = Seq []
-  let ( ++ ) (a : t) (b : t) : t = Seq [ a; b ]
-
-  let rec serialize ~(in_code : bool) ~(in_link : bool) (t : t) : string =
-    match t with
-    | Text s -> s
-    | Seq ts -> String.concat "" (List.map (serialize ~in_code ~in_link) ts)
-    | Code inner ->
-        let s = serialize ~in_code:true ~in_link inner in
-        if in_code then s else adoc_mono_chopped s
-    | Link (target, inner) ->
-        let s = serialize ~in_code ~in_link:true inner in
-        if in_link then s else adoc_link ~link:target s
-
-  (* Serialize at the top level: neither a code span nor a link is open. *)
-  let to_adoc (t : t) : string = serialize ~in_code:false ~in_link:false t
-
-  (* Serialize as if already inside a code span (no extra mono-wrapping of the
-     whole, leaves stay raw) -- the structural equivalent of the old
-     [render_exp in_code] used to build raw fragments for string assembly. *)
-  let to_adoc_code (t : t) : string = serialize ~in_code:true ~in_link:false t
-
-  (* Serialize as if already inside a link (nested links suppressed) -- the
-     structural equivalent of the old [render_exp in_link] used inside hint
-     alternations whose whole result is then wrapped in one outer link. *)
-  let to_adoc_in_link (t : t) : string = serialize ~in_code:false ~in_link:true t
-end
-
 let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
   String.concat ("\n" ^ adoc_unordered_bullet level) lines

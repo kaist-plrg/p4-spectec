@@ -88,8 +88,8 @@ let arm_letter (level : int) (idx : int) : string =
 (* Trails the bullet's first line, which must start with plain text *)
 
 let render_block_label (block : BlockLabel.t) : string =
-  F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]"
-    block.id block.display
+  F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]" block.id
+    block.display
 
 (* +++...+++, not pass:[...]: content has literal '[' / ']' *)
 
@@ -109,8 +109,8 @@ let render_fallthrough_link (backtrack : ctx option) : string =
 
 (* Backtrack target for arm [idx]: the next arm, or out of the block *)
 
-let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int)
-    ~(total : int) (idx : int) : ctx =
+let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int) ~(total : int)
+    (idx : int) : ctx =
   let target =
     if idx + 1 < total then NextArm (arm_letter level_arm (idx + 1))
     else OutOfBlock
@@ -120,7 +120,6 @@ let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int)
 (* Trails the arm's first line; bk-arm-anchor sets scroll-margin-top so
    fragment links land on the arm header *)
 
-let arm_anchor ~(block : BlockLabel.t) ~(level_arm : int) (idx : int) : string
-    =
-  F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++"
-    block.id (arm_letter level_arm idx)
+let arm_anchor ~(block : BlockLabel.t) ~(level_arm : int) (idx : int) : string =
+  F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++" block.id
+    (arm_letter level_arm idx)
