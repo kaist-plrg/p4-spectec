@@ -47,17 +47,84 @@ let render_list_doc (items : Doc.t list) : Doc.t =
           Doc.text ", and "; item_last;
         ]
 
-let render_alter_hint ?(caps = false) (mode : mode) (hints : Hints.Alter.t)
-    (render_base : string -> string) (render : 'a -> string) (items : 'a list) :
-    string =
-  let render_atom (atom : atom) : string =
-    let raw = "+" ^ (atom.it |> Atom.string_of_atom) ^ "+" in
-    match mode with Code -> raw | Prose -> adoc_mono_chopped raw
+(* Doc-producing fold over an alternation hint -- the [Doc.t] analogue of
+   [Hints.Alter.alternate]. Hole items are rendered straight to [Doc.t] (rather
+   than serialized to strings), so when the whole result is wrapped in a
+   [Doc.link] the nested links collapse structurally and no [to_adoc_in_link] is
+   needed. Mirrors [alternate']: [Seq] keeps empties (space-joined), [Brack]
+   drops empty pieces, [Fuse] concatenates with no space. [caps] capitalizes the
+   first emitted text segment. *)
+
+let alternate_doc ?(caps = false) (hint : Hints.Alter.t)
+    (base_text : string -> string) (render : 'a -> Doc.t) (items : 'a list) :
+    Doc.t =
+  let atom_doc (atom : atom) : Doc.t =
+    Doc.code (Doc.text ("+" ^ (atom.it |> Atom.string_of_atom) ^ "+"))
   in
-  items
-  |> Hints.Alter.alternate ~base_text:render_base ~base_atom:render_atom hints
-       render
-  |> fun s -> if caps then String.capitalize_ascii s else s
+  let space_join (docs : Doc.t list) : Doc.t =
+    Doc.seq
+      (List.mapi
+         (fun i d -> if i = 0 then d else Doc.seq [ Doc.text " "; d ])
+         docs)
+  in
+  (* [caps] capitalizes the first character of the whole assembled string. The
+     first non-empty piece (of any kind) consumes it; only a leading text
+     segment is actually altered -- a leading code span / atom starts with a
+     non-letter, so capitalization is a no-op there, matching the old
+     [String.capitalize_ascii] on the final string. *)
+  let cap_pending = ref caps in
+  let consume_cap () = if !cap_pending then cap_pending := false in
+  let cap_text (s : string) : string =
+    if !cap_pending && s <> "" then (
+      cap_pending := false;
+      String.capitalize_ascii s)
+    else s
+  in
+  let rec go (hint : Hints.Alter.t) (cursor : int) : int * Doc.t option =
+    let open Hints.Alter in
+    match hint with
+    | TextH str ->
+        let s = cap_text (base_text str) in
+        (cursor, if s = "" then None else Some (Doc.text s))
+    | AtomH atom ->
+        consume_cap ();
+        (cursor, Some (atom_doc atom))
+    | SeqH hints ->
+        let cursor, docs =
+          List.fold_left
+            (fun (cursor, acc) hint ->
+              let cursor, d = go hint cursor in
+              (cursor, acc @ [ Option.value ~default:Doc.empty d ]))
+            (cursor, []) hints
+        in
+        (cursor, Some (space_join docs))
+    | BrackH (atom_l, hint, atom_r) ->
+        let cursor, d = go hint cursor in
+        let pieces =
+          List.filter_map Fun.id [ Some (atom_doc atom_l); d; Some (atom_doc atom_r) ]
+        in
+        (cursor, match pieces with [] -> None | _ -> Some (space_join pieces))
+    | HoleH `Next ->
+        consume_cap ();
+        (cursor + 1, Some (render (List.nth items cursor)))
+    | HoleH (`Num idx) ->
+        consume_cap ();
+        (cursor, Some (render (List.nth items idx)))
+    | FuseH (hint_l, hint_r) ->
+        let cursor, dl = go hint_l cursor in
+        let cursor, dr = go hint_r cursor in
+        ( cursor,
+          Some
+            (Doc.seq
+               [
+                 Option.value ~default:Doc.empty dl;
+                 Option.value ~default:Doc.empty dr;
+               ]) )
+    | OtherH hintexp ->
+        let s = cap_text (El.Print.string_of_exp hintexp) in
+        (cursor, Some (Doc.text s))
+  in
+  go hint 0 |> snd |> Option.value ~default:Doc.empty
 
 (* Numbers *)
 
@@ -331,10 +398,8 @@ and render_negated_exp_opt (mode : mode) (exp : exp) : Doc.t option =
       | Some hints ->
           Some
             (Doc.link ~target:id.it
-               (Doc.text
-                  (render_alter_hint mode hints (reindent_lines ~level:0)
-                     (fun a -> Doc.to_adoc_in_link (render_arg Prose a))
-                     args)))
+               (alternate_doc hints (reindent_lines ~level:0) (render_arg Prose)
+                  args))
       | None ->
           Some
             (Doc.code
@@ -460,10 +525,8 @@ and render_case_exp (mode : mode) (exp : exp) (notexp : notexp) : Doc.t =
       match (hint_opt, link_opt) with
       | Some hints, Some tid ->
           Doc.link ~target:tid.it
-            (Doc.text
-               (render_alter_hint mode hints (reindent_lines ~level:0)
-                  (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                  (Mixfix.args notexp)))
+            (alternate_doc hints (reindent_lines ~level:0) (render_exp Prose)
+               (Mixfix.args notexp))
       | _ -> code_of_notexp notexp)
 
 (* Struct expression rendering *)
@@ -620,10 +683,8 @@ and render_call_exp (mode : mode) (exp : exp) (id : id) (targs : targ list)
       match (hint_in, hint_true) with
       | Some hints, _ | _, Some hints ->
           Doc.link ~target:id.it
-            (Doc.text
-               (render_alter_hint mode hints (reindent_lines ~level:0)
-                  (fun a -> Doc.to_adoc_in_link (render_arg Prose a))
-                  args))
+            (alternate_doc hints (reindent_lines ~level:0) (render_arg Prose)
+               args)
       | None, None ->
           Doc.code
             (Doc.link ~target:id.it
@@ -903,15 +964,12 @@ and render_hold_instr ~(level : int) ~(bullet : string)
     | Some hint ->
         Doc.to_adoc
           (Doc.link ~target:(string_of_relid id_rel)
-             (Doc.text
-                (render_alter_hint Prose hint (reindent_lines ~level:0)
-                   (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                   exps)))
+             (alternate_doc hint (reindent_lines ~level:0) (render_exp Prose)
+                exps))
     | None ->
         let math =
           Doc.to_adoc
-            (Doc.link ~target:(string_of_relid id_rel)
-               (Doc.text (Doc.to_adoc (code_of_notexp notexp))))
+            (Doc.link ~target:(string_of_relid id_rel) (code_of_notexp notexp))
         in
         math ^ fallback_verb
   in
@@ -1016,10 +1074,8 @@ and render_group_instr ~(level : int) ~(bullet : string)
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
         Doc.link ~target:(string_of_relid id_rel)
-          (Doc.text
-             (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-                (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                exps))
+          (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+             (render_exp Prose) exps)
     | None, None ->
         Doc.link ~target:(string_of_relid id_rel)
           (render_rel_title_math rel_signature exps)
@@ -1151,17 +1207,15 @@ and render_rule_instr ~(level : int) ~(bullet : string)
     match (hint_in, hint_out) with
     | Some hint_in, Some hint_out ->
         let prose_out =
-          render_alter_hint Prose hint_out unindent_lines
-            (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-            exps_out
+          (* Not wrapped in a visible link, but inner links are suppressed:
+             render to a string with links off. *)
+          Doc.to_adoc_in_link
+            (alternate_doc hint_out unindent_lines (render_exp Prose) exps_out)
         in
         let prose_in =
           Doc.to_adoc
             (Doc.link ~target:(string_of_relid id_rel)
-               (Doc.text
-                  (render_alter_hint Prose hint_in unindent_lines
-                     (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                     exps_in)))
+               (alternate_doc hint_in unindent_lines (render_exp Prose) exps_in))
         in
         if adoc_fits_in_width_short prose_in then
           F.asprintf "Let %s be the result of %s" prose_out prose_in
@@ -1222,10 +1276,8 @@ and render_result_instr ~(bullet : string) (hints : Annot.hints)
           (Doc.seq
              [
                Doc.text "Result in ";
-               Doc.text
-                 (render_alter_hint Prose hint (reindent_lines ~level:0)
-                    (fun e -> Doc.to_adoc (render_exp Prose e))
-                    exps);
+               alternate_doc hint (reindent_lines ~level:0) (render_exp Prose)
+                 exps;
                Doc.text ".";
              ])
     | None, [] -> line (Doc.text "The relation holds.")
@@ -1388,11 +1440,8 @@ and render_group (instr : instr) : string =
         | Some hint, _ | _, Some hint ->
             Doc.to_adoc
               (Doc.link ~target:(string_of_relid id_rel)
-                 (Doc.text
-                    (render_alter_hint ~caps:true Prose hint
-                       (reindent_lines ~level:0)
-                       (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                       exps)))
+                 (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+                    (render_exp Prose) exps))
         | None, None ->
             Doc.to_adoc
               (Doc.link ~target:(string_of_relid id_rel)
@@ -1456,19 +1505,15 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
            [
              title_header;
              Block.raw (adoc_unordered_bullet 0);
-             Block.raw
-               (render_alter_hint ~caps:true Prose hint_in
-                  (reindent_lines ~level:1)
-                  (fun e -> Doc.to_adoc (render_exp Prose e))
-                  exps_in_title);
+             Block.inline
+               (alternate_doc ~caps:true hint_in (reindent_lines ~level:1)
+                  (render_exp Prose) exps_in_title);
              Block.raw ":\n";
              Block.raw (adoc_unordered_bullet 0);
              Block.inline (Doc.text "Result in ");
-             Block.raw
-               (render_alter_hint ~caps:false Prose hint_out
-                  (reindent_lines ~level:1)
-                  (fun e -> Doc.to_adoc (render_exp Prose e))
-                  exps_out);
+             Block.inline
+               (alternate_doc ~caps:false hint_out (reindent_lines ~level:1)
+                  (render_exp Prose) exps_out);
              Block.raw ".";
            ])
   | Some hint_in, _, _, _ ->
@@ -1477,11 +1522,9 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
            [
              title_header;
              Block.raw (adoc_unordered_bullet 0);
-             Block.raw
-               (render_alter_hint ~caps:true Prose hint_in
-                  (reindent_lines ~level:1)
-                  (fun e -> Doc.to_adoc (render_exp Prose e))
-                  exps_in_title);
+             Block.inline
+               (alternate_doc ~caps:true hint_in (reindent_lines ~level:1)
+                  (render_exp Prose) exps_in_title);
              Block.raw ".";
            ])
   | _, _, _, Some hint_true ->
@@ -1490,11 +1533,9 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
            [
              title_header;
              Block.raw (adoc_unordered_bullet 0);
-             Block.raw
-               (render_alter_hint ~caps:true Prose hint_true
-                  (reindent_lines ~level:0)
-                  (fun e -> Doc.to_adoc (render_exp Prose e))
-                  exps);
+             Block.inline
+               (alternate_doc ~caps:true hint_true (reindent_lines ~level:0)
+                  (render_exp Prose) exps);
            ])
   | _ ->
       Block.serialize
@@ -1535,10 +1576,9 @@ let render_func_title_adoc (hints : Annot.hints) (id_func : id)
              Block.inline (Doc.seq [ title; Doc.text ":" ]);
              Block.raw "\n\n";
              Block.raw (adoc_unordered_bullet 0);
-             Block.raw
-               (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-                  (fun p -> Doc.to_adoc (render_param Prose p))
-                  params);
+             Block.inline
+               (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+                  (render_param Prose) params);
            ])
   | None, None ->
       Block.serialize
@@ -1559,9 +1599,9 @@ let render_func_header (hints : Annot.hints) (id_func : id)
         (Doc.link
            ~target:(string_of_defid ~link:true id_func)
            (Doc.text
-              (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-                 (fun p -> Doc.to_adoc (render_param Prose p))
-                 params)))
+              (Doc.to_adoc
+                 (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+                    (render_param Prose) params))))
   | None, None ->
       Doc.to_adoc
         (Doc.link
