@@ -1587,7 +1587,7 @@ let render_func_title_adoc (hints : Annot.hints) (id_func : id)
              Block.inline title;
              Block.raw (Sl.Print.string_of_tparams tparams);
              Block.raw
-               (Doc.serialize ~in_code:true ~in_link:true
+               (Doc.serialize ~in_code:true ~link_ctx:(Some "") ~lint:false
                   (render_params Code params));
            ])
 
@@ -1609,7 +1609,7 @@ let render_func_header (hints : Annot.hints) (id_func : id)
            (Doc.text
               (string_of_defid id_func
               ^ Sl.Print.string_of_tparams tparams
-              ^ Doc.serialize ~in_code:true ~in_link:true
+              ^ Doc.serialize ~in_code:true ~link_ctx:(Some "") ~lint:false
                   (render_params Code params))))
 
 let render_extern_func_def (hints : Annot.hints) (externfunc : externfunc) :
