@@ -25,13 +25,27 @@ let render_list (items : string list) : string =
       in
       String.concat ", " items ^ ", and " ^ item_last
 
-(* Wrap as a code span only in prose mode; in code mode the value is already
-   inside an enclosing code span, so leave it alone. The structural equivalent
-   of the old [_ |> adoc_as_code ctx] on an [Doc.t] that must not be
-   unconditionally re-wrapped. *)
+(* Oxford-comma join over inline documents (the [Doc.t] analogue of
+   [render_list]). *)
 
-let as_code_in (mode : mode) (t : Doc.t) : Doc.t =
-  match mode with Prose -> Doc.code t | Code -> t
+let render_list_doc (items : Doc.t list) : Doc.t =
+  match items with
+  | [] -> Doc.empty
+  | [ item ] -> item
+  | [ item_a; item_b ] -> Doc.seq [ item_a; Doc.text " and "; item_b ]
+  | _ ->
+      let items_rev = List.rev items in
+      let items, item_last =
+        (items_rev |> List.tl |> List.rev, items_rev |> List.hd)
+      in
+      Doc.seq
+        [
+          Doc.seq
+            (List.mapi
+               (fun i x -> if i = 0 then x else Doc.seq [ Doc.text ", "; x ])
+               items);
+          Doc.text ", and "; item_last;
+        ]
 
 let render_alter_hint ?(caps = false) (mode : mode) (hints : Hints.Alter.t)
     (render_base : string -> string) (render : 'a -> string) (items : 'a list) :
@@ -112,29 +126,33 @@ let render_var (mode : mode) ((id, _typ, iters) : var) : Doc.t =
            Doc.text (String.concat "" (List.map code_of_iter iters));
          ])
 
-let render_in_itervars (mode : mode) (vars : var list) : string =
+let render_in_itervars (vars : var list) : Doc.t =
   let render_in_var var =
-    F.asprintf "%s in %s"
-      (Doc.to_adoc (as_code_in mode (render_var Code var)))
-      (Doc.to_adoc
-         (as_code_in mode
-            (Doc.seq [ render_var Code var; Doc.text (code_of_iter List) ])))
+    Doc.seq
+      [
+        Doc.code (render_var Code var);
+        Doc.text " in ";
+        Doc.code
+          (Doc.seq [ render_var Code var; Doc.text (code_of_iter List) ]);
+      ]
   in
-  vars |> List.map render_in_var |> render_list
+  render_list_doc (List.map render_in_var vars)
 
-let render_out_itervars (mode : mode) (vars : var list) : string =
+let render_out_itervars (vars : var list) : Doc.t =
   vars
   |> List.filter_map (fun var ->
          let id, _, _ = var in
          if Id.is_underscored id then None
          else
            Some
-             (F.asprintf "%s be the list"
-                (Doc.to_adoc
-                   (as_code_in mode
-                      (Doc.seq
-                         [ render_var Code var; Doc.text (code_of_iter List) ])))))
-  |> render_list
+             (Doc.seq
+                [
+                  Doc.code
+                    (Doc.seq
+                       [ render_var Code var; Doc.text (code_of_iter List) ]);
+                  Doc.text " be the list";
+                ]))
+  |> render_list_doc
 
 (* Types *)
 
@@ -785,24 +803,23 @@ and render_instrs ?(level : int = 0) ?(backtrack : Backtrack.ctx option = None)
       "\n"
       ^ (List.map (render_instr ~level ~backtrack) instrs |> String.concat "\n")
 
-and render_iterexp_suffix (mode : mode) (iterexps : iterexp list) : string =
+and render_iterexp_suffix (iterexps : iterexp list) : Doc.t =
   match iterexps with
-  | [] -> ""
+  | [] -> Doc.empty
   | _ ->
       let vars = List.concat_map (fun (_, vars) -> vars) iterexps in
-      if vars = [] then ""
-      else F.asprintf ", for all %s" (render_in_itervars mode vars)
+      if vars = [] then Doc.empty
+      else Doc.seq [ Doc.text ", for all "; render_in_itervars vars ]
 
-and render_iterinstr_suffix (mode : mode) (iterinstrs : iterinstr list) : string
-    =
+and render_iterinstr_suffix (iterinstrs : iterinstr list) : Doc.t =
   match iterinstrs with
-  | [] -> ""
+  | [] -> Doc.empty
   | _ ->
       let vars =
         List.concat_map (fun (_, vars_in, _vars_out) -> vars_in) iterinstrs
       in
-      if vars = [] then ""
-      else F.asprintf ", for each %s" (render_in_itervars mode vars)
+      if vars = [] then Doc.empty
+      else Doc.seq [ Doc.text ", for each "; render_in_itervars vars ]
 
 (* If instruction rendering *)
 
@@ -813,7 +830,7 @@ and render_if_instr ~(level : int) ~(bullet : string)
   let check_line =
     F.asprintf "%sCheck that %s%s.%s" bullet
       (Doc.to_adoc (render_exp Prose cond))
-      (render_iterexp_suffix Prose iterexps)
+      (Doc.to_adoc (render_iterexp_suffix iterexps))
       fallthrough
   in
   if block_then = [] then check_line
@@ -831,7 +848,7 @@ and render_hold_instr ~(level : int) ~(bullet : string)
   let exps = Mixfix.args notexp in
   let hint_true = hints.Annot.prose_true in
   let hint_false = hints.Annot.prose_false in
-  let iter_suffix = render_iterexp_suffix Prose iterexps in
+  let iter_suffix = Doc.to_adoc (render_iterexp_suffix iterexps) in
   let render_head ~(hold : bool) : string =
     let hint_opt = if hold then hint_true else hint_false in
     let fallback_verb = if hold then " holds" else " does not hold" in
@@ -917,7 +934,7 @@ and render_group_instr ~(level : int) ~(bullet : string)
     | None, None ->
         Doc.to_adoc
           (Doc.link ~target:(string_of_relid id_rel)
-             (Doc.text (render_rel_title_math Prose rel_signature exps)))
+             (render_rel_title_math rel_signature exps))
   in
   F.asprintf "%s%s:%s" bullet title
     (render_instrs ~level:(level + 1) ~backtrack block)
@@ -960,7 +977,7 @@ and render_let_instr ~(level : int) ~(bullet : string)
     F.asprintf "%sLet %s be %s%s.%s" bullet
       (Doc.to_adoc (render_exp_as_code Prose exp_l))
       (Doc.to_adoc (render_exp Prose exp_r))
-      (render_iterinstr_suffix Prose iterinstrs)
+      (Doc.to_adoc (render_iterinstr_suffix iterinstrs))
       fallthrough
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
@@ -971,9 +988,9 @@ and render_let_instr ~(level : int) ~(bullet : string)
     in
     F.asprintf
       "%sLet %s obtained by repeating:\n+\n--\n%s\n--\n+\nfor each %s.%s" bullet
-      (render_out_itervars Prose vars_out_visible)
+      (Doc.to_adoc (render_out_itervars vars_out_visible))
       body
-      (render_in_itervars Prose vars_in_all)
+      (Doc.to_adoc (render_in_itervars vars_in_all))
       fallthrough
 
 (* Rule instruction rendering *)
@@ -1025,16 +1042,16 @@ and render_rule_instr ~(level : int) ~(bullet : string)
   in
   if vars_out_visible = [] then
     F.asprintf "%s%s%s.%s" bullet rule_body
-      (render_iterinstr_suffix Prose iterinstrs)
+      (Doc.to_adoc (render_iterinstr_suffix iterinstrs))
       fallthrough
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
     F.asprintf
       "%sLet %s obtained by repeating:\n+\n--\n%s%s.\n--\n+\nfor each %s.%s"
       bullet
-      (render_out_itervars Prose vars_out_visible)
+      (Doc.to_adoc (render_out_itervars vars_out_visible))
       bullet_inner rule_body
-      (render_in_itervars Prose vars_in_all)
+      (Doc.to_adoc (render_in_itervars vars_in_all))
       fallthrough
 
 (* Result instruction rendering *)
@@ -1179,7 +1196,7 @@ and render_group (instr : instr) : string =
         | None, None ->
             Doc.to_adoc
               (Doc.link ~target:(string_of_relid id_rel)
-                 (Doc.text (render_rel_title_math Prose rel_signature exps)))
+                 (render_rel_title_math rel_signature exps))
       in
       title ^ ":\n" ^ render_instrs block
   | _ -> assert false
@@ -1203,17 +1220,15 @@ and lift_synthesized_exp (exp : Sl.exp) : exp =
   in
   Annot.no_hints (it' $$ (exp.at, exp.note))
 
-and render_rel_title_math (mode : mode) (rel_signature : rel_signature)
-    (exps : exp list) : string =
+and render_rel_title_math (rel_signature : rel_signature) (exps : exp list) :
+    Doc.t =
   let nottyp, inputs = rel_signature in
   let mixop = Mixfix.to_mixop nottyp.it in
   let sexps = List.map (fun e -> Doc.to_adoc_code (render_exp Code e)) exps in
   let num_outputs = Mixop.arity mixop - List.length sexps in
   let holes = List.init num_outputs (fun _ -> "%") in
   let padded = Hints.Input.combine inputs sexps holes in
-  Doc.to_adoc
-    (as_code_in mode
-       (Doc.text (Mixop.assemble ~string_of_atom:code_of_atom mixop padded)))
+  Doc.code (Doc.text (Mixop.assemble ~string_of_atom:code_of_atom mixop padded))
 
 and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =
@@ -1262,10 +1277,11 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
   | _ ->
       Doc.to_adoc
         (Doc.link ~target:(string_of_relid id_rel)
-           (Doc.text
-              (F.asprintf "%s: %s"
-                 (Sl.Print.string_of_relid id_rel)
-                 (render_rel_title_math Prose rel_signature exps))))
+           (Doc.seq
+              [
+                Doc.text (Sl.Print.string_of_relid id_rel ^ ": ");
+                render_rel_title_math rel_signature exps;
+              ]))
 
 let render_extern_rel_def (hints : Annot.hints) (externrel : externrel) : string
     =
