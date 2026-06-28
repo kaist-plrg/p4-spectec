@@ -764,21 +764,27 @@ let rec render_instr ?(level : int = 0) ?(unordered : bool = false)
   let hints = instr.hints in
   match instr.node.it with
   | IfI (cond, iterexps, block_then, _) ->
-      render_if_instr ~level ~bullet ~backtrack cond iterexps block_then
+      Block.serialize
+        (render_if_instr ~level ~bullet ~backtrack cond iterexps block_then)
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
-      render_hold_instr ~level ~bullet ~backtrack hints id_rel notexp iterexps
-        holdcase
+      Block.serialize
+        (render_hold_instr ~level ~bullet ~backtrack hints id_rel notexp iterexps
+           holdcase)
   | CaseI (exp_scrut, cases, dangle) ->
-      render_case_instr ~level ~bullet ~backtrack exp_scrut cases dangle
+      Block.serialize
+        (render_case_instr ~level ~bullet ~backtrack exp_scrut cases dangle)
   | GroupI (_id_rulegroup, id_rel, rel_signature, exps, block) ->
-      render_group_instr ~level ~bullet ~backtrack hints id_rel rel_signature
-        exps block
-  | TryI arms -> render_try_instr ~level ~bullet arms
+      Block.serialize
+        (render_group_instr ~level ~bullet ~backtrack hints id_rel rel_signature
+           exps block)
+  | TryI arms -> Block.serialize (render_try_instr ~level ~bullet arms)
   | LetI (exp_l, exp_r, iterinstrs) ->
-      render_let_instr ~level ~bullet ~backtrack exp_l exp_r iterinstrs
+      Block.serialize
+        (render_let_instr ~level ~bullet ~backtrack exp_l exp_r iterinstrs)
   | RuleI (id_rel, notexp, hint_input, iterinstrs) ->
-      render_rule_instr ~level ~bullet ~backtrack hints id_rel notexp hint_input
-        iterinstrs
+      Block.serialize
+        (render_rule_instr ~level ~bullet ~backtrack hints id_rel notexp
+           hint_input iterinstrs)
   | ResultI (rel_signature, exps) ->
       Block.serialize (render_result_instr ~bullet hints rel_signature exps)
   | ReturnI exp -> Block.serialize (render_return_instr ~bullet exp)
@@ -825,28 +831,40 @@ and render_iterinstr_suffix (iterinstrs : iterinstr list) : Doc.t =
 
 (* If instruction rendering *)
 
+and render_children ~(level : int) ~(backtrack : Backtrack.ctx option)
+    (block : block) : Block.t =
+  Block.raw
+    (block |> List.map (render_instr ~level ~backtrack) |> String.concat "\n")
+
 and render_if_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (cond : exp) (iterexps : iterexp list)
-    (block_then : block) : string =
+    (block_then : block) : Block.t =
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
-  let check_line =
-    F.asprintf "%sCheck that %s%s.%s" bullet
-      (Doc.to_adoc (render_exp Prose cond))
-      (Doc.to_adoc (render_iterexp_suffix iterexps))
-      fallthrough
+  let head =
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Check that ";
+               render_exp Prose cond;
+               render_iterexp_suffix iterexps;
+               Doc.text ".";
+               Doc.text fallthrough;
+             ]);
+      ]
   in
-  if block_then = [] then check_line
+  if block_then = [] then head
   else
-    check_line ^ "\n"
-    ^ (block_then
-      |> List.map (render_instr ~level ~backtrack)
-      |> String.concat "\n")
+    Block.concat
+      [ head; Block.raw "\n"; render_children ~level ~backtrack block_then ]
 
 (* Hold instruction rendering *)
 
 and render_hold_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (hints : Annot.hints) (id_rel : id)
-    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) : string =
+    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) : Block.t =
   let exps = Mixfix.args notexp in
   let hint_true = hints.Annot.prose_true in
   let hint_false = hints.Annot.prose_false in
@@ -870,81 +888,128 @@ and render_hold_instr ~(level : int) ~(bullet : string)
         in
         math ^ fallback_verb
   in
+  let if_head ~hold =
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "If ";
+               Doc.text (render_head ~hold);
+               Doc.text iter_suffix;
+               Doc.text ":";
+             ]);
+      ]
+  in
   match holdcase with
   | HoldH (block, _dangle) ->
-      F.asprintf "%sIf %s%s:%s" bullet (render_head ~hold:true) iter_suffix
-        (render_instrs ~level:(level + 1) ~backtrack block)
+      Block.concat
+        [
+          if_head ~hold:true;
+          Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+        ]
   | NotHoldH (block, _dangle) ->
-      F.asprintf "%sIf %s%s:%s" bullet (render_head ~hold:false) iter_suffix
-        (render_instrs ~level:(level + 1) ~backtrack block)
+      Block.concat
+        [
+          if_head ~hold:false;
+          Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+        ]
   | BothH (block_hold, block_nothold) ->
-      F.asprintf "%sIf %s%s:%s\n%sElse:%s" bullet (render_head ~hold:true)
-        iter_suffix
-        (render_instrs ~level:(level + 1) ~backtrack block_hold)
-        bullet
-        (render_instrs ~level:(level + 1) ~backtrack block_nothold)
+      Block.concat
+        [
+          if_head ~hold:true;
+          Block.raw (render_instrs ~level:(level + 1) ~backtrack block_hold);
+          Block.raw "\n";
+          Block.raw bullet;
+          Block.inline (Doc.text "Else:");
+          Block.raw (render_instrs ~level:(level + 1) ~backtrack block_nothold);
+        ]
 
 (* Case analysis instruction rendering *)
 
 and render_case_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (exp_scrut : exp) (cases : case list)
-    (dangle : dangle) : string =
+    (dangle : dangle) : Block.t =
   let total = not dangle in
   let n = List.length cases in
   match cases with
   | [ (guard, block_then) ] ->
-      let check_line =
-        F.asprintf "%sCheck that %s." bullet
-          (Doc.to_adoc (render_guard Prose exp_scrut guard))
+      let head =
+        Block.concat
+          [
+            Block.raw bullet;
+            Block.inline
+              (Doc.seq
+                 [
+                   Doc.text "Check that ";
+                   render_guard Prose exp_scrut guard;
+                   Doc.text ".";
+                 ]);
+          ]
       in
-      if block_then = [] then check_line
+      if block_then = [] then head
       else
-        check_line ^ "\n"
-        ^ (block_then
-          |> List.map (render_instr ~level ~backtrack)
-          |> String.concat "\n")
+        Block.concat
+          [ head; Block.raw "\n"; render_children ~level ~backtrack block_then ]
   | _ ->
-      cases
-      |> List.mapi (fun idx (guard, block_then) ->
-             if idx = n - 1 && total then
-               F.asprintf "%sElse:%s" bullet
-                 (render_instrs ~level:(level + 1) ~backtrack block_then)
-             else
-               let keyword = if idx = 0 then "If" else "Else if" in
-               F.asprintf "%s%s %s:%s" bullet keyword
-                 (Doc.to_adoc (render_guard Prose exp_scrut guard))
-                 (render_instrs ~level:(level + 1) ~backtrack block_then))
-      |> String.concat "\n"
+      Block.vseq
+        (cases
+        |> List.mapi (fun idx (guard, block_then) ->
+               if idx = n - 1 && total then
+                 Block.concat
+                   [
+                     Block.raw bullet;
+                     Block.inline (Doc.text "Else:");
+                     Block.raw
+                       (render_instrs ~level:(level + 1) ~backtrack block_then);
+                   ]
+               else
+                 let keyword = if idx = 0 then "If" else "Else if" in
+                 Block.concat
+                   [
+                     Block.raw bullet;
+                     Block.inline
+                       (Doc.seq
+                          [
+                            Doc.text (keyword ^ " ");
+                            render_guard Prose exp_scrut guard;
+                            Doc.text ":";
+                          ]);
+                     Block.raw
+                       (render_instrs ~level:(level + 1) ~backtrack block_then);
+                   ]))
 
 (* Group instruction rendering *)
 
 and render_group_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (hints : Annot.hints) (id_rel : id)
-    (rel_signature : rel_signature) (exps : exp list) (block : block) : string =
+    (rel_signature : rel_signature) (exps : exp list) (block : block) : Block.t =
   let hint_in = hints.Annot.prose_in in
   let hint_true = hints.Annot.prose_true in
   let title =
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
-        Doc.to_adoc
-          (Doc.link ~target:(string_of_relid id_rel)
-             (Doc.text
-                (render_alter_hint ~caps:true Prose hint
-                   (reindent_lines ~level:0)
-                   (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
-                   exps)))
+        Doc.link ~target:(string_of_relid id_rel)
+          (Doc.text
+             (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+                (fun e -> Doc.to_adoc_in_link (render_exp Prose e))
+                exps))
     | None, None ->
-        Doc.to_adoc
-          (Doc.link ~target:(string_of_relid id_rel)
-             (render_rel_title_math rel_signature exps))
+        Doc.link ~target:(string_of_relid id_rel)
+          (render_rel_title_math rel_signature exps)
   in
-  F.asprintf "%s%s:%s" bullet title
-    (render_instrs ~level:(level + 1) ~backtrack block)
+  Block.concat
+    [
+      Block.raw bullet;
+      Block.inline (Doc.seq [ title; Doc.text ":" ]);
+      Block.raw (render_instrs ~level:(level + 1) ~backtrack block);
+    ]
 
 (* Try instruction rendering *)
 
 and render_try_instr ~(level : int) ~(bullet : string) (arms : arm list) :
-    string =
+    Block.t =
   let block = Backtrack.BlockLabel.fresh () in
   let level_arm = level + 1 in
   let level_body = level + 2 in
@@ -957,15 +1022,25 @@ and render_try_instr ~(level : int) ~(bullet : string) (arms : arm list) :
       anchor
       (render_instrs ~level:level_body ~backtrack:(Some backtrack) arm)
   in
-  F.asprintf "%sTry %s:\n%s" bullet
-    (Backtrack.render_block_label block)
-    (String.concat "\n" (List.mapi render_arm arms))
+  Block.concat
+    [
+      Block.raw bullet;
+      Block.inline
+        (Doc.seq
+           [
+             Doc.text "Try ";
+             Doc.text (Backtrack.render_block_label block);
+             Doc.text ":";
+           ]);
+      Block.raw "\n";
+      Block.raw (String.concat "\n" (List.mapi render_arm arms));
+    ]
 
 (* Let instruction rendering *)
 
 and render_let_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (exp_l : exp) (exp_r : exp)
-    (iterinstrs : iterinstr list) : string =
+    (iterinstrs : iterinstr list) : Block.t =
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let vars_out_visible =
     iterinstrs
@@ -976,31 +1051,62 @@ and render_let_instr ~(level : int) ~(bullet : string)
     List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
   in
   if vars_out_visible = [] then
-    F.asprintf "%sLet %s be %s%s.%s" bullet
-      (Doc.to_adoc (render_exp_as_code Prose exp_l))
-      (Doc.to_adoc (render_exp Prose exp_r))
-      (Doc.to_adoc (render_iterinstr_suffix iterinstrs))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Let ";
+               render_exp_as_code Prose exp_l;
+               Doc.text " be ";
+               render_exp Prose exp_r;
+               render_iterinstr_suffix iterinstrs;
+               Doc.text ".";
+               Doc.text fallthrough;
+             ]);
+      ]
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
     let body =
-      F.asprintf "%sLet %s be %s." bullet_inner
-        (Doc.to_adoc (render_exp_as_code Prose exp_l))
-        (Doc.to_adoc (render_exp Prose exp_r))
+      Block.concat
+        [
+          Block.raw bullet_inner;
+          Block.inline
+            (Doc.seq
+               [
+                 Doc.text "Let ";
+                 render_exp_as_code Prose exp_l;
+                 Doc.text " be ";
+                 render_exp Prose exp_r;
+                 Doc.text ".";
+               ]);
+        ]
     in
-    F.asprintf
-      "%sLet %s obtained by repeating:\n+\n--\n%s\n--\n+\nfor each %s.%s" bullet
-      (Doc.to_adoc (render_out_itervars vars_out_visible))
-      body
-      (Doc.to_adoc (render_in_itervars vars_in_all))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Let ";
+               render_out_itervars vars_out_visible;
+               Doc.text " obtained by repeating:";
+             ]);
+        Block.raw "\n+\n--\n";
+        body;
+        Block.raw "\n--\n+\nfor each ";
+        Block.inline
+          (Doc.seq
+             [ render_in_itervars vars_in_all; Doc.text "."; Doc.text fallthrough ]);
+      ]
 
 (* Rule instruction rendering *)
 
 and render_rule_instr ~(level : int) ~(bullet : string)
     ~(backtrack : Backtrack.ctx option) (hints : Annot.hints) (id_rel : id)
     (notexp : notexp) (hint_input : Hints.Input.t) (iterinstrs : iterinstr list)
-    : string =
+    : Block.t =
   let exps = Mixfix.args notexp in
   let fallthrough = Backtrack.render_fallthrough_link backtrack in
   let exps_in, exps_out = Hints.Input.split hint_input exps in
@@ -1043,18 +1149,35 @@ and render_rule_instr ~(level : int) ~(bullet : string)
                 (Doc.text (Doc.to_adoc (code_of_notexp notexp)))))
   in
   if vars_out_visible = [] then
-    F.asprintf "%s%s%s.%s" bullet rule_body
-      (Doc.to_adoc (render_iterinstr_suffix iterinstrs))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.raw rule_body;
+        Block.inline
+          (Doc.seq
+             [ render_iterinstr_suffix iterinstrs; Doc.text "."; Doc.text fallthrough ]);
+      ]
   else
     let bullet_inner = adoc_unordered_bullet (level + 1) in
-    F.asprintf
-      "%sLet %s obtained by repeating:\n+\n--\n%s%s.\n--\n+\nfor each %s.%s"
-      bullet
-      (Doc.to_adoc (render_out_itervars vars_out_visible))
-      bullet_inner rule_body
-      (Doc.to_adoc (render_in_itervars vars_in_all))
-      fallthrough
+    Block.concat
+      [
+        Block.raw bullet;
+        Block.inline
+          (Doc.seq
+             [
+               Doc.text "Let ";
+               render_out_itervars vars_out_visible;
+               Doc.text " obtained by repeating:";
+             ]);
+        Block.raw "\n+\n--\n";
+        Block.raw bullet_inner;
+        Block.raw rule_body;
+        Block.raw ".";
+        Block.raw "\n--\n+\nfor each ";
+        Block.inline
+          (Doc.seq
+             [ render_in_itervars vars_in_all; Doc.text "."; Doc.text fallthrough ]);
+      ]
 
 (* Result instruction rendering *)
 
