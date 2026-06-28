@@ -1406,51 +1406,74 @@ and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     | Some exps_in_sl -> List.map lift_synthesized_exp exps_in_sl
     | None -> exps
   in
+  let title =
+    Doc.link ~target:(string_of_relid id_rel)
+      (Doc.text (Sl.Print.string_of_relid id_rel))
+  in
+  let title_header =
+    Block.concat
+      [ Block.inline (Doc.seq [ title; Doc.text ":" ]); Block.raw "\n\n" ]
+  in
   match
     (hints.prose_in, hints.prose_out, hints.prose_output_exps, hints.prose_true)
   with
   | Some _, Some _, None, _ -> assert false
   | Some hint_in, Some hint_out, Some exps_out_sl, _ ->
       let exps_out = List.map lift_synthesized_exp exps_out_sl in
-      F.asprintf "%s:\n\n%s%s:\n%s%s."
-        (Doc.to_adoc
-           (Doc.link ~target:(string_of_relid id_rel)
-              (Doc.text (Sl.Print.string_of_relid id_rel))))
-        (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
-           (fun e -> Doc.to_adoc (render_exp Prose e))
-           exps_in_title)
-        (adoc_unordered_bullet 0)
-        ("Result in "
-        ^ render_alter_hint ~caps:false Prose hint_out (reindent_lines ~level:1)
-            (fun e -> Doc.to_adoc (render_exp Prose e))
-            exps_out)
+      Block.serialize
+        (Block.concat
+           [
+             title_header;
+             Block.raw (adoc_unordered_bullet 0);
+             Block.raw
+               (render_alter_hint ~caps:true Prose hint_in
+                  (reindent_lines ~level:1)
+                  (fun e -> Doc.to_adoc (render_exp Prose e))
+                  exps_in_title);
+             Block.raw ":\n";
+             Block.raw (adoc_unordered_bullet 0);
+             Block.inline (Doc.text "Result in ");
+             Block.raw
+               (render_alter_hint ~caps:false Prose hint_out
+                  (reindent_lines ~level:1)
+                  (fun e -> Doc.to_adoc (render_exp Prose e))
+                  exps_out);
+             Block.raw ".";
+           ])
   | Some hint_in, _, _, _ ->
-      F.asprintf "%s:\n\n%s%s."
-        (Doc.to_adoc
-           (Doc.link ~target:(string_of_relid id_rel)
-              (Doc.text (Sl.Print.string_of_relid id_rel))))
-        (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true Prose hint_in (reindent_lines ~level:1)
-           (fun e -> Doc.to_adoc (render_exp Prose e))
-           exps_in_title)
+      Block.serialize
+        (Block.concat
+           [
+             title_header;
+             Block.raw (adoc_unordered_bullet 0);
+             Block.raw
+               (render_alter_hint ~caps:true Prose hint_in
+                  (reindent_lines ~level:1)
+                  (fun e -> Doc.to_adoc (render_exp Prose e))
+                  exps_in_title);
+             Block.raw ".";
+           ])
   | _, _, _, Some hint_true ->
-      F.asprintf "%s:\n\n%s%s"
-        (Doc.to_adoc
-           (Doc.link ~target:(string_of_relid id_rel)
-              (Doc.text (Sl.Print.string_of_relid id_rel))))
-        (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true Prose hint_true (reindent_lines ~level:0)
-           (fun e -> Doc.to_adoc (render_exp Prose e))
-           exps)
+      Block.serialize
+        (Block.concat
+           [
+             title_header;
+             Block.raw (adoc_unordered_bullet 0);
+             Block.raw
+               (render_alter_hint ~caps:true Prose hint_true
+                  (reindent_lines ~level:0)
+                  (fun e -> Doc.to_adoc (render_exp Prose e))
+                  exps);
+           ])
   | _ ->
-      Doc.to_adoc
-        (Doc.link ~target:(string_of_relid id_rel)
-           (Doc.seq
-              [
-                Doc.text (Sl.Print.string_of_relid id_rel ^ ": ");
-                render_rel_title_math rel_signature exps;
-              ]))
+      Block.serialize
+        (Block.inline
+           (Doc.link ~target:(string_of_relid id_rel)
+              (Doc.seq
+                 [
+                   Doc.text (Sl.Print.string_of_relid id_rel ^ ": ");
+                   render_rel_title_math rel_signature exps;
+                 ])))
 
 let render_extern_rel_def (hints : Annot.hints) (externrel : externrel) : string
     =
@@ -1468,24 +1491,34 @@ let render_defined_rel_def (hints : Annot.hints) (rel : rel) : string =
 
 let render_func_title_adoc (hints : Annot.hints) (id_func : id)
     (tparams : tparam list) (params : param list) : string =
+  let title =
+    Doc.link
+      ~target:(string_of_defid ~link:true id_func)
+      (Doc.text (string_of_defid id_func))
+  in
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
-      F.asprintf "%s:\n\n%s%s"
-        (Doc.to_adoc
-           (Doc.link
-              ~target:(string_of_defid ~link:true id_func)
-              (Doc.text (string_of_defid id_func))))
-        (adoc_unordered_bullet 0)
-        (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
-           (fun p -> Doc.to_adoc (render_param Prose p))
-           params)
+      Block.serialize
+        (Block.concat
+           [
+             Block.inline (Doc.seq [ title; Doc.text ":" ]);
+             Block.raw "\n\n";
+             Block.raw (adoc_unordered_bullet 0);
+             Block.raw
+               (render_alter_hint ~caps:true Prose hint (reindent_lines ~level:0)
+                  (fun p -> Doc.to_adoc (render_param Prose p))
+                  params);
+           ])
   | None, None ->
-      Doc.to_adoc
-        (Doc.link
-           ~target:(string_of_defid ~link:true id_func)
-           (Doc.text (string_of_defid id_func)))
-      ^ Sl.Print.string_of_tparams tparams
-      ^ Doc.serialize ~in_code:true ~in_link:true (render_params Code params)
+      Block.serialize
+        (Block.concat
+           [
+             Block.inline title;
+             Block.raw (Sl.Print.string_of_tparams tparams);
+             Block.raw
+               (Doc.serialize ~in_code:true ~in_link:true
+                  (render_params Code params));
+           ])
 
 let render_func_header (hints : Annot.hints) (id_func : id)
     (tparams : tparam list) (params : param list) : string =
@@ -1527,22 +1560,32 @@ let render_table_func_def (hints : Annot.hints) (tablefunc : tablefunc) : string
     ^ "\", options=\"header\"]\n"
   in
   let table_header =
-    "|===" ^ "\n" ^ "| "
-    ^ Doc.to_adoc (render_params Prose params)
-    ^ " | " ^ "Result \n\n"
+    Block.concat
+      [
+        Block.raw "|===\n| ";
+        Block.inline (render_params Prose params);
+        Block.raw " | Result \n\n";
+      ]
   in
   let table_rows =
-    tablerows
-    |> List.map (fun tablerow ->
-           let exps_sig, exp_res, _ = tablerow in
-           let row_output = Doc.to_adoc_code (render_exp Code exp_res) in
-           let row_input = Doc.to_adoc_code (render_exps Code exps_sig) in
-           "| " ^ row_input ^ " | " ^ row_output)
-    |> String.concat "\n"
+    Block.vseq
+      (tablerows
+      |> List.map (fun tablerow ->
+             let exps_sig, exp_res, _ = tablerow in
+             let row_output = Doc.to_adoc_code (render_exp Code exp_res) in
+             let row_input = Doc.to_adoc_code (render_exps Code exps_sig) in
+             Block.raw ("| " ^ row_input ^ " | " ^ row_output)))
   in
-  let table_footer = "\n\n|===" in
-  render_func_header hints id_func [] params
-  ^ ":\n" ^ table_meta ^ table_header ^ table_rows ^ table_footer
+  Block.serialize
+    (Block.concat
+       [
+         Block.raw (render_func_header hints id_func [] params);
+         Block.raw ":\n";
+         Block.raw table_meta;
+         table_header;
+         table_rows;
+         Block.raw "\n\n|===";
+       ])
 
 let render_defined_func_def (hints : Annot.hints) (func : definedfunc) : string
     =
