@@ -615,10 +615,10 @@ externMethodPrototypeList:
 ;
 
 externObjectDeclaration:
-  | EXTERN n = nonTypeName push_scope tpl = typeParameterListOpt
+  | EXTERN n = nonTypeName push_scope
     L_BRACE pl = externMethodPrototypeList R_BRACE pop_scope
     { declare_type (id_of_name n);
-      "EXTERN nonTypeName typeParameterListOpt `{ externMethodPrototypeList }" <| [ n; tpl; pl ] <<| "externObjectDeclaration" <<<| (at $sloc) }
+      "EXTERN nonTypeName `{ externMethodPrototypeList }" <| [ n; pl ] <<| "externObjectDeclaration" <<<| (at $sloc) }
 ;
 
 externDeclaration:
