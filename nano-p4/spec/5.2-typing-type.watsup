@@ -14,14 +14,14 @@ rulegroup Type_ok {
   rule Type_ok/typeName:
     TC |- typeName ~> typeIR
     -- if typeId = $id(typeName)
-    -- if typeDefIR = $find_map<typeId, typeDefIR>(TC.GLOBAL.TYPE, typeId)
+    -- if typeDefIR = $find_typeDef_t(TC, typeId)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
 
   rule Type_ok/specializedType:
     TC |- typeName `< typeArgumentList > ~> typeIR
     -- if typeId = $id(typeName)
-    -- if typeDefIR = $find_map<typeId, typeDefIR>(TC.GLOBAL.TYPE, typeId)
+    -- if typeDefIR = $find_typeDef_t(TC, typeId)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
     -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
     -- (TypeArgument_ok: TC |- typeArgument ~> typeIR_arg)*

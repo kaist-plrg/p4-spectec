@@ -11,8 +11,8 @@ relation Expr_ok:
 ;;
 
 relation Lvalue_ok:
-  typingContext |- lvalue : typeIR
-  hint(input %0 %1)
+  scope typingContext |- lvalue : typeIR
+  hint(input %0 %1 %2)
 
 ;;
 ;; Statement typing
@@ -43,7 +43,11 @@ relation ParserLocalDeclList_ok:
   hint(input %0 %1)
 
 relation ParserStateList_ok:
-  typingContext |- parserStateList -| typingContext
+  typingContext |- parserStateList
+  hint(input %0 %1)
+
+relation ParserStatements_ok:
+  typingContext |- parserStatement* -| typingContext
   hint(input %0 %1)
 
 ;;

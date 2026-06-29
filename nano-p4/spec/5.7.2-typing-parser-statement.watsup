@@ -1,0 +1,47 @@
+relation ParserStatement_ok:
+  typingContext |- parserStatement -| typingContext
+  hint(input %0 %1)
+
+;; syntax parserStatement =
+;;   | constantDeclaration
+;;   | variableDeclaration
+;;   | emptyStatement
+;;   | assignmentStatement
+;;   | callStatement
+;;   | parserBlockStatement
+;;   | parserConditionalStatement
+
+rule ParserStatement_ok/constantDeclaration:
+  TC_0 |- constantDeclaration -| TC_1
+  -- ConstDecl_ok: LOCAL TC_0 |- constantDeclaration -| TC_1
+
+rule ParserStatement_ok/variableDeclaration:
+  TC_0 |- variableDeclaration -| TC_1
+  -- VarDecl_ok: LOCAL TC_0 |- variableDeclaration -| TC_1
+
+rule ParserStatement_ok/emptyStatement:
+  TC |- emptyStatement -| TC
+
+rule ParserStatement_ok/assignmentStatement:
+  TC_0 |- lvalue `= expression `; -| TC_0
+
+rule ParserStatement_ok/callStatement:
+  TC_0 |- callStatement -| TC_0
+
+rule ParserStatement_ok/parserBlockStatement:
+  TC_0 |- parserBlockStatement -| TC_0
+
+rule ParserStatement_ok/parserConditionalStatement:
+  TC_0 |- parserConditionalStatement -| TC_0
+
+rulegroup ParserStatements_ok {
+
+  rule ParserStatements_ok/nil:
+    TC |- eps -| TC
+
+  rule ParserStatements_ok/cons:
+    TC_0 |- parserStatement_h :: parserStatement_t* -| TC_2
+    -- ParserStatement_ok: TC_0 |- parserStatement_h -| TC_1
+    -- ParserStatements_ok: TC_1 |- parserStatement_t* -| TC_2
+
+}

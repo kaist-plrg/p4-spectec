@@ -39,3 +39,29 @@ rule ParserLocalDeclList_ok:
   -- if parserLocalDeclaration*
     = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   -- ParserLocalDecls_ok: TC_0 |- parserLocalDeclaration* -| TC_1
+
+;;
+;; Parser state
+;;
+
+relation ParserState_ok:
+  typingContext nameIR* |- parserState
+  hint(input %0 %1 %2)
+
+rule ParserState_ok:
+  TC_0 nameIR_state* |- STATE name `{ parserStatementList transitionStatement }
+  -- if TC_1 = $enter_t(TC_0)
+
+rule ParserStateList_ok:
+  TC |- parserStateList
+  -- if parserState* = $flatten_parserStateList(parserStateList)
+  -- if (STATE name `{ _ _ } = parserState)*
+  -- if (nameIR_state = $id(name))*
+  ---- ;; A parser may not define two states with the same name
+  -- if $distinct_<nameIR>(nameIR_state*)
+  ---- ;; a state named 'start' must be present
+  -- if "start" <- nameIR_state*
+  ---- ;; it is illegal to explicitly define states named 'accept' and 'reject'
+  -- if ~("accept" <- nameIR_state*) /\ ~("reject" <- nameIR_state*)
+  -- if nameIR_state_all* = "accept"::"reject"::nameIR_state*
+  -- (ParserState_ok: TC nameIR_state_all* |- parserState)*

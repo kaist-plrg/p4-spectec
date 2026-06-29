@@ -77,9 +77,20 @@ def $empty_typingContext = TC
           LOCAL localTypingLayer }
 
 ;;
-;; Adders
+;; Frame entry and exit
 ;;
 
+dec $enter_t(typingContext) : typingContext
+dec $exit_t(typingContext) : typingContext
+
+def $enter_t(TC)
+  = TC[ .LOCAL.FRAMES = $empty_typeFrame :: TC.LOCAL.FRAMES ]
+def $exit_t(TC) = TC [ .LOCAL.FRAMES = typeFrame_t* ]
+  -- if typeFrame_h :: typeFrame_t* = TC.LOCAL.FRAMES
+
+;;
+;; Adders
+;;
 
 ;;
 ;;;; Adder for variables
@@ -144,6 +155,40 @@ def $add_typeDef_t(TC, typeId, typeDefIR) = TC'
   -- if ~$in_set<typeId>($dom_map<typeId, typeDefIR>(typeDefEnv), typeId)
   -- if typeDefEnv' = $add_map<typeId, typeDefIR>(typeDefEnv, typeId, typeDefIR)
   -- if TC' = TC[.GLOBAL.TYPE = typeDefEnv']
+
+;;
+;; Finders
+;;
+
+;;
+;;;; Finders for variables
+;;
+
+dec $find_var_t(scope, typingContext, id) : varTypeIR
+
+def $find_var_t(GLOBAL, TC, id) = varTypeIR
+  -- if typeFrame = TC.GLOBAL.FRAME
+  -- if varTypeIR = $find_map<id, varTypeIR>(typeFrame, id)
+def $find_var_t(BLOCK, TC, id) = varTypeIR
+  -- if typeFrame = TC.BLOCK.FRAME
+  -- if varTypeIR = $find_map<id, varTypeIR>(typeFrame, id)
+def $find_var_t(BLOCK, TC, id) = $find_var_t(GLOBAL, TC, id)
+  -- if typeFrame = TC.BLOCK.FRAME
+  -- if eps = $find_map<id, varTypeIR>(typeFrame, id)
+def $find_var_t(LOCAL, TC, id) = varTypeIR
+  -- if typeFrame* = TC.LOCAL.FRAMES
+  -- if varTypeIR = $find_maps<id, varTypeIR>(typeFrame*, id)
+def $find_var_t(LOCAL, TC, id) = $find_var_t(BLOCK, TC, id)
+  -- if typeFrame* = TC.LOCAL.FRAMES
+  -- if eps = $find_maps<id, varTypeIR>(typeFrame*, id)
+
+;;
+;;;; Finders for typeDefs
+;;
+
+dec $find_typeDef_t(typingContext, typeId) : typeDefIR
+def $find_typeDef_t(TC, typeId) = typeDefIR
+  -- if typeDefIR = $find_map<typeId, typeDefIR>(TC.GLOBAL.TYPE, typeId)
 
 ;;
 ;; Type definition auxiliary functions
