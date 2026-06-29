@@ -104,6 +104,49 @@ let analyze_args_as_bind (dctx : Dctx.t) (args : arg list) :
   let prems = prems_partial @ sideconditions_multi in
   (dctx, venv, args, prems)
 
+let analyze_args_as_bind_shallow (dctx : Dctx.t) (args : arg list) :
+    Dctx.t * VEnv.t * arg list * prem list =
+  let binds = Collectbind.collect_args dctx args in
+  let venv = BEnv.flatten binds in
+  let dctx, renv_multi, args =
+    let renv_multi = Multibind.REnv.init binds in
+    Multibind.rename_args dctx renv_multi args
+  in
+  let venv = update_venv_multi venv renv_multi in
+  let sideconditions_multi =
+    Multibind.gen_sideconditions binds Iterctx.empty renv_multi
+  in
+  check
+    (List.is_empty sideconditions_multi)
+    (List.hd args).at
+    (Format.asprintf
+       "shallow binding should not generate sideconditions, but got: %s"
+       (List.map Il2.Print.string_of_prem sideconditions_multi
+       |> String.concat ", "));
+  let dctx, renv_partial, _, args =
+    Partialbind.rename_args dctx (VEnv.dom venv) Partialbind.REnv.empty
+      Iterctx.empty args
+  in
+  let venv = update_venv_partial venv renv_partial in
+  let prems_partial = Partialbind.gen_prems dctx Iterctx.empty renv_partial in
+  let prems = prems_partial in
+  (dctx, venv, args, prems)
+
+let analyze_arg_as_bound_shallow (dctx : Dctx.t) (arg : arg) : unit =
+  check
+    (Shallowbind.check_shallow_arg arg)
+    arg.at
+    (Format.asprintf "bindings are not shallow: %s"
+       (Il.Print.string_of_arg arg));
+  let binds = Collectbind.collect_arg dctx arg in
+  if not (BEnv.is_empty binds) then
+    error arg.at
+      (Format.asprintf "argument has free variable(s): %s"
+         (BEnv.to_string binds))
+
+let analyze_args_as_bound_shallow (dctx : Dctx.t) (args : arg list) : unit =
+  List.iter (analyze_arg_as_bound_shallow dctx) args
+
 (* Premise binding analysis *)
 
 let rec analyze_prem (dctx : Dctx.t) (iterctx : Iterctx.t) (prem : prem) :
@@ -371,14 +414,37 @@ let analyze_elsegroup (dctx : Dctx.t) (inputs : Hints.Input.t)
 
 let analyze_clause (dctx : Dctx.t) (clause : clause) : clause =
   let args, exp, prems = clause.it in
-  let frees = Free.free_clause clause in
-  let dctx = Dctx.add_frees dctx frees in
+  let dctx =
+    let frees = Free.free_clause clause in
+    Dctx.add_frees dctx frees
+  in
   let dctx, venv, args, sideconditions = analyze_args_as_bind dctx args in
   let dctx = Dctx.add_bounds dctx venv in
   let dctx, prems = analyze_prems dctx prems in
   analyze_exp_as_bound dctx exp;
   let prems = sideconditions @ prems in
   (args, exp, prems) $ clause.at
+
+(* Table row binding analysis *)
+
+let analyze_tablerow (dctx : Dctx.t) (tablerow : tablerow) : Il.tablerow =
+  let args, exp = tablerow.it in
+  let dctx =
+    let frees = Free.free_tablerow tablerow in
+    Dctx.add_frees dctx frees
+  in
+  let dctx, venv, args_input, sideconditions =
+    analyze_args_as_bind_shallow dctx args
+  in
+  let dctx = Dctx.add_bounds dctx venv in
+  analyze_args_as_bound_shallow dctx args;
+  let exps_signature =
+    List.map
+      (fun arg -> match arg.it with Il.ExpA exp -> exp | _ -> assert false)
+      args
+  in
+  analyze_exp_as_bound dctx exp;
+  (exps_signature, args_input, exp, sideconditions) $ tablerow.at
 
 (* Definition binding analysis *)
 
@@ -402,13 +468,7 @@ let analyze_def (dctx : Dctx.t) (def : def) : Il.def =
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       Il.BuiltinDecD (id, tparams, params, typ, hints) $ at
   | TableDecD (id, params, typ, tablerows, hints) ->
-      let tablerows_il =
-        List.map
-          (fun tablerow ->
-            let args, exp = tablerow.it in
-            ([], args, exp, []) $ tablerow.at)
-          tablerows
-      in
+      let tablerows_il = List.map (analyze_tablerow dctx) tablerows in
       Il.TableDecD (id, params, typ, tablerows_il, hints) $ at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause dctx) clauses in
