@@ -11,13 +11,13 @@
    inline rendering context to lose); rendered content flows through [Inline]. *)
 
 type t =
-  | Inline of Doc.t (* one inline sentence *)
+  | Inline of Doc.prose (* one inline sentence *)
   | Raw of string (* literal scaffolding: bullets, "\n", "--", "|===", anchors *)
   | Concat of t list (* children concatenated with no separator *)
   | Vseq of t list (* children joined by "\n" *)
   | Empty
 
-let inline (d : Doc.t) : t = Inline d
+let inline (d : Doc.prose) : t = Inline d
 let raw (s : string) : t = Raw s
 let concat (ts : t list) : t = Concat ts
 let vseq (ts : t list) : t = Vseq ts
