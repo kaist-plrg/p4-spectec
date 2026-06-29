@@ -18,10 +18,8 @@ module TDEnv = Type.Envs.TDEnv
 (* Relation environment *)
 
 module REnv = MakeRIdEnv (Rel)
-module REnv2 = MakeRIdEnv (Rel2)
 module IHEnv = MakeHIdEnv (Hints.Input)
 
 (* Definition environment *)
 
 module FEnv = MakeFIdEnv (Func)
-module FEnv2 = MakeFIdEnv (Func2)

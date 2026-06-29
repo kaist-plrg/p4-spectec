@@ -11,7 +11,7 @@ let hintid = "print"
 
 (* Types *)
 
-let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
+let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Al.typcase) :
     HEnv.t =
   let nottyp, _, hints = typcase in
   let hint_opt =
@@ -26,13 +26,13 @@ let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
       HEnv.add cid hint_alter henv
   | None -> henv
 
-let hints_of_typcases (henv : HEnv.t) (tid : TId.t) (typcases : Il.typcase list)
+let hints_of_typcases (henv : HEnv.t) (tid : TId.t) (typcases : Al.typcase list)
     : HEnv.t =
   List.fold_left
     (fun henv typcase -> hints_of_typcase henv tid typcase)
     henv typcases
 
-let hints_of_deftyp (henv : HEnv.t) (tid : TId.t) (deftyp : Il.deftyp) : HEnv.t
+let hints_of_deftyp (henv : HEnv.t) (tid : TId.t) (deftyp : Al.deftyp) : HEnv.t
     =
   match deftyp.it with
   | VariantT typcases -> hints_of_typcases henv tid typcases
@@ -40,8 +40,8 @@ let hints_of_deftyp (henv : HEnv.t) (tid : TId.t) (deftyp : Il.deftyp) : HEnv.t
 
 (* Definitions *)
 
-let hints_of_def_il (henv : HEnv.t) (def_il : Il.def) : HEnv.t =
-  match def_il.it with
+let hints_of_def_al (henv : HEnv.t) (def_al : Al.def) : HEnv.t =
+  match def_al.it with
   | TypD (id, _, deftyp, _) -> hints_of_deftyp henv id deftyp
   | _ -> henv
 
@@ -52,8 +52,8 @@ let hints_of_def_sl (henv : HEnv.t) (def_sl : Sl.def) : HEnv.t =
 
 (* Spec *)
 
-let hints_of_spec_il (spec_il : Il.spec) : HEnv.t =
-  List.fold_left hints_of_def_il HEnv.empty spec_il
+let hints_of_spec_al (spec_al : Al.spec) : HEnv.t =
+  List.fold_left hints_of_def_al HEnv.empty spec_al
 
 let hints_of_spec_sl (spec_sl : Sl.spec) : HEnv.t =
   List.fold_left hints_of_def_sl HEnv.empty spec_sl

@@ -3,10 +3,10 @@ module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
-open Il
+open Al
 module Type = Runtime.Type
 module Typ = Type.Typ
-open Runtime.Dynamic_Il
+open Runtime.Dynamic_Al
 open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
@@ -23,7 +23,7 @@ open Util.Source
 let func_cache = ref (Cache.Cache.create ~size:10000)
 let rel_cache = ref (Cache.Cache.create ~size:10000)
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
+module Make (Arch : Sim.ARCH) : Sim.INTERP_AL = struct
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
@@ -67,7 +67,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx_local =
       List.fold_left2
         (fun ctx_local tparam targ ->
-          let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
+          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
           Ctx.add_typdef ctx_local tparam td)
         ctx_local tparams targs
     in
@@ -122,7 +122,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         (* Per iterated variable, make an option out of the value *)
         List.fold_left
           (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
             let value_sub = Value.Make.opt typ None in
             Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
           ctx vars
@@ -133,11 +133,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
         List.fold_left
           (fun ctx (id, typ, iters) ->
             let value_sub =
-              let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+              let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
               let value = Ctx.find_value ctx (id, iters) in
               Value.Make.opt typ (Some value)
             in
-            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
     | IterE (exp, (List, vars)), ListV values ->
         (* Map over the value list elements,
@@ -156,12 +156,12 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
            then make a sequence out of them *)
         List.fold_left
           (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ List ]) in
+            let typ = Typ.Make.iterate typ (iters @ [ Il.List ]) in
             let values =
               List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
             in
             let value_sub = Value.Make.list typ values in
-            Ctx.add_value ctx (id, iters @ [ List ]) value_sub)
+            Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
           ctx vars
     | _ ->
         error exp.at
@@ -1024,11 +1024,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           List.fold_left
             (fun ctx (id_binding, typ_binding, iters_binding) ->
               let typ =
-                Typ.Make.iterate typ_binding (iters_binding @ [ Opt ])
+                Typ.Make.iterate typ_binding (iters_binding @ [ Il.Opt ])
               in
               let value_binding = Value.Make.opt typ None in
               Ctx.add_value ctx
-                (id_binding, iters_binding @ [ Opt ])
+                (id_binding, iters_binding @ [ Il.Opt ])
                 value_binding)
             ctx vars_bind
         in
@@ -1040,14 +1040,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
           List.fold_left
             (fun ctx (id_binding, typ_binding, iters_binding) ->
               let typ =
-                Typ.Make.iterate typ_binding (iters_binding @ [ Opt ])
+                Typ.Make.iterate typ_binding (iters_binding @ [ Il.Opt ])
               in
               let value_binding =
                 Ctx.find_value ctx_sub (id_binding, iters_binding)
               in
               let value_binding = Value.Make.opt typ (Some value_binding) in
               Ctx.add_value ctx
-                (id_binding, iters_binding @ [ Opt ])
+                (id_binding, iters_binding @ [ Il.Opt ])
                 value_binding)
             ctx vars_bind
         in
@@ -1094,9 +1094,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
     let ctx =
       List.fold_left2
         (fun ctx (id_binding, typ_binding, iters_binding) values_binding ->
-          let typ = Typ.Make.iterate typ_binding (iters_binding @ [ List ]) in
+          let typ =
+            Typ.Make.iterate typ_binding (iters_binding @ [ Il.List ])
+          in
           let value_binding = Value.Make.list typ values_binding in
-          Ctx.add_value ctx (id_binding, iters_binding @ [ List ]) value_binding)
+          Ctx.add_value ctx
+            (id_binding, iters_binding @ [ Il.List ])
+            value_binding)
         ctx vars_bind values_binding
     in
     Ok ctx
@@ -1432,7 +1436,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
       let ctx_local =
         List.fold_left2
           (fun ctx_local tparam targ ->
-            let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
+            let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
             Ctx.add_typdef ctx_local tparam td)
           ctx_local tparams targs
       in
@@ -1526,7 +1530,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_IL = struct
   let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
     if cache then Hook.cache_on () else Hook.cache_off ();
     let printer value =
-      let henv = Interface.Hint.hints_of_spec_il spec in
+      let henv = Interface.Hint.hints_of_spec_al spec in
       Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
     in
     Builtin.Call.init printer;

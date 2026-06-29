@@ -22,9 +22,6 @@ let frontend filenames_spec =
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
 
-let elab2 filenames_spec =
-  filenames_spec |> frontend |> Elaborate2.Elab.elab_spec
-
 let structure filenames_spec =
   filenames_spec |> elab |> Structure.Struct.struct_spec
 
@@ -35,9 +32,9 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     filenames_spec =
   let spec_sim =
     match mode with
-    | `IL ->
-        let spec_il = elab filenames_spec in
-        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
+    | `AL ->
+        let spec_al = elab filenames_spec in
+        (Runtime.Sim.Simulator.AL spec_al : Runtime.Sim.Simulator.spec)
     | `SL ->
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
@@ -216,25 +213,8 @@ let elab_command =
      in
      fun () ->
        try
-         let spec_il = elab filenames_spec in
-         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
-         ()
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
-
-let elab2_command =
-  Core.Command.basic ~summary:"parse and elaborate a P4 spec"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map filenames_spec =
-       anon (non_empty_sequence_as_list ("filename" %: string))
-     in
-     fun () ->
-       try
-         let spec_il = elab2 filenames_spec in
-         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+         let spec_al = elab filenames_spec in
+         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
          ()
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -297,8 +277,8 @@ let run_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `AL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
            flag "pl" no_arg ~doc:"run PL interpreter"
@@ -366,8 +346,8 @@ let sim_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `AL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
            flag "pl" no_arg ~doc:"run PL interpreter"
@@ -713,7 +693,7 @@ let parse_command =
          in
          let unparsed_p4_string =
            Format.asprintf "%a\n"
-             (Interface.Unparse.pp_program_il spec_il)
+             (Interface.Unparse.pp_program_al spec_il)
              parsed_p4_file
          in
          if roundtrip then
@@ -827,7 +807,6 @@ let command =
     [
       (* Transformations *)
       ("elab", elab_command);
-      ("elab2", elab2_command);
       ("struct", struct_command);
       ("annotate", annotate_command);
       (* Execution *)

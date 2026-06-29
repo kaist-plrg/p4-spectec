@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-open Il2
+open Il
 open Runtime.Static
 open Envs
 open Util.Source
@@ -71,5 +71,5 @@ let filter_bound (f : Id.t -> typ -> iter list -> bool) (iterctx : t) : t =
 let iterate_prem (iterctx : t) (prem : prem) : prem =
   List.fold_left
     (fun prem (iter, vars_bound, vars_bind) ->
-      Il.IterPr (prem, (iter, vars_bound, vars_bind)) $ prem.at)
+      IterPr (prem, (iter, vars_bound, vars_bind)) $ prem.at)
     prem iterctx

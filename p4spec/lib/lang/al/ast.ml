@@ -107,16 +107,18 @@ type targ' = Il.targ' [@@deriving yojson]
 type prem = Il.prem [@@deriving yojson]
 type prem' = Il.prem' [@@deriving yojson]
 
+type iterprem = Il.iterprem [@@deriving yojson]
+
 (* Rules *)
 
-type rule = rule' phrase
-and rule' = id * notexp * prem list
+and rulematch = exp list * exp list * prem list
+and rulepath = id * prem list * exp list
 
-type rulegroup = rulegroup' phrase
-and rulegroup' = id * rule list
+and rulegroup = rulegroup' phrase
+and rulegroup' = id * rulematch * rulepath list
 
-type elsegroup = elsegroup' phrase
-and elsegroup' = id * rule
+and elsegroup = elsegroup' phrase
+and elsegroup' = id * rulematch * rulepath
 
 (* Clauses *)
 
@@ -128,8 +130,8 @@ type elseclause' = Il.elseclause'
 
 (* Table rows *)
 
-type tablerow = tablerow' phrase
-and tablerow' = arg list * exp
+and tablerow = tablerow' phrase
+and tablerow' = exp list * arg list * exp * prem list
 
 (* Hints *)
 

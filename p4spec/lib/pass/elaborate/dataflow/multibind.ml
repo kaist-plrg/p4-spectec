@@ -1,19 +1,16 @@
 open Domain.Lib
 open Lang
 open Il
+open Runtime.Static
+open Envs
 module Mixfix = Domain.Mixfix
-open Error
 open Util.Source
-
-(* Renames for an identifier *)
 
 module Ids = struct
   include IdSet
 
   let to_string = to_string ~with_braces:false
 end
-
-(* Renaming environment *)
 
 module REnv = struct
   include MakeIdEnv (Ids)
@@ -27,10 +24,8 @@ module REnv = struct
       benv empty
 end
 
-(* Generate sideconditions *)
-
-let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
-    prem =
+let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
+    (ids_rename : Ids.t) : prem =
   let typ, iters = Bind.BEnv.find id benv |> Bind.Occ.strip in
   let id_rename, ids_rename =
     ids_rename |> IdSet.elements |> fun ids -> (List.hd ids, List.tl ids)
@@ -52,23 +47,26 @@ let gen_sidecondition (benv : Bind.BEnv.t) (id : Id.t) (ids_rename : Ids.t) :
       exp ids_rename
   in
   let sidecondition = IfPr exp $ id.at in
-  List.fold_left
-    (fun sidecondition iter -> IterPr (sidecondition, (iter, [], [])) $ id.at)
-    sidecondition iters
+  let iterctx =
+    let iters = iters @ Iterctx.iters_of iterctx in
+    let venv =
+      List.map (fun id -> (id, (typ, []))) (id :: id_rename :: ids_rename)
+      |> VEnv.of_list
+    in
+    List.map (fun iter -> (iter, [], [])) iters |> Iterctx.add_vars_bound venv
+  in
+  Iterctx.iterate_prem iterctx sidecondition
 
-let gen_sideconditions (benv : Bind.BEnv.t) (renv : REnv.t) : prem list =
+let gen_sideconditions (benv : Bind.BEnv.t) (iterctx : Iterctx.t)
+    (renv : REnv.t) : prem list =
   let renv = REnv.mapi Ids.remove renv in
   REnv.fold
     (fun id ids_rename sideconditions ->
       if Ids.is_empty ids_rename then sideconditions
       else
-        let sidecondition = gen_sidecondition benv id ids_rename in
+        let sidecondition = gen_sidecondition benv iterctx id ids_rename in
         sideconditions @ [ sidecondition ])
     renv []
-
-(* Rename multiple bindings, leaving the leftmost binding occurrence intact *)
-
-(* Expressions *)
 
 let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
     Dctx.t * REnv.t * exp =
@@ -128,17 +126,24 @@ let rec rename_exp (dctx : Dctx.t) (renv : REnv.t) (exp : exp) :
       let dctx, renv, exp_t = rename_exp dctx renv exp_t in
       let exp = ConsE (exp_h, exp_t) $$ (at, note) in
       (dctx, renv, exp)
-  | IterE (_, ((_, _ :: _) as iterexp)) ->
-      error at
-        (Format.asprintf
-           "iterated expression should initially have no annotations, but got \
-            %s"
-           (Il.Print.string_of_iterexp iterexp))
-  | IterE (exp, (iter, [])) ->
+  | IterE (exp, (iter, vars)) ->
       let dctx, renv, exp = rename_exp dctx renv exp in
-      let exp = IterE (exp, (iter, [])) $$ (at, note) in
+      let vars =
+        let frees = Free.free_exp exp in
+        vars
+        |> List.map (fun (id, typ, iters) ->
+               match REnv.find_opt id renv with
+               | None -> [ (id, typ, iters) ]
+               | Some ids_rename when IdSet.is_empty ids_rename ->
+                   [ (id, typ, iters) ]
+               | Some ids_rename ->
+                   let ids = IdSet.inter frees ids_rename in
+                   ids |> IdSet.elements
+                   |> List.map (fun id_rename -> (id_rename, typ, iters)))
+        |> List.flatten
+      in
+      let exp = IterE (exp, (iter, vars)) $$ (at, note) in
       (dctx, renv, exp)
-  (* Unnecessary to handle non-invertible constructs *)
   | _ -> (dctx, renv, exp)
 
 and rename_exps (dctx : Dctx.t) (renv : REnv.t) (exps : exp list) :
@@ -148,8 +153,6 @@ and rename_exps (dctx : Dctx.t) (renv : REnv.t) (exps : exp list) :
       let dctx, renv, exp = rename_exp dctx renv exp in
       (dctx, renv, exps @ [ exp ]))
     (dctx, renv, []) exps
-
-(* Arguments *)
 
 and rename_arg (dctx : Dctx.t) (renv : REnv.t) (arg : arg) :
     Dctx.t * REnv.t * arg =

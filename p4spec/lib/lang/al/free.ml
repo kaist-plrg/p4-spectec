@@ -83,23 +83,27 @@ and free_prems (prems : prem list) : t =
 
 (* Rules *)
 
-let free_rule (rule : rule) : t =
-  let _, notexp, prems = rule.it in
-  free_exps (Mixfix.args notexp) + free_prems prems
+let free_rulematch (rulematch : rulematch) : t =
+  let exps_signature, exps_input, prems = rulematch in
+  free_exps exps_signature + free_exps exps_input + free_prems prems
 
-let free_rules (rules : rule list) : t =
-  rules |> List.map free_rule |> List.fold_left ( + ) empty
+let free_rulepath (rulepath : rulepath) : t =
+  let _, prems, exps_output = rulepath in
+  free_prems prems + free_exps exps_output
+
+let free_rulepaths (rulepaths : rulepath list) : t =
+  rulepaths |> List.map free_rulepath |> List.fold_left ( + ) empty
 
 let free_rulegroup (rulegroup : rulegroup) : t =
-  let _, rules = rulegroup.it in
-  free_rules rules
+  let _, rulematch, rulepaths = rulegroup.it in
+  free_rulematch rulematch + free_rulepaths rulepaths
 
 let free_rulegroups (rulegroups : rulegroup list) : t =
   rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
 
 let free_elsegroup (elsegroup : elsegroup) : t =
-  let _, rule = elsegroup.it in
-  free_rule rule
+  let _, rulematch, rulepath = elsegroup.it in
+  free_rulematch rulematch + free_rulepath rulepath
 
 let free_elsegroup_opt (elsegroup_opt : elsegroup option) : t =
   match elsegroup_opt with
@@ -125,8 +129,8 @@ let free_elseclause_opt (elseclause_opt : elseclause option) : t =
 (* Table rows *)
 
 let free_tablerow (tablerow : tablerow) : t =
-  let args, exp = tablerow.it in
-  free_args args + free_exp exp
+  let _exps_signature, args, exp, prems = tablerow.it in
+  free_args args + free_exp exp + free_prems prems
 
 let free_tablerows (tablerows : tablerow list) : t =
   tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty

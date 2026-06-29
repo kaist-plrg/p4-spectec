@@ -6,8 +6,6 @@ open Error
 open Envs
 open Util.Source
 
-(* Binding occurrences of identifiers, singular or multiple (parallel) *)
-
 module Occ = struct
   type t = Single of Typdim.t | Multi of Typdim.t
 
@@ -18,8 +16,6 @@ module Occ = struct
     | Single typ -> Single (Typdim.add_iter iter typ)
     | Multi typ -> Multi (Typdim.add_iter iter typ)
 end
-
-(* Environment for identifier bindings *)
 
 module BEnv = struct
   include MakeIdEnv (Occ)

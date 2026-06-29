@@ -7,7 +7,7 @@ module Sim = Runtime.Sim.Simulator
 open Util.Source
 open Error
 
-module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
+module Make (Interp_AL : Sim.INTERP_AL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
   (* STF AST transformation *)
 

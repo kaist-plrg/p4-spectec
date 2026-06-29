@@ -9,7 +9,7 @@ open State
 open Error
 open Util.Source
 
-module Make (Interp_IL : Sim.INTERP_IL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
+module Make (Interp_AL : Sim.INTERP_AL) (Interp_SL : Sim.INTERP_SL) : Sim.ARCH =
 struct
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =

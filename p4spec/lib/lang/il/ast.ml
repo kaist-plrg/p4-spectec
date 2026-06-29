@@ -190,14 +190,14 @@ and iterprem = iter * var list * var list
 
 (* Rules *)
 
-and rulematch = exp list * exp list * prem list
-and rulepath = id * prem list * exp list
+and rule = rule' phrase
+and rule' = id * notexp * prem list
 
 and rulegroup = rulegroup' phrase
-and rulegroup' = id * rulematch * rulepath list
+and rulegroup' = id * rule list
 
 and elsegroup = elsegroup' phrase
-and elsegroup' = id * rulematch * rulepath
+and elsegroup' = id * rule
 
 (* Clauses *)
 
@@ -210,7 +210,7 @@ and elseclause' = clause'
 (* Table rows *)
 
 and tablerow = tablerow' phrase
-and tablerow' = exp list * arg list * exp * prem list
+and tablerow' = arg list * exp
 
 (* Hints *)
 

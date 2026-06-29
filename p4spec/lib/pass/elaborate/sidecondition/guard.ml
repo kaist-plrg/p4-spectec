@@ -1,6 +1,6 @@
 open Domain.Lib
 open Lang
-open Il
+open Al
 module Typ = Runtime.Type.Typ
 open Error
 open Util.Source
@@ -86,7 +86,7 @@ module Equiv = struct
   let of_prems (prems : prem list) : table =
     List.fold_left
       (fun tbl prem ->
-        match prem.it with IfPr exp -> of_if_exp tbl exp | _ -> tbl)
+        match prem.it with Il.IfPr exp -> of_if_exp tbl exp | _ -> tbl)
       [] prems
 
   (* True iff cond_a and cond_b belong to the same class of the given kind. *)
@@ -161,7 +161,7 @@ module Result = struct
     | [] -> None
     | _ ->
         let iterprem = (iter, vars_iter, []) in
-        Some (IterPr (prem, iterprem) $ prem.at)
+        Some (Il.IterPr (prem, iterprem) $ prem.at)
 
   let iterate (iterexp_must : iterexp) (iterexp_insert : iterexp)
       ((must, insert) : t) : t =
@@ -170,20 +170,22 @@ module Result = struct
 end
 
 let gen_index_guard (exp : exp) (exp_b : exp) (exp_i : exp) : prem list =
-  let exp_l = LenE exp_b $$ (exp.at, Typ.Make.nat') in
-  let exp_if = CmpE (`LtOp, `BoolT, exp_i, exp_l) $$ (exp.at, Typ.Make.bool') in
-  [ IfPr exp_if $ exp.at ]
+  let exp_l = Il.LenE exp_b $$ (exp.at, Typ.Make.nat') in
+  let exp_if =
+    Il.CmpE (`LtOp, `BoolT, exp_i, exp_l) $$ (exp.at, Typ.Make.bool')
+  in
+  [ Il.IfPr exp_if $ exp.at ]
 
 let gen_eq_epsilon_exp (iter : iter) (var : var) : exp =
   let id, typ, iters = var in
   let exp = Var.as_exp ~dim:true (id, typ, iters @ [ iter ]) in
-  let exp_epsilon = OptE None $$ (exp.at, exp.note) in
-  CmpE (`EqOp, `BoolT, exp, exp_epsilon) $$ (exp.at, Typ.Make.bool')
+  let exp_epsilon = Il.OptE None $$ (exp.at, exp.note) in
+  Il.CmpE (`EqOp, `BoolT, exp, exp_epsilon) $$ (exp.at, Typ.Make.bool')
 
 let gen_len_exp (iter : iter) (var : var) : exp =
   let id, typ, iters = var in
   let exp = Var.as_exp ~dim:true (id, typ, iters @ [ iter ]) in
-  LenE exp $$ (exp.at, Typ.Make.nat')
+  Il.LenE exp $$ (exp.at, Typ.Make.nat')
 
 let gen_iter_guard (iterexp : iterexp) : prem list =
   let iter, vars = iterexp in
@@ -192,46 +194,46 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
       let exp_a = gen_eq_epsilon_exp iter var_a in
       let exp_b = gen_eq_epsilon_exp iter var_b in
       let exp_if =
-        BinE (`EquivOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
+        Il.BinE (`EquivOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
           (fun (exp_prev, exp_if) var ->
             let exp = gen_eq_epsilon_exp iter var in
             let exp_bin =
-              BinE (`EquivOp, `BoolT, exp_prev, exp)
+              Il.BinE (`EquivOp, `BoolT, exp_prev, exp)
               $$ (exp_prev.at, Typ.Make.bool')
             in
             let exp_if =
-              BinE (`AndOp, `BoolT, exp_if, exp_bin)
+              Il.BinE (`AndOp, `BoolT, exp_if, exp_bin)
               $$ (exp_if.at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars
       in
-      [ IfPr exp_if $ no_region ]
+      [ Il.IfPr exp_if $ no_region ]
   | var_a :: var_b :: vars when iter = List ->
       let exp_a = gen_len_exp iter var_a in
       let exp_b = gen_len_exp iter var_b in
       let exp_if =
-        CmpE (`EqOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
+        Il.CmpE (`EqOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
           (fun (exp_prev, exp_if) var ->
             let exp = gen_len_exp iter var in
             let exp_cmp =
-              CmpE (`EqOp, `BoolT, exp_prev, exp)
+              Il.CmpE (`EqOp, `BoolT, exp_prev, exp)
               $$ (exp_prev.at, Typ.Make.bool')
             in
             let exp_if =
-              BinE (`AndOp, `BoolT, exp_if, exp_cmp)
+              Il.BinE (`AndOp, `BoolT, exp_if, exp_cmp)
               $$ (exp_if.at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars
       in
-      [ IfPr exp_if $ no_region ]
+      [ Il.IfPr exp_if $ no_region ]
   | _ -> []
 
 let collector : Result.t Walk.Collect.collector =
@@ -355,3 +357,18 @@ let insert_clause (clause : clause) : clause =
   let prems_must, prems = insert_prems prems_must prems in
   let prems_exp = insert_exp_output prems_must exp in
   (args, exp, prems @ prems_exp) $ clause.at
+
+let insert_def (def : def) : def =
+  let at = def.at in
+  match def.it with
+  | RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) ->
+      let rulegroups = List.map insert_rulegroup rulegroups in
+      let elsegroup_opt = Option.map insert_elsegroup elsegroup_opt in
+      RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) $ at
+  | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
+      let clauses = List.map insert_clause clauses in
+      let elseclause_opt = Option.map insert_clause elseclause_opt in
+      FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) $ at
+  | _ -> def
+
+let insert_spec (spec : spec) : spec = List.map insert_def spec

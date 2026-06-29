@@ -11,9 +11,11 @@ let to_string = function
   | Extern (nottyp_il, inputs) ->
       Hints.Input.to_string inputs
       ^ " = extern "
-      ^ Il.Print.string_of_nottyp nottyp_il
+      ^ Print.string_of_nottyp nottyp_il
   | Defined (nottyp_il, inputs, rulegroups, elsegroup_opt) ->
       Hints.Input.to_string inputs
-      ^ " =\n\n"
-      ^ Il.Print.string_of_rulegroups nottyp_il inputs rulegroups
-      ^ Il.Print.string_of_elsegroup_opt nottyp_il inputs elsegroup_opt
+      ^ " = "
+      ^ Print.string_of_nottyp nottyp_il
+      ^ "\n\n"
+      ^ Print.string_of_rulegroups rulegroups
+      ^ Print.string_of_elsegroup_opt elsegroup_opt

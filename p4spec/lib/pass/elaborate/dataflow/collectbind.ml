@@ -5,18 +5,12 @@ open Error
 open Runtime.Static.Envs
 open Util.Source
 
-(* Collect binding identifiers,
-   while enforcing the invariant that binding identifiers
-   can only occur in invertible constructs *)
-
 let collect_noninvertible (at : region) (construct : string)
     (benv : Bind.BEnv.t) : unit =
   if not (Bind.BEnv.is_empty benv) then
     error at
       (Format.asprintf "invalid binding position(s) for %s in non-invertible %s"
          (Bind.BEnv.to_string benv) construct)
-
-(* Expressions *)
 
 let rec collect_exp (dctx : Dctx.t) (exp : exp) : Bind.BEnv.t =
   match exp.it with
@@ -111,13 +105,7 @@ let rec collect_exp (dctx : Dctx.t) (exp : exp) : Bind.BEnv.t =
       let binds = collect_args dctx args in
       collect_noninvertible exp.at "call operator" binds;
       Bind.BEnv.empty
-  | IterE (_, ((_, _ :: _) as iterexp)) ->
-      error exp.at
-        (Format.asprintf
-           "iterated expression should initially have no annotations, but got \
-            %s"
-           (Il.Print.string_of_iterexp iterexp))
-  | IterE (exp, (iter, [])) ->
+  | IterE (exp, (iter, _vars)) ->
       let binds = collect_exp dctx exp in
       let binds = Bind.BEnv.map (Bind.Occ.add_iter iter) binds in
       binds
@@ -129,8 +117,6 @@ and collect_exps (dctx : Dctx.t) (exps : exp list) : Bind.BEnv.t =
       let binds_h = collect_exp dctx exp in
       let binds_t = collect_exps dctx exps in
       Bind.BEnv.union binds_h binds_t
-
-(* Paths *)
 
 and collect_path (dctx : Dctx.t) (path : path) : Bind.BEnv.t =
   match path.it with
@@ -146,8 +132,6 @@ and collect_path (dctx : Dctx.t) (path : path) : Bind.BEnv.t =
       let binds = Bind.BEnv.union binds_p binds_l in
       Bind.BEnv.union binds binds_h
   | DotP (path, _) -> collect_path dctx path
-
-(* Arguments *)
 
 and collect_arg (dctx : Dctx.t) (arg : arg) : Bind.BEnv.t =
   match arg.it with

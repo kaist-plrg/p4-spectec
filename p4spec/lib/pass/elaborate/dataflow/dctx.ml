@@ -1,6 +1,10 @@
 open Domain.Lib
+open Lang
+open Il
+open Runtime.Type
 open Runtime.Static
 open Envs
+open Util.Source
 
 (* Context for dataflow analysis *)
 
@@ -17,32 +21,43 @@ type t = {
 
 (* Constructors *)
 
-let init (ctx : Ctx.t) : t =
-  let frees = ctx.frees in
-  let bounds = ctx.venv in
-  let menv = ctx.menv in
-  let tdenv = ctx.tdenv in
-  { frees; bounds; menv; tdenv }
+let empty =
+  {
+    frees = IdSet.empty;
+    bounds = VEnv.empty;
+    menv = MEnv.empty;
+    tdenv = TDEnv.empty;
+  }
 
-(* Promoter *)
-
-let promote (ctx : Ctx.t) (dctx : t) (venv : VEnv.t) : Ctx.t =
-  let frees = dctx.frees in
-  let venv =
-    VEnv.union
-      (fun _ typ_a typ_b ->
-        if not (Typdim.equiv typ_a typ_b) then assert false;
-        Some typ_a)
-      ctx.venv venv
-  in
-  { ctx with frees; venv }
+let init (spec : spec) : t =
+  List.fold_left
+    (fun dctx def ->
+      match def.it with
+      | VarD (id, typ, _) -> { dctx with menv = MEnv.add id typ dctx.menv }
+      | TypD (id, tparams, deftyp, _) ->
+          {
+            dctx with
+            tdenv = TDEnv.add id (Typdef.Defined (tparams, deftyp)) dctx.tdenv;
+          }
+      | ExternTypD (id, _) ->
+          { dctx with tdenv = TDEnv.add id Typdef.Extern dctx.tdenv }
+      | _ -> dctx)
+    empty spec
 
 (* Adders *)
 
-let add_free (dctx : t) (id : Id.t) =
+let add_free (dctx : t) (id : Id.t) : t =
   let frees = IdSet.add id dctx.frees in
   { dctx with frees }
 
+let add_frees (dctx : t) (ids : IdSet.t) : t =
+  let frees = IdSet.union ids dctx.frees in
+  { dctx with frees }
+
+let add_bounds (dctx : t) (venv : VEnv.t) : t =
+  let bounds = VEnv.union (fun _ typ _ -> Some typ) dctx.bounds venv in
+  { dctx with bounds }
+
 (* Finders *)
 
-let find_typdef (dctx : t) (tid : TId.t) = TDEnv.find tid dctx.tdenv
+let find_typdef (dctx : t) (tid : TId.t) : Typdef.t = TDEnv.find tid dctx.tdenv

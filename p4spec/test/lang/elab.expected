@@ -5024,10 +5024,10 @@ relation Type_alpha: typeIR ~~ typeIR
     -- let RECORD { annotationList typeIR_field_a nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} } = recordTypeIR''
     -- let recordTypeIR''' = recordTypeIR'
     -- if recordTypeIR''' matches `RECORD {%}`
-    -- let RECORD { annotationList' typeIR_field_b nameIR ;*{annotationList' <- annotationList'*, nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} } = recordTypeIR'''
+    -- let RECORD { annotationList' typeIR_field_b nameIR ;*{typeIR_field_b <- typeIR_field_b*, annotationList' <- annotationList'*, nameIR <- nameIR*} } = recordTypeIR'''
     -- if (|annotationList*{annotationList <- annotationList*}| = |annotationList'*{annotationList' <- annotationList'*}|)
     -- (if (annotationList' = annotationList))*{annotationList <- annotationList*, annotationList' <- annotationList'*}
-    -- (if (nameIR = nameIR_field))*{nameIR <- nameIR*, nameIR_field <- nameIR_field*}
+    -- (if (nameIR = nameIR_field))*{nameIR_field <- nameIR_field*, nameIR <- nameIR*}
     -- (if Type_alpha: typeIR_field_a ~~ typeIR_field_b holds)*{typeIR_field_a <- typeIR_field_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
@@ -5037,10 +5037,10 @@ relation Type_alpha: typeIR ~~ typeIR
     -- let RECORD { annotationList typeIR_field_a nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_a <- typeIR_field_a*} , ... } = recordTypeIR''
     -- let recordTypeIR''' = recordTypeIR'
     -- if recordTypeIR''' matches `RECORD {% , ...}`
-    -- let RECORD { annotationList' typeIR_field_b nameIR ;*{annotationList' <- annotationList'*, nameIR <- nameIR*, typeIR_field_b <- typeIR_field_b*} , ... } = recordTypeIR'''
+    -- let RECORD { annotationList' typeIR_field_b nameIR ;*{typeIR_field_b <- typeIR_field_b*, annotationList' <- annotationList'*, nameIR <- nameIR*} , ... } = recordTypeIR'''
     -- if (|annotationList*{annotationList <- annotationList*}| = |annotationList'*{annotationList' <- annotationList'*}|)
     -- (if (annotationList' = annotationList))*{annotationList <- annotationList*, annotationList' <- annotationList'*}
-    -- (if (nameIR = nameIR_field))*{nameIR <- nameIR*, nameIR_field <- nameIR_field*}
+    -- (if (nameIR = nameIR_field))*{nameIR_field <- nameIR_field*, nameIR <- nameIR*}
     -- (if Type_alpha: typeIR_field_a ~~ typeIR_field_b holds)*{typeIR_field_a <- typeIR_field_a*, typeIR_field_b <- typeIR_field_b*}
     -- the relation holds
 
@@ -20629,7 +20629,7 @@ relation SwitchLabel_general_ok: typingContext typeIR |- switchLabel : switchLab
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_label, typeIR_switch)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_label_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
-    -- let _expressionIR # ( _typeIR' ctk ) = typedExpressionIR_label_cast
+    -- let _expressionIR # ( _typeIR ctk ) = typedExpressionIR_label_cast
     -- if ctk matches `LCTK`
     -- output: % % |- % : typedExpressionIR_label_cast as switchLabelIR
 
@@ -22112,16 +22112,16 @@ def $resolve_constraint(constraint) : inference =
   -- if infer matches `KNOWN AS %`
   -- let KNOWN AS typeIR_h = infer
   -- let { typeId : typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} } = $resolve_constraint({ typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} })
-  -- if (|typeId*{typeId <- typeId*}| = |typeId_t*{typeId_t <- typeId_t*}|)
-  -- (if (typeId = typeId_t))*{typeId <- typeId*, typeId_t <- typeId_t*}
+  -- if (|typeId_t*{typeId_t <- typeId_t*}| = |typeId*{typeId <- typeId*}|)
+  -- (if (typeId = typeId_t))*{typeId_t <- typeId_t*, typeId <- typeId*}
 
   clause 2 : ({ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} }) = { typeId_h : BOOL as typeIR :: typeId_t : typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} }
   -- if pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} matches _ :: _
   -- let typeId_h : infer_h :: typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} = pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*}
   -- if (UNKNOWN = infer_h)
   -- let { typeId : typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} } = $resolve_constraint({ typeId_t : infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} })
-  -- if (|typeId*{typeId <- typeId*}| = |typeId_t*{typeId_t <- typeId_t*}|)
-  -- (if (typeId = typeId_t))*{typeId <- typeId*, typeId_t <- typeId_t*}
+  -- if (|typeId_t*{typeId_t <- typeId_t*}| = |typeId*{typeId <- typeId*}|)
+  -- (if (typeId = typeId_t))*{typeId_t <- typeId_t*, typeId <- typeId*}
 
 def $resolve_type_alias(typeIR) : (nameIR, typeIR*) =
 
@@ -25232,7 +25232,7 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} @ p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_0 p IC @ p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} : IC_callee_4
-    -- let { callableId : callableDef*{callableDef <- callableDef*, callableId <- callableId*} } = IC_callee_4.BLOCK.CALLABLE
+    -- let { callableId : callableDef*{callableId <- callableId*, callableDef <- callableDef*} } = IC_callee_4.BLOCK.CALLABLE
     -- (if callableDef <: externMethodDef)*{callableDef <- callableDef*}
     -- (let externMethodDef = callableDef as externMethodDef)*{callableDef <- callableDef*, externMethodDef -> externMethodDef*}
     -- (let _annotationList' _direction' _typeIR' id_cparam _parameterInitializerOptIR' = constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*, _annotationList' -> _annotationList'*, _direction' -> _direction'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, _typeIR' -> _typeIR'*, id_cparam -> id_cparam*}
@@ -25300,7 +25300,7 @@ relation Constructor_call: cursor instContext store |- constructorDef < typeArgu
     -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : IC_local_0 STO_3 controlLocalDeclarationIR_inst*{controlLocalDeclarationIR_inst <- controlLocalDeclarationIR_inst*}
     -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR_inst
     -- let frame_control = IC_callee_3.BLOCK.FRAME
-    -- let { callableId : callableDef*{callableDef <- callableDef*, callableId <- callableId*} } = IC_local_1.BLOCK.CALLABLE
+    -- let { callableId : callableDef*{callableId <- callableId*, callableDef <- callableDef*} } = IC_local_1.BLOCK.CALLABLE
     -- (if callableDef <: actionDef)*{callableDef <- callableDef*}
     -- (let actionDef = callableDef as actionDef)*{callableDef <- callableDef*, actionDef -> actionDef*}
     -- let actionDefEnv_control = { callableId : actionDef*{actionDef <- actionDef*, callableId <- callableId*} }
