@@ -424,8 +424,6 @@ typeArgument:
   | t = type_
   | t = nonTypeName
     { t }
-  | VOID
-    { "VOID" <| [] <<| "typeArgument" <<<| (at $sloc) }
 ;
 
 typeArgumentList:
@@ -441,12 +439,6 @@ typeArgumentList:
 argument:
   | e = expression
     { e }
-  | n = name ASSIGN e = expression
-    { "name `= expression" <| [ n; e ] <<| "argument" <<<| (at $sloc) }
-  | n = name ASSIGN DONTCARE
-    { "name `= `_" <| [ n ] <<| "argument" <<<| (at $sloc) }
-  | DONTCARE
-    { "`_" <| [] <<| "argument" <<<| (at $sloc) }
 ;
 
 argumentListNonEmpty:

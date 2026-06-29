@@ -176,16 +176,6 @@ def $flatten_parameterList(nonEmptyParameterList `, parameter)
   = $flatten_parameterList(nonEmptyParameterList) ++ [ parameter ]
 
 ;;
-;; Expression key-value pairs
-;;
-
-syntax namedExpression = name `= expression
-
-syntax namedExpressionList =
-  | namedExpression
-  | namedExpressionList `, namedExpression
-
-;;
 ;; Expressions
 ;;
 
@@ -259,11 +249,6 @@ syntax expression =
   | callExpression
   | parenthesizedExpression
 
-syntax expressionList =
-  | `EMPTY
-  | expression
-  | expressionList `, expression
-
 syntax memberAccessBase =
   | typeName
   | expression
@@ -274,10 +259,7 @@ syntax callTarget = namedType
 ;; Type arguments
 ;;
 
-syntax realTypeArgument =
-  | type
-  | VOID
-  | `_
+syntax realTypeArgument = type
 
 syntax typeArgument =
   | realTypeArgument
@@ -292,11 +274,7 @@ syntax typeArgumentList =
 ;; Arguments
 ;;
 
-syntax argument =
-  | expression
-  | name `= expression
-  | name `= `_
-  | `_
+syntax argument = expression
 
 syntax argumentListNonEmpty =
   | argument
