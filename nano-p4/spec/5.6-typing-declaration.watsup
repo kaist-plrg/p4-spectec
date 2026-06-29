@@ -93,10 +93,11 @@ rulegroup TypeDecl_ok {
     TC_0 |- PARSER name typeParameterListOpt `( parameterList ) `; -| TC_1
     -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
     -- if (id_param = $id(typeParameter))*
+    -- if $distinct_<id>(id_param*)
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- if (direction type name_param = parameter)*
-    -- (Type_ok: TC_0 |- type ~> typeIR)*
-    -- if parameterIR* = (direction typeIR name_param)*
+    -- if $distinct_params(parameter*)
+    -- Parameters_ok: TC_0 |- parameter* ~> parameterIR*
+    -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = PARSER typeId id_param* `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
@@ -105,10 +106,11 @@ rulegroup TypeDecl_ok {
     TC_0 |- CONTROL name typeParameterListOpt `( parameterList ) `; -| TC_1
     -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
     -- if (id_param = $id(typeParameter))*
+    -- if $distinct_<id>(id_param*)
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- if (direction type name_param = parameter)*
-    -- (Type_ok: TC_0 |- type ~> typeIR)*
-    -- if parameterIR* = (direction typeIR name_param)*
+    -- if $distinct_params(parameter*)
+    -- Parameters_ok: TC_0 |- parameter* ~> parameterIR*
+    -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = CONTROL typeId id_param* `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
@@ -117,10 +119,10 @@ rulegroup TypeDecl_ok {
     TC_0 |- PACKAGE name typeParameterListOpt `( parameterList ) `; -| TC_1
     -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
     -- if (id_param = $id(typeParameter))*
+    -- if $distinct_<id>(id_param*)
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- if (direction type name_param = parameter)*
-    -- (Type_ok: TC_0 |- type ~> typeIR)*
-    -- if parameterIR* = (direction typeIR name_param)*
+    -- if $distinct_params(parameter*)
+    -- Parameters_ok: TC_0 |- parameter* ~> parameterIR*
     -- if typeId = $id(name)
     -- if typeDefIR = PACKAGE typeId id_param* `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)

@@ -1,27 +1,45 @@
-rulegroup Parameter_ok {
+;;
+;; Predicates for checking object type
+;;
 
-  rule Parameter_ok/baseType:
-    TC_0 |- direction baseType name -| TC_1
-    -- if id = $id(name)
-    -- if TC_1 = $add_var_t(LOCAL, TC_0, id, direction baseType)
+dec $is_object_typeIR(typeIR) : bool
 
-}
+def $is_object_typeIR(parserObjectTypeIR) = true
+def $is_object_typeIR(controlObjectTypeIR) = true
+def $is_object_typeIR(packageObjectTypeIR) = true
+def $is_object_typeIR(typeIR) = false
+  -- otherwise
 
-;; rule Parameter_ok:
-;;   TC_0 |- direction type name -| TC_1
-;;   -- if Type_wf: type
+dec $no_object_params(parameterIR*) : bool
 
+def $no_object_params(eps) = true
+def $no_object_params((direction typeIR name) :: parameterIR_t*)
+  = $no_object_params(parameterIR_t*)
+  -- if ~$is_object_typeIR(typeIR)
+
+;;
+;; Predicate for checking parameter uniqueness
+;;
+
+dec $distinct_params(parameter*) : bool
+
+def $distinct_params(parameter*)
+  = $distinct_<id>(id*)
+  -- if (direction type name = parameter)*
+  -- if (id = $id(name))*
+
+rule Parameter_ok:
+  TC |- direction type name ~> direction typeIR name
+  -- Type_ok: TC |- type ~> typeIR
 
 rulegroup Parameters_ok {
 
   rule Parameters_ok/nil:
-    TC |- eps -| TC
+    TC |- eps ~> eps
 
   rule Parameters_ok/cons:
-    TC_0 |- parameter_h :: parameter_t* -| TC_2
-    -- Parameter_ok:
-        TC_0 |- parameter_h -| TC_1
-    -- Parameters_ok:
-        TC_1 |- parameter_t* -| TC_2
+    TC |- parameter_h :: parameter_t* ~> parameterIR_h :: parameterIR_t*
+    -- Parameter_ok: TC |- parameter_h ~> parameterIR_h
+    -- Parameters_ok: TC |- parameter_t* ~> parameterIR_t*
 
 }
