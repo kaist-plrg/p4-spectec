@@ -3,8 +3,16 @@
 ;;
 
 relation Expr_ok:
-  typingContext |- expression : typeIR
-  hint(input %0 %1)
+  scope typingContext |- expression : typeIR
+  hint(input %0 %1 %2)
+
+;;
+;; Argument typing
+;;
+
+relation ArgumentList_ok:
+  scope typingContext |- argumentList : typeIR*
+  hint(input %0 %1 %2)
 
 ;;
 ;; Lvalue typing
@@ -19,15 +27,11 @@ relation Lvalue_ok:
 ;;
 
 relation Statement_ok:
-  typingContext |- statement -| typingContext
-  hint(input %0 %1)
+  scope typingContext |- statement -| typingContext
+  hint(input %0 %1 %2)
 
-relation BlockElementStatement_ok:
-  typingContext |- blockElementStatement -| typingContext
-  hint(input %0 %1)
-
-relation BlockElementStatements_ok:
-  typingContext |- blockElementStatement* -| typingContext
+relation Statements_ok:
+  typingContext |- statement* -| typingContext
   hint(input %0 %1)
 
 relation Block_ok:
@@ -46,17 +50,9 @@ relation ParserStateList_ok:
   typingContext |- parserStateList
   hint(input %0 %1)
 
-relation ParserStatements_ok:
-  typingContext |- parserStatement* -| typingContext
-  hint(input %0 %1)
-
 ;;
 ;; Declaration typing
 ;;
-
-relation ConstDecl_ok:
-  scope typingContext |- constantDeclaration -| typingContext
-  hint(input %0 %1 %2)
 
 relation VarDecl_ok:
   scope typingContext |- variableDeclaration -| typingContext

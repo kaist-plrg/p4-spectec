@@ -2,10 +2,6 @@ relation Type_ok:
   typingContext |- type ~> typeIR
   hint(input %0 %1)
 
-relation TypeArgument_ok:
-  typingContext |- typeArgument ~> typeIR
-  hint(input %0 %1)
-
 rulegroup Type_ok {
 
   rule Type_ok/baseType:
@@ -15,20 +11,6 @@ rulegroup Type_ok {
     TC |- typeName ~> typeIR
     -- if typeId = $id(typeName)
     -- if typeDefIR = $find_typeDef_t(TC, typeId)
-    -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
 
-  rule Type_ok/specializedType:
-    TC |- typeName `< typeArgumentList > ~> typeIR
-    -- if typeId = $id(typeName)
-    -- if typeDefIR = $find_typeDef_t(TC, typeId)
-    -- if ~$is_monomorphic_typeDefIR(typeDefIR)
-    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
-    -- (TypeArgument_ok: TC |- typeArgument ~> typeIR_arg)*
-    -- if typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*)
-
 }
-
-rule TypeArgument_ok/type:
-  TC |- type ~> typeIR
-  -- Type_ok: TC |- type ~> typeIR

@@ -1,4 +1,5 @@
 syntax id = text
+syntax callableId = text
 syntax nameIR = text
 
 dec $id(name) : text
@@ -38,7 +39,16 @@ syntax namedTypeIR = TYPEVAR typeId
 ;; Object types
 ;;
 
+syntax typeParameterIR = typeId
 syntax parameterIR = direction typeIR name
+
+syntax externMethodTypeDefIR =
+  VOID nameIR `< typeParameterIR* > `( parameterIR* )
+syntax externMethodTypeDefEnv =
+  map<callableId, externMethodTypeDefIR>
+
+syntax externObjectTypeIR =
+  EXTERN typeId externMethodTypeDefEnv
 
 syntax parserObjectTypeIR =
   PARSER typeId `( parameterIR* )
@@ -50,9 +60,31 @@ syntax packageObjectTypeIR =
   PACKAGE typeId `( parameterIR* )
 
 syntax objectTypeIR =
+  | externObjectTypeIR
   | parserObjectTypeIR
   | controlObjectTypeIR
   | packageObjectTypeIR
+
+;;
+;; Object typeDefs
+;;
+
+syntax externTypeDefIR = externObjectTypeIR
+
+syntax parserTypeDefIR =
+  PARSER typeId `( parameterIR* )
+
+syntax controlTypeDefIR =
+  CONTROL typeId `( parameterIR* )
+
+syntax packageTypeDefIR =
+  PACKAGE typeId `( parameterIR* )
+
+syntax objectTypeDefIR =
+  | externTypeDefIR
+  | parserTypeDefIR
+  | controlTypeDefIR
+  | packageTypeDefIR
 
 ;;
 ;; Internal type representation
@@ -66,6 +98,4 @@ syntax typeIR =
 
 syntax typeDefIR =
   | dataTypeIR
-  | PARSER typeId typeId* `( parameterIR* )
-  | CONTROL typeId typeId* `( parameterIR* )
-  | PACKAGE typeId typeId* `( parameterIR* )
+  | objectTypeDefIR

@@ -24,10 +24,6 @@
   let rec declare_types_of_il (value : Value.t) : unit =
     Value.Get.mtch value
       [
-        ("typeParameterList `, typeParameter",
-          fun values ->
-            declare_types_of_il (List.nth values 0);
-            declare_type (id_of_name (List.nth values 1)));
         ("ID text", fun _ -> declare_type (id_of_name value));
         ("TID text", fun _ -> declare_type (id_of_name value));
       ]
@@ -74,34 +70,32 @@
 (**************************** TYPES ******************************)
 %type <Lang.Il.value>
   int
-  trailingCommaOpt booleanLiteral
-  integerLiteral stringLiteral
+  booleanLiteral
+  integerLiteral
   identifier typeIdentifier nonTypeName typeName name nameList member
   direction
-  baseType specializedType namedType type_ typeOrVoid
-  typeParameter typeParameterList typeParameterListOpt
+  baseType namedType type_ typeOrVoid
   parameter nonEmptyParameterList parameterList
   literalExpression referenceExpression
-  unop unaryExpression binop binaryExpression ternaryExpression
+  unop unaryExpression binop binaryExpression
   memberAccessExpression accessExpression
   callExpression parenthesizedExpression
-  expression memberAccessBase
-  typeArgument typeArgumentList argument argumentListNonEmpty argumentList
+  expression
+  argument argumentListNonEmpty argumentList
   lvalue
   emptyStatement assignmentStatement callStatement blockStatement conditionalStatement statement
-  initializer_ initializerOpt constantDeclaration variableDeclaration
-  blockElementStatement blockElementStatementList
+  statementList
+  initializer_ variableDeclaration
   functionPrototype
   actionDeclaration
   instantiation
   matchKindDeclaration
   typeField typeFieldList structTypeDeclaration headerTypeDeclaration derivedTypeDeclaration
-  externFunctionDeclaration externMethodPrototype externMethodPrototypeList
+  externMethodPrototype externMethodPrototypeList
   externObjectDeclaration externDeclaration
   selectCase selectCaseList selectExpression
   stateExpression transitionStatement
   parserTypeDeclaration
-  parserBlockStatement parserConditionalStatement parserStatement parserStatementList
   parserState parserStateList
   parserLocalDeclaration parserLocalDeclarationList parserDeclaration
   tableKey tableActionReference tableAction tableActionList
@@ -132,14 +126,6 @@ int:
     { fst int }
 ;
 
-(* Misc *)
-trailingCommaOpt:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "trailingCommaOpt" <<<| (at $sloc) }
-  | COMMA
-    { "`," <| [] <<| "trailingCommaOpt" <<<| (at $sloc) }
-;
-
 (* Booleans *)
 %inline booleanLiteral:
   | TRUE
@@ -151,12 +137,6 @@ trailingCommaOpt:
 integerLiteral:
   | number = NUMBER
     { fst number }
-;
-
-(* Strings *)
-stringLiteral:
-  | text = STRING_LITERAL
-    { "`\" text `\"" <| [ text ] <<| "stringLiteral" <<<| (at $sloc) }
 ;
 
 (* Names *)
@@ -223,26 +203,14 @@ baseType:
     { "BOOL" <| [] <<| "baseType" <<<| (at $sloc) }
   | MATCH_KIND
     { "MATCH_KIND" <| [] <<| "baseType" <<<| (at $sloc) }
-  | STRING
-    { "STRING" <| [] <<| "baseType" <<<| (at $sloc) }
-  | INT
-    { "INT" <| [] <<| "baseType" <<<| (at $sloc) }
   | INT L_ANGLE v = int R_ANGLE
     { "INT `< int >" <| [ v ] <<| "baseType" <<<| (at $sloc) }
-  | BIT
-    { "BIT" <| [] <<| "baseType" <<<| (at $sloc) }
   | BIT L_ANGLE v = int R_ANGLE
     { "BIT `< int >" <| [ v ] <<| "baseType" <<<| (at $sloc) }
 ;
 
-specializedType:
-  | n = typeName L_ANGLE tal = typeArgumentList R_ANGLE
-    { "typeName `< typeArgumentList >" <| [ n; tal ] <<| "specializedType" <<<| (at $sloc) }
-;
-
 namedType:
   | t = typeName
-  | t = specializedType
     { t }
 ;
 
@@ -259,26 +227,6 @@ typeOrVoid:
     { "VOID" <| [] <<| "typeOrVoid" <<<| (at $sloc) }
   | id = identifier
     { id }
-;
-
-(* Type parameters *)
-typeParameter:
-  | n = name { n }
-;
-
-typeParameterList:
-  | tp = typeParameter
-    { tp }
-  | tps = typeParameterList COMMA tp = typeParameter
-    { "typeParameterList `, typeParameter" <| [ tps; tp ] <<| "typeParameterList" <<<| (at $sloc) }
-;
-
-typeParameterListOpt:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "typeParameterListOpt" <<<| (at $sloc) }
-  | L_ANGLE tps = typeParameterList R_ANGLE
-    { declare_types_of_il tps;
-      "`< typeParameterList >" <| [ tps ] <<| "typeParameterListOpt" <<<| (at $sloc) }
 ;
 
 (* Parameters *)
@@ -306,7 +254,6 @@ parameterList:
 %inline literalExpression:
   | bool = booleanLiteral { bool }
   | int = integerLiteral  { int }
-  | str = stringLiteral   { str }
 ;
 
 %inline referenceExpression:
@@ -376,11 +323,6 @@ parameterList:
     { "expression binop expression" <| [ l; o; r ] <<| "binaryExpression" <<<| (at $sloc) }
 ;
 
-%inline ternaryExpression:
-  | c = expression QUESTION t = expression COLON f = expression
-    { "expression `? expression `: expression" <| [ c; t; f ] <<| "ternaryExpression" <<<| (at $sloc) }
-;
-
 %inline memberAccessExpression:
   | e = memberAccessBase DOT m = member
     { "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" <<<| (at $sloc) }
@@ -406,7 +348,6 @@ expression:
   | e = referenceExpression
   | e = unaryExpression
   | e = binaryExpression
-  | e = ternaryExpression
   | e = accessExpression
   | e = callExpression
   | e = parenthesizedExpression
@@ -414,25 +355,8 @@ expression:
 ;
 
 %inline memberAccessBase:
-  | e = typeName
   | e = expression
     { e }
-;
-
-(* Type arguments *)
-typeArgument:
-  | t = type_
-  | t = nonTypeName
-    { t }
-;
-
-typeArgumentList:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "typeArgumentList" <<<| (at $sloc) }
-  | targ = typeArgument
-    { targ }
-  | targs = typeArgumentList COMMA targ = typeArgument
-    { "typeArgumentList `, typeArgument" <| [ targs; targ ] <<| "typeArgumentList" <<<| (at $sloc) }
 ;
 
 (* Arguments *)
@@ -479,20 +403,16 @@ assignmentStatement:
 callStatement:
   | lv = lvalue L_PAREN args = argumentList R_PAREN SEMICOLON
     { "lvalue `( argumentList ) `;" <| [ lv; args ] <<| "callStatement" <<<| (at $sloc) }
-  | lv = lvalue L_ANGLE targs = typeArgumentList R_ANGLE L_PAREN args = argumentList R_PAREN SEMICOLON
-    { "lvalue `< typeArgumentList > `( argumentList ) `;" <| [ lv; targs; args ] <<| "callStatement" <<<| (at $sloc) }
 ;
 
 blockStatement:
-  | L_BRACE push_scope sl = blockElementStatementList R_BRACE pop_scope
-    { "`{ blockElementStatementList }" <| [ sl ] <<| "blockStatement" <<<| (at $sloc) }
+  | L_BRACE push_scope sl = statementList R_BRACE pop_scope
+    { "`{ statementList }" <| [ sl ] <<| "blockStatement" <<<| (at $sloc) }
 ;
 
 conditionalStatement:
-  | IF L_PAREN c = expression R_PAREN t = statement %prec THEN
-    { "IF `( expression ) statement" <| [ c; t ] <<| "conditionalStatement" <<<| (at $sloc) }
-  | IF L_PAREN c = expression R_PAREN t = statement ELSE f = statement
-    { "IF `( expression ) statement ELSE statement" <| [ c; t; f ] <<| "conditionalStatement" <<<| (at $sloc) }
+  | IF L_PAREN c = expression R_PAREN t = blockStatement ELSE f = blockStatement
+    { "IF `( expression ) blockStatement ELSE blockStatement" <| [ c; t; f ] <<| "conditionalStatement" <<<| (at $sloc) }
 ;
 
 statement:
@@ -510,41 +430,23 @@ initializer_:
     { "`= expression" <| [ e ] <<| "initializer" <<<| (at $sloc) }
 ;
 
-initializerOpt:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "initializerOpt" <<<| (at $sloc) }
-  | i = initializer_ { i }
-;
-
-constantDeclaration:
-  | CONST t = type_ n = name i = initializer_ SEMICOLON
-    { "CONST type name initializer `;" <| [ t; n; i ] <<| "constantDeclaration" <<<| (at $sloc) }
-;
-
 variableDeclaration:
-  | t = type_ n = name i = initializerOpt SEMICOLON
+  | t = type_ n = name i = initializer_ SEMICOLON
     { declare_var (id_of_name n);
-      "type name initializerOpt `;" <| [ t; n; i ] <<| "variableDeclaration" <<<| (at $sloc) }
+      "type name initializer `;" <| [ t; n; i ] <<| "variableDeclaration" <<<| (at $sloc) }
 ;
 
-blockElementStatement:
-  | d = constantDeclaration
-  | d = variableDeclaration
-  | d = statement
-    { d }
-;
-
-blockElementStatementList:
+statementList:
   | (* empty *)
-    { "`EMPTY" <| [] <<| "blockElementStatementList" <<<| (at $sloc) }
-  | sl = blockElementStatementList s = blockElementStatement
-    { "blockElementStatementList blockElementStatement" <| [ sl; s ] <<| "blockElementStatementList" <<<| (at $sloc) }
+    { "`EMPTY" <| [] <<| "statementList" <<<| (at $sloc) }
+  | sl = statementList s = statement
+    { "statementList statement" <| [ sl; s ] <<| "statementList" <<<| (at $sloc) }
 ;
 
 (* Function prototype *)
 functionPrototype:
-  | VOID n = name push_scope tpl = typeParameterListOpt L_PAREN pl = parameterList R_PAREN
-    { "VOID name typeParameterListOpt `( parameterList )" <| [ n; tpl; pl ] <<| "functionPrototype" <<<| (at $sloc) }
+  | VOID n = name push_scope L_PAREN pl = parameterList R_PAREN
+    { "VOID name `( parameterList )" <| [ n; pl ] <<| "functionPrototype" <<<| (at $sloc) }
 ;
 
 (* Action declarations *)
@@ -561,8 +463,8 @@ instantiation:
 
 (* Match kind declarations *)
 matchKindDeclaration:
-  | MATCH_KIND L_BRACE nl = nameList c = trailingCommaOpt R_BRACE
-    { "MATCH_KIND `{ nameList trailingCommaOpt }" <| [ nl; c ] <<| "matchKindDeclaration" <<<| (at $sloc) }
+  | MATCH_KIND L_BRACE nl = nameList R_BRACE
+    { "MATCH_KIND `{ nameList }" <| [ nl ] <<| "matchKindDeclaration" <<<| (at $sloc) }
 ;
 
 (* Derived type declarations *)
@@ -596,12 +498,6 @@ derivedTypeDeclaration:
     { d }
 ;
 
-(* Extern declarations *)
-externFunctionDeclaration:
-  | EXTERN p = functionPrototype pop_scope SEMICOLON
-    { "EXTERN functionPrototype `;" <| [ p ] <<| "externFunctionDeclaration" <<<| (at $sloc) }
-;
-
 externMethodPrototype:
   | p = functionPrototype pop_scope SEMICOLON
     { "functionPrototype `;" <| [ p ] <<| "externMethodPrototype" <<<| (at $sloc) }
@@ -622,7 +518,6 @@ externObjectDeclaration:
 ;
 
 externDeclaration:
-  | d = externFunctionDeclaration
   | d = externObjectDeclaration
     { d }
 ;
@@ -658,46 +553,16 @@ transitionStatement:
 ;
 
 parserTypeDeclaration:
-  | PARSER n = name push_scope tpl = typeParameterListOpt
+  | PARSER n = name push_scope
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
     { declare_type (id_of_name n);
-      "PARSER name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "parserTypeDeclaration" <<<| (at $sloc) }
-;
-
-parserBlockStatement:
-  | L_BRACE sl = parserStatementList R_BRACE
-    { "`{ parserStatementList }" <| [ sl ] <<| "parserBlockStatement" <<<| (at $sloc) }
-;
-
-parserConditionalStatement:
-  | IF L_PAREN c = expression R_PAREN t = parserStatement %prec THEN
-    { "IF `( expression ) parserStatement" <| [ c; t ] <<| "parserConditionalStatement" <<<| (at $sloc) }
-  | IF L_PAREN c = expression R_PAREN t = parserStatement ELSE f = parserStatement
-    { "IF `( expression ) parserStatement ELSE parserStatement" <| [ c; t; f ] <<| "parserConditionalStatement" <<<| (at $sloc) }
-;
-
-parserStatement:
-  | s = constantDeclaration
-  | s = variableDeclaration
-  | s = emptyStatement
-  | s = assignmentStatement
-  | s = callStatement
-  | s = parserBlockStatement
-  | s = parserConditionalStatement
-    { s }
-;
-
-parserStatementList:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "parserStatementList" <<<| (at $sloc) }
-  | sl = parserStatementList s = parserStatement
-    { "parserStatementList parserStatement" <| [ sl; s ] <<| "parserStatementList" <<<| (at $sloc) }
+      "PARSER name `( parameterList ) `;" <| [ n; pl ] <<| "parserTypeDeclaration" <<<| (at $sloc) }
 ;
 
 parserState:
-  | STATE n = name push_scope L_BRACE sl = parserStatementList t = transitionStatement R_BRACE pop_scope
+  | STATE n = name push_scope L_BRACE sl = statementList t = transitionStatement R_BRACE pop_scope
     { declare_var (id_of_name n);
-      "STATE name `{ parserStatementList transitionStatement }" <| [ n; sl; t ] <<| "parserState" <<<| (at $sloc) }
+      "STATE name `{ statementList transitionStatement }" <| [ n; sl; t ] <<| "parserState" <<<| (at $sloc) }
 ;
 
 parserStateList:
@@ -708,7 +573,6 @@ parserStateList:
 ;
 
 parserLocalDeclaration:
-  | d = constantDeclaration
   | d = variableDeclaration
     { d }
 ;
@@ -788,10 +652,10 @@ tableDeclaration:
 ;
 
 controlTypeDeclaration:
-  | CONTROL n = name push_scope tpl = typeParameterListOpt
+  | CONTROL n = name push_scope
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
     { declare_type (id_of_name n);
-      "CONTROL name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "controlTypeDeclaration" <<<| (at $sloc) }
+      "CONTROL name `( parameterList ) `;" <| [ n; pl ] <<| "controlTypeDeclaration" <<<| (at $sloc) }
 ;
 
 controlBody:
@@ -799,7 +663,6 @@ controlBody:
 ;
 
 controlLocalDeclaration:
-  | d = constantDeclaration
   | d = variableDeclaration
   | d = tableDeclaration
     { d }
@@ -822,10 +685,10 @@ controlDeclaration:
 
 (* Package type declarations *)
 packageTypeDeclaration:
-  | PACKAGE n = name push_scope tpl = typeParameterListOpt
+  | PACKAGE n = name push_scope
     L_PAREN pl = parameterList R_PAREN pop_scope SEMICOLON
     { declare_type (id_of_name n);
-      "PACKAGE name typeParameterListOpt `( parameterList ) `;" <| [ n; tpl; pl ] <<| "packageTypeDeclaration" <<<| (at $sloc) }
+      "PACKAGE name `( parameterList ) `;" <| [ n; pl ] <<| "packageTypeDeclaration" <<<| (at $sloc) }
 ;
 
 (* Type declarations *)
@@ -839,7 +702,6 @@ typeDeclaration:
 
 (* Declarations *)
 declaration:
-  | d = constantDeclaration
   | d = instantiation
   | d = actionDeclaration
   | d = matchKindDeclaration

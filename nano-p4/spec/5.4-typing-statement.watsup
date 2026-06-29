@@ -1,39 +1,58 @@
-rulegroup BlockElementStatement_ok {
+;; syntax statement =
+;;   | emptyStatement
+;;   | assignmentStatement
+;;   | callStatement
+;;   | blockStatement
+;;   | conditionalStatement
 
-  rule BlockElementStatement_ok/constantDeclaration:
-    TC_0 |- constantDeclaration -| TC_1
-    -- ConstDecl_ok:
-        LOCAL TC_0 |- constantDeclaration -| TC_1
+rule Statement_ok/emptyStatement:
+  scope TC |- emptyStatement -| TC
 
-  rule BlockElementStatement_ok/variableDeclaration:
-    TC_0 |- variableDeclaration -| TC_1
-    -- VarDecl_ok:
-        LOCAL TC_0 |- variableDeclaration -| TC_1
+rule Statement_ok/assignmentStatement:
+  scope TC |- lvalue `= expression `; -| TC
+  -- Lvalue_ok: scope TC |- lvalue : typeIR_lvalue
+  -- Expr_ok: scope TC |- expression : typeIR_expression
+  ---- ;; NOTE: type equivalence
+  -- if typeIR_lvalue = typeIR_expression
 
-  rule BlockElementStatement_ok/statement:
-    TC_0 |- statement -| TC_1
-    -- Statement_ok:
-        TC_0 |- statement -| TC_1
+rulegroup Statement_ok/callStatement {
+
+  rule Statement_ok/callStatement-name-no-typeArgumentList:
+    scope TC |- referenceExpression `( argumentList ) `; -| TC
+    -- if callableId = $id(referenceExpression)
+    -- if callableTypeDef = $find_callableDef_t(TC, callableId)
+    -- if parameterIR* = $params_of_callableTypeDef(callableTypeDef)
+    -- ArgumentList_ok: scope TC |- argumentList : typeIR*
+    -- if (_ typeIR_param _ = parameterIR)*
+    ---- ;; TODO: does this do what i wish it does?
+    -- if (typeIR_param = typeIR)*
+
+  rule Statement_ok/callStatement-member-no-typeArgumentList:
+    scope TC |- (lvalue_base `. member) `( argumentList ) `; -| TC
+    -- Lvalue_ok: scope TC |- lvalue_base : typeIR_base
+
+  rule Statement_ok/callStatement-typeArgumentList:
+    scope TC |- lvalue `( argumentList ) `; -| TC
 
 }
 
-rulegroup BlockElementStatements_ok {
+rulegroup Statements_ok {
 
-  rule BlockElementStatements_ok/nil:
+  rule Statements_ok/nil:
     TC_0 |- eps -| TC_0
 
-  rule BlockElementStatements_ok/cons:
-    TC_0 |- blockElementStatement_h :: blockElementStatement_t* -| TC_2
-    -- BlockElementStatement_ok:
-        TC_0 |- blockElementStatement_h -| TC_1
-    -- BlockElementStatements_ok:
-        TC_1 |- blockElementStatement_t* -| TC_2
+  rule Statements_ok/cons:
+    TC_0 |- statement_h :: statement_t* -| TC_2
+    -- Statement_ok:
+        LOCAL TC_0 |- statement_h -| TC_1
+    -- Statements_ok:
+        TC_1 |- statement_t* -| TC_2
 
 }
 
 rule Block_ok:
-  TC_0 |- `{ blockElementStatementList }
-  -- if blockElementStatement* =
-      $flatten_blockElementStatementList(blockElementStatementList)
-  -- BlockElementStatements_ok: TC_0 |- blockElementStatement* -| TC_1
+  TC_0 |- `{ statementList }
+  -- if statement* =
+      $flatten_statementList(statementList)
+  -- Statements_ok: TC_0 |- statement* -| TC_1
 

@@ -12,10 +12,6 @@ relation ParserLocalDecls_ok:
 
 rulegroup ParserLocalDecl_ok {
 
-  rule ParserLocalDecl_ok/constantDeclaration:
-    TC_0 |- constantDeclaration -| TC_1
-    -- ConstDecl_ok: BLOCK TC_0 |- constantDeclaration -| TC_1
-
   rule ParserLocalDecl_ok/variableDeclaration:
     TC_0 |- variableDeclaration -| TC_1
     -- VarDecl_ok: BLOCK TC_0 |- variableDeclaration -| TC_1
@@ -49,7 +45,7 @@ relation ParserState_ok:
   hint(input %0 %1 %2)
 
 rule ParserState_ok:
-  TC_0 nameIR_state* |- STATE name `{ parserStatementList transitionStatement }
+  TC_0 nameIR_state* |- STATE name `{ statementList transitionStatement }
   -- if TC_1 = $enter_t(TC_0)
 
 rule ParserStateList_ok:

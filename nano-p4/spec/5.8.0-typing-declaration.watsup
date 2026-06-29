@@ -1,15 +1,3 @@
-;; Constant declaration
-
-rule ConstDecl_ok:
-  scope TC_0 |- CONST type name (`= expression) `; -| TC_1
-  -- Type_ok: TC_0 |- type ~> typeIR
-  -- Expr_ok: TC_0 |- expression : typeIR'
-  -- if typeIR = typeIR'
-  -- if id = $id(name)
-  ---- ;; update type frame
-  -- if varTypeIR = `EMPTY typeIR
-  -- if TC_1 = $add_var_t(scope, TC_0, id, varTypeIR)
-
 ;; Variable declaration
 
 rulegroup VarDecl_ok {
@@ -17,16 +5,7 @@ rulegroup VarDecl_ok {
   rule VarDecl_ok/initializer:
     scope TC_0 |- type name (`= expression) `; -| TC_1
     -- Type_ok: TC_0 |- type ~> typeIR
-    -- Expr_ok: TC_0 |- expression : typeIR'
-    -- if typeIR = typeIR'
-    -- if id = $id(name)
-    ---- ;; update type frame
-    -- if varTypeIR = INOUT typeIR
-    -- if TC_1 = $add_var_t(scope, TC_0, id, varTypeIR)
-
-  rule VarDecl_ok/no-initializer:
-    scope TC_0 |- type name `EMPTY `; -| TC_1
-    -- Type_ok: TC_0 |- type ~> typeIR
+    -- Expr_ok: scope TC_0 |- expression : typeIR'
     -- if typeIR = typeIR'
     -- if id = $id(name)
     ---- ;; update type frame
@@ -90,19 +69,11 @@ relation ExternDecl_ok:
 
 rulegroup ExternDecl_ok {
 
-  rule ExternDecl_ok/externFunctionDeclaration:
-    TC_0 |- EXTERN functionPrototype `; -| TC_1
-    -- if VOID name typeParameterListOpt `( parameterList ) = functionPrototype
-    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-    ---- ;; TODO: all (function) parameters must have a direction
-    -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
-    -- if callableId = $id(name)
-    -- if callableTypeDef = FUNCTION typeParameter* parameterIR*
-    -- if TC_1 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
-
   rule ExternDecl_ok/externObjectDeclaration:
     TC_0 |- EXTERN nonTypeName
-            typeParameterListOpt `{ externMethodPrototypeList } -| TC_0
+            `{ externMethodPrototypeList } -| TC_0
+    -- if externMethodPrototype*
+        = $flatten_externMethodPrototypeList(externMethodPrototypeList)
 
 }
 
@@ -143,49 +114,36 @@ rulegroup TypeDecl_ok {
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
 
   rule TypeDecl_ok/parserTypeDeclaration:
-    TC_0 |- PARSER name typeParameterListOpt `( parameterList ) `; -| TC_1
-    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-    -- if (id_param = $id(typeParameter))*
-    -- if $distinct_<id>(id_param*)
+    TC_0 |- PARSER name `( parameterList ) `; -| TC_1
     -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
     -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
-    -- if typeDefIR = PARSER typeId id_param* `( parameterIR* )
+    -- if typeDefIR = PARSER typeId `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
 
   rule TypeDecl_ok/controlTypeDeclaration:
-    TC_0 |- CONTROL name typeParameterListOpt `( parameterList ) `; -| TC_1
-    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-    -- if (id_param = $id(typeParameter))*
-    -- if $distinct_<id>(id_param*)
+    TC_0 |- CONTROL name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
     -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
     -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
-    -- if typeDefIR = CONTROL typeId id_param* `( parameterIR* )
+    -- if typeDefIR = CONTROL typeId `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
 
   rule TypeDecl_ok/packageTypeDeclaration:
-    TC_0 |- PACKAGE name typeParameterListOpt `( parameterList ) `; -| TC_1
-    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
-    -- if (id_param = $id(typeParameter))*
-    -- if $distinct_<id>(id_param*)
+    TC_0 |- PACKAGE name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
     -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
     -- if $distinct_params(parameterIR*)
     -- if typeId = $id(name)
-    -- if typeDefIR = PACKAGE typeId id_param* `( parameterIR* )
+    -- if typeDefIR = PACKAGE typeId `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
 
 }
 
 ;; Declaration
-
-rule Decl_ok/constantDeclaration:
-  TC_0 |- constantDeclaration -| TC_1
-  -- ConstDecl_ok: GLOBAL TC_0 |- constantDeclaration -| TC_1
 
 rule Decl_ok/instantiation:
   TC_0 |- type `( argumentList ) name `; -| TC_0
@@ -195,7 +153,7 @@ rule Decl_ok/actionDeclaration:
   -- ActionDecl_ok: TC_0 |- actionDeclaration -| TC_1
 
 rule Decl_ok/matchKindDeclaration:
-  TC_0 |- MATCH_KIND `{ nameList trailingCommaOpt } -| TC_1
+  TC_0 |- MATCH_KIND `{ nameList } -| TC_1
   -- if name* = $flatten_nameList(nameList)
   -- if (id = $id(name))*
   ---- ;; check name collision
