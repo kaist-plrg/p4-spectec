@@ -1746,11 +1746,6 @@ and elab_tablerow (ctx : Ctx.t) (at : region) (id : id)
     El.Free.free_id_def def |> Ctx.add_frees ctx_local
   in
   let ctx_local, args_il = elab_args ~as_def:true at ctx_local params_il args in
-  check
-    (Shallowbind.check_shallow_args args_il)
-    at
-    (Format.asprintf "bindings are not shallow: %s"
-       (Il.Print.string_of_args args_il));
   let+ _ctx_local, exp_il = elab_exp ctx_local typ_il exp_body in
   let tablerow_il = (args_il, exp_il) $ tablerow.at in
   tablerow_il
