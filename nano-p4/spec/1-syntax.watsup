@@ -270,6 +270,13 @@ syntax typeArgumentList =
   | typeArgument
   | typeArgumentList `, typeArgument
 
+dec $flatten_typeArgumentList(typeArgumentList) : typeArgument*
+  hint(prose_in %0 "flattened")
+def $flatten_typeArgumentList(`EMPTY) = eps
+def $flatten_typeArgumentList(typeArgument) = typeArgument
+def $flatten_typeArgumentList(typeArgumentList `, typeArgument)
+  = $flatten_typeArgumentList(typeArgumentList) ++ [ typeArgument ]
+
 ;;
 ;; Arguments
 ;;
@@ -424,6 +431,12 @@ syntax typeField = type name `;
 syntax typeFieldList =
   | `EMPTY
   | typeFieldList typeField
+
+dec $flatten_typeFieldList(typeFieldList) : typeField*
+  hint(prose_in %0 "flattened")
+def $flatten_typeFieldList(`EMPTY) = eps
+def $flatten_typeFieldList(typeFieldList typeField)
+  = $flatten_typeFieldList(typeFieldList) ++ [ typeField ]
 
 syntax structTypeDeclaration =
   STRUCT name `{ typeFieldList }
@@ -631,6 +644,14 @@ syntax typeDeclaration =
   | parserTypeDeclaration
   | controlTypeDeclaration
   | packageTypeDeclaration
+
+dec $typeParams_of_typeDecl(typeDeclaration) : typeParameter*
+def $typeParams_of_typeDecl(PARSER _ typeParameterListOpt `( _ ) `;)
+  = $flatten_typeParameterListOpt(typeParameterListOpt)
+def $typeParams_of_typeDecl(CONTROL _ typeParameterListOpt `( _ ) `;)
+  = $flatten_typeParameterListOpt(typeParameterListOpt)
+def $typeParams_of_typeDecl(PACKAGE _ typeParameterListOpt `( _ ) `;)
+  = $flatten_typeParameterListOpt(typeParameterListOpt)
 
 ;;
 ;;;; Declaration

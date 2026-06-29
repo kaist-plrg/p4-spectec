@@ -1,18 +1,38 @@
+relation Type_ok:
+  typingContext |- type ~> typeIR
+  hint(input %0 %1)
+
 relation Type_wf:
-  bound |- type
+  bound |- typeIR
   hint(input %0 %1)
 
-relation TypeDecl_wf:
-  bound |- type
+relation TypeArgument_ok:
+  typingContext |- typeArgument ~> typeIR
   hint(input %0 %1)
 
-;; rule Type_wf/baseType:
-;;   B |- baseType
-;;
-;; rulegroup Type_wf/namedType {
-;;
-;;   rule Type_wf/typeName:
-;;     B |- typeName
-;;
-;; }
-;;
+rulegroup Type_ok {
+
+  rule Type_ok/baseType:
+    TC |- baseType ~> baseType
+
+  rule Type_ok/typeName:
+    TC |- typeName ~> typeIR
+    -- if typeId = $id(typeName)
+    -- if typeDefIR = $find_map<typeId, typeDefIR>(TC.GLOBAL.TYPE, typeId)
+    -- if $is_monomorphic_typeDefIR(typeDefIR)
+    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+
+  rule Type_ok/specializedType:
+    TC |- typeName `< typeArgumentList > ~> typeIR
+    -- if typeId = $id(typeName)
+    -- if typeDefIR = $find_map<typeId, typeDefIR>(TC.GLOBAL.TYPE, typeId)
+    -- if ~$is_monomorphic_typeDefIR(typeDefIR)
+    -- if typeArgument* = $flatten_typeArgumentList(typeArgumentList)
+    -- (TypeArgument_ok: TC |- typeArgument ~> typeIR_arg)*
+    -- if typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*)
+
+}
+
+rule TypeArgument_ok/type:
+  TC |- type ~> typeIR
+  -- Type_ok: TC |- type ~> typeIR

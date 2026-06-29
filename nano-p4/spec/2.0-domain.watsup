@@ -21,12 +21,12 @@ syntax baseTypeIR = baseType
 
 syntax fieldTypeIR = typeIR id `;
 
-syntax structType = STRUCT id `{ fieldTypeIR* }
-syntax headerType = HEADER id `{ fieldTypeIR* }
+syntax structTypeIR = STRUCT id `{ fieldTypeIR* }
+syntax headerTypeIR = HEADER id `{ fieldTypeIR* }
 
 syntax dataTypeIR =
-  | structType
-  | headerType
+  | structTypeIR
+  | headerTypeIR
 
 ;;
 ;; Type variables
@@ -60,6 +60,12 @@ syntax objectTypeIR =
 
 syntax typeIR =
   | baseTypeIR
-  | dataTypeIR
   | namedTypeIR
+  | dataTypeIR
   | objectTypeIR
+
+syntax typeDefIR =
+  | dataTypeIR
+  | PARSER typeId typeId* `( parameterIR* )
+  | CONTROL typeId typeId* `( parameterIR* )
+  | PACKAGE typeId typeId* `( parameterIR* )

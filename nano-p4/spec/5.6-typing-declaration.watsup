@@ -61,13 +61,71 @@ rulegroup ExternDecl_ok {
 
 }
 
-;; rulegroup TypeDecl_ok {
-;;
-;;   rule TypeDecl_ok/derivedTypeDeclaration:
-;;     TC_0 |- derivedTypeDeclaration -| TC_0
-;;     -- TypeDecl_wf:
-;;
-;; }
+rulegroup TypeDecl_ok {
+
+  rule TypeDecl_ok/structTypeDeclaration:
+    TC_0 |- structTypeDeclaration -| TC_1
+    -- if STRUCT name_struct `{ typeFieldList } = structTypeDeclaration
+    -- if typeField* = $flatten_typeFieldList(typeFieldList)
+    -- if (type name `; = typeField)*
+    -- (Type_ok: TC_0 |- type ~> typeIR)*
+    -- if (id_field = $id(name))*
+    -- if $distinct_<id>(id_field*)
+    -- if typeId = $id(name_struct)
+    -- if fieldTypeIR* = (typeIR id_field `;)*
+    -- if typeDefIR = STRUCT typeId `{ fieldTypeIR* }
+    -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
+
+  rule TypeDecl_ok/headerTypeDeclaration:
+    TC_0 |- headerTypeDeclaration -| TC_1
+    -- if HEADER name_header `{ typeFieldList } = headerTypeDeclaration
+    -- if typeField* = $flatten_typeFieldList(typeFieldList)
+    -- if (type name `; = typeField)*
+    -- (Type_ok: TC_0 |- type ~> typeIR)*
+    -- if (id_field = $id(name))*
+    -- if $distinct_<id>(id_field*)
+    -- if typeId = $id(name_header)
+    -- if fieldTypeIR* = (typeIR id_field `;)*
+    -- if typeDefIR = HEADER typeId `{ fieldTypeIR* }
+    -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
+
+  rule TypeDecl_ok/parserTypeDeclaration:
+    TC_0 |- PARSER name typeParameterListOpt `( parameterList ) `; -| TC_1
+    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
+    -- if (id_param = $id(typeParameter))*
+    -- if parameter* = $flatten_parameterList(parameterList)
+    -- if (direction type name_param = parameter)*
+    -- (Type_ok: TC_0 |- type ~> typeIR)*
+    -- if parameterIR* = (direction typeIR name_param)*
+    -- if typeId = $id(name)
+    -- if typeDefIR = PARSER typeId id_param* `( parameterIR* )
+    -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
+
+  rule TypeDecl_ok/controlTypeDeclaration:
+    TC_0 |- CONTROL name typeParameterListOpt `( parameterList ) `; -| TC_1
+    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
+    -- if (id_param = $id(typeParameter))*
+    -- if parameter* = $flatten_parameterList(parameterList)
+    -- if (direction type name_param = parameter)*
+    -- (Type_ok: TC_0 |- type ~> typeIR)*
+    -- if parameterIR* = (direction typeIR name_param)*
+    -- if typeId = $id(name)
+    -- if typeDefIR = CONTROL typeId id_param* `( parameterIR* )
+    -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
+
+  rule TypeDecl_ok/packageTypeDeclaration:
+    TC_0 |- PACKAGE name typeParameterListOpt `( parameterList ) `; -| TC_1
+    -- if typeParameter* = $flatten_typeParameterListOpt(typeParameterListOpt)
+    -- if (id_param = $id(typeParameter))*
+    -- if parameter* = $flatten_parameterList(parameterList)
+    -- if (direction type name_param = parameter)*
+    -- (Type_ok: TC_0 |- type ~> typeIR)*
+    -- if parameterIR* = (direction typeIR name_param)*
+    -- if typeId = $id(name)
+    -- if typeDefIR = PACKAGE typeId id_param* `( parameterIR* )
+    -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
+
+}
 
 ;; Declaration
 

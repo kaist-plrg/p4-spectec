@@ -3,10 +3,10 @@
 ;; : type name -> type definition
 ;;
 
-syntax typeDefEnv = map<typeId, typeIR>
+syntax typeDefEnv = map<typeId, typeDefIR>
 
-dec $empty_typeDefEnv : map<typeId, typeIR>
-def $empty_typeDefEnv = $empty_map<typeId, typeIR>
+dec $empty_typeDefEnv : map<typeId, typeDefIR>
+def $empty_typeDefEnv = $empty_map<typeId, typeDefIR>
 
 ;;
 ;; Callable type definition environment
@@ -130,3 +130,78 @@ def $add_callableDef_t(TC, callableId, callableTypeDef)
           callableTypeDef
         )
   -- if TC' = TC[.GLOBAL.CALLABLE = callableTypeDefEnv']
+
+;;
+;;;; Adder for typeDefs
+;;
+
+dec $add_typeDef_t(typingContext, typeId, typeDefIR) : typingContext
+
+def $add_typeDef_t(TC, typeId, typeDefIR) = TC'
+  -- if typeDefEnv = TC.GLOBAL.TYPE
+  -- if ~$in_set<typeId>($dom_map<typeId, typeDefIR>(typeDefEnv), typeId)
+  -- if typeDefEnv' = $add_map<typeId, typeDefIR>(typeDefEnv, typeId, typeDefIR)
+  -- if TC' = TC[.GLOBAL.TYPE = typeDefEnv']
+
+;;
+;; Type definition auxiliary functions
+;;
+
+dec $is_monomorphic_typeDefIR(typeDefIR) : bool
+
+def $is_monomorphic_typeDefIR(dataTypeIR) = true
+def $is_monomorphic_typeDefIR(typeDefIR) = false
+  -- otherwise
+
+;;
+;; typeDefIR -> typeIR. only called for monomorphic types
+;;
+
+dec $typeIR_of_typeDefIR(typeDefIR) : typeIR
+
+def $typeIR_of_typeDefIR(dataTypeIR) = dataTypeIR
+
+;;
+;; Type substitution
+;;
+
+dec $subst_typeIR(typeId*, typeIR*, typeIR) : typeIR
+
+def $subst_typeIR(eps, eps, typeIR) = typeIR
+def $subst_typeIR(typeId_h :: typeId_t*, typeIR_h :: typeIR_t*, TYPEVAR typeId)
+  = typeIR_h
+  -- if typeId = typeId_h
+def $subst_typeIR(typeId_h :: typeId_t*, typeIR_h :: typeIR_t*, TYPEVAR typeId)
+  = $subst_typeIR(typeId_t*, typeIR_t*, TYPEVAR typeId)
+  -- if typeId =/= typeId_h
+def $subst_typeIR(typeId_s*, typeIR_s*, typeIR) = typeIR
+  -- otherwise
+
+;;
+;; Specialize type variables in parameters
+;;
+
+dec $subst_paramIR(typeId*, typeIR*, parameterIR) : parameterIR
+
+def $subst_paramIR(typeId*, typeIR*, direction typeIR_p name)
+  = direction ($subst_typeIR(typeId*, typeIR*, typeIR_p)) name
+
+dec $subst_paramsIR(typeId*, typeIR*, parameterIR*) : parameterIR*
+
+def $subst_paramsIR(typeId*, typeIR*, eps) = eps
+def $subst_paramsIR(typeId*, typeIR*, parameterIR_h :: parameterIR_t*)
+  = $subst_paramIR(typeId*, typeIR*, parameterIR_h)
+    :: $subst_paramsIR(typeId*, typeIR*, parameterIR_t*)
+
+;;
+;; Specialize type variables in type definitions
+;;
+
+dec $specialize_typeDefIR(typeDefIR, typeIR*) : typeIR
+
+def $specialize_typeDefIR(PARSER typeId typeId_param* `( parameterIR* ), typeIR_arg*)
+  = PARSER typeId `( $subst_paramsIR(typeId_param*, typeIR_arg*, parameterIR*) )
+def $specialize_typeDefIR(CONTROL typeId typeId_param* `( parameterIR* ), typeIR_arg*)
+  = CONTROL typeId `( $subst_paramsIR(typeId_param*, typeIR_arg*, parameterIR*) )
+def $specialize_typeDefIR(PACKAGE typeId typeId_param* `( parameterIR* ), typeIR_arg*)
+  = PACKAGE typeId `( $subst_paramsIR(typeId_param*, typeIR_arg*, parameterIR*) )
