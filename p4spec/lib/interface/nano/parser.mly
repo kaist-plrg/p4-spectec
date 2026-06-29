@@ -653,8 +653,6 @@ stateExpression:
 ;
 
 transitionStatement:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "transitionStatement" <<<| (at $sloc) }
   | TRANSITION e = stateExpression
     { "TRANSITION stateExpression" <| [ e ] <<| "transitionStatement" <<<| (at $sloc) }
 ;
