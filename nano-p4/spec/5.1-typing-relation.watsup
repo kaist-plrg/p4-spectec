@@ -3,7 +3,7 @@
 ;;
 
 relation Expr_ok:
-  typingContext |- expression : type
+  typingContext |- expression : typeIR
   hint(input %0 %1)
 
 ;;
@@ -11,7 +11,7 @@ relation Expr_ok:
 ;;
 
 relation Lvalue_ok:
-  typingContext |- lvalue : type
+  typingContext |- lvalue : typeIR
   hint(input %0 %1)
 
 ;;
@@ -35,15 +35,15 @@ relation Block_ok:
   hint(input %0 %1)
 
 ;;
-;; Parameter typing
+;; Parser declaration
 ;;
 
-relation Parameter_ok:
-  typingContext |- parameter ~> parameterIR
+relation ParserLocalDeclList_ok:
+  typingContext |- parserLocalDeclarationList -| typingContext
   hint(input %0 %1)
 
-relation Parameters_ok:
-  typingContext |- parameter* ~> parameterIR*
+relation ParserStateList_ok:
+  typingContext |- parserStateList -| typingContext
   hint(input %0 %1)
 
 ;;
@@ -57,18 +57,6 @@ relation ConstDecl_ok:
 relation VarDecl_ok:
   scope typingContext |- variableDeclaration -| typingContext
   hint(input %0 %1 %2)
-
-relation ActionDecl_ok:
-  typingContext |- actionDeclaration -| typingContext
-  hint(input %0 %1)
-
-relation ExternDecl_ok:
-  typingContext |- externDeclaration -| typingContext
-  hint(input %0 %1)
-
-relation TypeDecl_ok:
-  typingContext |- typeDeclaration -| typingContext
-  hint(input %0 %1)
 
 relation Decl_ok:
   typingContext |- declaration -| typingContext

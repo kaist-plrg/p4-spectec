@@ -14,8 +14,10 @@ def $empty_typeDefEnv = $empty_map<typeId, typeDefIR>
 ;;
 
 syntax callableTypeDef =
-  | ACTION parameter*
-  | FUNCTION typeParameter* parameter*
+  | ACTION parameterIR*
+  | FUNCTION typeParameter* parameterIR*
+  | PARSER parameterIR*
+  | CONTROL parameterIR*
 
 syntax callableId = id
 syntax callableTypeDefEnv = map<callableId, callableTypeDef>
@@ -28,12 +30,12 @@ def $empty_callableTypeDefEnv = $empty_map<callableId, callableTypeDef>
 ;; : variable name -> variable type
 ;;
 
-syntax varType = direction type
+syntax varTypeIR = direction typeIR
 
-syntax typeFrame = map<id, varType>
+syntax typeFrame = map<id, varTypeIR>
 
-dec $empty_typeFrame : map<id, varType>
-def $empty_typeFrame = $empty_map<id, varType>
+dec $empty_typeFrame : map<id, varTypeIR>
+def $empty_typeFrame = $empty_map<id, varTypeIR>
 
 ;;
 ;; Typing layers
@@ -83,31 +85,31 @@ def $empty_typingContext = TC
 ;;;; Adder for variables
 ;;
 
-dec $add_var_t(scope, typingContext, id, varType) : typingContext
-dec $add_vars_t(scope, typingContext, id*, varType*) : typingContext
+dec $add_var_t(scope, typingContext, id, varTypeIR) : typingContext
+dec $add_vars_t(scope, typingContext, id*, varTypeIR*) : typingContext
 
-def $add_var_t(GLOBAL, TC, id, varType) = TC'
+def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.GLOBAL.FRAME
-  -- if ~$in_set<id>($dom_map<id, varType>(typeFrame), id)
-  -- if typeFrame' = $add_map<id, varType>(typeFrame, id, varType)
+  -- if ~$in_set<id>($dom_map<id, varTypeIR>(typeFrame), id)
+  -- if typeFrame' = $add_map<id, varTypeIR>(typeFrame, id, varTypeIR)
   -- if TC' = TC[.GLOBAL.FRAME = typeFrame']
 
-def $add_var_t(BLOCK, TC, id, varType) = TC'
+def $add_var_t(BLOCK, TC, id, varTypeIR) = TC'
   -- if typeFrame = TC.BLOCK.FRAME
-  -- if ~$in_set<id>($dom_map<id, varType>(typeFrame), id)
-  -- if typeFrame' = $add_map<id, varType>(typeFrame, id, varType)
+  -- if ~$in_set<id>($dom_map<id, varTypeIR>(typeFrame), id)
+  -- if typeFrame' = $add_map<id, varTypeIR>(typeFrame, id, varTypeIR)
   -- if TC' = TC[.BLOCK.FRAME = typeFrame']
 
-def $add_var_t(LOCAL, TC, id, varType) = TC'
+def $add_var_t(LOCAL, TC, id, varTypeIR) = TC'
   -- if typeFrame_h :: typeFrame_t* = TC.LOCAL.FRAMES
-  -- if ~$in_set<id>($dom_map<id, varType>(typeFrame_h), id)
-  -- if typeFrame_h' = $add_map<id, varType>(typeFrame_h, id, varType)
+  -- if ~$in_set<id>($dom_map<id, varTypeIR>(typeFrame_h), id)
+  -- if typeFrame_h' = $add_map<id, varTypeIR>(typeFrame_h, id, varTypeIR)
   -- if TC' = TC[.LOCAL.FRAMES = typeFrame_h' :: typeFrame_t*]
 
 def $add_vars_t(scope, TC, eps, eps) = TC
-def $add_vars_t(scope, TC, id_h :: id_t*, varType_h :: varType_t*) = TC''
-  -- if TC' = $add_var_t(scope, TC, id_h, varType_h)
-  -- if TC'' = $add_vars_t(scope, TC', id_t*, varType_t*)
+def $add_vars_t(scope, TC, id_h :: id_t*, varTypeIR_h :: varTypeIR_t*) = TC''
+  -- if TC' = $add_var_t(scope, TC, id_h, varTypeIR_h)
+  -- if TC'' = $add_vars_t(scope, TC', id_t*, varTypeIR_t*)
 
 ;;
 ;;;; Adder for callableDefs

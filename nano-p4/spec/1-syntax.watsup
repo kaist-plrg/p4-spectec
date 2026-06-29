@@ -546,6 +546,15 @@ syntax parserLocalDeclarationList =
   | `EMPTY
   | parserLocalDeclarationList parserLocalDeclaration
 
+dec $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+  : parserLocalDeclaration*
+  hint(prose_in %0 "flattened")
+def $flatten_parserLocalDeclarationList(`EMPTY) = eps
+def $flatten_parserLocalDeclarationList(
+    parserLocalDeclarationList parserLocalDeclaration)
+  = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+    ++ [ parserLocalDeclaration ]
+
 syntax parserDeclaration =
   PARSER name
     `( parameterList )

@@ -18,15 +18,31 @@ def $no_object_params((direction typeIR name) :: parameterIR_t*)
   -- if ~$is_object_typeIR(typeIR)
 
 ;;
-;; Predicate for checking parameter uniqueness
+;; Predicate for parameter uniqueness
 ;;
 
-dec $distinct_params(parameter*) : bool
+dec $distinct_params(parameterIR*) : bool
 
-def $distinct_params(parameter*)
+def $distinct_params(parameterIR*)
   = $distinct_<id>(id*)
-  -- if (direction type name = parameter)*
+  -- if (_ _ name = parameterIR)*
   -- if (id = $id(name))*
+
+;;
+;; Parameter typing
+;;
+
+relation Parameter_ok:
+  typingContext |- parameter ~> parameterIR
+  hint(input %0 %1)
+
+relation Parameters_ok:
+  typingContext |- parameter* ~> parameterIR*
+  hint(input %0 %1)
+
+relation ParameterList_ok:
+  typingContext |- parameterList ~> parameterIR*
+  hint(input %0 %1)
 
 rule Parameter_ok:
   TC |- direction type name ~> direction typeIR name
@@ -43,3 +59,8 @@ rulegroup Parameters_ok {
     -- Parameters_ok: TC |- parameter_t* ~> parameterIR_t*
 
 }
+
+rule ParameterList_ok:
+  TC |- parameterList ~> parameterIR*
+  -- if parameter* = $flatten_parameterList(parameterList)
+  -- Parameters_ok: TC |- parameter* ~> parameterIR*
