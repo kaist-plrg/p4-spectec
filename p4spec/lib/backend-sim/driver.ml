@@ -11,10 +11,12 @@ open Util.Source
 module Make
     (MakeArch : functor (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) -> ARCH)
     (MakeInterp_IL : functor (Arch : ARCH) -> INTERP_IL)
-    (MakeInterp_SL : functor (Arch : ARCH) -> INTERP_SL) : DRIVER = struct
+    (MakeInterp_SL : functor (Arch : ARCH) -> INTERP_SL)
+    (MakeInterp_PL : functor (Arch : ARCH) -> INTERP_PL) : DRIVER = struct
   module rec Arch : ARCH = MakeArch (Interp_IL) (Interp_SL)
   and Interp_IL : INTERP_IL = MakeInterp_IL (Arch)
   and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
+  and Interp_PL : INTERP_PL = MakeInterp_PL (Arch)
 
   (* Initialization *)
 
@@ -41,6 +43,14 @@ module Make
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
         | Pass _ -> error no_region "unexpected number of return values"
         | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg)
+    | PL_mode -> (
+        let rel_result_pl =
+          Interp_PL.eval_program relname includes_p4 filename_p4
+        in
+        match rel_result_pl with
+        | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+        | Pass _ -> error no_region "unexpected number of return values"
+        | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg)
     | Empty_mode -> assert false
 
   let init_call_pgm () = Spec.Pgm.register call_pgm
@@ -55,6 +65,11 @@ module Make
     | SL_mode -> (
         let rel_result_sl = Interp_SL.eval_rel relname values_input in
         match rel_result_sl with
+        | Pass values_output -> values_output
+        | Fail (at, msg) -> error at msg)
+    | PL_mode -> (
+        let rel_result_pl = Interp_PL.eval_rel relname values_input in
+        match rel_result_pl with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
     | Empty_mode -> assert false
@@ -78,6 +93,13 @@ module Make
         match func_result_sl with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
+    | PL_mode -> (
+        let func_result_pl =
+          Interp_PL.eval_func funcname typs_input values_input
+        in
+        match func_result_pl with
+        | Pass value_output -> value_output
+        | Fail (at, msg) -> error at msg)
     | Empty_mode -> assert false
 
   let init_call_func () = Spec.Func.register call_func
@@ -92,6 +114,10 @@ module Make
         spec := SL spec_sl;
         init_mode SL_mode;
         Interp_SL.init ~cache ~det spec_sl
+    | PL spec_pl ->
+        spec := PL spec_pl;
+        init_mode PL_mode;
+        Interp_PL.init ~cache ~det spec_pl
     | Empty -> assert false);
     init_call_pgm ();
     init_call_rel ();
@@ -109,6 +135,7 @@ module Make
     match !spec with
     | IL _ -> Interp_IL.eval_program relname includes_p4 filename_p4
     | SL _ -> Interp_SL.eval_program relname includes_p4 filename_p4
+    | PL _ -> Interp_PL.eval_program relname includes_p4 filename_p4
     | Empty -> assert false
 
   let run_program_internal (relname : string) (value_program : Value.t) :
@@ -116,6 +143,7 @@ module Make
     match !spec with
     | IL _ -> Interp_IL.eval_rel relname [ value_program ]
     | SL _ -> Interp_SL.eval_rel relname [ value_program ]
+    | PL _ -> Interp_PL.eval_rel relname [ value_program ]
     | Empty -> assert false
 
   (* STF test runner *)

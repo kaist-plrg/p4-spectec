@@ -28,8 +28,8 @@ let elab2 filenames_spec =
 let structure filenames_spec =
   filenames_spec |> elab |> Structure.Struct.struct_spec
 
-let prosify filenames_spec =
-  filenames_spec |> structure |> Prose.Prosify.prosify_spec
+let annotate filenames_spec =
+  filenames_spec |> structure |> Annotate.annotate_spec
 
 let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     filenames_spec =
@@ -41,6 +41,9 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
     | `SL ->
         let spec_sl = structure filenames_spec in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+    | `PL ->
+        let spec_pl = annotate filenames_spec in
+        (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
     match arch with
@@ -254,7 +257,7 @@ let struct_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let prose_command =
+let annotate_command =
   Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
@@ -263,7 +266,7 @@ let prose_command =
      in
      fun () ->
        try
-         let spec_pl = prosify filenames_spec in
+         let spec_pl = annotate filenames_spec in
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
@@ -298,6 +301,8 @@ let run_command =
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `PL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
      in
@@ -365,6 +370,8 @@ let sim_command =
            |> map ~f:(fun b -> Core.Option.some_if b `IL);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `PL);
          ]
          ~if_nothing_chosen:(Default_to `SL)
      in
@@ -675,7 +682,7 @@ let splice_command =
            else List.combine filenames_input filenames_output
          in
          let spec = frontend filenames_spec in
-         let spec_pl = prosify filenames_spec in
+         let spec_pl = annotate filenames_spec in
          Backend_splice.Driver.splice_files spec spec_pl filenames
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -822,7 +829,7 @@ let command =
       ("elab", elab_command);
       ("elab2", elab2_command);
       ("struct", struct_command);
-      ("prose", prose_command);
+      ("annotate", annotate_command);
       (* Execution *)
       ("run", run_command);
       ("sim", sim_command);

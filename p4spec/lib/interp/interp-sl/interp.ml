@@ -15,9 +15,10 @@ open Envs
 module Sim = Runtime.Sim.Simulator
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
-open Error
-open Backtrace
-open Nondet
+open Interp_common.Error
+open Interp_common.Backtrace
+open Interp_common.Nondet
+module Flow = Interp_common.Flow
 module F = Format
 open Util.Source
 
@@ -1069,7 +1070,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         eval_rule_instr ctx id notexp inputs iterinstrs block
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI exp -> eval_debug_instr ctx exp
+    | DebugI (exp, instr) -> eval_debug_instr ctx exp instr
 
   and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
     if !Ctx.is_det then eval_block_deterministic ctx block
@@ -1659,7 +1660,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
+  and eval_debug_instr (ctx : Ctx.t) (exp : exp) (instr : instr) : Flow.t =
     try
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
@@ -1668,7 +1669,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (if region = "" then "" else region ^ ": ")
       ^ Il.Print.string_of_value value
       |> print_endline;
-      Flow.Cont []
+      eval_instr ctx instr
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Invoke a relation *)

@@ -1,3 +1,4 @@
+module Annot = Annot
 include Ast
-module Eq = Eq
+module Print = Print
 module Render = Render

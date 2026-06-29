@@ -149,7 +149,8 @@ and eq_instr (instr_a : instr) (instr_b : instr) : bool =
   | ResultI (rel_signature_a, exps_a), ResultI (rel_signature_b, exps_b) ->
       eq_rel_signature rel_signature_a rel_signature_b && eq_exps exps_a exps_b
   | ReturnI exp_a, ReturnI exp_b -> eq_exp exp_a exp_b
-  | DebugI exp_a, DebugI exp_b -> eq_exp exp_a exp_b
+  | DebugI (exp_a, instr_a), DebugI (exp_b, instr_b) ->
+      eq_exp exp_a exp_b && eq_instr instr_a instr_b
   | _ -> false
 
 and eq_instrs (instrs_a : instr list) (instrs_b : instr list) : bool =

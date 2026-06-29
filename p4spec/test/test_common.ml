@@ -1,3 +1,4 @@
+open Lang
 open Pass
 module Sim = Runtime.Sim.Simulator
 module Filesys = Util.Filesys
@@ -106,7 +107,7 @@ let frontend specdir =
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
 let elab2 specdir = specdir |> frontend |> Elaborate2.Elab.elab_spec
 let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
-let prosify specdir = specdir |> structure |> Prose.Prosify.prosify_spec
+let annotate specdir = specdir |> structure |> Annotate.annotate_spec
 
 let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =
@@ -117,6 +118,9 @@ let driver ?(det = false) ?(arch : string option) mode specdir =
     | `SL ->
         let spec_sl = structure specdir in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
+    | `PL ->
+        let spec_pl = annotate specdir in
+        (Runtime.Sim.Simulator.PL spec_pl : Runtime.Sim.Simulator.spec)
   in
   let (module Driver) =
     match arch with

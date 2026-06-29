@@ -151,7 +151,7 @@ and instr' =
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   (* Debugging instructions *)
-  | DebugI of exp
+  | DebugI of exp * instr
 [@@deriving yojson]
 
 and block = instr list

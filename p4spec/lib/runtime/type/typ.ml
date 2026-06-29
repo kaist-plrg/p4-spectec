@@ -65,4 +65,14 @@ module Make = struct
 
   and of_params_sl (params : Sl.param list) : t list =
     List.map of_param_sl params
+
+  let rec of_param_pl (param : Pl.param) : t =
+    match param.it with
+    | ExpP (typ, _) -> typ
+    | DefP (_, tparams, params, typ) ->
+        let typs_params = of_params_pl params in
+        func tparams typs_params typ
+
+  and of_params_pl (params : Pl.param list) : t list =
+    List.map of_param_pl params
 end

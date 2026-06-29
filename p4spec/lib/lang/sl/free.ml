@@ -97,7 +97,7 @@ and free_instr (instr : instr) : t =
       free_exps (Mixfix.args notexp) + free_block block
   | ResultI (_, exps) -> free_exps exps
   | ReturnI exp -> free_exp exp
-  | DebugI exp -> free_exp exp
+  | DebugI (exp, instr) -> free_exp exp + free_instr instr
 
 and free_instrs (instrs : instr list) : t =
   instrs |> List.map free_instr |> List.fold_left ( + ) empty
