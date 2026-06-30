@@ -75,11 +75,14 @@ syntax direction = `EMPTY | IN | OUT | INOUT
 
 syntax expression
 
+syntax integerType =
+  | BIT `< int >
+  | INT `< int >
+
 syntax baseType =
+  | integerType
   | BOOL
   | MATCH_KIND
-  | INT `< int >
-  | BIT `< int >
 
 ;;
 ;;;; Named types
@@ -148,9 +151,9 @@ syntax unop = `! | `~ | `- | `+
 syntax unaryExpression = unop expression
 
 syntax binop =
-  | `* | `/ | `% | `+ | `- | `<< | `>>
+  | `* | `/ | `% | `+ | `-
   | `<= | `>= | ``< | ``> | `!= | `==
-  | `& | `^ | `| | `++ | `&& | `||
+  | `& | `^ | `| | `&& | `||
 
 syntax binaryExpression = expression binop expression
 
