@@ -184,9 +184,14 @@ and analyze_rule_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
   let exps = Hints.Input.combine inputs exps_input exps_output in
   let notexp = Mixfix.fill mixop exps in
   let prem = RulePr (id, notexp, inputs) $ at in
+  let venv_bound = Dimension.infer_exps exps_input in
   let iterctx =
     iterctx
-    |> Iterctx.filter_bound (fun id _ _ -> not (VEnv.mem id venv))
+    |> Iterctx.filter_bound (fun id typ iters ->
+           VEnv.find_opt id venv_bound
+           |> Option.map (fun (typ_bound, iters_bound) ->
+                  Typdim.sub (typ_bound, iters_bound) (typ, iters))
+           |> Option.value ~default:false)
     |> Iterctx.add_vars_bind venv
   in
   Iterctx.validate at iterctx;
@@ -263,8 +268,8 @@ and analyze_let_prem (ctx : Ctx.t) (at : region) (iterctx : Iterctx.t)
   let prems_partial = Partialbind.gen_prems ctx iterctx renv_partial in
   let prems = prems_partial @ sideconditions_multi in
   let prem = LetPr (exp_l, exp_r) $ at in
-  let venv_l = Dimension.infer exp_l in
-  let venv_r = Dimension.infer exp_r in
+  let venv_l = Dimension.infer_exp exp_l in
+  let venv_r = Dimension.infer_exp exp_r in
   let iterctx =
     iterctx
     |> Iterctx.filter_bound (fun id typ iters ->

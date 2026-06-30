@@ -72,7 +72,7 @@ let gen_prem_bound (ctx : Ctx.t) (to_ : To.t) (exp_from : exp)
   in
   let sidecondition = IfPr exp_cond $ exp_from.at in
   let iterctx =
-    let venv = Dimension.infer exp_from in
+    let venv = Dimension.infer_exp exp_from in
     let id, typ, iters = to_ in
     iterctx
     |> Iterctx.filter_bound (fun id typ_iter iters_iter ->
@@ -101,7 +101,7 @@ let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
   let prem_bind =
     let prem_bind = LetPr (exp_from, exp_to) $ exp_from.at in
     let iterctx =
-      let venv = Dimension.infer exp_from in
+      let venv = Dimension.infer_exp exp_from in
       iterctx
       |> List.map (fun (iter, _, _) -> (iter, [], []))
       |> Iterctx.add_vars_bind venv
@@ -131,7 +131,7 @@ let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
     in
     let prem_bind = LetPr (exp_sub, exp_downcast) $ exp_from.at in
     let iterctx =
-      let venv = Dimension.infer exp_from in
+      let venv = Dimension.infer_exp exp_from in
       iterctx
       |> List.map (fun (iter, _, _) -> (iter, [], []))
       |> Iterctx.add_vars_bind venv
