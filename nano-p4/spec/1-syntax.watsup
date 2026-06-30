@@ -390,6 +390,12 @@ syntax selectCaseList =
   | `EMPTY
   | selectCaseList selectCase
 
+dec $flatten_selectCaseList(selectCaseList) : selectCase*
+  hint(prose_in %0 "flattened")
+def $flatten_selectCaseList(`EMPTY) = eps
+def $flatten_selectCaseList(selectCaseList selectCase)
+  = $flatten_selectCaseList(selectCaseList) ++ [ selectCase ]
+
 syntax selectExpression = SELECT `( expression ) `{ selectCaseList }
 
 ;;

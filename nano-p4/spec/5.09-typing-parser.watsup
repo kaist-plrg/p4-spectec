@@ -10,13 +10,9 @@ relation ParserLocalDecls_ok:
   typingContext |- parserLocalDeclaration* -| typingContext
   hint(input %0 %1)
 
-rulegroup ParserLocalDecl_ok {
-
-  rule ParserLocalDecl_ok/variableDeclaration:
-    TC_0 |- variableDeclaration -| TC_1
-    -- VarDecl_ok: BLOCK TC_0 |- variableDeclaration -| TC_1
-
-}
+rule ParserLocalDecl_ok:
+  TC_0 |- variableDeclaration -| TC_1
+  -- VarDecl_ok: BLOCK TC_0 |- variableDeclaration -| TC_1
 
 rulegroup ParserLocalDecls_ok {
 
@@ -36,6 +32,29 @@ rule ParserLocalDeclList_ok:
     = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   -- ParserLocalDecls_ok: TC_0 |- parserLocalDeclaration* -| TC_1
 
+;;
+;; Parser transition
+;;
+
+rule ParserTransition_ok/name:
+  TC nameIR_state* |- TRANSITION (name `;)
+  -- if nameIR = $id(name)
+  -- if nameIR <- nameIR_state*
+
+rule ParserTransition_ok/expression:
+  TC_0 nameIR_state* |- TRANSITION selectExpression
+  -- if SELECT `( expression ) `{ selectCaseList } = selectExpression
+  -- Expr_ok: LOCAL TC_0 |- expression : typeIR
+  -- if selectCase* = $flatten_selectCaseList(selectCaseList)
+  -- if (expression_case `: name_case `; = selectCase)*
+  ---- ;; expression
+  -- (Expr_ok: LOCAL TC_0 |- expression_case : typeIR_case)*
+  -- if (b_equiv = typeIR = typeIR_case)*
+  -- if $forall_(b_equiv*)
+  ---- ;; name
+  -- if (nameIR_case = $id(name_case))*
+  -- if (b_contains = nameIR_case <- nameIR_state*)*
+  -- if $forall_(b_contains*)
 ;;
 ;; Parser state
 ;;

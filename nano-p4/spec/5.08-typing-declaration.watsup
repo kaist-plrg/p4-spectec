@@ -107,7 +107,6 @@ rulegroup TypeDecl_ok {
   rule TypeDecl_ok/parserTypeDeclaration:
     TC_0 |- PARSER name `( parameterList ) `; -| TC_1
     -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
-    -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = PARSER typeId `( parameterIR* )
@@ -117,7 +116,6 @@ rulegroup TypeDecl_ok {
     TC_0 |- CONTROL name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
     -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
-    -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = CONTROL typeId `( parameterIR* )
@@ -127,7 +125,6 @@ rulegroup TypeDecl_ok {
     TC_0 |- PACKAGE name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
     -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
-    -- if $distinct_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = PACKAGE typeId `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
@@ -158,11 +155,16 @@ rule Decl_ok/externDeclaration:
   -- ExternDecl_ok: TC_0 |- externDeclaration -| TC_1
 
 rule Decl_ok/parserDeclaration:
-  TC_0 |- parserDeclaration -| TC_0
+  TC_0 |- parserDeclaration -| TC_1
   -- if PARSER name
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList } = parserDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_1
+  -- ParserLocalDeclList_ok: TC_1 |- parserLocalDeclarationList -| TC_2
+  -- ParserStateList_ok: TC_2 |- parserStateList
+  -- if callableId = $id(name)
+  -- if callableTypeDef = PARSER parameterIR*
+  -- if TC_1 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
 
 rule Decl_ok/controlDeclaration:
   TC_0 |- controlDeclaration -| TC_0

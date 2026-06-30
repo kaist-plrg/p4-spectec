@@ -25,6 +25,12 @@ def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
   -- if n =/= 0
   -- if n' = $(n - 1)
 
+dec $forall_(bool*) : bool
+  hint(prose_true "all" %0 "are true")
+  hint(prose_false "not all" %0 "are true")
+def $forall_(eps) = true
+def $forall_(b_h :: b_t*) = b_h /\ $forall_(b_t*)
+
 builtin dec $rev_<X>(X*) : X*
 builtin dec $distinct_<K>(K*) : bool
 builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
