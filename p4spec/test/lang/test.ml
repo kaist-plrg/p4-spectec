@@ -5,8 +5,8 @@ open Util.Error
 (* Spec elaboration test *)
 
 let elab_test specdir =
-  let spec_al = elab specdir in
-  Al.Print.string_of_spec spec_al |> print_endline
+  let spec_il = elab specdir in
+  Il.Print.string_of_spec spec_il |> print_endline
 
 let elab_command =
   Core.Command.basic ~summary:"run elaboration test"
@@ -17,6 +17,22 @@ let elab_command =
        try elab_test specdir
        with ParseError (at, msg) | ElabError (at, msg) ->
          Format.printf "Error on elaboration: %s\n" (string_of_error at msg))
+
+(* Algo test *)
+
+let algo_test specdir =
+  let spec_al = algo specdir in
+  Al.Print.string_of_spec spec_al |> print_endline
+
+let algo_command =
+  Core.Command.basic ~summary:"run algo test"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
+     fun () ->
+       try algo_test specdir
+       with ParseError (at, msg) | ElabError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
 
 (* Structuring test *)
 
@@ -54,6 +70,7 @@ let command =
   Core.Command.group ~summary:"p4spec-test-lang"
     [
       ("elab", elab_command);
+      ("algo", algo_command);
       ("struct", structure_command);
       ("annotate", annotate_command);
     ]

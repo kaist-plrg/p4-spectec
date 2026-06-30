@@ -117,8 +117,8 @@ and pp_list_v (henv : HEnv.t) fmt (value : Value.t) : unit =
 
 (* P4 program *)
 
-let pp_program_al (spec_al : Al.spec) fmt (value : Value.t) : unit =
-  let henv = hints_of_spec_al spec_al in
+let pp_program_il (spec_il : Il.spec) fmt (value : Value.t) : unit =
+  let henv = hints_of_spec_il spec_il in
   pp_value henv fmt value
 
 let pp_program_sl (spec_sl : Sl.spec) fmt (value : Value.t) : unit =

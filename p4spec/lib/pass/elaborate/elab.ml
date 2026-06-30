@@ -1958,10 +1958,9 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
 
 (* Entry point *)
 
-let elab_spec (spec : spec) : Al.spec =
+let elab_spec (spec : spec) : Il.spec =
   let ctx = Ctx.init () in
   let ctx, spec_il = elab_defs ctx spec in
   populate_typs ctx;
   spec_il |> populate_rules ctx |> populate_clauses ctx
-  |> Dataflow.Dimension.analyze_spec |> Dataflow.Binding.analyze_spec
-  |> Sidecondition.Guard.insert_spec
+  |> Dimension.analyze_spec

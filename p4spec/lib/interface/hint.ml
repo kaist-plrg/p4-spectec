@@ -40,6 +40,11 @@ let hints_of_deftyp (henv : HEnv.t) (tid : TId.t) (deftyp : Al.deftyp) : HEnv.t
 
 (* Definitions *)
 
+let hints_of_def_il (henv : HEnv.t) (def_il : Il.def) : HEnv.t =
+  match def_il.it with
+  | TypD (id, _, deftyp, _) -> hints_of_deftyp henv id deftyp
+  | _ -> henv
+
 let hints_of_def_al (henv : HEnv.t) (def_al : Al.def) : HEnv.t =
   match def_al.it with
   | TypD (id, _, deftyp, _) -> hints_of_deftyp henv id deftyp
@@ -51,6 +56,9 @@ let hints_of_def_sl (henv : HEnv.t) (def_sl : Sl.def) : HEnv.t =
   | _ -> henv
 
 (* Spec *)
+
+let hints_of_spec_il (spec_il : Il.spec) : HEnv.t =
+  List.fold_left hints_of_def_il HEnv.empty spec_il
 
 let hints_of_spec_al (spec_al : Al.spec) : HEnv.t =
   List.fold_left hints_of_def_al HEnv.empty spec_al

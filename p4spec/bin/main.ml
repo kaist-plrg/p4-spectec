@@ -21,9 +21,10 @@ let frontend filenames_spec =
   filenames_spec |> expand_spec |> List.concat_map Frontend.Parse.parse_file
 
 let elab filenames_spec = filenames_spec |> frontend |> Elaborate.Elab.elab_spec
+let algo filenames_spec = filenames_spec |> elab |> Algo.algo_spec
 
 let structure filenames_spec =
-  filenames_spec |> elab |> Structure.Struct.struct_spec
+  filenames_spec |> algo |> Structure.Struct.struct_spec
 
 let annotate filenames_spec =
   filenames_spec |> structure |> Annotate.annotate_spec
@@ -33,7 +34,7 @@ let runner ?(cache = true) ?(det = false) ?(arch : string option) mode
   let spec_sim =
     match mode with
     | `AL ->
-        let spec_al = elab filenames_spec in
+        let spec_al = algo filenames_spec in
         (Runtime.Sim.Simulator.AL spec_al : Runtime.Sim.Simulator.spec)
     | `SL ->
         let spec_sl = structure filenames_spec in
@@ -213,7 +214,24 @@ let elab_command =
      in
      fun () ->
        try
-         let spec_al = elab filenames_spec in
+         let spec_il = elab filenames_spec in
+         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let algo_command =
+  Core.Command.basic ~summary:"make an algorithmic spec from a P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map filenames_spec =
+       anon (non_empty_sequence_as_list ("filename" %: string))
+     in
+     fun () ->
+       try
+         let spec_al = algo filenames_spec in
          Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
          ()
        with
@@ -693,7 +711,7 @@ let parse_command =
          in
          let unparsed_p4_string =
            Format.asprintf "%a\n"
-             (Interface.Unparse.pp_program_al spec_il)
+             (Interface.Unparse.pp_program_il spec_il)
              parsed_p4_file
          in
          if roundtrip then
@@ -807,6 +825,7 @@ let command =
     [
       (* Transformations *)
       ("elab", elab_command);
+      ("algo", algo_command);
       ("struct", struct_command);
       ("annotate", annotate_command);
       (* Execution *)
