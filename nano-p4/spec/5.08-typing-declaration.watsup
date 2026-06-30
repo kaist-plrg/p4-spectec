@@ -63,10 +63,17 @@ relation ExternDecl_ok:
   hint(input %0 %1)
 
 rule ExternDecl_ok:
-  TC_0 |- EXTERN nonTypeName
-          `{ externMethodPrototypeList } -| TC_0
+  TC_0 |- EXTERN name
+          `{ externMethodPrototypeList } -| TC_1
   -- if externMethodPrototype*
       = $flatten_externMethodPrototypeList(externMethodPrototypeList)
+  -- (ExternMethod_ok : TC_0 |- externMethodPrototype : externMethodTypeDefIR)*
+  -- if (VOID callableId_method `( _ ) = externMethodTypeDefIR)*
+  -- if $distinct_<callableId>(callableId_method*)
+  -- if externMethodTypeDefEnv = `{ (callableId_method `: externMethodTypeDefIR)* }
+  -- if typeId = $id(name)
+  -- if typeDefIR = EXTERN typeId externMethodTypeDefEnv
+  -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
 
 ;;
 ;; Type declaration
