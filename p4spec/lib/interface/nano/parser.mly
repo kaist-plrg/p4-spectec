@@ -604,8 +604,8 @@ tableAction:
 ;
 
 tableActionList:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "tableActionList" <<<| (at $sloc) }
+  | ac = tableAction
+    { "tableAction" <| [ ac ] <<| "tableActionList" <<<| (at $sloc) }
   | acl = tableActionList ac = tableAction
     { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" <<<| (at $sloc) }
 ;
