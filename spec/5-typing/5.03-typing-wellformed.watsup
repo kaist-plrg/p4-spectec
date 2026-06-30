@@ -518,16 +518,11 @@ tbl def $nestable_definedFunction =
 
 rule CallableType_wf/definedFunctionTypeIR:
   B |- FUNCTION _ `( parameterIR* ) `: typeIR_ret
-  -- debug "definedFunctionTypeIR 1"
   -- (ParameterType_wf: B |- parameterIR)*
-  -- debug "definedFunctionTypeIR 2"
   -- if (~$is_optional_parameterIR(parameterIR))*
-  -- debug "definedFunctionTypeIR 3"
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_definedFunction(typeIR)*
-  -- debug "definedFunctionTypeIR 4"
   -- ReturnType_wf: B |- typeIR_ret
-  -- debug "definedFunctionTypeIR 5"
 
 tbl dec $nestable_externFunction(typeIR) : bool
   hint(prose_true %0 "can be used in an extern function type")
@@ -642,11 +637,7 @@ rule CallableTypeDef_wf:
       = $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
   -- if B_inner
       = $union_set<typeId>(B, `{ typeParameterIR* })
-  -- debug "CallableTypeDef_wf"
-  -- debug callableTypeDefIR
-  -- debug B_inner
   -- CallableType_wf: B_inner |- callableTypeIR_base
-  -- debug "CallableTypeDef_wf after"
 
 ;;
 ;;;; Well-formedness of constructor paramter types
