@@ -169,7 +169,6 @@ typeName:
 
 name:
   | n = nonTypeName
-  | n = typeName
     { n }
 ;
 
@@ -416,6 +415,7 @@ conditionalStatement:
 ;
 
 statement:
+  | s = variableDeclaration
   | s = emptyStatement
   | s = assignmentStatement
   | s = callStatement
