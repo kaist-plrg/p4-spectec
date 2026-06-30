@@ -20,14 +20,6 @@
 
   let at ((position_left, position_right) : Lexing.position * Lexing.position)
     = positions_to_region position_left position_right
-
-  let rec declare_types_of_il (value : Value.t) : unit =
-    Value.Get.mtch value
-      [
-        ("ID text", fun _ -> declare_type (id_of_name value));
-        ("TID text", fun _ -> declare_type (id_of_name value));
-      ]
-      (fun _ -> ())
 %}
 
 (**************************** TOKENS ******************************)
