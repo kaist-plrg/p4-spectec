@@ -53,7 +53,6 @@ syntax nameList =
   | nameList `, name
 
 dec $flatten_nameList(nameList) : name*
-  hint(prose_in %0 "flattened")
 def $flatten_nameList(name) = name
 def $flatten_nameList(nameList `, name) =
   $flatten_nameList(nameList) ++ [ name ]
@@ -210,7 +209,6 @@ syntax argumentList =
   | argumentListNonEmpty
 
 dec $flatten_argumentList(argumentList) : argument*
-  hint(prose_in %0 "flattened")
 def $flatten_argumentList(`EMPTY) = eps
 def $flatten_argumentList(argument) = argument
 def $flatten_argumentList(argumentListNonEmpty `, argument)
@@ -391,7 +389,6 @@ syntax selectCaseList =
   | selectCaseList selectCase
 
 dec $flatten_selectCaseList(selectCaseList) : selectCase*
-  hint(prose_in %0 "flattened")
 def $flatten_selectCaseList(`EMPTY) = eps
 def $flatten_selectCaseList(selectCaseList selectCase)
   = $flatten_selectCaseList(selectCaseList) ++ [ selectCase ]
@@ -426,7 +423,6 @@ syntax parserStateList =
   | parserStateList parserState
 
 dec $flatten_parserStateList(parserStateList) : parserState*
-  hint(prose_in %0 "flattened")
 def $flatten_parserStateList(parserState) = parserState
 def $flatten_parserStateList(parserStateList parserState)
   = $flatten_parserStateList(parserStateList) ++ [ parserState ]
@@ -439,7 +435,6 @@ syntax parserLocalDeclarationList =
 
 dec $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   : parserLocalDeclaration*
-  hint(prose_in %0 "flattened")
 def $flatten_parserLocalDeclarationList(`EMPTY) = eps
 def $flatten_parserLocalDeclarationList(
     parserLocalDeclarationList parserLocalDeclaration)
@@ -489,17 +484,18 @@ syntax tableEntryList =
 ;;;;;;;; Table properties
 ;;
 
-syntax tableProperty =
-  | KEY `= tableKey
-  | ACTIONS `= `{ tableActionList }
-  | CONST ENTRIES `= `{ tableEntryList }
+syntax tableKeyProperty = KEY `= tableKey
 
-syntax tablePropertyList =
-  | `EMPTY
-  | tablePropertyList tableProperty
+syntax tableActionsProperty = ACTIONS `= `{ tableActionList }
+
+syntax tableEntriesProperty = CONST ENTRIES `= `{ tableEntryList }
+
+syntax tableProperties =
+  | tableKeyProperty tableActionsProperty
+  | tableKeyProperty tableActionsProperty tableEntriesProperty
 
 syntax tableDeclaration =
-  TABLE name `{ tablePropertyList }
+  TABLE name `{ tableProperties }
 
 ;;
 ;;;;;; Control type declarations

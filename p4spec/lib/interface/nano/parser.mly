@@ -92,7 +92,8 @@
   parserLocalDeclaration parserLocalDeclarationList parserDeclaration
   tableKey tableActionReference tableAction tableActionList
   tableEntry tableEntryList
-  tableProperty tablePropertyList tableDeclaration
+  tableKeyProperty tableActionsProperty tableEntriesProperty
+  tableProperties tableDeclaration
   controlTypeDeclaration controlBody
   controlLocalDeclaration controlLocalDeclarationList controlDeclaration
   packageTypeDeclaration
@@ -621,26 +622,33 @@ tableEntryList:
     { "tableEntryList tableEntry" <| [ el; e ] <<| "tableEntryList" <<<| (at $sloc) }
 ;
 
-tableProperty:
-  | KEY ASSIGN tableKey
-    { let k = $3 in
-      "KEY `= tableKey" <| [ k ] <<| "tableProperty" <<<| (at $sloc) }
-  | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
-    { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableProperty" <<<| (at $sloc) }
-  | CONST ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
-    { "CONST ENTRIES `= `{ tableEntryList }" <| [ el ] <<| "tableProperty" <<<| (at $sloc) }
+tableKeyProperty:
+  | KEY ASSIGN k = tableKey
+    { "KEY `= tableKey" <| [ k ] <<| "tableKeyProperty" <<<| (at $sloc) }
 ;
 
-tablePropertyList:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "tablePropertyList" <<<| (at $sloc) }
-  | pl = tablePropertyList p = tableProperty
-    { "tablePropertyList tableProperty" <| [ pl; p ] <<| "tablePropertyList" <<<| (at $sloc) }
+tableActionsProperty:
+  | ACTIONS ASSIGN L_BRACE acl = tableActionList R_BRACE
+    { "ACTIONS `= `{ tableActionList }" <| [ acl ] <<| "tableActionsProperty" <<<| (at $sloc) }
+;
+
+tableEntriesProperty:
+  | CONST ENTRIES ASSIGN L_BRACE el = tableEntryList R_BRACE
+    { "CONST ENTRIES `= `{ tableEntryList }" <| [ el ] <<| "tableEntriesProperty" <<<| (at $sloc) }
+;
+
+tableProperties:
+  | kp = tableKeyProperty ap = tableActionsProperty
+    { "tableKeyProperty tableActionsProperty"
+      <| [ kp; ap ] <<| "tableProperties" <<<| (at $sloc) }
+  | kp = tableKeyProperty ap = tableActionsProperty ep = tableEntriesProperty
+    { "tableKeyProperty tableActionsProperty tableEntriesProperty"
+      <| [ kp; ap; ep ] <<| "tableProperties" <<<| (at $sloc) }
 ;
 
 tableDeclaration:
-  | TABLE n = name L_BRACE pl = tablePropertyList R_BRACE
-    { "TABLE name `{ tablePropertyList }" <| [ n; pl ] <<| "tableDeclaration" <<<| (at $sloc) }
+  | TABLE n = name L_BRACE tp = tableProperties R_BRACE
+    { "TABLE name `{ tableProperties }" <| [ n; tp ] <<| "tableDeclaration" <<<| (at $sloc) }
 ;
 
 controlTypeDeclaration:
