@@ -86,6 +86,8 @@ let run_command =
        | ParseError (at, msg) ->
            string_of_error at msg |> exit_with_message ~errorcode:1
        | ElabError (at, msg) ->
+           string_of_error at msg |> exit_with_message ~errorcode:1
+       | AlgoError (at, msg) ->
            string_of_error at msg |> exit_with_message ~errorcode:1)
 
 let sim_command =
@@ -137,7 +139,10 @@ let sim_command =
          | Fail (`Runtime (_, msg)) ->
              "runtime error: " ^ msg |> exit_with_message ~errorcode:6
        with
-       | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | AlgoError (at, msg)
+       | ArchError (at, msg) ->
            string_of_error at msg |> exit_with_message ~errorcode:1
        | StfError msg ->
            string_of_error no_region msg |> exit_with_message ~errorcode:1)

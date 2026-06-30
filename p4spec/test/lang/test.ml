@@ -31,7 +31,8 @@ let algo_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
      fun () ->
        try algo_test specdir
-       with ParseError (at, msg) | ElabError (at, msg) ->
+       with
+       | ParseError (at, msg) | ElabError (at, msg) | AlgoError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
 (* Structuring test *)
@@ -47,7 +48,8 @@ let structure_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
      fun () ->
        try structure_test specdir
-       with ParseError (at, msg) | ElabError (at, msg) ->
+       with
+       | ParseError (at, msg) | ElabError (at, msg) | AlgoError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
 (* Annotate test *)
@@ -63,7 +65,8 @@ let annotate_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory" in
      fun () ->
        try annotate_test specdir
-       with ParseError (at, msg) | ElabError (at, msg) ->
+       with
+       | ParseError (at, msg) | ElabError (at, msg) | AlgoError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
 
 let command =

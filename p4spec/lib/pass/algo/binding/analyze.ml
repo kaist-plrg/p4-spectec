@@ -189,6 +189,7 @@ and analyze_rule_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
     |> Iterctx.filter_bound (fun id _ _ -> not (VEnv.mem id venv))
     |> Iterctx.add_vars_bind venv
   in
+  Iterctx.validate at iterctx;
   let prem = Iterctx.iterate_prem iterctx prem in
   (ctx, venv, prem, sideconditions)
 
@@ -273,6 +274,7 @@ and analyze_let_prem (ctx : Ctx.t) (at : region) (iterctx : Iterctx.t)
            |> Option.value ~default:false)
     |> Iterctx.add_vars_bind venv_l
   in
+  Iterctx.validate at iterctx;
   let prem = Iterctx.iterate_prem iterctx prem in
   (ctx, venv, prem, prems)
 

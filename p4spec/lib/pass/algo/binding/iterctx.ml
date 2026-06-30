@@ -3,6 +3,7 @@ open Lang
 open Il
 open Runtime.Static
 open Envs
+open Error
 open Util.Source
 
 type t = (iter * var list * var list) list
@@ -64,6 +65,20 @@ let filter_bound (f : Id.t -> typ -> iter list -> bool) (iterctx : t) : t =
         List.filter (fun (id, typ, iters) -> f id typ iters) vars_bound
       in
       (iter, vars_bound, vars_bind))
+    iterctx
+
+(* Validation *)
+
+let validate (at : region) (iterctx : t) : unit =
+  List.iter
+    (fun (_, vars_bound, vars_bind) ->
+      if List.is_empty vars_bound then
+        if List.is_empty vars_bind then error at "empty iteration"
+        else
+          error at
+            ("cannot determine dimension of binding identifier(s) only: "
+            ^ String.concat ", " (List.map Print.string_of_var vars_bind))
+      else ())
     iterctx
 
 (* Construction of iterated premises *)

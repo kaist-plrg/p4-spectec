@@ -472,6 +472,9 @@ let () =
   | ElabError (at, msg) ->
       Printf.eprintf "%s\n" (string_of_error at msg);
       exit 1
+  | AlgoError (at, msg) ->
+      Printf.eprintf "%s\n" (string_of_error at msg);
+      exit 1
   | StructError (at, msg) ->
       Printf.eprintf "%s\n" (string_of_error at msg);
       exit 1

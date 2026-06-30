@@ -237,7 +237,8 @@ let algo_command =
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
@@ -336,7 +337,8 @@ let run_command =
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let sim_command =
   Core.Command.basic
@@ -406,7 +408,10 @@ let sim_command =
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | ArchError (at, msg) ->
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | AlgoError (at, msg)
+       | ArchError (at, msg) ->
            Format.printf "%s\n" (string_of_error at msg)
        | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
 
@@ -686,6 +691,7 @@ let splice_command =
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg)
        | ElabError (at, msg)
+       | AlgoError (at, msg)
        | StructError (at, msg)
        | ProseError (at, msg)
        | SpliceError (at, msg) ->
