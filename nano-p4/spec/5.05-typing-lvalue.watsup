@@ -1,3 +1,7 @@
+;;
+;; Lvalue typing
+;;
+
 rule Lvalue_ok/referenceExpression:
   scope TC |- referenceExpression : typeIR
   -- if id = $id(referenceExpression)
@@ -27,3 +31,14 @@ rulegroup Lvalue_ok/memberAccess {
 rule Lvalue_ok/parenthesized:
   scope TC |- `( lvalue ) : typeIR
   -- Lvalue_ok: scope TC |- lvalue : typeIR
+
+;;
+;; Check if expression is lvalue
+;;
+
+dec $expression_is_lvalue(expression) : bool
+def $expression_is_lvalue(referenceExpression) = true
+def $expression_is_lvalue(memberAccessExpression) = true
+def $expression_is_lvalue(`( expression )) = $expression_is_lvalue(expression)
+def $expression_is_lvalue(expression) = false
+  -- otherwise

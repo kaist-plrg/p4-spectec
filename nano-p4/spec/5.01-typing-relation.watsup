@@ -11,7 +11,7 @@ relation Expr_ok:
 ;;
 
 relation ArgumentList_ok:
-  scope typingContext |- argumentList : typeIR*
+  scope typingContext |- argumentList : argumentIR*
   hint(input %0 %1 %2)
 
 ;;
@@ -21,6 +21,14 @@ relation ArgumentList_ok:
 relation Lvalue_ok:
   scope typingContext |- lvalue : typeIR
   hint(input %0 %1 %2)
+
+;;
+;; Calling convention
+;;
+
+relation Call_convention_ok:
+  parameterIR* `@ argumentIR*
+  hint(input %0 %1)
 
 ;;
 ;; Statement typing
@@ -52,6 +60,38 @@ relation ParserTransition_ok:
 
 relation ParserStateList_ok:
   typingContext |- parserStateList
+  hint(input %0 %1)
+
+;;
+;; Table typing
+;;
+
+relation TableKey_ok:
+  typingContext |- tableKey : matchKey
+  hint(input %0 %1)
+
+relation TableActionList_ok:
+  typingContext |- tableActionList : matchAction*
+  hint(input %0 %1)
+
+relation TableEntries_ok:
+  typingContext tableContext |- tableEntry*
+  hint(input %0 %1 %2)
+
+relation TableProperties_ok:
+  typingContext |- tableProperties : tableContext
+  hint(input %0 %1)
+
+relation TableDecl_ok:
+  typingContext |- tableDeclaration -| typingContext
+  hint(input %0 %1)
+
+;;
+;; Control declaration
+;;
+
+relation ControlLocalDeclList_ok:
+  typingContext |- controlLocalDeclarationList -| typingContext
   hint(input %0 %1)
 
 ;;

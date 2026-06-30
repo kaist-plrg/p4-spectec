@@ -10,10 +10,11 @@ var n : nat
 var w : nat
 
 ;;
-;; Pretty-printer
+;; General text function
 ;;
 
 builtin dec $print_<X>(X) : text
+builtin dec $strip_all_whitespace(text) : text
 
 ;;
 ;; General sequence functions
@@ -24,6 +25,12 @@ def $repeat_<X>(X, 0) = eps
 def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
   -- if n =/= 0
   -- if n' = $(n - 1)
+
+dec $exists_(bool*) : bool
+  hint(prose_true "some of" %0 "is true")
+  hint(prose_false "none of" %0 "is true")
+def $exists_(eps) = false
+def $exists_(b_h :: b_t*) = b_h \/ $exists_(b_t*)
 
 dec $forall_(bool*) : bool
   hint(prose_true "all" %0 "are true")

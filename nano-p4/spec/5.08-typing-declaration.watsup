@@ -168,6 +168,15 @@ rule Decl_ok/parserDeclaration:
 
 rule Decl_ok/controlDeclaration:
   TC_0 |- controlDeclaration -| TC_0
+  -- if CONTROL name
+    `( parameterList )
+    `{ controlLocalDeclarationList APPLY controlBody } = controlDeclaration
+  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_1
+  -- ControlLocalDeclList_ok: TC_1 |- controlLocalDeclarationList -| TC_2
+  -- Block_ok: TC_2 |- controlBody
+  -- if callableId = $id(name)
+  -- if callableTypeDef = CONTROL parameterIR*
+  -- if TC_1 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
 
 rule Decl_ok/typeDeclaration:
   TC_0 |- typeDeclaration -| TC_1

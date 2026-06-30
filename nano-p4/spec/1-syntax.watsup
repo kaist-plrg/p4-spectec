@@ -470,6 +470,11 @@ syntax tableActionList =
   | tableAction
   | tableActionList tableAction
 
+dec $flatten_tableActionList(tableActionList) : tableAction*
+def $flatten_tableActionList(tableAction) = [ tableAction ]
+def $flatten_tableActionList(tableActionList tableAction)
+  = $flatten_tableActionList(tableActionList) ++ [ tableAction ]
+
 ;;
 ;;;;;;;; Table entries property
 ;;
@@ -479,6 +484,11 @@ syntax tableEntry = `( expression ) `: tableActionReference `;
 syntax tableEntryList =
   | `EMPTY
   | tableEntryList tableEntry
+
+dec $flatten_tableEntryList(tableEntryList) : tableEntry*
+def $flatten_tableEntryList(`EMPTY) = eps
+def $flatten_tableEntryList(tableEntryList tableEntry)
+  = $flatten_tableEntryList(tableEntryList) ++ [ tableEntry ]
 
 ;;
 ;;;;;;;; Table properties
@@ -522,6 +532,14 @@ syntax controlDeclaration =
   CONTROL name
     `( parameterList )
     `{ controlLocalDeclarationList APPLY controlBody }
+
+dec $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+  : controlLocalDeclaration*
+def $flatten_controlLocalDeclarationList(`EMPTY) = eps
+def $flatten_controlLocalDeclarationList(
+    controlLocalDeclarationList controlLocalDeclaration)
+  = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+    ++ [ controlLocalDeclaration ]
 
 ;;
 ;;;; Package type declarations
