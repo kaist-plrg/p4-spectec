@@ -13,7 +13,7 @@ def $is_object_typeIR(typeIR) = false
 dec $no_object_params(parameterIR*) : bool
 
 def $no_object_params(eps) = true
-def $no_object_params((direction typeIR name) :: parameterIR_t*)
+def $no_object_params((direction typeIR nameIR) :: parameterIR_t*)
   = $no_object_params(parameterIR_t*)
   -- if ~$is_object_typeIR(typeIR)
 
@@ -24,43 +24,46 @@ def $no_object_params((direction typeIR name) :: parameterIR_t*)
 dec $distinct_params(parameterIR*) : bool
 
 def $distinct_params(parameterIR*)
-  = $distinct_<id>(id*)
-  -- if (_ _ name = parameterIR)*
-  -- if (id = $id(name))*
+  = $distinct_<nameIR>(nameIR*)
+  -- if (_ _ nameIR = parameterIR)*
 
 ;;
 ;; Parameter typing
 ;;
 
 relation Parameter_ok:
-  typingContext |- parameter ~> parameterIR
+  typingContext |- parameter : parameterIR -| typingContext
   hint(input %0 %1)
 
 relation Parameters_ok:
-  typingContext |- parameter* ~> parameterIR*
+  typingContext |- parameter* : parameterIR* -| typingContext
   hint(input %0 %1)
 
 relation ParameterList_ok:
-  typingContext |- parameterList ~> parameterIR*
+  typingContext |- parameterList : parameterIR* -| typingContext
   hint(input %0 %1)
 
 rule Parameter_ok:
-  TC |- direction type name ~> direction typeIR name
-  -- Type_ok: TC |- type ~> typeIR
+  TC_0 |- direction type name : parameterIR -| TC_1
+  -- Type_ok: TC_0 |- type ~> typeIR
+  -- if nameIR = $id(name)
+  -- if parameterIR = direction typeIR nameIR
+  -- if varTypeIR = direction typeIR
+  -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, varTypeIR)
 
 rulegroup Parameters_ok {
 
   rule Parameters_ok/nil:
-    TC |- eps ~> eps
+    TC |- eps : eps -| TC
 
   rule Parameters_ok/cons:
-    TC |- parameter_h :: parameter_t* ~> parameterIR_h :: parameterIR_t*
-    -- Parameter_ok: TC |- parameter_h ~> parameterIR_h
-    -- Parameters_ok: TC |- parameter_t* ~> parameterIR_t*
+    TC_0 |- parameter_h :: parameter_t* : parameterIR_h :: parameterIR_t* -| TC_2
+    -- Parameter_ok: TC_0 |- parameter_h : parameterIR_h -| TC_1
+    -- Parameters_ok: TC_1 |- parameter_t* : parameterIR_t* -| TC_2
 
 }
 
 rule ParameterList_ok:
-  TC |- parameterList ~> parameterIR*
+  TC_0 |- parameterList : parameterIR* -| TC_1
   -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: TC |- parameter* ~> parameterIR*
+  -- Parameters_ok: TC_0 |- parameter* : parameterIR* -| TC_1

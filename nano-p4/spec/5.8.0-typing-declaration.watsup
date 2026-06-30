@@ -47,12 +47,7 @@ rule ActionDecl_ok:
   -- if (direction _ name = parameter)*
   -- if $directionless_trailing(direction*)
   ---- ;; Elaborate parameter types
-  -- Parameters_ok: TC_0 |- parameter* ~> parameterIR*
-  -- if (_ typeIR _ = parameterIR)*
-  ---- ;; Add parameters to type environment, then check action body
-  -- if (id = $id(name))*
-  -- if (varTypeIR = direction typeIR)*
-  -- if TC_body = $add_vars_t(LOCAL, TC_0, id*, varTypeIR*)
+  -- Parameters_ok: TC_0 |- parameter* : parameterIR* -| TC_body
   -- Block_ok: TC_body |- blockStatement
   ---- ;; add action to the context
   -- if callableId = $id(name_action)
@@ -67,15 +62,11 @@ relation ExternDecl_ok:
   typingContext |- externDeclaration -| typingContext
   hint(input %0 %1)
 
-rulegroup ExternDecl_ok {
-
-  rule ExternDecl_ok/externObjectDeclaration:
-    TC_0 |- EXTERN nonTypeName
-            `{ externMethodPrototypeList } -| TC_0
-    -- if externMethodPrototype*
-        = $flatten_externMethodPrototypeList(externMethodPrototypeList)
-
-}
+rule ExternDecl_ok:
+  TC_0 |- EXTERN nonTypeName
+          `{ externMethodPrototypeList } -| TC_0
+  -- if externMethodPrototype*
+      = $flatten_externMethodPrototypeList(externMethodPrototypeList)
 
 ;;
 ;; Type declaration
@@ -115,7 +106,7 @@ rulegroup TypeDecl_ok {
 
   rule TypeDecl_ok/parserTypeDeclaration:
     TC_0 |- PARSER name `( parameterList ) `; -| TC_1
-    -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
+    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
     -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
@@ -125,7 +116,7 @@ rulegroup TypeDecl_ok {
   rule TypeDecl_ok/controlTypeDeclaration:
     TC_0 |- CONTROL name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
+    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
     -- if $distinct_params(parameterIR*)
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
@@ -135,7 +126,7 @@ rulegroup TypeDecl_ok {
   rule TypeDecl_ok/packageTypeDeclaration:
     TC_0 |- PACKAGE name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
+    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
     -- if $distinct_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = PACKAGE typeId `( parameterIR* )
@@ -171,7 +162,7 @@ rule Decl_ok/parserDeclaration:
   -- if PARSER name
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList } = parserDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList ~> parameterIR*
+  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
 
 rule Decl_ok/controlDeclaration:
   TC_0 |- controlDeclaration -| TC_0
