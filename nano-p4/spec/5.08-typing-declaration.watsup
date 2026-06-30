@@ -1,20 +1,20 @@
+;;
 ;; Variable declaration
+;;
 
-rulegroup VarDecl_ok {
+rule VarDecl_ok:
+  scope TC_0 |- type name (`= expression) `; -| TC_1
+  -- Type_ok: TC_0 |- type ~> typeIR
+  -- Expr_ok: scope TC_0 |- expression : typeIR'
+  -- if typeIR = typeIR'
+  -- if id = $id(name)
+  ---- ;; update type frame
+  -- if varTypeIR = INOUT typeIR
+  -- if TC_1 = $add_var_t(scope, TC_0, id, varTypeIR)
 
-  rule VarDecl_ok/initializer:
-    scope TC_0 |- type name (`= expression) `; -| TC_1
-    -- Type_ok: TC_0 |- type ~> typeIR
-    -- Expr_ok: scope TC_0 |- expression : typeIR'
-    -- if typeIR = typeIR'
-    -- if id = $id(name)
-    ---- ;; update type frame
-    -- if varTypeIR = INOUT typeIR
-    -- if TC_1 = $add_var_t(scope, TC_0, id, varTypeIR)
-
-}
-
+;;
 ;; Action declaration
+;;
 
 dec $directionless_trailing(direction*) : bool
 dec $directionless_trailing'(bool, direction*) : bool
@@ -29,10 +29,6 @@ def $directionless_trailing'(false, `EMPTY :: direction_t*) = false
 def $directionless_trailing'(_, direction_h :: direction_t*)
   = $directionless_trailing'(false, direction_t*)
   -- if direction_h =/= `EMPTY
-
-;;
-;; Action declaration
-;;
 
 relation ActionDecl_ok:
   typingContext |- actionDeclaration -| typingContext
