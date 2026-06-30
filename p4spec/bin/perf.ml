@@ -85,14 +85,15 @@ let frontend specdir =
   |> List.concat_map Frontend.Parse.parse_file
 
 let elab specdir = specdir |> frontend |> Elaborate.Elab.elab_spec
-let structure specdir = specdir |> elab |> Structure.Struct.struct_spec
+let algo specdir = specdir |> elab |> Algo.algo_spec
+let structure specdir = specdir |> algo |> Structure.Struct.struct_spec
 
 let driver ?(det = false) ?(arch : string option) mode specdir =
   let spec_sim =
     match mode with
-    | `IL ->
-        let spec_il = elab specdir in
-        (Runtime.Sim.Simulator.IL spec_il : Runtime.Sim.Simulator.spec)
+    | `AL ->
+        let spec_al = algo specdir in
+        (Runtime.Sim.Simulator.AL spec_al : Runtime.Sim.Simulator.spec)
     | `SL ->
         let spec_sl = structure specdir in
         (Runtime.Sim.Simulator.SL spec_sl : Runtime.Sim.Simulator.spec)
@@ -179,8 +180,8 @@ let run_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "al" no_arg ~doc:"Run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `AL);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
          ]
@@ -305,8 +306,8 @@ let sim_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `IL);
+           flag "al" no_arg ~doc:"Run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b `AL);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b `SL);
          ]

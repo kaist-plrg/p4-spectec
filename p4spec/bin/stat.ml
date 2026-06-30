@@ -9,7 +9,8 @@ let frontend filenames_spec =
   filenames_spec |> List.concat_map Frontend.Parse.parse_file
 
 let elab spec_el = spec_el |> Elaborate.Elab.elab_spec
-let structure spec_il = spec_il |> Structure.Struct.struct_spec
+let algo spec_il = spec_il |> Algo.algo_spec
+let structure spec_al = spec_al |> Structure.Struct.struct_spec
 
 (* Spec statistics *)
 
@@ -130,6 +131,88 @@ module ILPrem = struct
         add count count_prem)
       zero prems
 
+  let count_rule rule : t =
+    let _, _, prems = rule.it in
+    count_prems prems
+
+  let count_rules rules : t =
+    List.fold_left
+      (fun count rule ->
+        let count_rule = count_rule rule in
+        add count count_rule)
+      zero rules
+
+  let count_rulegroup rulegroup : t =
+    let _, rules = rulegroup.it in
+    count_rules rules
+
+  let count_rulegroups rulegroups : t =
+    List.fold_left
+      (fun count rulegroup ->
+        let count_rulegroup = count_rulegroup rulegroup in
+        add count count_rulegroup)
+      zero rulegroups
+
+  let count_elsegroup elsegroup : t =
+    let _, rule = elsegroup.it in
+    count_rule rule
+
+  let count_def def : t =
+    match def.it with
+    | Il.RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
+        let count_rulegroups = count_rulegroups rulegroups in
+        let count_elsegroup =
+          match elsegroup_opt with
+          | Some elsegroup -> count_elsegroup elsegroup
+          | None -> zero
+        in
+        add count_rulegroups count_elsegroup
+    | _ -> zero
+
+  let count_defs defs : t =
+    List.fold_left
+      (fun count def ->
+        let count_def = count_def def in
+        add count count_def)
+      zero defs
+end
+
+let count_prems_il spec_il =
+  let count_rule_prems, count_if_prems, count_let_prems =
+    ILPrem.count_defs spec_il
+  in
+  (count_rule_prems, count_if_prems, count_let_prems)
+
+(* AL statistics *)
+
+module ALPrem = struct
+  type t = int * int * int
+
+  let zero : t = (0, 0, 0)
+  let add (r_a, i_a, l_a) (r_b, i_b, l_b) : t = (r_a + r_b, i_a + i_b, l_a + l_b)
+
+  let rec count_prem prem : t =
+    match prem.it with
+    (* Rule premise *)
+    | Il.RulePr _ -> (1, 0, 0)
+    (* If premise *)
+    | Il.IfPr _ -> (0, 1, 0)
+    (* If-hold and not-hold premises are specialized Rule premises, branching on relation results *)
+    | Il.IfHoldPr _ | Il.IfNotHoldPr _ -> (1, 0, 0)
+    (* Let premise *)
+    | Il.LetPr _ -> (0, 0, 1)
+    (* Iterated premise *)
+    | Il.IterPr (prem, _) -> count_prem prem
+    (* Debug premise is ignored *)
+    | Il.DebugPr _ -> zero
+
+  let count_prems prems : t =
+    List.fold_left
+      (fun count prem ->
+        let count_prem = count_prem prem in
+        add count count_prem)
+      zero prems
+
   let count_rulematch rulematch : t =
     let _, _, prems_match = rulematch in
     count_prems prems_match
@@ -166,7 +249,7 @@ module ILPrem = struct
 
   let count_def def : t =
     match def.it with
-    | Il.RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
+    | Al.RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
         let count_rulegroups = count_rulegroups rulegroups in
         let count_elsegroup =
           match elsegroup_opt with
@@ -184,9 +267,9 @@ module ILPrem = struct
       zero defs
 end
 
-let count_prems_il spec_il =
+let count_prems_al spec_al =
   let count_rule_prems, count_if_prems, count_let_prems =
-    ILPrem.count_defs spec_il
+    ALPrem.count_defs spec_al
   in
   (count_rule_prems, count_if_prems, count_let_prems)
 
@@ -362,7 +445,16 @@ let () =
     Printf.printf "   - Rule prems: %d\n" num_rule_prems_il;
     Printf.printf "   - If prems:   %d\n" num_if_prems_il;
     Printf.printf "   - Let prems:  %d\n" num_let_prems_il;
-    let spec_sl = spec_il |> structure in
+    let spec_al = spec_il |> algo in
+    let num_rule_prems_al, num_if_prems_al, num_let_prems_al =
+      count_prems_al spec_al
+    in
+    Printf.printf "AL has [ %d ] premises in rules\n"
+      (num_rule_prems_al + num_if_prems_al + num_let_prems_al);
+    Printf.printf "   - Rule prems: %d\n" num_rule_prems_al;
+    Printf.printf "   - If prems:   %d\n" num_if_prems_al;
+    Printf.printf "   - Let prems:  %d\n" num_let_prems_al;
+    let spec_sl = spec_al |> structure in
     let num_rule_instrs_sl, num_if_instrs_sl, num_let_instrs_sl =
       count_instrs_sl spec_sl
     in
