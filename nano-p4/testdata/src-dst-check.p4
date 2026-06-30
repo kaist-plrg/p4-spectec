@@ -1,20 +1,16 @@
 #include <nano_model.p4>
 
-struct Header {}
-
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
+        pkt.extract(hdr.nanonet);
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> x = 8w5;
-        bit<8> y = 8w10;
-        bool result = (x < y) ? true : false;
-        pass = result;
+        pass = hdr.nanonet.src != hdr.nanonet.dst;
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

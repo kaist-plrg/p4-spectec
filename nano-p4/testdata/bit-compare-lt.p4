@@ -8,9 +8,9 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool accept_pkt = true;
-        bool drop_pkt = false;
-        pass = accept_pkt != drop_pkt;
+        bit<8> x = 8w5;
+        bit<8> y = 8w10;
+        pass = x < y;
     }
 }
 

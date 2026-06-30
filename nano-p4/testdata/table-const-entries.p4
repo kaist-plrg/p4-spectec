@@ -1,15 +1,5 @@
 #include <nano_model.p4>
 
-header Ethernet {
-    bit<48> dst;
-    bit<48> src;
-    bit<16> ethertype;
-}
-
-struct Header {
-    Ethernet eth;
-}
-
 action drop(out bool pass) {
     pass = false;
 }
@@ -20,19 +10,19 @@ action fwd(out bool pass) {
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
-        pkt.extract<Ethernet>(hdr.eth);
+        pkt.extract(hdr.nanonet);
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
     table acl {
-        key = { hdr.eth.ethertype : exact; }
+        key = { hdr.nanonet.packetType : exact; }
         actions = { drop(pass); fwd(pass); }
         const entries = {
-            (16w0x0800) : fwd(pass);
-            (16w0x0806) : fwd(pass);
-            (16w0xDEAD) : drop(pass);
+            (7w1) : fwd(pass);
+            (7w2) : fwd(pass);
+            (7w0) : drop(pass);
         }
     }
     apply {
@@ -41,4 +31,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

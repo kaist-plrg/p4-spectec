@@ -1,20 +1,12 @@
 #include <nano_model.p4>
 
-header Hdr {
-    bit<8> proto;
-}
-
-struct Header {
-    Hdr h;
-}
-
 parser Parser(packet_in pkt, out Header hdr) {
-    bit<8> version = 8w1;
+    bit<7> version = 7w1;
     state start {
-        pkt.extract<Hdr>(hdr.h);
-        transition select(hdr.h.proto) {
-            8w1 : parse_v1;
-            8w2 : reject;
+        pkt.extract(hdr.nanonet);
+        transition select(hdr.nanonet.packetType) {
+            7w1 : parse_v1;
+            7w2 : reject;
         }
     }
 
@@ -29,4 +21,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

@@ -1,16 +1,5 @@
 #include <nano_model.p4>
 
-header Nanonet {
-    bool drop;
-    bit<7> packetType;
-    bit<8> src;
-    bit<8> dst;
-}
-
-struct Header {
-    Nanonet nanonet;
-}
-
 action reject(out bool pass, bit<8> rej) {
     if (rej == 8w0) {
         pass = true;
@@ -40,4 +29,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

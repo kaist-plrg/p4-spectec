@@ -1,26 +1,12 @@
 #include <nano_model.p4>
 
-header test_header {
-    bit<8> value;
-}
-
-header next_header {
-    bit<8> value;
-}
-
-struct Header {
-    test_header first;
-    next_header next;
-}
-
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
-        pkt.extract<test_header>(hdr.first);
+        pkt.extract(hdr.nanonet);
         transition parse_next;
     }
 
     state parse_next {
-        pkt.extract<next_header>(hdr.next);
         transition accept;
     }
 }
@@ -28,7 +14,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 control Filter(inout Header hdr, out bool pass) {
     apply {
         bit<8> val = 8w1;
-        if (hdr.next.value == val) {
+        if (hdr.nanonet.dst == val) {
             pass = true;
         } else {
             pass = false;
@@ -36,4 +22,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

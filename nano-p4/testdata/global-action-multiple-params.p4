@@ -1,7 +1,5 @@
 #include <nano_model.p4>
 
-struct Header {}
-
 action compute(out bool pass, bit<8> a, bit<8> b) {
     pass = a < b;
 }
@@ -20,4 +18,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

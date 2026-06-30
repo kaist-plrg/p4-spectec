@@ -2,15 +2,21 @@
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
+        pkt.extract(hdr.nanonet);
+        transition select(hdr.nanonet.packetType) {
+            7w1 : parse_data;
+            7w0 : reject;
+        }
+    }
+
+    state parse_data {
         transition accept;
     }
 }
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bool accept_pkt = true;
-        bool drop_pkt = false;
-        pass = accept_pkt != drop_pkt;
+        pass = hdr.nanonet.src > 8w0;
     }
 }
 

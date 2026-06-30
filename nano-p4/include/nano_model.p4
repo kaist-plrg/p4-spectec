@@ -3,9 +3,9 @@
 
 #include <nano_core.p4>
 
-parser parse<H>(packet_in packet, out H headers);
-control filter<H>(inout H headers, out bool accept);
+parser parse(packet_in packet, out Header hdr);
+control filter(inout Header hdr, out bool accept);
 
-package NanoSwitch<H>(parse<H> parse, filter<H> filter);
+package NanoSwitch(parse p, filter f);
 
 #endif /* _NANO_MODEL_P4_ */

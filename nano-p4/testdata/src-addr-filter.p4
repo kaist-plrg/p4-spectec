@@ -16,18 +16,18 @@ parser Parser(packet_in pkt, out Header hdr) {
 }
 
 control Filter(inout Header hdr, out bool pass) {
-    table dispatch {
-        key = { hdr.nanonet.packetType : exact; }
+    table src_acl {
+        key = { hdr.nanonet.src : exact; }
         actions = { allow(pass); deny(pass); }
         const entries = {
-            (7w1) : allow(pass);
-            (7w2) : allow(pass);
-            (7w0) : deny(pass);
+            (8w1) : allow(pass);
+            (8w2) : allow(pass);
+            (8w3) : deny(pass);
         }
     }
     apply {
         pass = false;
-        dispatch.apply();
+        src_acl.apply();
     }
 }
 

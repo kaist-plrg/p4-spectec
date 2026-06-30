@@ -1,7 +1,5 @@
 #include <nano_model.p4>
 
-struct Header {}
-
 action reject(out bool pass, bool rej) {
     pass = !rej;
 }
@@ -19,4 +17,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;

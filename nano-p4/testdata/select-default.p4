@@ -1,23 +1,15 @@
 #include <nano_model.p4>
 
-header Ethernet {
-    bit<16> ethertype;
-}
-
-struct Header {
-    Ethernet eth;
-}
-
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
-        pkt.extract<Ethernet>(hdr.eth);
-        transition select(hdr.eth.ethertype) {
-            0x0800 : parse_ipv4;
-            0xFFFF : reject;
+        pkt.extract(hdr.nanonet);
+        transition select(hdr.nanonet.packetType) {
+            7w1 : parse_data;
+            7w0 : reject;
         }
     }
 
-    state parse_ipv4 {
+    state parse_data {
         transition accept;
     }
 }
@@ -28,4 +20,4 @@ control Filter(inout Header hdr, out bool pass) {
     }
 }
 
-NanoSwitch<Header>(Parser(), Filter()) main;
+NanoSwitch(Parser(), Filter()) main;
