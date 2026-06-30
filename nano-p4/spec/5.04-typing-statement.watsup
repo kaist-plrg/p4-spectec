@@ -1,10 +1,3 @@
-;; syntax statement =
-;;   | emptyStatement
-;;   | assignmentStatement
-;;   | callStatement
-;;   | blockStatement
-;;   | conditionalStatement
-
 rule Statement_ok/emptyStatement:
   scope TC |- emptyStatement -| TC
 
@@ -17,25 +10,41 @@ rule Statement_ok/assignmentStatement:
 
 rulegroup Statement_ok/callStatement {
 
-  rule Statement_ok/callStatement-name-no-typeArgumentList:
+  rule Statement_ok/callStatement-name:
     scope TC |- referenceExpression `( argumentList ) `; -| TC
     -- if callableId = $id(referenceExpression)
     -- if callableTypeDef = $find_callableDef_t(TC, callableId)
     -- if parameterIR* = $params_of_callableTypeDef(callableTypeDef)
     -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
-    -- if (expression `# typeIR = argumentIR)*
-    -- if (_ typeIR_param _ = parameterIR)*
-    ---- ;; TODO: does this do what i wish it does?
-    -- if (typeIR_param = typeIR)*
+    -- Call_convention_ok: parameterIR* `@ argumentIR*
 
-  rule Statement_ok/callStatement-member-no-typeArgumentList:
+  rule Statement_ok/callStatement-member:
     scope TC |- (lvalue_base `. member) `( argumentList ) `; -| TC
     -- Lvalue_ok: scope TC |- lvalue_base : typeIR_base
-
-  rule Statement_ok/callStatement-typeArgumentList:
-    scope TC |- lvalue `( argumentList ) `; -| TC
+    -- if EXTERN typeId externMethodTypeDefEnv = typeIR_base
+    -- if callableId = $id(member)
+    -- if VOID callableId `( parameterIR* )
+        = $find_map<callableId, externMethodTypeDefIR>(
+            externMethodTypeDefEnv,
+            callableId
+          )
+    -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
+    -- Call_convention_ok: parameterIR* `@ argumentIR*
 
 }
+
+rule Statement_ok/blockStatement:
+  scope TC_0 |- blockStatement -| TC_2
+  -- if TC_1 = $enter_t(TC_0)
+  -- Block_ok: TC_1 |- blockStatement
+  -- if TC_2 = $exit_t(TC_1)
+
+rule Statement_ok/conditionalStatement:
+  scope TC |- IF `( expression ) blockStatement_then
+              ELSE blockStatement_else -| TC
+  -- Expr_ok: scope TC |- expression : BOOL
+  -- Block_ok: TC |- blockStatement_then
+  -- Block_ok: TC |- blockStatement_else
 
 rulegroup Statements_ok {
 
