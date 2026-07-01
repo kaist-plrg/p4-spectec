@@ -112,7 +112,22 @@ module NanoP4 = struct
 
   let unparse_program (_value_program : Value.t) : string = "<nano-p4>"
 
-  module Builtin_NanoP4 = Builtin.Call.Make (Builtin.Call.No_ext) ()
+  module Builtin_NanoP4_Ext = struct
+    (* dec $print_<X>(X) : text *)
+
+    let print (add : Value.t -> unit) (at : region) (targs : Typ.t list)
+        (values_input : Value.t list) : Value.t =
+      let _typ = Builtin.Extract.one at targs in
+      let value = Builtin.Extract.one at values_input in
+      let text = Lang.Il.Print.string_of_value value in
+      let value = Value.Make.text text in
+      add value;
+      value
+
+    let entries = [ ("print_", print) ]
+  end
+
+  module Builtin_NanoP4 = Builtin.Call.Make (Builtin_NanoP4_Ext) ()
 
   let call_builtin = Builtin_NanoP4.invoke
   let checkpoint = Builtin_NanoP4.checkpoint
