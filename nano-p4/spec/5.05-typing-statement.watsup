@@ -35,6 +35,11 @@ rulegroup Statement_ok/callStatement {
     -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
     -- Call_convention_ok: parameterIR* `@ argumentIR*
 
+  rule Statement_ok/callStatement-table-apply:
+    scope TC |- (lvalue_base `. APPLY) `( argumentList ) `; -| TC
+    -- if expression_base = $expression_of_lvalue(lvalue_base)
+    -- Expr_ok: scope TC |- expression_base : (TABLE typeId)
+
 }
 
 rule Statement_ok/blockStatement:
