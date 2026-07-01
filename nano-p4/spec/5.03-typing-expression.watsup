@@ -65,14 +65,14 @@ rulegroup Expr_ok/memberAccessExpression {
   rule Expr_ok/struct:
     scope TC |- memberAccessBase `. member : typeIR
     -- Expr_ok: scope TC |- memberAccessBase : typeIR_base
-    -- if STRUCT id `{ (typeIR_field id_field `;)* } = typeIR_base
+    -- if STRUCT _ `{ (typeIR_field id_field `;)* } = typeIR_base
     -- if id_member = $id(member)
     -- if typeIR = $assoc_<id, typeIR>(id_member, (id_field, typeIR_field)*)
 
   rule Expr_ok/header:
     scope TC |- memberAccessBase `. member : typeIR
     -- Expr_ok: scope TC |- memberAccessBase : typeIR_base
-    -- if HEADER id `{ (typeIR_field id_field `;)* } = typeIR_base
+    -- if HEADER _ `{ (typeIR_field id_field `;)* } = typeIR_base
     -- if id_member = $id(member)
     -- if typeIR = $assoc_<id, typeIR>(id_member, (id_field, typeIR_field)*)
 
@@ -81,15 +81,13 @@ rulegroup Expr_ok/memberAccessExpression {
 rulegroup Expr_ok/callExpression {
 
   rule Expr_ok/parser:
-    scope TC |- (`TID typeId_callTarget) `( `EMPTY ) : parserObjectTypeIR
-    -- if PARSER typeId `( parameterIR* )
-        = $find_typeDef_t(TC, typeId_callTarget)
+    scope TC |- (`TID typeId) `( `EMPTY ) : parserObjectTypeIR
+    -- if PARSER parameterIR* = $find_callableDef_t(TC, typeId)
     -- if parserObjectTypeIR = PARSER typeId `( parameterIR* )
 
   rule Expr_ok/control:
-    scope TC |- (`TID typeId_callTarget) `( `EMPTY ) : controlObjectTypeIR
-    -- if CONTROL typeId `( parameterIR* )
-        = $find_typeDef_t(TC, typeId_callTarget)
+    scope TC |- (`TID typeId) `( `EMPTY ) : controlObjectTypeIR
+    -- if CONTROL parameterIR* = $find_callableDef_t(TC, typeId)
     -- if controlObjectTypeIR = CONTROL typeId `( parameterIR* )
 
 }

@@ -1,5 +1,5 @@
-relation Type_ok:
-  typingContext |- type ~> typeIR
+relation ParameterType_alpha:
+  parameterIR ~~ parameterIR
   hint(input %0 %1)
 
 rulegroup Type_ok {
@@ -13,3 +13,45 @@ rulegroup Type_ok {
     -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
 
 }
+
+rule Type_alpha/baseTypeIR:
+  baseTypeIR ~~ baseTypeIR
+
+rulegroup Type_alpha/dataTypeIR {
+
+  rule Type_alpha/structTypeIR:
+    (STRUCT typeId `{ _ })
+    ~~ (STRUCT typeId `{ _ })
+
+  rule Type_alpha/headerTypeIR:
+    (HEADER typeId `{ _ })
+    ~~ (HEADER typeId `{ _ })
+
+}
+
+rulegroup Type_alpha/objectTypeIR {
+
+  rule Type_alpha/externObjectTypeIR:
+    (EXTERN typeId _) ~~ (EXTERN typeId _)
+
+  rule Type_alpha/parserObjectTypeIR:
+    (PARSER _ `( parameterIR_a* )) ~~ (PARSER _ `( parameterIR_b* ))
+    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_alpha/controlObjectTypeIR:
+    (CONTROL _ `( parameterIR_a* )) ~~ (CONTROL _ `( parameterIR_b* ))
+    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_alpha/packageObjectTypeIR:
+    (PACKAGE _ `( parameterIR_a* )) ~~ (PACKAGE _ `( parameterIR_b* ))
+    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_alpha/tableObjectTypeIR:
+    (TABLE typeId) ~~ (TABLE typeId)
+
+}
+
+rule ParameterType_alpha:
+  (direction typeIR_a _)
+  ~~ (direction typeIR_b _)
+  -- Type_alpha: typeIR_a ~~ typeIR_b
