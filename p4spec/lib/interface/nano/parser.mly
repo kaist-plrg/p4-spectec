@@ -135,12 +135,12 @@ integerLiteral:
 (* Names *)
 identifier:
   | text = NAME IDENTIFIER
-    { "ID text" <| [ text ] <<| "identifier" <<<| (at $sloc) }
+    { "`ID text" <| [ text ] <<| "identifier" <<<| (at $sloc) }
 ;
 
 typeIdentifier:
   | text = NAME TYPENAME
-    { "TID text" <| [ text ] <<| "typeIdentifier" <<<| (at $sloc) }
+    { "`TID text" <| [ text ] <<| "typeIdentifier" <<<| (at $sloc) }
 ;
 
 nonTypeName:
