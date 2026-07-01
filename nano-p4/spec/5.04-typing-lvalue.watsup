@@ -42,3 +42,12 @@ def $expression_is_lvalue(memberAccessExpression) = true
 def $expression_is_lvalue(`( expression )) = $expression_is_lvalue(expression)
 def $expression_is_lvalue(expression) = false
   -- otherwise
+
+;;
+;; Convert lvalue to expression
+;;
+
+dec $expression_of_lvalue(lvalue) : expression
+def $expression_of_lvalue(referenceExpression) = referenceExpression
+def $expression_of_lvalue(lvalue_base `. member) = $expression_of_lvalue(lvalue_base) `. member
+def $expression_of_lvalue(`( lvalue )) = `( $expression_of_lvalue(lvalue) )
