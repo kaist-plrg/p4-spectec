@@ -1,0 +1,17 @@
+// Error: ! requires bool operand, not bit<8>
+#include <nano_model.p4>
+
+parser Parser(packet_in pkt, out Header hdr) {
+    state start {
+        pkt.extract(hdr.nanonet);
+        transition accept;
+    }
+}
+
+control Filter(inout Header hdr, out bool pass) {
+    apply {
+        pass = !(hdr.nanonet.src != hdr.nanonet.dst) && !hdr.nanonet.src;
+    }
+}
+
+NanoSwitch(Parser(), Filter()) main;
