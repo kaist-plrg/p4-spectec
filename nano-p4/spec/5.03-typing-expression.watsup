@@ -32,25 +32,28 @@ rulegroup Expr_ok/unaryExpression {
 rulegroup Expr_ok/binaryExpression {
 
   rule Expr_ok/arithmetic:
-    scope TC |- expression_l binop expression_r : integerType_l
+    scope TC |- expression_l binop expression_r : integerType
     -- if binop <- [ `*, `/, `%, `+, `- ]
-    -- Expr_ok: scope TC |- expression_l : integerType_l
-    -- Expr_ok: scope TC |- expression_r : integerType_r
-    -- if integerType_l = integerType_r
+    -- Expr_ok: scope TC |- expression_l : integerType
+    -- Expr_ok: scope TC |- expression_r : integerType
 
   rule Expr_ok/comparison:
     scope TC |- expression_l binop expression_r : BOOL
-    -- if binop <- [ `<=, `>=, ``<, ``>, `!=, `== ]
-    -- Expr_ok: scope TC |- expression_l : integerType_l
-    -- Expr_ok: scope TC |- expression_r : integerType_r
-    -- if integerType_l = integerType_r
+    -- if binop <- [ `<=, `>=, ``<, ``> ]
+    -- Expr_ok: scope TC |- expression_l : integerType
+    -- Expr_ok: scope TC |- expression_r : integerType
+
+  rule Expr_ok/equality:
+    scope TC |- expression_l binop expression_r : BOOL
+    -- if binop <- [ `!=, `== ]
+    -- Expr_ok: scope TC |- expression_l : baseType
+    -- Expr_ok: scope TC |- expression_r : baseType
 
   rule Expr_ok/bitwise:
-    scope TC |- expression_l binop expression_r : integerType_l
+    scope TC |- expression_l binop expression_r : integerType
     -- if binop <- [ `&, `^, `| ]
-    -- Expr_ok: scope TC |- expression_l : integerType_l
-    -- Expr_ok: scope TC |- expression_r : integerType_r
-    -- if integerType_l = integerType_r
+    -- Expr_ok: scope TC |- expression_l : integerType
+    -- Expr_ok: scope TC |- expression_r : integerType
 
   rule Expr_ok/logical:
     scope TC |- expression_l binop expression_r : BOOL
