@@ -605,7 +605,7 @@ tableAction:
 
 tableActionList:
   | ac = tableAction
-    { "tableAction" <| [ ac ] <<| "tableActionList" <<<| (at $sloc) }
+    { ac }
   | acl = tableActionList ac = tableAction
     { "tableActionList tableAction" <| [ acl; ac ] <<| "tableActionList" <<<| (at $sloc) }
 ;
