@@ -43,7 +43,7 @@ rule ActionDecl_ok:
   -- if (direction _ name = parameter)*
   -- if $directionless_trailing(direction*)
   ---- ;; Elaborate parameter types
-  -- Parameters_ok: TC_0 |- parameter* : parameterIR* -| TC_body
+  -- Parameters_ok: LOCAL TC_0 |- parameter* : parameterIR* -| TC_body
   -- Block_ok: TC_body |- blockStatement
   ---- ;; add action to the context
   -- if callableId = $id(name_action)
@@ -109,7 +109,7 @@ rulegroup TypeDecl_ok {
 
   rule TypeDecl_ok/parserTypeDeclaration:
     TC_0 |- PARSER name `( parameterList ) `; -| TC_1
-    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+    -- ParameterList_ok: BLOCK TC_0 |- parameterList : parameterIR* -| TC_body
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = PARSER typeId `( parameterIR* )
@@ -118,7 +118,7 @@ rulegroup TypeDecl_ok {
   rule TypeDecl_ok/controlTypeDeclaration:
     TC_0 |- CONTROL name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+    -- ParameterList_ok: BLOCK TC_0 |- parameterList : parameterIR* -| TC_body
     -- if $no_object_params(parameterIR*)
     -- if typeId = $id(name)
     -- if typeDefIR = CONTROL typeId `( parameterIR* )
@@ -127,7 +127,7 @@ rulegroup TypeDecl_ok {
   rule TypeDecl_ok/packageTypeDeclaration:
     TC_0 |- PACKAGE name `( parameterList ) `; -| TC_1
     -- if parameter* = $flatten_parameterList(parameterList)
-    -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+    -- ParameterList_ok: BLOCK TC_0 |- parameterList : parameterIR* -| TC_body
     -- if typeId = $id(name)
     -- if typeDefIR = PACKAGE typeId `( parameterIR* )
     -- if TC_1 = $add_typeDef_t(TC_0, typeId, typeDefIR)
@@ -170,7 +170,7 @@ rule Decl_ok/parserDeclaration:
   -- if PARSER name
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList } = parserDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+  -- ParameterList_ok: BLOCK TC_0 |- parameterList : parameterIR* -| TC_body
   -- ParserLocalDeclList_ok: TC_body |- parserLocalDeclarationList -| TC_1
   -- ParserStateList_ok: TC_1 |- parserStateList
   -- if callableId = $id(name)
@@ -182,7 +182,7 @@ rule Decl_ok/controlDeclaration:
   -- if CONTROL name
     `( parameterList )
     `{ controlLocalDeclarationList APPLY controlBody } = controlDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+  -- ParameterList_ok: BLOCK TC_0 |- parameterList : parameterIR* -| TC_body
   -- ControlLocalDeclList_ok: TC_body |- controlLocalDeclarationList -| TC_1
   -- Block_ok: TC_1 |- controlBody
   -- if callableId = $id(name)

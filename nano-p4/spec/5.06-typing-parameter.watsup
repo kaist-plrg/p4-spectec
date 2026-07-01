@@ -32,39 +32,39 @@ def $distinct_params(parameterIR*)
 ;;
 
 relation Parameter_ok:
-  typingContext |- parameter : parameterIR -| typingContext
-  hint(input %0 %1)
+  scope typingContext |- parameter : parameterIR -| typingContext
+  hint(input %0 %1 %2)
 
 relation Parameters_ok:
-  typingContext |- parameter* : parameterIR* -| typingContext
-  hint(input %0 %1)
+  scope typingContext |- parameter* : parameterIR* -| typingContext
+  hint(input %0 %1 %2)
 
 relation ParameterList_ok:
-  typingContext |- parameterList : parameterIR* -| typingContext
-  hint(input %0 %1)
+  scope typingContext |- parameterList : parameterIR* -| typingContext
+  hint(input %0 %1 %2)
 
 rule Parameter_ok:
-  TC_0 |- direction type name : parameterIR -| TC_1
+  scope TC_0 |- direction type name : parameterIR -| TC_1
   -- Type_ok: TC_0 |- type ~> typeIR
   -- if nameIR = $id(name)
   -- if parameterIR = direction typeIR nameIR
   -- if varTypeIR = direction typeIR
-  -- if TC_1 = $add_var_t(LOCAL, TC_0, nameIR, varTypeIR)
+  -- if TC_1 = $add_var_t(scope, TC_0, nameIR, varTypeIR)
 
 rulegroup Parameters_ok {
 
   rule Parameters_ok/nil:
-    TC |- eps : eps -| TC
+    scope TC |- eps : eps -| TC
 
   rule Parameters_ok/cons:
-    TC_0 |- parameter_h :: parameter_t* : parameterIR_h :: parameterIR_t* -| TC_2
-    -- Parameter_ok: TC_0 |- parameter_h : parameterIR_h -| TC_1
-    -- Parameters_ok: TC_1 |- parameter_t* : parameterIR_t* -| TC_2
+    scope TC_0 |- parameter_h :: parameter_t* : parameterIR_h :: parameterIR_t* -| TC_2
+    -- Parameter_ok: scope TC_0 |- parameter_h : parameterIR_h -| TC_1
+    -- Parameters_ok: scope TC_1 |- parameter_t* : parameterIR_t* -| TC_2
 
 }
 
 rule ParameterList_ok:
-  TC_0 |- parameterList : parameterIR* -| TC_1
+  scope TC_0 |- parameterList : parameterIR* -| TC_1
   -- if parameter* = $flatten_parameterList(parameterList)
-  -- Parameters_ok: TC_0 |- parameter* : parameterIR* -| TC_1
+  -- Parameters_ok: scope TC_0 |- parameter* : parameterIR* -| TC_1
   -- if $distinct_params(parameterIR*)
