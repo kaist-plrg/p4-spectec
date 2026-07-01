@@ -16,23 +16,6 @@ def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
   -- if (parameterIR_data*, parameterIR_control*)
       = $split_dataplane_parameters(parameterIR_t*)
 
-dec $split_dataplane_arguments(parameterIR*, argumentIR*)
-  : (argumentIR*, argumentIR*)
-
-def $split_dataplane_parameters(eps) = (eps, eps)
-def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
-  = (parameterIR_data*, parameterIR_h :: parameterIR_control*)
-  -- if `EMPTY _ _ = parameterIR_h
-  -- if (parameterIR_data*, parameterIR_control*)
-      = $split_dataplane_parameters(parameterIR_t*)
-def $split_dataplane_parameters(parameterIR_h :: parameterIR_t*)
-  = (parameterIR_h :: parameterIR_data*, parameterIR_control*)
-  -- if direction _ _ = parameterIR_h
-  -- if direction =/= `EMPTY
-  -- if (parameterIR_data*, parameterIR_control*)
-      = $split_dataplane_parameters(parameterIR_t*)
-
-
 ;;
 ;; Table key
 ;;
