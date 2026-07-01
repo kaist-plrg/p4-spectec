@@ -166,28 +166,28 @@ rule Decl_ok/externDeclaration:
   -- ExternDecl_ok: TC_0 |- externDeclaration -| TC_1
 
 rule Decl_ok/parserDeclaration:
-  TC_0 |- parserDeclaration -| TC_1
+  TC_0 |- parserDeclaration -| TC_2
   -- if PARSER name
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList } = parserDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_1
-  -- ParserLocalDeclList_ok: TC_1 |- parserLocalDeclarationList -| TC_2
-  -- ParserStateList_ok: TC_2 |- parserStateList
+  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+  -- ParserLocalDeclList_ok: TC_body |- parserLocalDeclarationList -| TC_1
+  -- ParserStateList_ok: TC_1 |- parserStateList
   -- if callableId = $id(name)
   -- if callableTypeDef = PARSER parameterIR*
-  -- if TC_1 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
+  -- if TC_2 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
 
 rule Decl_ok/controlDeclaration:
-  TC_0 |- controlDeclaration -| TC_0
+  TC_0 |- controlDeclaration -| TC_2
   -- if CONTROL name
     `( parameterList )
     `{ controlLocalDeclarationList APPLY controlBody } = controlDeclaration
-  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_1
-  -- ControlLocalDeclList_ok: TC_1 |- controlLocalDeclarationList -| TC_2
-  -- Block_ok: TC_2 |- controlBody
+  -- ParameterList_ok: TC_0 |- parameterList : parameterIR* -| TC_body
+  -- ControlLocalDeclList_ok: TC_body |- controlLocalDeclarationList -| TC_1
+  -- Block_ok: TC_1 |- controlBody
   -- if callableId = $id(name)
   -- if callableTypeDef = CONTROL parameterIR*
-  -- if TC_1 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
+  -- if TC_2 = $add_callableDef_t(TC_0, callableId, callableTypeDef)
 
 rule Decl_ok/typeDeclaration:
   TC_0 |- typeDeclaration -| TC_1
