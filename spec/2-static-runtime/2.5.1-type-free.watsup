@@ -43,7 +43,9 @@ def $free_typeIR(LIST `< typeIR >) = $free_typeIR(typeIR)
 def $free_typeIR(TUPLE `< typeIR* >)
   = $unions_set<typeId>($free_typeIR(typeIR)*)
 
-def $free_typeIR(typeIR `[ _ ]) = $free_typeIR(typeIR)
+def $free_typeIR(ARRAY typeIR `[ _ ]) = $free_typeIR(typeIR)
+
+def $free_typeIR(HEADER_STACK typeIR `[ _ ]) = $free_typeIR(typeIR)
 
 def $free_typeIR(STRUCT _ `< typeArgumentIR* > `{ (_ typeIR_field _ `;)* })
   = $union_set<typeId>(

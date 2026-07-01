@@ -203,7 +203,7 @@ rulegroup Expr_inst/memberAccessExpressionIR-typedExpressionIR {
     p IC STO |- (typedExpressionIR_base `. nameIR) `# _
               : STO (D n_size)
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- if _ `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK _ `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if nameIR = "size"
 
   rule Expr_inst/struct:
@@ -245,7 +245,17 @@ rulegroup Expr_inst/indexAccessExpressionIR {
     -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
-  rule Expr_inst/indexAccessExpressionIR-stack:
+  rule Expr_inst/array:
+    p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                : STO_2 value
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
+    -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index
+    -- if ARRAY `[ value_e* `( _ ) ] = value_base
+    -- if n_index = $nat_of_integerValue(integerValue_index)
+    -- if $(n_index < |value_e*|)
+    -- if value = value_e*[n_index]
+
+  rule Expr_inst/stack:
     p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
                 : STO_2 value
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base

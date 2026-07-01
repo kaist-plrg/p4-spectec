@@ -118,7 +118,7 @@
   identifier typeIdentifier nonTypeName prefixedNonTypeName typeName prefixedTypeName tableCustomName name nameList member
   (* Directions *) direction
   (* Types *)
-  baseType specializedType namedType headerStackType listType tupleType typeRef typeOrVoid
+  baseType specializedType namedType arrayType listType tupleType typeRef typeOrVoid
   (* Type parameters *) typeParameter typeParameterList typeParameterListOpt
   (* Parameters *) parameter nonEmptyParameterList parameterList 
   (* Constructor parameters *) constructorParameterListOpt
@@ -428,10 +428,10 @@ namedType:
     { t }
 ;
 
-(* >> Header stack types *)
-headerStackType:
-  | t = namedType L_BRACKET e = expression R_BRACKET
-    { "namedType `[ expression ]" <| [ t; e ] <<| "headerStackType" <<<| (at $sloc) }
+(* >> Array types *)
+arrayType:
+  | t = typeRef L_BRACKET e = expression R_BRACKET
+    { "typeRef `[ expression ]" <| [ t; e ] <<| "arrayType" <<<| (at $sloc) }
 ;
 
 (* >> List types *)
@@ -450,7 +450,7 @@ tupleType:
 typeRef:
 	| t = baseType
 	| t = namedType
-	| t = headerStackType
+	| t = arrayType
 	| t = listType
 	| t = tupleType
     { t }

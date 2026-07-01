@@ -472,13 +472,22 @@ rulegroup ForCollectionExpr_ok/expression {
     -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_expression)
     -- Cast_impl: typeIR_e -> typeIR_var
 
+  rule ForCollectionExpr_ok/array:
+    TC typeIR_var |- expression : typedExpressionIR
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    ---- ;; check array type
+    -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if ARRAY typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
+    -- Type_alpha: typeIR_e ~~ typeIR_var
+
   rule ForCollectionExpr_ok/header-stack:
     TC typeIR_var |- expression : typedExpressionIR
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check header stack type
     -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
-    -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
+    -- if HEADER_STACK typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
     -- Type_alpha: typeIR_e ~~ typeIR_var
 
 }

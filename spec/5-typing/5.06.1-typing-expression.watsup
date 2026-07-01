@@ -804,7 +804,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; check that member is "size"
     -- if "size" = $name(member)
     ---- ;; create typed expression
@@ -818,7 +818,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; check that member is "lastIndex"
     -- if "lastIndex" = $name(member)
     ---- ;; "lastIndex" can be only used within a parser
@@ -835,7 +835,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; check that member is "last"
     -- if "last" = $name(member)
     ---- ;; "last" can be only used within a parser
@@ -852,7 +852,7 @@ rulegroup Expr_ok/memberAccessExpression-expression {
     ---- ;; fetch annotation
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     ---- ;; check that the expression is a header stack
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     ---- ;; check that member is "next"
     -- if "next" = $name(member)
     ---- ;; "next" can be only used within a parser
@@ -1008,6 +1008,60 @@ rulegroup Expr_ok/indexAccessExpression {
     ---- ;; create typed expression
     -- if expressionNoteIR = `( typeIR_e*[n_index] ctk_base )
 
+  rule Expr_ok/array-lctk:
+    p TC |- expression_base `[ expression_index ]
+          : (typedExpressionIR_base `[ typedExpressionIR_index_reduced ])
+              `# expressionNoteIR
+    ---- ;; check expressions
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    ---- ;; fetch annotations
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index)
+    -- if ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index)
+    ---- ;; check that the index is compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_index_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_index,
+            def $compat_array_index)
+    ---- ;; check that the base expression is an array
+    ---- ;; if the index is local compile-time known, then it must be in range
+    -- if ARRAY typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if ctk_index = LCTK
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
+    -- if n_index = $nat_of_integerValue(integerValue_index)
+    -- if $(n_index < n_size)
+    ---- ;; create typed expression
+    -- if expressionNoteIR = `( typeIR ctk_base )
+
+  rule Expr_ok/array-non-lctk:
+    p TC |- expression_base `[ expression_index ]
+          : (typedExpressionIR_base `[ typedExpressionIR_index_reduced ])
+              `# expressionNoteIR
+    ---- ;; check expressions
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    ---- ;; fetch annotations
+    -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- if ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base)
+    -- if typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index)
+    -- if ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index)
+    ---- ;; check that the index is compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_index_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_index,
+            def $compat_array_index)
+    ---- ;; check that the base expression is an array
+    ---- ;; if the index is not local compile-time known, no range check is done
+    -- if ARRAY typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if ctk_index =/= LCTK
+    ---- ;; create typed expression
+    -- if ctk = $join_ctk(ctk_base, ctk_index)
+    -- if expressionNoteIR = `( typeIR ctk )
+
   rule Expr_ok/headerStack-lctk:
     p TC |- expression_base `[ expression_index ]
           : (typedExpressionIR_base `[ typedExpressionIR_index_reduced ])
@@ -1028,7 +1082,7 @@ rulegroup Expr_ok/indexAccessExpression {
             def $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is local compile-time known, then it must be in range
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if ctk_index = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
     -- if n_index = $nat_of_integerValue(integerValue_index)
@@ -1056,7 +1110,7 @@ rulegroup Expr_ok/indexAccessExpression {
             def $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is not local compile-time known, no range check is done
-    -- if typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
+    -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
     -- if ctk_index =/= LCTK
     ---- ;; create typed expression
     -- if ctk = $join_ctk(ctk_base, ctk_index)
