@@ -1,6 +1,10 @@
 rule Statement_ok/emptyStatement:
   scope TC |- emptyStatement -| TC
 
+rule Statement_ok/variableDeclaration:
+  scope TC_0 |- variableDeclaration -| TC_1
+  -- VarDecl_ok: scope TC_0 |- variableDeclaration -| TC_1
+
 rule Statement_ok/assignmentStatement:
   scope TC |- lvalue `= expression `; -| TC
   -- Lvalue_ok: scope TC |- lvalue : typeIR_lvalue
@@ -61,6 +65,5 @@ rulegroup Statements_ok {
 
 rule Block_ok:
   TC_0 |- `{ statementList }
-  -- if statement* =
-      $flatten_statementList(statementList)
+  -- if statement* = $flatten_statementList(statementList)
   -- Statements_ok: TC_0 |- statement* -| TC_1
