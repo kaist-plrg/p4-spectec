@@ -147,6 +147,9 @@ rule Type_wf/listTypeIR:
 tbl dec $nestable_tuple(typeIR) : bool
   hint(prose_true %0 "can be nested in a tuple type")
   hint(prose_false %0 "cannot be nested in a tuple type")
+tbl dec $nestable_array_in_tuple(typeIR) : bool
+  hint(prose_true %0 "can be used in a struct nested in an array type")
+  hint(prose_false %0 "cannot be used in a struct nested in an array type")
 
 tbl def $nestable_tuple =
   | BOOL => true
@@ -158,11 +161,24 @@ tbl def $nestable_tuple =
   | TYPEDEF _ typeIR => $nestable_tuple(typeIR)
   | newTypeIR => true
   | tupleTypeIR => true
-  | arrayTypeIR => true
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_tuple(typeIR)
   | headerStackTypeIR => true
   | structTypeIR => true
   | headerTypeIR => true
   | headerUnionTypeIR => true
+  | enumTypeIR => true
+  | _ => false
+
+tbl def $nestable_array_in_tuple =
+  | BOOL => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | VARBIT `< _ > => true
+  | nameTypeIR => true
+  | TYPEDEF _ typeIR => $nestable_array_in_tuple(typeIR)
+  | newTypeIR => true
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_tuple(typeIR)
+  | structTypeIR => true
   | enumTypeIR => true
   | _ => false
 

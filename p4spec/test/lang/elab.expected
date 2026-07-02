@@ -12443,10 +12443,10 @@ tbl def $nestable_tuple(typeIR) : bool =
     -- if typeIR <: tupleTypeIR
     -- let tupleTypeIR = typeIR as tupleTypeIR
   row 9 :
-    (signature) arrayTypeIR as typeIR
-    (typeIR) -> true
-    -- if typeIR <: arrayTypeIR
-    -- let arrayTypeIR = typeIR as arrayTypeIR
+    (signature) ARRAY typeIR [ _nat ] as typeIR
+    (typeIR') -> $nestable_array_in_tuple(typeIR)
+    -- if typeIR' <: arrayTypeIR
+    -- let ARRAY typeIR [ _nat ] = typeIR' as arrayTypeIR
   row 10 :
     (signature) headerStackTypeIR as typeIR
     (typeIR) -> true
@@ -12473,6 +12473,62 @@ tbl def $nestable_tuple(typeIR) : bool =
     -- if typeIR <: enumTypeIR
     -- let enumTypeIR = typeIR as enumTypeIR
   row 15 :
+    (signature) _typeIR
+    (_typeIR) -> false
+
+tbl def $nestable_array_in_tuple(typeIR) : bool =
+  row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
+    (signature) INT < _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedIntTypeIR
+    -- let INT < _nat > = typeIR as fixedIntTypeIR
+  row 2 :
+    (signature) BIT < _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT < _nat > = typeIR as fixedBitTypeIR
+  row 3 :
+    (signature) VARBIT < _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: varBitTypeIR
+    -- let VARBIT < _nat > = typeIR as varBitTypeIR
+  row 4 :
+    (signature) nameTypeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: nameTypeIR
+    -- let nameTypeIR = typeIR as nameTypeIR
+  row 5 :
+    (signature) TYPEDEF _typeId typeIR as typeIR
+    (typeIR') -> $nestable_array_in_tuple(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
+  row 6 :
+    (signature) newTypeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: newTypeIR
+    -- let newTypeIR = typeIR as newTypeIR
+  row 7 :
+    (signature) ARRAY typeIR [ _nat ] as typeIR
+    (typeIR') -> $nestable_array_in_tuple(typeIR)
+    -- if typeIR' <: arrayTypeIR
+    -- let ARRAY typeIR [ _nat ] = typeIR' as arrayTypeIR
+  row 8 :
+    (signature) structTypeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: structTypeIR
+    -- let structTypeIR = typeIR as structTypeIR
+  row 9 :
+    (signature) enumTypeIR as typeIR
+    (typeIR) -> true
+    -- if typeIR <: enumTypeIR
+    -- let enumTypeIR = typeIR as enumTypeIR
+  row 10 :
     (signature) _typeIR
     (_typeIR) -> false
 
