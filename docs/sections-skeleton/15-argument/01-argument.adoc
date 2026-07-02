@@ -1,0 +1,161 @@
+[#sec-argument-semantics]
+=== Semantics of arguments
+
+// 608 - Modified
+An invocation can optionally specify for each argument the corresponding
+parameter name. It is illegal to use names only for some arguments: either all
+or no arguments must specify the parameter name. Arguments are evaluated in the
+order they appear, left to right, before the invocation takes place.
+
+// 612 - Modified
+The "don't care" identifier (`_`) can only be used for an `out` argument, when
+the value of returned in that argument is ignored by subsequent computations.
+When used in generic functions or methods, the compiler may reject the program
+if it is unable to infer a type for the don't care argument.
+
+==== Type checking
+
+// Added
+${relation-title-source: Argument_ok}
+${relation-title-prose: Argument_ok}
+
+// Added
+After type checking, arguments are represented in P4~IR~ as follows:
+
+// Added
+${syntax: argumentIR}
+
+===== Unnamed argument
+
+// Added
+${rulegroup-source: Argument_ok/expression}
+${rulegroup-prose: Argument_ok/expression}
+
+===== Named argument
+
+// Added
+${rulegroup-source: Argument_ok/name-expression}
+${rulegroup-prose: Argument_ok/name-expression}
+
+===== Named don't care argument
+
+// Added
+${rulegroup-source: Argument_ok/name-dontcare}
+${rulegroup-prose: Argument_ok/name-dontcare}
+
+===== Don't care argument
+
+// Added
+${rulegroup-source: Argument_ok/dontcare}
+${rulegroup-prose: Argument_ok/dontcare}
+
+// Added
+A list of arguments is type checked with:
+
+// Added
+${relation-title-source: ArgumentList_ok}
+${relation-title-prose: ArgumentList_ok}
+
+// Added
+${rulegroup-source: ArgumentList_ok}
+${rulegroup-prose: ArgumentList_ok}
+
+==== Local Compile-time evaluation
+
+// Added
+${relation-title-source: Argument_eval_lctk}
+${relation-title-prose: Argument_eval_lctk}
+
+===== Unnamed argument
+
+// Added
+${rulegroup-source: Argument_eval_lctk/typedExpressionIR}
+${rulegroup-prose: Argument_eval_lctk/typedExpressionIR}
+
+===== Named argument
+
+// Added
+${rulegroup-source: Argument_eval_lctk/namedArgumentIR}
+${rulegroup-prose: Argument_eval_lctk/namedArgumentIR}
+
+// Added
+Local compile-time known arguments are evaluated with the above relation.
+
+==== Compile-time evaluation
+
+// Added
+${relation-title-source: Argument_inst}
+${relation-title-prose: Argument_inst}
+
+===== Unnamed argument
+
+// Added
+${rulegroup-source: Argument_inst/typedExpressionIR}
+${rulegroup-prose: Argument_inst/typedExpressionIR}
+
+===== Named argument
+
+// Added
+${rulegroup-source: Argument_inst/nameIR-typedExpressionIR}
+${rulegroup-prose: Argument_inst/nameIR-typedExpressionIR}
+
+// Added
+Compile-time known arguments are evaluated with the above relation.
+
+==== Runtime evaluation
+
+// Added
+At runtime, an argument may be evaluated to a value, or a storage reference,
+depending on the direction of the corresponding parameter.
+
+===== `in` and directionless arguments
+
+Arguments for `in` and directionless parameters are evaluated to values at runtime.
+
+// Added
+${relation-title-source: Argument_eval}
+${relation-title-prose: Argument_eval}
+
+====== Unnamed argument
+
+// Added
+${rulegroup-source: Argument_eval/typedExpressionIR}
+${rulegroup-prose: Argument_eval/typedExpressionIR}
+
+====== Named argument
+
+// Added
+${rulegroup-source: Argument_eval/nameIR-typedExpressionIR}
+${rulegroup-prose: Argument_eval/nameIR-typedExpressionIR}
+
+===== `out` and `inout` arguments
+
+Arguments for `out` and `inout` parameters are evaluated to storage references at runtime.
+
+// Added
+${relation-title-source: Argument_eval_lvalue}
+${relation-title-prose: Argument_eval_lvalue}
+
+====== Unnamed argument
+
+// Added
+${rulegroup-source: Argument_eval_lvalue/typedExpressionIR}
+${rulegroup-prose: Argument_eval_lvalue/typedExpressionIR}
+
+====== Named argument
+
+// Added
+${rulegroup-source: Argument_eval_lvalue/nameIR-typedExpressionIR}
+${rulegroup-prose: Argument_eval_lvalue/nameIR-typedExpressionIR}
+
+====== Named don't care argument
+
+// Added
+${rulegroup-source: Argument_eval_lvalue/nameIR-dontcare}
+${rulegroup-prose: Argument_eval_lvalue/nameIR-dontcare}
+
+====== Don't care argument
+
+// Added
+${rulegroup-source: Argument_eval_lvalue/dontcare}
+${rulegroup-prose: Argument_eval_lvalue/dontcare}

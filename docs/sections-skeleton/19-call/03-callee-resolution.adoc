@@ -50,7 +50,7 @@ While resolving callees, `exit;` statements may be encountered. Thus, the
 result of callee resolution is:
 
 // Added
-${syntax: calleeResult}
+${syntax: calleeResult callee actionCallee functionCallee methodCallee}
 
 // Added
 The following subsections describe the two phases, for each kind of callable.
@@ -83,7 +83,7 @@ ${rulegroup-prose: Callee_eval/actionCallee}
 During type checking, functions are resolved by:
 
 // Added
-${syntax: functionTypeIR}
+${syntax: functionTypeIR definedFunctionTypeIR externFunctionTypeIR}
 
 // Added
 ${rulegroup-source: CallableType_ok/functionTypeIR}
@@ -93,7 +93,7 @@ ${rulegroup-prose: CallableType_ok/functionTypeIR}
 During runtime evaluation, functions are resolved by:
 
 // Added
-${syntax: functionCallee}
+${syntax: functionCallee definedFunctionCallee externFunctionCallee}
 
 // Added
 For extern functions,
@@ -112,20 +112,26 @@ ${rulegroup-prose: Callee_eval/definedFunctionCallee}
 ===== Built-in methods
 
 // Added
-During type checking, built-in methods are resolved by:
+During type checking, built-in methods are resolved as:
 
 // Added
 ${syntax: builtinMethodTypeIR}
+
+// Added
+And during runtime evaluation, built-in methods are resolved as:
+
+// Added
+${syntax: builtinMethodCallee}
+
+// Added
+During type checking,
 
 // Added
 ${rulegroup-source: CallableType_ok/builtinMethodTypeIR}
 ${rulegroup-prose: CallableType_ok/builtinMethodTypeIR}
 
 // Added
-During runtime evaluation, built-in methods are resolved by:
-
-// Added
-${syntax: builtinMethodCallee}
+During runtime evaluation,
 
 // Added
 ${rulegroup-source: Callee_eval/builtinMethodCallee}
@@ -218,3 +224,12 @@ ${syntax: tableApplyMethodCallee}
 // Added
 ${rulegroup-source: Callee_eval/tableApplyMethodCallee}
 ${rulegroup-prose: Callee_eval/tableApplyMethodCallee}
+
+===== Parenthesized callables
+
+// Added
+During type checking, parenthesized callables are resolved by:
+
+// Added
+${rulegroup-source: CallableType_ok/parenthesized}
+${rulegroup-prose: CallableType_ok/parenthesized}
