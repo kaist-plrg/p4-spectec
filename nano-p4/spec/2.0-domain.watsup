@@ -8,7 +8,14 @@ def $id(name) = $print_<name>(name)
 syntax scope = GLOBAL | BLOCK | LOCAL
 
 syntax typeId = id
+
 syntax typeIR
+
+;;
+;; Base types
+;;
+
+syntax baseTypeIR = baseType
 
 ;;
 ;; Arguments
@@ -17,10 +24,10 @@ syntax typeIR
 syntax argumentIR = expression `# typeIR
 
 ;;
-;; Base types
+;; Parameters
 ;;
 
-syntax baseTypeIR = baseType
+syntax parameterIR = direction typeIR nameIR
 
 ;;
 ;; User defined data types
@@ -38,8 +45,6 @@ syntax dataTypeIR =
 ;;
 ;; Object types
 ;;
-
-syntax parameterIR = direction typeIR nameIR
 
 syntax externMethodTypeDefIR =
   VOID callableId `( parameterIR* )
