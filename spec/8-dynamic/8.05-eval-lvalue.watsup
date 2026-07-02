@@ -231,6 +231,31 @@ rulegroup Lvalue_read/memberAccess {
 
 rulegroup Lvalue_read/indexAccess {
 
+  rule Lvalue_read/array-in-bounds:
+    p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : arrayValue_base
+    -- if ARRAY `[ value_element* `( n_size ) ]
+        = arrayValue_base
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
+    -- if value = value_element*[ n_idx ]
+
+  rule Lvalue_read/array-out-of-bounds:
+    p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : arrayValue_base
+    -- if ARRAY `[ value_element* `( n_size ) ]
+        = arrayValue_base
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    ---- ;; index access overflow
+    -- if ~b_in_bounds
+    -- if HEADER typeId `{ b_valid `; fieldValue* } = value_element*[ 0 ]
+    -- if value = HEADER typeId `{ false `; fieldValue* }
+
   rule Lvalue_read/stack-in-bounds:
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
@@ -396,6 +421,33 @@ rulegroup Lvalue_write/memberAccess {
 }
 
 rulegroup Lvalue_write/indexAccess {
+
+  rule Lvalue_write/array-in-bounds:
+    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : arrayValue_base
+    -- if ARRAY `[ value_element* `( n_size ) ]
+        = arrayValue_base
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
+    -- if value_element_update*
+        = value_element* [ [n_idx] = value ]
+    -- if arrayValue_base_update
+        = ARRAY `[ value_element_update* `( n_size ) ]
+    -- Lvalue_write:
+        p EC_0 ARCH |- storageReference := arrayValue_base_update : EC_1
+
+  rule Lvalue_write/array-out-of-bounds:
+    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_0
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : arrayValue_base
+    -- if ARRAY `[ value_element* `( n_size ) ]
+        = arrayValue_base
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if ~b_in_bounds
 
   rule Lvalue_write/stack-in-bounds:
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1

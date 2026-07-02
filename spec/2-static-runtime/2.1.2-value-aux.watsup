@@ -194,6 +194,11 @@ def $write_value_from_bits'(
   -- if (value_updated, b_rest*) = $write_value_from_bits'(value, n_var, b*)
 
 def $write_value_from_bits'(
+    ARRAY `[ value* `( n_size ) ], n_var, b*)
+  = (ARRAY `[ value_updated* `( n_size ) ], b_rest*)
+  -- if (value_updated*, b_rest*) = $write_values_from_bits'(value*, n_var, b*)
+
+def $write_value_from_bits'(
     HEADER_STACK `[ value* `( n_idx `; n_size ) ], n_var, b*)
   = (HEADER_STACK `[ value_updated* `( n_idx `; n_size ) ], b_rest*)
   -- if (value_updated*, b_rest*) = $write_values_from_bits'(value*, n_var, b*)
@@ -211,6 +216,10 @@ def $write_bits_from_value(w W i)
   = $int_to_bits_unsigned(w, i)
 def $write_bits_from_value(_ `. w V i)
   = $int_to_bits_unsigned(w, i)
+
+def $write_bits_from_value(
+    ARRAY `[ value_element* `( _ ) ])
+  = $concat_<bool>($write_bits_from_value(value_element)*)
 
 def $write_bits_from_value(
     HEADER_STACK `[ value_element* `( _ `; _ ) ])

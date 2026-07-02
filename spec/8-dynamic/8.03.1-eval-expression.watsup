@@ -469,6 +469,18 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if expressionResult = `` value_elem*[n_index]
 
+  rule Expr_eval/array:
+    p EC_0 ARCH_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+                  : EC_1 ARCH_1 expressionResult
+    -- Exprs_eval:
+        p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
+                       : EC_1 ARCH_1 (`` ([ arrayValue_base, integerValue_index ]))
+    -- if ARRAY `[ value_elem* `( n_size ) ] = arrayValue_base
+    -- if i_index = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_index < n_size) /\ $(i_index >= 0))
+    -- if n_idx = $ite<int>(b_in_bounds, i_index, $(n_size - 1))
+    -- if expressionResult = `` value_elem*[n_idx]
+
   rule Expr_eval/headerStack:
     p EC_0 ARCH_0 |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
                   : EC_1 ARCH_1 expressionResult

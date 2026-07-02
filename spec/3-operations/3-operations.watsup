@@ -854,6 +854,9 @@ def $default(TYPE _ typeIR) = $default(typeIR)
 
 def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 
+def $default(ARRAY typeIR `[ n_s ]) = ARRAY `[ value* `( n_s ) ]
+  -- if value* = $repeat_<value>($default(typeIR), n_s)
+
 def $default(HEADER_STACK typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0 `; n_s ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
