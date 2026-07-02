@@ -31,9 +31,10 @@ rulegroup Lvalue_eval/memberAccess {
                        : EC_1 ARCH_1 (`` storageReference)
     -- Lvalue_read:
         p EC_1 ARCH_1 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
         = headerStackValue
     -- if nameIR = "next"
+    -- if n_size = |value_element*|
     -- if $(n_idx >= n_size)
     -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
 
@@ -45,8 +46,9 @@ rulegroup Lvalue_eval/memberAccess {
                        : EC_1 ARCH_1 (`` storageReference)
     -- Lvalue_read:
         p EC_1 ARCH_1 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
         = headerStackValue
+    -- if n_size = |value_element*|
     -- if nameIR = "next"
     -- if $(n_idx < n_size)
     -- if storageReferenceResult
@@ -183,9 +185,10 @@ rulegroup Lvalue_read/memberAccess {
     ---- ;; read base value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
-    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
         = headerStackValue_base
     -- if nameIR = "next"
+    -- if n_size = |value_element*|
     -- if $(n_idx < n_size)
     -- if value = value_element*[ n_idx ]
 
@@ -235,8 +238,9 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : arrayValue_base
-    -- if ARRAY `[ value_element* `( n_size ) ]
+    -- if ARRAY `[ value_element* ]
         = arrayValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if b_in_bounds
@@ -247,8 +251,9 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : arrayValue_base
-    -- if ARRAY `[ value_element* `( n_size ) ]
+    -- if ARRAY `[ value_element* ]
         = arrayValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     ---- ;; index access overflow
@@ -260,8 +265,9 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
-    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( _ ) ]
         = headerStackValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if b_in_bounds
@@ -272,8 +278,9 @@ rulegroup Lvalue_read/indexAccess {
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
-    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( _ ) ]
         = headerStackValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     ---- ;; index access overflow
@@ -324,12 +331,12 @@ rulegroup Lvalue_write/memberAccess {
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
     ---- ;; if the base value is a header stack
-    -- if HEADER_STACK `[ value_element* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
         = headerStackValue_base
     -- if nameIR = "next"
     -- if value_element_update* = value_element* [ [n_idx] = value ]
     -- if headerStackValue_base_update
-        = HEADER_STACK `[ value_element_update* `( $(n_idx + 1) `; n_size ) ]
+        = HEADER_STACK `[ value_element_update* `( $(n_idx + 1) ) ]
     -- Lvalue_write:
         p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
 
@@ -426,8 +433,9 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : arrayValue_base
-    -- if ARRAY `[ value_element* `( n_size ) ]
+    -- if ARRAY `[ value_element* ]
         = arrayValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if b_in_bounds
@@ -435,7 +443,7 @@ rulegroup Lvalue_write/indexAccess {
     -- if value_element_update*
         = value_element* [ [n_idx] = value ]
     -- if arrayValue_base_update
-        = ARRAY `[ value_element_update* `( n_size ) ]
+        = ARRAY `[ value_element_update* ]
     -- Lvalue_write:
         p EC_0 ARCH |- storageReference := arrayValue_base_update : EC_1
 
@@ -443,8 +451,9 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_0
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : arrayValue_base
-    -- if ARRAY `[ value_element* `( n_size ) ]
+    -- if ARRAY `[ value_element* ]
         = arrayValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if ~b_in_bounds
@@ -453,8 +462,9 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
-    -- if HEADER_STACK `[ value_element* `( n_base_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( n_base_idx ) ]
         = headerStackValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if b_in_bounds
@@ -462,7 +472,7 @@ rulegroup Lvalue_write/indexAccess {
     -- if value_element_update*
         = value_element* [ [n_idx] = value ]
     -- if headerStackValue_base_update
-        = HEADER_STACK `[ value_element_update* `( n_base_idx `; n_size ) ]
+        = HEADER_STACK `[ value_element_update* `( n_base_idx ) ]
     -- Lvalue_write:
         p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
 
@@ -470,8 +480,9 @@ rulegroup Lvalue_write/indexAccess {
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_0
     -- Lvalue_read:
         p EC_0 ARCH |- storageReference : headerStackValue_base
-    -- if HEADER_STACK `[ value_element* `( _ `; n_size ) ]
+    -- if HEADER_STACK `[ value_element* `( _ ) ]
         = headerStackValue_base
+    -- if n_size = |value_element*|
     -- if i_idx = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
     -- if ~b_in_bounds

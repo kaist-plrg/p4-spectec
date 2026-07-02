@@ -2689,10 +2689,10 @@ syntax tupleValue =
    | TUPLE ( value* ) (from tupleValue) 
 
 syntax arrayValue = 
-   | ARRAY [ value* ( nat ) ] (from arrayValue) 
+   | ARRAY [ value* ] (from arrayValue) 
 
 syntax headerStackValue = 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
 
 syntax fieldValue = 
    | value nameIR ; (from fieldValue) 
@@ -2713,8 +2713,8 @@ syntax enumValue =
 syntax dataValue = 
    | LIST [ value* ] (from listValue) 
    | TUPLE ( value* ) (from tupleValue) 
-   | ARRAY [ value* ( nat ) ] (from arrayValue) 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | ARRAY [ value* ] (from arrayValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
    | STRUCT typeId { fieldValue* } (from structValue) 
    | HEADER typeId { bool ; fieldValue* } (from headerValue) 
    | HEADER_UNION typeId { fieldValue* } (from headerUnionValue) 
@@ -2781,8 +2781,8 @@ syntax value =
    | nat . nat V int (from integerValue) 
    | LIST [ value* ] (from listValue) 
    | TUPLE ( value* ) (from tupleValue) 
-   | ARRAY [ value* ( nat ) ] (from arrayValue) 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | ARRAY [ value* ] (from arrayValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
    | STRUCT typeId { fieldValue* } (from structValue) 
    | HEADER typeId { bool ; fieldValue* } (from headerValue) 
    | HEADER_UNION typeId { fieldValue* } (from headerUnionValue) 
@@ -2989,14 +2989,14 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let typeId . nameIR . value = enumValue
   -- let (value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, n_var, b*{b <- b*})
 
-  clause 8 : (value', n_var, b*{b <- b*}) = (ARRAY [ value_updated*{value_updated <- value_updated*} ( n_size ) ] as value, b_rest*{b_rest <- b_rest*})
+  clause 8 : (value', n_var, b*{b <- b*}) = (ARRAY [ value_updated*{value_updated <- value_updated*} ] as value, b_rest*{b_rest <- b_rest*})
   -- if value' <: arrayValue
-  -- let ARRAY [ value*{value <- value*} ( n_size ) ] = value' as arrayValue
+  -- let ARRAY [ value*{value <- value*} ] = value' as arrayValue
   -- let (value_updated*{value_updated <- value_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*})
 
-  clause 9 : (value', n_var, b*{b <- b*}) = (HEADER_STACK [ value_updated*{value_updated <- value_updated*} ( n_idx ; n_size ) ] as value, b_rest*{b_rest <- b_rest*})
+  clause 9 : (value', n_var, b*{b <- b*}) = (HEADER_STACK [ value_updated*{value_updated <- value_updated*} ( n_idx ) ] as value, b_rest*{b_rest <- b_rest*})
   -- if value' <: headerStackValue
-  -- let HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size ) ] = value' as headerStackValue
+  -- let HEADER_STACK [ value*{value <- value*} ( n_idx ) ] = value' as headerStackValue
   -- let (value_updated*{value_updated <- value_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*})
 
 def $write_values_from_bits'(value*, nat, bool*) : (value*, bool*) =
@@ -3052,11 +3052,11 @@ def $write_bits_from_value(value) : bool* =
 
   clause 4 : (value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
   -- if value <: arrayValue
-  -- let ARRAY [ value_element*{value_element <- value_element*} ( _nat ) ] = value as arrayValue
+  -- let ARRAY [ value_element*{value_element <- value_element*} ] = value as arrayValue
 
   clause 5 : (value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
   -- if value <: headerStackValue
-  -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; _nat' ) ] = value as headerStackValue
+  -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = value as headerStackValue
 
   clause 6 : (value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
   -- if value <: structValue
@@ -6192,14 +6192,21 @@ def $bin_eq(value, value) : bool =
   -- let TUPLE ( value_b*{value_b <- value_b*} ) = value' as tupleValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 10 : (value, value') = (((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})) /\ (n_size_a = n_size_b))
-  -- if value <: headerStackValue
-  -- let HEADER_STACK [ value_a*{value_a <- value_a*} ( _nat ; n_size_a ) ] = value as headerStackValue
-  -- if value' <: headerStackValue
-  -- let HEADER_STACK [ value_b*{value_b <- value_b*} ( _nat' ; n_size_b ) ] = value' as headerStackValue
+  clause 10 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  -- if value <: arrayValue
+  -- let ARRAY [ value_a*{value_a <- value_a*} ] = value as arrayValue
+  -- if value' <: arrayValue
+  -- let ARRAY [ value_b*{value_b <- value_b*} ] = value' as arrayValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 11 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 11 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  -- if value <: headerStackValue
+  -- let HEADER_STACK [ value_a*{value_a <- value_a*} ( _nat ) ] = value as headerStackValue
+  -- if value' <: headerStackValue
+  -- let HEADER_STACK [ value_b*{value_b <- value_b*} ( _nat' ) ] = value' as headerStackValue
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
+
+  clause 12 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: structValue
   -- let STRUCT typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } = value as structValue
   -- if value' <: structValue
@@ -6209,7 +6216,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 12 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 13 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerValue
   -- let HEADER typeId_a { _b ; fieldValue_a*{fieldValue_a <- fieldValue_a*} } = value as headerValue
   -- if value' <: headerValue
@@ -6219,7 +6226,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 13 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 14 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerUnionValue
   -- let HEADER_UNION typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } = value as headerUnionValue
   -- if value' <: headerUnionValue
@@ -6229,7 +6236,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 14 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
+  clause 15 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches `% . %`
@@ -6239,7 +6246,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches `% . %`
   -- let typeId_b . nameIR_field_b = enumValue'
 
-  clause 15 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
+  clause 16 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches `% . % . %`
@@ -6249,7 +6256,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches `% . % . %`
   -- let typeId_b . _nameIR' . value_field_b = enumValue'
 
-  clause 16 : (value, value') = true
+  clause 17 : (value, value') = true
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- if (invalidHeaderValue = {#})
@@ -6531,12 +6538,12 @@ def $default(typeIR) : value =
   -- if typeIR' <: tupleTypeIR
   -- let TUPLE < typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
 
-  clause 10 : (typeIR') = ARRAY [ value*{value <- value*} ( n_s ) ] as value
+  clause 10 : (typeIR') = ARRAY [ value*{value <- value*} ] as value
   -- if typeIR' <: arrayTypeIR
   -- let ARRAY typeIR [ n_s ] = typeIR' as arrayTypeIR
   -- let value*{value <- value*} = $repeat_<value>($default(typeIR), n_s)
 
-  clause 11 : (typeIR') = HEADER_STACK [ value*{value <- value*} ( 0 ; n_s ) ] as value
+  clause 11 : (typeIR') = HEADER_STACK [ value*{value <- value*} ( 0 ) ] as value
   -- if typeIR' <: headerStackTypeIR
   -- let HEADER_STACK typeIR [ n_s ] = typeIR' as headerStackTypeIR
   -- let value*{value <- value*} = $repeat_<value>($default(typeIR), n_s)
@@ -6817,17 +6824,15 @@ def $cast_list(typeIR, listValue) : value =
 
 def $cast_array(typeIR, arrayValue) : value =
 
-  clause 0 : (typeIR', ARRAY [ value*{value <- value*} ( n_size' ) ]) = ARRAY [ value*{value <- value*} ( n_size ) ] as value
+  clause 0 : (typeIR', ARRAY [ value*{value <- value*} ]) = ARRAY [ value*{value <- value*} ] as value
   -- if typeIR' <: arrayTypeIR
   -- let ARRAY typeIR [ n_size ] = typeIR' as arrayTypeIR
-  -- if (n_size = n_size')
 
 def $cast_header_stack(typeIR, headerStackValue) : value =
 
-  clause 0 : (typeIR', HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size' ) ]) = HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size ) ] as value
+  clause 0 : (typeIR', HEADER_STACK [ value*{value <- value*} ( n_idx ) ]) = HEADER_STACK [ value*{value <- value*} ( n_idx ) ] as value
   -- if typeIR' <: headerStackTypeIR
   -- let HEADER_STACK typeIR [ n_size ] = typeIR' as headerStackTypeIR
-  -- if (n_size = n_size')
 
 def $cast_struct(typeIR, structValue) : value =
 
@@ -6883,14 +6888,14 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- let SEQ ( value*{value <- value*} ) = sequenceValue
   -- if (|typeIR*{typeIR <- typeIR*}| = |value*{value <- value*}|)
 
-  clause 2 : (typeIR', sequenceValue) = ARRAY [ value_cast*{value_cast <- value_cast*} ( n_size ) ] as value
+  clause 2 : (typeIR', sequenceValue) = ARRAY [ value_cast*{value_cast <- value_cast*} ] as value
   -- if typeIR' <: arrayTypeIR
   -- let ARRAY typeIR [ n_size ] = typeIR' as arrayTypeIR
   -- if sequenceValue matches `SEQ (%)`
   -- let SEQ ( value*{value <- value*} ) = sequenceValue
   -- (let value_cast = $cast_op(typeIR, value))*{value <- value*, value_cast -> value_cast*}
 
-  clause 3 : (typeIR', sequenceValue) = HEADER_STACK [ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size ) ] as value
+  clause 3 : (typeIR', sequenceValue) = HEADER_STACK [ value_cast*{value_cast <- value_cast*} ( n_idx ) ] as value
   -- if typeIR' <: headerStackTypeIR
   -- let HEADER_STACK typeIR [ n_size ] = typeIR' as headerStackTypeIR
   -- if sequenceValue matches `SEQ (%)`
@@ -8705,19 +8710,15 @@ def $lift_dataTypeIR(dataTypeIR) : type =
   -- let TUPLE < typeIR*{typeIR <- typeIR*} > = dataTypeIR as tupleTypeIR
   -- let typeArgumentList = $lift_typeArgumentListIR(typeIR*{typeIR <- typeIR*})
 
-  clause 2 : (dataTypeIR) = namedType as type [ D n as int as expression ] as type
+  clause 2 : (dataTypeIR) = type [ D n as int as expression ] as type
   -- if dataTypeIR <: arrayTypeIR
   -- let ARRAY typeIR [ n ] = dataTypeIR as arrayTypeIR
   -- let type = $lift_typeIR(typeIR)
-  -- if type <: namedType
-  -- let namedType = type as namedType
 
-  clause 3 : (dataTypeIR) = namedType as type [ D n as int as expression ] as type
+  clause 3 : (dataTypeIR) = type [ D n as int as expression ] as type
   -- if dataTypeIR <: headerStackTypeIR
   -- let HEADER_STACK typeIR [ n ] = dataTypeIR as headerStackTypeIR
   -- let type = $lift_typeIR(typeIR)
-  -- if type <: namedType
-  -- let namedType = type as namedType
 
   clause 4 : (dataTypeIR) = typeName as type
   -- if dataTypeIR <: simpleEnumTypeIR
@@ -13636,14 +13637,30 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- let value = value_e*{value_e <- value_e*}[n_index]
     -- output: % % |- % ~> value
 
-    rulepath indexAccessExpressionIR-stack
+    rulepath array
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> value'
+    -- if value' <: integerValue
+    -- let integerValue_index = value' as integerValue
+    -- let value'' = value_base
+    -- if value'' <: arrayValue
+    -- let ARRAY [ value_e*{value_e <- value_e*} ] = value'' as arrayValue
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
+    -- if (n_index < |value_e*{value_e <- value_e*}|)
+    -- if (n_index < |value_e*{value_e <- value_e*}|)
+    -- let value = value_e*{value_e <- value_e*}[n_index]
+    -- output: % % |- % ~> value
+
+    rulepath stack
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> value'
     -- if value' <: integerValue
     -- let integerValue_index = value' as integerValue
     -- let value'' = value_base
     -- if value'' <: headerStackValue
-    -- let HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ; _nat' ) ] = value'' as headerStackValue
+    -- let HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ) ] = value'' as headerStackValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
@@ -14487,7 +14504,7 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
     -- let ARRAY typeIR_b [ n_size ] = typeIR'' as arrayTypeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
@@ -14495,7 +14512,7 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let HEADER_STACK typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
@@ -14812,7 +14829,7 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
     -- let ARRAY typeIR_b [ n_size ] = typeIR'' as arrayTypeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
@@ -14820,7 +14837,7 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
     -- let HEADER_STACK typeIR_b [ n_size ] = typeIR'' as headerStackTypeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- the relation holds
 
@@ -23670,7 +23687,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let integerValue_index = value' as integerValue
     -- let value'' = value_base
     -- if value'' <: arrayValue
-    -- let ARRAY [ value_e*{value_e <- value_e*} ( _nat ) ] = value'' as arrayValue
+    -- let ARRAY [ value_e*{value_e <- value_e*} ] = value'' as arrayValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
@@ -23686,7 +23703,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- let integerValue_index = value' as integerValue
     -- let value'' = value_base
     -- if value'' <: headerStackValue
-    -- let HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ; _nat' ) ] = value'' as headerStackValue
+    -- let HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ) ] = value'' as headerStackValue
     -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_index) = nat?{nat <- nat?}
@@ -26776,8 +26793,9 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let ` value = expressionResult' as continueResult<value>
     -- if value <: headerStackValue
     -- let headerStackValue_base = value as headerStackValue
-    -- let HEADER_STACK [ _value*{_value <- _value*} ( _nat ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ) ] = headerStackValue_base
     -- if (nameIR = "size")
+    -- let n_size = |value_elem*{value_elem <- value_elem*}|
     -- let expressionResult = ` D n_size as int as value as expressionResult
     -- output: % % % |- % : EC_1 ARCH_1 expressionResult
 
@@ -26788,8 +26806,9 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let ` value = expressionResult' as continueResult<value>
     -- if value <: headerStackValue
     -- let headerStackValue_base = value as headerStackValue
-    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base
     -- if (nameIR = "last")
+    -- let n_size = |value_elem*{value_elem <- value_elem*}|
     -- let b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size))
     -- if b_out_of_bounds
     -- let rejectTransitionResult = REJECT ERROR . "StackOutOfBounds"
@@ -26802,8 +26821,9 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let ` value = expressionResult' as continueResult<value>
     -- if value <: headerStackValue
     -- let headerStackValue_base = value as headerStackValue
-    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base
     -- if (nameIR = "last")
+    -- let n_size = |value_elem*{value_elem <- value_elem*}|
     -- let b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size))
     -- if ~b_out_of_bounds
     -- let i = (n_idx - 1)
@@ -26821,7 +26841,7 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let ` value = expressionResult' as continueResult<value>
     -- if value <: headerStackValue
     -- let headerStackValue_base = value as headerStackValue
-    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; _nat ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base
     -- if (nameIR = "lastIndex")
     -- let i = ($max_nat([n_idx, 1]) - 1)
     -- if i <: nat
@@ -26953,7 +26973,8 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let arrayValue_base = value as arrayValue
     -- if value' <: integerValue
     -- let integerValue_index = value' as integerValue
-    -- let ARRAY [ value_elem*{value_elem <- value_elem*} ( n_size ) ] = arrayValue_base
+    -- let ARRAY [ value_elem*{value_elem <- value_elem*} ] = arrayValue_base
+    -- let n_size = |value_elem*{value_elem <- value_elem*}|
     -- let i_index = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_index < n_size as int) /\ (i_index >= 0 as int))
     -- let i = $ite<int>(b_in_bounds, i_index, (n_size - 1))
@@ -26973,7 +26994,8 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- let headerStackValue_base = value as headerStackValue
     -- if value' <: integerValue
     -- let integerValue_index = value' as integerValue
-    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ) ] = headerStackValue_base
+    -- let n_size = |value_elem*{value_elem <- value_elem*}|
     -- let i_index = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_index < n_size as int) /\ (i_index >= 0 as int))
     -- let i = $ite<int>(b_in_bounds, i_index, (n_size - 1))
@@ -27284,8 +27306,9 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value'
     -- if value' <: headerStackValue
     -- let headerStackValue = value' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
     -- if (nameIR = "next")
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- if (n_idx >= n_size)
     -- let rejectTransitionResult = REJECT ERROR . "StackOutOfBounds"
     -- output: % % % |- % : EC_1 ARCH_1 rejectTransitionResult as storageReferenceResult
@@ -27299,7 +27322,8 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value'
     -- if value' <: headerStackValue
     -- let headerStackValue = value' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- if (nameIR = "next")
     -- if (n_idx < n_size)
     -- let storageReferenceResult = ` ?(storageReference . nameIR) as storageReferenceResult
@@ -27462,8 +27486,9 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerStackValue
     -- let headerStackValue_base = value' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue_base
     -- if (nameIR = "next")
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- if (n_idx < n_size)
     -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value = value_element*{value_element <- value_element*}[n_idx]
@@ -27516,7 +27541,8 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: arrayValue
     -- let arrayValue_base = value'' as arrayValue
-    -- let ARRAY [ value_element*{value_element <- value_element*} ( n_size ) ] = arrayValue_base
+    -- let ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if b_in_bounds
@@ -27531,7 +27557,8 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: arrayValue
     -- let arrayValue_base = value'' as arrayValue
-    -- let ARRAY [ value_element*{value_element <- value_element*} ( n_size ) ] = arrayValue_base
+    -- let ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if ~b_in_bounds
@@ -27546,7 +27573,8 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if b_in_bounds
@@ -27561,7 +27589,8 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if ~b_in_bounds
@@ -27631,10 +27660,10 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerStackValue
     -- let headerStackValue_base = value' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue_base
     -- if (nameIR = "next")
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
-    -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size ) ]
+    -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ) ]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
     -- output: % % % |- % := % : EC_1
 
@@ -27720,7 +27749,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: arrayValue
     -- let arrayValue_base = value'' as arrayValue
-    -- let ARRAY [ value_element*{value_element <- value_element*} ( n_size ) ] = arrayValue_base
+    -- let ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if b_in_bounds
@@ -27728,7 +27758,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- if i <: nat
     -- let n_idx = i as nat
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
-    -- let arrayValue_base_update = ARRAY [ value_element_update*{value_element_update <- value_element_update*} ( n_size ) ]
+    -- let arrayValue_base_update = ARRAY [ value_element_update*{value_element_update <- value_element_update*} ]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := arrayValue_base_update as value : EC_1
     -- output: % % % |- % := % : EC_1
 
@@ -27736,7 +27766,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: arrayValue
     -- let arrayValue_base = value'' as arrayValue
-    -- let ARRAY [ value_element*{value_element <- value_element*} ( n_size ) ] = arrayValue_base
+    -- let ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if ~b_in_bounds
@@ -27746,7 +27777,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_base_idx ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_base_idx ) ] = headerStackValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if b_in_bounds
@@ -27754,7 +27786,7 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- if i <: nat
     -- let n_idx = i as nat
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
-    -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ; n_size ) ]
+    -- let headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ) ]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
     -- output: % % % |- % := % : EC_1
 
@@ -27762,7 +27794,8 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: headerStackValue
     -- let headerStackValue_base = value'' as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- let i_idx = $int_of_integerValue(integerValue_index)
     -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
     -- if ~b_in_bounds
@@ -29924,7 +29957,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
@@ -29939,7 +29972,8 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value' = expressionResult as continueResult<value>
@@ -29957,7 +29991,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_back]
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
-    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
+    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
@@ -29970,7 +30004,8 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value' = expressionResult as continueResult<value>
@@ -29982,7 +30017,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- if (n_count >= n_size)
     -- (let value_element_updated = $invalidate_value(value_element))*{value_element <- value_element*, value_element_updated -> value_element_updated*}
     -- let n_idx_updated = $min_nat([n_size, (n_idx + n_count)])
-    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
+    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
@@ -30009,7 +30044,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: abortResult
     -- let abortResult = expressionResult as abortResult
@@ -30024,7 +30059,8 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value' = expressionResult as continueResult<value>
@@ -30042,7 +30078,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- (let value_back_invalidated = $invalidate_value(value_back))*{value_back <- value_back*, value_back_invalidated -> value_back_invalidated*}
     -- let value_element_updated*{value_element_updated <- value_element_updated*} = value_front*{value_front <- value_front*} ++ value_back_invalidated*{value_back_invalidated <- value_back_invalidated*}
     -- let n_idx_updated = n_front
-    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
+    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
@@ -30055,7 +30091,8 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
-    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue
+    -- let HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let ` value' = expressionResult as continueResult<value>
@@ -30069,7 +30106,7 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- let i = $max_int([0 as int, (n_size - n_count)])
     -- if i <: nat
     -- let n_idx_updated = i as nat
-    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ]
+    -- let headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ]
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % @ < % > ( % ) : EC_2 ARCH_1 RETURN ?() as callResult
 
@@ -30960,7 +30997,7 @@ relation ForCollectionExpr_eval: evalContext arch |- forCollectionExpressionIR :
     -- let ` value' = expressionResult as continueResult<value>
     -- if value' <: arrayValue
     -- let arrayValue = value' as arrayValue
-    -- let ARRAY [ value*{value <- value*} ( _nat ) ] = arrayValue
+    -- let ARRAY [ value*{value <- value*} ] = arrayValue
     -- output: % % |- % : EC_1 ARCH_1 ` value*{value <- value*} as expressionListResult
 
     rulepath header-stack
@@ -30969,7 +31006,7 @@ relation ForCollectionExpr_eval: evalContext arch |- forCollectionExpressionIR :
     -- let ` value' = expressionResult as continueResult<value>
     -- if value' <: headerStackValue
     -- let headerStackValue = value' as headerStackValue
-    -- let HEADER_STACK [ value*{value <- value*} ( _nat ; _nat' ) ] = headerStackValue
+    -- let HEADER_STACK [ value*{value <- value*} ( _nat ) ] = headerStackValue
     -- output: % % |- % : EC_1 ARCH_1 ` value*{value <- value*} as expressionListResult
 
   rulegroup range

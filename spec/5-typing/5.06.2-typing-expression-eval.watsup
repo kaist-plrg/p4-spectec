@@ -250,12 +250,22 @@ rulegroup Expr_eval_lctk/indexAccessExpressionIR {
     -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]
 
-  rule Expr_eval_lctk/indexAccessExpressionIR-stack:
+  rule Expr_eval_lctk/array:
     p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
          ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index
-    -- if HEADER_STACK `[ value_e* `( _ `; _ ) ] = value_base
+    -- if ARRAY `[ value_e* ] = value_base
+    -- if n_index = $nat_of_integerValue(integerValue_index)
+    -- if $(n_index < |value_e*|)
+    -- if value = value_e*[n_index]
+
+  rule Expr_eval_lctk/stack:
+    p TC |- (typedExpressionIR_base `[ typedExpressionIR_index ]) `# _
+         ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index
+    -- if HEADER_STACK `[ value_e* `( _ ) ] = value_base
     -- if n_index = $nat_of_integerValue(integerValue_index)
     -- if $(n_index < |value_e*|)
     -- if value = value_e*[n_index]

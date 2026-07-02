@@ -904,12 +904,12 @@ xref:write_value_from_bits'[$write_value_from_bits'(value', n~var~, b^{asterisk}
    .... Let!~type~ ``typeId`` ``+.+`` ``nameIR`` ``+.+`` ``value`` be ``enumValue``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1-b">else #1-b</a>]</sub>+++
    .... Let ``(`` ``value~updated~,`` ``b~rest~^{asterisk}^`` ``)`` be ``xref:write_value_from_bits'[$write_value_from_bits'(value,`` ``n~var~,`` ``b^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1-b">else #1-b</a>]</sub>+++
    .... Return ( ``typeId`` ``+.+`` ``"__UNSPECIFIED"`` ``+.+`` ``value~updated~``, ``b~rest~^{asterisk}^`` ).
-  ... Else if let ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+`` be ``value'``:
+  ... Else if let ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+]+`` be ``value'``:
    .... Let ``(`` ``value~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^`` ``)`` be ``xref:write_values_from_bits'[$write_values_from_bits'(value^{asterisk}^,`` ``n~var~,`` ``b^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1-b">else #1-b</a>]</sub>+++
-   .... Return ( ``+ARRAY+`` ``+[+`` ``value~updated~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+``, ``b~rest~^{asterisk}^`` ).
-  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``value'``:
+   .... Return ( ``+ARRAY+`` ``+[+`` ``value~updated~^{asterisk}^`` ``+]+``, ``b~rest~^{asterisk}^`` ).
+  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``value'``:
    .... Let ``(`` ``value~updated~^{asterisk}^,`` ``b~rest~^{asterisk}^`` ``)`` be ``xref:write_values_from_bits'[$write_values_from_bits'(value^{asterisk}^,`` ``n~var~,`` ``b^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1-b">else #1-b</a>]</sub>+++
-   .... Return ( ``+HEADER_STACK+`` ``+[+`` ``value~updated~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``, ``b~rest~^{asterisk}^`` ).
+   .... Return ( ``+HEADER_STACK+`` ``+[+`` ``value~updated~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+``, ``b~rest~^{asterisk}^`` ).
  .. {empty}+++<span class="bk-arm-anchor" id="bk-write_value_from_bits'-1-b"></span>+++
   ... Let!~type~ ``integerValue`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1">fail #1</a>]</sub>+++
   ... Let!~type~ ``n~max~`` ``+.+`` ``++_++`` ``+V+`` ``i`` be ``integerValue``.+++<sub class="bk-mark">[<a href="#bk-write_value_from_bits'-1">fail #1</a>]</sub>+++
@@ -961,7 +961,7 @@ xref:write_bits_from_value[$write_bits_from_value(value')]
     ..... Return ``xref:int_to_bits_signed[$int_to_bits_signed(w,`` ``i)]``.
    .... Else if let ``w`` ``+W+`` ``i`` be ``integerLiteral``:
     ..... Return ``xref:int_to_bits_unsigned[$int_to_bits_unsigned(w,`` ``i)]``.
-  ... Else if let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value'``:
+  ... Else if let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+]+`` be ``value'``:
    .... Let ``bool^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -970,7 +970,7 @@ xref:write_bits_from_value[$write_bits_from_value(value')]
 +
 for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-write_bits_from_value-1-b">else #1-b</a>]</sub>+++
    .... Return ``xref:concat_[$concat_<bool>(bool^{asterisk}^^{asterisk}^)]``.
-  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value'``:
+  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value'``:
    .... Let ``bool'^{asterisk}^^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -3040,8 +3040,8 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
 for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``bool''`` be xref:forall_[all ``bool'''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''``.
-  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~a~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_a~`` ``+)+`` ``+]+`` be ``value``:
-   .... Let!~type~ ``+HEADER_STACK+`` ``+[+`` ``value~b~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size_b~`` ``+)+`` ``+]+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+  ... Else if let ``+ARRAY+`` ``+[+`` ``value~a~^{asterisk}^`` ``+]+`` be ``value``:
+   .... Let!~type~ ``+ARRAY+`` ``+[+`` ``value~b~^{asterisk}^`` ``+]+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``bool'''''^{asterisk}^`` be the list obtained by repeating:
 +
@@ -3051,7 +3051,19 @@ for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~
 +
 for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``bool''''`` be xref:forall_[all ``bool'''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''`` and ``n~size_a~`` is equal to ``n~size_b~``.
+   .... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''``.
+  ... Else if let ``+HEADER_STACK+`` ``+[+`` ``value~a~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value``:
+   .... Let!~type~ ``+HEADER_STACK+`` ``+[+`` ``value~b~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Check that the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Let ``bool'''''''^{asterisk}^`` be the list obtained by repeating:
++
+--
+    ***** Let ``bool'''''''`` be xref:bin_eq[``value~a~`` ``+==+`` ``value~b~``].
+--
++
+for each ``value~a~`` in ``value~a~^{asterisk}^`` and ``value~b~`` in ``value~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Let ``bool''''''`` be xref:forall_[all ``bool'''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Return the length of ``value~a~^{asterisk}^`` is equal to the length of ``value~b~^{asterisk}^`` and ``bool''''''``.
   ... Else if let ``+STRUCT+`` ``typeId~a~`` ``+{+`` ``fieldValue~a~^{asterisk}^`` ``+}+`` be ``value``:
    .... Let!~type~ ``+STRUCT+`` ``typeId~b~`` ``+{+`` ``fieldValue~b~^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``nameIR~field_a~^{asterisk}^`` be the list and ``value~field_a~^{asterisk}^`` be the list obtained by repeating:
@@ -3070,16 +3082,16 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool''''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``bool''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
+    ***** Let ``bool''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
 --
 +
 for each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''`` be xref:forall_[all ``bool''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''`` and ``bool'''''''``.
+   .... Let ``bool''''''''`` be xref:forall_[all ``bool''''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Let ``bool'''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''`` and ``bool'''''''''``.
   ... Else if let ``+HEADER+`` ``typeId~a~`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue~a~^{asterisk}^`` ``+}+`` be ``value``:
    .... Let!~type~ ``+HEADER+`` ``typeId~b~`` ``+{+`` ``++_++`` ``+;+`` ``fieldValue~b~^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``nameIR~field_a~^{asterisk}^`` be the list and ``value~field_a~^{asterisk}^`` be the list obtained by repeating:
@@ -3098,16 +3110,16 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''''''''^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool'''''''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``bool'''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
+    ***** Let ``bool'''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
 --
 +
 for each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''''''`` be xref:forall_[all ``bool'''''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''`` and ``bool''''''''''``.
+   .... Let ``bool'''''''''''`` be xref:forall_[all ``bool'''''''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Let ``bool''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool'''''''''''`` and ``bool''''''''''''``.
   ... Else if let ``+HEADER_UNION+`` ``typeId~a~`` ``+{+`` ``fieldValue~a~^{asterisk}^`` ``+}+`` be ``value``:
    .... Let!~type~ ``+HEADER_UNION+`` ``typeId~b~`` ``+{+`` ``fieldValue~b~^{asterisk}^`` ``+}+`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Let ``nameIR~field_a~^{asterisk}^`` be the list and ``value~field_a~^{asterisk}^`` be the list obtained by repeating:
@@ -3126,16 +3138,16 @@ for each ``fieldValue~a~`` in ``fieldValue~a~^{asterisk}^``.+++<sub class="bk-ma
 for each ``fieldValue~b~`` in ``fieldValue~b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``value~field_a~^{asterisk}^`` is equal to the length of ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Check that the length of ``nameIR~field_a~^{asterisk}^`` is equal to the length of ``nameIR~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''''''''^{asterisk}^`` be the list obtained by repeating:
+   .... Let ``bool''''''''''''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``bool''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
+    ***** Let ``bool''''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].
 --
 +
 for each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_b~`` in ``value~field_b~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool''''''''''''`` be xref:forall_[all ``bool''''''''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Let ``bool'''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''`` and ``bool'''''''''''''``.
+   .... Let ``bool''''''''''''''`` be xref:forall_[all ``bool''''''''''''''''^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Let ``bool'''''''''''''''`` be xref:forall_[all ``(`` ``nameIR~field_a~`` ``=`` ``nameIR~field_b~`` ``)^{asterisk}^`` are true].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+   .... Return ``typeId~a~`` is equal to ``typeId~b~`` and the length of ``fieldValue~a~^{asterisk}^`` is equal to the length of ``fieldValue~b~^{asterisk}^`` and ``bool''''''''''''''`` and ``bool'''''''''''''''``.
   ... Else if let ``enumValue`` be ``value``:
    .... If let ``typeId~a~`` ``+.+`` ``nameIR~field_a~`` be ``enumValue``:
     ..... Let!~type~ ``enumValue'`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
@@ -3144,8 +3156,8 @@ for each ``value~field_a~`` in ``value~field_a~^{asterisk}^`` and ``value~field_
    .... Else:
     ..... Let!~type~ ``enumValue'`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
     ..... Let!~type~ ``typeId~b~`` ``+.+`` ``++_++`` ``+.+`` ``value~field_b~`` be ``enumValue'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-    ..... Let ``bool'''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
-    ..... Return ``typeId~a~`` is equal to ``typeId~b~`` and ``bool'''''''''''''''``.
+    ..... Let ``bool'''''''''''''''''`` be xref:bin_eq[``value~field_a~`` ``+==+`` ``value~field_b~``].+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
+    ..... Return ``typeId~a~`` is equal to ``typeId~b~`` and ``bool'''''''''''''''''``.
   ... Else if let ``invalidHeaderValue`` be ``value``:
    .... Let!~type~ ``invalidHeaderValue'`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-bin_eq-1-b">else #1-b</a>]</sub>+++
    .... Return ``true``.
@@ -3336,11 +3348,11 @@ for each ``typeIR`` in ``typeIR^{asterisk}^``.
 . Else if let ``+ARRAY+`` ``typeIR`` ``+[+`` ``n~s~`` ``+]+`` be ``typeIR'``:
  .. Let ``value''`` be xref:default[the default value for type ``typeIR``].
  .. Let ``value^{asterisk}^`` be xref:repeat_[a list of ``n~s~`` copies of ``value''``].
- .. Return ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~s~`` ``+)+`` ``+]+``.
+ .. Return ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+]+``.
 . Else if let ``+HEADER_STACK+`` ``typeIR`` ``+[+`` ``n~s~`` ``+]+`` be ``typeIR'``:
  .. Let ``value'''`` be xref:default[the default value for type ``typeIR``].
  .. Let ``value^{asterisk}^`` be xref:repeat_[a list of ``n~s~`` copies of ``value'''``].
- .. Return ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``0`` ``+;+`` ``n~s~`` ``+)+`` ``+]+``.
+ .. Return ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``0`` ``+)+`` ``+]+``.
 . Else if let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~f~`` ``id~f~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Let ``value''''^{asterisk}^`` be the list obtained by repeating:
 +
@@ -3514,17 +3526,15 @@ xref:cast_error[``errorValue`` casted to type ``typeIR'``]
 for each ``value`` in ``value^{asterisk}^``.
 . Return ``+LIST+`` ``+[+`` ``value'^{asterisk}^`` ``+]+``.
 
-<<cast_array,``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~size'~`` ``+)+`` ``+]+`` casted to type ``typeIR'``>>
+<<cast_array,``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+]+`` casted to type ``typeIR``>>
 
-. Let!~type~ ``+ARRAY+`` ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``.
-. Check that ``n~size~`` is equal to ``n~size'~``.
-. Return ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+``.
+. Check that ``typeIR`` has type ``arrayTypeIR``.
+. Return ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+]+``.
 
-<<cast_header_stack,``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size'~`` ``+)+`` ``+]+`` casted to type ``typeIR'``>>
+<<cast_header_stack,``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` casted to type ``typeIR``>>
 
-. Let!~type~ ``+HEADER_STACK+`` ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``.
-. Check that ``n~size~`` is equal to ``n~size'~``.
-. Return ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+. Check that ``typeIR`` has type ``headerStackTypeIR``.
+. Return ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+``.
 
 xref:cast_struct[``+STRUCT+`` ``typeId'`` ``+{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` casted to type ``typeIR``]
 
@@ -3590,7 +3600,7 @@ for each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk
 --
 +
 for each ``value`` in ``value^{asterisk}^``.
- .. Return ``+ARRAY+`` ``+[+`` ``value~cast~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+``.
+ .. Return ``+ARRAY+`` ``+[+`` ``value~cast~^{asterisk}^`` ``+]+``.
 . Else if let ``+HEADER_STACK+`` ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
  .. Let!~type~ ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
  .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
@@ -3601,7 +3611,7 @@ for each ``value`` in ``value^{asterisk}^``.
 +
 for each ``value`` in ``value^{asterisk}^``.
  .. Let ``n~idx~`` be the length of ``value^{asterisk}^``.
- .. Return ``+HEADER_STACK+`` ``+[+`` ``value~cast~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+ .. Return ``+HEADER_STACK+`` ``+[+`` ``value~cast~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+``.
 . Else if let ``+STRUCT+`` ``typeId`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field~`` ``nameIR~field~`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
  .. Let!~type~ ``+SEQ+`` ``+(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
  .. Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
@@ -4697,12 +4707,10 @@ xref:lift_dataTypeIR[$lift_dataTypeIR(dataTypeIR)]
  .. Return ``+TUPLE+`` ``+<+`` ``typeArgumentList`` ``+>+``.
 . Else if let ``+ARRAY+`` ``typeIR`` ``+[+`` ``n`` ``+]+`` be ``dataTypeIR``:
  .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
- .. Let!~type~ ``namedType`` be ``type``.
- .. Return ``namedType`` ``+[+`` ``+D+`` ``n`` ``+]+``.
+ .. Return ``type`` ``+[+`` ``+D+`` ``n`` ``+]+``.
 . Else if let ``+HEADER_STACK+`` ``typeIR`` ``+[+`` ``n`` ``+]+`` be ``dataTypeIR``:
  .. Let ``type`` be ``xref:lift_typeIR[$lift_typeIR(typeIR)]``.
- .. Let!~type~ ``namedType`` be ``type``.
- .. Return ``namedType`` ``+[+`` ``+D+`` ``n`` ``+]+``.
+ .. Return ``type`` ``+[+`` ``+D+`` ``n`` ``+]+``.
 . Else if let ``+ENUM+`` ``typeId`` ``+{+`` ``++_++^{asterisk}^`` ``+}+`` be ``dataTypeIR``:
  .. Let ``typeName`` be ``xref:lift_nameIR_as_typeName[$lift_nameIR_as_typeName(typeId)]``.
  .. Return ``typeName``.
@@ -8201,7 +8209,13 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in ``value``.
-. Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
+. Else if let ``+ARRAY+`` ``+[+`` ``value~e~^{asterisk}^`` ``+]+`` be ``value~base~``:
+ .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
+ .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
+ .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
+ .. Result in ``value``.
+. Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
@@ -8641,11 +8655,11 @@ xref:Cast_expl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be ex
  .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+ARRAY+`` ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
  .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
  .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
@@ -8923,11 +8937,11 @@ xref:Cast_impl_neq[``+SEQ+`` ``+<+`` ``typeIR~a~^{asterisk}^`` ``+>+`` can be im
  .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+ARRAY+`` ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
  .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than or equal to ``n~size~``.
+ .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
  .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
   ... Then, the relation holds.
 . Else if let ``+STRUCT+`` ``++_++`` ``+<+`` ``++_++^{asterisk}^`` ``+>+`` ``+{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
@@ -14862,13 +14876,13 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+.+`` ``
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in store ``STO~2~`` and ``value``.
-. Else if let ``+ARRAY+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
+. Else if let ``+ARRAY+`` ``+[+`` ``value~e~^{asterisk}^`` ``+]+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in store ``STO~2~`` and ``value``.
-. Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
+. Else if let ``+HEADER_STACK+`` ``+[+`` ``value~e~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``value~base~``:
  .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
  .. Check that ``n~index~`` is less than the length of ``value~e~^{asterisk}^``.
@@ -16805,11 +16819,13 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
    .... Result in context ``EC~1~``, state ``ARCH~1~`` and ``abortResult``.
   ... Else:
    .... If let ``headerStackValue~base~`` be ``value``:
-    ..... Let ``+HEADER_STACK+`` ``+[+`` ``++_++^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
+    ..... Let ``+HEADER_STACK+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
     ..... If ``nameIR`` is equal to ``"size"``:
+     ...... Let ``n~size~`` be the length of ``value~elem~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
      ...... Let ``expressionResult`` be ``+D+`` ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
      ...... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
     ..... Else if ``nameIR`` is equal to ``"last"``:
+     ...... Let ``n~size~`` be the length of ``value~elem~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
      ...... Let ``b~out_of_bounds~`` be ``++_++`` is less than ``1`` or ``++_++`` is greater than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
      ...... If ``b~out_of_bounds~``:
       ....... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+.+`` ``"StackOutOfBounds"``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
@@ -16817,8 +16833,8 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
      ...... Else:
       ....... Let ``i`` be ``++_++`` ``-`` ``1``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
       ....... Let!~type~ ``n~idx_last~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
-      ....... Check that ``n~idx_last~`` is less than the length of ``++_++^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
-      ....... Let ``value~last~`` be ``++_++^{asterisk}^[n~idx_last~]``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
+      ....... Check that ``n~idx_last~`` is less than the length of ``value~elem~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
+      ....... Let ``value~last~`` be ``value~elem~^{asterisk}^[n~idx_last~]``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
       ....... Let ``expressionResult`` be ``value~last~``.+++<sub class="bk-mark">[<a href="#bk-Expr_eval-5-b">else #5-b</a>]</sub>+++
       ....... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
     ..... Else if ``nameIR`` is equal to ``"lastIndex"``:
@@ -16876,7 +16892,8 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
  .. Else if let ``arrayValue~base~`` be ``value``:
   ... Let!~type~ ``integerValue~index~`` be ``value'``.
-  ... Let ``+ARRAY+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+`` be ``arrayValue~base~``.
+  ... Let ``+ARRAY+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+]+`` be ``arrayValue~base~``.
+  ... Let ``n~size~`` be the length of ``value~elem~^{asterisk}^``.
   ... Let ``i~index~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
   ... Let ``b~in_bounds~`` be ``i~index~`` is less than ``n~size~`` and ``i~index~`` is greater than or equal to ``0``.
   ... Let ``i`` be xref:ite[``i~index~`` if ``b~in_bounds~`` otherwise ``n~size~`` ``-`` ``1``].
@@ -16886,7 +16903,8 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+.+`` ``nameIR`` annotat
   ... Result in context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
  .. Else if let ``headerStackValue~base~`` be ``value``:
   ... Let!~type~ ``integerValue~index~`` be ``value'``.
-  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~elem~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+  ... Let ``n~size~`` be the length of ``value~elem~^{asterisk}^``.
   ... Let ``i~index~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
   ... Let ``b~in_bounds~`` be ``i~index~`` is less than ``n~size~`` and ``i~index~`` is greater than or equal to ``0``.
   ... Let ``i`` be xref:ite[``i~index~`` if ``b~in_bounds~`` otherwise ``n~size~`` ``-`` ``1``].
@@ -17031,14 +17049,17 @@ xref:Lvalue_eval[Evaluating ``typedLvalueIR`` ``+.+`` ``nameIR`` with note ``lva
  ** the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
  .. If ``value`` has type ``headerStackValue``:
   ... Let ``headerStackValue`` be ``value``.
-  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
-  ... Check that ``nameIR`` is equal to ``"next"``.
+  ... Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue``.
   ... Try pass:[<strong id="bk-Lvalue_eval-1" class="bk-label">#1</strong>]:
    .... {empty}+++<span class="bk-arm-anchor" id="bk-Lvalue_eval-1-A"></span>+++
+    ..... Check that ``nameIR`` is equal to ``"next"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-B">else #1-B</a>]</sub>+++
+    ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-B">else #1-B</a>]</sub>+++
     ..... Check that ``n~idx~`` is greater than or equal to ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-B">else #1-B</a>]</sub>+++
     ..... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+.+`` ``"StackOutOfBounds"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-B">else #1-B</a>]</sub>+++
     ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``rejectTransitionResult``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-Lvalue_eval-1-B"></span>+++
+    ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
+    ..... Check that ``nameIR`` is equal to ``"next"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
     ..... Check that ``n~idx~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
     ..... Let ``storageReferenceResult`` be ``storageReference`` ``+.+`` ``nameIR``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
     ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult``.
@@ -17106,8 +17127,9 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+.+`` ``nameIR``, under con
  .. Let ``value`` be xref:option_get[*!*] xref:find_map[the value of ``nameIR`` in map ``frame``].
  .. Result in value ``value``.
 . Else if let ``headerStackValue~base~`` be ``value~base~``:
- .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
  .. Check that ``nameIR`` is equal to ``"next"``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Check that ``n~idx~`` is less than ``n~size~``.
  .. Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
  .. Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
@@ -17130,7 +17152,8 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+.+`` ``nameIR``, under con
 . Let value ``value''`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC`` and state ``ARCH`` at ``p``].
 . If let ``arrayValue~base~`` be ``value''``:
- .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+`` be ``arrayValue~base~``.
+ .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+]+`` be ``arrayValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
  .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
  .. If ``b~in_bounds~``:
@@ -17145,7 +17168,8 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+.+`` ``nameIR``, under con
   ... Let ``value`` be ``+HEADER+`` ``typeId`` ``+{+`` ``false`` ``+;+`` ``fieldValue^{asterisk}^`` ``+}+``.
   ... Result in value ``value``.
 . Else if let ``headerStackValue~base~`` be ``value''``:
- .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
  .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
  .. If ``b~in_bounds~``:
@@ -17188,10 +17212,10 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+.+`` ``nameIR``, 
 . Let value ``value'`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
 . If let ``headerStackValue~base~`` be ``value'``:
- .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
  .. Check that ``nameIR`` is equal to ``"next"``.
  .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
- .. Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+`` ``1`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+ .. Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+`` ``1`` ``+)+`` ``+]+``.
  .. Let context ``EC~1~`` be
  ** the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
  .. Result in context ``EC~1~``.
@@ -17234,26 +17258,28 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+.+`` ``nameIR``, 
 . Let value ``value''`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
 . If let ``arrayValue~base~`` be ``value''``:
- .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+`` be ``arrayValue~base~``.
+ .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+]+`` be ``arrayValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
  .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
  .. If ``b~in_bounds~``:
   ... Let!~type~ ``n~idx~`` be ``i~idx~``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
-  ... Let ``arrayValue~base_update~`` be ``+ARRAY+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let ``arrayValue~base_update~`` be ``+ARRAY+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+]+``.
   ... Let context ``EC~1~`` be
   *** the result of xref:Lvalue_write[writing ``arrayValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
   ... Result in context ``EC~1~``.
  .. Else:
   ... Result in context ``EC~0~``.
 . Else if let ``headerStackValue~base~`` be ``value''``:
- .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
  .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
  .. If ``b~in_bounds~``:
   ... Let!~type~ ``n~idx~`` be ``i~idx~``.
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
-  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.
+  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_update~^{asterisk}^`` ``+(+`` ``n~base_idx~`` ``+)+`` ``+]+``.
   ... Let context ``EC~1~`` be
   *** the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
   ... Result in context ``EC~1~``.
@@ -18366,47 +18392,52 @@ xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``
 . Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
 . Let!~type~ ``headerStackValue`` be ``value``.
-. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
-. Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
-. If let ``abortResult`` be ``expressionResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
-. Else:
- .. Let!~type~ ``integerValue~count~`` be ``value'``.
- .. Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
- .. Try pass:[<strong id="bk-Call_eval-2" class="bk-label">#2</strong>]:
-  ... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-2-i"></span>+++
-   .... Check that ``n~count~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
+. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue``.
+. Try pass:[<strong id="bk-Call_eval-2" class="bk-label">#2</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-2-a"></span>+++
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-b">else #2-b</a>]</sub>+++
+  ... Let!~type~ ``abortResult`` be ``expressionResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-b">else #2-b</a>]</sub>+++
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-2-b"></span>+++
+  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
+  ... Let!~type~ ``value'`` be ``expressionResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
+  ... Let!~type~ ``integerValue~count~`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
+  ... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
+  ... Try pass:[<strong id="bk-Call_eval-3" class="bk-label">#3</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-3-A"></span>+++
+    ..... Check that ``n~count~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``value~front_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
+     ****** Let ``value~front_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~front~)]``.
 --
 +
-for each ``value~front~`` in ``value~front~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let!~type~ ``n~back~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Let context ``EC~2~`` be
-   **** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-2-ii">else #2-ii</a>]</sub>+++
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-  ... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-2-ii"></span>+++
-   .... Check that ``n~count~`` is greater than or equal to ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
-   .... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
+for each ``value~front~`` in ``value~front~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let!~type~ ``n~back~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Let context ``EC~2~`` be
+    ***** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-B">else #3-B</a>]</sub>+++
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-3-B"></span>+++
+    ..... Check that ``n~count~`` is greater than or equal to ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
 --
 +
-for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
-   .... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
-   .... Let context ``EC~2~`` be
-   **** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-2">fail #2</a>]</sub>+++
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
+    ..... Let ``n~idx_updated~`` be <<min_nat,min``+(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
+    ..... Let context ``EC~2~`` be
+    ***** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
 
 xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``argumentIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
@@ -18417,47 +18448,52 @@ xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``
 . Let value ``value`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``].
 . Let!~type~ ``headerStackValue`` be ``value``.
-. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+`` be ``headerStackValue``.
-. Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].
-. If let ``abortResult`` be ``expressionResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
-. Else:
- .. Let!~type~ ``integerValue~count~`` be ``value'``.
- .. Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].
- .. Try pass:[<strong id="bk-Call_eval-3" class="bk-label">#3</strong>]:
-  ... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-3-i"></span>+++
-   .... Check that ``n~count~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let!~type~ ``n~front~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
+. Let ``+HEADER_STACK+`` ``+[+`` ``value~element~^{asterisk}^`` ``+(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue``.
+. Try pass:[<strong id="bk-Call_eval-4" class="bk-label">#4</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-4-a"></span>+++
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-4-b">else #4-b</a>]</sub>+++
+  ... Let!~type~ ``abortResult`` be ``expressionResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4-b">else #4-b</a>]</sub>+++
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-4-b"></span>+++
+  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+  ... Let xref:Argument_eval[``p`` ``EC~0~`` ``ARCH~0~`` ``+|-+`` ``argumentIR`` ``+:+`` ``EC~1~`` ``ARCH~1~`` ``expressionResult``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+  ... Let!~type~ ``value'`` be ``expressionResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+  ... Let!~type~ ``integerValue~count~`` be ``value'``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+  ... Let ``n~count~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~count~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+  ... Try pass:[<strong id="bk-Call_eval-5" class="bk-label">#5</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-5-A"></span>+++
+    ..... Check that ``n~count~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let!~type~ ``n~front~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``value~front~^{asterisk}^`` be ``value~element~^{asterisk}^[n~count~`` ``:`` ``n~front~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~count~]``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``value~back_invalidated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
+     ****** Let ``value~back_invalidated~`` be ``xref:invalidate_value[$invalidate_value(value~back~)]``.
 --
 +
-for each ``value~back~`` in ``value~back~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Let context ``EC~2~`` be
-   **** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-3-ii">else #3-ii</a>]</sub>+++
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
-  ... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-3-ii"></span>+++
-   .... Check that ``n~count~`` is greater than or equal to ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
+for each ``value~back~`` in ``value~back~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``value~element_updated~^{asterisk}^`` be ``value~front~^{asterisk}^`` concatenated with ``value~back_invalidated~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~front~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Let context ``EC~2~`` be
+    ***** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-5-B">else #5-B</a>]</sub>+++
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-5-B"></span>+++
+    ..... Check that ``n~count~`` is greater than or equal to ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Let ``value~element_updated~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-    ***** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
+     ****** Let ``value~element_updated~`` be ``xref:invalidate_value[$invalidate_value(value~element~)]``.
 --
 +
-for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Let!~type~ ``n~idx_updated~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+;+`` ``n~size~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Let context ``EC~2~`` be
-   **** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-3">fail #3</a>]</sub>+++
-   .... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
+for each ``value~element~`` in ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Let ``i`` be <<max_int,max``+(+`` ``+[+`` ``0,`` ``n~size~`` ``-`` ``n~count~`` ``+]+`` ``+)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Let!~type~ ``n~idx_updated~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+[+`` ``value~element_updated~^{asterisk}^`` ``+(+`` ``n~idx_updated~`` ``+)+`` ``+]+``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Let context ``EC~2~`` be
+    ***** the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-5">fail #5</a>]</sub>+++
+    ..... Result in context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
 
 xref:Call_eval[Calling ``builtinMethodCallee`` ``+<+`` ``·`` ``+>+`` ``+(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
@@ -18624,16 +18660,16 @@ xref:Call_eval[Calling ``controlApplyMethodCallee`` ``+<+`` ``typeArgumentListIR
  .. Else:
   ... Let context ``EC~callee_5~``, state ``ARCH~3~``, and result ``controlBodyResult`` be
   *** the result of xref:ControlBody_eval[evaluating ``controlBodyIR``, under context ``EC~callee_4~``, and state ``ARCH~2~``].
-  ... Try pass:[<strong id="bk-Call_eval-4" class="bk-label">#4</strong>]:
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-4-A"></span>+++
-    ..... Let!~type~ ``exitResult`` be ``controlBodyResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4-B">else #4-B</a>]</sub>+++
+  ... Try pass:[<strong id="bk-Call_eval-6" class="bk-label">#6</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-6-A"></span>+++
+    ..... Let!~type~ ``exitResult`` be ``controlBodyResult``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-6-B">else #6-B</a>]</sub>+++
     ..... Let ``EC~2~`` be
-    ***** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-4-B">else #4-B</a>]</sub>+++
+    ***** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-6-B">else #6-B</a>]</sub>+++
     ..... Result in context ``EC~2~``, state ``ARCH~3~``, and call result ``+EXIT+``.
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-4-B"></span>+++
-    ..... Check that ``controlBodyResult`` is equal to ``+RETURN+`` ``·``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Call_eval-6-B"></span>+++
+    ..... Check that ``controlBodyResult`` is equal to ``+RETURN+`` ``·``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-6">fail #6</a>]</sub>+++
     ..... Let ``EC~2~`` be
-    ***** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-4">fail #4</a>]</sub>+++
+    ***** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+BLOCK+`` of ``EC~callee_5~``, under state ``ARCH~3~`` at shared ``p~shared~``].+++<sub class="bk-mark">[<a href="#bk-Call_eval-6">fail #6</a>]</sub>+++
     ..... Result in context ``EC~2~``, state ``ARCH~3~``, and call result ``+RETURN+`` ``·``.
 
 xref:Call_eval[Calling ``tableApplyMethodCallee`` ``+<+`` ``typeArgumentListIR`` ``+>+`` ``+(+`` ``argumentListIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
@@ -18956,11 +18992,11 @@ xref:ForCollectionExpr_eval[Runtime evaluation of ``typedExpressionIR``, under e
   ... Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``value^{asterisk}^``.
  .. Else if let ``arrayValue`` be ``value'``:
-  ... Let ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``arrayValue``.
+  ... Let ``+ARRAY+`` ``+[+`` ``value^{asterisk}^`` ``+]+`` be ``arrayValue``.
   ... Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``value^{asterisk}^``.
  .. Else if let ``headerStackValue`` be ``value'``:
-  ... Let ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``++_++`` ``+;+`` ``++_++`` ``+)+`` ``+]+`` be ``headerStackValue``.
+  ... Let ``+HEADER_STACK+`` ``+[+`` ``value^{asterisk}^`` ``+(+`` ``++_++`` ``+)+`` ``+]+`` be ``headerStackValue``.
   ... Result in 
 * the updated evaluation context ``EC~1~``, state ``ARCH~1~``, and ``value^{asterisk}^``.
 

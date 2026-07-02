@@ -408,12 +408,14 @@ def $bin_eq(LIST `[ value_a* ], LIST `[ value_b* ])
 def $bin_eq(TUPLE `( value_a* ), TUPLE `( value_b* ))
   = |value_a*| = |value_b*|
     /\ $forall_($bin_eq(value_a, value_b)*)
-def $bin_eq(
-    HEADER_STACK `[ value_a* `( _ `; n_size_a ) ],
-    HEADER_STACK `[ value_b* `( _ `; n_size_b ) ])
+def $bin_eq(ARRAY `[ value_a* ], ARRAY `[ value_b* ])
   = |value_a*| = |value_b*|
     /\ $forall_($bin_eq(value_a, value_b)*)
-    /\ (n_size_a = n_size_b)
+def $bin_eq(
+    HEADER_STACK `[ value_a* `( _ ) ],
+    HEADER_STACK `[ value_b* `( _ ) ])
+  = |value_a*| = |value_b*|
+    /\ $forall_($bin_eq(value_a, value_b)*)
 def $bin_eq(
     STRUCT typeId_a `{ fieldValue_a* },
     STRUCT typeId_b `{ fieldValue_b* })
@@ -665,10 +667,8 @@ dec $cast_array(typeIR, arrayValue) : value
   hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
-def $cast_array(
-    ARRAY typeIR `[ n_size ],
-    ARRAY `[ value* `( n_size ) ])
-  = ARRAY `[ value* `( n_size )]
+def $cast_array(ARRAY typeIR `[ n_size ], ARRAY `[ value* ])
+  = ARRAY `[ value* ]
 
 def $cast_op(typeIR, arrayValue)
   = $cast_array(typeIR_unroll, arrayValue)
@@ -682,8 +682,8 @@ dec $cast_header_stack(typeIR, headerStackValue) : value
 
 def $cast_header_stack(
     HEADER_STACK typeIR `[ n_size ],
-    HEADER_STACK `[ value* `( n_idx `; n_size ) ])
-  = HEADER_STACK `[ value* `( n_idx `; n_size )]
+    HEADER_STACK `[ value* `( n_idx ) ])
+  = HEADER_STACK `[ value* `( n_idx )]
 
 def $cast_op(typeIR, headerStackValue)
   = $cast_header_stack(typeIR_unroll, headerStackValue)
@@ -743,10 +743,10 @@ def $cast_sequence(LIST `< typeIR >, SEQ `( value* ))
 def $cast_sequence(TUPLE `< typeIR* >, SEQ `( value* ))
   = TUPLE `( $cast_op(typeIR, value)* )
 def $cast_sequence(ARRAY typeIR `[ n_size ], SEQ `( value* ))
-  = ARRAY `[ value_cast* `( n_size ) ]
+  = ARRAY `[ value_cast* ]
   -- if (value_cast = $cast_op(typeIR, value))*
 def $cast_sequence(HEADER_STACK typeIR `[ n_size ], SEQ `( value* ))
-  = HEADER_STACK `[ value_cast* `( n_idx `; n_size ) ]
+  = HEADER_STACK `[ value_cast* `( n_idx ) ]
   -- if (value_cast = $cast_op(typeIR, value))*
   -- if n_idx = |value*|
 def $cast_sequence(
@@ -854,10 +854,10 @@ def $default(TYPE _ typeIR) = $default(typeIR)
 
 def $default(TUPLE `< typeIR* >) = TUPLE `( $default(typeIR)* )
 
-def $default(ARRAY typeIR `[ n_s ]) = ARRAY `[ value* `( n_s ) ]
+def $default(ARRAY typeIR `[ n_s ]) = ARRAY `[ value* ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
-def $default(HEADER_STACK typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0 `; n_s ) ]
+def $default(HEADER_STACK typeIR `[ n_s ]) = HEADER_STACK `[ value* `( 0 ) ]
   -- if value* = $repeat_<value>($default(typeIR), n_s)
 
 def $default(STRUCT typeId `< _ > `{ (_ typeIR_f id_f `;)* })

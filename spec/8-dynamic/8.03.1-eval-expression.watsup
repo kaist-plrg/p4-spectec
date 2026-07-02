@@ -331,8 +331,9 @@ rulegroup Expr_eval/memberAccessExpressionIR-typedExpressionIR {
     -- Expr_eval:
         p EC_0 ARCH_0 |- typedExpressionIR_base
                        : EC_1 ARCH_1 (`` headerStackValue_base) 
-    -- if HEADER_STACK `[ _ `( _ `; n_size ) ] = headerStackValue_base
+    -- if HEADER_STACK `[ value_elem* `( _ ) ] = headerStackValue_base
     -- if nameIR = "size"
+    -- if n_size = |value_elem*|
     -- if expressionResult = `` (D n_size)
 
   rule Expr_eval/stack-last-out-of-bounds:
@@ -341,9 +342,10 @@ rulegroup Expr_eval/memberAccessExpressionIR-typedExpressionIR {
     -- Expr_eval:
         p EC_0 ARCH_0 |- typedExpressionIR_base
                        : EC_1 ARCH_1 (`` headerStackValue_base)
-    -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_elem* `( n_idx ) ]
         = headerStackValue_base
     -- if nameIR = "last"
+    -- if n_size = |value_elem*|
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if b_out_of_bounds
     -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
@@ -354,9 +356,10 @@ rulegroup Expr_eval/memberAccessExpressionIR-typedExpressionIR {
     -- Expr_eval:
         p EC_0 ARCH_0 |- typedExpressionIR_base
                        : EC_1 ARCH_1 (`` headerStackValue_base)
-    -- if HEADER_STACK `[ value_elem* `( n_idx `; n_size ) ]
+    -- if HEADER_STACK `[ value_elem* `( n_idx ) ]
         = headerStackValue_base
     -- if nameIR = "last"
+    -- if n_size = |value_elem*|
     -- if b_out_of_bounds = ($(n_idx < 1) \/ $(n_idx > n_size))
     -- if ~b_out_of_bounds
     -- if n_idx_last = $(n_idx - 1)
@@ -369,7 +372,7 @@ rulegroup Expr_eval/memberAccessExpressionIR-typedExpressionIR {
     -- Expr_eval:
         p EC_0 ARCH_0 |- typedExpressionIR_base
                        : EC_1 ARCH_1 (`` headerStackValue_base) 
-    -- if HEADER_STACK `[ value_elem* `( n_idx `; _ ) ]
+    -- if HEADER_STACK `[ value_elem* `( n_idx ) ]
         = headerStackValue_base
     -- if nameIR = "lastIndex"
     -- if n_idx_last = $($max_nat([n_idx, 1]) - 1)
@@ -475,7 +478,8 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- Exprs_eval:
         p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                        : EC_1 ARCH_1 (`` ([ arrayValue_base, integerValue_index ]))
-    -- if ARRAY `[ value_elem* `( n_size ) ] = arrayValue_base
+    -- if ARRAY `[ value_elem* ] = arrayValue_base
+    -- if n_size = |value_elem*|
     -- if i_index = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_index < n_size) /\ $(i_index >= 0))
     -- if n_idx = $ite<int>(b_in_bounds, i_index, $(n_size - 1))
@@ -487,7 +491,8 @@ rulegroup Expr_eval/indexAccessExpressionIR {
     -- Exprs_eval:
         p EC_0 ARCH_0 |- [ typedExpressionIR_base, typedExpressionIR_index ]
                        : EC_1 ARCH_1 (`` ([ headerStackValue_base, integerValue_index ]))
-    -- if HEADER_STACK `[ value_elem* `( _ `; n_size ) ] = headerStackValue_base
+    -- if HEADER_STACK `[ value_elem* `( _ ) ] = headerStackValue_base
+    -- if n_size = |value_elem*|
     -- if i_index = $int_of_integerValue(integerValue_index)
     -- if b_in_bounds = ($(i_index < n_size) /\ $(i_index >= 0))
     -- if n_idx = $ite<int>(b_in_bounds, i_index, $(n_size - 1))
