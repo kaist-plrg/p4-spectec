@@ -1,16 +1,16 @@
 [#sec-packet-data-emit]
 === Packet data emission
 
-// 1028
+// 1035
 The inverse of parsing is deparsing, or packet construction. P4 does not
 provide a separate language for packet deparsing; deparsing is done in a
 `control` block that has at least one parameter of type `packet_out`.
 
-// 1029
+// 1036
 For example, the following code sequence writes first an Ethernet header and
 then an IPv4 header into a `packet_out`:
 
-// 1030
+// 1037
 [source,p4]
 ----
 control TopDeparser(inout Parsed_packet p, packet_out b) {
@@ -21,19 +21,19 @@ control TopDeparser(inout Parsed_packet p, packet_out b) {
 }
 ----
 
-// 1031
+// 1038
 Emitting a header appends the header to the `packet_out` only if the header is
 valid. Emitting a header stack will emit all elements of the stack in order of
 increasing indices.
 
 ==== Data insertion into packets
 
-// 1032
+// 1039
 The `packet_out` datatype is defined in the P4 core library, and reproduced
 below. It provides a method for appending data to an output packet called
 `emit`:
 
-// 1033
+// 1040
 [source,p4]
 ----
 extern packet_out {
@@ -41,11 +41,11 @@ extern packet_out {
 }
 ----
 
-// 1034
+// 1041
 The `emit` method supports appending the data contained in a header, header
 stack, `struct`, or header union to the output packet.
 
-// 1035
+// 1042
 * When applied to a header, `emit` appends the data in the header to
   the packet if it is valid and otherwise behaves like a no-op.
 * When applied to a header stack, `emit` recursively invokes itself to
@@ -54,14 +54,14 @@ stack, `struct`, or header union to the output packet.
   invokes itself to each field.  Note, a `struct` must not contain a field of
   type `error` or `enum` because these types cannot be serialized.
 
-// 1036
+// 1043
 It is illegal to invoke `emit` on an expression whose type is a base type,
 `enum`, or `error`.
 
-// 1037
+// 1044
 We can define the meaning of the `emit` method in pseudocode as follows:
 
-// 1038
+// 1045
 [source,p4pseudo]
 ----
 packet_out {
@@ -89,7 +89,7 @@ packet_out {
     }
 ----
 
-// 1039
+// 1046
 Here we use the special `valid$` identifier to indicate the hidden valid bit of
 headers and `fields$` to indicate the list of fields for a struct or header
 union. We also use standard `for-each` notation to iterate through the elements

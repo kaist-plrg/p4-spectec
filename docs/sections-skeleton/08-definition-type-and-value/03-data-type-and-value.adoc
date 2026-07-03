@@ -9,17 +9,17 @@ tuples, header stacks, structs, headers, header unions, and enums.
 
 ==== Lists
 
-// 306
+// 309
 A list holds zero or more values, where every element must have the same type.
 The type of a list where all elements have type `T` is written as
 
-// 307
+// 310
 [source,p4]
 ----
 list<T>
 ----
 
-// 308 - Modified
+// 311 - Modified
 ${syntax: listType}
 
 // Added
@@ -30,13 +30,13 @@ ${syntax: listTypeIR listValue}
 
 ===== Operations
 
-// 516
+// 520
 The value of a list is written using curly braces, with each element separated
 by a comma. The left curly brace is preceded by a `(list<T>)` where `T` is the
 list element type. Such a value can be passed as an argument, e.g. to extern
 constructor functions.
 
-// 517
+// 521
 [source,p4]
 ----
 struct pair_t {
@@ -57,7 +57,7 @@ control c() {
 }
 ----
 
-// 518
+// 522
 Additionally, the size of a list can be determined at compile-time
 (<<sec-minsizeinbits>>).
 
@@ -75,20 +75,20 @@ ${rulegroup-prose: Type_wf/listTypeIR}
 
 ==== Tuples
 
-// 301
+// 304
 A tuple is similar to a `struct`, in that it holds multiple values. The type of
 tuples with `n` component types `T1`, ..., `Tn` is written as
 
-// 302
+// 305
 [source,p4]
 ----
 tuple<T1, /* more fields omitted */, Tn>
 ----
 
-// 305
+// 308
 The type `tuple<>` is a tuple type with no components.
 
-// 303 - Modified
+// 306 - Modified
 ${syntax: tupleType}
 
 // Added
@@ -99,16 +99,16 @@ ${syntax: tupleTypeIR tupleValue}
 
 ===== Operations
 
-// 491
+// 495
 The fields of a tuple can be accessed using array index syntax `x[0]`, `x[1]`.
 The indexes *must* be local compile-time known values, to enable the
 type-checker to identify the field types statically.
 
-// 492
+// 496
 Tuples can be compared for equality using `==` and `!=`; two tuples are equal
 if and only if all their fields are respectively equal.
 
-// 493 - Modified
+// 497 - Modified
 Currently tuple fields are not left-values, even if the tuple itself is. (i.e.,
 a tuple can only be assigned monolithically, and the field values cannot be
 changed individually.) This restriction may be lifted in a future version of
@@ -129,14 +129,14 @@ ${rulegroup-prose: Type_wf/tupleTypeIR}
 [#sec-header-stack]
 ==== Header stacks
 
-// 282
+// 287
 A header stack represents an array of headers or header unions. A header stack
 type is defined as:
 
-// 283 - Modified
+// 287 - Modified
 ${syntax: headerStackType}
 
-// 284 - Modified
+// 287 - Modified
 where `namedType` refers to a header or header union type. For a header stack
 `hs[n]`, the term `n` is the maximum defined size, and must be a local
 compile-time known value that is a positive integer. Nested header stacks are
@@ -148,16 +148,16 @@ Internally, header stack types and values are represented as follows:
 // Added
 ${syntax: headerStackTypeIR headerStackValue}
 
-// 284 - Modified
-// 560 - Modified
+// 287 - Modified
+// 567 - Modified
 At runtime a stack contains `n` values with type `namedType`, only some of
 which may be valid. The valid elements of a header stack need not be
 contiguous.
 
-// 285
+// 288
 For example, the following declarations,
 
-// 286
+// 289
 [source,p4]
 ----
 header Mpls_h {
@@ -169,18 +169,18 @@ header Mpls_h {
 Mpls_h[10] mpls;
 ----
 
-// 287
+// 290
 introduce a header stack called `mpls` containing ten entries, each of type
 `Mpls_h`.
 
 ===== Operations
 
-// 560 - Modified
+// 567 - Modified
 P4 provides a set of computations for manipulating header stacks. A header
 stack `hs` of type `h[n]` can be understood in terms of the following
 pseudocode:
 
-// 561
+// 568
 [source,p4pseudo]
 ----
 // type declaration
@@ -196,17 +196,17 @@ hs.nextIndex = 0;
 hs.size = n;
 ----
 
-// 562
+// 569
 Intuitively, a header stack can be thought of as a struct containing an
 ordinary array of headers `hs` and a counter `nextIndex` that can be used to
 simplify the construction of parsers for header stacks, as discussed below. The
 `nextIndex` counter is initialized to `0`.
 
-// 563
+// 570
 Given a header stack value `hs` of size `n`, the following expressions are
 legal:
 
-// 564
+// 571
 * `hs[index]`: produces a reference to the header at the
   specified position within the stack; if `hs` is an l-value, the result is
   also an l-value. The header may be invalid. Some implementations may impose
@@ -226,12 +226,12 @@ The `index` is an expression that must be of numeric types (<<sec-numeric-values
   copied, including its elements and their validity bits, as well as
   `nextIndex`.
 
-// 565
+// 572
 To help programmers write parsers for header stacks, P4 also offers
 computations that automatically advance through the stack as elements are
 parsed:
 
-// 566
+// 573
 * `hs.next`: produces a reference to the element with index `hs.nextIndex`
   in the stack. May only be used in a `parser`. If the stack's `nextIndex`
   counter is greater than or equal to `size`, then evaluating this expression
@@ -248,11 +248,11 @@ parsed:
   `hs.nextIndex - 1`. May only be used in a `parser`. If the `nextIndex`
   counter is `0`, then evaluating this expression produces an undefined value.
 
-// 567
+// 574
 Finally, P4 offers the following computations that can be used to manipulate
 the elements at the front and back of the stack:
 
-// 568
+// 575
 * `hs.push_front(int count)`: shifts `hs` "right" by `count`. The
   first `count` elements become invalid. The last `count` elements in the stack
   are discarded. The `hs.nextIndex` counter is incremented by `count`. The
@@ -264,10 +264,10 @@ the elements at the front and back of the stack:
   `count`. The `count` argument must be a compile-time known value that is a
   positive integer. The return type is `void`.
 
-// 569
+// 576
 The following pseudocode defines the behavior of `push_front` and `pop_front`:
 
-// 570
+// 577
 [source,p4pseudo]
 ----
 void push_front(int count) {
@@ -300,11 +300,11 @@ void pop_front(int count) {
 }
 ----
 
-// 571
+// 578
 Similar to structs and headers, the size of a header stack is a compile-time
 known value (Section <<sec-minsizeinbits>>).
 
-// 572
+// 579
 Two header stacks can be compared for equality (`==`) or inequality (`!=`) only
 if they have the same element type and the same length. Two stacks are equal if
 and only if all their corresponding elements are equal. Note that the
@@ -332,13 +332,13 @@ endif::[]
 [#sec-struct]
 ==== Structs
 
-// 297
+// 300
 P4 `struct` types are defined with the following syntax:
 
-// 298 - Modified
+// 301 - Modified
 ${syntax: typeField structTypeDeclaration}
 
-// 299 - Modified
+// 302 - Modified
 This declaration introduces a new struct type definition with the specified
 name in the current scope. Field names have to be distinct. An empty struct
 (with no fields) is legal.
@@ -346,11 +346,11 @@ name in the current scope. Field names have to be distinct. An empty struct
 // Added
 ${syntax: structTypeDefIR}
 
-// 299 - Modified
+// 302 - Modified
 For example, the structure `Parsed_headers` below contains the headers
 recognized by a simple parser:
 
-// 300
+// 303
 [source,p4]
 ----
 header Tcp_h { /* fields omitted */ }
@@ -373,7 +373,7 @@ ${syntax: fieldTypeIR structTypeIR fieldValue structValue}
 
 ===== Operations
 
-// 544 - Modified
+// 548 - Modified
 The only operation defined on expressions whose type is a `struct` is field
 access, written using dot (".") notation--e.g., `s.field`. If `s` is an
 l-value, then `s.field` is also an l-value. P4 also allows copying ``struct``s
@@ -384,16 +384,16 @@ discussed in <<sec-sequence>>, or with a record expression, as described in
 structure. The size of a struct can be determined at compile-time
 (<<sec-minsizeinbits>>).
 
-// 544
+// 549
 Two structs can be compared for equality (`==`) or inequality (`!=`) only if
 they have the same type and all of their fields can be recursively compared for
 equality. Two structures are equal if and only if all their corresponding
 fields are equal.
 
-// 545
+// 550
 The following example shows a structure initialized in several different ways:
 
-// 546 - Modified
+// 551 - Modified
 [source,p4]
 ----
 struct S {
@@ -405,7 +405,7 @@ const S x = { a = 10, b = 20 };     // record expression
 const S x = (S) { a = 10, b = 20 }; // record expression
 ----
 
-// 547
+// 552
 See <<sec-uninitialized-values-and-writing-invalid-headers>> for a description
 of the behavior if `struct` fields are read without being initialized.
 
@@ -426,13 +426,13 @@ ${rulegroup-prose: Type_wf/structTypeIR}
 [#sec-header]
 ==== Headers
 
-// 262
+// 264
 The declaration of a `header` type is given by the following syntax:
 
-// 263 - Modified
+// 265 - Modified
 ${syntax: typeField headerTypeDeclaration}
 
-// 264
+// 266
 where each `type` is restricted to a bit-string type (fixed or variable), a
 fixed-width signed integer type, a boolean type, or a struct that itself
 contains other struct fields, nested arbitrarily, as long as all of the "leaf"
@@ -441,14 +441,14 @@ is used inside a P4 header, all implementations encode the `bool` as a one bit
 long field, with the value `1` representing `true` and `0` representing
 `false`. Field names have to be distinct.
 
-// 265 - Modified
+// 267 - Modified
 A header declaration introduces a new identifier in the current scope; the type
 definition can be referred to using this identifier.
 
 // Added
 ${syntax: headerTypeDefIR}
 
-// 265 - Modified
+// 267 - Modified
 A header is similar to a `struct` in C, containing all the specified fields.
 However, in addition, a header also contains a hidden Boolean "validity" field.
 When the "validity" bit is `true` we say that the "header is valid". When a
@@ -456,24 +456,24 @@ local variable with a header type is declared, its "validity" bit is
 automatically set to `false`. The "validity" bit can be manipulated by using
 the header methods `isValid()`, `setValid()`, and `setInvalid()`.
 
-// 267
+// 269
 Header types may be empty:
 
-// 268
+// 270
 [source,p4]
 ----
 header Empty_h { }
 ----
 
-// 269
+// 271
 Note that an empty header still contains a validity bit.
 
-// 270
+// 272
 When a struct is inside of a header, the order of the fields for the purposes
 of `extract` and `emit` calls is the order of the fields as defined in the
 source code. An example of a header including a struct is included below.
 
-// 271
+// 273
 [source,p4]
 ----
 struct ipv6_addr {
@@ -495,7 +495,7 @@ header ipv6_t {
 }
 ----
 
-// 272
+// 274
 Headers that do not contain any `varbit` field are _fixed size_. Headers
 containing `varbit` fields have _variable size_. The size (in bits) of a
 fixed-size header is simply the sum of the sizes of all component fields
@@ -503,10 +503,10 @@ fixed-size header is simply the sum of the sizes of all component fields
 header fields. Targets may impose additional constraints on header
 types--e.g., restricting headers to sizes that are an integer number of bytes.
 
-// 273
+// 275
 For example, the following declaration describes a typical Ethernet header:
 
-// 274
+// 276
 [source,p4]
 ----
 header Ethernet_h {
@@ -516,25 +516,25 @@ header Ethernet_h {
 }
 ----
 
-// 275
+// 277
 The following variable declaration uses the newly introduced type `Ethernet_h`:
 
-// 276
+// 278
 [source,p4]
 ----
 Ethernet_h ethernetHeader;
 ----
 
-// 277
+// 279
 P4's parser language provides an `extract` method that can be used to "fill in"
 the fields of a header from a network packet, as described in
 <<sec-packet-data-extraction>>. The successful execution of an `extract`
 operation also sets the validity bit of the extracted header to `true`.
 
-// 278
+// 280
 Here is an example of an IPv4 header with variable-sized options:
 
-// 279
+// 281
 [source,p4]
 ----
 header IPv4_h {
@@ -554,13 +554,13 @@ header IPv4_h {
 }
 ----
 
-// 280
+// 282
 As demonstrated by a code example in <<sec-packet-extract-two>>, another way to
 support headers that contain variable-length fields is to define two headers --
 one fixed length, one containing a `varbit` field -- and extract each part in
 separate parsing steps.
 
-// 281
+// 283
 Notice that the names `isValid`, `setValid`, `minSizeInBits`, etc. are all
 valid header field names.
 
@@ -572,27 +572,27 @@ ${syntax: headerTypeIR headerValue}
 
 ===== Operations
 
-// 548
+// 553
 Headers provide the same operations as ``struct``s. Assignment between headers
 also copies the "validity" header bit.
 
-// 549
+// 554
 In addition, headers support the following methods:
 
-// 550
+// 555
 * The method `isValid()` returns the value of the "validity" bit of the header.
 * The method `setValid()` sets the header's validity bit to "true". It can only
  be applied to an l-value.
 * The method `setInvalid()` sets the header's validity bit to "false". It can
  only be applied to an l-value.
 
-// 551 - Modified
+// 556 - Modified
 Similar to a `struct`, a header object can be initialized with a sequence
 expression (see <<sec-sequence>>) -- the sequence elements are assigned to the
 header fields in the order they appear -- or with a record expression (see
 <<sec-record>>). When initialized the header automatically becomes valid:
 
-// 552
+// 557
 [source,p4]
 ----
 header H { bit<32> x; bit<32> y; }
@@ -601,14 +601,14 @@ h = { 10, 12 };  // This also makes the header h valid
 h = { y = 12, x = 10 };  // Same effect as above
 ----
 
-// 553
+// 558
 Two headers can be compared for equality (`==`) or inequality (`!=`) only if
 they have the same type. Two headers are equal if and only if they are both
 invalid, or they are both valid and all their corresponding fields are equal.
 Furthermore, the size of a header can be determined at compile-time
 (<<sec-minsizeinbits>>).
 
-// 559
+// 564
 See <<sec-uninitialized-values-and-writing-invalid-headers>> for a description
 of the behavior if header fields are read without being initialized, or header
 fields are written to a currently invalid header.
@@ -630,34 +630,34 @@ ${rulegroup-prose: Type_wf/headerTypeIR}
 [#sec-header-union]
 ==== Header unions
 
-// 289
+// 292
 A header union represents an alternative containing at most one of several
 different headers. Header unions can be used to represent "options" in
 protocols like TCP and IP. They also provide hints to P4 compilers that only
 one alternative will be present, allowing them to conserve storage resources.
 
-// 290
+// 293
 A header union is defined as:
 
-// 291 - Modified
+// 294 - Modified
 ${syntax: typeField headerUnionTypeDeclaration}
 
-// 292 - Modified
+// 295 - Modified
 This declaration introduces a new type definition with the specified name in
 the current scope.
 
 // Added
 ${syntax: headerUnionTypeDefIR}
 
-// 292 - Modified
+// 295 - Modified
 Each element of the list of fields used to declare a header union must be of
 header type. An empty list of fields is legal. Field names have to be distinct.
 
-// 293
+// 296
 As an example, the type `Ip_h` below represents the union of an IPv4 and IPv6
 headers:
 
-// 294
+// 297
 [source,p4]
 ----
 header_union IP_h {
@@ -666,10 +666,10 @@ header_union IP_h {
 }
 ----
 
-// 295
+// 298
 A header union is not considered a type with fixed length.
 
-// 296
+// 299
 Internally, header union types and values are represented as follows:
 
 // Added
@@ -677,10 +677,10 @@ ${syntax: headerUnionTypeIR headerUnionValue}
 
 ===== Operations
 
-// 579
+// 586
 A variable declared with a union type is initially invalid. For example:
 
-// 580
+// 587
 [source,p4]
 ----
 header H1 {
@@ -697,13 +697,13 @@ header_union U {
 U u; // u invalid
 ----
 
-// 581
+// 588
 This also implies that each of the headers `h1` through `hn` contained in a
 header union are also initially invalid. Unlike headers, a union cannot be
 initialized. However, the validity of a header union can be updated by
 assigning a valid header to one of its elements:
 
-// 582
+// 589
 [source,p4]
 ----
 U u;
@@ -711,20 +711,20 @@ H1 my_h1 = { 8w0 }; // my_h1 is valid
 u.h1 = my_h1;       // u and u.h1 are both valid
 ----
 
-// 583 - Modified
+// 590 - Modified
 We can also assign a sequence to an element of a header union,
 
-// 584
+// 591
 [source,p4]
 ----
 U u;
 u.h2 = { 16w1 };     // u and u.h2 are both valid
 ----
 
-// 585
+// 592
 or set their validity bits directly.
 
-// 586
+// 593
 [source,p4]
 ----
 U u;
@@ -732,20 +732,20 @@ u.h1.setValid();     // u and u.h1 are both valid
 H1 my_h1 = u.h1;     // my_h1 is now valid, but contains an undefined value
 ----
 
-// 587
+// 594
 Note that reading an uninitialized header produces an undefined value, even if
 the header is itself valid.
 
-// 588
+// 595
 If `u` is an expression whose type is a header union `U` with fields ranged
 over by `hi`, then the expression `u.hi` evaluates to a header, and thus it can
 be used wherever a header expression is allowed. If `u` is a left-value, then
 `u.hi` is also a left-value.
 
-// 589
+// 596
 The following operations:
 
-// 590
+// 597
 * `u.hi.setValid():` sets the valid bit for header `hi` to `true` and
   sets the valid bit for all other headers to `false`, which implies that it is
   unspecified what value reading any member header of `u` will return.
@@ -753,19 +753,19 @@ The following operations:
   is `true` then sets it to `false`, which implies that it is unspecified what
   value reading any member header of `u` will return.
 
-// 591
+// 598
 The assignment to a union field:
 
-// 592
+// 599
 [source,p4]
 ----
 u.hi = e;
 ----
 
-// 593
+// 600
 has the following meaning:
 
-// 594
+// 601
 * if `e` is valid, then it is equivalent to:
 
 [source,p4]
@@ -781,27 +781,27 @@ has the following meaning:
   u.hi.setInvalid();
 ----
 
-// 595
+// 602
 Assignments between variables of the same type of header union are permitted.
 The assignment `u1 = u2` copies the full state of header union `u2` to `u1`. If
 `u2` is valid, then there is some header `u2.hi` that is valid. The assignment
 behaves the same as `u1.hi = u2.hi`. If `u2` is not valid, then `u1` becomes
 invalid (i.e. if any header of `u1` was valid, it becomes invalid).
 
-// 596
+// 603
 `u.isValid()` returns true if any member of the header union `u` is valid,
 otherwise it returns false. `setValid()` and `setInvalid()` methods are not
 defined for header unions.
 
-// 597
+// 604
 Supplying an expression with a union type to `emit` simply emits the single
 header that is valid, if any.
 
-// 598
+// 605
 The following example shows how we can use header unions to represent IPv4 and
 IPv6 headers uniformly:
 
-// 599
+// 606
 [source,p4]
 ----
 header_union IP {
@@ -833,10 +833,10 @@ parser top(packet_in b, out Parsed_packet p) {
 }
 ----
 
-// 600
+// 607
 As another example, we can also use unions to parse (selected) TCP options:
 
-// 601
+// 608
 [source,p4]
 ----
 header Tcp_option_end_h {
@@ -910,11 +910,11 @@ parser Tcp_option_parser(packet_in b, out Tcp_option_stack vec) {
 }
 ----
 
-// 602
+// 609
 Similar to headers, the size of a header union is a local compile-time known
 value (Section <<#sec-minsizeinbits>>).
 
-// 605
+// 612
 Two header unions can be compared for equality (`==`) or inequality (`!=`) if
 they have the same type. The unions are equal if and only if all their
 corresponding fields are equal (i.e., either all fields are invalid in both
@@ -938,10 +938,10 @@ ${rulegroup-prose: Type_wf/headerUnionTypeIR}
 [#sec-enum]
 ==== Enums
 
-// 246
+// 247
 An enumeration type is defined using the following syntax:
 
-// 247 - Modified
+// 248 - Modified
 ${syntax: namedExpression
           namedExpressionList
           enumTypeDeclaration}
@@ -968,16 +968,16 @@ ${syntax: valueFieldIR enumTypeIR enumValue}
 [#sec-enum-non-serializable]
 ===== Enum type declaration without an underlying type
 
-// 248
+// 249
 For example, the declaration
 
-// 249
+// 250
 [source,p4]
 ----
 enum Suits { Clubs, Diamonds, Hearths, Spades }
 ----
 
-// 250
+// 251
 introduces a new enumeration type, which contains four elements--e.g.,
 `Suits.Clubs`. An `enum` declaration introduces a new identifier in the current
 scope for naming the created type along with its distinct elements. The
@@ -987,17 +987,17 @@ in bits is not specified (it is target-specific).
 [#sec-enum-serializable]
 ===== Enum type declaration with an underlying type
 
-// 251
+// 252
 It is also possible to specify an `enum` with an underlying representation.
 These are sometimes called serializable ``enum``s, because headers are allowed
 to have fields with such `enum` types. This requires the programmer provide
 both the fixed-width unsigned (or signed) integer type and an associated
 integer value for each symbolic entry in the enumeration.
 
-// 1274
+// 254
 For example, the declaration
 
-// 253
+// 255
 [source,p4]
 ----
 enum bit<16> EtherType {
@@ -1009,7 +1009,7 @@ enum bit<16> EtherType {
 }
 ----
 
-// 254
+// 256
 introduces a new enumeration type, which contains five elements--e.g.,
 `EtherType.IPV4`.  This `enum` declaration specifies the fixed-width unsigned
 integer representation for each entry in the `enum` and provides an underlying
@@ -1021,15 +1021,15 @@ way, an `enum` with an underlying type can be thought of as being a type
 derived from the underlying type carrying equality, assignment, and casts
 to/from the underlying type.
 
-// 255
+// 257
 Compiler implementations are expected to raise an error if the fixed-width
 integer representation for an enumeration entry falls outside the
 representation range of the underlying type.
 
-// 256
+// 258
 For example, the declaration
 
-// 257
+// 259
 [source,p4]
 ----
 enum bit<8> FailingExample {
@@ -1040,24 +1040,24 @@ enum bit<8> FailingExample {
 }
 ----
 
-// 258
+// 260
 would raise an error because `300`, the value associated with
 `FailingExample.unrepresentable` cannot be represented as a `bit<8>` value.
 
-// 259
+// 261
 The initializer `expression` must be a local compile-time known value.
 
-// 260
+// 262
 Annotations, represented by the non-terminal `annotationList`, are described in
 <<sec-annotations>>.
 
 ===== Operations
 
-// 393
+// 396
 Symbolic names declared by an enum belong to the namespace introduced by the
 enum declaration rather than the top-level namespace.
 
-// 394
+// 397
 [source,p4]
 ----
 enum X { v1, v2, v3 }
@@ -1065,16 +1065,16 @@ X.v1  // reference to v1
 v1    // error - v1 is not in the top-level namespace
 ----
 
-// 395
+// 398
 Similar to errors, `enum` expressions without a specified underlying type only
 support equality (`==`) and inequality (`!=`) comparisons. Expressions whose
 type is an `enum` without a specified underlying type cannot be cast to or from
 any other type.
 
-// 396
+// 399
 An `enum` may also specify an underlying type, such as the following:
 
-// 397
+// 400
 [source,p4]
 ----
 enum bit<8> E {
@@ -1084,11 +1084,11 @@ enum bit<8> E {
 }
 ----
 
-// 398
+// 401
 More than one symbolic value in an `enum` may map to the same fixed-width
 integer value.
 
-// 399
+// 402
 [source,p4]
 ----
 enum bit<8> NonUnique {
@@ -1099,11 +1099,11 @@ enum bit<8> NonUnique {
 }
 ----
 
-// 400
+// 403
 An `enum` with an underlying type also supports explicit casts to and from the
 underlying type. For instance, the following code:
 
-// 401
+// 404
 [source,p4]
 ----
 bit<8> x;
@@ -1114,18 +1114,18 @@ x = (bit<8>) a; // sets x to 1
 b = (E) x;      // sets b to E.e2
 ----
 
-// 402
+// 405
 casts `a` (which was initialized with `E.e2`) to a `bit<8>`, using the
 specified fixed-width unsigned integer representation for `E.e2`, i.e. `1`. The
 variable `b` is then set to the symbolic value `E.e2`, which corresponds to the
 fixed-width unsigned integer value `1`.
 
-// 403
+// 406
 Because it is always safe to cast from an `enum` to its underlying fixed-width
 integer type, implicit casting from an `enum` to its fixed-width (signed or
 unsigned) integer type is also supported (see <<sec-implicit-cast>>):
 
-// 404
+// 407
 [source,p4]
 ----
 bit<8> x = E.e2; // sets x to 1 (E.e2 is automatically casted to bit<8>)
@@ -1134,11 +1134,11 @@ E  a = E.e2
 bit<8> y = a << 3; // sets y to 8 (a is automatically casted to bit<8> and then shifted)
 ----
 
-// 404
+// 408
 Implicit casting from an underlying fixed-width type to an enum is *not*
 supported.
 
-// 405
+// 409
 [source,p4]
 ----
 enum bit<8> E1 {
@@ -1169,11 +1169,11 @@ a = E1.e1 + E1.e2; // Error: both arguments to the addition are automatically
 a = (E1)(E2.e1 + E2.e2); //  Final explicit casting makes the assignment legal
 ----
 
-// 406
+// 410
 A reasonable compiler might generate a warning in cases that involve multiple
 automatic casts.
 
-// 407
+// 411
 [source,p4]
 ----
 E1     a = E1.e1;
@@ -1187,29 +1187,29 @@ if (a > b) { // Potential warning: two automatic and different casts to bit<8>.
 c = a + b; // Legal, but a warning would be reasonable
 ----
 
-// 408
+// 412
 Note that while it is always safe to cast from an `enum` to its fixed-width
 unsigned integer type, and vice versa, there may be cases where casting a
 fixed-width unsigned integer value to its related `enum` type produces an
 unnamed value.
 
-// 409
+// 413
 [source,p4]
 ----
 bit<8> x = 5;
 E e = (E) x; // sets e to an unnamed value
 ----
 
-// 410
+// 414
 sets `e` to an unnamed value, since there is no symbol corresponding to the
 fixed-width unsigned integer value `5`.
 
-// 411
+// 415
 For example, in the following code, the `else` clause of the `if/else if/else`
 block can be reached even though the matches on `x` are complete with respect
 to the symbols defined in `MyPartialEnum_t`:
 
-// 412
+// 416
 [source,p4]
 ----
 enum bit<2> MyPartialEnum_t {
@@ -1233,12 +1233,12 @@ if (x == MyPartialEnum_t.VALUE_A) {
 }
 ----
 
-// 413
+// 417
 Additionally, if an enumeration is used as a field of a header, we would expect
 the `transition select` to match `default` when the parsed integer value does
 not match one of the symbolic values of `EtherType` in the following example:
 
-// 414
+// 418
 [source,p4]
 ----
 enum bit<16> EtherType {
@@ -1264,7 +1264,7 @@ parser my_parser(/* parameters omitted */) {
 }
 ----
 
-// 415
+// 419
 Any variable with an `enum` type that contains an unnamed value (whether as the
 result of a cast to an `enum` with an underlying type, parse into the field of
 an `enum` with an underlying type, or simply the declaration of any `enum`
@@ -1273,7 +1273,7 @@ defined for that type.  Such an unnamed value should still lead to predictable
 behavior in cases where any legal value would match, e.g. it should match in
 any of these situations:
 
-// 416
+// 420
 * If used in a `select` expression, it should match `default` or `_`
   in a key set expression.
 * If used as a key with `match_kind` `ternary` in a table, it should
@@ -1281,14 +1281,14 @@ any of these situations:
 * If used as a key with `match_kind` `lpm` in a table, it should match
   a table entry where the field has a prefix length of 0.
 
-// 417
+// 421
 Note that if an `enum` value lacking an underlying type appears in the
 control-plane API, the compiler must select a suitable serialization data type
 and representation. For `enum` values with an underlying type and
 representations, the compiler should use the specified underlying type as the
 serialization data type and representation.
 
-// 418
+// 422
 Additionally, the size of a serializable enum can be determined at
 compile-time. However, the size of an enum without an underlying type cannot be
 determined at compile-time (<<sec-minsizeinbits>>).

@@ -1,26 +1,26 @@
 [#sec-call-convention-overview]
 === Call convention: copy-in/copy-out
 
-// 144
+// 145
 P4 provides multiple constructs for writing modular programs: extern methods,
 parsers, controls, actions. All these constructs behave similarly to procedures
 in standard general-purpose programming languages:
 
-// 145
+// 146
 * They have named and typed parameters.
 * They introduce a new local scope for parameters and local variables.
 * They allow arguments to be passed by binding them to their parameters.
 
-// 170 - Modified
+// 171 - Modified
 ${syntax: parameterList nonEmptyParameterList parameter direction}
 
-// 146
+// 147
 Invocations are executed using copy-in/copy-out semantics.
 
-// 147
+// 148
 Each parameter may be labeled with a direction:
 
-// 148
+// 149
 * `in` parameters are read-only. It is an error to use an `in`
   parameter on the left-hand side of an assignment or to pass it to a callee as
   a non-`in` argument. `in` parameters are initialized by copying the value of
@@ -48,16 +48,16 @@ Each parameter may be labeled with a direction:
     need not be a compile-time known value.
 *** The parameter's value is provided by the control plane software when an entry
     is added to a table that uses that action.  See <<sec-action>>.
-// 149
+// 150
 ** A directionless parameter of an extern object type is passed by reference.
 
-// 150
+// 151
 Direction `out` parameters are always initialized at the beginning of execution
 of the portion of the program that has the `out` parameters, e.g. `control`,
 `parser`, `action`, function, etc.  This initialization is not performed for
 parameters with any direction that is not `out`.
 
-// 151
+// 152
 * If a direction `out` parameter is of type `header` or `header_union`, it is set
   to "invalid".
 * If a direction `out` parameter is of type header stack, all elements
@@ -69,10 +69,10 @@ parameters with any direction that is not `out`.
 * If a direction `out` parameter has any other type, e.g. `bit<W>`, an
   implementation need not initialize it to any predictable value.
 
-// 152
+// 153
 For example, if a direction `out` parameter has type `s2_t` named `p`:
 
-// 153
+// 154
 [source,p4]
 ----
 header h1_t {
@@ -91,17 +91,17 @@ struct s2_t {
 }
 ----
 
-// 154
+// 155
 then at the beginning of execution of the part of the program that has the
 `out` parameter `p`, it must be initialized so that `p.h1b` and and `p.s1.h1a`
 are invalid.  No other parts of `p` are required to be initialized.
 
-// 155
+// 156
 Arguments are evaluated from left to right prior to the invocation of the
 function itself. The order of evaluation is important when the expression
 supplied for an argument can have side-effects. Consider the following example:
 
-// 156
+// 157
 [source,p4]
 ----
 extern void f(inout bit x, in bit y);
@@ -110,14 +110,14 @@ bit a;
 f(a, g(a));
 ----
 
-// 157
+// 158
 Note that the evaluation of `g` may mutate its argument `a`, so the compiler
 has to ensure that the value passed to `f` for its first parameter is not
 changed by the evaluation of the second argument. The semantics for evaluating
 a function call is given by the following algorithm (implementations can be
 different as long as they provide the same result):
 
-// 158
+// 159
 1. Arguments are evaluated from left to right as they appear in the function call
    expression.
 2. If a parameter has a default value and no corresponding argument is supplied,
@@ -134,11 +134,11 @@ different as long as they provide the same result):
    arguments are copied in order from left to right into the l-values saved in
    Step 3.
 
-// 159
+// 160
 According to this algorithm, the previous function call is equivalent to the
 following sequence of statements:
 
-// 160
+// 161
 [source,p4]
 ----
 bit tmp1 = a;     // evaluate a; save result
@@ -147,11 +147,11 @@ f(tmp1, tmp2);    // evaluate f; modifies tmp1
 a = tmp1;         // copy inout result back into a
 ----
 
-// 161
+// 162
 To see why Step 3 in the above algorithm is important, consider the following
 example:
 
-// 162
+// 163
 [source,p4]
 ----
 header H { bit z; }
@@ -159,11 +159,11 @@ H[2] s;
 f(s[a].z, g(a));
 ----
 
-// 163
+// 164
 The evaluation of this call is equivalent to the following sequence of
 statements:
 
-// 164
+// 165
 [source,p4]
 ----
 bit tmp1 = a;          // save the value of a
@@ -173,7 +173,7 @@ f(tmp2, tmp3);         // evaluate f; modifies tmp2
 s[tmp1].z = tmp2;      // copy inout result back; dest is not s[a].z
 ----
 
-// 165
+// 166
 When used as arguments, `extern` objects can only be passed as directionless
 parameters--e.g., see the packet argument in the very simple switch example.
 
@@ -184,7 +184,7 @@ endif::[]
 
 ==== Justification
 
-// 166
+// 167
 The main reason for using copy-in/copy-out semantics (instead of the more
 common call-by-reference semantics) is for controlling the side-effects of
 `extern` functions and methods. `extern` methods and functions are the main
@@ -195,17 +195,17 @@ program objects; this enables the compiler to limit the side-effects that
 affect `out` parameters) and in time (side-effects can only occur at function
 call time).
 
-// 167
+// 168
 In general, `extern` functions are arbitrarily powerful: they can store
 information in global storage, spawn separate threads, "collude" with each
 other to share information--but they cannot access any variable in a P4
 program. With copy-in/copy-out semantics the compiler can still reason about P4
 programs that invoke `extern` functions.
 
-// 168
+// 169
 There are additional benefits of using copy-in copy-out semantics:
 
-// 169
+// 170
 * It enables P4 to be compiled for architectures that do not support references
   (e.g., where all data is allocated to named registers. Such architectures may
   require indices into header stacks that appear in a program to be compile-time
@@ -213,11 +213,11 @@ There are additional benefits of using copy-in copy-out semantics:
 * It simplifies some compiler analyses, since function parameters can never alias
   to each other within the function body.
 
-// 171
+// 172
 Following is a summary of the constraints imposed by the parameter
 directions:
 
-// 172
+// 173
 * When used as arguments, extern objects can only be passed as directionless
   parameters.
 * All constructor parameters are evaluated at compilation-time, and in
@@ -241,7 +241,7 @@ directions:
   parameters, invocations that use the default values must use named arguments,
   as in the following example:
 
-// 173
+// 174
 [source,p4]
 ----
 extern void f(in bit a, in bit<3> b = 2, in bit<5> c);
@@ -256,7 +256,7 @@ void g() {
 
 ==== Optional parameters
 
-// 174
+// 175
 A parameter that is annotated with the `@optional` annotation is optional: the
 user may omit the value for that parameter in an invocation. Optional
 parameters can only appear for arguments of: packages, parser types, control
@@ -266,14 +266,14 @@ has both optional parameters and default values then it can only be called
 using named arguments. It is recommended, but not mandatory, for all optional
 parameters to be at the end of a parameter list.
 
-// 175
+// 176
 The implementation of such objects is not expressed in P4, so the meaning and
 implementation of optional parameters should be specified by the target
 architecture. For example, we can imagine a two-stage switch architecture where
 the second stage is optional. This could be declared as a package with an
 optional parameter:
 
-// 176
+// 177
 [source,p4]
 ----
 package pipeline(/* parameters omitted */);
@@ -283,15 +283,15 @@ pipeline(/* arguments omitted */) ingress;
 switch(ingress) main;   // a switch with a single-stage pipeline
 ----
 
-// 177
+// 178
 Here the target architecture could implement the elided optional argument using
 an empty pipeline.
 
-// 178
+// 179
 The following example shows optional parameters and parameters with default
 values.
 
-// 179
+// 180
 [source,p4]
 ----
 extern void h(in bit<32> a, in bool b = true);  // default value

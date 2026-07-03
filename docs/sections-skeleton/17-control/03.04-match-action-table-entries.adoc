@@ -1,34 +1,34 @@
 [#sec-table-entry]
 ==== Table entries
 
-// 928
+// 935
 While table entries are typically installed by the control plane, tables may
 also be initialized at compile time with a set of entries.
 
-// 929
+// 936
 Declaring these entries with `const entries` is useful in situations where
 tables are used to implement fixed algorithms--defining table entries
 statically enables expressing these algorithms directly in P4, which allows the
 compiler to infer how the table is actually used and potentially make better
 allocation decisions for targets with limited resources.
 
-// 930
+// 937
 Declaring entries with `entries` (without the `const` qualifier) enables one to
 specify a mix of some immutable entries that are always in the table, and some
 mutable entries that the control plane is allowed to later change or remove.
 
-// 931
+// 938
 Entries declared in the P4 source are installed in the table when the program
 is loaded onto the target. Entries cannot be specified for a table with no key
 (see <<sec-table-key>>).
 
-// 932
+// 939
 Table entries are defined using the following syntax:
 
-// 933 - Modified
+// 940 - Modified
 ${syntax: tableEntryList tableEntry tableEntryPriority}
 
-// 934
+// 941
 Table entries defined using `const entries` are immutable--i.e., they can only
 be read by the control plane. The control plane is not allowed to remove or
 modify any entries defined within `const entries`, nor is it allowed to add
@@ -36,7 +36,7 @@ entries to such a table. It is allowed for individual entries to have the
 `const` keyword before them, but this is redundant when the entries are
 declared using `const entries`.
 
-// 935
+// 942
 Table entries defined using `entries` (without a `const` qualifier before it)
 may have `const` before them, or not, independently for each entry. Entries
 with `const` before them may not be modified or removed by the control plane.
@@ -44,20 +44,20 @@ Entries without `const` may be modified or removed by the control plane. It is
 permitted for the control plane to add entries to such a table (subject to
 table capacity limitations), unlike tables declared with `const entries`.
 
-// 936
+// 943
 Whether the control plane is allowed to modify a table's default action at run
 time is determined by the table's `default_action` table property (see
 <<sec-table-default-action>>), independently of whether the control plane is
 allowed to modify the entries of the table.
 
-// 937
+// 944
 The `keysetExpression` component of an entry is a tuple that must provide a
 field for each key in the table keys (see <<sec-table-props>>). The table key
 type must match the type of the element of the set. The `tableActionReference`
 component must be an action which appears in the table actions list (and must
 not have the `@defaultonly` annotation), with all its arguments bound.
 
-// 938
+// 945
 If no entry priorities are specified in the source code, and if the runtime API
 requires a priority for the entries of a table--e.g. when using the P4 Runtime
 API, tables with at least one `ternary` search key field--then the entries are
@@ -65,14 +65,14 @@ matched in program order, stopping at the first matching entry. Architectures
 should define the significance of entry order (if any) for other kinds of
 tables.
 
-// 939
+// 946
 Because control-plane APIs cannot insert or remove entries of a table that is
 declared with `const entries`, the relative priorities of such a table's
 entries are determined solely by the program order of the entries. Therefore
 assigning numeric priorities to entries of a table that has `const entries` is
 not allowed.
 
-// 940
+// 947
 Depending on the `match_kind` of the keys, key set expressions may define one
 or multiple entries. The compiler will synthesize the correct number of entries
 to be installed in the table. Target constraints may further restrict the
@@ -80,10 +80,10 @@ ability of synthesizing entries. For example, if the number of synthesized
 entries exceeds the table size, the compiler implementation may choose to issue
 a warning or an error, depending on target capabilities.
 
-// 941
+// 948
 To illustrate, consider the following example:
 
-// 942
+// 949
 [source,p4]
 ----
 header hdr {
@@ -133,7 +133,7 @@ control ingress(inout Header_t h, inout Meta_t m,
 }
 ----
 
-// 943
+// 950
 In this example we define a set of 7 entries, all of which invoke action
 `a_params` except for the final entry which invokes action `a`. Once the
 program is loaded, these entries are installed in the table in the order they
@@ -142,7 +142,7 @@ are enumerated in the program.
 [#sec-table-entry-priority]
 ===== Entry priorities
 
-// 944
+// 951
 If a table has fields where their ``match_kind``s are all `exact` or `lpm`,
 there is no reason to assign numeric priorities to its entries. If they are all
 `exact`, duplicate keys are not allowed, and thus every lookup key can match at
@@ -151,7 +151,7 @@ field, the priority of the entry corresponds to the length of the prefix, i.e.
 if a lookup key matches multiple prefixes, the longest prefix is always the
 winner.
 
-// 945
+// 952
 For tables with other `match_kind` values, e.g. at least one `ternary` field,
 in general it is possible to install multiple entries such that the same lookup
 key can match the key of multiple entries installed into the table at the same
@@ -162,22 +162,22 @@ a numeric priority with each entry added to such a table. This enables the data
 plane to determine which of several matching entries is the "winner", i.e. the
 one entry whose action is invoked.
 
-// 946
+// 953
 Unfortunately there are two commonly used, but different, ways of interpreting
 numeric priority values.
 
-// 947
+// 954
 The P4Runtime API requires numeric priorities to be positive integers, i.e. 1
 or larger, and defines that entries with larger priorities must win over
 entries with smaller priorities. We will call this convention
 `largest_priority_wins`.
 
-// 948
+// 955
 TDI requires numeric priorities to be non-negative integers, i.e. 0 or larger,
 and defines that entries with smaller priorities must win over entries with
 larger priorities. We will call this convention `smallest_priority_wins`.
 
-// 949
+// 956
 We wish to support either of these conventions when developers specify
 priorities for initial table entries in the program. Thus there is a table
 property `largest_priority_wins`. If explicitly specified for a table, its
@@ -187,13 +187,13 @@ the `smallest_priority_wins` convention. If the table property is not present
 at all, then the default convention is `true`, corresponding to
 `largest_priority_wins`.
 
-// 950
+// 957
 We also wish to support developers that want the convenience of predictable
 entry priority values automatically selected by the compiler, without having to
 write them in the program, plus the ability to specify entry priorities
 explicitly, if they wish.
 
-// 951
+// 958
 In some cases, developers may wish the initial priority values to have "gaps"
 between their values, to leave room for possible later insertion of new entries
 between two initial entries. They can achieve this by explicitly specifying all
@@ -202,28 +202,28 @@ priority values, of course, but as a convenience we define the table property
 not specified for a table, to use as a default difference between the
 priorities of consecutive entries.
 
-// 952
+// 959
 There are two steps that occur at compile time for a table with the `entries`
 property involving entry priorities:
 
-// 953
+// 960
 * Determine the value of the priority of every entry in the `entries` list.
 * Issue any errors or warnings that are appropriate for these priority values.
   Warnings may be suppressed via an appropriate `@noWarn` annotation.
 
-// 954
+// 961
 These steps are performed independently for each table with the `entries`
 property, and each is described in more detail below.
 
-// 955
+// 962
 In general, if the developer specifies a priority value for an entry, that is
 the value that will be used.
 
-// 956
+// 963
 If the developer does not specify priority values for any entry, then the
 compiler calculates priority values for every entry as follows:
 
-// 957
+// 964
 [source,p4pseudo]
 ----
 // For this pseudocode, table entries in the `entries` list are
@@ -244,14 +244,14 @@ if (largest_priority_wins == true) {
 }
 ----
 
-// 958
+// 965
 If the developer specifies priority values for at least one entry, then in
 order to simplify the rules for determining priorities of entries without one
 in the source code, the first entry _must_ have a priority value explicitly
 provided. The priorities of entries that do not have one in the source code (if
 any) are determined as follows:
 
-// 959
+// 966
 [source,p4pseudo]
 ----
 // Same conventions here as in the previous block of pseudocode above.
@@ -273,25 +273,25 @@ for (int j = 1; j < n; j += 1) {
 }
 ----
 
-// 960
+// 967
 This is the end of the first step: determining entry priorities.
 
-// 961
+// 968
 The priorities determined in this way are the values used when the P4 program
 is first loaded into a device. Afterwards, the priorities may only change by
 means provided by the control plane API in use.
 
-// 962
+// 969
 In the second step, the compiler issues errors for out of range priority
 values, and/or warnings for certain combinations of entry priorities that might
 be unintended by the developer, unless the developer explicitly disables those
 warnings.
 
-// 963
+// 970
 If any priority values are negative, or larger than the maximum supported
 value, that is a compile time error.
 
-// 964
+// 971
 If the annotation `@noWarn("duplicate_priorities")` is _not_ used on the
 `entries` table property, then the compiler issues a warning if any two entries
 for the same table have equal priority values. Both P4Runtime and TDI leave it
@@ -299,18 +299,18 @@ unspecified which entry is the winner if a lookup key matches multiple keys
 that all have the same priority, hence a warning is useful to less experienced
 developers that are unfamiliar with this unspecified behavior.
 
-// 965
+// 972
 If the annotation `@noWarn("duplicate_priorities")` is used on the `entries`
 table property, then no warnings of this type are ever issued by the compiler.
 Using equal priority values for multiple entries in the same table is sometimes
 useful in reducing the number of hardware updates required when adding entries
 to such a table.
 
-// 966
+// 973
 If the annotation `@noWarn("entries_out_of_priority_order")` is _not_ used on
 the `entries` table property, then the compiler issues a warning if:
 
-// 967
+// 974
 * If `largest_priority_wins` is `true` for the table, and there is any pair of
   consecutive entries where `prio[j] < prio[j+1]`, then a warning is issued for
   that pair of entries.
@@ -318,22 +318,22 @@ the `entries` table property, then the compiler issues a warning if:
   consecutive entries where `prio[j] > prio[j+1]`, then a warning is issued for
   that pair of entries.
 
-// 968
+// 975
 This warning is useful to developers that want the order that entries appear in
 the source code to match the relative priority of entries in the target device.
 
-// 969
+// 976
 If the annotation `@noWarn("entries_out_of_priority_order")` is used on the
 `entries` table property, then no warnings of this type are ever issued by the
 compiler for this table.  his option is provided for developers who explicitly
 choose to specify entries in an order that does not match their relative
 priority order.
 
-// 970
+// 977
 The following example is the same as the first example in <<sec-entries>>,
 except for the definition of table `t_exact_ternary` shown below.
 
-// 971
+// 978
 [source,p4]
 ----
 table t_exact_ternary {
@@ -363,12 +363,12 @@ table t_exact_ternary {
 }
 ----
 
-// 972
+// 979
 The entries that do not have an explicit priority specified will be assigned
 the priority values shown in the comments, because `priority_delta` is 10, and
 because of those entries that do have priority values specified.
 
-// 973
+// 980
 Normally this program would cause a warning about multiple entries with the
 same priority of 40, but those warnings will be suppressed because of the
 `@noWarn("duplicate_priorities")` annotation.
