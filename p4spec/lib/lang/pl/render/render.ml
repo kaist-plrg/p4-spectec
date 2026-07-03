@@ -124,18 +124,18 @@ let alternate_doc ?(caps = false) (hint : Hints.Alter.t)
 
 (* Numbers *)
 
-let string_of_num (num : num) = Il.Print.string_of_num num
+let string_of_num (num : num) : string = Il.Print.string_of_num num
 
 (* Texts *)
 
-let string_of_text (text : text) = Il.Print.string_of_text text
+let string_of_text (text : text) : string = Il.Print.string_of_text text
 
 (* Identifiers *)
 
-let string_of_varid (varid : id) = Il.Print.string_of_varid varid
-let string_of_relid (relid : id) = Il.Print.string_of_relid relid
+let string_of_varid (varid : id) : string = Il.Print.string_of_varid varid
+let string_of_relid (relid : id) : string = Il.Print.string_of_relid relid
 
-let string_of_defid ?(link = false) (defid : id) =
+let string_of_defid ?(link = false) (defid : id) : string =
   if link then Il.Print.string_of_varid defid
   else Il.Print.string_of_defid defid
 
@@ -171,12 +171,12 @@ let code_of_mixop (mixop : mixop) : Adoc.code =
 
 (* Iterators *)
 
-let code_of_iter (iter : iter) =
+let code_of_iter (iter : iter) : Adoc.code =
   match iter with
-  | List -> "{asterisk}" |> adoc_superscript
-  | Opt -> "?" |> adoc_superscript
+  | List -> Adoc.token ("{asterisk}" |> adoc_superscript)
+  | Opt -> Adoc.token ("?" |> adoc_superscript)
 
-let code_of_iterexp ((iter, _) : iterexp) = code_of_iter iter
+let code_of_iterexp ((iter, _) : iterexp) : Adoc.code = code_of_iter iter
 
 (* Variables *)
 
@@ -186,7 +186,7 @@ let render_var ((id, _typ, iters) : var) : Adoc.code =
     Adoc.cseq
       [
         render_varid id;
-        Adoc.token (String.concat "" (List.map code_of_iter iters));
+        Adoc.cseq (List.map code_of_iter iters);
       ]
 
 let render_in_itervars (vars : var list) : Adoc.prose =
@@ -195,7 +195,7 @@ let render_in_itervars (vars : var list) : Adoc.prose =
       [
         Adoc.code (render_var var);
         Adoc.text " in ";
-        Adoc.code (Adoc.cseq [ render_var var; Adoc.token (code_of_iter List) ]);
+        Adoc.code (Adoc.cseq [ render_var var; code_of_iter List ]);
       ]
   in
   render_list_doc (List.map render_in_var vars)
@@ -210,7 +210,7 @@ let render_out_itervars (vars : var list) : Adoc.prose =
              (Adoc.pseq
                 [
                   Adoc.code
-                    (Adoc.cseq [ render_var var; Adoc.token (code_of_iter List) ]);
+                    (Adoc.cseq [ render_var var; code_of_iter List ]);
                   Adoc.text " be the list";
                 ]))
   |> render_list_doc
@@ -224,11 +224,11 @@ let tid_of_typ (typ' : typ') : id option =
 
 (* Operators *)
 
-let render_unop = Sl.Print.string_of_unop
+let string_of_unop (unop : unop) : string = Sl.Print.string_of_unop unop
 
 (* Operator words used in prose phrasing (the code form uses the printer). *)
 
-let binop_word (binop : binop) : string =
+let string_of_binop (binop : binop) : string =
   match binop with
   | `AndOp -> "and"
   | `OrOp -> "or"
@@ -236,7 +236,7 @@ let binop_word (binop : binop) : string =
   | `EquivOp -> "is equivalent to"
   | _ -> Sl.Print.string_of_binop binop
 
-let cmpop_word (cmpop : cmpop) : string =
+let string_of_cmpop (cmpop : cmpop) : string =
   match cmpop with
   | `EqOp -> "is equal to"
   | `NeOp -> "is not equal to"
@@ -289,7 +289,7 @@ let rec render_code (exp : exp) : Adoc.code =
   | TextE text -> Adoc.token ("\"" ^ String.escaped text ^ "\"")
   | VarE id_var -> render_varid id_var
   | UnE (unop, _, exp_inner) ->
-      Adoc.cseq [ Adoc.token (render_unop unop); render_code exp_inner ]
+      Adoc.cseq [ Adoc.token (string_of_unop unop); render_code exp_inner ]
   | BinE (binop, _, exp_l, exp_r) ->
       Adoc.cseq
         [
@@ -405,14 +405,14 @@ and render_iter_code (exp_inner : exp) (iterexp : iterexp) : Adoc.code =
   match (exp_inner.node.it, iterexp) with
   | _, (_, []) -> render_code exp_inner
   | (VarE _ | TupleE _), _ ->
-      Adoc.cseq [ render_code exp_inner; Adoc.token (code_of_iterexp iterexp) ]
+      Adoc.cseq [ render_code exp_inner; code_of_iterexp iterexp ]
   | _ ->
       let inner = render_code exp_inner in
       let sexp = Adoc.to_adoc_code inner in
       if String.contains sexp ' ' then
         Adoc.cseq
-          [ Adoc.token "( "; inner; Adoc.token (" )" ^ code_of_iterexp iterexp) ]
-      else Adoc.cseq [ inner; Adoc.token (code_of_iterexp iterexp) ]
+          [ Adoc.token "( "; inner; Adoc.token " )"; code_of_iterexp iterexp ]
+      else Adoc.cseq [ inner; code_of_iterexp iterexp ]
 
 and code_of_notexp (notexp : notexp) : Adoc.code =
   let mixop, exps = Mixfix.split notexp in
@@ -446,7 +446,7 @@ and render_path (path : path) : Adoc.code =
   | DotP (path, atom) ->
       Adoc.cseq [ render_path path; Adoc.token "."; code_of_atom atom ]
 
-and string_of_targs (targs : targ list) = Sl.Print.string_of_targs targs
+and string_of_targs (targs : targ list) : string = Sl.Print.string_of_targs targs
 
 and render_arg_code (arg : arg) : Adoc.code =
   match arg.it with
@@ -520,10 +520,10 @@ and render_prose (exp : exp) : Adoc.prose =
           | Some p -> p
           | None ->
               Adoc.code
-                (Adoc.cseq [ Adoc.token (render_unop unop); render_code exp_inner ]))
+                (Adoc.cseq [ Adoc.token (string_of_unop unop); render_code exp_inner ]))
       | _ ->
           Adoc.code
-            (Adoc.cseq [ Adoc.token (render_unop unop); render_code exp_inner ]))
+            (Adoc.cseq [ Adoc.token (string_of_unop unop); render_code exp_inner ]))
   | BinE (`ImplOp, _, exp_l, exp_r) ->
       Adoc.pseq
         [
@@ -536,7 +536,7 @@ and render_prose (exp : exp) : Adoc.prose =
       Adoc.pseq
         [
           render_prose exp_l;
-          Adoc.text (" " ^ binop_word binop ^ " ");
+          Adoc.text (" " ^ string_of_binop binop ^ " ");
           render_prose exp_r;
         ]
   | BinE (#Num.binop, _, _, _) -> Adoc.code (render_code exp)
@@ -544,7 +544,7 @@ and render_prose (exp : exp) : Adoc.prose =
       Adoc.pseq
         [
           render_prose exp_l;
-          Adoc.text (" " ^ cmpop_word cmpop ^ " ");
+          Adoc.text (" " ^ string_of_cmpop cmpop ^ " ");
           render_prose exp_r;
         ]
   | SubE (exp_inner, typ) ->
@@ -660,7 +660,7 @@ and render_negated_prose_opt (exp : exp) : Adoc.prose option =
       | None ->
           Some
             (Adoc.code
-               (Adoc.cseq [ Adoc.token (render_unop `NotOp); render_code exp ])))
+               (Adoc.cseq [ Adoc.token (string_of_unop `NotOp); render_code exp ])))
   | _ -> None
 
 and render_arg_prose (arg : arg) : Adoc.prose =
@@ -704,7 +704,7 @@ let render_guard (exp_scrut : exp) (guard : guard) : Adoc.prose =
       Adoc.pseq
         [
           render_prose exp_scrut;
-          Adoc.text (" " ^ cmpop_word cmpop ^ " ");
+          Adoc.text (" " ^ string_of_cmpop cmpop ^ " ");
           render_prose exp;
         ]
   | SubG typ ->
