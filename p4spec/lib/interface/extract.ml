@@ -116,7 +116,7 @@ let id_of_parameter (value : value) : string =
 let rec tid_of_typeRef (value : value) : Context.tid =
   match flatten_case_v_opt value with
   | Some ("baseType", _, _)
-  | Some ("headerStackType", _, _)
+  | Some ("arrayType", _, _)
   | Some ("listType", _, _)
   | Some ("tupleType", _, _) ->
       Empty

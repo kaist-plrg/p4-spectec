@@ -209,9 +209,12 @@ def $lift_dataTypeIR(LIST `< typeIR >)
 def $lift_dataTypeIR(TUPLE `< typeIR* >)
   = TUPLE `< typeArgumentList >
   -- if typeArgumentList = $lift_typeArgumentListIR(typeIR*)
-def $lift_dataTypeIR(typeIR `[ n ])
-  = namedType `[ (D n) ]
-  -- if namedType = $lift_typeIR(typeIR)
+def $lift_dataTypeIR(ARRAY typeIR `[ n ])
+  = type `[ (D n) ]
+  -- if type = $lift_typeIR(typeIR)
+def $lift_dataTypeIR(HEADER_STACK typeIR `[ n ])
+  = type `[ (D n) ]
+  -- if type = $lift_typeIR(typeIR)
 def $lift_dataTypeIR(ENUM typeId `{ _ }) = typeName
   -- if typeName = $lift_nameIR_as_typeName(typeId)
 def $lift_dataTypeIR(ENUM typeId `< typeIR > `{ _ })
