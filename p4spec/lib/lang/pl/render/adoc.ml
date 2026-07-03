@@ -1,53 +1,144 @@
-module F = Format
+open Utils
 
-(* Asciidoc utils *)
+(* Inline documents
 
-let rec adoc_escape (c : char) (text : string) =
-  match String.index_opt text c with
-  | None -> text
-  | Some idx ->
-      let text_before = String.sub text 0 idx in
-      let text_after =
-        String.sub text (idx + 1) (String.length text - idx - 1)
-      in
-      text_before ^ "+" ^ String.make 1 c ^ "+" ^ adoc_escape c text_after
+   Inline content is split into two layers so the type system forbids
+   monospacing prose: a monospace [Code] span may contain only [code] tokens,
+   never [prose] words. [Code] is the sole bridge from [code] into [prose], and
+   it is a [prose] constructor, so [Code] can neither wrap prose nor nest inside
+   another [Code]. Monospacing is therefore applied exactly once, structurally,
+   with no [in_code] bookkeeping. *)
 
-let adoc_width_short = 30
-let adoc_fits_in_width_short (s : string) = String.length s <= adoc_width_short
-let adoc_subscript (s : string) = "~" ^ s ^ "~"
-let adoc_superscript (s : string) = "^" ^ s ^ "^"
-let adoc_bold (s : string) = "*" ^ s ^ "*"
-let adoc_mono (s : string) = "``" ^ s ^ "``"
+type prose =
+  | Text of string (* prose words -- never monospaced *)
+  | PSeq of prose list
+  | PLink of string * prose (* cross-reference wrapping prose *)
+  | Code of code (* a monospace span -- the only bridge into [code] *)
 
-let adoc_mono_chopped (s : string) =
-  s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
+and code =
+  | Token of string (* a code token / run *)
+  | CSeq of code list
+  | CLink of string * code (* cross-reference to a definition, inside code *)
 
-let adoc_ordered_bullet (level : int) =
-  Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')
+(* Prose constructors *)
 
-let adoc_unordered_bullet (level : int) =
-  Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '*')
+let text (s : string) : prose = Text s
+let pseq (ps : prose list) : prose = PSeq ps
+let plink ~(target : string) (p : prose) : prose = PLink (target, p)
+let code (c : code) : prose = Code c
+let pempty : prose = PSeq []
+let ( ++ ) (a : prose) (b : prose) : prose = PSeq [ a; b ]
 
-let adoc_link ~(link : string) (text : string) : string =
-  let brackets = String.contains text '[' || String.contains text ']' in
-  let angles = String.contains text '<' || String.contains text '>' in
-  match (brackets, angles) with
-  | false, false | false, true -> "xref:" ^ link ^ "[" ^ text ^ "]"
-  | true, false -> "<<" ^ link ^ "," ^ text ^ ">>"
-  | true, true ->
-      Format.eprintf
-        "Warning: Asciidoc link text contains both brackets and angle \
-         brackets. Link may not render correctly.\n\
-         \t%s\n"
-        text;
-      text
+(* Code constructors *)
 
-let adoc_attach_block = "+\n"
-let adoc_open_block (s : string) = F.asprintf "--\n%s\n--" s
+let token (s : string) : code = Token s
+let cseq (cs : code list) : code = CSeq cs
+let clink ~(target : string) (c : code) : code = CLink (target, c)
+let cempty : code = CSeq []
 
-let reindent_lines ?(level = 0) (s : string) : string =
-  let lines = String.split_on_char '\n' s in
-  String.concat ("\n" ^ adoc_unordered_bullet level) lines
+(* Structural lints
 
-let unindent_lines (s : string) : string =
-  s |> String.split_on_char '\n' |> String.concat ""
+   The typed representation lets the serializer report malformed documents that
+   string concatenation hid: a cross-reference nested inside another (asciidoc
+   renders only the outer, dropping the inner xref), an empty link target, or a
+   link / code span wrapping nothing. Warnings go to stderr, de-duplicated.
+   (Monospacing prose and nested code are now unrepresentable, so they need no
+   runtime check.) *)
+
+let warned : (string, unit) Hashtbl.t = Hashtbl.create 64
+
+let warn (msg : string) : unit =
+  if not (Hashtbl.mem warned msg) then (
+    Hashtbl.add warned msg ();
+    Format.eprintf "Warning [pl/render]: %s\n%!" msg)
+
+let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
+  if lint then
+    warn
+      (Printf.sprintf
+         "nested link: cross-reference to %S is dropped inside the link to %S \
+          (asciidoc cannot nest cross-references)"
+         inner outer)
+
+(* [link_ctx] is the target of the innermost open link, or [None] at top level.
+   [lint] is off for the deliberate raw / links-off serializers. *)
+
+let rec ser_prose ~(link_ctx : string option) ~(lint : bool) (p : prose) :
+    string =
+  match p with
+  | Text s -> s
+  | PSeq ps -> String.concat "" (List.map (ser_prose ~link_ctx ~lint) ps)
+  | Code c ->
+      let s = ser_code ~link_ctx ~lint c in
+      if lint && s = "" then warn "code span wraps empty content";
+      adoc_mono_chopped s
+  | PLink (target, p) -> (
+      if lint && target = "" then warn "link with empty target";
+      match link_ctx with
+      | Some outer ->
+          warn_nested ~lint ~outer ~inner:target;
+          ser_prose ~link_ctx ~lint p
+      | None ->
+          let s = ser_prose ~link_ctx:(Some target) ~lint p in
+          if lint && s = "" then
+            warn (Printf.sprintf "link to %S has empty body" target);
+          adoc_link ~link:target s)
+
+and ser_code ~(link_ctx : string option) ~(lint : bool) (c : code) : string =
+  match c with
+  | Token s -> s
+  | CSeq cs -> String.concat "" (List.map (ser_code ~link_ctx ~lint) cs)
+  | CLink (target, c) -> (
+      if lint && target = "" then warn "link with empty target";
+      match link_ctx with
+      | Some outer ->
+          warn_nested ~lint ~outer ~inner:target;
+          ser_code ~link_ctx ~lint c
+      | None ->
+          let s = ser_code ~link_ctx:(Some target) ~lint c in
+          if lint && s = "" then
+            warn (Printf.sprintf "link to %S has empty body" target);
+          adoc_link ~link:target s)
+
+(* Serialize a prose document at the top level *)
+
+let to_adoc (p : prose) : string = ser_prose ~link_ctx:None ~lint:true p
+
+(* Serialize a code fragment as raw tokens (no enclosing monospace span) *)
+
+let to_adoc_code (c : code) : string = ser_code ~link_ctx:None ~lint:false c
+
+(* Serialize prose with cross-references suppressed and no surrounding link *)
+
+let to_adoc_in_link (p : prose) : string =
+  ser_prose ~link_ctx:(Some "") ~lint:false p
+
+(* Block documents
+
+   Block-level asciidoc: inline [prose] sentences joined by literal scaffolding
+   (bullets, newlines, attach blocks, tables). Replaces the hand-rolled
+   [F.asprintf]/[^] assembly in the instruction and definition renderers, so each
+   logical line is a single [prose] serialized once and block structure is a
+   typed tree. Literal markup is carried as [Raw] (it holds no inline rendering
+   context to lose); rendered content flows through [Inline]. *)
+
+type block =
+  | Inline of prose (* one inline sentence *)
+  | Raw of string (* literal scaffolding: bullets, "\n", "--", "|===", anchors *)
+  | Concat of block list (* children concatenated with no separator *)
+  | Vseq of block list (* children joined by "\n" *)
+  | Empty
+
+let inline (d : prose) : block = Inline d
+let raw (s : string) : block = Raw s
+let concat (ts : block list) : block = Concat ts
+let vseq (ts : block list) : block = Vseq ts
+let empty : block = Empty
+
+let rec serialize (b : block) : string =
+  match b with
+  | Empty -> ""
+  | Inline d -> to_adoc d
+  | Raw s -> s
+  | Concat ts -> String.concat "" (List.map serialize ts)
+  | Vseq ts -> String.concat "\n" (List.map serialize ts)
