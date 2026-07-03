@@ -151,20 +151,23 @@ let render_varid (id_var : id) : Adoc.code =
 
 (* Atoms *)
 
-let code_of_atom (atom : atom) =
+(* The [+...+] passthrough form of an atom (empty for the invisible Tick). Used
+   raw where the string is needed (mixfix assembly, struct-literal markers). *)
+
+let string_of_atom (atom : atom) : string =
   match atom.it with
   | Atom.Tick -> ""
   | _ -> "+" ^ Atom.string_of_atom atom.it ^ "+"
 
-let code_of_atoms (atoms : atom list) =
-  atoms |> List.map code_of_atom |> String.concat " "
+let code_of_atom (atom : atom) : Adoc.code = Adoc.token (string_of_atom atom)
 
 (* Mixfix operators *)
 
-let code_of_mixop (mixop : mixop) =
+let code_of_mixop (mixop : mixop) : Adoc.code =
   let arity = Mixop.arity mixop in
   let placeholders = List.init arity (fun _ -> "%") in
-  Mixop.assemble ~string_of_atom:code_of_atom mixop placeholders |> String.trim
+  Adoc.token
+    (Mixop.assemble ~string_of_atom mixop placeholders |> String.trim)
 
 (* Iterators *)
 
@@ -309,7 +312,7 @@ let rec render_code (exp : exp) : Adoc.code =
       match pattern with
       | Il.CaseP mixop when Mixop.arity mixop = 0 ->
           Adoc.cseq
-            [ scrut; Adoc.token " is "; Adoc.token (code_of_pattern (Il.CaseP mixop)) ]
+            [ scrut; Adoc.token " is "; code_of_pattern (Il.CaseP mixop) ]
       | Il.ListP `Nil -> Adoc.cseq [ scrut; Adoc.token " is an empty list" ]
       | Il.ListP `Cons -> Adoc.cseq [ scrut; Adoc.token " is a non-empty list" ]
       | Il.ListP (`Fixed len) ->
@@ -318,7 +321,7 @@ let rec render_code (exp : exp) : Adoc.code =
       | Il.OptP `Some -> Adoc.cseq [ scrut; Adoc.token " is defined" ]
       | pattern ->
           Adoc.cseq
-            [ scrut; Adoc.token " matches pattern "; Adoc.token (code_of_pattern pattern) ]
+            [ scrut; Adoc.token " matches pattern "; code_of_pattern pattern ]
       )
   | TupleE exps ->
       Adoc.cseq [ Adoc.token "( "; render_codes ~sep:", " exps; Adoc.token " )" ]
@@ -332,7 +335,7 @@ let rec render_code (exp : exp) : Adoc.code =
                (fun i (atom, exp_f) ->
                  let field =
                    Adoc.cseq
-                     [ Adoc.token (code_of_atom atom); Adoc.token " "; render_code exp_f ]
+                     [ code_of_atom atom; Adoc.token " "; render_code exp_f ]
                  in
                  if i = 0 then field else Adoc.cseq [ Adoc.token ", "; field ])
                expfields);
@@ -356,7 +359,7 @@ let rec render_code (exp : exp) : Adoc.code =
       Adoc.cseq [ Adoc.token "the length of "; render_code exp_inner ]
   | DotE (exp_b, atom) ->
       Adoc.cseq
-        [ render_code exp_b; Adoc.token "."; Adoc.token (code_of_atom atom) ]
+        [ render_code exp_b; Adoc.token "."; code_of_atom atom ]
   | IdxE (exp_b, exp_i) ->
       Adoc.cseq
         [ render_code exp_b; Adoc.token "["; render_code exp_i; Adoc.token "]" ]
@@ -413,16 +416,16 @@ and render_iter_code (exp_inner : exp) (iterexp : iterexp) : Adoc.code =
 
 and code_of_notexp (notexp : notexp) : Adoc.code =
   let mixop, exps = Mixfix.split notexp in
-  assemble_doc ~atom:code_of_atom mixop (List.map render_code exps)
+  assemble_doc ~atom:string_of_atom mixop (List.map render_code exps)
 
-and code_of_pattern (pattern : pattern) : string =
+and code_of_pattern (pattern : pattern) : Adoc.code =
   match pattern with
   | Il.CaseP mixop -> code_of_mixop mixop
-  | Il.ListP `Cons -> "_ :: _"
-  | Il.ListP (`Fixed len) -> Format.asprintf "[ _/%d ]" len
-  | Il.ListP `Nil -> "[]"
-  | Il.OptP `Some -> "(_)"
-  | Il.OptP `None -> "()"
+  | Il.ListP `Cons -> Adoc.token "_ :: _"
+  | Il.ListP (`Fixed len) -> Adoc.token (Format.asprintf "[ _/%d ]" len)
+  | Il.ListP `Nil -> Adoc.token "[]"
+  | Il.OptP `Some -> Adoc.token "(_)"
+  | Il.OptP `None -> Adoc.token "()"
 
 and render_path (path : path) : Adoc.code =
   match path.it with
@@ -439,9 +442,9 @@ and render_path (path : path) : Adoc.code =
           render_code exp_h;
           Adoc.token "]";
         ]
-  | DotP ({ it = RootP; _ }, atom) -> Adoc.token (code_of_atom atom)
+  | DotP ({ it = RootP; _ }, atom) -> code_of_atom atom
   | DotP (path, atom) ->
-      Adoc.cseq [ render_path path; Adoc.token "."; Adoc.token (code_of_atom atom) ]
+      Adoc.cseq [ render_path path; Adoc.token "."; code_of_atom atom ]
 
 and string_of_targs (targs : targ list) = Sl.Print.string_of_targs targs
 
@@ -504,7 +507,7 @@ and render_prose (exp : exp) : Adoc.prose =
                (fun i (atom, exp_f) ->
                  let field =
                    Adoc.pseq
-                     [ Adoc.text (code_of_atom atom); Adoc.text " "; render_prose exp_f ]
+                     [ Adoc.text (string_of_atom atom); Adoc.text " "; render_prose exp_f ]
                  in
                  if i = 0 then field else Adoc.pseq [ Adoc.text ", "; field ])
                expfields);
@@ -553,7 +556,7 @@ and render_prose (exp : exp) : Adoc.prose =
         ]
   | MatchE (exp_inner, pattern) -> (
       let scrut = render_prose exp_inner in
-      let pat p = Adoc.code (Adoc.token (code_of_pattern p)) in
+      let pat p = Adoc.code (code_of_pattern p) in
       match pattern with
       | Il.CaseP mixop when Mixop.arity mixop = 0 ->
           Adoc.pseq [ scrut; Adoc.text " is "; pat (Il.CaseP mixop) ]
@@ -629,7 +632,7 @@ and render_negated_prose_opt (exp : exp) : Adoc.prose option =
            [
              render_prose exp_e;
              Adoc.text " does not match pattern ";
-             Adoc.code (Adoc.token (code_of_pattern pattern));
+             Adoc.code (code_of_pattern pattern);
            ])
   | SubE (exp_e, typ) ->
       Some
@@ -716,7 +719,7 @@ let render_guard (exp_scrut : exp) (guard : guard) : Adoc.prose =
         [
           render_prose exp_scrut;
           Adoc.text " matches pattern ";
-          Adoc.code (Adoc.token (code_of_pattern pattern));
+          Adoc.code (code_of_pattern pattern);
         ]
   | MemG exp ->
       Adoc.pseq
@@ -1361,7 +1364,7 @@ and render_rel_title_math (rel_signature : rel_signature) (exps : exp list) :
   let num_outputs = Mixop.arity mixop - List.length dexps in
   let holes = List.init num_outputs (fun _ -> Adoc.token "%") in
   let padded = Hints.Input.combine inputs dexps holes in
-  Adoc.code (assemble_doc ~atom:code_of_atom mixop padded)
+  Adoc.code (assemble_doc ~atom:string_of_atom mixop padded)
 
 and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =
