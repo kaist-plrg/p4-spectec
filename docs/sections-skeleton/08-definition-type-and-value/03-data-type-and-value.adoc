@@ -126,6 +126,38 @@ ${rulegroup-prose: Type_ok/tupleType}
 ${rulegroup-source: Type_wf/tupleTypeIR}
 ${rulegroup-prose: Type_wf/tupleTypeIR}
 
+[#sec-array]
+==== Arrays
+
+// 284
+An array is a fixed-size vector of elements of the same type. It is defined as:
+
+// Added
+${syntax: arrayType}
+
+// 286
+where `typeRef` refers to the element type and the expression is a compile-time
+known value that is the size of the array. For an array type such as `arr[n]`,
+`n-1` is the maximum defined index.
+
+// Added
+Internally, array types and values are represented as follows:
+
+// Added
+${syntax: arrayTypeIR arrayValue}
+
+===== Type checking
+
+// Added
+${rulegroup-source: Type_ok/arrayType}
+${rulegroup-prose: Type_ok/arrayType}
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/arrayTypeIR}
+${rulegroup-prose: Type_wf/arrayTypeIR}
+
 [#sec-header-stack]
 ==== Header stacks
 
@@ -134,7 +166,7 @@ A header stack represents an array of headers or header unions. A header stack
 type is defined as:
 
 // 287 - Modified
-${syntax: headerStackType}
+${syntax: arrayType}
 
 // 287 - Modified
 where `namedType` refers to a header or header union type. For a header stack
@@ -321,13 +353,6 @@ ${rulegroup-prose: Type_ok/headerStackType}
 // Added
 ${rulegroup-source: Type_wf/headerStackTypeIR}
 ${rulegroup-prose: Type_wf/headerStackTypeIR}
-
-[#sec-array]
-==== Arrays
-
-ifndef::release[]
-NOTE: This feature will be added to P4 v1.2.5.6. It is not modeled in P4-SpecTec yet.
-endif::[]
 
 [#sec-struct]
 ==== Structs
