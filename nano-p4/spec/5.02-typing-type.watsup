@@ -1,4 +1,4 @@
-relation ParameterType_alpha:
+relation ParameterType_eq:
   parameterIR ~~ parameterIR
   hint(input %0 %1)
 
@@ -14,44 +14,44 @@ rulegroup Type_ok {
 
 }
 
-rule Type_alpha/baseTypeIR:
+rule Type_eq/baseTypeIR:
   baseTypeIR ~~ baseTypeIR
 
-rulegroup Type_alpha/dataTypeIR {
+rulegroup Type_eq/dataTypeIR {
 
-  rule Type_alpha/structTypeIR:
+  rule Type_eq/structTypeIR:
     (STRUCT typeId `{ _ })
     ~~ (STRUCT typeId `{ _ })
 
-  rule Type_alpha/headerTypeIR:
+  rule Type_eq/headerTypeIR:
     (HEADER typeId `{ _ })
     ~~ (HEADER typeId `{ _ })
 
 }
 
-rulegroup Type_alpha/objectTypeIR {
+rulegroup Type_eq/objectTypeIR {
 
-  rule Type_alpha/externObjectTypeIR:
+  rule Type_eq/externObjectTypeIR:
     (EXTERN typeId _) ~~ (EXTERN typeId _)
 
-  rule Type_alpha/parserObjectTypeIR:
+  rule Type_eq/parserObjectTypeIR:
     (PARSER _ `( parameterIR_a* )) ~~ (PARSER _ `( parameterIR_b* ))
-    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
 
-  rule Type_alpha/controlObjectTypeIR:
+  rule Type_eq/controlObjectTypeIR:
     (CONTROL _ `( parameterIR_a* )) ~~ (CONTROL _ `( parameterIR_b* ))
-    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
 
-  rule Type_alpha/packageObjectTypeIR:
+  rule Type_eq/packageObjectTypeIR:
     (PACKAGE _ `( parameterIR_a* )) ~~ (PACKAGE _ `( parameterIR_b* ))
-    -- (ParameterType_alpha: parameterIR_a ~~ parameterIR_b)*
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
 
-  rule Type_alpha/tableObjectTypeIR:
+  rule Type_eq/tableObjectTypeIR:
     (TABLE typeId) ~~ (TABLE typeId)
 
 }
 
-rule ParameterType_alpha:
+rule ParameterType_eq:
   (direction typeIR_a _)
   ~~ (direction typeIR_b _)
-  -- Type_alpha: typeIR_a ~~ typeIR_b
+  -- Type_eq: typeIR_a ~~ typeIR_b
