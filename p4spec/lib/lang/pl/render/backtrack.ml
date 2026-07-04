@@ -12,16 +12,11 @@ module BlockLabel : sig
 end = struct
   type t = { id : string; display : string }
 
-  (* Current namespace prefix for generated ids *)
-
   let namespace : string option ref = ref None
 
   (* Per-namespace counter for unique label numbers *)
 
   let counters : (string, int) Hashtbl.t = Hashtbl.create 64
-
-  (* Set the namespace prefix for ids generated afterwards *)
-
   let set_namespace (namespace_ : string) = namespace := Some namespace_
 
   (* Fresh label, counted within the current namespace *)
@@ -56,13 +51,11 @@ type ordered_style =
   | Upperalpha
   | Upperroman
 
-(* The list style asciidoctor uses at the given nesting depth *)
-
 let style_at_level (level : int) : ordered_style =
   let cycle = [| Arabic; Loweralpha; Lowerroman; Upperalpha; Upperroman |] in
   cycle.(((level mod 5) + 5) mod 5)
 
-(* The arm's list marker as asciidoctor renders it at this level and index *)
+(* Must mirror asciidoctor's own numbering exactly, or arm cross-links break *)
 
 let arm_letter (level : int) (idx : int) : string =
   let to_roman ?(upper = false) (n : int) =
@@ -107,8 +100,6 @@ let render_fallthrough_link (backtrack : ctx option) : string =
       F.asprintf "+++<sub class=\"bk-mark\">[<a href=\"#%s\">%s</a>]</sub>+++"
         id_target text
 
-(* Backtrack target for arm [idx]: the next arm, or out of the block *)
-
 let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int) ~(total : int)
     (idx : int) : ctx =
   let target =
@@ -117,8 +108,7 @@ let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int) ~(total : int)
   in
   { block; target }
 
-(* Trails the arm's first line; bk-arm-anchor sets scroll-margin-top so
-   fragment links land on the arm header *)
+(* Trails the arm's first line; bk-arm-anchor sets scroll-margin-top so fragment links land on the arm header *)
 
 let arm_anchor ~(block : BlockLabel.t) ~(level_arm : int) (idx : int) : string =
   F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++" block.id

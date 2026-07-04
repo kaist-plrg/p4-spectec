@@ -1,13 +1,6 @@
 open Utils
 
-(* Inline documents
-
-   Inline content is split into two layers so the type system forbids
-   monospacing prose: a monospace [Code] span may contain only [code] tokens,
-   never [prose] words. [Code] is the sole bridge from [code] into [prose], and
-   it is a [prose] constructor, so [Code] can neither wrap prose nor nest inside
-   another [Code]. Monospacing is therefore applied exactly once, structurally,
-   with no [in_code] bookkeeping. *)
+(* [prose]/[code] split in two so the type system forbids monospacing prose: [Code] is the only bridge into [code] and can't nest or wrap prose. *)
 
 type prose =
   | Text of string (* prose words -- never monospaced *)
@@ -36,21 +29,14 @@ let cseq (cs : code list) : code = CSeq cs
 let clink ~(target : string) (c : code) : code = CLink (target, c)
 let cempty : code = CSeq []
 
-(* Structural lints
-
-   The typed representation lets the serializer report malformed documents that
-   string concatenation hid: a cross-reference nested inside another (asciidoc
-   renders only the outer, dropping the inner xref), an empty link target, or a
-   link / code span wrapping nothing. Warnings go to stderr, de-duplicated.
-   (Monospacing prose and nested code are now unrepresentable, so they need no
-   runtime check.) *)
+(* Structural lints: warn (stderr, de-duplicated) on malformed docs that string concat used to hide -- nested cross-references, empty link targets, empty link/code bodies. *)
 
 let warned : (string, unit) Hashtbl.t = Hashtbl.create 64
 
 let warn (msg : string) : unit =
   if not (Hashtbl.mem warned msg) then (
     Hashtbl.add warned msg ();
-    Format.eprintf "Warning [pl/render]: %s\n%!" msg)
+    Util.Error.warn_prose Util.Source.no_region msg)
 
 let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
   if lint then
@@ -60,8 +46,7 @@ let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
           (asciidoc cannot nest cross-references)"
          inner outer)
 
-(* [link_ctx] is the target of the innermost open link, or [None] at top level.
-   [lint] is off for the deliberate raw / links-off serializers. *)
+(* [link_ctx] is the innermost open link's target ([None] at top level); [lint] is off for the deliberate raw / links-off serializers. *)
 
 let rec ser_prose ~(link_ctx : string option) ~(lint : bool) (p : prose) :
     string =
@@ -113,18 +98,12 @@ let to_adoc_code (c : code) : string = ser_code ~link_ctx:None ~lint:false c
 let to_adoc_in_link (p : prose) : string =
   ser_prose ~link_ctx:(Some "") ~lint:false p
 
-(* Block documents
-
-   Block-level asciidoc: inline [prose] sentences joined by literal scaffolding
-   (bullets, newlines, attach blocks, tables). Replaces the hand-rolled
-   [F.asprintf]/[^] assembly in the instruction and definition renderers, so each
-   logical line is a single [prose] serialized once and block structure is a
-   typed tree. Literal markup is carried as [Raw] (it holds no inline rendering
-   context to lose); rendered content flows through [Inline]. *)
+(* Block documents: [prose] sentences joined by literal scaffolding (bullets, "\n", tables); [Raw] carries literal markup, [Inline] carries rendered content. *)
 
 type block =
   | Inline of prose (* one inline sentence *)
-  | Raw of string (* literal scaffolding: bullets, "\n", "--", "|===", anchors *)
+  | Raw of
+      string (* literal scaffolding: bullets, "\n", "--", "|===", anchors *)
   | Concat of block list (* children concatenated with no separator *)
   | Vseq of block list (* children joined by "\n" *)
   | Empty
@@ -134,6 +113,24 @@ let raw (s : string) : block = Raw s
 let concat (ts : block list) : block = Concat ts
 let vseq (ts : block list) : block = Vseq ts
 let empty : block = Empty
+
+(* Sole owner of the ordered-list bullet format, so instruction renderers stop threading a pre-formatted bullet string. *)
+let bullet (level : int) : block = Raw (adoc_ordered_bullet level)
+
+(* Owns the "[cols=...]|===...|===" envelope; [rows] are pre-serialized (table cells are raw code by spec, see PROSE.md). *)
+let table ~(cols : int) ~(header : prose list) (rows : string list list) : block
+    =
+  let header_line =
+    "| " ^ String.concat " | " (List.map to_adoc header) ^ " \n\n"
+  in
+  let row_lines =
+    rows
+    |> List.map (fun cells -> "| " ^ String.concat " | " cells)
+    |> String.concat "\n"
+  in
+  Raw
+    (Printf.sprintf "[cols=\"%d\", options=\"header\"]\n|===\n%s%s\n\n|===" cols
+       header_line row_lines)
 
 let rec serialize (b : block) : string =
   match b with
