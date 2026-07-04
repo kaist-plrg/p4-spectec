@@ -80,66 +80,6 @@ and validate' (cursor : int) (hint : t) (items : 'a list) : (int, string) result
       Ok cursor_r
   | _ -> Ok cursor
 
-(* Alternation *)
-
-let rec alternate ?(base_text : string -> string = fun x -> x)
-    ?(base_atom : atom -> string = Print.string_of_atom)
-    ?(base_exp : exp -> string = Print.string_of_exp) (hint : t)
-    (print : 'a -> string) (items : 'a list) : string =
-  let _, result =
-    alternate' ~base_text ~base_atom ~base_exp hint print items 0
-  in
-  result
-
-and alternate' ?(base_text : string -> string = fun x -> x)
-    ?(base_atom : atom -> string = Print.string_of_atom)
-    ?(base_exp : exp -> string = Print.string_of_exp) (hint : t)
-    (print : 'a -> string) (items : 'a list) (cursor : int) : int * string =
-  match hint with
-  | TextH str -> (cursor, base_text str)
-  | AtomH atom -> (cursor, base_atom atom)
-  | SeqH hints ->
-      let cursor, strs =
-        List.fold_left
-          (fun (cursor, strs) hint ->
-            let cursor, str =
-              alternate' ~base_text ~base_atom ~base_exp hint print items cursor
-            in
-            (cursor, strs @ [ str ]))
-          (cursor, []) hints
-      in
-      (cursor, String.concat " " strs)
-  | BrackH (atom_l, hint, atom_r) ->
-      let cursor, str =
-        alternate' ~base_text ~base_atom ~base_exp hint print items cursor
-      in
-      let strs =
-        [
-          Printf.sprintf "%s" (base_atom atom_l);
-          str;
-          Printf.sprintf "%s" (base_atom atom_r);
-        ]
-        |> List.filter (fun s -> String.length s > 0)
-      in
-      (cursor, String.concat " " strs)
-  | HoleH `Next ->
-      let item = List.nth items cursor in
-      let str = print item in
-      (cursor + 1, str)
-  | HoleH (`Num idx) ->
-      let item = List.nth items idx in
-      let str = print item in
-      (cursor, str)
-  | FuseH (hint_l, hint_r) ->
-      let cursor, str_l =
-        alternate' ~base_text ~base_atom ~base_exp hint_l print items cursor
-      in
-      let cursor, str_r =
-        alternate' ~base_text ~base_atom ~base_exp hint_r print items cursor
-      in
-      (cursor, str_l ^ str_r)
-  | OtherH hintexp -> (cursor, Print.string_of_exp hintexp)
-
 (* Re-alignment of alternation indices *)
 
 let rec collect (hint : t) : int list = collect' [] hint
@@ -186,3 +126,52 @@ and realign' (realign : (int * int) list) (hint : t) : t =
       let hint_r = realign' realign hint_r in
       FuseH (hint_l, hint_r)
   | _ -> hint
+
+(* Alternation *)
+
+module Ops = struct
+  type 'd t = {
+    empty : 'd;
+    text : string -> 'd option;
+    atom : atom -> 'd;
+    join : 'd list -> 'd;
+    fuse : 'd -> 'd -> 'd;
+    other : exp -> 'd;
+  }
+end
+
+let alternate (ops : 'd Ops.t) (hint : t) (render : 'a -> 'd) (items : 'a list)
+    : 'd =
+  let rec go (hint : t) (cursor : int) : int * 'd option =
+    match hint with
+    | TextH str -> (cursor, ops.text str)
+    | AtomH atom -> (cursor, Some (ops.atom atom))
+    | SeqH hints ->
+        let cursor, ds =
+          List.fold_left
+            (fun (cursor, acc) hint ->
+              let cursor, d = go hint cursor in
+              (cursor, acc @ [ Option.value ~default:ops.empty d ]))
+            (cursor, []) hints
+        in
+        (cursor, Some (ops.join ds))
+    | BrackH (atom_l, hint, atom_r) -> (
+        let cursor, d = go hint cursor in
+        let ds =
+          List.filter_map Fun.id
+            [ Some (ops.atom atom_l); d; Some (ops.atom atom_r) ]
+        in
+        (cursor, match ds with [] -> None | _ -> Some (ops.join ds)))
+    | HoleH `Next -> (cursor + 1, Some (render (List.nth items cursor)))
+    | HoleH (`Num idx) -> (cursor, Some (render (List.nth items idx)))
+    | FuseH (hint_l, hint_r) ->
+        let cursor, d_l = go hint_l cursor in
+        let cursor, d_r = go hint_r cursor in
+        ( cursor,
+          Some
+            (ops.fuse
+               (Option.value ~default:ops.empty d_l)
+               (Option.value ~default:ops.empty d_r)) )
+    | OtherH hintexp -> (cursor, Some (ops.other hintexp))
+  in
+  go hint 0 |> snd |> Option.value ~default:ops.empty

@@ -18,6 +18,32 @@ and code =
 let text (s : string) : prose = Text s
 let pseq (ps : prose list) : prose = PSeq ps
 let plink ~(target : string) (p : prose) : prose = PLink (target, p)
+
+(* Capitalizes the first letter of [p]'s own text, skipping past empty [Text]
+   runs; stops (a no-op) at the first [PLink]/[Code], since that content isn't
+   ours to alter and never starts with a lowercase letter to begin with. *)
+type cap_step = Done of prose | Skip | Stop
+
+let rec capitalize_first_step (p : prose) : cap_step =
+  match p with
+  | Text "" -> Skip
+  | Text s -> Done (Text (String.capitalize_ascii s))
+  | PSeq [] -> Skip
+  | PSeq (p0 :: ps) -> (
+      match capitalize_first_step p0 with
+      | Done p0' -> Done (PSeq (p0' :: ps))
+      | Stop -> Stop
+      | Skip -> (
+          match capitalize_first_step (PSeq ps) with
+          | Done (PSeq ps') -> Done (PSeq (p0 :: ps'))
+          | Done _ -> assert false
+          | Skip -> Skip
+          | Stop -> Stop))
+  | PLink _ | Code _ -> Stop
+
+let capitalize_first (p : prose) : prose =
+  match capitalize_first_step p with Done p' -> p' | Skip | Stop -> p
+
 let code (c : code) : prose = Code c
 let pempty : prose = PSeq []
 let ( ++ ) (a : prose) (b : prose) : prose = PSeq [ a; b ]

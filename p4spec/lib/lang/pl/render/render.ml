@@ -11,7 +11,7 @@ open Utils
 
 (* Oxford-comma join over inline docs *)
 
-let render_list_doc (items : Adoc.prose list) : Adoc.prose =
+let render_list (items : Adoc.prose list) : Adoc.prose =
   match items with
   | [] -> Adoc.pempty
   | [ item ] -> item
@@ -31,75 +31,43 @@ let render_list_doc (items : Adoc.prose list) : Adoc.prose =
           item_last;
         ]
 
-(* [Adoc.t] analogue of [Hints.Alter.alternate]: holes render straight to [Adoc.t] (not strings), so nested links collapse structurally under an outer [Adoc.plink] with no [to_adoc_in_link] needed. *)
+(* Alternation *)
 
-let alternate_doc ?(caps = false) (hint : Hints.Alter.t)
+let alternate ?(caps = false) (hint : Hints.Alter.t)
     (base_text : string -> string) (render : 'a -> Adoc.prose) (items : 'a list)
     : Adoc.prose =
-  let atom_doc (atom : atom) : Adoc.prose =
-    Adoc.code (Adoc.token ("+" ^ (atom.it |> Atom.string_of_atom) ^ "+"))
+  let module Ops = struct
+    let empty : Adoc.prose = Adoc.pempty
+
+    let text (s : string) : Adoc.prose option =
+      match s with "" -> None | s -> Some (Adoc.text (base_text s))
+
+    let atom (atom : atom) : Adoc.prose =
+      Adoc.code (Adoc.token ("+" ^ Atom.string_of_atom atom.it ^ "+"))
+
+    let join (docs : Adoc.prose list) : Adoc.prose =
+      Adoc.pseq
+        (List.mapi
+           (fun i d -> if i = 0 then d else Adoc.pseq [ Adoc.text " "; d ])
+           docs)
+
+    let fuse (a : Adoc.prose) (b : Adoc.prose) : Adoc.prose = Adoc.pseq [ a; b ]
+
+    let other (hintexp : El.exp) : Adoc.prose =
+      Adoc.text (El.Print.string_of_exp hintexp)
+  end in
+  let ops : Adoc.prose Hints.Alter.Ops.t =
+    {
+      empty = Ops.empty;
+      text = Ops.text;
+      atom = Ops.atom;
+      join = Ops.join;
+      fuse = Ops.fuse;
+      other = Ops.other;
+    }
   in
-  let space_join (docs : Adoc.prose list) : Adoc.prose =
-    Adoc.pseq
-      (List.mapi
-         (fun i d -> if i = 0 then d else Adoc.pseq [ Adoc.text " "; d ])
-         docs)
-  in
-  (* [caps] capitalizes the first emitted piece; a leading code/atom starts with a non-letter so capitalization there is a no-op, matching the old [String.capitalize_ascii]. *)
-  let cap_pending = ref caps in
-  let consume_cap () = if !cap_pending then cap_pending := false in
-  let cap_text (s : string) : string =
-    if !cap_pending && s <> "" then (
-      cap_pending := false;
-      String.capitalize_ascii s)
-    else s
-  in
-  let rec go (hint : Hints.Alter.t) (cursor : int) : int * Adoc.prose option =
-    let open Hints.Alter in
-    match hint with
-    | TextH str ->
-        let s = cap_text (base_text str) in
-        (cursor, if s = "" then None else Some (Adoc.text s))
-    | AtomH atom ->
-        consume_cap ();
-        (cursor, Some (atom_doc atom))
-    | SeqH hints ->
-        let cursor, docs =
-          List.fold_left
-            (fun (cursor, acc) hint ->
-              let cursor, d = go hint cursor in
-              (cursor, acc @ [ Option.value ~default:Adoc.pempty d ]))
-            (cursor, []) hints
-        in
-        (cursor, Some (space_join docs))
-    | BrackH (atom_l, hint, atom_r) -> (
-        let cursor, d = go hint cursor in
-        let pieces =
-          List.filter_map Fun.id
-            [ Some (atom_doc atom_l); d; Some (atom_doc atom_r) ]
-        in
-        (cursor, match pieces with [] -> None | _ -> Some (space_join pieces)))
-    | HoleH `Next ->
-        consume_cap ();
-        (cursor + 1, Some (render (List.nth items cursor)))
-    | HoleH (`Num idx) ->
-        consume_cap ();
-        (cursor, Some (render (List.nth items idx)))
-    | FuseH (hint_l, hint_r) ->
-        let cursor, dl = go hint_l cursor in
-        let cursor, dr = go hint_r cursor in
-        ( cursor,
-          Some
-            (Adoc.pseq
-               [
-                 Option.value ~default:Adoc.pempty dl;
-                 Option.value ~default:Adoc.pempty dr;
-               ]) )
-    | OtherH hintexp ->
-        let s = cap_text (El.Print.string_of_exp hintexp) in
-        (cursor, Some (Adoc.text s))
-  in
-  go hint 0 |> snd |> Option.value ~default:Adoc.pempty
+  let p = Hints.Alter.alternate ops hint render items in
+  if caps then Adoc.capitalize_first p else p
 
 (* Numbers *)
 
@@ -170,7 +138,7 @@ let render_in_itervars (vars : var list) : Adoc.prose =
         Adoc.code (Adoc.cseq [ render_var var; code_of_iter List ]);
       ]
   in
-  render_list_doc (List.map render_in_var vars)
+  render_list (List.map render_in_var vars)
 
 let render_out_itervars (vars : var list) : Adoc.prose =
   vars
@@ -184,7 +152,7 @@ let render_out_itervars (vars : var list) : Adoc.prose =
                   Adoc.code (Adoc.cseq [ render_var var; code_of_iter List ]);
                   Adoc.text " be the list";
                 ]))
-  |> render_list_doc
+  |> render_list
 
 (* Types *)
 
@@ -552,7 +520,7 @@ and render_prose (exp : exp) : Adoc.prose =
       match (hint_opt, link_opt) with
       | Some hints, Some tid ->
           Adoc.plink ~target:tid.it
-            (alternate_doc hints (reindent_lines ~level:0) render_prose
+            (alternate hints (reindent_lines ~level:0) render_prose
                (Mixfix.args notexp))
       | _ -> Adoc.code (code_of_notexp notexp))
   | CatE (exp_l, exp_r) ->
@@ -581,7 +549,7 @@ and render_prose (exp : exp) : Adoc.prose =
       match (hint_in, hint_true) with
       | Some hints, _ | _, Some hints ->
           Adoc.plink ~target:id.it
-            (alternate_doc hints (reindent_lines ~level:0) render_arg_prose args)
+            (alternate hints (reindent_lines ~level:0) render_arg_prose args)
       | None, None -> Adoc.code (render_code exp))
   | IterE (exp_inner, iterexp) -> (
       match iterexp with
@@ -597,7 +565,7 @@ and render_proses ?(sep : string option) (exps : exp list) : Adoc.prose =
              if i = 0 then render_prose exp
              else Adoc.pseq [ Adoc.text sep; render_prose exp ])
            exps)
-  | None -> render_list_doc (List.map render_prose exps)
+  | None -> render_list (List.map render_prose exps)
 
 and render_negated_prose_opt (exp : exp) : Adoc.prose option =
   match exp.node.it with
@@ -630,8 +598,7 @@ and render_negated_prose_opt (exp : exp) : Adoc.prose option =
       | Some hints ->
           Some
             (Adoc.plink ~target:id.it
-               (alternate_doc hints (reindent_lines ~level:0) render_arg_prose
-                  args))
+               (alternate hints (reindent_lines ~level:0) render_arg_prose args))
       | None ->
           Some
             (Adoc.code
@@ -824,7 +791,7 @@ and render_hold_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     | Some hint ->
         Adoc.to_adoc
           (Adoc.plink ~target:(string_of_relid id_rel)
-             (alternate_doc hint (reindent_lines ~level:0) render_prose exps))
+             (alternate hint (reindent_lines ~level:0) render_prose exps))
     | None ->
         let math =
           Adoc.to_adoc
@@ -928,8 +895,7 @@ and render_group_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
         Adoc.plink ~target:(string_of_relid id_rel)
-          (alternate_doc ~caps:true hint (reindent_lines ~level:0) render_prose
-             exps)
+          (alternate ~caps:true hint (reindent_lines ~level:0) render_prose exps)
     | None, None ->
         Adoc.plink ~target:(string_of_relid id_rel)
           (render_rel_title_math rel_signature exps)
@@ -1063,12 +1029,12 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         let prose_out =
           (* Not wrapped in a visible link; inner links suppressed via a links-off string render. *)
           Adoc.to_adoc_in_link
-            (alternate_doc hint_out unindent_lines render_prose exps_out)
+            (alternate hint_out unindent_lines render_prose exps_out)
         in
         let prose_in =
           Adoc.to_adoc
             (Adoc.plink ~target:(string_of_relid id_rel)
-               (alternate_doc hint_in unindent_lines render_prose exps_in))
+               (alternate hint_in unindent_lines render_prose exps_in))
         in
         if adoc_fits_in_width_short prose_in then
           F.asprintf "Let %s be the result of %s" prose_out prose_in
@@ -1137,7 +1103,7 @@ and render_result_instr ~(level : int) (hints : Annot.hints)
           (Adoc.pseq
              [
                Adoc.text "Result in ";
-               alternate_doc hint (reindent_lines ~level:0) render_prose exps;
+               alternate hint (reindent_lines ~level:0) render_prose exps;
                Adoc.text ".";
              ])
     | None, [] -> line (Adoc.text "The relation holds.")
@@ -1196,7 +1162,7 @@ and render_destruct_instr ~(level : int) (fields : (string option * exp) list)
              Adoc.text "Let ";
              render_proses exps_target;
              Adoc.text " be ";
-             render_list_doc (List.map (fun s -> Adoc.text ("the " ^ s)) names);
+             render_list (List.map (fun s -> Adoc.text ("the " ^ s)) names);
              Adoc.text " of ";
              render_prose exp_source;
              Adoc.text ".";
@@ -1294,7 +1260,7 @@ and render_group (instr : instr) : string =
         | Some hint, _ | _, Some hint ->
             Adoc.to_adoc
               (Adoc.plink ~target:(string_of_relid id_rel)
-                 (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+                 (alternate ~caps:true hint (reindent_lines ~level:0)
                     render_prose exps))
         | None, None ->
             Adoc.to_adoc
@@ -1359,13 +1325,13 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
           title_header;
           Adoc.raw (adoc_unordered_bullet 0);
           Adoc.inline
-            (alternate_doc ~caps:true hint_in (reindent_lines ~level:1)
-               render_prose exps_in_title);
+            (alternate ~caps:true hint_in (reindent_lines ~level:1) render_prose
+               exps_in_title);
           Adoc.raw ":\n";
           Adoc.raw (adoc_unordered_bullet 0);
           Adoc.inline (Adoc.text "Result in ");
           Adoc.inline
-            (alternate_doc ~caps:false hint_out (reindent_lines ~level:1)
+            (alternate ~caps:false hint_out (reindent_lines ~level:1)
                render_prose exps_out);
           Adoc.raw ".";
         ]
@@ -1375,8 +1341,8 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
           title_header;
           Adoc.raw (adoc_unordered_bullet 0);
           Adoc.inline
-            (alternate_doc ~caps:true hint_in (reindent_lines ~level:1)
-               render_prose exps_in_title);
+            (alternate ~caps:true hint_in (reindent_lines ~level:1) render_prose
+               exps_in_title);
           Adoc.raw ".";
         ]
   | _, _, _, Some hint_true ->
@@ -1385,7 +1351,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
           title_header;
           Adoc.raw (adoc_unordered_bullet 0);
           Adoc.inline
-            (alternate_doc ~caps:true hint_true (reindent_lines ~level:0)
+            (alternate ~caps:true hint_true (reindent_lines ~level:0)
                render_prose exps);
         ]
   | _ ->
@@ -1442,7 +1408,7 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
           Adoc.raw "\n\n";
           Adoc.raw (adoc_unordered_bullet 0);
           Adoc.inline
-            (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+            (alternate ~caps:true hint (reindent_lines ~level:0)
                render_param_prose params);
         ]
   | None, None ->
@@ -1466,7 +1432,7 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
            ~target:(string_of_defid ~link:true id_func)
            (Adoc.text
               (Adoc.to_adoc
-                 (alternate_doc ~caps:true hint (reindent_lines ~level:0)
+                 (alternate ~caps:true hint (reindent_lines ~level:0)
                     render_param_prose params))))
   | None, None ->
       Adoc.inline
