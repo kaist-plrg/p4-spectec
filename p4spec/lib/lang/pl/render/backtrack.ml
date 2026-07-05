@@ -87,7 +87,7 @@ let update ~(label : Label.t) ~(level : int) ~(total : int) (idx : int) : ctx =
 (* Renderers *)
 
 let prose_of_label (label : Label.t) : Adoc.prose =
-  Adoc.text_prose
+  Adoc.text
     (F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]"
        label.id label.display)
 
@@ -102,7 +102,7 @@ let prose_of_fallthrough_link (backtrack : ctx option) : Adoc.prose =
               F.asprintf "%s-%s" label.id letter )
         | OutOfBlock -> (F.asprintf "fail %s" label.display, label.id)
       in
-      Adoc.text_prose
+      Adoc.text
         (F.asprintf
            "+++<sub class=\"bk-mark\">[<a href=\"#%s\">%s</a>]</sub>+++"
            id_target text)
@@ -110,6 +110,6 @@ let prose_of_fallthrough_link (backtrack : ctx option) : Adoc.prose =
 let prose_of_arm_anchor ~(label : Label.t) ~(level : int) (idx : int) :
     Adoc.prose =
   (* bk-arm-anchor sets scroll-margin-top so fragment links land on the arm header *)
-  Adoc.text_prose
+  Adoc.text
     (F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++"
        label.id (arm_letter level idx))

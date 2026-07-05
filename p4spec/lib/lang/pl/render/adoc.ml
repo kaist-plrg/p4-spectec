@@ -26,7 +26,7 @@ type block =
 
 (* Prose constructors *)
 
-let text_prose (s : string) : prose = TextP s
+let text (s : string) : prose = TextP s
 let code_prose (c : code) : prose = CodeP c
 let link_prose ~(target : string) (p : prose) : prose = LinkP (target, p)
 let seq_prose (ps : prose list) : prose = SeqP ps
@@ -34,7 +34,7 @@ let empty_prose : prose = EmptyP
 
 (* Code constructors *)
 
-let token_code (s : string) : code = TokenC s
+let token (s : string) : code = TokenC s
 let link_code ~(target : string) (c : code) : code = LinkC (target, c)
 let seq_code (cs : code list) : code = SeqC cs
 let empty_code : code = EmptyC
@@ -49,6 +49,10 @@ let bullet_block (style : [ `Unordered of int | `Ordered of int ]) : block =
 
 let concat_block (ts : block list) : block = ConcatB ts
 let seq_block (ts : block list) : block = SeqB ts
+
+let bullet_line (style : [ `Unordered of int | `Ordered of int ]) (p : prose) :
+    block =
+  concat_block [ bullet_block style; inline_block p ]
 
 let table_block ~(cols : int) ~(header : prose list) (rows : string list list) :
     block =
@@ -80,6 +84,7 @@ let capitalize_first (p : prose) : prose =
   match capitalize_first_step p with Done p' -> p' | Skip | Stop -> p
 
 let ( ++ ) (a : prose) (b : prose) : prose = SeqP [ a; b ]
+let ( ^^ ) (a : code) (b : code) : code = SeqC [ a; b ]
 
 (* Serialization *)
 

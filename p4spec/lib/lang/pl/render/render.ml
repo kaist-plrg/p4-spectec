@@ -15,23 +15,16 @@ let prose_of_list (items : Adoc.prose list) : Adoc.prose =
   match items with
   | [] -> Adoc.empty_prose
   | [ item ] -> item
-  | [ item_a; item_b ] ->
-      Adoc.seq_prose [ item_a; Adoc.text_prose " and "; item_b ]
+  | [ item_a; item_b ] -> Adoc.(item_a ++ text " and " ++ item_b)
   | _ ->
       let items_rev = List.rev items in
       let items, item_last =
         (items_rev |> List.tl |> List.rev, items_rev |> List.hd)
       in
-      Adoc.seq_prose
-        [
-          Adoc.seq_prose
-            (List.mapi
-               (fun i x ->
-                 if i = 0 then x else Adoc.seq_prose [ Adoc.text_prose ", "; x ])
-               items);
-          Adoc.text_prose ", and ";
-          item_last;
-        ]
+      Adoc.(
+        seq_prose
+          (List.mapi (fun i x -> if i = 0 then x else text ", " ++ x) items)
+        ++ text ", and " ++ item_last)
 
 (* Alternation *)
 
@@ -42,24 +35,19 @@ let alternate ?(caps = false) (hint : Hints.Alter.t)
     let empty : Adoc.prose = Adoc.empty_prose
 
     let text (s : string) : Adoc.prose option =
-      match s with "" -> None | s -> Some (Adoc.text_prose (base_text s))
+      match s with "" -> None | s -> Some (Adoc.text (base_text s))
 
     let atom (atom : atom) : Adoc.prose =
-      Adoc.code_prose
-        (Adoc.token_code ("+" ^ Atom.string_of_atom atom.it ^ "+"))
+      Adoc.code_prose (Adoc.token ("+" ^ Atom.string_of_atom atom.it ^ "+"))
 
     let join (docs : Adoc.prose list) : Adoc.prose =
       Adoc.seq_prose
-        (List.mapi
-           (fun i d ->
-             if i = 0 then d else Adoc.seq_prose [ Adoc.text_prose " "; d ])
-           docs)
+        (List.mapi (fun i d -> if i = 0 then d else Adoc.(text " " ++ d)) docs)
 
-    let fuse (a : Adoc.prose) (b : Adoc.prose) : Adoc.prose =
-      Adoc.seq_prose [ a; b ]
+    let fuse (a : Adoc.prose) (b : Adoc.prose) : Adoc.prose = Adoc.(a ++ b)
 
     let other (hintexp : El.exp) : Adoc.prose =
-      Adoc.text_prose (El.Print.string_of_exp hintexp)
+      Adoc.text (El.Print.string_of_exp hintexp)
   end in
   let ops : Adoc.prose Hints.Alter.Ops.t =
     {
@@ -73,6 +61,33 @@ let alternate ?(caps = false) (hint : Hints.Alter.t)
   in
   let p = Hints.Alter.alternate ops hint render items in
   if caps then Adoc.capitalize_first p else p
+
+(* Assembly *)
+
+let assemble_doc ~(atom : atom -> string) (mixop : Mixop.t)
+    (args : Adoc.code list) : Adoc.code =
+  let atom_opt (a : atom) : Adoc.code option =
+    match atom a with "" -> None | s -> Some (Adoc.token s)
+  in
+  let join (pieces : Adoc.code option list) : Adoc.code option =
+    match List.filter_map Fun.id pieces with
+    | [] -> None
+    | docs ->
+        Some
+          (Adoc.seq_code
+             (List.mapi
+                (fun i d -> if i = 0 then d else Adoc.(token " " ^^ d))
+                docs))
+  in
+  let rec go (m : Adoc.code Mixfix.t) : Adoc.code option =
+    match m with
+    | Mixfix.Arg d -> Some d
+    | Mixfix.Atom a -> atom_opt a
+    | Mixfix.Brack (l, m, r) -> join [ atom_opt l; go m; atom_opt r ]
+    | Mixfix.Infix (l, a, r) -> join [ go l; atom_opt a; go r ]
+    | Mixfix.Seq ms -> join (List.map go ms)
+  in
+  go (Mixfix.fill mixop args) |> Option.value ~default:Adoc.empty_code
 
 (* Numbers *)
 
@@ -92,13 +107,13 @@ let string_of_defid ?(link = false) (defid : id) : string =
   else Il.Print.string_of_defid defid
 
 let code_of_varid (id_var : id) : Adoc.code =
-  if Id.is_underscored id_var then Adoc.token_code "++_++"
+  if Id.is_underscored id_var then Adoc.token "++_++"
   else
     match String.split_on_char '_' id_var.it with
     | [] -> assert false
-    | [ var_type ] -> Adoc.token_code var_type
+    | [ var_type ] -> Adoc.token var_type
     | var_type :: var_subscripts ->
-        Adoc.token_code
+        Adoc.token
           (var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript))
 
 (* Atoms *)
@@ -109,7 +124,7 @@ let string_of_atom (atom : atom) : string =
   | _ -> "+" ^ Atom.string_of_atom atom.it ^ "+"
 
 let code_of_atom (atom : atom) : Adoc.code =
-  atom |> string_of_atom |> Adoc.token_code
+  atom |> string_of_atom |> Adoc.token
 
 (* Mixfix operators *)
 
@@ -118,14 +133,14 @@ let code_of_mixop (mixop : mixop) : Adoc.code =
   let placeholders = List.init arity (fun _ -> "%") in
   placeholders
   |> Mixop.assemble ~string_of_atom mixop
-  |> String.trim |> Adoc.token_code
+  |> String.trim |> Adoc.token
 
 (* Iterators *)
 
 let code_of_iter (iter : iter) : Adoc.code =
   match iter with
-  | List -> "{asterisk}" |> adoc_superscript |> Adoc.token_code
-  | Opt -> "?" |> adoc_superscript |> Adoc.token_code
+  | List -> "{asterisk}" |> adoc_superscript |> Adoc.token
+  | Opt -> "?" |> adoc_superscript |> Adoc.token
 
 let code_of_iterexp (iterexp : iterexp) : Adoc.code =
   let iter, _ = iterexp in
@@ -135,19 +150,15 @@ let code_of_iterexp (iterexp : iterexp) : Adoc.code =
 
 let code_of_var (var : var) : Adoc.code =
   let id, _, iters = var in
-  if Id.is_underscored id then Adoc.token_code "++_++"
-  else
-    Adoc.seq_code
-      [ code_of_varid id; Adoc.seq_code (List.map code_of_iter iters) ]
+  if Id.is_underscored id then Adoc.token "++_++"
+  else Adoc.(code_of_varid id ^^ seq_code (List.map code_of_iter iters))
 
 let prose_of_in_itervars (vars : var list) : Adoc.prose =
   let render_in_var var =
-    Adoc.seq_prose
-      [
-        Adoc.code_prose (code_of_var var);
-        Adoc.text_prose " in ";
-        Adoc.code_prose (Adoc.seq_code [ code_of_var var; code_of_iter List ]);
-      ]
+    Adoc.(
+      code_prose (code_of_var var)
+      ++ text " in "
+      ++ code_prose (code_of_var var ^^ code_of_iter List))
   in
   vars |> List.map render_in_var |> prose_of_list
 
@@ -158,20 +169,15 @@ let prose_of_out_itervars (vars : var list) : Adoc.prose =
          if Id.is_underscored id then None
          else
            Some
-             (Adoc.seq_prose
-                [
-                  Adoc.code_prose
-                    (Adoc.seq_code [ code_of_var var; code_of_iter List ]);
-                  Adoc.text_prose " be the list";
-                ]))
+             Adoc.(
+               code_prose (code_of_var var ^^ code_of_iter List)
+               ++ text " be the list"))
   |> prose_of_list
 
 (* Types *)
 
 let string_of_typ (typ : typ) : string = Sl.Print.string_of_typ typ
-
-let code_of_typ (typ : typ) : Adoc.code =
-  typ |> string_of_typ |> Adoc.token_code
+let code_of_typ (typ : typ) : Adoc.code = typ |> string_of_typ |> Adoc.token
 
 let tid_of_typ (typ' : typ') : id option =
   match typ' with Il.VarT (id, _) -> Some id | _ -> None
@@ -196,34 +202,6 @@ let string_of_cmpop (cmpop : cmpop) : string =
   | `GtOp -> "is greater than"
   | `LeOp -> "is less than or equal to"
   | `GeOp -> "is greater than or equal to"
-
-(* [Adoc.code] analogue of [Mixop.assemble]; args stay [Adoc.code] so cross-references nest structurally. *)
-
-let assemble_doc ~(atom : atom -> string) (mixop : Mixop.t)
-    (args : Adoc.code list) : Adoc.code =
-  let atom_opt (a : atom) : Adoc.code option =
-    match atom a with "" -> None | s -> Some (Adoc.token_code s)
-  in
-  let join (pieces : Adoc.code option list) : Adoc.code option =
-    match List.filter_map Fun.id pieces with
-    | [] -> None
-    | docs ->
-        Some
-          (Adoc.seq_code
-             (List.mapi
-                (fun i d ->
-                  if i = 0 then d else Adoc.seq_code [ Adoc.token_code " "; d ])
-                docs))
-  in
-  let rec go (m : Adoc.code Mixfix.t) : Adoc.code option =
-    match m with
-    | Mixfix.Arg d -> Some d
-    | Mixfix.Atom a -> atom_opt a
-    | Mixfix.Brack (l, m, r) -> join [ atom_opt l; go m; atom_opt r ]
-    | Mixfix.Infix (l, a, r) -> join [ go l; atom_opt a; go r ]
-    | Mixfix.Seq ms -> join (List.map go ms)
-  in
-  go (Mixfix.fill mixop args) |> Option.value ~default:Adoc.empty_code
 
 (* Expressions, as code *)
 
@@ -260,8 +238,7 @@ and code_of_exps ?(sep : string = ", ") (exps : exp list) : Adoc.code =
   Adoc.seq_code
     (List.mapi
        (fun i exp ->
-         if i = 0 then code_of_exp exp
-         else Adoc.seq_code [ Adoc.token_code sep; code_of_exp exp ])
+         if i = 0 then code_of_exp exp else Adoc.(token sep ^^ code_of_exp exp))
        exps)
 
 and code_of_notexp (notexp : notexp) : Adoc.code =
@@ -270,16 +247,16 @@ and code_of_notexp (notexp : notexp) : Adoc.code =
 
 (* Boolean expression, as code *)
 
-and code_of_bool_exp (b : bool) : Adoc.code = Adoc.token_code (string_of_bool b)
+and code_of_bool_exp (b : bool) : Adoc.code = Adoc.token (string_of_bool b)
 
 (* Numeric expression, as code *)
 
-and code_of_num_exp (n : num) : Adoc.code = Adoc.token_code (string_of_num n)
+and code_of_num_exp (n : num) : Adoc.code = Adoc.token (string_of_num n)
 
 (* Text expression, as code *)
 
 and code_of_text_exp (text : text) : Adoc.code =
-  Adoc.token_code ("\"" ^ String.escaped text ^ "\"")
+  Adoc.token ("\"" ^ String.escaped text ^ "\"")
 
 (* Variable expression, as code *)
 
@@ -288,27 +265,23 @@ and code_of_var_exp (id : id) : Adoc.code = code_of_varid id
 (* Unary expression, as code *)
 
 and code_of_un_exp (unop : unop) (exp : exp) : Adoc.code =
-  Adoc.seq_code [ Adoc.token_code (string_of_unop unop); code_of_exp exp ]
+  Adoc.(token (string_of_unop unop) ^^ code_of_exp exp)
 
 (* Binary expression, as code *)
 
 and code_of_bin_exp (binop : binop) (exp_l : exp) (exp_r : exp) : Adoc.code =
-  Adoc.seq_code
-    [
-      code_of_exp exp_l;
-      Adoc.token_code (" " ^ Sl.Print.string_of_binop binop ^ " ");
-      code_of_exp exp_r;
-    ]
+  Adoc.(
+    code_of_exp exp_l
+    ^^ token (" " ^ Sl.Print.string_of_binop binop ^ " ")
+    ^^ code_of_exp exp_r)
 
 (* Comparison expression, as code *)
 
 and code_of_cmp_exp (cmpop : cmpop) (exp_l : exp) (exp_r : exp) : Adoc.code =
-  Adoc.seq_code
-    [
-      code_of_exp exp_l;
-      Adoc.token_code (" " ^ Sl.Print.string_of_cmpop cmpop ^ " ");
-      code_of_exp exp_r;
-    ]
+  Adoc.(
+    code_of_exp exp_l
+    ^^ token (" " ^ Sl.Print.string_of_cmpop cmpop ^ " ")
+    ^^ code_of_exp exp_r)
 
 (* Upcast expression, as code *)
 
@@ -321,8 +294,7 @@ and code_of_downcast_exp (exp : exp) : Adoc.code = code_of_exp exp
 (* Subtype check expression, as code *)
 
 and code_of_sub_exp (exp : exp) (typ : typ) : Adoc.code =
-  Adoc.seq_code
-    [ code_of_exp exp; Adoc.token_code " has type "; code_of_typ typ ]
+  Adoc.(code_of_exp exp ^^ token " has type " ^^ code_of_typ typ)
 
 (* Pattern match check expression, as code *)
 
@@ -330,26 +302,20 @@ and code_of_match_exp (exp : exp) (pattern : pattern) : Adoc.code =
   let scrut = code_of_exp exp in
   match pattern with
   | Il.CaseP mixop when Mixop.arity mixop = 0 ->
-      Adoc.seq_code
-        [ scrut; Adoc.token_code " is "; code_of_pattern (Il.CaseP mixop) ]
-  | Il.ListP `Nil ->
-      Adoc.seq_code [ scrut; Adoc.token_code " is an empty list" ]
-  | Il.ListP `Cons ->
-      Adoc.seq_code [ scrut; Adoc.token_code " is a non-empty list" ]
+      Adoc.(scrut ^^ token " is " ^^ code_of_pattern (Il.CaseP mixop))
+  | Il.ListP `Nil -> Adoc.(scrut ^^ token " is an empty list")
+  | Il.ListP `Cons -> Adoc.(scrut ^^ token " is a non-empty list")
   | Il.ListP (`Fixed len) ->
-      Adoc.seq_code
-        [ scrut; Adoc.token_code (F.asprintf " is a list of length %d" len) ]
-  | Il.OptP `None -> Adoc.seq_code [ scrut; Adoc.token_code " is none" ]
-  | Il.OptP `Some -> Adoc.seq_code [ scrut; Adoc.token_code " is defined" ]
+      Adoc.(scrut ^^ token (F.asprintf " is a list of length %d" len))
+  | Il.OptP `None -> Adoc.(scrut ^^ token " is none")
+  | Il.OptP `Some -> Adoc.(scrut ^^ token " is defined")
   | pattern ->
-      Adoc.seq_code
-        [ scrut; Adoc.token_code " matches pattern "; code_of_pattern pattern ]
+      Adoc.(scrut ^^ token " matches pattern " ^^ code_of_pattern pattern)
 
 (* Tuple expression, as code *)
 
 and code_of_tuple_exp (exps : exp list) : Adoc.code =
-  Adoc.seq_code
-    [ Adoc.token_code "( "; code_of_exps ~sep:", " exps; Adoc.token_code " )" ]
+  Adoc.(token "( " ^^ code_of_exps ~sep:", " exps ^^ token " )")
 
 (* Case expression, as code *)
 
@@ -358,117 +324,82 @@ and code_of_case_exp (notexp : notexp) : Adoc.code = code_of_notexp notexp
 (* Struct expression, as code *)
 
 and code_of_str_exp (expfields : (atom * exp) list) : Adoc.code =
-  Adoc.seq_code
-    [
-      Adoc.token_code "+{+";
-      Adoc.seq_code
-        (List.mapi
-           (fun i (atom, exp_f) ->
-             let field =
-               Adoc.seq_code
-                 [ code_of_atom atom; Adoc.token_code " "; code_of_exp exp_f ]
-             in
-             if i = 0 then field
-             else Adoc.seq_code [ Adoc.token_code ", "; field ])
-           expfields);
-      Adoc.token_code "+}+";
-    ]
+  Adoc.(
+    token "+{+"
+    ^^ seq_code
+         (List.mapi
+            (fun i (atom, exp_f) ->
+              let field = code_of_atom atom ^^ token " " ^^ code_of_exp exp_f in
+              if i = 0 then field else token ", " ^^ field)
+            expfields)
+    ^^ token "+}+")
 
 (* Option expression, as code *)
 
 and code_of_opt_exp (exp_opt : exp option) : Adoc.code =
-  match exp_opt with None -> Adoc.token_code "·" | Some exp -> code_of_exp exp
+  match exp_opt with None -> Adoc.token "·" | Some exp -> code_of_exp exp
 
 (* List expression, as code *)
 
 and code_of_list_exp (exps : exp list) : Adoc.code =
   match exps with
-  | [] -> Adoc.token_code "·"
+  | [] -> Adoc.token "·"
   | [ exp ] -> code_of_exp exp
-  | exps ->
-      Adoc.seq_code
-        [
-          Adoc.token_code "+[+ ";
-          code_of_exps ~sep:", " exps;
-          Adoc.token_code " +]+";
-        ]
+  | exps -> Adoc.(token "+[+ " ^^ code_of_exps ~sep:", " exps ^^ token " +]+")
 
 (* Cons expression, as code *)
 
 and code_of_cons_exp (exp_h : exp) (exp_t : exp) : Adoc.code =
-  Adoc.seq_code
-    [ code_of_exp exp_h; Adoc.token_code " {two-colons} "; code_of_exp exp_t ]
+  Adoc.(code_of_exp exp_h ^^ token " {two-colons} " ^^ code_of_exp exp_t)
 
 (* Concatenation expression, as code *)
 
 and code_of_cat_exp (exp_l : exp) (exp_r : exp) : Adoc.code =
-  Adoc.seq_code
-    [ code_of_exp exp_l; Adoc.token_code " {pp} "; code_of_exp exp_r ]
+  Adoc.(code_of_exp exp_l ^^ token " {pp} " ^^ code_of_exp exp_r)
 
 (* Membership expression, as code *)
 
 and code_of_mem_exp (exp_e : exp) (exp_s : exp) : Adoc.code =
-  Adoc.seq_code
-    [ code_of_exp exp_e; Adoc.token_code " is in "; code_of_exp exp_s ]
+  Adoc.(code_of_exp exp_e ^^ token " is in " ^^ code_of_exp exp_s)
 
 (* Length expression, as code *)
 
 and code_of_len_exp (exp : exp) : Adoc.code =
-  Adoc.seq_code [ Adoc.token_code "the length of "; code_of_exp exp ]
+  Adoc.(token "the length of " ^^ code_of_exp exp)
 
 (* Dot expression, as code *)
 
 and code_of_dot_exp (exp_b : exp) (atom : atom) : Adoc.code =
-  Adoc.seq_code [ code_of_exp exp_b; Adoc.token_code "."; code_of_atom atom ]
+  Adoc.(code_of_exp exp_b ^^ token "." ^^ code_of_atom atom)
 
 (* Index expression, as code *)
 
 and code_of_idx_exp (exp_b : exp) (exp_i : exp) : Adoc.code =
-  Adoc.seq_code
-    [
-      code_of_exp exp_b;
-      Adoc.token_code "[";
-      code_of_exp exp_i;
-      Adoc.token_code "]";
-    ]
+  Adoc.(code_of_exp exp_b ^^ token "[" ^^ code_of_exp exp_i ^^ token "]")
 
 (* Slice expression, as code *)
 
 and code_of_slice_exp (exp_b : exp) (exp_l : exp) (exp_h : exp) : Adoc.code =
-  Adoc.seq_code
-    [
-      code_of_exp exp_b;
-      Adoc.token_code "[";
-      code_of_exp exp_l;
-      Adoc.token_code " : ";
-      code_of_exp exp_h;
-      Adoc.token_code "]";
-    ]
+  Adoc.(
+    code_of_exp exp_b ^^ token "[" ^^ code_of_exp exp_l ^^ token " : "
+    ^^ code_of_exp exp_h ^^ token "]")
 
 (* Update expression, as code *)
 
 and code_of_upd_exp (exp_b : exp) (path : path) (exp_f : exp) : Adoc.code =
-  Adoc.seq_code
-    [
-      code_of_exp exp_b;
-      Adoc.token_code "[";
-      code_of_path path;
-      Adoc.token_code " = ";
-      code_of_exp exp_f;
-      Adoc.token_code "]";
-    ]
+  Adoc.(
+    code_of_exp exp_b ^^ token "[" ^^ code_of_path path ^^ token " = "
+    ^^ code_of_exp exp_f ^^ token "]")
 
 (* Function call expression, as code *)
 
 and code_of_call_exp (id : id) (targs : targ list) (args : arg list) : Adoc.code
     =
   Adoc.link_code ~target:id.it
-    (Adoc.seq_code
-       [
-         Adoc.token_code (string_of_defid id);
-         Adoc.token_code (string_of_targs targs);
-         code_of_args args;
-       ])
+    Adoc.(
+      token (string_of_defid id)
+      ^^ token (string_of_targs targs)
+      ^^ code_of_args args)
 
 (* Iterated expression, as code *)
 
@@ -476,19 +407,13 @@ and code_of_iter_exp (exp_inner : exp) (iterexp : iterexp) : Adoc.code =
   match (exp_inner.node.it, iterexp) with
   | _, (_, []) -> code_of_exp exp_inner
   | (VarE _ | TupleE _), _ ->
-      Adoc.seq_code [ code_of_exp exp_inner; code_of_iterexp iterexp ]
+      Adoc.(code_of_exp exp_inner ^^ code_of_iterexp iterexp)
   | _ ->
       let inner = code_of_exp exp_inner in
       let sexp = Adoc.ser_code inner in
       if String.contains sexp ' ' then
-        Adoc.seq_code
-          [
-            Adoc.token_code "( ";
-            inner;
-            Adoc.token_code " )";
-            code_of_iterexp iterexp;
-          ]
-      else Adoc.seq_code [ inner; code_of_iterexp iterexp ]
+        Adoc.(token "( " ^^ inner ^^ token " )" ^^ code_of_iterexp iterexp)
+      else Adoc.(inner ^^ code_of_iterexp iterexp)
 
 (* Expressions, as prose *)
 
@@ -528,7 +453,7 @@ and prose_of_exps ?(sep : string option) (exps : exp list) : Adoc.prose =
         (List.mapi
            (fun i exp ->
              if i = 0 then prose_of_exp exp
-             else Adoc.seq_prose [ Adoc.text_prose sep; prose_of_exp exp ])
+             else Adoc.(text sep ++ prose_of_exp exp))
            exps)
   | None -> prose_of_list (List.map prose_of_exp exps)
 
@@ -558,28 +483,22 @@ and prose_of_negated_exp_opt (exp : exp) : Adoc.prose option =
   match exp.node.it with
   | MatchE (exp_e, pattern) ->
       Some
-        (Adoc.seq_prose
-           [
-             prose_of_exp exp_e;
-             Adoc.text_prose " does not match pattern ";
-             Adoc.code_prose (code_of_pattern pattern);
-           ])
+        Adoc.(
+          prose_of_exp exp_e
+          ++ text " does not match pattern "
+          ++ code_prose (code_of_pattern pattern))
   | SubE (exp_e, typ) ->
       Some
-        (Adoc.seq_prose
-           [
-             Adoc.code_prose (code_of_exp exp_e);
-             Adoc.text_prose " does not have type ";
-             Adoc.code_prose (code_of_typ typ);
-           ])
+        Adoc.(
+          code_prose (code_of_exp exp_e)
+          ++ text " does not have type "
+          ++ code_prose (code_of_typ typ))
   | MemE (exp_e, exp_s) ->
       Some
-        (Adoc.seq_prose
-           [
-             Adoc.code_prose (code_of_exp exp_e);
-             Adoc.text_prose " is not in ";
-             Adoc.code_prose (code_of_exp exp_s);
-           ])
+        Adoc.(
+          code_prose (code_of_exp exp_e)
+          ++ text " is not in "
+          ++ code_prose (code_of_exp exp_s))
   | CallE (id, _targs, args) -> (
       match exp.hints.prose_false with
       | Some hints ->
@@ -589,9 +508,7 @@ and prose_of_negated_exp_opt (exp : exp) : Adoc.prose option =
       | None ->
           Some
             (Adoc.code_prose
-               (Adoc.seq_code
-                  [ Adoc.token_code (string_of_unop `NotOp); code_of_exp exp ]))
-      )
+               Adoc.(token (string_of_unop `NotOp) ^^ code_of_exp exp)))
   | _ -> None
 
 and prose_of_un_exp (unop : unop) (exp : exp) : Adoc.prose =
@@ -607,31 +524,22 @@ and prose_of_un_exp (unop : unop) (exp : exp) : Adoc.prose =
 and prose_of_bin_exp (binop : binop) (exp_l : exp) (exp_r : exp) : Adoc.prose =
   match binop with
   | `ImplOp ->
-      Adoc.seq_prose
-        [
-          Adoc.text_prose "if ";
-          prose_of_exp exp_l;
-          Adoc.text_prose ", then ";
-          prose_of_exp exp_r;
-        ]
+      Adoc.(
+        text "if " ++ prose_of_exp exp_l ++ text ", then " ++ prose_of_exp exp_r)
   | #Bool.binop as binop ->
-      Adoc.seq_prose
-        [
-          prose_of_exp exp_l;
-          Adoc.text_prose (" " ^ string_of_binop binop ^ " ");
-          prose_of_exp exp_r;
-        ]
+      Adoc.(
+        prose_of_exp exp_l
+        ++ text (" " ^ string_of_binop binop ^ " ")
+        ++ prose_of_exp exp_r)
   | #Num.binop -> Adoc.code_prose (code_of_bin_exp binop exp_l exp_r)
 
 (* Comparison expression, as prose *)
 
 and prose_of_cmp_exp (cmpop : cmpop) (exp_l : exp) (exp_r : exp) : Adoc.prose =
-  Adoc.seq_prose
-    [
-      prose_of_exp exp_l;
-      Adoc.text_prose (" " ^ string_of_cmpop cmpop ^ " ");
-      prose_of_exp exp_r;
-    ]
+  Adoc.(
+    prose_of_exp exp_l
+    ++ text (" " ^ string_of_cmpop cmpop ^ " ")
+    ++ prose_of_exp exp_r)
 
 (* Upcast expression, as prose *)
 
@@ -646,12 +554,10 @@ and prose_of_downcast_exp (exp : exp) : Adoc.prose =
 (* Subtype check expression, as prose *)
 
 and prose_of_sub_exp (exp : exp) (typ : typ) : Adoc.prose =
-  Adoc.seq_prose
-    [
-      Adoc.code_prose (code_of_exp exp);
-      Adoc.text_prose " has type ";
-      Adoc.code_prose (code_of_typ typ);
-    ]
+  Adoc.(
+    code_prose (code_of_exp exp)
+    ++ text " has type "
+    ++ code_prose (code_of_typ typ))
 
 (* Pattern match check expression, as prose *)
 
@@ -660,24 +566,19 @@ and prose_of_match_exp (exp : exp) (pattern : pattern) : Adoc.prose =
   let pat p = Adoc.code_prose (code_of_pattern p) in
   match pattern with
   | Il.CaseP mixop when Mixop.arity mixop = 0 ->
-      Adoc.seq_prose [ scrut; Adoc.text_prose " is "; pat (Il.CaseP mixop) ]
-  | Il.ListP `Nil ->
-      Adoc.seq_prose [ scrut; Adoc.text_prose " is an empty list" ]
-  | Il.ListP `Cons ->
-      Adoc.seq_prose [ scrut; Adoc.text_prose " is a non-empty list" ]
+      Adoc.(scrut ++ text " is " ++ pat (Il.CaseP mixop))
+  | Il.ListP `Nil -> Adoc.(scrut ++ text " is an empty list")
+  | Il.ListP `Cons -> Adoc.(scrut ++ text " is a non-empty list")
   | Il.ListP (`Fixed len) ->
-      Adoc.seq_prose
-        [ scrut; Adoc.text_prose (F.asprintf " is a list of length %d" len) ]
-  | Il.OptP `None -> Adoc.seq_prose [ scrut; Adoc.text_prose " is none" ]
-  | Il.OptP `Some -> Adoc.seq_prose [ scrut; Adoc.text_prose " is defined" ]
-  | pattern ->
-      Adoc.seq_prose [ scrut; Adoc.text_prose " matches pattern "; pat pattern ]
+      Adoc.(scrut ++ text (F.asprintf " is a list of length %d" len))
+  | Il.OptP `None -> Adoc.(scrut ++ text " is none")
+  | Il.OptP `Some -> Adoc.(scrut ++ text " is defined")
+  | pattern -> Adoc.(scrut ++ text " matches pattern " ++ pat pattern)
 
 (* Tuple expression, as prose *)
 
 and prose_of_tuple_exp (exps : exp list) : Adoc.prose =
-  Adoc.seq_prose
-    [ Adoc.text_prose "( "; prose_of_exps ~sep:", " exps; Adoc.text_prose " )" ]
+  Adoc.(text "( " ++ prose_of_exps ~sep:", " exps ++ text " )")
 
 (* Case expression, as prose *)
 
@@ -694,25 +595,17 @@ and prose_of_case_exp (exp : exp) (notexp : notexp) : Adoc.prose =
 (* Struct expression, as prose *)
 
 and prose_of_str_exp (expfields : (atom * exp) list) : Adoc.prose =
-  Adoc.seq_prose
-    [
-      Adoc.text_prose "+{+";
-      Adoc.seq_prose
-        (List.mapi
-           (fun i (atom, exp_f) ->
-             let field =
-               Adoc.seq_prose
-                 [
-                   Adoc.text_prose (string_of_atom atom);
-                   Adoc.text_prose " ";
-                   prose_of_exp exp_f;
-                 ]
-             in
-             if i = 0 then field
-             else Adoc.seq_prose [ Adoc.text_prose ", "; field ])
-           expfields);
-      Adoc.text_prose "+}+";
-    ]
+  Adoc.(
+    text "+{+"
+    ++ seq_prose
+         (List.mapi
+            (fun i (atom, exp_f) ->
+              let field =
+                text (string_of_atom atom) ++ text " " ++ prose_of_exp exp_f
+              in
+              if i = 0 then field else text ", " ++ field)
+            expfields)
+    ++ text "+}+")
 
 (* Option expression, as prose *)
 
@@ -734,23 +627,17 @@ and prose_of_cons_exp (exp_h : exp) (exp_t : exp) : Adoc.prose =
 (* Concatenation expression, as prose *)
 
 and prose_of_cat_exp (exp_l : exp) (exp_r : exp) : Adoc.prose =
-  Adoc.seq_prose
-    [
-      prose_of_exp exp_l;
-      Adoc.text_prose " concatenated with ";
-      prose_of_exp exp_r;
-    ]
+  Adoc.(prose_of_exp exp_l ++ text " concatenated with " ++ prose_of_exp exp_r)
 
 (* Membership expression, as prose *)
 
 and prose_of_mem_exp (exp_e : exp) (exp_s : exp) : Adoc.prose =
-  Adoc.seq_prose
-    [ prose_of_exp exp_e; Adoc.text_prose " is in "; prose_of_exp exp_s ]
+  Adoc.(prose_of_exp exp_e ++ text " is in " ++ prose_of_exp exp_s)
 
 (* Length expression, as prose *)
 
 and prose_of_len_exp (exp : exp) : Adoc.prose =
-  Adoc.seq_prose [ Adoc.text_prose "the length of "; prose_of_exp exp ]
+  Adoc.(text "the length of " ++ prose_of_exp exp)
 
 (* Dot expression, as prose *)
 
@@ -770,14 +657,12 @@ and prose_of_slice_exp (exp_b : exp) (exp_l : exp) (exp_h : exp) : Adoc.prose =
 (* Update expression, as prose *)
 
 and prose_of_upd_exp (exp_b : exp) (path : path) (exp_f : exp) : Adoc.prose =
-  Adoc.seq_prose
-    [
-      Adoc.code_prose (code_of_exp exp_b);
-      Adoc.text_prose " with ";
-      Adoc.code_prose (code_of_path path);
-      Adoc.text_prose " set to ";
-      Adoc.code_prose (code_of_exp exp_f);
-    ]
+  Adoc.(
+    code_prose (code_of_exp exp_b)
+    ++ text " with "
+    ++ code_prose (code_of_path path)
+    ++ text " set to "
+    ++ code_prose (code_of_exp exp_f))
 
 (* Function call expression, as prose *)
 
@@ -802,11 +687,11 @@ and prose_of_iter_exp (exp : exp) (iterexp : iterexp) : Adoc.prose =
 and code_of_pattern (pattern : pattern) : Adoc.code =
   match pattern with
   | Il.CaseP mixop -> code_of_mixop mixop
-  | Il.ListP `Cons -> Adoc.token_code "_ :: _"
-  | Il.ListP (`Fixed len) -> Adoc.token_code (Format.asprintf "[ _/%d ]" len)
-  | Il.ListP `Nil -> Adoc.token_code "[]"
-  | Il.OptP `Some -> Adoc.token_code "(_)"
-  | Il.OptP `None -> Adoc.token_code "()"
+  | Il.ListP `Cons -> Adoc.token "_ :: _"
+  | Il.ListP (`Fixed len) -> Adoc.token (Format.asprintf "[ _/%d ]" len)
+  | Il.ListP `Nil -> Adoc.token "[]"
+  | Il.OptP `Some -> Adoc.token "(_)"
+  | Il.OptP `None -> Adoc.token "()"
 
 (* Path *)
 
@@ -814,27 +699,14 @@ and code_of_path (path : path) : Adoc.code =
   match path.it with
   | RootP -> Adoc.empty_code
   | IdxP (path, exp) ->
-      Adoc.seq_code
-        [
-          code_of_path path;
-          Adoc.token_code "[";
-          code_of_exp exp;
-          Adoc.token_code "]";
-        ]
+      Adoc.(code_of_path path ^^ token "[" ^^ code_of_exp exp ^^ token "]")
   | SliceP (path, exp_l, exp_h) ->
-      Adoc.seq_code
-        [
-          code_of_path path;
-          Adoc.token_code "[";
-          code_of_exp exp_l;
-          Adoc.token_code " : ";
-          code_of_exp exp_h;
-          Adoc.token_code "]";
-        ]
+      Adoc.(
+        code_of_path path ^^ token "[" ^^ code_of_exp exp_l ^^ token " : "
+        ^^ code_of_exp exp_h ^^ token "]")
   | DotP ({ it = RootP; _ }, atom) -> code_of_atom atom
   | DotP (path, atom) ->
-      Adoc.seq_code
-        [ code_of_path path; Adoc.token_code "."; code_of_atom atom ]
+      Adoc.(code_of_path path ^^ token "." ^^ code_of_atom atom)
 
 (* Type parameters *)
 
@@ -843,24 +715,21 @@ and code_of_path (path : path) : Adoc.code =
 and code_of_param (param : param) : Adoc.code =
   match param.it with
   | ExpP (_, exp) -> code_of_exp exp
-  | DefP (defid, _, _, _) -> defid |> string_of_defid |> Adoc.token_code
+  | DefP (defid, _, _, _) -> defid |> string_of_defid |> Adoc.token
 
 and code_of_params (params : param list) : Adoc.code =
   match params with
   | [] -> Adoc.empty_code
   | params ->
-      Adoc.seq_code
-        [
-          Adoc.token_code "(";
-          Adoc.seq_code
-            (List.mapi
-               (fun i param ->
-                 if i = 0 then code_of_param param
-                 else
-                   Adoc.seq_code [ Adoc.token_code ", "; code_of_param param ])
-               params);
-          Adoc.token_code ")";
-        ]
+      Adoc.(
+        token "("
+        ^^ seq_code
+             (List.mapi
+                (fun i param ->
+                  if i = 0 then code_of_param param
+                  else token ", " ^^ code_of_param param)
+                params)
+        ^^ token ")")
 
 (* Parameters, as prose *)
 
@@ -868,24 +737,21 @@ and prose_of_param (param : param) : Adoc.prose =
   match param.it with
   | ExpP (_, exp) -> prose_of_exp exp
   | DefP (defid, _, _, _) ->
-      defid |> string_of_defid |> Adoc.token_code |> Adoc.code_prose
+      defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
 
 and prose_of_params (params : param list) : Adoc.prose =
   match params with
   | [] -> Adoc.empty_prose
   | params ->
-      Adoc.seq_prose
-        [
-          Adoc.text_prose "(";
-          Adoc.seq_prose
-            (List.mapi
-               (fun i param ->
-                 if i = 0 then prose_of_param param
-                 else
-                   Adoc.seq_prose [ Adoc.text_prose ", "; prose_of_param param ])
-               params);
-          Adoc.text_prose ")";
-        ]
+      Adoc.(
+        text "("
+        ++ seq_prose
+             (List.mapi
+                (fun i param ->
+                  if i = 0 then prose_of_param param
+                  else text ", " ++ prose_of_param param)
+                params)
+        ++ text ")")
 
 (* Type arguments *)
 
@@ -897,30 +763,27 @@ and string_of_targs (targs : targ list) : string =
 and code_of_arg (arg : arg) : Adoc.code =
   match arg.it with
   | ExpA exp -> code_of_exp exp
-  | DefA defid -> defid |> string_of_defid |> Adoc.token_code
+  | DefA defid -> defid |> string_of_defid |> Adoc.token
 
 and code_of_args (args : arg list) : Adoc.code =
   match args with
   | [] -> Adoc.empty_code
   | args ->
-      Adoc.seq_code
-        [
-          Adoc.token_code "(";
-          Adoc.seq_code
-            (List.mapi
-               (fun i a ->
-                 if i = 0 then code_of_arg a
-                 else Adoc.seq_code [ Adoc.token_code ", "; code_of_arg a ])
-               args);
-          Adoc.token_code ")";
-        ]
+      Adoc.(
+        token "("
+        ^^ seq_code
+             (List.mapi
+                (fun i a ->
+                  if i = 0 then code_of_arg a else token ", " ^^ code_of_arg a)
+                args)
+        ^^ token ")")
 
 (* Arguments, as prose *)
 
 and prose_of_arg (arg : arg) : Adoc.prose =
   match arg.it with
   | ExpA exp -> prose_of_exp exp
-  | DefA defid -> defid |> string_of_defid |> Adoc.token_code |> Adoc.code_prose
+  | DefA defid -> defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
 
 (* Case analysis *)
 
@@ -934,37 +797,26 @@ let prose_of_guard (exp_scrut : exp) (guard : guard) : Adoc.prose =
       in
       prose_of_exp (Annot.no_hints neg_inner)
   | CmpG (cmpop, _, exp) ->
-      Adoc.seq_prose
-        [
-          prose_of_exp exp_scrut;
-          Adoc.text_prose (" " ^ string_of_cmpop cmpop ^ " ");
-          prose_of_exp exp;
-        ]
+      Adoc.(
+        prose_of_exp exp_scrut
+        ++ text (" " ^ string_of_cmpop cmpop ^ " ")
+        ++ prose_of_exp exp)
   | SubG typ ->
-      Adoc.seq_prose
-        [
-          Adoc.code_prose (code_of_exp exp_scrut);
-          Adoc.text_prose " has type ";
-          Adoc.code_prose (code_of_typ typ);
-        ]
+      Adoc.(
+        code_prose (code_of_exp exp_scrut)
+        ++ text " has type "
+        ++ code_prose (code_of_typ typ))
   | MatchG pattern ->
-      Adoc.seq_prose
-        [
-          prose_of_exp exp_scrut;
-          Adoc.text_prose " matches pattern ";
-          Adoc.code_prose (code_of_pattern pattern);
-        ]
+      Adoc.(
+        prose_of_exp exp_scrut ++ text " matches pattern "
+        ++ code_prose (code_of_pattern pattern))
   | MemG exp ->
-      Adoc.seq_prose
-        [ prose_of_exp exp_scrut; Adoc.text_prose " is in "; prose_of_exp exp ]
+      Adoc.(prose_of_exp exp_scrut ++ text " is in " ++ prose_of_exp exp)
   | CheckLetSubG (_, target) | CheckLetMatchG (_, target) ->
-      Adoc.seq_prose
-        [
-          Adoc.text_prose "let ";
-          Adoc.code_prose (code_of_exp target);
-          Adoc.text_prose " be ";
-          prose_of_exp exp_scrut;
-        ]
+      Adoc.(
+        text "let "
+        ++ code_prose (code_of_exp target)
+        ++ text " be " ++ prose_of_exp exp_scrut)
 
 (* Instructions *)
 
@@ -1006,12 +858,7 @@ and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
      instr);
   ] -> (
       let p =
-        Adoc.seq_prose
-          [
-            Adoc.text_prose " return ";
-            Adoc.code_prose (code_of_exp e);
-            Adoc.text_prose ".";
-          ]
+        Adoc.(text " return " ++ code_prose (code_of_exp e) ++ text ".")
       in
       match head with
       | Some head -> Adoc.concat_block [ head; Adoc.inline_block p ]
@@ -1038,9 +885,7 @@ and prose_of_iterexp_suffix (iterexps : iterexp list) : Adoc.prose =
   | _ ->
       let vars = List.concat_map (fun (_, vars) -> vars) iterexps in
       if vars = [] then Adoc.empty_prose
-      else
-        Adoc.seq_prose
-          [ Adoc.text_prose ", for all "; prose_of_in_itervars vars ]
+      else Adoc.(text ", for all " ++ prose_of_in_itervars vars)
 
 and prose_of_iterinstr_suffix (iterinstrs : iterinstr list) : Adoc.prose =
   match iterinstrs with
@@ -1048,9 +893,7 @@ and prose_of_iterinstr_suffix (iterinstrs : iterinstr list) : Adoc.prose =
   | _ ->
       let vars = List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs in
       if vars = [] then Adoc.empty_prose
-      else
-        Adoc.seq_prose
-          [ Adoc.text_prose ", for each "; prose_of_in_itervars vars ]
+      else Adoc.(text ", for each " ++ prose_of_in_itervars vars)
 
 (* If instruction rendering *)
 
@@ -1058,19 +901,11 @@ and render_if_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (cond : exp) (iterexps : iterexp list) (block_then : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Check that ";
-               prose_of_exp cond;
-               prose_of_iterexp_suffix iterexps;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(
+        text "Check that " ++ prose_of_exp cond
+        ++ prose_of_iterexp_suffix iterexps
+        ++ text "." ++ prose_fallthrough)
   in
   if block_then = [] then head
   else
@@ -1102,18 +937,9 @@ and render_hold_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         math ^ fallback_verb
   in
   let if_head ~hold =
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "If ";
-               Adoc.text_prose (render_head ~hold);
-               Adoc.text_prose iter_suffix;
-               Adoc.text_prose ":";
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(
+        text "If " ++ text (render_head ~hold) ++ text iter_suffix ++ text ":")
   in
   match holdcase with
   | HoldH (block, _dangle) ->
@@ -1131,13 +957,7 @@ and render_hold_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
             ~head:(Some (if_head ~hold:true))
             ~level:(level + 1) ~backtrack block_hold;
           render_instrs
-            ~head:
-              (Some
-                 (Adoc.concat_block
-                    [
-                      Adoc.bullet_block (`Ordered level);
-                      Adoc.inline_block (Adoc.text_prose "Else:");
-                    ]))
+            ~head:(Some (Adoc.bullet_line (`Ordered level) (Adoc.text "Else:")))
             ~level:(level + 1) ~backtrack block_nothold;
         ]
 
@@ -1150,17 +970,9 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
   match cases with
   | [ (guard, block_then) ] ->
       let head =
-        Adoc.concat_block
-          [
-            Adoc.bullet_block (`Ordered level);
-            Adoc.inline_block
-              (Adoc.seq_prose
-                 [
-                   Adoc.text_prose "Check that ";
-                   prose_of_guard exp_scrut guard;
-                   Adoc.text_prose ".";
-                 ]);
-          ]
+        Adoc.bullet_line (`Ordered level)
+          Adoc.(
+            text "Check that " ++ prose_of_guard exp_scrut guard ++ text ".")
       in
       if block_then = [] then head
       else
@@ -1174,28 +986,18 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
                  render_instrs
                    ~head:
                      (Some
-                        (Adoc.concat_block
-                           [
-                             Adoc.bullet_block (`Ordered level);
-                             Adoc.inline_block (Adoc.text_prose "Else:");
-                           ]))
+                        (Adoc.bullet_line (`Ordered level) (Adoc.text "Else:")))
                    ~level:(level + 1) ~backtrack block_then
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
                  render_instrs
                    ~head:
                      (Some
-                        (Adoc.concat_block
-                           [
-                             Adoc.bullet_block (`Ordered level);
-                             Adoc.inline_block
-                               (Adoc.seq_prose
-                                  [
-                                    Adoc.text_prose (keyword ^ " ");
-                                    prose_of_guard exp_scrut guard;
-                                    Adoc.text_prose ":";
-                                  ]);
-                           ]))
+                        (Adoc.bullet_line (`Ordered level)
+                           Adoc.(
+                             text (keyword ^ " ")
+                             ++ prose_of_guard exp_scrut guard
+                             ++ text ":")))
                    ~level:(level + 1) ~backtrack block_then))
 
 (* Group instruction rendering *)
@@ -1215,13 +1017,7 @@ and render_group_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
           (prose_of_rel_title_math rel_signature exps)
   in
   render_instrs
-    ~head:
-      (Some
-         (Adoc.concat_block
-            [
-              Adoc.bullet_block (`Ordered level);
-              Adoc.inline_block (Adoc.seq_prose [ title; Adoc.text_prose ":" ]);
-            ]))
+    ~head:(Some (Adoc.bullet_line (`Ordered level) Adoc.(title ++ text ":")))
     ~level:(level + 1) ~backtrack block
 
 (* Try instruction rendering *)
@@ -1237,26 +1033,13 @@ and render_try_instr ~(level : int) (arms : arm list) : Adoc.block =
     render_instrs
       ~head:
         (Some
-           (Adoc.concat_block
-              [
-                Adoc.bullet_block (`Ordered level_arm);
-                Adoc.inline_block
-                  (Adoc.seq_prose [ Adoc.text_prose "{empty}"; anchor ]);
-              ]))
+           (Adoc.bullet_line (`Ordered level_arm)
+              Adoc.(text "{empty}" ++ anchor)))
       ~level:level_body ~backtrack:(Some backtrack) arm
   in
   let head =
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Try ";
-               Backtrack.prose_of_label label;
-               Adoc.text_prose ":";
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(text "Try " ++ Backtrack.prose_of_label label ++ text ":")
   in
   Adoc.seq_block (head :: List.mapi render_arm arms)
 
@@ -1274,57 +1057,35 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
   in
   if vars_out_visible = [] then
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Let ";
-               Adoc.code_prose (code_of_exp exp_l);
-               Adoc.text_prose " be ";
-               prose_of_exp exp_r;
-               prose_of_iterinstr_suffix iterinstrs;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(
+        text "Let "
+        ++ code_prose (code_of_exp exp_l)
+        ++ text " be " ++ prose_of_exp exp_r
+        ++ prose_of_iterinstr_suffix iterinstrs
+        ++ text "." ++ prose_fallthrough)
   else
     let body =
-      Adoc.concat_block
-        [
-          Adoc.bullet_block (`Unordered (level + 1));
-          Adoc.inline_block
-            (Adoc.seq_prose
-               [
-                 Adoc.text_prose "Let ";
-                 Adoc.code_prose (code_of_exp exp_l);
-                 Adoc.text_prose " be ";
-                 prose_of_exp exp_r;
-                 Adoc.text_prose ".";
-               ]);
-        ]
+      Adoc.bullet_line
+        (`Unordered (level + 1))
+        Adoc.(
+          text "Let "
+          ++ code_prose (code_of_exp exp_l)
+          ++ text " be " ++ prose_of_exp exp_r ++ text ".")
     in
     Adoc.concat_block
       [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Let ";
-               prose_of_out_itervars vars_out_visible;
-               Adoc.text_prose " obtained by repeating:";
-             ]);
+        Adoc.bullet_line (`Ordered level)
+          Adoc.(
+            text "Let "
+            ++ prose_of_out_itervars vars_out_visible
+            ++ text " obtained by repeating:");
         Adoc.raw_block "\n+\n--\n";
         body;
         Adoc.raw_block "\n--\n+\nfor each ";
         Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               prose_of_in_itervars vars_in_all;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
+          Adoc.(
+            prose_of_in_itervars vars_in_all ++ text "." ++ prose_fallthrough);
       ]
 
 (* Rule instruction rendering *)
@@ -1375,36 +1136,26 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         Adoc.bullet_block (`Ordered level);
         Adoc.raw_block rule_body;
         Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               prose_of_iterinstr_suffix iterinstrs;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
+          Adoc.(
+            prose_of_iterinstr_suffix iterinstrs
+            ++ text "." ++ prose_fallthrough);
       ]
   else
     Adoc.concat_block
       [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Let ";
-               prose_of_out_itervars vars_out_visible;
-               Adoc.text_prose " obtained by repeating:";
-             ]);
+        Adoc.bullet_line (`Ordered level)
+          Adoc.(
+            text "Let "
+            ++ prose_of_out_itervars vars_out_visible
+            ++ text " obtained by repeating:");
         Adoc.raw_block "\n+\n--\n";
         Adoc.bullet_block (`Unordered (level + 1));
         Adoc.raw_block rule_body;
         Adoc.raw_block ".";
         Adoc.raw_block "\n--\n+\nfor each ";
         Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               prose_of_in_itervars vars_in_all;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
+          Adoc.(
+            prose_of_in_itervars vars_in_all ++ text "." ++ prose_fallthrough);
       ]
 
 (* Result instruction rendering *)
@@ -1414,52 +1165,30 @@ and render_result_instr ~(level : int) (hints : Annot.hints)
   let nottyp, hint_input = rel_signature in
   let typs = Mixfix.args nottyp.it in
   let is_conditional = Hints.Input.is_conditional hint_input typs in
-  let line doc =
-    Adoc.concat_block
-      [ Adoc.bullet_block (`Ordered level); Adoc.inline_block doc ]
-  in
-  if is_conditional then line (Adoc.text_prose "Then, the relation holds.")
+  let line = Adoc.bullet_line (`Ordered level) in
+  if is_conditional then line (Adoc.text "Then, the relation holds.")
   else
     match (hints.prose_out, exps) with
     | Some hint, _ ->
         line
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Result in ";
-               alternate hint (reindent_lines ~level:0) prose_of_exp exps;
-               Adoc.text_prose ".";
-             ])
-    | None, [] -> line (Adoc.text_prose "The relation holds.")
-    | None, _ ->
-        line
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Result in ";
-               prose_of_exps exps;
-               Adoc.text_prose ".";
-             ])
+          Adoc.(
+            text "Result in "
+            ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
+            ++ text ".")
+    | None, [] -> line (Adoc.text "The relation holds.")
+    | None, _ -> line Adoc.(text "Result in " ++ prose_of_exps exps ++ text ".")
 
 (* Return instruction rendering *)
 
 and render_return_instr ~(level : int) (exp : exp) : Adoc.block =
-  Adoc.concat_block
-    [
-      Adoc.bullet_block (`Ordered level);
-      Adoc.inline_block
-        (Adoc.seq_prose
-           [ Adoc.text_prose "Return "; prose_of_exp exp; Adoc.text_prose "." ]);
-    ]
+  Adoc.bullet_line (`Ordered level)
+    Adoc.(text "Return " ++ prose_of_exp exp ++ text ".")
 
 (* Debug instruction rendering *)
 
 and render_debug_instr ~(level : int) (exp : exp) : Adoc.block =
-  Adoc.concat_block
-    [
-      Adoc.bullet_block (`Ordered level);
-      Adoc.inline_block
-        (Adoc.seq_prose
-           [ Adoc.text_prose "(debug: "; prose_of_exp exp; Adoc.text_prose ")" ]);
-    ]
+  Adoc.bullet_line (`Ordered level)
+    Adoc.(text "(debug: " ++ prose_of_exp exp ++ text ")")
 
 (* Destruct instruction rendering *)
 
@@ -1471,35 +1200,21 @@ and render_destruct_instr ~(level : int) (fields : (string option * exp) list)
         Option.map (fun name -> (name, exp_target)) name_opt)
       fields
   in
-  let line doc =
-    Adoc.concat_block
-      [ Adoc.bullet_block (`Ordered level); Adoc.inline_block doc ]
-  in
+  let line = Adoc.bullet_line (`Ordered level) in
   match projections with
   | [ (name, exp_target) ] ->
       line
-        (Adoc.seq_prose
-           [
-             Adoc.text_prose "Let ";
-             prose_of_exp exp_target;
-             Adoc.text_prose (F.asprintf " be the %s of " name);
-             prose_of_exp exp_source;
-             Adoc.text_prose ".";
-           ])
+        Adoc.(
+          text "Let " ++ prose_of_exp exp_target
+          ++ text (F.asprintf " be the %s of " name)
+          ++ prose_of_exp exp_source ++ text ".")
   | _ ->
       let names, exps_target = List.split projections in
       line
-        (Adoc.seq_prose
-           [
-             Adoc.text_prose "Let ";
-             prose_of_exps exps_target;
-             Adoc.text_prose " be ";
-             prose_of_list
-               (List.map (fun s -> Adoc.text_prose ("the " ^ s)) names);
-             Adoc.text_prose " of ";
-             prose_of_exp exp_source;
-             Adoc.text_prose ".";
-           ])
+        Adoc.(
+          text "Let " ++ prose_of_exps exps_target ++ text " be "
+          ++ prose_of_list (List.map (fun s -> text ("the " ^ s)) names)
+          ++ text " of " ++ prose_of_exp exp_source ++ text ".")
 
 (* Check-let instruction rendering (CheckLetSubI / CheckLetMatchI) *)
 
@@ -1507,20 +1222,11 @@ and render_check_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (exp_l : exp) (exp_r : exp) (block_inner : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Let!~type~ ";
-               Adoc.code_prose (code_of_exp exp_l);
-               Adoc.text_prose " be ";
-               prose_of_exp exp_r;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(
+        text "Let!~type~ "
+        ++ code_prose (code_of_exp exp_l)
+        ++ text " be " ++ prose_of_exp exp_r ++ text "." ++ prose_fallthrough)
   in
   if block_inner = [] then head
   else
@@ -1533,22 +1239,13 @@ and render_option_get_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (exp_l : exp) (exp_r : exp) (block_inner : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose "Let ";
-               Adoc.code_prose (code_of_exp exp_l);
-               Adoc.text_prose " be ";
-               Adoc.text_prose (adoc_link ~link:"option_get" "*!*");
-               Adoc.text_prose " ";
-               prose_of_exp exp_r;
-               Adoc.text_prose ".";
-               prose_fallthrough;
-             ]);
-      ]
+    Adoc.bullet_line (`Ordered level)
+      Adoc.(
+        text "Let "
+        ++ code_prose (code_of_exp exp_l)
+        ++ text " be "
+        ++ text (adoc_link ~link:"option_get" "*!*")
+        ++ text " " ++ prose_of_exp exp_r ++ text "." ++ prose_fallthrough)
   in
   if block_inner = [] then head
   else
@@ -1596,7 +1293,7 @@ and prose_of_rel_title_math (rel_signature : rel_signature) (exps : exp list) :
   let mixop = Mixfix.to_mixop nottyp.it in
   let dexps = List.map code_of_exp exps in
   let num_outputs = Mixop.arity mixop - List.length dexps in
-  let holes = List.init num_outputs (fun _ -> Adoc.token_code "%") in
+  let holes = List.init num_outputs (fun _ -> Adoc.token "%") in
   let padded = Hints.Input.combine inputs dexps holes in
   Adoc.code_prose (assemble_doc ~atom:string_of_atom mixop padded)
 
@@ -1609,14 +1306,11 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
   in
   let title =
     Adoc.link_prose ~target:(string_of_relid id_rel)
-      (Adoc.text_prose (Sl.Print.string_of_relid id_rel))
+      (Adoc.text (Sl.Print.string_of_relid id_rel))
   in
   let title_header =
     Adoc.concat_block
-      [
-        Adoc.inline_block (Adoc.seq_prose [ title; Adoc.text_prose ":" ]);
-        Adoc.raw_block "\n\n";
-      ]
+      [ Adoc.inline_block Adoc.(title ++ text ":"); Adoc.raw_block "\n\n" ]
   in
   match
     (hints.prose_in, hints.prose_out, hints.prose_output_exps, hints.prose_true)
@@ -1627,24 +1321,22 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_block (`Unordered 0);
-          Adoc.inline_block
+          Adoc.bullet_line (`Unordered 0)
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ":\n";
-          Adoc.bullet_block (`Unordered 0);
-          Adoc.inline_block (Adoc.text_prose "Result in ");
-          Adoc.inline_block
-            (alternate ~caps:false hint_out (reindent_lines ~level:1)
-               prose_of_exp exps_out);
+          Adoc.bullet_line (`Unordered 0)
+            Adoc.(
+              text "Result in "
+              ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
+                   prose_of_exp exps_out);
           Adoc.raw_block ".";
         ]
   | Some hint_in, _, _, _ ->
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_block (`Unordered 0);
-          Adoc.inline_block
+          Adoc.bullet_line (`Unordered 0)
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ".";
@@ -1653,19 +1345,16 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_block (`Unordered 0);
-          Adoc.inline_block
+          Adoc.bullet_line (`Unordered 0)
             (alternate ~caps:true hint_true (reindent_lines ~level:0)
                prose_of_exp exps);
         ]
   | _ ->
       Adoc.inline_block
         (Adoc.link_prose ~target:(string_of_relid id_rel)
-           (Adoc.seq_prose
-              [
-                Adoc.text_prose (Sl.Print.string_of_relid id_rel ^ ": ");
-                prose_of_rel_title_math rel_signature exps;
-              ]))
+           Adoc.(
+             text (Sl.Print.string_of_relid id_rel ^ ": ")
+             ++ prose_of_rel_title_math rel_signature exps))
 
 and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : string =
@@ -1731,16 +1420,15 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
   let title =
     Adoc.link_prose
       ~target:(string_of_defid ~link:true id_func)
-      (Adoc.text_prose (string_of_defid id_func))
+      (Adoc.text (string_of_defid id_func))
   in
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
       Adoc.concat_block
         [
-          Adoc.inline_block (Adoc.seq_prose [ title; Adoc.text_prose ":" ]);
+          Adoc.inline_block Adoc.(title ++ text ":");
           Adoc.raw_block "\n\n";
-          Adoc.bullet_block (`Unordered 0);
-          Adoc.inline_block
+          Adoc.bullet_line (`Unordered 0)
             (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_param
                params);
         ]
@@ -1763,7 +1451,7 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
       Adoc.inline_block
         (Adoc.link_prose
            ~target:(string_of_defid ~link:true id_func)
-           (Adoc.text_prose
+           (Adoc.text
               (Adoc.ser_prose
                  (alternate ~caps:true hint (reindent_lines ~level:0)
                     prose_of_param params))))
@@ -1771,7 +1459,7 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
       Adoc.inline_block
         (Adoc.link_prose
            ~target:(string_of_defid ~link:true id_func)
-           (Adoc.text_prose
+           (Adoc.text
               (string_of_defid id_func
               ^ Sl.Print.string_of_tparams tparams
               ^ Adoc.ser_code (code_of_params params))))
@@ -1802,7 +1490,7 @@ let render_table_func_def_block (hints : Annot.hints) (tablefunc : tablefunc) :
   let table =
     Adoc.table_block
       ~cols:(List.length params + 1)
-      ~header:[ prose_of_params params; Adoc.text_prose "Result" ]
+      ~header:[ prose_of_params params; Adoc.text "Result" ]
       (tablerows
       |> List.map (fun tablerow ->
              let exps_sig, exp_res, _ = tablerow in
@@ -1834,12 +1522,7 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
        instr);
     ] ->
         Adoc.inline_block
-          (Adoc.seq_prose
-             [
-               Adoc.text_prose " return ";
-               Adoc.code_prose (code_of_exp e);
-               Adoc.text_prose ".";
-             ])
+          Adoc.(text " return " ++ code_prose (code_of_exp e) ++ text ".")
     | _ ->
         Adoc.seq_block (List.map (render_instr ~level:0 ~backtrack:None) block)
   in
