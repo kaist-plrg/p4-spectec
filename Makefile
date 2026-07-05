@@ -110,6 +110,22 @@ test-fast:
 	  (echo "####>" Failure running fast tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
+.PHONY: test-micro
+test-micro:
+	echo "#### Running micro tests (speclang, micro, micro-det)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
+	  (echo "####>" Failure running micro tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
+.PHONY: test-micro-det
+test-micro-det:
+	echo "#### Running micro tests (det only)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @micro-det --profile=release && echo OK || \
+	  (echo "####>" Failure running micro det tests. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
+
 .PHONY: test-pl
 test-pl:
 	echo "#### Running PL-only tests (sim-pl)"

@@ -1,0 +1,819 @@
+;; Fast micro test tier: a curated subset of the p4c submodule's own test
+;; corpus (selected via -only include-lists, see ../../../testdata/micro/),
+;; run through the exact same test executables as the full parse/run/sim
+;; suites.
+
+(rule
+ (alias micro)
+ (action
+  (progn
+   (ignore-outputs
+    (diff micro_parse_pos.expected micro_parse_pos.actual))
+   (ignore-outputs
+    (diff micro_run_pos_il.expected micro_run_pos_il.actual))
+   (ignore-outputs
+    (diff micro_run_pos_sl.expected micro_run_pos_sl.actual))
+   (ignore-outputs
+    (diff micro_run_pos_pl.expected micro_run_pos_pl.actual))
+   (ignore-outputs
+    (diff micro_run_neg_il.expected micro_run_neg_il.actual))
+   (ignore-outputs
+    (diff micro_run_neg_sl.expected micro_run_neg_sl.actual))
+   (ignore-outputs
+    (diff micro_run_neg_pl.expected micro_run_neg_pl.actual))
+   (ignore-outputs
+    (diff micro_sim_v1model_il.expected micro_sim_v1model_il.actual))
+   (ignore-outputs
+    (diff micro_sim_v1model_sl.expected micro_sim_v1model_sl.actual))
+   (ignore-outputs
+    (diff micro_sim_v1model_pl.expected micro_sim_v1model_pl.actual))
+   (ignore-outputs
+    (diff micro_sim_ebpf_il.expected micro_sim_ebpf_il.actual))
+   (ignore-outputs
+    (diff micro_sim_ebpf_sl.expected micro_sim_ebpf_sl.actual))
+   (ignore-outputs
+    (diff micro_sim_ebpf_pl.expected micro_sim_ebpf_pl.actual))
+   (ignore-outputs
+    (diff micro_sim_psa_il.expected micro_sim_psa_il.actual))
+   (ignore-outputs
+    (diff micro_sim_psa_sl.expected micro_sim_psa_sl.actual))
+   (ignore-outputs
+    (diff micro_sim_psa_pl.expected micro_sim_psa_pl.actual)))))
+
+(rule
+ (alias micro-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff micro_run_pos_il.expected micro_run_pos_il_det.actual))
+   (ignore-outputs
+    (diff micro_run_pos_sl.expected micro_run_pos_sl_det.actual))
+   (ignore-outputs
+    (diff micro_run_neg_il.expected micro_run_neg_il_det.actual))
+   (ignore-outputs
+    (diff micro_run_neg_sl.expected micro_run_neg_sl_det.actual))
+   (ignore-outputs
+    (diff micro_sim_v1model_il.expected micro_sim_v1model_il_det.actual))
+   (ignore-outputs
+    (diff micro_sim_v1model_sl.expected micro_sim_v1model_sl_det.actual))
+   (ignore-outputs
+    (diff micro_sim_ebpf_il.expected micro_sim_ebpf_il_det.actual))
+   (ignore-outputs
+    (diff micro_sim_ebpf_sl.expected micro_sim_ebpf_sl_det.actual))
+   (ignore-outputs
+    (diff micro_sim_psa_il.expected micro_sim_psa_il_det.actual))
+   (ignore-outputs
+    (diff micro_sim_psa_sl.expected micro_sim_psa_sl_det.actual)))))
+
+;; Parse (reduction-independent, lives outside @micro-det)
+
+(rule
+ (target micro_parse_pos.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_parse_pos.actual
+   (with-stderr-to
+    micro_parse_pos.err
+    (run
+     %{exe:../parse/test.exe}
+     parser
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+;; Run (typing), seq mode
+
+(rule
+ (target micro_run_pos_il.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_pos_il.actual
+   (with-stderr-to
+    micro_run_pos_il.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -il
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_run_pos_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_pos_sl.actual
+   (with-stderr-to
+    micro_run_pos_sl.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -sl
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_run_pos_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_pos_pl.actual
+   (with-stderr-to
+    micro_run_pos_pl.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -pl
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_run_neg_il.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_neg_il.actual
+   (with-stderr-to
+    micro_run_neg_il.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -il
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/neg
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target micro_run_neg_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_neg_sl.actual
+   (with-stderr-to
+    micro_run_neg_sl.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -sl
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/neg
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target micro_run_neg_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_neg_pl.actual
+   (with-stderr-to
+    micro_run_neg_pl.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -pl
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/neg
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+;; Run (typing), det mode
+
+(rule
+ (target micro_run_pos_il_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_pos_il_det.actual
+   (with-stderr-to
+    micro_run_pos_il_det.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -il
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_run_pos_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_pos_sl_det.actual
+   (with-stderr-to
+    micro_run_pos_sl_det.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -sl
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/pos
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_run_neg_il_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_neg_il_det.actual
+   (with-stderr-to
+    micro_run_neg_il_det.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -il
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/neg
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target micro_run_neg_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_run_neg_sl_det.actual
+   (with-stderr-to
+    micro_run_neg_sl_det.err
+    (run
+     %{exe:../run/test.exe}
+     run
+     -sl
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/neg
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+;; Sim, seq mode
+
+(rule
+ (target micro_sim_v1model_il.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_v1model_il.actual
+   (with-stderr-to
+    micro_sim_v1model_il.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -s
+     ../../../spec
+     -arch
+     v1model
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-v1model
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_v1model_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_v1model_sl.actual
+   (with-stderr-to
+    micro_sim_v1model_sl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -s
+     ../../../spec
+     -arch
+     v1model
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-v1model
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_v1model_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_v1model_pl.actual
+   (with-stderr-to
+    micro_sim_v1model_pl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -pl
+     -s
+     ../../../spec
+     -arch
+     v1model
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-v1model
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_v1model_il_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_v1model_il_det.actual
+   (with-stderr-to
+    micro_sim_v1model_il_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -det
+     -s
+     ../../../spec
+     -arch
+     v1model
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-v1model
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_v1model_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_v1model_sl_det.actual
+   (with-stderr-to
+    micro_sim_v1model_sl_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -det
+     -s
+     ../../../spec
+     -arch
+     v1model
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-v1model
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_ebpf_il.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_ebpf_il.actual
+   (with-stderr-to
+    micro_sim_ebpf_il.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -s
+     ../../../spec
+     -arch
+     ebpf
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-ebpf
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_ebpf_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_ebpf_sl.actual
+   (with-stderr-to
+    micro_sim_ebpf_sl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -s
+     ../../../spec
+     -arch
+     ebpf
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-ebpf
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_ebpf_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_ebpf_pl.actual
+   (with-stderr-to
+    micro_sim_ebpf_pl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -pl
+     -s
+     ../../../spec
+     -arch
+     ebpf
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-ebpf
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_ebpf_il_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_ebpf_il_det.actual
+   (with-stderr-to
+    micro_sim_ebpf_il_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -det
+     -s
+     ../../../spec
+     -arch
+     ebpf
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-ebpf
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_ebpf_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_ebpf_sl_det.actual
+   (with-stderr-to
+    micro_sim_ebpf_sl_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -det
+     -s
+     ../../../spec
+     -arch
+     ebpf
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-ebpf
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_psa_il.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_psa_il.actual
+   (with-stderr-to
+    micro_sim_psa_il.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -s
+     ../../../spec
+     -arch
+     psa
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-psa
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_psa_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_psa_sl.actual
+   (with-stderr-to
+    micro_sim_psa_sl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -s
+     ../../../spec
+     -arch
+     psa
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-psa
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_psa_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_psa_pl.actual
+   (with-stderr-to
+    micro_sim_psa_pl.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -pl
+     -s
+     ../../../spec
+     -arch
+     psa
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-psa
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_psa_il_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_psa_il_det.actual
+   (with-stderr-to
+    micro_sim_psa_il_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -il
+     -det
+     -s
+     ../../../spec
+     -arch
+     psa
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-psa
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target micro_sim_psa_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../testdata/micro))
+ (action
+  (with-stdout-to
+   micro_sim_psa_sl_det.actual
+   (with-stderr-to
+    micro_sim_psa_sl_det.err
+    (run
+     %{exe:../sim/test.exe}
+     sim
+     -sl
+     -det
+     -s
+     ../../../spec
+     -arch
+     psa
+     -i
+     ../../../p4c/p4include
+     -only
+     ../../../testdata/micro/sim-psa
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))

@@ -98,7 +98,7 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
             (if is_patched then stat.patch_fail_run + 1 else stat.patch_fail_run);
         }
 
-let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4 onlys_p4
     testdirs_p4 testdirs_stf patchdirs =
   let excludes_by_subdir =
     Test.collect_excludes_by_subdir excludes_p4
@@ -109,8 +109,13 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
+  let onlys_p4 =
+    onlys_p4 |> Test.collect_onlys
+    |> List.map (fun only_p4 -> "../../../" ^ only_p4)
+  in
   let filename_pairs =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
+    |> Test.filter_onlys_pairs onlys_p4
   in
   let total = List.length filename_pairs in
   let stat = empty_stat in
@@ -139,6 +144,8 @@ let sim_command =
      let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and onlys_p4 =
+       flag "-only" (listed string) ~doc:"p4 test include-only paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and testdirs_stf =
        flag "-stf-dir" (listed string) ~doc:"stf test directories"
@@ -159,7 +166,7 @@ let sim_command =
      in
      fun () ->
        run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
-         testdirs_p4 testdirs_stf patchdirs)
+         onlys_p4 testdirs_p4 testdirs_stf patchdirs)
 
 (* Coverage test *)
 

@@ -160,3 +160,42 @@ let collect_test_pairs (arch : string) (testdirs_p4 : string list)
            (fun (filename_stf, is_stf_patched) ->
              (filename_p4, filename_stf, is_p4_patched || is_stf_patched))
            matched_stfs)
+
+(* Collector for inclusion (same file format as exclusion) *)
+
+let collect_onlys (paths_only : string list) =
+  let filenames_only =
+    List.concat_map (Filesys.collect_files ~suffix:".include") paths_only
+  in
+  List.concat_map collect_exclude filenames_only
+
+(* Inclusion policy *)
+
+let filter_onlys (onlys : string list) (filenames : string list) =
+  if onlys = [] then filenames
+  else (
+    onlys
+    |> List.iter (fun only ->
+           if not (List.mem only filenames) then
+             failwith (Format.asprintf "No file found for -only entry: %s" only));
+    List.filter (fun filename -> List.mem filename onlys) filenames)
+
+let filter_onlys_pairs (onlys : string list)
+    (filename_pairs : (string * string * bool) list) =
+  if onlys = [] then filename_pairs
+  else (
+    onlys
+    |> List.iter (fun only ->
+           if
+             not
+               (List.exists
+                  (fun (filename_p4, filename_stf, _) ->
+                    String.equal filename_p4 only
+                    || String.equal filename_stf only)
+                  filename_pairs)
+           then
+             failwith (Format.asprintf "No file found for -only entry: %s" only));
+    List.filter
+      (fun (filename_p4, filename_stf, _) ->
+        List.mem filename_p4 onlys || List.mem filename_stf onlys)
+      filename_pairs)

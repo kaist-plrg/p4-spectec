@@ -72,13 +72,19 @@ let run_test (module Driver : Sim.DRIVER) neg stat relname includes_p4
         }
 
 let run_test_driver mode det neg specdir relname includes_p4 excludes_p4
-    testdirs_p4 =
+    onlys_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
+  let onlys_p4 =
+    onlys_p4 |> Test.collect_onlys
+    |> List.map (fun only_p4 -> "../../../" ^ only_p4)
+  in
   let filenames_p4 =
-    testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+    testdirs_p4
+    |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+    |> Test.filter_onlys onlys_p4
   in
   let total = List.length filenames_p4 in
   let stat = empty_stat in
@@ -108,6 +114,8 @@ let run_command =
      and relname = flag "-rel" (required string) ~doc:"relation name"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
+     and onlys_p4 =
+       flag "-only" (listed string) ~doc:"p4 test include-only paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
      and neg = flag "-neg" no_arg ~doc:"neg testsing (expect failure)"
      and det = flag "-det" no_arg ~doc:"deterministic mode"
@@ -125,7 +133,7 @@ let run_command =
      in
      fun () ->
        run_test_driver mode det neg specdir relname includes_p4 excludes_p4
-         testdirs_p4)
+         onlys_p4 testdirs_p4)
 
 (* Coverage test *)
 
