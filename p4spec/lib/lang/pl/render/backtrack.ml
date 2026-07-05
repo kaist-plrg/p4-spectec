@@ -4,7 +4,7 @@ module F = Format
 
 (* Namespaced anchor ids and display labels for backtracking blocks *)
 
-module BlockLabel : sig
+module Label : sig
   type t = { id : string; display : string }
 
   val set_namespace : string -> unit
@@ -40,7 +40,7 @@ type target = NextArm of string | OutOfBlock
 
 (* A backtracking block paired with the target of its current arm *)
 
-type ctx = { block : BlockLabel.t; target : target }
+type ctx = { label : Label.t; target : target }
 
 (* Asciidoctor ordered-list styles, cycled by nesting depth. *)
 
@@ -78,38 +78,38 @@ let arm_letter (level : int) (idx : int) : string =
   | Upperroman -> to_roman ~upper:true n
   | Loweralpha | Upperalpha -> F.asprintf "arm%d" n
 
-(* Trails the bullet's first line, which must start with plain text *)
+let update ~(label : Label.t) ~(level : int) ~(total : int) (idx : int) : ctx =
+  let target =
+    if idx + 1 < total then NextArm (arm_letter level (idx + 1)) else OutOfBlock
+  in
+  { label; target }
 
-let render_block_label (block : BlockLabel.t) : string =
-  F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]" block.id
-    block.display
+(* Renderers *)
 
-(* +++...+++, not pass:[...]: content has literal '[' / ']' *)
+let prose_of_label (label : Label.t) : Adoc.prose =
+  Adoc.text_prose
+    (F.asprintf "pass:[<strong id=\"%s\" class=\"bk-label\">%s</strong>]"
+       label.id label.display)
 
-let render_fallthrough_link (backtrack : ctx option) : string =
+let prose_of_fallthrough_link (backtrack : ctx option) : Adoc.prose =
   match backtrack with
-  | None -> ""
-  | Some { block; target } ->
+  | None -> Adoc.empty_prose
+  | Some { label; target } ->
       let text, id_target =
         match target with
         | NextArm letter ->
-            ( F.asprintf "else %s-%s" block.display letter,
-              F.asprintf "%s-%s" block.id letter )
-        | OutOfBlock -> (F.asprintf "fail %s" block.display, block.id)
+            ( F.asprintf "else %s-%s" label.display letter,
+              F.asprintf "%s-%s" label.id letter )
+        | OutOfBlock -> (F.asprintf "fail %s" label.display, label.id)
       in
-      F.asprintf "+++<sub class=\"bk-mark\">[<a href=\"#%s\">%s</a>]</sub>+++"
-        id_target text
+      Adoc.text_prose
+        (F.asprintf
+           "+++<sub class=\"bk-mark\">[<a href=\"#%s\">%s</a>]</sub>+++"
+           id_target text)
 
-let arm_backtrack_ctx ~(block : BlockLabel.t) ~(level_arm : int) ~(total : int)
-    (idx : int) : ctx =
-  let target =
-    if idx + 1 < total then NextArm (arm_letter level_arm (idx + 1))
-    else OutOfBlock
-  in
-  { block; target }
-
-(* Trails the arm's first line; bk-arm-anchor sets scroll-margin-top so fragment links land on the arm header *)
-
-let arm_anchor ~(block : BlockLabel.t) ~(level_arm : int) (idx : int) : string =
-  F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++" block.id
-    (arm_letter level_arm idx)
+let prose_of_arm_anchor ~(label : Label.t) ~(level : int) (idx : int) :
+    Adoc.prose =
+  (* bk-arm-anchor sets scroll-margin-top so fragment links land on the arm header *)
+  Adoc.text_prose
+    (F.asprintf "+++<span class=\"bk-arm-anchor\" id=\"%s-%s\"></span>+++"
+       label.id (arm_letter level idx))

@@ -1,6 +1,6 @@
-module F = Format
-
 (* Asciidoc utils *)
+
+let adoc_width_short = 30
 
 let rec adoc_escape (c : char) (text : string) =
   match String.index_opt text c with
@@ -12,11 +12,8 @@ let rec adoc_escape (c : char) (text : string) =
       in
       text_before ^ "+" ^ String.make 1 c ^ "+" ^ adoc_escape c text_after
 
-let adoc_width_short = 30
-let adoc_fits_in_width_short (s : string) = String.length s <= adoc_width_short
 let adoc_subscript (s : string) = "~" ^ s ^ "~"
 let adoc_superscript (s : string) = "^" ^ s ^ "^"
-let adoc_bold (s : string) = "*" ^ s ^ "*"
 let adoc_mono (s : string) = "``" ^ s ^ "``"
 
 let adoc_mono_chopped (s : string) =
@@ -42,8 +39,7 @@ let adoc_link ~(link : string) (text : string) : string =
         text;
       text
 
-let adoc_attach_block = "+\n"
-let adoc_open_block (s : string) = F.asprintf "--\n%s\n--" s
+(* Indentation *)
 
 let reindent_lines ?(level = 0) (s : string) : string =
   let lines = String.split_on_char '\n' s in
