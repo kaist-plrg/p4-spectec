@@ -1,0 +1,57 @@
+relation ParameterType_eq:
+  parameterIR ~~ parameterIR
+  hint(input %0 %1)
+
+rulegroup Type_ok {
+
+  rule Type_ok/baseType:
+    TC |- baseType ~> baseType
+
+  rule Type_ok/typeName:
+    TC |- (`TID typeId) ~> typeIR
+    -- if typeDefIR = $find_typeDef_t(TC, typeId)
+    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+
+}
+
+rule Type_eq/baseTypeIR:
+  baseTypeIR ~~ baseTypeIR
+
+rulegroup Type_eq/dataTypeIR {
+
+  rule Type_eq/structTypeIR:
+    (STRUCT typeId `{ _ })
+    ~~ (STRUCT typeId `{ _ })
+
+  rule Type_eq/headerTypeIR:
+    (HEADER typeId `{ _ })
+    ~~ (HEADER typeId `{ _ })
+
+}
+
+rulegroup Type_eq/objectTypeIR {
+
+  rule Type_eq/externObjectTypeIR:
+    (EXTERN typeId _) ~~ (EXTERN typeId _)
+
+  rule Type_eq/parserObjectTypeIR:
+    (PARSER _ `( parameterIR_a* )) ~~ (PARSER _ `( parameterIR_b* ))
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_eq/controlObjectTypeIR:
+    (CONTROL _ `( parameterIR_a* )) ~~ (CONTROL _ `( parameterIR_b* ))
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_eq/packageObjectTypeIR:
+    (PACKAGE _ `( parameterIR_a* )) ~~ (PACKAGE _ `( parameterIR_b* ))
+    -- (ParameterType_eq: parameterIR_a ~~ parameterIR_b)*
+
+  rule Type_eq/tableObjectTypeIR:
+    (TABLE typeId) ~~ (TABLE typeId)
+
+}
+
+rule ParameterType_eq:
+  (direction typeIR_a _)
+  ~~ (direction typeIR_b _)
+  -- Type_eq: typeIR_a ~~ typeIR_b

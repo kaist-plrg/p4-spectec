@@ -1,12 +1,4 @@
 ;;
-;; Misc
-;;
-
-syntax trailingCommaOpt =
-  | `EMPTY
-  | `,
-
-;;
 ;; Booleans
 ;;
 
@@ -19,15 +11,8 @@ syntax booleanLiteral =
 ;;
 
 syntax integerLiteral =
-  | D int
   | nat W int
   | nat S int
-
-;;
-;; Strings
-;;
-
-syntax stringLiteral = `" text `"
 
 ;;
 ;; Names
@@ -61,14 +46,16 @@ syntax typeName = typeIdentifier
 ;;;; Names
 ;;
 
-syntax name =
-  | nonTypeName
-  | typeName
-  | LIST
+syntax name = nonTypeName
 
 syntax nameList =
   | name
   | nameList `, name
+
+dec $flatten_nameList(nameList) : name*
+def $flatten_nameList(name) = name
+def $flatten_nameList(nameList `, name) =
+  $flatten_nameList(nameList) ++ [ name ]
 
 syntax member = name
 
@@ -88,29 +75,20 @@ syntax direction = `EMPTY | IN | OUT | INOUT
 
 syntax expression
 
-syntax baseType =
-  | BOOL
-  | ERROR
-  | MATCH_KIND
-  | STRING
-  | INT
-  | INT `< int >
-  | BIT
+syntax integerType =
   | BIT `< int >
+  | INT `< int >
+
+syntax baseType =
+  | integerType
+  | BOOL
+  | MATCH_KIND
 
 ;;
 ;;;; Named types
 ;;
 
-syntax typeArgumentList
-
-syntax specializedType = typeName `< typeArgumentList >
-
-syntax namedType =
-  | typeName
-  | specializedType
-
-syntax typeArgument
+syntax namedType = typeName
 
 ;;
 ;;;; Types
@@ -126,27 +104,11 @@ syntax typeOrVoid =
   | identifier
 
 ;;
-;; Type parameters
-;;
-
-syntax typeParameter = name
-
-syntax typeParameterList =
-  | typeParameter
-  | typeParameterList `, typeParameter
-
-syntax typeParameterListOpt =
-  | `EMPTY
-  | `< typeParameterList >
-
-;;
 ;; Parameters
 ;;
 
-syntax initializerOpt
-
 syntax parameter =
-  direction type name initializerOpt
+  direction type name
 
 syntax nonEmptyParameterList =
   | parameter
@@ -156,15 +118,11 @@ syntax parameterList =
   | `EMPTY
   | nonEmptyParameterList
 
-;;
-;; Expression key-value pairs
-;;
-
-syntax namedExpression = name `= expression
-
-syntax namedExpressionList =
-  | namedExpression
-  | namedExpressionList `, namedExpression
+dec $flatten_parameterList(parameterList) : parameter*
+def $flatten_parameterList(`EMPTY) = eps
+def $flatten_parameterList(parameter) = [ parameter ]
+def $flatten_parameterList(nonEmptyParameterList `, parameter)
+  = $flatten_parameterList(nonEmptyParameterList) ++ [ parameter ]
 
 ;;
 ;; Expressions
@@ -177,13 +135,12 @@ syntax namedExpressionList =
 syntax literalExpression =
   | booleanLiteral
   | integerLiteral
-  | stringLiteral
 
 ;;
 ;;;; Reference expressions
 ;;
 
-syntax referenceExpression = nonTypeName
+syntax referenceExpression = name
 
 ;;
 ;;;; Unary, binary, and ternary expressions
@@ -194,14 +151,11 @@ syntax unop = `! | `~ | `- | `+
 syntax unaryExpression = unop expression
 
 syntax binop =
-  | `* | `/ | `% | `+ | `- | `<< | `>>
+  | `* | `/ | `% | `+ | `-
   | `<= | `>= | ``< | ``> | `!= | `==
-  | `& | `^ | `| | `++ | `&& | `||
+  | `& | `^ | `| | `&& | `||
 
 syntax binaryExpression = expression binop expression
-
-syntax ternaryExpression =
-  expression `? expression `: expression
 
 ;;
 ;;;; Member access expressions
@@ -209,15 +163,7 @@ syntax ternaryExpression =
 
 syntax memberAccessBase
 
-syntax errorAccessExpression =
-  ERROR `. member
-
-syntax memberAccessExpression =
-  memberAccessBase `. member
-
-syntax accessExpression =
-  | errorAccessExpression
-  | memberAccessExpression
+syntax memberAccessExpression = memberAccessBase `. member
 
 ;;
 ;;;; Call expressions
@@ -243,49 +189,19 @@ syntax expression =
   | referenceExpression
   | unaryExpression
   | binaryExpression
-  | ternaryExpression
-  | accessExpression
+  | memberAccessExpression
   | callExpression
   | parenthesizedExpression
 
-syntax expressionList =
-  | `EMPTY
-  | expression
-  | expressionList `, expression
-
-syntax memberAccessBase =
-  | typeName
-  | expression
+syntax memberAccessBase = expression
 
 syntax callTarget = namedType
-
-;;
-;; Type arguments
-;;
-
-syntax realTypeArgument =
-  | type
-  | VOID
-  | `_
-
-syntax typeArgument =
-  | realTypeArgument
-  | nonTypeName
-
-syntax typeArgumentList =
-  | `EMPTY
-  | typeArgument
-  | typeArgumentList `, typeArgument
 
 ;;
 ;; Arguments
 ;;
 
-syntax argument =
-  | expression
-  | name `= expression
-  | name `= `_
-  | `_
+syntax argument = expression
 
 syntax argumentListNonEmpty =
   | argument
@@ -294,6 +210,12 @@ syntax argumentListNonEmpty =
 syntax argumentList =
   | `EMPTY
   | argumentListNonEmpty
+
+dec $flatten_argumentList(argumentList) : argument*
+def $flatten_argumentList(`EMPTY) = eps
+def $flatten_argumentList(argument) = argument
+def $flatten_argumentList(argumentListNonEmpty `, argument)
+  = $flatten_argumentList(argumentListNonEmpty) ++ [ argument ]
 
 ;;
 ;; L-values
@@ -326,72 +248,61 @@ syntax assignmentStatement = lvalue `= expression `;
 
 syntax callStatement =
   | lvalue `( argumentList ) `;
-  | lvalue `< typeArgumentList > `( argumentList ) `;
 
 ;;
 ;;;; Block statements
 ;;
 
-syntax blockElementStatementList
+syntax statementList
 
-syntax blockStatement = `{ blockElementStatementList }
+syntax blockStatement = `{ statementList }
 
 ;;
 ;;;; Conditional statements
 ;;
 
 syntax statement
+syntax variableDeclaration
 
 syntax conditionalStatement =
-  | IF `( expression ) statement
-  | IF `( expression ) statement ELSE statement
-
-;;
-;;;; Statements
-;;
-
-syntax statement =
-  | emptyStatement
-  | assignmentStatement
-  | callStatement
-  | blockStatement
-  | conditionalStatement
+  IF `( expression ) blockStatement ELSE blockStatement
 
 ;;
 ;; Declarations
 ;;
 
 ;;
-;;;; Constant and variable declarations
+;;;; Variable declaration
 ;;
 
 syntax initializer = `= expression
 
-syntax constantDeclaration =
-  CONST type name initializer `;
-
-syntax initializerOpt =
-  | `EMPTY
-  | initializer
-
 syntax variableDeclaration =
-  type name initializerOpt `;
+  type name initializer `;
 
-syntax blockElementStatement =
-  | constantDeclaration
+syntax statement =
+  | emptyStatement
   | variableDeclaration
-  | statement
+  | assignmentStatement
+  | callStatement
+  | blockStatement
+  | conditionalStatement
 
-syntax blockElementStatementList =
+syntax statementList =
   | `EMPTY
-  | blockElementStatementList blockElementStatement
+  | statementList statement
+
+dec $flatten_statementList(statementList) : statement*
+def $flatten_statementList(`EMPTY) = eps
+def $flatten_statementList(statementList statement)
+  = $flatten_statementList(statementList) ++ [ statement ]
 
 ;;
 ;;;; Function declarations
 ;;
 
 syntax functionPrototype =
-  typeOrVoid name typeParameterListOpt `( parameterList )
+  VOID name `( parameterList )
 
 ;;
 ;;;; Action declarations
@@ -407,16 +318,10 @@ syntax actionDeclaration =
 syntax instantiation = type `( argumentList ) name `;
 
 ;;
-;;;; Error declarations
-;;
-
-syntax errorDeclaration = ERROR `{ nameList }
-
-;;
 ;;;; Match kind declarations
 ;;
 
-syntax matchKindDeclaration = MATCH_KIND `{ nameList trailingCommaOpt }
+syntax matchKindDeclaration = MATCH_KIND `{ nameList }
 
 ;;
 ;;;; Derived type declarations
@@ -432,11 +337,16 @@ syntax typeFieldList =
   | `EMPTY
   | typeFieldList typeField
 
+dec $flatten_typeFieldList(typeFieldList) : typeField*
+def $flatten_typeFieldList(`EMPTY) = eps
+def $flatten_typeFieldList(typeFieldList typeField)
+  = $flatten_typeFieldList(typeFieldList) ++ [ typeField ]
+
 syntax structTypeDeclaration =
-  STRUCT name typeParameterListOpt `{ typeFieldList }
+  STRUCT name `{ typeFieldList }
 
 syntax headerTypeDeclaration =
-  HEADER name typeParameterListOpt `{ typeFieldList }
+  HEADER name `{ typeFieldList }
 
 syntax derivedTypeDeclaration =
   | structTypeDeclaration
@@ -446,24 +356,26 @@ syntax derivedTypeDeclaration =
 ;;;; Extern declarations
 ;;
 
-syntax externFunctionDeclaration =
-  EXTERN functionPrototype `;
-
 syntax externMethodPrototype =
   functionPrototype `;
 
 syntax externMethodPrototypeList =
   | `EMPTY
-  | externMethodPrototypeList
-      externMethodPrototype
+  | externMethodPrototypeList externMethodPrototype
+
+dec $flatten_externMethodPrototypeList(externMethodPrototypeList)
+  : externMethodPrototype*
+def $flatten_externMethodPrototypeList(`EMPTY) = eps
+def $flatten_externMethodPrototypeList(
+    externMethodPrototypeList externMethodPrototype
+  )
+  = $flatten_externMethodPrototypeList(externMethodPrototypeList)
+    ++ [ externMethodPrototype ]
 
 syntax externObjectDeclaration =
-  EXTERN nonTypeName
-    typeParameterListOpt `{ externMethodPrototypeList }
+  EXTERN name `{ externMethodPrototypeList }
 
-syntax externDeclaration =
-  | externFunctionDeclaration
-  | externObjectDeclaration
+syntax externDeclaration = externObjectDeclaration
 
 ;;
 ;;;; Parser statements and declarations
@@ -479,6 +391,11 @@ syntax selectCaseList =
   | `EMPTY
   | selectCaseList selectCase
 
+dec $flatten_selectCaseList(selectCaseList) : selectCase*
+def $flatten_selectCaseList(`EMPTY) = eps
+def $flatten_selectCaseList(selectCaseList selectCase)
+  = $flatten_selectCaseList(selectCaseList) ++ [ selectCase ]
+
 syntax selectExpression = SELECT `( expression ) `{ selectCaseList }
 
 ;;
@@ -488,60 +405,47 @@ syntax selectExpression = SELECT `( expression ) `{ selectCaseList }
 syntax stateExpression =
   | name `;
   | selectExpression
-
-syntax transitionStatement =
-  | `EMPTY
-  | TRANSITION stateExpression
+syntax transitionStatement = TRANSITION stateExpression
 
 ;;
 ;;;;;; Parser type declarations
 ;;
 
 syntax parserTypeDeclaration =
-  PARSER name typeParameterListOpt `( parameterList ) `;
+  PARSER name `( parameterList ) `;
 
 ;;
 ;;;;;; Parser declarations
 ;;
 
-syntax parserStatement, parserStatementList
-
-syntax parserBlockStatement = `{ parserStatementList }
-
-syntax parserConditionalStatement =
-  | IF `( expression ) parserStatement
-  | IF `( expression ) parserStatement ELSE parserStatement
-
-syntax parserStatement =
-  | constantDeclaration
-  | variableDeclaration
-  | emptyStatement
-  | assignmentStatement
-  | callStatement
-  | parserBlockStatement
-  | parserConditionalStatement
-
-syntax parserStatementList =
-  | `EMPTY
-  | parserStatementList parserStatement
-
 syntax parserState =
-  STATE name `{ parserStatementList transitionStatement }
+  STATE name `{ statementList transitionStatement }
 
 syntax parserStateList =
   | parserState
   | parserStateList parserState
 
-syntax parserLocalDeclaration =
-  | constantDeclaration
-  | variableDeclaration
+dec $flatten_parserStateList(parserStateList) : parserState*
+def $flatten_parserStateList(parserState) = parserState
+def $flatten_parserStateList(parserStateList parserState)
+  = $flatten_parserStateList(parserStateList) ++ [ parserState ]
+
+syntax parserLocalDeclaration = variableDeclaration
 
 syntax parserLocalDeclarationList =
   | `EMPTY
   | parserLocalDeclarationList parserLocalDeclaration
 
+dec $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+  : parserLocalDeclaration*
+def $flatten_parserLocalDeclarationList(`EMPTY) = eps
+def $flatten_parserLocalDeclarationList(
+    parserLocalDeclarationList parserLocalDeclaration)
+  = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
+    ++ [ parserLocalDeclaration ]
+
 syntax parserDeclaration =
-  PARSER name typeParameterListOpt
+  PARSER name
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList }
 
@@ -566,8 +470,13 @@ syntax tableActionReference =
 syntax tableAction = tableActionReference `;
 
 syntax tableActionList =
-  | `EMPTY
+  | tableAction
   | tableActionList tableAction
+
+dec $flatten_tableActionList(tableActionList) : tableAction*
+def $flatten_tableActionList(tableAction) = [ tableAction ]
+def $flatten_tableActionList(tableActionList tableAction)
+  = $flatten_tableActionList(tableActionList) ++ [ tableAction ]
 
 ;;
 ;;;;;;;; Table entries property
@@ -579,28 +488,34 @@ syntax tableEntryList =
   | `EMPTY
   | tableEntryList tableEntry
 
+dec $flatten_tableEntryList(tableEntryList) : tableEntry*
+def $flatten_tableEntryList(`EMPTY) = eps
+def $flatten_tableEntryList(tableEntryList tableEntry)
+  = $flatten_tableEntryList(tableEntryList) ++ [ tableEntry ]
+
 ;;
 ;;;;;;;; Table properties
 ;;
 
-syntax tableProperty =
-  | KEY `= tableKey
-  | ACTIONS `= `{ tableActionList }
-  | CONST ENTRIES `= `{ tableEntryList }
+syntax tableKeyProperty = KEY `= tableKey
 
-syntax tablePropertyList =
-  | `EMPTY
-  | tablePropertyList tableProperty
+syntax tableActionsProperty = ACTIONS `= `{ tableActionList }
+
+syntax tableEntriesProperty = CONST ENTRIES `= `{ tableEntryList }
+
+syntax tableProperties =
+  | tableKeyProperty tableActionsProperty
+  | tableKeyProperty tableActionsProperty tableEntriesProperty
 
 syntax tableDeclaration =
-  TABLE name `{ tablePropertyList }
+  TABLE name `{ tableProperties }
 
 ;;
 ;;;;;; Control type declarations
 ;;
 
 syntax controlTypeDeclaration =
-  CONTROL name typeParameterListOpt `( parameterList ) `;
+  CONTROL name `( parameterList ) `;
 
 ;;
 ;;;;;; Control declarations
@@ -609,7 +524,6 @@ syntax controlTypeDeclaration =
 syntax controlBody = blockStatement
 
 syntax controlLocalDeclaration =
-  | constantDeclaration
   | variableDeclaration
   | tableDeclaration
 
@@ -618,16 +532,24 @@ syntax controlLocalDeclarationList =
   | controlLocalDeclarationList controlLocalDeclaration
 
 syntax controlDeclaration =
-  CONTROL name typeParameterListOpt
+  CONTROL name
     `( parameterList )
     `{ controlLocalDeclarationList APPLY controlBody }
+
+dec $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+  : controlLocalDeclaration*
+def $flatten_controlLocalDeclarationList(`EMPTY) = eps
+def $flatten_controlLocalDeclarationList(
+    controlLocalDeclarationList controlLocalDeclaration)
+  = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+    ++ [ controlLocalDeclaration ]
 
 ;;
 ;;;; Package type declarations
 ;;
 
 syntax packageTypeDeclaration =
-  PACKAGE name typeParameterListOpt `( parameterList ) `;
+  PACKAGE name `( parameterList ) `;
 
 ;;
 ;;;; Type declarations
@@ -644,10 +566,8 @@ syntax typeDeclaration =
 ;;
 
 syntax declaration =
-  | constantDeclaration
   | instantiation
   | actionDeclaration
-  | errorDeclaration
   | matchKindDeclaration
   | externDeclaration
   | parserDeclaration
@@ -661,4 +581,8 @@ syntax declaration =
 syntax program =
   | `EMPTY
   | program declaration
-  | program `;
+
+dec $flatten_program(program) : declaration*
+def $flatten_program(`EMPTY) = eps
+def $flatten_program(program declaration)
+  = $flatten_program(program) ++ [ declaration ]

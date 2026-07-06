@@ -1,0 +1,75 @@
+rule Statement_ok/emptyStatement:
+  scope TC |- emptyStatement -| TC
+
+rule Statement_ok/variableDeclaration:
+  scope TC_0 |- variableDeclaration -| TC_1
+  -- VarDecl_ok: scope TC_0 |- variableDeclaration -| TC_1
+
+rule Statement_ok/assignmentStatement:
+  scope TC |- lvalue `= expression `; -| TC
+  -- Lvalue_ok: scope TC |- lvalue : typeIR_lvalue
+  -- Expr_ok: scope TC |- expression : typeIR_expression
+  -- Type_eq: typeIR_lvalue ~~ typeIR_expression
+
+rulegroup Statement_ok/callStatement {
+
+  rule Statement_ok/callStatement-name:
+    scope TC |- referenceExpression `( argumentList ) `; -| TC
+    -- if callableId = $id(referenceExpression)
+    -- if callableTypeDef = $find_callableDef_t(TC, callableId)
+    -- if parameterIR* = $params_of_callableTypeDef(callableTypeDef)
+    -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
+    -- Call_convention_ok: parameterIR* `@ argumentIR*
+
+  rule Statement_ok/callStatement-member:
+    scope TC |- (lvalue_base `. member) `( argumentList ) `; -| TC
+    -- if expression_base = $expression_of_lvalue(lvalue_base)
+    -- Expr_ok: scope TC |- expression_base : typeIR_base
+    -- if EXTERN typeId externMethodTypeDefEnv = typeIR_base
+    -- if callableId = $id(member)
+    -- if VOID callableId `( parameterIR* )
+        = $find_map<callableId, externMethodTypeDefIR>(
+            externMethodTypeDefEnv,
+            callableId
+          )
+    -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
+    -- Call_convention_ok: parameterIR* `@ argumentIR*
+
+  rule Statement_ok/callStatement-table-apply:
+    scope TC |- (lvalue_base `. APPLY) `( argumentList ) `; -| TC
+    -- if expression_base = $expression_of_lvalue(lvalue_base)
+    -- Expr_ok: scope TC |- expression_base : (TABLE typeId)
+
+}
+
+rule Statement_ok/blockStatement:
+  scope TC_0 |- blockStatement -| TC_2
+  -- if TC_1 = $enter_t(TC_0)
+  -- Block_ok: TC_1 |- blockStatement
+  -- if TC_2 = $exit_t(TC_1)
+
+rule Statement_ok/conditionalStatement:
+  scope TC |- IF `( expression ) blockStatement_then
+              ELSE blockStatement_else -| TC
+  -- Expr_ok: scope TC |- expression : BOOL
+  -- Block_ok: TC |- blockStatement_then
+  -- Block_ok: TC |- blockStatement_else
+
+rulegroup Statements_ok {
+
+  rule Statements_ok/nil:
+    TC_0 |- eps -| TC_0
+
+  rule Statements_ok/cons:
+    TC_0 |- statement_h :: statement_t* -| TC_2
+    -- Statement_ok:
+        LOCAL TC_0 |- statement_h -| TC_1
+    -- Statements_ok:
+        TC_1 |- statement_t* -| TC_2
+
+}
+
+rule Block_ok:
+  TC_0 |- `{ statementList }
+  -- if statement* = $flatten_statementList(statementList)
+  -- Statements_ok: TC_0 |- statement* -| TC_1

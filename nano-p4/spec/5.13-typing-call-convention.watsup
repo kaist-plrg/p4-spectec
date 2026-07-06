@@ -1,0 +1,41 @@
+relation Call_convention_arg_ok:
+  parameterIR `@ argumentIR
+  hint(input %0 %1)
+
+rulegroup Call_convention_arg_ok {
+
+  rule Call_convention_arg_ok/empty:
+    parameterIR `@ argumentIR
+    -- if `EMPTY typeIR_param _ = parameterIR
+    -- if expression_arg `# typeIR_arg = argumentIR
+    -- Type_eq: typeIR_param ~~ typeIR_arg
+
+  rule Call_convention_arg_ok/in:
+    parameterIR `@ argumentIR
+    -- if IN typeIR_param _ = parameterIR
+    -- if expression_arg `# typeIR_arg = argumentIR
+    -- Type_eq: typeIR_param ~~ typeIR_arg
+
+  rule Call_convention_arg_ok/out-inout:
+    parameterIR `@ argumentIR
+    -- if direction typeIR_param _ = parameterIR
+    -- if direction = OUT \/ direction = INOUT
+    -- if expression_arg `# typeIR_arg = argumentIR
+    -- Type_eq: typeIR_param ~~ typeIR_arg
+    -- if $expression_is_lvalue(expression_arg)
+
+}
+
+rulegroup Call_convention_ok {
+
+  rule Call_convention_ok/nil:
+    eps `@ eps
+
+  rule Call_convention_ok/cons:
+    (parameterIR_h :: parameterIR_t*) `@ (argumentIR_h :: argumentIR_t*)
+    -- Call_convention_arg_ok:
+        parameterIR_h `@ argumentIR_h
+    -- Call_convention_ok:
+        parameterIR_t* `@ argumentIR_t*
+
+}

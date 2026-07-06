@@ -7,6 +7,70 @@ open Util.Source
 
 (* Interfaces *)
 
+(* Nano-P4 *)
+
+module NanoP4 = struct
+  let parse_program (includes : string list) (paths : string list) :
+      Run.parse_result =
+    try
+      match paths with
+      | [ path ] ->
+          let value_program = Nano.Parse.parse_file includes path in
+          Run.Pass value_program
+      | _ ->
+          Run.Fail
+            (`Syntax (no_region, "exactly one nano-P4 file must be provided"))
+    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  let parse_string (path : string) (str : string) : Run.parse_result =
+    try
+      let value_program = Nano.Parse.parse_string path str in
+      Run.Pass value_program
+    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+
+  let unparse_program (_value_program : Value.t) : string = "<nano-p4>"
+  let unparser = ref (fun (_ : Value.t) -> "")
+
+  module Builtin_NanoP4_Ext = struct
+    (* dec $print_<X>(X) : text *)
+
+    let print (add : Value.t -> unit) (at : region) (targs : Typ.t list)
+        (values_input : Value.t list) : Value.t =
+      let _typ = Builtin.Extract.one at targs in
+      let value = Builtin.Extract.one at values_input in
+      let text = !unparser value in
+      let value = Value.Make.text text in
+      add value;
+      value
+
+    let entries = [ ("print_", print) ]
+  end
+
+  module Builtin_NanoP4 = Builtin.Call.Make (Builtin_NanoP4_Ext) ()
+
+  let call_builtin = Builtin_NanoP4.invoke
+  let checkpoint = Builtin_NanoP4.checkpoint
+  let seff = Builtin_NanoP4.seff
+
+  module Cache = struct
+    let cache_on () = ()
+    let cache_off () = ()
+  end
+
+  let init (spec : Run.spec) : unit =
+    let printer (value : Value.t) =
+      match spec with
+      | IL spec_il ->
+          let henv = P4.Unparse.hints_of_spec_il spec_il in
+          Format.asprintf "%a" (P4.Unparse.pp_value henv) value
+      | SL spec_sl ->
+          let henv = P4.Unparse.hints_of_spec_sl spec_sl in
+          Format.asprintf "%a" (P4.Unparse.pp_value henv) value
+      | Empty -> assert false
+    in
+    unparser := printer
+end
+
 (* P4 *)
 
 module P4 = struct
@@ -87,43 +151,6 @@ module P4 = struct
       | Empty -> assert false
     in
     unparser := printer
-end
-
-(* Nano-P4 *)
-
-module NanoP4 = struct
-  let parse_program (includes : string list) (paths : string list) :
-      Run.parse_result =
-    try
-      match paths with
-      | [ path ] ->
-          let value_program = Nano.Parse.parse_file includes path in
-          Run.Pass value_program
-      | _ ->
-          Run.Fail
-            (`Syntax (no_region, "exactly one nano-P4 file must be provided"))
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-
-  let parse_string (path : string) (str : string) : Run.parse_result =
-    try
-      let value_program = Nano.Parse.parse_string path str in
-      Run.Pass value_program
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-
-  let unparse_program (_value_program : Value.t) : string = "<nano-p4>"
-
-  module Builtin_NanoP4 = Builtin.Call.Make (Builtin.Call.No_ext) ()
-
-  let call_builtin = Builtin_NanoP4.invoke
-  let checkpoint = Builtin_NanoP4.checkpoint
-  let seff = Builtin_NanoP4.seff
-
-  module Cache = struct
-    let cache_on () = ()
-    let cache_off () = ()
-  end
-
-  let init (_spec : Run.spec) : unit = ()
 end
 
 (* SpecTec IL *)

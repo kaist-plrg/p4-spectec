@@ -655,24 +655,6 @@ let splice_command =
            Format.eprintf "%s\n" (string_of_error at msg);
            Format.printf "%s\n" (string_of_error at msg))
 
-let parse_nano_command =
-  Core.Command.basic ~summary:"parse a nano-P4 program"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map path_p4 = flag "-p" (required string) ~doc:"Nano-P4 program"
-     and tree = flag "-t" no_arg ~doc:"print as tree"
-     and includes_p4 = flag "-i" (listed string) ~doc:"Nano-P4 include paths" in
-     fun () ->
-       try
-         let value_program = Nano.Parse.parse_file includes_p4 path_p4 in
-         if tree then Nano.Print.print_tree value_program
-         else Format.printf "%s\n" (Lang.Il.Print.string_of_value value_program)
-       with
-       | Sys_error msg -> Format.printf "File error: %s\n" msg
-       | ParseError (at, msg) ->
-           Format.printf "Parse error: %s\n" (string_of_error at msg)
-       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
-
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
     (let open Core.Command.Let_syntax in
@@ -824,7 +806,6 @@ let command =
       ("splice", splice_command);
       (* Interfacing with P4 *)
       ("parse", parse_command);
-      ("parse-nano", parse_nano_command);
       (* Interfacing with external tools via JSON *)
       ("json-ast", json_ast_command);
       ("p4-program-value-json", p4_program_value_json_command);

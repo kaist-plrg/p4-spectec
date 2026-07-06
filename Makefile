@@ -1,5 +1,6 @@
 SPEC = p4spectec
 BOOT = spectec-boot
+NANO = nano-p4spectec
 
 # Compile
 
@@ -7,6 +8,7 @@ BOOT = spectec-boot
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 EXEBOOT = p4spec/_build/default/bin/boot.exe
+EXENANO = p4spec/_build/default/bin/nano.exe
 
 build:
 	rm -f ./$(SPEC)
@@ -30,6 +32,8 @@ release:
 	ln -f $(EXESPEC) ./$(SPEC)
 	cd p4spec && opam exec -- dune build --profile=release bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
+	cd p4spec && opam exec -- dune build --profile=release bin/nano.exe && echo
+	ln -f $(EXENANO) ./$(NANO)
 
 # Spec
 

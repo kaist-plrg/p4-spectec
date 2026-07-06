@@ -1,0 +1,84 @@
+;;
+;; Meta variables
+;;
+
+var b : bool
+
+var i : int
+
+var n : nat
+var w : nat
+
+;;
+;; General text function
+;;
+
+builtin dec $print_<X>(X) : text
+builtin dec $strip_all_whitespace(text) : text
+
+;;
+;; General sequence functions
+;;
+
+dec $repeat_<X>(X, nat) : X*
+def $repeat_<X>(X, 0) = eps
+def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+dec $exists_(bool*) : bool
+  hint(prose_true "some of" %0 "is true")
+  hint(prose_false "none of" %0 "is true")
+def $exists_(eps) = false
+def $exists_(b_h :: b_t*) = b_h \/ $exists_(b_t*)
+
+dec $forall_(bool*) : bool
+  hint(prose_true "all" %0 "are true")
+  hint(prose_false "not all" %0 "are true")
+def $forall_(eps) = true
+def $forall_(b_h :: b_t*) = b_h /\ $forall_(b_t*)
+
+builtin dec $rev_<X>(X*) : X*
+builtin dec $distinct_<K>(K*) : bool
+builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+
+;;
+;; General set functions
+;;
+
+syntax set<K> = `{ K* }
+
+dec $empty_set<K> : set<K>
+def $empty_set<K> = `{ eps }
+
+dec $in_set<K>(set<K>, K) : bool
+def $in_set<K>(`{ K_e* }, K) = K <- K_e*
+
+builtin dec $intersect_set<K>(set<K>, set<K>) : set<K>
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+builtin dec $unions_set<K>(set<K>*) : set<K>
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
+builtin dec $sub_set<K>(set<K>, set<K>) : bool
+builtin dec $eq_set<K>(set<K>, set<K>) : bool
+
+;;
+;; General map functions
+;;
+
+syntax pair<K, V> = K `: V
+
+syntax map<K, V> = set<pair<K, V>>
+
+dec $empty_map<K, V> : map<K, V>
+def $empty_map<K, V> = `{ eps }
+
+dec $dom_map<K, V>(map<K, V>) : set<K>
+def $dom_map<K, V>(`{ (K `: V)* }) = `{ K* }
+
+dec $codom_map<K, V>(map<K, V>) : set<V>
+def $codom_map<K, V>(`{ (K `: V)* }) = `{ V* }
+
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
