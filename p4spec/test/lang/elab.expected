@@ -16455,6 +16455,29 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
 
    paths
 
+    rulepath tuple
+    -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
+    -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
+    -- let typeIR' = $unroll_typeIR(typeIR_base)
+    -- if typeIR' <: tupleTypeIR
+    -- let TUPLE < typeIR_field*{typeIR_field <- typeIR_field*} > = typeIR' as tupleTypeIR
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- let _expressionIR # ( typeIR_index ctk_index ) = typedExpressionIR_index
+    -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index)
+    -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
+    -- let ?(typedExpressionIR_index_reduced) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
+    -- if (ctk_index = LCTK)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> value
+    -- if value <: integerValue
+    -- let integerValue_index = value as integerValue
+    -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_index)
+    -- if nat?{nat <- nat?} matches (_)
+    -- let ?(n_index) = nat?{nat <- nat?}
+    -- if (n_index < |typeIR_field*{typeIR_field <- typeIR_field*}|)
+    -- let typeIR = typeIR_field*{typeIR_field <- typeIR_field*}[n_index]
+    -- let typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR )
+    -- output: % % |- % : typedLvalueIR
+
     rulepath array-lctk
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- let _lvalueIR # ( typeIR_base ) = typedLvalueIR_base
@@ -27593,6 +27616,22 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
    paths
 
+    rulepath tuple
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
+    -- if value'' <: tupleValue
+    -- let tupleValue_base = value'' as tupleValue
+    -- let TUPLE ( value_element*{value_element <- value_element*} ) = tupleValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if b_in_bounds
+    -- let i = i_idx
+    -- if i <: nat
+    -- let n_idx = i as nat
+    -- if (n_idx < |value_element*{value_element <- value_element*}|)
+    -- let value = value_element*{value_element <- value_element*}[n_idx]
+    -- output: % % % |- % : value
+
     rulepath array-in-bounds
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
     -- if value'' <: arrayValue
@@ -27800,6 +27839,23 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- let integerValue_index = value' as integerValue
 
    paths
+
+    rulepath tuple
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : value''
+    -- if value'' <: tupleValue
+    -- let tupleValue_base = value'' as tupleValue
+    -- let TUPLE ( value_element*{value_element <- value_element*} ) = tupleValue_base
+    -- let n_size = |value_element*{value_element <- value_element*}|
+    -- let i_idx = $int_of_integerValue(integerValue_index)
+    -- let b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int))
+    -- if b_in_bounds
+    -- let i = i_idx
+    -- if i <: nat
+    -- let n_idx = i as nat
+    -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
+    -- let tupleValue_base_update = TUPLE ( value_element_update*{value_element_update <- value_element_update*} )
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := tupleValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
 
     rulepath array-in-bounds
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value''

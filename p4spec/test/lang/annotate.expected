@@ -10025,7 +10025,21 @@ xref:Lvalue_ok[Typing ``lvalue~base~`` ``+.+`` ``member``, under context ``TC`` 
 * the result of xref:Lvalue_ok[typing ``lvalue~base~``, under context ``TC`` at ``p``].
 . Let ``+(+`` ``typeIR~base~`` ``+)+`` be the note of ``typedLvalueIR~base~``.
 . Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. If let ``+ARRAY+`` ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
+. If let ``+TUPLE+`` ``+<+`` ``typeIR~field~^{asterisk}^`` ``+>+`` be ``typeIR'``:
+ .. Let ``typedExpressionIR~index~`` be
+ ** the result of xref:Expr_ok[typing ``expression~index~``, under context ``TC`` at ``p``].
+ .. Let xref:expressionNoteIR[a pair of type ``typeIR~index~`` and compile-time known-ness ``ctk~index~``] be the note of ``typedExpressionIR~index~``.
+ .. Let ``typedExpressionIR~index_reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR~index~`` until ``$compat_array_index`` is satisfied].
+ .. Check that ``ctk~index~`` is ``+LCTK+``.
+ .. Let ``value`` be
+ ** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~index_reduced~``, under context ``TC`` at ``p``].
+ .. Let!~type~ ``integerValue~index~`` be ``value``.
+ .. Let ``n~index~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~index~``].
+ .. Check that ``n~index~`` is less than the length of ``typeIR~field~^{asterisk}^``.
+ .. Let ``typeIR`` be ``typeIR~field~^{asterisk}^[n~index~]``.
+ .. Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+[+`` ``typedExpressionIR~index_reduced~`` ``+]+`` with note ``+(+`` ``typeIR`` ``+)+``>>.
+ .. Result in ``typedLvalueIR``.
+. Else if let ``+ARRAY+`` ``typeIR`` ``+[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
  .. Let ``typedExpressionIR~index~`` be
  ** the result of xref:Expr_ok[typing ``expression~index~``, under context ``TC`` at ``p``].
  .. Let xref:expressionNoteIR[a pair of type ``typeIR~index~`` and compile-time known-ness ``ctk~index~``] be the note of ``typedExpressionIR~index~``.
@@ -17169,7 +17183,17 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+.+`` ``nameIR``, under con
 
 . Let value ``value''`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC`` and state ``ARCH`` at ``p``].
-. If let ``arrayValue~base~`` be ``value''``:
+. If let ``tupleValue~base~`` be ``value''``:
+ .. Let ``+TUPLE+`` ``+(+`` ``value~element~^{asterisk}^`` ``+)+`` be ``tupleValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
+ .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+ .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+ .. Check that ``b~in_bounds~``.
+ .. Let!~type~ ``n~idx~`` be ``i~idx~``.
+ .. Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
+ .. Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
+ .. Result in value ``value``.
+. Else if let ``arrayValue~base~`` be ``value''``:
  .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+]+`` be ``arrayValue~base~``.
  .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
@@ -17275,7 +17299,19 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+.+`` ``nameIR``, 
 
 . Let value ``value''`` be
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
-. If let ``arrayValue~base~`` be ``value''``:
+. If let ``tupleValue~base~`` be ``value''``:
+ .. Let ``+TUPLE+`` ``+(+`` ``value~element~^{asterisk}^`` ``+)+`` be ``tupleValue~base~``.
+ .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
+ .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].
+ .. Let ``b~in_bounds~`` be ``i~idx~`` is less than ``n~size~`` and ``i~idx~`` is greater than or equal to ``0``.
+ .. Check that ``b~in_bounds~``.
+ .. Let!~type~ ``n~idx~`` be ``i~idx~``.
+ .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
+ .. Let ``tupleValue~base_update~`` be ``+TUPLE+`` ``+(+`` ``value~element_update~^{asterisk}^`` ``+)+``.
+ .. Let context ``EC~1~`` be
+ ** the result of xref:Lvalue_write[writing ``tupleValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
+ .. Result in context ``EC~1~``.
+. Else if let ``arrayValue~base~`` be ``value''``:
  .. Let ``+ARRAY+`` ``+[+`` ``value~element~^{asterisk}^`` ``+]+`` be ``arrayValue~base~``.
  .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
  .. Let ``i~idx~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~index~``].

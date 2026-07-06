@@ -234,6 +234,19 @@ rulegroup Lvalue_read/memberAccess {
 
 rulegroup Lvalue_read/indexAccess {
 
+  rule Lvalue_read/tuple:
+    p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : tupleValue_base
+    -- if TUPLE `( value_element* )
+        = tupleValue_base
+    -- if n_size = |value_element*|
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
+    -- if value = value_element*[ n_idx ]
+
   rule Lvalue_read/array-in-bounds:
     p EC_0 ARCH |- storageReference `[ integerValue_index ] : value
     -- Lvalue_read:
@@ -428,6 +441,24 @@ rulegroup Lvalue_write/memberAccess {
 }
 
 rulegroup Lvalue_write/indexAccess {
+
+  rule Lvalue_write/tuple:
+    p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : tupleValue_base
+    -- if TUPLE `( value_element* )
+        = tupleValue_base
+    -- if n_size = |value_element*|
+    -- if i_idx = $int_of_integerValue(integerValue_index)
+    -- if b_in_bounds = ($(i_idx < n_size) /\ $(i_idx >= 0))
+    -- if b_in_bounds
+    -- if n_idx = i_idx
+    -- if value_element_update*
+        = value_element* [ [n_idx] = value ]
+    -- if tupleValue_base_update
+        = TUPLE `( value_element_update* )
+    -- Lvalue_write:
+        p EC_0 ARCH |- storageReference := tupleValue_base_update : EC_1
 
   rule Lvalue_write/array-in-bounds:
     p EC_0 ARCH |- (storageReference `[ integerValue_index ]) := value : EC_1

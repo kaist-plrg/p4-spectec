@@ -89,6 +89,32 @@ rulegroup Lvalue_ok/memberAccess {
 
 rulegroup Lvalue_ok/indexAccess {
 
+  rule Lvalue_ok/tuple:
+    p TC |- lvalue_base `[ expression_index ] : typedLvalueIR
+    ---- ;; check base lvalue
+    -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
+    -- if _ `# `( typeIR_base ) = typedLvalueIR_base
+    ---- ;; check that the lvalue is a tuple
+    -- if TUPLE `< typeIR_field* > = $unroll_typeIR(typeIR_base)
+    ---- ;; check index expression
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- if _ `# `( typeIR_index ctk_index ) = typedExpressionIR_index
+    ---- ;; check that the index is compatible
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_index_reduced
+        = $reduce_serenum_unary(
+            typedExpressionIR_index,
+            def $compat_array_index)
+    ---- ;; the index should be local compile-time known, and in range
+    -- if ctk_index = LCTK
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index
+    -- if n_index = $nat_of_integerValue(integerValue_index)
+    -- if typeIR = typeIR_field*[n_index]
+    ---- ;; create typed lvalue
+    -- if typedLvalueIR
+        = (typedLvalueIR_base `[ typedExpressionIR_index_reduced ])
+            `# `( typeIR )
+
   rule Lvalue_ok/array-lctk:
     p TC |- lvalue_base `[ expression_index ] : typedLvalueIR
     ---- ;; check base lvalue
