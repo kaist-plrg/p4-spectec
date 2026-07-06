@@ -869,7 +869,7 @@ and render_if_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (cond : exp) (iterexps : iterexp list) (block_then : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
         text "Check that " ++ prose_of_exp cond
         ++ prose_of_iterexp_suffix iterexps
@@ -905,7 +905,7 @@ and render_hold_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         math ^ fallback_verb
   in
   let if_head ~hold =
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
         text "If " ++ text (render_head ~hold) ++ text iter_suffix ++ text ":")
   in
@@ -925,7 +925,9 @@ and render_hold_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
             ~head:(Some (if_head ~hold:true))
             ~level:(level + 1) ~backtrack block_hold;
           render_instrs
-            ~head:(Some (Adoc.bullet_line (`Ordered level) (Adoc.text "Else:")))
+            ~head:
+              (Some
+                 (Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")))
             ~level:(level + 1) ~backtrack block_nothold;
         ]
 
@@ -938,7 +940,7 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
   match cases with
   | [ (guard, block_then) ] ->
       let head =
-        Adoc.bullet_line (`Ordered level)
+        Adoc.bullet_inline_block (`Ordered level)
           Adoc.(
             text "Check that " ++ prose_of_guard exp_scrut guard ++ text ".")
       in
@@ -954,14 +956,15 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
                  render_instrs
                    ~head:
                      (Some
-                        (Adoc.bullet_line (`Ordered level) (Adoc.text "Else:")))
+                        (Adoc.bullet_inline_block (`Ordered level)
+                           (Adoc.text "Else:")))
                    ~level:(level + 1) ~backtrack block_then
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
                  render_instrs
                    ~head:
                      (Some
-                        (Adoc.bullet_line (`Ordered level)
+                        (Adoc.bullet_inline_block (`Ordered level)
                            Adoc.(
                              text (keyword ^ " ")
                              ++ prose_of_guard exp_scrut guard
@@ -985,7 +988,8 @@ and render_group_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
           (prose_of_rel_title_math rel_signature exps)
   in
   render_instrs
-    ~head:(Some (Adoc.bullet_line (`Ordered level) Adoc.(title ++ text ":")))
+    ~head:
+      (Some (Adoc.bullet_inline_block (`Ordered level) Adoc.(title ++ text ":")))
     ~level:(level + 1) ~backtrack block
 
 (* Try instruction rendering *)
@@ -1001,12 +1005,12 @@ and render_try_instr ~(level : int) (arms : arm list) : Adoc.block =
     render_instrs
       ~head:
         (Some
-           (Adoc.bullet_line (`Ordered level_arm)
+           (Adoc.bullet_inline_block (`Ordered level_arm)
               Adoc.(text "{empty}" ++ anchor)))
       ~level:level_body ~backtrack:(Some backtrack) arm
   in
   let head =
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(text "Try " ++ Backtrack.prose_of_label label ++ text ":")
   in
   Adoc.seq_block (head :: List.mapi render_arm arms)
@@ -1025,7 +1029,7 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
   in
   if vars_out_visible = [] then
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
         text "Let "
         ++ code_prose (code_of_exp exp_l)
@@ -1034,7 +1038,7 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         ++ text "." ++ prose_fallthrough)
   else
     let body =
-      Adoc.bullet_line
+      Adoc.bullet_inline_block
         (`Unordered (level + 1))
         Adoc.(
           text "Let "
@@ -1043,7 +1047,7 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     in
     Adoc.concat_block
       [
-        Adoc.bullet_line (`Ordered level)
+        Adoc.bullet_inline_block (`Ordered level)
           Adoc.(
             text "Let "
             ++ prose_of_out_itervars vars_out_visible
@@ -1111,7 +1115,7 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
   else
     Adoc.concat_block
       [
-        Adoc.bullet_line (`Ordered level)
+        Adoc.bullet_inline_block (`Ordered level)
           Adoc.(
             text "Let "
             ++ prose_of_out_itervars vars_out_visible
@@ -1133,7 +1137,7 @@ and render_result_instr ~(level : int) (hints : Annot.hints)
   let nottyp, hint_input = rel_signature in
   let typs = Mixfix.args nottyp.it in
   let is_conditional = Hints.Input.is_conditional hint_input typs in
-  let line = Adoc.bullet_line (`Ordered level) in
+  let line = Adoc.bullet_inline_block (`Ordered level) in
   if is_conditional then line (Adoc.text "Then, the relation holds.")
   else
     match (hints.prose_out, exps) with
@@ -1149,13 +1153,13 @@ and render_result_instr ~(level : int) (hints : Annot.hints)
 (* Return instruction rendering *)
 
 and render_return_instr ~(level : int) (exp : exp) : Adoc.block =
-  Adoc.bullet_line (`Ordered level)
+  Adoc.bullet_inline_block (`Ordered level)
     Adoc.(text "Return " ++ prose_of_exp exp ++ text ".")
 
 (* Debug instruction rendering *)
 
 and render_debug_instr ~(level : int) (exp : exp) : Adoc.block =
-  Adoc.bullet_line (`Ordered level)
+  Adoc.bullet_inline_block (`Ordered level)
     Adoc.(text "(debug: " ++ prose_of_exp exp ++ text ")")
 
 (* Destruct instruction rendering *)
@@ -1168,7 +1172,7 @@ and render_destruct_instr ~(level : int) (fields : (string option * exp) list)
         Option.map (fun name -> (name, exp_target)) name_opt)
       fields
   in
-  let line = Adoc.bullet_line (`Ordered level) in
+  let line = Adoc.bullet_inline_block (`Ordered level) in
   match projections with
   | [ (name, exp_target) ] ->
       line
@@ -1190,7 +1194,7 @@ and render_check_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (exp_l : exp) (exp_r : exp) (block_inner : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
         text "Let!~type~ "
         ++ code_prose (code_of_exp exp_l)
@@ -1207,7 +1211,7 @@ and render_option_get_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     (exp_l : exp) (exp_r : exp) (block_inner : block) : Adoc.block =
   let prose_fallthrough = Backtrack.prose_of_fallthrough_link backtrack in
   let head =
-    Adoc.bullet_line (`Ordered level)
+    Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
         text "Let "
         ++ code_prose (code_of_exp exp_l)
@@ -1289,11 +1293,11 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_line (`Unordered 0)
+          Adoc.bullet_inline_block (`Unordered 0)
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ":\n";
-          Adoc.bullet_line (`Unordered 0)
+          Adoc.bullet_inline_block (`Unordered 0)
             Adoc.(
               text "Result in "
               ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
@@ -1304,7 +1308,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_line (`Unordered 0)
+          Adoc.bullet_inline_block (`Unordered 0)
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ".";
@@ -1313,7 +1317,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           title_header;
-          Adoc.bullet_line (`Unordered 0)
+          Adoc.bullet_inline_block (`Unordered 0)
             (alternate ~caps:true hint_true (reindent_lines ~level:0)
                prose_of_exp exps);
         ]
@@ -1396,7 +1400,7 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
         [
           Adoc.inline_block Adoc.(title ++ text ":");
           Adoc.raw_block "\n\n";
-          Adoc.bullet_line (`Unordered 0)
+          Adoc.bullet_inline_block (`Unordered 0)
             (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_param
                params);
         ]

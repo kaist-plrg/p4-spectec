@@ -50,8 +50,8 @@ let bullet_block (style : [ `Unordered of int | `Ordered of int ]) : block =
 let concat_block (ts : block list) : block = ConcatB ts
 let seq_block (ts : block list) : block = SeqB ts
 
-let bullet_line (style : [ `Unordered of int | `Ordered of int ]) (p : prose) :
-    block =
+let bullet_inline_block (style : [ `Unordered of int | `Ordered of int ])
+    (p : prose) : block =
   concat_block [ bullet_block style; inline_block p ]
 
 let table_block ~(cols : int) ~(header : prose list) (rows : string list list) :
@@ -170,7 +170,7 @@ let rec ser_block (b : block) : string =
       Printf.sprintf "[cols=\"%d\", options=\"header\"]\n|===\n%s%s\n\n|==="
         cols header_line row_lines
 
-(* Width: visible-text length, ignoring markup (link targets, monospace delimiters) that serialization adds but never renders on screen. *)
+(* Width: visible-text length, ignoring markup *)
 
 let rec width_prose (p : prose) : int =
   match p with
