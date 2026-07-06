@@ -96,15 +96,15 @@ and param' =
   | DefP of id * tparam list * param list * typ
   [@@deriving yojson]
 
-(* Arguments *)
-
-type arg = Il.arg [@@deriving yojson]
-type arg' = Il.arg'
-
 (* Type arguments *)
 
 type targ = Il.targ [@@deriving yojson]
 type targ' = Il.targ'
+
+(* Arguments *)
+
+type arg = Il.arg [@@deriving yojson]
+type arg' = Il.arg'
 
 (* Dangling *)
 
