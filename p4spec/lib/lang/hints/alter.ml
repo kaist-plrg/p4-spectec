@@ -129,39 +129,28 @@ and realign' (realign : (int * int) list) (hint : t) : t =
 
 (* Alternation *)
 
-module Ops = struct
-  type 'd t = {
-    empty : 'd;
-    text : string -> 'd option;
-    atom : atom -> 'd;
-    join : 'd list -> 'd;
-    fuse : 'd -> 'd -> 'd;
-    other : exp -> 'd;
-  }
-end
-
-let alternate (ops : 'd Ops.t) (hint : t) (render : 'a -> 'd) (items : 'a list)
-    : 'd =
+let alternate ~(empty : 'd) ~(text : string -> 'd option) ~(atom : atom -> 'd)
+    ~(join : 'd list -> 'd) ~(fuse : 'd -> 'd -> 'd) ~(other : exp -> 'd)
+    (hint : t) (render : 'a -> 'd) (items : 'a list) : 'd =
   let rec go (hint : t) (cursor : int) : int * 'd option =
     match hint with
-    | TextH str -> (cursor, ops.text str)
-    | AtomH atom -> (cursor, Some (ops.atom atom))
+    | TextH str -> (cursor, text str)
+    | AtomH a -> (cursor, Some (atom a))
     | SeqH hints ->
         let cursor, ds =
           List.fold_left
             (fun (cursor, acc) hint ->
               let cursor, d = go hint cursor in
-              (cursor, acc @ [ Option.value ~default:ops.empty d ]))
+              (cursor, acc @ [ Option.value ~default:empty d ]))
             (cursor, []) hints
         in
-        (cursor, Some (ops.join ds))
+        (cursor, Some (join ds))
     | BrackH (atom_l, hint, atom_r) -> (
         let cursor, d = go hint cursor in
         let ds =
-          List.filter_map Fun.id
-            [ Some (ops.atom atom_l); d; Some (ops.atom atom_r) ]
+          List.filter_map Fun.id [ Some (atom atom_l); d; Some (atom atom_r) ]
         in
-        (cursor, match ds with [] -> None | _ -> Some (ops.join ds)))
+        (cursor, match ds with [] -> None | _ -> Some (join ds)))
     | HoleH `Next -> (cursor + 1, Some (render (List.nth items cursor)))
     | HoleH (`Num idx) -> (cursor, Some (render (List.nth items idx)))
     | FuseH (hint_l, hint_r) ->
@@ -169,9 +158,9 @@ let alternate (ops : 'd Ops.t) (hint : t) (render : 'a -> 'd) (items : 'a list)
         let cursor, d_r = go hint_r cursor in
         ( cursor,
           Some
-            (ops.fuse
-               (Option.value ~default:ops.empty d_l)
-               (Option.value ~default:ops.empty d_r)) )
-    | OtherH hintexp -> (cursor, Some (ops.other hintexp))
+            (fuse
+               (Option.value ~default:empty d_l)
+               (Option.value ~default:empty d_r)) )
+    | OtherH hintexp -> (cursor, Some (other hintexp))
   in
-  go hint 0 |> snd |> Option.value ~default:ops.empty
+  go hint 0 |> snd |> Option.value ~default:empty

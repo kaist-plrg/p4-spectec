@@ -78,29 +78,14 @@ and pp_case_v (note : Il.vnote) (henv : HEnv.t) fmt (valuecase : Il.valuecase) :
 
 and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
     (values : Value.t list) : unit =
-  let module Ops = struct
-    let empty : string = ""
-
-    let text (s : string) : string option =
-      match s with "" -> None | s -> Some s
-
-    let atom (atom : Il.atom) : string = F.asprintf "%a" pp_atom atom
-    let join (docs : string list) : string = String.concat " " docs
-    let fuse (a : string) (b : string) : string = a ^ b
-    let other (hintexp : El.exp) : string = El.Print.string_of_exp hintexp
-  end in
-  let ops : string Hints.Alter.Ops.t =
-    {
-      empty = Ops.empty;
-      text = Ops.text;
-      atom = Ops.atom;
-      join = Ops.join;
-      fuse = Ops.fuse;
-      other = Ops.other;
-    }
-  in
   let str =
-    Hints.Alter.alternate ops hint
+    Hints.Alter.alternate ~empty:""
+      ~text:(fun s -> match s with "" -> None | s -> Some s)
+      ~atom:(fun (atom : Il.atom) -> F.asprintf "%a" pp_atom atom)
+      ~join:(fun (docs : string list) -> String.concat " " docs)
+      ~fuse:(fun (a : string) (b : string) -> a ^ b)
+      ~other:(fun (hintexp : El.exp) -> El.Print.string_of_exp hintexp)
+      hint
       (fun value -> F.asprintf "%a" (pp_value henv) value)
       values
   in

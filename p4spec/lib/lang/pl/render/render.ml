@@ -31,63 +31,31 @@ let prose_of_list (items : Adoc.prose list) : Adoc.prose =
 let alternate ?(caps = false) (hint : Hints.Alter.t)
     (base_text : string -> string) (render : 'a -> Adoc.prose) (items : 'a list)
     : Adoc.prose =
-  let module Ops = struct
-    let empty : Adoc.prose = Adoc.empty_prose
-
-    let text (s : string) : Adoc.prose option =
-      match s with "" -> None | s -> Some (Adoc.text (base_text s))
-
-    let atom (atom : atom) : Adoc.prose =
-      Adoc.code_prose (Adoc.token ("+" ^ Atom.string_of_atom atom.it ^ "+"))
-
-    let join (docs : Adoc.prose list) : Adoc.prose =
-      Adoc.seq_prose
-        (List.mapi (fun i d -> if i = 0 then d else Adoc.(text " " ++ d)) docs)
-
-    let fuse (a : Adoc.prose) (b : Adoc.prose) : Adoc.prose = Adoc.(a ++ b)
-
-    let other (hintexp : El.exp) : Adoc.prose =
-      Adoc.text (El.Print.string_of_exp hintexp)
-  end in
-  let ops : Adoc.prose Hints.Alter.Ops.t =
-    {
-      empty = Ops.empty;
-      text = Ops.text;
-      atom = Ops.atom;
-      join = Ops.join;
-      fuse = Ops.fuse;
-      other = Ops.other;
-    }
+  let p =
+    Hints.Alter.alternate ~empty:Adoc.empty_prose
+      ~text:(fun s ->
+        match s with "" -> None | s -> Some (Adoc.text (base_text s)))
+      ~atom:(fun (atom : atom) ->
+        Adoc.code_prose (Adoc.token ("+" ^ Atom.string_of_atom atom.it ^ "+")))
+      ~join:(fun (docs : Adoc.prose list) ->
+        Adoc.seq_prose
+          (List.mapi
+             (fun i d -> if i = 0 then d else Adoc.(text " " ++ d))
+             docs))
+      ~fuse:(fun (a : Adoc.prose) (b : Adoc.prose) -> Adoc.(a ++ b))
+      ~other:(fun (hintexp : El.exp) ->
+        Adoc.text (El.Print.string_of_exp hintexp))
+      hint render items
   in
-  let p = Hints.Alter.alternate ops hint render items in
   if caps then Adoc.capitalize_first p else p
 
-(* Assembly *)
+(* Mixfix *)
 
-let assemble_doc ~(atom : atom -> string) (mixop : Mixop.t)
+let code_of_mixfix ~(atom : atom -> string) (mixop : Mixop.t)
     (args : Adoc.code list) : Adoc.code =
-  let atom_opt (a : atom) : Adoc.code option =
-    match atom a with "" -> None | s -> Some (Adoc.token s)
-  in
-  let join (pieces : Adoc.code option list) : Adoc.code option =
-    match List.filter_map Fun.id pieces with
-    | [] -> None
-    | docs ->
-        Some
-          (Adoc.seq_code
-             (List.mapi
-                (fun i d -> if i = 0 then d else Adoc.(token " " ^^ d))
-                docs))
-  in
-  let rec go (m : Adoc.code Mixfix.t) : Adoc.code option =
-    match m with
-    | Mixfix.Arg d -> Some d
-    | Mixfix.Atom a -> atom_opt a
-    | Mixfix.Brack (l, m, r) -> join [ atom_opt l; go m; atom_opt r ]
-    | Mixfix.Infix (l, a, r) -> join [ go l; atom_opt a; go r ]
-    | Mixfix.Seq ms -> join (List.map go ms)
-  in
-  go (Mixfix.fill mixop args) |> Option.value ~default:Adoc.empty_code
+  Mixfix.assemble ~empty:Adoc.empty_code
+    ~atom:(fun a -> match atom a with "" -> None | s -> Some (Adoc.token s))
+    ~space:(Adoc.token " ") ~concat:Adoc.( ^^ ) (Mixfix.fill mixop args)
 
 (* Numbers *)
 
@@ -243,7 +211,7 @@ and code_of_exps ?(sep : string = ", ") (exps : exp list) : Adoc.code =
 
 and code_of_notexp (notexp : notexp) : Adoc.code =
   let mixop, exps = Mixfix.split notexp in
-  assemble_doc ~atom:string_of_atom mixop (List.map code_of_exp exps)
+  code_of_mixfix ~atom:string_of_atom mixop (List.map code_of_exp exps)
 
 (* Boolean expression, as code *)
 
@@ -1295,7 +1263,7 @@ and prose_of_rel_title_math (rel_signature : rel_signature) (exps : exp list) :
   let num_outputs = Mixop.arity mixop - List.length dexps in
   let holes = List.init num_outputs (fun _ -> Adoc.token "%") in
   let padded = Hints.Input.combine inputs dexps holes in
-  Adoc.code_prose (assemble_doc ~atom:string_of_atom mixop padded)
+  Adoc.code_prose (code_of_mixfix ~atom:string_of_atom mixop padded)
 
 and render_rel_title_block (hints : Annot.hints) (id_rel : id)
     (rel_signature : rel_signature) (exps : exp list) : Adoc.block =
