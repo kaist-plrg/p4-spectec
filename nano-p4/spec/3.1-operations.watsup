@@ -1,0 +1,192 @@
+;;
+;; Bitwise operations
+;;
+
+;; Interpret a bitstring with width as a raw integer
+builtin dec $bitstr_to_int(int, int) : int
+
+;; Convert a raw integer to a bitstring with width
+builtin dec $int_to_bitstr(int, int) : int
+
+builtin dec $pow2(nat) : int
+builtin dec $bneg(int) : int
+builtin dec $band(int, int) : int
+builtin dec $bxor(int, int) : int
+builtin dec $bor(int, int) : int
+
+;;
+;; Unary operation
+;;
+
+dec $un_op(unop, value) : value
+
+;; Unary logical not
+
+def $un_op(`!, `B b) = `B (~b)
+
+;; Unary bitwise not
+
+def $un_op(`~, w W i) = w W i'
+  ---- ;; i + ~i + 1 = $pow2(w)
+  -- if i' = $($pow2(w) - i - 1)
+
+def $un_op(`~, w S i) = w S i'
+  ---- ;; -i = ~i + 1
+  -- if i' = $int_to_bitstr(w, $(-(i + 1)))
+
+;; Unary minus
+
+def $un_op(`-, w W i) = w W i'
+  -- if i' = $($pow2(w) - i)
+
+def $un_op(`-, w S i) = w S i'
+  -- if i' = $int_to_bitstr(w, $bitstr_to_int(w, $(-i)))
+
+;; Unary plus
+
+def $un_op(`+, w W i) = w W i
+def $un_op(`+, w S i) = w S i
+
+;;
+;; Binary operation
+;;
+
+dec $bin_op(binop, value, value) : value
+
+;; Binary plus
+
+def $bin_op(`+, w W i_l, w W i_r) = w W i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' + i_r'))
+
+def $bin_op(`+, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' + i_r'))
+
+;; Binary minus
+
+def $bin_op(`-, w W i_l, w W i_r) = w W i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' - i_r'))
+
+def $bin_op(`-, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' - i_r'))
+
+;; Binary minus
+
+def $bin_op(`-, w W i_l, w W i_r) = w W i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' - i_r'))
+
+def $bin_op(`-, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' - i_r'))
+
+;; Binary minus
+
+def $bin_op(`*, w W i_l, w W i_r) = w W i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' * i_r'))
+
+def $bin_op(`*, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $(i_l' * i_r'))
+
+;; Binary less than or equal
+
+def $bin_op(`<=, w W i_l, w W i_r) = `B $(i_l <= i_r)
+def $bin_op(`<=, w S i_l, w S i_r) = `B $(i_l' <= i_r')
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+
+;; Binary greater than or equal
+
+def $bin_op(`>=, w W i_l, w W i_r) = `B $(i_l >= i_r)
+def $bin_op(`>=, w S i_l, w S i_r) = `B $(i_l' >= i_r')
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+
+;; Binary less than
+
+def $bin_op(``<, w W i_l, w W i_r) = `B $(i_l < i_r)
+def $bin_op(``<, w S i_l, w S i_r) = `B $(i_l' < i_r')
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+
+;; Binary greater than
+
+def $bin_op(``>, w W i_l, w W i_r) = `B $(i_l > i_r)
+def $bin_op(``>, w S i_l, w S i_r) = `B $(i_l' > i_r')
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+
+;; Binary equals
+
+dec $bin_eq(value, value) : bool
+
+def $bin_eq(`B b_a, `B b_b) = (b_a = b_b)
+def $bin_eq(MATCH_KIND `. id_a, MATCH_KIND `. id_b) = (id_a = id_b)
+
+def $bin_eq(w_a W i_a, w_b W i_b)
+  = (w_a = w_b) /\ (i_a = i_b)
+def $bin_eq(w_a S i_a, w_b S i_b)
+  = (w_a = w_b) /\ (i_a = i_b)
+
+def $bin_eq(
+    STRUCT typeId_a `{ fieldValue_a* },
+    STRUCT typeId_b `{ fieldValue_b* })
+  = (typeId_a = typeId_b)
+    /\ |fieldValue_a*| = |fieldValue_b*|
+    /\ $forall_($bin_eq(value_field_a, value_field_b)*)
+    /\ $forall_((nameIR_field_a = nameIR_field_b)*)
+  -- if (value_field_a nameIR_field_a `; = fieldValue_a)*
+  -- if (value_field_b nameIR_field_b `; = fieldValue_b)*
+
+def $bin_eq(
+    HEADER typeId_a `{ fieldValue_a* },
+    HEADER typeId_b `{ fieldValue_b* })
+  = (typeId_a = typeId_b)
+    /\ |fieldValue_a*| = |fieldValue_b*|
+    /\ $forall_($bin_eq(value_field_a, value_field_b)*)
+    /\ $forall_((nameIR_field_a = nameIR_field_b)*)
+  -- if (value_field_a nameIR_field_a `; = fieldValue_a)*
+  -- if (value_field_b nameIR_field_b `; = fieldValue_b)*
+
+def $bin_op(`==, value_l, value_r) = `B $bin_eq(value_l, value_r)
+def $bin_op(`!=, value_l, value_r) = `B (~$bin_eq(value_l, value_r))
+
+;; Binary bitwise and
+
+def $bin_op(`&, w W i_l, w W i_r) = w W i'
+  -- if i' = $int_to_bitstr(w, $band(i_l, i_r))
+def $bin_op(`&, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $band(i_l', i_r'))
+
+;; Binary bitwise xor
+
+def $bin_op(`^, w W i_l, w W i_r) = w W i'
+  -- if i' = $int_to_bitstr(w, $bxor(i_l, i_r))
+def $bin_op(`^, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $bxor(i_l', i_r'))
+
+;; Binary bitwise or
+
+def $bin_op(`|, w W i_l, w W i_r) = w W i'
+  -- if i' = $int_to_bitstr(w, $bor(i_l, i_r))
+def $bin_op(`|, w S i_l, w S i_r) = w S i'
+  -- if i_l' = $bitstr_to_int(w, i_l)
+  -- if i_r' = $bitstr_to_int(w, i_r)
+  -- if i' = $int_to_bitstr(w, $bor(i_l', i_r'))

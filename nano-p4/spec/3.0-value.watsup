@@ -1,0 +1,48 @@
+;;
+;; Value
+;;
+
+syntax value
+
+;;
+;;;; Base values
+;;
+
+syntax integerValue = integerLiteral
+syntax boolValue = `B bool
+syntax matchKindValue = MATCH_KIND `. nameIR
+
+syntax baseValue =
+  | integerValue
+  | boolValue
+  | matchKindValue
+
+;;
+;;;; Data values
+;;
+
+syntax fieldValue = value nameIR `;
+
+syntax structValue = STRUCT typeId `{ fieldValue* }
+syntax headerValue = HEADER typeId `{ fieldValue* }
+
+syntax dataValue =
+  | structValue
+  | headerValue
+
+;;
+;;;; Packet value
+;;
+
+extern syntax objectState
+
+syntax packetValue = PACKET objectState
+
+;;
+;;;; Values
+;;
+
+syntax value =
+  | baseValue
+  | dataValue
+  | packetValue
