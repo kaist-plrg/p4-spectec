@@ -1,0 +1,56 @@
+syntax callableDef =
+  | actionDeclaration
+  | parserDeclaration
+  | controlDeclaration
+
+syntax callableDefEnv = map<callableId, callableDef>
+
+dec $empty_callableDefEnv : map<callableId, callableDef>
+def $empty_callableDefEnv = $empty_map<callableId, callableDef>
+
+syntax globalInstLayer =
+  { CALLABLE callableDefEnv,
+    PARSER parserDeclaration?,
+    CONTROL controlDeclaration? }
+
+syntax instContext = globalInstLayer
+
+var IC : instContext
+
+dec $empty_instContext : instContext
+def $empty_instContext = IC
+  -- if IC
+      = { CALLABLE $empty_callableDefEnv,
+          PARSER eps,
+          CONTROL eps }
+
+;;
+;;;; Adder for callableDefs
+;;
+
+dec $add_callableDef_i(instContext, callableId, callableDef)
+  : instContext
+
+def $add_callableDef_i(IC, callableId, callableDef)
+  = IC'
+  -- if callableDefEnv = IC.CALLABLE
+  -- if ~$in_set<callableId>(
+        $dom_map<callableId, callableDef>(callableDefEnv),
+        callableId
+      )
+  -- if callableDefEnv'
+      = $add_map<callableId, callableDef>(
+          callableDefEnv,
+          callableId,
+          callableDef
+        )
+  -- if IC' = IC[ .CALLABLE = callableDefEnv' ]
+
+;;
+;;;; Finder for callableDefs
+;;
+
+dec $find_callableDef_i(instContext, callableId) : callableDef
+def $find_callableDef_i(IC, callableId) = callableDef
+  -- if callableDef
+      = $find_map<callableId, callableDef>(IC.CALLABLE, callableId)
