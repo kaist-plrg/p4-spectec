@@ -120,10 +120,7 @@ let compile_magic_bridge (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       expr_result_ml
   in
   let funcdef_ml =
-    ( id_ml,
-      params_ml,
-      Some typ_ret_ml,
-      Common.prof_wrap id_ml (Common.deref_ctx expr_body_ml) )
+    (id_ml, params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
   in
   (ctx, [ funcdef_ml ])
 
@@ -248,7 +245,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
   in
   let funcdef_dispatcher_ml =
-    (id_ml, params_ml, Some typ_ret_ml, Common.prof_wrap id_ml dispatch_ml)
+    (id_ml, params_ml, Some typ_ret_ml, dispatch_ml)
   in
   (* Collect function definitions *)
   let funcdefs_ml =
