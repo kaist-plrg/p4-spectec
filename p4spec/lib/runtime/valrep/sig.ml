@@ -5,8 +5,8 @@
        [builtin] and [interface] layers and the structural [backend-sim]
        functors are generic over [SAFE], so the same code runs against two
        value representations and none of them can reinterpret a value.
-     - [RAW]: the unchecked reinterpret across the runner edge (see below).
-     - [VAL]: [SAFE] + [RAW] — what a concrete representation actually provides.
+     - [UNSAFE]: the unchecked reinterpret across the runner edge (see below).
+     - [VAL]: [SAFE] + [UNSAFE] — what a concrete representation actually provides.
 
    The two representations:
      - [V_value] (here in [valrep]): t = Value.t, for the IL/SL interpreter.
@@ -82,15 +82,15 @@ module type SAFE = sig
   end
 end
 
-(* [RAW]: the unchecked reinterpret across the [Value.t]-typed dynamic-runner
+(* [UNSAFE]: the unchecked reinterpret across the [Value.t]-typed dynamic-runner
    edge. [to_value]/[of_value] pass a value straight back to compiled code,
    where it is never decoded — identity under [V_value], a bare [Obj.obj]/
    [Obj.repr] under [V_native]. This is the dangerous escape hatch, so it is
    deliberately NOT part of [SAFE]: the generic [builtin] layer and the
    structural [backend-sim] functors only ever see [SAFE] and so cannot cast.
    Only the per-arch boundary that owns the runner edge ([extern], and the pipe
-   initializers via [Spec.V]) is handed a [RAW]/[VAL]. *)
-module type RAW = sig
+   initializers via [Spec.V]) is handed a [UNSAFE]/[VAL]. *)
+module type UNSAFE = sig
   type t
 
   val to_value : t -> Value.t
@@ -98,9 +98,9 @@ module type RAW = sig
 end
 
 (* [VAL]: what a concrete value representation actually provides — the [SAFE]
-   contract plus the [RAW] escape hatch. [V_value]/[V_native] satisfy it, and
+   contract plus the [UNSAFE] escape hatch. [V_value]/[V_native] satisfy it, and
    [Spec.V] is typed at it so the arch/pipe layer keeps cast access. *)
 module type VAL = sig
   include SAFE
-  include RAW with type t := t
+  include UNSAFE with type t := t
 end

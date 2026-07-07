@@ -14,7 +14,7 @@ module type IMPL = sig
   val init_arch_state : vt
 end
 
-module Make (V : Runtime.Valrep.RAW) (A : IMPL with type vt = V.t) = struct
+module Make (V : Runtime.Valrep.UNSAFE) (A : IMPL with type vt = V.t) = struct
   let init_mode _ = ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after
