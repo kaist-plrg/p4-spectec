@@ -1,12 +1,24 @@
-rule Statement_eval/emptyStatement:
-  scope EC |- emptyStatement -| EC
+;;
+;; Variable declaration
+;;
 
-rule Statement_eval/variableDeclaration:
+rule VarDecl_eval:
   scope EC_0 |- type name (`= expression) `; -| EC_1
   -- Expr_eval:
       scope EC_0 |- expression : value
   -- if nameIR = $id(name)
   -- if EC_1 = $add_var_e(scope, EC_0, nameIR, value)
+
+;;
+;; Statement
+;;
+
+rule Statement_eval/emptyStatement:
+  scope EC |- emptyStatement -| EC
+
+rule Statement_eval/variableDeclaration:
+  scope EC_0 |- variableDeclaration -| EC_1
+  -- VarDecl_eval: scope EC_0 |- variableDeclaration -| EC_1
 
 rule Statement_eval/assignmentStatement:
   scope EC_0 |- lvalue `= expression `; -| EC_1

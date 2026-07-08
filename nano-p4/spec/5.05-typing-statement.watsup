@@ -1,3 +1,21 @@
+;;
+;; Variable declaration
+;;
+
+rule VarDecl_ok:
+  scope TC_0 |- type name (`= expression) `; -| TC_1
+  -- Type_ok: TC_0 |- type ~> typeIR
+  -- Expr_ok: scope TC_0 |- expression : typeIR'
+  -- Type_eq: typeIR ~~ typeIR'
+  -- if id = $id(name)
+  ---- ;; update type frame
+  -- if varTypeIR = INOUT typeIR
+  -- if TC_1 = $add_var_t(scope, TC_0, id, varTypeIR)
+
+;;
+;; Statement
+;;
+
 rule Statement_ok/emptyStatement:
   scope TC |- emptyStatement -| TC
 
@@ -16,7 +34,7 @@ rulegroup Statement_ok/callStatement {
   rule Statement_ok/callStatement-name:
     scope TC |- referenceExpression `( argumentList ) `; -| TC
     -- if callableId = $id(referenceExpression)
-    -- if callableTypeDef = $find_callableDef_t(TC, callableId)
+    -- if callableTypeDef = $find_callableTypeDef_t(TC, callableId)
     -- if parameterIR* = $params_of_callableTypeDef(callableTypeDef)
     -- ArgumentList_ok: scope TC |- argumentList : argumentIR*
     -- Call_convention_ok: parameterIR* `@ argumentIR*

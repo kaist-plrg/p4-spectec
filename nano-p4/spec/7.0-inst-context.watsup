@@ -1,7 +1,25 @@
+;;
+;; Elaborated callable definitions
+;;
+
+syntax actionDeclarationIR =
+  ACTION nameIR
+    `( parameterIR* ) blockStatement
+
+syntax parserDeclarationIR =
+  PARSER nameIR
+    `( parameterIR* )
+    `{ parserLocalDeclarationList parserStateList }
+
+syntax controlDeclarationIR =
+  CONTROL nameIR
+    `( parameterIR* )
+    `{ controlLocalDeclarationList APPLY controlBody }
+
 syntax callableDef =
-  | actionDeclaration
-  | parserDeclaration
-  | controlDeclaration
+  | actionDeclarationIR
+  | parserDeclarationIR
+  | controlDeclarationIR
 
 syntax callableDefEnv = map<callableId, callableDef>
 
@@ -9,20 +27,36 @@ dec $empty_callableDefEnv : map<callableId, callableDef>
 def $empty_callableDefEnv = $empty_map<callableId, callableDef>
 
 syntax globalInstLayer =
-  { CALLABLE callableDefEnv,
-    PARSER parserDeclaration?,
-    CONTROL controlDeclaration? }
+  { CALLABLE_TYPE callableTypeDefEnv,
+    CALLABLE callableDefEnv,
+    PARSER parserDeclarationIR?,
+    CONTROL controlDeclarationIR? }
 
 syntax instContext = globalInstLayer
 
 var IC : instContext
 
-dec $empty_instContext : instContext
-def $empty_instContext = IC
+dec $make_instContext(typingContext) : instContext
+def $make_instContext(TC) = IC
   -- if IC
-      = { CALLABLE $empty_callableDefEnv,
+      = {
+          CALLABLE_TYPE TC.GLOBAL.CALLABLE,
+          CALLABLE $empty_callableDefEnv,
           PARSER eps,
           CONTROL eps }
+
+;;
+;; Finder and Adders
+;;
+
+;;
+;;;; Finder for callableDefs
+;;
+
+dec $find_callableDef_i(instContext, callableId) : callableDef
+def $find_callableDef_i(IC, callableId) = callableDef
+  -- if callableDef
+      = $find_map<callableId, callableDef>(IC.CALLABLE, callableId)
 
 ;;
 ;;;; Adder for callableDefs
@@ -47,10 +81,10 @@ def $add_callableDef_i(IC, callableId, callableDef)
   -- if IC' = IC[ .CALLABLE = callableDefEnv' ]
 
 ;;
-;;;; Finder for callableDefs
+;;;; Finder for callableTypeDefs
 ;;
 
-dec $find_callableDef_i(instContext, callableId) : callableDef
-def $find_callableDef_i(IC, callableId) = callableDef
-  -- if callableDef
-      = $find_map<callableId, callableDef>(IC.CALLABLE, callableId)
+dec $find_callableTypeDef_i(instContext, callableId) : callableTypeDef
+def $find_callableTypeDef_i(IC, callableId) = callableTypeDef
+  -- if callableTypeDef
+      = $find_map<callableId, callableTypeDef>(IC.CALLABLE_TYPE, callableId)

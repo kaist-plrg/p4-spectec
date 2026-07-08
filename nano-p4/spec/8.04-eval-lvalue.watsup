@@ -1,0 +1,60 @@
+rule Lvalue_eval:
+  scope EC |- lvalue : value
+  -- if expression = $expression_of_lvalue(lvalue)
+  -- Expr_eval:
+      scope EC |- expression : value
+
+;; Update a field value
+
+dec $update_fieldValue(fieldValue*, nameIR, value) : fieldValue*
+
+def $update_fieldValue(eps, nameIR, value) = eps
+def $update_fieldValue(
+    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
+    nameIR, value)
+  = (value nameIR `;) :: fieldValue_t*
+  -- if nameIR_field_h = nameIR
+def $update_fieldValue(
+    (value_field_h nameIR_field_h `;) :: fieldValue_t*,
+    nameIR, value)
+  = (value_field_h nameIR_field_h `;) ::
+      $update_fieldValue(fieldValue_t*, nameIR, value)
+  -- if nameIR_field_h =/= nameIR
+
+rule Lvalue_write/referenceExpression:
+  scope EC_0 |- referenceExpression := value -| EC_1
+  -- if nameIR = $id(referenceExpression)
+  -- if EC_1 = $update_var_e(scope, EC_0, nameIR, value)
+
+rulegroup Lvalue_write/memberAccess {
+
+  rule Lvalue_write/struct:
+    scope EC_0 |- (lvalue_base `. member) := value -| EC_1
+    -- Lvalue_eval:
+        scope EC_0 |- lvalue_base : value_base
+    -- if STRUCT typeId `{ fieldValue* } = value_base
+    -- if nameIR = $id(member)
+    -- if fieldValue_update* = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if structValue_base_update
+        = STRUCT typeId `{ fieldValue_update* }
+    -- Lvalue_write:
+        scope EC_0 |- lvalue_base := structValue_base_update -| EC_1
+
+  rule Lvalue_write/header:
+    scope EC_0 |- (lvalue_base `. member) := value -| EC_1
+    -- Lvalue_eval:
+        scope EC_0 |- lvalue_base : value_base
+    -- if HEADER typeId `{ fieldValue* } = value_base
+    -- if nameIR = $id(member)
+    -- if fieldValue_update* = $update_fieldValue(fieldValue*, nameIR, value)
+    -- if headerValue_base_update
+        = HEADER typeId `{ fieldValue_update* }
+    -- Lvalue_write:
+        scope EC_0 |- lvalue_base := headerValue_base_update -| EC_1
+
+}
+
+rule Lvalue_write/parenthesized:
+  scope EC_0 |- (`( lvalue )) := value -| EC_1
+  -- Lvalue_write:
+      scope EC_0 |- lvalue := value -| EC_1

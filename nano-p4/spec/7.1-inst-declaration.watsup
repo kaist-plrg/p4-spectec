@@ -13,20 +13,26 @@ relation Decls_inst:
 rule Decl_inst/instantiation:
   IC_0 |- (`TID typeId_target) `( argumentList ) name `; -| IC_1
   -- if argument* = $flatten_argumentList(argumentList)
-  -- if $(|argument*| >= 2)
   ---- ;; find parser declaration
   -- if (`TID callableId_parser) `( _ ) = argument*[0]
-  -- if parserDeclaration = $find_callableDef_i(IC_0, callableId_parser)
+  -- if parserDeclarationIR
+      = $find_callableDef_i(IC_0, callableId_parser)
   ---- ;; find control declaration
   -- if (`TID callableId_control) `( _ ) = argument*[1]
-  -- if controlDeclaration = $find_callableDef_i(IC_0, callableId_control)
-  -- if IC_1 = IC_0[ .PARSER = parserDeclaration ][ .CONTROL = controlDeclaration ]
+  -- if controlDeclarationIR
+      = $find_callableDef_i(IC_0, callableId_control)
+  -- if IC_1
+      = IC_0[ .PARSER = parserDeclarationIR ][ .CONTROL = controlDeclarationIR ]
 
 rule Decl_inst/actionDeclaration:
   IC_0 |- actionDeclaration -| IC_1
-  -- if ACTION name_action `( parameterList ) blockStatement = actionDeclaration
+  -- if ACTION name_action `( _ ) blockStatement = actionDeclaration
   -- if callableId = $id(name_action)
-  -- if IC_1 = $add_callableDef_i(IC_0, callableId, actionDeclaration)
+  ---- ;; find action type
+  -- if ACTION parameterIR* = $find_callableTypeDef_i(IC_0, callableId)
+  -- if actionDeclarationIR
+      = ACTION callableId `( parameterIR* ) blockStatement
+  -- if IC_1 = $add_callableDef_i(IC_0, callableId, actionDeclarationIR)
 
 rule Decl_inst/matchKindDeclaration:
   IC |- MATCH_KIND `{ nameList } -| IC
@@ -40,7 +46,13 @@ rule Decl_inst/parserDeclaration:
     `( parameterList )
     `{ parserLocalDeclarationList parserStateList } = parserDeclaration
   -- if callableId = $id(name)
-  -- if IC_1 = $add_callableDef_i(IC_0, callableId, parserDeclaration)
+  ---- ;; find parser type
+  -- if PARSER parameterIR* = $find_callableTypeDef_i(IC_0, callableId)
+  -- if parserDeclarationIR
+      = PARSER callableId
+          `( parameterIR* )
+          `{ parserLocalDeclarationList parserStateList }
+  -- if IC_1 = $add_callableDef_i(IC_0, callableId, parserDeclarationIR)
 
 rule Decl_inst/controlDeclaration:
   IC_0 |- controlDeclaration -| IC_1
@@ -48,7 +60,13 @@ rule Decl_inst/controlDeclaration:
     `( parameterList )
     `{ controlLocalDeclarationList APPLY controlBody } = controlDeclaration
   -- if callableId = $id(name)
-  -- if IC_1 = $add_callableDef_i(IC_0, callableId, controlDeclaration)
+  ---- ;; find control type
+  -- if CONTROL parameterIR* = $find_callableTypeDef_i(IC_0, callableId)
+  -- if controlDeclarationIR
+      = CONTROL callableId
+          `( parameterIR* )
+          `{ controlLocalDeclarationList APPLY controlBody }
+  -- if IC_1 = $add_callableDef_i(IC_0, callableId, controlDeclarationIR)
 
 rule Decl_inst/typeDeclaration:
   IC |- typeDeclaration -| IC
@@ -70,12 +88,12 @@ rulegroup Decls_inst {
 ;;
 
 relation Program_inst:
-  |- program -| instContext
-  hint(input %0)
+  typingContext |- program -| instContext
+  hint(input %0 %1)
 
 rule Program_inst:
-  |- program -| IC'
+  TC |- program -| IC'
   -- if declaration* = $flatten_program(program)
-  -- if IC = $empty_instContext
+  -- if IC = $make_instContext(TC)
   -- Decls_inst: IC |- declaration* -| IC'
   -- debug IC'

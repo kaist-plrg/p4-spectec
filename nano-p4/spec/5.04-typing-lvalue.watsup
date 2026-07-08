@@ -49,5 +49,18 @@ def $expression_is_lvalue(expression) = false
 
 dec $expression_of_lvalue(lvalue) : expression
 def $expression_of_lvalue(referenceExpression) = referenceExpression
-def $expression_of_lvalue(lvalue_base `. member) = $expression_of_lvalue(lvalue_base) `. member
-def $expression_of_lvalue(`( lvalue )) = `( $expression_of_lvalue(lvalue) )
+def $expression_of_lvalue(lvalue_base `. member)
+  = $expression_of_lvalue(lvalue_base) `. member
+def $expression_of_lvalue(`( lvalue ))
+  = `( $expression_of_lvalue(lvalue) )
+
+;;
+;; Convert expression to lvalue
+;;
+
+dec $lvalue_of_expression(expression) : lvalue
+def $lvalue_of_expression(referenceExpression) = referenceExpression
+def $lvalue_of_expression(memberAccessBase `. member)
+  = $lvalue_of_expression(memberAccessBase) `. member
+def $lvalue_of_expression(`( expression ))
+  = `( $lvalue_of_expression(expression) )

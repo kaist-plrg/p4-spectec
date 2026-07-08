@@ -31,12 +31,22 @@ syntax dataValue =
   | headerValue
 
 ;;
-;;;; Packet value
+;;;; Object values
 ;;
+
+;; Packet value
 
 extern syntax objectState
 
-syntax packetValue = PACKET objectState
+syntax packetValue = PACKET typeId objectState
+
+;; Table value
+
+syntax tableValue = TABLE typeId tableProperties
+
+syntax objectValue =
+  | packetValue
+  | tableValue
 
 ;;
 ;;;; Values
@@ -45,4 +55,24 @@ syntax packetValue = PACKET objectState
 syntax value =
   | baseValue
   | dataValue
-  | packetValue
+  | objectValue
+
+;;
+;; Default values
+;;
+
+dec $default(typeIR) : value
+
+def $default(BIT `< int >) = 0 W int
+def $default(INT `< int >) = 0 S int
+def $default(BOOL) = `B false
+def $default(STRUCT typeId `{ fieldTypeIR* })
+  = STRUCT typeId `{ fieldValue* }
+  -- if (typeIR id `; = fieldTypeIR)*
+  -- if (value = $default(typeIR))*
+  -- if (fieldValue = value id `;)*
+def $default(HEADER typeId `{ fieldTypeIR* })
+  = HEADER typeId `{ fieldValue* }
+  -- if (typeIR id `; = fieldTypeIR)*
+  -- if (value = $default(typeIR))*
+  -- if (fieldValue = value id `;)*

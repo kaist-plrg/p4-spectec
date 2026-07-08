@@ -29,30 +29,20 @@ relation Lvalue_write:
 ;; Call
 ;;
 
-;; parameter without type information
-syntax calleeParameterIR = direction nameIR
-
-dec $calleeParameterIR_of_parameterList(parameterList) : calleeParameterIR*
-def $calleeParameterIR_of_parameterList(parameterList) = calleeParameterIR*
-  -- if parameter* = $flatten_parameterList(parameterList)
-  -- if (direction _ name = parameter)*
-  -- if (nameIR = $id(name))*
-  -- if (calleeParameterIR = direction nameIR)*
-
 syntax actionCallee =
-  ACTION callableId `( calleeParameterIR* ) blockStatement
+  ACTION callableId `( parameterIR* ) blockStatement
 
 syntax externMethodCallee =
-  EXTERN_METHOD value `. callableId `( calleeParameterIR* )
+  EXTERN_METHOD value `. callableId `( parameterIR* )
 
 syntax parserApplyMethodCallee =
   PARSER `. APPLY
-    `( calleeParameterIR* )
+    `( parameterIR* )
     `{ parserLocalDeclarationList `; parserStateList }
 
 syntax controlApplyMethodCallee =
   CONTROL `. APPLY
-    `( calleeParameterIR* )
+    `( parameterIR* )
     `{ controlLocalDeclarationList `; controlBody }
 
 syntax tableApplyMethodCallee =
@@ -70,8 +60,44 @@ relation Callee_eval:
   hint(input %0 %1 %2)
 
 relation Call_eval:
-  scope evalContext |- callee `( argumentList ) -| evalContext
+  scope evalContext |- callee `( argument* ) -| evalContext
   hint(input %0 %1 %2 %3)
+
+;;
+;; Calling conventions
+;;
+
+relation Copy_in:
+  scope evalContext parameterIR*
+    `@ scope evalContext argument*
+  ~> evalContext lvalue?*
+  hint(input %0 %1 %2 %3 %4 %5)
+
+relation Copy_out:
+  scope evalContext parameterIR*
+    `@ scope evalContext lvalue?*
+  ~> evalContext
+  hint(input %0 %1 %2 %3 %4 %5)
+
+;;
+;; Parser
+;;
+
+relation ParserState_trans:
+  evalContext |- TRANSITION nameIR : transitionResult -| evalContext
+  hint(input %0 %1)
+
+relation ParserLocalDeclList_eval:
+  evalContext |- parserLocalDeclarationList -| evalContext
+  hint(input %0 %1)
+
+;;
+;; Variable declaration
+;;
+
+relation VarDecl_eval:
+  scope evalContext |- variableDeclaration -| evalContext
+  hint(input %0 %1 %2)
 
 ;;
 ;; Statement

@@ -15,8 +15,8 @@ syntax globalEvalLayer =
   { TYPE typeDefEnv,
     CALLABLE callableDefEnv,
     FRAME frame,
-    PARSER parserDeclaration,
-    CONTROL controlDeclaration }
+    PARSER parserDeclarationIR,
+    CONTROL controlDeclarationIR }
 
 ;; Block layer
 
@@ -39,23 +39,17 @@ syntax evalContext =
 
 var EC : evalContext
 
-dec $make_evalContext(
-    typeDefEnv,
-    parserDeclaration,
-    controlDeclaration
-  ) : evalContext
+dec $make_evalContext(typingContext, instContext) : evalContext
 
-def $make_evalContext(
-    typeDefEnv,
-    parserDeclaration,
-    controlDeclaration
-  ) = EC
+def $make_evalContext(TC, IC) = EC
+  -- if parserDeclarationIR = IC.PARSER
+  -- if controlDeclarationIR = IC.CONTROL
   -- if globalEvalLayer
-      = { TYPE typeDefEnv,
+      = { TYPE TC.GLOBAL.TYPE,
           CALLABLE $empty_callableDefEnv,
           FRAME $empty_frame,
-          PARSER parserDeclaration,
-          CONTROL controlDeclaration }
+          PARSER parserDeclarationIR,
+          CONTROL controlDeclarationIR }
   -- if blockEvalLayer
       = { FRAME $empty_frame }
   -- if localEvalLayer
@@ -64,6 +58,24 @@ def $make_evalContext(
       = { GLOBAL globalEvalLayer,
           BLOCK blockEvalLayer,
           LOCAL localEvalLayer }
+
+;;
+;; Context inheritance
+;;
+
+dec $inherit_e(scope, evalContext) : evalContext
+
+def $inherit_e(GLOBAL, EC)
+  = EC[ .BLOCK = blockEvalLayer ][ .LOCAL = localEvalLayer ]
+  -- if blockEvalLayer
+      = { FRAME $empty_frame }
+  -- if localEvalLayer
+      = { FRAMES ([ $empty_frame ]) }
+def $inherit_e(BLOCK, EC)
+  = EC[ .LOCAL = localEvalLayer ]
+  -- if localEvalLayer
+      = { FRAMES ([ $empty_frame ]) }
+def $inherit_e(LOCAL, EC) = EC
 
 ;;
 ;; Finder for variables
