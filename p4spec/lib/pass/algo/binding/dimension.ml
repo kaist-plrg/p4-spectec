@@ -8,11 +8,10 @@ open Util.Source
 (* Dimension inference *)
 
 let rec infer_exp' (exp : exp) (iters : iter list) (venv : VEnv.t) : VEnv.t =
-  let typ', at = (exp.note, exp.at) in
+  let typ = exp.note $ exp.at in
   match exp.it with
   | BoolE _ | NumE _ | TextE _ -> venv
   | VarE id -> (
-      let typ = typ' $ at in
       match VEnv.find_opt id venv with
       | None -> VEnv.add id (typ, iters) venv
       | Some (typ_prev, iters_prev) ->
