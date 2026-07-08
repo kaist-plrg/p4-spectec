@@ -699,37 +699,6 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
       - then try usual elaboration
    - Otherwise, directly try usual elaboration *)
 
-and is_pure_exp (exp_il : Il.exp) : bool =
-  match exp_il.it with
-  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
-  | UnE (_, _, exp_il) -> is_pure_exp exp_il
-  | BinE (_, _, exp_l_il, exp_r_il) | CmpE (_, _, exp_l_il, exp_r_il) ->
-      is_pure_exp exp_l_il && is_pure_exp exp_r_il
-  | UpCastE (_, exp_il)
-  | DownCastE (_, exp_il)
-  | SubE (exp_il, _)
-  | MatchE (exp_il, _) ->
-      is_pure_exp exp_il
-  | TupleE exps_il -> List.for_all is_pure_exp exps_il
-  | CaseE notexp_il -> List.for_all is_pure_exp (Mixfix.args notexp_il)
-  | StrE expfields_il ->
-      let exps_il = List.map snd expfields_il in
-      List.for_all is_pure_exp exps_il
-  | OptE (Some exp_il) -> is_pure_exp exp_il
-  | OptE None -> true
-  | ListE exps_il -> List.for_all is_pure_exp exps_il
-  | ConsE (exp_h_il, exp_t_il) -> is_pure_exp exp_h_il && is_pure_exp exp_t_il
-  | CatE (exp_l_il, exp_r_il) -> is_pure_exp exp_l_il && is_pure_exp exp_r_il
-  | MemE (exp_e_il, exp_s_il) -> is_pure_exp exp_e_il && is_pure_exp exp_s_il
-  | LenE exp_il | DotE (exp_il, _) -> is_pure_exp exp_il
-  | IdxE (exp_b_il, exp_i_il) -> is_pure_exp exp_b_il && is_pure_exp exp_i_il
-  | SliceE (exp_b_il, exp_i_il, exp_n_il) ->
-      is_pure_exp exp_b_il && is_pure_exp exp_i_il && is_pure_exp exp_n_il
-  | UpdE (exp_b_il, path_il, exp_f_il) ->
-      is_pure_exp exp_b_il && is_pure_path path_il && is_pure_exp exp_f_il
-  | CallE _ -> false
-  | IterE (exp_il, _) -> is_pure_exp exp_il
-
 and elab_exp (ctx : Ctx.t) (typ_il_expect : Il.typ) (exp : exp) :
     (Ctx.t * Il.exp) attempt =
   elab_exp' ctx typ_il_expect exp
@@ -1131,14 +1100,6 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
 
 (* Elaboration of paths *)
 
-and is_pure_path (path_il : Il.path) : bool =
-  match path_il.it with
-  | RootP -> true
-  | IdxP (path_il, exp_il) -> is_pure_path path_il && is_pure_exp exp_il
-  | SliceP (path_il, exp_il_i, exp_il_n) ->
-      is_pure_path path_il && is_pure_exp exp_il_i && is_pure_exp exp_il_n
-  | DotP (path_il, _) -> is_pure_path path_il
-
 and elab_path (ctx : Ctx.t) (typ_il_expect : Il.typ) (path : path) :
     (Ctx.t * Il.path * Il.typ) attempt =
   let* ctx, path_il, typ_il = elab_path' ctx typ_il_expect path.it in
@@ -1308,32 +1269,10 @@ let externalize_prem (prem_internal : prem_internal) : Il.prem option =
 let is_else_prem_internal (prem_internal : prem_internal) : bool =
   match prem_internal.it with ElsePr -> true | _ -> false
 
-let rec is_pure_prem (prem_il : Il.prem) : bool =
-  match prem_il.it with
-  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ -> false
-  | LetPr (_, exp_r_il) -> is_pure_exp exp_r_il
-  | IterPr (prem_il, _) -> is_pure_prem prem_il
-  | DebugPr exp_il -> is_pure_exp exp_il
-
-let is_pure_prem_internal (prem_internal : prem_internal) : bool =
-  match prem_internal.it with
-  | SomePr prem_il -> is_pure_prem (prem_il $ prem_internal.at)
-  | VarPr -> true
-  | ElsePr -> false
-
 let check_prems_internal (at : region) (prems_internal : prem_internal list) :
     unit =
-  let prems_non_else_internal =
-    prems_internal
-    |> List.filter (fun prem_internal ->
-           not (is_else_prem_internal prem_internal))
-  in
-  if List.length prems_internal = List.length prems_non_else_internal then ()
-  else if List.length prems_internal = List.length prems_non_else_internal + 1
-  then
-    check
-      (List.for_all is_pure_prem_internal prems_non_else_internal)
-      at "cannot have non-pure premises alongside an otherwise premise"
+  let prems_else_internal = List.filter is_else_prem_internal prems_internal in
+  if List.length prems_else_internal <= 1 then ()
   else error at "cannot use multiple otherwise premises"
 
 let rec elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal =

@@ -50,6 +50,42 @@ let update_venv_partial (venv : VEnv.t) (renv_partial : Partialbind.REnv.t) :
 
 (* Expression binding analysis *)
 
+let rec is_pure_exp (exp : exp) : bool =
+  match exp.it with
+  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
+  | UnE (_, _, exp) -> is_pure_exp exp
+  | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
+      is_pure_exp exp_l && is_pure_exp exp_r
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+      is_pure_exp exp
+  | TupleE exps -> List.for_all is_pure_exp exps
+  | CaseE notexp -> List.for_all is_pure_exp (Mixfix.args notexp)
+  | StrE expfields ->
+      let exps = List.map snd expfields in
+      List.for_all is_pure_exp exps
+  | OptE (Some exp) -> is_pure_exp exp
+  | OptE None -> true
+  | ListE exps -> List.for_all is_pure_exp exps
+  | ConsE (exp_h, exp_t) -> is_pure_exp exp_h && is_pure_exp exp_t
+  | CatE (exp_l, exp_r) -> is_pure_exp exp_l && is_pure_exp exp_r
+  | MemE (exp_e, exp_s) -> is_pure_exp exp_e && is_pure_exp exp_s
+  | LenE exp | DotE (exp, _) -> is_pure_exp exp
+  | IdxE (exp_b, exp_i) -> is_pure_exp exp_b && is_pure_exp exp_i
+  | SliceE (exp_b, exp_i, exp_n) ->
+      is_pure_exp exp_b && is_pure_exp exp_i && is_pure_exp exp_n
+  | UpdE (exp_b, path, exp_f) ->
+      is_pure_exp exp_b && is_pure_path path && is_pure_exp exp_f
+  | CallE _ -> false
+  | IterE (exp, _) -> is_pure_exp exp
+
+and is_pure_path (path : path) : bool =
+  match path.it with
+  | RootP -> true
+  | IdxP (path, exp) -> is_pure_path path && is_pure_exp exp
+  | SliceP (path, exp_i, exp_n) ->
+      is_pure_path path && is_pure_exp exp_i && is_pure_exp exp_n
+  | DotP (path, _) -> is_pure_path path
+
 let analyze_exps_as_bind (ctx : Ctx.t) (iterctx : Iterctx.t) (exps : exp list) :
     Ctx.t * VEnv.t * exp list * prem list =
   let binds = Collectbind.collect_exps ctx exps in
@@ -153,6 +189,18 @@ let analyze_args_as_bound_shallow (ctx : Ctx.t) (args : arg list) : unit =
   List.iter (analyze_arg_as_bound_shallow ctx) args
 
 (* Premise binding analysis *)
+
+let rec is_pure_prem (prem : prem) : bool =
+  match prem.it with
+  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ -> false
+  | LetPr (_, exp_r) -> is_pure_exp exp_r
+  | IterPr (prem, _) -> is_pure_prem prem
+  | DebugPr exp -> is_pure_exp exp
+
+let check_prems_in_else (at : region) (prems : prem list) : unit =
+  check
+    (List.for_all is_pure_prem prems)
+    at "cannot have non-pure premises alongside an otherwise premise"
 
 let rec analyze_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (prem : prem) :
     Ctx.t * VEnv.t * prem * prem list =
@@ -342,18 +390,21 @@ let analyze_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
   let rulematch = (exps_input_unified, exps_input_unified_match, prems_match) in
   (ctxs_local, rulematch, prems_unified_group)
 
-let analyze_rulepath (ctx_local : Ctx.t) (id_rule : id)
-    (prems_unified : prem list) (prems : prem list) (exps_output : exp list) :
-    Al.rulepath =
+let analyze_rulepath ?(is_else : bool = false) (ctx_local : Ctx.t)
+    (id_rule : id) (prems_unified : prem list) (prems : prem list)
+    (exps_output : exp list) : Al.rulepath =
   let ctx_local, prems = analyze_prems ctx_local prems in
   let prems = prems_unified @ prems in
+  if is_else then check_prems_in_else id_rule.at prems;
   analyze_exps_as_bound ctx_local exps_output;
   (id_rule, prems, exps_output)
 
-let analyze_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
-    (prems_unified_group : prem list list) (prems_group : prem list list)
-    (exps_output_group : exp list list) : Al.rulepath list =
-  ctxs_local |> List.map analyze_rulepath
+let analyze_rulepaths ?(is_else : bool = false) (ctxs_local : Ctx.t list)
+    (id_rule_group : id list) (prems_unified_group : prem list list)
+    (prems_group : prem list list) (exps_output_group : exp list list) :
+    Al.rulepath list =
+  ctxs_local
+  |> List.map (analyze_rulepath ~is_else)
   |> List.map2
        (fun id_rule analyze_rulepath -> analyze_rulepath id_rule)
        id_rule_group
@@ -367,8 +418,8 @@ let analyze_rulepaths (ctxs_local : Ctx.t list) (id_rule_group : id list)
        (fun exps_output analyze_rulepath -> analyze_rulepath exps_output)
        exps_output_group
 
-let analyze_rulegroup (ctx : Ctx.t) (inputs : Hints.Input.t)
-    (rulegroup : rulegroup) : Al.rulegroup =
+let analyze_rulegroup ?(is_else : bool = false) (ctx : Ctx.t)
+    (inputs : Hints.Input.t) (rulegroup : rulegroup) : Al.rulegroup =
   let id, rules = rulegroup.it in
   let ctxs_local =
     List.map (fun rule -> Free.free_rule rule |> Ctx.add_frees ctx) rules
@@ -394,8 +445,8 @@ let analyze_rulegroup (ctx : Ctx.t) (inputs : Hints.Input.t)
     analyze_rulematch ctx ctxs_local exps_input_group
   in
   let rulepaths =
-    analyze_rulepaths ctxs_local id_rule_group prems_unified_group prems_group
-      exps_output_group
+    analyze_rulepaths ~is_else ctxs_local id_rule_group prems_unified_group
+      prems_group exps_output_group
   in
   (id, rulematch, rulepaths) $ rulegroup.at
 
@@ -403,14 +454,15 @@ let analyze_elsegroup (ctx : Ctx.t) (inputs : Hints.Input.t)
     (elsegroup : elsegroup) : Al.elsegroup =
   let id, rule = elsegroup.it in
   let rulegroup = (id, [ rule ]) $ elsegroup.at in
-  let rulegroup_il = analyze_rulegroup ctx inputs rulegroup in
+  let rulegroup_il = analyze_rulegroup ~is_else:true ctx inputs rulegroup in
   let id, rulematch, rulepaths = rulegroup_il.it in
   let rulepath = List.hd rulepaths in
   (id, rulematch, rulepath) $ elsegroup.at
 
 (* Clause binding analysis *)
 
-let analyze_clause (ctx : Ctx.t) (clause : clause) : clause =
+let analyze_clause ?(is_else : bool = false) (ctx : Ctx.t) (clause : clause) :
+    clause =
   let args, exp, prems = clause.it in
   let ctx =
     let frees = Free.free_clause clause in
@@ -421,7 +473,11 @@ let analyze_clause (ctx : Ctx.t) (clause : clause) : clause =
   let ctx, prems = analyze_prems ctx prems in
   analyze_exp_as_bound ctx exp;
   let prems = sideconditions @ prems in
+  if is_else then check_prems_in_else clause.at prems;
   (args, exp, prems) $ clause.at
+
+let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
+  analyze_clause ~is_else:true ctx elseclause
 
 (* Table row binding analysis *)
 
@@ -470,7 +526,7 @@ let analyze_def (ctx : Ctx.t) (def : def) : Al.def =
       Al.TableDecD (id, params, typ, tablerows_il, hints) $ at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause ctx) clauses in
-      let elseclause_opt = Option.map (analyze_clause ctx) elseclause_opt in
+      let elseclause_opt = Option.map (analyze_elseclause ctx) elseclause_opt in
       Al.FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
       $ at
 
