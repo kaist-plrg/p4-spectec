@@ -5,6 +5,10 @@ open Error
 open Runtime.Static.Envs
 open Util.Source
 
+(* Collect binding identifiers,
+   while enforcing the invariant that binding identifiers
+   can only occur in invertible constructs *)
+
 let collect_noninvertible (at : region) (construct : string)
     (benv : Bind.BEnv.t) : unit =
   if not (Bind.BEnv.is_empty benv) then

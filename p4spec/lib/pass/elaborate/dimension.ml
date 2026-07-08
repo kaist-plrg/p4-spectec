@@ -36,11 +36,11 @@ end
 
 (* Expression inference *)
 
-let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
-  let typ', at = (exp.note, exp.at) in
+let rec infer_exp (dctx : Dimctx.t) (exp : exp) (iters : iter list) : Dimctx.t =
+  let typ = exp.note $ exp.at in
   match exp.it with
   | BoolE _ | NumE _ | TextE _ -> dctx
-  | VarE id -> Dimctx.add_to_list id (typ' $ at, iters) dctx
+  | VarE id -> Dimctx.add_to_list id (typ, iters) dctx
   | UnE (_, _, exp)
   | UpCastE (_, exp)
   | DownCastE (_, exp)
@@ -48,99 +48,109 @@ let rec infer_exp (exp : exp) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
   | MatchE (exp, _)
   | LenE exp
   | DotE (exp, _) ->
-      infer_exp exp iters dctx
+      infer_exp dctx exp iters
   | BinE (_, _, exp_l, exp_r)
   | CmpE (_, _, exp_l, exp_r)
   | ConsE (exp_l, exp_r)
   | CatE (exp_l, exp_r)
   | MemE (exp_l, exp_r)
   | IdxE (exp_l, exp_r) ->
-      dctx |> infer_exp exp_l iters |> infer_exp exp_r iters
-  | TupleE exps | ListE exps -> infer_exps exps iters dctx
-  | CaseE notexp -> infer_notexp notexp iters dctx
+      let dctx = infer_exp dctx exp_l iters in
+      infer_exp dctx exp_r iters
+  | TupleE exps | ListE exps -> infer_exps dctx exps iters
+  | CaseE notexp -> infer_notexp dctx notexp iters
   | StrE expfields ->
       let exps = List.map snd expfields in
-      infer_exps exps iters dctx
-  | OptE (Some exp) -> infer_exp exp iters dctx
+      infer_exps dctx exps iters
+  | OptE (Some exp) -> infer_exp dctx exp iters
   | OptE None -> dctx
   | SliceE (exp_b, exp_l, exp_h) ->
-      dctx |> infer_exp exp_b iters |> infer_exp exp_l iters
-      |> infer_exp exp_h iters
+      let dctx = infer_exp dctx exp_b iters in
+      let dctx = infer_exp dctx exp_l iters in
+      infer_exp dctx exp_h iters
   | UpdE (exp_b, path, exp_f) ->
-      dctx |> infer_exp exp_b iters |> infer_path path iters
-      |> infer_exp exp_f iters
-  | CallE (_, _, args) -> infer_args args iters dctx
-  | IterE (exp, (iter, _)) -> infer_exp exp (iter :: iters) dctx
+      let dctx = infer_exp dctx exp_b iters in
+      let dctx = infer_path dctx path iters in
+      infer_exp dctx exp_f iters
+  | CallE (_, _, args) -> infer_args dctx args iters
+  | IterE (exp, (iter, _)) -> infer_exp dctx exp (iter :: iters)
 
-and infer_exps (exps : exp list) (iters : iter list) (dctx : Dimctx.t) :
+and infer_exps (dctx : Dimctx.t) (exps : exp list) (iters : iter list) :
     Dimctx.t =
-  List.fold_left (fun dctx exp -> infer_exp exp iters dctx) dctx exps
+  List.fold_left (fun dctx exp -> infer_exp dctx exp iters) dctx exps
 
-and infer_notexp (notexp : notexp) (iters : iter list) (dctx : Dimctx.t) :
+and infer_notexp (dctx : Dimctx.t) (notexp : notexp) (iters : iter list) :
     Dimctx.t =
   let exps = Mixfix.args notexp in
-  infer_exps exps iters dctx
+  infer_exps dctx exps iters
 
 (* Path inference *)
 
-and infer_path (path : path) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
+and infer_path (dctx : Dimctx.t) (path : path) (iters : iter list) : Dimctx.t =
   match path.it with
   | RootP -> dctx
-  | IdxP (path, exp) -> dctx |> infer_path path iters |> infer_exp exp iters
+  | IdxP (path, exp) ->
+      let dctx = infer_path dctx path iters in
+      infer_exp dctx exp iters
   | SliceP (path, exp_l, exp_h) ->
-      dctx |> infer_path path iters |> infer_exp exp_l iters
-      |> infer_exp exp_h iters
-  | DotP (path, _) -> infer_path path iters dctx
+      let dctx = infer_path dctx path iters in
+      let dctx = infer_exp dctx exp_l iters in
+      infer_exp dctx exp_h iters
+  | DotP (path, _) -> infer_path dctx path iters
 
 (* Argument inference *)
 
-and infer_arg (arg : arg) (iters : iter list) (dctx : Dimctx.t) : Dimctx.t =
-  match arg.it with ExpA exp -> infer_exp exp iters dctx | DefA _ -> dctx
+and infer_arg (dctx : Dimctx.t) (arg : arg) (iters : iter list) : Dimctx.t =
+  match arg.it with ExpA exp -> infer_exp dctx exp iters | DefA _ -> dctx
 
-and infer_args (args : arg list) (iters : iter list) (dctx : Dimctx.t) :
+and infer_args (dctx : Dimctx.t) (args : arg list) (iters : iter list) :
     Dimctx.t =
-  List.fold_left (fun dctx arg -> infer_arg arg iters dctx) dctx args
+  List.fold_left (fun dctx arg -> infer_arg dctx arg iters) dctx args
 
 (* Premise inference *)
 
-let rec infer_prem (prem : prem) (iters : iter list) (dctx : Dimctx.t) :
+let rec infer_prem (dctx : Dimctx.t) (prem : prem) (iters : iter list) :
     Dimctx.t =
   match prem.it with
-  | RulePr (_, notexp, _) -> infer_notexp notexp iters dctx
-  | IfPr exp -> infer_exp exp iters dctx
-  | IfHoldPr (_, notexp) -> infer_notexp notexp iters dctx
-  | IfNotHoldPr (_, notexp) -> infer_notexp notexp iters dctx
+  | RulePr (_, notexp, _) -> infer_notexp dctx notexp iters
+  | IfPr exp -> infer_exp dctx exp iters
+  | IfHoldPr (_, notexp) -> infer_notexp dctx notexp iters
+  | IfNotHoldPr (_, notexp) -> infer_notexp dctx notexp iters
   | LetPr _ ->
-      error prem.at "let premise should appear only after bind analysis"
+      error prem.at "let premise should appear only after the algo pass"
   | IterPr (_, ((_, vars_bound, vars_bind) as iterprem))
     when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error prem.at
         (Format.asprintf
            "iterated premise should initially have no annotations, but got %s"
            (Il.Print.string_of_iterprem iterprem))
-  | IterPr (prem, (iter, _, _)) -> infer_prem prem (iter :: iters) dctx
-  | DebugPr exp -> infer_exp exp iters dctx
+  | IterPr (prem, (iter, _, _)) -> infer_prem dctx prem (iter :: iters)
+  | DebugPr exp -> infer_exp dctx exp iters
 
-let infer_prems (prems : prem list) (dctx : Dimctx.t) : Dimctx.t =
-  List.fold_left (fun dctx prem -> infer_prem prem [] dctx) dctx prems
+let infer_prems (dctx : Dimctx.t) (prems : prem list) : Dimctx.t =
+  List.fold_left (fun dctx prem -> infer_prem dctx prem []) dctx prems
 
 (* Rule inference *)
 
 let infer_rule (rule : rule) : Dimctx.t =
   let _, notexp, prems = rule.it in
-  Dimctx.empty |> infer_notexp notexp [] |> infer_prems prems
+  let dctx = infer_notexp Dimctx.empty notexp [] in
+  infer_prems dctx prems
 
 (* Clause inference *)
 
 let infer_clause (clause : clause) : Dimctx.t =
   let args, exp, prems = clause.it in
-  Dimctx.empty |> infer_args args [] |> infer_prems prems |> infer_exp exp []
+  let dctx = infer_args Dimctx.empty args [] in
+  let dctx = infer_prems dctx prems in
+  infer_exp dctx exp []
 
 (* Table row inference *)
 
 let infer_tablerow (tablerow : tablerow) : Dimctx.t =
   let args, exp = tablerow.it in
-  Dimctx.empty |> infer_args args [] |> infer_exp exp []
+  let dctx = infer_args Dimctx.empty args [] in
+  infer_exp dctx exp []
 
 (* Occurence constructors *)
 
@@ -400,7 +410,7 @@ let rec annotate_prem (bounds : VEnv.t) (prem : prem) : VEnv.t * prem =
       let prem = IfNotHoldPr (id, notexp) $ at in
       (occurs, prem)
   | LetPr _ ->
-      error prem.at "let premise should appear only after bind analysis"
+      error prem.at "let premise should appear only after the algo pass"
   | IterPr (_, (_, vars_bound, vars_bind))
     when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
       error at "iterated premise should initially have no annotations"
