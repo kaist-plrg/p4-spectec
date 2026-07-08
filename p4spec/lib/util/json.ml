@@ -31,6 +31,22 @@ let array_of_yojson (e_of_yojson : Yojson.Safe.t -> ('a, string) result)
       aux [] lst
   | _ -> Error "expected a JSON list"
 
+(* JSON conversion helpers for pairs *)
+
+let pair_to_yojson (a_to_yojson : 'a -> Yojson.Safe.t)
+    (b_to_yojson : 'b -> Yojson.Safe.t) ((a, b) : 'a * 'b) : Yojson.Safe.t =
+  `List [ a_to_yojson a; b_to_yojson b ]
+
+let pair_of_yojson (a_of_yojson : Yojson.Safe.t -> ('a, string) result)
+    (b_of_yojson : Yojson.Safe.t -> ('b, string) result) (json : Yojson.Safe.t)
+    : ('a * 'b, string) result =
+  match json with
+  | `List [ json_a; json_b ] -> (
+      match (a_of_yojson json_a, b_of_yojson json_b) with
+      | Ok a, Ok b -> Ok (a, b)
+      | Error e, _ | _, Error e -> Error e)
+  | _ -> Error "expected a JSON pair"
+
 (* JSON conversion helpers for key-value maps *)
 
 module Map = struct

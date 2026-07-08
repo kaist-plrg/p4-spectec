@@ -23,21 +23,6 @@ module Make (Spec : Spec.S) = struct
   module Counter = struct
     (* Type *)
 
-    let bytes_pair_to_yojson ((packets, bytes) : Bigint.t * Bigint.t) :
-        Yojson.Safe.t =
-      `List
-        [ Util.Json.bigint_to_yojson packets; Util.Json.bigint_to_yojson bytes ]
-
-    let bytes_pair_of_yojson :
-        Yojson.Safe.t -> (Bigint.t * Bigint.t, string) result = function
-      | `List [ jp; jb ] -> (
-          match
-            (Util.Json.bigint_of_yojson jp, Util.Json.bigint_of_yojson jb)
-          with
-          | Ok packets, Ok bytes -> Ok (packets, bytes)
-          | Error e, _ | _, Error e -> Error e)
-      | _ -> Error "expected a counter (packets, bytes) pair"
-
     type t =
       | Packets of
           (Bigint.t array
@@ -49,8 +34,14 @@ module Make (Spec : Spec.S) = struct
           [@of_yojson Util.Json.array_of_yojson Util.Json.bigint_of_yojson])
       | PacketsAndBytes of
           ((Bigint.t * Bigint.t) array
-          [@to_yojson Util.Json.array_to_yojson bytes_pair_to_yojson]
-          [@of_yojson Util.Json.array_of_yojson bytes_pair_of_yojson])
+          [@to_yojson
+            Util.Json.array_to_yojson
+              (Util.Json.pair_to_yojson Util.Json.bigint_to_yojson
+                 Util.Json.bigint_to_yojson)]
+          [@of_yojson
+            Util.Json.array_of_yojson
+              (Util.Json.pair_of_yojson Util.Json.bigint_of_yojson
+                 Util.Json.bigint_of_yojson)])
     [@@deriving yojson]
 
     let pp fmt (_ctr : t) = Format.fprintf fmt "counter"
