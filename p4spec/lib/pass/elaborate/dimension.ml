@@ -7,6 +7,24 @@ open Error
 open Envs
 open Util.Source
 
+(* Dimension analysis :
+
+   For each rule or clause, collect the dimension of all occurrences of
+   every identifier. The minimal dimension is determined to be the ambient
+   dimension of the identifier in the rule or clause.
+    - e.g. -- if n_x* = [ 1, 1 ] ;; n_x : [ n_x* ]
+           -- if n_y = 1         ;; n_y : [ n_y ]
+           -- if (n_x = n_y)*    ;; n_x : [ n_x* ], n_y : [ n_y* ]
+    - Overall, n_x : [ n_x* ] and n_y : [ n_y, n_y* ]
+    - Therefore, n_x : n_x* and n_y : n_y
+
+   Annotate iteration constructs with what variables are iterated over.
+    - Variables with iterated dimensions at most the ambient dimension
+    - Check that iteration is non-empty
+    - e.g. -- if n_x*{n_x <- n_x*} = [ 1, 1 ]
+           -- if n_y = 1
+           -- if (n_x = n_y)*{n_x <- n_x*} *)
+
 (* Context for dimension analysis *)
 
 module Dimctx = struct
