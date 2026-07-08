@@ -1,0 +1,90 @@
+;; Parser transition result
+
+syntax transitionResult =
+  | ACCEPT
+  | REJECT
+  | STATE id
+
+;;
+;; Expression
+;;
+
+relation Expr_eval:
+  scope evalContext |- expression : value
+  hint(input %0 %1 %2)
+
+;;
+;; Lvalue
+;;
+
+relation Lvalue_eval:
+  scope evalContext |- lvalue : value
+  hint(input %0 %1 %2)
+
+relation Lvalue_write:
+  scope evalContext |- lvalue := value -| evalContext
+  hint(input %0 %1 %2 %3)
+
+;;
+;; Call
+;;
+
+;; parameter without type information
+syntax calleeParameterIR = direction nameIR
+
+dec $calleeParameterIR_of_parameterList(parameterList) : calleeParameterIR*
+def $calleeParameterIR_of_parameterList(parameterList) = calleeParameterIR*
+  -- if parameter* = $flatten_parameterList(parameterList)
+  -- if (direction _ name = parameter)*
+  -- if (nameIR = $id(name))*
+  -- if (calleeParameterIR = direction nameIR)*
+
+syntax actionCallee =
+  ACTION callableId `( calleeParameterIR* ) blockStatement
+
+syntax externMethodCallee =
+  EXTERN_METHOD value `. callableId `( calleeParameterIR* )
+
+syntax parserApplyMethodCallee =
+  PARSER `. APPLY
+    `( calleeParameterIR* )
+    `{ parserLocalDeclarationList `; parserStateList }
+
+syntax controlApplyMethodCallee =
+  CONTROL `. APPLY
+    `( calleeParameterIR* )
+    `{ controlLocalDeclarationList `; controlBody }
+
+syntax tableApplyMethodCallee =
+  TABLE typeId `. APPLY `{ tableProperties }
+
+syntax callee =
+  | actionCallee
+  | externMethodCallee
+  | parserApplyMethodCallee
+  | controlApplyMethodCallee
+  | tableApplyMethodCallee
+
+relation Callee_eval:
+  scope evalContext |- lvalue : callee
+  hint(input %0 %1 %2)
+
+relation Call_eval:
+  scope evalContext |- callee `( argumentList ) -| evalContext
+  hint(input %0 %1 %2 %3)
+
+;;
+;; Statement
+;;
+
+relation Statement_eval:
+  scope evalContext |- statement -| evalContext
+  hint(input %0 %1 %2)
+
+relation Statements_eval:
+  scope evalContext |- statement* -| evalContext
+  hint(input %0 %1 %2)
+
+relation Block_eval:
+  scope evalContext |- blockStatement -| evalContext
+  hint(input %0 %1 %2)
