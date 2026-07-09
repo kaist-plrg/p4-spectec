@@ -84,11 +84,19 @@ relation Copy_out:
 ;;
 
 relation ParserState_trans:
-  evalContext |- TRANSITION nameIR : transitionResult -| evalContext
-  hint(input %0 %1)
+  evalContext parserState* |- nameIR : transitionResult -| evalContext
+  hint(input %0 %1 %2)
 
 relation ParserLocalDeclList_eval:
   evalContext |- parserLocalDeclarationList -| evalContext
+  hint(input %0 %1)
+
+;;
+;; Control
+;;
+
+relation ControlLocalDeclList_eval:
+  evalContext |- controlLocalDeclarationList -| evalContext
   hint(input %0 %1)
 
 ;;
@@ -112,5 +120,5 @@ relation Statements_eval:
   hint(input %0 %1 %2)
 
 relation Block_eval:
-  scope evalContext |- blockStatement -| evalContext
-  hint(input %0 %1 %2)
+  evalContext |- blockStatement -| evalContext
+  hint(input %0 %1)

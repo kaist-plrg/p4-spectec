@@ -39,7 +39,7 @@ rule Statement_eval/blockStatement:
   scope EC_0 |- blockStatement -| EC_3
   -- if EC_1 = $enter_e(EC_0)
   -- Block_eval:
-      scope EC_1 |- blockStatement -| EC_2
+      EC_1 |- blockStatement -| EC_2
   -- if EC_3 = $exit_e(EC_2)
 
 rulegroup Statement_eval/conditionalStatement {
@@ -49,14 +49,14 @@ rulegroup Statement_eval/conditionalStatement {
     -- Expr_eval:
         scope EC_0 |- expression : (`B true)
     -- Block_eval:
-        scope EC_0 |- blockStatement_then -| EC_1
+        EC_0 |- blockStatement_then -| EC_1
 
   rule Statement_eval/else:
     scope EC_0 |- IF `( expression ) blockStatement_then ELSE blockStatement_else -| EC_1
     -- Expr_eval:
         scope EC_0 |- expression : (`B false)
     -- Block_eval:
-        scope EC_0 |- blockStatement_else -| EC_1
+        EC_0 |- blockStatement_else -| EC_1
 
 }
 
@@ -75,7 +75,7 @@ rulegroup Statements_eval {
 }
 
 rule Block_eval:
-  scope EC_0 |- `{ statementList } -| EC_1
+  EC_0 |- `{ statementList } -| EC_1
   -- if statement* = $flatten_statementList(statementList)
   -- Statements_eval:
-      scope EC_0 |- statement* -| EC_1
+      LOCAL EC_0 |- statement* -| EC_1

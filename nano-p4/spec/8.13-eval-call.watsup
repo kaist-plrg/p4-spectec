@@ -1,0 +1,93 @@
+;;
+;; Callee
+;;
+
+rule Callee_eval/action:
+  scope EC |- referenceExpression : actionCallee
+  -- if callableId = $id(referenceExpression)
+  ---- ;; NOTE: parser and control block constructor invocations
+  ---- ;;       are unreachable.
+  -- if actionDeclarationIR = $find_callableDef_e(EC, callableId)
+  -- if ACTION _ `( parameterIR* ) blockStatement = actionDeclarationIR
+  -- if actionCallee = ACTION callableId `( parameterIR* ) blockStatement
+
+rule Callee_eval/extern:
+  scope EC |- lvalue_base `. member : externMethodCallee
+  -- Lvalue_eval:
+      scope EC |- lvalue_base : packetValue
+  -- if PACKET typeId objectState = packetValue
+  -- if callableId = $id(member)
+  -- if EXTERN _ externMethodTypeDefEnv = $find_typeDef_e(EC, typeId)
+  -- if VOID _ `( parameterIR* )
+      = $find_map<callableId, externMethodTypeDefIR>(
+          externMethodTypeDefEnv,
+          callableId
+        )
+  -- if externMethodCallee
+      = EXTERN_METHOD packetValue `. callableId `( parameterIR* )
+
+rule Callee_eval/table:
+  scope EC |- lvalue_base `. member : tableApplyMethodCallee
+  -- Lvalue_eval:
+      scope EC |- lvalue_base : tableValue
+  -- if TABLE typeId tableProperties = tableValue
+  -- if tableApplyMethodCallee = TABLE typeId `. APPLY `{ tableProperties }
+
+;;
+;; Call
+;;
+
+rule Call_eval/actionCallee:
+  scope EC_0 |- actionCallee `( argument* ) -| EC_1
+  -- if ACTION callableId `( parameterIR* ) blockStatement = actionCallee
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  -- Copy_in:
+      scope EC_0 parameterIR*
+        `@ LOCAL EC_callee_0 argument*
+      ~> EC_callee_1 lvalue?*
+  -- Block_eval:
+      EC_callee_1 |- blockStatement -| EC_callee_2
+  -- Copy_out:
+      scope EC_0 parameterIR*
+        `@ LOCAL EC_callee_2 lvalue?*
+      ~> EC_1
+
+rule Call_eval/parserApplyMethodCallee:
+  scope EC_0 |- parserApplyMethodCallee `( argument* ) -| EC_1
+  -- if PARSER `. APPLY
+    `( parameterIR* )
+    `{ parserLocalDeclarationList `; parserStateList } = parserApplyMethodCallee
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  -- Copy_in:
+      scope EC_0 parameterIR*
+        `@ BLOCK EC_callee_0 argument*
+      ~> EC_callee_1 lvalue?*
+  -- ParserLocalDeclList_eval:
+      EC_callee_1 |- parserLocalDeclarationList -| EC_callee_2
+  -- if parserState* = $flatten_parserStateList(parserStateList)
+  ---- ;; TODO: do we ignore parser rejects?
+  -- ParserState_trans:
+      EC_callee_2 parserState* |- "start" : transitionResult -| EC_callee_3
+  -- Copy_out:
+      scope EC_0 parameterIR*
+        `@ BLOCK EC_callee_3 lvalue?*
+      ~> EC_1
+
+rule Call_eval/controlApplyMethodCallee:
+  scope EC_0 |- controlApplyMethodCallee `( argument* ) -| EC_1
+  -- if CONTROL `. APPLY
+    `( parameterIR* )
+    `{ controlLocalDeclarationList `; controlBody } = controlApplyMethodCallee
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  -- Copy_in:
+      scope EC_0 parameterIR*
+        `@ BLOCK EC_callee_0 argument*
+      ~> EC_callee_1 lvalue?*
+  -- ControlLocalDeclList_eval:
+      EC_callee_1 |- controlLocalDeclarationList -| EC_callee_2
+  -- Block_eval:
+      EC_callee_2 |- controlBody -| EC_callee_3
+  -- Copy_out:
+      scope EC_0 parameterIR*
+        `@ BLOCK EC_callee_3 lvalue?*
+      ~> EC_1

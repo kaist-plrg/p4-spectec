@@ -1,0 +1,40 @@
+;;
+;; Control local declarations
+;;
+
+relation ControlLocalDecl_eval:
+  evalContext |- controlLocalDeclaration -| evalContext
+  hint(input %0 %1)
+
+relation ControlLocalDecls_eval:
+  evalContext |- controlLocalDeclaration* -| evalContext
+  hint(input %0 %1)
+
+rule ControlLocalDecl_eval/variableDeclaration:
+  EC_0 |- variableDeclaration -| EC_1
+  -- VarDecl_eval:
+      BLOCK EC_0 |- variableDeclaration -| EC_1
+
+rule ControlLocalDecl_eval/tableDeclaration:
+  EC |- tableDeclaration -| EC
+
+rulegroup ControlLocalDecls_eval {
+
+  rule ControlLocalDecls_eval/nil:
+    EC |- eps -| EC
+
+  rule ControlLocalDecls_eval/cons:
+    EC_0 |- controlLocalDeclaration_h :: controlLocalDeclaration_t* -| EC_2
+    -- ControlLocalDecl_eval:
+        EC_0 |- controlLocalDeclaration_h -| EC_1
+    -- ControlLocalDecls_eval:
+        EC_1 |- controlLocalDeclaration_t* -| EC_2
+
+}
+
+rule ControlLocalDeclList_eval:
+  EC_0 |- controlLocalDeclarationList -| EC_1
+  -- if controlLocalDeclaration*
+      = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
+  -- ControlLocalDecls_eval:
+      EC_0 |- controlLocalDeclaration* -| EC_1
