@@ -114,23 +114,23 @@ relation TableEntry_ok:
 rulegroup TableEntry_ok {
 
   rule TableEntry_ok/action-no-argumentList:
-    TC TBLC |- `( expression ) `: nonTypeName `;
+    TC TBLC |- `( expression ) `: name `;
     ---- ;; check key
     -- Expr_ok: BLOCK TC |- expression : typeIR
     -- if typeIR_key `: _ = TBLC.KEY
     -- Type_eq: typeIR ~~ typeIR_key
     ---- ;; check action. if entry has no arguments,
     ---- ;; the registered action must have no parameters
-    -- if callableId = $id(nonTypeName)
+    -- if callableId = $id(name)
     -- if (eps, eps) = $find_action(TBLC, callableId)
 
   rule TableEntry_ok/action-argumentList:
-    TC TBLC |- `( expression ) `: (nonTypeName `( argumentList )) `;
+    TC TBLC |- `( expression ) `: (name `( argumentList )) `;
     ---- ;; check key
     -- Expr_ok: BLOCK TC |- expression : typeIR
     -- if typeIR_key `: _ = TBLC.KEY
     -- Type_eq: typeIR ~~ typeIR_key
-    -- if callableId = $id(nonTypeName)
+    -- if callableId = $id(name)
     -- if (parameterIR_action*, argumentIR_action*)
         = $find_action(TBLC, callableId)
     -- ArgumentList_ok: BLOCK TC |- argumentList : argumentIR_entry*

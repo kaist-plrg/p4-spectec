@@ -32,18 +32,18 @@ rulegroup ParserTransition_eval {
 
 }
 
-dec $match_case_expression(value, (name, value)*) : name?
+dec $match_case_value(value, (name, value)*) : name?
 
-def $match_case_expression(value, eps) = eps
-def $match_case_expression(
+def $match_case_value(value, eps) = eps
+def $match_case_value(
     value,
     (name_case_h, value_case_h) :: (name_case_t, value_case_t)*)
   = name_case_h
   -- if $bin_eq(value, value_case_h)
-def $match_case_expression(
+def $match_case_value(
     value,
     (name_case_h, value_case_h) :: (name_case_t, value_case_t)*)
-  = $match_case_expression(value, (name_case_t, value_case_t)*)
+  = $match_case_value(value, (name_case_t, value_case_t)*)
   -- if ~$bin_eq(value, value_case_h)
 
 rulegroup ParserSelect_eval {
@@ -55,7 +55,7 @@ rulegroup ParserSelect_eval {
     -- if selectCase* = $flatten_selectCaseList(selectCaseList)
     -- if (expression_case `: name_case `; = selectCase)*
     -- (Expr_eval: LOCAL EC |- expression_case : value_case)*
-    -- if name_match = $match_case_expression(value, (name_case, value_case)*)
+    -- if name_match = $match_case_value(value, (name_case, value_case)*)
     -- ParserTransition_eval:
         EC |- TRANSITION (name_match `;) : transitionResult
 
@@ -66,7 +66,7 @@ rulegroup ParserSelect_eval {
     -- if selectCase* = $flatten_selectCaseList(selectCaseList)
     -- if (expression_case `: name_case `; = selectCase)*
     -- (Expr_eval: LOCAL EC |- expression_case : value_case)*
-    -- if eps = $match_case_expression(value, (name_case, value_case)*)
+    -- if eps = $match_case_value(value, (name_case, value_case)*)
 
 }
 
@@ -164,3 +164,27 @@ rule ParserLocalDeclList_eval:
       = $flatten_parserLocalDeclarationList(parserLocalDeclarationList)
   -- ParserLocalDecls_eval:
       EC_0 |- parserLocalDeclaration* -| EC_1
+
+;;
+;; Parser apply
+;;
+
+rule Parser_apply:
+  EC_0 argument* |- parserDeclarationIR : transitionResult -| EC_1
+  -- if PARSER nameIR
+      `( parameterIR* )
+      `{ parserLocalDeclarationList parserStateList } = parserDeclarationIR
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  -- Copy_in:
+      GLOBAL EC_0 parameterIR*
+        `@ BLOCK EC_callee_0 argument*
+      ~> EC_callee_1 lvalue?*
+  -- ParserLocalDeclList_eval:
+      EC_callee_1 |- parserLocalDeclarationList -| EC_callee_2
+  -- if parserState* = $flatten_parserStateList(parserStateList)
+  -- ParserState_trans:
+      EC_callee_2 parserState* |- "start" : transitionResult -| EC_callee_3
+  -- Copy_out:
+      GLOBAL EC_0 parameterIR*
+        `@ BLOCK EC_callee_3 lvalue?*
+      ~> EC_1

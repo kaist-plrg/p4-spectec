@@ -24,7 +24,7 @@ rule Callee_eval/extern:
           callableId
         )
   -- if externMethodCallee
-      = EXTERN_METHOD packetValue `. callableId `( parameterIR* )
+      = EXTERN_METHOD lvalue_base `. callableId `( parameterIR* )
 
 rule Callee_eval/table:
   scope EC |- lvalue_base `. member : tableApplyMethodCallee
@@ -52,42 +52,33 @@ rule Call_eval/actionCallee:
         `@ LOCAL EC_callee_2 lvalue?*
       ~> EC_1
 
-rule Call_eval/parserApplyMethodCallee:
-  scope EC_0 |- parserApplyMethodCallee `( argument* ) -| EC_1
-  -- if PARSER `. APPLY
-    `( parameterIR* )
-    `{ parserLocalDeclarationList `; parserStateList } = parserApplyMethodCallee
-  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-  -- Copy_in:
-      scope EC_0 parameterIR*
-        `@ BLOCK EC_callee_0 argument*
-      ~> EC_callee_1 lvalue?*
-  -- ParserLocalDeclList_eval:
-      EC_callee_1 |- parserLocalDeclarationList -| EC_callee_2
-  -- if parserState* = $flatten_parserStateList(parserStateList)
-  ---- ;; TODO: do we ignore parser rejects?
-  -- ParserState_trans:
-      EC_callee_2 parserState* |- "start" : transitionResult -| EC_callee_3
-  -- Copy_out:
-      scope EC_0 parameterIR*
-        `@ BLOCK EC_callee_3 lvalue?*
-      ~> EC_1
+rule Call_eval/externMethodCallee:
+  scope EC_0 |- externMethodCallee `( argument* ) -| EC_2
+    -- if EXTERN_METHOD lvalue_extern `. callableId `( parameterIR* )
+        = externMethodCallee
+    -- Lvalue_eval:
+        scope EC_0 |- lvalue_extern : value_extern
+    -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+    -- Copy_in:
+        scope EC_0 parameterIR*
+          `@ LOCAL EC_callee_0 argument*
+        ~> EC_callee_1 lvalue?*
+    -- if (_ _ nameIR = parameterIR)*
+    -- ExternMethodCall_eval:
+        EC_callee_1 |- value_extern `. callableId `( nameIR* )
+                    : value_extern' -| EC_callee_2
+    -- Copy_out:
+        scope EC_0 parameterIR*
+          `@ LOCAL EC_callee_2 lvalue?*
+        ~> EC_1
+    -- Lvalue_write:
+        scope EC_1 |- lvalue_extern := value_extern' -| EC_2
 
-rule Call_eval/controlApplyMethodCallee:
-  scope EC_0 |- controlApplyMethodCallee `( argument* ) -| EC_1
-  -- if CONTROL `. APPLY
-    `( parameterIR* )
-    `{ controlLocalDeclarationList `; controlBody } = controlApplyMethodCallee
-  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
-  -- Copy_in:
-      scope EC_0 parameterIR*
-        `@ BLOCK EC_callee_0 argument*
-      ~> EC_callee_1 lvalue?*
-  -- ControlLocalDeclList_eval:
-      EC_callee_1 |- controlLocalDeclarationList -| EC_callee_2
-  -- Block_eval:
-      EC_callee_2 |- controlBody -| EC_callee_3
-  -- Copy_out:
-      scope EC_0 parameterIR*
-        `@ BLOCK EC_callee_3 lvalue?*
-      ~> EC_1
+rule Call_eval/tableApplyMethodCallee:
+  scope EC_0 |- tableApplyMethodCallee `( argument* ) -| EC_1
+    -- if TABLE typeId `. APPLY `{ tableProperties } = tableApplyMethodCallee
+    -- if EC_callee_0 = $inherit_e(BLOCK, EC_0)
+    -- Table_eval:
+        EC_callee_0 |- tableProperties -| EC_callee_1
+    -- if EC_1 = EC_0[ .GLOBAL = EC_callee_1.GLOBAL ]
+                     [ .BLOCK = EC_callee_1.BLOCK ]

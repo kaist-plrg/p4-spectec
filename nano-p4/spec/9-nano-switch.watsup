@@ -1,0 +1,116 @@
+;;
+;; Global variable initialization
+;;
+
+relation Var_init:
+  evalContext |- typeIR nameIR -| evalContext
+  hint(input %0 %1 %2)
+
+rule Var_init:
+  EC_0 |- typeIR nameIR -| EC_1
+  -- if value = $default(typeIR)
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, nameIR, value)
+
+;;
+;; Program initialization
+;;
+
+relation NanoSwitch_init:
+  |- program : evalContext
+  hint(input %0)
+
+rule NanoSwitch_init:
+  |- program : EC
+  -- Program_ok: |- program -| TC
+  -- Program_inst: TC |- program -| IC
+  -- if EC = $make_evalContext(TC, IC)
+
+;;
+;; Initialize per-packet global variables
+;;
+
+relation NanoSwitch_setup:
+  evalContext |- objectState -| evalContext
+  hint(input %0 %1)
+
+rule NanoSwitch_setup:
+  EC_0 |- objectState_packet -| EC_3
+  -- if packetValue = PACKET "packet_in" objectState_packet
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, "packet_in", packetValue)
+  -- if typeIR_header = $typeIR_of_typeDefIR($find_typeDef_e(EC_1, "Header"))
+  -- Var_init: EC_1 |- typeIR_header "hdr" -| EC_2
+  -- Var_init: EC_2 |- BOOL "accept" -| EC_3
+
+syntax forwardingDecision = FORWARD | DROP
+
+;;
+;; Forwarding decision from accept flag
+;;
+
+dec $nanoswitch_forwarding(evalContext) : forwardingDecision
+def $nanoswitch_forwarding(EC) = FORWARD
+  -- if `B true = $find_var_e(GLOBAL, EC, "accept")
+def $nanoswitch_forwarding(EC) = DROP
+  -- if `B false = $find_var_e(GLOBAL, EC, "accept")
+
+;;
+;; Nanoswitch parse
+;;
+
+relation NanoSwitch_parse:
+  evalContext |- parserDeclarationIR : transitionResult -| evalContext
+  hint(input %0 %1)
+
+rule NanoSwitch_parse:
+  EC_0 |- parserDeclarationIR : transitionResult -| EC_1
+  -- if argument* = [ `ID "packet_in", `ID "hdr" ]
+  -- Parser_apply:
+      EC_0 argument* |- parserDeclarationIR : transitionResult -| EC_1
+
+;;
+;; Nanoswitch filter
+;;
+
+relation NanoSwitch_filter:
+  evalContext |- controlDeclarationIR -| evalContext
+  hint(input %0 %1)
+
+rule NanoSwitch_filter:
+  EC_0 |- controlDeclarationIR -| EC_1
+  -- if argument* = [ `ID "hdr", `ID "accept" ]
+  -- Control_apply:
+      EC_0 argument* |- controlDeclarationIR -| EC_1
+
+;;
+;; Packet pass
+;;
+
+relation NanoSwitch_drive:
+  evalContext |- objectState : forwardingDecision -| evalContext
+  hint(input %0 %1)
+
+rulegroup NanoSwitch_drive {
+
+  rule NanoSwitch_drive/drop-on-reject:
+    EC |- objectState_packet : DROP -| EC_1
+    -- if parserDeclarationIR = EC.GLOBAL.PARSER
+    -- if controlDeclarationIR = EC.GLOBAL.CONTROL
+    ---- ;; initialize packet_in and global variables
+    -- NanoSwitch_setup: EC |- objectState_packet -| EC_0
+    ---- ;; invoke parser; reject means drop
+    -- NanoSwitch_parse: EC_0 |- parserDeclarationIR : REJECT -| EC_1
+
+  rule NanoSwitch_drive/filter:
+    EC |- objectState_packet : forwardingDecision -| EC_2
+    -- if parserDeclarationIR = EC.GLOBAL.PARSER
+    -- if controlDeclarationIR = EC.GLOBAL.CONTROL
+    ---- ;; initialize packet_in and global variables
+    -- NanoSwitch_setup: EC |- objectState_packet -| EC_0
+    ---- ;; invoke parser; accept means continue
+    -- NanoSwitch_parse: EC_0 |- parserDeclarationIR : ACCEPT -| EC_1
+    ---- ;; invoke filter control
+    -- NanoSwitch_filter: EC_1 |- controlDeclarationIR -| EC_2
+    ---- ;; read accept flag and decide
+    -- if forwardingDecision = $nanoswitch_forwarding(EC_2)
+
+}

@@ -38,3 +38,26 @@ rule ControlLocalDeclList_eval:
       = $flatten_controlLocalDeclarationList(controlLocalDeclarationList)
   -- ControlLocalDecls_eval:
       EC_0 |- controlLocalDeclaration* -| EC_1
+
+;;
+;; Control apply
+;;
+
+rule Control_apply:
+  EC_0 argument* |- controlDeclarationIR -| EC_1
+  -- if CONTROL nameIR
+      `( parameterIR* )
+      `{ controlLocalDeclarationList APPLY controlBody } = controlDeclarationIR
+  -- if EC_callee_0 = $inherit_e(GLOBAL, EC_0)
+  -- Copy_in:
+      GLOBAL EC_0 parameterIR*
+        `@ BLOCK EC_callee_0 argument*
+      ~> EC_callee_1 lvalue?*
+  -- ControlLocalDeclList_eval:
+      EC_callee_1 |- controlLocalDeclarationList -| EC_callee_2
+  -- Block_eval:
+      EC_callee_2 |- controlBody -| EC_callee_3
+  -- Copy_out:
+      GLOBAL EC_0 parameterIR*
+        `@ BLOCK EC_callee_3 lvalue?*
+      ~> EC_1

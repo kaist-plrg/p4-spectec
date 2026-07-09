@@ -33,17 +33,7 @@ syntax actionCallee =
   ACTION callableId `( parameterIR* ) blockStatement
 
 syntax externMethodCallee =
-  EXTERN_METHOD value `. callableId `( parameterIR* )
-
-syntax parserApplyMethodCallee =
-  PARSER `. APPLY
-    `( parameterIR* )
-    `{ parserLocalDeclarationList `; parserStateList }
-
-syntax controlApplyMethodCallee =
-  CONTROL `. APPLY
-    `( parameterIR* )
-    `{ controlLocalDeclarationList `; controlBody }
+  EXTERN_METHOD lvalue `. callableId `( parameterIR* )
 
 syntax tableApplyMethodCallee =
   TABLE typeId `. APPLY `{ tableProperties }
@@ -51,9 +41,15 @@ syntax tableApplyMethodCallee =
 syntax callee =
   | actionCallee
   | externMethodCallee
-  | parserApplyMethodCallee
-  | controlApplyMethodCallee
   | tableApplyMethodCallee
+
+relation Parser_apply:
+  evalContext argument* |- parserDeclarationIR : transitionResult -| evalContext
+  hint(input %0 %1 %2)
+
+relation Control_apply:
+  evalContext argument* |- controlDeclarationIR -| evalContext
+  hint(input %0 %1 %2)
 
 relation Callee_eval:
   scope evalContext |- lvalue : callee
@@ -61,6 +57,10 @@ relation Callee_eval:
 
 relation Call_eval:
   scope evalContext |- callee `( argument* ) -| evalContext
+  hint(input %0 %1 %2 %3)
+
+extern relation ExternMethodCall_eval:
+  evalContext |- value `. callableId `( nameIR* ) : value -| evalContext
   hint(input %0 %1 %2 %3)
 
 ;;
@@ -97,6 +97,14 @@ relation ParserLocalDeclList_eval:
 
 relation ControlLocalDeclList_eval:
   evalContext |- controlLocalDeclarationList -| evalContext
+  hint(input %0 %1)
+
+;;
+;; Table
+;;
+
+relation Table_eval:
+  evalContext |- tableProperties -| evalContext
   hint(input %0 %1)
 
 ;;
