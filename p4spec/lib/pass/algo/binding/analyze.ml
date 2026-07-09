@@ -481,6 +481,98 @@ let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
 
 (* Table row binding analysis *)
 
+let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
+    =
+  match typ.it with
+  | VarT (tid, _) -> (
+      let td = Ctx.find_typdef ctx tid in
+      match td with
+      | Defined (_, deftyp) -> (
+          match deftyp.it with
+          | VariantT typcases ->
+              typcases
+              |> List.map (fun (nottyp, _, _) -> nottyp)
+              |> Pattern.PatternSet.of_list
+          | _ ->
+              error typ.at
+                ("non-variant type not supported in patterns: "
+               ^ Print.string_of_typ typ))
+      | _ ->
+          error typ.at
+            ("non-variant type not supported in patterns: "
+           ^ Print.string_of_typ typ))
+  | _ -> error typ.at "expected variable type"
+
+let pattern_set_covered_by_exp (ctx : Ctx.t) (exp : exp) : Pattern.PatternSet.t
+    =
+  match exp.it with
+  | VarE _ -> pattern_set_covered_by_typ ctx (exp.note $ exp.at)
+  | UpCastE (_, { it = VarE _; note; at }) ->
+      pattern_set_covered_by_typ ctx (note $ at)
+  | UpCastE (_, { it = CaseE notexp; at; _ }) ->
+      let mixop, exps = Mixfix.split notexp in
+      [ Mixfix.fill mixop (List.map (fun exp -> exp.note $ exp.at) exps) $ at ]
+      |> Pattern.PatternSet.of_list
+  | _ -> assert false
+
+let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
+    (typs_match : typ list) (tablerows : Al.tablerow list) : unit =
+  (* Split the last wildcard row (a "closer") if it exists *)
+  let split_last_wildcard_tablerows tablerows =
+    let rec split_last_wildcard_tablerows' tablerows_rev = function
+      | [] -> (None, tablerows)
+      | [ tablerow ] ->
+          let exps_signature, _, _, _ = tablerow.it in
+          if
+            List.for_all
+              (fun exp_signature ->
+                match exp_signature.it with
+                | VarE id when Id.is_underscored id -> true
+                | _ -> false)
+              exps_signature
+          then (Some tablerow, List.rev tablerows_rev)
+          else (None, tablerows)
+      | tablerow_h :: tablerows_t ->
+          split_last_wildcard_tablerows'
+            (tablerow_h :: tablerows_rev)
+            tablerows_t
+    in
+    split_last_wildcard_tablerows' [] tablerows
+  in
+  let closer_opt, tablerows = split_last_wildcard_tablerows tablerows in
+  (* Check that table rows have exclusive patterns *)
+  let pattern_sets_tablerows =
+    List.map
+      (fun tablerow ->
+        let exps_signature, _, _, _ = tablerow.it in
+        List.map (pattern_set_covered_by_exp ctx) exps_signature)
+      tablerows
+  in
+  let pattern_set_overlap_opt = Pattern.find_overlap pattern_sets_tablerows in
+  check
+    (Option.is_none pattern_set_overlap_opt)
+    at
+    (Format.asprintf "table rows have overlapping patterns: %s"
+       (match pattern_set_overlap_opt with
+       | Some (pattern_sets_l, pattern_sets_r) ->
+           Pattern.PatternSets.to_string pattern_sets_l
+           ^ " and "
+           ^ Pattern.PatternSets.to_string pattern_sets_r
+       | None -> ""));
+  (* Check that table rows are exhaustive *)
+  let pattern_sets_total =
+    List.map (pattern_set_covered_by_typ ctx) typs_match
+  in
+  let pattern_sets_group_missing =
+    Pattern.find_missing pattern_sets_total pattern_sets_tablerows
+  in
+  check
+    (Option.is_some closer_opt || pattern_sets_group_missing = [])
+    at
+    (Format.asprintf "table rows are missing patterns: %s"
+       (String.concat ", "
+          (List.map Pattern.PatternSets.to_string pattern_sets_group_missing)))
+
 let analyze_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Al.tablerow =
   let args, exp = tablerow.it in
   let ctx =
@@ -499,6 +591,17 @@ let analyze_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Al.tablerow =
   in
   analyze_exp_as_bound ctx exp;
   (exps_signature, args_input, exp, sideconditions) $ tablerow.at
+
+let analyze_tablerows (ctx : Ctx.t) (at : region) (params : param list)
+    (tablerows : tablerow list) : Al.tablerow list =
+  let tablerows = List.map (analyze_tablerow ctx) tablerows in
+  let typs_match =
+    params
+    |> List.map (fun param ->
+           match param.it with ExpP typ_il -> typ_il | _ -> assert false)
+  in
+  check_valid_match_tablerows ctx at typs_match tablerows;
+  tablerows
 
 (* Definition binding analysis *)
 
@@ -522,8 +625,8 @@ let analyze_def (ctx : Ctx.t) (def : def) : Al.def =
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       Al.BuiltinDecD (id, tparams, params, typ, hints) $ at
   | TableDecD (id, params, typ, tablerows, hints) ->
-      let tablerows_il = List.map (analyze_tablerow ctx) tablerows in
-      Al.TableDecD (id, params, typ, tablerows_il, hints) $ at
+      let tablerows = analyze_tablerows ctx at params tablerows in
+      Al.TableDecD (id, params, typ, tablerows, hints) $ at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause ctx) clauses in
       let elseclause_opt = Option.map (analyze_elseclause ctx) elseclause_opt in
