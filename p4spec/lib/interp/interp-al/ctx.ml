@@ -1,8 +1,8 @@
 open Domain.Lib
 open Lang
-open Il
+open Al
 module Typdef = Runtime.Type.Typdef
-open Runtime.Dynamic_Il
+open Runtime.Dynamic_Al
 open Envs
 open Error
 open Backtrack
@@ -259,7 +259,7 @@ let sub_opt (ctx : t) (vars : var list) : t option backtrack =
   let values =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ Opt ]) |> Value.Get.opt)
+        find_value ctx (id, iters @ [ Il.Opt ]) |> Value.Get.opt)
       vars
   in
   (* Iteration is valid when all variables agree on their optionality *)
@@ -281,7 +281,7 @@ let sub_list (ctx : t) (vars : var list) : t list backtrack =
   let* values_batch =
     List.map
       (fun (id, _typ, iters) ->
-        find_value ctx (id, iters @ [ List ]) |> Value.Get.list)
+        find_value ctx (id, iters @ [ Il.List ]) |> Value.Get.list)
       vars
     |> transpose
   in

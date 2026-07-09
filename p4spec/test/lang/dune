@@ -17,6 +17,8 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
     (diff annotate.expected annotate.actual)))))
@@ -27,6 +29,8 @@
   (progn
    (ignore-outputs
     (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff algo.expected algo.actual))
    (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
@@ -44,6 +48,17 @@
    (with-stderr-to
     elab.err
     (run ./test.exe elab -s ../../../spec)))))
+
+(rule
+ (target algo.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   algo.actual
+   (with-stderr-to
+    algo.err
+    (run ./test.exe algo -s ../../../spec)))))
 
 (rule
  (target struct.actual)

@@ -9,8 +9,8 @@ open Util.Source
 
 (* Module signatures for interpreter-architecture interaction *)
 
-type mode = IL_mode | SL_mode | PL_mode | Empty_mode
-type spec = IL of Il.spec | SL of Sl.spec | PL of Pl.spec | Empty
+type mode = AL_mode | SL_mode | PL_mode | Empty_mode
+type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 type rel_result = Pass of Value.t list | Fail of region * string
 type func_result = Pass of Value.t | Fail of region * string
 
@@ -61,16 +61,16 @@ module type ARCH = sig
   val drive_pipe : Value.t -> Value.t -> IO.rx -> Value.t * Value.t * IO.tx list
 end
 
-module type INTERP_IL = sig
+module type INTERP_AL = sig
   (* Relation and meta-function evaluation *)
 
   val eval_program : string -> string list -> string -> program_result
   val eval_rel : string -> Value.t list -> rel_result
-  val eval_func : string -> Il.typ list -> Value.t list -> func_result
+  val eval_func : string -> Al.typ list -> Value.t list -> func_result
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> Il.spec -> unit
+  val init : cache:bool -> det:bool -> Al.spec -> unit
 end
 
 module type INTERP_SL = sig

@@ -75,7 +75,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
           let frees = IdSet.add id_fresh frees in
           let unifiers = IdSet.add id_fresh unifiers in
           let exp_template =
-            Var.as_exp ~dim:false (id_fresh, typ_fresh, iter_fresh)
+            Var.as_exp ~dim:true (id_fresh, typ_fresh, iter_fresh)
           in
           Ok (frees, unifiers, exp_template)
   in

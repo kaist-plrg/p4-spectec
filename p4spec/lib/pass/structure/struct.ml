@@ -1,7 +1,7 @@
 open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
-open Il
+open Al
 module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
 open Error
@@ -37,7 +37,7 @@ let struct_params_from_args (ctx : Ctx.t) (params : param list)
     (fun param arg_input ->
       let at = param.at in
       match (param.it, arg_input.it) with
-      | ExpP typ, ExpA exp -> Sl.ExpP (typ, exp) $ at
+      | Il.ExpP typ, Il.ExpA exp -> Sl.ExpP (typ, exp) $ at
       | DefP (id_def, tparams, params, typ), DefA id_def_arg
         when Id.eq id_def id_def_arg ->
           Sl.DefP (id_def, tparams, struct_params ctx params, typ) $ at
@@ -232,8 +232,8 @@ and struct_defined_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
     (elsegroup_opt : elsegroup option) (hints : hint list) : Sl.def =
   let frees =
     IdSet.union
-      (Il.Free.free_rulegroups rulegroups)
-      (Il.Free.free_elsegroup_opt elsegroup_opt)
+      (Al.Free.free_rulegroups rulegroups)
+      (Al.Free.free_elsegroup_opt elsegroup_opt)
   in
   let rulegroups, exps_match_group, prems_match_group =
     List.fold_left

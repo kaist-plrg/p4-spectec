@@ -9,12 +9,16 @@ open Util.Source
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
 
 module Make
-    (MakeArch : functor (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) -> ARCH)
-    (MakeInterp_IL : functor (Arch : ARCH) -> INTERP_IL)
+    (MakeArch : functor
+      (Interp_AL : INTERP_AL)
+      (Interp_SL : INTERP_SL)
+      (Interp_PL : INTERP_PL)
+      -> ARCH)
+    (MakeInterp_AL : functor (Arch : ARCH) -> INTERP_AL)
     (MakeInterp_SL : functor (Arch : ARCH) -> INTERP_SL)
     (MakeInterp_PL : functor (Arch : ARCH) -> INTERP_PL) : DRIVER = struct
-  module rec Arch : ARCH = MakeArch (Interp_IL) (Interp_SL)
-  and Interp_IL : INTERP_IL = MakeInterp_IL (Arch)
+  module rec Arch : ARCH = MakeArch (Interp_AL) (Interp_SL) (Interp_PL)
+  and Interp_AL : INTERP_AL = MakeInterp_AL (Arch)
   and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
   and Interp_PL : INTERP_PL = MakeInterp_PL (Arch)
 
@@ -27,11 +31,11 @@ module Make
   let call_pgm (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Value.t * Value.t =
     match !mode with
-    | IL_mode -> (
-        let rel_result_il =
-          Interp_IL.eval_program relname includes_p4 filename_p4
+    | AL_mode -> (
+        let rel_result_al =
+          Interp_AL.eval_program relname includes_p4 filename_p4
         in
-        match rel_result_il with
+        match rel_result_al with
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
         | Pass _ -> error no_region "unexpected number of return values"
         | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg)
@@ -57,9 +61,9 @@ module Make
 
   let call_rel (relname : string) (values_input : Value.t list) : Value.t list =
     match !mode with
-    | IL_mode -> (
-        let rel_result_il = Interp_IL.eval_rel relname values_input in
-        match rel_result_il with
+    | AL_mode -> (
+        let rel_result_al = Interp_AL.eval_rel relname values_input in
+        match rel_result_al with
         | Pass values_output -> values_output
         | Fail (at, msg) -> error at msg)
     | SL_mode -> (
@@ -79,11 +83,11 @@ module Make
   let call_func (funcname : string) (typs_input : Sl.typ list)
       (values_input : Value.t list) : Value.t =
     match !mode with
-    | IL_mode -> (
-        let func_result_il =
-          Interp_IL.eval_func funcname typs_input values_input
+    | AL_mode -> (
+        let func_result_al =
+          Interp_AL.eval_func funcname typs_input values_input
         in
-        match func_result_il with
+        match func_result_al with
         | Pass value_output -> value_output
         | Fail (at, msg) -> error at msg)
     | SL_mode -> (
@@ -106,10 +110,10 @@ module Make
 
   let init ?(cache = true) ?(det = false) (spec_ : spec) : unit =
     (match spec_ with
-    | IL spec_il ->
-        spec := IL spec_il;
-        init_mode IL_mode;
-        Interp_IL.init ~cache ~det spec_il
+    | AL spec_al ->
+        spec := AL spec_al;
+        init_mode AL_mode;
+        Interp_AL.init ~cache ~det spec_al
     | SL spec_sl ->
         spec := SL spec_sl;
         init_mode SL_mode;
@@ -133,7 +137,7 @@ module Make
   let run_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : program_result =
     match !spec with
-    | IL _ -> Interp_IL.eval_program relname includes_p4 filename_p4
+    | AL _ -> Interp_AL.eval_program relname includes_p4 filename_p4
     | SL _ -> Interp_SL.eval_program relname includes_p4 filename_p4
     | PL _ -> Interp_PL.eval_program relname includes_p4 filename_p4
     | Empty -> assert false
@@ -141,7 +145,7 @@ module Make
   let run_program_internal (relname : string) (value_program : Value.t) :
       rel_result =
     match !spec with
-    | IL _ -> Interp_IL.eval_rel relname [ value_program ]
+    | AL _ -> Interp_AL.eval_rel relname [ value_program ]
     | SL _ -> Interp_SL.eval_rel relname [ value_program ]
     | PL _ -> Interp_PL.eval_rel relname [ value_program ]
     | Empty -> assert false
