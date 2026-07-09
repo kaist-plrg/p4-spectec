@@ -5,7 +5,11 @@ open Runtime.Static
 open Envs
 open Util.Source
 
-(* Dimension inference *)
+(* Dimension inference :
+
+   A simplified version of elaborate/dimension.ml.
+   Finds free variables in expressions and records their dimensions.
+   If a variable appears multiple times, the minimal dimension is kept. *)
 
 let rec infer_exp' (exp : exp) (iters : iter list) (venv : VEnv.t) : VEnv.t =
   let typ = exp.note $ exp.at in
