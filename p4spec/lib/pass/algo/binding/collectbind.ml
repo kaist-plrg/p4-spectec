@@ -20,7 +20,7 @@ let rec collect_exp (ctx : Ctx.t) (exp : exp) : Bind.BEnv.t =
   match exp.it with
   | BoolE _ | NumE _ | TextE _ -> Bind.BEnv.empty
   | VarE id ->
-      if VEnv.mem id ctx.bounds then Bind.BEnv.empty
+      if VEnv.mem id ctx.venv then Bind.BEnv.empty
       else Bind.BEnv.singleton id (exp.note $ exp.at)
   | UnE (_, _, exp) ->
       let binds = collect_exp ctx exp in

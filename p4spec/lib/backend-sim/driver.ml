@@ -9,11 +9,15 @@ open Util.Source
 (* Functor to create a DRIVER from ARCH and INTERP implementations *)
 
 module Make
-    (MakeArch : functor (Interp_AL : INTERP_AL) (Interp_SL : INTERP_SL) -> ARCH)
+    (MakeArch : functor
+      (Interp_AL : INTERP_AL)
+      (Interp_SL : INTERP_SL)
+      (Interp_PL : INTERP_PL)
+      -> ARCH)
     (MakeInterp_AL : functor (Arch : ARCH) -> INTERP_AL)
     (MakeInterp_SL : functor (Arch : ARCH) -> INTERP_SL)
     (MakeInterp_PL : functor (Arch : ARCH) -> INTERP_PL) : DRIVER = struct
-  module rec Arch : ARCH = MakeArch (Interp_AL) (Interp_SL)
+  module rec Arch : ARCH = MakeArch (Interp_AL) (Interp_SL) (Interp_PL)
   and Interp_AL : INTERP_AL = MakeInterp_AL (Arch)
   and Interp_SL : INTERP_SL = MakeInterp_SL (Arch)
   and Interp_PL : INTERP_PL = MakeInterp_PL (Arch)

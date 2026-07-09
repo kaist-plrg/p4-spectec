@@ -75,7 +75,8 @@ let gen_prem_bound (ctx : Ctx.t) (to_ : To.t) (exp_from : exp)
     let venv = Dimension.infer_exp exp_from in
     let id, typ, iters = to_ in
     iterctx
-    |> Iterctx.filter_bound (fun id typ_iter iters_iter ->
+    |> Iterctx.filter_bound (fun var ->
+           let id, typ_iter, iters_iter = var in
            VEnv.find_opt id venv
            |> Option.map (fun (typ, iters) ->
                   Typdim.sub (typ, iters) (typ_iter, iters_iter))
@@ -168,7 +169,9 @@ let rename_exp_bind_match (ctx : Ctx.t) (renv : REnv.t)
   let iterctx_exp =
     let bounds = Free.free_exp exp_from in
     iterctx_exp
-    |> Iterctx.filter_bound (fun id _ _ -> not (IdSet.mem id bounds))
+    |> Iterctx.filter_bound (fun var ->
+           let id, _, _ = var in
+           not (IdSet.mem id bounds))
     |> Iterctx.add_var_bound id_rename typ iters
   in
   let exp = To.as_exp to_ in
@@ -185,7 +188,9 @@ let rename_exp_bind_sub (ctx : Ctx.t) (renv : REnv.t) (iterctx_exp : Iterctx.t)
   let iterctx_exp =
     let bounds = Free.free_exp exp_from in
     iterctx_exp
-    |> Iterctx.filter_bound (fun id _ _ -> not (IdSet.mem id bounds))
+    |> Iterctx.filter_bound (fun var ->
+           let id, _, _ = var in
+           not (IdSet.mem id bounds))
     |> Iterctx.add_var_bound id_rename typ iters
   in
   let exp = To.as_exp to_ in
@@ -218,7 +223,9 @@ and rename_exp_bound (ctx : Ctx.t) (renv : REnv.t) (iterctx_exp : Iterctx.t)
   let iterctx_exp =
     let bounds = Free.free_exp exp in
     iterctx_exp
-    |> Iterctx.filter_bound (fun id _ _ -> not (IdSet.mem id bounds))
+    |> Iterctx.filter_bound (fun var ->
+           let id, _, _ = var in
+           not (IdSet.mem id bounds))
     |> Iterctx.add_var_bound id_rename typ iters
   in
   let exp = To.as_exp to_ in

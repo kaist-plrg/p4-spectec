@@ -235,7 +235,8 @@ and analyze_rule_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
   let venv_bound = Dimension.infer_exps exps_input in
   let iterctx =
     iterctx
-    |> Iterctx.filter_bound (fun id typ iters ->
+    |> Iterctx.filter_bound (fun var ->
+           let id, typ, iters = var in
            VEnv.find_opt id venv_bound
            |> Option.map (fun (typ_bound, iters_bound) ->
                   Typdim.sub (typ_bound, iters_bound) (typ, iters))
@@ -320,7 +321,8 @@ and analyze_let_prem (ctx : Ctx.t) (at : region) (iterctx : Iterctx.t)
   let venv_r = Dimension.infer_exp exp_r in
   let iterctx =
     iterctx
-    |> Iterctx.filter_bound (fun id typ iters ->
+    |> Iterctx.filter_bound (fun var ->
+           let id, typ, iters = var in
            VEnv.find_opt id venv_r
            |> Option.map (fun (typ_r, iters_r) ->
                   Typdim.sub (typ_r, iters_r) (typ, iters))
@@ -380,7 +382,7 @@ let analyze_rulematch (ctx : Ctx.t) (ctxs_local : Ctx.t list)
         {
           ctx_local with
           frees = ctx_local_unified.frees;
-          bounds = ctx_local_unified.bounds;
+          venv = ctx_local_unified.venv;
         })
       ctxs_local
   in

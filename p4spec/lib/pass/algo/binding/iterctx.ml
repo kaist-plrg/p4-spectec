@@ -58,12 +58,10 @@ let add_var_bind (id : Id.t) (typ : typ) (iters : iter list) (iterctx : t) : t =
 
 (* Filtering variables *)
 
-let filter_bound (f : Id.t -> typ -> iter list -> bool) (iterctx : t) : t =
+let filter_bound (f : var -> bool) (iterctx : t) : t =
   List.map
     (fun (iter, vars_bound, vars_bind) ->
-      let vars_bound =
-        List.filter (fun (id, typ, iters) -> f id typ iters) vars_bound
-      in
+      let vars_bound = List.filter f vars_bound in
       (iter, vars_bound, vars_bind))
     iterctx
 

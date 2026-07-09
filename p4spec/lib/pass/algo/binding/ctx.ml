@@ -12,11 +12,11 @@ type t = {
   (* Free identifiers over the entire definition *)
   frees : IdSet.t;
   (* Bound variables so far *)
-  bounds : VEnv.t;
-  (* Metavariables so far *)
-  menv : MEnv.t;
+  venv : VEnv.t;
   (* Typedefs so far *)
   tdenv : TDEnv.t;
+  (* Metavariables so far *)
+  menv : MEnv.t;
 }
 
 (* Constructors *)
@@ -24,9 +24,9 @@ type t = {
 let empty =
   {
     frees = IdSet.empty;
-    bounds = VEnv.empty;
-    menv = MEnv.empty;
+    venv = VEnv.empty;
     tdenv = TDEnv.empty;
+    menv = MEnv.empty;
   }
 
 let init () : t =
@@ -50,8 +50,8 @@ let add_frees (ctx : t) (ids : IdSet.t) : t =
   { ctx with frees }
 
 let add_bounds (ctx : t) (venv : VEnv.t) : t =
-  let bounds = VEnv.union (fun _ typ _ -> Some typ) ctx.bounds venv in
-  { ctx with bounds }
+  let venv = VEnv.union (fun _ typ _ -> Some typ) ctx.venv venv in
+  { ctx with venv }
 
 (* Finders *)
 
