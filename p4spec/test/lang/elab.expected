@@ -377,8 +377,8 @@ syntax namedType =
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
 
-syntax headerStackType = 
-   | namedType [ expression ] (from headerStackType) 
+syntax arrayType = 
+   | type [ expression ] (from arrayType) 
 
 syntax listType = 
    | LIST < typeArgument > (from listType) 
@@ -402,7 +402,7 @@ syntax type =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
 
@@ -422,7 +422,7 @@ syntax typeOrVoid =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | VOID (from typeOrVoid) 
@@ -1145,7 +1145,7 @@ syntax realTypeArgument =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | VOID (from realTypeArgument) 
@@ -1167,7 +1167,7 @@ syntax realTypeArgumentList =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | VOID (from realTypeArgument) 
@@ -1196,7 +1196,7 @@ syntax typeArgument =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | VOID (from realTypeArgument) 
@@ -1227,7 +1227,7 @@ syntax typeArgumentList =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | VOID (from realTypeArgument) 
@@ -1785,7 +1785,7 @@ syntax typedef =
    | `TID text (from typeIdentifier) 
    | `TID . typeName (from prefixedTypeName) 
    | prefixedTypeName < typeArgumentList > (from specializedType) 
-   | namedType [ expression ] (from headerStackType) 
+   | type [ expression ] (from arrayType) 
    | LIST < typeArgument > (from listType) 
    | TUPLE < typeArgumentList > (from tupleType) 
    | annotationList ENUM name { nameList trailingCommaOpt } (from enumTypeDeclaration) 
@@ -2352,8 +2352,11 @@ syntax listValue =
 syntax tupleValue = 
    | TUPLE ( value* ) (from tupleValue) 
 
+syntax arrayValue = 
+   | ARRAY [ value* ] (from arrayValue) 
+
 syntax headerStackValue = 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
 
 syntax fieldValue = 
    | value nameIR ; (from fieldValue) 
@@ -2374,7 +2377,8 @@ syntax enumValue =
 syntax dataValue = 
    | LIST [ value* ] (from listValue) 
    | TUPLE ( value* ) (from tupleValue) 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | ARRAY [ value* ] (from arrayValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
    | STRUCT typeId { fieldValue* } (from structValue) 
    | HEADER typeId { bool ; fieldValue* } (from headerValue) 
    | HEADER_UNION typeId { fieldValue* } (from headerUnionValue) 
@@ -2441,7 +2445,8 @@ syntax value =
    | nat . nat V int (from integerValue) 
    | LIST [ value* ] (from listValue) 
    | TUPLE ( value* ) (from tupleValue) 
-   | HEADER_STACK [ value* ( nat ; nat ) ] (from headerStackValue) 
+   | ARRAY [ value* ] (from arrayValue) 
+   | HEADER_STACK [ value* ( nat ) ] (from headerStackValue) 
    | STRUCT typeId { fieldValue* } (from structValue) 
    | HEADER typeId { bool ; fieldValue* } (from headerValue) 
    | HEADER_UNION typeId { fieldValue* } (from headerUnionValue) 
@@ -2578,7 +2583,10 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   clause 7 : (typeId . nameIR . value as value, n_var, b*{b <- b*}) = (typeId . "__UNSPECIFIED" . value_updated as value, b_rest*{b_rest <- b_rest*})
   -- if ((value_updated, b_rest*{b_rest <- b_rest*}) = $write_value_from_bits'(value, n_var, b*{b <- b*}))
 
-  clause 8 : (HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size ) ] as value, n_var, b*{b <- b*}) = (HEADER_STACK [ value_updated*{value_updated <- value_updated*} ( n_idx ; n_size ) ] as value, b_rest*{b_rest <- b_rest*})
+  clause 8 : (ARRAY [ value*{value <- value*} ] as value, n_var, b*{b <- b*}) = (ARRAY [ value_updated*{value_updated <- value_updated*} ] as value, b_rest*{b_rest <- b_rest*})
+  -- if ((value_updated*{value_updated <- value_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*}))
+
+  clause 9 : (HEADER_STACK [ value*{value <- value*} ( n_idx ) ] as value, n_var, b*{b <- b*}) = (HEADER_STACK [ value_updated*{value_updated <- value_updated*} ( n_idx ) ] as value, b_rest*{b_rest <- b_rest*})
   -- if ((value_updated*{value_updated <- value_updated*}, b_rest*{b_rest <- b_rest*}) = $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*}))
 
 def $write_values_from_bits'(value*, nat, bool*) : (value*, bool*) =
@@ -2612,17 +2620,19 @@ def $write_bits_from_value(value) : bool* =
 
   clause 3 : (_nat . w V i as value) = $int_to_bits_unsigned(w, i)
 
-  clause 4 : (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; _nat' ) ] as value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
+  clause 4 : (ARRAY [ value_element*{value_element <- value_element*} ] as value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
 
-  clause 5 : (STRUCT _typeId { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } as value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
+  clause 5 : (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] as value) = $concat_<bool>($write_bits_from_value(value_element)*{value_element <- value_element*})
 
-  clause 6 : (HEADER _typeId { true ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } as value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
+  clause 6 : (STRUCT _typeId { value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } as value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
-  clause 7 : (HEADER _typeId { false ; _fieldValue*{_fieldValue <- _fieldValue*} } as value) = []
+  clause 7 : (HEADER _typeId { true ; value_field id_field ;*{id_field <- id_field*, value_field <- value_field*} } as value) = $concat_<bool>($write_bits_from_value(value_field)*{value_field <- value_field*})
 
-  clause 8 : (HEADER_UNION _typeId { value id ;*{id <- id*, value <- value*} } as value) = $concat_<bool>($write_bits_from_value(value)*{value <- value*})
+  clause 8 : (HEADER _typeId { false ; _fieldValue*{_fieldValue <- _fieldValue*} } as value) = []
 
-  clause 9 : (typeId . id . value as value) = $write_bits_from_value(value)
+  clause 9 : (HEADER_UNION _typeId { value id ;*{id <- id*, value <- value*} } as value) = $concat_<bool>($write_bits_from_value(value)*{value <- value*})
+
+  clause 10 : (typeId . id . value as value) = $write_bits_from_value(value)
 
 syntax voidTypeIR = 
    | VOID (from voidTypeIR) 
@@ -2687,8 +2697,11 @@ syntax listTypeIR =
 syntax tupleTypeIR = 
    | TUPLE < typeIR* > (from tupleTypeIR) 
 
+syntax arrayTypeIR = 
+   | ARRAY typeIR [ nat ] (from arrayTypeIR) 
+
 syntax headerStackTypeIR = 
-   | typeIR [ nat ] (from headerStackTypeIR) 
+   | HEADER_STACK typeIR [ nat ] (from headerStackTypeIR) 
 
 syntax fieldTypeIR = 
    | annotationList typeIR nameIR ; (from fieldTypeIR) 
@@ -2718,7 +2731,8 @@ syntax enumTypeIR =
 syntax dataTypeIR = 
    | LIST < typeIR > (from listTypeIR) 
    | TUPLE < typeIR* > (from tupleTypeIR) 
-   | typeIR [ nat ] (from headerStackTypeIR) 
+   | ARRAY typeIR [ nat ] (from arrayTypeIR) 
+   | HEADER_STACK typeIR [ nat ] (from headerStackTypeIR) 
    | STRUCT typeId < typeArgumentIR* > { fieldTypeIR* } (from structTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER typeId < typeArgumentIR* > { fieldTypeIR* } (from headerTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER_UNION typeId < typeArgumentIR* > { fieldTypeIR* } (from headerUnionTypeIR)  hint(print %0#"<"#%1#">")
@@ -2802,7 +2816,8 @@ syntax typeIR =
    | TYPE typeId typeIR (from newTypeIR)  hint(print %0)
    | LIST < typeIR > (from listTypeIR) 
    | TUPLE < typeIR* > (from tupleTypeIR) 
-   | typeIR [ nat ] (from headerStackTypeIR) 
+   | ARRAY typeIR [ nat ] (from arrayTypeIR) 
+   | HEADER_STACK typeIR [ nat ] (from headerStackTypeIR) 
    | STRUCT typeId < typeArgumentIR* > { fieldTypeIR* } (from structTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER typeId < typeArgumentIR* > { fieldTypeIR* } (from headerTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER_UNION typeId < typeArgumentIR* > { fieldTypeIR* } (from headerUnionTypeIR)  hint(print %0#"<"#%1#">")
@@ -2925,18 +2940,20 @@ tbl def $is_defaultable_typeIR(typeIR) : bool =
   row 6 :
     (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
   row 7 :
-    (typeIR [ _nat ] as typeIR) -> $is_defaultable_typeIR(typeIR)
+    (ARRAY typeIR [ _nat ] as typeIR) -> $is_defaultable_typeIR(typeIR)
   row 8 :
-    (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
+    (HEADER_STACK typeIR [ _nat ] as typeIR) -> $is_defaultable_typeIR(typeIR)
   row 9 :
-    (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
+    (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
   row 10 :
-    (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
+    (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
   row 11 :
-    (ENUM _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR) -> true
+    (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) -> $forall_($is_defaultable_typeIR(typeIR)*{typeIR <- typeIR*})
   row 12 :
-    (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) -> $is_defaultable_typeIR(typeIR)
+    (ENUM _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR) -> true
   row 13 :
+    (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) -> $is_defaultable_typeIR(typeIR)
+  row 14 :
     (_typeIR) -> false
 
 tbl def $is_equalable_typeIR(typeIR) : bool =
@@ -3337,43 +3354,45 @@ def $free_typeIR(typeIR) : bound =
 
   clause 5 : (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
 
-  clause 6 : (typeIR [ _nat ] as typeIR) = $free_typeIR(typeIR)
+  clause 6 : (ARRAY typeIR [ _nat ] as typeIR) = $free_typeIR(typeIR)
 
-  clause 7 : (STRUCT _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
+  clause 7 : (HEADER_STACK typeIR [ _nat ] as typeIR) = $free_typeIR(typeIR)
 
-  clause 8 : (HEADER _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
+  clause 8 : (STRUCT _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
 
-  clause 9 : (HEADER_UNION _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
+  clause 9 : (HEADER _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
 
-  clause 10 : (ENUM _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR) = { [] }
+  clause 10 : (HEADER_UNION _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR_field)*{typeIR_field <- typeIR_field*}))
 
-  clause 11 : (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) = $free_typeIR(typeIR)
+  clause 11 : (ENUM _typeId { _nameIR*{_nameIR <- _nameIR*} } as typeIR) = { [] }
 
-  clause 12 : (EXTERN _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _callableId : externMethodTypeDefIR*{_callableId <- _callableId*, externMethodTypeDefIR <- externMethodTypeDefIR*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_callableTypeDefIR(externMethodTypeDefIR as callableTypeDefIR)*{externMethodTypeDefIR <- externMethodTypeDefIR*}))
+  clause 12 : (ENUM _typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR) = $free_typeIR(typeIR)
 
-  clause 13 : (PARSER _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
+  clause 13 : (EXTERN _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { _callableId : externMethodTypeDefIR*{_callableId <- _callableId*, externMethodTypeDefIR <- externMethodTypeDefIR*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_callableTypeDefIR(externMethodTypeDefIR as callableTypeDefIR)*{externMethodTypeDefIR <- externMethodTypeDefIR*}))
 
-  clause 14 : (CONTROL _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
+  clause 14 : (PARSER _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
 
-  clause 15 : (PACKAGE _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { typeIR*{typeIR <- typeIR*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*}))
+  clause 15 : (CONTROL _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
 
-  clause 16 : (TABLE _typeId { _tableMetadataStructTypeIR } as typeIR) = { [] }
+  clause 16 : (PACKAGE _typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { typeIR*{typeIR <- typeIR*} } as typeIR) = $union_set<typeId>($unions_set<typeId>($free_typeIR(typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*}), $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*}))
 
-  clause 17 : (DEFAULT as typeIR) = { [] }
+  clause 17 : (TABLE _typeId { _tableMetadataStructTypeIR } as typeIR) = { [] }
 
-  clause 18 : (HEADER_INVALID as typeIR) = { [] }
+  clause 18 : (DEFAULT as typeIR) = { [] }
 
-  clause 19 : (SEQ < typeIR*{typeIR <- typeIR*} > as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
+  clause 19 : (HEADER_INVALID as typeIR) = { [] }
 
-  clause 20 : (SEQ < typeIR*{typeIR <- typeIR*} , ... > as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
+  clause 20 : (SEQ < typeIR*{typeIR <- typeIR*} > as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
 
-  clause 21 : (RECORD { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
+  clause 21 : (SEQ < typeIR*{typeIR <- typeIR*} , ... > as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
 
-  clause 22 : (RECORD { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} , ... } as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
+  clause 22 : (RECORD { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
 
-  clause 23 : (SET < typeIR > as typeIR) = $free_typeIR(typeIR)
+  clause 23 : (RECORD { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} , ... } as typeIR) = $unions_set<typeId>($free_typeIR(typeIR)*{typeIR <- typeIR*})
 
-  clause 24 : (tableMetadataTypeIR as typeIR) = { [] }
+  clause 24 : (SET < typeIR > as typeIR) = $free_typeIR(typeIR)
+
+  clause 25 : (tableMetadataTypeIR as typeIR) = { [] }
 
 def $free_typeDefIR(typeDefIR) : bound =
 
@@ -3484,78 +3503,81 @@ def $subst_typeIR'(theta, typeIR) : typeIR =
   clause 6 : (theta, TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) = TUPLE < typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- (if (typeIR_subst = $subst_typeIR'(theta, typeIR)))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  clause 7 : (theta, typeIR [ n_size ] as typeIR) = typeIR_subst [ n_size ] as typeIR
+  clause 7 : (theta, ARRAY typeIR [ n_size ] as typeIR) = ARRAY typeIR_subst [ n_size ] as typeIR
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
 
-  clause 8 : (theta, structTypeIR as typeIR) = structTypeIR_subst as typeIR
+  clause 8 : (theta, HEADER_STACK typeIR [ n_size ] as typeIR) = HEADER_STACK typeIR_subst [ n_size ] as typeIR
+  -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
+
+  clause 9 : (theta, structTypeIR as typeIR) = structTypeIR_subst as typeIR
   -- if (STRUCT typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = structTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field)))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- if (structTypeIR_subst = STRUCT typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} })
 
-  clause 9 : (theta, headerTypeIR as typeIR) = headerTypeIR_subst as typeIR
+  clause 10 : (theta, headerTypeIR as typeIR) = headerTypeIR_subst as typeIR
   -- if (HEADER typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field)))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- if (headerTypeIR_subst = HEADER typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} })
 
-  clause 10 : (theta, headerUnionTypeIR as typeIR) = headerUnionTypeIR_subst as typeIR
+  clause 11 : (theta, headerUnionTypeIR as typeIR) = headerUnionTypeIR_subst as typeIR
   -- if (HEADER_UNION typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { annotationList typeIR_field nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = headerUnionTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field)))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
   -- if (headerUnionTypeIR_subst = HEADER_UNION typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { annotationList typeIR_field_subst nameIR_field ;*{annotationList <- annotationList*, nameIR_field <- nameIR_field*, typeIR_field_subst <- typeIR_field_subst*} })
 
-  clause 11 : (theta, ENUM typeId { id_field*{id_field <- id_field*} } as typeIR) = ENUM typeId { id_field*{id_field <- id_field*} } as typeIR
+  clause 12 : (theta, ENUM typeId { id_field*{id_field <- id_field*} } as typeIR) = ENUM typeId { id_field*{id_field <- id_field*} } as typeIR
 
-  clause 12 : (theta, ENUM typeId < typeIR > { valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR) = ENUM typeId < typeIR_subst > { valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR
+  clause 13 : (theta, ENUM typeId < typeIR > { valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR) = ENUM typeId < typeIR_subst > { valueFieldIR*{valueFieldIR <- valueFieldIR*} } as typeIR
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
 
-  clause 13 : (theta, externObjectTypeIR as typeIR) = externObjectTypeIR_subst as typeIR
+  clause 14 : (theta, externObjectTypeIR as typeIR) = externObjectTypeIR_subst as typeIR
   -- if (EXTERN typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { callableId : externMethodTypeDefIR*{callableId <- callableId*, externMethodTypeDefIR <- externMethodTypeDefIR*} } = externObjectTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (externMethodTypeDefIR_subst as callableTypeDefIR = $subst_callableTypeDefIR(theta, externMethodTypeDefIR as callableTypeDefIR)))*{externMethodTypeDefIR <- externMethodTypeDefIR*, externMethodTypeDefIR_subst <- externMethodTypeDefIR_subst*}
   -- if (externObjectTypeIR_subst = EXTERN typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { callableId : externMethodTypeDefIR_subst*{callableId <- callableId*, externMethodTypeDefIR_subst <- externMethodTypeDefIR_subst*} })
 
-  clause 14 : (theta, parserObjectTypeIR as typeIR) = parserObjectTypeIR_subst as typeIR
+  clause 15 : (theta, parserObjectTypeIR as typeIR) = parserObjectTypeIR_subst as typeIR
   -- if (PARSER typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) = parserObjectTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (parameterIR_subst = $subst_parameterIR'(theta, parameterIR)))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- if (parserObjectTypeIR_subst = PARSER typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > ( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ))
 
-  clause 15 : (theta, controlObjectTypeIR as typeIR) = controlObjectTypeIR_subst as typeIR
+  clause 16 : (theta, controlObjectTypeIR as typeIR) = controlObjectTypeIR_subst as typeIR
   -- if (CONTROL typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > ( parameterIR*{parameterIR <- parameterIR*} ) = controlObjectTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (parameterIR_subst = $subst_parameterIR'(theta, parameterIR)))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- if (controlObjectTypeIR_subst = CONTROL typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > ( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} ))
 
-  clause 16 : (theta, packageObjectTypeIR as typeIR) = packageObjectTypeIR_subst as typeIR
+  clause 17 : (theta, packageObjectTypeIR as typeIR) = packageObjectTypeIR_subst as typeIR
   -- if (PACKAGE typeId < typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > { typeIR*{typeIR <- typeIR*} } = packageObjectTypeIR)
   -- (if (typeArgumentIR_subst = $subst_typeIR'(theta, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_subst <- typeArgumentIR_subst*}
   -- (if (typeIR_subst = $subst_typeIR'(theta, typeIR)))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
   -- if (packageObjectTypeIR_subst = PACKAGE typeId < typeArgumentIR_subst*{typeArgumentIR_subst <- typeArgumentIR_subst*} > { typeIR_subst*{typeIR_subst <- typeIR_subst*} })
 
-  clause 17 : (theta, tableObjectTypeIR as typeIR) = tableObjectTypeIR as typeIR
+  clause 18 : (theta, tableObjectTypeIR as typeIR) = tableObjectTypeIR as typeIR
 
-  clause 18 : (theta, DEFAULT as typeIR) = DEFAULT as typeIR
+  clause 19 : (theta, DEFAULT as typeIR) = DEFAULT as typeIR
 
-  clause 19 : (theta, HEADER_INVALID as typeIR) = HEADER_INVALID as typeIR
+  clause 20 : (theta, HEADER_INVALID as typeIR) = HEADER_INVALID as typeIR
 
-  clause 20 : (theta, SEQ < typeIR*{typeIR <- typeIR*} > as typeIR) = SEQ < typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
+  clause 21 : (theta, SEQ < typeIR*{typeIR <- typeIR*} > as typeIR) = SEQ < typeIR_subst*{typeIR_subst <- typeIR_subst*} > as typeIR
   -- (if (typeIR_subst = $subst_typeIR'(theta, typeIR)))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  clause 21 : (theta, SEQ < typeIR*{typeIR <- typeIR*} , ... > as typeIR) = SEQ < typeIR_subst*{typeIR_subst <- typeIR_subst*} , ... > as typeIR
+  clause 22 : (theta, SEQ < typeIR*{typeIR <- typeIR*} , ... > as typeIR) = SEQ < typeIR_subst*{typeIR_subst <- typeIR_subst*} , ... > as typeIR
   -- (if (typeIR_subst = $subst_typeIR'(theta, typeIR)))*{typeIR <- typeIR*, typeIR_subst <- typeIR_subst*}
 
-  clause 22 : (theta, RECORD { annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} } as typeIR) = RECORD { annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} } as typeIR
+  clause 23 : (theta, RECORD { annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} } as typeIR) = RECORD { annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} } as typeIR
   -- (if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field)))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
 
-  clause 23 : (theta, RECORD { annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} , ... } as typeIR) = RECORD { annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} , ... } as typeIR
+  clause 24 : (theta, RECORD { annotationList typeIR_field id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field <- typeIR_field*} , ... } as typeIR) = RECORD { annotationList typeIR_field_subst id_field ;*{annotationList <- annotationList*, id_field <- id_field*, typeIR_field_subst <- typeIR_field_subst*} , ... } as typeIR
   -- (if (typeIR_field_subst = $subst_typeIR'(theta, typeIR_field)))*{typeIR_field <- typeIR_field*, typeIR_field_subst <- typeIR_field_subst*}
 
-  clause 24 : (theta, SET < typeIR > as typeIR) = SET < typeIR_subst > as typeIR
+  clause 25 : (theta, SET < typeIR > as typeIR) = SET < typeIR_subst > as typeIR
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
 
-  clause 25 : (theta, tableMetadataTypeIR as typeIR) = tableMetadataTypeIR as typeIR
+  clause 26 : (theta, tableMetadataTypeIR as typeIR) = tableMetadataTypeIR as typeIR
 
 def $subst_parameterIR(theta, parameterIR) : parameterIR =
 
@@ -3744,9 +3766,14 @@ relation Type_alpha: typeIR ~~ typeIR
     rule tupleTypeIR: TUPLE < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR ~~ TUPLE < typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     -- (if Type_alpha: typeIR_a ~~ typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
 
+  rulegroup arrayTypeIR
+
+    rule arrayTypeIR: ARRAY typeIR_a [ n_size ] as typeIR ~~ ARRAY typeIR_b [ n_size ] as typeIR
+    -- if Type_alpha: typeIR_a ~~ typeIR_b holds
+
   rulegroup headerStackTypeIR
 
-    rule headerStackTypeIR: typeIR_a [ n_size ] as typeIR ~~ typeIR_b [ n_size ] as typeIR
+    rule headerStackTypeIR: HEADER_STACK typeIR_a [ n_size ] as typeIR ~~ HEADER_STACK typeIR_b [ n_size ] as typeIR
     -- if Type_alpha: typeIR_a ~~ typeIR_b holds
 
   rulegroup structTypeIR
@@ -4257,25 +4284,27 @@ def $bin_eq(value, value) : bool =
 
   clause 9 : (TUPLE ( value_a*{value_a <- value_a*} ) as value, TUPLE ( value_b*{value_b <- value_b*} ) as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
 
-  clause 10 : (HEADER_STACK [ value_a*{value_a <- value_a*} ( _nat ; n_size_a ) ] as value, HEADER_STACK [ value_b*{value_b <- value_b*} ( _nat' ; n_size_b ) ] as value) = (((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})) /\ (n_size_a = n_size_b))
+  clause 10 : (ARRAY [ value_a*{value_a <- value_a*} ] as value, ARRAY [ value_b*{value_b <- value_b*} ] as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
 
-  clause 11 : (STRUCT typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, STRUCT typeId_b { fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 11 : (HEADER_STACK [ value_a*{value_a <- value_a*} ( _nat ) ] as value, HEADER_STACK [ value_b*{value_b <- value_b*} ( _nat' ) ] as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+
+  clause 12 : (STRUCT typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, STRUCT typeId_b { fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ; = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ; = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 12 : (HEADER typeId_a { _b ; fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, HEADER typeId_b { _b' ; fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 13 : (HEADER typeId_a { _b ; fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, HEADER typeId_b { _b' ; fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ; = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ; = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 13 : (HEADER_UNION typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, HEADER_UNION typeId_b { fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 14 : (HEADER_UNION typeId_a { fieldValue_a*{fieldValue_a <- fieldValue_a*} } as value, HEADER_UNION typeId_b { fieldValue_b*{fieldValue_b <- fieldValue_b*} } as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ; = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ; = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 14 : (typeId_a . nameIR_field_a as value, typeId_b . nameIR_field_b as value) = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
+  clause 15 : (typeId_a . nameIR_field_a as value, typeId_b . nameIR_field_b as value) = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
 
-  clause 15 : (typeId_a . _nameIR . value_field_a as value, typeId_b . _nameIR' . value_field_b as value) = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
+  clause 16 : (typeId_a . _nameIR . value_field_a as value, typeId_b . _nameIR' . value_field_b as value) = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
 
-  clause 16 : ({#} as value, {#} as value) = true
+  clause 17 : ({#} as value, {#} as value) = true
 
 def $bin_ne(value, value) : bool =
 
@@ -4355,31 +4384,34 @@ def $cast_op(typeIR, value) : value =
   clause 3 : (typeIR, listValue as value) = $cast_list(typeIR_unroll, listValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 4 : (typeIR, headerStackValue as value) = $cast_header_stack(typeIR_unroll, headerStackValue)
+  clause 4 : (typeIR, arrayValue as value) = $cast_array(typeIR_unroll, arrayValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 5 : (typeIR, structValue as value) = $cast_struct(typeIR_unroll, structValue)
+  clause 5 : (typeIR, headerStackValue as value) = $cast_header_stack(typeIR_unroll, headerStackValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 6 : (typeIR, headerValue as value) = $cast_header(typeIR_unroll, headerValue)
+  clause 6 : (typeIR, structValue as value) = $cast_struct(typeIR_unroll, structValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 7 : (typeIR, enumValue as value) = $cast_enum(typeIR_unroll, enumValue)
+  clause 7 : (typeIR, headerValue as value) = $cast_header(typeIR_unroll, headerValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 8 : (typeIR, sequenceValue as value) = $cast_sequence(typeIR_unroll, sequenceValue)
+  clause 8 : (typeIR, enumValue as value) = $cast_enum(typeIR_unroll, enumValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 9 : (typeIR, recordValue as value) = $cast_record(typeIR_unroll, recordValue)
+  clause 9 : (typeIR, sequenceValue as value) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 10 : (typeIR, DEFAULT as value) = $cast_default(typeIR_unroll, DEFAULT)
+  clause 10 : (typeIR, recordValue as value) = $cast_record(typeIR_unroll, recordValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 11 : (typeIR, invalidHeaderValue as value) = $cast_invalid_header(typeIR_unroll)
+  clause 11 : (typeIR, DEFAULT as value) = $cast_default(typeIR_unroll, DEFAULT)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 12 : (typeIR, setValue as value) = $cast_set(typeIR_unroll, setValue)
+  clause 12 : (typeIR, invalidHeaderValue as value) = $cast_invalid_header(typeIR_unroll)
+  -- if (typeIR_unroll = $unroll_typeIR(typeIR))
+
+  clause 13 : (typeIR, setValue as value) = $cast_set(typeIR_unroll, setValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
 def $default(typeIR) : value =
@@ -4405,22 +4437,25 @@ def $default(typeIR) : value =
 
   clause 9 : (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) = TUPLE ( $default(typeIR)*{typeIR <- typeIR*} ) as value
 
-  clause 10 : (typeIR [ n_s ] as typeIR) = HEADER_STACK [ value*{value <- value*} ( 0 ; n_s ) ] as value
+  clause 10 : (ARRAY typeIR [ n_s ] as typeIR) = ARRAY [ value*{value <- value*} ] as value
   -- if (value*{value <- value*} = $repeat_<value>($default(typeIR), n_s))
 
-  clause 11 : (STRUCT typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = STRUCT typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
+  clause 11 : (HEADER_STACK typeIR [ n_s ] as typeIR) = HEADER_STACK [ value*{value <- value*} ( 0 ) ] as value
+  -- if (value*{value <- value*} = $repeat_<value>($default(typeIR), n_s))
 
-  clause 12 : (HEADER typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = HEADER typeId { false ; $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
+  clause 12 : (STRUCT typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = STRUCT typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
 
-  clause 13 : (HEADER_UNION typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = HEADER_UNION typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
+  clause 13 : (HEADER typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = HEADER typeId { false ; $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
 
-  clause 14 : (ENUM typeId { id_f_h :: _id*{_id <- _id*} } as typeIR) = typeId . id_f_h as value
+  clause 14 : (HEADER_UNION typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_f id_f ;*{_annotationList <- _annotationList*, id_f <- id_f*, typeIR_f <- typeIR_f*} } as typeIR) = HEADER_UNION typeId { $default(typeIR_f) id_f ;*{id_f <- id_f*, typeIR_f <- typeIR_f*} } as value
 
-  clause 15 : (ENUM typeId < typeIR > { nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as typeIR) = typeId . id_zero . value_zero as value
+  clause 15 : (ENUM typeId { id_f_h :: _id*{_id <- _id*} } as typeIR) = typeId . id_f_h as value
+
+  clause 16 : (ENUM typeId < typeIR > { nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as typeIR) = typeId . id_zero . value_zero as value
   -- if (value_zero = $cast_int(typeIR, D 0 as int as integerValue))
   -- if (?(id_zero) = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}))
 
-  clause 16 : (ENUM typeId < typeIR > { nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as typeIR) = typeId . id_zero . value_zero as value
+  clause 17 : (ENUM typeId < typeIR > { nameIR_field = value_field ;*{nameIR_field <- nameIR_field*, value_field <- value_field*} } as typeIR) = typeId . id_zero . value_zero as value
   -- if (value_zero = $cast_int(typeIR, D 0 as int as integerValue))
   -- if (?() = $assoc_<value, id>(value_zero, (value_field, nameIR_field)*{nameIR_field <- nameIR_field*, value_field <- value_field*}))
   -- if (id_zero = "__UNSPECIFIED")
@@ -4515,9 +4550,13 @@ def $cast_list(typeIR, listValue) : value =
 
   clause 0 : (LIST < typeIR > as typeIR, LIST [ value*{value <- value*} ]) = LIST [ $cast_op(typeIR, value)*{value <- value*} ] as value
 
+def $cast_array(typeIR, arrayValue) : value =
+
+  clause 0 : (ARRAY typeIR [ n_size ] as typeIR, ARRAY [ value*{value <- value*} ]) = ARRAY [ value*{value <- value*} ] as value
+
 def $cast_header_stack(typeIR, headerStackValue) : value =
 
-  clause 0 : (typeIR [ n_size ] as typeIR, HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size ) ]) = HEADER_STACK [ value*{value <- value*} ( n_idx ; n_size ) ] as value
+  clause 0 : (HEADER_STACK typeIR [ n_size ] as typeIR, HEADER_STACK [ value*{value <- value*} ( n_idx ) ]) = HEADER_STACK [ value*{value <- value*} ( n_idx ) ] as value
 
 def $cast_struct(typeIR, structValue) : value =
 
@@ -4544,14 +4583,17 @@ def $cast_sequence(typeIR, sequenceValue) : value =
 
   clause 1 : (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR, SEQ ( value*{value <- value*} )) = TUPLE ( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} ) as value
 
-  clause 2 : (typeIR [ n_size ] as typeIR, SEQ ( value*{value <- value*} )) = HEADER_STACK [ value_cast*{value_cast <- value_cast*} ( n_idx ; n_size ) ] as value
+  clause 2 : (ARRAY typeIR [ n_size ] as typeIR, SEQ ( value*{value <- value*} )) = ARRAY [ value_cast*{value_cast <- value_cast*} ] as value
+  -- (if (value_cast = $cast_op(typeIR, value)))*{value <- value*, value_cast <- value_cast*}
+
+  clause 3 : (HEADER_STACK typeIR [ n_size ] as typeIR, SEQ ( value*{value <- value*} )) = HEADER_STACK [ value_cast*{value_cast <- value_cast*} ( n_idx ) ] as value
   -- (if (value_cast = $cast_op(typeIR, value)))*{value <- value*, value_cast <- value_cast*}
   -- if (n_idx = |value*{value <- value*}|)
 
-  clause 3 : (STRUCT typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ ( value*{value <- value*} )) = STRUCT typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 4 : (STRUCT typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ ( value*{value <- value*} )) = STRUCT typeId { value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- (if (value_cast = $cast_op(typeIR_field, value)))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
-  clause 4 : (HEADER typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ ( value*{value <- value*} )) = HEADER typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  clause 5 : (HEADER typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field nameIR_field ;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ ( value*{value <- value*} )) = HEADER typeId { true ; value_cast nameIR_field ;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- (if (value_cast = $cast_op(typeIR_field, value)))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
 def $cast_record(typeIR, recordValue) : value =
@@ -4655,13 +4697,15 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
 
   clause 7 : (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 8 : (typeIR [ n_size ] as typeIR) = ($sizeof_minSizeInBits'(typeIR) * n_size)
+  clause 8 : (ARRAY typeIR [ n_size ] as typeIR) = ($sizeof_minSizeInBits'(typeIR) * n_size)
 
-  clause 9 : (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 9 : (HEADER_STACK typeIR [ n_size ] as typeIR) = ($sizeof_minSizeInBits'(typeIR) * n_size)
 
-  clause 10 : (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 10 : (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 11 : (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 11 : (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+
+  clause 12 : (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
 def $sizeof_minSizeInBytes(typeIR) : value =
 
@@ -4690,13 +4734,15 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
 
   clause 7 : (TUPLE < typeIR*{typeIR <- typeIR*} > as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 8 : (typeIR [ n_size ] as typeIR) = ($sizeof_maxSizeInBits'(typeIR) * n_size)
+  clause 8 : (ARRAY typeIR [ n_size ] as typeIR) = ($sizeof_maxSizeInBits'(typeIR) * n_size)
 
-  clause 9 : (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 9 : (HEADER_STACK typeIR [ n_size ] as typeIR) = ($sizeof_maxSizeInBits'(typeIR) * n_size)
 
-  clause 10 : (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 10 : (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 11 : (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 11 : (HEADER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+
+  clause 12 : (HEADER_UNION _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR) = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
 def $sizeof_maxSizeInBytes(typeIR) : value =
 
@@ -5144,7 +5190,8 @@ syntax typedefIR =
    | TYPE typeId typeIR (from newTypeIR)  hint(print %0)
    | LIST < typeIR > (from listTypeIR) 
    | TUPLE < typeIR* > (from tupleTypeIR) 
-   | typeIR [ nat ] (from headerStackTypeIR) 
+   | ARRAY typeIR [ nat ] (from arrayTypeIR) 
+   | HEADER_STACK typeIR [ nat ] (from headerStackTypeIR) 
    | STRUCT typeId < typeArgumentIR* > { fieldTypeIR* } (from structTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER typeId < typeArgumentIR* > { fieldTypeIR* } (from headerTypeIR)  hint(print %0#"<"#%1#">")
    | HEADER_UNION typeId < typeArgumentIR* > { fieldTypeIR* } (from headerUnionTypeIR)  hint(print %0#"<"#%1#">")
@@ -5883,13 +5930,16 @@ def $lift_dataTypeIR(dataTypeIR) : type =
   clause 1 : (TUPLE < typeIR*{typeIR <- typeIR*} > as dataTypeIR) = TUPLE < typeArgumentList > as type
   -- if (typeArgumentList = $lift_typeArgumentListIR(typeIR*{typeIR <- typeIR*}))
 
-  clause 2 : (typeIR [ n ] as dataTypeIR) = namedType [ D n as int as expression ] as type
-  -- if (namedType as type = $lift_typeIR(typeIR))
+  clause 2 : (ARRAY typeIR [ n ] as dataTypeIR) = type [ D n as int as expression ] as type
+  -- if (type = $lift_typeIR(typeIR))
 
-  clause 3 : (ENUM typeId { _nameIR*{_nameIR <- _nameIR*} } as dataTypeIR) = typeName as type
+  clause 3 : (HEADER_STACK typeIR [ n ] as dataTypeIR) = type [ D n as int as expression ] as type
+  -- if (type = $lift_typeIR(typeIR))
+
+  clause 4 : (ENUM typeId { _nameIR*{_nameIR <- _nameIR*} } as dataTypeIR) = typeName as type
   -- if (typeName = $lift_nameIR_as_typeName(typeId))
 
-  clause 4 : (ENUM typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as dataTypeIR) = typeName as prefixedTypeName < typeArgument as typeArgumentList > as type
+  clause 5 : (ENUM typeId < typeIR > { _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as dataTypeIR) = typeName as prefixedTypeName < typeArgument as typeArgumentList > as type
   -- if (typeName = $lift_nameIR_as_typeName(typeId))
   -- if (typeArgument = $lift_typeArgumentIR(typeIR))
 
@@ -7933,9 +7983,15 @@ relation Type_wf: bound |- typeIR
     -- (if $nestable_tuple(typeIR))*{typeIR <- typeIR*}
     -- (if Type_wf: B |- typeIR holds)*{typeIR <- typeIR*}
 
+  rulegroup arrayTypeIR
+
+    rule arrayTypeIR: B |- ARRAY typeIR [ _nat ] as typeIR
+    -- if $nestable_array(typeIR)
+    -- if Type_wf: B |- typeIR holds
+
   rulegroup headerStackTypeIR
 
-    rule headerStackTypeIR: B |- typeIR [ _nat ] as typeIR
+    rule headerStackTypeIR: B |- HEADER_STACK typeIR [ _nat ] as typeIR
     -- if $nestable_headerStack(typeIR)
     -- if Type_wf: B |- typeIR holds
 
@@ -8284,8 +8340,20 @@ tbl def $nestable_list(typeIR) : bool =
   row 7 :
     (newTypeIR as typeIR) -> true
   row 8 :
-    (dataTypeIR as typeIR) -> true
+    (listTypeIR as typeIR) -> true
   row 9 :
+    (tupleTypeIR as typeIR) -> true
+  row 10 :
+    (headerStackTypeIR as typeIR) -> true
+  row 11 :
+    (structTypeIR as typeIR) -> true
+  row 12 :
+    (headerTypeIR as typeIR) -> true
+  row 13 :
+    (headerUnionTypeIR as typeIR) -> true
+  row 14 :
+    (enumTypeIR as typeIR) -> true
+  row 15 :
     (_typeIR) -> false
 
 tbl def $nestable_tuple(typeIR) : bool =
@@ -8308,16 +8376,68 @@ tbl def $nestable_tuple(typeIR) : bool =
   row 8 :
     (tupleTypeIR as typeIR) -> true
   row 9 :
-    (headerStackTypeIR as typeIR) -> true
+    (ARRAY typeIR [ _nat ] as typeIR) -> $nestable_array_in_tuple(typeIR)
   row 10 :
-    (structTypeIR as typeIR) -> true
+    (headerStackTypeIR as typeIR) -> true
   row 11 :
-    (headerTypeIR as typeIR) -> true
+    (structTypeIR as typeIR) -> true
   row 12 :
-    (headerUnionTypeIR as typeIR) -> true
+    (headerTypeIR as typeIR) -> true
   row 13 :
-    (enumTypeIR as typeIR) -> true
+    (headerUnionTypeIR as typeIR) -> true
   row 14 :
+    (enumTypeIR as typeIR) -> true
+  row 15 :
+    (_typeIR) -> false
+
+tbl def $nestable_array_in_tuple(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT < _nat > as typeIR) -> true
+  row 2 :
+    (BIT < _nat > as typeIR) -> true
+  row 3 :
+    (VARBIT < _nat > as typeIR) -> true
+  row 4 :
+    (nameTypeIR as typeIR) -> true
+  row 5 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $nestable_array_in_tuple(typeIR)
+  row 6 :
+    (newTypeIR as typeIR) -> true
+  row 7 :
+    (ARRAY typeIR [ _nat ] as typeIR) -> $nestable_array_in_tuple(typeIR)
+  row 8 :
+    (structTypeIR as typeIR) -> true
+  row 9 :
+    (enumTypeIR as typeIR) -> true
+  row 10 :
+    (_typeIR) -> false
+
+tbl def $nestable_array(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT < _nat > as typeIR) -> true
+  row 2 :
+    (BIT < _nat > as typeIR) -> true
+  row 3 :
+    (VARBIT < _nat > as typeIR) -> true
+  row 4 :
+    (nameTypeIR as typeIR) -> true
+  row 5 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $nestable_array(typeIR)
+  row 6 :
+    (newTypeIR as typeIR) -> true
+  row 7 :
+    (arrayTypeIR as typeIR) -> true
+  row 8 :
+    (structTypeIR as typeIR) -> true
+  row 9 :
+    (enumTypeIR as typeIR) -> true
+  row 10 :
+    (externObjectTypeIR as typeIR) -> true
+  row 11 :
     (_typeIR) -> false
 
 tbl def $nestable_headerStack(typeIR) : bool =
@@ -8356,6 +8476,8 @@ tbl def $nestable_header(typeIR) : bool =
   row 8 :
     (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
   row 9 :
+    (ARRAY typeIR [ _nat ] as typeIR) -> $nestable_array_in_header(typeIR)
+  row 10 :
     (_typeIR) -> false
 
 tbl def $nestable_struct_in_header(typeIR) : bool =
@@ -8376,6 +8498,30 @@ tbl def $nestable_struct_in_header(typeIR) : bool =
   row 7 :
     (STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} } as typeIR) -> $forall_($nestable_struct_in_header(typeIR_field)*{typeIR_field <- typeIR_field*})
   row 8 :
+    (_typeIR) -> false
+
+tbl def $nestable_array_in_header(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT < _nat > as typeIR) -> true
+  row 2 :
+    (BIT < _nat > as typeIR) -> true
+  row 3 :
+    (VARBIT < _nat > as typeIR) -> true
+  row 4 :
+    (nameTypeIR as typeIR) -> true
+  row 5 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $nestable_array_in_header(typeIR)
+  row 6 :
+    (newTypeIR as typeIR) -> true
+  row 7 :
+    (ARRAY typeIR [ _nat ] as typeIR) -> $nestable_array_in_header(typeIR)
+  row 8 :
+    (structTypeIR as typeIR) -> true
+  row 9 :
+    (enumTypeIR as typeIR) -> true
+  row 10 :
     (_typeIR) -> false
 
 tbl def $nestable_headerUnion(typeIR) : bool =
@@ -8745,7 +8891,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
     rule header-stack-size: p TC |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # _expressionNoteIR ~> D n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (_typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK _typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
 
     rule struct: p TC |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # _expressionNoteIR ~> value
@@ -8773,10 +8919,18 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
-    rule indexAccessExpressionIR-stack: p TC |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR ~> value
+    rule array: p TC |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR ~> value
     -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index as value
-    -- if (HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ; _nat' ) ] as value = value_base)
+    -- if (ARRAY [ value_e*{value_e <- value_e*} ] as value = value_base)
+    -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
+    -- if (n_index < |value_e*{value_e <- value_e*}|)
+    -- if (value = value_e*{value_e <- value_e*}[n_index])
+
+    rule stack: p TC |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR ~> value
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_base ~> value_base
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index ~> integerValue_index as value
+    -- if (HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ) ] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
@@ -8929,10 +9083,22 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR # typeId*
     -- TypeArgumentList_ok: p TC |- typeArgumentList : typeIR_arg*{typeIR_arg <- typeIR_arg*} # typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- if (typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*}))
 
-  rulegroup headerStackType
+  rulegroup arrayType
 
-    rule headerStackType: p TC |- namedType [ expression_size ] as typeOrVoid : typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Type_ok: p TC |- namedType as typeOrVoid : typeIR_base # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    rule headerStack: p TC |- type [ expression_size ] as typeOrVoid : HEADER_STACK typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR_base # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (typeIR_base' = $unroll_typeIR(typeIR_base))
+    -- if (typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR)
+    -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
+    -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size))
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> integerValue_size as value
+    -- if (?(n_size) = $nat_of_integerValue(integerValue_size))
+    -- if (n_size > 0)
+
+    rule array: p TC |- type [ expression_size ] as typeOrVoid : ARRAY typeIR_base [ n_size ] as typeIR # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR_base # typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (typeIR_base' = $unroll_typeIR(typeIR_base))
+    -- if ~(typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR)
     -- Expr_ok: p TC |- expression_size : typedExpressionIR_size
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_size))
     -- Expr_eval_lctk: p TC |- typedExpressionIR_size ~> integerValue_size as value
@@ -9074,8 +9240,12 @@ relation Cast_expl_neq: typeIR -> typeIR
     rule tupleTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> TUPLE < typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
 
-    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> typeIR_b [ n_size ] as typeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    rule arrayTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> ARRAY typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+
+    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> HEADER_STACK typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
 
     rule structTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } as typeIR
@@ -9092,7 +9262,12 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- (if Cast_expl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
 
-    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> typeIR_b [ n_size ] as typeIR
+    rule arrayTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> ARRAY typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
+    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- if $is_defaultable_typeIR(typeIR_b)
+
+    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> HEADER_STACK typeIR_b [ n_size ] as typeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
     -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- if $is_defaultable_typeIR(typeIR_b)
@@ -9190,8 +9365,12 @@ relation Cast_impl_neq: typeIR -> typeIR
     rule tupleTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> TUPLE < typeIR_b*{typeIR_b <- typeIR_b*} > as typeIR
     -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
 
-    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> typeIR_b [ n_size ] as typeIR
-    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| <= n_size)
+    rule arrayTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> ARRAY typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+
+    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> HEADER_STACK typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
     -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
 
     rule structTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} > as typeIR -> STRUCT _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { _annotationList typeIR_field_b _nameIR ;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} } as typeIR
@@ -9211,7 +9390,12 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- (if Cast_impl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
 
-    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> typeIR_b [ n_size ] as typeIR
+    rule arrayTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> ARRAY typeIR_b [ n_size ] as typeIR
+    -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
+    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- if $is_defaultable_typeIR(typeIR_b)
+
+    rule headerStackTypeIR: SEQ < typeIR_a*{typeIR_a <- typeIR_a*} , ... > as typeIR -> HEADER_STACK typeIR_b [ n_size ] as typeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
     -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
     -- if $is_defaultable_typeIR(typeIR_b)
@@ -9624,14 +9808,14 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     rule headerStack-size: p TC |- expression_base as memberAccessBase . member as expression : typedExpressionIR_base as memberAccessBaseIR . "size" as expressionIR # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if ("size" = $name(member))
     -- if (expressionNoteIR = ( BIT < 32 > as typeIR LCTK ))
 
     rule headerStack-lastIndex: p TC |- expression_base as memberAccessBase . member as expression : typedExpressionIR_base as memberAccessBaseIR . "lastIndex" as expressionIR # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if ("lastIndex" = $name(member))
     -- if (((p = BLOCK) /\ (TC.BLOCK.KIND = PARSER)) \/ ((p = LOCAL) /\ (TC.LOCAL.KIND = PARSER_STATE as localKind)))
     -- if (expressionNoteIR = ( BIT < 32 > as typeIR DYN ))
@@ -9639,7 +9823,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     rule headerStack-last: p TC |- expression_base as memberAccessBase . member as expression : typedExpressionIR_base as memberAccessBaseIR . "last" as expressionIR # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if ("last" = $name(member))
     -- if (((p = BLOCK) /\ (TC.BLOCK.KIND = PARSER)) \/ ((p = LOCAL) /\ (TC.LOCAL.KIND = PARSER_STATE as localKind)))
     -- if (expressionNoteIR = ( typeIR DYN ))
@@ -9647,7 +9831,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     rule headerStack-next: p TC |- expression_base as memberAccessBase . member as expression : typedExpressionIR_base as memberAccessBaseIR . "next" as expressionIR # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if ("next" = $name(member))
     -- if (((p = BLOCK) /\ (TC.BLOCK.KIND = PARSER)) \/ ((p = LOCAL) /\ (TC.LOCAL.KIND = PARSER_STATE as localKind)))
     -- if (expressionNoteIR = ( typeIR DYN ))
@@ -9720,6 +9904,34 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (n_index < |typeIR_e*{typeIR_e <- typeIR_e*}|)
     -- if (expressionNoteIR = ( typeIR_e*{typeIR_e <- typeIR_e*}[n_index] ctk_base ))
 
+    rule array-lctk: p TC |- expression_base [ expression_index ] as expression : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
+    -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (ARRAY typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (ctk_index = LCTK)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
+    -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
+    -- if (n_index < n_size)
+    -- if (expressionNoteIR = ( typeIR ctk_base ))
+
+    rule array-non-lctk: p TC |- expression_base [ expression_index ] as expression : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
+    -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
+    -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (ARRAY typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (ctk_index =/= LCTK)
+    -- if (ctk = $join_ctk(ctk_base, ctk_index))
+    -- if (expressionNoteIR = ( typeIR ctk ))
+
     rule headerStack-lctk: p TC |- expression_base [ expression_index ] as expression : typedExpressionIR_base [ typedExpressionIR_index_reduced ] as expressionIR # expressionNoteIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
@@ -9728,7 +9940,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
     -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
@@ -9743,7 +9955,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
     -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index =/= LCTK)
     -- if (ctk = $join_ctk(ctk_base, ctk_index))
     -- if (expressionNoteIR = ( typeIR ctk ))
@@ -9933,7 +10145,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     rule headerStackTypeIR-next-last: p TC |- lvalue_base . member : typedLvalueIR
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- if (_lvalueIR # ( typeIR_base ) = typedLvalueIR_base)
-    -- if (typeIR [ _nat ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ _nat ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = $name(member))
     -- if ((nameIR = "next") \/ (nameIR = "last"))
     -- if (((p = BLOCK) /\ (TC.BLOCK.KIND = PARSER)) \/ ((p = LOCAL) /\ (TC.LOCAL.KIND = PARSER_STATE as localKind)))
@@ -9965,10 +10177,10 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
 
   rulegroup indexAccess
 
-    rule lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
+    rule array-lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- if (_lvalueIR # ( typeIR_base ) = typedLvalueIR_base)
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (ARRAY typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR # ( typeIR_index ctk_index ) = typedExpressionIR_index)
     -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
@@ -9978,10 +10190,33 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if (n_index < n_size)
     -- if (typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR ))
 
-    rule non-lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
+    rule array-non-lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
     -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
     -- if (_lvalueIR # ( typeIR_base ) = typedLvalueIR_base)
-    -- if (typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (ARRAY typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- if (_expressionIR # ( typeIR_index ctk_index ) = typedExpressionIR_index)
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (ctk_index =/= LCTK)
+    -- if (typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR ))
+
+    rule headerStack-lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
+    -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
+    -- if (_lvalueIR # ( typeIR_base ) = typedLvalueIR_base)
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
+    -- if (_expressionIR # ( typeIR_index ctk_index ) = typedExpressionIR_index)
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (ctk_index = LCTK)
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
+    -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
+    -- if (n_index < n_size)
+    -- if (typedLvalueIR = typedLvalueIR_base [ typedExpressionIR_index_reduced ] # ( typeIR ))
+
+    rule headerStack-non-lctk: p TC |- lvalue_base [ expression_index ] : typedLvalueIR
+    -- Lvalue_ok: p TC |- lvalue_base : typedLvalueIR_base
+    -- if (_lvalueIR # ( typeIR_base ) = typedLvalueIR_base)
+    -- if (HEADER_STACK typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR # ( typeIR_index ctk_index ) = typedExpressionIR_index)
     -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
@@ -11434,7 +11669,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR < typeArgumen
     rule builtinMethodTypeIR-header-stack: p TC |- typedExpressionIR_base . nameIR < [] > ( [argumentIR] ) : methodTypeIR as callableTypeIR < # [] > ( # [] # [] )
     -- if nameIR <- ["push_front", "pop_front"]
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR [ _nat ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK typeIR [ _nat ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (parameterIR = `EMPTY `EMPTY INT as typeIR "count" ?())
     -- if (methodTypeIR = BUILTIN_METHOD nameIR ( [parameterIR] ) : INT as typeIR as methodTypeIR)
 
@@ -12107,10 +12342,16 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if (LIST < typeIR_e > as typeIR = $unroll_typeIR(typeIR_expression))
     -- if Cast_impl: typeIR_e -> typeIR_var holds
 
+    rule array: TC typeIR_var |- expression as forCollectionExpression : typedExpressionIR as forCollectionExpressionIR
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    -- if (typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR))
+    -- if (ARRAY typeIR_e [ _nat ] as typeIR = $unroll_typeIR(typeIR_expression))
+    -- if Type_alpha: typeIR_e ~~ typeIR_var holds
+
     rule header-stack: TC typeIR_var |- expression as forCollectionExpression : typedExpressionIR as forCollectionExpressionIR
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if (typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR))
-    -- if (typeIR_e [ _nat ] as typeIR = $unroll_typeIR(typeIR_expression))
+    -- if (HEADER_STACK typeIR_e [ _nat ] as typeIR = $unroll_typeIR(typeIR_expression))
     -- if Type_alpha: typeIR_e ~~ typeIR_var holds
 
   rulegroup range
@@ -12873,25 +13114,27 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
 
   clause 5 : (constraint, TUPLE < typeIR_param*{typeIR_param <- typeIR_param*} > as typeIR, TUPLE < typeIR_arg*{typeIR_arg <- typeIR_arg*} > as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
-  clause 6 : (constraint, typeIR_param [ n_size ] as typeIR, typeIR_arg [ n_size ] as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 6 : (constraint, ARRAY typeIR_param [ n_size ] as typeIR, ARRAY typeIR_arg [ n_size ] as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-  clause 7 : (constraint, STRUCT typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, STRUCT typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 7 : (constraint, HEADER_STACK typeIR_param [ n_size ] as typeIR, HEADER_STACK typeIR_arg [ n_size ] as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
-  clause 8 : (constraint, HEADER typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, HEADER typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 8 : (constraint, STRUCT typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, STRUCT typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 9 : (constraint, HEADER_UNION typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, HEADER_UNION typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 9 : (constraint, HEADER typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, HEADER typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 10 : (constraint, EXTERN typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} } as typeIR, EXTERN typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 10 : (constraint, HEADER_UNION typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} } as typeIR, HEADER_UNION typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 11 : (constraint, PARSER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > ( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) as typeIR, PARSER _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > ( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} ) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 11 : (constraint, EXTERN typeId < typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} > { _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} } as typeIR, EXTERN typeId < typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} > { _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} } as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+
+  clause 12 : (constraint, PARSER _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > ( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) as typeIR, PARSER _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > ( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} ) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- (if (_annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param))*{_annotationList <- _annotationList*, _id <- _id*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
   -- (if (_annotationList' direction typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg))*{_annotationList' <- _annotationList'*, _id' <- _id'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, direction <- direction*, parameterIR_arg <- parameterIR_arg*, typeIR_arg <- typeIR_arg*}
 
-  clause 12 : (constraint, CONTROL _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > ( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) as typeIR, CONTROL _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > ( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} ) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 13 : (constraint, CONTROL _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > ( parameterIR_param*{parameterIR_param <- parameterIR_param*} ) as typeIR, CONTROL _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > ( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} ) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- (if (_annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param))*{_annotationList <- _annotationList*, _id <- _id*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
   -- (if (_annotationList' direction typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg))*{_annotationList' <- _annotationList'*, _id' <- _id'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, direction <- direction*, parameterIR_arg <- parameterIR_arg*, typeIR_arg <- typeIR_arg*}
 
-  clause 13 : (constraint, PACKAGE _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { typeIR_param*{typeIR_param <- typeIR_param*} } as typeIR, PACKAGE _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > { typeIR_arg*{typeIR_arg <- typeIR_arg*} } as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 14 : (constraint, PACKAGE _typeId < _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > { typeIR_param*{typeIR_param <- typeIR_param*} } as typeIR, PACKAGE _typeId' < _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} > { typeIR_arg*{typeIR_arg <- typeIR_arg*} } as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   clause -1 : (constraint, typeIR_param, typeIR_arg) = constraint
 
@@ -13669,7 +13912,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
     rule header-stack-size: p IC STO |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # _expressionNoteIR : STO D n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (_typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (HEADER_STACK _typeIR [ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
 
     rule struct: p IC STO_0 |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # _expressionNoteIR : STO_1 value
@@ -13697,10 +13940,18 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
 
-    rule indexAccessExpressionIR-stack: p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : STO_2 value
+    rule array: p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : STO_2 value
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index as value
-    -- if (HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ; _nat' ) ] as value = value_base)
+    -- if (ARRAY [ value_e*{value_e <- value_e*} ] as value = value_base)
+    -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
+    -- if (n_index < |value_e*{value_e <- value_e*}|)
+    -- if (value = value_e*{value_e <- value_e*}[n_index])
+
+    rule stack: p IC STO_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : STO_2 value
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
+    -- Expr_inst: p IC STO_1 |- typedExpressionIR_index : STO_2 integerValue_index as value
+    -- if (HEADER_STACK [ value_e*{value_e <- value_e*} ( _nat ) ] as value = value_base)
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
     -- if (n_index < |value_e*{value_e <- value_e*}|)
     -- if (value = value_e*{value_e <- value_e*}[n_index])
@@ -15115,22 +15366,25 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
 
     rule stack-size: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # ( typeIR_base _ctk ) : EC_1 ARCH_1 expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 ` headerStackValue_base as value as expressionResult
-    -- if (HEADER_STACK [ _value*{_value <- _value*} ( _nat ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ) ] = headerStackValue_base)
     -- if (nameIR = "size")
+    -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
     -- if (expressionResult = ` D n_size as int as value as expressionResult)
 
     rule stack-last-out-of-bounds: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # ( typeIR_base _ctk ) : EC_1 ARCH_1 rejectTransitionResult as expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 ` headerStackValue_base as value as expressionResult
-    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base)
     -- if (nameIR = "last")
+    -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
     -- if (b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size)))
     -- if b_out_of_bounds
     -- if (rejectTransitionResult = REJECT ERROR . "StackOutOfBounds")
 
     rule stack-last-in-bounds: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # ( typeIR_base _ctk ) : EC_1 ARCH_1 expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 ` headerStackValue_base as value as expressionResult
-    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base)
     -- if (nameIR = "last")
+    -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
     -- if (b_out_of_bounds = ((n_idx < 1) \/ (n_idx > n_size)))
     -- if ~b_out_of_bounds
     -- if (n_idx_last as int = (n_idx - 1))
@@ -15139,7 +15393,7 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
 
     rule stack-lastIndex: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR . nameIR as expressionIR # ( typeIR_base _ctk ) : EC_1 ARCH_1 expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 ` headerStackValue_base as value as expressionResult
-    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ; _nat ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( n_idx ) ] = headerStackValue_base)
     -- if (nameIR = "lastIndex")
     -- if (n_idx_last as int = ($max_nat([n_idx, 1]) - 1))
     -- if (value_idx_last = 32 W n_idx_last as int as value)
@@ -15192,9 +15446,19 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
     -- if (expressionResult = ` value_elem*{value_elem <- value_elem*}[n_index] as expressionResult)
 
+    rule array: p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : EC_1 ARCH_1 expressionResult
+    -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 ARCH_1 ` [arrayValue_base as value, integerValue_index as value] as expressionListResult
+    -- if (ARRAY [ value_elem*{value_elem <- value_elem*} ] = arrayValue_base)
+    -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
+    -- if (i_index = $int_of_integerValue(integerValue_index))
+    -- if (b_in_bounds = ((i_index < n_size as int) /\ (i_index >= 0 as int)))
+    -- if (n_idx as int = $ite<int>(b_in_bounds, i_index, (n_size - 1)))
+    -- if (expressionResult = ` value_elem*{value_elem <- value_elem*}[n_idx] as expressionResult)
+
     rule headerStack: p EC_0 ARCH_0 |- typedExpressionIR_base [ typedExpressionIR_index ] as expressionIR # _expressionNoteIR : EC_1 ARCH_1 expressionResult
     -- Exprs_eval: p EC_0 ARCH_0 |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 ARCH_1 ` [headerStackValue_base as value, integerValue_index as value] as expressionListResult
-    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_elem*{value_elem <- value_elem*} ( _nat ) ] = headerStackValue_base)
+    -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
     -- if (i_index = $int_of_integerValue(integerValue_index))
     -- if (b_in_bounds = ((i_index < n_size as int) /\ (i_index >= 0 as int)))
     -- if (n_idx as int = $ite<int>(b_in_bounds, i_index, (n_size - 1)))
@@ -15311,15 +15575,17 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     rule stack-next-out-of-bounds: p EC_0 ARCH_0 |- typedLvalueIR . nameIR # _lvalueNoteIR : EC_1 ARCH_1 rejectTransitionResult as storageReferenceResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 ` ?(storageReference) as storageReferenceResult
     -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
     -- if (nameIR = "next")
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (n_idx >= n_size)
     -- if (rejectTransitionResult = REJECT ERROR . "StackOutOfBounds")
 
     rule stack-next-in-bounds: p EC_0 ARCH_0 |- typedLvalueIR . nameIR # _lvalueNoteIR : EC_1 ARCH_1 storageReferenceResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 ` ?(storageReference) as storageReferenceResult
     -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (nameIR = "next")
     -- if (n_idx < n_size)
     -- if (storageReferenceResult = ` ?(storageReference . nameIR) as storageReferenceResult)
@@ -15380,8 +15646,9 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
     rule stack-next: p EC_0 ARCH |- storageReference . nameIR : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue_base)
     -- if (nameIR = "next")
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (n_idx < n_size)
     -- if (value = value_element*{value_element <- value_element*}[n_idx])
 
@@ -15402,9 +15669,30 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
   rulegroup indexAccess
 
+    rule array-in-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] : value
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : arrayValue_base as value
+    -- if (ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if (i_idx = $int_of_integerValue(integerValue_index))
+    -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
+    -- if b_in_bounds
+    -- if (n_idx as int = i_idx)
+    -- if (value = value_element*{value_element <- value_element*}[n_idx])
+
+    rule array-out-of-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] : value
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : arrayValue_base as value
+    -- if (ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if (i_idx = $int_of_integerValue(integerValue_index))
+    -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
+    -- if ~b_in_bounds
+    -- if (HEADER typeId { b_valid ; fieldValue*{fieldValue <- fieldValue*} } as value = value_element*{value_element <- value_element*}[0])
+    -- if (value = HEADER typeId { false ; fieldValue*{fieldValue <- fieldValue*} } as value)
+
     rule stack-in-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (i_idx = $int_of_integerValue(integerValue_index))
     -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
     -- if b_in_bounds
@@ -15413,7 +15701,8 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
 
     rule stack-out-of-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (i_idx = $int_of_integerValue(integerValue_index))
     -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
     -- if ~b_in_bounds
@@ -15441,10 +15730,10 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
 
     rule stack-next: p EC_0 ARCH |- storageReference . nameIR := value : EC_1
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue_base)
     -- if (nameIR = "next")
     -- if (value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value])
-    -- if (headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ; n_size ) ])
+    -- if (headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( (n_idx + 1) ) ])
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
 
     rule struct: p EC_0 ARCH |- storageReference . nameIR := value : EC_1
@@ -15490,20 +15779,42 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
 
   rulegroup indexAccess
 
-    rule stack-in-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : EC_1
-    -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_base_idx ; n_size ) ] = headerStackValue_base)
+    rule array-in-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : EC_1
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : arrayValue_base as value
+    -- if (ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (i_idx = $int_of_integerValue(integerValue_index))
     -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
     -- if b_in_bounds
     -- if (n_idx as int = i_idx)
     -- if (value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value])
-    -- if (headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ; n_size ) ])
+    -- if (arrayValue_base_update = ARRAY [ value_element_update*{value_element_update <- value_element_update*} ])
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := arrayValue_base_update as value : EC_1
+
+    rule array-out-of-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : EC_0
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : arrayValue_base as value
+    -- if (ARRAY [ value_element*{value_element <- value_element*} ] = arrayValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if (i_idx = $int_of_integerValue(integerValue_index))
+    -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
+    -- if ~b_in_bounds
+
+    rule stack-in-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : EC_1
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_base_idx ) ] = headerStackValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if (i_idx = $int_of_integerValue(integerValue_index))
+    -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
+    -- if b_in_bounds
+    -- if (n_idx as int = i_idx)
+    -- if (value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value])
+    -- if (headerStackValue_base_update = HEADER_STACK [ value_element_update*{value_element_update <- value_element_update*} ( n_base_idx ) ])
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
 
     rule stack-out-of-bounds: p EC_0 ARCH |- storageReference [ integerValue_index as value ] := value : EC_0
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ; n_size ) ] = headerStackValue_base)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( _nat ) ] = headerStackValue_base)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (i_idx = $int_of_integerValue(integerValue_index))
     -- if (b_in_bounds = ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
     -- if ~b_in_bounds
@@ -16376,13 +16687,14 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_1 ARCH_1 abortResult as callResult
     -- if (BUILTIN_METHOD storageReference . "push_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
     rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_2 ARCH_1 RETURN ?() as callResult
     -- if (BUILTIN_METHOD storageReference . "push_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 ` integerValue_count as value as expressionResult
     -- if (?(n_count) = $nat_of_integerValue(integerValue_count))
     -- if (n_count < n_size)
@@ -16392,19 +16704,20 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- if (value_back*{value_back <- value_back*} = value_element*{value_element <- value_element*}[0 : n_back])
     -- if (value_element_updated*{value_element_updated <- value_element_updated*} = value_front_invalidated*{value_front_invalidated <- value_front_invalidated*} ++ value_back*{value_back <- value_back*})
     -- if (n_idx_updated = $min_nat([n_size, (n_idx + n_count)]))
-    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ])
+    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
     rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_2 ARCH_1 RETURN ?() as callResult
     -- if (BUILTIN_METHOD storageReference . "push_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 ` integerValue_count as value as expressionResult
     -- if (?(n_count) = $nat_of_integerValue(integerValue_count))
     -- if (n_count >= n_size)
     -- (if (value_element_updated = $invalidate_value(value_element)))*{value_element <- value_element*, value_element_updated <- value_element_updated*}
     -- if (n_idx_updated = $min_nat([n_size, (n_idx + n_count)]))
-    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ])
+    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
   rulegroup builtinMethodCallee-header-stack-pop-front
@@ -16412,13 +16725,14 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_1 ARCH_1 abortResult as callResult
     -- if (BUILTIN_METHOD storageReference . "pop_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
     rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_2 ARCH_1 RETURN ?() as callResult
     -- if (BUILTIN_METHOD storageReference . "pop_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 ` integerValue_count as value as expressionResult
     -- if (?(n_count) = $nat_of_integerValue(integerValue_count))
     -- if (n_count < n_size)
@@ -16428,19 +16742,20 @@ relation Call_eval: cursor evalContext arch |- callee @ < typeArgumentListIR > (
     -- (if (value_back_invalidated = $invalidate_value(value_back)))*{value_back <- value_back*, value_back_invalidated <- value_back_invalidated*}
     -- if (value_element_updated*{value_element_updated <- value_element_updated*} = value_front*{value_front <- value_front*} ++ value_back_invalidated*{value_back_invalidated <- value_back_invalidated*})
     -- if (n_idx_updated = n_front)
-    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ])
+    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
     rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee @ < [] > ( [argumentIR] ) : EC_2 ARCH_1 RETURN ?() as callResult
     -- if (BUILTIN_METHOD storageReference . "pop_front" < [] > ( [parameterIR] ) = builtinMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
-    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ; n_size ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value_element*{value_element <- value_element*} ( n_idx ) ] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 ` integerValue_count as value as expressionResult
     -- if (?(n_count) = $nat_of_integerValue(integerValue_count))
     -- if (n_count >= n_size)
     -- (if (value_element_updated = $invalidate_value(value_element)))*{value_element <- value_element*, value_element_updated <- value_element_updated*}
     -- if (n_idx_updated as int = $max_int([0 as int, (n_size - n_count)]))
-    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ; n_size ) ])
+    -- if (headerStackValue_updated = HEADER_STACK [ value_element_updated*{value_element_updated <- value_element_updated*} ( n_idx_updated ) ])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
   rulegroup builtinMethodCallee-header-isValid
@@ -16842,9 +17157,13 @@ relation ForCollectionExpr_eval: evalContext arch |- forCollectionExpressionIR :
     -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 ` listValue as value as expressionResult
     -- if (LIST [ value*{value <- value*} ] = listValue)
 
+    rule array: EC_0 ARCH_0 |- typedExpressionIR as forCollectionExpressionIR : EC_1 ARCH_1 ` value*{value <- value*} as expressionListResult
+    -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 ` arrayValue as value as expressionResult
+    -- if (ARRAY [ value*{value <- value*} ] = arrayValue)
+
     rule header-stack: EC_0 ARCH_0 |- typedExpressionIR as forCollectionExpressionIR : EC_1 ARCH_1 ` value*{value <- value*} as expressionListResult
     -- Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 ` headerStackValue as value as expressionResult
-    -- if (HEADER_STACK [ value*{value <- value*} ( _nat ; _nat' ) ] = headerStackValue)
+    -- if (HEADER_STACK [ value*{value <- value*} ( _nat ) ] = headerStackValue)
 
   rulegroup range
 

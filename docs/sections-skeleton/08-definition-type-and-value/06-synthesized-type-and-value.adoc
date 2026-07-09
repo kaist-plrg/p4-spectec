@@ -1,6 +1,6 @@
 === Synthesized types and values
 
-// 317 - Modified
+// 320 - Modified
 For the purposes of type-checking the P4 compiler can synthesize some type
 representations which cannot be directly expressed by users.
 
@@ -13,7 +13,7 @@ ${syntax: synthesizedTypeIR synthesizedValue}
 [#sec-default]
 ==== Default
 
-// 652 - Modified
+// 659 - Modified
 A left-value can be initialized automatically with a default value of the
 suitable type using:
 
@@ -31,7 +31,7 @@ ${syntax: defaultTypeIR defaultValue}
 // Added
 For example:
 
-// 653
+// 660
 [source,p4]
 ----
 struct S {
@@ -72,16 +72,16 @@ ${rulegroup-prose: Type_wf/defaultTypeIR}
 [#sec-invalid-header]
 ==== Invalid headers
 
-// 554
+// 559
 The expression `+{#}+` represents an invalid header of some type, but it can be
 any header or header union type. A P4 compiler may require an explicit cast on
 this expression in cases where it cannot determine the particular header or
 header union type from the context.
 
-// 555 - Modified
+// 560 - Modified
 ${syntax: invalidHeaderExpression}
 
-// 558
+// 563
 Note that the `+#+` character cannot be misinterpreted as a preprocessor
 directive, since it cannot be the first character on a line when it occurs in
 the single lexical token `+{#}+`, which may not have whitespace or any other
@@ -95,10 +95,10 @@ ${syntax: invalidHeaderTypeIR invalidHeaderValue}
 
 ===== Operations
 
-// 556
+// 561
 For example:
 
-// 557
+// 562
 [source,p4]
 ----
 header H { bit<32> x; bit<32> y; }
@@ -121,11 +121,11 @@ ${rulegroup-prose: Type_wf/invalidHeaderTypeIR}
 [#sec-sequence]
 ==== Sequences
 
-// 494 - Modified
+// 498 - Modified
 A sequence expression is written using curly braces, with each element
 separated by a comma:
 
-// 495 - Modified
+// 499 - Modified
 ${syntax: sequenceElementExpression
           sequenceOrRecordElementExpression
           sequenceOrRecordExpression}
@@ -139,25 +139,25 @@ ${syntax: sequenceTypeIR sequenceValue}
 
 ===== Operations
 
-// 496 - Modified
+// 500 - Modified
 Sequence expressions can be assigned to expressions of type `tuple`, `struct`
 or `header`, and can also be passed as arguments to methods. Sequences may be
 nested.
 
-// 489 - Modified
+// 493 - Modified
 For instance, sequences can be assigned to other tuples with the same type:
 
-// 490
+// 494
 [source,p4]
 ----
 tuple<bit<32>, bool> x = { 10, false };
 ----
 
-// 497 - Modified
+// 501 - Modified
 The following program fragment uses a sequence expression to pass several
 header fields simultaneously to a learning provider:
 
-// 498
+// 502
 [source,p4]
 ----
 extern LearningProvider<T> {
@@ -170,13 +170,13 @@ LearningProvider<tuple<bit<48>, bit<32>>>() lp;
 lp.learn( { hdr.ethernet.srcAddr, hdr.ipv4.src } );
 ----
 
-// 499 - Modified
+// 503 - Modified
 A sequence may be used to initialize a structure if the tuple has the same
 number of elements as fields in the structure. The effect of such an
 initializer is to assign the n^th^ element of the tuple to the n^th^ field in
 the structure:
 
-// 500
+// 504
 [source,p4]
 ----
 struct S {
@@ -186,7 +186,7 @@ struct S {
 const S x = { 10, 20 }; // a = 10, b = 20
 ----
 
-// 501 - Modified
+// 505 - Modified
 Sequence expressions that have `+...+` as their last element are allowed to
 give values to only a subset of the fields of the struct or header type to
 which it evaluates. Any field names not given a value explicitly will be given
@@ -211,11 +211,11 @@ ${rulegroup-prose: Type_wf/sequenceTypeIR}
 [#sec-record]
 ==== Records
 
-// 506 - Modified
+// 510 - Modified
 One can write record expressions that evaluate to a structure or header. The
 syntax of these expressions is given by:
 
-// 507 - Modified
+// 511 - Modified
 ${syntax: recordElementExpression
           sequenceOrRecordElementExpression
           sequenceOrRecordExpression}
@@ -228,11 +228,11 @@ ${syntax: recordTypeIR recordValue}
 
 ===== Operations
 
-// 509
+// 513
 The following example shows a structure-valued expression used in an equality
 comparison expression:
 
-// 510
+// 514
 [source,p4]
 ----
 struct S {
@@ -248,27 +248,27 @@ void f() {
 }
 ----
 
-// 511
+// 515
 Record expressions can be used in the right-hand side of assignments, in
 comparisons, in field selection expressions, and as arguments to functions,
 method or actions. Record expressions are not left values.
 
-// 512
+// 516
 Record expressions that do not have `+...+` as their last element must provide
 a value for every member of the struct or header type to which it evaluates, by
 mentioning each field name exactly once.
 
-// 513
+// 517
 Record expressions that have `+...+` as their last element are allowed to give
 values to only a subset of the fields of the struct or header type to which it
 evaluates. Any field names not given a value explicitly will be given their
 default values (see <<sec-initializing-with-default-values>>).
 
-// 514
+// 518
 The order of the fields of the `struct` or `header` type does not need to match
 the order of the values of the structure-valued expression.
 
-// 515
+// 519
 It is a compile-time error if a field name appears more than once in the same
 structure-valued expression.
 
@@ -290,7 +290,7 @@ ${rulegroup-prose: Type_wf/recordTypeIR}
 // Added
 ${syntax: setTypeIR}
 
-// 318 - Modified
+// 321 - Modified
 The set type describes _sets_ of values of some type `T`. Set types can only
 appear in restricted contexts in P4 programs. For example, the range expression
 `8w5 .. 8w8` describes a set containing the 8-bit numbers 5, 6, 7, and 8, so
@@ -307,12 +307,12 @@ ${syntax: setValue}
 
 ===== Operations
 
-// 519 - Modified
+// 523 - Modified
 Some P4 expressions denote sets of values. These expressions can appear only in
 a few contexts--parsers and table entries. For example, the `select` expression
 (<<sec-select>>) has the following structure:
 
-// 520
+// 524
 [source,p4]
 ----
 select (expression) {
@@ -322,27 +322,27 @@ select (expression) {
 }
 ----
 
-// 521
+// 525
 Here the expressions `set1, set2`, etc. evaluate to sets of values and the
 `select` expression tests whether `expression` belongs to the sets used as
 labels.
 
-// 522 - Modified
+// 526 - Modified
 ${syntax: keysetExpression tupleKeysetExpression
           simpleKeysetExpressionList simpleKeysetExpression}
 
-// 523
+// 527
 The mask (`&&&`) and range (`..`) operators have the same precedence; the just
 above the `?:` operator.
 
 [#sec-singleton-set]
 ====== Singleton sets
 
-// 524
+// 528
 In a set context, expressions denote singleton sets. For example, in the
 following program fragment,
 
-// 525
+// 529
 [source,p4]
 ----
 select (hdr.ipv4.version) {
@@ -350,17 +350,17 @@ select (hdr.ipv4.version) {
 }
 ----
 
-// 526
+// 530
 The label `4` denotes the singleton set containing the `int` value `4`.
 
 [#sec-universal-set]
 ====== The universal set
 
-// 527
+// 531
 In a set context, the expressions `default` or `_` denote the universal set,
 which contains all possible values of a given type:
 
-// 528
+// 532
 [source,p4]
 ----
 select (hdr.ipv4.version) {
@@ -372,39 +372,39 @@ select (hdr.ipv4.version) {
 [#sec-mask-set]
 ====== Masks
 
-// 529
+// 533
 The infix operator `&&&` takes two arguments of the same numeric type
 (<<sec-numeric-values>>), and creates a value of the same type. The right value
 is used as a "mask", where each bit set to `0` in the mask indicates a "don't
 care" bit. More formally, the set denoted by `a &&& b` is defined as follows:
 
-// 530
+// 534
 [source,p4]
 ----
 a &&& b = { c where a & b = c & b }
 ----
 
-// 531
+// 535
 For example:
 
-// 532
+// 536
 [source,p4]
 ----
 8w0x0A &&& 8w0x0F
 ----
 
-// 533
+// 537
 denotes a set that contains 16 different `bit<8>` values, whose bit-pattern is
 `XXXX1010`, where the value of an `X` can be any bit. Note that there may be
 multiple ways to express a keyset using a mask operator--e.g., `8w0xFA &&&
 8w0x0F` denotes the same keyset as in the example above.
 
-// 534
+// 538
 Similar to other binary operations, the mask operator allows the compiler to
 automatically insert casts to unify the argument types in certain situations
 (<<sec-implicit-cast>>).
 
-// 535
+// 539
 P4 architectures may impose additional restrictions on the expressions on the
 left and right-hand side of a mask operator: for example, they may require that
 either or both sub-expressions be compile-time known values.
@@ -412,36 +412,36 @@ either or both sub-expressions be compile-time known values.
 [#sec-range-set]
 ====== Ranges
 
-// 536
+// 540
 The infix operator `..` takes two arguments of the same numeric type `T`
 (<<sec-numeric-values>>), and creates a value of the type `set<T>`. The set
 contains all values numerically between the first and the second, inclusively.
 For example:
 
-// 537
+// 541
 [source,p4]
 ----
 4s5 .. 4s8
 ----
 
-// 538
+// 542
 denotes a set of 4 consecutive `int<4>` values `4s5, 4s6, 4s7`, and `4s8`.
 
-// 539
+// 543
 Similar to other binary operations, the range operator allows the compiler to
 automatically insert casts to unify the argument types in certain situations
 (<<sec-implicit-casts>>).
 
-// 540
+// 544
 A range where the second value is smaller than the first one represents an
 empty set.
 
 ====== Products
 
-// 541
+// 545
 Multiple sets can be combined using Cartesian product:
 
-// 542
+// 546
 [source,p4]
 ----
 select(hdr.ipv4.ihl, hdr.ipv4.protocol) {
@@ -451,7 +451,7 @@ select(hdr.ipv4.ihl, hdr.ipv4.protocol) {
      (_, _): accept; }
 ----
 
-// 543
+// 547
 The type of a product of sets is a set of sequences or tuples.
 
 ===== Well-formedness
@@ -463,14 +463,14 @@ ${rulegroup-prose: Type_wf/setTypeIR}
 [#sec-table-metadata]
 ==== Table metadata
 
-// 982
+// 989
 A `table` can be invoked by calling its `apply` method. Calling an apply method
 on a table instance returns a value with a table metadata `struct` type with
 three fields. This structure is synthesized by the compiler automatically. For
 each `table T`, the compiler synthesizes a table metadata `enum` and a
 `struct`, shown in pseudo-P4:
 
-// 983
+// 990
 [source,p4pseudo]
 ----
 enum action_list(T) {
@@ -485,14 +485,14 @@ struct apply_result(T) {
 
 ===== Operations
 
-// 984
+// 991
 The evaluation of the `apply` method sets the `hit` field to `true` and the
 field `miss` to `false` if a match is found in the lookup-table; if a match is
 not found `hit` is set to `false` and `miss` to `true`. These bits can be used
 to drive the execution of the control-flow in the control block that invoked
 the table:
 
-// 985
+// 992
 [source,p4]
 ----
 if (ipv4_match.apply().hit) {
@@ -506,12 +506,12 @@ if (ipv4_host.apply().miss) {
 }
 ----
 
-// 986
+// 993
 The `action_run` field indicates which kind of action was executed
 (irrespective of whether it was a hit or a miss). It can be used in a switch
 statement:
 
-// 987
+// 994
 [source,p4]
 ----
 switch (dmac.apply().action_run) {

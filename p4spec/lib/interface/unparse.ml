@@ -79,8 +79,12 @@ and pp_case_v (note : Il.vnote) (henv : HEnv.t) fmt (valuecase : Il.valuecase) :
 and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
     (values : Value.t list) : unit =
   let str =
-    Hints.Alter.alternate
-      ~base_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
+    Hints.Alter.alternate ~empty:""
+      ~text:(fun s -> match s with "" -> None | s -> Some s)
+      ~atom:(fun (atom : Il.atom) -> F.asprintf "%a" pp_atom atom)
+      ~join:(fun (docs : string list) -> String.concat " " docs)
+      ~fuse:(fun (a : string) (b : string) -> a ^ b)
+      ~other:(fun (hintexp : El.exp) -> El.Print.string_of_exp hintexp)
       hint
       (fun value -> F.asprintf "%a" (pp_value henv) value)
       values

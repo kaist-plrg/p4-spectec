@@ -31,12 +31,12 @@ void f(S s) {}
 // Added
 Here, `S` is a named type (`typeName`) that refers to the struct type defined earlier.
 
-// 347 - Modified
+// 350 - Modified
 Types such as struct, header, and header union types can be generic. In order
 to use such a generic type it must be specialized with appropriate type
 arguments. For example,
 
-// 348
+// 351
 [source,p4]
 ----
 // generic structure type
@@ -209,11 +209,11 @@ ${syntax: nameTypeDefIR nameTypeIR}
 
 ===== Operations
 
-// 627
+// 634
 Because functions and methods can be generic, they offer the possibility of
 declaring values with types that are type variables:
 
-// 628
+// 635
 [source,p4]
 ----
 void f<T>() {
@@ -221,16 +221,16 @@ void f<T>() {
 }
 ----
 
-// 629
+// 636
 The type of such objects is not known until the function is specialized with
 specific type arguments.
 
-// 630
+// 637
 Currently the only operations that are available for such values are assignment
 (explicit through `=`, or implicit, through argument passing). This behavior is
 similar to languages such as Java, and different from languages such as C++.
 
-// 631
+// 638
 A future version of P4 may introduce a notion of _type constraints_ which would
 enable more operations on such values. Because of this limitation, such values
 are currently of limited utility.
@@ -249,7 +249,7 @@ ${rulegroup-prose: Type_wf/nameTypeIR}
 
 ==== Specialized types
 
-// 340
+// 343
 A generic type may be specialized by specifying arguments for its type
 variables. In cases where the compiler can infer type arguments, type
 specialization is not necessary. When a type is specialized, all its type
@@ -261,15 +261,15 @@ NOTE: P4-SpecTec currently does *not* infer type arguments for type
 specialization, where it only performs inference for function and method calls.
 endif::[]
 
-// 341 - Modified
+// 344 - Modified
 ${syntax: specializedType}
 
-// 342
+// 345
 For example, the following extern declaration describes a generic block of
 registers, where the type of the elements stored in each register is an
 arbitrary `T`.
 
-// 343
+// 346
 [source,p4]
 ----
 extern Register<T> {
@@ -279,17 +279,17 @@ extern Register<T> {
 }
 ----
 
-// 344
+// 347
 The type `T` has to be specified when instantiating a set of registers, by
 specializing the Register type:
 
-// 345
+// 348
 [source,p4]
 ----
 Register<bit<32>>(128) registerBank;
 ----
 
-// 346
+// 349
 The instantiation of `registerBank` is made using the `Register` type
 specialized with the `bit<32>` bound to the `T` type argument.
 

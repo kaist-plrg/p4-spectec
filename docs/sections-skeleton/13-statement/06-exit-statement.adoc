@@ -1,26 +1,26 @@
 [#sec-exit-statement]
 === Exit statements
 
-// 708
+// 715
 The `exit` statement immediately terminates the execution of all the blocks
 currently executing: the current `action` (if invoked within an `action`), the
 current `control`, and all its callers. `exit` statements are not allowed
 within parsers or functions.
 
-// 709
+// 716
 Any copy-out behavior due to direction `out` or `inout` parameters of the
 enclosing `action` or `control`, and all of its callers, are still performed
 after the execution of the `exit` statement. See <<sec-call-convention>> for
 details on copy-out behavior.
 
-// 710 - Modified
+// 717 - Modified
 ${syntax: exitStatement}
 
-// 711
+// 718
 There are some expressions whose evaluation might cause an `exit` statement to
 be executed. Examples include:
 
-// 712
+// 719
 * `table.apply().action_run`, which can only appear as the expression
   of a `switch` statement (see <<sec-switch-statement>>), and when
   it appears there, it must be the entire expression.
@@ -34,10 +34,10 @@ be executed. Examples include:
 ** an argument passed to a function or method call.
 ** an expression to calculate a table key (see <<sec-mau-semantics>>).
 
-// 713
+// 720
 This list is not intended to be exhaustive.
 
-// 714
+// 721
 If applying the table causes an action to be executed, which in turn causes an
 `exit` statement to be executed, then evaluation of the expression ends
 immediately, and the rest of the current expression or statement does not
@@ -46,7 +46,7 @@ evaluation of the parts of an expression.  For the examples listed above, it
 also means the following behavior after the expression evaluation is
 interrupted.
 
-// 715
+// 722
 * For a `switch` statement, if `table.apply()` exits, then none of the
   blocks in the `switch` statement are executed.
 * If `table.apply().hit` or `table.apply().miss` cause an exit during

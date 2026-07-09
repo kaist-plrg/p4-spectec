@@ -19,22 +19,22 @@ ${syntax: methodTypeDefIR methodTypeIR methodDef}
 [#sec-extern-method]
 ==== Extern methods
 
-// 329 - Modified
+// 332 - Modified
 An extern object declaration declares an object and all methods that
 can be invoked to perform computations and to alter the state of the
 object.
 
-// 330 - Modified
+// 333 - Modified
 ${syntax: externConstructorPrototype externMethodPrototype
           externConstructorOrMethodPrototype externObjectDeclaration}
 
-// 331
+// 334
 For example, the P4 core library introduces two extern objects `packet_in`
 and `packet_out` used for manipulating packets (see
 <<sec-packet-data-extraction>> and <<sec-deparse>>). Here is an example
 showing how the methods of these objects can be invoked on a packet:
 
-// 332
+// 335
 [source,p4]
 ----
 extern packet_out {
@@ -53,16 +53,16 @@ Internally, extern methods are represented as follows:
 // Added
 ${syntax: externMethodTypeDefIR externMethodTypeIR externMethodDef}
 
-// 336
+// 339
 Typical extern object methods are implemented by the target architecture. P4
 programmers can only call such methods.
 
-// 337 - Modified
+// 340 - Modified
 Some types of extern objects may provide methods that can be implemented by
 the P4 programmers. Such methods are described with the `abstract` keyword
 prior to the method definition. Here is an example:
 
-// 338
+// 341
 [source,p4]
 ----
 extern Balancer {
@@ -75,7 +75,7 @@ extern Balancer {
 }
 ----
 
-// 339
+// 342
 When such an object is instantiated the user has to supply an implementation
 of all the `abstract` methods (see <<sec-instantion-abstract-method>>).
 
@@ -87,16 +87,16 @@ ${rulegroup-prose: CallableType_wf/externMethodTypeIR}
 
 ==== Parser apply methods
 
-// 844
+// 851
 P4 allows parsers to invoke the services of other parsers, similar to
 subroutines. To invoke the services of another parser, the sub-parser must be
 first instantiated; the services of an instance are invoked by calling it using
 its `apply` method.
 
-// 845
+// 852
 The following example shows a sub-parser invocation:
 
-// 846
+// 853
 [source,p4]
 ----
 parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
@@ -125,16 +125,16 @@ ${rulegroup-prose: CallableType_wf/parserApplyMethodTypeIR}
 
 ==== Control apply methods
 
-// 999
+// 1006
 P4 allows controls to invoke the services of other controls, similar to
 subroutines. To invoke the services of another control, it must be first
 instantiated; the services of an instance are invoked by calling it using its
 `apply` method.
 
-// 1000
+// 1007
 The following example shows a control invocation:
 
-// 1001
+// 1008
 [source,p4]
 ----
 control Callee(inout IPv4 ipv4) { /* body omitted */ }
@@ -163,7 +163,7 @@ ${rulegroup-prose: CallableType_wf/controlApplyMethodTypeIR}
 
 ==== Table apply methods
 
-// 982 - Modified
+// 989 - Modified
 A `table` can be invoked by calling its `apply` method. Calling an apply method
 on a table instance returns a synthesized table metadata structure, explained
 in <<sec-table-metadata>>.

@@ -1,7 +1,7 @@
 [#sec-value-set-object]
 === Parser value set objects
 
-// 854
+// 861
 In some cases, the values that determine the transition from one parser state
 to another need to be determined at runtime. MPLS is one example where the
 value of the MPLS label field is used to determine what headers follow the MPLS
@@ -9,33 +9,33 @@ tag and this mapping may change dynamically at runtime. To support this
 functionality, P4 supports the notion of a Parser Value Set. This is a named
 set of values with a runtime API to add and remove values from the set.
 
-// 855
+// 862
 Value sets are declared locally within a parser. They should be declared before
 being referenced in parser `keysetExpression` and can be used as a label in a
 select expression.
 
-// 856
+// 863
 The syntax for declaring value sets is:
 
-// 857 - Modified
+// 864 - Modified
 ${syntax: valueSetDeclaration valueSetType}
 
-// 858
+// 865
 Parser Value Sets support a `size` argument to provide hints to the compiler to
 reserve hardware resources to implement the value set. Thus, the `size`
 argument must be a compile-time known value. For example, this parser value
 set:
 
-// 859
+// 866
 [source,p4]
 ----
 value_set<bit<16>>(4) pvs;
 ----
 
-// 860
+// 867
 creates a value_set of size 4 with entries of type `bit<16>`.
 
-// 861
+// 868
 The semantics of the `size` argument is similar to the `size` property of a
 table. If a value set has a `size` argument with value `N`, it is recommended
 that a compiler should choose a data plane implementation that is capable of
@@ -44,7 +44,7 @@ sets"
 footnote:P4SizeProperty[<https://github.com/p4lang/p4-spec/blob/master/p4-16/spec/docs/p4-table-and-parser-value-set-sizes.md>]
 for further discussion on the implementation of parser value set size.
 
-// 862
+// 869
 The value set is populated by the control plane by methods specified in the
 P4Runtime specification.footnote:P4RuntimeAPI[The P4Runtime API is defined as a
 Google Protocol Buffer `.proto` file and an accompanying English specification

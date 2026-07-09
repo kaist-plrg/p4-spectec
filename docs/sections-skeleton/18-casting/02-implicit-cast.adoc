@@ -1,7 +1,7 @@
 [#sec-implicit-cast]
 === Implicit casts
 
-// 479 - Modified
+// 483 - Modified
 To keep the language simple and avoid introducing hidden costs, the main
 implicit casts in P4 are casts from `int` to fixed-width types and from enums
 with an underlying type to the underlying type. In particular, applying a
@@ -12,10 +12,10 @@ type, it can be implicitly cast to its underlying type whenever appropriate,
 including but not limited to in shifts, concatenation, bit slicing indexes,
 header stack indexes as well as other unary and binary operations.
 
-// 480
+// 484
 For example, given the following declarations,
 
-// 481
+// 485
 [source,p4]
 ----
 enum bit<8> E {
@@ -27,10 +27,10 @@ bit<16> y;
 int<8>  z;
 ----
 
-// 482
+// 486
 the compiler will add implicit casts as follows:
 
-// 483
+// 487
 * `x + 1` becomes `x + (bit<8>)1`
 * `z < 0` becomes `z < (int<8>)0`
 * `x | 0xFFF` becomes `x | (bit<8>)0xFFF`; overflow warning
@@ -41,7 +41,7 @@ the compiler will add implicit casts as follows:
 * `x[E.a:0]` becomes `x[(bit<8>)E.a:0]`
 * `E.a pass:[++] 8w0` becomes `(bit<8>)E.a pass:[++] 8w0`
 
-// 484 - Modified
+// 488 - Modified
 The compiler also adds implicit casts when types of different expressions need
 to match; for example, as described in Section <<sec-select>>, since select
 labels are compared against the selected expression, the compiler will insert

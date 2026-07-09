@@ -77,7 +77,7 @@ module Prose = struct
                | GroupI (_, id_rel, _, _, _) -> id_rel
                | _ -> assert false
              in
-             Pl.Render.Backtrack.BlockLabel.set_namespace id_rel.it;
+             Pl.Render.Backtrack.Label.set_namespace id_rel.it;
              Pl.Render.render_group instr)
       |> String.concat "\n\n"
   end

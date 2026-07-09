@@ -1,20 +1,20 @@
 [#sec-table-key]
 ==== Table keys
 
-// 896
+// 903
 The `key` is a table property which specifies the data-plane values that
 should be used to look up an entry. A key is a list of pairs of the form
 `(e : m)`, where `e` is an expression that describes the data to be
 matched in the table, and `m` is a `match_kind` that describes the algorithm
 used to perform the lookup (see Section <<sec-match-kind>>).
 
-// 897 - Modified
+// 904 - Modified
 ${syntax: tableKeyList tableKey}
 
-// 898
+// 905
 For example, consider the following program fragment:
 
-// 899
+// 906
 ----
 table Fwd {
     key = {
@@ -25,12 +25,12 @@ table Fwd {
 }
 ----
 
-// 900
+// 907
 Here the key comprises two fields from the `ipv4header`
 header: `dstAddress` and `version`. The `match_kind` elements
 serve three purposes:
 
-// 901
+// 908
 * They specify the algorithm used to match data-plane values against
   the entries in the table at runtime.
 * They are used to synthesize the control-plane API that is used to
@@ -38,10 +38,10 @@ serve three purposes:
 * They are used by the compiler back-end to allocate resources for the
   implementation of the table.
 
-// 902
+// 909
 The P4 core library contains three predefined `match_kind` identifiers:
 
-// 903
+// 910
 [source,p4]
 ----
 match_kind {
@@ -51,7 +51,7 @@ match_kind {
 }
 ----
 
-// 904
+// 911
 These identifiers correspond to the P4~14~ match kinds with the same names. The
 semantics of these match kinds is actually not needed to describe the behavior
 of the P4 abstract machine; how they are used influences only the control-plane
@@ -60,10 +60,10 @@ P4 program, a look-up table is an abstract finite map that is given a key and
 produces as a result either an action or a "miss" indication, as described in
 <<sec-match-action-table-invocation>>.
 
-// 905
+// 912
 The expected meaning of these values is as follows:
 
-// 906
+// 913
 * an `exact` match kind on a key field means that the value of the field in the
   table specifies exactly the value the lookup key field must have in order to
   match. This is applicable for all legal key fields whose types support
@@ -79,7 +79,7 @@ The expected meaning of these values is as follows:
   more 1 bits have automatically higher priorities. A mask with all bits 0 is
   legal.
 
-// 907
+// 914
 Some table entries, in particular the ones with at least one `ternary` field,
 also require a priority value. A priority is a numeric value which is used to
 break ties when a particular key belongs to multiple sets. When table entries
@@ -90,19 +90,19 @@ specification does not mandate whether "higher" priorities are represented by
 higher or lower numeric values; this choice is left to the target
 implementation.
 
-// 908
+// 915
 An example specifying entries for a table is given in <<sec-table-entries>>.
 
-// 909
+// 916
 If a table has no `key` property, or if the value of its `key` property is the
 empty tuple, i.e. `key = {}`, then it contains no look-up table, just a default
 action--i.e., the associated lookup table is always the empty map.
 
-// 910
+// 917
 Each key element can have an optional `@name` annotation which is used to
 synthesize the control-plane-visible name for the key field.
 
-// 911
+// 918
 Note some implementations might only support a limited number of keys or a
 limited combinations of match_kind for the keys. The implementation should
 reject those cases with an error message in this case.

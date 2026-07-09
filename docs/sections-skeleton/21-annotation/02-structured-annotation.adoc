@@ -1,6 +1,6 @@
 === Bodies of Structured Annotations
 
-// 1164 - Modified
+// 1171 - Modified
 Unlike unstructured annotations, structured annotations use square brackets
 `[...]` and have a restricted format. They are commonly used to declare custom
 metadata, consisting of expression lists or key-value lists but not both. An
@@ -9,7 +9,7 @@ metadata, consisting of expression lists or key-value lists but not both. An
 ``namedExpression``s, each consisting of a key and a value `expression`. Note
 the syntax for `expression` is rich, see <<sec-grammar>> for details.
 
-// 1165
+// 1172
 All ``expression``s within a `structuredAnnotationBody` must be compile-time
 known values with a result type that is either: `string`, `int`, or `bool`. In
 particular, structured ``expression``s (e.g. an `expression` containing an
@@ -22,11 +22,11 @@ ifndef::release[]
 NOTE: P4-SpecTec does not evaluate any structured annotation body anyhow.
 endif::[]
 
-// 1166
+// 1173
 It is illegal to duplicate a `name` within the `namedExpressionList` of a
 structured annotation.
 
-// 1167
+// 1174
 ${syntax: structuredAnnotationBody
           sequenceOrRecordElementExpression
           sequenceElementExpression
@@ -35,13 +35,13 @@ ${syntax: structuredAnnotationBody
 
 ==== Structured Annotation Examples
 
-// 1168
+// 1175
 *Empty Expression List*
 
-// 1169
+// 1176
 The following example produces an empty annotation:
 
-// 1170
+// 1177
 [source,p4]
 ----
 @Empty[]
@@ -50,18 +50,18 @@ table t {
 }
 ----
 
-// 1171
+// 1178
 *Mixed Expression List*
 
-// 1172
+// 1179
 The following example will produce an effective expression list as follows:
 
-// 173
+// 1180
 ```
 [1,"hello",true, false, 11]
 ```
 
-// 1174
+// 1181
 [source,p4]
 ----
 #define TEXT_CONST "hello"
@@ -72,10 +72,10 @@ table t {
 }
 ----
 
-// 1175
+// 1182
 *`namedExprssionList` of Strings*
 
-// 1176
+// 1183
 [source,p4]
 ----
 @Labels[short="Short Label", hover="My Longer Table Label to appear in hover-help"]
@@ -84,19 +84,19 @@ table t {
 }
 ----
 
-// 1177
+// 1184
 *`namedExpressionList` of Mixed Expressions*
 
-// 1178
+// 1185
 The following example will produce an effective `namedExpressionList` as
 follows.
 
-// 1179
+// 1186
 ```
 [label="text", my_bool=true, int_val=6]
 ```
 
-// 1180
+// 1187
 [source,p4]
 ----
 @MixedKV[label="text", my_bool=true, int_val=2*3]
@@ -105,14 +105,14 @@ table t {
 }
 ----
 
-// 1181
+// 1188
 *Illegal Mixing of `namedExpression` and `expressionList`*
 
-// 1182
+// 1189
 The following example is invalid because the body contains both a
 `namedExpression` and an `expression`:
 
-// 1183
+// 1190
 [source,p4]
 ----
 @IllegalMixing[key=4, 5] // illegal mixing
@@ -121,13 +121,13 @@ table t {
 }
 ----
 
-// 1184
+// 1191
 *Illegal Duplicate Key*
 
-// 1185
+// 1192
 The following example is invalid because the same key occurs more than once:
 
-// 1186
+// 1193
 [source,p4]
 ----
 @DupKey[k1=4,k1=5] // illegal duplicate key
@@ -136,14 +136,14 @@ table t {
 }
 ----
 
-// 1187
+// 1194
 *Illegal Duplicate Structured Annotation*
 
-// 1188
+// 1195
 The following example is invalid because the annotation `name` occurs more than
 once on the same element, e.g. `table t`:
 
-// 1189
+// 1196
 [source,p4]
 ----
 @DupAnno[k1=4]
@@ -153,14 +153,14 @@ table t {
 }
 ----
 
-// 1190
+// 1197
 *Illegal Simultaneous Use of Both Structured and Unstructured Annotation*
 
-// 1191
+// 1198
 The following example is invalid because the annotation `name` is used by both
 an unstructured and structured annotation on the same element `table t`:
 
-// 1192
+// 1199
 [source,p4]
 ----
 @MixAnno("Anything")
