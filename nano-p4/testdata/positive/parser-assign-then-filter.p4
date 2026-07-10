@@ -12,6 +12,7 @@ control Filter(inout Header hdr, out bool pass) {
         bit<8> threshold = 8w128;
         if (hdr.nanonet.drop) {
             pass = hdr.nanonet.src > threshold;
+            hdr.nanonet.drop = false;
         } else {
             pass = hdr.nanonet.src < threshold;
         }
