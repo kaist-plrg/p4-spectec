@@ -99,7 +99,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
           error_no_region "unexpected number of arguments to extern method call"
     in
     let extern =
-      value_extern |> Value.Get.extern |> extern_of_yojson |> Result.get_ok
+      Value.Get.(
+        value_extern |>> "PACKET typeId objectState" |> two |> snd |> extern)
+      |> extern_of_yojson |> Result.get_ok
     in
     let name_method = Value.Get.text value_name_method in
     let names_param =
