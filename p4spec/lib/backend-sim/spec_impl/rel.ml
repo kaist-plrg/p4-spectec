@@ -363,6 +363,25 @@ module Make () = struct
     | [ value_ctx; value_arch; value_callResult ] ->
         (value_ctx, value_arch, value_callResult)
     | _ -> assert false
+
+  (* NanoSwitch_setup *)
+
+  let nanoswitch_setup (value_ctx : Value.t) (value_arch : Value.t)
+      (value_packet_in_state : Value.t) : Value.t * Value.t =
+    match
+      !call "NanoSwitch_setup" [ value_ctx; value_arch; value_packet_in_state ]
+    with
+    | [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+    | _ -> assert false
+
+  (* NanoSwitch_drive *)
+
+  let nanoswitch_drive (value_ctx : Value.t) (value_packet_in_state : Value.t) :
+      Value.t * Value.t =
+    match !call "NanoSwitch_drive" [ value_ctx; value_packet_in_state ] with
+    | [ value_forwardingDecision; value_ctx ] ->
+        (value_ctx, value_forwardingDecision)
+    | _ -> assert false
 end
 
 module type S = module type of Make ()

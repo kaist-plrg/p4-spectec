@@ -65,6 +65,7 @@ module Make
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
+        | Pass [ value_ctx ] -> (value_ctx, Arch.init_arch_state)
         | Pass _ -> error no_region "unexpected number of return values"
         | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg
       in
