@@ -2,17 +2,22 @@ relation ParameterType_eq:
   parameterIR ~~ parameterIR
   hint(input %0 %1)
 
-rulegroup Type_ok {
+rule Type_ok/signed:
+  TC |- INT `< n > ~> INT `< n >
 
-  rule Type_ok/baseType:
-    TC |- baseType ~> baseType
+rule Type_ok/unsigned:
+  TC |- BIT `< n > ~> BIT `< n >
 
-  rule Type_ok/typeName:
-    TC |- (`TID typeId) ~> typeIR
-    -- if typeDefIR = $find_typeDef_t(TC, typeId)
-    -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
+rule Type_ok/boolType:
+  TC |- BOOL ~> BOOL
 
-}
+rule Type_ok/matchKindType:
+  TC |- MATCH_KIND ~> MATCH_KIND
+
+rule Type_ok/typeName:
+  TC |- (`TID typeId) ~> typeIR
+  -- if typeDefIR = $find_typeDef_t(TC, typeId)
+  -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
 
 rule Type_eq/baseTypeIR:
   baseTypeIR ~~ baseTypeIR
