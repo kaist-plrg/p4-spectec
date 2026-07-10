@@ -28,10 +28,6 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
 
   type extern = PacketIn of Core.Object.PacketIn.t [@@deriving yojson]
 
-  let get_extern (value_arch : Value.t) (value_oid : Value.t) : extern =
-    Spec.Func.find_objectState_e value_arch value_oid
-    |> Value.Get.extern |> extern_of_yojson |> Result.get_ok
-
   (* Extern calls *)
 
   let eval_extern_init (values_input : Value.t list) : Value.t =
