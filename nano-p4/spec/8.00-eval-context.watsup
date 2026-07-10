@@ -141,7 +141,6 @@ def $update_var_e(BLOCK, EC, nameIR, value)
   -- if ~$in_set<nameIR>($dom_map<nameIR, value>(frame), nameIR)
 def $update_var_e(LOCAL, EC, nameIR, value)
   = $update_var_e(BLOCK, EC, nameIR, value)
-  ---- ;; TODO: is this unreachable?
   -- if eps = EC.LOCAL.FRAMES
 def $update_var_e(LOCAL, EC, nameIR, value)
   = EC[ .LOCAL.FRAMES = frame_h' :: frame_t* ]
@@ -149,7 +148,7 @@ def $update_var_e(LOCAL, EC, nameIR, value)
   -- if $in_set<nameIR>($dom_map<nameIR, value>(frame_h), nameIR)
   -- if frame_h' = $update_map<nameIR, value>(frame_h, nameIR, value)
 def $update_var_e(LOCAL, EC, nameIR, value)
-  = EC[ .LOCAL.FRAMES = frame_h :: EC_pop'.LOCAL.FRAMES ]
+  = EC_pop'[ .LOCAL.FRAMES = frame_h :: EC_pop'.LOCAL.FRAMES ]
   -- if frame_h :: frame_t* = EC.LOCAL.FRAMES
   -- if ~$in_set<nameIR>($dom_map<nameIR, value>(frame_h), nameIR)
   -- if EC_pop = EC[ .LOCAL.FRAMES = frame_t* ]
