@@ -34,12 +34,14 @@ relation NanoSwitch_setup:
   hint(input %0 %1)
 
 rule NanoSwitch_setup:
-  EC_0 |- objectState_packet -| EC_3
+  EC_0 |- objectState_packet -| EC_4
   -- if packetValue = PACKET "packet_in" objectState_packet
-  -- if EC_1 = $add_var_e(GLOBAL, EC_0, "packet_in", packetValue)
+  ---- ;; clear per-packet globals
+  -- if EC_1 = EC_0[ .GLOBAL.FRAME = $empty_frame ]
+  -- if EC_2 = $add_var_e(GLOBAL, EC_1, "packet_in", packetValue)
   -- if typeIR_header = $typeIR_of_typeDefIR($find_typeDef_e(EC_1, "Header"))
-  -- Var_init: EC_1 |- typeIR_header "hdr" -| EC_2
-  -- Var_init: EC_2 |- BOOL "accept" -| EC_3
+  -- Var_init: EC_2 |- typeIR_header "hdr" -| EC_3
+  -- Var_init: EC_3 |- BOOL "accept" -| EC_4
 
 ;;
 ;; Forwarding decision from accept flag
