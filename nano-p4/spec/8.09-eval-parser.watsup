@@ -48,7 +48,7 @@ def $match_case_value(
 
 rulegroup ParserSelect_eval {
 
-  rule ParserSelect_eval/accept:
+  rule ParserSelect_eval/match:
     EC |- selectExpression : transitionResult
     -- if SELECT `( expression ) `{ selectCaseList } = selectExpression
     -- Expr_eval: LOCAL EC |- expression : value
@@ -59,7 +59,7 @@ rulegroup ParserSelect_eval {
     -- ParserTransition_eval:
         EC |- TRANSITION (name_match `;) : transitionResult
 
-  rule ParserSelect_eval/reject:
+  rule ParserSelect_eval/no-match:
     EC |- selectExpression : REJECT
     -- if SELECT `( expression ) `{ selectCaseList } = selectExpression
     -- Expr_eval: LOCAL EC |- expression : value
@@ -112,7 +112,7 @@ rulegroup ParserState_trans {
         EC_0 |- parserState_found : ACCEPT -| EC_1
 
   rule ParserState_trans/reject:
-    EC_0 parserState* |- nameIR : ACCEPT -| EC_1
+    EC_0 parserState* |- nameIR : REJECT -| EC_1
     -- if parserState_found = $find_parserState(parserState*, nameIR)
     -- ParserState_eval:
         EC_0 |- parserState_found : REJECT -| EC_1
