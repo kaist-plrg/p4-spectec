@@ -83,7 +83,7 @@ module Make
   include (
     Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_IL)
       (MakeInterp_SL)
-      (Backend_ocaml.Spec_compiled.Make) :
+      (Backend_ocaml.Interp_ml.Make) :
         RUNNER)
 
   (* Logger *)

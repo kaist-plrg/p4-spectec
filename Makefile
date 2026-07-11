@@ -1,35 +1,55 @@
 SPEC = p4spectec
 BOOT = spectec-boot
 COMP = p4spectec-comp
+BOOTCOMP = spectec-boot-comp
 
 # Compile
 
-.PHONY: build stat perf spec-test ensure-spec-compiled restore-stub build-compiled test-run-ml test-run-ml-inc test-sim-ml test-sim-ml-inc
+.PHONY: build stat perf spec-test ensure-interp-ml restore-stub build-compiled test-run-ml test-run-ml-inc test-sim-ml test-sim-ml-inc
 
 # Executables
 
 EXESPEC = p4spec/_build/default/bin/main.exe
 EXEBOOT = p4spec/_build/default/bin/boot.exe
 EXECOMP = p4spec/_build/default/bin/comp.exe
+EXEBOOTCOMP = p4spec/_build/default/bin/compboot.exe
 
 # Compiled spec paths
 
-SPEC_COMPILED      = p4spec/lib/backend-ocaml/spec_compiled.ml
-SPEC_COMPILED_STUB = p4spec/lib/backend-ocaml/spec_compiled_stub.ml
+INTERP_ML      = p4spec/lib/backend-ocaml/interp_ml.ml
+INTERP_ML_STUB = p4spec/lib/backend-ocaml/interp_ml_stub.ml
 # The heavy generated spec is split across a part-library directory; restore-stub
 # swaps in a tiny committed mirror so plain `make build` stays fast.
-SPEC_COMPILED_DIR      = p4spec/lib/backend-ocaml/compiled
-SPEC_COMPILED_STUB_DIR = p4spec/lib/backend-ocaml/compiled_stub
+INTERP_ML_DIR      = p4spec/lib/backend-ocaml/compiled
+INTERP_ML_STUB_DIR = p4spec/lib/backend-ocaml/compiled_stub
 UNPARSE_COMPILED      = p4spec/lib/interface/p4/unparse_compiled.ml
 UNPARSE_COMPILED_STUB = p4spec/lib/interface/p4/unparse_compiled_stub.ml
+
+# Compiled meta-spec paths (spectec-boot-comp: spec-meta/il, spec-meta/sl)
+
+INTERP_ML_IL      = p4spec/lib/backend-ocaml-il/interp_ml.ml
+INTERP_ML_IL_STUB = p4spec/lib/backend-ocaml-il/interp_ml_stub.ml
+INTERP_ML_IL_DIR      = p4spec/lib/backend-ocaml-il/compiled
+INTERP_ML_IL_STUB_DIR = p4spec/lib/backend-ocaml-il/compiled_stub
+
+INTERP_ML_SL      = p4spec/lib/backend-ocaml-sl/interp_ml.ml
+INTERP_ML_SL_STUB = p4spec/lib/backend-ocaml-sl/interp_ml_stub.ml
+INTERP_ML_SL_DIR      = p4spec/lib/backend-ocaml-sl/compiled
+INTERP_ML_SL_STUB_DIR = p4spec/lib/backend-ocaml-sl/compiled_stub
 
 # Restore the compiled spec to a stub version
 
 restore-stub:
-	rm -rf $(SPEC_COMPILED_DIR)
-	cp -R $(SPEC_COMPILED_STUB_DIR) $(SPEC_COMPILED_DIR)
-	cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
+	rm -rf $(INTERP_ML_DIR)
+	cp -R $(INTERP_ML_STUB_DIR) $(INTERP_ML_DIR)
+	cp $(INTERP_ML_STUB) $(INTERP_ML)
 	cp $(UNPARSE_COMPILED_STUB) $(UNPARSE_COMPILED)
+	rm -rf $(INTERP_ML_IL_DIR)
+	cp -R $(INTERP_ML_IL_STUB_DIR) $(INTERP_ML_IL_DIR)
+	cp $(INTERP_ML_IL_STUB) $(INTERP_ML_IL)
+	rm -rf $(INTERP_ML_SL_DIR)
+	cp -R $(INTERP_ML_SL_STUB_DIR) $(INTERP_ML_SL_DIR)
+	cp $(INTERP_ML_SL_STUB) $(INTERP_ML_SL)
 
 # Build EXESPEC
 
@@ -49,7 +69,7 @@ boot: restore-stub
 	ln -f $(EXEBOOT) ./$(BOOT)
 	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
-# Build SPEC_COMPILED
+# Build INTERP_ML
 
 # gen-ocaml compiles via the ML backend, so it uses the compile-optimized
 # variant (defined-function stdlib maps). The interpreter test rules use spec/p4.
@@ -65,19 +85,56 @@ endif
 
 gen-ocaml: restore-stub
 	./$(SPEC) ocaml $(_gen_ocaml_paths) \
-	  -o $(SPEC_COMPILED) \
+	  -o $(INTERP_ML) \
 	  -o-unparse $(UNPARSE_COMPILED)
 
-# Build EXECOMP with SPEC_COMPILED
+# Compile spec-meta/il and spec-meta/sl via spectec-boot's `compile` command.
+# Unlike `gen-ocaml`, these do NOT depend on `restore-stub` (which would wipe
+# out any already-generated compiled specs) — they only ensure every compiled
+# dir exists in *some* form (real or stub) so bin/boot.exe still builds, then
+# build+link spectec-boot idempotently before invoking `compile`.
 
-ensure-spec-compiled:
-	@test -d $(SPEC_COMPILED_DIR) || cp -R $(SPEC_COMPILED_STUB_DIR) $(SPEC_COMPILED_DIR)
-	@test -f $(SPEC_COMPILED) || cp $(SPEC_COMPILED_STUB) $(SPEC_COMPILED)
+.PHONY: gen-ocaml-il gen-ocaml-sl
 
-build-compiled: ensure-spec-compiled
+gen-ocaml-il: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/boot.exe && echo
+	ln -f $(EXEBOOT) ./$(BOOT)
+	./$(BOOT) compile spec-meta/il -o $(INTERP_ML_IL) -name il
+
+gen-ocaml-sl: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/boot.exe && echo
+	ln -f $(EXEBOOT) ./$(BOOT)
+	./$(BOOT) compile spec-meta/sl -o $(INTERP_ML_SL) -name sl
+
+# Build EXECOMP with INTERP_ML
+
+ensure-interp-ml:
+	@test -d $(INTERP_ML_DIR) || cp -R $(INTERP_ML_STUB_DIR) $(INTERP_ML_DIR)
+	@test -f $(INTERP_ML) || cp $(INTERP_ML_STUB) $(INTERP_ML)
+
+build-compiled: ensure-interp-ml
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/comp.exe && echo
 	ln -f $(EXECOMP) ./$(COMP)
+
+# Build EXEBOOTCOMP with INTERP_ML, INTERP_ML_IL, INTERP_ML_SL
+
+.PHONY: ensure-interp-ml-il ensure-interp-ml-sl build-boot-comp
+
+ensure-interp-ml-il:
+	@test -d $(INTERP_ML_IL_DIR) || cp -R $(INTERP_ML_IL_STUB_DIR) $(INTERP_ML_IL_DIR)
+	@test -f $(INTERP_ML_IL) || cp $(INTERP_ML_IL_STUB) $(INTERP_ML_IL)
+
+ensure-interp-ml-sl:
+	@test -d $(INTERP_ML_SL_DIR) || cp -R $(INTERP_ML_SL_STUB_DIR) $(INTERP_ML_SL_DIR)
+	@test -f $(INTERP_ML_SL) || cp $(INTERP_ML_SL_STUB) $(INTERP_ML_SL)
+
+build-boot-comp: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build bin/compboot.exe && echo
+	ln -f $(EXEBOOTCOMP) ./$(BOOTCOMP)
 
 # Run ML-mode tests using the compiled spec.
 # Does NOT call restore-stub — generates OCaml then rebuilds test.exe.
@@ -87,7 +144,7 @@ test-run-ml: gen-ocaml
 	cd p4spec && opam exec -- dune build test/run/test.exe && echo
 	cd p4spec && opam exec -- dune build @run-ml --profile=release && echo OK
 
-# Incremental: skip gen-ocaml, assume spec_compiled.ml already up to date.
+# Incremental: skip gen-ocaml, assume interp_ml.ml already up to date.
 
 test-run-ml-inc:
 	opam switch 5.1.0
@@ -108,7 +165,7 @@ test-sim-ml-inc:
 
 # Per-arch/per-tool sim ML-mode tests.
 # test-sim-<arch>-<tool>-ml      runs gen-ocaml first (two-pass).
-# test-sim-<arch>-<tool>-ml-inc  skips gen-ocaml, assumes spec_compiled.ml up to date.
+# test-sim-<arch>-<tool>-ml-inc  skips gen-ocaml, assumes interp_ml.ml up to date.
 define dune-sim-ml-test
 .PHONY: test-sim-$(1)-ml test-sim-$(1)-ml-inc
 test-sim-$(1)-ml: gen-ocaml

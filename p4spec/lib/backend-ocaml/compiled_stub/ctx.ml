@@ -3,7 +3,7 @@
    parts. Overwritten by `make gen-ocaml`.
 
    Mirrors the type surface of the generated [Ctx] (same [iface__]/[extern__]
-   field names) so the thin [spec_compiled_stub.ml] shell typechecks against it. *)
+   field names) so the thin [interp_ml_stub.ml] shell typechecks against it. *)
 
 [@@@warning "-8-11-26-27-30-32-33-39"]
 
@@ -27,13 +27,13 @@ type ctx__ = {
 }
 
 let dummy_iface__ : iface__ = {
-  call_builtin = (fun _ _ _ _ -> failwith "spec_compiled: ctx not initialized");
-  parse_program = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
+  call_builtin = (fun _ _ _ _ -> failwith "interp_ml: ctx not initialized");
+  parse_program = (fun _ _ -> failwith "interp_ml: ctx not initialized");
 }
 
 let dummy_extern__ : extern__ = {
-  eval_extern_rel = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
-  eval_extern_func = (fun _ _ _ -> failwith "spec_compiled: ctx not initialized");
+  eval_extern_rel = (fun _ _ -> failwith "interp_ml: ctx not initialized");
+  eval_extern_func = (fun _ _ _ -> failwith "interp_ml: ctx not initialized");
 }
 
 let dummy__ : ctx__ = {

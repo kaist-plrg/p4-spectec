@@ -1,12 +1,16 @@
-(* Per-instance context glue for generated OCaml.
+(* Stub Ctx for the [spec_parts_il] library — copied into [compiled/] by
+   `make restore-stub` so plain `make build` never compiles the heavy generated
+   parts. Overwritten by `make gen-ocaml-il`.
 
-   Replaces the old functor-internal state. The [iface]/[extern] state of the
-   current interpreter instance lives in a module-global [cur__], switched only
-   at dispatch boundaries by [with_ctx] (save / set / restore), so towers of
-   nested runners each keep their own context. *)
+   Mirrors the type surface of the generated [Ctx] (same [iface__]/[extern__]
+   field names) so the thin [interp_ml_stub.ml] shell typechecks against it. *)
 
-let static =
-  {|
+[@@@warning "-8-11-26-27-30-32-33-39"]
+
+module Value = Runtime.Value
+module Typ = Runtime.Type.Typ
+module Run = Runtime.Dynamic_Runner.Signature
+
 type iface__ = {
   call_builtin  : (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t;
   parse_program : string list -> string list -> Run.parse_result;
@@ -43,6 +47,3 @@ let with_ctx (c : ctx__) (f : unit -> 'a) : 'a =
   let saved = !cur__ in
   cur__ := c;
   Fun.protect ~finally:(fun () -> cur__ := saved) f
-|}
-
-let glue () : string = static

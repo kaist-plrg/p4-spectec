@@ -1,9 +1,9 @@
-(* Stub thin shell — copied to spec_compiled.ml by `make restore-stub`,
-   overwritten by `make gen-ocaml`. Identical in shape to the generated shell;
-   it routes through the stub [spec_parts] (compiled_stub/), whose dispatch
-   entry points fail with "run `make gen-ocaml`". *)
+(* Stub thin shell — copied to interp_ml.ml by `make restore-stub`,
+   overwritten by `make gen-ocaml-sl`. Identical in shape to the generated
+   shell; it routes through the stub [spec_parts_sl] (compiled_stub/), whose
+   dispatch entry points fail with "run `make gen-ocaml-sl`". *)
 module Run = Runtime.Dynamic_Runner.Signature
-open Spec_parts.Ctx
+open Spec_parts_sl.Ctx
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_ML = struct
@@ -31,12 +31,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   let eval_func name__ typs__ args__ =
     with_ctx my_ctx (fun () ->
-        Spec_parts.Dispatch.eval_func name__ typs__ args__)
+        Spec_parts_sl.Dispatch.eval_func name__ typs__ args__)
 
   let eval_rel name__ args__ =
-    with_ctx my_ctx (fun () -> Spec_parts.Dispatch.eval_rel name__ args__)
+    with_ctx my_ctx (fun () -> Spec_parts_sl.Dispatch.eval_rel name__ args__)
 
   let eval_program relname__ includes__ path__ =
     with_ctx my_ctx (fun () ->
-        Spec_parts.Dispatch.eval_program relname__ includes__ path__)
+        Spec_parts_sl.Dispatch.eval_program relname__ includes__ path__)
 end

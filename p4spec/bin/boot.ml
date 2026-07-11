@@ -266,9 +266,21 @@ let compile_command =
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and path_out = flag "-o" (required string) ~doc:"output .ml file path" in
+     and path_out = flag "-o" (required string) ~doc:"output .ml file path"
+     and path_out_unparse =
+       flag "-o-unparse" (optional string)
+         ~doc:"output unparse_compiled .ml path (optional)"
+     and split_lines =
+       flag "-split-lines"
+         (optional_with_default 5000 int)
+         ~doc:"target lines per generated part file (default 5000)"
+     and name =
+       flag "-name"
+         (optional_with_default "" string)
+         ~doc:"suffix for the compiled library/module name (e.g. il, sl)"
+     in
      fun () ->
-       try Pass.compile paths_spec path_out
+       try Pass.compile ~name paths_spec path_out path_out_unparse split_lines
        with
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
