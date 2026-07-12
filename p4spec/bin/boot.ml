@@ -274,9 +274,13 @@ let compile_command =
        flag "-split-lines"
          (optional_with_default 5000 int)
          ~doc:"target lines per generated part file (default 5000)"
+     and name =
+       flag "-name"
+         (optional_with_default "" string)
+         ~doc:"suffix for the compiled library/module name (e.g. il, sl)"
      in
      fun () ->
-       try Pass.compile paths_spec path_out path_out_unparse split_lines
+       try Pass.compile ~name paths_spec path_out path_out_unparse split_lines
        with
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))

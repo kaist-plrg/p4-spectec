@@ -23,10 +23,13 @@ type tower = {
 
 (* Load a tower from a JSON file.
    JSON schema:
-     { "mode": "il"|"sl",
+     { "mode": "il"|"sl"|"ml",
        "levels": [ { "specdir": "...", "rel": "...", "interface": "p4"|"il"|"sl" }, ... ] }
    First level = boot, last = target, middle = intermediates.
-   `target` is supplied separately (from CLI -p/-i flags). *)
+   `target` is supplied separately (from CLI -p/-i flags).
+   "ml" is used by spectec-boot-comp's fully-compiled towers: [Build.build_tower]
+   applies [mode] uniformly to every level (target, intermediates, boot), not
+   just the boot level, so "ml" drives the whole tower through compiled code. *)
 
 let tower_of_file path target =
   let json = Yojson.Basic.from_file path in
@@ -35,6 +38,7 @@ let tower_of_file path target =
     match json |> member "mode" |> to_string with
     | "il" -> Run.IL_mode
     | "sl" -> Run.SL_mode
+    | "ml" -> Run.ML_mode
     | s -> failwith (Format.sprintf "tower: unknown mode %S" s)
   in
   let level_of_json json =

@@ -7,6 +7,15 @@
 let part_module_name (idx : int) : string = Printf.sprintf "Part_%03d" idx
 let part_file_name (idx : int) : string = Printf.sprintf "part_%03d.ml" idx
 
+(* [name] suffixes the generated library/module so multiple compiled specs
+   (e.g. P4, spec-meta/il, spec-meta/sl) can coexist in one workspace. The
+   empty name (P4's default) keeps the original unsuffixed identifiers. *)
+let lib_name (name : string) : string =
+  if name = "" then "spec_parts" else "spec_parts_" ^ name
+
+let module_name (name : string) : string =
+  if name = "" then "Spec_parts" else "Spec_parts_" ^ name
+
 (* Common opens every generated unit needs: the runtime/domain/lang names the
    generated code uses unqualified, plus [Ctx] (Value/Typ/Run aliases, the
    prelude helpers, [Option]/[List], and the [cur__]/[with_ctx] glue). *)
@@ -36,9 +45,11 @@ let dispatch_header (n_parts : int) : string =
 
 (* Generated [compiled/dune]. [-opaque] keeps the [.cmx] jobs parallel despite
    the linear cmi chain. *)
-let dune : string =
-  "(library\n\
-  \ (name spec_parts)\n\
-  \ (public_name p4spectec.spec_parts)\n\
-  \ (libraries util domain frontend lang pass runtime)\n\
-  \ (ocamlopt_flags (:standard -opaque)))\n"
+let dune (name : string) : string =
+  Printf.sprintf
+    "(library\n\
+    \ (name %s)\n\
+    \ (public_name p4spectec.%s)\n\
+    \ (libraries util domain frontend lang pass runtime)\n\
+    \ (ocamlopt_flags (:standard -opaque)))\n"
+    (lib_name name) (lib_name name)

@@ -34,6 +34,6 @@ let prosify paths_spec =
 
 (* Compilation *)
 
-let compile paths_spec path_out path_out_unparse split_lines =
+let compile ?(name = "") paths_spec path_out path_out_unparse split_lines =
   paths_spec |> structure ~final:true
-  |> Compile.Codegen.compile_spec path_out path_out_unparse split_lines
+  |> Compile.Codegen.compile_spec ~name path_out path_out_unparse split_lines

@@ -23,13 +23,13 @@ type ctx__ = {
 }
 
 let dummy_iface__ : iface__ = {
-  parse_program = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
-  call_builtin = (fun _ _ _ _ -> failwith "spec_compiled: ctx not initialized");
+  call_builtin = (fun _ _ _ _ -> failwith "interp_ml: ctx not initialized");
+  parse_program = (fun _ _ -> failwith "interp_ml: ctx not initialized");
 }
 
 let dummy_extern__ : extern__ = {
-  eval_extern_rel = (fun _ _ -> failwith "spec_compiled: ctx not initialized");
-  eval_extern_func = (fun _ _ _ -> failwith "spec_compiled: ctx not initialized");
+  eval_extern_rel = (fun _ _ -> failwith "interp_ml: ctx not initialized");
+  eval_extern_func = (fun _ _ _ -> failwith "interp_ml: ctx not initialized");
 }
 
 let dummy__ : ctx__ = {

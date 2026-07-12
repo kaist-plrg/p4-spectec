@@ -111,7 +111,7 @@ and compile_binop_num (binop : Num.binop) : string =
 
    ==>        ->  [(not expr_l) || expr_r]
    &&, ||, == ->  [expr_l op expr_r]
-   **         ->  [Bigint.( ** ) expr_l (to_int expr_r)]
+   **         ->  [Bigint.( ** ) expr_l expr_r]
    +,-,*,/,%  ->  [Bigint.op expr_l expr_r] *)
 
 and compile_binop_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
@@ -126,9 +126,7 @@ and compile_binop_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
     | (`AndOp | `OrOp | `EquivOp) as binop ->
         let binop_ml = compile_binop_bool binop in
         Ml.BinopE (binop_ml, expr_ml_l, expr_ml_r)
-    | `PowOp ->
-        let expr_r_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_ml_r ]) in
-        Ml.AppE (Ml.VarE "Bigint.( ** )", [ expr_ml_l; expr_r_ml ])
+    | `PowOp -> Ml.AppE (Ml.VarE "Bigint.( ** )", [ expr_ml_l; expr_ml_r ])
     | (`AddOp | `SubOp | `MulOp | `DivOp | `ModOp) as binop ->
         let binop_ml = compile_binop_num binop in
         Ml.AppE (Ml.VarE binop_ml, [ expr_ml_l; expr_ml_r ])

@@ -177,9 +177,9 @@ let rec print_expr ~level expr =
       ^ " }"
   | RecordUpdateE (expr_base, []) -> print_expr ~level expr_base
   | RecordUpdateE (expr_base, fields) ->
-      "{ "
+      "{ " ^ "("
       ^ print_expr ~level expr_base
-      ^ " with "
+      ^ ")" ^ " with "
       ^ String.concat "; "
           (List.map
              (fun (field, expr) ->

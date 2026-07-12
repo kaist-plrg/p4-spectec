@@ -1,6 +1,6 @@
-(* Stub Ctx for the [spec_parts] library — copied into [compiled/] by
+(* Stub Ctx for the [spec_parts_sl] library — copied into [compiled/] by
    `make restore-stub` so plain `make build` never compiles the heavy generated
-   parts. Overwritten by `make gen-ocaml`.
+   parts. Overwritten by `make gen-ocaml-sl`.
 
    Mirrors the type surface of the generated [Ctx] (same [iface__]/[extern__]
    field names) so the thin [interp_ml_stub.ml] shell typechecks against it. *)
@@ -12,8 +12,8 @@ module Typ = Runtime.Type.Typ
 module Run = Runtime.Dynamic_Runner.Signature
 
 type iface__ = {
-  parse_program : string list -> string list -> Run.parse_result;
   call_builtin  : (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t;
+  parse_program : string list -> string list -> Run.parse_result;
 }
 
 type extern__ = {

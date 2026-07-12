@@ -41,8 +41,8 @@ let bucket (target : int) (tls : Ml.toplevel list) : Ml.toplevel list list =
 
 (* ── Entry ── *)
 
-let compile_spec (path_out : string) (path_out_unparse : string option)
-    (split_lines : int) (spec : Sl.spec) =
+let compile_spec ?(name = "") (path_out : string)
+    (path_out_unparse : string option) (split_lines : int) (spec : Sl.spec) =
   (* Monomorphize the spec *)
   let spec, dispatch_table = Mono.monomorphize spec in
   (* Initialize context *)
@@ -124,7 +124,7 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   let buckets = bucket split_lines parts_stream in
   let n_parts = List.length buckets in
-  (* Emit the [compiled/] part-library next to [spec_compiled.ml]. *)
+  (* Emit the [compiled/] part-library next to [interp_ml.ml]. *)
   let compiled_dir = Filename.concat (Filename.dirname path_out) "compiled" in
   prepare_dir compiled_dir;
   (* ctx.ml — prelude (opens/aliases/helpers/Option/List) + the ctx glue. *)
@@ -149,9 +149,9 @@ let compile_spec (path_out : string) (path_out_unparse : string option)
   in
   write_file (Filename.concat compiled_dir "dispatch.ml") dispatch_ml;
   (* dune *)
-  write_file (Filename.concat compiled_dir "dune") Template.Split.dune;
+  write_file (Filename.concat compiled_dir "dune") (Template.Split.dune name);
   (* Thin functor shell at the original [-o] path. *)
-  write_file path_out Template.Functor.make;
+  write_file path_out (Template.Functor.make name);
   (* Unparse helper (independent output). *)
   Option.iter
     (fun path_out_unparse ->
