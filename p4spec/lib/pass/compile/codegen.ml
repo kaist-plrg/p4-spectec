@@ -41,7 +41,7 @@ let bucket (target : int) (tls : Ml.toplevel list) : Ml.toplevel list list =
 
 (* ── Entry ── *)
 
-let compile_spec ?(name = "") (path_out : string)
+let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
     (path_out_unparse : string option) (split_lines : int) (spec : Sl.spec) =
   (* Monomorphize the spec *)
   let spec, dispatch_table = Mono.monomorphize spec in
@@ -62,7 +62,7 @@ let compile_spec ?(name = "") (path_out : string)
   (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
   let toplevels_interface_ml =
     let const_decls, marshal_groups, unmarshal_groups, typed_bridges =
-      Gen.Interface.compile ctx spec
+      Gen.Interface.compile ctx spec ~tid_program
     in
     let to_tops groups =
       List.filter_map
@@ -100,15 +100,12 @@ let compile_spec ?(name = "") (path_out : string)
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     [
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
-      Ml.Raw Template.Functor.eval_program;
+      Ml.Raw (Template.Functor.eval_program tid_program);
       (* Stable re-exports of the typed mixop bridges, so [V_native] can bind them
          at [Spec_parts.Dispatch.*] without depending on which (unstable)
          [part_NNN] they bucket into. *)
       Ml.Let ("make_case_typed", Ml.VarE "make_case_typed");
       Ml.Let ("case_of_typed", Ml.VarE "case_of_typed");
-      (* [marshal_value] — the one value conversion [V_native.to_string] uses to
-         print a [value]; stable re-export so it binds at [Spec_parts.Dispatch.*]. *)
-      Ml.Let ("marshal_value", Ml.VarE "marshal_value");
       (* Typename-indexed marshal/unmarshal — the state-persist bridge
          [V_native.marshal]/[unmarshal] dispatch through. *)
       Ml.Let ("marshal_typed", Ml.VarE "marshal_typed");

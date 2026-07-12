@@ -47,9 +47,7 @@ module Make (V : Valrep.SAFE) = struct
   let map_of_value (value : V.t) : map =
     match Mixfix.args (V.Get.case value typ_map) with
     | [ value_pairs ] -> value_pairs |> V.Get.list
-    | _ ->
-        error no_region
-          (Format.asprintf "expected a map, but got %s" (V.to_string value))
+    | _ -> error no_region "expected a map, but got a different value"
 
   let value_of_map (add : V.t -> unit) (typ_key : typ) (typ_value : typ)
       (map : map) : V.t =

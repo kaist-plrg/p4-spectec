@@ -20,11 +20,6 @@ open Util.Source
 module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
   type t = Obj.t
 
-  (* [to_string] is used only when logging a [value]: convert that one value
-     back to [Value.t] (via the generated [marshal_value]) and print it. *)
-  let to_string (x : t) : string =
-    Value.to_string (Spec_parts.Dispatch.marshal_value (Obj.obj x))
-
   (* Pass straight back to compiled code, never decoded: identity cast. *)
   let to_value (x : t) : Value.t = Obj.obj x
   let of_value (v : Value.t) : t = Obj.repr v

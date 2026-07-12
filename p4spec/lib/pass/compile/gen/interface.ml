@@ -1012,7 +1012,7 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
       Ml.MatchE (scrut, unmarshal_arms @ [ wild "unmarshal_typed" ]) );
   ]
 
-let compile (ctx : Ctx.t) (spec : Sl.spec) :
+let compile (ctx : Ctx.t) (spec : Sl.spec) ~(tid_program : string) :
     Ml.toplevel list
     * Ml.funcdef list list
     * Ml.funcdef list list
@@ -1020,13 +1020,14 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) :
   let all_refs = all_typ_refs spec in
   (* Marshal/unmarshal are generated only for the closure of the types that still
      cross a Value.t boundary on the typed path: [eval_program]'s program type
-     ([p4program]) and the persisted state types (picked out of [all_refs] by
-     interface name, no spec-id guessing). Builtins pass typed [Obj.t] directly,
-     so there is no builtin I/O seed: the only builtin types that still marshal
-     are the [marshal_typed] dispatch targets ([print_] argument + set/map
-     compared keys), all reachable from this persist closure; [builtin_arms]
-     below is filtered to exactly those it contains. *)
-  let marshal_seed_inames = "p4program" :: persist_interface_names in
+     ([tid_program] — [p4program] for the P4 spec, [script] for spec-meta/il
+     and spec-meta/sl) and the persisted state types (picked out of [all_refs]
+     by interface name, no spec-id guessing). Builtins pass typed [Obj.t]
+     directly, so there is no builtin I/O seed: the only builtin types that
+     still marshal are the [marshal_typed] dispatch targets ([print_] argument
+     + set/map compared keys), all reachable from this persist closure;
+     [builtin_arms] below is filtered to exactly those it contains. *)
+  let marshal_seed_inames = tid_program :: persist_interface_names in
   let typs =
     close_types ctx
       (List.filter

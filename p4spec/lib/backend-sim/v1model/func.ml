@@ -1,4 +1,5 @@
 module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
 open Error
 open Util.Source
 
@@ -602,6 +603,8 @@ module Make (Spec : Spec.S) = struct
     in
     (value_ctx, value_sto, value_callResult)
 
+  let typ_value = Typ.Make.var ("value" $ no_region) []
+
   let format_braces (fmt : string) (args : V.t list) =
     let n = String.length fmt in
     let buf = Buffer.create (n + 64) in
@@ -621,7 +624,7 @@ module Make (Spec : Spec.S) = struct
         | '{' when i + 1 < n && fmt.[i + 1] = '}' -> (
             match args with
             | a :: rest ->
-                Buffer.add_string buf (V.to_string a);
+                Buffer.add_string buf (Value.to_string (V.marshal typ_value a));
                 walk (i + 2) rest
             | [] ->
                 error_no_region

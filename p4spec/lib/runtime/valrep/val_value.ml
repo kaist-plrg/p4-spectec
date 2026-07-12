@@ -10,7 +10,6 @@ open Util.Source
 module V_value : Sig.VAL with type t = Value.t = struct
   type t = Value.t
 
-  let to_string = Value.to_string
   let to_value = Fun.id
   let of_value = Fun.id
 

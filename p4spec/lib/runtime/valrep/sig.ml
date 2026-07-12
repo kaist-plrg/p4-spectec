@@ -28,8 +28,6 @@ open Util.Source
 module type SAFE = sig
   type t
 
-  val to_string : t -> string
-
   (* [marshal]/[unmarshal]: convert a value of (statically known) spec type
      [typ] to/from a real [Value.t] when it must be stored in a serialized field
      (scheduler [Packet.value_ctx], register payloads). Identity under

@@ -6,24 +6,29 @@
    via [with_ctx]. Towers nest correctly because control crosses levels only
    through [eval_rel] / [eval_func] / [eval_program]. *)
 
-(* Top-level program dispatch — reads the current instance's parser. *)
-let eval_program =
-  {|
+(* Top-level program dispatch — reads the current instance's parser.
+   [tid_program] is the spec's entry syntax type ([p4program] for the P4
+   spec, [script] for spec-meta/il and spec-meta/sl), supplied by the caller
+   so this template stays agnostic of which spec it is generated for. *)
+let eval_program (tid_program : string) =
+  Printf.sprintf
+    {|
 let eval_program (relname__ : string) (includes__ : string list)
     (path__ : string) : Run.program_result =
   match (!cur__).iface.parse_program includes__ [path__] with
   | Run.Pass value_program -> (
       (* The parsed program is a real [Value.t] from the parser, but [eval_rel]
          [Obj.magic]-casts its inputs. So unmarshal it once here into the typed
-         [p4program], then [Obj.repr] it. *)
+         [%s], then [Obj.repr] it. *)
       let value_program : Value.t =
-        Obj.magic (unmarshal_p4program value_program)
+        Obj.magic (unmarshal_%s value_program)
       in
       match eval_rel relname__ [ value_program ] with
       | Run.Pass values_output -> Run.Pass values_output
       | Run.Fail (at, msg) -> Run.Fail (`Runtime (at, msg)))
   | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
 |}
+    tid_program tid_program
 
 (* The public functor contract, preserved structurally.
 

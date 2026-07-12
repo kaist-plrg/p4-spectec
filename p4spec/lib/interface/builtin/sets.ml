@@ -29,9 +29,7 @@ module Make (V : Valrep.SAFE) = struct
   let set_of_value cmp (value : V.t) : V.t list =
     match Mixfix.args (V.Get.case value typ_set) with
     | [ value_elements ] -> value_elements |> V.Get.list |> norm cmp
-    | _ ->
-        error no_region
-          (Format.asprintf "expected a set, but got %s" (V.to_string value))
+    | _ -> error no_region "expected a set, but got a different value"
 
   let value_of_set (add : V.t -> unit) (typ_key : typ) (set : V.t list) : V.t =
     let typ_list = Typ.Make.list typ_key in

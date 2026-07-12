@@ -280,7 +280,9 @@ let compile_command =
          ~doc:"suffix for the compiled library/module name (e.g. il, sl)"
      in
      fun () ->
-       try Pass.compile ~name paths_spec path_out path_out_unparse split_lines
+       try
+         Pass.compile ~name ~tid_program:"script" paths_spec path_out
+           path_out_unparse split_lines
        with
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
          Format.printf "%s\n" (string_of_error at msg))
