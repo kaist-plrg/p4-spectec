@@ -100,11 +100,26 @@ end
 (* SpecTec IL *)
 
 module SpecTec_IL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Ili.Boot
-  include Spectec.Ili.Unboot
+  module Boot_value = Spectec.Ili.Boot.Make (Valrep.V_value)
+  module Unboot_value = Spectec.Ili.Unboot.Make (Valrep.V_value)
+  module Boot_native = Spectec.Ili.Boot.Make (Backend_ocaml.Val_native.V_native)
+  module Unboot_native =
+    Spectec.Ili.Unboot.Make (Backend_ocaml.Val_native.V_native)
+
   include Spectec.Caches
+
+  (* Boot-time-only entry points, always at the [V_value] rep — used directly
+     by [backend-boot/patch.ml] to build the compiled spec, never under
+     [ML_mode]. *)
+
+  let boot_spec = Boot_value.boot_spec
+  let unboot_script = Unboot_value.unboot_script
+
+  (* The mode of the running meta-interpreter, set by [init]; picks which of
+     [Boot_value]/[Boot_native] (resp. [Unboot_value]/[Unboot_native]) the
+     boundary functions below dispatch to. *)
+
+  let cur_mode : Run.mode ref = ref Run.Empty_mode
 
   (* Program parsing *)
 
@@ -128,7 +143,48 @@ module SpecTec_IL = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_script |> Il.Print.string_of_spec
+    let spec =
+      match !cur_mode with
+      | Run.ML_mode -> Unboot_native.unboot_script (Obj.magic value_script)
+      | _ -> Unboot_value.unboot_script value_script
+    in
+    Il.Print.string_of_spec spec
+
+  (* Boundary functions: bridge the [Value.t]-fixed [INTERFACE_SPECTEC]
+     contract with the mode-correct [V]. Exactly one [Obj.magic] per
+     [ML_mode] branch. *)
+
+  let boot_value (value : Value.t) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic (Boot_native.boot_value (Obj.magic value : Il.value))
+          : Value.t)
+    | _ -> Boot_value.boot_value (value : Il.value)
+
+  let boot_values (values : Value.t list) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic
+           (Boot_native.boot_values (Obj.magic values : Il.value list))
+          : Value.t)
+    | _ -> Boot_value.boot_values values
+
+  let unboot_id (value : Value.t) : Il.id =
+    match !cur_mode with
+    | Run.ML_mode -> Unboot_native.unboot_id (Obj.magic value)
+    | _ -> Unboot_value.unboot_id value
+
+  let unboot_typs (value : Value.t) : Typ.t list =
+    match !cur_mode with
+    | Run.ML_mode -> Unboot_native.unboot_typs (Obj.magic value)
+    | _ -> Unboot_value.unboot_typs value
+
+  let unboot_values (value : Value.t) : Value.t list =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic (Unboot_native.unboot_values (Obj.magic value))
+          : Value.t list)
+    | _ -> Unboot_value.unboot_values value
 
   (* Builtins *)
 
@@ -150,17 +206,37 @@ module SpecTec_IL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (spec : Run.spec) : unit =
+    cur_mode :=
+      (match spec with
+      | Run.IL _ -> Run.IL_mode
+      | Run.ML -> Run.ML_mode
+      | Run.SL _ | Run.Empty -> assert false)
 end
 
 (* SpecTec SL *)
 
 module SpecTec_SL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Sli.Boot
-  include Spectec.Sli.Unboot
+  module Boot_value = Spectec.Sli.Boot.Make (Valrep.V_value)
+  module Unboot_value = Spectec.Sli.Unboot.Make (Valrep.V_value)
+  module Boot_native = Spectec.Sli.Boot.Make (Backend_ocaml.Val_native.V_native)
+  module Unboot_native =
+    Spectec.Sli.Unboot.Make (Backend_ocaml.Val_native.V_native)
+
   include Spectec.Caches
+
+  (* Boot-time-only entry points, always at the [V_value] rep — used directly
+     by [backend-boot/patch.ml] to build the compiled spec, never under
+     [ML_mode]. *)
+
+  let boot_spec = Boot_value.boot_spec
+  let unboot_script = Unboot_value.unboot_script
+
+  (* The mode of the running meta-interpreter, set by [init]; picks which of
+     [Boot_value]/[Boot_native] (resp. [Unboot_value]/[Unboot_native]) the
+     boundary functions below dispatch to. *)
+
+  let cur_mode : Run.mode ref = ref Run.Empty_mode
 
   (* Program parsing *)
 
@@ -184,7 +260,48 @@ module SpecTec_SL = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_script |> Sl.Print.string_of_spec
+    let spec =
+      match !cur_mode with
+      | Run.ML_mode -> Unboot_native.unboot_script (Obj.magic value_script)
+      | _ -> Unboot_value.unboot_script value_script
+    in
+    Sl.Print.string_of_spec spec
+
+  (* Boundary functions: bridge the [Value.t]-fixed [INTERFACE_SPECTEC]
+     contract with the mode-correct [V]. Exactly one [Obj.magic] per
+     [ML_mode] branch. *)
+
+  let boot_value (value : Value.t) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic (Boot_native.boot_value (Obj.magic value : Il.value))
+          : Value.t)
+    | _ -> Boot_value.boot_value (value : Il.value)
+
+  let boot_values (values : Value.t list) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic
+           (Boot_native.boot_values (Obj.magic values : Il.value list))
+          : Value.t)
+    | _ -> Boot_value.boot_values values
+
+  let unboot_id (value : Value.t) : Il.id =
+    match !cur_mode with
+    | Run.ML_mode -> Unboot_native.unboot_id (Obj.magic value)
+    | _ -> Unboot_value.unboot_id value
+
+  let unboot_typs (value : Value.t) : Typ.t list =
+    match !cur_mode with
+    | Run.ML_mode -> Unboot_native.unboot_typs (Obj.magic value)
+    | _ -> Unboot_value.unboot_typs value
+
+  let unboot_values (value : Value.t) : Value.t list =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic (Unboot_native.unboot_values (Obj.magic value))
+          : Value.t list)
+    | _ -> Unboot_value.unboot_values value
 
   (* Builtins *)
 
@@ -206,5 +323,10 @@ module SpecTec_SL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (spec : Run.spec) : unit =
+    cur_mode :=
+      (match spec with
+      | Run.SL _ -> Run.SL_mode
+      | Run.ML -> Run.ML_mode
+      | Run.IL _ | Run.Empty -> assert false)
 end
