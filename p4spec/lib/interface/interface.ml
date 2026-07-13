@@ -108,16 +108,14 @@ module SpecTec_IL = struct
 
   include Spectec.Caches
 
-  (* Boot-time-only entry points, always at the [V_value] rep — used directly
-     by [backend-boot/patch.ml] to build the compiled spec, never under
-     [ML_mode]. *)
+  (* Boot-time-only entry points used by backend-boot/patch.ml,
+     never under [ML_mode]. *)
 
   let boot_spec = Boot_value.boot_spec
   let unboot_script = Unboot_value.unboot_script
 
-  (* The mode of the running meta-interpreter, set by [init]; picks which of
-     [Boot_value]/[Boot_native] (resp. [Unboot_value]/[Unboot_native]) the
-     boundary functions below dispatch to. *)
+  (* The mode of the running meta-interpreter; picks which Boot/Unboot
+     variant the boundary functions dispatch to. *)
 
   let cur_mode : Run.mode ref = ref Run.Empty_mode
 
@@ -225,16 +223,14 @@ module SpecTec_SL = struct
 
   include Spectec.Caches
 
-  (* Boot-time-only entry points, always at the [V_value] rep — used directly
-     by [backend-boot/patch.ml] to build the compiled spec, never under
-     [ML_mode]. *)
+  (* Boot-time-only entry points used by backend-boot/patch.ml,
+     never under [ML_mode]. *)
 
   let boot_spec = Boot_value.boot_spec
   let unboot_script = Unboot_value.unboot_script
 
-  (* The mode of the running meta-interpreter, set by [init]; picks which of
-     [Boot_value]/[Boot_native] (resp. [Unboot_value]/[Unboot_native]) the
-     boundary functions below dispatch to. *)
+  (* The mode of the running meta-interpreter; picks which Boot/Unboot
+     variant the boundary functions dispatch to. *)
 
   let cur_mode : Run.mode ref = ref Run.Empty_mode
 
@@ -267,9 +263,8 @@ module SpecTec_SL = struct
     in
     Sl.Print.string_of_spec spec
 
-  (* Boundary functions: bridge the [Value.t]-fixed [INTERFACE_SPECTEC]
-     contract with the mode-correct [V]. Exactly one [Obj.magic] per
-     [ML_mode] branch. *)
+  (* Boundary functions bridge [Value.t] to mode-correct [V];
+     exactly one [Obj.magic] per [ML_mode] branch. *)
 
   let boot_value (value : Value.t) : Value.t =
     match !cur_mode with

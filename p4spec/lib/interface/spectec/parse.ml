@@ -1,9 +1,8 @@
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
 
-(* Boot at the [V_value] rep (IL/SL interpreters) and at the [V_native] rep
-   (compiled ML target). Target scripts are SL surface syntax, so only the SL
-   family needs a [V_native] instance; IL parsing never runs under [ML_mode]. *)
+(* Boot at [V_value] rep (IL/SL) and [V_native] rep (compiled ML).
+   SL needs [V_native]; IL never runs under [ML_mode]. *)
 
 module Boot_ili_value = Ili.Boot.Make (Runtime.Valrep.V_value)
 module Boot_sli_value = Sli.Boot.Make (Runtime.Valrep.V_value)
