@@ -18,6 +18,8 @@ module V_value : Sig.VAL with type t = Value.t = struct
   let marshal (_typ : Typ.t) (x : t) : Value.t = x
   let unmarshal (_typ : Typ.t) (v : Value.t) : t = v
 
+  let at (x : t) : region = x.at
+
   module Get = struct
     let text = Value.Get.text
     let num = Value.Get.num

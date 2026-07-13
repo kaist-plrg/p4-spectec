@@ -28,6 +28,11 @@ open Util.Source
 module type SAFE = sig
   type t
 
+  (* The value's source region, when the representation carries one.
+     [V_value] returns the real region; [V_native] has none (compiled
+     values carry no per-node location), so it returns [no_region]. *)
+  val at : t -> region
+
   (* [marshal]/[unmarshal]: convert a value of (statically known) spec type
      [typ] to/from a real [Value.t] when it must be stored in a serialized field
      (scheduler [Packet.value_ctx], register payloads). Identity under

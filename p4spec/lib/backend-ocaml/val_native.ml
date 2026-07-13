@@ -24,6 +24,10 @@ module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
   let to_value (x : t) : Value.t = Obj.obj x
   let of_value (v : Value.t) : t = Obj.repr v
 
+  (* Compiled native values carry no per-node region; matches every
+     [V_native.Make.*] constructor already discarding [~at]. *)
+  let at (_ : t) : region = no_region
+
   (* Convert to/from a real [Value.t] when the value is stored in a serialized
      field. Dispatch a per-type [marshal_<typ>]/[unmarshal_<typ>] by the
      caller-supplied spec type. *)
