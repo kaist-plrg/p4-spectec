@@ -148,9 +148,8 @@ module SpecTec_IL = struct
     in
     Il.Print.string_of_spec spec
 
-  (* Boundary functions: bridge the [Value.t]-fixed [INTERFACE_SPECTEC]
-     contract with the mode-correct [V]. Exactly one [Obj.magic] per
-     [ML_mode] branch. *)
+  (* Boundary functions bridge [Value.t] to mode-correct [V];
+     exactly one [Obj.magic] per [ML_mode] branch. *)
 
   let boot_value (value : Value.t) : Value.t =
     match !cur_mode with
