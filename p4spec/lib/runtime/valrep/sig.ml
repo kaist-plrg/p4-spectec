@@ -78,11 +78,8 @@ module type SAFE = sig
     val tuple : ?at:region -> Typ.t -> t list -> t
     val extern : ?at:region -> Typ.t -> Yojson.Safe.t -> t
 
-    (* case construction: "mixop" <| args <<| typ. [( <| )] parses the mixop
-       string into an [Il.mixop]; [( <<| )] takes the spec type as an [Il.typ].
-       [( <<| )] takes an optional [~at]: [V_value] uses it verbatim when
-       given, else falls back to the union of the args' regions; [V_native]
-       ignores it (compiled values carry no per-node region). *)
+    (* case construction: "mixop" <| args <<| typ. [( <<| )]'s [~at] is
+       optional since [V_native] has no per-node region to carry it in. *)
     val ( <| ) : string -> t list -> Il.mixop * t list
     val ( <<| ) : ?at:region -> Il.mixop * t list -> Il.typ -> t
   end

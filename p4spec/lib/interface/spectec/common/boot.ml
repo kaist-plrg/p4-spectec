@@ -7,23 +7,9 @@ open Mixops
 open Typs
 open Util.Source
 
-module Il_typs = Il_typs
-
 module Make (V : Runtime.Valrep.SAFE) = struct
-  (* Operators: local generic replacements for [Value.Make]'s [<|!]/[<<|!]/
-     [<<<|] conveniences, which are [Value.Make]-only (not part of
-     [Runtime.Valrep.SAFE.Make]). [<|!] is plain pairing, so it is unchanged.
-     [<<|!]/[case_at] wrap [V.Make.( <<| )], which now takes an optional
-     [~at] (added to [SAFE.Make] alongside this task, since case construction
-     had no way to carry a source region otherwise).
-
-     [#@@] (retag an already-built value's noted type, e.g. text-as-"id") has
-     no [SAFE] equivalent: it mutates a [Value.t]'s [note.typ] in place, and
-     [SAFE] never exposes a value's note (V_native has none). It is dropped
-     below (see boot_id/boot_atom/boot_targ/boot_num_exp) — boot/unboot's own
-     round trip dispatches purely on the case's mixop, never on note.typ, so
-     this doesn't affect this module pair; see the task report for the
-     (narrower) risk to external Value.t-specific consumers of note.typ. *)
+  (* [#@@]'s note-retag has no [SAFE] equivalent and is dropped here: this
+     module's own dispatch never reads [note.typ]. *)
   let ( <|! ) (mixop : Mixop.t) (args : V.t list) : Mixop.t * V.t list =
     (mixop, args)
 
