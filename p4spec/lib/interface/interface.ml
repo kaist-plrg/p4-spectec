@@ -193,8 +193,19 @@ module SpecTec_IL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
+  module Builtin_SpecTec_native = Builtins (Backend_ocaml.Val_native.V_native)
 
-  let call_builtin = Builtin_SpecTec.invoke
+  let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+      (typs : Typ.t list) (values : Value.t list) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic
+           (Builtin_SpecTec_native.invoke
+              (fun v -> add (Obj.magic v : Value.t))
+              id typs
+              (Obj.magic values : Backend_ocaml.Val_native.V_native.t list))
+          : Value.t)
+    | _ -> Builtin_SpecTec.invoke add id typs values
 
   (* State management *)
 
@@ -307,8 +318,19 @@ module SpecTec_SL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
+  module Builtin_SpecTec_native = Builtins (Backend_ocaml.Val_native.V_native)
 
-  let call_builtin = Builtin_SpecTec.invoke
+  let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+      (typs : Typ.t list) (values : Value.t list) : Value.t =
+    match !cur_mode with
+    | Run.ML_mode ->
+        (Obj.magic
+           (Builtin_SpecTec_native.invoke
+              (fun v -> add (Obj.magic v : Value.t))
+              id typs
+              (Obj.magic values : Backend_ocaml.Val_native.V_native.t list))
+          : Value.t)
+    | _ -> Builtin_SpecTec.invoke add id typs values
 
   (* State management *)
 
