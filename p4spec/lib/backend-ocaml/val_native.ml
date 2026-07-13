@@ -144,7 +144,9 @@ module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
     let ( <| ) (s_mixop : string) (args : t list) : Il.mixop * t list =
       (Value.Mixops.of_string s_mixop, args)
 
-    let ( <<| ) ((mixop, args) : Il.mixop * t list) (typ : Il.typ) : t =
+    let ( <<| ) ?(at = no_region) ((mixop, args) : Il.mixop * t list)
+        (typ : Il.typ) : t =
+      ignore at;
       Spec_parts.Dispatch.make_case_typed mixop args typ
   end
 end

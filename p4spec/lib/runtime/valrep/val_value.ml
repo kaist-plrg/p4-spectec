@@ -56,14 +56,18 @@ module V_value : Sig.VAL with type t = Value.t = struct
     let ( <| ) (s_mixop : string) (args : t list) : Il.mixop * t list =
       (Value.Mixops.of_string s_mixop, args)
 
-    (* Build the [Value.t] case from the mixop + spec type, taking the region
-       from the args. *)
-    let ( <<| ) ((mixop, args) : Il.mixop * t list) (typ : Il.typ) : t =
+    (* Build the [Value.t] case from the mixop + spec type. Uses [~at] when
+       given; else takes the region from the union of the args. *)
+    let ( <<| ) ?at:at_opt ((mixop, args) : Il.mixop * t list) (typ : Il.typ) :
+        t =
       let valuecase = Mixfix.fill mixop args in
       let at =
-        args |> List.map at
-        |> List.filter (fun region -> region <> no_region)
-        |> over_region
+        match at_opt with
+        | Some at -> at
+        | None ->
+            args |> List.map Util.Source.at
+            |> List.filter (fun region -> region <> no_region)
+            |> over_region
       in
       Value.Make.case ~at typ valuecase
   end
