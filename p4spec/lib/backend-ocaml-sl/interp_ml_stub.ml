@@ -39,4 +39,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let eval_program relname__ includes__ path__ =
     with_ctx my_ctx (fun () ->
         Spec_parts_sl.Dispatch.eval_program relname__ includes__ path__)
+
+  let unmarshal_program value =
+    with_ctx my_ctx (fun () -> Spec_parts_sl.Dispatch.unmarshal_program value)
 end

@@ -20,6 +20,9 @@ let eval_program (_relname : string) (_includes : string list) (_path : string)
     (`Runtime
        (no_region, "ML interpreter: run `make gen-ocaml-il` to generate it"))
 
+let unmarshal_program (_value : Value.t) : Value.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
+
 (* Typed mixop bridges — re-exported by the real Dispatch from the generated
    parts. Stubbed here so the [spec_parts_il] surface stays stable when the
    stub is in place (`make build`). *)

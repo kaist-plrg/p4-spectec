@@ -145,6 +145,7 @@ let boot_n_command =
          Inst.Hook.init_spec spec;
          let rel_boot = tower.level_boot.layer.rel in
          let value = Backend_boot.Patch.apply_tower tower in
+         let value = Booter.Interp.unmarshal_program value in
          let result = Booter.Interp.eval_rel rel_boot [ value ] in
          Inst.Hook.finish ();
          match result with

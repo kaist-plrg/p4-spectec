@@ -101,6 +101,7 @@ let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
     [
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.Raw (Template.Functor.eval_program tid_program);
+      Ml.Raw (Template.Functor.unmarshal_program tid_program);
       (* Stable re-exports of the typed mixop bridges, so [V_native] can bind them
          at [Spec_parts.Dispatch.*] without depending on which (unstable)
          [part_NNN] they bucket into. *)

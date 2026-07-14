@@ -1615,6 +1615,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (Run.Pass value_output : Run.func_result)
     with Util.Error.InterpError (at, msg) -> Run.Fail (at, msg)
 
+  (* This interpreter already operates directly on [Value.t] — no native
+     marshalling boundary to cross, unlike [ML_mode]'s compiled dispatch. *)
+  let unmarshal_program (value : value) : value = value
+
   (* Initialization *)
 
   let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =

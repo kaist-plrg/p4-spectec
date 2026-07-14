@@ -74,6 +74,13 @@ module Make_rec
       | ML_mode -> Interp_ML.eval_func funcname typs values
       | Empty_mode -> assert false
 
+    let unmarshal_program (value : Value.t) : Value.t =
+      match !mode with
+      | IL_mode -> Interp_IL.unmarshal_program value
+      | SL_mode -> Interp_SL.unmarshal_program value
+      | ML_mode -> Interp_ML.unmarshal_program value
+      | Empty_mode -> assert false
+
     (* Cache management *)
 
     module Cache = struct
@@ -193,6 +200,13 @@ module Make_nonrec
       | IL_mode -> Interp_IL.eval_func funcname typs values
       | SL_mode -> Interp_SL.eval_func funcname typs values
       | ML_mode -> Interp_ML.eval_func funcname typs values
+      | Empty_mode -> assert false
+
+    let unmarshal_program (value : Value.t) : Value.t =
+      match !mode with
+      | IL_mode -> Interp_IL.unmarshal_program value
+      | SL_mode -> Interp_SL.unmarshal_program value
+      | ML_mode -> Interp_ML.unmarshal_program value
       | Empty_mode -> assert false
 
     (* Cache management *)

@@ -30,6 +30,18 @@ let eval_program (relname__ : string) (includes__ : string list)
 |}
     tid_program tid_program
 
+(* Same conversion [eval_program] does inline for a freshly-parsed program,
+   exposed standalone for callers (e.g. [backend-boot/patch.ml]) that already
+   hold a [Value.t] built some other way (not via [iface.parse_program]) and
+   need it [eval_rel]-ready. *)
+let unmarshal_program (tid_program : string) : string =
+  Printf.sprintf
+    {|
+let unmarshal_program (value : Value.t) : Value.t =
+  Obj.magic (unmarshal_%s value)
+|}
+    tid_program
+
 (* The public functor contract, preserved structurally.
 
    This is the full content of the thin [interp_ml.ml] shell. The heavy code
@@ -79,6 +91,8 @@ module Make
     with_ctx my_ctx (fun () -> %s.Dispatch.eval_rel name__ args__)
   let eval_program relname__ includes__ path__ =
     with_ctx my_ctx (fun () -> %s.Dispatch.eval_program relname__ includes__ path__)
+  let unmarshal_program value =
+    with_ctx my_ctx (fun () -> %s.Dispatch.unmarshal_program value)
 end
 |}
-    module_name module_name module_name module_name
+    module_name module_name module_name module_name module_name

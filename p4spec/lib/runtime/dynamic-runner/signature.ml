@@ -107,6 +107,14 @@ module type INTERP = sig
   val eval_rel : string -> Value.t list -> rel_result
   val eval_func : string -> Typ.t list -> Value.t list -> func_result
 
+  (* Convert an already-in-memory [Value.t] (e.g. one built by
+     [backend-boot/patch.ml] to glue tower levels together) into the shape
+     [eval_rel] actually expects for the entry syntax type — identity under
+     [IL_mode]/[SL_mode] (already [Value.t]-shaped), a real marshal under
+     [ML_mode] (native-tagged, [Obj.magic]-cast to [Value.t]) mirroring what
+     [eval_program] already does internally for freshly-parsed input. *)
+  val unmarshal_program : Value.t -> Value.t
+
   (* Clear the state *)
 
   val clear : unit -> unit
