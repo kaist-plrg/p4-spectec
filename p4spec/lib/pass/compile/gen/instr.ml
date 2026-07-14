@@ -895,10 +895,62 @@ and compile_return_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
 
 (* Debug instruction: [debug exp]
 
-   [raise (Unmatch "debug")] *)
+   Prints two lines, matching [Interp_SL.eval_debug_instr]'s interpreted
+   output:
+     <exp's source region>: <exp's source text>   (static text, computed
+                                                     here at codegen time)
+     <the value exp evaluates to, this call, printed>
+   then falls through to the rest of the enclosing block via the same
+   raise-Unmatch-and-continue idiom every instruction in a block uses.
 
-and compile_debug_instr (ctx : Ctx.t) (_exp : exp) : Ctx.t * Ml.expr =
-  (ctx, Common.raise_unmatch "debug")
+   The value line marshals the native result into a real [Value.t] via
+   [marshal_typed] (printable with [Il.Print.string_of_value]) — except
+   for the four primitive types, converted directly, since [marshal_typed]
+   only dispatches named ([VarT]) types (see [gen/interface.ml]'s
+   [compile_marshal_dispatch]) and a plain string/bool/number debug value
+   (by far the most common case — e.g. every relation's own
+   [-- debug "..."] entry/exit trace) would otherwise always miss. A
+   marshal failure on some other, genuinely uncovered structural type
+   degrades to a placeholder instead of raising, since this is a debug
+   aid — it shouldn't be able to crash the run it's diagnosing. *)
+
+and compile_debug_instr (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_native_ml = Exp.compile_exp ctx exp in
+  let line1_ml =
+    Ml.StrE (string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp)
+  in
+  let value_ml =
+    match exp.note with
+    | BoolT -> Ml.AppE (Ml.LitE "Value.Make.bool", [ expr_native_ml ])
+    | NumT `NatT -> Ml.AppE (Ml.LitE "Value.Make.nat", [ expr_native_ml ])
+    | NumT `IntT -> Ml.AppE (Ml.LitE "Value.Make.int", [ expr_native_ml ])
+    | TextT -> Ml.AppE (Ml.LitE "Value.Make.text", [ expr_native_ml ])
+    | _ ->
+        let typ_ml = Interface.typ_make_expr (exp.note $ no_region) in
+        Ml.AppE
+          ( Ml.LitE "marshal_typed",
+            [ typ_ml; Ml.AppE (Ml.LitE "Obj.repr", [ expr_native_ml ]) ] )
+  in
+  let print_value_ml =
+    Ml.TryE
+      ( Ml.AppE (Ml.LitE "Il.Print.string_of_value", [ value_ml ]),
+        [
+          ( Ml.VariantP (`Mono ("Failure", [ Ml.VarP "msg__" ])),
+            Ml.BinopE
+              ( "^",
+                Ml.StrE "<unprintable: ",
+                Ml.BinopE ("^", Ml.VarE "msg__", Ml.StrE ">") ) );
+        ] )
+  in
+  let expr_ml =
+    Ml.SeqE
+      [
+        Ml.AppE (Ml.LitE "print_endline", [ line1_ml ]);
+        Ml.AppE (Ml.LitE "print_endline", [ print_value_ml ]);
+        Common.raise_unmatch "debug";
+      ]
+  in
+  (ctx, expr_ml)
 
 (* Block: [[instr_h; instrs_t..]]
 
