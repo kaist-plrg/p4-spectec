@@ -102,9 +102,9 @@ end
 module SpecTec_IL = struct
   module Boot_value = Spectec.Ili.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Ili.Unboot.Make (Valrep.V_value)
-  module Boot_native = Spectec.Ili.Boot.Make (Backend_ocaml.Val_native.V_native)
+  module Boot_native = Spectec.Ili.Boot.Make (Backend_ocaml_il.Val_native.V_native)
   module Unboot_native =
-    Spectec.Ili.Unboot.Make (Backend_ocaml.Val_native.V_native)
+    Spectec.Ili.Unboot.Make (Backend_ocaml_il.Val_native.V_native)
 
   include Spectec.Caches
 
@@ -193,7 +193,7 @@ module SpecTec_IL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
-  module Builtin_SpecTec_native = Builtins (Backend_ocaml.Val_native.V_native)
+  module Builtin_SpecTec_native = Builtins (Backend_ocaml_il.Val_native.V_native)
 
   let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
       (typs : Typ.t list) (values : Value.t list) : Value.t =
@@ -203,7 +203,7 @@ module SpecTec_IL = struct
            (Builtin_SpecTec_native.invoke
               (fun v -> add (Obj.magic v : Value.t))
               id typs
-              (Obj.magic values : Backend_ocaml.Val_native.V_native.t list))
+              (Obj.magic values : Backend_ocaml_il.Val_native.V_native.t list))
           : Value.t)
     | _ -> Builtin_SpecTec.invoke add id typs values
 
@@ -227,9 +227,9 @@ end
 module SpecTec_SL = struct
   module Boot_value = Spectec.Sli.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Sli.Unboot.Make (Valrep.V_value)
-  module Boot_native = Spectec.Sli.Boot.Make (Backend_ocaml.Val_native.V_native)
+  module Boot_native = Spectec.Sli.Boot.Make (Backend_ocaml_sl.Val_native.V_native)
   module Unboot_native =
-    Spectec.Sli.Unboot.Make (Backend_ocaml.Val_native.V_native)
+    Spectec.Sli.Unboot.Make (Backend_ocaml_sl.Val_native.V_native)
 
   include Spectec.Caches
 
@@ -318,7 +318,7 @@ module SpecTec_SL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
-  module Builtin_SpecTec_native = Builtins (Backend_ocaml.Val_native.V_native)
+  module Builtin_SpecTec_native = Builtins (Backend_ocaml_sl.Val_native.V_native)
 
   let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
       (typs : Typ.t list) (values : Value.t list) : Value.t =
@@ -328,7 +328,7 @@ module SpecTec_SL = struct
            (Builtin_SpecTec_native.invoke
               (fun v -> add (Obj.magic v : Value.t))
               id typs
-              (Obj.magic values : Backend_ocaml.Val_native.V_native.t list))
+              (Obj.magic values : Backend_ocaml_sl.Val_native.V_native.t list))
           : Value.t)
     | _ -> Builtin_SpecTec.invoke add id typs values
 

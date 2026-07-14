@@ -6,7 +6,7 @@ module Run = Runtime.Dynamic_Runner.Signature
 
 module Boot_ili_value = Ili.Boot.Make (Runtime.Valrep.V_value)
 module Boot_sli_value = Sli.Boot.Make (Runtime.Valrep.V_value)
-module Boot_sli_native = Sli.Boot.Make (Backend_ocaml.Val_native.V_native)
+module Boot_sli_native = Sli.Boot.Make (Backend_ocaml_sl.Val_native.V_native)
 
 let parse_files (mode : Run.mode) (paths_spec : string list) : Value.t =
   match mode with
