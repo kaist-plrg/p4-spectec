@@ -100,28 +100,18 @@ end
 (* SpecTec IL *)
 
 module SpecTec_IL = struct
+  (* Boot-time-only entry points used by backend-boot/patch.ml: they
+     process the spec itself (elaboration/patch input), never a runtime
+     value under whatever mode the meta-interpreter ends up running, so
+     they stay fixed to [Valrep.V_value] regardless of [Make]'s [V]. *)
+
   module Boot_value = Spectec.Ili.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Ili.Unboot.Make (Valrep.V_value)
-  module Boot_native =
-    Spectec.Ili.Boot.Make (Backend_ocaml_il.Val_native.V_native)
-
-  module Unboot_native =
-    Spectec.Ili.Unboot.Make (Backend_ocaml_il.Val_native.V_native)
-
-  include Spectec.Caches
-
-  (* Boot-time-only entry points used by backend-boot/patch.ml,
-     never under [ML_mode]. *)
 
   let boot_spec = Boot_value.boot_spec
   let unboot_script = Unboot_value.unboot_script
 
-  (* The mode of the running meta-interpreter; picks which Boot/Unboot
-     variant the boundary functions dispatch to. *)
-
-  let cur_mode : Run.mode ref = ref Run.Empty_mode
-
-  (* Program parsing *)
+  (* Program parsing doesn't depend on the runtime value rep either. *)
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
@@ -140,117 +130,94 @@ module SpecTec_IL = struct
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  (* Program unparsing *)
+  (* The mode-dependent boundary: which [V] the running meta-interpreter
+     uses for runtime values (interpreted [Valrep.V_value], or under
+     [ML_mode] the compiled interface's native [V_native]) is fixed at
+     construction — the same call sites in [build.ml] that already pick
+     [Interp_ml]/[V] for [Spectec.Make_null]/[Make_parametric] pick it
+     here too, instead of a runtime [!cur_mode] branch with a bespoke
+     [Obj.magic] in every function. *)
 
-  let unparse_program (value_script : Value.t) : string =
-    let spec =
-      match !cur_mode with
-      | Run.ML_mode -> Unboot_native.unboot_script (Obj.magic value_script)
-      | _ -> Unboot_value.unboot_script value_script
-    in
-    Il.Print.string_of_spec spec
+  module Make (V : Runtime.Valrep.VAL) = struct
+    include Spectec.Caches
 
-  (* Boundary functions bridge [Value.t] to mode-correct [V];
-     exactly one [Obj.magic] per [ML_mode] branch. *)
+    let boot_spec = boot_spec
+    let unboot_script = unboot_script
+    let parse_program = parse_program
+    let parse_string = parse_string
 
-  let boot_value (value : Value.t) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic (Boot_native.boot_value (Obj.magic value : Il.value))
-          : Value.t)
-    | _ -> Boot_value.boot_value (value : Il.value)
+    module Boot = Spectec.Ili.Boot.Make (V)
+    module Unboot = Spectec.Ili.Unboot.Make (V)
 
-  let boot_values (values : Value.t list) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic
-           (Boot_native.boot_values (Obj.magic values : Il.value list))
-          : Value.t)
-    | _ -> Boot_value.boot_values values
+    (* Boundary functions bridge [Value.t] to [V] through [V.to_value]/
+       [V.of_value] — the [SAFE]/[UNSAFE] boundary crossing, not a
+       hand-written [Obj.magic]. *)
 
-  let unboot_id (value : Value.t) : Il.id =
-    match !cur_mode with
-    | Run.ML_mode -> Unboot_native.unboot_id (Obj.magic value)
-    | _ -> Unboot_value.unboot_id value
+    let unparse_program (value_script : Value.t) : string =
+      Il.Print.string_of_spec
+        (Unboot.unboot_script (V.of_value value_script))
 
-  let unboot_typs (value : Value.t) : Typ.t list =
-    match !cur_mode with
-    | Run.ML_mode -> Unboot_native.unboot_typs (Obj.magic value)
-    | _ -> Unboot_value.unboot_typs value
+    let boot_value (value : Value.t) : Value.t =
+      Boot.boot_value (value : Il.value) |> V.to_value
 
-  let unboot_values (value : Value.t) : Value.t list =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic (Unboot_native.unboot_values (Obj.magic value))
-          : Value.t list)
-    | _ -> Unboot_value.unboot_values value
+    let boot_values (values : Value.t list) : Value.t =
+      Boot.boot_values (values : Il.value list) |> V.to_value
 
-  (* Builtins *)
+    let unboot_id (value : Value.t) : Il.id = Unboot.unboot_id (V.of_value value)
 
-  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
-    type vt = V.t
+    let unboot_typs (value : Value.t) : Typ.t list =
+      Unboot.unboot_typs (V.of_value value)
 
-    module F = Builtin.Call.Make_funcs (V)
-    include F.Make (F.No_ext) ()
+    let unboot_values (value : Value.t) : Value.t list =
+      Unboot.unboot_values (V.of_value value)
+
+    (* Builtins *)
+
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t =
+    struct
+      type vt = V.t
+
+      module F = Builtin.Call.Make_funcs (V)
+      include F.Make (F.No_ext) ()
+    end
+
+    module Builtin_SpecTec = Builtins (V)
+
+    let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec.invoke
+        (fun v -> add (V.to_value v))
+        id typs
+        (List.map V.of_value values)
+      |> V.to_value
+
+    (* State management *)
+
+    let checkpoint = Builtin_SpecTec.checkpoint
+    let seff = Builtin_SpecTec.seff
+
+    (* Initialization: [V] already fixes the mode, so there is nothing
+       left to configure from [spec] at this point. *)
+
+    let init (_ : Run.spec) : unit = ()
   end
-
-  module Builtin_SpecTec = Builtins (Valrep.V_value)
-
-  module Builtin_SpecTec_native =
-    Builtins (Backend_ocaml_il.Val_native.V_native)
-
-  let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
-      (typs : Typ.t list) (values : Value.t list) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic
-           (Builtin_SpecTec_native.invoke
-              (fun v -> add (Obj.magic v : Value.t))
-              id typs
-              (Obj.magic values : Backend_ocaml_il.Val_native.V_native.t list))
-          : Value.t)
-    | _ -> Builtin_SpecTec.invoke add id typs values
-
-  (* State management *)
-
-  let checkpoint = Builtin_SpecTec.checkpoint
-  let seff = Builtin_SpecTec.seff
-
-  (* Initialization *)
-
-  let init (spec : Run.spec) : unit =
-    cur_mode :=
-      (match spec with
-      | Run.IL _ -> Run.IL_mode
-      | Run.ML -> Run.ML_mode
-      | Run.SL _ | Run.Empty -> assert false)
 end
 
 (* SpecTec SL *)
 
 module SpecTec_SL = struct
+  (* Boot-time-only entry points used by backend-boot/patch.ml: they
+     process the spec itself (elaboration/patch input), never a runtime
+     value under whatever mode the meta-interpreter ends up running, so
+     they stay fixed to [Valrep.V_value] regardless of [Make]'s [V]. *)
+
   module Boot_value = Spectec.Sli.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Sli.Unboot.Make (Valrep.V_value)
-  module Boot_native =
-    Spectec.Sli.Boot.Make (Backend_ocaml_sl.Val_native.V_native)
-
-  module Unboot_native =
-    Spectec.Sli.Unboot.Make (Backend_ocaml_sl.Val_native.V_native)
-
-  include Spectec.Caches
-
-  (* Boot-time-only entry points used by backend-boot/patch.ml,
-     never under [ML_mode]. *)
 
   let boot_spec = Boot_value.boot_spec
   let unboot_script = Unboot_value.unboot_script
 
-  (* The mode of the running meta-interpreter; picks which Boot/Unboot
-     variant the boundary functions dispatch to. *)
-
-  let cur_mode : Run.mode ref = ref Run.Empty_mode
-
-  (* Program parsing *)
+  (* Program parsing doesn't depend on the runtime value rep either. *)
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
@@ -269,88 +236,75 @@ module SpecTec_SL = struct
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  (* Program unparsing *)
+  (* The mode-dependent boundary: which [V] the running meta-interpreter
+     uses for runtime values (interpreted [Valrep.V_value], or under
+     [ML_mode] the compiled interface's native [V_native]) is fixed at
+     construction — the same call sites in [build.ml] that already pick
+     [Interp_ml]/[V] for [Spectec.Make_null]/[Make_parametric] pick it
+     here too, instead of a runtime [!cur_mode] branch with a bespoke
+     [Obj.magic] in every function. *)
 
-  let unparse_program (value_script : Value.t) : string =
-    let spec =
-      match !cur_mode with
-      | Run.ML_mode -> Unboot_native.unboot_script (Obj.magic value_script)
-      | _ -> Unboot_value.unboot_script value_script
-    in
-    Sl.Print.string_of_spec spec
+  module Make (V : Runtime.Valrep.VAL) = struct
+    include Spectec.Caches
 
-  (* Boundary functions bridge [Value.t] to mode-correct [V];
-     exactly one [Obj.magic] per [ML_mode] branch. *)
+    let boot_spec = boot_spec
+    let unboot_script = unboot_script
+    let parse_program = parse_program
+    let parse_string = parse_string
 
-  let boot_value (value : Value.t) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic (Boot_native.boot_value (Obj.magic value : Il.value))
-          : Value.t)
-    | _ -> Boot_value.boot_value (value : Il.value)
+    module Boot = Spectec.Sli.Boot.Make (V)
+    module Unboot = Spectec.Sli.Unboot.Make (V)
 
-  let boot_values (values : Value.t list) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic
-           (Boot_native.boot_values (Obj.magic values : Il.value list))
-          : Value.t)
-    | _ -> Boot_value.boot_values values
+    (* Boundary functions bridge [Value.t] to [V] through [V.to_value]/
+       [V.of_value] — the [SAFE]/[UNSAFE] boundary crossing, not a
+       hand-written [Obj.magic]. *)
 
-  let unboot_id (value : Value.t) : Il.id =
-    match !cur_mode with
-    | Run.ML_mode -> Unboot_native.unboot_id (Obj.magic value)
-    | _ -> Unboot_value.unboot_id value
+    let unparse_program (value_script : Value.t) : string =
+      Sl.Print.string_of_spec
+        (Unboot.unboot_script (V.of_value value_script))
 
-  let unboot_typs (value : Value.t) : Typ.t list =
-    match !cur_mode with
-    | Run.ML_mode -> Unboot_native.unboot_typs (Obj.magic value)
-    | _ -> Unboot_value.unboot_typs value
+    let boot_value (value : Value.t) : Value.t =
+      Boot.boot_value (value : Il.value) |> V.to_value
 
-  let unboot_values (value : Value.t) : Value.t list =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic (Unboot_native.unboot_values (Obj.magic value))
-          : Value.t list)
-    | _ -> Unboot_value.unboot_values value
+    let boot_values (values : Value.t list) : Value.t =
+      Boot.boot_values (values : Il.value list) |> V.to_value
 
-  (* Builtins *)
+    let unboot_id (value : Value.t) : Il.id = Unboot.unboot_id (V.of_value value)
 
-  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
-    type vt = V.t
+    let unboot_typs (value : Value.t) : Typ.t list =
+      Unboot.unboot_typs (V.of_value value)
 
-    module F = Builtin.Call.Make_funcs (V)
-    include F.Make (F.No_ext) ()
+    let unboot_values (value : Value.t) : Value.t list =
+      Unboot.unboot_values (V.of_value value)
+
+    (* Builtins *)
+
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t =
+    struct
+      type vt = V.t
+
+      module F = Builtin.Call.Make_funcs (V)
+      include F.Make (F.No_ext) ()
+    end
+
+    module Builtin_SpecTec = Builtins (V)
+
+    let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec.invoke
+        (fun v -> add (V.to_value v))
+        id typs
+        (List.map V.of_value values)
+      |> V.to_value
+
+    (* State management *)
+
+    let checkpoint = Builtin_SpecTec.checkpoint
+    let seff = Builtin_SpecTec.seff
+
+    (* Initialization: [V] already fixes the mode, so there is nothing
+       left to configure from [spec] at this point. *)
+
+    let init (_ : Run.spec) : unit = ()
   end
-
-  module Builtin_SpecTec = Builtins (Valrep.V_value)
-
-  module Builtin_SpecTec_native =
-    Builtins (Backend_ocaml_sl.Val_native.V_native)
-
-  let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
-      (typs : Typ.t list) (values : Value.t list) : Value.t =
-    match !cur_mode with
-    | Run.ML_mode ->
-        (Obj.magic
-           (Builtin_SpecTec_native.invoke
-              (fun v -> add (Obj.magic v : Value.t))
-              id typs
-              (Obj.magic values : Backend_ocaml_sl.Val_native.V_native.t list))
-          : Value.t)
-    | _ -> Builtin_SpecTec.invoke add id typs values
-
-  (* State management *)
-
-  let checkpoint = Builtin_SpecTec.checkpoint
-  let seff = Builtin_SpecTec.seff
-
-  (* Initialization *)
-
-  let init (spec : Run.spec) : unit =
-    cur_mode :=
-      (match spec with
-      | Run.SL _ -> Run.SL_mode
-      | Run.ML -> Run.ML_mode
-      | Run.IL _ | Run.Empty -> assert false)
 end
