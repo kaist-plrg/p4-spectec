@@ -15,8 +15,7 @@ let parse_files (mode : Run.mode) (paths_spec : string list) : Value.t =
       paths_spec |> Pass.structure ~final:true |> Boot_sli_value.boot_spec
   | ML_mode ->
       (Obj.magic
-         (paths_spec |> Pass.structure ~final:true
-        |> Boot_sli_native.boot_spec)
+         (paths_spec |> Pass.structure ~final:true |> Boot_sli_native.boot_spec)
         : Value.t)
   | Empty_mode -> assert false
 
@@ -32,7 +31,7 @@ let parse_string (mode : Run.mode) (_path : string) (str : string) : Value.t =
   | ML_mode ->
       (Obj.magic
          (str |> Frontend.Parse.parse_string |> Pass.Elaborate.Elab.elab_spec
-        |> Pass.Structure.Struct.struct_spec ~final:true
-        |> Boot_sli_native.boot_spec)
+         |> Pass.Structure.Struct.struct_spec ~final:true
+         |> Boot_sli_native.boot_spec)
         : Value.t)
   | Empty_mode -> assert false

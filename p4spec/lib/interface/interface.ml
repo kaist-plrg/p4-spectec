@@ -102,7 +102,9 @@ end
 module SpecTec_IL = struct
   module Boot_value = Spectec.Ili.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Ili.Unboot.Make (Valrep.V_value)
-  module Boot_native = Spectec.Ili.Boot.Make (Backend_ocaml_il.Val_native.V_native)
+  module Boot_native =
+    Spectec.Ili.Boot.Make (Backend_ocaml_il.Val_native.V_native)
+
   module Unboot_native =
     Spectec.Ili.Unboot.Make (Backend_ocaml_il.Val_native.V_native)
 
@@ -227,7 +229,9 @@ end
 module SpecTec_SL = struct
   module Boot_value = Spectec.Sli.Boot.Make (Valrep.V_value)
   module Unboot_value = Spectec.Sli.Unboot.Make (Valrep.V_value)
-  module Boot_native = Spectec.Sli.Boot.Make (Backend_ocaml_sl.Val_native.V_native)
+  module Boot_native =
+    Spectec.Sli.Boot.Make (Backend_ocaml_sl.Val_native.V_native)
+
   module Unboot_native =
     Spectec.Sli.Unboot.Make (Backend_ocaml_sl.Val_native.V_native)
 

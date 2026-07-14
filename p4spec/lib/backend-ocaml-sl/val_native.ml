@@ -18,7 +18,6 @@ module Num = Lang.Xl.Num
 
 (* This library's own generated dispatch tables (spec-meta/sl), not P4's. *)
 module Spec_parts = Spec_parts_sl
-
 open Util.Source
 
 module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
