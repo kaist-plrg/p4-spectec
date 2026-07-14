@@ -189,6 +189,17 @@ module SpecTec_IL = struct
         (List.map V.of_value values)
       |> V.to_value
 
+    (* Fixed at [Valrep.V_value] regardless of this functor's own [V] — for
+       callers (e.g. [Call_builtin_func]) whose [values] are already real
+       [Value.t] (from [unboot_values]); [call_builtin] above would
+       [V.of_value]-recast them with no actual conversion. *)
+
+    module Builtin_SpecTec_value = Builtins (Valrep.V_value)
+
+    let call_builtin_value (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec_value.invoke add id typs values
+
     (* State management *)
 
     let checkpoint = Builtin_SpecTec.checkpoint
@@ -292,6 +303,17 @@ module SpecTec_SL = struct
         id typs
         (List.map V.of_value values)
       |> V.to_value
+
+    (* Fixed at [Valrep.V_value] regardless of this functor's own [V] — for
+       callers (e.g. [Call_builtin_func]) whose [values] are already real
+       [Value.t] (from [unboot_values]); [call_builtin] above would
+       [V.of_value]-recast them with no actual conversion. *)
+
+    module Builtin_SpecTec_value = Builtins (Valrep.V_value)
+
+    let call_builtin_value (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec_value.invoke add id typs values
 
     (* State management *)
 

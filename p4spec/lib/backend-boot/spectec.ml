@@ -12,6 +12,20 @@ open Util.Source
 let typ_funccache = Typ.Make.var ("funccache" $ no_region) []
 let typ_relcache = Typ.Make.var ("relcache" $ no_region) []
 
+(* [valres]/[valsres] (= [res<val>]/[res<val*>], FINDINGS.md §2c) dispatch
+   through the generic ["res"] [parametric_heads] arm — keyed on the head
+   name, the same way [maps.ml] keys map/pair/set lookups on "map"/"pair",
+   never on a specific instantiation's alias. Both aliases share one [Il.typ]
+   witness for this reason: the parametric arm is payload-erased, so it
+   doesn't (can't) distinguish "valres" from "valsres" — only the actual
+   argument list passed to [V.Make]/[V.Get] differs. *)
+
+let typ_res = Typ.Make.var ("res" $ no_region) []
+let typ_valres = typ_res
+let typ_valsres = typ_res
+let mixop_ok_val = Value.Mixops.of_string "OK val"
+let mixop_ok_vals = Value.Mixops.of_string "OK val*"
+
 (* A wrapper for SpecTec interfaces, providing apis for caching boot/unboots *)
 
 module type INTERFACE_SPECTEC = sig
@@ -45,6 +59,16 @@ module type INTERFACE_SPECTEC = sig
   val unboot_id : vt -> string phrase
   val unboot_typs : vt -> Typ.t list
   val unboot_values : vt -> Value.t list
+
+  (* [call_builtin], fixed at [Valrep.V_value] regardless of the module's
+     own [vt]. For values that already are real [Value.t] (e.g. the
+     output of [unboot_values]), [call_builtin] would recast them to
+     [vt] with no actual conversion (a bare relabel when [vt <> Value.t])
+     before handing them to a [vt]-typed builtin — this doesn't recast at
+     all, since [Valrep.V_value.t = Value.t]. *)
+
+  val call_builtin_value :
+    (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t
 end
 
 (* The null layer *)
@@ -63,13 +87,34 @@ module Make_null
   (* Threading extern calls to the interpreter.
 
      [Call_builtin_func] resolves a *builtin* (a `builtin dec` in the
-     target script, e.g. $find_map/$add_map — FINDINGS.md §2a) —
-     previously routed through [Interp_IL/SL/ML.eval_func], spec-meta's
-     own closed dispatch table of its *own* function definitions, which
-     doesn't (and structurally can't) recognize a target script's own
-     builtin declarations. [Interface_SpecTec.call_builtin] is the actual
-     generic builtin registry ([Builtin.Call.Make_funcs]) and is what
-     resolves it correctly. *)
+     target script, e.g. $find_map/$add_map — FINDINGS.md §2a). Its
+     arguments already went through [unboot_values], which produces real
+     [Value.t] (confirmed: it dispatches via spec-meta's own declared
+     "val" type, which decodes correctly). [Interface_SpecTec.call_builtin]
+     is the wrong thing to hand them to here — it exists for spec-meta's
+     own internal calls (e.g. [ctx.iface.call_builtin]'s venv/funcdef
+     lookups), where the values genuinely are already native, and it
+     unconditionally [V.of_value]-recasts its arguments to native before
+     invoking the builtin. For values that are already real [Value.t],
+     that recast doesn't convert anything — it just relabels a [Value.t]
+     block as if it were [V]-shaped, and the builtin (instantiated at
+     [V]) then misreads it (FINDINGS.md §2b, confirmed at the exact
+     generated line: [case_of_typed]'s single-constructor arms).
+     [call_builtin_value] is fixed at [Valrep.V_value] regardless of this
+     functor's own [V], so passing already-real [Value.t] through it is a
+     no-op cast ([V_value.of_value = Fun.id]), not a relabel.
+
+     The result crosses back the other way: [call_builtin_value] returns
+     a real, interpreted [Value.t], but the "valres" shell handed back
+     across [Run.EXTERN] must be genuinely [V]-shaped, since compiled
+     code [Obj.magic]s it straight into its native `` `OK_X `` / `` `FAIL
+     `` on the other side (no dispatch, no conversion). [boot_value]
+     deep-converts the payload from [Value.t] into [vt]; [V.Make] then
+     builds the "valres" shell itself through the generic ["res"]
+     [parametric_heads] arm (FINDINGS.md §2c — now covered) instead of
+     [Value.Make], which would build the same wrong-for-this-boundary
+     interpreted shape [cache_find_func] et al. were already fixed to
+     avoid. *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
     let value_id, value_typs, value_values =
@@ -83,10 +128,11 @@ module Make_null
     let typs = value_typs |> V.of_value |> Interface_SpecTec.unboot_typs in
     let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
     let value_output =
-      Interface_SpecTec.call_builtin (fun _ -> ()) id typs values
+      Interface_SpecTec.call_builtin_value (fun _ -> ()) id typs values
     in
+    let vt_output = Interface_SpecTec.boot_value value_output in
     let value_output_res =
-      Value.Make.("OK val" <| [ value_output ] <<| "valres")
+      V.Make.("OK val" <| [ vt_output ] <<| typ_valres) |> V.to_value
     in
     [ value_output_res ]
 
@@ -252,9 +298,15 @@ module Make_parametric
      [Call_builtin_func] resolves a *builtin* (a `builtin dec` in the
      target script — FINDINGS.md §2a), not a spec-defined function — it
      doesn't belong on [Runner.Interp.eval_func] (the level-above runner,
-     for calling *up* the tower), same routing bug [Make_null.
-     call_builtin_func] had. [Interface_SpecTec.call_builtin] is the
-     actual generic builtin registry. *)
+     for calling *up* the tower). [Interface_SpecTec.call_builtin_value]
+     is the actual generic builtin registry, fixed at [Valrep.V_value] so
+     it doesn't recast the already-real [Value.t] [unboot_values]
+     produces. The result shell ("valres"/"valsres") is built through
+     [V.Make] over a [boot_value]/[boot_values]-converted, genuinely
+     [vt]-shaped payload — not [Value.Make] over the raw interpreted
+     result — since compiled code [Obj.magic]s this shell straight into
+     its native `` `OK_X `` / `` `FAIL `` with no dispatch (FINDINGS.md
+     §2c; see [Make_null.call_builtin_func]'s longer comment). *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
     let value_id, value_typs, value_values =
@@ -269,10 +321,11 @@ module Make_parametric
     let typs = value_typs |> V.of_value |> Interface_SpecTec.unboot_typs in
     let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
     let value_output =
-      Interface_SpecTec.call_builtin (fun _ -> ()) id typs values
+      Interface_SpecTec.call_builtin_value (fun _ -> ()) id typs values
     in
+    let vt_output = Interface_SpecTec.boot_value value_output in
     let value_output_res =
-      Value.Make.("OK val" <| [ value_output ] <<| "valres")
+      V.Make.("OK val" <| [ vt_output ] <<| typ_valres) |> V.to_value
     in
     Interface_SpecTec.pop_cache ();
     [ value_output_res ]
@@ -293,9 +346,9 @@ module Make_parametric
       | Pass value_output -> value_output
       | Fail (at, msg) -> error at msg
     in
-    let value_value_output = Interface_SpecTec.boot_value value_output |> V.to_value in
+    let vt_output = Interface_SpecTec.boot_value value_output in
     let value_value_output_res =
-      Value.Make.("OK val" <| [ value_value_output ] <<| "valsres")
+      V.Make.("OK val" <| [ vt_output ] <<| typ_valsres) |> V.to_value
     in
     Interface_SpecTec.pop_cache ();
     [ value_value_output_res ]
@@ -314,9 +367,9 @@ module Make_parametric
       | Pass values_output -> values_output
       | Fail (at, msg) -> error at msg
     in
-    let value_values_output = Interface_SpecTec.boot_values values_output |> V.to_value in
+    let vt_output = Interface_SpecTec.boot_values values_output in
     let value_values_output_res =
-      Value.Make.("OK val*" <| [ value_values_output ] <<| "valsres")
+      V.Make.("OK val*" <| [ vt_output ] <<| typ_valsres) |> V.to_value
     in
     Interface_SpecTec.pop_cache ();
     [ value_values_output_res ]
@@ -358,11 +411,6 @@ module Make_parametric
           V.Make.("OK val" <| [ value_value_output |> V.of_value ] <<| typ_funccache)
       | None -> V.Make.("NONE" <| [] <<| typ_funccache))
       |> V.to_value
-
-  let typ_valres = Typ.Make.var ("valres" $ no_region) []
-  let typ_valsres = Typ.Make.var ("valsres" $ no_region) []
-  let mixop_ok_val = Value.Mixops.of_string "OK val"
-  let mixop_ok_vals = Value.Mixops.of_string "OK val*"
 
   let cache_add_func_maybe (values_input : Value.t list) : Value.t =
     if not cache.meta.enabled then V.Make.bool true |> V.to_value

@@ -672,24 +672,31 @@ module Typed = struct
           (Ml.WildP, Ml.StrE "");
         ] )
 
-  (* [set]/[pair]/[map] are parametric poly-variants ([`Set of 'k list],
-     [`Pair of 'k * 'v], [map = pair set]) absent from [variant_ids]: their decls
-     carry tparams, so the normal arm-builder's per-payload [compile_typ]
-     annotation would dangle a free type var. But the ctor is type-uniform —
-     'k/'v erase to [Obj.t] — so ONE annotation-free arm per head covers every
-     instantiation. The real ctor + mixop come from [Ctx] (keys then match the
-     spec, hence [V_native]'s threaded mixop); [map]'s value is a [`Set] of pairs,
-     so it reuses the "set" ctor. *)
-  let parametric_heads = [ "set"; "pair"; "map" ]
+  (* [set]/[pair]/[map]/[res] are parametric poly-variants ([`Set of 'k list],
+     [`Pair of 'k * 'v], [map = pair set], [`OK_X of 'x | `FAIL]) absent from
+     [variant_ids]: their decls carry tparams, so the normal arm-builder's
+     per-payload [compile_typ] annotation would dangle a free type var. But
+     the ctor is type-uniform — 'k/'v/'x erase to [Obj.t] — so ONE
+     annotation-free arm per head covers every instantiation. The real ctor +
+     mixop come from [Ctx] (keys then match the spec, hence [V_native]'s
+     threaded mixop); [map]'s value is a [`Set] of pairs, so it reuses the
+     "set" ctor. [res] is included for the same reason as the other three —
+     FINDINGS.md §2c: [valres]/[valsres] (= [res<val>]/[res<val*>]) are
+     concrete aliases of the parametric [res<X>], and nothing in
+     [all_typ_refs]'s closure unfolds through a parametric alias target, so
+     they never got a [case_of_typed]/[make_case_typed] arm despite being
+     exactly as type-uniform as [set]/[pair]/[map]. *)
+  let parametric_heads = [ "set"; "pair"; "map"; "res" ]
 
   let parametric_ctors (ctx : Ctx.t) (head : string) =
     let src = if head = "map" then "set" else head in
     Ctx.find_ctors_full ctx (src $ no_region)
 
-  (* set/map -> [Obj.t set], pair -> [(Obj.t, Obj.t) pair]. *)
+  (* set/map -> [Obj.t set], pair -> [(Obj.t, Obj.t) pair], res -> [Obj.t res]. *)
   let parametric_scrut_typ (head : string) : Ml.typ =
     match head with
     | "pair" -> Ml.AppT ("pair", [ Ml.NameT "Obj.t"; Ml.NameT "Obj.t" ])
+    | "res" -> Ml.AppT ("res", [ Ml.NameT "Obj.t" ])
     | _ -> Ml.AppT ("set", [ Ml.NameT "Obj.t" ])
 
   let make_parametric_arms (ctx : Ctx.t) : Ml.arm list =
