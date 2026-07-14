@@ -91,9 +91,11 @@ let build_level ?(cache = true) ?(det = false) ?(guard = false)
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
     | IL_interface ->
-        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
     | SL_interface ->
-        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
   in
   let (module Interp_ml) = interp_ml_of_interface level.interface in
   let (module Runner) =
@@ -149,9 +151,11 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
     | IL_interface ->
-        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
     | SL_interface ->
-        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
   in
   let (module Interp_ml) = interp_ml_of_interface interface in
   let (module Runner) =

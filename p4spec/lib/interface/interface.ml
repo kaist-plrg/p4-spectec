@@ -149,27 +149,25 @@ module SpecTec_IL = struct
     module Boot = Spectec.Ili.Boot.Make (V)
     module Unboot = Spectec.Ili.Unboot.Make (V)
 
-    (* Boundary functions bridge [Value.t] to [V] through [V.to_value]/
-       [V.of_value] — the [SAFE]/[UNSAFE] boundary crossing, not a
-       hand-written [Obj.magic]. *)
+    (* [unparse_program] crosses [Value.t] -> [V] through [V.of_value] (the
+       [SAFE]/[UNSAFE] boundary, not a hand-written [Obj.magic]) since
+       [Run.INTERFACE] fixes its argument at [Value.t]. [boot_*]/[unboot_*]
+       don't need that crossing at all — [INTERFACE_SPECTEC] types them
+       directly over this functor's own [vt = V.t]. *)
+
+    type vt = V.t
 
     let unparse_program (value_script : Value.t) : string =
       Il.Print.string_of_spec
         (Unboot.unboot_script (V.of_value value_script))
 
-    let boot_value (value : Value.t) : Value.t =
-      Boot.boot_value (value : Il.value) |> V.to_value
+    let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
+    let boot_values (values : Value.t list) : vt =
+      Boot.boot_values (values : Il.value list)
 
-    let boot_values (values : Value.t list) : Value.t =
-      Boot.boot_values (values : Il.value list) |> V.to_value
-
-    let unboot_id (value : Value.t) : Il.id = Unboot.unboot_id (V.of_value value)
-
-    let unboot_typs (value : Value.t) : Typ.t list =
-      Unboot.unboot_typs (V.of_value value)
-
-    let unboot_values (value : Value.t) : Value.t list =
-      Unboot.unboot_values (V.of_value value)
+    let unboot_id (value : vt) : Il.id = Unboot.unboot_id value
+    let unboot_typs (value : vt) : Typ.t list = Unboot.unboot_typs value
+    let unboot_values (value : vt) : Value.t list = Unboot.unboot_values value
 
     (* Builtins *)
 
@@ -255,27 +253,25 @@ module SpecTec_SL = struct
     module Boot = Spectec.Sli.Boot.Make (V)
     module Unboot = Spectec.Sli.Unboot.Make (V)
 
-    (* Boundary functions bridge [Value.t] to [V] through [V.to_value]/
-       [V.of_value] — the [SAFE]/[UNSAFE] boundary crossing, not a
-       hand-written [Obj.magic]. *)
+    (* [unparse_program] crosses [Value.t] -> [V] through [V.of_value] (the
+       [SAFE]/[UNSAFE] boundary, not a hand-written [Obj.magic]) since
+       [Run.INTERFACE] fixes its argument at [Value.t]. [boot_*]/[unboot_*]
+       don't need that crossing at all — [INTERFACE_SPECTEC] types them
+       directly over this functor's own [vt = V.t]. *)
+
+    type vt = V.t
 
     let unparse_program (value_script : Value.t) : string =
       Sl.Print.string_of_spec
         (Unboot.unboot_script (V.of_value value_script))
 
-    let boot_value (value : Value.t) : Value.t =
-      Boot.boot_value (value : Il.value) |> V.to_value
+    let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
+    let boot_values (values : Value.t list) : vt =
+      Boot.boot_values (values : Il.value list)
 
-    let boot_values (values : Value.t list) : Value.t =
-      Boot.boot_values (values : Il.value list) |> V.to_value
-
-    let unboot_id (value : Value.t) : Il.id = Unboot.unboot_id (V.of_value value)
-
-    let unboot_typs (value : Value.t) : Typ.t list =
-      Unboot.unboot_typs (V.of_value value)
-
-    let unboot_values (value : Value.t) : Value.t list =
-      Unboot.unboot_values (V.of_value value)
+    let unboot_id (value : vt) : Il.id = Unboot.unboot_id value
+    let unboot_typs (value : vt) : Typ.t list = Unboot.unboot_typs value
+    let unboot_values (value : vt) : Value.t list = Unboot.unboot_values value
 
     (* Builtins *)
 
