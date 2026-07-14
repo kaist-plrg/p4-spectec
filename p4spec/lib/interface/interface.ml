@@ -195,7 +195,9 @@ module SpecTec_IL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
-  module Builtin_SpecTec_native = Builtins (Backend_ocaml_il.Val_native.V_native)
+
+  module Builtin_SpecTec_native =
+    Builtins (Backend_ocaml_il.Val_native.V_native)
 
   let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
       (typs : Typ.t list) (values : Value.t list) : Value.t =
@@ -322,7 +324,9 @@ module SpecTec_SL = struct
   end
 
   module Builtin_SpecTec = Builtins (Valrep.V_value)
-  module Builtin_SpecTec_native = Builtins (Backend_ocaml_sl.Val_native.V_native)
+
+  module Builtin_SpecTec_native =
+    Builtins (Backend_ocaml_sl.Val_native.V_native)
 
   let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
       (typs : Typ.t list) (values : Value.t list) : Value.t =
