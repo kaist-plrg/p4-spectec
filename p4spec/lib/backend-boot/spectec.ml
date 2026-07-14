@@ -5,6 +5,13 @@ module Run = Runtime.Dynamic_Runner.Signature
 open Error
 open Util.Source
 
+(* [Il.typ] witnesses for the cache-shell types, used with the generic
+   [V.Make.( <<| )] (which needs a real [Il.typ], unlike [Value.Make]'s own
+   [( <<| )] convenience overload that takes the type name as a string). *)
+
+let typ_funccache = Typ.Make.var ("funccache" $ no_region) []
+let typ_relcache = Typ.Make.var ("relcache" $ no_region) []
+
 (* A wrapper for SpecTec interfaces, providing apis for caching boot/unboots *)
 
 module type INTERFACE_SPECTEC = sig
@@ -33,6 +40,7 @@ end
 (* The null layer *)
 
 module Make_null
+    (V : Runtime.Valrep.VAL)
     (Interface_SpecTec : INTERFACE_SPECTEC)
     (Interp_IL : Run.INTERP_IL)
     (Interp_SL : Run.INTERP_SL)
@@ -75,7 +83,16 @@ module Make_null
     in
     [ value_value_output_res ]
 
-  (* Cache management *)
+  (* Cache management.
+
+     These constants cross the [Run.EXTERN] boundary, whose wire type is
+     hardcoded to [Value.t] by the compiled-spec template regardless of
+     mode (see FINDINGS.md §4). Building them through [V.Make] and handing
+     them across with [V.to_value] — the same [SAFE]/[UNSAFE] boundary
+     [interface.ml]'s [call_builtin]/[boot_value] already cross — makes
+     the functor produce a genuinely [V]-shaped result instead of always
+     an interpreted [Value.t] that [ML_mode] compiled code then
+     [Obj.magic]s into its native poly-variant type and misreads. *)
 
   let cache_find_func (values_input : Value.t list) : Value.t =
     let _value_id, _value_values_input =
@@ -83,7 +100,7 @@ module Make_null
       | [ value_id; value_values_input ] -> (value_id, value_values_input)
       | _ -> error_no_region "unexpected number of arguments to cache_find_func"
     in
-    Value.Make.("NONE" <| [] <<| "funccache")
+    V.Make.("NONE" <| [] <<| typ_funccache) |> V.to_value
 
   let cache_add_func_maybe (values_input : Value.t list) : Value.t =
     let _value_seff, _value_id, _value_values_input, _value_valres =
@@ -94,7 +111,7 @@ module Make_null
           error_no_region
             "unexpected number of arguments to cache_add_func_maybe"
     in
-    Value.Make.bool true
+    V.Make.bool true |> V.to_value
 
   let cache_find_rel (values_input : Value.t list) : Value.t =
     let _value_id, _value_values_input =
@@ -102,13 +119,14 @@ module Make_null
       | [ value_id; value_values_input ] -> (value_id, value_values_input)
       | _ -> error_no_region "unexpected number of arguments to cache_find_rel"
     in
-    Value.Make.("NONE" <| [] <<| "relcache")
+    V.Make.("NONE" <| [] <<| typ_relcache) |> V.to_value
 
   let cache_checkpoint (values_input : Value.t list) : Value.t =
     (match values_input with
     | [] -> ()
     | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
-    Value.Make.extern (Typ.Make.var ("cachepoint" $ no_region) []) (`Int 42)
+    V.Make.extern (Typ.Make.var ("cachepoint" $ no_region) []) (`Int 42)
+    |> V.to_value
 
   let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
     let _value_seff, _value_id, _value_values_input, _value_valsres =
@@ -119,7 +137,7 @@ module Make_null
           error_no_region
             "unexpected number of arguments to cache_add_rel_maybe"
     in
-    Value.Make.bool true
+    V.Make.bool true |> V.to_value
 
   let cache_seff (values_input : Value.t list) : Value.t =
     let _value_cachepoint_before, _value_cachepoint_after =
@@ -128,7 +146,7 @@ module Make_null
           (value_cachepoint_before, value_cachepoint_after)
       | _ -> error_no_region "unexpected number of arguments to cache_seff"
     in
-    Value.Make.bool false
+    V.Make.bool false |> V.to_value
 
   (* Externs *)
 
@@ -179,6 +197,7 @@ end
 (* The intermediate layer *)
 
 module Make_parametric
+    (V : Runtime.Valrep.VAL)
     (Runner : Run.RUNNER)
     (Interface_SpecTec : INTERFACE_SPECTEC)
     () : Run.EXTERN = struct
@@ -291,10 +310,27 @@ module Make_parametric
     Interface_SpecTec.pop_cache ();
     [ value_values_output_res ]
 
-  (* Meta-cache management *)
+  (* Meta-cache management.
+
+     Wrapper shells ([funccache]/[relcache]/[bool]/[extern cachepoint]) are
+     built through [V.Make]/[V.to_value] so [ML_mode] gets a genuinely
+     native-shaped result instead of an interpreted [Value.t] that compiled
+     code then misreads (see [Make_null] above and FINDINGS.md §4).
+
+     The [value_valres]/[value_valsres] payload *extraction* below is a
+     different, still-open problem: [valres]/[valsres] are the parametric
+     type [res<X>] instantiated at [val]/[val*], and [V_native]'s generated
+     [case_of_typed] has no entry for parametric heads outside
+     [set;pair;map] (FINDINGS.md §2c — extending that is a shared-codegen
+     change, not something to improvise here). Under [V_native] the
+     [V.Get.( |>>? )] below therefore raises; since this cache is a pure
+     optimization (a miss just means recomputation, not a wrong answer),
+     that failure is caught and treated as "nothing to cache" rather than
+     propagated. *)
 
   let cache_find_func (values_input : Value.t list) : Value.t =
-    if not cache.meta.enabled then Value.Make.("NONE" <| [] <<| "funccache")
+    if not cache.meta.enabled then
+      V.Make.("NONE" <| [] <<| typ_funccache) |> V.to_value
     else
       let value_id, value_values_input =
         match values_input with
@@ -306,13 +342,19 @@ module Make_parametric
       let cache_result =
         CCache.find cache.meta.func (id.it, [ value_values_input ])
       in
-      match cache_result with
+      (match cache_result with
       | Some value_value_output ->
-          Value.Make.("OK val" <| [ value_value_output ] <<| "funccache")
-      | None -> Value.Make.("NONE" <| [] <<| "funccache")
+          V.Make.("OK val" <| [ value_value_output |> V.of_value ] <<| typ_funccache)
+      | None -> V.Make.("NONE" <| [] <<| typ_funccache))
+      |> V.to_value
+
+  let typ_valres = Typ.Make.var ("valres" $ no_region) []
+  let typ_valsres = Typ.Make.var ("valsres" $ no_region) []
+  let mixop_ok_val = Value.Mixops.of_string "OK val"
+  let mixop_ok_vals = Value.Mixops.of_string "OK val*"
 
   let cache_add_func_maybe (values_input : Value.t list) : Value.t =
-    if not cache.meta.enabled then Value.Make.bool true
+    if not cache.meta.enabled then V.Make.bool true |> V.to_value
     else
       let value_seff, value_id, value_values_input, value_valres =
         match values_input with
@@ -322,19 +364,24 @@ module Make_parametric
             error_no_region
               "unexpected number of arguments to cache_add_func_maybe"
       in
-      let seff = value_seff |> Value.Get.bool in
+      let seff = value_seff |> V.of_value |> V.Get.bool in
       (if not seff then
-         match Value.Get.(value_valres |>>? "OK val") with
-         | Some [ value_value_output ] ->
-             let id = value_id |> Interface_SpecTec.unboot_id in
-             CCache.add cache.meta.func
-               (id.it, [ value_values_input ])
-               value_value_output
-         | _ -> ());
-      Value.Make.bool true
+         try
+           match
+             V.Get.((value_valres |> V.of_value) |>>? (mixop_ok_val, typ_valres))
+           with
+           | Some [ value_value_output ] ->
+               let id = value_id |> Interface_SpecTec.unboot_id in
+               CCache.add cache.meta.func
+                 (id.it, [ value_values_input ])
+                 (value_value_output |> V.to_value)
+           | _ -> ()
+         with Failure _ -> ());
+      V.Make.bool true |> V.to_value
 
   let cache_find_rel (values_input : Value.t list) : Value.t =
-    if not cache.meta.enabled then Value.Make.("NONE" <| [] <<| "relcache")
+    if not cache.meta.enabled then
+      V.Make.("NONE" <| [] <<| typ_relcache) |> V.to_value
     else
       let value_id, value_values_input =
         match values_input with
@@ -346,13 +393,14 @@ module Make_parametric
       let cache_result =
         CCache.find cache.meta.rel (id.it, [ value_values_input ])
       in
-      match cache_result with
+      (match cache_result with
       | Some value_values_output ->
-          Value.Make.("OK val*" <| [ value_values_output ] <<| "relcache")
-      | None -> Value.Make.("NONE" <| [] <<| "relcache")
+          V.Make.("OK val*" <| [ value_values_output |> V.of_value ] <<| typ_relcache)
+      | None -> V.Make.("NONE" <| [] <<| typ_relcache))
+      |> V.to_value
 
   let cache_add_rel_maybe (values_input : Value.t list) : Value.t =
-    if not cache.meta.enabled then Value.Make.bool true
+    if not cache.meta.enabled then V.Make.bool true |> V.to_value
     else
       let value_seff, value_id, value_values_input, value_valsres =
         match values_input with
@@ -362,25 +410,28 @@ module Make_parametric
             error_no_region
               "unexpected number of arguments to cache_add_rel_maybe"
       in
-      let seff = value_seff |> Value.Get.bool in
+      let seff = value_seff |> V.of_value |> V.Get.bool in
       (if not seff then
-         match Value.Get.(value_valsres |>>? "OK val*") with
-         | Some [ value_values_output ] ->
-             let id = value_id |> Interface_SpecTec.unboot_id in
-             CCache.add cache.meta.rel
-               (id.it, [ value_values_input ])
-               value_values_output
-         | _ -> ());
-      Value.Make.bool true
+         try
+           match
+             V.Get.((value_valsres |> V.of_value) |>>? (mixop_ok_vals, typ_valsres))
+           with
+           | Some [ value_values_output ] ->
+               let id = value_id |> Interface_SpecTec.unboot_id in
+               CCache.add cache.meta.rel
+                 (id.it, [ value_values_input ])
+                 (value_values_output |> V.to_value)
+           | _ -> ()
+         with Failure _ -> ());
+      V.Make.bool true |> V.to_value
 
   let cache_checkpoint (values_input : Value.t list) : Value.t =
     (match values_input with
     | [] -> ()
     | _ -> error_no_region "unexpected number of arguments to cache_checkpoint");
     let checkpoint = Runner.Interface.checkpoint () in
-    Value.Make.extern
-      (Typ.Make.var ("cachepoint" $ no_region) [])
-      (`Int checkpoint)
+    V.Make.extern (Typ.Make.var ("cachepoint" $ no_region) []) (`Int checkpoint)
+    |> V.to_value
 
   let cache_seff (values_input : Value.t list) : Value.t =
     let value_cachepoint_before, value_cachepoint_after =
@@ -390,17 +441,17 @@ module Make_parametric
       | _ -> error_no_region "unexpected number of arguments to cache_seff"
     in
     let cachepoint_before =
-      value_cachepoint_before |> Value.Get.extern |> function
+      value_cachepoint_before |> V.of_value |> V.Get.extern |> function
       | `Int i -> i
       | _ -> error_no_region "unexpected type for cachepoint_before"
     in
     let cachepoint_after =
-      value_cachepoint_after |> Value.Get.extern |> function
+      value_cachepoint_after |> V.of_value |> V.Get.extern |> function
       | `Int i -> i
       | _ -> error_no_region "unexpected type for cachepoint_after"
     in
     let seff = Runner.Interface.seff cachepoint_before cachepoint_after in
-    Value.Make.bool seff
+    V.Make.bool seff |> V.to_value
 
   (* Extern handlers *)
 
