@@ -102,8 +102,7 @@ module Make (V : Runtime.Valrep.SAFE) = struct
         Sl.HoldH (block, dangle)
     | _ -> error "@unboot_hold_holdcase"
 
-  and unboot_nothold_holdcase (_at : region) (values : V.t list) : Sl.holdcase
-      =
+  and unboot_nothold_holdcase (_at : region) (values : V.t list) : Sl.holdcase =
     match values with
     | [ value_block ] ->
         let block = unboot_block value_block in
@@ -250,8 +249,7 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   and unboot_instrs (value_instrs : V.t) : Sl.instr list =
     value_instrs |> V.Get.list |> List.map unboot_instr
 
-  and unboot_block (value_block : V.t) : Sl.block =
-    value_block |> unboot_instrs
+  and unboot_block (value_block : V.t) : Sl.block = value_block |> unboot_instrs
 
   and unboot_block_opt (value_block_opt : V.t) : Sl.block option =
     value_block_opt |> V.Get.opt |> Option.map unboot_block
@@ -273,8 +271,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   (* Definitions *)
 
   let unboot_def (value_def : V.t) : Sl.def =
-    Dispatch.dispatch value_def Il_typs.typ_defn !unboot_def_mtchtbl
-      (fun _ _ -> error "@unboot_def")
+    Dispatch.dispatch value_def Il_typs.typ_defn !unboot_def_mtchtbl (fun _ _ ->
+        error "@unboot_def")
 
   let unboot_extern_typ_def (at : region) (values : V.t list) : Sl.def =
     match values with
@@ -358,7 +356,12 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   let unboot_func_def (at : region) (values : V.t list) : Sl.def =
     match values with
     | [
-     value_id; value_tparams; value_params; value_typ; value_block; value_elsblock;
+     value_id;
+     value_tparams;
+     value_params;
+     value_typ;
+     value_block;
+     value_elsblock;
     ] ->
         let id = unboot_id value_id in
         let tparams = unboot_tparams value_tparams in

@@ -68,7 +68,11 @@ module type INTERFACE_SPECTEC = sig
      all, since [Valrep.V_value.t = Value.t]. *)
 
   val call_builtin_value :
-    (Value.t -> unit) -> Domain.Lib.Id.t -> Typ.t list -> Value.t list -> Value.t
+    (Value.t -> unit) ->
+    Domain.Lib.Id.t ->
+    Typ.t list ->
+    Value.t list ->
+    Value.t
 end
 
 (* The null layer *)
@@ -126,7 +130,9 @@ module Make_null
     in
     let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
     let typs = value_typs |> V.of_value |> Interface_SpecTec.unboot_typs in
-    let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
+    let values =
+      value_values |> V.of_value |> Interface_SpecTec.unboot_values
+    in
     let value_output =
       Interface_SpecTec.call_builtin_value (fun _ -> ()) id typs values
     in
@@ -319,7 +325,9 @@ module Make_parametric
     Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
     let typs = value_typs |> V.of_value |> Interface_SpecTec.unboot_typs in
-    let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
+    let values =
+      value_values |> V.of_value |> Interface_SpecTec.unboot_values
+    in
     let value_output =
       Interface_SpecTec.call_builtin_value (fun _ -> ()) id typs values
     in
@@ -340,7 +348,9 @@ module Make_parametric
     Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
     let typs = value_typs |> V.of_value |> Interface_SpecTec.unboot_typs in
-    let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
+    let values =
+      value_values |> V.of_value |> Interface_SpecTec.unboot_values
+    in
     let value_output =
       match Runner.Interp.eval_func id.it typs values with
       | Pass value_output -> value_output
@@ -361,7 +371,9 @@ module Make_parametric
     in
     Interface_SpecTec.push_cache cache.interface;
     let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
-    let values = value_values |> V.of_value |> Interface_SpecTec.unboot_values in
+    let values =
+      value_values |> V.of_value |> Interface_SpecTec.unboot_values
+    in
     let values_output =
       match Runner.Interp.eval_rel id.it values with
       | Pass values_output -> values_output
@@ -408,7 +420,8 @@ module Make_parametric
       in
       (match cache_result with
       | Some value_value_output ->
-          V.Make.("OK val" <| [ value_value_output |> V.of_value ] <<| typ_funccache)
+          V.Make.(
+            "OK val" <| [ value_value_output |> V.of_value ] <<| typ_funccache)
       | None -> V.Make.("NONE" <| [] <<| typ_funccache))
       |> V.to_value
 
@@ -427,7 +440,7 @@ module Make_parametric
       (if not seff then
          try
            match
-             V.Get.((value_valres |> V.of_value) |>>? (mixop_ok_val, typ_valres))
+             V.Get.(value_valres |> V.of_value |>>? (mixop_ok_val, typ_valres))
            with
            | Some [ value_value_output ] ->
                let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
@@ -454,7 +467,8 @@ module Make_parametric
       in
       (match cache_result with
       | Some value_values_output ->
-          V.Make.("OK val*" <| [ value_values_output |> V.of_value ] <<| typ_relcache)
+          V.Make.(
+            "OK val*" <| [ value_values_output |> V.of_value ] <<| typ_relcache)
       | None -> V.Make.("NONE" <| [] <<| typ_relcache))
       |> V.to_value
 
@@ -473,7 +487,8 @@ module Make_parametric
       (if not seff then
          try
            match
-             V.Get.((value_valsres |> V.of_value) |>>? (mixop_ok_vals, typ_valsres))
+             V.Get.(
+               value_valsres |> V.of_value |>>? (mixop_ok_vals, typ_valsres))
            with
            | Some [ value_values_output ] ->
                let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in

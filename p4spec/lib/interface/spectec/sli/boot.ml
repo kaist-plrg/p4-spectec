@@ -67,7 +67,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
         boot_let_instr at exp_l exp_r iterinstrs block
     | RuleI (id, notexp, inputs, iterinstrs, block) ->
         boot_rule_instr at id notexp inputs iterinstrs block
-    | ResultI ((nottyp, inputs), exps) -> boot_result_instr at nottyp inputs exps
+    | ResultI ((nottyp, inputs), exps) ->
+        boot_result_instr at nottyp inputs exps
     | ReturnI exp -> boot_return_instr at exp
     | DebugI exp -> boot_debug_instr at exp
 
@@ -136,8 +137,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     let values_cases = List.map boot_case cases in
     V.Make.list (Runtime.Type.Typ.Make.list typ_case) values_cases
 
-  and boot_case_instr (at : region) (exp : Sl.exp) (cases : Sl.case list) :
-      V.t =
+  and boot_case_instr (at : region) (exp : Sl.exp) (cases : Sl.case list) : V.t
+      =
     let value_exp = boot_exp exp in
     let value_cases = boot_cases cases in
     case_at at (mop_case_instr <|! [ value_exp; value_cases ]) typ_instr
@@ -168,8 +169,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
       typ_instr
 
   and boot_rule_instr (at : region) (id : Sl.id) (notexp : Sl.notexp)
-      (inputs : Hints.Input.t) (iterinstrs : Sl.iterinstr list) (block : Sl.block)
-      : V.t =
+      (inputs : Hints.Input.t) (iterinstrs : Sl.iterinstr list)
+      (block : Sl.block) : V.t =
     let value_id = boot_id id in
     let exps = Mixfix.args notexp in
     let exps_in, exps_out = Hints.Input.split inputs exps in
@@ -180,7 +181,11 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     case_at at
       (mop_rule_instr
       <|! [
-            value_id; value_exps_in; value_exps_out; value_iterinstrs; value_block;
+            value_id;
+            value_exps_in;
+            value_exps_out;
+            value_iterinstrs;
+            value_block;
           ])
       typ_instr
 
@@ -309,8 +314,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
       <|! [ value_id; value_tparams; value_params; value_typ ])
       typ_defn
 
-  and boot_builtin_func_def (at : region) (id : Sl.id) (tparams : Sl.tparam list)
-      (params : Sl.param list) (typ : Sl.typ) : V.t =
+  and boot_builtin_func_def (at : region) (id : Sl.id)
+      (tparams : Sl.tparam list) (params : Sl.param list) (typ : Sl.typ) : V.t =
     let value_id = boot_id id in
     let value_tparams = boot_tparams tparams in
     let value_params = boot_params params in

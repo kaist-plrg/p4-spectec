@@ -158,10 +158,10 @@ module SpecTec_IL = struct
     type vt = V.t
 
     let unparse_program (value_script : Value.t) : string =
-      Il.Print.string_of_spec
-        (Unboot.unboot_script (V.of_value value_script))
+      Il.Print.string_of_spec (Unboot.unboot_script (V.of_value value_script))
 
     let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
+
     let boot_values (values : Value.t list) : vt =
       Boot.boot_values (values : Il.value list)
 
@@ -171,8 +171,7 @@ module SpecTec_IL = struct
 
     (* Builtins *)
 
-    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t =
-    struct
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
       type vt = V.t
 
       module F = Builtin.Call.Make_funcs (V)
@@ -273,10 +272,10 @@ module SpecTec_SL = struct
     type vt = V.t
 
     let unparse_program (value_script : Value.t) : string =
-      Sl.Print.string_of_spec
-        (Unboot.unboot_script (V.of_value value_script))
+      Sl.Print.string_of_spec (Unboot.unboot_script (V.of_value value_script))
 
     let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
+
     let boot_values (values : Value.t list) : vt =
       Boot.boot_values (values : Il.value list)
 
@@ -286,8 +285,7 @@ module SpecTec_SL = struct
 
     (* Builtins *)
 
-    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t =
-    struct
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
       type vt = V.t
 
       module F = Builtin.Call.Make_funcs (V)

@@ -210,8 +210,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   (* Definitions *)
 
   let unboot_def (value_def : V.t) : Il.def =
-    Dispatch.dispatch value_def Il_typs.typ_defn !unboot_def_mtchtbl
-      (fun _ _ -> error "@unboot_def")
+    Dispatch.dispatch value_def Il_typs.typ_defn !unboot_def_mtchtbl (fun _ _ ->
+        error "@unboot_def")
 
   and unboot_extern_typ_def (at : region) (values : V.t list) : Il.def =
     match values with

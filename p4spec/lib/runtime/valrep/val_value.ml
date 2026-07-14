@@ -17,7 +17,6 @@ module V_value : Sig.VAL with type t = Value.t = struct
      is irrelevant. *)
   let marshal (_typ : Typ.t) (x : t) : Value.t = x
   let unmarshal (_typ : Typ.t) (v : Value.t) : t = v
-
   let at (x : t) : region = x.at
 
   module Get = struct

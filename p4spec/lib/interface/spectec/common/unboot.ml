@@ -98,8 +98,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   (* Types *)
 
   and unboot_typ (value_typ : V.t) : Il.typ =
-    Dispatch.dispatch value_typ Il_typs.typ_typ !unboot_typ_mtchtbl
-      (fun _ _ -> error "@unboot_typ")
+    Dispatch.dispatch value_typ Il_typs.typ_typ !unboot_typ_mtchtbl (fun _ _ ->
+        error "@unboot_typ")
 
   and unboot_typs (value_typs : V.t) : Il.typ list =
     value_typs |> V.Get.list |> List.map unboot_typ
@@ -358,8 +358,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   (* Arguments *)
 
   and unboot_arg (value_arg : V.t) : Il.arg =
-    Dispatch.dispatch value_arg Il_typs.typ_arg !unboot_arg_mtchtbl
-      (fun _ _ -> error "@unboot_arg")
+    Dispatch.dispatch value_arg Il_typs.typ_arg !unboot_arg_mtchtbl (fun _ _ ->
+        error "@unboot_arg")
 
   and unboot_exp_arg (at : region) (values : V.t list) : Il.arg =
     match values with
@@ -381,8 +381,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   (* Expressions *)
 
   and unboot_exp (value_exp : V.t) : Il.exp =
-    Dispatch.dispatch value_exp Il_typs.typ_exp !unboot_exp_mtchtbl
-      (fun _ _ -> error "@unboot_exp")
+    Dispatch.dispatch value_exp Il_typs.typ_exp !unboot_exp_mtchtbl (fun _ _ ->
+        error "@unboot_exp")
 
   and unboot_exps (value_exps : V.t) : Il.exp list =
     value_exps |> V.Get.list |> List.map unboot_exp
@@ -704,9 +704,11 @@ module Make (V : Runtime.Valrep.SAFE) = struct
   and unboot_nil_pattern (_ : region) (_ : V.t list) : Il.pattern =
     Il.ListP `Nil
 
-  and unboot_some_pattern (_ : region) (_ : V.t list) : Il.pattern = Il.OptP `Some
+  and unboot_some_pattern (_ : region) (_ : V.t list) : Il.pattern =
+    Il.OptP `Some
 
-  and unboot_none_pattern (_ : region) (_ : V.t list) : Il.pattern = Il.OptP `None
+  and unboot_none_pattern (_ : region) (_ : V.t list) : Il.pattern =
+    Il.OptP `None
 
   (* Iter expressions *)
 

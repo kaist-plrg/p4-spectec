@@ -949,7 +949,6 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
       | _ -> None)
     spec
 
-
 (* [marshal_typed]/[unmarshal_typed]: the per-type [V_native] persist bridge.
    Dispatched by matching the value's spec type [Typ.t] directly — call sites pass
    the type they already hold (backend-sim's [Typs.*], the builtins' element-type

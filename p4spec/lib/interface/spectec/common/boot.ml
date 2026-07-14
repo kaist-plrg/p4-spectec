@@ -177,7 +177,9 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     | ExternV json -> boot_extern_value at json
 
   and boot_value_opt (value_opt : Il.value option) : V.t =
-    V.Make.opt (Runtime.Type.Typ.Make.opt typ_val) (Option.map boot_value value_opt)
+    V.Make.opt
+      (Runtime.Type.Typ.Make.opt typ_val)
+      (Option.map boot_value value_opt)
 
   and boot_values (values : Il.value list) : V.t =
     let values_values = List.map boot_value values in
@@ -412,8 +414,7 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     let value_typ = boot_typ typ in
     case_at at (mop_sub_exp <|! [ value_exp; value_typ ]) typ_exp
 
-  and boot_match_exp (at : region) (exp : Il.exp) (pattern : Il.pattern) : V.t
-      =
+  and boot_match_exp (at : region) (exp : Il.exp) (pattern : Il.pattern) : V.t =
     let value_exp = boot_exp exp in
     let value_pattern = boot_pattern pattern in
     case_at at (mop_match_exp <|! [ value_exp; value_pattern ]) typ_exp
@@ -441,8 +442,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     let values_expfields = List.map boot_expfield expfields in
     V.Make.list (Runtime.Type.Typ.Make.list typ_expfield) values_expfields
 
-  and boot_struct_exp (at : region) (expfields : (Il.atom * Il.exp) list) :
-      V.t =
+  and boot_struct_exp (at : region) (expfields : (Il.atom * Il.exp) list) : V.t
+      =
     let value_expfields = boot_expfields expfields in
     case_at at (mop_struct_exp <|! [ value_expfields ]) typ_exp
 
@@ -506,9 +507,7 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     let value_id = boot_id id in
     let value_targs = boot_targs targs in
     let value_args = boot_args args in
-    case_at at
-      (mop_call_exp <|! [ value_id; value_targs; value_args ])
-      typ_exp
+    case_at at (mop_call_exp <|! [ value_id; value_targs; value_args ]) typ_exp
 
   and boot_iter_exp (at : region) (exp : Il.exp) (iterexp : Il.iterexp) : V.t =
     let value_exp = boot_exp exp in

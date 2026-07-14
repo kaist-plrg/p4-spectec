@@ -4,7 +4,6 @@ open Util.Source
 (* Il.typ mirrors of Typs constants (same underlying type, different alias path) *)
 
 let var (name : string) : Il.typ = Il.VarT (name $ no_region, []) $ no_region
-
 let typ_val = var "val"
 let typ_typ = var "typ"
 let typ_deftyp = var "deftyp"

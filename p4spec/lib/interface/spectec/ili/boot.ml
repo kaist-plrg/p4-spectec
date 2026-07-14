@@ -73,8 +73,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
     let value_exps = boot_exps exps in
     case_at at (mop_if_hold_prem <|! [ value_id; value_exps ]) typ_prem
 
-  and boot_if_nothold_prem (at : region) (id : Il.id) (notexp : Il.notexp) :
-      V.t =
+  and boot_if_nothold_prem (at : region) (id : Il.id) (notexp : Il.notexp) : V.t
+      =
     let exps = Mixfix.args notexp in
     let value_id = boot_id id in
     let value_exps = boot_exps exps in
@@ -255,9 +255,8 @@ module Make (V : Runtime.Valrep.SAFE) = struct
           ])
       typ_defn
 
-  and boot_extern_func_def (at : region) (id : Il.id)
-      (tparams : Il.tparam list) (params : Il.param list) (typ : Il.typ) :
-      V.t =
+  and boot_extern_func_def (at : region) (id : Il.id) (tparams : Il.tparam list)
+      (params : Il.param list) (typ : Il.typ) : V.t =
     let value_id = boot_id id in
     let value_tparams = boot_tparams tparams in
     let value_params = boot_params params in
@@ -268,8 +267,7 @@ module Make (V : Runtime.Valrep.SAFE) = struct
       typ_defn
 
   and boot_builtin_func_def (at : region) (id : Il.id)
-      (tparams : Il.tparam list) (params : Il.param list) (typ : Il.typ) :
-      V.t =
+      (tparams : Il.tparam list) (params : Il.param list) (typ : Il.typ) : V.t =
     let value_id = boot_id id in
     let value_tparams = boot_tparams tparams in
     let value_params = boot_params params in
