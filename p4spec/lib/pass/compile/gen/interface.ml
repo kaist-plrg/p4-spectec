@@ -942,14 +942,6 @@ let all_typ_refs (spec : Sl.spec) : Sl.typ list =
       | _ -> None)
     spec
 
-(* Spec types that still cross a [Value.t] boundary under [V_native] and so seed
-   the marshal/unmarshal closure: [V.marshal]/[V.unmarshal] persist these into
-   yojson-serialized [Value.t] state in backend-sim (scheduler [Packet.value_ctx]
-   → [eval_context]; register payloads → [value]; register element type →
-   [type_ir]). This MUST stay in sync with the backend-sim call sites' [Typs.*]
-   constants. It is only a closure SEED; the dispatch below covers the whole
-   closure, so it is not a curated arm set. *)
-let persist_interface_names = [ "eval_context"; "value"; "type_ir" ]
 
 (* [marshal_typed]/[unmarshal_typed]: the per-type [V_native] persist bridge.
    Dispatched by matching the value's spec type [Typ.t] directly — call sites pass
@@ -1018,22 +1010,20 @@ let compile (ctx : Ctx.t) (spec : Sl.spec) ~(tid_program : string) :
     * Ml.funcdef list list
     * Ml.funcdef list =
   let all_refs = all_typ_refs spec in
-  (* Marshal/unmarshal are generated only for the closure of the types that still
-     cross a Value.t boundary on the typed path: [eval_program]'s program type
-     ([tid_program] — [p4program] for the P4 spec, [script] for spec-meta/il
-     and spec-meta/sl) and the persisted state types (picked out of [all_refs]
-     by interface name, no spec-id guessing). Builtins pass typed [Obj.t]
-     directly, so there is no builtin I/O seed: the only builtin types that
-     still marshal are the [marshal_typed] dispatch targets ([print_] argument
-     + set/map compared keys), all reachable from this persist closure;
-     [builtin_arms] below is filtered to exactly those it contains. *)
-  let marshal_seed_inames = tid_program :: persist_interface_names in
-  let typs =
-    close_types ctx
-      (List.filter
-         (fun t -> List.mem (interface_name t) marshal_seed_inames)
-         all_refs)
-  in
+  ignore tid_program;
+  (* Marshal/unmarshal are generated for every non-parametric type declared in
+     the spec ([all_refs]) — the same closure [make_case_typed]/[case_of_typed]
+     already use (see [all_typ_refs]'s comment). This used to be seeded from
+     just [eval_program]'s program type plus the types backend-sim persists,
+     as a code-size optimization. But [V.marshal] has a second caller besides
+     backend-sim's persistence: [builtin/maps.ml]'s [eq_v] calls it to derive
+     element equality for ANY map/set key type, and a spec can have map/set
+     keys that never reach that narrower persist closure — e.g. spec-meta/sl's
+     own [venv = map<varr, val>], whose key type [varr] is pure interpreter
+     bookkeeping, never part of the target program's AST or persisted state.
+     That miss failed at runtime ([marshal_typed: unknown type varr]) instead
+     of never existing. *)
+  let typs = close_types ctx all_refs in
   let groups = compute_groups ctx typs in
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
