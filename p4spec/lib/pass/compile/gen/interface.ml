@@ -692,6 +692,18 @@ module Typed = struct
     let src = if head = "map" then "set" else head in
     Ctx.find_ctors_full ctx (src $ no_region)
 
+  (* Not every spec declares every parametric head — P4's own "spec" tree has
+     no [res]/[valres] concept (that's spec-meta's own extern-call-result
+     wrapper). [make_case_typed]'s per-head arm is still safe with zero ctors
+     (it falls through to its own [wild]/[failwith]), but [case_of_typed]'s
+     per-head arm has no such fallback: a literal-string match on a head
+     whose [inner_arms] is empty compiles to a zero-case [match], a syntax
+     error, not a runtime one. Drop heads with no ctors in this spec before
+     emitting either — they correctly fall through to [case_of_typed]'s own
+     outer ["unknown typ"] instead. *)
+  let parametric_heads_present (ctx : Ctx.t) : string list =
+    List.filter (fun head -> parametric_ctors ctx head <> []) parametric_heads
+
   (* set/map -> [Obj.t set], pair -> [(Obj.t, Obj.t) pair], res -> [Obj.t res]. *)
   let parametric_scrut_typ (head : string) : Ml.typ =
     match head with
@@ -724,7 +736,7 @@ module Typed = struct
         in
         ( Ml.LitP (Printf.sprintf "%S" head),
           Ml.MatchE (Ml.VarE "mixop", inner_arms @ [ wild ]) ))
-      parametric_heads
+      (parametric_heads_present ctx)
 
   let case_parametric_arms (ctx : Ctx.t) (pool : const_pool) : Ml.arm list =
     List.map
@@ -757,7 +769,7 @@ module Typed = struct
               parametric_scrut_typ head )
         in
         (Ml.LitP (Printf.sprintf "%S" head), Ml.MatchE (scrut, inner_arms)))
-      parametric_heads
+      (parametric_heads_present ctx)
 
   let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
       Ml.funcdef =
