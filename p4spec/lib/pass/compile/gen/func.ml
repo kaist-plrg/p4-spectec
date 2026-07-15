@@ -291,8 +291,7 @@ let has_callback_param (params : param list) : bool =
       match param.it with DefP _ -> true | ExpP _ -> false)
     params
 
-let compile_defined_func (ctx : Ctx.t)
-    (extern_builtin_names : Mono.StringSet.t) (definedfunc : definedfunc) :
+let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     Ctx.t * Ml.funcdef list =
   let id, tparams, params, typ_ret, block_main, elseblock_opt, _ =
     definedfunc
@@ -313,7 +312,10 @@ let compile_defined_func (ctx : Ctx.t)
             supported for generic compilation, skipping"
            id.it);
       (ctx, []))
-    else if block_crosses_boundary_with scope extern_builtin_names all_blocks
+    else if
+      block_crosses_boundary_with scope
+        (Ctx.find_extern_builtin_names ctx)
+        all_blocks
     then
       Error.error id.at
         (Format.asprintf
@@ -334,21 +336,8 @@ let compile_defined_func (ctx : Ctx.t)
 
 (* Defs *)
 
-(* Names of extern/builtin decls — the call targets that matter to
-   [block_crosses_boundary_with]. *)
-let collect_extern_builtin_names (defs : def list) : Mono.StringSet.t =
-  List.filter_map
-    (fun (def : def) ->
-      match def.it with
-      | ExternDecD (id, _, _, _, _) | BuiltinDecD (id, _, _, _, _) ->
-          Some id.it
-      | _ -> None)
-    defs
-  |> Mono.StringSet.of_list
-
 let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
-    (extern_builtin_names : Mono.StringSet.t) (def : def) :
-    Ctx.t * Ml.funcdef list =
+    (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
   | ExternDecD (id, [], params, typ_ret, _) ->
       compile_extern_func ctx reverse_dispatch id params typ_ret
@@ -356,18 +345,14 @@ let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       compile_builtin_func ctx reverse_dispatch id params typ_ret
   | TableDecD (id, params, typ_ret, tablerows, _) ->
       compile_table_func ctx id params typ_ret tablerows
-  | FuncDecD definedfunc ->
-      compile_defined_func ctx extern_builtin_names definedfunc
+  | FuncDecD definedfunc -> compile_defined_func ctx definedfunc
   | _ -> (ctx, [])
 
 let compile_defs (ctx : Ctx.t) (defs : def list)
     (reverse_dispatch : reverse_dispatch) : Ctx.t * Ml.funcdef list =
-  let extern_builtin_names = collect_extern_builtin_names defs in
   List.fold_left
     (fun (ctx, funcdefs_ml_acc) def ->
-      let ctx, funcdefs_ml =
-        compile_def ctx reverse_dispatch extern_builtin_names def
-      in
+      let ctx, funcdefs_ml = compile_def ctx reverse_dispatch def in
       (ctx, funcdefs_ml_acc @ funcdefs_ml))
     (ctx, []) defs
 
