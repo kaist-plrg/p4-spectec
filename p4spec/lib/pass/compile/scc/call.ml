@@ -123,12 +123,10 @@ let collect_refs_def (def : def) : string list * int list =
 
 (* ── Node classification ── *)
 
-(* True for defs that compile to OCaml let-bindings (func or rel, concrete) *)
+(* True for defs that are graph nodes: funcs (ground or generic) and rels. *)
 let is_entity (def : def) : bool =
   match def.it with
-  | FuncDecD (_, tparams, _, _, _, _, _) -> tparams = []
-  | ExternDecD (_, tparams, _, _, _) -> tparams = []
-  | BuiltinDecD (_, tparams, _, _, _) -> tparams = []
+  | FuncDecD _ | ExternDecD _ | BuiltinDecD _ -> true
   | TableDecD _ | RelD _ | ExternRelD _ -> true
   | _ -> false
 

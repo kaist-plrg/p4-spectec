@@ -43,16 +43,28 @@ let add_instance (tbl : dispatch_table) ~(original : string) ~(mangled : string)
 
 (* ===== Call-site rewriting ===== *)
 
+(* True if [typ] mentions a VarT bound in [scope] — distinguishes a
+   still-symbolic call from a ground one, so we don't mangle the former. *)
+let rec typ_mentions_any (scope : StringSet.t) (typ : Il.typ) : bool =
+  match typ.it with
+  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> false
+  | Il.VarT (id, targs) ->
+      StringSet.mem id.it scope || List.exists (typ_mentions_any scope) targs
+  | Il.TupleT typs -> List.exists (typ_mentions_any scope) typs
+  | Il.IterT (typ, _) -> typ_mentions_any scope typ
+
 (* Rewrite all CallE nodes in an expression tree:
    - CallE(id, targs, args) where id.it ∈ poly_funcs and targs ≠ []
      → CallE({id with it = mangled_name}, [], args)
    - All other nodes are left unchanged (types are not substituted here). *)
 
-let rec rewrite_exp (poly_funcs : StringSet.t) (exp : Il.exp) : Il.exp =
-  { exp with it = rewrite_exp' poly_funcs exp.it }
+let rec rewrite_exp (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (exp : Il.exp) : Il.exp =
+  { exp with it = rewrite_exp' poly_funcs tparams_scope exp.it }
 
-and rewrite_exp' (poly_funcs : StringSet.t) (exp' : Il.exp') : Il.exp' =
-  let re = rewrite_exp poly_funcs in
+and rewrite_exp' (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (exp' : Il.exp') : Il.exp' =
+  let re = rewrite_exp poly_funcs tparams_scope in
   match exp' with
   | Il.BoolE _ | Il.NumE _ | Il.TextE _ | Il.VarE _ -> exp'
   | Il.UnE (op, ot, exp) -> Il.UnE (op, ot, re exp)
@@ -77,63 +89,81 @@ and rewrite_exp' (poly_funcs : StringSet.t) (exp' : Il.exp') : Il.exp' =
   | Il.IdxE (exp_l, exp_r) -> Il.IdxE (re exp_l, re exp_r)
   | Il.SliceE (exp_l, exp_m, exp_r) -> Il.SliceE (re exp_l, re exp_m, re exp_r)
   | Il.UpdE (exp_b, path, exp_u) ->
-      Il.UpdE (re exp_b, rewrite_path poly_funcs path, re exp_u)
+      Il.UpdE (re exp_b, rewrite_path poly_funcs tparams_scope path, re exp_u)
   | Il.CallE (id, targs, args)
-    when targs <> [] && StringSet.mem id.it poly_funcs ->
+    when targs <> []
+         && StringSet.mem id.it poly_funcs
+         && not (List.exists (typ_mentions_any tparams_scope) targs) ->
       let mangled = Name.mangle id.it targs in
       Il.CallE
-        ({ id with it = mangled }, [], List.map (rewrite_arg poly_funcs) args)
+        ( { id with it = mangled },
+          [],
+          List.map (rewrite_arg poly_funcs tparams_scope) args )
   | Il.CallE (id, targs, args) ->
-      Il.CallE (id, targs, List.map (rewrite_arg poly_funcs) args)
+      (* Non-poly callee, or poly callee called with still-symbolic targs —
+         leave targs untouched; Task 5 compiles these calls directly. *)
+      Il.CallE
+        (id, targs, List.map (rewrite_arg poly_funcs tparams_scope) args)
   | Il.IterE (exp, iterexp) -> Il.IterE (re exp, iterexp)
 
-and rewrite_path (poly_funcs : StringSet.t) (path : Il.path) : Il.path =
-  { path with it = rewrite_path' poly_funcs path.it }
+and rewrite_path (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (path : Il.path) : Il.path =
+  { path with it = rewrite_path' poly_funcs tparams_scope path.it }
 
-and rewrite_path' (poly_funcs : StringSet.t) (path' : Il.path') : Il.path' =
-  let re = rewrite_exp poly_funcs in
+and rewrite_path' (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (path' : Il.path') : Il.path' =
+  let re = rewrite_exp poly_funcs tparams_scope in
   match path' with
   | Il.RootP -> Il.RootP
-  | Il.IdxP (path, exp) -> Il.IdxP (rewrite_path poly_funcs path, re exp)
+  | Il.IdxP (path, exp) ->
+      Il.IdxP (rewrite_path poly_funcs tparams_scope path, re exp)
   | Il.SliceP (path, exp_l, exp_r) ->
-      Il.SliceP (rewrite_path poly_funcs path, re exp_l, re exp_r)
-  | Il.DotP (path, atom) -> Il.DotP (rewrite_path poly_funcs path, atom)
+      Il.SliceP (rewrite_path poly_funcs tparams_scope path, re exp_l, re exp_r)
+  | Il.DotP (path, atom) ->
+      Il.DotP (rewrite_path poly_funcs tparams_scope path, atom)
 
-and rewrite_arg (poly_funcs : StringSet.t) (arg : Il.arg) : Il.arg =
+and rewrite_arg (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (arg : Il.arg) : Il.arg =
   match arg.it with
-  | Il.ExpA exp -> Il.ExpA (rewrite_exp poly_funcs exp) $ arg.at
+  | Il.ExpA exp -> Il.ExpA (rewrite_exp poly_funcs tparams_scope exp) $ arg.at
   | Il.DefA _ -> arg
 
-let rewrite_notexp (poly_funcs : StringSet.t) (notexp : Sl.notexp) : Sl.notexp =
-  Mixfix.map (rewrite_exp poly_funcs) notexp
+let rewrite_notexp (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (notexp : Sl.notexp) : Sl.notexp =
+  Mixfix.map (rewrite_exp poly_funcs tparams_scope) notexp
 
-let rewrite_guard (poly_funcs : StringSet.t) (guard : Sl.guard) : Sl.guard =
+let rewrite_guard (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (guard : Sl.guard) : Sl.guard =
   match guard with
   | Sl.BoolG _ | Sl.MatchG _ -> guard
-  | Sl.CmpG (op, ot, exp) -> Sl.CmpG (op, ot, rewrite_exp poly_funcs exp)
+  | Sl.CmpG (op, ot, exp) ->
+      Sl.CmpG (op, ot, rewrite_exp poly_funcs tparams_scope exp)
   | Sl.SubG _ -> guard
-  | Sl.MemG exp -> Sl.MemG (rewrite_exp poly_funcs exp)
+  | Sl.MemG exp -> Sl.MemG (rewrite_exp poly_funcs tparams_scope exp)
 
-let rec rewrite_instr (poly_funcs : StringSet.t) (instr : Sl.instr) : Sl.instr =
-  { instr with it = rewrite_instr' poly_funcs instr.it }
+let rec rewrite_instr (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (instr : Sl.instr) : Sl.instr =
+  { instr with it = rewrite_instr' poly_funcs tparams_scope instr.it }
 
-and rewrite_instr' (poly_funcs : StringSet.t) (instr' : Sl.instr') : Sl.instr' =
-  let re = rewrite_exp poly_funcs in
-  let rb = rewrite_block poly_funcs in
+and rewrite_instr' (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (instr' : Sl.instr') : Sl.instr' =
+  let re = rewrite_exp poly_funcs tparams_scope in
+  let rb = rewrite_block poly_funcs tparams_scope in
   match instr' with
   | Sl.IfI (exp, iterexps, block, dangle) ->
       Sl.IfI (re exp, iterexps, rb block, dangle)
   | Sl.HoldI (id, notexp, iterexps, holdcase) ->
       Sl.HoldI
         ( id,
-          rewrite_notexp poly_funcs notexp,
+          rewrite_notexp poly_funcs tparams_scope notexp,
           iterexps,
-          rewrite_holdcase poly_funcs holdcase )
+          rewrite_holdcase poly_funcs tparams_scope holdcase )
   | Sl.CaseI (exp, cases, dangle) ->
       Sl.CaseI
         ( re exp,
           List.map
-            (fun (guard, block) -> (rewrite_guard poly_funcs guard, rb block))
+            (fun (guard, block) ->
+              (rewrite_guard poly_funcs tparams_scope guard, rb block))
             cases,
           dangle )
   | Sl.GroupI (id, rel_sig, exps, block) ->
@@ -142,17 +172,22 @@ and rewrite_instr' (poly_funcs : StringSet.t) (instr' : Sl.instr') : Sl.instr' =
       Sl.LetI (re lhs_exp, re rhs_exp, iterinstrs, rb block)
   | Sl.RuleI (id, notexp, hints, iterinstrs, block) ->
       Sl.RuleI
-        (id, rewrite_notexp poly_funcs notexp, hints, iterinstrs, rb block)
+        ( id,
+          rewrite_notexp poly_funcs tparams_scope notexp,
+          hints,
+          iterinstrs,
+          rb block )
   | Sl.ResultI (rel_sig, exps) -> Sl.ResultI (rel_sig, List.map re exps)
   | Sl.ReturnI exp -> Sl.ReturnI (re exp)
   | Sl.DebugI exp -> Sl.DebugI (re exp)
 
-and rewrite_block (poly_funcs : StringSet.t) (block : Sl.block) : Sl.block =
-  List.map (rewrite_instr poly_funcs) block
+and rewrite_block (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (block : Sl.block) : Sl.block =
+  List.map (rewrite_instr poly_funcs tparams_scope) block
 
-and rewrite_holdcase (poly_funcs : StringSet.t) (holdcase : Sl.holdcase) :
-    Sl.holdcase =
-  let rb = rewrite_block poly_funcs in
+and rewrite_holdcase (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
+    (holdcase : Sl.holdcase) : Sl.holdcase =
+  let rb = rewrite_block poly_funcs tparams_scope in
   match holdcase with
   | Sl.BothH (block_hold, block_nhold) ->
       Sl.BothH (rb block_hold, rb block_nhold)
@@ -160,29 +195,28 @@ and rewrite_holdcase (poly_funcs : StringSet.t) (holdcase : Sl.holdcase) :
   | Sl.NotHoldH (block, dangle) -> Sl.NotHoldH (rb block, dangle)
 
 let rewrite_def (poly_funcs : StringSet.t) (def : Sl.def) : Sl.def =
-  let rb = rewrite_block poly_funcs in
   match def.it with
   | Sl.FuncDecD (id, tparams, params, typ_ret, block, elseblock, hints) ->
+      let scope =
+        StringSet.of_list (List.map (fun (tp : Il.tparam) -> tp.it) tparams)
+      in
+      let rb = rewrite_block poly_funcs scope in
       {
         def with
         it =
           Sl.FuncDecD
-            ( id,
-              tparams,
-              params,
-              typ_ret,
-              rb block,
-              Option.map rb elseblock,
-              hints );
+            (id, tparams, params, typ_ret, rb block, Option.map rb elseblock, hints);
       }
   | Sl.RelD (id, rel_sig, exps, block, elseblock, hints) ->
+      (* RelD has no tparams of its own — always ground scope. *)
+      let rb = rewrite_block poly_funcs StringSet.empty in
       {
         def with
         it =
           Sl.RelD
             ( id,
               rel_sig,
-              List.map (rewrite_exp poly_funcs) exps,
+              List.map (rewrite_exp poly_funcs StringSet.empty) exps,
               rb block,
               Option.map rb elseblock,
               hints );
@@ -281,18 +315,6 @@ let monomorphize (spec : Sl.spec) : Sl.spec * dispatch_table =
     (* Step 5: rewrite all call sites in the full spec (including new defs) *)
     let combined_spec = spec @ List.rev !new_defs in
     let rewritten = rewrite_spec poly_funcs combined_spec in
-    (* Step 6: remove original poly FuncDecDs/BuiltinDecDs/ExternDecDs *)
-    let filtered =
-      List.filter
-        (fun def ->
-          match def.it with
-          | Sl.FuncDecD (id, tparams, _, _, _, _, _) ->
-              not (tparams <> [] && StringSet.mem id.it poly_funcs)
-          | Sl.BuiltinDecD (id, tparams, _, _, _) ->
-              not (tparams <> [] && StringSet.mem id.it poly_funcs)
-          | Sl.ExternDecD (id, tparams, _, _, _) ->
-              not (tparams <> [] && StringSet.mem id.it poly_funcs)
-          | _ -> true)
-        rewritten
-    in
-    (filtered, dispatch_table)
+    (* Step 6: keep generic originals alive — Task 4/5 compile them,
+       Task 6 makes them reachable from eval_func. *)
+    (rewritten, dispatch_table)
