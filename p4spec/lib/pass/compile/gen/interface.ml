@@ -708,8 +708,8 @@ and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
   | _ when typ_mentions tparams typ ->
       failwith
         (Printf.sprintf
-           "resolve_unmarshal: %s: type parameter used inside an \
-            unsupported container at a boundary call"
+           "resolve_unmarshal: %s: type parameter used inside an unsupported \
+            container at a boundary call"
            (Sl.Print.string_of_typ typ))
   | _ -> Ml.VarE ("unmarshal_" ^ interface_name typ)
 
@@ -771,12 +771,38 @@ let compute_groups (ctx : Ctx.t) (typs : Sl.typ list) : Sl.typ list list =
     let sccs = Scc.Tarjan.tarjan n adj in
     List.map (fun scc -> List.map (fun i -> typs_arr.(i)) scc) sccs
 
+(* name -> [Obj.t]-erased marshal_<name>/unmarshal_<name> pair, used by
+   [eval_func]'s generic arm. *)
+let compile_registry (typs : Sl.typ list) : Ml.toplevel =
+  let entries_ml =
+    List.map
+      (fun typ ->
+        let name = interface_name typ in
+        Ml.TupleE
+          [
+            Ml.StrE name;
+            Ml.TupleE
+              [
+                Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE ("marshal_" ^ name) ]);
+                Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE ("unmarshal_" ^ name) ]);
+              ];
+          ])
+      typs
+  in
+  Ml.Let
+    ( "interface_registry_",
+      Ml.AppE
+        ( Ml.LitE "Hashtbl.of_seq",
+          [ Ml.AppE (Ml.LitE "List.to_seq", [ Ml.ListE entries_ml ]) ] ) )
+
 let compile (ctx : Ctx.t) (spec : Sl.spec) :
-    Ml.toplevel list * Ml.funcdef list list * Ml.funcdef list list =
+    Ml.toplevel list * Ml.funcdef list list * Ml.funcdef list list * Ml.toplevel
+    =
   let typs = collect_types ctx spec in
   let groups = compute_groups ctx typs in
   let pool = make_pool () in
   let marshal_groups = List.map (List.map (Marshal.compile ctx pool)) groups in
   let unmarshal_groups = List.map (List.map (Unmarshal.compile ctx)) groups in
   let const_decls = List.rev_map (fun (n, e) -> Ml.Let (n, e)) pool.consts in
-  (const_decls, marshal_groups, unmarshal_groups)
+  let registry_ml = compile_registry typs in
+  (const_decls, marshal_groups, unmarshal_groups, registry_ml)

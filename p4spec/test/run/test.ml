@@ -165,8 +165,62 @@ let cover_run_command =
      fun () ->
        cover_run mode path_spec relname includes_p4 excludes_p4 testdirs_p4)
 
+(* Direct [eval_func] test (Task 6): [has_dup_<X>] is generic and is never
+   instantiated at [text] by any ground call site in spec/p4-comp, so this
+   only succeeds if [eval_func] can build [text]'s witnesses at runtime. *)
+
+let eval_func_has_dup_test () : unit =
+  let module Extern_stub = struct
+    module Cache = struct
+      let cache_on () = ()
+      let cache_off () = ()
+    end
+
+    let eval_extern_rel (_ : string) (_ : Runtime.Value.t list) : rel_result =
+      failwith "eval_func_has_dup_test: unexpected extern relation call"
+
+    let eval_extern_func (_ : string) (_ : Runtime.Type.Typ.t list)
+        (_ : Runtime.Value.t list) : func_result =
+      failwith "eval_func_has_dup_test: unexpected extern function call"
+
+    let checkpoint () : int = 0
+    let seff (_ : int) (_ : int) : bool = false
+    let clear () : unit = ()
+    let init_mode (_ : mode) : unit = ()
+  end in
+  let module Interp =
+    Backend_ocaml.Interp_ml.Make (Interface.P4) (Extern_stub) ()
+  in
+  Interp.init ~cache:false ~det:false ~guard:false ();
+  let typ_text = Runtime.Type.Typ.Make.text in
+  let value_dup = Runtime.Value.Make.text "dup" in
+  let value_args =
+    Runtime.Value.Make.list
+      (Runtime.Type.Typ.Make.list typ_text)
+      [ value_dup; value_dup ]
+  in
+  match Interp.eval_func "has_dup_" [ typ_text ] [ value_args ] with
+  | Pass value ->
+      if Runtime.Value.Get.bool value then
+        print_endline
+          "[PASS] eval_func \"has_dup_\" at text (no ground call site) \
+           returned true"
+      else
+        failwith "eval_func_has_dup_test: expected true (duplicate), got false"
+  | Fail (_, msg) ->
+      failwith
+        (Printf.sprintf "eval_func_has_dup_test: eval_func failed: %s" msg)
+
+let eval_func_command =
+  Core.Command.basic ~summary:"direct eval_func test (Task 6)"
+    (Core.Command.Param.return eval_func_has_dup_test)
+
 let command =
   Core.Command.group ~summary:"p4spec-test-run"
-    [ ("run", run_command); ("cover-run", cover_run_command) ]
+    [
+      ("run", run_command);
+      ("cover-run", cover_run_command);
+      ("eval-func", eval_func_command);
+    ]
 
 let () = Command_unix.run ~version command

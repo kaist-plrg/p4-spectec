@@ -61,7 +61,7 @@ let compile_spec ?(name = "") (path_out : string)
   in
   (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
   let toplevels_interface_ml =
-    let const_decls, marshal_groups, unmarshal_groups =
+    let const_decls, marshal_groups, unmarshal_groups, registry_ml =
       Gen.Interface.compile ctx spec
     in
     let to_tops groups =
@@ -71,6 +71,7 @@ let compile_spec ?(name = "") (path_out : string)
         groups
     in
     const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
+    @ [ registry_ml ]
   in
   (* Logic groups — one Ml.LetRec per SCC group, in topo order. The heavy code
      lives at module top-level (no longer inside the functor), reading the
@@ -97,6 +98,7 @@ let compile_spec ?(name = "") (path_out : string)
     in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     [
+      Ml.Raw Template.Split.interface_name_fn;
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.Raw Template.Functor.eval_program;
     ]
