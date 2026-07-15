@@ -293,10 +293,8 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
       print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
       ^ print_expr ~level:1 expr_body
   | _ ->
-      (* Explicit forall, spelled out — required for mutual/self-recursive
-         generic calls that instantiate at a different type than the
-         member's own parameters (OCaml won't infer this inside a
-         [let rec]). *)
+      (* Explicit forall: OCaml can't infer instantiation at a different
+         type than the member's own params inside a [let rec]. *)
       let quantifier = String.concat " " (List.map (fun t -> "'" ^ t) tparams) in
       let param_typ_strs =
         List.map
