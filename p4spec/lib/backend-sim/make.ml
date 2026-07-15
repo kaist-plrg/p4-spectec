@@ -29,7 +29,7 @@ module Make
   end
 
   module Stack_v = MakeStack (Runtime.Valrep.V_value)
-  module Stack_n = MakeStack (Backend_ocaml.Val_native.V_native)
+  module Stack_n = MakeStack (Backend_ocaml_p4.Val_native.V_native)
 
   (* Active mode, set by [MakeExtern.init_mode] (the runner calls it from [init]);
      read by the extern dispatch and the STF runner to pick the stack. *)
@@ -41,7 +41,7 @@ module Make
      [Interface.Builtins] hands out the interface's own builtin set + EXT at any
      rep, so the [V_native] instance matches whatever [Interface] uses at
      [V_value] (no reach-in to the builtin library or a hardcoded EXT). *)
-  module Builtin_t = Interface.Builtins (Backend_ocaml.Val_native.V_native)
+  module Builtin_t = Interface.Builtins (Backend_ocaml_p4.Val_native.V_native)
 
   (* Mode-aware [Interface] for the runner. Builtins are part of the interface,
      but the compiled ML path needs the typed [V_native] instance: under ML the
@@ -148,7 +148,7 @@ module Make
   include (
     Runner.Make.Make_rec (Interface_sim) (MakeExtern) (MakeInterp_IL)
       (MakeInterp_SL)
-      (Backend_ocaml.Interp_ml.Make) :
+      (Backend_ocaml_p4.Interp_ml.Make) :
         RUNNER)
 
   (* Logger *)
@@ -498,7 +498,7 @@ module Make
     RunStf (Runtime.Valrep.V_value) (Stack_v.Arch) (Stack_v.Table)
 
   module RunStf_t =
-    RunStf (Backend_ocaml.Val_native.V_native) (Stack_n.Arch) (Stack_n.Table)
+    RunStf (Backend_ocaml_p4.Val_native.V_native) (Stack_n.Arch) (Stack_n.Table)
 
   (* Dispatch to the stack matching the active mode (ML drives the typed stack). *)
   let run_stf_test (includes_p4 : string list) (path_p4 : string)

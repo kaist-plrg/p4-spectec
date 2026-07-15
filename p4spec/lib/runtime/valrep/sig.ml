@@ -10,12 +10,13 @@
 
    The two representations:
      - [V_value] (here in [valrep]): t = Value.t, for the IL/SL interpreter.
-     - [V_native] (in backend-ocaml): t = Obj.t holding native compiled values,
-       so a boundary crossing is an O(1) box/unbox instead of a deep conversion.
+     - [V_native] (in backend-ocaml-p4): t = Obj.t holding native compiled
+       values, so a boundary crossing is an O(1) box/unbox instead of a deep
+       conversion.
 
    These signatures sit at the bottom of the boundary stack so [builtin],
    [interface], and [backend-sim] can all be functors over them. [V_native]
-   stays in [backend-ocaml] because its body needs the generated symbols. *)
+   stays in [backend-ocaml-p4] because its body needs the generated symbols. *)
 
 module Value = Value
 module Typ = Type.Typ

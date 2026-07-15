@@ -1,4 +1,4 @@
-(* Stub Dispatch for the [spec_parts] library — copied into [compiled/] by
+(* Stub Dispatch for the [spec_parts_p4] library — copied into [compiled/] by
    `make restore-stub`. Every entry point fails, telling the user to generate
    the real interpreter. Overwritten by `make gen-ocaml`. *)
 
@@ -24,8 +24,8 @@ let unmarshal_program (_value : Value.t) : Value.t =
   failwith "ML interpreter: run `make gen-ocaml` to generate it"
 
 (* Typed mixop bridges — re-exported by the real Dispatch from the generated
-   parts. Stubbed here so the [spec_parts] surface stays stable when the stub is
-   in place (`make build`). *)
+   parts. Stubbed here so the [spec_parts_p4] surface stays stable when the
+   stub is in place (`make build`). *)
 
 let make_case_typed (_mixop : Domain.Mixfix.mixop) (_args : Obj.t list)
     (_typ : Typ.t) : Obj.t =

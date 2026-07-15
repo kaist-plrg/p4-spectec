@@ -45,12 +45,12 @@ let unmarshal_program (value : Value.t) : Value.t =
 (* The public functor contract, preserved structurally.
 
    This is the full content of the thin [interp_ml.ml] shell. The heavy code
-   lives in the separate [spec_parts] library ([Spec_parts.Ctx] /
-   [Spec_parts.Dispatch] / [Spec_parts.Part_NNN]); the shell only builds its
-   per-instance [ctx__] and routes the three dispatch entry points through
-   [with_ctx]. [name] selects which compiled part-library to reference, so
-   multiple compiled specs can coexist ([Spec_parts] for P4's default empty
-   name, [Spec_parts_il]/[Spec_parts_sl] etc. otherwise). *)
+   lives in the separate [spec_parts_<name>] library ([Spec_parts_<name>.Ctx]
+   / [.Dispatch] / [.Part_NNN]); the shell only builds its per-instance
+   [ctx__] and routes the four dispatch entry points through [with_ctx].
+   [name] selects which compiled part-library to reference, so multiple
+   compiled specs can coexist ([Spec_parts_p4], [Spec_parts_il],
+   [Spec_parts_sl], ...). *)
 let make (name : string) : string =
   let module_name = Split.module_name name in
   Printf.sprintf

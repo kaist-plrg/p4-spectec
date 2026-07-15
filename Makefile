@@ -5,7 +5,7 @@ BOOTCOMP = spectec-boot-comp
 
 # Compile
 
-.PHONY: build stat perf spec-test ensure-interp-ml restore-stub build-compiled test-run-ml test-run-ml-inc test-sim-ml test-sim-ml-inc
+.PHONY: build stat perf spec-test ensure-interp-ml-p4 restore-stub build-compiled test-run-ml test-run-ml-inc test-sim-ml test-sim-ml-inc
 
 # Executables
 
@@ -16,12 +16,12 @@ EXEBOOTCOMP = p4spec/_build/default/bin/compboot.exe
 
 # Compiled spec paths
 
-INTERP_ML      = p4spec/lib/backend-ocaml/interp_ml.ml
-INTERP_ML_STUB = p4spec/lib/backend-ocaml/interp_ml_stub.ml
+INTERP_ML_P4      = p4spec/lib/backend-ocaml-p4/interp_ml.ml
+INTERP_ML_P4_STUB = p4spec/lib/backend-ocaml-p4/interp_ml_stub.ml
 # The heavy generated spec is split across a part-library directory; restore-stub
 # swaps in a tiny committed mirror so plain `make build` stays fast.
-INTERP_ML_DIR      = p4spec/lib/backend-ocaml/compiled
-INTERP_ML_STUB_DIR = p4spec/lib/backend-ocaml/compiled_stub
+INTERP_ML_P4_DIR      = p4spec/lib/backend-ocaml-p4/compiled
+INTERP_ML_P4_STUB_DIR = p4spec/lib/backend-ocaml-p4/compiled_stub
 UNPARSE_COMPILED      = p4spec/lib/interface/p4/unparse_compiled.ml
 UNPARSE_COMPILED_STUB = p4spec/lib/interface/p4/unparse_compiled_stub.ml
 
@@ -40,9 +40,9 @@ INTERP_ML_SL_STUB_DIR = p4spec/lib/backend-ocaml-sl/compiled_stub
 # Restore the compiled spec to a stub version
 
 restore-stub:
-	rm -rf $(INTERP_ML_DIR)
-	cp -R $(INTERP_ML_STUB_DIR) $(INTERP_ML_DIR)
-	cp $(INTERP_ML_STUB) $(INTERP_ML)
+	rm -rf $(INTERP_ML_P4_DIR)
+	cp -R $(INTERP_ML_P4_STUB_DIR) $(INTERP_ML_P4_DIR)
+	cp $(INTERP_ML_P4_STUB) $(INTERP_ML_P4)
 	cp $(UNPARSE_COMPILED_STUB) $(UNPARSE_COMPILED)
 	rm -rf $(INTERP_ML_IL_DIR)
 	cp -R $(INTERP_ML_IL_STUB_DIR) $(INTERP_ML_IL_DIR)
@@ -69,7 +69,7 @@ boot: restore-stub
 	ln -f $(EXEBOOT) ./$(BOOT)
 	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
-# Build INTERP_ML
+# Build INTERP_ML_P4
 
 # gen-ocaml compiles via the ML backend. Both the compiler and the interpreter
 # test rules now use the single spec/ tree (native builtins under the VAL abstraction).
@@ -85,7 +85,7 @@ endif
 
 gen-ocaml: restore-stub
 	./$(SPEC) ocaml $(_gen_ocaml_paths) \
-	  -o $(INTERP_ML) \
+	  -o $(INTERP_ML_P4) \
 	  -o-unparse $(UNPARSE_COMPILED)
 
 # Compile spec-meta/il and spec-meta/sl via spectec-boot's `compile` command.
@@ -96,30 +96,30 @@ gen-ocaml: restore-stub
 
 .PHONY: gen-ocaml-il gen-ocaml-sl
 
-gen-ocaml-il: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+gen-ocaml-il: ensure-interp-ml-p4 ensure-interp-ml-il ensure-interp-ml-sl
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
 	./$(BOOT) compile spec-meta/il -o $(INTERP_ML_IL) -name il
 
-gen-ocaml-sl: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+gen-ocaml-sl: ensure-interp-ml-p4 ensure-interp-ml-il ensure-interp-ml-sl
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
 	./$(BOOT) compile spec-meta/sl -o $(INTERP_ML_SL) -name sl
 
-# Build EXECOMP with INTERP_ML
+# Build EXECOMP with INTERP_ML_P4
 
-ensure-interp-ml:
-	@test -d $(INTERP_ML_DIR) || cp -R $(INTERP_ML_STUB_DIR) $(INTERP_ML_DIR)
-	@test -f $(INTERP_ML) || cp $(INTERP_ML_STUB) $(INTERP_ML)
+ensure-interp-ml-p4:
+	@test -d $(INTERP_ML_P4_DIR) || cp -R $(INTERP_ML_P4_STUB_DIR) $(INTERP_ML_P4_DIR)
+	@test -f $(INTERP_ML_P4) || cp $(INTERP_ML_P4_STUB) $(INTERP_ML_P4)
 
-build-compiled: ensure-interp-ml
+build-compiled: ensure-interp-ml-p4
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/comp.exe && echo
 	ln -f $(EXECOMP) ./$(COMP)
 
-# Build EXEBOOTCOMP with INTERP_ML, INTERP_ML_IL, INTERP_ML_SL
+# Build EXEBOOTCOMP with INTERP_ML_P4, INTERP_ML_IL, INTERP_ML_SL
 
 .PHONY: ensure-interp-ml-il ensure-interp-ml-sl build-boot-comp
 
@@ -131,7 +131,7 @@ ensure-interp-ml-sl:
 	@test -d $(INTERP_ML_SL_DIR) || cp -R $(INTERP_ML_SL_STUB_DIR) $(INTERP_ML_SL_DIR)
 	@test -f $(INTERP_ML_SL) || cp $(INTERP_ML_SL_STUB) $(INTERP_ML_SL)
 
-build-boot-comp: ensure-interp-ml ensure-interp-ml-il ensure-interp-ml-sl
+build-boot-comp: ensure-interp-ml-p4 ensure-interp-ml-il ensure-interp-ml-sl
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/compboot.exe && echo
 	ln -f $(EXEBOOTCOMP) ./$(BOOTCOMP)

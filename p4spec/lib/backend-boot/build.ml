@@ -9,7 +9,7 @@ end
 
 let interp_ml_of_interface (interface : Config.interface) : (module INTERP_ML) =
   match interface with
-  | Config.P4_interface -> (module Backend_ocaml.Interp_ml : INTERP_ML)
+  | Config.P4_interface -> (module Backend_ocaml_p4.Interp_ml : INTERP_ML)
   | Config.IL_interface -> (module Backend_ocaml_il.Interp_ml : INTERP_ML)
   | Config.SL_interface -> (module Backend_ocaml_sl.Interp_ml : INTERP_ML)
 
@@ -24,7 +24,7 @@ let valrep_of_mode_interface (mode : Run.mode) (interface : Config.interface) :
   | Run.ML_mode -> (
       match interface with
       | Config.P4_interface ->
-          (module Backend_ocaml.Val_native.V_native : Runtime.Valrep.VAL)
+          (module Backend_ocaml_p4.Val_native.V_native : Runtime.Valrep.VAL)
       | Config.IL_interface ->
           (module Backend_ocaml_il.Val_native.V_native : Runtime.Valrep.VAL)
       | Config.SL_interface ->

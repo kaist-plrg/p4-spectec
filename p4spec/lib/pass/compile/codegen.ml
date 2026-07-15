@@ -103,7 +103,7 @@ let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
       Ml.Raw (Template.Functor.eval_program tid_program);
       Ml.Raw (Template.Functor.unmarshal_program tid_program);
       (* Stable re-exports of the typed mixop bridges, so [V_native] can bind them
-         at [Spec_parts.Dispatch.*] without depending on which (unstable)
+         at [Spec_parts_<name>.Dispatch.*] without depending on which (unstable)
          [part_NNN] they bucket into. *)
       Ml.Let ("make_case_typed", Ml.VarE "make_case_typed");
       Ml.Let ("case_of_typed", Ml.VarE "case_of_typed");

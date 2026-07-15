@@ -15,6 +15,9 @@ module Mixfix = Domain.Mixfix
 module Mixop = Domain.Mixop
 module Il = Lang.Il
 module Num = Lang.Xl.Num
+
+(* This library's own generated dispatch tables (spec/, the P4 spec). *)
+module Spec_parts = Spec_parts_p4
 open Util.Source
 
 module V_native : Runtime.Valrep.VAL with type t = Obj.t = struct
