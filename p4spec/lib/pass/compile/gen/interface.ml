@@ -474,7 +474,7 @@ module Marshal = struct
     let name = "marshal_" ^ interface_name typ in
     let ml_typ = Type.compile_typ ~tparams:[] typ in
     let body = compile_body ctx pool typ in
-    (name, [ ("x", Some ml_typ) ], Some (Ml.NameT "Value.t"), body)
+    (name, [], [ ("x", Some ml_typ) ], Some (Ml.NameT "Value.t"), body)
 end
 
 (* Unmarshalling *)
@@ -638,7 +638,7 @@ module Unmarshal = struct
     let name = "unmarshal_" ^ interface_name typ in
     let ml_typ = Type.compile_typ ~tparams:[] typ in
     let body = compile_body ctx typ in
-    (name, [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
+    (name, [], [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
 (* Direct dependencies of marshal/unmarshal for a given type:

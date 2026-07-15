@@ -124,7 +124,7 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       expr_result_ml
   in
   let funcdef_ml =
-    (id_ml, params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
+    (id_ml, [], params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
   in
   (ctx, [ funcdef_ml ])
 
@@ -200,7 +200,7 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
       expr_result_ml
   in
   let funcdef_ml =
-    (id_ml, params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
+    (id_ml, [], params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
   in
   (ctx, [ funcdef_ml ])
 
@@ -227,7 +227,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
   let ctx, funcdef_main_ml =
     let ctx, expr_block_ml = Instr.compile_block ctx block_main in
     let expr_ml = Chain.apply chain expr_block_ml in
-    let funcdef_main_ml = (id_main_ml, params_ml, Some typ_ret_ml, expr_ml) in
+    let funcdef_main_ml = (id_main_ml, [], params_ml, Some typ_ret_ml, expr_ml) in
     (ctx, funcdef_main_ml)
   in
   (* Compile else block *)
@@ -238,7 +238,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
         let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
         let expr_ml = Chain.apply chain expr_else_ml in
         let funcdef_else_ml =
-          (id_else_ml, params_ml, Some typ_ret_ml, expr_ml)
+          (id_else_ml, [], params_ml, Some typ_ret_ml, expr_ml)
         in
         (ctx, Some funcdef_else_ml)
     | None -> (ctx, None)
@@ -261,7 +261,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
     | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
   in
   let funcdef_dispatcher_ml =
-    (id_ml, params_ml, Some typ_ret_ml, dispatch_ml)
+    (id_ml, [], params_ml, Some typ_ret_ml, dispatch_ml)
   in
   (* Collect function definitions *)
   let funcdefs_ml =

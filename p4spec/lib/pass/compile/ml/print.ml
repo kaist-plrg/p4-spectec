@@ -279,17 +279,51 @@ let print_param (id, typ_opt) =
 
 (* Function definitions *)
 
-let print_funcdef (id, params, typ_ret_opt, expr_body) =
-  let str_params =
-    match params with
-    | [] -> "()"
-    | _ -> String.concat " " (List.map print_param params)
-  in
-  let str_ret =
-    match typ_ret_opt with None -> "" | Some typ -> " : " ^ print_typ typ
-  in
-  print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
-  ^ print_expr ~level:1 expr_body
+let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
+  match tparams with
+  | [] ->
+      let str_params =
+        match params with
+        | [] -> "()"
+        | _ -> String.concat " " (List.map print_param params)
+      in
+      let str_ret =
+        match typ_ret_opt with None -> "" | Some typ -> " : " ^ print_typ typ
+      in
+      print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
+      ^ print_expr ~level:1 expr_body
+  | _ ->
+      (* Explicit forall, spelled out — required for mutual/self-recursive
+         generic calls that instantiate at a different type than the
+         member's own parameters (OCaml won't infer this inside a
+         [let rec]). *)
+      let quantifier = String.concat " " (List.map (fun t -> "'" ^ t) tparams) in
+      let param_typ_strs =
+        List.map
+          (fun (id, typ_opt) ->
+            match typ_opt with
+            | Some typ -> print_typ typ
+            | None ->
+                failwith
+                  (Printf.sprintf
+                     "print_funcdef: generic function %s: untyped param %s \
+                      (higher-order params not supported)"
+                     id id))
+          params
+      in
+      let ret_typ_str =
+        match typ_ret_opt with
+        | Some typ -> print_typ typ
+        | None -> failwith (Printf.sprintf "print_funcdef: generic function %s: missing return type" id)
+      in
+      let arrow_typ_str = String.concat " -> " (param_typ_strs @ [ ret_typ_str ]) in
+      let str_params =
+        match params with
+        | [] -> "()"
+        | _ -> String.concat " " (List.map (fun (id, _) -> print_id id) params)
+      in
+      print_id id ^ " : " ^ quantifier ^ ". " ^ arrow_typ_str ^ " =\n  fun "
+      ^ str_params ^ " ->\n  " ^ print_expr ~level:1 expr_body
 
 (* Top-level items *)
 

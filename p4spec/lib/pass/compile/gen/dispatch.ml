@@ -205,7 +205,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
       ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
     ]
   in
-  ("eval_func", params_ml, Some (Ml.NameT "Run.func_result"), expr_try_ml)
+  ("eval_func", [], params_ml, Some (Ml.NameT "Run.func_result"), expr_try_ml)
 
 let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
   ignore ctx;
@@ -351,4 +351,4 @@ let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
       ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
     ]
   in
-  ("eval_rel", params_ml, Some (Ml.NameT "Run.rel_result"), expr_try_ml)
+  ("eval_rel", [], params_ml, Some (Ml.NameT "Run.rel_result"), expr_try_ml)

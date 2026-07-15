@@ -36,7 +36,7 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
   let ctx, funcdef_main_ml =
     let ctx, expr_block_ml = Instr.compile_block ctx block_main in
     let expr_ml = Chain.apply chain expr_block_ml in
-    (ctx, (id_main_ml, params_ml, None, expr_ml))
+    (ctx, (id_main_ml, [], params_ml, None, expr_ml))
   in
   (* Compile else block *)
   let id_else_ml = "else__" ^ id_ml in
@@ -45,7 +45,7 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
     | Some elseblock ->
         let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
         let expr_ml = Chain.apply chain expr_else_ml in
-        (ctx, Some (id_else_ml, params_ml, None, expr_ml))
+        (ctx, Some (id_else_ml, [], params_ml, None, expr_ml))
     | None -> (ctx, None)
   in
   (* Promote preamble to outer context *)
@@ -63,7 +63,7 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
             ] )
     | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
   in
-  let funcdef_dispatcher_ml = (id_ml, params_ml, None, dispatch_ml) in
+  let funcdef_dispatcher_ml = (id_ml, [], params_ml, None, dispatch_ml) in
   let funcdefs_ml =
     (funcdef_main_ml :: Option.to_list funcdef_else_ml_opt)
     @ [ funcdef_dispatcher_ml ]
@@ -143,7 +143,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (List.combine vars_marshal_ml exprs_marshal_ml)
       expr_result_ml
   in
-  (ctx, [ (id_ml, params_ml, None, Common.deref_ctx expr_body_ml) ])
+  (ctx, [ (id_ml, [], params_ml, None, Common.deref_ctx expr_body_ml) ])
 
 (* Defs *)
 

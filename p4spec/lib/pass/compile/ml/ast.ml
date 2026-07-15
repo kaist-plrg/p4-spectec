@@ -147,7 +147,7 @@ type param = id * typ option
 
 (* Function definitions *)
 
-type funcdef = id * param list * typ option * expr
+type funcdef = id * tparam list * param list * typ option * expr
 
 (* Top-level items *)
 
