@@ -641,6 +641,90 @@ module Unmarshal = struct
     (name, [], [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
+(* Dictionary-passing witnesses: a generic function's own boundary calls
+   (extern/builtin) marshal/unmarshal at its still-unresolved tparams via
+   witness functions the caller passes in, instead of a named top-level
+   marshal_T/unmarshal_T (which only exists for closed/ground T). *)
+
+let witness_marshal_name (tvar : string) = "marshal__" ^ tvar
+let witness_unmarshal_name (tvar : string) = "unmarshal__" ^ tvar
+
+(* [resolve_marshal tparams typ] / [resolve_unmarshal tparams typ] build an
+   expr of OCaml type ['t -> Value.t] / [Value.t -> 't] for [typ], where
+   ['t] is [typ]'s compiled OCaml type. Scope: bare tparam, or List/Opt of
+   one; anything else mentioning a tparam raises (see plan doc). *)
+let rec resolve_marshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
+  match typ.it with
+  | Il.VarT (id, []) when List.mem id.it tparams ->
+      Ml.VarE (witness_marshal_name (Names.tvar id))
+  | Il.IterT (t, Il.List) when typ_mentions tparams t ->
+      Ml.FunE
+        ( [ Ml.VarP "x__" ],
+          Ml.AppE
+            ( Ml.LitE "Value.Make.list",
+              [
+                typ_make_expr typ;
+                Ml.AppE
+                  ( Ml.LitE "List.map",
+                    [ resolve_marshal tparams t; Ml.VarE "x__" ] );
+              ] ) )
+  | Il.IterT (t, Il.Opt) when typ_mentions tparams t ->
+      Ml.FunE
+        ( [ Ml.VarP "x__" ],
+          Ml.AppE
+            ( Ml.LitE "Value.Make.opt",
+              [
+                typ_make_expr typ;
+                Ml.AppE
+                  ( Ml.LitE "Option.map",
+                    [ resolve_marshal tparams t; Ml.VarE "x__" ] );
+              ] ) )
+  | _ when typ_mentions tparams typ ->
+      failwith
+        (Printf.sprintf
+           "resolve_marshal: %s: type parameter used inside an unsupported \
+            container at a boundary call (only bare/List/Opt supported)"
+           (Sl.Print.string_of_typ typ))
+  | _ -> Ml.VarE ("marshal_" ^ interface_name typ)
+
+and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
+  match typ.it with
+  | Il.VarT (id, []) when List.mem id.it tparams ->
+      Ml.VarE (witness_unmarshal_name (Names.tvar id))
+  | Il.IterT (t, Il.List) when typ_mentions tparams t ->
+      Ml.FunE
+        ( [ Ml.VarP "v__" ],
+          Ml.AppE
+            ( Ml.LitE "List.map",
+              [
+                resolve_unmarshal tparams t;
+                Ml.AppE (Ml.LitE "Value.Get.list", [ Ml.VarE "v__" ]);
+              ] ) )
+  | Il.IterT (t, Il.Opt) when typ_mentions tparams t ->
+      Ml.FunE
+        ( [ Ml.VarP "v__" ],
+          Ml.AppE
+            ( Ml.LitE "Option.map",
+              [
+                resolve_unmarshal tparams t;
+                Ml.AppE (Ml.LitE "Value.Get.opt", [ Ml.VarE "v__" ]);
+              ] ) )
+  | _ when typ_mentions tparams typ ->
+      failwith
+        (Printf.sprintf
+           "resolve_unmarshal: %s: type parameter used inside an \
+            unsupported container at a boundary call"
+           (Sl.Print.string_of_typ typ))
+  | _ -> Ml.VarE ("unmarshal_" ^ interface_name typ)
+
+and typ_mentions (tparams : string list) (typ : Sl.typ) : bool =
+  match typ.it with
+  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> false
+  | Il.VarT (id, targs) ->
+      List.mem id.it tparams || List.exists (typ_mentions tparams) targs
+  | Il.TupleT typs -> List.exists (typ_mentions tparams) typs
+  | Il.IterT (t, _) -> typ_mentions tparams t
+
 (* Direct dependencies of marshal/unmarshal for a given type:
    the sub-types that marshal_T calls marshal_S for. *)
 let interface_typ_deps (ctx : Ctx.t) (typ : Sl.typ) : Sl.typ list =

@@ -1068,12 +1068,27 @@ and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
+(* If [id] is still generic (found in [poly_sigs]), forward the caller's own
+   witnesses for its targs, resolved against the caller's [tparams]. Mangled
+   ground-specialized names are never in [poly_sigs], so this is a no-op for
+   the entire monomorphized path — only symbolic calls hit the [Some] arm. *)
 and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
-    (_targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
+    (targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
   let id_func_ml = Names.func id in
   let ctx, exprs_arg_ml = compile_args ~tparams ctx args in
-  let expr_ml = Ml.AppE (Ml.VarE id_func_ml, exprs_arg_ml) in
-  (ctx, expr_ml)
+  match Ctx.find_poly_tparams ctx id.it with
+  | Some callee_tparams when List.length callee_tparams = List.length targs ->
+      let exprs_witness_ml =
+        List.concat_map
+          (fun targ ->
+            [
+              Interface.resolve_marshal tparams targ;
+              Interface.resolve_unmarshal tparams targ;
+            ])
+          targs
+      in
+      (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_witness_ml @ exprs_arg_ml))
+  | _ -> (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_arg_ml))
 
 (* Iterator expressions *)
 

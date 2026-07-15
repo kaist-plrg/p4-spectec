@@ -130,6 +130,102 @@ let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
   in
   (ctx, [ funcdef_ml ])
 
+(* Witness parameters for a generic extern/builtin bridge: for each of the
+   function's own tparams, a marshal/unmarshal pair the caller must supply. *)
+let compile_witness_params (tparams_ml : string list) : Ml.param list =
+  List.concat_map
+    (fun tv ->
+      [
+        ( Interface.witness_marshal_name tv,
+          Some (Ml.NameT (Printf.sprintf "('%s -> Value.t)" tv)) );
+        ( Interface.witness_unmarshal_name tv,
+          Some (Ml.NameT (Printf.sprintf "(Value.t -> '%s)" tv)) );
+      ])
+    tparams_ml
+
+let compile_targ_reify (tvars : string list) : Ml.expr =
+  Ml.ListE
+    (List.map
+       (fun tv -> Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE tv; Ml.ListE [] ]))
+       tvars)
+
+(* [resolve_expr] may itself be a lambda (List/Opt witnesses build one) —
+   bind it to a name before applying, since Ml's printer never parenthesizes
+   an [AppE]'s function-position expression. *)
+let apply_witness (tag : string) (resolve_expr : Ml.expr) (arg_expr : Ml.expr)
+    : Ml.expr =
+  let w_id = "w__" ^ tag in
+  Ml.LetE (Ml.VarP w_id, resolve_expr, Ml.AppE (Ml.VarE w_id, [ arg_expr ]))
+
+(* Extern functions, still generic: forward the enclosing tparams' witnesses
+   to marshal/unmarshal at the boundary, and reify the tparams themselves as
+   the call's runtime targs (they're the callee's own, still unresolved). *)
+
+let compile_extern_func_generic (ctx : Ctx.t) (id : id)
+    (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
+    Ctx.t * Ml.funcdef list =
+  let id_ml = Names.func id in
+  let tvars = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
+  let tparams_ml = List.map Names.tvar tparams in
+  let typ_ret_ml = Type.compile_typ ~tparams:tvars typ_ret in
+  let typs_param =
+    List.filter_map
+      (fun (param : param) ->
+        match param.it with ExpP (typ, _) -> Some typ | _ -> None)
+      params
+  in
+  let n = List.length typs_param in
+  let params_ml =
+    compile_witness_params tparams_ml
+    @ List.mapi
+        (fun i typ ->
+          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams:tvars typ)))
+        typs_param
+  in
+  let vars_marshal_ml, exprs_marshal_ml =
+    List.mapi
+      (fun i typ ->
+        ( "v__" ^ string_of_int i,
+          apply_witness (string_of_int i) (Interface.resolve_marshal tvars typ)
+            (Ml.VarE ("p__" ^ string_of_int i)) ))
+      typs_param
+    |> List.split
+  in
+  let exprs_arg_ml =
+    Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
+  in
+  let exprs_targ_ml = compile_targ_reify tvars in
+  let expr_call_ml =
+    Ml.AppE
+      ( Common.extern_field "eval_extern_func",
+        [ Ml.StrE id.it; exprs_targ_ml; exprs_arg_ml ] )
+  in
+  let expr_result_ml =
+    Ml.MatchE
+      ( expr_call_ml,
+        [
+          ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
+            apply_witness "ret__"
+              (Interface.resolve_unmarshal tvars typ_ret)
+              (Ml.VarE "v_out__") );
+          ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
+            Ml.AppE
+              ( Ml.LitE "raise",
+                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
+        ] )
+  in
+  let expr_body_ml =
+    List.fold_right
+      (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
+        Ml.LetE (Ml.VarP var_marshal_ml, expr_marshal_ml, expr_body_ml))
+      (List.combine vars_marshal_ml exprs_marshal_ml)
+      expr_result_ml
+  in
+  let funcdef_ml =
+    (id_ml, tparams_ml, params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
+  in
+  (ctx, [ funcdef_ml ])
+
 (* Builtin functions *)
 
 let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
@@ -206,23 +302,107 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
   in
   (ctx, [ funcdef_ml ])
 
+(* Builtin functions, still generic — mirrors [compile_extern_func_generic]
+   but for [call_builtin]'s calling convention. *)
+
+let compile_builtin_func_generic (ctx : Ctx.t) (id : id)
+    (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
+    Ctx.t * Ml.funcdef list =
+  let id_ml = Names.func id in
+  let tvars = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
+  let tparams_ml = List.map Names.tvar tparams in
+  let typ_ret_ml = Type.compile_typ ~tparams:tvars typ_ret in
+  let typs_param =
+    List.filter_map
+      (fun (param : param) ->
+        match param.it with ExpP (typ, _) -> Some typ | _ -> None)
+      params
+  in
+  let n = List.length typs_param in
+  let params_ml =
+    compile_witness_params tparams_ml
+    @ List.mapi
+        (fun i typ ->
+          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams:tvars typ)))
+        typs_param
+  in
+  let vars_marshal_ml, exprs_marshal_ml =
+    List.mapi
+      (fun i typ ->
+        ( "v__" ^ string_of_int i,
+          apply_witness (string_of_int i) (Interface.resolve_marshal tvars typ)
+            (Ml.VarE ("p__" ^ string_of_int i)) ))
+      typs_param
+    |> List.split
+  in
+  let exprs_arg_ml =
+    Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
+  in
+  let exprs_targ_ml = compile_targ_reify tvars in
+  let name_orig_lit_ml =
+    Ml.LitE (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped id.it))
+  in
+  let expr_call_ml =
+    Ml.AppE
+      ( Common.iface_field "call_builtin",
+        [ Ml.LitE "(fun _ -> ())"; name_orig_lit_ml; exprs_targ_ml; exprs_arg_ml ]
+      )
+  in
+  let expr_try_ml =
+    Ml.TryE
+      ( expr_call_ml,
+        [
+          ( Ml.VariantP
+              (`Mono ("Util.Error.BuiltinError", [ Ml.WildP; Ml.VarP "msg__" ])),
+            Ml.AppE
+              ( Ml.LitE "raise",
+                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
+        ] )
+  in
+  let expr_result_ml =
+    Ml.LetE
+      ( Ml.VarP "v_out__",
+        expr_try_ml,
+        apply_witness "ret__"
+          (Interface.resolve_unmarshal tvars typ_ret)
+          (Ml.VarE "v_out__") )
+  in
+  let expr_body_ml =
+    List.fold_right
+      (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
+        Ml.LetE (Ml.VarP var_marshal_ml, expr_marshal_ml, expr_body_ml))
+      (List.combine vars_marshal_ml exprs_marshal_ml)
+      expr_result_ml
+  in
+  let funcdef_ml =
+    (id_ml, tparams_ml, params_ml, Some typ_ret_ml, Common.deref_ctx expr_body_ml)
+  in
+  (ctx, [ funcdef_ml ])
+
 (* Table functions *)
 
 let rec compile_table_func (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (tablerows : tablerow list) : Ctx.t * Ml.funcdef list =
   let block = List.concat_map (fun (_, _, block_row) -> block_row) tablerows in
-  compile_defined_func_mono ~tparams:[] ctx id params typ_ret block None
+  compile_defined_func_mono ~tparams:[] ~tparams_ml:[] ctx id params typ_ret
+    block None
 
 (* Defined functions *)
 
-and compile_defined_func_mono ~(tparams : string list) (ctx : Ctx.t) (id : id)
-    (params : param list) (typ_ret : typ) (block_main : block)
-    (elseblock_opt : block option) : Ctx.t * Ml.funcdef list =
+(* A generic function forwards its own witnesses to sibling/boundary calls
+   inside its body (see [compile_call_exp]), so its own signature — and its
+   internal main__/else__/dispatcher helpers — must accept them too. *)
+and compile_defined_func_mono ~(tparams : string list)
+    ~(tparams_ml : string list) (ctx : Ctx.t) (id : id) (params : param list)
+    (typ_ret : typ) (block_main : block) (elseblock_opt : block option) :
+    Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let ctx_outer = ctx in
   (* Compile parameters *)
+  let witness_params_ml = compile_witness_params tparams_ml in
   let ctx, params_ml, chain = compile_params ~tparams ctx params in
+  let params_ml = witness_params_ml @ params_ml in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
@@ -274,15 +454,6 @@ and compile_defined_func_mono ~(tparams : string list) (ctx : Ctx.t) (id : id)
   in
   (ctx, funcdefs_ml)
 
-(* Only extern/builtin calls cross the Value.t boundary — a plain
-   self/mutual call with a bare tparam is ordinary polymorphic recursion. *)
-let block_crosses_boundary_with (scope : Mono.StringSet.t)
-    (extern_builtin_names : Mono.StringSet.t) (block : block) : bool =
-  Mono.Collect.collect_all_calls_in_block block
-  |> List.exists (fun (callee, targs) ->
-         Mono.StringSet.mem callee extern_builtin_names
-         && List.exists (Mono.typ_mentions_any scope) targs)
-
 (* DefP (callback) params have no Ml.typ, so the generic-tparams printer
    path can't build an explicit forall signature for them. *)
 let has_callback_param (params : param list) : bool =
@@ -297,52 +468,55 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     definedfunc
   in
   if tparams = [] then
-    compile_defined_func_mono ~tparams:[] ctx id params typ_ret block_main
-      elseblock_opt
+    compile_defined_func_mono ~tparams:[] ~tparams_ml:[] ctx id params
+      typ_ret block_main elseblock_opt
+  (* Unsupported-but-preexisting (e.g. $match_overloaded_named<V>): warn and
+     skip, same as pre-Task-4 behavior, instead of failing the build. *)
+  else if has_callback_param params then (
+    Util.Error.warn_compile id.at
+      (Format.asprintf
+         "generic function %s has a callback parameter — not yet supported \
+          for generic compilation, skipping"
+         id.it);
+    (ctx, []))
   else
     let tparams_str = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
-    let scope = Mono.StringSet.of_list tparams_str in
-    let all_blocks = block_main @ Option.value ~default:[] elseblock_opt in
-    (* Unsupported-but-preexisting (e.g. $match_overloaded_named<V>): warn
-       and skip, same as pre-Task-4 behavior, instead of failing the build. *)
-    if has_callback_param params then (
-      Util.Error.warn_compile id.at
-        (Format.asprintf
-           "generic function %s has a callback parameter — not yet \
-            supported for generic compilation, skipping"
-           id.it);
-      (ctx, []))
-    else if
-      block_crosses_boundary_with scope
-        (Ctx.find_extern_builtin_names ctx)
-        all_blocks
-    then
-      Error.error id.at
-        (Format.asprintf
-           "generic function %s crosses the Value.t boundary via its own \
-            type parameter — not yet supported (see Task 5)"
-           id.it)
-    else
-      let tparams_ml = List.map Names.tvar tparams in
-      let ctx, funcdefs =
-        compile_defined_func_mono ~tparams:tparams_str ctx id params typ_ret
-          block_main elseblock_opt
-      in
-      ( ctx,
-        List.map
-          (fun (name, _tparams, params, ret, body) ->
-            (name, tparams_ml, params, ret, body))
-          funcdefs )
+    let tparams_ml = List.map Names.tvar tparams in
+    let ctx, funcdefs =
+      compile_defined_func_mono ~tparams:tparams_str ~tparams_ml ctx id params
+        typ_ret block_main elseblock_opt
+    in
+    ( ctx,
+      List.map
+        (fun (name, _tparams, params, ret, body) ->
+          (name, tparams_ml, params, ret, body))
+        funcdefs )
 
 (* Defs *)
+
+(* Pre-existing generic externs/builtins with an unsupported boundary shape
+   (e.g. a tuple-of-lists return) warn and skip, not fail the whole build. *)
+let try_compile_generic_bridge (ctx : Ctx.t) (id : id)
+    (f : unit -> Ctx.t * Ml.funcdef list) : Ctx.t * Ml.funcdef list =
+  try f ()
+  with Failure msg ->
+    Util.Error.warn_compile id.at
+      (Format.asprintf "generic extern/builtin %s: %s — skipping" id.it msg);
+    (ctx, [])
 
 let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
     (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
   | ExternDecD (id, [], params, typ_ret, _) ->
       compile_extern_func ctx reverse_dispatch id params typ_ret
+  | ExternDecD (id, tparams, params, typ_ret, _) ->
+      try_compile_generic_bridge ctx id (fun () ->
+          compile_extern_func_generic ctx id tparams params typ_ret)
   | BuiltinDecD (id, [], params, typ_ret, _) ->
       compile_builtin_func ctx reverse_dispatch id params typ_ret
+  | BuiltinDecD (id, tparams, params, typ_ret, _) ->
+      try_compile_generic_bridge ctx id (fun () ->
+          compile_builtin_func_generic ctx id tparams params typ_ret)
   | TableDecD (id, params, typ_ret, tablerows, _) ->
       compile_table_func ctx id params typ_ret tablerows
   | FuncDecD definedfunc -> compile_defined_func ctx definedfunc

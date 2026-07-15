@@ -217,6 +217,19 @@ builtin dec $distinct_<K>(K*) : bool
   hint(prose_true "the elements of" %0 "are distinct")
   hint(prose_false "the elements of" %0 "are not distinct")
 
+dec $has_dup_<X>(X*) : bool
+  hint(prose_true "some element of" %0 "occurs more than once")
+dec $has_dup_from_<X>(X, X*) : bool
+
+def $has_dup_<X>(eps) = false
+def $has_dup_<X>(X_h :: X_t*) = $has_dup_from_<X>(X_h, X_t*)
+
+def $has_dup_from_<X>(X_h, eps) = false
+def $has_dup_from_<X>(X_h, X_h2 :: X_t*) = true
+  -- if ~$distinct_<X>(X_h :: X_h2 :: eps)
+def $has_dup_from_<X>(X_h, X_h2 :: X_t*) = $has_dup_<X>(X_h2 :: X_t*)
+  -- if $distinct_<X>(X_h :: X_h2 :: eps)
+
 ;;
 ;; General set functions
 ;;
