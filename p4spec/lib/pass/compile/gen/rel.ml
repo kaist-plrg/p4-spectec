@@ -26,7 +26,9 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
     |> List.fold_left
          (fun (ctx, chain_acc) (i, exp_in) ->
            let ctx, ch =
-             Bind.compile ctx (Ml.VarE ("param__" ^ string_of_int i)) exp_in
+             Bind.compile ~tparams:[] ctx
+               (Ml.VarE ("param__" ^ string_of_int i))
+               exp_in
            in
            (ctx, Chain.connect [ chain_acc; ch ]))
          (ctx, Chain.nop)
@@ -34,7 +36,7 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
   let ctx, funcdef_main_ml =
-    let ctx, expr_block_ml = Instr.compile_block ctx block_main in
+    let ctx, expr_block_ml = Instr.compile_block ~tparams:[] ctx block_main in
     let expr_ml = Chain.apply chain expr_block_ml in
     (ctx, (id_main_ml, [], params_ml, None, expr_ml))
   in
@@ -43,7 +45,7 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
   let ctx, funcdef_else_ml_opt =
     match elseblock_opt with
     | Some elseblock ->
-        let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
+        let ctx, expr_else_ml = Instr.compile_block ~tparams:[] ctx elseblock in
         let expr_ml = Chain.apply chain expr_else_ml in
         (ctx, Some (id_else_ml, [], params_ml, None, expr_ml))
     | None -> (ctx, None)

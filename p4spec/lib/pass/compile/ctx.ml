@@ -28,6 +28,7 @@ type t = {
   ctors : Ctors.t;
   rels : Rels.t;
   bindings : Bindings.t;
+  poly_sigs : (string * Il.tparam list) list;
 }
 
 (* Adders *)
@@ -102,6 +103,9 @@ let find_binding (ctx : t) (var : Var.t) : Ml.id =
 
 let find_rel (ctx : t) (rid : RId.t) : Input.t = Rels.find rid ctx.rels
 
+let find_poly_tparams (ctx : t) (name : string) : Il.tparam list option =
+  List.assoc_opt name ctx.poly_sigs
+
 (* Initialization *)
 
 let empty_lib = { splits = []; combines = []; folds = []; foralls = [] }
@@ -124,6 +128,17 @@ let load_def (ctx : t) (def : Sl.def) : t =
 let load_defs (ctx : t) (defs : Sl.def list) : t =
   List.fold_left load_def ctx defs
 
+(* Definitions still generic after monomorphization: name -> its own tparams. *)
+
+let poly_sig_of_def (def : Sl.def) : (string * Il.tparam list) option =
+  match def.it with
+  | FuncDecD (id, tparams, _, _, _, _, _) when tparams <> [] ->
+      Some (id.it, tparams)
+  | BuiltinDecD (id, tparams, _, _, _) when tparams <> [] ->
+      Some (id.it, tparams)
+  | ExternDecD (id, tparams, _, _, _) when tparams <> [] -> Some (id.it, tparams)
+  | _ -> None
+
 let init (spec : Sl.spec) : t =
   let ctx =
     {
@@ -132,6 +147,7 @@ let init (spec : Sl.spec) : t =
       ctors = Ctors.empty;
       rels = Rels.empty;
       bindings = Bindings.empty;
+      poly_sigs = List.filter_map poly_sig_of_def spec;
     }
   in
   load_defs ctx spec

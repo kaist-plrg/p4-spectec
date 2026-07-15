@@ -7,7 +7,8 @@ open Util.Source
 
 (* Compiling expressions *)
 
-let rec compile_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
+let rec compile_exp ~(tparams : string list) (ctx : Ctx.t) (exp : exp) :
+    Ctx.t * Ml.expr =
   let wrap_ctx (expr_ml : Ml.expr) : Ctx.t * Ml.expr = (ctx, expr_ml) in
   let typ_exp = exp.note $ exp.at in
   match exp.it with
@@ -15,33 +16,37 @@ let rec compile_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
   | NumE num -> compile_num_exp num |> wrap_ctx
   | TextE str -> compile_text_exp str |> wrap_ctx
   | VarE id -> compile_var_exp ctx id |> wrap_ctx
-  | UnE (op, optyp, exp) -> compile_unop_exp ctx op optyp exp
-  | BinE (op, optyp, exp_l, exp_r) -> compile_binop_exp ctx op optyp exp_l exp_r
-  | CmpE (op, optyp, exp_l, exp_r) -> compile_cmp_exp ctx op optyp exp_l exp_r
-  | UpCastE (typ, exp) -> compile_upcast_exp ctx typ exp
-  | DownCastE (typ, exp) -> compile_downcast_exp ctx typ exp
-  | SubE (exp, typ) -> compile_sub_exp ctx exp typ
-  | MatchE (exp, pattern) -> compile_match_exp ctx exp pattern
-  | TupleE exps -> compile_tuple_exp ctx exps
-  | CaseE notexp -> compile_case_exp ctx typ_exp notexp
-  | StrE expfields -> compile_str_exp ctx typ_exp expfields
-  | OptE exp_opt -> compile_opt_exp ctx exp_opt
-  | ListE exps -> compile_list_exp ctx exps
-  | ConsE (exp_h, exp_t) -> compile_cons_exp ctx exp_h exp_t
-  | CatE (exp_l, exp_r) -> compile_cat_exp ctx typ_exp exp_l exp_r
-  | MemE (exp_e, exp_s) -> compile_mem_exp ctx exp_e exp_s
-  | LenE exp -> compile_len_exp ctx exp
-  | DotE (exp_b, atom) -> compile_dot_exp ctx exp_b atom
-  | IdxE (exp_b, exp_i) -> compile_idx_exp ctx exp_b exp_i
-  | SliceE (exp_b, exp_l, exp_n) -> compile_slice_exp ctx exp_b exp_l exp_n
-  | UpdE (exp_b, path, exp_n) -> compile_upd_exp ctx exp_b path exp_n
-  | CallE (id, targs, args) -> compile_call_exp ctx id targs args
-  | IterE (exp, iterexp) -> compile_iter_exp ctx typ_exp exp iterexp
+  | UnE (op, optyp, exp) -> compile_unop_exp ~tparams ctx op optyp exp
+  | BinE (op, optyp, exp_l, exp_r) ->
+      compile_binop_exp ~tparams ctx op optyp exp_l exp_r
+  | CmpE (op, optyp, exp_l, exp_r) ->
+      compile_cmp_exp ~tparams ctx op optyp exp_l exp_r
+  | UpCastE (typ, exp) -> compile_upcast_exp ~tparams ctx typ exp
+  | DownCastE (typ, exp) -> compile_downcast_exp ~tparams ctx typ exp
+  | SubE (exp, typ) -> compile_sub_exp ~tparams ctx exp typ
+  | MatchE (exp, pattern) -> compile_match_exp ~tparams ctx exp pattern
+  | TupleE exps -> compile_tuple_exp ~tparams ctx exps
+  | CaseE notexp -> compile_case_exp ~tparams ctx typ_exp notexp
+  | StrE expfields -> compile_str_exp ~tparams ctx typ_exp expfields
+  | OptE exp_opt -> compile_opt_exp ~tparams ctx exp_opt
+  | ListE exps -> compile_list_exp ~tparams ctx exps
+  | ConsE (exp_h, exp_t) -> compile_cons_exp ~tparams ctx exp_h exp_t
+  | CatE (exp_l, exp_r) -> compile_cat_exp ~tparams ctx typ_exp exp_l exp_r
+  | MemE (exp_e, exp_s) -> compile_mem_exp ~tparams ctx exp_e exp_s
+  | LenE exp -> compile_len_exp ~tparams ctx exp
+  | DotE (exp_b, atom) -> compile_dot_exp ~tparams ctx exp_b atom
+  | IdxE (exp_b, exp_i) -> compile_idx_exp ~tparams ctx exp_b exp_i
+  | SliceE (exp_b, exp_l, exp_n) ->
+      compile_slice_exp ~tparams ctx exp_b exp_l exp_n
+  | UpdE (exp_b, path, exp_n) -> compile_upd_exp ~tparams ctx exp_b path exp_n
+  | CallE (id, targs, args) -> compile_call_exp ~tparams ctx id targs args
+  | IterE (exp, iterexp) -> compile_iter_exp ~tparams ctx typ_exp exp iterexp
 
-and compile_exps (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr list =
+and compile_exps ~(tparams : string list) (ctx : Ctx.t) (exps : exp list) :
+    Ctx.t * Ml.expr list =
   List.fold_left
     (fun (ctx, exprs_ml) exp ->
-      let ctx, expr_ml = compile_exp ctx exp in
+      let ctx, expr_ml = compile_exp ~tparams ctx exp in
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) exps
 
@@ -78,9 +83,9 @@ and compile_var_exp (ctx : Ctx.t) (id : id) : Ml.expr =
    +    ->  [expr]
    -    ->  [Bigint.neg expr] *)
 
-and compile_unop_exp (ctx : Ctx.t) (unop : unop) (_optyp : optyp) (exp : exp) :
-    Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_exp ctx exp in
+and compile_unop_exp ~(tparams : string list) (ctx : Ctx.t) (unop : unop)
+    (_optyp : optyp) (exp : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let expr_ml =
     match unop with
     | `NotOp -> Ml.UnopE ("not", expr_ml)
@@ -114,10 +119,10 @@ and compile_binop_num (binop : Num.binop) : string =
    **         ->  [Bigint.( ** ) expr_l expr_r]
    +,-,*,/,%  ->  [Bigint.op expr_l expr_r] *)
 
-and compile_binop_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp)
-    (exp_l : exp) (exp_r : exp) : Ctx.t * Ml.expr =
-  let ctx, expr_ml_l = compile_exp ctx exp_l in
-  let ctx, expr_ml_r = compile_exp ctx exp_r in
+and compile_binop_exp ~(tparams : string list) (ctx : Ctx.t) (binop : binop)
+    (_optyp : optyp) (exp_l : exp) (exp_r : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_ml_l = compile_exp ~tparams ctx exp_l in
+  let ctx, expr_ml_r = compile_exp ~tparams ctx exp_r in
   let expr_ml =
     match binop with
     | `ImplOp ->
@@ -150,10 +155,10 @@ and compile_cmpop_num (cmpop : Num.cmpop) : string =
   | `LeOp -> "Bigint.( <= )"
   | `GeOp -> "Bigint.( >= )"
 
-and compile_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (optyp : optyp) (exp_l : exp)
-    (exp_r : exp) : Ctx.t * Ml.expr =
-  let ctx, expr_ml_l = compile_exp ctx exp_l in
-  let ctx, expr_ml_r = compile_exp ctx exp_r in
+and compile_cmp_exp ~(tparams : string list) (ctx : Ctx.t) (cmpop : cmpop)
+    (optyp : optyp) (exp_l : exp) (exp_r : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_ml_l = compile_exp ~tparams ctx exp_l in
+  let ctx, expr_ml_r = compile_exp ~tparams ctx exp_r in
   let expr_ml =
     match (cmpop, optyp) with
     | ((`EqOp | `NeOp) as cmpop), `BoolT ->
@@ -175,9 +180,10 @@ and compile_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (optyp : optyp) (exp_l : exp)
 
    [(expr :> T)] *)
 
-and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_exp ctx exp in
-  let typ_ml = Type.compile_typ ~tparams:[] typ in
+and compile_upcast_exp ~(tparams : string list) (ctx : Ctx.t) (typ : typ)
+    (exp : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
+  let typ_ml = Type.compile_typ ~tparams typ in
   let expr_ml = Ml.CoerceE (expr_ml, typ_ml) in
   (ctx, expr_ml)
 
@@ -192,12 +198,12 @@ and compile_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
    plain (expr :> T). Inside iter bodies, the SL type is narrowed post-SubG but
    the OCaml binding type is the wider guide type, so a plain coercion fails. *)
 
-and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
-    (exp : exp) : Ctx.t * Ml.expr =
+and compile_downcast_exp_var ~(tparams : string list) (ctx : Ctx.t) (id : id)
+    (targs : targ list) (exp : exp) : Ctx.t * Ml.expr =
   let ctors_typ = Ctx.find_ctors ctx id in
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let typ_target_ml =
-    Type.compile_typ ~tparams:[] (Il.VarT (id, targs) $ no_region)
+    Type.compile_typ ~tparams (Il.VarT (id, targs) $ no_region)
   in
   if ctors_typ = [] then (ctx, expr_ml)
   else
@@ -212,7 +218,7 @@ and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
                 List.map (Mono.Subst.subst_typ theta) typs
             | _ -> typs
           in
-          (ctor_ml, Type.compile_typs ~tparams:[] typs_inst))
+          (ctor_ml, Type.compile_typs ~tparams typs_inst))
         ctors_typ
     in
     let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
@@ -241,10 +247,10 @@ and compile_downcast_exp_var (ctx : Ctx.t) (id : id) (targs : targ list)
 
    [let (x1,..,xn) = expr in (dc(T1,x1), .., dc(Tn,xn))] *)
 
-and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
-    Ctx.t * Ml.expr =
+and compile_downcast_exp_tuple ~(tparams : string list) (ctx : Ctx.t)
+    (typs : typ list) (exp : exp) : Ctx.t * Ml.expr =
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let ctx_outer = ctx in
   (* Create stub expression for tuple elements *)
   let ctx, ids_stub_ml = Stub.OCaml.vars ctx "tup__" (List.length typs) in
@@ -254,7 +260,9 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
     List.combine exps_stub typs
     |> List.fold_left
          (fun (ctx, expr_elems_ml) (exp_stub, typ) ->
-           let ctx, expr_elem_ml = compile_downcast_exp ctx typ exp_stub in
+           let ctx, expr_elem_ml =
+             compile_downcast_exp ~tparams ctx typ exp_stub
+           in
            (ctx, expr_elems_ml @ [ expr_elem_ml ]))
          (ctx, [])
   in
@@ -273,18 +281,18 @@ and compile_downcast_exp_tuple (ctx : Ctx.t) (typs : typ list) (exp : exp) :
 
    [Option.map (fun x -> dc(T, x)) expr] *)
 
-and compile_downcast_exp_iter_opt (ctx : Ctx.t) (typ : typ) (exp : exp) :
-    Ctx.t * Ml.expr =
+and compile_downcast_exp_iter_opt ~(tparams : string list) (ctx : Ctx.t)
+    (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
   (* Fetch source type *)
   let typ_src = match exp.note with IterT (typ, Opt) -> typ | _ -> typ in
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let ctx_outer = ctx in
   (* Create stub expression for option element *)
   let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_opt__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ_src in
   (* Compile downcast expression for iterated element *)
-  let ctx, expr_elem_ml = compile_downcast_exp ctx typ exp_stub in
+  let ctx, expr_elem_ml = compile_downcast_exp ~tparams ctx typ exp_stub in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create map on option *)
@@ -296,18 +304,18 @@ and compile_downcast_exp_iter_opt (ctx : Ctx.t) (typ : typ) (exp : exp) :
 
    [List.map (fun x -> dc(T, x)) expr] *)
 
-and compile_downcast_exp_iter_list (ctx : Ctx.t) (typ : typ) (exp : exp) :
-    Ctx.t * Ml.expr =
+and compile_downcast_exp_iter_list ~(tparams : string list) (ctx : Ctx.t)
+    (typ : typ) (exp : exp) : Ctx.t * Ml.expr =
   (* Fetch source type *)
   let typ_src = match exp.note with IterT (typ, List) -> typ | _ -> typ in
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let ctx_outer = ctx in
   (* Create stub expression for list element *)
   let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_list__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ_src in
   (* Compile downcast expression for iterated element *)
-  let ctx, expr_elem_ml = compile_downcast_exp ctx typ exp_stub in
+  let ctx, expr_elem_ml = compile_downcast_exp ~tparams ctx typ exp_stub in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create map on list *)
@@ -315,19 +323,19 @@ and compile_downcast_exp_iter_list (ctx : Ctx.t) (typ : typ) (exp : exp) :
   let expr_ml = Ml.AppE (Ml.VarE "List.map", [ expr_lambda_ml; expr_ml ]) in
   (ctx, expr_ml)
 
-and compile_downcast_exp_iter (ctx : Ctx.t) (typ : typ) (iter : iter)
-    (exp : exp) : Ctx.t * Ml.expr =
+and compile_downcast_exp_iter ~(tparams : string list) (ctx : Ctx.t) (typ : typ)
+    (iter : iter) (exp : exp) : Ctx.t * Ml.expr =
   match iter with
-  | Opt -> compile_downcast_exp_iter_opt ctx typ exp
-  | List -> compile_downcast_exp_iter_list ctx typ exp
+  | Opt -> compile_downcast_exp_iter_opt ~tparams ctx typ exp
+  | List -> compile_downcast_exp_iter_list ~tparams ctx typ exp
 
-and compile_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr
-    =
+and compile_downcast_exp ~(tparams : string list) (ctx : Ctx.t) (typ : typ)
+    (exp : exp) : Ctx.t * Ml.expr =
   match typ.it with
-  | VarT (id, targs) -> compile_downcast_exp_var ctx id targs exp
-  | TupleT typs -> compile_downcast_exp_tuple ctx typs exp
-  | IterT (typ, iter) -> compile_downcast_exp_iter ctx typ iter exp
-  | _ -> compile_exp ctx exp
+  | VarT (id, targs) -> compile_downcast_exp_var ~tparams ctx id targs exp
+  | TupleT typs -> compile_downcast_exp_tuple ~tparams ctx typs exp
+  | IterT (typ, iter) -> compile_downcast_exp_iter ~tparams ctx typ iter exp
+  | _ -> compile_exp ~tparams ctx exp
 
 (* Subtyping check expressions *)
 
@@ -335,8 +343,9 @@ and compile_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.expr
 
    [Bigint.( >= ) expr 0] *)
 
-and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_exp ctx exp in
+and compile_sub_exp_num_nat ~(tparams : string list) (ctx : Ctx.t) (exp : exp) :
+    Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let expr_zero_ml = Ml.BigintE "0" in
   let expr_ml = Ml.AppE (Ml.VarE "Bigint.( >= )", [ expr_ml; expr_zero_ml ]) in
   (ctx, expr_ml)
@@ -347,13 +356,13 @@ and compile_sub_exp_num_nat (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
    | `Ci pi.. -> sub(pi) && ..
    | _        -> false *)
 
-and compile_sub_match (ctx : Ctx.t) (exp : exp)
+and compile_sub_match ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
     (ctors_inter : (Ml.ctor * Il.typ list) list) : Ctx.t * Ml.expr =
   (* Compile expression with type annotation *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let typrows_ml =
     List.map
-      (fun (ctor_ml, typs) -> (ctor_ml, Type.compile_typs ~tparams:[] typs))
+      (fun (ctor_ml, typs) -> (ctor_ml, Type.compile_typs ~tparams typs))
       ctors_inter
   in
   let expr_scrut_ml = Ml.AnnotE (expr_ml, Ml.OpenRowT typrows_ml) in
@@ -371,7 +380,9 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
           |> List.fold_left
                (fun (ctx, exprs_cond_ml) (id, typ) ->
                  let exp_stub = Stub.SpecTec.var id typ in
-                 let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+                 let ctx, expr_cond_ml =
+                   compile_sub_exp ~tparams ctx exp_stub typ
+                 in
                  (ctx, exprs_cond_ml @ [ expr_cond_ml ]))
                (ctx, [])
         in
@@ -412,8 +423,8 @@ and compile_sub_match (ctx : Ctx.t) (exp : exp)
    ctors(S) & ctors(T) = {} ->  false
    otherwise                ->  compile_sub_match on intersection *)
 
-and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
-    (targs : targ list) : Ctx.t * Ml.expr =
+and compile_sub_exp_var_irreflexive ~(tparams : string list) (ctx : Ctx.t)
+    (exp : exp) (id : id) (targs : targ list) : Ctx.t * Ml.expr =
   let ctors_typ = Ctx.find_ctors ctx id in
   if ctors_typ = [] then (ctx, Ml.BoolE true)
   else
@@ -440,27 +451,27 @@ and compile_sub_exp_var_irreflexive (ctx : Ctx.t) (exp : exp) (id : id)
         ctors_typ
     in
     if ctors_inter = [] then (ctx, Ml.BoolE false)
-    else compile_sub_match ctx exp ctors_inter
+    else compile_sub_match ~tparams ctx exp ctors_inter
 
 (* Variable subtype check: [exp <: VarT T]
 
    exp : T  ->  true
    exp : S  ->  compile_sub_exp_var_irreflexive *)
 
-and compile_sub_exp_var (ctx : Ctx.t) (exp : exp) (id : id) (targs : targ list)
-    : Ctx.t * Ml.expr =
+and compile_sub_exp_var ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (id : id) (targs : targ list) : Ctx.t * Ml.expr =
   match exp.note with
   | VarT (id_exp_typ, _) when id_exp_typ.it = id.it -> (ctx, Ml.BoolE true)
-  | _ -> compile_sub_exp_var_irreflexive ctx exp id targs
+  | _ -> compile_sub_exp_var_irreflexive ~tparams ctx exp id targs
 
 (* Tuple subtype check: [exp <: (typ_1, ..., typ_n)]
 
    [let (x1,..,xn) = expr in sub(x1,T1) && .. && sub(xn,Tn)] *)
 
-and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
-    Ctx.t * Ml.expr =
+and compile_sub_exp_tuple ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (typs : typ list) : Ctx.t * Ml.expr =
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   (* Save context for promotion *)
   let ctx_outer = ctx in
   (* Create stub expression for tuple elements *)
@@ -471,7 +482,7 @@ and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
     |> List.fold_left
          (fun (ctx, exprs_elem_ml) (id_stub, typ) ->
            let exp_stub = Stub.SpecTec.var id_stub typ in
-           let ctx, expr_ml = compile_sub_exp ctx exp_stub typ in
+           let ctx, expr_ml = compile_sub_exp ~tparams ctx exp_stub typ in
            (ctx, exprs_elem_ml @ [ expr_ml ]))
          (ctx, [])
   in
@@ -501,17 +512,17 @@ and compile_sub_exp_tuple (ctx : Ctx.t) (exp : exp) (typs : typ list) :
 
    [match expr with None -> true | Some x -> sub(x, T)] *)
 
-and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
-    =
+and compile_sub_exp_opt ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (typ : typ) : Ctx.t * Ml.expr =
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   (* Save context for promotion *)
   let ctx_outer = ctx in
   (* Create stub expression for option element *)
   let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_opt__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ in
   (* Compile subtype check for option element *)
-  let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+  let ctx, expr_cond_ml = compile_sub_exp ~tparams ctx exp_stub typ in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create match expression *)
@@ -529,17 +540,17 @@ and compile_sub_exp_opt (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
 
    [List.for_all (fun x -> sub(x, T)) expr] *)
 
-and compile_sub_exp_list (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
-    =
+and compile_sub_exp_list ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (typ : typ) : Ctx.t * Ml.expr =
   (* Compile expression *)
-  let ctx, expr_ml = compile_exp ctx exp in
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   (* Save context for promotion *)
   let ctx_outer = ctx in
   (* Create stub expression for list element *)
   let ctx, id_stub_ml = Stub.OCaml.var ctx "elem_list__" in
   let exp_stub = Stub.SpecTec.var id_stub_ml typ in
   (* Compile subtype check for list element *)
-  let ctx, expr_cond_ml = compile_sub_exp ctx exp_stub typ in
+  let ctx, expr_cond_ml = compile_sub_exp ~tparams ctx exp_stub typ in
   (* Promote preamble *)
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (* Create result expression *)
@@ -552,18 +563,19 @@ and compile_sub_exp_list (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr
   in
   (ctx, expr_ml)
 
-and compile_sub_exp_iter (ctx : Ctx.t) (exp : exp) (typ : typ) (iter : iter) :
-    Ctx.t * Ml.expr =
+and compile_sub_exp_iter ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (typ : typ) (iter : iter) : Ctx.t * Ml.expr =
   match iter with
-  | Opt -> compile_sub_exp_opt ctx exp typ
-  | List -> compile_sub_exp_list ctx exp typ
+  | Opt -> compile_sub_exp_opt ~tparams ctx exp typ
+  | List -> compile_sub_exp_list ~tparams ctx exp typ
 
-and compile_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr =
+and compile_sub_exp ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (typ : typ) : Ctx.t * Ml.expr =
   match typ.it with
-  | NumT `NatT -> compile_sub_exp_num_nat ctx exp
-  | VarT (id, targs) -> compile_sub_exp_var ctx exp id targs
-  | TupleT typs -> compile_sub_exp_tuple ctx exp typs
-  | IterT (typ, iter) -> compile_sub_exp_iter ctx exp typ iter
+  | NumT `NatT -> compile_sub_exp_num_nat ~tparams ctx exp
+  | VarT (id, targs) -> compile_sub_exp_var ~tparams ctx exp id targs
+  | TupleT typs -> compile_sub_exp_tuple ~tparams ctx exp typs
+  | IterT (typ, iter) -> compile_sub_exp_iter ~tparams ctx exp typ iter
   | _ -> (ctx, Ml.BoolE true)
 
 (* Pattern match expression: [exp matches pattern]
@@ -575,9 +587,9 @@ and compile_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : Ctx.t * Ml.expr =
    OptP Some       ->  [Option.is_some expr]
    OptP None       ->  [Option.is_none expr] *)
 
-and compile_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
-    Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_exp ctx exp in
+and compile_match_exp ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (pattern : pattern) : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let expr_ml =
     match pattern with
     | CaseP mixop ->
@@ -607,8 +619,9 @@ and compile_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) :
 
    [(expr1, .., exprn)] *)
 
-and compile_tuple_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
-  let ctx, exprs_ml = compile_exps ctx exps in
+and compile_tuple_exp ~(tparams : string list) (ctx : Ctx.t) (exps : exp list) :
+    Ctx.t * Ml.expr =
+  let ctx, exprs_ml = compile_exps ~tparams ctx exps in
   let expr_ml = Ml.TupleE exprs_ml in
   (ctx, expr_ml)
 
@@ -616,11 +629,11 @@ and compile_tuple_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
 
    [`Ctor(expr1, .., exprn)] *)
 
-and compile_case_exp (ctx : Ctx.t) (typ_exp : typ) (notexp : notexp) :
-    Ctx.t * Ml.expr =
+and compile_case_exp ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
+    (notexp : notexp) : Ctx.t * Ml.expr =
   let mixop, exps = Mixfix.split notexp in
   let ctor_ml = Ctx.find_ctor ctx typ_exp mixop in
-  let ctx, exprs_ml = compile_exps ctx exps in
+  let ctx, exprs_ml = compile_exps ~tparams ctx exps in
   let expr_ml = Ml.VariantE (ctor_ml, exprs_ml) in
   (ctx, expr_ml)
 
@@ -628,19 +641,19 @@ and compile_case_exp (ctx : Ctx.t) (typ_exp : typ) (notexp : notexp) :
 
    [({field1=expr1; ..; fieldn=exprn} : T)] *)
 
-and compile_str_exp (ctx : Ctx.t) (typ_exp : typ)
+and compile_str_exp ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
     (expfields : (atom * exp) list) : Ctx.t * Ml.expr =
   let ctx, exprfields_ml =
     List.fold_left
       (fun (ctx, exprfields_ml) (atom, exp) ->
         let field_ml = Names.field atom in
-        let ctx, expr_ml = compile_exp ctx exp in
+        let ctx, expr_ml = compile_exp ~tparams ctx exp in
         let exprfield_ml = (field_ml, expr_ml) in
         (ctx, exprfields_ml @ [ exprfield_ml ]))
       (ctx, []) expfields
   in
   let expr_ml = Ml.RecordE exprfields_ml in
-  let typ_ml = Type.compile_typ ~tparams:[] typ_exp in
+  let typ_ml = Type.compile_typ ~tparams typ_exp in
   let expr_ml = Ml.AnnotE (expr_ml, typ_ml) in
   (ctx, expr_ml)
 
@@ -649,13 +662,14 @@ and compile_str_exp (ctx : Ctx.t) (typ_exp : typ)
    None    ->  [None]
    Some e  ->  [Some expr] *)
 
-and compile_opt_exp (ctx : Ctx.t) (exp_opt : exp option) : Ctx.t * Ml.expr =
+and compile_opt_exp ~(tparams : string list) (ctx : Ctx.t)
+    (exp_opt : exp option) : Ctx.t * Ml.expr =
   match exp_opt with
   | None ->
       let expr_ml = Ml.OptE None in
       (ctx, expr_ml)
   | Some exp ->
-      let ctx, expr_ml = compile_exp ctx exp in
+      let ctx, expr_ml = compile_exp ~tparams ctx exp in
       let expr_ml = Ml.OptE (Some expr_ml) in
       (ctx, expr_ml)
 
@@ -663,8 +677,9 @@ and compile_opt_exp (ctx : Ctx.t) (exp_opt : exp option) : Ctx.t * Ml.expr =
 
    [[expr1; ..; exprn]] *)
 
-and compile_list_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
-  let ctx, exprs_ml = compile_exps ctx exps in
+and compile_list_exp ~(tparams : string list) (ctx : Ctx.t) (exps : exp list) :
+    Ctx.t * Ml.expr =
+  let ctx, exprs_ml = compile_exps ~tparams ctx exps in
   let expr_ml = Ml.ListE exprs_ml in
   (ctx, expr_ml)
 
@@ -672,10 +687,10 @@ and compile_list_exp (ctx : Ctx.t) (exps : exp list) : Ctx.t * Ml.expr =
 
    [expr_h :: expr_t] *)
 
-and compile_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) : Ctx.t * Ml.expr
-    =
-  let ctx, expr_h_ml = compile_exp ctx exp_h in
-  let ctx, expr_t_ml = compile_exp ctx exp_t in
+and compile_cons_exp ~(tparams : string list) (ctx : Ctx.t) (exp_h : exp)
+    (exp_t : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_h_ml = compile_exp ~tparams ctx exp_h in
+  let ctx, expr_t_ml = compile_exp ~tparams ctx exp_t in
   let expr_ml = Ml.ConsE (expr_h_ml, expr_t_ml) in
   (ctx, expr_ml)
 
@@ -684,11 +699,11 @@ and compile_cons_exp (ctx : Ctx.t) (exp_h : exp) (exp_t : exp) : Ctx.t * Ml.expr
    text  ->  [expr_l ^ expr_r]
    list  ->  [expr_l @ expr_r] *)
 
-and compile_cat_exp (ctx : Ctx.t) (typ_exp : typ) (exp_l : exp) (exp_r : exp) :
-    Ctx.t * Ml.expr =
+and compile_cat_exp ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
+    (exp_l : exp) (exp_r : exp) : Ctx.t * Ml.expr =
   let binop_ml = match typ_exp.it with TextT -> "^" | _ -> "@" in
-  let ctx, expr_l_ml = compile_exp ctx exp_l in
-  let ctx, expr_r_ml = compile_exp ctx exp_r in
+  let ctx, expr_l_ml = compile_exp ~tparams ctx exp_l in
+  let ctx, expr_r_ml = compile_exp ~tparams ctx exp_r in
   let expr_ml = Ml.BinopE (binop_ml, expr_l_ml, expr_r_ml) in
   (ctx, expr_ml)
 
@@ -696,10 +711,10 @@ and compile_cat_exp (ctx : Ctx.t) (typ_exp : typ) (exp_l : exp) (exp_r : exp) :
 
    [List.mem expr_e expr_s] *)
 
-and compile_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : Ctx.t * Ml.expr
-    =
-  let ctx, expr_e_ml = compile_exp ctx exp_e in
-  let ctx, expr_s_ml = compile_exp ctx exp_s in
+and compile_mem_exp ~(tparams : string list) (ctx : Ctx.t) (exp_e : exp)
+    (exp_s : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_e_ml = compile_exp ~tparams ctx exp_e in
+  let ctx, expr_s_ml = compile_exp ~tparams ctx exp_s in
   let expr_ml = Ml.AppE (Ml.VarE "List.mem", [ expr_e_ml; expr_s_ml ]) in
   (ctx, expr_ml)
 
@@ -708,8 +723,9 @@ and compile_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : Ctx.t * Ml.expr
    text  ->  [Bigint.of_int (String.length expr)]
    list  ->  [Bigint.of_int (List.length expr)] *)
 
-and compile_len_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_exp ctx exp in
+and compile_len_exp ~(tparams : string list) (ctx : Ctx.t) (exp : exp) :
+    Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_exp ~tparams ctx exp in
   let id_len_ml =
     match exp.note with TextT -> "String.length" | _ -> "List.length"
   in
@@ -723,10 +739,10 @@ and compile_len_exp (ctx : Ctx.t) (exp : exp) : Ctx.t * Ml.expr =
 
    [expr_b.field] *)
 
-and compile_dot_exp (ctx : Ctx.t) (exp_b : exp) (atom : atom) : Ctx.t * Ml.expr
-    =
+and compile_dot_exp ~(tparams : string list) (ctx : Ctx.t) (exp_b : exp)
+    (atom : atom) : Ctx.t * Ml.expr =
   let field_ml = Names.field atom in
-  let ctx, expr_b_ml = compile_exp ctx exp_b in
+  let ctx, expr_b_ml = compile_exp ~tparams ctx exp_b in
   let expr_ml = Ml.FieldE (expr_b_ml, field_ml) in
   (ctx, expr_ml)
 
@@ -735,10 +751,10 @@ and compile_dot_exp (ctx : Ctx.t) (exp_b : exp) (atom : atom) : Ctx.t * Ml.expr
    text  ->  [String.sub expr_b (to_int i) 1]
    list  ->  [List.nth expr_b (to_int i)] *)
 
-and compile_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : Ctx.t * Ml.expr
-    =
-  let ctx, expr_b_ml = compile_exp ctx exp_b in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_idx_exp ~(tparams : string list) (ctx : Ctx.t) (exp_b : exp)
+    (exp_i : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_b_ml = compile_exp ~tparams ctx exp_b in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
   let expr_ml =
     match exp_b.note with
@@ -753,12 +769,12 @@ and compile_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : Ctx.t * Ml.expr
    text  ->  [String.sub expr_b (to_int i) (to_int n)]
    list  ->  [List.filteri (fun j _ -> i <= j && j < i+n) expr_b] *)
 
-and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
-    Ctx.t * Ml.expr =
-  let ctx, expr_b_ml = compile_exp ctx exp_b in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_slice_exp ~(tparams : string list) (ctx : Ctx.t) (exp_b : exp)
+    (exp_i : exp) (exp_n : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_b_ml = compile_exp ~tparams ctx exp_b in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
-  let ctx, expr_n_ml = compile_exp ctx exp_n in
+  let ctx, expr_n_ml = compile_exp ~tparams ctx exp_n in
   let expr_n_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_ml ]) in
   match exp_b.note with
   | TextT ->
@@ -797,10 +813,10 @@ and compile_slice_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) (exp_n : exp) :
    IdxP(p, i)    ->  [access(p, expr_b)[i]]
    SliceP(p,i,n) ->  [access(p, expr_b)[i..i+n-1]] *)
 
-and compile_access_path_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
-    (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
-  let ctx, expr_inner_ml = compile_access_path ctx path expr_b_ml in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_access_path_idx ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (exp_i : exp) (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, expr_inner_ml = compile_access_path ~tparams ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
   let expr_ml =
     match path.note with
@@ -810,12 +826,13 @@ and compile_access_path_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
   in
   (ctx, expr_ml)
 
-and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
-    (exp_n : exp) (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
-  let ctx, expr_inner_ml = compile_access_path ctx path expr_b_ml in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_access_path_slice ~(tparams : string list) (ctx : Ctx.t)
+    (path : path) (exp_i : exp) (exp_n : exp) (expr_b_ml : Ml.expr) :
+    Ctx.t * Ml.expr =
+  let ctx, expr_inner_ml = compile_access_path ~tparams ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
-  let ctx, expr_n_ml = compile_exp ctx exp_n in
+  let ctx, expr_n_ml = compile_exp ~tparams ctx exp_n in
   let expr_n_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_ml ]) in
   match path.note with
   | Il.TextT ->
@@ -844,18 +861,19 @@ and compile_access_path_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
       in
       (ctx, expr_ml)
 
-and compile_access_path (ctx : Ctx.t) (path : path) (expr_b_ml : Ml.expr) :
-    Ctx.t * Ml.expr =
+and compile_access_path ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (expr_b_ml : Ml.expr) : Ctx.t * Ml.expr =
   match path.it with
   | RootP -> (ctx, expr_b_ml)
   | DotP (path, atom) ->
-      let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+      let ctx, expr_ml = compile_access_path ~tparams ctx path expr_b_ml in
       let field_ml = Names.field atom in
       let expr_ml = Ml.FieldE (expr_ml, field_ml) in
       (ctx, expr_ml)
-  | IdxP (path, exp_i) -> compile_access_path_idx ctx path exp_i expr_b_ml
+  | IdxP (path, exp_i) ->
+      compile_access_path_idx ~tparams ctx path exp_i expr_b_ml
   | SliceP (path, exp_i, exp_n) ->
-      compile_access_path_slice ctx path exp_i exp_n expr_b_ml
+      compile_access_path_slice ~tparams ctx path exp_i exp_n expr_b_ml
 
 (* Path write helper: [update(path, expr_b, expr_n)]
 
@@ -910,17 +928,18 @@ and compile_upd_idx_list (ctx : Ctx.t) (expr_ml : Ml.expr) (expr_i_ml : Ml.expr)
   in
   (ctx, expr_ml)
 
-and compile_upd_idx (ctx : Ctx.t) (path : path) (exp_i : exp)
-    (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_upd_idx ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (exp_i : exp) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr
+    =
+  let ctx, expr_ml = compile_access_path ~tparams ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
   let ctx, expr_ml =
     match path.note with
     | Il.TextT -> compile_upd_idx_text ctx expr_ml expr_i_ml expr_n_ml
     | _ -> compile_upd_idx_list ctx expr_ml expr_i_ml expr_n_ml
   in
-  compile_upd ctx path expr_b_ml expr_ml
+  compile_upd ~tparams ctx path expr_b_ml expr_ml
 
 (* Slice update: [exp_b[i : n] <- exp_n]
 
@@ -977,13 +996,13 @@ and compile_upd_slice_list (ctx : Ctx.t) (expr_ml : Ml.expr)
   in
   (ctx, expr_ml)
 
-and compile_upd_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
-    (exp_n_len : exp) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) :
-    Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
-  let ctx, expr_i_ml = compile_exp ctx exp_i in
+and compile_upd_slice ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (exp_i : exp) (exp_n_len : exp) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr)
+    : Ctx.t * Ml.expr =
+  let ctx, expr_ml = compile_access_path ~tparams ctx path expr_b_ml in
+  let ctx, expr_i_ml = compile_exp ~tparams ctx exp_i in
   let expr_i_ml = Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_i_ml ]) in
-  let ctx, expr_n_len_ml = compile_exp ctx exp_n_len in
+  let ctx, expr_n_len_ml = compile_exp ~tparams ctx exp_n_len in
   let expr_n_len_ml =
     Ml.AppE (Ml.VarE "Bigint.to_int_exn", [ expr_n_len_ml ])
   in
@@ -993,61 +1012,66 @@ and compile_upd_slice (ctx : Ctx.t) (path : path) (exp_i : exp)
         compile_upd_slice_text ctx expr_ml expr_i_ml expr_n_len_ml expr_n_ml
     | _ -> compile_upd_slice_list ctx expr_ml expr_i_ml expr_n_len_ml expr_n_ml
   in
-  compile_upd ctx path expr_b_ml expr_ml
+  compile_upd ~tparams ctx path expr_b_ml expr_ml
 
 (* Record field update: [exp_b.atom <- exp_n]
 
    [update(p, expr_b, {access(p, expr_b) with field = expr_n})] *)
 
-and compile_upd_dot (ctx : Ctx.t) (path : path) (atom : atom)
-    (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
-  let ctx, expr_ml = compile_access_path ctx path expr_b_ml in
+and compile_upd_dot ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (atom : atom) (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr
+    =
+  let ctx, expr_ml = compile_access_path ~tparams ctx path expr_b_ml in
   let expr_ml =
     let field_ml = Names.field atom in
     Ml.RecordUpdateE (expr_ml, [ (field_ml, expr_n_ml) ])
   in
-  compile_upd ctx path expr_b_ml expr_ml
+  compile_upd ~tparams ctx path expr_b_ml expr_ml
 
-and compile_upd (ctx : Ctx.t) (path : path) (expr_b_ml : Ml.expr)
-    (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
+and compile_upd ~(tparams : string list) (ctx : Ctx.t) (path : path)
+    (expr_b_ml : Ml.expr) (expr_n_ml : Ml.expr) : Ctx.t * Ml.expr =
   match path.it with
   | RootP -> (ctx, expr_n_ml)
-  | DotP (path, atom) -> compile_upd_dot ctx path atom expr_b_ml expr_n_ml
-  | IdxP (path, exp_i) -> compile_upd_idx ctx path exp_i expr_b_ml expr_n_ml
+  | DotP (path, atom) ->
+      compile_upd_dot ~tparams ctx path atom expr_b_ml expr_n_ml
+  | IdxP (path, exp_i) ->
+      compile_upd_idx ~tparams ctx path exp_i expr_b_ml expr_n_ml
   | SliceP (path, exp_i, exp_n_len) ->
-      compile_upd_slice ctx path exp_i exp_n_len expr_b_ml expr_n_ml
+      compile_upd_slice ~tparams ctx path exp_i exp_n_len expr_b_ml expr_n_ml
 
-and compile_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_n : exp) :
-    Ctx.t * Ml.expr =
-  let ctx, expr_b_ml = compile_exp ctx exp_b in
-  let ctx, expr_n_ml = compile_exp ctx exp_n in
-  compile_upd ctx path expr_b_ml expr_n_ml
+and compile_upd_exp ~(tparams : string list) (ctx : Ctx.t) (exp_b : exp)
+    (path : path) (exp_n : exp) : Ctx.t * Ml.expr =
+  let ctx, expr_b_ml = compile_exp ~tparams ctx exp_b in
+  let ctx, expr_n_ml = compile_exp ~tparams ctx exp_n in
+  compile_upd ~tparams ctx path expr_b_ml expr_n_ml
 
 (* Call expressions: [id(args)]
 
    [f_id expr_args] *)
 
-and compile_arg (ctx : Ctx.t) (arg : arg) : Ctx.t * Ml.expr =
+and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
+    Ctx.t * Ml.expr =
   match arg.it with
   | ExpA exp ->
-      let ctx, expr_ml = compile_exp ctx exp in
+      let ctx, expr_ml = compile_exp ~tparams ctx exp in
       (ctx, expr_ml)
   | DefA id ->
       let id_ml = Names.func id in
       let expr_ml = Ml.VarE id_ml in
       (ctx, expr_ml)
 
-and compile_args (ctx : Ctx.t) (args : arg list) : Ctx.t * Ml.expr list =
+and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
+    Ctx.t * Ml.expr list =
   List.fold_left
     (fun (ctx, exprs_ml) arg ->
-      let ctx, expr_ml = compile_arg ctx arg in
+      let ctx, expr_ml = compile_arg ~tparams ctx arg in
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
-and compile_call_exp (ctx : Ctx.t) (id : id) (_targs : targ list)
-    (args : arg list) : Ctx.t * Ml.expr =
+and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
+    (_targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
   let id_func_ml = Names.func id in
-  let ctx, exprs_arg_ml = compile_args ctx args in
+  let ctx, exprs_arg_ml = compile_args ~tparams ctx args in
   let expr_ml = Ml.AppE (Ml.VarE id_func_ml, exprs_arg_ml) in
   (ctx, expr_ml)
 
@@ -1059,8 +1083,8 @@ and compile_call_exp (ctx : Ctx.t) (id : id) (_targs : targ list)
    multi-var   ->  [Option.fold_N_1 (fun x .. -> expr) x? y? ..]
                    (fuses [Option.map f (Option.combineN x? y? ..)]) *)
 
-and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
-    Ctx.t * Ml.expr =
+and compile_iter_exp_opt ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (vars : var list) : Ctx.t * Ml.expr =
   (* Fetch iteration target variables *)
   let ids_opt_ml =
     List.map
@@ -1072,7 +1096,7 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
   let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_opt__" ctx vars in
   let n = List.length ids_opt_ml in
   (* Compile body expression *)
-  let ctx, expr_body_ml = compile_exp ctx exp in
+  let ctx, expr_body_ml = compile_exp ~tparams ctx exp in
   let ctx, expr_ml =
     if n >= 2 then
       (* Fuse [Option.map f (combineN o0 ..)] into [Option.fold_N_1 f o0 ..] *)
@@ -1108,8 +1132,8 @@ and compile_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list) :
    multi-var   ->  [List.fold_left_N_1 (fun x .. -> expr) x* y* ..]
                    (fuses [List.map f (List.combineN x* y* ..)]) *)
 
-and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
-    Ctx.t * Ml.expr =
+and compile_iter_exp_list ~(tparams : string list) (ctx : Ctx.t) (exp : exp)
+    (vars : var list) : Ctx.t * Ml.expr =
   (* Save outer context for promotion *)
   let ctx_outer = ctx in
   (* Fetch iteration target variables *)
@@ -1122,7 +1146,7 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
   let ctx, ids_stub_ml = Stub.OCaml.iterator ~prefix:"elem_list__" ctx vars in
   let n = List.length ids_list_ml in
   (* Compile body expression *)
-  let ctx, expr_body_ml = compile_exp ctx exp in
+  let ctx, expr_body_ml = compile_exp ~tparams ctx exp in
   let ctx, expr_ml =
     if n >= 2 then
       (* Fuse [List.map f (combineN l0 ..)] into a single [fold_left_N_1 f l0 ..] *)
@@ -1152,8 +1176,8 @@ and compile_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list) :
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (ctx, expr_ml)
 
-and compile_iter_exp (ctx : Ctx.t) (typ_exp : typ) (exp : exp)
-    (iterexp : iterexp) : Ctx.t * Ml.expr =
+and compile_iter_exp ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
+    (exp : exp) (iterexp : iterexp) : Ctx.t * Ml.expr =
   match
     Common.is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
   with
@@ -1164,5 +1188,5 @@ and compile_iter_exp (ctx : Ctx.t) (typ_exp : typ) (exp : exp)
   | None -> (
       let iter, vars = iterexp in
       match iter with
-      | Opt -> compile_iter_exp_opt ctx exp vars
-      | List -> compile_iter_exp_list ctx exp vars)
+      | Opt -> compile_iter_exp_opt ~tparams ctx exp vars
+      | List -> compile_iter_exp_list ~tparams ctx exp vars)

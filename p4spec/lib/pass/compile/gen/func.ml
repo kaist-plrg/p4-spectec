@@ -26,15 +26,15 @@ let lookup_dispatch_info (reverse_dispatch : reverse_dispatch) (id : id) :
 
 (* Parameters *)
 
-let compile_exp_param ~(index : int option) (ctx : Ctx.t) (typ : typ)
-    (exp : exp) : Ctx.t * Ml.param * Chain.t =
+let compile_exp_param ~(index : int option) ~(tparams : string list)
+    (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.param * Chain.t =
   let id_stub_ml =
     "param__" ^ (index |> Option.map string_of_int |> Option.value ~default:"")
   in
   let expr_stub_ml = Ml.VarE id_stub_ml in
-  let typ_ml = Type.compile_typ ~tparams:[] typ in
+  let typ_ml = Type.compile_typ ~tparams typ in
   let param_ml = (id_stub_ml, Some typ_ml) in
-  let ctx, chain = Bind.compile ctx expr_stub_ml exp in
+  let ctx, chain = Bind.compile ~tparams ctx expr_stub_ml exp in
   (ctx, param_ml, chain)
 
 let compile_def_param (ctx : Ctx.t) (id : id) : Ctx.t * Ml.param * Chain.t =
@@ -44,19 +44,21 @@ let compile_def_param (ctx : Ctx.t) (id : id) : Ctx.t * Ml.param * Chain.t =
   let chain = Chain.nop in
   (ctx, param_ml, chain)
 
-let compile_param ~(index : int option) (ctx : Ctx.t) (param : param) :
-    Ctx.t * Ml.param * Chain.t =
+let compile_param ~(index : int option) ~(tparams : string list) (ctx : Ctx.t)
+    (param : param) : Ctx.t * Ml.param * Chain.t =
   match param.it with
-  | ExpP (typ, exp) -> compile_exp_param ~index ctx typ exp
+  | ExpP (typ, exp) -> compile_exp_param ~index ~tparams ctx typ exp
   | DefP (id, _, _, _) -> compile_def_param ctx id
 
-let compile_params (ctx : Ctx.t) (params : param list) :
-    Ctx.t * Ml.param list * Chain.t =
+let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
+    : Ctx.t * Ml.param list * Chain.t =
   params
   |> List.mapi (fun idx param -> (idx, param))
   |> List.fold_left
        (fun (ctx, params_ml, chain_acc) (idx, param) ->
-         let ctx, param_ml, chain = compile_param ~index:(Some idx) ctx param in
+         let ctx, param_ml, chain =
+           compile_param ~index:(Some idx) ~tparams ctx param
+         in
          let params_ml = params_ml @ [ param_ml ] in
          let chain = Chain.connect [ chain_acc; chain ] in
          (ctx, params_ml, chain))
@@ -209,25 +211,27 @@ let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
 let rec compile_table_func (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (tablerows : tablerow list) : Ctx.t * Ml.funcdef list =
   let block = List.concat_map (fun (_, _, block_row) -> block_row) tablerows in
-  compile_defined_func_mono ctx id params typ_ret block None
+  compile_defined_func_mono ~tparams:[] ctx id params typ_ret block None
 
 (* Defined functions *)
 
-and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
-    (typ_ret : typ) (block_main : block) (elseblock_opt : block option) :
-    Ctx.t * Ml.funcdef list =
+and compile_defined_func_mono ~(tparams : string list) (ctx : Ctx.t) (id : id)
+    (params : param list) (typ_ret : typ) (block_main : block)
+    (elseblock_opt : block option) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
-  let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
+  let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let ctx_outer = ctx in
   (* Compile parameters *)
-  let ctx, params_ml, chain = compile_params ctx params in
+  let ctx, params_ml, chain = compile_params ~tparams ctx params in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
   let ctx, funcdef_main_ml =
-    let ctx, expr_block_ml = Instr.compile_block ctx block_main in
+    let ctx, expr_block_ml = Instr.compile_block ~tparams ctx block_main in
     let expr_ml = Chain.apply chain expr_block_ml in
-    let funcdef_main_ml = (id_main_ml, [], params_ml, Some typ_ret_ml, expr_ml) in
+    let funcdef_main_ml =
+      (id_main_ml, [], params_ml, Some typ_ret_ml, expr_ml)
+    in
     (ctx, funcdef_main_ml)
   in
   (* Compile else block *)
@@ -235,7 +239,7 @@ and compile_defined_func_mono (ctx : Ctx.t) (id : id) (params : param list)
   let ctx, funcdef_else_ml_opt =
     match elseblock_opt with
     | Some elseblock ->
-        let ctx, expr_else_ml = Instr.compile_block ctx elseblock in
+        let ctx, expr_else_ml = Instr.compile_block ~tparams ctx elseblock in
         let expr_ml = Chain.apply chain expr_else_ml in
         let funcdef_else_ml =
           (id_else_ml, [], params_ml, Some typ_ret_ml, expr_ml)
@@ -276,7 +280,9 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     definedfunc
   in
   if tparams <> [] then (ctx, [])
-  else compile_defined_func_mono ctx id params typ_ret block_main elseblock_opt
+  else
+    compile_defined_func_mono ~tparams:[] ctx id params typ_ret block_main
+      elseblock_opt
 
 (* Defs *)
 
