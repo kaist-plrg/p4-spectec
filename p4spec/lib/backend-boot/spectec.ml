@@ -303,16 +303,36 @@ module Make_parametric
 
      [Call_builtin_func] resolves a *builtin* (a `builtin dec` in the
      target script — FINDINGS.md §2a), not a spec-defined function — it
-     doesn't belong on [Runner.Interp.eval_func] (the level-above runner,
-     for calling *up* the tower). [Interface_SpecTec.call_builtin_value]
-     is the actual generic builtin registry, fixed at [Valrep.V_value] so
-     it doesn't recast the already-real [Value.t] [unboot_values]
-     produces. The result shell ("valres"/"valsres") is built through
-     [V.Make] over a [boot_value]/[boot_values]-converted, genuinely
-     [vt]-shaped payload — not [Value.Make] over the raw interpreted
-     result — since compiled code [Obj.magic]s this shell straight into
-     its native `` `OK_X `` / `` `FAIL `` with no dispatch (FINDINGS.md
-     §2c; see [Make_null.call_builtin_func]'s longer comment). *)
+     doesn't belong on [Runner.Interp.eval_func] (that's for *defined*
+     functions/relations, calling *up* the tower).
+
+     Always goes through [Runner.Interface.call_builtin] — [Runner_above],
+     the adjacent level below — never this level's own [Interface_SpecTec].
+     This works today because: (a) the generic builtins spec-meta's own
+     interpreter needs internally (`$add_map`/`$find_map`/etc., used e.g.
+     by `$load`) are part of the base [Funcs] table in every level's
+     [Builtins], regardless of [Ext] (FINDINGS.md §2a); and (b) a builtin
+     declared by a script loaded *as data* into this level (spec's own
+     `$print_<X>`) is only ever implemented as an interface extension on
+     the *target* level (P4's `print_` — [Interface.P4]'s
+     [Builtin_P4_Ext]), which [Runner_above] reaches directly in a
+     two-level tower.
+
+     Known gap: this is one hop to [Runner_above], not a transitive relay
+     down the whole tower — [Interface.call_builtin] has no fallback of
+     its own. For a tower with 2+ meta-levels above target, an extension
+     that only exists on target (not on the level immediately below the
+     caller) is still unreachable. Only correct today for towers where
+     [Runner_above] is the target directly. Not otherwise fixed — needs a
+     real multi-hop design, not a patch here.
+
+     [Runner.Interface.call_builtin]'s args are already real [Value.t]
+     (from [unboot_values]); the result shell ("valres") is built through
+     [V.Make] over a [boot_value]-converted, genuinely [vt]-shaped
+     payload — not [Value.Make] over the raw result — since compiled code
+     [Obj.magic]s this shell straight into its native `` `OK_X `` /
+     `` `FAIL `` with no dispatch (FINDINGS.md §2c; see
+     [Make_null.call_builtin_func]'s longer comment). *)
 
   let call_builtin_func (values_input : Value.t list) : Value.t list =
     let value_id, value_typs, value_values =
@@ -329,7 +349,7 @@ module Make_parametric
       value_values |> V.of_value |> Interface_SpecTec.unboot_values
     in
     let value_output =
-      Interface_SpecTec.call_builtin_value (fun _ -> ()) id typs values
+      Runner.Interface.call_builtin (fun _ -> ()) id typs values
     in
     let vt_output = Interface_SpecTec.boot_value value_output in
     let value_output_res =
