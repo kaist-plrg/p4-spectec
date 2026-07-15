@@ -143,10 +143,8 @@ let poly_sig_of_def (def : Sl.def) : (string * Il.tparam list) option =
   | ExternDecD (id, tparams, _, _, _) when tparams <> [] -> Some (id.it, tparams)
   | _ -> None
 
-(* Extern/builtin decl names across the whole spec (ground and generic
-   alike) — the call targets [Gen.Func]'s boundary-crossing guard cares
-   about. Spec-wide, since an extern/builtin never shares an SCC with its
-   generic caller (it has no outgoing call-graph edges of its own). *)
+(* Spec-wide extern/builtin names: an extern/builtin never shares an SCC
+   with its generic caller, so [Gen.Func]'s boundary guard needs this set. *)
 let extern_builtin_name_of_def (def : Sl.def) : string option =
   match def.it with
   | ExternDecD (id, _, _, _, _) | BuiltinDecD (id, _, _, _, _) -> Some id.it
