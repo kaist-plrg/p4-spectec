@@ -1068,10 +1068,8 @@ and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
-(* If [id] is still generic (found in [poly_sigs]), forward the caller's own
-   witnesses for its targs, resolved against the caller's [tparams]. Mangled
-   ground-specialized names are never in [poly_sigs], so this is a no-op for
-   the entire monomorphized path — only symbolic calls hit the [Some] arm. *)
+(* Forward the caller's witnesses if [id] is still generic — a no-op for
+   mangled ground names, which are never in [poly_sigs]. *)
 and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
     (targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
   let id_func_ml = Names.func id in

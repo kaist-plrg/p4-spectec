@@ -641,18 +641,14 @@ module Unmarshal = struct
     (name, [], [ ("v", Some (Ml.NameT "Value.t")) ], Some ml_typ, body)
 end
 
-(* Dictionary-passing witnesses: a generic function's own boundary calls
-   (extern/builtin) marshal/unmarshal at its still-unresolved tparams via
-   witness functions the caller passes in, instead of a named top-level
-   marshal_T/unmarshal_T (which only exists for closed/ground T). *)
+(* Dictionary-passing: a boundary call at a still-unresolved tparam
+   marshals/unmarshals via a caller-supplied witness, not a named marshal_T. *)
 
 let witness_marshal_name (tvar : string) = "marshal__" ^ tvar
 let witness_unmarshal_name (tvar : string) = "unmarshal__" ^ tvar
 
-(* [resolve_marshal tparams typ] / [resolve_unmarshal tparams typ] build an
-   expr of OCaml type ['t -> Value.t] / [Value.t -> 't] for [typ], where
-   ['t] is [typ]'s compiled OCaml type. Scope: bare tparam, or List/Opt of
-   one; anything else mentioning a tparam raises (see plan doc). *)
+(* Builds an expr of type ['t -> Value.t] / [Value.t -> 't] for [typ].
+   Scope: bare tparam, or List/Opt of one; else raises (see plan doc). *)
 let rec resolve_marshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams ->

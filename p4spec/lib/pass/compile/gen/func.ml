@@ -149,17 +149,15 @@ let compile_targ_reify (tvars : string list) : Ml.expr =
        (fun tv -> Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE tv; Ml.ListE [] ]))
        tvars)
 
-(* [resolve_expr] may itself be a lambda (List/Opt witnesses build one) —
-   bind it to a name before applying, since Ml's printer never parenthesizes
-   an [AppE]'s function-position expression. *)
+(* Bind [resolve_expr] before applying — it may be a bare lambda, and Ml's
+   printer never parenthesizes an [AppE]'s function-position expression. *)
 let apply_witness (tag : string) (resolve_expr : Ml.expr) (arg_expr : Ml.expr)
     : Ml.expr =
   let w_id = "w__" ^ tag in
   Ml.LetE (Ml.VarP w_id, resolve_expr, Ml.AppE (Ml.VarE w_id, [ arg_expr ]))
 
-(* Extern functions, still generic: forward the enclosing tparams' witnesses
-   to marshal/unmarshal at the boundary, and reify the tparams themselves as
-   the call's runtime targs (they're the callee's own, still unresolved). *)
+(* Generic extern: forward tparam witnesses to marshal/unmarshal at the
+   boundary, and reify the tparams as the call's own runtime targs. *)
 
 let compile_extern_func_generic (ctx : Ctx.t) (id : id)
     (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
@@ -389,9 +387,8 @@ let rec compile_table_func (ctx : Ctx.t) (id : id) (params : param list)
 
 (* Defined functions *)
 
-(* A generic function forwards its own witnesses to sibling/boundary calls
-   inside its body (see [compile_call_exp]), so its own signature — and its
-   internal main__/else__/dispatcher helpers — must accept them too. *)
+(* A generic function's body forwards its own witnesses to sibling/boundary
+   calls, so its main__/else__/dispatcher helpers must accept them too. *)
 and compile_defined_func_mono ~(tparams : string list)
     ~(tparams_ml : string list) (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (block_main : block) (elseblock_opt : block option) :
