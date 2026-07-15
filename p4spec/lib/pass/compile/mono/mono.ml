@@ -4,6 +4,7 @@ module Mixfix = Domain.Mixfix
 module StringSet = Collect.StringSet
 module Specialize = Specialize
 module Subst = Subst
+module Collect = Collect
 
 (* ===== Dispatch table types ===== *)
 

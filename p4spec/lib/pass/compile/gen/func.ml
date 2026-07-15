@@ -274,20 +274,81 @@ and compile_defined_func_mono ~(tparams : string list) (ctx : Ctx.t) (id : id)
   in
   (ctx, funcdefs_ml)
 
-let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
+(* Only extern/builtin calls cross the Value.t boundary — a plain
+   self/mutual call with a bare tparam is ordinary polymorphic recursion. *)
+let block_crosses_boundary_with (scope : Mono.StringSet.t)
+    (extern_builtin_names : Mono.StringSet.t) (block : block) : bool =
+  Mono.Collect.collect_all_calls_in_block block
+  |> List.exists (fun (callee, targs) ->
+         Mono.StringSet.mem callee extern_builtin_names
+         && List.exists (Mono.typ_mentions_any scope) targs)
+
+(* DefP (callback) params have no Ml.typ, so the generic-tparams printer
+   path can't build an explicit forall signature for them. *)
+let has_callback_param (params : param list) : bool =
+  List.exists
+    (fun (param : param) ->
+      match param.it with DefP _ -> true | ExpP _ -> false)
+    params
+
+let compile_defined_func (ctx : Ctx.t)
+    (extern_builtin_names : Mono.StringSet.t) (definedfunc : definedfunc) :
     Ctx.t * Ml.funcdef list =
   let id, tparams, params, typ_ret, block_main, elseblock_opt, _ =
     definedfunc
   in
-  if tparams <> [] then (ctx, [])
-  else
+  if tparams = [] then
     compile_defined_func_mono ~tparams:[] ctx id params typ_ret block_main
       elseblock_opt
+  else
+    let tparams_str = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
+    let scope = Mono.StringSet.of_list tparams_str in
+    let all_blocks = block_main @ Option.value ~default:[] elseblock_opt in
+    (* Unsupported-but-preexisting (e.g. $match_overloaded_named<V>): warn
+       and skip, same as pre-Task-4 behavior, instead of failing the build. *)
+    if has_callback_param params then (
+      Util.Error.warn_compile id.at
+        (Format.asprintf
+           "generic function %s has a callback parameter — not yet \
+            supported for generic compilation, skipping"
+           id.it);
+      (ctx, []))
+    else if block_crosses_boundary_with scope extern_builtin_names all_blocks
+    then
+      Error.error id.at
+        (Format.asprintf
+           "generic function %s crosses the Value.t boundary via its own \
+            type parameter — not yet supported (see Task 5)"
+           id.it)
+    else
+      let tparams_ml = List.map Names.tvar tparams in
+      let ctx, funcdefs =
+        compile_defined_func_mono ~tparams:tparams_str ctx id params typ_ret
+          block_main elseblock_opt
+      in
+      ( ctx,
+        List.map
+          (fun (name, _tparams, params, ret, body) ->
+            (name, tparams_ml, params, ret, body))
+          funcdefs )
 
 (* Defs *)
 
-let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch) (def : def)
-    : Ctx.t * Ml.funcdef list =
+(* Names of extern/builtin decls — the call targets that matter to
+   [block_crosses_boundary_with]. *)
+let collect_extern_builtin_names (defs : def list) : Mono.StringSet.t =
+  List.filter_map
+    (fun (def : def) ->
+      match def.it with
+      | ExternDecD (id, _, _, _, _) | BuiltinDecD (id, _, _, _, _) ->
+          Some id.it
+      | _ -> None)
+    defs
+  |> Mono.StringSet.of_list
+
+let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
+    (extern_builtin_names : Mono.StringSet.t) (def : def) :
+    Ctx.t * Ml.funcdef list =
   match def.it with
   | ExternDecD (id, [], params, typ_ret, _) ->
       compile_extern_func ctx reverse_dispatch id params typ_ret
@@ -295,14 +356,18 @@ let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch) (def : def)
       compile_builtin_func ctx reverse_dispatch id params typ_ret
   | TableDecD (id, params, typ_ret, tablerows, _) ->
       compile_table_func ctx id params typ_ret tablerows
-  | FuncDecD definedfunc -> compile_defined_func ctx definedfunc
+  | FuncDecD definedfunc ->
+      compile_defined_func ctx extern_builtin_names definedfunc
   | _ -> (ctx, [])
 
 let compile_defs (ctx : Ctx.t) (defs : def list)
     (reverse_dispatch : reverse_dispatch) : Ctx.t * Ml.funcdef list =
+  let extern_builtin_names = collect_extern_builtin_names defs in
   List.fold_left
     (fun (ctx, funcdefs_ml_acc) def ->
-      let ctx, funcdefs_ml = compile_def ctx reverse_dispatch def in
+      let ctx, funcdefs_ml =
+        compile_def ctx reverse_dispatch extern_builtin_names def
+      in
       (ctx, funcdefs_ml_acc @ funcdefs_ml))
     (ctx, []) defs
 

@@ -202,6 +202,15 @@ def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
   = $filter_<X>(X_t*, b_t*)
   -- if ~b_h
 
+dec $evens_<X>(X*) : X*
+  hint(prose_in "every other element of" %0 "starting from the first")
+dec $odds_<X>(X*) : X*
+  hint(prose_in "every other element of" %0 "starting from the second")
+def $evens_<X>(eps) = eps
+def $evens_<X>(X_h :: X_t*) = X_h :: $odds_<X>(X_t*)
+def $odds_<X>(eps) = eps
+def $odds_<X>(X_h :: X_t*) = $evens_<X>(X_t*)
+
 builtin dec $sort_<X>((nat, X)*) : (nat, X)*
 
 builtin dec $distinct_<K>(K*) : bool

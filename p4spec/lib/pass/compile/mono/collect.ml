@@ -19,6 +19,20 @@ let make_poly_call_collector (poly_funcs : StringSet.t) :
   in
   { (Collect.make_base ~default:[] ~compose:( @ )) with collect_exp }
 
+(* ===== All-call collector ===== *)
+
+(* Every (callee, targs) pair in a block, regardless of polymorphism —
+   used to detect a generic function's own boundary crossings. *)
+let make_all_call_collector () : (string * Il.typ list) list Collect.collector
+    =
+  let collect_exp c exp =
+    let sub = Collect.default_collect_exp c exp in
+    match exp.it with
+    | Il.CallE (id, targs, _) -> c.compose sub [ (id.it, targs) ]
+    | _ -> sub
+  in
+  { (Collect.make_base ~default:[] ~compose:( @ )) with collect_exp }
+
 (* ===== Collecting from SL blocks ===== *)
 
 let collect_from_exp (c : (string * Il.typ list) list Collect.collector)
@@ -113,3 +127,10 @@ let collect_call_sites ~(poly_funcs : StringSet.t) (spec : Sl.spec) :
       let cmp_id = String.compare id_a id_b in
       if cmp_id <> 0 then cmp_id else compare targs_a targs_b)
     raw
+
+(* All (callee, targs) call sites in a block; feeds [Gen.Func]'s boundary
+   check. *)
+let collect_all_calls_in_block (block : Sl.block) : (string * Il.typ list) list
+    =
+  let c = make_all_call_collector () in
+  collect_in_block c block
