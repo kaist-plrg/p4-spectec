@@ -3,8 +3,8 @@ open Lib
 open Lang
 open Xl
 open Sl
-module Typdef = Runtime.Type.Typdef
-module Subst = Runtime.Type.Subst
+module Typ = Runtime.Type
+module Typdef = Typ.Typdef
 open Util.Source
 
 (* Compiling expressions *)
@@ -217,7 +217,7 @@ and compile_downcast_exp_var ~(tparams : string list) (ctx : Ctx.t) (id : id)
             match td with
             | Typdef.Defined (tparams, _) ->
                 let theta = TIdMap.of_lists tparams targs in
-                List.map (Subst.subst_typ theta) typs
+                Typ.Subst.subst_typs theta typs
             | _ -> typs
           in
           (ctor_ml, Type.compile_typs ~tparams typs_inst))
@@ -437,7 +437,8 @@ and compile_sub_exp_var_irreflexive ~(tparams : string list) (ctx : Ctx.t)
           let theta = TIdMap.of_lists tparams targs in
           List.map
             (fun (ctor_ml, typs) ->
-              (ctor_ml, List.map (Subst.subst_typ theta) typs))
+              let typs = Typ.Subst.subst_typs theta typs in
+              (ctor_ml, typs))
             ctors_typ
       | _ -> ctors_typ
     in
@@ -1060,8 +1061,8 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
   | DefA id ->
       let id_ml = Names.func id in
       let expr_ml =
-        match Ctx.find_poly_tparams ctx id.it with
-        | Some callee_tparams ->
+        match Ctx.find_func_tparams ctx id.it with
+        | Some callee_tparams when callee_tparams <> [] ->
             List.iter
               (fun (tp : Il.tparam) ->
                 if not (List.mem tp.it tparams) then
@@ -1082,7 +1083,7 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
                 callee_tparams
             in
             Ml.AppE (Ml.VarE id_ml, exprs_witness_ml)
-        | None -> Ml.VarE id_ml
+        | Some _ | None -> Ml.VarE id_ml
       in
       (ctx, expr_ml)
 
@@ -1094,14 +1095,16 @@ and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
-(* Forward the caller's witnesses if [id] is still generic — a no-op for
-   mangled ground names, which are never in [poly_sigs]. *)
+(* Forward the caller's witnesses if [id] has its own tparams — a no-op
+   for a ground callee, per [Ctx.find_func_tparams]. *)
 and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
     (targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
   let id_func_ml = Names.func id in
   let ctx, exprs_arg_ml = compile_args ~tparams ctx args in
-  match Ctx.find_poly_tparams ctx id.it with
-  | Some callee_tparams when List.length callee_tparams = List.length targs ->
+  match Ctx.find_func_tparams ctx id.it with
+  | Some callee_tparams
+    when callee_tparams <> [] && List.length callee_tparams = List.length targs
+    ->
       let exprs_witness_ml =
         List.concat_map
           (fun targ ->

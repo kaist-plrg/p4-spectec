@@ -236,7 +236,10 @@ let seed_poly_calls (ctx : Ctx.t) ~(enqueue : Sl.typ -> unit) (spec : Sl.spec) :
   let make_collector (tparams : string list) : unit Collect.collector =
     let collect_exp c exp =
       (match exp.it with
-      | Il.CallE (id, targs, _) when Ctx.find_poly_tparams ctx id.it <> None ->
+      | Il.CallE (id, targs, _)
+        when (match Ctx.find_func_tparams ctx id.it with
+              | Some (_ :: _) -> true
+              | Some [] | None -> false) ->
           List.iter (enqueue_ground tparams) targs
       | _ -> ());
       Collect.default_collect_exp c exp

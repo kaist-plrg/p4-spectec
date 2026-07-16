@@ -126,36 +126,36 @@ let collect_refs_def (def : def) : string list * int list =
 (* True for defs that are graph nodes: funcs (ground or generic) and rels. *)
 let is_entity (def : def) : bool =
   match def.it with
-  | FuncDecD _ | ExternDecD _ | BuiltinDecD _ -> true
-  | TableDecD _ | RelD _ | ExternRelD _ -> true
+  | ExternRelD _ | RelD _
+  | ExternDecD _ | BuiltinDecD _ | TableDecD _ | FuncDecD _ -> true
   | _ -> false
 
 let def_id (def : def) : string =
   match def.it with
-  | FuncDecD (id, _, _, _, _, _, _) -> id.it
+  | ExternRelD (id, _, _, _) -> id.it
+  | RelD (id, _, _, _, _, _) -> id.it
   | ExternDecD (id, _, _, _, _) -> id.it
   | BuiltinDecD (id, _, _, _, _) -> id.it
   | TableDecD (id, _, _, _, _) -> id.it
-  | RelD (id, _, _, _, _, _) -> id.it
-  | ExternRelD (id, _, _, _) -> id.it
+  | FuncDecD (id, _, _, _, _, _, _) -> id.it
   | _ -> assert false
 
 (* Returns Some arity (# ExpP params) for function defs, None for rels.
    Used to build the DefP conservative-edge targets: only functions, not rels. *)
 let func_expp_arity (def : def) : int option =
   match def.it with
-  | FuncDecD (_, _, params, _, _, _, _) -> Some (count_expp params)
   | ExternDecD (_, _, params, _, _) -> Some (count_expp params)
   | BuiltinDecD (_, _, params, _, _) -> Some (count_expp params)
   | TableDecD (_, params, _, _, _) -> Some (count_expp params)
-  | RelD _ | ExternRelD _ -> None
+  | FuncDecD (_, _, params, _, _, _, _) -> Some (count_expp params)
   | _ -> None
 
-(* ── Entry point ── *)
+(* Entry point *)
 
 (* Given an SL spec, compute SCCs on the function/relation call
-   graph and return binding groups in topological order (dependencies first).
-   Each group becomes one Ml.LetRec in codegen. *)
+   graph and return binding groups in topological order (dependencies first)
+   Each group becomes one Ml.LetRec in codegen *)
+
 let compute (spec : spec) : def list list =
   let defs = List.filter is_entity spec in
   let n = List.length defs in

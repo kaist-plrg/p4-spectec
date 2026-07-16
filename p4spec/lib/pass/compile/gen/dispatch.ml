@@ -3,7 +3,7 @@ open Sl
 open Util.Source
 
 let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
-  (* Signatures for defs still generic (tparams <> []) — the generic arm needs
+  (* Signatures for generic defs (tparams <> []) — the generic arm needs
      its own signature table. *)
   let poly_func_sigs : (string, Sl.param list * Sl.typ) Hashtbl.t =
     Hashtbl.create 16
@@ -101,7 +101,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
         | _ -> None)
       spec
   in
-  (* Arms for defs still generic: witnesses come from [interface_lookup_],
+  (* Arms for generic defs: witnesses come from [interface_lookup_],
      so no ground call site is needed. *)
   let build_generic_arm (name : string) (tparams : Il.tparam list)
       (params : Sl.param list) (typ_ret : Sl.typ) : Ml.arm option =
@@ -240,13 +240,20 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
         None
   in
   let arms_generic_ml =
+    let poly_names_tparams =
+      Ctx.fold_funcs
+        (fun id func acc ->
+          let tparams, _, _ = Runtime.Dynamic_Sl.Func.get_signature func in
+          if tparams = [] then acc else (id.it, tparams) :: acc)
+        ctx []
+    in
     List.filter_map
       (fun (name, tparams) ->
         match Hashtbl.find_opt poly_func_sigs name with
         | None -> None
         | Some (params, typ_ret) ->
             build_generic_arm name tparams params typ_ret)
-      ctx.Ctx.poly_sigs
+      poly_names_tparams
   in
   (* Fallback wild arm *)
   let arm_wild_ml =
