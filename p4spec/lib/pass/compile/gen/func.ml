@@ -186,7 +186,7 @@ let compile_extern_func_generic (ctx : Ctx.t) (id : id)
       (fun i typ ->
         ( "v__" ^ string_of_int i,
           apply_witness (string_of_int i)
-            (Interface.resolve_marshal tvars typ)
+            (Interface.resolve_marshal ctx tvars typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -206,7 +206,7 @@ let compile_extern_func_generic (ctx : Ctx.t) (id : id)
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
             apply_witness "ret__"
-              (Interface.resolve_unmarshal tvars typ_ret)
+              (Interface.resolve_unmarshal ctx tvars typ_ret)
               (Ml.VarE "v_out__") );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
@@ -335,7 +335,7 @@ let compile_builtin_func_generic (ctx : Ctx.t) (id : id)
       (fun i typ ->
         ( "v__" ^ string_of_int i,
           apply_witness (string_of_int i)
-            (Interface.resolve_marshal tvars typ)
+            (Interface.resolve_marshal ctx tvars typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -370,7 +370,7 @@ let compile_builtin_func_generic (ctx : Ctx.t) (id : id)
       ( Ml.VarP "v_out__",
         expr_try_ml,
         apply_witness "ret__"
-          (Interface.resolve_unmarshal tvars typ_ret)
+          (Interface.resolve_unmarshal ctx tvars typ_ret)
           (Ml.VarE "v_out__") )
   in
   let expr_body_ml =

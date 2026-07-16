@@ -649,9 +649,15 @@ end
 let witness_marshal_name (tvar : string) = "marshal__" ^ tvar
 let witness_unmarshal_name (tvar : string) = "unmarshal__" ^ tvar
 
-(* Builds an expr of type ['t -> Value.t] / [Value.t -> 't] for [typ].
-   Scope: bare tparam, or List/Opt of one; else raises (see plan doc). *)
-let rec resolve_marshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
+(* [f] may be a bare lambda; Ml's printer never parens an [AppE]'s function
+   position (mirrors [Func.apply_witness], which guards the same hazard). *)
+let apply_resolved (f : Ml.expr) (arg : Ml.expr) : Ml.expr =
+  Ml.LetE (Ml.VarP "w__resolved_", f, Ml.AppE (Ml.VarE "w__resolved_", [ arg ]))
+
+(* Builds an expr of type ['t -> Value.t] for [typ]: bare tparam, List/Opt/
+   tuple/typedef (mirrors [compile_var]); [visiting] guards typedef cycles. *)
+let rec resolve_marshal ?(visiting : string list = []) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams ->
       Ml.VarE (witness_marshal_name (Names.tvar id))
@@ -664,7 +670,8 @@ let rec resolve_marshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
                 typ_make_expr typ;
                 Ml.AppE
                   ( Ml.LitE "List.map",
-                    [ resolve_marshal tparams t; Ml.VarE "x__" ] );
+                    [ resolve_marshal ~visiting ctx tparams t; Ml.VarE "x__" ]
+                  );
               ] ) )
   | Il.IterT (t, Il.Opt) when typ_mentions tparams t ->
       Ml.FunE
@@ -675,17 +682,125 @@ let rec resolve_marshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
                 typ_make_expr typ;
                 Ml.AppE
                   ( Ml.LitE "Option.map",
-                    [ resolve_marshal tparams t; Ml.VarE "x__" ] );
+                    [ resolve_marshal ~visiting ctx tparams t; Ml.VarE "x__" ]
+                  );
               ] ) )
+  | Il.TupleT typs when typ_mentions tparams typ ->
+      let vars = List.mapi (fun i _ -> "x" ^ string_of_int i) typs in
+      let marshal_calls =
+        List.map2
+          (fun t v ->
+            let f = resolve_marshal ~visiting ctx tparams t in
+            apply_resolved f (Ml.VarE v))
+          typs vars
+      in
+      Ml.FunE
+        ( [ Ml.VarP "x__" ],
+          Ml.LetE
+            ( Ml.TupleP (List.map (fun v -> Ml.VarP v) vars),
+              Ml.VarE "x__",
+              Ml.AppE
+                ( Ml.LitE "Value.Make.tuple",
+                  [ typ_make_expr typ; Ml.ListE marshal_calls ] ) ) )
+  | Il.VarT (id, targs) when typ_mentions tparams typ ->
+      if List.mem id.it visiting then
+        failwith
+          (Printf.sprintf
+             "resolve_marshal: %s: recursive generic typedef at a boundary \
+              call is not supported"
+             id.it)
+      else
+        resolve_typdef_marshal ~visiting:(id.it :: visiting) ctx tparams typ
+          id targs
   | _ when typ_mentions tparams typ ->
       failwith
         (Printf.sprintf
            "resolve_marshal: %s: type parameter used inside an unsupported \
-            container at a boundary call (only bare/List/Opt supported)"
+            container at a boundary call"
            (Sl.Print.string_of_typ typ))
   | _ -> Ml.VarE ("marshal_" ^ interface_name typ)
 
-and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
+(* Mirrors [compile_var]'s [Typdef.Defined] dispatch, but recurses via
+   [resolve_marshal] (bottoming out at a witness) instead of marshal_<T>. *)
+and resolve_typdef_marshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list)
+    : Ml.expr =
+  let theta = build_theta ctx id targs in
+  let subst t = Mono.Subst.subst_typ theta t in
+  match Ctx.find_typdef ctx id with
+  | Typdef.Defined (_, deftyp) -> (
+      match deftyp.it with
+      | Il.PlainT typ_alias ->
+          resolve_marshal ~visiting ctx tparams (subst typ_alias)
+      | Il.StructT typfields ->
+          resolve_struct_marshal ~visiting ctx tparams typ subst typfields
+      | Il.VariantT _ ->
+          resolve_variant_marshal ~visiting ctx tparams typ id subst)
+  | _ ->
+      failwith
+        (Printf.sprintf
+           "resolve_marshal: %s: not a plain/struct/variant typedef" id.it)
+
+and resolve_struct_marshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (subst : Sl.typ -> Sl.typ)
+    (typfields : Sl.typfield list) : Ml.expr =
+  (* [x__] has no param-level type annotation (unlike a named marshal_T
+     function), so pin it here — else punned field labels resolve wrong. *)
+  let x_ann = Ml.AnnotE (Ml.VarE "x__", Type.compile_typ ~tparams typ) in
+  let field_exprs =
+    List.map
+      (fun (atom, t) ->
+        let atom_str = Names.Ctor.atom atom in
+        let ocaml_field = Names.field atom in
+        Ml.TupleE
+          [
+            Ml.AppE (Ml.LitE "make_atom_", [ Ml.StrE atom_str ]);
+            apply_resolved
+              (resolve_marshal ~visiting ctx tparams (subst t))
+              (Ml.FieldE (x_ann, ocaml_field));
+          ])
+      typfields
+  in
+  Ml.FunE
+    ( [ Ml.VarP "x__" ],
+      Ml.AppE
+        (Ml.LitE "Value.Make.str", [ typ_make_expr typ; Ml.ListE field_exprs ])
+    )
+
+and resolve_variant_marshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (id : Sl.id)
+    (subst : Sl.typ -> Sl.typ) : Ml.expr =
+  let ctors_info = Ctx.find_ctors_full ctx id in
+  let arms =
+    List.map
+      (fun (mixop, ctor_ml, payload_typs) ->
+        let payload_typs' = List.map subst payload_typs in
+        let pvars =
+          List.mapi (fun i _ -> "p_" ^ string_of_int i) payload_typs'
+        in
+        let pat =
+          Ml.VariantP (`Poly (ctor_ml, List.map (fun v -> Ml.VarP v) pvars))
+        in
+        let marshal_calls =
+          List.map2
+            (fun t pvar ->
+              apply_resolved
+                (resolve_marshal ~visiting ctx tparams t)
+                (Ml.VarE pvar))
+            payload_typs' pvars
+        in
+        ( pat,
+          Ml.AppE
+            ( Ml.LitE "make_case_",
+              [
+                mixop_expr mixop; Ml.ListE marshal_calls; typ_make_expr typ;
+              ] ) ))
+      ctors_info
+  in
+  Ml.FunE ([ Ml.VarP "x__" ], Ml.MatchE (Ml.VarE "x__", arms))
+
+and resolve_unmarshal ?(visiting : string list = []) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams ->
       Ml.VarE (witness_unmarshal_name (Names.tvar id))
@@ -695,7 +810,7 @@ and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
           Ml.AppE
             ( Ml.LitE "List.map",
               [
-                resolve_unmarshal tparams t;
+                resolve_unmarshal ~visiting ctx tparams t;
                 Ml.AppE (Ml.LitE "Value.Get.list", [ Ml.VarE "v__" ]);
               ] ) )
   | Il.IterT (t, Il.Opt) when typ_mentions tparams t ->
@@ -704,9 +819,39 @@ and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
           Ml.AppE
             ( Ml.LitE "Option.map",
               [
-                resolve_unmarshal tparams t;
+                resolve_unmarshal ~visiting ctx tparams t;
                 Ml.AppE (Ml.LitE "Value.Get.opt", [ Ml.VarE "v__" ]);
               ] ) )
+  | Il.TupleT typs when typ_mentions tparams typ ->
+      let n = List.length typs in
+      let vars = List.init n (fun i -> "v" ^ string_of_int i) in
+      let unmarshal_calls =
+        List.mapi
+          (fun i t ->
+            apply_resolved
+              (resolve_unmarshal ~visiting ctx tparams t)
+              (Ml.VarE (List.nth vars i)))
+          typs
+      in
+      Ml.FunE
+        ( [ Ml.VarP "v__" ],
+          Ml.MatchE
+            ( Ml.AppE (Ml.LitE "Value.Get.tuple", [ Ml.VarE "v__" ]),
+              [
+                ( Ml.ListP (List.map (fun v -> Ml.VarP v) vars),
+                  Ml.TupleE unmarshal_calls );
+                (Ml.WildP, Common.raise_unmatch "resolve_unmarshal: tuple");
+              ] ) )
+  | Il.VarT (id, targs) when typ_mentions tparams typ ->
+      if List.mem id.it visiting then
+        failwith
+          (Printf.sprintf
+             "resolve_unmarshal: %s: recursive generic typedef at a \
+              boundary call is not supported"
+             id.it)
+      else
+        resolve_typdef_unmarshal ~visiting:(id.it :: visiting) ctx tparams
+          typ id targs
   | _ when typ_mentions tparams typ ->
       failwith
         (Printf.sprintf
@@ -714,6 +859,90 @@ and resolve_unmarshal (tparams : string list) (typ : Sl.typ) : Ml.expr =
             container at a boundary call"
            (Sl.Print.string_of_typ typ))
   | _ -> Ml.VarE ("unmarshal_" ^ interface_name typ)
+
+and resolve_typdef_unmarshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list)
+    : Ml.expr =
+  let theta = build_theta ctx id targs in
+  let subst t = Mono.Subst.subst_typ theta t in
+  match Ctx.find_typdef ctx id with
+  | Typdef.Defined (_, deftyp) -> (
+      match deftyp.it with
+      | Il.PlainT typ_alias ->
+          resolve_unmarshal ~visiting ctx tparams (subst typ_alias)
+      | Il.StructT typfields ->
+          resolve_struct_unmarshal ~visiting ctx tparams typ subst typfields
+      | Il.VariantT _ ->
+          resolve_variant_unmarshal ~visiting ctx tparams typ id subst)
+  | _ ->
+      failwith
+        (Printf.sprintf
+           "resolve_unmarshal: %s: not a plain/struct/variant typedef" id.it)
+
+and resolve_struct_unmarshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (subst : Sl.typ -> Sl.typ)
+    (typfields : Sl.typfield list) : Ml.expr =
+  let field_bindings =
+    List.map
+      (fun (atom, t) ->
+        let atom_str = Names.Ctor.atom atom in
+        let ocaml_field = Names.field atom in
+        ( ocaml_field,
+          apply_resolved
+            (resolve_unmarshal ~visiting ctx tparams (subst t))
+            (Ml.AppE
+               ( Ml.LitE "get_field_",
+                 [ Ml.VarE "fields__"; Ml.StrE atom_str ] )) ))
+      typfields
+  in
+  (* Record construction here also lacks a return-type annotation to
+     resolve punned field labels (see [x_ann] in [resolve_struct_marshal]). *)
+  Ml.FunE
+    ( [ Ml.VarP "v__" ],
+      Ml.LetE
+        ( Ml.VarP "fields__",
+          Ml.AppE (Ml.LitE "Value.Get.str", [ Ml.VarE "v__" ]),
+          Ml.AnnotE (Ml.RecordE field_bindings, Type.compile_typ ~tparams typ)
+        ) )
+
+and resolve_variant_unmarshal ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (id : Sl.id)
+    (subst : Sl.typ -> Sl.typ) : Ml.expr =
+  let ctors_info = Ctx.find_ctors_full ctx id in
+  let arms_ctor_ml =
+    List.map
+      (fun (mixop, ctor_ml, payload_typs) ->
+        let payload_typs' = List.map subst payload_typs in
+        let pat_str, ids_arg_ml = mixop_value_arg_pat mixop in
+        let exprs_payload_ml =
+          List.map2
+            (fun t id_arg_ml ->
+              apply_resolved
+                (resolve_unmarshal ~visiting ctx tparams t)
+                (Ml.VarE id_arg_ml))
+            payload_typs' ids_arg_ml
+        in
+        (Ml.LitP pat_str, Ml.VariantE (ctor_ml, exprs_payload_ml)))
+      ctors_info
+  in
+  let name = interface_name typ in
+  let arm_wild_ml =
+    ( Ml.WildP,
+      Common.raise_unmatch (Printf.sprintf "unmarshal_%s: unknown case" name)
+    )
+  in
+  (* [v__] has no param-level type annotation (unlike a named unmarshal_T
+     function), so pin it here — else punned [.it]/[CaseV] resolve wrong. *)
+  Ml.FunE
+    ( [ Ml.VarP "v__" ],
+      Ml.MatchE
+        ( Ml.FieldE
+            (Ml.AnnotE (Ml.VarE "v__", Ml.NameT "Value.t"), "it"),
+          [
+            ( Ml.VariantP (`Mono ("CaseV", [ Ml.VarP "vc_" ])),
+              Ml.MatchE (Ml.VarE "vc_", arms_ctor_ml @ [ arm_wild_ml ]) );
+            (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
+          ] ) )
 
 and typ_mentions (tparams : string list) (typ : Sl.typ) : bool =
   match typ.it with

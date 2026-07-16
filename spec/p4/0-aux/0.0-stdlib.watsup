@@ -285,3 +285,8 @@ def $codom_map<K, V>(`{ (K `: V)* }) = `{ V* }
 
 builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
   hint(prose_in "the map" %0 "with the value for" %1 "is updated to" %2)
+
+;; Exercises dictionary-passing for a still-generic map<K, V> argument
+;; (map -> set -> pair -> K, V: three layers of typedef unfolding).
+builtin dec $map_union_<K, V>(map<K, V>, map<K, V>) : map<K, V>
+  hint(prose_in "the union of the maps" %0 "and" %1 "(right-biased)")

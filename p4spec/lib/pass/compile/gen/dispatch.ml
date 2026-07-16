@@ -240,7 +240,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
             (fun i typ ->
               ( "a" ^ string_of_int i,
                 Func.apply_witness (string_of_int i)
-                  (Interface.resolve_unmarshal tvars typ)
+                  (Interface.resolve_unmarshal ctx tvars typ)
                   (Ml.AppE
                      ( Ml.LitE "List.nth",
                        [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] )) ))
@@ -253,7 +253,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
         in
         let expr_marshal_ret_ml =
           Func.apply_witness "ret__"
-            (Interface.resolve_marshal tvars typ_ret)
+            (Interface.resolve_marshal ctx tvars typ_ret)
             expr_call_ml
         in
         let expr_run_pass_ml =

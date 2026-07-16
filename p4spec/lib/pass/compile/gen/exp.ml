@@ -1080,8 +1080,8 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
         List.concat_map
           (fun targ ->
             [
-              Interface.resolve_marshal tparams targ;
-              Interface.resolve_unmarshal tparams targ;
+              Interface.resolve_marshal ctx tparams targ;
+              Interface.resolve_unmarshal ctx tparams targ;
             ])
           targs
       in

@@ -156,23 +156,35 @@ let rec print_expr ~level expr =
       in
       "(" ^ String.concat ", " (List.map print_tuple_elem exprs) ^ ")"
   | ListE exprs ->
-      "[" ^ String.concat "; " (List.map (print_expr ~level) exprs) ^ "]"
+      let print_elem expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
+      "[" ^ String.concat "; " (List.map print_elem exprs) ^ "]"
   | ConsE (expr_hd, expr_tl) ->
       "(" ^ print_expr ~level expr_hd ^ " :: " ^ print_expr ~level expr_tl ^ ")"
   | OptE None -> "None"
   | OptE (Some expr) -> "Some (" ^ print_expr ~level expr ^ ")"
   | VariantE (ctor, []) -> "`" ^ print_ctor ctor
   | VariantE (ctor, exprs) ->
+      let print_elem expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
       "`" ^ print_ctor ctor ^ " ("
-      ^ String.concat ", " (List.map (print_expr ~level) exprs)
+      ^ String.concat ", " (List.map print_elem exprs)
       ^ ")"
   | RecordE [] -> "{}"
   | RecordE fields ->
+      let print_field_val expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
       "{ "
       ^ String.concat "; "
           (List.map
              (fun (field, expr) ->
-               print_field field ^ " = " ^ print_expr ~level expr)
+               print_field field ^ " = " ^ print_field_val expr)
              fields)
       ^ " }"
   | RecordUpdateE (expr_base, []) -> print_expr ~level expr_base
