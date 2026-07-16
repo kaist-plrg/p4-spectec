@@ -290,6 +290,11 @@ let seed_poly_calls (ctx : Ctx.t) ~(enqueue : Sl.typ -> unit) (spec : Sl.spec) :
           visit_exps c exps;
           visit_block c block;
           Option.iter (visit_block c) elseblock
+      | Sl.TableDecD (_, _, _, tablerows, _) ->
+          (* Rows compile with tparams:[] (compile_table_func), so mirror
+             that here rather than treating rows as generic. *)
+          let c = make_collector [] in
+          List.iter (fun (_, _, block_row) -> visit_block c block_row) tablerows
       | _ -> ())
     spec
 
