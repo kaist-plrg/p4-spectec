@@ -1057,7 +1057,22 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
       (ctx, expr_ml)
   | DefA id ->
       let id_ml = Names.func id in
-      let expr_ml = Ml.VarE id_ml in
+      let expr_ml =
+        match Ctx.find_poly_tparams ctx id.it with
+        | Some callee_tparams ->
+            let exprs_witness_ml =
+              List.concat_map
+                (fun (tp : Il.tparam) ->
+                  let typ_tp = Il.VarT (tp, []) $ no_region in
+                  [
+                    Interface.resolve_marshal ctx tparams typ_tp;
+                    Interface.resolve_unmarshal ctx tparams typ_tp;
+                  ])
+                callee_tparams
+            in
+            Ml.AppE (Ml.VarE id_ml, exprs_witness_ml)
+        | None -> Ml.VarE id_ml
+      in
       (ctx, expr_ml)
 
 and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :

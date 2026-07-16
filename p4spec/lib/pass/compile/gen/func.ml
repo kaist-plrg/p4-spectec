@@ -37,10 +37,25 @@ let compile_exp_param ~(index : int option) ~(tparams : string list)
   let ctx, chain = Bind.compile ~tparams ctx expr_stub_ml exp in
   (ctx, param_ml, chain)
 
-let compile_def_param (ctx : Ctx.t) (id : id) : Ctx.t * Ml.param * Chain.t =
+let compile_def_param ~(tparams : string list) (ctx : Ctx.t) (id : id)
+    (params : param list) (typ_ret : typ) : Ctx.t * Ml.param * Chain.t =
   let id_ml = Names.func id in
   let ctx = Ctx.add_binding ctx (id, []) id_ml in
-  let param_ml = (id_ml, None) in
+  let typs_param =
+    List.filter_map
+      (fun (param : param) ->
+        match param.it with ExpP (typ, _) -> Some typ | _ -> None)
+      params
+  in
+  let typs_arrow_ml =
+    List.map (Type.compile_typ ~tparams) typs_param
+    @ [ Type.compile_typ ~tparams typ_ret ]
+  in
+  (* [Ml.typ] has no arrow case; build one as a parenthesized name string. *)
+  let str_arrow_ml =
+    "(" ^ String.concat " -> " (List.map Ml.Print.print_typ typs_arrow_ml) ^ ")"
+  in
+  let param_ml = (id_ml, Some (Ml.NameT str_arrow_ml)) in
   let chain = Chain.nop in
   (ctx, param_ml, chain)
 
@@ -48,7 +63,8 @@ let compile_param ~(index : int option) ~(tparams : string list) (ctx : Ctx.t)
     (param : param) : Ctx.t * Ml.param * Chain.t =
   match param.it with
   | ExpP (typ, exp) -> compile_exp_param ~index ~tparams ctx typ exp
-  | DefP (id, _, _, _) -> compile_def_param ctx id
+  | DefP (id, _, params, typ_ret) ->
+      compile_def_param ~tparams ctx id params typ_ret
 
 let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
     : Ctx.t * Ml.param list * Chain.t =
@@ -473,14 +489,6 @@ let try_compile_generic_bridge (ctx : Ctx.t) (id : id)
       (Format.asprintf "generic extern/builtin %s: %s — skipping" id.it msg);
     (ctx, [])
 
-(* DefP (callback) params have no Ml.typ, so the generic-tparams printer
-   path can't build an explicit forall signature for them. *)
-let has_callback_param (params : param list) : bool =
-  List.exists
-    (fun (param : param) ->
-      match param.it with DefP _ -> true | ExpP _ -> false)
-    params
-
 let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     Ctx.t * Ml.funcdef list =
   let id, tparams, params, typ_ret, block_main, elseblock_opt, _ =
@@ -489,15 +497,6 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
   if tparams = [] then
     compile_defined_func_mono ~tparams:[] ~tparams_ml:[] ctx id params typ_ret
       block_main elseblock_opt
-    (* Unsupported-but-preexisting (e.g. $match_overloaded_named<V>): warn and
-       skip, same as pre-Task-4 behavior, instead of failing the build. *)
-  else if has_callback_param params then (
-    Util.Error.warn_compile id.at
-      (Format.asprintf
-         "generic function %s has a callback parameter — not yet supported for \
-          generic compilation, skipping"
-         id.it);
-    (ctx, []))
   else
     let tparams_str = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
     let tparams_ml = List.map Names.tvar tparams in

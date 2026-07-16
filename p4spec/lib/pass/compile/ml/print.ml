@@ -313,11 +313,12 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
           (fun (id, typ_opt) ->
             match typ_opt with
             | Some typ -> print_typ typ
+            (* Every generic param (ExpP, DefP, witness) carries a real typ
+               by construction; reaching [None] means a compiler bug. *)
             | None ->
                 failwith
                   (Printf.sprintf
-                     "print_funcdef: generic function %s: untyped param %s \
-                      (higher-order params not supported)"
+                     "print_funcdef: generic function %s: untyped param %s"
                      id id))
           params
       in
