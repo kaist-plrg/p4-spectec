@@ -456,16 +456,6 @@ and compile_defined_func_mono ~(tparams : string list)
   in
   (ctx, funcdefs_ml)
 
-(* Pre-existing generic externs/builtins with an unsupported boundary shape
-   (e.g. a tuple-of-lists return) warn and skip, not fail the whole build. *)
-let try_compile_generic_bridge (ctx : Ctx.t) (id : id)
-    (f : unit -> Ctx.t * Ml.funcdef list) : Ctx.t * Ml.funcdef list =
-  try f ()
-  with Failure msg ->
-    Util.Error.warn_compile id.at
-      (Format.asprintf "generic extern/builtin %s: %s — skipping" id.it msg);
-    (ctx, [])
-
 let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     Ctx.t * Ml.funcdef list =
   let id, tparams, params, typ_ret, block_main, elseblock_opt, _ =
@@ -478,9 +468,8 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
     let tparams_str = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
     let tparams_ml = List.map Names.tvar tparams in
     let ctx, funcdefs =
-      try_compile_generic_bridge ctx id (fun () ->
-          compile_defined_func_mono ~tparams:tparams_str ~tparams_ml ctx id
-            params typ_ret block_main elseblock_opt)
+      compile_defined_func_mono ~tparams:tparams_str ~tparams_ml ctx id params
+        typ_ret block_main elseblock_opt
     in
     ( ctx,
       List.map
@@ -495,13 +484,11 @@ let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
   | ExternDecD (id, [], params, typ_ret, _) ->
       compile_extern_func ctx id params typ_ret
   | ExternDecD (id, tparams, params, typ_ret, _) ->
-      try_compile_generic_bridge ctx id (fun () ->
-          compile_extern_func_generic ctx id tparams params typ_ret)
+      compile_extern_func_generic ctx id tparams params typ_ret
   | BuiltinDecD (id, [], params, typ_ret, _) ->
       compile_builtin_func ctx id params typ_ret
   | BuiltinDecD (id, tparams, params, typ_ret, _) ->
-      try_compile_generic_bridge ctx id (fun () ->
-          compile_builtin_func_generic ctx id tparams params typ_ret)
+      compile_builtin_func_generic ctx id tparams params typ_ret
   | TableDecD (id, params, typ_ret, tablerows, _) ->
       compile_table_func ctx id params typ_ret tablerows
   | FuncDecD definedfunc -> compile_defined_func ctx definedfunc
