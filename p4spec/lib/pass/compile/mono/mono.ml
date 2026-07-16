@@ -44,20 +44,8 @@ let add_instance (tbl : dispatch_table) ~(original : string) ~(mangled : string)
 
 (* ===== Call-site rewriting ===== *)
 
-(* True if [typ] mentions a VarT bound in [scope] — distinguishes a
-   still-symbolic call from a ground one, so we don't mangle the former. *)
-let rec typ_mentions_any (scope : StringSet.t) (typ : Il.typ) : bool =
-  match typ.it with
-  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> false
-  | Il.VarT (id, targs) ->
-      StringSet.mem id.it scope || List.exists (typ_mentions_any scope) targs
-  | Il.TupleT typs -> List.exists (typ_mentions_any scope) typs
-  | Il.IterT (typ, _) -> typ_mentions_any scope typ
-
-(* Rewrite all CallE nodes in an expression tree:
-   - CallE(id, targs, args) where id.it ∈ poly_funcs and targs ≠ []
-     → CallE({id with it = mangled_name}, [], args)
-   - All other nodes are left unchanged (types are not substituted here). *)
+(* Rewrite all CallE nodes in an expression tree: every call is left
+   untouched (targs/args as-is); Task 5's witness-passing path compiles it. *)
 
 let rec rewrite_exp (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
     (exp : Il.exp) : Il.exp =
@@ -91,18 +79,7 @@ and rewrite_exp' (poly_funcs : StringSet.t) (tparams_scope : StringSet.t)
   | Il.SliceE (exp_l, exp_m, exp_r) -> Il.SliceE (re exp_l, re exp_m, re exp_r)
   | Il.UpdE (exp_b, path, exp_u) ->
       Il.UpdE (re exp_b, rewrite_path poly_funcs tparams_scope path, re exp_u)
-  | Il.CallE (id, targs, args)
-    when targs <> []
-         && StringSet.mem id.it poly_funcs
-         && not (List.exists (typ_mentions_any tparams_scope) targs) ->
-      let mangled = Name.mangle id.it targs in
-      Il.CallE
-        ( { id with it = mangled },
-          [],
-          List.map (rewrite_arg poly_funcs tparams_scope) args )
   | Il.CallE (id, targs, args) ->
-      (* Non-poly callee, or poly callee called with still-symbolic targs —
-         leave targs untouched; Task 5 compiles these calls directly. *)
       Il.CallE
         (id, targs, List.map (rewrite_arg poly_funcs tparams_scope) args)
   | Il.IterE (exp, iterexp) -> Il.IterE (re exp, iterexp)
