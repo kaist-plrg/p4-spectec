@@ -1,6 +1,7 @@
 open Domain
 open Lang
 module Typdef = Runtime.Type.Typdef
+module Subst = Runtime.Type.Subst
 module Collect = Il.Walk.Collect
 open Util.Source
 
@@ -356,8 +357,8 @@ let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
             ()
         | Some (Typdef.Defined (tparams, deftyp))
           when List.length tparams = List.length targs -> (
-            let theta = Mono.Specialize.build_theta tparams targs in
-            let sub t = Mono.Subst.subst_typ theta t in
+            let theta = Domain.Lib.TIdMap.of_lists tparams targs in
+            let sub t = Subst.subst_typ theta t in
             match deftyp.it with
             | Il.PlainT t -> enqueue (sub t)
             | Il.StructT typfields ->
@@ -377,8 +378,8 @@ let build_theta ctx id targs =
   match Ctx.find_typdef_opt ctx id with
   | Some (Typdef.Defined (tparams, _) | Typdef.Defining tparams)
     when List.length tparams = List.length targs ->
-      Mono.Specialize.build_theta tparams targs
-  | _ -> Mono.Specialize.build_theta [] []
+      Domain.Lib.TIdMap.of_lists tparams targs
+  | _ -> Domain.Lib.TIdMap.of_lists [] []
 
 (* Module-level constant pool for hoisting marshal templates out of function bodies *)
 
@@ -490,7 +491,7 @@ module Marshal = struct
   let compile_var (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
       (typ_ref : string) (pool : const_pool) : Ml.expr =
     let theta = build_theta ctx id targs in
-    let subst typ = Mono.Subst.subst_typ theta typ in
+    let subst typ = Subst.subst_typ theta typ in
     let td = Ctx.find_typdef ctx id in
     match td with
     | Typdef.Param | Typdef.Defining _ -> Ml.UnitE
@@ -657,7 +658,7 @@ module Unmarshal = struct
   let compile_var (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
       (name : string) : Ml.expr =
     let theta = build_theta ctx id targs in
-    let subst typ = Mono.Subst.subst_typ theta typ in
+    let subst typ = Subst.subst_typ theta typ in
     let td = Ctx.find_typdef ctx id in
     match td with
     | Typdef.Param | Typdef.Defining _ ->
@@ -820,7 +821,7 @@ and resolve_typdef_marshal ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list)
     : Ml.expr =
   let theta = build_theta ctx id targs in
-  let subst t = Mono.Subst.subst_typ theta t in
+  let subst t = Subst.subst_typ theta t in
   match Ctx.find_typdef ctx id with
   | Typdef.Defined (_, deftyp) -> (
       match deftyp.it with
@@ -958,7 +959,7 @@ and resolve_typdef_unmarshal ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list)
     : Ml.expr =
   let theta = build_theta ctx id targs in
-  let subst t = Mono.Subst.subst_typ theta t in
+  let subst t = Subst.subst_typ theta t in
   match Ctx.find_typdef ctx id with
   | Typdef.Defined (_, deftyp) -> (
       match deftyp.it with
@@ -1047,7 +1048,7 @@ let interface_typ_deps (ctx : Ctx.t) (typ : Sl.typ) : Sl.typ list =
   | Il.IterT (t, _) -> [ t ]
   | Il.VarT (id, targs) -> (
       let theta = build_theta ctx id targs in
-      let sub t = Mono.Subst.subst_typ theta t in
+      let sub t = Subst.subst_typ theta t in
       match Ctx.find_typdef ctx id with
       | Typdef.Param | Typdef.Defining _ | Typdef.Extern -> []
       | Typdef.Defined (_, deftyp) -> (

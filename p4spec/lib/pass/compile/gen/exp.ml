@@ -1,8 +1,10 @@
 open Domain
+open Lib
 open Lang
 open Xl
 open Sl
 module Typdef = Runtime.Type.Typdef
+module Subst = Runtime.Type.Subst
 open Util.Source
 
 (* Compiling expressions *)
@@ -214,8 +216,8 @@ and compile_downcast_exp_var ~(tparams : string list) (ctx : Ctx.t) (id : id)
             let td = Ctx.find_typdef ctx id in
             match td with
             | Typdef.Defined (tparams, _) ->
-                let theta = Domain.Lib.TIdMap.of_lists tparams targs in
-                List.map (Mono.Subst.subst_typ theta) typs
+                let theta = TIdMap.of_lists tparams targs in
+                List.map (Subst.subst_typ theta) typs
             | _ -> typs
           in
           (ctor_ml, Type.compile_typs ~tparams typs_inst))
@@ -432,10 +434,10 @@ and compile_sub_exp_var_irreflexive ~(tparams : string list) (ctx : Ctx.t)
       let td = Ctx.find_typdef ctx id in
       match td with
       | Typdef.Defined (tparams, _) ->
-          let theta = Domain.Lib.TIdMap.of_lists tparams targs in
+          let theta = TIdMap.of_lists tparams targs in
           List.map
             (fun (ctor_ml, typs) ->
-              (ctor_ml, List.map (Mono.Subst.subst_typ theta) typs))
+              (ctor_ml, List.map (Subst.subst_typ theta) typs))
             ctors_typ
       | _ -> ctors_typ
     in
