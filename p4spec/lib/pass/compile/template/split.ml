@@ -43,8 +43,8 @@ let dispatch_header (n_parts : int) : string =
   in
   if opens = "" then common_opens ^ "\n" else common_opens ^ "\n" ^ opens ^ "\n"
 
-(* [interface_name]/[Names.sanitize] (interface.ml) re-emitted as fixed
-   source, since [Typ.t = Il.typ] but the compiler isn't linked into the artifact. *)
+(* [interface_name]/[Names.sanitize] re-emitted as fixed source, since the
+   compiler itself isn't linked into the generated artifact. *)
 let interface_name_fn : string =
   {|
 let interface_keywords_ =

@@ -233,6 +233,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
           (fun p -> match p.it with ExpP (typ, _) -> Some typ | _ -> None)
           params
       in
+      let n_tparams = List.length tparams in
       try
         let vars_arg_ml, exprs_marshal_arg_ml =
           List.mapi
@@ -258,11 +259,42 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
         let expr_run_pass_ml =
           Ml.AppE (Ml.LitE "Run.Pass", [ expr_marshal_ret_ml ])
         in
-        let expr_body_ml =
+        let expr_ok_ml =
           List.fold_right
             (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
             (witness_lets @ List.combine vars_arg_ml exprs_marshal_arg_ml)
             expr_run_pass_ml
+        in
+        (* Guard arity before any [List.nth typs__ i] below can crash. *)
+        let expr_fail_arity_ml =
+          Ml.AppE
+            ( Ml.LitE "Run.Fail",
+              [
+                Ml.TupleE
+                  [
+                    Ml.LitE "no_region";
+                    Ml.AppE
+                      ( Ml.LitE "Printf.sprintf",
+                        [
+                          Ml.StrE
+                            (Printf.sprintf
+                               "eval_func: %s expects %d type argument(s), \
+                                got %%d"
+                               name n_tparams);
+                          Ml.AppE
+                            (Ml.LitE "List.length", [ Ml.VarE "typs__" ]);
+                        ] );
+                  ];
+              ] )
+        in
+        let expr_body_ml =
+          Ml.IfE
+            ( Ml.BinopE
+                ( "=",
+                  Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]),
+                  Ml.LitE (string_of_int n_tparams) ),
+              expr_ok_ml,
+              Some expr_fail_arity_ml )
         in
         Some (Ml.LitP ("\"" ^ name ^ "\""), expr_body_ml)
       with Failure msg ->
@@ -276,10 +308,14 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
   let arms_generic_ml =
     List.filter_map
       (fun (name, tparams) ->
-        match Hashtbl.find_opt poly_func_sigs name with
-        | None -> None
-        | Some (params, typ_ret) ->
-            build_generic_arm name tparams params typ_ret)
+        (* A name with a recorded ground instance is already handled by
+           [arms_poly_ml] — don't shadow it with an unreachable arm here. *)
+        if Hashtbl.mem poly_names name then None
+        else
+          match Hashtbl.find_opt poly_func_sigs name with
+          | None -> None
+          | Some (params, typ_ret) ->
+              build_generic_arm name tparams params typ_ret)
       ctx.Ctx.poly_sigs
   in
   (* Fallback wild arm *)

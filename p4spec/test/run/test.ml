@@ -165,9 +165,8 @@ let cover_run_command =
      fun () ->
        cover_run mode path_spec relname includes_p4 excludes_p4 testdirs_p4)
 
-(* Direct [eval_func] test (Task 6): [has_dup_<X>] is generic and is never
-   instantiated at [text] by any ground call site in spec/p4-comp, so this
-   only succeeds if [eval_func] can build [text]'s witnesses at runtime. *)
+(* [has_dup_<X>] is generic, never instantiated at [text] anywhere — only
+   succeeds if [eval_func] can build [text]'s witnesses at runtime. *)
 
 let eval_func_has_dup_test () : unit =
   let module Extern_stub = struct
@@ -199,7 +198,7 @@ let eval_func_has_dup_test () : unit =
       (Runtime.Type.Typ.Make.list typ_text)
       [ value_dup; value_dup ]
   in
-  match Interp.eval_func "has_dup_" [ typ_text ] [ value_args ] with
+  (match Interp.eval_func "has_dup_" [ typ_text ] [ value_args ] with
   | Pass value ->
       if Runtime.Value.Get.bool value then
         print_endline
@@ -209,7 +208,14 @@ let eval_func_has_dup_test () : unit =
         failwith "eval_func_has_dup_test: expected true (duplicate), got false"
   | Fail (_, msg) ->
       failwith
-        (Printf.sprintf "eval_func_has_dup_test: eval_func failed: %s" msg)
+        (Printf.sprintf "eval_func_has_dup_test: eval_func failed: %s" msg));
+  (* Wrong arity (missing the [X] witness type) must fail cleanly, not crash. *)
+  match Interp.eval_func "has_dup_" [] [ value_args ] with
+  | Pass _ ->
+      failwith "eval_func_has_dup_test: expected arity failure, got Pass"
+  | Fail (_, _) ->
+      print_endline
+        "[PASS] eval_func \"has_dup_\" with wrong arity failed cleanly"
 
 let eval_func_command =
   Core.Command.basic ~summary:"direct eval_func test (Task 6)"
