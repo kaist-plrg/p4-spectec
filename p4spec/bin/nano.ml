@@ -4,6 +4,23 @@ open Util.Error
 
 exception CommandError of string
 
+let elab_command =
+  Core.Command.basic ~summary:"parse and elaborate a nano-P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
+     fun () ->
+       try
+         let spec_il = Pass.elab paths_spec in
+         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let run_command =
   Core.Command.basic
     ~summary:"execute the nano-p4 spec against a nano-p4 program"
@@ -165,6 +182,11 @@ let sim_command =
 let command =
   Core.Command.group
     ~summary:"nano-p4spectec: a language design framework for nano-P4"
-    [ ("run", run_command); ("parse", parse_command); ("sim", sim_command) ]
+    [
+      ("elab", elab_command);
+      ("run", run_command);
+      ("parse", parse_command);
+      ("sim", sim_command);
+    ]
 
 let () = Command_unix.run command
