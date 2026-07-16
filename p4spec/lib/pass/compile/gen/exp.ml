@@ -1060,6 +1060,15 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
       let expr_ml =
         match Ctx.find_poly_tparams ctx id.it with
         | Some callee_tparams ->
+            List.iter
+              (fun (tp : Il.tparam) ->
+                if not (List.mem tp.it tparams) then
+                  failwith
+                    (Printf.sprintf
+                       "compile_arg: %s: callee type parameter %s is not \
+                        among the caller's type parameters"
+                       id.it tp.it))
+              callee_tparams;
             let exprs_witness_ml =
               List.concat_map
                 (fun (tp : Il.tparam) ->
