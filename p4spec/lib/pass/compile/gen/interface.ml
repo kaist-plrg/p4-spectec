@@ -1,6 +1,7 @@
 open Domain
 open Lang
 module Typdef = Runtime.Type.Typdef
+module Collect = Il.Walk.Collect
 open Util.Source
 
 (* Type-to-name mapping for generated function suffixes *)
@@ -205,6 +206,93 @@ let mixop_value_arg_pat (mixop : Mixop.t) : string * string list =
   let pat = go mixop in
   (pat, List.rev !args_rev)
 
+(* Whether [typ] mentions any of [tparams] (an abstract type variable). *)
+
+let rec typ_mentions (tparams : string list) (typ : Sl.typ) : bool =
+  match typ.it with
+  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> false
+  | Il.VarT (id, targs) ->
+      List.mem id.it tparams || List.exists (typ_mentions tparams) targs
+  | Il.TupleT typs -> List.exists (typ_mentions tparams) typs
+  | Il.IterT (t, _) -> typ_mentions tparams t
+
+(* Seed marshallers for concrete instantiation types at poly call sites.
+   The old worklist enqueued these via ground specialized defs; instead we walk
+   def bodies and enqueue each targ's maximal ground subterms (parts mentioning
+   the enclosing def's tparams become witnesses, not named marshallers). *)
+
+let seed_poly_calls (ctx : Ctx.t) ~(enqueue : Sl.typ -> unit) (spec : Sl.spec) :
+    unit =
+  let rec enqueue_ground (tparams : string list) (typ : Sl.typ) : unit =
+    if not (typ_mentions tparams typ) then enqueue typ
+    else
+      match typ.it with
+      | Il.VarT (_, targs) -> List.iter (enqueue_ground tparams) targs
+      | Il.TupleT typs -> List.iter (enqueue_ground tparams) typs
+      | Il.IterT (t, _) -> enqueue_ground tparams t
+      | _ -> ()
+  in
+  let make_collector (tparams : string list) : unit Collect.collector =
+    let collect_exp c exp =
+      (match exp.it with
+      | Il.CallE (id, targs, _) when Ctx.find_poly_tparams ctx id.it <> None ->
+          List.iter (enqueue_ground tparams) targs
+      | _ -> ());
+      Collect.default_collect_exp c exp
+    in
+    {
+      (Collect.make_base ~default:() ~compose:(fun () () -> ())) with
+      collect_exp;
+    }
+  in
+  let visit_exps c exps = List.iter (fun exp -> Collect.collect_exp c exp) exps in
+  let rec visit_block c block = List.iter (visit_instr c) block
+  and visit_instr c instr =
+    match instr.it with
+    | Sl.IfI (exp, _, block, _) ->
+        visit_exps c [ exp ];
+        visit_block c block
+    | Sl.HoldI (_, notexp, _, holdcase) ->
+        visit_exps c (Mixfix.args notexp);
+        visit_holdcase c holdcase
+    | Sl.CaseI (exp, cases, _) ->
+        visit_exps c [ exp ];
+        List.iter (fun (_, block) -> visit_block c block) cases
+    | Sl.GroupI (_, _, exps, block) ->
+        visit_exps c exps;
+        visit_block c block
+    | Sl.LetI (lhs, rhs, _, block) ->
+        visit_exps c [ lhs; rhs ];
+        visit_block c block
+    | Sl.RuleI (_, notexp, _, _, block) ->
+        visit_exps c (Mixfix.args notexp);
+        visit_block c block
+    | Sl.ResultI (_, exps) -> visit_exps c exps
+    | Sl.ReturnI exp -> visit_exps c [ exp ]
+    | Sl.DebugI exp -> visit_exps c [ exp ]
+  and visit_holdcase c = function
+    | Sl.BothH (block_hold, block_nhold) ->
+        visit_block c block_hold;
+        visit_block c block_nhold
+    | Sl.HoldH (block, _) | Sl.NotHoldH (block, _) -> visit_block c block
+  in
+  List.iter
+    (fun def ->
+      match def.it with
+      | Sl.FuncDecD (_, tparams, _, _, block, elseblock, _) ->
+          let c =
+            make_collector (List.map (fun (tp : Il.tparam) -> tp.it) tparams)
+          in
+          visit_block c block;
+          Option.iter (visit_block c) elseblock
+      | Sl.RelD (_, _, exps, block, elseblock, _) ->
+          let c = make_collector [] in
+          visit_exps c exps;
+          visit_block c block;
+          Option.iter (visit_block c) elseblock
+      | _ -> ())
+    spec
+
 (* BFS over all types reachable from function signatures *)
 
 let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
@@ -245,6 +333,7 @@ let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
           List.iter enqueue typs_output
       | _ -> ())
     spec;
+  seed_poly_calls ctx ~enqueue spec;
   let result = ref [] in
   while not (Queue.is_empty queue) do
     let typ = Queue.pop queue in
@@ -943,14 +1032,6 @@ and resolve_variant_unmarshal ~(visiting : string list) (ctx : Ctx.t)
               Ml.MatchE (Ml.VarE "vc_", arms_ctor_ml @ [ arm_wild_ml ]) );
             (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name));
           ] ) )
-
-and typ_mentions (tparams : string list) (typ : Sl.typ) : bool =
-  match typ.it with
-  | Il.BoolT | Il.NumT _ | Il.TextT | Il.FuncT _ -> false
-  | Il.VarT (id, targs) ->
-      List.mem id.it tparams || List.exists (typ_mentions tparams) targs
-  | Il.TupleT typs -> List.exists (typ_mentions tparams) typs
-  | Il.IterT (t, _) -> typ_mentions tparams t
 
 (* Direct dependencies of marshal/unmarshal for a given type:
    the sub-types that marshal_T calls marshal_S for. *)
