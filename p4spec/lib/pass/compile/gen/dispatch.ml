@@ -2,25 +2,9 @@ open Lang
 open Sl
 open Util.Source
 
-let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
-    (dispatch_table : Mono.dispatch_table) : Ml.funcdef =
-  (* Build func_sigs from monomorphized spec *)
-  let func_sigs : (string, Sl.param list * Sl.typ) Hashtbl.t =
-    Hashtbl.create 32
-  in
-  List.iter
-    (fun def ->
-      match def.it with
-      | FuncDecD (id, [], params, typ_ret, _, _, _)
-      | BuiltinDecD (id, [], params, typ_ret, _)
-      | ExternDecD (id, [], params, typ_ret, _) ->
-          Hashtbl.replace func_sigs id.it (params, typ_ret)
-      | TableDecD (id, params, typ_ret, _, _) ->
-          Hashtbl.replace func_sigs id.it (params, typ_ret)
-      | _ -> ())
-    spec;
-  (* Same, but for defs still generic (tparams <> []) — [func_sigs] above
-     skips these, so the generic arm (Task 6) needs its own signature table. *)
+let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
+  (* Signatures for defs still generic (tparams <> []) — the generic arm needs
+     its own signature table. *)
   let poly_func_sigs : (string, Sl.param list * Sl.typ) Hashtbl.t =
     Hashtbl.create 16
   in
@@ -34,11 +18,6 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
           Hashtbl.replace poly_func_sigs id.it (params, typ_ret)
       | _ -> ())
     spec;
-  (* Collect poly-instance original names *)
-  let poly_names : (string, unit) Hashtbl.t = Hashtbl.create 16 in
-  Hashtbl.iter
-    (fun orig_name _ -> Hashtbl.replace poly_names orig_name ())
-    dispatch_table;
   (* Helpers *)
   let run_fail msg =
     Ml.AppE
@@ -89,73 +68,29 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
       in
       Some expr_body_ml
   in
-  (* Arms for poly dispatch (dispatch_table entries) *)
-  let arms_poly_ml =
-    Hashtbl.fold
-      (fun orig_name instances acc ->
-        let fail_no_inst =
-          run_fail
-            (Printf.sprintf "eval_func: no matching instance for %s" orig_name)
-        in
-        let expr_body_ml =
-          List.fold_right
-            (fun (inst : Mono.poly_instance) expr_else_ml ->
-              let exprs_targ_ml =
-                List.map Interface.typ_make_expr inst.concrete_targs
-              in
-              let expr_guard_ml =
-                Ml.AppE
-                  ( Ml.LitE "Il.Eq.eq_typs",
-                    [ Ml.VarE "typs__"; Ml.ListE exprs_targ_ml ] )
-              in
-              let mangled = inst.mangled_name in
-              let ocaml_name = "f__" ^ Names.sanitize mangled in
-              let expr_then_ml =
-                match Hashtbl.find_opt func_sigs mangled with
-                | None ->
-                    run_fail (Printf.sprintf "eval_func: no sig for %s" mangled)
-                | Some (params, typ_ret) -> (
-                    match build_dispatch_body params typ_ret ocaml_name with
-                    | None ->
-                        run_fail
-                          (Printf.sprintf
-                             "eval_func: higher-order parameter not supported: \
-                              %s"
-                             orig_name)
-                    | Some expr_body_ml -> expr_body_ml)
-              in
-              Ml.IfE (expr_guard_ml, expr_then_ml, Some expr_else_ml))
-            instances fail_no_inst
-        in
-        (Ml.LitP ("\"" ^ orig_name ^ "\""), expr_body_ml) :: acc)
-      dispatch_table []
-  in
-  (* Arms for mono functions (not in dispatch_table) *)
+  (* Arms for mono functions *)
   let arms_mono_ml =
     List.filter_map
       (fun def ->
         let make_arm id params typ_ret =
           let name = id.it in
-          if Hashtbl.mem poly_names name then None
-          else
-            let ocaml_name = Names.func id in
-            let expr_wrong_targs_ml =
-              run_fail (Printf.sprintf "eval_func: wrong type args for %s" name)
-            in
-            let expr_body_ml =
-              match build_dispatch_body params typ_ret ocaml_name with
-              | None ->
-                  run_fail
-                    (Printf.sprintf
-                       "eval_func: higher-order parameter not supported: %s"
-                       name)
-              | Some expr_body_ml ->
-                  Ml.IfE
-                    ( Ml.BinopE ("=", Ml.VarE "typs__", Ml.ListE []),
-                      expr_body_ml,
-                      Some expr_wrong_targs_ml )
-            in
-            Some (Ml.LitP ("\"" ^ name ^ "\""), expr_body_ml)
+          let ocaml_name = Names.func id in
+          let expr_wrong_targs_ml =
+            run_fail (Printf.sprintf "eval_func: wrong type args for %s" name)
+          in
+          let expr_body_ml =
+            match build_dispatch_body params typ_ret ocaml_name with
+            | None ->
+                run_fail
+                  (Printf.sprintf
+                     "eval_func: higher-order parameter not supported: %s" name)
+            | Some expr_body_ml ->
+                Ml.IfE
+                  ( Ml.BinopE ("=", Ml.VarE "typs__", Ml.ListE []),
+                    expr_body_ml,
+                    Some expr_wrong_targs_ml )
+          in
+          Some (Ml.LitP ("\"" ^ name ^ "\""), expr_body_ml)
         in
         match def.it with
         | FuncDecD (id, [], params, typ_ret, _, _, _) ->
@@ -307,14 +242,10 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
   let arms_generic_ml =
     List.filter_map
       (fun (name, tparams) ->
-        (* A name with a recorded ground instance is already handled by
-           [arms_poly_ml] — don't shadow it with an unreachable arm here. *)
-        if Hashtbl.mem poly_names name then None
-        else
-          match Hashtbl.find_opt poly_func_sigs name with
-          | None -> None
-          | Some (params, typ_ret) ->
-              build_generic_arm name tparams params typ_ret)
+        match Hashtbl.find_opt poly_func_sigs name with
+        | None -> None
+        | Some (params, typ_ret) ->
+            build_generic_arm name tparams params typ_ret)
       ctx.Ctx.poly_sigs
   in
   (* Fallback wild arm *)
@@ -335,9 +266,7 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
               ];
           ] ) )
   in
-  let arms_ml =
-    arms_poly_ml @ arms_mono_ml @ arms_generic_ml @ [ arm_wild_ml ]
-  in
+  let arms_ml = arms_mono_ml @ arms_generic_ml @ [ arm_wild_ml ] in
   let expr_match_ml = Ml.MatchE (Ml.VarE "name__", arms_ml) in
   (* Unmatch handler *)
   let expr_fail_unmatch_ml =

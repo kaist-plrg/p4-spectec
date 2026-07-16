@@ -43,8 +43,6 @@ let bucket (target : int) (tls : Ml.toplevel list) : Ml.toplevel list list =
 
 let compile_spec ?(name = "") (path_out : string)
     (path_out_unparse : string option) (split_lines : int) (spec : Sl.spec) =
-  (* Monomorphize the spec *)
-  let spec, dispatch_table = Mono.monomorphize spec in
   (* Initialize context *)
   let ctx = Ctx.init spec in
   (* Type definitions — one Ml.TypeRec per SCC group *)
@@ -80,9 +78,7 @@ let compile_spec ?(name = "") (path_out : string)
     let scc_groups = Scc.Call.compute spec in
     List.fold_left
       (fun (ctx, tops_acc) group ->
-        let ctx, funcdefs_ml =
-          Gen.Func.compile_group ctx group dispatch_table
-        in
+        let ctx, funcdefs_ml = Gen.Func.compile_group ctx group in
         let ctx, reldefs_ml = Gen.Rel.compile_group ctx group in
         let combined = funcdefs_ml @ reldefs_ml in
         let tops_acc =
@@ -93,9 +89,7 @@ let compile_spec ?(name = "") (path_out : string)
   in
   (* Dispatch entry points — [eval_func]/[eval_rel]/[eval_program]. *)
   let toplevels_dispatch_ml =
-    let funcdef_eval_func_ml =
-      Gen.Dispatch.compile_eval_func ctx spec dispatch_table
-    in
+    let funcdef_eval_func_ml = Gen.Dispatch.compile_eval_func ctx spec in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
     [
       Ml.Raw Template.Split.interface_name_fn;

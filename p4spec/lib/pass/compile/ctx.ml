@@ -128,7 +128,7 @@ let load_def (ctx : t) (def : Sl.def) : t =
 let load_defs (ctx : t) (defs : Sl.def list) : t =
   List.fold_left load_def ctx defs
 
-(* Definitions still generic after monomorphization: name -> its own tparams. *)
+(* Generic definitions (with tparams): name -> its own tparams. *)
 
 let poly_sig_of_def (def : Sl.def) : (string * Il.tparam list) option =
   match def.it with

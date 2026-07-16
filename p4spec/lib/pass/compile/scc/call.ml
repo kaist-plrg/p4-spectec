@@ -153,7 +153,7 @@ let func_expp_arity (def : def) : int option =
 
 (* ── Entry point ── *)
 
-(* Given a monomorphized SL spec, compute SCCs on the function/relation call
+(* Given an SL spec, compute SCCs on the function/relation call
    graph and return binding groups in topological order (dependencies first).
    Each group becomes one Ml.LetRec in codegen. *)
 let compute (spec : spec) : def list list =

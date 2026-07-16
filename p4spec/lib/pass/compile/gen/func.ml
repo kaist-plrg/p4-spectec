@@ -1,29 +1,6 @@
 open Lang
 open Sl
 
-(* Reverse dispatch: mangled_name -> (original_name, concrete_targs) *)
-
-type reverse_dispatch = (string, string * Il.typ list) Hashtbl.t
-
-let build_reverse_dispatch (dispatch_table : Mono.dispatch_table) :
-    reverse_dispatch =
-  let tbl = Hashtbl.create 32 in
-  Hashtbl.iter
-    (fun name_orig_ml instances ->
-      List.iter
-        (fun (inst : Mono.poly_instance) ->
-          Hashtbl.replace tbl inst.mangled_name
-            (name_orig_ml, inst.concrete_targs))
-        instances)
-    dispatch_table;
-  tbl
-
-let lookup_dispatch_info (reverse_dispatch : reverse_dispatch) (id : id) :
-    string * Il.typ list =
-  match Hashtbl.find_opt reverse_dispatch id.it with
-  | Some info -> info
-  | None -> (id.it, [])
-
 (* Parameters *)
 
 let compile_exp_param ~(index : int option) ~(tparams : string list)
@@ -82,11 +59,11 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
 
 (* Extern functions *)
 
-let compile_extern_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
-    (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+let compile_extern_func (ctx : Ctx.t) (id : id) (params : param list)
+    (typ_ret : typ) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
-  let name_orig_ml, targs = lookup_dispatch_info reverse_dispatch id in
+  let name_orig_ml, targs = (id.it, []) in
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -248,11 +225,11 @@ let compile_extern_func_generic (ctx : Ctx.t) (id : id)
 
 (* Builtin functions *)
 
-let compile_builtin_func (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch)
-    (id : id) (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+let compile_builtin_func (ctx : Ctx.t) (id : id) (params : param list)
+    (typ_ret : typ) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let typ_ret_ml = Type.compile_typ ~tparams:[] typ_ret in
-  let name_orig_ml, targs = lookup_dispatch_info reverse_dispatch id in
+  let name_orig_ml, targs = (id.it, []) in
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -513,16 +490,15 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
 
 (* Defs *)
 
-let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch) (def : def)
-    : Ctx.t * Ml.funcdef list =
+let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
   | ExternDecD (id, [], params, typ_ret, _) ->
-      compile_extern_func ctx reverse_dispatch id params typ_ret
+      compile_extern_func ctx id params typ_ret
   | ExternDecD (id, tparams, params, typ_ret, _) ->
       try_compile_generic_bridge ctx id (fun () ->
           compile_extern_func_generic ctx id tparams params typ_ret)
   | BuiltinDecD (id, [], params, typ_ret, _) ->
-      compile_builtin_func ctx reverse_dispatch id params typ_ret
+      compile_builtin_func ctx id params typ_ret
   | BuiltinDecD (id, tparams, params, typ_ret, _) ->
       try_compile_generic_bridge ctx id (fun () ->
           compile_builtin_func_generic ctx id tparams params typ_ret)
@@ -531,21 +507,14 @@ let compile_def (ctx : Ctx.t) (reverse_dispatch : reverse_dispatch) (def : def)
   | FuncDecD definedfunc -> compile_defined_func ctx definedfunc
   | _ -> (ctx, [])
 
-let compile_defs (ctx : Ctx.t) (defs : def list)
-    (reverse_dispatch : reverse_dispatch) : Ctx.t * Ml.funcdef list =
+let compile_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Ml.funcdef list =
   List.fold_left
     (fun (ctx, funcdefs_ml_acc) def ->
-      let ctx, funcdefs_ml = compile_def ctx reverse_dispatch def in
+      let ctx, funcdefs_ml = compile_def ctx def in
       (ctx, funcdefs_ml_acc @ funcdefs_ml))
     (ctx, []) defs
 
 (* Spec *)
 
-let compile_group (ctx : Ctx.t) (group : def list)
-    (dispatch_table : Mono.dispatch_table) : Ctx.t * Ml.funcdef list =
-  let reverse_dispatch = build_reverse_dispatch dispatch_table in
-  compile_defs ctx group reverse_dispatch
-
-let compile_spec (ctx : Ctx.t) (spec : spec)
-    (dispatch_table : Mono.dispatch_table) : Ctx.t * Ml.funcdef list =
-  compile_group ctx spec dispatch_table
+let compile_group (ctx : Ctx.t) (group : def list) : Ctx.t * Ml.funcdef list =
+  compile_defs ctx group
