@@ -29,7 +29,6 @@ type t = {
   rels : Rels.t;
   bindings : Bindings.t;
   poly_sigs : (string * Il.tparam list) list;
-  extern_builtin_names : Mono.StringSet.t;
 }
 
 (* Adders *)
@@ -107,9 +106,6 @@ let find_rel (ctx : t) (rid : RId.t) : Input.t = Rels.find rid ctx.rels
 let find_poly_tparams (ctx : t) (name : string) : Il.tparam list option =
   List.assoc_opt name ctx.poly_sigs
 
-let find_extern_builtin_names (ctx : t) : Mono.StringSet.t =
-  ctx.extern_builtin_names
-
 (* Initialization *)
 
 let empty_lib = { splits = []; combines = []; folds = []; foralls = [] }
@@ -143,13 +139,6 @@ let poly_sig_of_def (def : Sl.def) : (string * Il.tparam list) option =
   | ExternDecD (id, tparams, _, _, _) when tparams <> [] -> Some (id.it, tparams)
   | _ -> None
 
-(* Spec-wide extern/builtin names: an extern/builtin never shares an SCC
-   with its generic caller, so [Gen.Func]'s boundary guard needs this set. *)
-let extern_builtin_name_of_def (def : Sl.def) : string option =
-  match def.it with
-  | ExternDecD (id, _, _, _, _) | BuiltinDecD (id, _, _, _, _) -> Some id.it
-  | _ -> None
-
 let init (spec : Sl.spec) : t =
   let ctx =
     {
@@ -159,8 +148,6 @@ let init (spec : Sl.spec) : t =
       rels = Rels.empty;
       bindings = Bindings.empty;
       poly_sigs = List.filter_map poly_sig_of_def spec;
-      extern_builtin_names =
-        Mono.StringSet.of_list (List.filter_map extern_builtin_name_of_def spec);
     }
   in
   load_defs ctx spec

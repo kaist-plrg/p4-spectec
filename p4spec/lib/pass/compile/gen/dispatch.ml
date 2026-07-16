@@ -278,11 +278,10 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec)
                         [
                           Ml.StrE
                             (Printf.sprintf
-                               "eval_func: %s expects %d type argument(s), \
-                                got %%d"
+                               "eval_func: %s expects %d type argument(s), got \
+                                %%d"
                                name n_tparams);
-                          Ml.AppE
-                            (Ml.LitE "List.length", [ Ml.VarE "typs__" ]);
+                          Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]);
                         ] );
                   ];
               ] )

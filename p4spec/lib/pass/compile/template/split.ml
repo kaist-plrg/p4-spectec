@@ -45,6 +45,7 @@ let dispatch_header (n_parts : int) : string =
 
 (* [interface_name]/[Names.sanitize] re-emitted as fixed source, since the
    compiler itself isn't linked into the generated artifact. *)
+(* Must stay in sync with [Interface.interface_name] (gen/interface.ml). *)
 let interface_name_fn : string =
   {|
 let interface_keywords_ =

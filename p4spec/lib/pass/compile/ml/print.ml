@@ -312,7 +312,10 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
       let ret_typ_str =
         match typ_ret_opt with
         | Some typ -> print_typ typ
-        | None -> failwith (Printf.sprintf "print_funcdef: generic function %s: missing return type" id)
+        | None ->
+            failwith
+              (Printf.sprintf
+                 "print_funcdef: generic function %s: missing return type" id)
       in
       let arrow_typ_str =
         match param_typ_strs with

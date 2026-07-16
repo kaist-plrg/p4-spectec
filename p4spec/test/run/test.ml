@@ -209,6 +209,45 @@ let eval_func_has_dup_test () : unit =
   | Fail (_, msg) ->
       failwith
         (Printf.sprintf "eval_func_has_dup_test: eval_func failed: %s" msg));
+  (* [interface_name]/[interface_name_] registry-key agreement: a mismatch
+     for a registered witness type surfaces as [No_marshaller_] below. *)
+  let check_has_dup (label : string) (typ_x : Runtime.Type.Typ.t)
+      (value_dup : Runtime.Value.t) : unit =
+    let value_args =
+      Runtime.Value.Make.list
+        (Runtime.Type.Typ.Make.list typ_x)
+        [ value_dup; value_dup ]
+    in
+    match Interp.eval_func "has_dup_" [ typ_x ] [ value_args ] with
+    | Pass value ->
+        if Runtime.Value.Get.bool value then
+          print_endline
+            (Printf.sprintf "[PASS] eval_func \"has_dup_\" at %s" label)
+        else
+          failwith
+            (Printf.sprintf
+               "eval_func_has_dup_test: %s: expected true, got false" label)
+    | Fail (_, msg) ->
+        failwith (Printf.sprintf "eval_func_has_dup_test: %s: %s" label msg)
+  in
+  (* [name]'s [`TYPE] case — a VarT with a plain id (no sanitizing needed). *)
+  let typ_name =
+    Util.Source.(Runtime.Type.Typ.Make.var ("name" $ no_region) [])
+  in
+  let value_name = Runtime.Value.Make.(("TYPE" <| []) <<| "name") in
+  check_has_dup "name (VarT, plain id)" typ_name value_name;
+  (* Witness itself is [text list] — exercises the [IterT (_, List)] arm. *)
+  let typ_text_list = Runtime.Type.Typ.Make.list typ_text in
+  let value_text_list =
+    Runtime.Value.Make.list typ_text_list [ Runtime.Value.Make.text "a" ]
+  in
+  check_has_dup "text list (IterT List)" typ_text_list value_text_list;
+  (* Witness itself is [text opt] — exercises the [IterT (_, Opt)] arm. *)
+  let typ_text_opt = Runtime.Type.Typ.Make.opt typ_text in
+  let value_text_opt =
+    Runtime.Value.Make.opt typ_text_opt (Some (Runtime.Value.Make.text "a"))
+  in
+  check_has_dup "text opt (IterT Opt)" typ_text_opt value_text_opt;
   (* Wrong arity (missing the [X] witness type) must fail cleanly, not crash. *)
   match Interp.eval_func "has_dup_" [] [ value_args ] with
   | Pass _ ->
@@ -217,9 +256,48 @@ let eval_func_has_dup_test () : unit =
       print_endline
         "[PASS] eval_func \"has_dup_\" with wrong arity failed cleanly"
 
+(* [split.ml]'s embedded keyword list must match [Names.keywords], or a
+   keyword-colliding type name sanitizes differently at runtime vs compile. *)
+
+let extract_bracketed_list (s : string) (marker : string) : string list =
+  let n = String.length s and m = String.length marker in
+  let rec find i =
+    if i + m > n then failwith "extract_bracketed_list: marker not found"
+    else if String.sub s i m = marker then i
+    else find (i + 1)
+  in
+  let marker_idx = find 0 in
+  let open_idx = String.index_from s marker_idx '[' in
+  let close_idx = String.index_from s open_idx ']' in
+  String.sub s (open_idx + 1) (close_idx - open_idx - 1)
+  |> String.split_on_char ';'
+  |> List.filter_map (fun tok ->
+         match String.trim tok with
+         | "" -> None
+         | tok -> Some (String.sub tok 1 (String.length tok - 2)))
+
+let interface_name_keywords_test () : unit =
+  let embedded =
+    extract_bracketed_list Pass.Compile.Template.Split.interface_name_fn
+      "interface_keywords_ ="
+  in
+  let expected = Pass.Compile.Gen.Names.keywords in
+  if List.sort compare embedded <> List.sort compare expected then
+    failwith
+      "interface_name_keywords_test: split.ml's interface_keywords_ has \
+       drifted from Names.keywords"
+  else
+    print_endline
+      "[PASS] interface_name_fn's embedded keyword list matches \
+       Names.keywords"
+
+let eval_func_has_dup_and_keywords_test () : unit =
+  eval_func_has_dup_test ();
+  interface_name_keywords_test ()
+
 let eval_func_command =
   Core.Command.basic ~summary:"direct eval_func test (Task 6)"
-    (Core.Command.Param.return eval_func_has_dup_test)
+    (Core.Command.Param.return eval_func_has_dup_and_keywords_test)
 
 let command =
   Core.Command.group ~summary:"p4spec-test-run"

@@ -5,6 +5,8 @@ open Util.Source
 
 (* Type-to-name mapping for generated function suffixes *)
 
+(* Mirrored at runtime by [interface_name_] in [Template.Split.interface_name_fn]
+   — keep both in sync; see that function's own cross-reference comment. *)
 let rec interface_name (typ : Sl.typ) : string =
   match typ.it with
   | BoolT -> "bool"
