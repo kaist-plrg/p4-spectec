@@ -80,8 +80,8 @@ let compile_spec ?(name = "") (path_out : string)
     let scc_groups = Scc.Call.compute spec in
     List.fold_left
       (fun (ctx, tops_acc) group ->
-        let ctx, funcdefs_ml = Gen.Func.compile_group ctx group in
-        let ctx, reldefs_ml = Gen.Rel.compile_group ctx group in
+        let ctx, funcdefs_ml = Gen.Ast.Func.compile_group ctx group in
+        let ctx, reldefs_ml = Gen.Ast.Rel.compile_group ctx group in
         let combined = funcdefs_ml @ reldefs_ml in
         let tops_acc =
           if combined = [] then tops_acc else tops_acc @ [ Ml.LetRec combined ]
