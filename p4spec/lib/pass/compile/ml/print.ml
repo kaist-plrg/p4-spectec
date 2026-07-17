@@ -307,16 +307,12 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
       print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
       ^ print_expr ~level:1 expr_body
   | _ ->
-      (* Explicit forall: OCaml can't infer instantiation at a different
-         type than the member's own params inside a [let rec]. *)
       let quantifier = String.concat " " (List.map (fun t -> "'" ^ t) tparams) in
       let param_typ_strs =
         List.map
           (fun (id, typ_opt) ->
             match typ_opt with
             | Some typ -> print_typ typ
-            (* Every generic param (ExpP, DefP, witness) carries a real typ
-               by construction; reaching [None] means a compiler bug. *)
             | None ->
                 failwith
                   (Printf.sprintf

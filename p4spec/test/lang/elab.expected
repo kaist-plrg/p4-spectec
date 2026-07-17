@@ -232,51 +232,9 @@ def $filter_<X>(X*, bool*) : X* =
   -- let b_h :: b_t*{b_t <- b_t*} = b*{b <- b*}
   -- if ~b_h
 
-def $evens_<X>(X*) : X* =
-
-  clause 0 : (X*{X <- X*}) = []
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (X*{X <- X*}) = X_h :: $odds_<X>(X_t*{X_t <- X_t*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-
-def $odds_<X>(X*) : X* =
-
-  clause 0 : (X*{X <- X*}) = []
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (X*{X <- X*}) = $evens_<X>(X_t*{X_t <- X_t*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-
 builtin def $sort_<X>((nat, X)*) : (nat, X)*
 
 builtin def $distinct_<K>(K*) : bool
-
-def $has_dup_<X>(X*) : bool =
-
-  clause 0 : (X*{X <- X*}) = false
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (X*{X <- X*}) = $has_dup_from_<X>(X_h, X_t*{X_t <- X_t*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h :: X_t*{X_t <- X_t*} = X*{X <- X*}
-
-def $has_dup_from_<X>(X, X*) : bool =
-
-  clause 0 : (X_h, X*{X <- X*}) = false
-  -- if X*{X <- X*} matches []
-
-  clause 1 : (X_h, X*{X <- X*}) = true
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h2 :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if ~$distinct_<X>(X_h :: X_h2 :: [])
-
-  clause 2 : (X_h, X*{X <- X*}) = $has_dup_<X>(X_h2 :: X_t*{X_t <- X_t*})
-  -- if X*{X <- X*} matches _ :: _
-  -- let X_h2 :: X_t*{X_t <- X_t*} = X*{X <- X*}
-  -- if $distinct_<X>(X_h :: X_h2 :: [])
 
 syntax set<K> = 
    | `{ K* } (from set<K>) 
@@ -319,8 +277,6 @@ def $codom_map<K, V>(map<K, V>) : set<V> =
   clause 0 : (`{ K `: V*{K <- K*, V <- V*} }) = `{ V*{V <- V*} }
 
 builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
-
-builtin def $map_union_<K, V>(map<K, V>, map<K, V>) : map<K, V>
 
 builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
 

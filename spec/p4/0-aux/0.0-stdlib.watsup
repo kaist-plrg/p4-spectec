@@ -202,33 +202,11 @@ def $filter_<X>(X_h :: X_t*, b_h :: b_t*)
   = $filter_<X>(X_t*, b_t*)
   -- if ~b_h
 
-dec $evens_<X>(X*) : X*
-  hint(prose_in "every other element of" %0 "starting from the first")
-dec $odds_<X>(X*) : X*
-  hint(prose_in "every other element of" %0 "starting from the second")
-def $evens_<X>(eps) = eps
-def $evens_<X>(X_h :: X_t*) = X_h :: $odds_<X>(X_t*)
-def $odds_<X>(eps) = eps
-def $odds_<X>(X_h :: X_t*) = $evens_<X>(X_t*)
-
 builtin dec $sort_<X>((nat, X)*) : (nat, X)*
 
 builtin dec $distinct_<K>(K*) : bool
   hint(prose_true "the elements of" %0 "are distinct")
   hint(prose_false "the elements of" %0 "are not distinct")
-
-dec $has_dup_<X>(X*) : bool
-  hint(prose_true "some element of" %0 "occurs more than once")
-dec $has_dup_from_<X>(X, X*) : bool
-
-def $has_dup_<X>(eps) = false
-def $has_dup_<X>(X_h :: X_t*) = $has_dup_from_<X>(X_h, X_t*)
-
-def $has_dup_from_<X>(X_h, eps) = false
-def $has_dup_from_<X>(X_h, X_h2 :: X_t*) = true
-  -- if ~$distinct_<X>(X_h :: X_h2 :: eps)
-def $has_dup_from_<X>(X_h, X_h2 :: X_t*) = $has_dup_<X>(X_h2 :: X_t*)
-  -- if $distinct_<X>(X_h :: X_h2 :: eps)
 
 ;;
 ;; General set functions
@@ -285,8 +263,3 @@ def $codom_map<K, V>(`{ (K `: V)* }) = `{ V* }
 
 builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
   hint(prose_in "the map" %0 "with the value for" %1 "is updated to" %2)
-
-;; Exercises dictionary-passing for a still-generic map<K, V> argument
-;; (map -> set -> pair -> K, V: three layers of typedef unfolding).
-builtin dec $map_union_<K, V>(map<K, V>, map<K, V>) : map<K, V>
-  hint(prose_in "the union of the maps" %0 "and" %1 "(right-biased)")
