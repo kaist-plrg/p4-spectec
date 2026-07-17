@@ -1,324 +1,204 @@
+open Domain
 open Lang
 open Sl
 open Util.Source
 
-let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
-  (* Signatures for generic defs (tparams <> []) — the generic arm needs
-     its own signature table. *)
-  let poly_func_sigs : (string, Sl.param list * Sl.typ) Hashtbl.t =
-    Hashtbl.create 16
+(* Failures *)
+
+let run_fail_msg (msg : string) : Ml.expr =
+  Ml.AppE (Ml.LitE "Run.Fail", [ Ml.TupleE [ Ml.LitE "no_region"; Ml.StrE msg ] ])
+
+let run_fail_fmt (s_fmt : string) (exprs : Ml.expr list) : Ml.expr =
+  Ml.AppE
+    ( Ml.LitE "Run.Fail",
+      [
+        Ml.TupleE
+          [
+            Ml.LitE "no_region";
+            Ml.AppE (Ml.LitE "Printf.sprintf", Ml.StrE s_fmt :: exprs);
+          ];
+      ] )
+
+(* Ground marshal/unmarshal pair for [typ], resolved by direct name reference *)
+
+let find_converter_static (typ : Sl.typ) : Ml.expr * Ml.expr =
+  let name = Interface.interface_name typ in
+  (Ml.VarE ("marshal_" ^ name), Ml.VarE ("unmarshal_" ^ name))
+
+(* Dispatcher *)
+
+let compile_dispatcher (name : string)
+    (params_ml : (string * Ml.typ option) list) (typ_ret_ml : Ml.typ)
+    (msg_unknown : string) (arms_ml : Ml.arm list) (arms_extra_ml : Ml.arm list) :
+    Ml.funcdef =
+  let expr_match_ml =
+    let arm_wild_ml = (Ml.WildP, run_fail_fmt msg_unknown [ Ml.VarE "name__" ]) in
+    Ml.MatchE (Ml.VarE "name__", arms_ml @ [ arm_wild_ml ])
   in
-  List.iter
+  let arm_unmatch_ml =
+    ( Ml.VariantP (`Mono ("Unmatch", [ Ml.VarP "msg_" ])),
+      run_fail_fmt
+        (Printf.sprintf "%s: unmatch in %%s: %%s" name)
+        [ Ml.VarE "name__"; Ml.VarE "msg_" ] )
+  in
+  let expr_try_ml = Ml.TryE (expr_match_ml, arm_unmatch_ml :: arms_extra_ml) in
+  (name, [], params_ml, Some typ_ret_ml, expr_try_ml)
+
+(* Runtime function dispatcher: [eval_func name typs args]
+
+   [let eval_func name__ typs__ args__ =
+      try match name__ with
+        | "f" ->
+            let marshal__x, unmarshal__x = find_converter_dynamic (List.nth typs__ i) in ..
+            let a0 = unmarshal__.. (List.nth args__ 0) in ..
+            Run.Pass (marshal__.. (f__f marshal__x unmarshal__x .. a0 ..))
+        | .. -> Run.Fail (no_region, "eval_func: unknown function: %s" name__)
+      with Unmatch msg_ -> Run.Fail (no_region, ..)
+         | NoConverter tyname__ -> Run.Fail (no_region, ..)] *)
+
+let compile_converter_binding (tparams_ml : string list) : (string * Ml.expr) list =
+  tparams_ml
+  |> List.mapi
+       (fun i tparam_ml ->
+         (* [find_converter_dynamic (List.nth typs__ i)] *)
+         let id_entry_ml = "entry__" ^ string_of_int i in
+         let expr_lookup_ml =
+           Ml.AppE
+             ( Ml.LitE "find_converter_dynamic",
+               [
+                 Ml.AppE
+                   ( Ml.LitE "List.nth",
+                     [ Ml.VarE "typs__"; Ml.LitE (string_of_int i) ] );
+               ] )
+         in
+         let binding_converter_ml = (id_entry_ml, expr_lookup_ml) in
+         (* [let marshal__x, unmarshal__x = ..] *)
+         let id_marshal_ml = Interface.converter_marshal_name tparam_ml in
+         let expr_marshal_ml =
+           let typ_marshal_ml = Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t") in
+           Ml.AnnotE
+             ( Ml.AppE
+                 (Ml.LitE "Obj.obj", [ Ml.AppE (Ml.LitE "fst", [ Ml.VarE id_entry_ml ]) ]),
+               typ_marshal_ml )
+         in
+         let binding_marshal_ml = (id_marshal_ml, expr_marshal_ml) in
+         let id_unmarshal_ml = Interface.converter_unmarshal_name tparam_ml in
+         let expr_unmarshal_ml =
+           let typ_unmarshal_ml = Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml) in
+           Ml.AnnotE
+             ( Ml.AppE
+                 (Ml.LitE "Obj.obj", [ Ml.AppE (Ml.LitE "snd", [ Ml.VarE id_entry_ml ]) ]),
+               typ_unmarshal_ml )
+         in
+         let binding_unmarshal_ml = (id_unmarshal_ml, expr_unmarshal_ml) in
+         [binding_converter_ml; binding_marshal_ml; binding_unmarshal_ml])
+  |> List.concat
+
+let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
+    (tparams_ml : string list) (id_func_ml : string) (typs_param : Sl.typ list)
+    (typ_ret : Sl.typ) : Ml.expr =
+  (* [let marshal__x, unmarshal__x = find_converter_dynamic (..) in ..] *)
+  let bindings_converter_ml = compile_converter_binding tparams_ml in
+  (* [marshal__x unmarshal__x ..], the leading args of [f__f ..] *)
+  let exprs_converter_ml =
+    List.concat_map
+      (fun tparam ->
+        [
+          Ml.VarE (Interface.converter_marshal_name tparam);
+          Ml.VarE (Interface.converter_unmarshal_name tparam);
+        ])
+      tparams_ml
+  in
+  (* [let a0 = unmarshal__.. (List.nth args__ 0) in ..] *)
+  let vars_arg_ml, exprs_unmarshal_arg_ml =
+    typs_param
+    |> List.mapi
+      (fun i typ ->
+        ( "a" ^ string_of_int i,
+          Converter.apply (string_of_int i)
+            (Interface.resolve_unmarshal ctx tparams typ)
+            (Ml.AppE
+               ( Ml.LitE "List.nth",
+                 [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] )) ))
+    |> List.split
+  in
+  let exprs_arg_ml = List.map (fun var_arg_ml -> Ml.VarE var_arg_ml) vars_arg_ml in
+  let bindings_arg_ml = List.combine vars_arg_ml exprs_unmarshal_arg_ml in
+  (* [f__f marshal__x unmarshal__x .. a0 ..] *)
+  let expr_call_ml =
+    Ml.AppE (Ml.LitE id_func_ml, exprs_converter_ml @ exprs_arg_ml)
+  in
+  (* [Run.Pass (marshal__.. (..))] *)
+  let expr_marshal_ret_ml =
+    Converter.apply "ret__" (Interface.resolve_marshal ctx tparams typ_ret)
+      expr_call_ml
+  in
+  let expr_pass_ml = Ml.AppE (Ml.LitE "Run.Pass", [ expr_marshal_ret_ml ]) in
+  (* [let .. in ..] chain wrapping the call above *)
+  let expr_ok_ml =
+    List.fold_right
+      (fun (var, expr_ml) expr_cont_ml -> Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+      (bindings_converter_ml @ bindings_arg_ml)
+      expr_pass_ml
+  in
+  (* Arity guard around the [| "f" -> ..] arm *)
+  let n_tparams = List.length tparams in
+  let expr_fail_arity_ml =
+    run_fail_fmt
+      (Printf.sprintf "eval_func: %s expects %d type argument(s), got %%d" name
+         n_tparams)
+      [ Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]) ]
+  in
+  Ml.IfE
+    ( Ml.BinopE
+        ( "=",
+          Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]),
+          Ml.LitE (string_of_int n_tparams) ),
+      expr_ok_ml,
+      Some expr_fail_arity_ml )
+
+let compile_func_arm (ctx : Ctx.t) (name : string) (tparams : Il.tparam list)
+    (params : Sl.param list) (typ_ret : Sl.typ) : Ml.arm =
+  let is_high_order_func =
+    List.exists (fun param -> match param.it with DefP _ -> true | _ -> false) params
+  in
+  (* Pattern matching on function name ["f" -> ..] *)
+  let pat_ml = Ml.LitP ("\"" ^ name ^ "\"") in
+  let expr_func_ml =
+    if is_high_order_func then
+      run_fail_msg
+        (Printf.sprintf "eval_func: higher-order parameter not supported: %s" name)
+    else
+      let tparams_ml = List.map Names.tvar tparams in
+      let tparams = List.map it tparams in
+      let id_func_ml = "f__" ^ Names.sanitize name in
+      let typs_param =
+        List.filter_map
+          (fun param -> match param.it with ExpP (typ, _) -> Some typ | _ -> None)
+          params
+      in
+      compile_func_arm_body ctx name tparams tparams_ml id_func_ml typs_param typ_ret
+  in
+  (pat_ml, expr_func_ml)
+
+let compile_func_arms (ctx : Ctx.t) (spec : Sl.spec) : Ml.arm list =
+  List.filter_map
     (fun def ->
       match def.it with
-      | FuncDecD (id, tparams, params, typ_ret, _, _, _)
       | BuiltinDecD (id, tparams, params, typ_ret, _)
-      | ExternDecD (id, tparams, params, typ_ret, _)
-        when tparams <> [] ->
-          Hashtbl.replace poly_func_sigs id.it (params, typ_ret)
-      | _ -> ())
-    spec;
-  (* Helpers *)
-  let run_fail msg =
-    Ml.AppE
-      (Ml.LitE "Run.Fail", [ Ml.TupleE [ Ml.LitE "no_region"; Ml.StrE msg ] ])
-  in
-  let build_dispatch_body params typ_ret ocaml_name =
-    let has_defp =
-      List.exists
-        (fun p -> match p.it with DefP _ -> true | _ -> false)
-        params
-    in
-    if has_defp then None
-    else
-      let exp_typs =
-        List.filter_map
-          (fun p -> match p.it with ExpP (typ, _) -> Some typ | _ -> None)
-          params
-      in
-      let n = List.length exp_typs in
-      let unmarshal_lets =
-        List.mapi
-          (fun i typ ->
-            ( "a" ^ string_of_int i,
-              Ml.AppE
-                ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ),
-                  [
-                    Ml.AppE
-                      ( Ml.LitE "List.nth",
-                        [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] );
-                  ] ) ))
-          exp_typs
-      in
-      let exprs_arg_ml =
-        List.init n (fun i -> Ml.VarE ("a" ^ string_of_int i))
-      in
-      let expr_call_ml = Ml.AppE (Ml.LitE ocaml_name, exprs_arg_ml) in
-      let marshal_ret = Interface.interface_name typ_ret in
-      let expr_run_pass_ml =
-        Ml.AppE
-          ( Ml.LitE "Run.Pass",
-            [ Ml.AppE (Ml.VarE ("marshal_" ^ marshal_ret), [ expr_call_ml ]) ]
-          )
-      in
-      let expr_body_ml =
-        List.fold_right
-          (fun (var_name, rhs) acc -> Ml.LetE (Ml.VarP var_name, rhs, acc))
-          unmarshal_lets expr_run_pass_ml
-      in
-      Some expr_body_ml
-  in
-  (* Arms for mono functions *)
-  let arms_mono_ml =
-    List.filter_map
-      (fun def ->
-        let make_arm id params typ_ret =
-          let name = id.it in
-          let ocaml_name = Names.func id in
-          let expr_wrong_targs_ml =
-            run_fail (Printf.sprintf "eval_func: wrong type args for %s" name)
-          in
-          let expr_body_ml =
-            match build_dispatch_body params typ_ret ocaml_name with
-            | None ->
-                run_fail
-                  (Printf.sprintf
-                     "eval_func: higher-order parameter not supported: %s" name)
-            | Some expr_body_ml ->
-                Ml.IfE
-                  ( Ml.BinopE ("=", Ml.VarE "typs__", Ml.ListE []),
-                    expr_body_ml,
-                    Some expr_wrong_targs_ml )
-          in
-          Some (Ml.LitP ("\"" ^ name ^ "\""), expr_body_ml)
-        in
-        match def.it with
-        | FuncDecD (id, [], params, typ_ret, _, _, _) ->
-            make_arm id params typ_ret
-        | BuiltinDecD (id, [], params, typ_ret, _) -> make_arm id params typ_ret
-        | ExternDecD (id, [], params, typ_ret, _) -> make_arm id params typ_ret
-        | TableDecD (id, params, typ_ret, _, _) -> make_arm id params typ_ret
-        | _ -> None)
-      spec
-  in
-  (* Arms for generic defs: witnesses come from [interface_lookup_],
-     so no ground call site is needed. *)
-  let build_generic_arm (name : string) (tparams : Il.tparam list)
-      (params : Sl.param list) (typ_ret : Sl.typ) : Ml.arm option =
-    let has_defp =
-      List.exists
-        (fun p -> match p.it with DefP _ -> true | _ -> false)
-        params
-    in
-    if has_defp then None
-    else
-      let tvars = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
-      let tparams_ml = List.map Names.tvar tparams in
-      let ocaml_name = "f__" ^ Names.sanitize name in
-      (* Bind [marshal__x]/[unmarshal__x] per tparam; the annotation is needed
-         or OCaml can't prove the later application principal ([-w 20]). *)
-      let witness_lets =
-        List.concat
-          (List.mapi
-             (fun i tv ->
-               let id_entry = "entry__" ^ string_of_int i in
-               let expr_lookup_ml =
-                 Ml.AppE
-                   ( Ml.LitE "interface_lookup_",
-                     [
-                       Ml.AppE
-                         ( Ml.LitE "List.nth",
-                           [ Ml.VarE "typs__"; Ml.LitE (string_of_int i) ] );
-                     ] )
-               in
-               let typ_marshal_ml = Ml.FuncT (Ml.VarT tv, Ml.NameT "Value.t") in
-               let typ_unmarshal_ml =
-                 Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tv)
-               in
-               [
-                 (id_entry, expr_lookup_ml);
-                 ( Interface.witness_marshal_name tv,
-                   Ml.AnnotE
-                     ( Ml.AppE
-                         ( Ml.LitE "Obj.obj",
-                           [ Ml.AppE (Ml.LitE "fst", [ Ml.VarE id_entry ]) ] ),
-                       typ_marshal_ml ) );
-                 ( Interface.witness_unmarshal_name tv,
-                   Ml.AnnotE
-                     ( Ml.AppE
-                         ( Ml.LitE "Obj.obj",
-                           [ Ml.AppE (Ml.LitE "snd", [ Ml.VarE id_entry ]) ] ),
-                       typ_unmarshal_ml ) );
-               ])
-             tparams_ml)
-      in
-      let exprs_witness_ml =
-        List.concat_map
-          (fun tv ->
-            [
-              Ml.VarE (Interface.witness_marshal_name tv);
-              Ml.VarE (Interface.witness_unmarshal_name tv);
-            ])
-          tparams_ml
-      in
-      let exp_typs =
-        List.filter_map
-          (fun p -> match p.it with ExpP (typ, _) -> Some typ | _ -> None)
-          params
-      in
-      let n_tparams = List.length tparams in
-      try
-        let vars_arg_ml, exprs_marshal_arg_ml =
-          List.mapi
-            (fun i typ ->
-              ( "a" ^ string_of_int i,
-                Func.apply_witness (string_of_int i)
-                  (Interface.resolve_unmarshal ctx tvars typ)
-                  (Ml.AppE
-                     ( Ml.LitE "List.nth",
-                       [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] )) ))
-            exp_typs
-          |> List.split
-        in
-        let exprs_arg_ml = List.map (fun v -> Ml.VarE v) vars_arg_ml in
-        let expr_call_ml =
-          Ml.AppE (Ml.LitE ocaml_name, exprs_witness_ml @ exprs_arg_ml)
-        in
-        let expr_marshal_ret_ml =
-          Func.apply_witness "ret__"
-            (Interface.resolve_marshal ctx tvars typ_ret)
-            expr_call_ml
-        in
-        let expr_run_pass_ml =
-          Ml.AppE (Ml.LitE "Run.Pass", [ expr_marshal_ret_ml ])
-        in
-        let expr_ok_ml =
-          List.fold_right
-            (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
-            (witness_lets @ List.combine vars_arg_ml exprs_marshal_arg_ml)
-            expr_run_pass_ml
-        in
-        (* Guard arity before any [List.nth typs__ i] below can crash. *)
-        let expr_fail_arity_ml =
-          Ml.AppE
-            ( Ml.LitE "Run.Fail",
-              [
-                Ml.TupleE
-                  [
-                    Ml.LitE "no_region";
-                    Ml.AppE
-                      ( Ml.LitE "Printf.sprintf",
-                        [
-                          Ml.StrE
-                            (Printf.sprintf
-                               "eval_func: %s expects %d type argument(s), got \
-                                %%d"
-                               name n_tparams);
-                          Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]);
-                        ] );
-                  ];
-              ] )
-        in
-        let expr_body_ml =
-          Ml.IfE
-            ( Ml.BinopE
-                ( "=",
-                  Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]),
-                  Ml.LitE (string_of_int n_tparams) ),
-              expr_ok_ml,
-              Some expr_fail_arity_ml )
-        in
-        Some (Ml.LitP ("\"" ^ name ^ "\""), expr_body_ml)
-      with Failure msg ->
-        (* Same tuple/set/map boundary shapes Task 5's bridges skip (e.g. a
-           tuple-of-lists return) — skip this arm too. *)
-        Util.Error.warn_compile no_region
-          (Format.asprintf "generic function %s: %s — skipping eval_func arm"
-             name msg);
-        None
-  in
-  let arms_generic_ml =
-    let poly_names_tparams =
-      Ctx.fold_funcs
-        (fun id func acc ->
-          let tparams, _, _ = Runtime.Dynamic_Sl.Func.get_signature func in
-          if tparams = [] then acc else (id.it, tparams) :: acc)
-        ctx []
-    in
-    List.filter_map
-      (fun (name, tparams) ->
-        match Hashtbl.find_opt poly_func_sigs name with
-        | None -> None
-        | Some (params, typ_ret) ->
-            build_generic_arm name tparams params typ_ret)
-      poly_names_tparams
-  in
-  (* Fallback wild arm *)
-  let arm_wild_ml =
-    ( Ml.WildP,
-      Ml.AppE
-        ( Ml.LitE "Run.Fail",
-          [
-            Ml.TupleE
-              [
-                Ml.LitE "no_region";
-                Ml.AppE
-                  ( Ml.LitE "Printf.sprintf",
-                    [
-                      Ml.StrE "eval_func: unknown function: %s";
-                      Ml.VarE "name__";
-                    ] );
-              ];
-          ] ) )
-  in
-  let arms_ml = arms_mono_ml @ arms_generic_ml @ [ arm_wild_ml ] in
-  let expr_match_ml = Ml.MatchE (Ml.VarE "name__", arms_ml) in
-  (* Unmatch handler *)
-  let expr_fail_unmatch_ml =
-    Ml.AppE
-      ( Ml.LitE "Run.Fail",
-        [
-          Ml.TupleE
-            [
-              Ml.LitE "no_region";
-              Ml.AppE
-                ( Ml.LitE "Printf.sprintf",
-                  [
-                    Ml.StrE "eval_func: unmatch in %s: %s";
-                    Ml.VarE "name__";
-                    Ml.VarE "msg_";
-                  ] );
-            ];
-        ] )
-  in
-  (* [interface_lookup_] raises this when a generic arm's witness type has
-     no ground call site anywhere in the spec. *)
-  let expr_fail_no_marshaller_ml =
-    Ml.AppE
-      ( Ml.LitE "Run.Fail",
-        [
-          Ml.TupleE
-            [
-              Ml.LitE "no_region";
-              Ml.AppE
-                ( Ml.LitE "Printf.sprintf",
-                  [
-                    Ml.StrE "eval_func: no marshaller registered for type %s";
-                    Ml.VarE "tyname__";
-                  ] );
-            ];
-        ] )
-  in
-  let expr_try_ml =
-    Ml.TryE
-      ( expr_match_ml,
-        [
-          ( Ml.VariantP (`Mono ("Unmatch", [ Ml.VarP "msg_" ])),
-            expr_fail_unmatch_ml );
-          ( Ml.VariantP (`Mono ("No_marshaller_", [ Ml.VarP "tyname__" ])),
-            expr_fail_no_marshaller_ml );
-        ] )
-  in
+      | ExternDecD (id, tparams, params, typ_ret, _) ->
+          let arm_ml = compile_func_arm ctx id.it tparams params typ_ret in
+          Some arm_ml
+      | TableDecD (id, params, typ_ret, _, _) ->
+          let arm_ml = compile_func_arm ctx id.it [] params typ_ret in
+          Some arm_ml
+      | FuncDecD (id, tparams, params, typ_ret, _, _, _) ->
+          let arm_ml = compile_func_arm ctx id.it tparams params typ_ret in
+          Some arm_ml
+      | _ -> None)
+    spec
+
+let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
   let params_ml =
     [
       ("name__", Some (Ml.NameT "string"));
@@ -326,150 +206,112 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
       ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
     ]
   in
-  ("eval_func", [], params_ml, Some (Ml.NameT "Run.func_result"), expr_try_ml)
-
-let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
-  ignore ctx;
-  (* Build rel_sigs: id.it -> (typs_input, typs_output) derived from nottyp *)
-  let rel_sigs : (string, Sl.typ list * Sl.typ list) Hashtbl.t =
-    Hashtbl.create 32
+  let arms_ml = compile_func_arms ctx spec in
+  let arm_no_interface_ml =
+    ( Ml.VariantP (`Mono ("NoConverter", [ Ml.VarP "tyname__" ])),
+      run_fail_fmt "eval_func: no marshaller registered for type %s"
+        [ Ml.VarE "tyname__" ] )
   in
-  List.iter
+  compile_dispatcher "eval_func" params_ml (Ml.NameT "Run.func_result")
+    "eval_func: unknown function: %s" arms_ml
+    [ arm_no_interface_ml ]
+
+(* Runtime relation dispatcher: [eval_rel name args]
+
+   [let eval_rel name__ args__ =
+      try match name__ with
+        | "r" ->
+            let a0 = unmarshal__.. (List.nth args__ 0) in ..
+            let out0, .. = r__r a0 .. in
+            Run.Pass [marshal__.. (out0); ..]
+        | .. -> Run.Fail (no_region, "eval_rel: unknown relation: %s" name__)
+      with Unmatch msg_ -> Run.Fail (no_region, ..)] *)
+
+let compile_rel_arm_body (id_rel_ml : string) (typs_input : Sl.typ list)
+    (typs_output : Sl.typ list) : Ml.expr =
+  (* [let a0 = unmarshal__.. (List.nth args__ 0) in ..] *)
+  let vars_arg_ml, exprs_unmarshal_arg_ml =
+    typs_input
+    |> List.mapi
+      (fun i typ ->
+        ( "a" ^ string_of_int i,
+          Ml.AppE
+            ( snd (find_converter_static typ),
+              [
+                Ml.AppE
+                  ( Ml.LitE "List.nth",
+                    [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] );
+              ] ) ))
+    |> List.split
+  in
+  let exprs_arg_ml = List.map (fun var_arg_ml -> Ml.VarE var_arg_ml) vars_arg_ml in
+  let bindings_arg_ml = List.combine vars_arg_ml exprs_unmarshal_arg_ml in
+  (* [r__r a0 ..] *)
+  let expr_call_ml = Ml.AppE (Ml.VarE id_rel_ml, exprs_arg_ml) in
+  match typs_output with
+  | [] ->
+      (* [Run.Pass []], sequenced after the call *)
+      let expr_seq_ml =
+        Ml.LetE
+          (Ml.WildP, expr_call_ml, Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE [] ]))
+      in
+      List.fold_right
+        (fun (var, expr_ml) expr_cont_ml -> Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+        bindings_arg_ml expr_seq_ml
+  | _ ->
+      let n_out = List.length typs_output in
+      let ids_out_ml = List.init n_out (fun i -> "out" ^ string_of_int i) in
+      (* [let out0, .. = r__r a0 .. in ..] *)
+      let pat_out_ml =
+        match ids_out_ml with
+        | [ id_out_ml ] -> Ml.VarP id_out_ml
+        | _ -> Ml.TupleP (List.map (fun s -> Ml.VarP s) ids_out_ml)
+      in
+      (* [Run.Pass [marshal__.. (out0); ..]] *)
+      let exprs_marshal_out_ml =
+        List.mapi
+          (fun i typ ->
+            Ml.AppE
+              (fst (find_converter_static typ), [ Ml.VarE ("out" ^ string_of_int i) ]))
+          typs_output
+      in
+      let expr_pass_ml =
+        Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE exprs_marshal_out_ml ])
+      in
+      let expr_bind_ml = Ml.LetE (pat_out_ml, expr_call_ml, expr_pass_ml) in
+      List.fold_right
+        (fun (var, expr_ml) expr_cont_ml -> Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+        bindings_arg_ml expr_bind_ml
+
+let compile_rel_arm (id : Sl.id) (typs_input : Sl.typ list)
+    (typs_output : Sl.typ list) : Ml.arm =
+  (* Pattern matching on relation name ["r" -> ..] *)
+  let pat_ml = Ml.LitP ("\"" ^ id.it ^ "\"") in
+  let id_rel_ml = Names.rel id in
+  let expr_func_ml = compile_rel_arm_body id_rel_ml typs_input typs_output in
+  (pat_ml, expr_func_ml)
+
+let compile_rel_arms (spec : Sl.spec) : Ml.arm list =
+  List.filter_map
     (fun def ->
       match def.it with
       | RelD (id, (nottyp, inputs), _, _, _, _)
       | ExternRelD (id, (nottyp, inputs), _, _) ->
-          let typs_rel = Domain.Mixfix.args nottyp.it in
+          let typs_rel = Mixfix.args nottyp.it in
           let typs_input, typs_output = Hints.Input.split inputs typs_rel in
-          Hashtbl.replace rel_sigs id.it (typs_input, typs_output)
-      | _ -> ())
-    spec;
-  (* Arms for each relation *)
-  let arms_ml =
-    List.filter_map
-      (fun def ->
-        let make_arm (id : Sl.id) =
-          match Hashtbl.find_opt rel_sigs id.it with
-          | None -> None
-          | Some (typs_input, typs_output) ->
-              let n_in = List.length typs_input in
-              let id_rel_ml = Names.rel id in
-              let unmarshal_lets =
-                List.mapi
-                  (fun i typ ->
-                    ( "a" ^ string_of_int i,
-                      Ml.AppE
-                        ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ),
-                          [
-                            Ml.AppE
-                              ( Ml.LitE "List.nth",
-                                [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ]
-                              );
-                          ] ) ))
-                  typs_input
-              in
-              let exprs_arg_ml =
-                List.init n_in (fun i -> Ml.VarE ("a" ^ string_of_int i))
-              in
-              let expr_call_ml = Ml.AppE (Ml.VarE id_rel_ml, exprs_arg_ml) in
-              let expr_body_ml =
-                match typs_output with
-                | [] ->
-                    let expr_seq_ml =
-                      Ml.LetE
-                        ( Ml.WildP,
-                          expr_call_ml,
-                          Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE [] ]) )
-                    in
-                    List.fold_right
-                      (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
-                      unmarshal_lets expr_seq_ml
-                | _ ->
-                    let n_out = List.length typs_output in
-                    let ids_out_ml =
-                      List.init n_out (fun i -> "out" ^ string_of_int i)
-                    in
-                    let pat_out_ml =
-                      match ids_out_ml with
-                      | [ id_out_ml ] -> Ml.VarP id_out_ml
-                      | _ ->
-                          Ml.TupleP (List.map (fun s -> Ml.VarP s) ids_out_ml)
-                    in
-                    let exprs_marshal_out_ml =
-                      List.mapi
-                        (fun i typ ->
-                          Ml.AppE
-                            ( Ml.VarE ("marshal_" ^ Interface.interface_name typ),
-                              [ Ml.VarE ("out" ^ string_of_int i) ] ))
-                        typs_output
-                    in
-                    let expr_run_pass_ml =
-                      Ml.AppE
-                        (Ml.LitE "Run.Pass", [ Ml.ListE exprs_marshal_out_ml ])
-                    in
-                    let expr_bind_ml =
-                      Ml.LetE (pat_out_ml, expr_call_ml, expr_run_pass_ml)
-                    in
-                    List.fold_right
-                      (fun (var, rhs) acc -> Ml.LetE (Ml.VarP var, rhs, acc))
-                      unmarshal_lets expr_bind_ml
-              in
-              Some (Ml.LitP ("\"" ^ id.it ^ "\""), expr_body_ml)
-        in
-        match def.it with
-        | RelD (id, _, _, _, _, _) -> make_arm id
-        | ExternRelD (id, _, _, _) -> make_arm id
-        | _ -> None)
-      spec
-  in
-  (* Fallback arm *)
-  let arm_wild_ml =
-    ( Ml.WildP,
-      Ml.AppE
-        ( Ml.LitE "Run.Fail",
-          [
-            Ml.TupleE
-              [
-                Ml.LitE "no_region";
-                Ml.AppE
-                  ( Ml.LitE "Printf.sprintf",
-                    [
-                      Ml.StrE "eval_rel: unknown relation: %s"; Ml.VarE "name__";
-                    ] );
-              ];
-          ] ) )
-  in
-  let expr_match_ml = Ml.MatchE (Ml.VarE "name__", arms_ml @ [ arm_wild_ml ]) in
-  (* Unmatch handler *)
-  let expr_fail_unmatch_ml =
-    Ml.AppE
-      ( Ml.LitE "Run.Fail",
-        [
-          Ml.TupleE
-            [
-              Ml.LitE "no_region";
-              Ml.AppE
-                ( Ml.LitE "Printf.sprintf",
-                  [
-                    Ml.StrE "eval_rel: unmatch in %s: %s";
-                    Ml.VarE "name__";
-                    Ml.VarE "msg_";
-                  ] );
-            ];
-        ] )
-  in
-  let expr_try_ml =
-    Ml.TryE
-      ( expr_match_ml,
-        [
-          ( Ml.VariantP (`Mono ("Unmatch", [ Ml.VarP "msg_" ])),
-            expr_fail_unmatch_ml );
-        ] )
-  in
+          let arm_ml = compile_rel_arm id typs_input typs_output in
+          Some arm_ml
+      | _ -> None)
+    spec
+
+let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
+  ignore ctx;
   let params_ml =
     [
       ("name__", Some (Ml.NameT "string"));
       ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
     ]
   in
-  ("eval_rel", [], params_ml, Some (Ml.NameT "Run.rel_result"), expr_try_ml)
+  let arms_ml = compile_rel_arms spec in
+  compile_dispatcher "eval_rel" params_ml (Ml.NameT "Run.rel_result")
+    "eval_rel: unknown relation: %s" arms_ml []

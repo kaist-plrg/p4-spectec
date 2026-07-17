@@ -105,13 +105,13 @@ let rec interface_name_ (typ : Typ.t) : string =
   | Il.IterT (t, Il.List) -> interface_name_ t ^ "__list"
   | Il.FuncT _ -> "func"
 
-exception No_marshaller_ of string
+exception NoConverter of string
 
-let interface_lookup_ (typ : Typ.t) : Obj.t * Obj.t =
+let find_converter_dynamic (typ : Typ.t) : Obj.t * Obj.t =
   let name = interface_name_ typ in
   match Hashtbl.find_opt interface_registry_ name with
   | Some entry -> entry
-  | None -> raise (No_marshaller_ name)
+  | None -> raise (NoConverter name)
 |}
 
 (* Generated [compiled/dune]. [-opaque] keeps the [.cmx] jobs parallel despite

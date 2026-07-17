@@ -220,7 +220,7 @@ let rec typ_mentions (tparams : string list) (typ : Sl.typ) : bool =
 (* Seed marshallers for concrete instantiation types at poly call sites.
    The old worklist enqueued these via ground specialized defs; instead we walk
    def bodies and enqueue each targ's maximal ground subterms (parts mentioning
-   the enclosing def's tparams become witnesses, not named marshallers). *)
+   the enclosing def's tparams become converters, not named marshallers). *)
 
 let seed_poly_calls (ctx : Ctx.t) ~(enqueue : Sl.typ -> unit) (spec : Sl.spec) :
     unit =
@@ -742,15 +742,16 @@ module Unmarshal = struct
 end
 
 (* Dictionary-passing: a boundary call at a still-unresolved tparam
-   marshals/unmarshals via a caller-supplied witness, not a named marshal_T. *)
+   marshals/unmarshals via a caller-supplied converter, not a named marshal_T. *)
 
-let witness_marshal_name (tvar : string) = "marshal__" ^ tvar
-let witness_unmarshal_name (tvar : string) = "unmarshal__" ^ tvar
+let converter_marshal_name (tvar : string) = "marshal__" ^ tvar
+let converter_unmarshal_name (tvar : string) = "unmarshal__" ^ tvar
 
 (* [f] may be a bare lambda; Ml's printer never parens an [AppE]'s function
-   position (mirrors [Func.apply_witness], which guards the same hazard). *)
+   position (mirrors [Func.apply_converter], which guards the same hazard). *)
 let apply_resolved (f : Ml.expr) (arg : Ml.expr) : Ml.expr =
-  Ml.LetE (Ml.VarP "w__resolved_", f, Ml.AppE (Ml.VarE "w__resolved_", [ arg ]))
+  Ml.LetE
+    (Ml.VarP "converter__resolved_", f, Ml.AppE (Ml.VarE "converter__resolved_", [ arg ]))
 
 (* Builds an expr of type ['t -> Value.t] for [typ]: bare tparam, List/Opt/
    tuple/typedef (mirrors [compile_var]); [visiting] guards typedef cycles. *)
@@ -758,7 +759,7 @@ let rec resolve_marshal ?(visiting : string list = []) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams ->
-      Ml.VarE (witness_marshal_name (Names.tvar id))
+      Ml.VarE (converter_marshal_name (Names.tvar id))
   | Il.IterT (t, Il.List) when typ_mentions tparams t ->
       Ml.FunE
         ( [ Ml.VarP "x__" ],
@@ -819,7 +820,7 @@ let rec resolve_marshal ?(visiting : string list = []) (ctx : Ctx.t)
   | _ -> Ml.VarE ("marshal_" ^ interface_name typ)
 
 (* Mirrors [compile_var]'s [Typdef.Defined] dispatch, but recurses via
-   [resolve_marshal] (bottoming out at a witness) instead of marshal_<T>. *)
+   [resolve_marshal] (bottoming out at a converter) instead of marshal_<T>. *)
 and resolve_typdef_marshal ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list)
     : Ml.expr =
@@ -901,7 +902,7 @@ and resolve_unmarshal ?(visiting : string list = []) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams ->
-      Ml.VarE (witness_unmarshal_name (Names.tvar id))
+      Ml.VarE (converter_unmarshal_name (Names.tvar id))
   | Il.IterT (t, Il.List) when typ_mentions tparams t ->
       Ml.FunE
         ( [ Ml.VarP "v__" ],

@@ -74,28 +74,23 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
 (* Type parameters
 
    Each type parameter becomes an OCaml type variable ('x), and for each one it
-   takes an extra pair of parameters — a witness — [marshal__x : 'x -> Value.t]
+   takes an extra pair of parameters — a converter — [marshal__x : 'x -> Value.t]
    / [unmarshal__x : Value.t -> 'x] — converting between that abstract type and
    the runtime's uniform [Value.t]
 
    At a call site, [Interface.resolve_marshal]/[resolve_unmarshal] resolve
-   each callee type parameter's witness *)
+   each callee type parameter's converter *)
 
 let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
   List.concat_map
     (fun tparam_ml ->
       [
-        ( Interface.witness_marshal_name tparam_ml,
+        ( Interface.converter_marshal_name tparam_ml,
           Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
-        ( Interface.witness_unmarshal_name tparam_ml,
+        ( Interface.converter_unmarshal_name tparam_ml,
           Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
       ])
     tparams_ml
-
-let apply_witness (tag : string) (expr_resolve_ml : Ml.expr) (expr_arg_ml : Ml.expr) :
-    Ml.expr =
-  let w_id = "w__" ^ tag in
-  Ml.LetE (Ml.VarP w_id, expr_resolve_ml, Ml.AppE (Ml.VarE w_id, [ expr_arg_ml ]))
 
 (* Type arguments
 
@@ -125,6 +120,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
   let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
+  (* Compile parameters *)
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -139,11 +135,12 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
           ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
+  (* Marshal each parameter before crossing into the extern *)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i typ ->
         ( "v__" ^ string_of_int i,
-          apply_witness (string_of_int i)
+          Converter.apply (string_of_int i)
             (Interface.resolve_marshal ctx tparams typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
@@ -153,6 +150,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
   let exprs_targ_ml = compile_targs tparams in
+  (* Call the extern, unmarshal its result *)
   let expr_call_ml =
     Ml.AppE
       ( Common.extern_field "eval_extern_func",
@@ -163,7 +161,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
       ( expr_call_ml,
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-            apply_witness "ret__"
+            Converter.apply "ret__"
               (Interface.resolve_unmarshal ctx tparams typ_ret)
               (Ml.VarE "v_out__") );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
@@ -172,6 +170,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
         ] )
   in
+  (* Chain the marshal lets ahead of the call *)
   let expr_body_ml =
     List.fold_right
       (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
@@ -205,6 +204,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
   let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
+  (* Compile parameters *)
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -219,11 +219,12 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
           ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
+  (* Marshal each parameter before crossing into the builtin *)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i typ ->
         ( "v__" ^ string_of_int i,
-          apply_witness (string_of_int i)
+          Converter.apply (string_of_int i)
             (Interface.resolve_marshal ctx tparams typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
@@ -233,6 +234,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
   let exprs_targ_ml = compile_targs tparams in
+  (* Call the builtin, catching a builtin error as [Unmatch] *)
   let name_orig_lit_ml =
     Ml.LitE (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped id.it))
   in
@@ -254,14 +256,16 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
         ] )
   in
+  (* Unmarshal the result *)
   let expr_result_ml =
     Ml.LetE
       ( Ml.VarP "v_out__",
         expr_try_ml,
-        apply_witness "ret__"
+        Converter.apply "ret__"
           (Interface.resolve_unmarshal ctx tparams typ_ret)
           (Ml.VarE "v_out__") )
   in
+  (* Chain the marshal lets ahead of the call *)
   let expr_body_ml =
     List.fold_right
       (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
@@ -304,9 +308,9 @@ and compile_defined_func_body ~(tparams : string list)
   let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let ctx_outer = ctx in
   (* Compile parameters *)
-  let params_witness_ml = compile_tparams tparams_ml in
+  let params_converter_ml = compile_tparams tparams_ml in
   let ctx, params_ml, chain = compile_params ~tparams ctx params in
-  let params_ml = params_witness_ml @ params_ml in
+  let params_ml = params_converter_ml @ params_ml in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
@@ -337,7 +341,7 @@ and compile_defined_func_body ~(tparams : string list)
   let exprs_param_ml =
     List.map (fun id_param_ml -> Ml.VarE id_param_ml) ids_param_ml
   in
-  let dispatch_ml =
+  let expr_dispatch_ml =
     match funcdef_else_ml_opt with
     | Some _ ->
         Ml.TryE
@@ -349,12 +353,12 @@ and compile_defined_func_body ~(tparams : string list)
     | None -> Ml.AppE (Ml.VarE id_main_ml, exprs_param_ml)
   in
   let funcdef_dispatcher_ml =
-    (id_ml, [], params_ml, Some typ_ret_ml, dispatch_ml)
+    (id_ml, [], params_ml, Some typ_ret_ml, expr_dispatch_ml)
   in
   (* Collect function definitions *)
   let funcdefs_ml =
-    let else_list = Option.to_list funcdef_else_ml_opt in
-    (funcdef_main_ml :: else_list) @ [ funcdef_dispatcher_ml ]
+    let funcdefs_else_ml = Option.to_list funcdef_else_ml_opt in
+    (funcdef_main_ml :: funcdefs_else_ml) @ [ funcdef_dispatcher_ml ]
   in
   (ctx, funcdefs_ml)
 

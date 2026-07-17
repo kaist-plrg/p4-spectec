@@ -1072,7 +1072,7 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
                         among the caller's type parameters"
                        id.it tp.it))
               callee_tparams;
-            let exprs_witness_ml =
+            let exprs_converter_ml =
               List.concat_map
                 (fun (tp : Il.tparam) ->
                   let typ_tp = Il.VarT (tp, []) $ no_region in
@@ -1082,7 +1082,7 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
                   ])
                 callee_tparams
             in
-            Ml.AppE (Ml.VarE id_ml, exprs_witness_ml)
+            Ml.AppE (Ml.VarE id_ml, exprs_converter_ml)
         | Some _ | None -> Ml.VarE id_ml
       in
       (ctx, expr_ml)
@@ -1095,7 +1095,7 @@ and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
-(* Forward the caller's witnesses if [id] has its own tparams — a no-op
+(* Forward the caller's converters if [id] has its own tparams — a no-op
    for a ground callee, per [Ctx.find_func_tparams]. *)
 and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
     (targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
@@ -1105,7 +1105,7 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
   | Some callee_tparams
     when callee_tparams <> [] && List.length callee_tparams = List.length targs
     ->
-      let exprs_witness_ml =
+      let exprs_converter_ml =
         List.concat_map
           (fun targ ->
             [
@@ -1114,7 +1114,7 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
             ])
           targs
       in
-      (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_witness_ml @ exprs_arg_ml))
+      (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_converter_ml @ exprs_arg_ml))
   | _ -> (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_arg_ml))
 
 (* Iterator expressions *)
