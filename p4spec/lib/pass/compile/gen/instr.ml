@@ -2,7 +2,21 @@ open Lang
 open Sl
 open Util.Source
 
-(* Instructions *)
+(* Compiling instructions: [Sl.instr] -> [Ml.expr]
+
+   A rule/function body is a list of instructions, threaded through
+   [compile_instr] and lowered into nested OCaml control flow that ends in a
+   result (or raises [Unmatch] — SpecTec rules are partial).
+
+     [if exp_cond then block]
+     -->
+     [if compile_exp exp_cond then <block> else raise (Unmatch "if failed")]
+
+     [case exp_scrut of g1 => block1 | g2 => block2 | ..]
+     -->
+     [let case__ = compile_exp exp_scrut in
+      if <guard g1> then <block1> else if <guard g2> then <block2> else ..
+      else raise (Unmatch "no case matched")] *)
 
 let rec compile_instr ~(tparams : string list) (ctx : Ctx.t) (instr : instr) :
     Ctx.t * Ml.expr =

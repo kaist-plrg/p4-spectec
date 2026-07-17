@@ -43,9 +43,9 @@ let dispatch_header (n_parts : int) : string =
   in
   if opens = "" then common_opens ^ "\n" else common_opens ^ "\n" ^ opens ^ "\n"
 
-(* [interface_name]/[Names.sanitize] re-emitted as fixed source, since the
+(* [Naming.name]/[Names.sanitize] re-emitted as fixed source, since the
    compiler itself isn't linked into the generated artifact. *)
-(* Must stay in sync with [Interface.interface_name] (gen/interface.ml). *)
+(* Must stay in sync with [Interface.Naming.name] (gen/interface/naming.ml). *)
 let interface_name_fn : string =
   {|
 let interface_keywords_ =

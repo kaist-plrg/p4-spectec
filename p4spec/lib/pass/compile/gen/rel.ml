@@ -97,7 +97,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       (fun i typ ->
         ( "v__" ^ string_of_int i,
           Ml.AppE
-            ( Ml.VarE ("marshal_" ^ Interface.interface_name typ),
+            ( Ml.VarE ("marshal_" ^ Interface.Naming.name typ),
               [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
       typs_input
     |> List.split
@@ -112,7 +112,7 @@ let compile_extern_rel (ctx : Ctx.t) (id : id)
       List.mapi
         (fun i (typ : Sl.typ) ->
           Ml.AppE
-            ( Ml.VarE ("unmarshal_" ^ Interface.interface_name typ),
+            ( Ml.VarE ("unmarshal_" ^ Interface.Naming.name typ),
               [
                 Ml.AppE
                   ( Ml.LitE "List.nth",

@@ -7,7 +7,7 @@ module Typ = Runtime.Type
 module Typdef = Typ.Typdef
 open Util.Source
 
-(* Compiling expressions *)
+(* Compiling expressions: [Sl.exp] -> [Ml.expr] *)
 
 let rec compile_exp ~(tparams : string list) (ctx : Ctx.t) (exp : exp) :
     Ctx.t * Ml.expr =
@@ -1068,18 +1068,16 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
                 if not (List.mem tp.it tparams) then
                   failwith
                     (Printf.sprintf
-                       "compile_arg: %s: callee type parameter %s is not \
-                        among the caller's type parameters"
+                       "compile_arg: %s: callee type parameter %s is not among \
+                        the caller's type parameters"
                        id.it tp.it))
               callee_tparams;
             let exprs_converter_ml =
               List.concat_map
                 (fun (tp : Il.tparam) ->
                   let typ_tp = Il.VarT (tp, []) $ no_region in
-                  [
-                    Interface.resolve_marshal ctx tparams typ_tp;
-                    Interface.resolve_unmarshal ctx tparams typ_tp;
-                  ])
+                  let conv = Interface.Converter.resolve ctx tparams typ_tp in
+                  [ conv.marshal; conv.unmarshal ])
                 callee_tparams
             in
             Ml.AppE (Ml.VarE id_ml, exprs_converter_ml)
@@ -1108,10 +1106,8 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
       let exprs_converter_ml =
         List.concat_map
           (fun targ ->
-            [
-              Interface.resolve_marshal ctx tparams targ;
-              Interface.resolve_unmarshal ctx tparams targ;
-            ])
+            let conv = Interface.Converter.resolve ctx tparams targ in
+            [ conv.marshal; conv.unmarshal ])
           targs
       in
       (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_converter_ml @ exprs_arg_ml))

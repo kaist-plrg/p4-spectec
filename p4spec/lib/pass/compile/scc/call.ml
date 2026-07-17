@@ -126,8 +126,9 @@ let collect_refs_def (def : def) : string list * int list =
 (* True for defs that are graph nodes: funcs (ground or generic) and rels. *)
 let is_entity (def : def) : bool =
   match def.it with
-  | ExternRelD _ | RelD _
-  | ExternDecD _ | BuiltinDecD _ | TableDecD _ | FuncDecD _ -> true
+  | ExternRelD _ | RelD _ | ExternDecD _ | BuiltinDecD _ | TableDecD _
+  | FuncDecD _ ->
+      true
   | _ -> false
 
 let def_id (def : def) : string =

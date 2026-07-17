@@ -78,16 +78,16 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
    / [unmarshal__x : Value.t -> 'x] — converting between that abstract type and
    the runtime's uniform [Value.t]
 
-   At a call site, [Interface.resolve_marshal]/[resolve_unmarshal] resolve
-   each callee type parameter's converter *)
+   At a call site, [Interface.Converter.resolve] resolves each callee type
+   parameter's converter *)
 
 let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
   List.concat_map
     (fun tparam_ml ->
       [
-        ( Interface.converter_marshal_name tparam_ml,
+        ( Interface.Converter.name_marshal tparam_ml,
           Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
-        ( Interface.converter_unmarshal_name tparam_ml,
+        ( Interface.Converter.name_unmarshal tparam_ml,
           Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
       ])
     tparams_ml
@@ -113,9 +113,8 @@ let compile_targs (tparams : string list) : Ml.expr =
       | Run.Pass v_out__ -> unmarshal__ret (v_out__)
       | Run.Fail (_, msg__) -> raise (Unmatch msg__)] *)
 
-let compile_extern_func (ctx : Ctx.t) (id : id)
-    (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
-    Ctx.t * Ml.funcdef list =
+let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
+    (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -140,8 +139,8 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
     List.mapi
       (fun i typ ->
         ( "v__" ^ string_of_int i,
-          Converter.apply (string_of_int i)
-            (Interface.resolve_marshal ctx tparams typ)
+          Interface.Converter.apply_converter (string_of_int i)
+            (Interface.Converter.resolve ctx tparams typ).marshal
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -161,8 +160,8 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
       ( expr_call_ml,
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-            Converter.apply "ret__"
-              (Interface.resolve_unmarshal ctx tparams typ_ret)
+            Interface.Converter.apply_converter "ret__"
+              (Interface.Converter.resolve ctx tparams typ_ret).unmarshal
               (Ml.VarE "v_out__") );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
@@ -197,9 +196,8 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
       in
       unmarshal__ret (v_out__)] *)
 
-let compile_builtin_func (ctx : Ctx.t) (id : id)
-    (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
-    Ctx.t * Ml.funcdef list =
+let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
+    (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -224,8 +222,8 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
     List.mapi
       (fun i typ ->
         ( "v__" ^ string_of_int i,
-          Converter.apply (string_of_int i)
-            (Interface.resolve_marshal ctx tparams typ)
+          Interface.Converter.apply_converter (string_of_int i)
+            (Interface.Converter.resolve ctx tparams typ).marshal
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -261,8 +259,8 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
     Ml.LetE
       ( Ml.VarP "v_out__",
         expr_try_ml,
-        Converter.apply "ret__"
-          (Interface.resolve_unmarshal ctx tparams typ_ret)
+        Interface.Converter.apply_converter "ret__"
+          (Interface.Converter.resolve ctx tparams typ_ret).unmarshal
           (Ml.VarE "v_out__") )
   in
   (* Chain the marshal lets ahead of the call *)
@@ -370,8 +368,8 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
   let ctx, funcdefs_ml =
-    compile_defined_func_body ~tparams ~tparams_ml ctx id params
-      typ_ret block_main elseblock_opt
+    compile_defined_func_body ~tparams ~tparams_ml ctx id params typ_ret
+      block_main elseblock_opt
   in
   let funcdefs_ml =
     List.map

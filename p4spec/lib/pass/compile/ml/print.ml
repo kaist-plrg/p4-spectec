@@ -307,7 +307,9 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
       print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
       ^ print_expr ~level:1 expr_body
   | _ ->
-      let quantifier = String.concat " " (List.map (fun t -> "'" ^ t) tparams) in
+      let quantifier =
+        String.concat " " (List.map (fun t -> "'" ^ t) tparams)
+      in
       let param_typ_strs =
         List.map
           (fun (id, typ_opt) ->
@@ -316,8 +318,8 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
             | None ->
                 failwith
                   (Printf.sprintf
-                     "print_funcdef: generic function %s: untyped param %s"
-                     id id))
+                     "print_funcdef: generic function %s: untyped param %s" id
+                     id))
           params
       in
       let ret_typ_str =
@@ -339,7 +341,8 @@ let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
         | _ -> String.concat " " (List.map (fun (id, _) -> print_id id) params)
       in
       print_id id ^ " : " ^ quantifier ^ ". " ^ arrow_typ_str ^ " =\n  fun "
-      ^ str_params ^ " ->\n  " ^ print_expr ~level:1 expr_body
+      ^ str_params ^ " ->\n  "
+      ^ print_expr ~level:1 expr_body
 
 (* Top-level items *)
 

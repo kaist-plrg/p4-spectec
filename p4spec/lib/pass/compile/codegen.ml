@@ -45,7 +45,7 @@ let compile_spec ?(name = "") (path_out : string)
     (path_out_unparse : string option) (split_lines : int) (spec : Sl.spec) =
   (* Initialize context *)
   let ctx = Ctx.init spec in
-  (* Type definitions — one Ml.TypeRec per SCC group *)
+  (* Type definitions *)
   let ctx, toplevel_typdefs_ml =
     let type_groups = Scc.Type.compute spec in
     let ctx, typdef_groups_ml = Gen.Type.compile_spec_scc ctx type_groups in
@@ -57,10 +57,12 @@ let compile_spec ?(name = "") (path_out : string)
     in
     (ctx, tops)
   in
-  (* Marshal/unmarshal — one Ml.LetRec per SCC group *)
+  (* Marshal/unmarshal *)
   let toplevels_interface_ml =
-    let const_decls, marshal_groups, unmarshal_groups, registry_ml =
-      Gen.Interface.compile ctx spec
+    let typs = Gen.Interface.Collect.collect_types ctx spec in
+    let groups = Scc.Converter.compute ctx typs in
+    let const_decls, marshal_groups, unmarshal_groups, converter_table_ml =
+      Gen.Interface.compile ctx typs groups
     in
     let to_tops groups =
       List.filter_map
@@ -69,7 +71,7 @@ let compile_spec ?(name = "") (path_out : string)
         groups
     in
     const_decls @ to_tops marshal_groups @ to_tops unmarshal_groups
-    @ [ registry_ml ]
+    @ [ converter_table_ml ]
   in
   (* Logic groups — one Ml.LetRec per SCC group, in topo order. The heavy code
      lives at module top-level (no longer inside the functor), reading the
