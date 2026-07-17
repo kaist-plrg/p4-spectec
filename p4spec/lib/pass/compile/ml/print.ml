@@ -30,6 +30,8 @@ let rec print_typ typ =
   | TupleT [] -> "unit"
   | TupleT [ typ ] -> print_typ typ
   | TupleT typs -> "(" ^ String.concat " * " (List.map print_typ typs) ^ ")"
+  | FuncT (typ_dom, typ_codom) ->
+      "(" ^ print_typ typ_dom ^ " -> " ^ print_typ typ_codom ^ ")"
   | OpenRowT typcases ->
       "[> "
       ^ String.concat " | "

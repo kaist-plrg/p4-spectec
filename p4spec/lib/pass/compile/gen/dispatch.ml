@@ -131,11 +131,9 @@ let compile_eval_func (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
                            [ Ml.VarE "typs__"; Ml.LitE (string_of_int i) ] );
                      ] )
                in
-               let typ_marshal_ml =
-                 Ml.NameT (Printf.sprintf "('%s -> Value.t)" tv)
-               in
+               let typ_marshal_ml = Ml.FuncT (Ml.VarT tv, Ml.NameT "Value.t") in
                let typ_unmarshal_ml =
-                 Ml.NameT (Printf.sprintf "(Value.t -> '%s)" tv)
+                 Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tv)
                in
                [
                  (id_entry, expr_lookup_ml);

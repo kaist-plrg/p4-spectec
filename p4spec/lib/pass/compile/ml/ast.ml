@@ -28,6 +28,8 @@ type typ =
   | AppT of id * typ list
   (* `(` list(typ, `,`) `)` *)
   | TupleT of typ list
+  (* `(` typ `->` typ `)` *)
+  | FuncT of typ * typ
   (* `[>` list(`ctor of typ1 * ..., `|`) `]` *)
   | OpenRowT of typrow list
 

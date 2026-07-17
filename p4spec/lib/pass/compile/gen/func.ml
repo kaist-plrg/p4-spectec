@@ -1,7 +1,13 @@
 open Lang
 open Sl
+open Util.Source
 
 (* Parameters *)
+
+(* Value parameter: [typ exp]
+
+   [(param__i : typ_ml)], plus a bind chain that destructures [exp]'s
+   pattern out of the [param__i] stub *)
 
 let compile_exp_param ~(index : int option) ~(tparams : string list)
     (ctx : Ctx.t) (typ : typ) (exp : exp) : Ctx.t * Ml.param * Chain.t =
@@ -13,6 +19,10 @@ let compile_exp_param ~(index : int option) ~(tparams : string list)
   let param_ml = (id_stub_ml, Some typ_ml) in
   let ctx, chain = Bind.compile ~tparams ctx expr_stub_ml exp in
   (ctx, param_ml, chain)
+
+(* Def parameter: [def $g(t1, .., tn) : tret]
+
+   [(g_id : (t1_ml -> .. -> tn_ml -> tret_ml))] *)
 
 let compile_def_param ~(tparams : string list) (ctx : Ctx.t) (id : id)
     (params : param list) (typ_ret : typ) : Ctx.t * Ml.param * Chain.t =
@@ -28,11 +38,15 @@ let compile_def_param ~(tparams : string list) (ctx : Ctx.t) (id : id)
     List.map (Type.compile_typ ~tparams) typs_param
     @ [ Type.compile_typ ~tparams typ_ret ]
   in
-  (* [Ml.typ] has no arrow case; build one as a parenthesized name string. *)
-  let str_arrow_ml =
-    "(" ^ String.concat " -> " (List.map Ml.Print.print_typ typs_arrow_ml) ^ ")"
+  let typ_arrow_ml =
+    match List.rev typs_arrow_ml with
+    | typ_ret_ml :: typs_param_ml_rev ->
+        List.fold_left
+          (fun typ_cod typ_dom -> Ml.FuncT (typ_dom, typ_cod))
+          typ_ret_ml typs_param_ml_rev
+    | [] -> assert false
   in
-  let param_ml = (id_ml, Some (Ml.NameT str_arrow_ml)) in
+  let param_ml = (id_ml, Some typ_arrow_ml) in
   let chain = Chain.nop in
   (ctx, param_ml, chain)
 
@@ -57,44 +71,60 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
          (ctx, params_ml, chain))
        (ctx, [], Chain.nop)
 
-(* Witness parameters for a generic extern/builtin bridge: for each of the
-   function's own tparams, a marshal/unmarshal pair the caller must supply. *)
-let compile_witness_params (tparams_ml : string list) : Ml.param list =
+(* Type parameters
+
+   Each type parameter becomes an OCaml type variable ('x), and for each one it
+   takes an extra pair of parameters — a witness — [marshal__x : 'x -> Value.t]
+   / [unmarshal__x : Value.t -> 'x] — converting between that abstract type and
+   the runtime's uniform [Value.t]
+
+   At a call site, [Interface.resolve_marshal]/[resolve_unmarshal] resolve
+   each callee type parameter's witness *)
+
+let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
   List.concat_map
-    (fun tv ->
+    (fun tparam_ml ->
       [
-        ( Interface.witness_marshal_name tv,
-          Some (Ml.NameT (Printf.sprintf "('%s -> Value.t)" tv)) );
-        ( Interface.witness_unmarshal_name tv,
-          Some (Ml.NameT (Printf.sprintf "(Value.t -> '%s)" tv)) );
+        ( Interface.witness_marshal_name tparam_ml,
+          Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
+        ( Interface.witness_unmarshal_name tparam_ml,
+          Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
       ])
     tparams_ml
 
-let compile_targ_reify (tvars : string list) : Ml.expr =
-  Ml.ListE
-    (List.map
-       (fun tv ->
-         Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE tv; Ml.ListE [] ]))
-       tvars)
-
-(* Bind [resolve_expr] before applying — it may be a bare lambda, and Ml's
-   printer never parenthesizes an [AppE]'s function-position expression. *)
-let apply_witness (tag : string) (resolve_expr : Ml.expr) (arg_expr : Ml.expr) :
+let apply_witness (tag : string) (expr_resolve_ml : Ml.expr) (expr_arg_ml : Ml.expr) :
     Ml.expr =
   let w_id = "w__" ^ tag in
-  Ml.LetE (Ml.VarP w_id, resolve_expr, Ml.AppE (Ml.VarE w_id, [ arg_expr ]))
+  Ml.LetE (Ml.VarP w_id, expr_resolve_ml, Ml.AppE (Ml.VarE w_id, [ expr_arg_ml ]))
 
-(* Extern functions: forward tparam witnesses to marshal/unmarshal at the
-   boundary, and reify the tparams as the call's own runtime targs. A
-   non-generic extern is just [tparams = []], no special case needed. *)
+(* Type arguments
+
+   Reifies a generic call's own tparams as runtime targs: [<X, ..>]
+
+   [[make_typ_var_ "X" []; ..]] *)
+
+let compile_targs (tparams : string list) : Ml.expr =
+  Ml.ListE
+    (List.map
+       (fun tparam ->
+         Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE tparam; Ml.ListE [] ]))
+       tparams)
+
+(* Extern function: [extern def $f<X, ..>(t1, .., tn) : tret]
+
+   [let f_id (marshal__x, unmarshal__x, ..) (p__0 : t1_ml) .. =
+      let v__0 = marshal__0 (p__0) in ..
+      match eval_extern_func "f" (compile_targs) [v__0; ..] with
+      | Run.Pass v_out__ -> unmarshal__ret (v_out__)
+      | Run.Fail (_, msg__) -> raise (Unmatch msg__)] *)
 
 let compile_extern_func (ctx : Ctx.t) (id : id)
     (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
     Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
-  let tvars = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
   let tparams_ml = List.map Names.tvar tparams in
-  let typ_ret_ml = Type.compile_typ ~tparams:tvars typ_ret in
+  let tparams = List.map it tparams in
+  let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -103,10 +133,10 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
   in
   let n = List.length typs_param in
   let params_ml =
-    compile_witness_params tparams_ml
+    compile_tparams tparams_ml
     @ List.mapi
         (fun i typ ->
-          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams:tvars typ)))
+          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
   let vars_marshal_ml, exprs_marshal_ml =
@@ -114,7 +144,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
       (fun i typ ->
         ( "v__" ^ string_of_int i,
           apply_witness (string_of_int i)
-            (Interface.resolve_marshal ctx tvars typ)
+            (Interface.resolve_marshal ctx tparams typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -122,7 +152,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targ_reify tvars in
+  let exprs_targ_ml = compile_targs tparams in
   let expr_call_ml =
     Ml.AppE
       ( Common.extern_field "eval_extern_func",
@@ -134,7 +164,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
             apply_witness "ret__"
-              (Interface.resolve_unmarshal ctx tvars typ_ret)
+              (Interface.resolve_unmarshal ctx tparams typ_ret)
               (Ml.VarE "v_out__") );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
@@ -158,16 +188,23 @@ let compile_extern_func (ctx : Ctx.t) (id : id)
   in
   (ctx, [ funcdef_ml ])
 
-(* Builtin functions — mirrors [compile_extern_func] but for
-   [call_builtin]'s calling convention. *)
+(* Builtin function: [builtin def $f<X, ..>(t1, .., tn) : tret]
+
+   [let f_id (marshal__x, unmarshal__x, ..) (p__0 : t1_ml) .. =
+      let v__0 = marshal__0 (p__0) in ..
+      let v_out__ =
+        try call_builtin (fun _ -> ()) "f" (compile_targs) [v__0; ..]
+        with Util.Error.BuiltinError (_, msg__) -> raise (Unmatch msg__)
+      in
+      unmarshal__ret (v_out__)] *)
 
 let compile_builtin_func (ctx : Ctx.t) (id : id)
     (tparams : Il.tparam list) (params : param list) (typ_ret : typ) :
     Ctx.t * Ml.funcdef list =
   let id_ml = Names.func id in
-  let tvars = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
   let tparams_ml = List.map Names.tvar tparams in
-  let typ_ret_ml = Type.compile_typ ~tparams:tvars typ_ret in
+  let tparams = List.map it tparams in
+  let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let typs_param =
     List.filter_map
       (fun (param : param) ->
@@ -176,10 +213,10 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
   in
   let n = List.length typs_param in
   let params_ml =
-    compile_witness_params tparams_ml
+    compile_tparams tparams_ml
     @ List.mapi
         (fun i typ ->
-          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams:tvars typ)))
+          ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
   let vars_marshal_ml, exprs_marshal_ml =
@@ -187,7 +224,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
       (fun i typ ->
         ( "v__" ^ string_of_int i,
           apply_witness (string_of_int i)
-            (Interface.resolve_marshal ctx tvars typ)
+            (Interface.resolve_marshal ctx tparams typ)
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -195,7 +232,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targ_reify tvars in
+  let exprs_targ_ml = compile_targs tparams in
   let name_orig_lit_ml =
     Ml.LitE (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped id.it))
   in
@@ -222,7 +259,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
       ( Ml.VarP "v_out__",
         expr_try_ml,
         apply_witness "ret__"
-          (Interface.resolve_unmarshal ctx tvars typ_ret)
+          (Interface.resolve_unmarshal ctx tparams typ_ret)
           (Ml.VarE "v_out__") )
   in
   let expr_body_ml =
@@ -241,7 +278,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id)
   in
   (ctx, [ funcdef_ml ])
 
-(* Table functions *)
+(* Table function: [tbl def $f(t1, .., tn) : tret = { rows }] *)
 
 let rec compile_table_func (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (tablerows : tablerow list) : Ctx.t * Ml.funcdef list =
@@ -249,10 +286,16 @@ let rec compile_table_func (ctx : Ctx.t) (id : id) (params : param list)
   compile_defined_func_body ~tparams:[] ~tparams_ml:[] ctx id params typ_ret
     block None
 
-(* Defined functions *)
+(* Defined function
 
-(* A generic function's body forwards its own witnesses to sibling/boundary
-   calls, so its main__/else__/dispatcher helpers must accept them too. *)
+   [def $f<X, ..>(t1, .., tn) : tret = { block } [else { elseblock }]]
+
+   [let main__f_id (marshal__x, unmarshal__x, ..) (p__0 : t1_ml) .. =
+      <compile_block block>
+    and else__f_id .. = <compile_block elseblock>          (* if present *)
+    and f_id .. =
+      try main__f_id .. with Unmatch _ -> else__f_id ..]   (* if present *) *)
+
 and compile_defined_func_body ~(tparams : string list)
     ~(tparams_ml : string list) (ctx : Ctx.t) (id : id) (params : param list)
     (typ_ret : typ) (block_main : block) (elseblock_opt : block option) :
@@ -261,9 +304,9 @@ and compile_defined_func_body ~(tparams : string list)
   let typ_ret_ml = Type.compile_typ ~tparams typ_ret in
   let ctx_outer = ctx in
   (* Compile parameters *)
-  let witness_params_ml = compile_witness_params tparams_ml in
+  let params_witness_ml = compile_tparams tparams_ml in
   let ctx, params_ml, chain = compile_params ~tparams ctx params in
-  let params_ml = witness_params_ml @ params_ml in
+  let params_ml = params_witness_ml @ params_ml in
   let ids_param_ml = List.map (fun (id_param_ml, _) -> id_param_ml) params_ml in
   (* Compile main block *)
   let id_main_ml = "main__" ^ id_ml in
@@ -320,17 +363,19 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
   let id, tparams, params, typ_ret, block_main, elseblock_opt, _ =
     definedfunc
   in
-  let tparams_str = List.map (fun (tp : Il.tparam) -> tp.it) tparams in
   let tparams_ml = List.map Names.tvar tparams in
-  let ctx, funcdefs =
-    compile_defined_func_body ~tparams:tparams_str ~tparams_ml ctx id params
+  let tparams = List.map it tparams in
+  let ctx, funcdefs_ml =
+    compile_defined_func_body ~tparams ~tparams_ml ctx id params
       typ_ret block_main elseblock_opt
   in
-  ( ctx,
+  let funcdefs_ml =
     List.map
-      (fun (name, _tparams, params, ret, body) ->
-        (name, tparams_ml, params, ret, body))
-      funcdefs )
+      (fun (name_ml, _, params_ml, typ_ret_ml, expr_body_ml) ->
+        (name_ml, tparams_ml, params_ml, typ_ret_ml, expr_body_ml))
+      funcdefs_ml
+  in
+  (ctx, funcdefs_ml)
 
 (* Defs *)
 
