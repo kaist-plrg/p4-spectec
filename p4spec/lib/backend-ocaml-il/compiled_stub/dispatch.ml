@@ -5,7 +5,7 @@
 [@@@warning "-8-11-26-27-30-32-33-39"]
 
 open Util.Source
-open Ctx
+open Trampoline
 
 let eval_func (_name : string) (_typs : Typ.t list) (_args : Value.t list) :
     Run.func_result =

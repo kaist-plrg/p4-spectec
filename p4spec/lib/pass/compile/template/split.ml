@@ -42,7 +42,7 @@ let prelude_open_common : string =
    open Domain\n\
    open Lang\n\
    open Util.Source\n\
-   open Ctx"
+   open Trampoline"
 
 let prelude_part (idx : int) : string =
   let prelude_open_prior =

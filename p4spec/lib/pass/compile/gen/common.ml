@@ -94,17 +94,3 @@ let make_list_forall (ctx : Ctx.t) (ids_in_ml : Ml.id list)
     expr_lambda_ml :: List.map (fun id_in_ml -> Ml.VarE id_in_ml) ids_in_ml
   in
   (ctx, Ml.AppE (Ml.VarE id_forall_ml, exprs_arg_ml))
-
-(* Context helpers *)
-
-(* Bind the current per-instance context once at a function's entry. Generated
-   code reads [iface]/[extern] off [ctx__] instead of functor parameters. *)
-let deref_ctx (body : Ml.expr) : Ml.expr =
-  Ml.LetE (Ml.VarP "ctx__", Ml.UnopE ("!", Ml.VarE "cur__"), body)
-
-(* Field accessors on [ctx__]. *)
-let iface_field (f : Ml.field) : Ml.expr =
-  Ml.FieldE (Ml.FieldE (Ml.VarE "ctx__", "iface"), f)
-
-let extern_field (f : Ml.field) : Ml.expr =
-  Ml.FieldE (Ml.FieldE (Ml.VarE "ctx__", "extern"), f)

@@ -70,9 +70,13 @@ let compile_spec ?(name = "") (path_out : string)
     Filename.concat (Filename.dirname path_out) "compiled"
   in
   prepare_dir dirname_compiled;
-  (* Emit [ctx.ml], containing the prelude and the context glue *)
-  let s_ctx = Template.Prelude.prelude ctx ^ "\n" ^ Template.Ctx_glue.glue () in
-  Filesys.write_file (Filename.concat dirname_compiled "ctx.ml") s_ctx;
+  (* Emit [trampoline.ml], containing the prelude and the trampoline glue *)
+  let s_trampoline =
+    Template.Prelude.prelude ctx ^ "\n" ^ Template.Trampoline.glue ()
+  in
+  Filesys.write_file
+    (Filename.concat dirname_compiled "trampoline.ml")
+    s_trampoline;
   (* Emit the buckets to [part_NNN.ml] *)
   List.iteri
     (fun idx toplevels_ml ->

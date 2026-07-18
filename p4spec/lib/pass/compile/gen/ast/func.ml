@@ -146,6 +146,14 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       typs_param
     |> List.split
   in
+  let chain_marshal =
+    List.map2
+      (fun var_marshal_ml expr_marshal_ml ->
+        Chain.make_let (Ml.VarP var_marshal_ml) expr_marshal_ml)
+      vars_marshal_ml exprs_marshal_ml
+    |> Chain.connect
+  in
+  (* Build args list *)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
@@ -153,7 +161,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   (* Call the extern, unmarshal its result *)
   let expr_call_ml =
     Ml.AppE
-      ( Common.extern_field "eval_extern_func",
+      ( Interface.Trampoline.eval_extern_func,
         [ Ml.StrE id.it; exprs_targ_ml; exprs_arg_ml ] )
   in
   let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
@@ -170,20 +178,11 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
         ] )
   in
-  (* Chain the marshal lets ahead of the call *)
-  let expr_body_ml =
-    List.fold_right
-      (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
-        Ml.LetE (Ml.VarP var_marshal_ml, expr_marshal_ml, expr_body_ml))
-      (List.combine vars_marshal_ml exprs_marshal_ml)
-      expr_result_ml
-  in
+  (* Chain bindings *)
+  let chain = Chain.connect [ Interface.Trampoline.chain; chain_marshal ] in
+  let expr_body_ml = Chain.apply chain expr_result_ml in
   let funcdef_ml =
-    ( id_ml,
-      tparams_ml,
-      params_ml,
-      Some typ_ret_ml,
-      Common.deref_ctx expr_body_ml )
+    (id_ml, tparams_ml, params_ml, Some typ_ret_ml, expr_body_ml)
   in
   funcdef_ml
 
@@ -230,6 +229,14 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       typs_param
     |> List.split
   in
+  let chain_marshal =
+    List.map2
+      (fun var_marshal_ml expr_marshal_ml ->
+        Chain.make_let (Ml.VarP var_marshal_ml) expr_marshal_ml)
+      vars_marshal_ml exprs_marshal_ml
+    |> Chain.connect
+  in
+  (* Build args list *)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
@@ -240,7 +247,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   in
   let expr_call_ml =
     Ml.AppE
-      ( Common.iface_field "call_builtin",
+      ( Interface.Trampoline.call_builtin,
         [
           Ml.LitE "(fun _ -> ())"; name_orig_lit_ml; exprs_targ_ml; exprs_arg_ml;
         ] )
@@ -265,20 +272,11 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
         Interface.Converter.apply_converter "ret__" converter_ret.unmarshal
           (Ml.VarE "v_out__") )
   in
-  (* Chain the marshal lets ahead of the call *)
-  let expr_body_ml =
-    List.fold_right
-      (fun (var_marshal_ml, expr_marshal_ml) expr_body_ml ->
-        Ml.LetE (Ml.VarP var_marshal_ml, expr_marshal_ml, expr_body_ml))
-      (List.combine vars_marshal_ml exprs_marshal_ml)
-      expr_result_ml
-  in
+  (* Chain bindings *)
+  let chain = Chain.connect [ Interface.Trampoline.chain; chain_marshal ] in
+  let expr_body_ml = Chain.apply chain expr_result_ml in
   let funcdef_ml =
-    ( id_ml,
-      tparams_ml,
-      params_ml,
-      Some typ_ret_ml,
-      Common.deref_ctx expr_body_ml )
+    (id_ml, tparams_ml, params_ml, Some typ_ret_ml, expr_body_ml)
   in
   funcdef_ml
 

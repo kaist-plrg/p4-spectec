@@ -8,7 +8,7 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
     ((nottyp, inputs) : rel_signature) (exps : exp list) : Ml.funcdef =
   ignore exps;
   let id_ml = Names.rel id in
-  (* Derive input/output types from nottyp (authoritative source) *)
+  (* Get input/output types from nottyp *)
   let typs_rel = Domain.Mixfix.args nottyp.it in
   let typs_input, typs_output = Hints.Input.split inputs typs_rel in
   let n = List.length typs_input in
@@ -30,6 +30,12 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
               [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
       typs_input
     |> List.split
+  in
+  let chain_marshal =
+    List.map2
+      (fun var_ml expr_ml -> Chain.make_let (Ml.VarP var_ml) expr_ml)
+      vars_marshal_ml exprs_marshal_ml
+    |> Chain.connect
   in
   (* Build args list *)
   let exprs_arg_ml =
@@ -54,7 +60,7 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
   (* Call extern relation and match result *)
   let expr_call_ml =
     Ml.AppE
-      (Common.extern_field "eval_extern_rel", [ Ml.StrE id.it; exprs_arg_ml ])
+      (Interface.Trampoline.eval_extern_rel, [ Ml.StrE id.it; exprs_arg_ml ])
   in
   let expr_result_ml =
     Ml.MatchE
@@ -68,15 +74,10 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
         ] )
   in
-  let expr_body_ml =
-    List.fold_right
-      (fun (var_ml, expr_ml) acc -> Ml.LetE (Ml.VarP var_ml, expr_ml, acc))
-      (List.combine vars_marshal_ml exprs_marshal_ml)
-      expr_result_ml
-  in
-  let funcdef_ml =
-    (id_ml, [], params_ml, None, Common.deref_ctx expr_body_ml)
-  in
+  (* Chain bindings *)
+  let chain = Chain.connect [ Interface.Trampoline.chain; chain_marshal ] in
+  let expr_body_ml = Chain.apply chain expr_result_ml in
+  let funcdef_ml = (id_ml, [], params_ml, None, expr_body_ml) in
   funcdef_ml
 
 (* Defined relations *)

@@ -6,6 +6,7 @@ module Constpool = Constpool
 module Marshal = Marshal
 module Unmarshal = Unmarshal
 module Converter = Converter
+module Trampoline = Trampoline
 
 let compile (ctx : Ctx.t) (typs : Sl.typ list) (typs_groups : Sl.typ list list)
     : Ml.toplevel list =
