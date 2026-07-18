@@ -4,26 +4,33 @@ open Util.Source
 
 (* Runtime Typ.t codegen *)
 
-let rec make_typ_expr (typ : Sl.typ) : Ml.expr =
+(* Naming *)
+
+let name_typ (tvar : string) = "typ__" ^ tvar
+
+let rec make_typ_expr ?(tparams : string list = []) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | BoolT -> Ml.LitE "Typ.Make.bool"
   | NumT `NatT -> Ml.LitE "Typ.Make.nat"
   | NumT `IntT -> Ml.LitE "Typ.Make.int"
   | TextT -> Ml.LitE "Typ.Make.text"
+  | VarT (id, []) when List.mem id.it tparams ->
+      Ml.VarE (name_typ (Names.tvar id))
   | VarT (id, targs) ->
       Ml.AppE
         ( Ml.LitE "Typ.Make.var",
           [
             Common.make_phrase (Printf.sprintf "\"%s\"" (String.escaped id.it));
-            Ml.ListE (List.map make_typ_expr targs);
+            Ml.ListE (List.map (make_typ_expr ~tparams) targs);
           ] )
   | TupleT typs ->
       Ml.AppE
-        (Ml.LitE "Typ.Make.tuple", [ Ml.ListE (List.map make_typ_expr typs) ])
+        ( Ml.LitE "Typ.Make.tuple",
+          [ Ml.ListE (List.map (make_typ_expr ~tparams) typs) ] )
   | IterT (typ, Il.Opt) ->
-      Ml.AppE (Ml.LitE "Typ.Make.opt", [ make_typ_expr typ ])
+      Ml.AppE (Ml.LitE "Typ.Make.opt", [ make_typ_expr ~tparams typ ])
   | IterT (typ, Il.List) ->
-      Ml.AppE (Ml.LitE "Typ.Make.list", [ make_typ_expr typ ])
+      Ml.AppE (Ml.LitE "Typ.Make.list", [ make_typ_expr ~tparams typ ])
   | FuncT _ -> Ml.LitE "Typ.Make.bool"
 
 (* Runtime Atom.t codegen *)
