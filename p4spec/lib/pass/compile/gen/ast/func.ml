@@ -90,21 +90,18 @@ let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
           Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
         ( Interface.Converter.name_unmarshal tparam_ml,
           Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
+        ( Interface.Dynamic_gen.name_typ tparam_ml, Some (Ml.NameT "Typ.t") );
       ])
     tparams_ml
 
-(* Type arguments
+(* Type arguments: [<X, ..>]
 
-   Reifies a generic call's own tparams as runtime targs: [<X, ..>]
-
-   [[Typ.Make.var ("X" $ no_region) []; ..]] *)
+   [[typ__x; ..]] *)
 
 let compile_targs (tparams : string list) : Ml.expr =
   let exprs_targs_ml =
     List.map
-      (fun tparam ->
-        let typ = Typ.Make.var (tparam $ no_region) [] in
-        Interface.Dynamic_gen.make_typ_expr typ)
+      (fun tparam -> Ml.VarE (Interface.Dynamic_gen.name_typ tparam))
       tparams
   in
   Ml.ListE exprs_targs_ml
