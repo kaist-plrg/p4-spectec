@@ -74,11 +74,10 @@ let compile_variant_typ (pool : Constpool.t) (typ_ref : string)
 
 let compile_var_typ (ctx : Ctx.t) (pool : Constpool.t) (typ_ref : string)
     (id : Sl.id) (targs : Sl.targ list) : Constpool.t * Ml.expr =
-  let theta = Naming.build_theta ctx id targs in
-  let td = Ctx.find_typdef ctx id in
-  match td with
+  match Ctx.find_typdef ctx id with
   | Typdef.Param | Typdef.Defining _ -> (pool, Ml.UnitE)
-  | Typdef.Defined (_, deftyp) -> (
+  | Typdef.Defined (tparams, deftyp) -> (
+      let theta = Domain.Lib.TIdMap.of_lists tparams targs in
       match deftyp.it with
       | Il.PlainT typ_alias ->
           let typ_alias = Typ.Subst.subst_typ theta typ_alias in
@@ -160,17 +159,17 @@ let compile_body_typ (ctx : Ctx.t) (pool : Constpool.t) (typ : Sl.typ) :
   | Il.TextT -> (pool, compile_text_typ)
   | Il.VarT (id, targs) ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Naming.typ typ)
+        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
       in
       compile_var_typ ctx pool typ_ref id targs
   | Il.TupleT typs ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Naming.typ typ)
+        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
       in
       (pool, compile_tuple_typ typ_ref typs)
   | Il.IterT (typ_inner, iter) ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Naming.typ typ)
+        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
       in
       (pool, compile_iter_typ typ_ref typ_inner iter)
   | Il.FuncT _ -> (pool, Ml.UnitE)

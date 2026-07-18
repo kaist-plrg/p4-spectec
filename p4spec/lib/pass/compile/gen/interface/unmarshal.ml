@@ -54,7 +54,7 @@ let compile_variant_typ (name : string)
   let arms_ctor_ml =
     List.map
       (fun (mixop, ctor_ml, payload_typs) ->
-        let pat_str, ids_arg_ml = Naming.mixop_pat mixop in
+        let pat_str, ids_arg_ml = Dynamic_gen.mixop_pat mixop in
         let exprs_payload_ml =
           List.map2
             (fun typ id_arg_ml ->
@@ -84,12 +84,11 @@ let compile_variant_typ (name : string)
 
 let compile_var_typ (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
     (name : string) : Ml.expr =
-  let theta = Naming.build_theta ctx id targs in
-  let td = Ctx.find_typdef ctx id in
-  match td with
+  match Ctx.find_typdef ctx id with
   | Typdef.Param | Typdef.Defining _ ->
       Common.raise_unmatch ("unmarshal_" ^ name)
-  | Typdef.Defined (_, deftyp) -> (
+  | Typdef.Defined (tparams, deftyp) -> (
+      let theta = Domain.Lib.TIdMap.of_lists tparams targs in
       match deftyp.it with
       | Il.PlainT typ_alias ->
           let typ_alias = Typ.Subst.subst_typ theta typ_alias in

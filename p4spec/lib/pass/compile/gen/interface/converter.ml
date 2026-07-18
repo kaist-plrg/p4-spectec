@@ -53,15 +53,15 @@ let rec resolve ?(visiting : string list = []) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) : t =
   match typ.it with
   | Il.VarT (id, []) when List.mem id.it tparams -> resolve_var_typ_tparam id
-  | Il.VarT (id, targs) when Naming.mentions tparams typ ->
+  | Il.VarT (id, targs) when Type.is_generic tparams typ ->
       resolve_var_typ ~visiting ctx tparams typ id targs
-  | Il.TupleT typs when Naming.mentions tparams typ ->
+  | Il.TupleT typs when Type.is_generic tparams typ ->
       resolve_tuple_typ ~visiting ctx tparams typ typs
-  | Il.IterT (t, Il.Opt) when Naming.mentions tparams t ->
+  | Il.IterT (t, Il.Opt) when Type.is_generic tparams t ->
       resolve_opt_typ ~visiting ctx tparams typ t
-  | Il.IterT (t, Il.List) when Naming.mentions tparams t ->
+  | Il.IterT (t, Il.List) when Type.is_generic tparams t ->
       resolve_list_typ ~visiting ctx tparams typ t
-  | _ when Naming.mentions tparams typ -> resolve_unsupported typ
+  | _ when Type.is_generic tparams typ -> resolve_unsupported typ
   | _ -> resolve_ground typ
 
 (* Ground type *)
@@ -117,7 +117,7 @@ and resolve_tuple_typ ~(visiting : string list) (ctx : Ctx.t)
     let expr_tuple_ml =
       Ml.AppE
         ( Ml.LitE "Value.Make.tuple",
-          [ Naming.typ typ; Ml.ListE marshal_calls_ml ] )
+          [ Dynamic_gen.typ typ; Ml.ListE marshal_calls_ml ] )
     in
     let expr_let_ml = Ml.LetE (pat_vars_ml, Ml.VarE "x__", expr_tuple_ml) in
     Ml.FunE ([ Ml.VarP "x__" ], expr_let_ml)
@@ -142,7 +142,7 @@ and resolve_opt_typ ~(visiting : string list) (ctx : Ctx.t)
       Ml.AppE (Ml.LitE "Option.map", [ conv.marshal; Ml.VarE "x__" ])
     in
     let expr_opt_ml =
-      Ml.AppE (Ml.LitE "Value.Make.opt", [ Naming.typ typ; expr_map_ml ])
+      Ml.AppE (Ml.LitE "Value.Make.opt", [ Dynamic_gen.typ typ; expr_map_ml ])
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_opt_ml)
   in
@@ -165,7 +165,7 @@ and resolve_list_typ ~(visiting : string list) (ctx : Ctx.t)
       Ml.AppE (Ml.LitE "List.map", [ conv.marshal; Ml.VarE "x__" ])
     in
     let expr_list_ml =
-      Ml.AppE (Ml.LitE "Value.Make.list", [ Naming.typ typ; expr_map_ml ])
+      Ml.AppE (Ml.LitE "Value.Make.list", [ Dynamic_gen.typ typ; expr_map_ml ])
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_list_ml)
   in
@@ -192,9 +192,9 @@ and resolve_unsupported (typ : Sl.typ) : t =
 and resolve_typdef ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list) :
     t =
-  let theta = Naming.build_theta ctx id targs in
   match Ctx.find_typdef ctx id with
-  | Typdef.Defined (_, deftyp) -> (
+  | Typdef.Defined (tparams_def, deftyp) -> (
+      let theta = Domain.Lib.TIdMap.of_lists tparams_def targs in
       match deftyp.it with
       | Il.PlainT typ_alias ->
           let typ_alias = Typ.Subst.subst_typ theta typ_alias in
@@ -247,7 +247,8 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
     in
     let expr_str_ml =
       Ml.AppE
-        (Ml.LitE "Value.Make.str", [ Naming.typ typ; Ml.ListE field_exprs_ml ])
+        ( Ml.LitE "Value.Make.str",
+          [ Dynamic_gen.typ typ; Ml.ListE field_exprs_ml ] )
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_str_ml)
   in
@@ -306,9 +307,9 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
             Ml.AppE
               ( Ml.LitE "make_case_",
                 [
-                  Naming.mixop_expr mixop;
+                  Dynamic_gen.mixop_expr mixop;
                   Ml.ListE marshal_calls_ml;
-                  Naming.typ typ;
+                  Dynamic_gen.typ typ;
                 ] )
           in
           (pat_ml, expr_case_ml))
@@ -321,7 +322,7 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
     let arms_ctor_ml =
       List.map
         (fun (mixop, ctor_ml, convs) ->
-          let pat_str, ids_arg_ml = Naming.mixop_pat mixop in
+          let pat_str, ids_arg_ml = Dynamic_gen.mixop_pat mixop in
           let exprs_payload_ml =
             List.map2
               (fun conv id_arg_ml ->

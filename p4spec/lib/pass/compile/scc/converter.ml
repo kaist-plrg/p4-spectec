@@ -12,10 +12,10 @@ let typ_deps (ctx : Ctx.t) (typ : Sl.typ) : Sl.typ list =
   | Il.TupleT typs -> typs
   | Il.IterT (typ, _) -> [ typ ]
   | Il.VarT (id, targs) -> (
-      let theta = Naming.build_theta ctx id targs in
       match Ctx.find_typdef ctx id with
       | Typdef.Param | Typdef.Defining _ | Typdef.Extern -> []
-      | Typdef.Defined (_, deftyp) -> (
+      | Typdef.Defined (tparams, deftyp) -> (
+          let theta = Domain.Lib.TIdMap.of_lists tparams targs in
           match deftyp.it with
           | Il.PlainT typ ->
               let typ = Typ.Subst.subst_typ theta typ in

@@ -16,7 +16,7 @@ open Util.Source
 
 let rec enqueue_ground (enqueue : Sl.typ -> unit) (tparams : string list)
     (typ : Sl.typ) : unit =
-  if not (Naming.mentions tparams typ) then enqueue typ
+  if not (Type.is_generic tparams typ) then enqueue typ
   else
     match typ.it with
     | Il.VarT (_, targs) -> List.iter (enqueue_ground enqueue tparams) targs
