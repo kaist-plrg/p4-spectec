@@ -114,7 +114,7 @@ let compile_targs (tparams : string list) : Ml.expr =
       | Run.Fail (_, msg__) -> raise (Unmatch msg__)] *)
 
 let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
-    (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+    (params : param list) (typ_ret : typ) : Ml.funcdef =
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -138,9 +138,10 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i typ ->
+        let converter = Interface.Converter.resolve ctx tparams typ in
         ( "v__" ^ string_of_int i,
           Interface.Converter.apply_converter (string_of_int i)
-            (Interface.Converter.resolve ctx tparams typ).marshal
+            converter.marshal
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -155,13 +156,13 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       ( Common.extern_field "eval_extern_func",
         [ Ml.StrE id.it; exprs_targ_ml; exprs_arg_ml ] )
   in
+  let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
   let expr_result_ml =
     Ml.MatchE
       ( expr_call_ml,
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-            Interface.Converter.apply_converter "ret__"
-              (Interface.Converter.resolve ctx tparams typ_ret).unmarshal
+            Interface.Converter.apply_converter "ret__" converter_ret.unmarshal
               (Ml.VarE "v_out__") );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
@@ -184,7 +185,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       Some typ_ret_ml,
       Common.deref_ctx expr_body_ml )
   in
-  (ctx, [ funcdef_ml ])
+  funcdef_ml
 
 (* Builtin function: [builtin def $f<X, ..>(t1, .., tn) : tret]
 
@@ -197,7 +198,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       unmarshal__ret (v_out__)] *)
 
 let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
-    (params : param list) (typ_ret : typ) : Ctx.t * Ml.funcdef list =
+    (params : param list) (typ_ret : typ) : Ml.funcdef =
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -221,9 +222,10 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let vars_marshal_ml, exprs_marshal_ml =
     List.mapi
       (fun i typ ->
+        let converter = Interface.Converter.resolve ctx tparams typ in
         ( "v__" ^ string_of_int i,
           Interface.Converter.apply_converter (string_of_int i)
-            (Interface.Converter.resolve ctx tparams typ).marshal
+            converter.marshal
             (Ml.VarE ("p__" ^ string_of_int i)) ))
       typs_param
     |> List.split
@@ -255,12 +257,12 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
         ] )
   in
   (* Unmarshal the result *)
+  let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
   let expr_result_ml =
     Ml.LetE
       ( Ml.VarP "v_out__",
         expr_try_ml,
-        Interface.Converter.apply_converter "ret__"
-          (Interface.Converter.resolve ctx tparams typ_ret).unmarshal
+        Interface.Converter.apply_converter "ret__" converter_ret.unmarshal
           (Ml.VarE "v_out__") )
   in
   (* Chain the marshal lets ahead of the call *)
@@ -278,7 +280,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
       Some typ_ret_ml,
       Common.deref_ctx expr_body_ml )
   in
-  (ctx, [ funcdef_ml ])
+  funcdef_ml
 
 (* Table function: [tbl def $f(t1, .., tn) : tret = { rows }] *)
 
@@ -384,9 +386,11 @@ let compile_defined_func (ctx : Ctx.t) (definedfunc : definedfunc) :
 let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
   | ExternDecD (id, tparams, params, typ_ret, _) ->
-      compile_extern_func ctx id tparams params typ_ret
+      let funcdef_ml = compile_extern_func ctx id tparams params typ_ret in
+      (ctx, [ funcdef_ml ])
   | BuiltinDecD (id, tparams, params, typ_ret, _) ->
-      compile_builtin_func ctx id tparams params typ_ret
+      let funcdef_ml = compile_builtin_func ctx id tparams params typ_ret in
+      (ctx, [ funcdef_ml ])
   | TableDecD (id, params, typ_ret, tablerows, _) ->
       compile_table_func ctx id params typ_ret tablerows
   | FuncDecD definedfunc -> compile_defined_func ctx definedfunc

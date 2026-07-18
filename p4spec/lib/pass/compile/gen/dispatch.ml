@@ -20,12 +20,6 @@ let run_fail_fmt (s_fmt : string) (exprs : Ml.expr list) : Ml.expr =
           ];
       ] )
 
-(* Ground marshal/unmarshal pair for [typ], resolved by direct name reference *)
-
-let find_converter_static (typ : Sl.typ) : Ml.expr * Ml.expr =
-  let name = Interface.Naming.name typ in
-  (Ml.VarE ("marshal_" ^ name), Ml.VarE ("unmarshal_" ^ name))
-
 (* Dispatcher *)
 
 let compile_dispatcher (name : string)
@@ -122,9 +116,10 @@ let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
   let vars_arg_ml, exprs_unmarshal_arg_ml =
     typs_param
     |> List.mapi (fun i typ ->
+           let converter = Interface.Converter.resolve ctx tparams typ in
            ( "a" ^ string_of_int i,
              Interface.Converter.apply_converter (string_of_int i)
-               (Interface.Converter.resolve ctx tparams typ).unmarshal
+               converter.unmarshal
                (Ml.AppE
                   ( Ml.LitE "List.nth",
                     [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] )) ))
@@ -139,9 +134,10 @@ let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
     Ml.AppE (Ml.LitE id_func_ml, exprs_converter_ml @ exprs_arg_ml)
   in
   (* [Run.Pass (marshal__.. (..))] *)
+  let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
   let expr_marshal_ret_ml =
-    Interface.Converter.apply_converter "ret__"
-      (Interface.Converter.resolve ctx tparams typ_ret).marshal expr_call_ml
+    Interface.Converter.apply_converter "ret__" converter_ret.marshal
+      expr_call_ml
   in
   let expr_pass_ml = Ml.AppE (Ml.LitE "Run.Pass", [ expr_marshal_ret_ml ]) in
   (* [let .. in ..] chain wrapping the call above *)
@@ -248,9 +244,10 @@ let compile_rel_arm_body (id_rel_ml : string) (typs_input : Sl.typ list)
   let vars_arg_ml, exprs_unmarshal_arg_ml =
     typs_input
     |> List.mapi (fun i typ ->
+           let converter = Interface.Converter.resolve_ground typ in
            ( "a" ^ string_of_int i,
              Ml.AppE
-               ( snd (find_converter_static typ),
+               ( converter.unmarshal,
                  [
                    Ml.AppE
                      ( Ml.LitE "List.nth",
@@ -288,9 +285,8 @@ let compile_rel_arm_body (id_rel_ml : string) (typs_input : Sl.typ list)
       let exprs_marshal_out_ml =
         List.mapi
           (fun i typ ->
-            Ml.AppE
-              ( fst (find_converter_static typ),
-                [ Ml.VarE ("out" ^ string_of_int i) ] ))
+            let converter = Interface.Converter.resolve_ground typ in
+            Ml.AppE (converter.marshal, [ Ml.VarE ("out" ^ string_of_int i) ]))
           typs_output
       in
       let expr_pass_ml =
