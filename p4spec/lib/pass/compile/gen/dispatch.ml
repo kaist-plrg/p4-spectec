@@ -95,18 +95,18 @@ let compile_converter_binding (tparams_ml : string list) :
          in
          let binding_unmarshal_ml = (id_unmarshal_ml, expr_unmarshal_ml) in
          (* [let typ__x = List.nth typs__ i] *)
-         let id_typ_ml = Interface.Dynamic_gen.name_typ tparam_ml in
+         let id_typ_ml = Interface.Naming.name_typ tparam_ml in
          let expr_typ_ml =
            Ml.AppE
              ( Ml.LitE "List.nth",
                [ Ml.VarE "typs__"; Ml.LitE (string_of_int i) ] )
          in
-         let binding_typ_ml = (id_typ_ml, expr_typ_ml) in
+         let binding_targs_ml = (id_typ_ml, expr_typ_ml) in
          [
            binding_converter_ml;
            binding_marshal_ml;
            binding_unmarshal_ml;
-           binding_typ_ml;
+           binding_targs_ml;
          ])
   |> List.concat
 
@@ -122,7 +122,7 @@ let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
         [
           Ml.VarE (Interface.Converter.name_marshal tparam);
           Ml.VarE (Interface.Converter.name_unmarshal tparam);
-          Ml.VarE (Interface.Dynamic_gen.name_typ tparam);
+          Ml.VarE (Interface.Naming.name_typ tparam);
         ])
       tparams_ml
   in

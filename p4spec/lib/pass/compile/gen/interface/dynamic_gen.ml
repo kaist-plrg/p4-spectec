@@ -4,10 +4,6 @@ open Util.Source
 
 (* Runtime Typ.t codegen *)
 
-(* Naming *)
-
-let name_typ (tvar : string) = "typ__" ^ tvar
-
 let rec make_typ_expr ?(tparams : string list = []) (typ : Sl.typ) : Ml.expr =
   match typ.it with
   | BoolT -> Ml.LitE "Typ.Make.bool"
@@ -15,7 +11,7 @@ let rec make_typ_expr ?(tparams : string list = []) (typ : Sl.typ) : Ml.expr =
   | NumT `IntT -> Ml.LitE "Typ.Make.int"
   | TextT -> Ml.LitE "Typ.Make.text"
   | VarT (id, []) when List.mem id.it tparams ->
-      Ml.VarE (name_typ (Names.tvar id))
+      Ml.VarE (Naming.name_typ (Names.tvar id))
   | VarT (id, targs) ->
       Ml.AppE
         ( Ml.LitE "Typ.Make.var",

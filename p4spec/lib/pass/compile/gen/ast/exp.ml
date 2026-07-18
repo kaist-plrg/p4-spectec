@@ -1064,23 +1064,25 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
         match Ctx.find_func_tparams ctx id.it with
         | Some callee_tparams when callee_tparams <> [] ->
             List.iter
-              (fun (tp : Il.tparam) ->
-                if not (List.mem tp.it tparams) then
+              (fun (tparam : Il.tparam) ->
+                if not (List.mem tparam.it tparams) then
                   failwith
                     (Printf.sprintf
                        "compile_arg: %s: callee type parameter %s is not among \
                         the caller's type parameters"
-                       id.it tp.it))
+                       id.it tparam.it))
               callee_tparams;
             let exprs_converter_ml =
               List.concat_map
-                (fun (tp : Il.tparam) ->
-                  let typ_tp = Il.VarT (tp, []) $ no_region in
-                  let conv = Interface.Converter.resolve ctx tparams typ_tp in
-                  let expr_typ_ml =
-                    Interface.Dynamic_gen.make_typ_expr ~tparams typ_tp
+                (fun (tparam : Il.tparam) ->
+                  let typ_tparam = Il.VarT (tparam, []) $ no_region in
+                  let converter =
+                    Interface.Converter.resolve ctx tparams typ_tparam
                   in
-                  [ conv.marshal; conv.unmarshal; expr_typ_ml ])
+                  let expr_typ_ml =
+                    Interface.Dynamic_gen.make_typ_expr ~tparams typ_tparam
+                  in
+                  [ converter.marshal; converter.unmarshal; expr_typ_ml ])
                 callee_tparams
             in
             Ml.AppE (Ml.VarE id_ml, exprs_converter_ml)
@@ -1096,8 +1098,6 @@ and compile_args ~(tparams : string list) (ctx : Ctx.t) (args : arg list) :
       (ctx, exprs_ml @ [ expr_ml ]))
     (ctx, []) args
 
-(* Forward the caller's converters if [id] has its own tparams — a no-op
-   for a ground callee, per [Ctx.find_func_tparams]. *)
 and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
     (targs : targ list) (args : arg list) : Ctx.t * Ml.expr =
   let id_func_ml = Names.func id in
@@ -1109,11 +1109,11 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
       let exprs_converter_ml =
         List.concat_map
           (fun targ ->
-            let conv = Interface.Converter.resolve ctx tparams targ in
+            let converter = Interface.Converter.resolve ctx tparams targ in
             let expr_typ_ml =
               Interface.Dynamic_gen.make_typ_expr ~tparams targ
             in
-            [ conv.marshal; conv.unmarshal; expr_typ_ml ])
+            [ converter.marshal; converter.unmarshal; expr_typ_ml ])
           targs
       in
       (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_converter_ml @ exprs_arg_ml))

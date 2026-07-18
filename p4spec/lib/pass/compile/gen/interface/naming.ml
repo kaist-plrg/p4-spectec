@@ -19,3 +19,8 @@ let rec name (typ : Sl.typ) : string =
   | IterT (t, Il.Opt) -> name t ^ "__opt"
   | IterT (t, Il.List) -> name t ^ "__list"
   | FuncT _ -> "func"
+
+(* OCaml binding name for a type parameter's runtime [Typ.t] dictionary
+   entry: [x] -> [typ__x] *)
+
+let name_typ (tvar : string) = "typ__" ^ tvar
