@@ -94,7 +94,20 @@ let compile_converter_binding (tparams_ml : string list) :
                typ_unmarshal_ml )
          in
          let binding_unmarshal_ml = (id_unmarshal_ml, expr_unmarshal_ml) in
-         [ binding_converter_ml; binding_marshal_ml; binding_unmarshal_ml ])
+         (* [let typ__x = List.nth typs__ i] *)
+         let id_typ_ml = Interface.Naming.name_typ tparam_ml in
+         let expr_typ_ml =
+           Ml.AppE
+             ( Ml.LitE "List.nth",
+               [ Ml.VarE "typs__"; Ml.LitE (string_of_int i) ] )
+         in
+         let binding_targs_ml = (id_typ_ml, expr_typ_ml) in
+         [
+           binding_converter_ml;
+           binding_marshal_ml;
+           binding_unmarshal_ml;
+           binding_targs_ml;
+         ])
   |> List.concat
 
 let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
@@ -109,6 +122,7 @@ let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
         [
           Ml.VarE (Interface.Converter.name_marshal tparam);
           Ml.VarE (Interface.Converter.name_unmarshal tparam);
+          Ml.VarE (Interface.Naming.name_typ tparam);
         ])
       tparams_ml
   in
@@ -330,3 +344,192 @@ let compile_eval_rel (ctx : Ctx.t) (spec : Sl.spec) : Ml.funcdef =
   let arms_ml = compile_rel_arms spec in
   compile_dispatcher "eval_rel" params_ml (Ml.NameT "Run.rel_result")
     "eval_rel: unknown relation: %s" arms_ml []
+
+(* Native dispatchers: [eval_func_native]/[eval_rel_native]
+
+   [eval_func]/[eval_rel] convert every argument through a real [Value.t] —
+   correct for any caller, since a name-dispatched entry point has no static
+   guarantee about who's calling or what representation they hold. But under
+   the compiled ML backend, some callers (compiler-val's own [backend-sim]
+   glue, e.g. [call_func_t]/[call_rel_t] in [backend-sim/make.ml], used by
+   hand-written externs to call back into the spec by name) live entirely in
+   the typed-[Obj.t] world and never held a real [Value.t] to begin with —
+   converting through one would be converting from nothing.
+
+   These two are that caller's dispatcher: same shape as [eval_func]/
+   [eval_rel], [Obj.magic] instead of real conversion, ground only (matching
+   [gen/ast/func.ml]'s [compile_extern_func]/[compile_builtin_func] — no
+   witnesses exist here to support a still-generic callee, so one is simply
+   not reachable through this entry point; skipped, not miscompiled). *)
+
+let compile_func_arm_body_native (name : string) (id_func_ml : string)
+    (typs_param : Sl.typ list) : Ml.expr =
+  let vars_arg_ml, exprs_magic_arg_ml =
+    typs_param
+    |> List.mapi (fun i _typ ->
+           ( "a" ^ string_of_int i,
+             Ml.AppE
+               ( Ml.LitE "Obj.magic",
+                 [
+                   Ml.AppE
+                     ( Ml.LitE "List.nth",
+                       [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] );
+                 ] ) ))
+    |> List.split
+  in
+  let exprs_arg_ml =
+    List.map (fun var_arg_ml -> Ml.VarE var_arg_ml) vars_arg_ml
+  in
+  let bindings_arg_ml = List.combine vars_arg_ml exprs_magic_arg_ml in
+  let expr_call_ml = Ml.AppE (Ml.LitE id_func_ml, exprs_arg_ml) in
+  let expr_pass_ml =
+    Ml.AppE
+      (Ml.LitE "Run.Pass", [ Ml.AppE (Ml.LitE "Obj.magic", [ expr_call_ml ]) ])
+  in
+  let expr_ok_ml =
+    List.fold_right
+      (fun (var, expr_ml) expr_cont_ml ->
+        Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+      bindings_arg_ml expr_pass_ml
+  in
+  let expr_fail_arity_ml =
+    run_fail_fmt
+      (Printf.sprintf
+         "eval_func_native: %s is not generic, got %%d type argument(s)" name)
+      [ Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]) ]
+  in
+  Ml.IfE
+    ( Ml.BinopE
+        ( "=",
+          Ml.AppE (Ml.LitE "List.length", [ Ml.VarE "typs__" ]),
+          Ml.LitE "0" ),
+      expr_ok_ml,
+      Some expr_fail_arity_ml )
+
+let compile_func_arm_native (name : string) (tparams : Il.tparam list)
+    (params : Sl.param list) : Ml.arm option =
+  let is_high_order_func =
+    List.exists
+      (fun param -> match param.it with DefP _ -> true | _ -> false)
+      params
+  in
+  if tparams <> [] || is_high_order_func then None
+  else
+    let pat_ml = Ml.LitP ("\"" ^ name ^ "\"") in
+    let id_func_ml = "f__" ^ Names.sanitize name in
+    let typs_param =
+      List.filter_map
+        (fun param ->
+          match param.it with ExpP (typ, _) -> Some typ | _ -> None)
+        params
+    in
+    Some (pat_ml, compile_func_arm_body_native name id_func_ml typs_param)
+
+let compile_func_arms_native (spec : Sl.spec) : Ml.arm list =
+  List.filter_map
+    (fun def ->
+      match def.it with
+      | BuiltinDecD (id, tparams, params, _typ_ret, _)
+      | ExternDecD (id, tparams, params, _typ_ret, _) ->
+          compile_func_arm_native id.it tparams params
+      | TableDecD (id, params, _typ_ret, _, _) ->
+          compile_func_arm_native id.it [] params
+      | FuncDecD (id, tparams, params, _typ_ret, _, _, _) ->
+          compile_func_arm_native id.it tparams params
+      | _ -> None)
+    spec
+
+let compile_eval_func_native (spec : Sl.spec) : Ml.funcdef =
+  let params_ml =
+    [
+      ("name__", Some (Ml.NameT "string"));
+      ("typs__", Some (Ml.AppT ("list", [ Ml.NameT "Typ.t" ])));
+      ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
+    ]
+  in
+  let arms_ml = compile_func_arms_native spec in
+  compile_dispatcher "eval_func_native" params_ml (Ml.NameT "Run.func_result")
+    "eval_func_native: unknown function: %s" arms_ml []
+
+let compile_rel_arm_body_native (id_rel_ml : string) (typs_input : Sl.typ list)
+    (typs_output : Sl.typ list) : Ml.expr =
+  let vars_arg_ml, exprs_magic_arg_ml =
+    typs_input
+    |> List.mapi (fun i _typ ->
+           ( "a" ^ string_of_int i,
+             Ml.AppE
+               ( Ml.LitE "Obj.magic",
+                 [
+                   Ml.AppE
+                     ( Ml.LitE "List.nth",
+                       [ Ml.VarE "args__"; Ml.LitE (string_of_int i) ] );
+                 ] ) ))
+    |> List.split
+  in
+  let exprs_arg_ml =
+    List.map (fun var_arg_ml -> Ml.VarE var_arg_ml) vars_arg_ml
+  in
+  let bindings_arg_ml = List.combine vars_arg_ml exprs_magic_arg_ml in
+  let expr_call_ml = Ml.AppE (Ml.VarE id_rel_ml, exprs_arg_ml) in
+  match typs_output with
+  | [] ->
+      let expr_seq_ml =
+        Ml.LetE
+          (Ml.WildP, expr_call_ml, Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE [] ]))
+      in
+      List.fold_right
+        (fun (var, expr_ml) expr_cont_ml ->
+          Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+        bindings_arg_ml expr_seq_ml
+  | _ ->
+      let n_out = List.length typs_output in
+      let ids_out_ml = List.init n_out (fun i -> "out" ^ string_of_int i) in
+      let pat_out_ml =
+        match ids_out_ml with
+        | [ id_out_ml ] -> Ml.VarP id_out_ml
+        | _ -> Ml.TupleP (List.map (fun s -> Ml.VarP s) ids_out_ml)
+      in
+      let exprs_magic_out_ml =
+        List.mapi
+          (fun i _typ ->
+            Ml.AppE
+              (Ml.LitE "Obj.magic", [ Ml.VarE ("out" ^ string_of_int i) ]))
+          typs_output
+      in
+      let expr_pass_ml =
+        Ml.AppE (Ml.LitE "Run.Pass", [ Ml.ListE exprs_magic_out_ml ])
+      in
+      let expr_bind_ml = Ml.LetE (pat_out_ml, expr_call_ml, expr_pass_ml) in
+      List.fold_right
+        (fun (var, expr_ml) expr_cont_ml ->
+          Ml.LetE (Ml.VarP var, expr_ml, expr_cont_ml))
+        bindings_arg_ml expr_bind_ml
+
+let compile_rel_arm_native (id : Sl.id) (typs_input : Sl.typ list)
+    (typs_output : Sl.typ list) : Ml.arm =
+  let pat_ml = Ml.LitP ("\"" ^ id.it ^ "\"") in
+  let id_rel_ml = Names.rel id in
+  (pat_ml, compile_rel_arm_body_native id_rel_ml typs_input typs_output)
+
+let compile_rel_arms_native (spec : Sl.spec) : Ml.arm list =
+  List.filter_map
+    (fun def ->
+      match def.it with
+      | RelD (id, (nottyp, inputs), _, _, _, _)
+      | ExternRelD (id, (nottyp, inputs), _, _) ->
+          let typs_rel = Mixfix.args nottyp.it in
+          let typs_input, typs_output = Hints.Input.split inputs typs_rel in
+          Some (compile_rel_arm_native id typs_input typs_output)
+      | _ -> None)
+    spec
+
+let compile_eval_rel_native (spec : Sl.spec) : Ml.funcdef =
+  let params_ml =
+    [
+      ("name__", Some (Ml.NameT "string"));
+      ("args__", Some (Ml.AppT ("list", [ Ml.NameT "Value.t" ])));
+    ]
+  in
+  let arms_ml = compile_rel_arms_native spec in
+  compile_dispatcher "eval_rel_native" params_ml (Ml.NameT "Run.rel_result")
+    "eval_rel_native: unknown relation: %s" arms_ml []

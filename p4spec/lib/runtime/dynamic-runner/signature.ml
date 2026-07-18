@@ -130,6 +130,14 @@ end
 module type INTERP_ML = sig
   include INTERP
 
+  (* Native-side dispatch: same shape as [eval_func]/[eval_rel], but for
+     callers that already hold typed [Obj.t] (compiler-val's own
+     [backend-sim] glue, calling back into the spec by name) rather than a
+     real [Value.t] — IL/SL have no such caller, hence ML-only. *)
+
+  val eval_func_native : string -> Typ.t list -> Value.t list -> func_result
+  val eval_rel_native : string -> Value.t list -> rel_result
+
   (* Initialization *)
 
   val init : cache:bool -> det:bool -> guard:bool -> unit -> unit

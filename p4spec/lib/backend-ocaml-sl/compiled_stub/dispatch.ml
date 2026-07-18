@@ -14,6 +14,13 @@ let eval_func (_name : string) (_typs : Typ.t list) (_args : Value.t list) :
 let eval_rel (_name : string) (_args : Value.t list) : Run.rel_result =
   Fail (no_region, "ML interpreter: run `make gen-ocaml-sl` to generate it")
 
+let eval_func_native (_name : string) (_typs : Typ.t list)
+    (_args : Value.t list) : Run.func_result =
+  Fail (no_region, "ML interpreter: run `make gen-ocaml-sl` to generate it")
+
+let eval_rel_native (_name : string) (_args : Value.t list) : Run.rel_result =
+  Fail (no_region, "ML interpreter: run `make gen-ocaml-sl` to generate it")
+
 let eval_program (_relname : string) (_includes : string list) (_path : string)
     : Run.program_result =
   Fail

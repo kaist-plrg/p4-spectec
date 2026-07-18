@@ -37,6 +37,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     with_trampoline trampoline (fun () ->
         Spec_parts_il.Dispatch.eval_rel name__ args__)
 
+  let eval_func_native name__ typs__ args__ =
+    with_trampoline trampoline (fun () ->
+        Spec_parts_il.Dispatch.eval_func_native name__ typs__ args__)
+
+  let eval_rel_native name__ args__ =
+    with_trampoline trampoline (fun () ->
+        Spec_parts_il.Dispatch.eval_rel_native name__ args__)
+
   let eval_program relname__ includes__ path__ =
     with_trampoline trampoline (fun () ->
         Spec_parts_il.Dispatch.eval_program relname__ includes__ path__)

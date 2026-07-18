@@ -53,9 +53,14 @@ let compile_spec ?(name = "") (path_out : string)
   let toplevels_dispatch_ml =
     let funcdef_eval_func_ml = Gen.Dispatch.compile_eval_func ctx spec in
     let funcdef_eval_rel_ml = Gen.Dispatch.compile_eval_rel ctx spec in
+    let funcdef_eval_func_native_ml =
+      Gen.Dispatch.compile_eval_func_native spec
+    in
+    let funcdef_eval_rel_native_ml = Gen.Dispatch.compile_eval_rel_native spec in
     [
       Ml.Raw Template.Converter.converter_table;
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
+      Ml.LetRec [ funcdef_eval_func_native_ml; funcdef_eval_rel_native_ml ];
       Ml.Raw Template.Functor.eval_program;
       Ml.Raw Template.Functor.unmarshal_program;
       (* Stable re-exports of the typed mixop bridges, so [V_native] can bind them

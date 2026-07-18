@@ -59,10 +59,15 @@ module Make
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_func name__ typs__ args__)
   let eval_rel name__ args__ =
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_rel name__ args__)
+  let eval_func_native name__ typs__ args__ =
+    with_trampoline trampoline (fun () -> %s.Dispatch.eval_func_native name__ typs__ args__)
+  let eval_rel_native name__ args__ =
+    with_trampoline trampoline (fun () -> %s.Dispatch.eval_rel_native name__ args__)
   let eval_program relname__ includes__ path__ =
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_program relname__ includes__ path__)
   let unmarshal_program value =
     with_trampoline trampoline (fun () -> %s.Dispatch.unmarshal_program value)
 end
 |}
-    module_name module_name module_name module_name module_name
+    module_name module_name module_name module_name module_name module_name
+    module_name

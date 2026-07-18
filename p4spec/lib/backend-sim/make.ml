@@ -81,17 +81,21 @@ module Make
       | Pass values -> values
       | Fail (at, msg) -> error at msg
 
-    (* ML callbacks: typed [Obj.t] passed through the [Value.t] dispatch. *)
+    (* ML callbacks: typed [Obj.t], never really [Value.t] — route through
+       [eval_func_native]/[eval_rel_native], not [eval_func]/[eval_rel],
+       which convert through a real [Value.t] there's nothing genuine to
+       convert from here. *)
     let call_func_t name typs (values : Obj.t list) : Obj.t =
       (match
-         Interp_ML.eval_func name typs (Obj.magic values : Value.t list)
+         Interp_ML.eval_func_native name typs
+           (Obj.magic values : Value.t list)
        with
       | Pass value -> value
       | Fail (at, msg) -> error at msg)
       |> Obj.magic
 
     let call_rel_t name (values : Obj.t list) : Obj.t list =
-      (match Interp_ML.eval_rel name (Obj.magic values : Value.t list) with
+      (match Interp_ML.eval_rel_native name (Obj.magic values : Value.t list) with
       | Pass values -> values
       | Fail (at, msg) -> error at msg)
       |> Obj.magic
