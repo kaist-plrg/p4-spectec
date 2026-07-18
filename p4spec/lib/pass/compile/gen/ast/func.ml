@@ -1,6 +1,5 @@
 open Lang
 open Sl
-module Typ = Runtime.Type.Typ
 open Util.Source
 
 (* Parameters *)
@@ -90,7 +89,7 @@ let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
           Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
         ( Interface.Converter.name_unmarshal tparam_ml,
           Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
-        ( Interface.Dynamic_gen.name_typ tparam_ml, Some (Ml.NameT "Typ.t") );
+        (Interface.Dynamic_gen.name_typ tparam_ml, Some (Ml.NameT "Typ.t"));
       ])
     tparams_ml
 

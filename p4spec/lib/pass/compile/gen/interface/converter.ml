@@ -141,7 +141,8 @@ and resolve_tuple_typ ~(visiting : string list) (ctx : Ctx.t)
     let expr_tuple_ml =
       Ml.AppE
         ( Ml.LitE "Value.Make.tuple",
-          [ Dynamic_gen.make_typ_expr ~tparams typ; Ml.ListE marshal_calls_ml ] )
+          [ Dynamic_gen.make_typ_expr ~tparams typ; Ml.ListE marshal_calls_ml ]
+        )
     in
     let expr_let_ml = Ml.LetE (pat_vars_ml, Ml.VarE "x__", expr_tuple_ml) in
     Ml.FunE ([ Ml.VarP "x__" ], expr_let_ml)

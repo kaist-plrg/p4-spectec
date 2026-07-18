@@ -1110,7 +1110,9 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
         List.concat_map
           (fun targ ->
             let conv = Interface.Converter.resolve ctx tparams targ in
-            let expr_typ_ml = Interface.Dynamic_gen.make_typ_expr ~tparams targ in
+            let expr_typ_ml =
+              Interface.Dynamic_gen.make_typ_expr ~tparams targ
+            in
             [ conv.marshal; conv.unmarshal; expr_typ_ml ])
           targs
       in
