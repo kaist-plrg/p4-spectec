@@ -1077,7 +1077,10 @@ and compile_arg ~(tparams : string list) (ctx : Ctx.t) (arg : arg) :
                 (fun (tp : Il.tparam) ->
                   let typ_tp = Il.VarT (tp, []) $ no_region in
                   let conv = Interface.Converter.resolve ctx tparams typ_tp in
-                  [ conv.marshal; conv.unmarshal ])
+                  let expr_typ_ml =
+                    Interface.Dynamic_gen.make_typ_expr ~tparams typ_tp
+                  in
+                  [ conv.marshal; conv.unmarshal; expr_typ_ml ])
                 callee_tparams
             in
             Ml.AppE (Ml.VarE id_ml, exprs_converter_ml)
@@ -1107,7 +1110,8 @@ and compile_call_exp ~(tparams : string list) (ctx : Ctx.t) (id : id)
         List.concat_map
           (fun targ ->
             let conv = Interface.Converter.resolve ctx tparams targ in
-            [ conv.marshal; conv.unmarshal ])
+            let expr_typ_ml = Interface.Dynamic_gen.make_typ_expr ~tparams targ in
+            [ conv.marshal; conv.unmarshal; expr_typ_ml ])
           targs
       in
       (ctx, Ml.AppE (Ml.VarE id_func_ml, exprs_converter_ml @ exprs_arg_ml))
