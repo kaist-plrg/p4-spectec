@@ -4,27 +4,31 @@ open Util.Source
 
 (* Runtime Typ.t codegen *)
 
-let rec typ (t : Sl.typ) : Ml.expr =
-  match t.it with
+let rec make_typ_expr (typ : Sl.typ) : Ml.expr =
+  match typ.it with
   | BoolT -> Ml.LitE "Typ.Make.bool"
   | NumT `NatT -> Ml.LitE "Typ.Make.nat"
   | NumT `IntT -> Ml.LitE "Typ.Make.int"
   | TextT -> Ml.LitE "Typ.Make.text"
-  | VarT (id, []) ->
-      Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE id.it; Ml.ListE [] ])
   | VarT (id, targs) ->
       Ml.AppE
-        ( Ml.LitE "make_typ_var_",
-          [ Ml.StrE id.it; Ml.ListE (List.map typ targs) ] )
+        ( Ml.LitE "Typ.Make.var",
+          [
+            Common.make_phrase (Printf.sprintf "\"%s\"" (String.escaped id.it));
+            Ml.ListE (List.map make_typ_expr targs);
+          ] )
   | TupleT typs ->
-      Ml.AppE (Ml.LitE "Typ.Make.tuple", [ Ml.ListE (List.map typ typs) ])
-  | IterT (t, Il.Opt) -> Ml.AppE (Ml.LitE "Typ.Make.opt", [ typ t ])
-  | IterT (t, Il.List) -> Ml.AppE (Ml.LitE "Typ.Make.list", [ typ t ])
+      Ml.AppE
+        (Ml.LitE "Typ.Make.tuple", [ Ml.ListE (List.map make_typ_expr typs) ])
+  | IterT (typ, Il.Opt) ->
+      Ml.AppE (Ml.LitE "Typ.Make.opt", [ make_typ_expr typ ])
+  | IterT (typ, Il.List) ->
+      Ml.AppE (Ml.LitE "Typ.Make.list", [ make_typ_expr typ ])
   | FuncT _ -> Ml.LitE "Typ.Make.bool"
 
-(* Runtime Atom.t/Mixop.t codegen, for marshalling *)
+(* Runtime Atom.t codegen *)
 
-let atom_lit (atom : Atom.t) : string =
+let make_atom_string (atom : Atom.t) : string =
   match atom with
   | Atom.Atom s -> Printf.sprintf "Atom.Atom \"%s\"" (String.escaped s)
   | Atom.SilentAtom s ->
@@ -116,34 +120,38 @@ let atom_lit (atom : Atom.t) : string =
   | Atom.SMinus -> "Atom.SMinus"
   | Atom.SMinusEq -> "Atom.SMinusEq"
 
-let atom_phrase_lit (atom : Atom.t phrase) : string =
-  Printf.sprintf "{it = %s; at = no_region; note = ()}" (atom_lit atom.it)
+let make_atom_phrase_string (atom : Atom.t phrase) : string =
+  Printf.sprintf "{it = %s; at = no_region; note = ()}"
+    (make_atom_string atom.it)
 
-let rec mixop_lit (mixop : Mixop.t) : string =
+let make_atom_phrase_pat_string (atom : Atom.t phrase) : string =
+  Printf.sprintf "{it = %s; _}" (make_atom_string atom.it)
+
+(* Runtime Mixop.t codegen *)
+
+let rec make_mixop_string (mixop : Mixop.t) : string =
   match mixop with
   | Mixfix.Arg () -> "Mixfix.Arg ()"
-  | Mixfix.Atom atom -> Printf.sprintf "Mixfix.Atom (%s)" (atom_phrase_lit atom)
-  | Mixfix.Brack (open_a, inner, close_a) ->
-      Printf.sprintf "Mixfix.Brack (%s, %s, %s)" (atom_phrase_lit open_a)
-        (mixop_lit inner) (atom_phrase_lit close_a)
-  | Mixfix.Infix (left, atom, right) ->
-      Printf.sprintf "Mixfix.Infix (%s, %s, %s)" (mixop_lit left)
-        (atom_phrase_lit atom) (mixop_lit right)
-  | Mixfix.Seq parts ->
+  | Mixfix.Atom atom ->
+      Printf.sprintf "Mixfix.Atom (%s)" (make_atom_phrase_string atom)
+  | Mixfix.Brack (atom_l, mixop_inner, atom_r) ->
+      Printf.sprintf "Mixfix.Brack (%s, %s, %s)"
+        (make_atom_phrase_string atom_l)
+        (make_mixop_string mixop_inner)
+        (make_atom_phrase_string atom_r)
+  | Mixfix.Infix (mixop_l, atom, mixop_r) ->
+      Printf.sprintf "Mixfix.Infix (%s, %s, %s)"
+        (make_mixop_string mixop_l)
+        (make_atom_phrase_string atom)
+        (make_mixop_string mixop_r)
+  | Mixfix.Seq mixops ->
       Printf.sprintf "Mixfix.Seq [%s]"
-        (String.concat "; " (List.map mixop_lit parts))
+        (String.concat "; " (List.map make_mixop_string mixops))
 
-let mixop_expr (mixop : Mixop.t) : Ml.expr = Ml.LitE (mixop_lit mixop)
+let make_mixop_expr (mixop : Mixop.t) : Ml.expr =
+  Ml.LitE (make_mixop_string mixop)
 
-(* Runtime Atom.t/Mixop.t codegen, for unmarshalling --- *)
-
-let atom_phrase_pat (atom : Atom.t phrase) : string =
-  Printf.sprintf "{it = %s; _}" (atom_lit atom.it)
-
-(* Pattern for value Mixfix.t: binds each Arg node to a named variable.
-   Returns (pattern_string, arg_var_names_in_left_to_right_order). *)
-
-let mixop_pat (mixop : Mixop.t) : string * string list =
+let make_mixop_pat_string (mixop : Mixop.t) : string * string list =
   let counter = ref 0 in
   let args_rev = ref [] in
   let rec go = function
@@ -154,15 +162,18 @@ let mixop_pat (mixop : Mixop.t) : string * string list =
         args_rev := name :: !args_rev;
         Printf.sprintf "Mixfix.Arg %s" name
     | Mixfix.Atom atom ->
-        Printf.sprintf "Mixfix.Atom (%s)" (atom_phrase_pat atom)
+        Printf.sprintf "Mixfix.Atom (%s)" (make_atom_phrase_pat_string atom)
     | Mixfix.Brack (open_a, inner, close_a) ->
         let s_inner = go inner in
-        Printf.sprintf "Mixfix.Brack (%s, %s, %s)" (atom_phrase_pat open_a)
-          s_inner (atom_phrase_pat close_a)
+        Printf.sprintf "Mixfix.Brack (%s, %s, %s)"
+          (make_atom_phrase_pat_string open_a)
+          s_inner
+          (make_atom_phrase_pat_string close_a)
     | Mixfix.Infix (left, atom, right) ->
         let s_left = go left in
         let s_right = go right in
-        Printf.sprintf "Mixfix.Infix (%s, %s, %s)" s_left (atom_phrase_pat atom)
+        Printf.sprintf "Mixfix.Infix (%s, %s, %s)" s_left
+          (make_atom_phrase_pat_string atom)
           s_right
     | Mixfix.Seq parts ->
         Printf.sprintf "Mixfix.Seq [%s]"

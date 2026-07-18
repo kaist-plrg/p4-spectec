@@ -27,15 +27,23 @@ let compile_text_typ = Ml.AppE (Ml.LitE "Value.Get.text", [ Ml.VarE "v" ])
 
 (* Structs *)
 
+let compile_field_access (s : string) (expr_fields_ml : Ml.expr) : Ml.expr =
+  let expr_pred_ml =
+    Ml.LitE
+      (Printf.sprintf "(fun ({ it; _ }, _) -> it = Atom.Atom \"%s\")"
+         (String.escaped s))
+  in
+  Ml.AppE
+    ( Ml.LitE "snd",
+      [ Ml.AppE (Ml.LitE "List.find", [ expr_pred_ml; expr_fields_ml ]) ] )
+
 let compile_struct_typ (typfields : Sl.typfield list) : Ml.expr =
   let field_bindings_ml =
     List.map
       (fun (atom, typ) ->
         let atom_str = Names.Ctor.atom atom in
         let field_id = Names.field atom in
-        let expr_field_ml =
-          Ml.AppE (Ml.LitE "get_field_", [ Ml.VarE "fields_"; Ml.StrE atom_str ])
-        in
+        let expr_field_ml = compile_field_access atom_str (Ml.VarE "fields_") in
         let expr_unmarshal_ml =
           Ml.AppE (Ml.VarE ("unmarshal_" ^ Naming.name typ), [ expr_field_ml ])
         in
@@ -54,7 +62,7 @@ let compile_variant_typ (name : string)
   let arms_ctor_ml =
     List.map
       (fun (mixop, ctor_ml, payload_typs) ->
-        let pat_str, ids_arg_ml = Dynamic_gen.mixop_pat mixop in
+        let pat_str, ids_arg_ml = Dynamic_gen.make_mixop_pat_string mixop in
         let exprs_payload_ml =
           List.map2
             (fun typ id_arg_ml ->

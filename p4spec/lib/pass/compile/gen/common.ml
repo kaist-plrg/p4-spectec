@@ -26,6 +26,13 @@ let rec is_iter_var_exp (exp : Sl.exp) : Var.t option =
 let raise_unmatch (msg : string) : Ml.expr =
   Ml.AppE (Ml.VarE "raise", [ Ml.AppE (Ml.VarE "Unmatch", [ Ml.StrE msg ]) ])
 
+(* Phrase construction, via [Util.Source]'s [( $ )] *)
+
+let make_phrase (s_it : string) : Ml.expr =
+  Ml.LitE (Printf.sprintf "(%s $ no_region)" s_it)
+
+(* Iteration helpers *)
+
 (* Fuse [splitM (Option.map f (combineN o0 .. o(N-1)))] into a single match
    [Option.fold_N_M f o0 .. o(N-1)] *)
 

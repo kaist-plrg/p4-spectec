@@ -13,7 +13,7 @@ type t = {
 let empty : t = { ctr = 0; consts = []; mixops = SMap.empty; typs = SMap.empty }
 
 let intern_mixop (pool : t) (mixop : Mixop.t) : t * string =
-  let key = Dynamic_gen.mixop_lit mixop in
+  let key = Dynamic_gen.make_mixop_string mixop in
   match SMap.find_opt key pool.mixops with
   | Some n -> (pool, n)
   | None ->
@@ -22,7 +22,7 @@ let intern_mixop (pool : t) (mixop : Mixop.t) : t * string =
         {
           pool with
           ctr = pool.ctr + 1;
-          consts = (n, Dynamic_gen.mixop_expr mixop) :: pool.consts;
+          consts = (n, Dynamic_gen.make_mixop_expr mixop) :: pool.consts;
           mixops = SMap.add key n pool.mixops;
         }
       in

@@ -1,13 +1,7 @@
-(* Thin functor shell + top-level program-dispatch entry for generated OCaml.
+(* Thin functor shell + top-level program-dispatch entry for generated OCaml *)
 
-   The heavy logic lives at module top-level, reading the per-instance
-   trampoline [trampoline_cur__]. [Make] builds its own [trampoline__] from
-   the [Interface]/[Extern] functor arguments and switches [trampoline_cur__]
-   to it across the three dispatch entry points via [with_trampoline]. Towers
-   nest correctly because control crosses levels only through [eval_rel] /
-   [eval_func] / [eval_program]. *)
+(* Top-level program dispatch *)
 
-(* Top-level program dispatch — reads the current instance's parser. *)
 let eval_program =
   {|
 let eval_program (relname__ : string) (includes__ : string list)
@@ -20,15 +14,9 @@ let eval_program (relname__ : string) (includes__ : string list)
   | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
 |}
 
-(* The public functor contract, preserved structurally.
+(* Thin [interp_ml.ml] shell.
+   Compiled code lives in the separate [spec_parts] library *)
 
-   This is the full content of the thin [interp_ml.ml] shell. The heavy code
-   lives in the separate [spec_parts] library ([Spec_parts.Trampoline] /
-   [Spec_parts.Dispatch] / [Spec_parts.Part_NNN]); the shell only builds its
-   per-instance [trampoline__] and routes the three dispatch entry points
-   through [with_trampoline]. [name] selects which compiled part-library to
-   reference, so multiple compiled specs can coexist ([Spec_parts] for P4's
-   default empty name, [Spec_parts_il]/[Spec_parts_sl] etc. otherwise). *)
 let make (name : string) : string =
   let module_name = Split.name_module name in
   Printf.sprintf

@@ -21,6 +21,9 @@ let compile_text_typ = Ml.AppE (Ml.LitE "Value.Make.text", [ Ml.VarE "x" ])
 
 (* Structs *)
 
+let compile_field_atom (s : string) : Ml.expr =
+  Common.make_phrase (Dynamic_gen.make_atom_string (Domain.Atom.Atom s))
+
 let compile_struct_typ (typ_ref : string) (typfields : Sl.typfield list) :
     Ml.expr =
   let field_exprs_ml =
@@ -28,9 +31,7 @@ let compile_struct_typ (typ_ref : string) (typfields : Sl.typfield list) :
       (fun (atom, typ) ->
         let atom_str = Names.Ctor.atom atom in
         let field_id = Names.field atom in
-        let expr_atom_ml =
-          Ml.AppE (Ml.LitE "make_atom_", [ Ml.StrE atom_str ])
-        in
+        let expr_atom_ml = compile_field_atom atom_str in
         let expr_field_ml = Ml.FieldE (Ml.VarE "x", field_id) in
         let expr_marshal_ml =
           Ml.AppE (Ml.VarE ("marshal_" ^ Naming.name typ), [ expr_field_ml ])
@@ -42,6 +43,15 @@ let compile_struct_typ (typ_ref : string) (typfields : Sl.typfield list) :
     (Ml.LitE "Value.Make.str", [ Ml.VarE typ_ref; Ml.ListE field_exprs_ml ])
 
 (* Variants *)
+
+let compile_case_value (expr_mixop_ml : Ml.expr) (expr_payload_ml : Ml.expr)
+    (expr_typ_ml : Ml.expr) : Ml.expr =
+  Ml.AppE
+    ( Ml.LitE "Value.Make.case",
+      [
+        expr_typ_ml;
+        Ml.AppE (Ml.LitE "Mixfix.fill", [ expr_mixop_ml; expr_payload_ml ]);
+      ] )
 
 let compile_variant_typ (pool : Constpool.t) (typ_ref : string)
     (ctors : (Domain.Mixop.t * Ml.ctor * Sl.typ list) list) :
@@ -63,9 +73,8 @@ let compile_variant_typ (pool : Constpool.t) (typ_ref : string)
         in
         let pool, mo_ref = Constpool.intern_mixop pool mixop in
         let expr_case_ml =
-          Ml.AppE
-            ( Ml.LitE "make_case_",
-              [ Ml.VarE mo_ref; Ml.ListE marshal_calls_ml; Ml.VarE typ_ref ] )
+          compile_case_value (Ml.VarE mo_ref) (Ml.ListE marshal_calls_ml)
+            (Ml.VarE typ_ref)
         in
         (pool, (pat_ml, expr_case_ml)))
       pool ctors
@@ -159,17 +168,20 @@ let compile_body_typ (ctx : Ctx.t) (pool : Constpool.t) (typ : Sl.typ) :
   | Il.TextT -> (pool, compile_text_typ)
   | Il.VarT (id, targs) ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
+        Constpool.intern_typ pool (Naming.name typ)
+          (Dynamic_gen.make_typ_expr typ)
       in
       compile_var_typ ctx pool typ_ref id targs
   | Il.TupleT typs ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
+        Constpool.intern_typ pool (Naming.name typ)
+          (Dynamic_gen.make_typ_expr typ)
       in
       (pool, compile_tuple_typ typ_ref typs)
   | Il.IterT (typ_inner, iter) ->
       let pool, typ_ref =
-        Constpool.intern_typ pool (Naming.name typ) (Dynamic_gen.typ typ)
+        Constpool.intern_typ pool (Naming.name typ)
+          (Dynamic_gen.make_typ_expr typ)
       in
       (pool, compile_iter_typ typ_ref typ_inner iter)
   | Il.FuncT _ -> (pool, Ml.UnitE)

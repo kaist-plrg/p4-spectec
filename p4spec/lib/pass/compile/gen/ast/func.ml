@@ -1,5 +1,6 @@
 open Lang
 open Sl
+module Typ = Runtime.Type.Typ
 open Util.Source
 
 (* Parameters *)
@@ -96,14 +97,17 @@ let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
 
    Reifies a generic call's own tparams as runtime targs: [<X, ..>]
 
-   [[make_typ_var_ "X" []; ..]] *)
+   [[Typ.Make.var ("X" $ no_region) []; ..]] *)
 
 let compile_targs (tparams : string list) : Ml.expr =
-  Ml.ListE
-    (List.map
-       (fun tparam ->
-         Ml.AppE (Ml.LitE "make_typ_var_", [ Ml.StrE tparam; Ml.ListE [] ]))
-       tparams)
+  let exprs_targs_ml =
+    List.map
+      (fun tparam ->
+        let typ = Typ.Make.var (tparam $ no_region) [] in
+        Interface.Dynamic_gen.make_typ_expr typ)
+      tparams
+  in
+  Ml.ListE exprs_targs_ml
 
 (* Extern function: [extern def $f<X, ..>(t1, .., tn) : tret]
 

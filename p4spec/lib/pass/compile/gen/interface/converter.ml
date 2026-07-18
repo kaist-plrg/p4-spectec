@@ -24,7 +24,7 @@ open Util.Source
 
      [(resolve ctx tparams (List<X>)).marshal]
      -->
-     [fun x__ -> Value.Make.list (make_typ_var_ "X" []) (List.map marshal__x x__)]
+     [fun x__ -> Value.Make.list (Typ.Make.var ("X" $ no_region) []) (List.map marshal__x x__)]
 
    (the "list" layer is handled the same way it would be for [List<int>];
    the "X" layer just plugs in the closure already in scope, [marshal__x]) *)
@@ -46,6 +46,30 @@ let apply_converter (tag : string) (expr_resolve_ml : Ml.expr)
   let pat_converter_ml = Ml.VarP id_converter_ml in
   let expr_apply_ml = Ml.AppE (Ml.VarE id_converter_ml, [ expr_arg_ml ]) in
   Ml.LetE (pat_converter_ml, expr_resolve_ml, expr_apply_ml)
+
+(* Struct/variant field and case construction *)
+
+let compile_field_atom (s : string) : Ml.expr =
+  Common.make_phrase (Dynamic_gen.make_atom_string (Domain.Atom.Atom s))
+
+let compile_field_access (s : string) (expr_fields_ml : Ml.expr) : Ml.expr =
+  let expr_pred_ml =
+    Ml.LitE
+      (Printf.sprintf "(fun ({ it; _ }, _) -> it = Atom.Atom \"%s\")"
+         (String.escaped s))
+  in
+  Ml.AppE
+    ( Ml.LitE "snd",
+      [ Ml.AppE (Ml.LitE "List.find", [ expr_pred_ml; expr_fields_ml ]) ] )
+
+let compile_case_value (expr_mixop_ml : Ml.expr) (expr_payload_ml : Ml.expr)
+    (expr_typ_ml : Ml.expr) : Ml.expr =
+  Ml.AppE
+    ( Ml.LitE "Value.Make.case",
+      [
+        expr_typ_ml;
+        Ml.AppE (Ml.LitE "Mixfix.fill", [ expr_mixop_ml; expr_payload_ml ]);
+      ] )
 
 (* Builds a [t] for [typ]; [visiting] guards typedef cycles *)
 
@@ -117,7 +141,7 @@ and resolve_tuple_typ ~(visiting : string list) (ctx : Ctx.t)
     let expr_tuple_ml =
       Ml.AppE
         ( Ml.LitE "Value.Make.tuple",
-          [ Dynamic_gen.typ typ; Ml.ListE marshal_calls_ml ] )
+          [ Dynamic_gen.make_typ_expr typ; Ml.ListE marshal_calls_ml ] )
     in
     let expr_let_ml = Ml.LetE (pat_vars_ml, Ml.VarE "x__", expr_tuple_ml) in
     Ml.FunE ([ Ml.VarP "x__" ], expr_let_ml)
@@ -142,7 +166,9 @@ and resolve_opt_typ ~(visiting : string list) (ctx : Ctx.t)
       Ml.AppE (Ml.LitE "Option.map", [ conv.marshal; Ml.VarE "x__" ])
     in
     let expr_opt_ml =
-      Ml.AppE (Ml.LitE "Value.Make.opt", [ Dynamic_gen.typ typ; expr_map_ml ])
+      Ml.AppE
+        ( Ml.LitE "Value.Make.opt",
+          [ Dynamic_gen.make_typ_expr typ; expr_map_ml ] )
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_opt_ml)
   in
@@ -165,7 +191,9 @@ and resolve_list_typ ~(visiting : string list) (ctx : Ctx.t)
       Ml.AppE (Ml.LitE "List.map", [ conv.marshal; Ml.VarE "x__" ])
     in
     let expr_list_ml =
-      Ml.AppE (Ml.LitE "Value.Make.list", [ Dynamic_gen.typ typ; expr_map_ml ])
+      Ml.AppE
+        ( Ml.LitE "Value.Make.list",
+          [ Dynamic_gen.make_typ_expr typ; expr_map_ml ] )
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_list_ml)
   in
@@ -235,9 +263,7 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
       List.map
         (fun (atom, conv) ->
           let atom_str = Names.Ctor.atom atom in
-          let expr_atom_ml =
-            Ml.AppE (Ml.LitE "make_atom_", [ Ml.StrE atom_str ])
-          in
+          let expr_atom_ml = compile_field_atom atom_str in
           let expr_field_ml = Ml.FieldE (x_ann, Names.field atom) in
           let expr_conv_ml =
             apply_converter "resolved_" conv.marshal expr_field_ml
@@ -248,7 +274,7 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
     let expr_str_ml =
       Ml.AppE
         ( Ml.LitE "Value.Make.str",
-          [ Dynamic_gen.typ typ; Ml.ListE field_exprs_ml ] )
+          [ Dynamic_gen.make_typ_expr typ; Ml.ListE field_exprs_ml ] )
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_str_ml)
   in
@@ -258,8 +284,7 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
         (fun (atom, conv) ->
           let atom_str = Names.Ctor.atom atom in
           let expr_get_field_ml =
-            Ml.AppE
-              (Ml.LitE "get_field_", [ Ml.VarE "fields__"; Ml.StrE atom_str ])
+            compile_field_access atom_str (Ml.VarE "fields__")
           in
           let expr_conv_ml =
             apply_converter "resolved_" conv.unmarshal expr_get_field_ml
@@ -304,13 +329,10 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
               convs pvars
           in
           let expr_case_ml =
-            Ml.AppE
-              ( Ml.LitE "make_case_",
-                [
-                  Dynamic_gen.mixop_expr mixop;
-                  Ml.ListE marshal_calls_ml;
-                  Dynamic_gen.typ typ;
-                ] )
+            compile_case_value
+              (Dynamic_gen.make_mixop_expr mixop)
+              (Ml.ListE marshal_calls_ml)
+              (Dynamic_gen.make_typ_expr typ)
           in
           (pat_ml, expr_case_ml))
         per_ctor
@@ -322,7 +344,7 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
     let arms_ctor_ml =
       List.map
         (fun (mixop, ctor_ml, convs) ->
-          let pat_str, ids_arg_ml = Dynamic_gen.mixop_pat mixop in
+          let pat_str, ids_arg_ml = Dynamic_gen.make_mixop_pat_string mixop in
           let exprs_payload_ml =
             List.map2
               (fun conv id_arg_ml ->
