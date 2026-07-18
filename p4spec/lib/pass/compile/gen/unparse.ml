@@ -37,15 +37,16 @@ let rec serialize_alter (alter : Hints.Alter.t) : string =
   | Hints.Alter.TextH s ->
       Printf.sprintf "Hints.Alter.TextH \"%s\"" (String.escaped s)
   | Hints.Alter.AtomH atom ->
-      Printf.sprintf "Hints.Alter.AtomH (%s)" (Interface.atom_phrase_lit atom)
+      Printf.sprintf "Hints.Alter.AtomH (%s)"
+        (Interface.Dynamic_gen.make_atom_phrase_string atom)
   | Hints.Alter.SeqH hints ->
       Printf.sprintf "Hints.Alter.SeqH [%s]"
         (String.concat "; " (List.map serialize_alter hints))
   | Hints.Alter.BrackH (l, h, r) ->
       Printf.sprintf "Hints.Alter.BrackH (%s, %s, %s)"
-        (Interface.atom_phrase_lit l)
+        (Interface.Dynamic_gen.make_atom_phrase_string l)
         (serialize_alter h)
-        (Interface.atom_phrase_lit r)
+        (Interface.Dynamic_gen.make_atom_phrase_string r)
   | Hints.Alter.HoleH `Next -> "Hints.Alter.HoleH `Next"
   | Hints.Alter.HoleH (`Num i) ->
       Printf.sprintf "(Hints.Alter.HoleH (`Num %d))" i
@@ -75,7 +76,7 @@ let compile_spec (_ctx : Ctx.t) (spec : Sl.spec) ~(path_out : string) : unit =
   List.iter
     (fun (tid, mixop, alter) ->
       pr "      (\"%s\",\n" (String.escaped tid);
-      pr "       %s,\n" (Interface.mixop_lit mixop);
+      pr "       %s,\n" (Interface.Dynamic_gen.make_mixop_string mixop);
       pr "       %s);\n" (serialize_alter alter))
     entries;
   pr "    ]\n";

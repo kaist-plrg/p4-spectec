@@ -27,6 +27,7 @@ type t = {
   typdefs : Typdefs.t;
   ctors : Ctors.t;
   rels : Rels.t;
+  funcs : Funcs.t;
   bindings : Bindings.t;
 }
 
@@ -38,14 +39,27 @@ let add_typdef (ctx : t) (tid : TId.t) (typdef : Typdef.t) : t =
 let add_ctor (ctx : t) (case : Case.t) (ctor : Ctor.t) : t =
   { ctx with ctors = Ctors.add case ctor ctx.ctors }
 
+let add_rel (ctx : t) (rid : RId.t) (input : Input.t) : t =
+  { ctx with rels = Rels.add rid input ctx.rels }
+
+let add_func (ctx : t) (fid : FId.t) (func : Runtime.Dynamic_Sl.Func.t) : t =
+  { ctx with funcs = Funcs.add fid func ctx.funcs }
+
 let add_binding (ctx : t) (var : Var.t) (id_ml : Ml.id) : t =
   { ctx with bindings = Bindings.add var id_ml ctx.bindings }
 
 let add_bindings (ctx : t) (vars : Var.t list) (ids_ml : Ml.id list) : t =
   List.fold_left2 add_binding ctx vars ids_ml
 
-let add_rel (ctx : t) (rid : RId.t) (input : Input.t) : t =
-  { ctx with rels = Rels.add rid input ctx.rels }
+(* Folders *)
+
+let fold_typdefs (f : TId.t -> Typdef.t -> 'a -> 'a) (ctx : t) (init : 'a) : 'a
+    =
+  Typdefs.fold f ctx.typdefs init
+
+let fold_funcs (f : FId.t -> Runtime.Dynamic_Sl.Func.t -> 'a -> 'a) (ctx : t)
+    (init : 'a) : 'a =
+  Funcs.fold f ctx.funcs init
 
 (* Finders *)
 
@@ -70,10 +84,6 @@ let find_typdef (ctx : t) (id : TId.t) : Typdef.t =
   | Some typdef -> typdef
   | None ->
       error no_region (Format.asprintf "%s is not defined" (TId.to_string id))
-
-let fold_typdefs (f : TId.t -> Typdef.t -> 'a -> 'a) (ctx : t) (init : 'a) : 'a
-    =
-  Typdefs.fold f ctx.typdefs init
 
 let find_ctors (ctx : t) (id : TId.t) : (Ml.ctor * Il.typ list) list =
   let find_typdef_opt (tid : TId.t) = Typdefs.find_opt tid ctx.typdefs in
@@ -100,6 +110,13 @@ let find_binding (ctx : t) (var : Var.t) : Ml.id =
   | None ->
       error no_region (Format.asprintf "%s is not bound" (Var.to_string var))
 
+let find_func_tparams (ctx : t) (name : string) : Il.tparam list option =
+  match Funcs.find_opt (name $ no_region) ctx.funcs with
+  | None -> None
+  | Some func ->
+      let tparams, _, _ = Runtime.Dynamic_Sl.Func.get_signature func in
+      Some tparams
+
 let find_rel (ctx : t) (rid : RId.t) : Input.t = Rels.find rid ctx.rels
 
 (* Initialization *)
@@ -119,6 +136,21 @@ let load_def (ctx : t) (def : Sl.def) : t =
     ->
       let _, inputs = rel_signature in
       add_rel ctx id inputs
+  | ExternDecD (id, tparams, params, typ_ret, _) ->
+      let func = Runtime.Dynamic_Sl.Func.Extern (tparams, params, typ_ret) in
+      add_func ctx id func
+  | BuiltinDecD (id, tparams, params, typ_ret, _) ->
+      let func = Runtime.Dynamic_Sl.Func.Builtin (tparams, params, typ_ret) in
+      add_func ctx id func
+  | TableDecD (id, params, typ_ret, tablerows, _) ->
+      let func = Runtime.Dynamic_Sl.Func.Table (params, typ_ret, tablerows) in
+      add_func ctx id func
+  | FuncDecD (id, tparams, params, typ_ret, block, elseblock_opt, _) ->
+      let func =
+        Runtime.Dynamic_Sl.Func.Defined
+          (tparams, params, typ_ret, block, elseblock_opt)
+      in
+      add_func ctx id func
   | _ -> ctx
 
 let load_defs (ctx : t) (defs : Sl.def list) : t =
@@ -132,6 +164,7 @@ let init (spec : Sl.spec) : t =
       ctors = Ctors.empty;
       rels = Rels.empty;
       bindings = Bindings.empty;
+      funcs = Funcs.empty;
     }
   in
   load_defs ctx spec

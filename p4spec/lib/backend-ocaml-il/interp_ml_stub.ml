@@ -3,13 +3,13 @@
    shell; it routes through the stub [spec_parts_il] (compiled_stub/), whose
    dispatch entry points fail with "run `make gen-ocaml-il`". *)
 module Run = Runtime.Dynamic_Runner.Signature
-open Spec_parts_il.Ctx
+open Spec_parts_il.Trampoline
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_ML = struct
-  let my_ctx : ctx__ =
+  let trampoline : trampoline__ =
     {
-      iface =
+      interface =
         {
           call_builtin = Interface.call_builtin;
           parse_program = Interface.parse_program;
@@ -30,13 +30,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let clear () = ()
 
   let eval_func name__ typs__ args__ =
-    with_ctx my_ctx (fun () ->
+    with_trampoline trampoline (fun () ->
         Spec_parts_il.Dispatch.eval_func name__ typs__ args__)
 
   let eval_rel name__ args__ =
-    with_ctx my_ctx (fun () -> Spec_parts_il.Dispatch.eval_rel name__ args__)
+    with_trampoline trampoline (fun () ->
+        Spec_parts_il.Dispatch.eval_rel name__ args__)
 
   let eval_program relname__ includes__ path__ =
-    with_ctx my_ctx (fun () ->
+    with_trampoline trampoline (fun () ->
         Spec_parts_il.Dispatch.eval_program relname__ includes__ path__)
 end

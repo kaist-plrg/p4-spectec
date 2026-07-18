@@ -30,6 +30,8 @@ let rec print_typ typ =
   | TupleT [] -> "unit"
   | TupleT [ typ ] -> print_typ typ
   | TupleT typs -> "(" ^ String.concat " * " (List.map print_typ typs) ^ ")"
+  | FuncT (typ_dom, typ_codom) ->
+      "(" ^ print_typ typ_dom ^ " -> " ^ print_typ typ_codom ^ ")"
   | OpenRowT typcases ->
       "[> "
       ^ String.concat " | "
@@ -156,23 +158,35 @@ let rec print_expr ~level expr =
       in
       "(" ^ String.concat ", " (List.map print_tuple_elem exprs) ^ ")"
   | ListE exprs ->
-      "[" ^ String.concat "; " (List.map (print_expr ~level) exprs) ^ "]"
+      let print_elem expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
+      "[" ^ String.concat "; " (List.map print_elem exprs) ^ "]"
   | ConsE (expr_hd, expr_tl) ->
       "(" ^ print_expr ~level expr_hd ^ " :: " ^ print_expr ~level expr_tl ^ ")"
   | OptE None -> "None"
   | OptE (Some expr) -> "Some (" ^ print_expr ~level expr ^ ")"
   | VariantE (ctor, []) -> "`" ^ print_ctor ctor
   | VariantE (ctor, exprs) ->
+      let print_elem expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
       "`" ^ print_ctor ctor ^ " ("
-      ^ String.concat ", " (List.map (print_expr ~level) exprs)
+      ^ String.concat ", " (List.map print_elem exprs)
       ^ ")"
   | RecordE [] -> "{}"
   | RecordE fields ->
+      let print_field_val expr =
+        if is_compound_expr expr then "(" ^ print_expr ~level expr ^ ")"
+        else print_expr ~level expr
+      in
       "{ "
       ^ String.concat "; "
           (List.map
              (fun (field, expr) ->
-               print_field field ^ " = " ^ print_expr ~level expr)
+               print_field field ^ " = " ^ print_field_val expr)
              fields)
       ^ " }"
   | RecordUpdateE (expr_base, []) -> print_expr ~level expr_base
@@ -279,17 +293,56 @@ let print_param (id, typ_opt) =
 
 (* Function definitions *)
 
-let print_funcdef (id, params, typ_ret_opt, expr_body) =
-  let str_params =
-    match params with
-    | [] -> "()"
-    | _ -> String.concat " " (List.map print_param params)
-  in
-  let str_ret =
-    match typ_ret_opt with None -> "" | Some typ -> " : " ^ print_typ typ
-  in
-  print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
-  ^ print_expr ~level:1 expr_body
+let print_funcdef (id, tparams, params, typ_ret_opt, expr_body) =
+  match tparams with
+  | [] ->
+      let str_params =
+        match params with
+        | [] -> "()"
+        | _ -> String.concat " " (List.map print_param params)
+      in
+      let str_ret =
+        match typ_ret_opt with None -> "" | Some typ -> " : " ^ print_typ typ
+      in
+      print_id id ^ " " ^ str_params ^ str_ret ^ " =\n  "
+      ^ print_expr ~level:1 expr_body
+  | _ ->
+      let quantifier =
+        String.concat " " (List.map (fun t -> "'" ^ t) tparams)
+      in
+      let param_typ_strs =
+        List.map
+          (fun (id, typ_opt) ->
+            match typ_opt with
+            | Some typ -> print_typ typ
+            | None ->
+                failwith
+                  (Printf.sprintf
+                     "print_funcdef: generic function %s: untyped param %s" id
+                     id))
+          params
+      in
+      let ret_typ_str =
+        match typ_ret_opt with
+        | Some typ -> print_typ typ
+        | None ->
+            failwith
+              (Printf.sprintf
+                 "print_funcdef: generic function %s: missing return type" id)
+      in
+      let arrow_typ_str =
+        match param_typ_strs with
+        | [] -> "unit -> " ^ ret_typ_str
+        | _ -> String.concat " -> " (param_typ_strs @ [ ret_typ_str ])
+      in
+      let str_params =
+        match params with
+        | [] -> "()"
+        | _ -> String.concat " " (List.map (fun (id, _) -> print_id id) params)
+      in
+      print_id id ^ " : " ^ quantifier ^ ". " ^ arrow_typ_str ^ " =\n  fun "
+      ^ str_params ^ " ->\n  "
+      ^ print_expr ~level:1 expr_body
 
 (* Top-level items *)
 

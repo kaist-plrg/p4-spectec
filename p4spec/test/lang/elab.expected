@@ -232,8 +232,6 @@ def $filter_<X>(X*, bool*) : X* =
   -- let b_h :: b_t*{b_t <- b_t*} = b*{b <- b*}
   -- if ~b_h
 
-builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
-
 builtin def $sort_<X>((nat, X)*) : (nat, X)*
 
 builtin def $distinct_<K>(K*) : bool
@@ -278,6 +276,10 @@ def $codom_map<K, V>(map<K, V>) : set<V> =
 
   clause 0 : (`{ K `: V*{K <- K*, V <- V*} }) = `{ V*{V <- V*} }
 
+builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+builtin def $assoc_<X, Y>(X, (X, Y)*) : Y?
+
 builtin def $find_map<K, V>(map<K, V>, K) : V?
 
 builtin def $find_maps<K, V>(map<K, V>*, K) : V?
@@ -285,8 +287,6 @@ builtin def $find_maps<K, V>(map<K, V>*, K) : V?
 builtin def $add_map<K, V>(map<K, V>, K, V) : map<K, V>
 
 builtin def $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
-
-builtin def $update_map<K, V>(map<K, V>, K, V) : map<K, V>
 
 def $extend_map<K, V>(map<K, V>, map<K, V>) : map<K, V> =
 

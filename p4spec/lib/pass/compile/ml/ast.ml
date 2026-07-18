@@ -28,6 +28,8 @@ type typ =
   | AppT of id * typ list
   (* `(` list(typ, `,`) `)` *)
   | TupleT of typ list
+  (* `(` typ `->` typ `)` *)
+  | FuncT of typ * typ
   (* `[>` list(`ctor of typ1 * ..., `|`) `]` *)
   | OpenRowT of typrow list
 
@@ -147,7 +149,7 @@ type param = id * typ option
 
 (* Function definitions *)
 
-type funcdef = id * param list * typ option * expr
+type funcdef = id * tparam list * param list * typ option * expr
 
 (* Top-level items *)
 
