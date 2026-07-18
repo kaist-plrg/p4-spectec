@@ -138,11 +138,10 @@ and resolve_tuple_typ ~(visiting : string list) (ctx : Ctx.t)
   in
   let expr_marshal_ml =
     let pat_vars_ml = Ml.TupleP (List.map (fun var -> Ml.VarP var) vars_m) in
+    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
     let expr_tuple_ml =
       Ml.AppE
-        ( Ml.LitE "Value.Make.tuple",
-          [ Dynamic_gen.make_typ_expr ~tparams typ; Ml.ListE marshal_calls_ml ]
-        )
+        (Ml.LitE "Value.Make.tuple", [ expr_typ_ml; Ml.ListE marshal_calls_ml ])
     in
     let expr_let_ml = Ml.LetE (pat_vars_ml, Ml.VarE "x__", expr_tuple_ml) in
     Ml.FunE ([ Ml.VarP "x__" ], expr_let_ml)
@@ -166,10 +165,9 @@ and resolve_opt_typ ~(visiting : string list) (ctx : Ctx.t)
     let expr_map_ml =
       Ml.AppE (Ml.LitE "Option.map", [ conv.marshal; Ml.VarE "x__" ])
     in
+    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
     let expr_opt_ml =
-      Ml.AppE
-        ( Ml.LitE "Value.Make.opt",
-          [ Dynamic_gen.make_typ_expr ~tparams typ; expr_map_ml ] )
+      Ml.AppE (Ml.LitE "Value.Make.opt", [ expr_typ_ml; expr_map_ml ])
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_opt_ml)
   in
@@ -191,10 +189,9 @@ and resolve_list_typ ~(visiting : string list) (ctx : Ctx.t)
     let expr_map_ml =
       Ml.AppE (Ml.LitE "List.map", [ conv.marshal; Ml.VarE "x__" ])
     in
+    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
     let expr_list_ml =
-      Ml.AppE
-        ( Ml.LitE "Value.Make.list",
-          [ Dynamic_gen.make_typ_expr ~tparams typ; expr_map_ml ] )
+      Ml.AppE (Ml.LitE "Value.Make.list", [ expr_typ_ml; expr_map_ml ])
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_list_ml)
   in
@@ -272,10 +269,10 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
           Ml.TupleE [ expr_atom_ml; expr_conv_ml ])
         field_convs
     in
+    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
     let expr_str_ml =
       Ml.AppE
-        ( Ml.LitE "Value.Make.str",
-          [ Dynamic_gen.make_typ_expr ~tparams typ; Ml.ListE field_exprs_ml ] )
+        (Ml.LitE "Value.Make.str", [ expr_typ_ml; Ml.ListE field_exprs_ml ])
     in
     Ml.FunE ([ Ml.VarP "x__" ], expr_str_ml)
   in
@@ -329,11 +326,11 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
                 apply_converter "resolved_" conv.marshal (Ml.VarE pvar))
               convs pvars
           in
+          let expr_mixop_ml = Dynamic_gen.make_mixop_expr mixop in
+          let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
           let expr_case_ml =
-            compile_case_value
-              (Dynamic_gen.make_mixop_expr mixop)
-              (Ml.ListE marshal_calls_ml)
-              (Dynamic_gen.make_typ_expr ~tparams typ)
+            compile_case_value expr_mixop_ml (Ml.ListE marshal_calls_ml)
+              expr_typ_ml
           in
           (pat_ml, expr_case_ml))
         per_ctor
