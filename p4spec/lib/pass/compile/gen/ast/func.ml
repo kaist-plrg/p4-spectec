@@ -158,7 +158,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targs tparams in
+  let exprs_targ_ml = compile_targs tparams_ml in
   (* Call the extern, unmarshal its result *)
   let expr_call_ml =
     Ml.AppE
@@ -241,7 +241,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targs tparams in
+  let exprs_targ_ml = compile_targs tparams_ml in
   (* Call the builtin, catching a builtin error as [Unmatch] *)
   let name_orig_lit_ml =
     Ml.LitE (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped id.it))
