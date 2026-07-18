@@ -2,6 +2,83 @@ open Lang
 open Sl
 open Util.Source
 
+(* Extern relations *)
+
+let compile_extern_rel (_ctx : Ctx.t) (id : id)
+    ((nottyp, inputs) : rel_signature) (exps : exp list) : Ml.funcdef =
+  ignore exps;
+  let id_ml = Names.rel id in
+  (* Derive input/output types from nottyp (authoritative source) *)
+  let typs_rel = Domain.Mixfix.args nottyp.it in
+  let typs_input, typs_output = Hints.Input.split inputs typs_rel in
+  let n = List.length typs_input in
+  (* Input params *)
+  let params_ml =
+    List.mapi
+      (fun i typ ->
+        let typ_ml = Type.compile_typ ~tparams:[] typ in
+        ("param__" ^ string_of_int i, Some typ_ml))
+      typs_input
+  in
+  (* Marshal inputs *)
+  let vars_marshal_ml, exprs_marshal_ml =
+    List.mapi
+      (fun i typ ->
+        ( "v__" ^ string_of_int i,
+          Ml.AppE
+            ( Ml.VarE ("marshal_" ^ Interface.Naming.name typ),
+              [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
+      typs_input
+    |> List.split
+  in
+  (* Build args list *)
+  let exprs_arg_ml =
+    Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
+  in
+  (* Unmarshal outputs from Pass value list *)
+  let expr_unmarshal_body_ml =
+    let exprs_out_ml =
+      List.mapi
+        (fun i (typ : Sl.typ) ->
+          Ml.AppE
+            ( Ml.VarE ("unmarshal_" ^ Interface.Naming.name typ),
+              [
+                Ml.AppE
+                  ( Ml.LitE "List.nth",
+                    [ Ml.VarE "vs_out__"; Ml.LitE (string_of_int i) ] );
+              ] ))
+        typs_output
+    in
+    match exprs_out_ml with [] -> Ml.UnitE | [ e ] -> e | es -> Ml.TupleE es
+  in
+  (* Call extern relation and match result *)
+  let expr_call_ml =
+    Ml.AppE
+      (Common.extern_field "eval_extern_rel", [ Ml.StrE id.it; exprs_arg_ml ])
+  in
+  let expr_result_ml =
+    Ml.MatchE
+      ( expr_call_ml,
+        [
+          ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "vs_out__" ])),
+            expr_unmarshal_body_ml );
+          ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
+            Ml.AppE
+              ( Ml.LitE "raise",
+                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
+        ] )
+  in
+  let expr_body_ml =
+    List.fold_right
+      (fun (var_ml, expr_ml) acc -> Ml.LetE (Ml.VarP var_ml, expr_ml, acc))
+      (List.combine vars_marshal_ml exprs_marshal_ml)
+      expr_result_ml
+  in
+  let funcdef_ml =
+    (id_ml, [], params_ml, None, Common.deref_ctx expr_body_ml)
+  in
+  funcdef_ml
+
 (* Defined relations *)
 
 let compile_defined_rel (ctx : Ctx.t) (id : id)
@@ -72,88 +149,15 @@ let compile_defined_rel (ctx : Ctx.t) (id : id)
   in
   (ctx, funcdefs_ml)
 
-(* Extern relations *)
-
-let compile_extern_rel (ctx : Ctx.t) (id : id)
-    ((nottyp, inputs) : rel_signature) (exps : exp list) :
-    Ctx.t * Ml.funcdef list =
-  ignore exps;
-  let id_ml = Names.rel id in
-  (* Derive input/output types from nottyp (authoritative source) *)
-  let typs_rel = Domain.Mixfix.args nottyp.it in
-  let typs_input, typs_output = Hints.Input.split inputs typs_rel in
-  let n = List.length typs_input in
-  (* Input params *)
-  let params_ml =
-    List.mapi
-      (fun i typ ->
-        let typ_ml = Type.compile_typ ~tparams:[] typ in
-        ("param__" ^ string_of_int i, Some typ_ml))
-      typs_input
-  in
-  (* Marshal inputs *)
-  let vars_marshal_ml, exprs_marshal_ml =
-    List.mapi
-      (fun i typ ->
-        ( "v__" ^ string_of_int i,
-          Ml.AppE
-            ( Ml.VarE ("marshal_" ^ Interface.Naming.name typ),
-              [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
-      typs_input
-    |> List.split
-  in
-  (* Build args list *)
-  let exprs_arg_ml =
-    Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
-  in
-  (* Unmarshal outputs from Pass value list *)
-  let expr_unmarshal_body_ml =
-    let exprs_out_ml =
-      List.mapi
-        (fun i (typ : Sl.typ) ->
-          Ml.AppE
-            ( Ml.VarE ("unmarshal_" ^ Interface.Naming.name typ),
-              [
-                Ml.AppE
-                  ( Ml.LitE "List.nth",
-                    [ Ml.VarE "vs_out__"; Ml.LitE (string_of_int i) ] );
-              ] ))
-        typs_output
-    in
-    match exprs_out_ml with [] -> Ml.UnitE | [ e ] -> e | es -> Ml.TupleE es
-  in
-  (* Call extern relation and match result *)
-  let expr_call_ml =
-    Ml.AppE
-      (Common.extern_field "eval_extern_rel", [ Ml.StrE id.it; exprs_arg_ml ])
-  in
-  let expr_result_ml =
-    Ml.MatchE
-      ( expr_call_ml,
-        [
-          ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "vs_out__" ])),
-            expr_unmarshal_body_ml );
-          ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
-            Ml.AppE
-              ( Ml.LitE "raise",
-                [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
-        ] )
-  in
-  let expr_body_ml =
-    List.fold_right
-      (fun (var_ml, expr_ml) acc -> Ml.LetE (Ml.VarP var_ml, expr_ml, acc))
-      (List.combine vars_marshal_ml exprs_marshal_ml)
-      expr_result_ml
-  in
-  (ctx, [ (id_ml, [], params_ml, None, Common.deref_ctx expr_body_ml) ])
-
 (* Defs *)
 
 let compile_def (ctx : Ctx.t) (def : def) : Ctx.t * Ml.funcdef list =
   match def.it with
+  | ExternRelD (id, rel_sig, exps, _) ->
+      let funcdef_ml = compile_extern_rel ctx id rel_sig exps in
+      (ctx, [ funcdef_ml ])
   | RelD (id, rel_sig, exps, block, elseblock_opt, _) ->
       compile_defined_rel ctx id rel_sig exps block elseblock_opt
-  | ExternRelD (id, rel_sig, exps, _) -> compile_extern_rel ctx id rel_sig exps
   | _ -> (ctx, [])
 
 let compile_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Ml.funcdef list =
