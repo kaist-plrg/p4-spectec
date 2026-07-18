@@ -1,6 +1,5 @@
 open Lang
 open Sl
-module Typ = Runtime.Type.Typ
 open Util.Source
 
 (* Parameters *)
@@ -85,27 +84,27 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
 let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
   List.concat_map
     (fun tparam_ml ->
+      let id_marshal_ml = Interface.Converter.name_marshal tparam_ml in
+      let typ_marshal_ml = Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t") in
+      let id_unmarshal_ml = Interface.Converter.name_unmarshal tparam_ml in
+      let typ_unmarshal_ml = Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml) in
+      let id_typ_ml = Interface.Naming.name_typ tparam_ml in
       [
-        ( Interface.Converter.name_marshal tparam_ml,
-          Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
-        ( Interface.Converter.name_unmarshal tparam_ml,
-          Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
+        (id_marshal_ml, Some typ_marshal_ml);
+        (id_unmarshal_ml, Some typ_unmarshal_ml);
+        (id_typ_ml, Some (Ml.NameT "Typ.t"));
       ])
     tparams_ml
 
-(* Type arguments
+(* Type arguments: [<X, ..>]
 
-   Reifies a generic call's own tparams as runtime targs: [<X, ..>]
+   [[typ__x; ..]] *)
 
-   [[Typ.Make.var ("X" $ no_region) []; ..]] *)
-
-let compile_targs (tparams : string list) : Ml.expr =
+let compile_targs (tparams_ml : Ml.tparam list) : Ml.expr =
   let exprs_targs_ml =
     List.map
-      (fun tparam ->
-        let typ = Typ.Make.var (tparam $ no_region) [] in
-        Interface.Dynamic_gen.make_typ_expr typ)
-      tparams
+      (fun tparam_ml -> Ml.VarE (Interface.Naming.name_typ tparam_ml))
+      tparams_ml
   in
   Ml.ListE exprs_targs_ml
 
@@ -161,7 +160,7 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targs tparams in
+  let exprs_targ_ml = compile_targs tparams_ml in
   (* Call the extern, unmarshal its result *)
   let expr_call_ml =
     Ml.AppE
@@ -244,7 +243,7 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  let exprs_targ_ml = compile_targs tparams in
+  let exprs_targ_ml = compile_targs tparams_ml in
   (* Call the builtin, catching a builtin error as [Unmatch] *)
   let name_orig_lit_ml =
     Ml.LitE (Printf.sprintf "(\"%s\" $ no_region)" (String.escaped id.it))
