@@ -84,12 +84,15 @@ let compile_params ~(tparams : string list) (ctx : Ctx.t) (params : param list)
 let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
   List.concat_map
     (fun tparam_ml ->
+      let id_marshal_ml = Interface.Converter.name_marshal tparam_ml in
+      let typ_marshal_ml = Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t") in
+      let id_unmarshal_ml = Interface.Converter.name_unmarshal tparam_ml in
+      let typ_unmarshal_ml = Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml) in
+      let id_typ_ml = Interface.Naming.name_typ tparam_ml in
       [
-        ( Interface.Converter.name_marshal tparam_ml,
-          Some (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")) );
-        ( Interface.Converter.name_unmarshal tparam_ml,
-          Some (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)) );
-        (Interface.Naming.name_typ tparam_ml, Some (Ml.NameT "Typ.t"));
+        (id_marshal_ml, Some typ_marshal_ml);
+        (id_unmarshal_ml, Some typ_unmarshal_ml);
+        (id_typ_ml, Some (Ml.NameT "Typ.t"));
       ])
     tparams_ml
 
