@@ -800,8 +800,8 @@ let ocaml_command =
      in
      fun () ->
        try
-         Pass.compile ~name:"p4" ~tid_program:"p4program" paths_spec path_out
-           path_out_unparse split_lines
+         Pass.compile ~name:"p4" paths_spec path_out path_out_unparse
+           split_lines
        with
        | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->

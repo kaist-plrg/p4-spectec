@@ -24,3 +24,7 @@ end)
 (* Relation environment *)
 
 module Rels = MakeRIdEnv (Input)
+
+(* Function environment: name -> its own definition (dynamic-sl repr) *)
+
+module Funcs = MakeFIdEnv (Runtime.Dynamic_Sl.Func)

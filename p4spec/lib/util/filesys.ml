@@ -70,3 +70,10 @@ let read_file (path : string) : string =
   with End_of_file ->
     close_in ic;
     Buffer.contents buf
+
+(* Writers *)
+
+let write_file (path : string) (content : string) : unit =
+  let oc = open_out path in
+  output_string oc content;
+  close_out oc

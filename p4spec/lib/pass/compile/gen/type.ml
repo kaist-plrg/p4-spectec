@@ -2,6 +2,17 @@ open Domain
 open Lang
 open Util.Source
 
+(* Whether [typ] still depends on an unresolved type parameter in [tparams] *)
+
+let rec is_generic (tparams : string list) (typ : Sl.typ) : bool =
+  match typ.it with
+  | Il.BoolT | Il.NumT _ | Il.TextT -> false
+  | Il.VarT (id, targs) ->
+      List.mem id.it tparams || List.exists (is_generic tparams) targs
+  | Il.TupleT typs -> List.exists (is_generic tparams) typs
+  | Il.IterT (typ, _) -> is_generic tparams typ
+  | Il.FuncT _ -> false
+
 (* Typs *)
 
 let rec compile_typ ~(tparams : string list) (typ : Sl.typ) : Ml.typ =

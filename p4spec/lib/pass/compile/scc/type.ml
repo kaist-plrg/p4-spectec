@@ -45,8 +45,8 @@ let typedef_refs (def : def) : string list =
 
 (* ── Entry point ── *)
 
-(* Compute SCCs on type definitions and return groups in topological order
-   (dependencies first). Each group becomes one Ml.TypeRec in codegen. *)
+(* Compute SCCs on type definitions and return groups in topological order *)
+
 let compute (spec : spec) : def list list =
   let defs = List.filter is_typedef spec in
   let n = List.length defs in

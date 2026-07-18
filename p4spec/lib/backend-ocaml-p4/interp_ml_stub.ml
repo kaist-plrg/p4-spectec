@@ -3,13 +3,13 @@
    it routes through the stub [spec_parts_p4] (compiled_stub/), whose dispatch
    entry points fail with "run `make gen-ocaml`". *)
 module Run = Runtime.Dynamic_Runner.Signature
-open Spec_parts_p4.Ctx
+open Spec_parts_p4.Trampoline
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_ML = struct
-  let my_ctx : ctx__ =
+  let trampoline : trampoline__ =
     {
-      iface =
+      interface =
         {
           parse_program = Interface.parse_program;
           call_builtin = Interface.call_builtin;
@@ -30,16 +30,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let clear () = ()
 
   let eval_func name__ typs__ args__ =
-    with_ctx my_ctx (fun () ->
+    with_trampoline trampoline (fun () ->
         Spec_parts_p4.Dispatch.eval_func name__ typs__ args__)
 
   let eval_rel name__ args__ =
-    with_ctx my_ctx (fun () -> Spec_parts_p4.Dispatch.eval_rel name__ args__)
+    with_trampoline trampoline (fun () ->
+        Spec_parts_p4.Dispatch.eval_rel name__ args__)
 
   let eval_program relname__ includes__ path__ =
-    with_ctx my_ctx (fun () ->
+    with_trampoline trampoline (fun () ->
         Spec_parts_p4.Dispatch.eval_program relname__ includes__ path__)
 
   let unmarshal_program value =
-    with_ctx my_ctx (fun () -> Spec_parts_p4.Dispatch.unmarshal_program value)
+    with_trampoline trampoline (fun () ->
+        Spec_parts_p4.Dispatch.unmarshal_program value)
 end
