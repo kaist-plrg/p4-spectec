@@ -485,7 +485,7 @@ module Make (Spec : Spec.S) : Sim.ARCH with type vt = Spec.V.t = struct
 
   let init_pipe (includes_p4 : string list) (filename_p4 : string) : V.t * V.t =
     let value_ctx, value_arch = Spec.Pgm.v1model_init includes_p4 filename_p4 in
-    (V.of_value value_ctx, V.of_value value_arch)
+    (V.unmarshal Typs.eval_context value_ctx, V.unmarshal Typs.arch value_arch)
 
   (* Pipeline driver *)
 
