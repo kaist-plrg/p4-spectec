@@ -16,6 +16,10 @@ let is_cache_on () = !cache
 let handlers : (module HANDLER) list ref = ref []
 let register (handlers_ : (module HANDLER) list) = handlers := handlers_
 
+(* Activity *)
+
+let is_active () : bool = !handlers <> []
+
 (* Initialization and finalization *)
 
 let init_spec (spec : spec) : unit =

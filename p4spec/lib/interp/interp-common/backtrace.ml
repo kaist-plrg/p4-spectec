@@ -3,7 +3,7 @@ open Util.Source
 
 (* Backtraces *)
 
-type trace = region * string
+type trace = region * (unit -> string)
 type backtrace = Err of trace list | Unmatch of trace list
 
 exception Backtrace of backtrace
@@ -16,7 +16,7 @@ let back_failtraces (backtrace : backtrace) : failtrace list =
     | [] -> []
     | (at, msg) :: traces_t ->
         let failtraces = back_failtraces traces_t in
-        [ Failtrace (at, msg, failtraces) ]
+        [ Failtrace (at, msg (), failtraces) ]
   in
   match backtrace with Err traces | Unmatch traces -> back_failtraces traces
 
@@ -25,14 +25,14 @@ let back_failtraces (backtrace : backtrace) : failtrace list =
 let back (backtrace : backtrace) = raise (Backtrace backtrace)
 
 let back_err (at : region) (msg : string) =
-  let traces = [ (at, msg) ] in
+  let traces = [ (at, fun () -> msg) ] in
   raise (Backtrace (Err traces))
 
 let back_unmatch (at : region) (msg : string) =
-  let traces = [ (at, msg) ] in
+  let traces = [ (at, fun () -> msg) ] in
   raise (Backtrace (Unmatch traces))
 
-let back_nest (at : region) (msg : string) (backtrace : backtrace) =
+let back_nest (at : region) (msg : unit -> string) (backtrace : backtrace) =
   let trace = (at, msg) in
   match backtrace with
   | Err traces -> raise (Backtrace (Err (trace :: traces)))
