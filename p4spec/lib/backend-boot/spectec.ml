@@ -262,10 +262,6 @@ module Make_parametric
     (Runner : Run.RUNNER)
     (Interface_SpecTec : INTERFACE_SPECTEC with type vt = V.t)
     () : Run.EXTERN = struct
-  (* Mode initialization *)
-
-  let init_mode _ = ()
-
   (* Caches
    * a meta-cache for storing results of meta-relation and meta-meta-function calls
    * an interface cache for storing results of booting and unbooting values, types, and mixops *)
@@ -300,6 +296,19 @@ module Make_parametric
       CCache.reset cache.meta.rel;
       Interface_SpecTec.cache_disable_reset cache.interface
   end
+
+  (* Mode initialization. Called once per level, right after this level's
+     own [Interp_<mode>.init] has already applied the [-no-cache] flag's
+     initial on/off state (see [runner/make.ml]'s [init]) - so this runs
+     last and wins. Under [ML_mode] the meta-cache's key/value marshal
+     (see [marshal_val_star] below) costs more than just redoing the call:
+     every hit still walks the full native argument tree into a fresh real
+     [Value.t] to hash it, on every single meta-function/meta-relation
+     call the compiled interpreter makes. IL/SL modes pay nothing for that
+     marshal (identity under [V_value]), so they keep the cache. *)
+
+  let init_mode (mode : Run.mode) : unit =
+    match mode with Run.ML_mode -> Cache.cache_off () | _ -> ()
 
   (* Threading extern calls to the runner.
 
