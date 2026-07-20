@@ -207,13 +207,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) : Ctx.t
       =
-    check_back_err
-      (List.length exps = List.length values)
-      (over_region (List.map at exps))
-      (F.asprintf
-         "mismatch in number of expressions and values while assigning, \
-          expected %d value(s) but got %d"
-         (List.length exps) (List.length values));
+    if List.length exps <> List.length values then
+      back_err
+        (over_region (List.map at exps))
+        (F.asprintf
+           "mismatch in number of expressions and values while assigning, \
+            expected %d value(s) but got %d"
+           (List.length exps) (List.length values));
     List.fold_left2 assign_exp ctx exps values
 
   (* Assigning a value to a parameter *)
@@ -226,13 +226,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
-    check_back_err
-      (List.length params = List.length values)
-      (over_region (List.map at params))
-      (F.asprintf
-         "mismatch in number of parameters and values while assigning, \
-          expected %d value(s) but got %d"
-         (List.length params) (List.length values));
+    if List.length params <> List.length values then
+      back_err
+        (over_region (List.map at params))
+        (F.asprintf
+           "mismatch in number of parameters and values while assigning, \
+            expected %d value(s) but got %d"
+           (List.length params) (List.length values));
     List.fold_left2 (assign_param ctx_caller) ctx_callee params values
 
   and assign_param_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
@@ -268,7 +268,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try eval_exp' ctx exp
     with Backtrace backtrace ->
       back_nest exp.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
+        (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
         backtrace
 
   and eval_exp' (ctx : Ctx.t) (exp : exp) : value =
@@ -312,10 +312,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_bool_exp (_typ_note : typ) (ctx : Ctx.t) (b : bool) : value =
     let value_res = Value.Make.bool b in
     Hook.on_value value_res;
-    List.iter
-      (fun value_input ->
-        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input ctx);
+    if Hook.is_active () then
+      List.iter
+        (fun value_input ->
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Numeric expression evaluation *)
@@ -323,10 +324,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_num_exp (_typ_note : typ) (ctx : Ctx.t) (n : Num.t) : value =
     let value_res = Value.Make.num n in
     Hook.on_value value_res;
-    List.iter
-      (fun value_input ->
-        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input ctx);
+    if Hook.is_active () then
+      List.iter
+        (fun value_input ->
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Text expression evaluation *)
@@ -334,10 +336,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_text_exp (_typ_note : typ) (ctx : Ctx.t) (s : string) : value =
     let value_res = Value.Make.text s in
     Hook.on_value value_res;
-    List.iter
-      (fun value_input ->
-        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-      (Ctx.find_values_input ctx);
+    if Hook.is_active () then
+      List.iter
+        (fun value_input ->
+          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+        (Ctx.find_values_input ctx);
     value_res
 
   (* Variable expression evaluation *)
@@ -1029,7 +1032,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try eval_arg' ctx arg
     with Backtrace backtrace ->
       back_nest arg.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
+        (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
         backtrace
 
   and eval_arg' (ctx : Ctx.t) (arg : arg) : value =
@@ -1051,8 +1054,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     try eval_instr' ctx instr
     with Backtrace backtrace ->
       backtrace
-      |> back_nest instr.at
-           (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+      |> back_nest instr.at (fun () ->
+             F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
     let iid = instr.note.iid in
@@ -1215,7 +1218,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       with
       | Backtrace (Unmatch _) -> false
       | Backtrace backtrace ->
-          back_nest id.at "hold condition evaluation failed" backtrace
+          back_nest id.at
+            (fun () -> "hold condition evaluation failed")
+            backtrace
     in
     let value_res = Value.Make.bool hold in
     Hook.on_value value_res;
@@ -1686,7 +1691,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_output
     with Backtrace backtrace ->
       Hook.on_rel_exit id;
-      back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
+      back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
 
   and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list =
@@ -1840,7 +1845,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       value_output
     with Backtrace backtrace ->
       Hook.on_func_exit id;
-      back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
+      back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (targs : targ list) (values_input : value list) (typ_output : typ) : value

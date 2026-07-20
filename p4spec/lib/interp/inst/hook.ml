@@ -16,6 +16,11 @@ let is_cache_on () = !cache
 let handlers : (module HANDLER) list ref = ref []
 let register (handlers_ : (module HANDLER) list) = handlers := handlers_
 
+(* Fast-path guard: instrumentation is only needed when a handler is active.
+   Lets hot interpreter paths skip building dependency-edge arguments and
+   driving per-input loops when no handler is registered. *)
+let is_active () : bool = !handlers <> []
+
 (* Initialization and finalization *)
 
 let init_spec (spec : spec) : unit =
