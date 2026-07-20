@@ -3,10 +3,6 @@ open Util.Source
 
 (* Backtraces *)
 
-(* Trace messages are deferred as thunks. On the hot backtracking path
-   (Unmatch used as control flow) the trace is discarded without ever being
-   forced, so its message string is never built. It is forced only when a
-   backtrace is actually rendered as a failtrace at error-report time. *)
 type trace = region * (unit -> string)
 type backtrace = Err of trace list | Unmatch of trace list
 
@@ -36,8 +32,6 @@ let back_unmatch (at : region) (msg : string) =
   let traces = [ (at, fun () -> msg) ] in
   raise (Backtrace (Unmatch traces))
 
-(* Nesting a descriptive frame; the message is a thunk so it is only built if
-   the resulting backtrace is ever rendered. *)
 let back_nest (at : region) (msg : unit -> string) (backtrace : backtrace) =
   let trace = (at, msg) in
   match backtrace with

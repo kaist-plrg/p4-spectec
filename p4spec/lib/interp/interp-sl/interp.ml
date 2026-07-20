@@ -1691,7 +1691,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       values_output
     with Backtrace backtrace ->
       Hook.on_rel_exit id;
-      back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
+      back_nest id.at
+        (fun () -> F.asprintf "relation %s failed" id.it)
+        backtrace
 
   and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list =
@@ -1845,7 +1847,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       value_output
     with Backtrace backtrace ->
       Hook.on_func_exit id;
-      back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
+      back_nest id.at
+        (fun () -> F.asprintf "function %s failed" id.it)
+        backtrace
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
