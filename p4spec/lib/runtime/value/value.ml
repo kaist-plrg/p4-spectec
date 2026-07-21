@@ -135,7 +135,15 @@ let hash_of (v : value') : int =
 (* Mixops *)
 
 module Mixops = struct
-  let of_string (s : string) : Mixop.t = Frontend.Parse.parse_mixop s
+  let cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
+
+  let of_string (s : string) : Mixop.t =
+    match Hashtbl.find_opt cache s with
+    | Some mixop -> mixop
+    | None ->
+        let mixop = Frontend.Parse.parse_mixop s in
+        Hashtbl.replace cache s mixop;
+        mixop
 
   let of_atoms_matrix (atoms_matrix : Atom.t list list) : Mixop.t =
     atoms_matrix
