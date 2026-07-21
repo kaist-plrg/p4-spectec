@@ -5,6 +5,16 @@ open Util.Error
 
 let version = "0.1"
 
+(* Tune GC for the allocation-heavy meta-circular interpreter *)
+
+let () =
+  Gc.set
+    {
+      (Gc.get ()) with
+      Gc.minor_heap_size = 16 * 1024 * 1024;
+      Gc.space_overhead = 2000;
+    }
+
 exception CommandError of string
 
 (* Commands *)
