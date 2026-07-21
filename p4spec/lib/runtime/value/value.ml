@@ -304,12 +304,13 @@ module Get = struct
       (case_default : value list -> 'a) : 'a =
     match value.it with
     | CaseV valuecase -> (
-        let mixop, values = Mixfix.split valuecase in
-        let cases =
-          List.map (fun (s_mixop, f) -> (Mixops.of_string s_mixop, f)) cases
-        in
+        let values = Mixfix.args valuecase in
         let f_opt =
-          List.find_opt (fun (m, _) -> Mixop.eq m mixop) cases |> Option.map snd
+          List.find_opt
+            (fun (s_mixop, _) ->
+              Mixfix.eq_mixop valuecase (Mixops.of_string s_mixop))
+            cases
+          |> Option.map snd
         in
         match f_opt with Some f -> f values | None -> case_default values)
     | _ -> case_default []
@@ -352,33 +353,32 @@ module Get = struct
   let ( |>> ) (value : t) (s_mixop : string) : value list =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
         let mixop_expect = Mixops.of_string s_mixop in
-        if Mixop.eq mixop mixop_expect then values
+        if Mixfix.eq_mixop valuecase mixop_expect then Mixfix.args valuecase
         else
           error no_region
             (Format.asprintf "expected case with %s, but got %s"
                (Mixop.string_of_mixop mixop_expect)
-               (Mixop.string_of_mixop mixop))
+               (Mixop.string_of_mixop (Mixfix.to_mixop valuecase)))
     | _ -> error no_region "not a case"
 
   let ( |>>! ) (value : t) (mixop_expect : Mixop.t) : value list =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
-        if Mixop.eq mixop mixop_expect then values
+        if Mixfix.eq_mixop valuecase mixop_expect then Mixfix.args valuecase
         else
           error no_region
             (Format.asprintf "expected case with %s, but got %s"
                (Mixop.string_of_mixop mixop_expect)
-               (Mixop.string_of_mixop mixop))
+               (Mixop.string_of_mixop (Mixfix.to_mixop valuecase)))
     | _ -> error no_region "not a case"
 
   let ( |>>? ) (value : t) (s_mixop : string) : value list option =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
         let mixop_expect = Mixops.of_string s_mixop in
-        if Mixop.eq mixop mixop_expect then Some values else None
+        if Mixfix.eq_mixop valuecase mixop_expect then
+          Some (Mixfix.args valuecase)
+        else None
     | _ -> None
 end
