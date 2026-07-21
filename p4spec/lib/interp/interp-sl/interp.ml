@@ -2140,8 +2140,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Entry points for evaluation *)
 
   let clear () : unit =
-    CCache.reset !func_cache;
-    CCache.reset !rel_cache
+    CCache.empty !func_cache;
+    CCache.empty !rel_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try

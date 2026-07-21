@@ -79,22 +79,22 @@ let cache_enable (cache : cache) : unit = cache.enabled <- true
 
 let cache_disable_reset (cache : cache) : unit =
   cache.enabled <- false;
-  MCache.reset cache.boot_mixop;
-  VCache.reset cache.boot_value;
-  VCache.reset cache.boot_value_pingpong;
-  VCache.reset cache.unboot_mixop;
-  VCache.reset cache.unboot_typ;
-  VCache.reset cache.unboot_value;
-  VCache.reset cache.unboot_value_pingpong
+  MCache.empty cache.boot_mixop;
+  VCache.empty cache.boot_value;
+  VCache.empty cache.boot_value_pingpong;
+  VCache.empty cache.unboot_mixop;
+  VCache.empty cache.unboot_typ;
+  VCache.empty cache.unboot_value;
+  VCache.empty cache.unboot_value_pingpong
 
 let cache_clear (cache : cache) : unit =
-  MCache.clear cache.boot_mixop;
-  VCache.clear cache.boot_value;
-  VCache.clear cache.boot_value_pingpong;
-  VCache.clear cache.unboot_mixop;
-  VCache.clear cache.unboot_typ;
-  VCache.clear cache.unboot_value;
-  VCache.clear cache.unboot_value_pingpong
+  MCache.empty cache.boot_mixop;
+  VCache.empty cache.boot_value;
+  VCache.empty cache.boot_value_pingpong;
+  VCache.empty cache.unboot_mixop;
+  VCache.empty cache.unboot_typ;
+  VCache.empty cache.unboot_value;
+  VCache.empty cache.unboot_value_pingpong
 
 (* Stack of caches, where the stack is pushed along calls that climb tower levels,
    and popped along call returns that descend tower levels *)

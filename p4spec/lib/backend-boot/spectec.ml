@@ -214,8 +214,8 @@ module Make_parametric
 
     let cache_off () =
       cache.meta.enabled <- false;
-      CCache.reset cache.meta.func;
-      CCache.reset cache.meta.rel;
+      CCache.empty cache.meta.func;
+      CCache.empty cache.meta.rel;
       Interface_SpecTec.cache_disable_reset cache.interface
   end
 
@@ -445,6 +445,6 @@ module Make_parametric
 
   let clear () : unit =
     clear_cache_interface ();
-    CCache.clear cache.meta.func;
-    CCache.clear cache.meta.rel
+    CCache.empty cache.meta.func;
+    CCache.empty cache.meta.rel
 end
