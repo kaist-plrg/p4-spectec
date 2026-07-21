@@ -39,31 +39,10 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
-  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
-    let value_ctx, value_name_func, value_names_param =
-      match values_input with
-      | [ value_ctx; value_name_func; value_names_param ] ->
-          (value_ctx, value_name_func, value_names_param)
-      | _ ->
-          error_no_region
-            "unexpected number of arguments to local compile-time known extern \
-             function call"
-    in
-    let name_func = Value.Get.text value_name_func in
-    let names_param =
-      value_names_param |> Value.Get.list |> List.map Value.Get.text
-    in
-    match (name_func, names_param) with
-    | "static_assert", [ "check"; "message" ] ->
-        [ Core.Func.static_assert ~message:true value_ctx ]
-    | "static_assert", [ "check" ] ->
-        [ Core.Func.static_assert ~message:false value_ctx ]
-    | _ ->
-        error_no_region
-          ("unsupported local compile-time known extern function call: "
-         ^ name_func ^ "("
-          ^ String.concat ", " names_param
-          ^ ")")
+  let eval_extern_func_lctk_call =
+    error_no_region
+      "eval_extern_func_lctk_call is not implemented for the nano-switch \
+       simulator"
 
   let eval_extern_func_call (values_input : Value.t list) : Value.t list =
     let value_ctx, value_arch, value_name_func, value_names_param =
@@ -117,9 +96,6 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
             let pkt, bits =
               Core.Object.PacketIn.parse pkt nano_switch_header_size
             in
-            (* Use $find_var_e(LOCAL, EC, nameIR) and $update_var_e(LOCAL, EC, nameIR, value)
-               from the nano spec directly via the Spec.Func trampoline.
-               These have nano-specific argument shapes, distinct from the main spec wrappers. *)
             let value_scope_local = Value.Make.("LOCAL" <| [] <<| "scope") in
             let find_var_local (ec : Value.t) (name : string) : Value.t =
               !Spec.Func.call "find_var_e" []
