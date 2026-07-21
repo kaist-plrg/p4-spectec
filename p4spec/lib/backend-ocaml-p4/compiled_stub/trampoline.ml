@@ -1,4 +1,4 @@
-(* Stub Trampoline for the [spec_parts] library — copied into [compiled/] by
+(* Stub Trampoline for the [spec_parts_p4] library — copied into [compiled/] by
    `make restore-stub` so plain `make build` never compiles the heavy generated
    parts. Overwritten by `make gen-ocaml`.
 

@@ -62,6 +62,6 @@ module Make () : RUNNER = struct
   include (
     Runner.Make.Make_rec (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
       (Interp_sl.Interp.Make)
-      (Backend_ocaml.Interp_ml.Make) :
+      (Backend_ocaml_p4.Interp_ml.Make) :
         RUNNER)
 end

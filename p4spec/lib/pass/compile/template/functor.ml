@@ -15,7 +15,7 @@ let eval_program (relname__ : string) (includes__ : string list)
 |}
 
 (* Thin [interp_ml.ml] shell.
-   Compiled code lives in the separate [spec_parts] library *)
+   Compiled code lives in the separate [spec_parts_<name>] library *)
 
 let make (name : string) : string =
   let module_name = Split.name_module name in

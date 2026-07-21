@@ -1,4 +1,4 @@
-(* Stub Dispatch for the [spec_parts] library — copied into [compiled/] by
+(* Stub Dispatch for the [spec_parts_p4] library — copied into [compiled/] by
    `make restore-stub`. Every entry point fails, telling the user to generate
    the real interpreter. Overwritten by `make gen-ocaml`. *)
 

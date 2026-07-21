@@ -1,9 +1,9 @@
 (* Stub thin shell — copied to interp_ml.ml by `make restore-stub`,
    overwritten by `make gen-ocaml`. Identical in shape to the generated shell;
-   it routes through the stub [spec_parts] (compiled_stub/), whose dispatch
+   it routes through the stub [spec_parts_p4] (compiled_stub/), whose dispatch
    entry points fail with "run `make gen-ocaml`". *)
 module Run = Runtime.Dynamic_Runner.Signature
-open Spec_parts.Trampoline
+open Spec_parts_p4.Trampoline
 
 module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   Run.INTERP_ML = struct
@@ -31,13 +31,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   let eval_func name__ typs__ args__ =
     with_trampoline trampoline (fun () ->
-        Spec_parts.Dispatch.eval_func name__ typs__ args__)
+        Spec_parts_p4.Dispatch.eval_func name__ typs__ args__)
 
   let eval_rel name__ args__ =
     with_trampoline trampoline (fun () ->
-        Spec_parts.Dispatch.eval_rel name__ args__)
+        Spec_parts_p4.Dispatch.eval_rel name__ args__)
 
   let eval_program relname__ includes__ path__ =
     with_trampoline trampoline (fun () ->
-        Spec_parts.Dispatch.eval_program relname__ includes__ path__)
+        Spec_parts_p4.Dispatch.eval_program relname__ includes__ path__)
 end

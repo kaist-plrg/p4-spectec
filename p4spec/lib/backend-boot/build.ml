@@ -9,7 +9,7 @@ end
 
 let interp_ml_of_interface (interface : Config.interface) : (module INTERP_ML) =
   match interface with
-  | Config.P4_interface -> (module Backend_ocaml.Interp_ml : INTERP_ML)
+  | Config.P4_interface -> (module Backend_ocaml_p4.Interp_ml : INTERP_ML)
   | Config.IL_interface -> (module Backend_ocaml_il.Interp_ml : INTERP_ML)
   | Config.SL_interface -> (module Backend_ocaml_sl.Interp_ml : INTERP_ML)
 
