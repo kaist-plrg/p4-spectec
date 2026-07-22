@@ -43,14 +43,14 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
                 typfields valuefields
           | VariantT typcases, CaseV valuecase ->
               let theta = TIdMap.of_lists tparams targs in
-              let mixop_v, values = Mixfix.split valuecase in
+              let values = Mixfix.args valuecase in
               List.exists
-                (fun typcase ->
-                  let nottyp, _, _ = typcase in
+                (fun (nottyp, _, _) ->
+                  Mixfix.eq_mixop nottyp.it valuecase
+                  &&
                   let nottyp = Type.Subst.subst_nottyp theta nottyp in
-                  let mixop_t, typs = Mixfix.split nottyp.it in
-                  Mixop.eq mixop_t mixop_v
-                  && subs_ find_typdef_opt find_func typs values)
+                  let typs = Mixfix.args nottyp.it in
+                  subs_ find_typdef_opt find_func typs values)
                 typcases
           | _ -> false))
   | TupleT typs -> (

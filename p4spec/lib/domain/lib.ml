@@ -35,8 +35,8 @@ module VId = struct
   type t = int
 
   let to_string t = string_of_int t
-  let compare t_a t_b = compare t_a t_b
-  let eq t_a t_b = compare t_a t_b = 0
+  let compare t_a t_b = Int.compare t_a t_b
+  let eq t_a t_b = Int.equal t_a t_b
   let hash t = Hashtbl.hash t
 end
 
@@ -109,8 +109,8 @@ module Id = struct
   type t = string phrase
 
   let to_string t = t.it
-  let compare t_a t_b = compare t_a.it t_b.it
-  let eq t_a t_b = compare t_a t_b = 0
+  let compare t_a t_b = String.compare t_a.it t_b.it
+  let eq t_a t_b = String.equal t_a.it t_b.it
   let hash t = Hashtbl.hash t.it
   let is_underscored t = String.starts_with ~prefix:"_" t.it
 

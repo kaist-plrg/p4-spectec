@@ -79,7 +79,12 @@ type t =
 [@@@ocamlformat "enable"]
 
 let compare atom_a atom_b = compare atom_a atom_b
-let eq atom_a atom_b = atom_a = atom_b
+
+let eq (atom_a : t) (atom_b : t) : bool =
+  match (atom_a, atom_b) with
+  | Atom id_a, Atom id_b | SilentAtom id_a, SilentAtom id_b ->
+      String.equal id_a id_b
+  | _ -> atom_a = atom_b
 
 let string_of_atom = function
   | Atom id -> id
