@@ -118,6 +118,7 @@ let compile_targs (tparams_ml : Ml.tparam list) : Ml.expr =
 
 let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
     (params : param list) (typ_ret : typ) : Ml.funcdef =
+  ignore ctx;
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -137,16 +138,12 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
           ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
-  (* Marshal each parameter before crossing into the extern *)
+  (* Smuggle typed [Obj.t] inputs through the [Value.t list] boundary *)
   let vars_marshal_ml, exprs_marshal_ml =
-    List.mapi
-      (fun i typ ->
-        let converter = Interface.Converter.resolve ctx tparams typ in
+    List.init n (fun i ->
         ( "v__" ^ string_of_int i,
-          Interface.Converter.apply_converter (string_of_int i)
-            converter.marshal
-            (Ml.VarE ("p__" ^ string_of_int i)) ))
-      typs_param
+          Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE ("p__" ^ string_of_int i) ])
+        ))
     |> List.split
   in
   let chain_marshal =
@@ -161,20 +158,20 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
   let exprs_targ_ml = compile_targs tparams_ml in
-  (* Call the extern, unmarshal its result *)
+  (* Call the extern, casting its smuggled output back to its OCaml type *)
   let expr_call_ml =
     Ml.AppE
       ( Interface.Trampoline.eval_extern_func,
         [ Ml.StrE id.it; exprs_targ_ml; exprs_arg_ml ] )
   in
-  let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
   let expr_result_ml =
     Ml.MatchE
       ( expr_call_ml,
         [
           ( Ml.VariantP (`Mono ("Run.Pass", [ Ml.VarP "v_out__" ])),
-            Interface.Converter.apply_converter "ret__" converter_ret.unmarshal
-              (Ml.VarE "v_out__") );
+            Ml.AnnotE
+              (Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]), typ_ret_ml)
+          );
           ( Ml.VariantP (`Mono ("Run.Fail", [ Ml.WildP; Ml.VarP "msg__" ])),
             Ml.AppE
               ( Ml.LitE "raise",
@@ -191,16 +188,23 @@ let compile_extern_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
 
 (* Builtin function: [builtin def $f<X, ..>(t1, .., tn) : tret]
 
+   Compiled builtin code runs only under ML, where [call_builtin] routes to the
+   [V_native] builtin instance ([Obj.magic] box/unbox). So smuggle typed [Obj.t]
+   inputs through the [Value.t list] boundary and cast the result back, uniform
+   with the extern bypass — no deep marshal (which would hand the builtin a real
+   [Value.t] the [V_native] instance then misreads).
+
    [let f_id (marshal__x, unmarshal__x, ..) (p__0 : t1_ml) .. =
-      let v__0 = marshal__0 (p__0) in ..
+      let v__0 = Obj.magic p__0 in ..
       let v_out__ =
         try call_builtin (fun _ -> ()) "f" (compile_targs) [v__0; ..]
         with Util.Error.BuiltinError (_, msg__) -> raise (Unmatch msg__)
       in
-      unmarshal__ret (v_out__)] *)
+      (Obj.magic v_out__ : tret_ml)] *)
 
 let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
     (params : param list) (typ_ret : typ) : Ml.funcdef =
+  ignore ctx;
   let id_ml = Names.func id in
   let tparams_ml = List.map Names.tvar tparams in
   let tparams = List.map it tparams in
@@ -220,16 +224,12 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
           ("p__" ^ string_of_int i, Some (Type.compile_typ ~tparams typ)))
         typs_param
   in
-  (* Marshal each parameter before crossing into the builtin *)
+  (* Smuggle typed [Obj.t] inputs through the [Value.t list] boundary *)
   let vars_marshal_ml, exprs_marshal_ml =
-    List.mapi
-      (fun i typ ->
-        let converter = Interface.Converter.resolve ctx tparams typ in
+    List.init n (fun i ->
         ( "v__" ^ string_of_int i,
-          Interface.Converter.apply_converter (string_of_int i)
-            converter.marshal
-            (Ml.VarE ("p__" ^ string_of_int i)) ))
-      typs_param
+          Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE ("p__" ^ string_of_int i) ])
+        ))
     |> List.split
   in
   let chain_marshal =
@@ -266,14 +266,13 @@ let compile_builtin_func (ctx : Ctx.t) (id : id) (tparams : Il.tparam list)
                 [ Ml.AppE (Ml.LitE "Unmatch", [ Ml.VarE "msg__" ]) ] ) );
         ] )
   in
-  (* Unmarshal the result *)
-  let converter_ret = Interface.Converter.resolve ctx tparams typ_ret in
+  (* Cast the smuggled output back to its OCaml type *)
   let expr_result_ml =
     Ml.LetE
       ( Ml.VarP "v_out__",
         expr_try_ml,
-        Interface.Converter.apply_converter "ret__" converter_ret.unmarshal
-          (Ml.VarE "v_out__") )
+        Ml.AnnotE
+          (Ml.AppE (Ml.LitE "Obj.magic", [ Ml.VarE "v_out__" ]), typ_ret_ml) )
   in
   (* Chain bindings *)
   let chain = Chain.connect [ Interface.Trampoline.chain; chain_marshal ] in

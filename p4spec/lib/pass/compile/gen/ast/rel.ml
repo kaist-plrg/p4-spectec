@@ -20,15 +20,12 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
         ("param__" ^ string_of_int i, Some typ_ml))
       typs_input
   in
-  (* Marshal inputs *)
+  (* Pass typed [Obj.t] inputs through the [Value.t list] boundary *)
   let vars_marshal_ml, exprs_marshal_ml =
-    List.mapi
-      (fun i typ ->
+    List.init n (fun i ->
         ( "v__" ^ string_of_int i,
           Ml.AppE
-            ( Ml.VarE ("marshal_" ^ Interface.Naming.name typ),
-              [ Ml.VarE ("param__" ^ string_of_int i) ] ) ))
-      typs_input
+            (Ml.LitE "Obj.magic", [ Ml.VarE ("param__" ^ string_of_int i) ]) ))
     |> List.split
   in
   let chain_marshal =
@@ -41,18 +38,20 @@ let compile_extern_rel (_ctx : Ctx.t) (id : id)
   let exprs_arg_ml =
     Ml.ListE (List.init n (fun i -> Ml.VarE ("v__" ^ string_of_int i)))
   in
-  (* Unmarshal outputs from Pass value list *)
+  (* Cast outputs back from the [Value.t list] to their OCaml types *)
   let expr_unmarshal_body_ml =
     let exprs_out_ml =
       List.mapi
         (fun i (typ : Sl.typ) ->
-          Ml.AppE
-            ( Ml.VarE ("unmarshal_" ^ Interface.Naming.name typ),
-              [
-                Ml.AppE
-                  ( Ml.LitE "List.nth",
-                    [ Ml.VarE "vs_out__"; Ml.LitE (string_of_int i) ] );
-              ] ))
+          Ml.AnnotE
+            ( Ml.AppE
+                ( Ml.LitE "Obj.magic",
+                  [
+                    Ml.AppE
+                      ( Ml.LitE "List.nth",
+                        [ Ml.VarE "vs_out__"; Ml.LitE (string_of_int i) ] );
+                  ] ),
+              Type.compile_typ ~tparams:[] typ ))
         typs_output
     in
     match exprs_out_ml with [] -> Ml.UnitE | [ e ] -> e | es -> Ml.TupleE es
