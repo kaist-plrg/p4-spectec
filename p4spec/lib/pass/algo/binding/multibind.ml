@@ -33,17 +33,17 @@ let gen_sidecondition (benv : Bind.BEnv.t) (iterctx : Iterctx.t) (id : Id.t)
   let exp =
     let exp =
       let exp_l = VarE id $$ (id.at, typ.it) in
-      let exp_r = VarE id_rename $$ (id_rename.at, typ.it) in
-      CmpE (`EqOp, `BoolT, exp_l, exp_r) $$ (id_rename.at, BoolT)
+      let exp_r = VarE id_rename $$ (id.at, typ.it) in
+      CmpE (`EqOp, `BoolT, exp_l, exp_r) $$ (id.at, BoolT)
     in
     List.fold_left
       (fun exp_l id_rename ->
         let exp_r =
           let exp_l = VarE id $$ (id.at, typ.it) in
-          let exp_r = VarE id_rename $$ (id_rename.at, typ.it) in
-          CmpE (`EqOp, `BoolT, exp_l, exp_r) $$ (id_rename.at, BoolT)
+          let exp_r = VarE id_rename $$ (id.at, typ.it) in
+          CmpE (`EqOp, `BoolT, exp_l, exp_r) $$ (id.at, BoolT)
         in
-        BinE (`AndOp, `BoolT, exp_l, exp_r) $$ (id_rename.at, BoolT))
+        BinE (`AndOp, `BoolT, exp_l, exp_r) $$ (id.at, BoolT))
       exp ids_rename
   in
   let sidecondition = IfPr exp $ id.at in

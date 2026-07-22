@@ -1079,15 +1079,7 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
               let id, targs_il = typorigin_il.it in
               Il.VarT (id, targs_il) $ typorigin_il.at
             in
-            let exp_il =
-              let atoms = Mixfix.atoms notexp_il in
-              let at =
-                match atoms with
-                | [] -> exp_list_region (Mixfix.args notexp_il)
-                | _ -> atoms |> List.map at |> over_region
-              in
-              Il.CaseE notexp_il $$ (at, typ_il.it)
-            in
+            let exp_il = Il.CaseE notexp_il $$ (exp.at, typ_il.it) in
             let+ exp_il = cast_exp ctx typ_il_expect typ_il exp_il in
             (ctx, exps_il @ [ exp_il ])
         | Fail _ -> (ctx, exps_il))

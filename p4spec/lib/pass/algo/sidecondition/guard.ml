@@ -194,46 +194,54 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
       let exp_a = gen_eq_epsilon_exp iter var_a in
       let exp_b = gen_eq_epsilon_exp iter var_b in
       let exp_if =
-        Il.BinE (`EquivOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
+        let at = over_region [ exp_a.at; exp_b.at ] in
+        Il.BinE (`EquivOp, `BoolT, exp_a, exp_b)
+        $$ (at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
           (fun (exp_prev, exp_if) var ->
             let exp = gen_eq_epsilon_exp iter var in
             let exp_bin =
+              let at = over_region [ exp_prev.at; exp.at ] in
               Il.BinE (`EquivOp, `BoolT, exp_prev, exp)
-              $$ (exp_prev.at, Typ.Make.bool')
+              $$ (at, Typ.Make.bool')
             in
             let exp_if =
+              let at = over_region [ exp_if.at; exp_bin.at ] in
               Il.BinE (`AndOp, `BoolT, exp_if, exp_bin)
-              $$ (exp_if.at, Typ.Make.bool')
+              $$ (at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars
       in
-      [ Il.IfPr exp_if $ no_region ]
+      [ Il.IfPr exp_if $ exp_if.at ]
   | var_a :: var_b :: vars when iter = List ->
       let exp_a = gen_len_exp iter var_a in
       let exp_b = gen_len_exp iter var_b in
       let exp_if =
-        Il.CmpE (`EqOp, `BoolT, exp_a, exp_b) $$ (exp_a.at, Typ.Make.bool')
+        let at = over_region [ exp_a.at; exp_b.at ] in
+        Il.CmpE (`EqOp, `BoolT, exp_a, exp_b)
+        $$ (at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
           (fun (exp_prev, exp_if) var ->
             let exp = gen_len_exp iter var in
             let exp_cmp =
+              let at = over_region [ exp_prev.at; exp.at ] in
               Il.CmpE (`EqOp, `BoolT, exp_prev, exp)
-              $$ (exp_prev.at, Typ.Make.bool')
+              $$ (at, Typ.Make.bool')
             in
             let exp_if =
+              let at = over_region [ exp_if.at; exp_cmp.at ] in
               Il.BinE (`AndOp, `BoolT, exp_if, exp_cmp)
-              $$ (exp_if.at, Typ.Make.bool')
+              $$ (at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars
       in
-      [ Il.IfPr exp_if $ no_region ]
+      [ Il.IfPr exp_if $ exp_if.at ]
   | _ -> []
 
 let collector : Result.t Walk.Collect.collector =

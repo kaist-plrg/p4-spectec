@@ -142,7 +142,8 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     match (exp_template.it, exp.it) with
     | VarE id_template, _ when IdSet.mem id_template unifiers ->
         let exp_match =
-          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (exp.at, BoolT)
+          let at = over_region [ exp_template.at; exp.at ] in
+          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (at, BoolT)
         in
         let prem_match = IfPr exp_match $ exp_match.at in
         [ prem_match ]
@@ -162,7 +163,8 @@ let rec populate_exp (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
         populate_exps unifiers exps_template exps
     | _ ->
         let exp_match =
-          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (exp.at, BoolT)
+          let at = over_region [ exp_template.at; exp.at ] in
+          CmpE (`EqOp, `BoolT, exp_template, exp) $$ (at, BoolT)
         in
         let prem_match = IfPr exp_match $ exp_match.at in
         [ prem_match ]
