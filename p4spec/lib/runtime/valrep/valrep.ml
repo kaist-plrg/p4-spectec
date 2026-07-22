@@ -9,3 +9,4 @@ module type UNSAFE = Sig.UNSAFE
 module type VAL = Sig.VAL
 
 module V_value = Val_value.V_value
+module Dispatch = Dispatch
