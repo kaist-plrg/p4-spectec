@@ -28,7 +28,8 @@ module CallEntry = struct
     | _ -> false
 
   let equal ((id_a, values_a) : t) ((id_b, values_b) : t) : bool =
-    if id_a <> id_b then false else equal_values values_a values_b
+    if not (String.equal id_a id_b) then false
+    else equal_values values_a values_b
 
   let hash ((id, values) : t) : int =
     let h = ref ((Hashtbl.hash id * 31) + 17) in
