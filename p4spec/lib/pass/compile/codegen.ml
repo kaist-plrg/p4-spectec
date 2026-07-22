@@ -61,6 +61,7 @@ let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
       Ml.Raw Template.Converter.converter_table;
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.LetRec [ funcdef_eval_func_native_ml; funcdef_eval_rel_native_ml ];
+      Ml.Raw (Template.Functor.unmarshal_program tid_program);
       Ml.Raw Template.Functor.eval_program;
       (* Typed bridges — stable re-exports so [V_native] can bind them at
          [Spec_parts_*.Dispatch.*]. *)

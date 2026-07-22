@@ -26,3 +26,6 @@ let eval_program (_relname : string) (_includes : string list) (_path : string)
   Fail
     (`Runtime
        (no_region, "ML interpreter: run `make gen-ocaml-il` to generate it"))
+
+let unmarshal_program (_value : Value.t) : Value.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
