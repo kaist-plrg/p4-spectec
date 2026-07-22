@@ -12,7 +12,7 @@ let prepare_dir (dir : string) : unit =
 
 (* Entry point *)
 
-let compile_spec ?(name = "") (path_out : string)
+let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
     (path_out_unparse : string option) (loc_split : int) (spec : Sl.spec) =
   (* Initialize context *)
   let ctx = Ctx.init spec in
@@ -32,7 +32,7 @@ let compile_spec ?(name = "") (path_out : string)
   let toplevels_interface_ml =
     let typs = Gen.Interface.Collect.collect_types ctx spec in
     let typs_groups = Scc.Converter.compute ctx typs in
-    Gen.Interface.compile ctx typs typs_groups
+    Gen.Interface.compile ctx typs typs_groups ~tid_program
   in
   (* Relations and functions *)
   let ctx, toplevels_groups_ml =
@@ -57,6 +57,10 @@ let compile_spec ?(name = "") (path_out : string)
       Ml.Raw Template.Converter.converter_table;
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.Raw Template.Functor.eval_program;
+      (* Typename-indexed marshal/unmarshal — stable re-exports so
+         [V_native] can bind them at [Spec_parts_*.Dispatch.*]. *)
+      Ml.Let ("marshal_typed", Ml.VarE "marshal_typed");
+      Ml.Let ("unmarshal_typed", Ml.VarE "unmarshal_typed");
     ]
   in
   (* Concatenate the top-level definitions and split into buckets *)
