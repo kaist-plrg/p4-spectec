@@ -597,7 +597,7 @@ and infer_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) :
     |> fun typfield_opt ->
     match typfield_opt with
     | Some (_, typ_il) -> Ok typ_il
-    | None -> fail exp.at "cannot infer type of field"
+    | None -> fail atom.at "cannot infer type of field"
   in
   let exp_il = Il.DotE (exp_il, atom) in
   Ok (ctx, exp_il, typ_il.it)
