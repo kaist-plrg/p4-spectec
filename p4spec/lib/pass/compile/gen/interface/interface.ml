@@ -36,9 +36,15 @@ let compile (ctx : Ctx.t) (typs : Sl.typ list) (typs_groups : Sl.typ list list)
   let toplevel_typed_ml =
     funcdefs_typed_ml |> List.map (fun fd -> Ml.LetRec [ fd ])
   in
+  (* [case_of_typed]/[make_case_typed] share the marshal const pool (interned
+     mixops) — thread [pool] through so its extra consts are emitted below. *)
+  let pool, funcdefs_case_ml = Typed.compile_case_dispatch ctx pool typs in
+  let toplevel_case_ml =
+    funcdefs_case_ml |> List.map (fun fd -> Ml.LetRec [ fd ])
+  in
   let toplevel_consts_ml =
     List.rev_map (fun (var, expr_ml) -> Ml.Let (var, expr_ml)) pool.consts
   in
   let toplevel_converter_table_ml = Converter.compile_converter_table typs in
   toplevel_consts_ml @ toplevel_marshals_ml @ toplevel_unmarshals_ml
-  @ toplevel_typed_ml @ [ toplevel_converter_table_ml ]
+  @ toplevel_typed_ml @ toplevel_case_ml @ [ toplevel_converter_table_ml ]

@@ -57,10 +57,12 @@ let compile_spec ?(name = "") ~(tid_program : string) (path_out : string)
       Ml.Raw Template.Converter.converter_table;
       Ml.LetRec [ funcdef_eval_func_ml; funcdef_eval_rel_ml ];
       Ml.Raw Template.Functor.eval_program;
-      (* Typename-indexed marshal/unmarshal — stable re-exports so
-         [V_native] can bind them at [Spec_parts_*.Dispatch.*]. *)
+      (* Typed bridges — stable re-exports so [V_native] can bind them at
+         [Spec_parts_*.Dispatch.*]. *)
       Ml.Let ("marshal_typed", Ml.VarE "marshal_typed");
       Ml.Let ("unmarshal_typed", Ml.VarE "unmarshal_typed");
+      Ml.Let ("case_of_typed", Ml.VarE "case_of_typed");
+      Ml.Let ("make_case_typed", Ml.VarE "make_case_typed");
     ]
   in
   (* Concatenate the top-level definitions and split into buckets *)
