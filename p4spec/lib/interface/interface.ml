@@ -100,10 +100,10 @@ end
 (* SpecTec IL *)
 
 module SpecTec_IL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Ili.Boot
-  include Spectec.Ili.Unboot
+  (* [Ili.*.Make (V)] already includes [Common.*.Make (V)]. Instantiated at
+     [V_value]; a later task turns this module into a proper [Make (V)]. *)
+  include Spectec.Ili.Boot.Make (Runtime.Valrep.V_value)
+  include Spectec.Ili.Unboot.Make (Runtime.Valrep.V_value)
   include Spectec.Caches
 
   (* Program parsing *)
@@ -156,10 +156,10 @@ end
 (* SpecTec SL *)
 
 module SpecTec_SL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Sli.Boot
-  include Spectec.Sli.Unboot
+  (* [Sli.*.Make (V)] already includes [Common.*.Make (V)]. Instantiated at
+     [V_value]; a later task turns this module into a proper [Make (V)]. *)
+  include Spectec.Sli.Boot.Make (Runtime.Valrep.V_value)
+  include Spectec.Sli.Unboot.Make (Runtime.Valrep.V_value)
   include Spectec.Caches
 
   (* Program parsing *)
