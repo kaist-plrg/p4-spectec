@@ -64,7 +64,7 @@ let rec interface_name_ (typ : Typ.t) : string =
 
 exception NoConverter of string
 
-let find_converter_dynamic (typ : Typ.t) : Obj.t * Obj.t =
+let find_converter_dynamic (typ : Typ.t) : Obj.t * Obj.t * Obj.t * Obj.t =
   let name = interface_name_ typ in
   match Hashtbl.find_opt interface_registry_ name with
   | Some entry -> entry

@@ -29,14 +29,81 @@ open Util.Source
    (the "list" layer is handled the same way it would be for [List<int>];
    the "X" layer just plugs in the closure already in scope, [marshal__x]) *)
 
-(* A boundary-call converter *)
+(* A boundary-call converter: [marshal]/[unmarshal] cross the [Value.t] edge,
+   [hash]/[eq] give a value's structural hash/equality without leaving native
+   form (a wrapped node's [hash] is an O(1) slot read) *)
 
-type t = { marshal : Ml.expr; unmarshal : Ml.expr }
+type t = {
+  marshal : Ml.expr;
+  unmarshal : Ml.expr;
+  hash : Ml.expr;
+  eq : Ml.expr;
+}
 
 (* Naming *)
 
 let name_marshal (tvar : string) = "marshal__" ^ tvar
 let name_unmarshal (tvar : string) = "unmarshal__" ^ tvar
+let name_hash (tvar : string) = "hash__" ^ tvar
+let name_eq (tvar : string) = "eq__" ^ tvar
+
+(* A wrapped node's hash is its stored slot; its structural eq is the poly
+   [eq_<base>] applied to the element eqs *)
+
+(* [.Il.vhash] is qualified because this closure's [x__] is unannotated, so the
+   field cannot be disambiguated by type *)
+
+let expr_slot_hash : Ml.expr =
+  Ml.FunE
+    ([ Ml.VarP "x__" ], Ml.FieldE (Ml.FieldE (Ml.VarE "x__", "note"), "Il.vhash"))
+
+(* Wrap a raw composite body [expr_body_ml] into a note-carrying value, stamping
+   a fresh vid, the reified typ, and the incremental vhash [expr_hash_ml] (which
+   folds over [body__]) *)
+
+let wrap_note (tparams : string list) (typ : Sl.typ) (expr_body_ml : Ml.expr)
+    (expr_hash_ml : Ml.expr) : Ml.expr =
+  Ml.LetE
+    ( Ml.VarP "body__",
+      expr_body_ml,
+      Ml.BinopE
+        ( "$$",
+          Ml.VarE "body__",
+          Ml.TupleE
+            [
+              Ml.LitE "no_region";
+              Ml.RecordE
+                [
+                  ("Il.vid", Ml.AppE (Ml.LitE "Value.fresh", []));
+                  ( "typ",
+                    Ml.LetE
+                      ( Ml.VarP "typ__w",
+                        Dynamic_gen.make_typ_expr ~tparams typ,
+                        Ml.FieldE (Ml.VarE "typ__w", "it") ) );
+                  ("vhash", expr_hash_ml);
+                ];
+            ] ) )
+
+(* == / vid / vhash short-circuit, then the structural comparison [expr_cmp_ml]
+   over the two bodies [l__.it]/[r__.it] *)
+
+let eq_composite_ladder (expr_cmp_ml : Ml.expr) : Ml.expr =
+  let note_of id_ml field_ml =
+    Ml.FieldE (Ml.FieldE (Ml.VarE id_ml, "note"), field_ml)
+  in
+  Ml.FunE
+    ( [ Ml.VarP "l__"; Ml.VarP "r__" ],
+      Ml.BinopE
+        ( "||",
+          Ml.BinopE ("==", Ml.VarE "l__", Ml.VarE "r__"),
+          Ml.BinopE
+            ( "||",
+              Ml.BinopE ("=", note_of "l__" "Il.vid", note_of "r__" "Il.vid"),
+              Ml.BinopE
+                ( "&&",
+                  Ml.BinopE
+                    ("=", note_of "l__" "Il.vhash", note_of "r__" "Il.vhash"),
+                  expr_cmp_ml ) ) ) )
 
 (* Application *)
 
@@ -79,31 +146,38 @@ let rec resolve ?(visiting : string list = []) (ctx : Ctx.t)
   | Il.VarT (id, []) when List.mem id.it tparams -> resolve_var_typ_tparam id
   | Il.VarT (id, targs) when Type.is_generic tparams typ ->
       resolve_var_typ ~visiting ctx tparams typ id targs
-  | Il.TupleT typs when Type.is_generic tparams typ ->
-      resolve_tuple_typ ~visiting ctx tparams typ typs
-  | Il.IterT (t, Il.Opt) when Type.is_generic tparams t ->
-      resolve_opt_typ ~visiting ctx tparams typ t
-  | Il.IterT (t, Il.List) when Type.is_generic tparams t ->
-      resolve_list_typ ~visiting ctx tparams typ t
-  | _ when Type.is_generic tparams typ -> resolve_unsupported typ
+  | Il.VarT (id, targs) ->
+      resolve_var_typ_ground ~visiting ctx tparams typ id targs
+  (* composites resolve to closures over the element converters even when
+     ground, so a composite (e.g. [infer?]) never needs a mono function that
+     the marshal-driven [Collect] may not have produced *)
+  | Il.TupleT typs -> resolve_tuple_typ ~visiting ctx tparams typ typs
+  | Il.IterT (t, Il.Opt) -> resolve_opt_typ ~visiting ctx tparams typ t
+  | Il.IterT (t, Il.List) -> resolve_list_typ ~visiting ctx tparams typ t
   | _ -> resolve_ground typ
 
 (* Ground type *)
 
 and resolve_ground (typ : Sl.typ) : t =
   let name = Naming.name typ in
-  let expr_marshal_ml = Ml.VarE ("marshal_" ^ name) in
-  let expr_unmarshal_ml = Ml.VarE ("unmarshal_" ^ name) in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  {
+    marshal = Ml.VarE ("marshal_" ^ name);
+    unmarshal = Ml.VarE ("unmarshal_" ^ name);
+    hash = Ml.VarE ("hash_" ^ name);
+    eq = Ml.VarE ("eq_" ^ name);
+  }
 
 (* Bare type parameter
 
    - the converter is just the caller-supplied dictionary entry *)
 
 and resolve_var_typ_tparam (id : Sl.id) : t =
-  let expr_marshal_ml = Ml.VarE (name_marshal (Names.tvar id)) in
-  let expr_unmarshal_ml = Ml.VarE (name_unmarshal (Names.tvar id)) in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  {
+    marshal = Ml.VarE (name_marshal (Names.tvar id));
+    unmarshal = Ml.VarE (name_unmarshal (Names.tvar id));
+    hash = Ml.VarE (name_hash (Names.tvar id));
+    eq = Ml.VarE (name_eq (Names.tvar id));
+  }
 
 (* Variable type *)
 
@@ -118,43 +192,119 @@ and resolve_var_typ ~(visiting : string list) (ctx : Ctx.t)
          id.it)
   else resolve_typdef ~visiting:(id.it :: visiting) ctx tparams typ id targs
 
+(* Ground variable type: mono marshal/unmarshal, but hash is the poly base's
+   slot read and eq the poly base applied to the arg eqs, so a parametric
+   instantiation never needs a mono hash/eq that may not have been collected *)
+
+and resolve_var_typ_ground ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) (id : Sl.id) (targs : Sl.targ list) :
+    t =
+  match Ctx.find_typdef ctx id with
+  | Typdef.Defined (tparams_def, deftyp) -> (
+      let theta = Domain.Lib.TIdMap.of_lists tparams_def targs in
+      match deftyp.it with
+      | Il.PlainT typ_alias ->
+          resolve ~visiting ctx tparams (Typ.Subst.subst_typ theta typ_alias)
+      | Il.StructT _ | Il.VariantT _ ->
+          let name = Naming.name typ in
+          {
+            marshal = Ml.VarE ("marshal_" ^ name);
+            unmarshal = Ml.VarE ("unmarshal_" ^ name);
+            hash = Ml.VarE ("hash_" ^ Names.var_of_id id);
+            eq = resolve_wrapped_eq ~visiting ctx tparams typ;
+          })
+  | _ -> resolve_ground typ
+
 (* Tuple type *)
 
 and resolve_tuple_typ ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (typs : Sl.typ list) : t =
   let convs = List.map (resolve ~visiting ctx tparams) typs in
+  let n = List.length typs in
   let vars_m = List.mapi (fun i _ -> "x" ^ string_of_int i) typs in
   let marshal_calls_ml =
     List.map2
       (fun conv var -> apply_converter "resolved_" conv.marshal (Ml.VarE var))
       convs vars_m
   in
-  let n = List.length typs in
   let vars_u = List.init n (fun i -> "v" ^ string_of_int i) in
   let unmarshal_calls_ml =
     List.map2
       (fun conv var -> apply_converter "resolved_" conv.unmarshal (Ml.VarE var))
       convs vars_u
   in
+  (* the body is the native tuple; marshal reads it from [x__.it] *)
   let expr_marshal_ml =
     let pat_vars_ml = Ml.TupleP (List.map (fun var -> Ml.VarP var) vars_m) in
-    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
     let expr_tuple_ml =
       Ml.AppE
-        (Ml.LitE "Value.Make.tuple", [ expr_typ_ml; Ml.ListE marshal_calls_ml ])
+        ( Ml.LitE "Value.Make.tuple",
+          [ Dynamic_gen.make_typ_expr ~tparams typ; Ml.ListE marshal_calls_ml ] )
     in
-    let expr_let_ml = Ml.LetE (pat_vars_ml, Ml.VarE "x__", expr_tuple_ml) in
-    Ml.FunE ([ Ml.VarP "x__" ], expr_let_ml)
+    Ml.FunE
+      ( [ Ml.VarP "x__" ],
+        Ml.LetE (pat_vars_ml, Ml.FieldE (Ml.VarE "x__", "it"), expr_tuple_ml) )
+  in
+  (* the tuple hash folds [conv.hash] over the freshly-built body components *)
+  let vars_h = List.mapi (fun i _ -> "h" ^ string_of_int i) typs in
+  let expr_hash_body_ml =
+    let exprs_hash_ml =
+      List.map2 (fun conv var -> Ml.AppE (conv.hash, [ Ml.VarE var ])) convs vars_h
+    in
+    let expr_combine_ml =
+      List.fold_left
+        (fun acc_ml expr_ml ->
+          Ml.BinopE ("+", Ml.BinopE ("*", acc_ml, Ml.LitE "31"), expr_ml))
+        (Ml.LitE (string_of_int n))
+        exprs_hash_ml
+    in
+    Ml.LetE
+      ( Ml.TupleP (List.map (fun var -> Ml.VarP var) vars_h),
+        Ml.VarE "body__",
+        expr_combine_ml )
   in
   let expr_unmarshal_ml =
     let expr_get_ml = Ml.AppE (Ml.LitE "Value.Get.tuple", [ Ml.VarE "v__" ]) in
     let pat_vars_ml = Ml.ListP (List.map (fun var -> Ml.VarP var) vars_u) in
     let arm_ok_ml = (pat_vars_ml, Ml.TupleE unmarshal_calls_ml) in
     let arm_wild_ml = (Ml.WildP, Common.raise_unmatch "resolve: tuple") in
-    let expr_match_ml = Ml.MatchE (expr_get_ml, [ arm_ok_ml; arm_wild_ml ]) in
-    Ml.FunE ([ Ml.VarP "v__" ], expr_match_ml)
+    let expr_body_ml = Ml.MatchE (expr_get_ml, [ arm_ok_ml; arm_wild_ml ]) in
+    Ml.FunE
+      ( [ Ml.VarP "v__" ],
+        wrap_note tparams typ expr_body_ml expr_hash_body_ml )
   in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  let expr_eq_ml =
+    let vars_l = List.mapi (fun i _ -> "l" ^ string_of_int i) typs in
+    let vars_r = List.mapi (fun i _ -> "r" ^ string_of_int i) typs in
+    let pat_l_ml = Ml.TupleP (List.map (fun var -> Ml.VarP var) vars_l) in
+    let pat_r_ml = Ml.TupleP (List.map (fun var -> Ml.VarP var) vars_r) in
+    let exprs_eq_ml =
+      List.map2
+        (fun conv (var_l, var_r) ->
+          Ml.AppE (conv.eq, [ Ml.VarE var_l; Ml.VarE var_r ]))
+        convs
+        (List.combine vars_l vars_r)
+    in
+    let expr_and_ml =
+      match exprs_eq_ml with
+      | [] -> Ml.BoolE true
+      | expr_ml :: exprs_ml ->
+          List.fold_left
+            (fun acc_ml expr_ml -> Ml.BinopE ("&&", acc_ml, expr_ml))
+            expr_ml exprs_ml
+    in
+    eq_composite_ladder
+      (Ml.LetE
+         ( pat_l_ml,
+           Ml.FieldE (Ml.VarE "l__", "it"),
+           Ml.LetE (pat_r_ml, Ml.FieldE (Ml.VarE "r__", "it"), expr_and_ml) ))
+  in
+  {
+    marshal = expr_marshal_ml;
+    unmarshal = expr_unmarshal_ml;
+    hash = expr_slot_hash;
+    eq = expr_eq_ml;
+  }
 
 (* Option type *)
 
@@ -162,23 +312,45 @@ and resolve_opt_typ ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (t : Sl.typ) : t =
   let conv = resolve ~visiting ctx tparams t in
   let expr_marshal_ml =
-    let expr_map_ml =
-      Ml.AppE (Ml.LitE "Option.map", [ conv.marshal; Ml.VarE "x__" ])
-    in
-    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
-    let expr_opt_ml =
-      Ml.AppE (Ml.LitE "Value.Make.opt", [ expr_typ_ml; expr_map_ml ])
-    in
-    Ml.FunE ([ Ml.VarP "x__" ], expr_opt_ml)
+    Ml.FunE
+      ( [ Ml.VarP "x__" ],
+        Ml.AppE
+          ( Ml.LitE "Value.Make.opt",
+            [
+              Dynamic_gen.make_typ_expr ~tparams typ;
+              Ml.AppE
+                ( Ml.LitE "Option.map",
+                  [ conv.marshal; Ml.FieldE (Ml.VarE "x__", "it") ] );
+            ] ) )
   in
   let expr_unmarshal_ml =
-    let expr_get_ml = Ml.AppE (Ml.LitE "Value.Get.opt", [ Ml.VarE "v__" ]) in
-    let expr_map_ml =
-      Ml.AppE (Ml.LitE "Option.map", [ conv.unmarshal; expr_get_ml ])
-    in
-    Ml.FunE ([ Ml.VarP "v__" ], expr_map_ml)
+    Ml.FunE
+      ( [ Ml.VarP "v__" ],
+        wrap_note tparams typ
+          (Ml.AppE
+             ( Ml.LitE "Option.map",
+               [
+                 conv.unmarshal;
+                 Ml.AppE (Ml.LitE "Value.Get.opt", [ Ml.VarE "v__" ]);
+               ] ))
+          (Ml.AppE (Ml.LitE "hash_opt", [ conv.hash; Ml.VarE "body__" ])) )
   in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  let expr_eq_ml =
+    eq_composite_ladder
+      (Ml.AppE
+         ( Ml.LitE "Option.equal",
+           [
+             conv.eq;
+             Ml.FieldE (Ml.VarE "l__", "it");
+             Ml.FieldE (Ml.VarE "r__", "it");
+           ] ))
+  in
+  {
+    marshal = expr_marshal_ml;
+    unmarshal = expr_unmarshal_ml;
+    hash = expr_slot_hash;
+    eq = expr_eq_ml;
+  }
 
 (* List type *)
 
@@ -186,23 +358,45 @@ and resolve_list_typ ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (t : Sl.typ) : t =
   let conv = resolve ~visiting ctx tparams t in
   let expr_marshal_ml =
-    let expr_map_ml =
-      Ml.AppE (Ml.LitE "List.map", [ conv.marshal; Ml.VarE "x__" ])
-    in
-    let expr_typ_ml = Dynamic_gen.make_typ_expr ~tparams typ in
-    let expr_list_ml =
-      Ml.AppE (Ml.LitE "Value.Make.list", [ expr_typ_ml; expr_map_ml ])
-    in
-    Ml.FunE ([ Ml.VarP "x__" ], expr_list_ml)
+    Ml.FunE
+      ( [ Ml.VarP "x__" ],
+        Ml.AppE
+          ( Ml.LitE "Value.Make.list",
+            [
+              Dynamic_gen.make_typ_expr ~tparams typ;
+              Ml.AppE
+                ( Ml.LitE "List.map",
+                  [ conv.marshal; Ml.FieldE (Ml.VarE "x__", "it") ] );
+            ] ) )
   in
   let expr_unmarshal_ml =
-    let expr_get_ml = Ml.AppE (Ml.LitE "Value.Get.list", [ Ml.VarE "v__" ]) in
-    let expr_map_ml =
-      Ml.AppE (Ml.LitE "List.map", [ conv.unmarshal; expr_get_ml ])
-    in
-    Ml.FunE ([ Ml.VarP "v__" ], expr_map_ml)
+    Ml.FunE
+      ( [ Ml.VarP "v__" ],
+        wrap_note tparams typ
+          (Ml.AppE
+             ( Ml.LitE "List.map",
+               [
+                 conv.unmarshal;
+                 Ml.AppE (Ml.LitE "Value.Get.list", [ Ml.VarE "v__" ]);
+               ] ))
+          (Ml.AppE (Ml.LitE "hash_list", [ conv.hash; Ml.VarE "body__" ])) )
   in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  let expr_eq_ml =
+    eq_composite_ladder
+      (Ml.AppE
+         ( Ml.LitE "List.equal",
+           [
+             conv.eq;
+             Ml.FieldE (Ml.VarE "l__", "it");
+             Ml.FieldE (Ml.VarE "r__", "it");
+           ] ))
+  in
+  {
+    marshal = expr_marshal_ml;
+    unmarshal = expr_unmarshal_ml;
+    hash = expr_slot_hash;
+    eq = expr_eq_ml;
+  }
 
 (* Error *)
 
@@ -248,6 +442,39 @@ and resolve_typdef ~(visiting : string list) (ctx : Ctx.t)
       failwith
         (Printf.sprintf "resolve: %s: not a plain/struct/variant typedef" id.it)
 
+(* Wrap a raw body through the poly [mk_<base>] with a typ/hash dictionary per
+   type argument, resolved in the ambient generic context *)
+
+and mk_wrap ~(visiting : string list) (ctx : Ctx.t) (tparams : string list)
+    (typ : Sl.typ) (expr_body_ml : Ml.expr) : Ml.expr =
+  match typ.it with
+  | Il.VarT (id, targs) ->
+      let exprs_dict_ml =
+        List.concat_map
+          (fun targ ->
+            [
+              Dynamic_gen.make_typ_expr ~tparams targ;
+              (resolve ~visiting ctx tparams targ).hash;
+            ])
+          targs
+      in
+      Ml.AppE (Ml.VarE ("mk_" ^ Names.var_of_id id), exprs_dict_ml @ [ expr_body_ml ])
+  | _ -> expr_body_ml
+
+(* A wrapped typedef's eq is the poly [eq_<base>] applied to its element eqs *)
+
+and resolve_wrapped_eq ~(visiting : string list) (ctx : Ctx.t)
+    (tparams : string list) (typ : Sl.typ) : Ml.expr =
+  match typ.it with
+  | Il.VarT (id, targs) -> (
+      let exprs_eq_targ_ml =
+        List.map (fun targ -> (resolve ~visiting ctx tparams targ).eq) targs
+      in
+      match exprs_eq_targ_ml with
+      | [] -> Ml.VarE ("eq_" ^ Names.var_of_id id)
+      | _ -> Ml.AppE (Ml.VarE ("eq_" ^ Names.var_of_id id), exprs_eq_targ_ml))
+  | _ -> Ml.LitE "(=)"
+
 and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ) (typfields : Sl.typfield list) : t =
   let field_convs =
@@ -262,7 +489,9 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
         (fun (atom, conv) ->
           let atom_str = Names.Ctor.atom atom in
           let expr_atom_ml = compile_field_atom atom_str in
-          let expr_field_ml = Ml.FieldE (x_ann, Names.field atom) in
+          let expr_field_ml =
+            Ml.FieldE (Ml.FieldE (x_ann, "it"), Names.field atom)
+          in
           let expr_conv_ml =
             apply_converter "resolved_" conv.marshal expr_field_ml
           in
@@ -293,12 +522,17 @@ and resolve_struct_typdef ~(visiting : string list) (ctx : Ctx.t)
     let pat_fields_ml = Ml.VarP "fields__" in
     let expr_str_ml = Ml.AppE (Ml.LitE "Value.Get.str", [ Ml.VarE "v__" ]) in
     let expr_record_ml =
-      Ml.AnnotE (Ml.RecordE field_bindings_ml, Type.compile_typ ~tparams typ)
+      mk_wrap ~visiting ctx tparams typ (Ml.RecordE field_bindings_ml)
     in
     let expr_let_ml = Ml.LetE (pat_fields_ml, expr_str_ml, expr_record_ml) in
     Ml.FunE ([ Ml.VarP "v__" ], expr_let_ml)
   in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  {
+    marshal = expr_marshal_ml;
+    unmarshal = expr_unmarshal_ml;
+    hash = expr_slot_hash;
+    eq = resolve_wrapped_eq ~visiting ctx tparams typ;
+  }
 
 and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
     (tparams : string list) (typ : Sl.typ)
@@ -335,7 +569,7 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
           (pat_ml, expr_case_ml))
         per_ctor
     in
-    let expr_match_ml = Ml.MatchE (Ml.VarE "x__", arms_ml) in
+    let expr_match_ml = Ml.MatchE (Ml.FieldE (Ml.VarE "x__", "it"), arms_ml) in
     Ml.FunE ([ Ml.VarP "x__" ], expr_match_ml)
   in
   let expr_unmarshal_ml =
@@ -367,9 +601,14 @@ and resolve_variant_typdef ~(visiting : string list) (ctx : Ctx.t)
     let arm_case_ml = (pat_case_ml, expr_match_ctor_ml) in
     let arm_wild_ml = (Ml.WildP, Common.raise_unmatch ("unmarshal_" ^ name)) in
     let expr_match_ml = Ml.MatchE (expr_it_ml, [ arm_case_ml; arm_wild_ml ]) in
-    Ml.FunE ([ Ml.VarP "v__" ], expr_match_ml)
+    Ml.FunE ([ Ml.VarP "v__" ], mk_wrap ~visiting ctx tparams typ expr_match_ml)
   in
-  { marshal = expr_marshal_ml; unmarshal = expr_unmarshal_ml }
+  {
+    marshal = expr_marshal_ml;
+    unmarshal = expr_unmarshal_ml;
+    hash = expr_slot_hash;
+    eq = resolve_wrapped_eq ~visiting ctx tparams typ;
+  }
 
 (* Table for finding converters *)
 
@@ -384,8 +623,18 @@ let compile_converter_table (typs : Sl.typ list) : Ml.toplevel =
         let expr_unmarshal_ml =
           Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE ("unmarshal_" ^ name) ])
         in
+        let expr_hash_ml =
+          Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE ("hash_" ^ name) ])
+        in
+        let expr_eq_ml =
+          Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VarE ("eq_" ^ name) ])
+        in
         Ml.TupleE
-          [ Ml.StrE name; Ml.TupleE [ expr_marshal_ml; expr_unmarshal_ml ] ])
+          [
+            Ml.StrE name;
+            Ml.TupleE
+              [ expr_marshal_ml; expr_unmarshal_ml; expr_hash_ml; expr_eq_ml ];
+          ])
       typs
   in
   let expr_seq_ml = Ml.AppE (Ml.LitE "List.to_seq", [ Ml.ListE entries_ml ]) in

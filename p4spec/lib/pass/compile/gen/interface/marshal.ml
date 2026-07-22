@@ -32,7 +32,7 @@ let compile_struct_typ (typ_ref : string) (typfields : Sl.typfield list) :
         let atom_str = Names.Ctor.atom atom in
         let field_id = Names.field atom in
         let expr_atom_ml = compile_field_atom atom_str in
-        let expr_field_ml = Ml.FieldE (Ml.VarE "x", field_id) in
+        let expr_field_ml = Ml.FieldE (Ml.FieldE (Ml.VarE "x", "it"), field_id) in
         let expr_marshal_ml =
           Ml.AppE (Ml.VarE ("marshal_" ^ Naming.name typ), [ expr_field_ml ])
         in
@@ -79,7 +79,8 @@ let compile_variant_typ (pool : Constpool.t) (typ_ref : string)
         (pool, (pat_ml, expr_case_ml)))
       pool ctors
   in
-  (pool, Ml.MatchE (Ml.VarE "x", arms_ml))
+  (* match the unwrapped variant body *)
+  (pool, Ml.MatchE (Ml.FieldE (Ml.VarE "x", "it"), arms_ml))
 
 let compile_var_typ (ctx : Ctx.t) (pool : Constpool.t) (typ_ref : string)
     (id : Sl.id) (targs : Sl.targ list) : Constpool.t * Ml.expr =
@@ -132,7 +133,7 @@ let compile_tuple_typ (typ_ref : string) (typs : Sl.typ list) : Ml.expr =
       ( Ml.LitE "Value.Make.tuple",
         [ Ml.VarE typ_ref; Ml.ListE marshal_calls_ml ] )
   in
-  Ml.LetE (pat_vars_ml, Ml.VarE "x", expr_tuple_ml)
+  Ml.LetE (pat_vars_ml, Ml.FieldE (Ml.VarE "x", "it"), expr_tuple_ml)
 
 (* Iterations *)
 
@@ -140,7 +141,10 @@ let compile_iter_opt_typ (typ_ref : string) (typ : Sl.typ) : Ml.expr =
   let expr_map_ml =
     Ml.AppE
       ( Ml.LitE "Option.map",
-        [ Ml.VarE ("marshal_" ^ Naming.name typ); Ml.VarE "x" ] )
+        [
+          Ml.VarE ("marshal_" ^ Naming.name typ);
+          Ml.FieldE (Ml.VarE "x", "it");
+        ] )
   in
   Ml.AppE (Ml.LitE "Value.Make.opt", [ Ml.VarE typ_ref; expr_map_ml ])
 
@@ -148,7 +152,10 @@ let compile_iter_list_typ (typ_ref : string) (typ : Sl.typ) : Ml.expr =
   let expr_map_ml =
     Ml.AppE
       ( Ml.LitE "List.map",
-        [ Ml.VarE ("marshal_" ^ Naming.name typ); Ml.VarE "x" ] )
+        [
+          Ml.VarE ("marshal_" ^ Naming.name typ);
+          Ml.FieldE (Ml.VarE "x", "it");
+        ] )
   in
   Ml.AppE (Ml.LitE "Value.Make.list", [ Ml.VarE typ_ref; expr_map_ml ])
 

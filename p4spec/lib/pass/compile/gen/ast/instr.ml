@@ -24,7 +24,7 @@ let rec compile_instr ~(tparams : string list) (ctx : Ctx.t) (instr : instr) :
   | IfI (exp_cond, iterexps, block, _) ->
       compile_if_instr ~tparams ctx exp_cond iterexps block
   | HoldI (id, notexp, iterexps, holdcase) ->
-      compile_hold_instr ~tparams ctx id notexp iterexps holdcase
+      compile_hold_instr ~tparams ~at:instr.at ctx id notexp iterexps holdcase
   | CaseI (exp, cases, _) -> compile_case_instr ~tparams ctx exp cases
   | GroupI (_, _, _, block) -> compile_group_instr ~tparams ctx block
   | LetI (exp_l, exp_r, iterinstrs, block) ->
@@ -81,7 +81,8 @@ and compile_if_cond_list ~(tparams : string list) (ctx : Ctx.t) (exp_cond : exp)
       in
       let expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        (* guide is a wrapped composite; iterate over its bare body *)
+        | [ id_guide_ml ] -> Ml.FieldE (Ml.VarE id_guide_ml, "it")
         | _ -> assert false
       in
       ( ctx,
@@ -123,7 +124,8 @@ and compile_if_cond_opt ~(tparams : string list) (ctx : Ctx.t) (exp_cond : exp)
       in
       let expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        (* guide is a wrapped composite; iterate over its bare body *)
+        | [ id_guide_ml ] -> Ml.FieldE (Ml.VarE id_guide_ml, "it")
         | _ -> assert false
       in
       ( ctx,
@@ -217,7 +219,8 @@ and compile_hold_cond_list ~(tparams : string list) (ctx : Ctx.t) (id : id)
       in
       let expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        (* guide is a wrapped composite; iterate over its bare body *)
+        | [ id_guide_ml ] -> Ml.FieldE (Ml.VarE id_guide_ml, "it")
         | _ -> assert false
       in
       ( ctx,
@@ -259,7 +262,8 @@ and compile_hold_cond_opt ~(tparams : string list) (ctx : Ctx.t) (id : id)
       in
       let expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> Ml.VarE id_guide_ml
+        (* guide is a wrapped composite; iterate over its bare body *)
+        | [ id_guide_ml ] -> Ml.FieldE (Ml.VarE id_guide_ml, "it")
         | _ -> assert false
       in
       ( ctx,
@@ -281,8 +285,9 @@ and compile_hold_cond_iter ~(tparams : string list) (ctx : Ctx.t) (id : id)
       | Il.List -> compile_hold_cond_list ~tparams ctx id notexp vars iterexps_t
       | Il.Opt -> compile_hold_cond_opt ~tparams ctx id notexp vars iterexps_t)
 
-and compile_hold_case ~(tparams : string list) (ctx : Ctx.t)
+and compile_hold_case ~(tparams : string list) ~(at : region) (ctx : Ctx.t)
     (holdcase : holdcase) (id_hold_ml : string) : Ctx.t * Ml.expr =
+  let region = Util.Source.string_of_region at in
   match holdcase with
   | BothH (block_hold, block_nothold) ->
       (* Both branches reachable; no Unmatch on either path *)
@@ -296,7 +301,7 @@ and compile_hold_case ~(tparams : string list) (ctx : Ctx.t)
         Ml.IfE
           ( Ml.VarE id_hold_ml,
             expr_hold_ml,
-            Some (Common.raise_unmatch "hold failed") ) )
+            Some (Common.raise_unmatch ("hold failed " ^ region)) ) )
   | NotHoldH (block_nothold, _) ->
       (* If condition holds: Unmatch -> fall through to next sibling *)
       let ctx, expr_nothold_ml = compile_block ~tparams ctx block_nothold in
@@ -304,11 +309,11 @@ and compile_hold_case ~(tparams : string list) (ctx : Ctx.t)
         Ml.IfE
           ( Ml.UnopE ("not", Ml.VarE id_hold_ml),
             expr_nothold_ml,
-            Some (Common.raise_unmatch "not-hold failed") ) )
+            Some (Common.raise_unmatch ("not-hold failed " ^ region)) ) )
 
-and compile_hold_instr ~(tparams : string list) (ctx : Ctx.t) (id : id)
-    (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) :
-    Ctx.t * Ml.expr =
+and compile_hold_instr ~(tparams : string list) ~(at : region) (ctx : Ctx.t)
+    (id : id) (notexp : notexp) (iterexps : iterexp list)
+    (holdcase : holdcase) : Ctx.t * Ml.expr =
   let ctx_outer = ctx in
   (* Process iterexps innermost-first, matching interpreter's List.rev *)
   let iterexps_rev = List.rev iterexps in
@@ -317,7 +322,9 @@ and compile_hold_instr ~(tparams : string list) (ctx : Ctx.t) (id : id)
   in
   (* Bind hold__ so holdcase branches can reference it *)
   let ctx, id_hold_ml = Stub.OCaml.var ctx "hold__" in
-  let ctx, expr_body_ml = compile_hold_case ~tparams ctx holdcase id_hold_ml in
+  let ctx, expr_body_ml =
+    compile_hold_case ~tparams ~at ctx holdcase id_hold_ml
+  in
   let ctx = Ctx.promote_preamble ctx ctx_outer in
   (ctx, Ml.LetE (Ml.VarP id_hold_ml, expr_hold_ml, expr_body_ml))
 
@@ -415,6 +422,51 @@ and compile_let ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
   let expr_ml = Chain.apply chain expr_result_ml in
   (ctx, expr_ml)
 
+(* Bind an iterated-let/rule's bare split columns [expr_rhs_ml] to fresh temps,
+   re-wrap each to its lifted [iter] type, bind the lifted outputs, and emit
+   [let (raw..) = rhs in let out0 = wrap raw0 in .. in cont] *)
+and compile_iter_out ~(tparams : string list) (ctx : Ctx.t) (ctx_outer : Ctx.t)
+    (vars_bind : var list) (iter : Il.iter) (expr_rhs_ml : Ml.expr)
+    (cont : Ctx.t -> Ctx.t * Ml.expr) : Ctx.t * Ml.expr =
+  let ctx, ids_raw_ml =
+    Stub.OCaml.vars ctx "iter_out__" (List.length vars_bind)
+  in
+  let pat_raw_ml =
+    match ids_raw_ml with
+    | [ id_raw_ml ] -> Ml.VarP id_raw_ml
+    | _ -> Ml.TupleP (List.map (fun id_raw_ml -> Ml.VarP id_raw_ml) ids_raw_ml)
+  in
+  let outs =
+    List.map2
+      (fun (id, typ, iters) id_raw_ml ->
+        let id_out_ml = Names.var_of_var (id, iters @ [ iter ]) in
+        let typ_out =
+          List.fold_left
+            (fun t it -> Il.IterT (t, it) $ typ.at)
+            typ (iters @ [ iter ])
+        in
+        let expr_wrap_ml =
+          Wrap.compile_mk_wrap ~tparams ctx typ_out (Ml.VarE id_raw_ml)
+        in
+        (id, iters, id_out_ml, expr_wrap_ml))
+      vars_bind ids_raw_ml
+  in
+  let ctx =
+    List.fold_left
+      (fun ctx (id, iters, id_out_ml, _) ->
+        Ctx.add_binding ctx (id, iters @ [ iter ]) id_out_ml)
+      ctx outs
+  in
+  let ctx, expr_cont_ml = cont ctx in
+  let ctx = Ctx.promote_preamble ctx ctx_outer in
+  let expr_cont_ml =
+    List.fold_right
+      (fun (_, _, id_out_ml, expr_wrap_ml) acc ->
+        Ml.LetE (Ml.VarP id_out_ml, expr_wrap_ml, acc))
+      outs expr_cont_ml
+  in
+  (ctx, Ml.LetE (pat_raw_ml, expr_rhs_ml, expr_cont_ml))
+
 and compile_let_opt ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
     (exp_r : exp) (vars_bound : var list) (vars_bind : var list)
     (iterinstrs : iterinstr list) (cont : Ctx.t -> Ctx.t * Ml.expr) :
@@ -461,14 +513,15 @@ and compile_let_opt ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
     else
       let ctx, expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | [ id_guide_ml ] -> (ctx, Ml.FieldE (Ml.VarE id_guide_ml, "it"))
         | _ ->
             let ctx = Ctx.add_opt_combine ctx n_bound in
             ( ctx,
               Ml.AppE
                 ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
-                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
-                ) )
+                  List.map
+                    (fun id_guide_ml -> Ml.FieldE (Ml.VarE id_guide_ml, "it"))
+                    ids_guide_ml ) )
       in
       let pat_elem_ml =
         match ids_elem_ml with
@@ -489,32 +542,8 @@ and compile_let_opt ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
       in
       (ctx, expr_split_ml)
   in
-  (* Name output vars with __quest suffix *)
-  let ids_out_ml =
-    List.map
-      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
-      vars_bind
-  in
-  (* Build output pattern *)
-  let pat_out_ml =
-    match ids_out_ml with
-    | [ id_out_ml ] -> Ml.VarP id_out_ml
-    | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Add output bindings to ctx *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_out_ml ->
-        Ctx.add_binding ctx (id, iters @ [ Il.Opt ]) id_out_ml)
-      ctx vars_bind ids_out_ml
-  in
-  (* Compile continuation *)
-  let ctx, expr_cont_ml = cont ctx in
-  (* Promote preamble to outer ctx *)
-  let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Build let expression *)
-  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
-  (ctx, expr_ml)
+  (* re-wrap the bare split columns to their lifted option types *)
+  compile_iter_out ~tparams ctx ctx_outer vars_bind Il.Opt expr_rhs_ml cont
 
 and compile_let_list ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
     (exp_r : exp) (vars_bound : var list) (vars_bind : var list)
@@ -562,14 +591,15 @@ and compile_let_list ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
     else
       let ctx, expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | [ id_guide_ml ] -> (ctx, Ml.FieldE (Ml.VarE id_guide_ml, "it"))
         | _ ->
             let ctx = Ctx.add_list_combine ctx n_bound in
             ( ctx,
               Ml.AppE
                 ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
-                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
-                ) )
+                  List.map
+                    (fun id_guide_ml -> Ml.FieldE (Ml.VarE id_guide_ml, "it"))
+                    ids_guide_ml ) )
       in
       let pat_elem_ml =
         match ids_elem_ml with
@@ -589,32 +619,8 @@ and compile_let_list ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
       in
       (ctx, expr_split_ml)
   in
-  (* Name output vars with __star suffix *)
-  let ids_out_ml =
-    List.map
-      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.List ]))
-      vars_bind
-  in
-  (* Build output pattern *)
-  let pat_out_ml =
-    match ids_out_ml with
-    | [ id_out_ml ] -> Ml.VarP id_out_ml
-    | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Add output bindings to ctx *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_out_ml ->
-        Ctx.add_binding ctx (id, iters @ [ Il.List ]) id_out_ml)
-      ctx vars_bind ids_out_ml
-  in
-  (* Compile continuation *)
-  let ctx, expr_cont_ml = cont ctx in
-  (* Promote preamble to outer ctx *)
-  let ctx = Ctx.promote_preamble ctx ctx_outer in
-  (* Build let expression *)
-  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
-  (ctx, expr_ml)
+  (* re-wrap the bare split columns to their lifted list types *)
+  compile_iter_out ~tparams ctx ctx_outer vars_bind Il.List expr_rhs_ml cont
 
 and compile_let_iter ~(tparams : string list) (ctx : Ctx.t) (exp_l : exp)
     (exp_r : exp) (iterinstrs_rev : iterinstr list)
@@ -740,14 +746,15 @@ and compile_rule_opt ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
     else
       let ctx, expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | [ id_guide_ml ] -> (ctx, Ml.FieldE (Ml.VarE id_guide_ml, "it"))
         | _ ->
             let ctx = Ctx.add_opt_combine ctx n_bound in
             ( ctx,
               Ml.AppE
                 ( Ml.VarE ("Option.combine" ^ string_of_int n_bound),
-                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
-                ) )
+                  List.map
+                    (fun id_guide_ml -> Ml.FieldE (Ml.VarE id_guide_ml, "it"))
+                    ids_guide_ml ) )
       in
       let pat_elem_ml =
         match ids_elem_ml with
@@ -768,30 +775,8 @@ and compile_rule_opt ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
       in
       (ctx, expr_split_ml)
   in
-  (* Name output vars with __quest suffix *)
-  let ids_out_ml =
-    List.map
-      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
-      vars_bind
-  in
-  (* Build output pattern *)
-  let pat_out_ml =
-    match ids_out_ml with
-    | [ id_out_ml ] -> Ml.VarP id_out_ml
-    | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Add output bindings to ctx *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_out_ml ->
-        Ctx.add_binding ctx (id, iters @ [ Il.Opt ]) id_out_ml)
-      ctx vars_bind ids_out_ml
-  in
-  (* Compile continuation *)
-  let ctx, expr_cont_ml = cont ctx in
-  let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
-  (ctx, expr_ml)
+  (* re-wrap the bare split columns to their lifted option types *)
+  compile_iter_out ~tparams ctx ctx_outer vars_bind Il.Opt expr_rhs_ml cont
 
 and compile_rule_list ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
     (notexp : notexp) (inputs : Hints.Input.t) (vars_bound : var list)
@@ -839,14 +824,15 @@ and compile_rule_list ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
     else
       let ctx, expr_guide_ml =
         match ids_guide_ml with
-        | [ id_guide_ml ] -> (ctx, Ml.VarE id_guide_ml)
+        | [ id_guide_ml ] -> (ctx, Ml.FieldE (Ml.VarE id_guide_ml, "it"))
         | _ ->
             let ctx = Ctx.add_list_combine ctx n_bound in
             ( ctx,
               Ml.AppE
                 ( Ml.VarE ("List.combine" ^ string_of_int n_bound),
-                  List.map (fun id_guide_ml -> Ml.VarE id_guide_ml) ids_guide_ml
-                ) )
+                  List.map
+                    (fun id_guide_ml -> Ml.FieldE (Ml.VarE id_guide_ml, "it"))
+                    ids_guide_ml ) )
       in
       let pat_elem_ml =
         match ids_elem_ml with
@@ -866,30 +852,8 @@ and compile_rule_list ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
       in
       (ctx, expr_split_ml)
   in
-  (* Name output vars with __star suffix *)
-  let ids_out_ml =
-    List.map
-      (fun (id, _, iters) -> Names.var_of_var (id, iters @ [ Il.List ]))
-      vars_bind
-  in
-  (* Build output pattern *)
-  let pat_out_ml =
-    match ids_out_ml with
-    | [ id_out_ml ] -> Ml.VarP id_out_ml
-    | _ -> Ml.TupleP (List.map (fun id_out_ml -> Ml.VarP id_out_ml) ids_out_ml)
-  in
-  (* Add output bindings to ctx *)
-  let ctx =
-    List.fold_left2
-      (fun ctx (id, _, iters) id_out_ml ->
-        Ctx.add_binding ctx (id, iters @ [ Il.List ]) id_out_ml)
-      ctx vars_bind ids_out_ml
-  in
-  (* Compile continuation *)
-  let ctx, expr_cont_ml = cont ctx in
-  let ctx = Ctx.promote_preamble ctx ctx_outer in
-  let expr_ml = Ml.LetE (pat_out_ml, expr_rhs_ml, expr_cont_ml) in
-  (ctx, expr_ml)
+  (* re-wrap the bare split columns to their lifted list types *)
+  compile_iter_out ~tparams ctx ctx_outer vars_bind Il.List expr_rhs_ml cont
 
 and compile_rule_iter ~(tparams : string list) (ctx : Ctx.t) (rel_id : id)
     (notexp : notexp) (inputs : Hints.Input.t) (iterinstrs_rev : iterinstr list)

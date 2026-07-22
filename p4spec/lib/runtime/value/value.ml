@@ -18,6 +18,11 @@ type t = value [@@deriving yojson]
 
 let to_string t = string_of_value t
 
+(* Fresh vid, shared with compiled note-wrapped values so vids stay globally
+   unique across both representations *)
+
+let fresh () = Fresh_.fresh ()
+
 (* Comparison *)
 
 let rec compare (value_l : t) (value_r : t) =

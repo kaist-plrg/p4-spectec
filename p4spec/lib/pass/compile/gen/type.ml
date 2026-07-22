@@ -56,23 +56,24 @@ and compile_var_typ ~(tparams : string list) (id : Sl.id) (targs : Sl.targ list)
       let targs_ml = compile_typs ~tparams targs in
       Ml.AppT (id_ml, targs_ml)
 
+(* [(body, vnote) note_phrase]: a composite carries a note like a named type *)
+
+and wrap_body_typ (typ_body_ml : Ml.typ) : Ml.typ =
+  Ml.AppT ("note_phrase", [ typ_body_ml; Ml.NameT "Il.vnote" ])
+
 (* Tuple types *)
 
 and compile_tuple_typ ~(tparams : string list) (typs : Sl.typ list) : Ml.typ =
-  let typs_ml = compile_typs ~tparams typs in
-  Ml.TupleT typs_ml
+  wrap_body_typ (Ml.TupleT (compile_typs ~tparams typs))
 
 (* Iter types *)
 
 and compile_iter_typ ~(tparams : string list) (typ : Sl.typ) (iter : Sl.iter) :
     Ml.typ =
+  let typ_ml = compile_typ ~tparams typ in
   match iter with
-  | Il.Opt ->
-      let typ_ml = compile_typ ~tparams typ in
-      Ml.AppT ("option", [ typ_ml ])
-  | Il.List ->
-      let typ_ml = compile_typ ~tparams typ in
-      Ml.AppT ("list", [ typ_ml ])
+  | Il.Opt -> wrap_body_typ (Ml.AppT ("option", [ typ_ml ]))
+  | Il.List -> wrap_body_typ (Ml.AppT ("list", [ typ_ml ]))
 
 (* Func types *)
 
@@ -176,31 +177,47 @@ and compile_variant_deftyp ~(tparams : string list) (ctx : Ctx.t) (id : Sl.id)
 
 (* Defs *)
 
-let compile_def (ctx : Ctx.t) (def : Sl.def) : Ctx.t * Ml.typdef option =
+(* Wrap a variant/record named type as [foo = (foo_body, vnote) note_phrase],
+   emitting the raw body type first; aliases and externs stay unwrapped *)
+
+let wrap_typdefs (tparams_ml : Ml.tparam list) (id : Sl.id)
+    (deftyp_ml : Ml.deftyp) : Ml.typdef list =
+  let id_ml = Names.var_of_id id in
+  match deftyp_ml with
+  | Ml.AliasTD _ -> [ (tparams_ml, id_ml, deftyp_ml) ]
+  | Ml.RecordTD _ | Ml.VariantTD _ ->
+      let body_id_ml = Names.body_of_id id in
+      let typ_body_ml =
+        match tparams_ml with
+        | [] -> Ml.NameT body_id_ml
+        | _ -> Ml.AppT (body_id_ml, List.map (fun t -> Ml.VarT t) tparams_ml)
+      in
+      let wrapper_ml =
+        Ml.AliasTD
+          (Ml.AppT ("note_phrase", [ typ_body_ml; Ml.NameT "Il.vnote" ]))
+      in
+      [ (tparams_ml, body_id_ml, deftyp_ml); (tparams_ml, id_ml, wrapper_ml) ]
+
+let compile_def (ctx : Ctx.t) (def : Sl.def) : Ctx.t * Ml.typdef list =
   match def.it with
   | Sl.TypD (id, tparams, deftyp, _) ->
       let tparams_ml = List.map Names.var_of_id tparams in
-      let id_ml = Names.var_of_id id in
       let ctx, deftyp_ml =
         let tparams = List.map it tparams in
         compile_deftyp ~tparams ctx id deftyp
       in
-      let typdef_ml_opt = Some (tparams_ml, id_ml, deftyp_ml) in
-      (ctx, typdef_ml_opt)
+      (ctx, wrap_typdefs tparams_ml id deftyp_ml)
   | Sl.ExternTypD (id, _) ->
       let id_ml = Names.var_of_id id in
       let deftyp_ml = Ml.AliasTD (Ml.NameT "Yojson.Safe.t") in
-      let typdef_ml_opt = Some ([], id_ml, deftyp_ml) in
-      (ctx, typdef_ml_opt)
-  | _ -> (ctx, None)
+      (ctx, [ ([], id_ml, deftyp_ml) ])
+  | _ -> (ctx, [])
 
 let compile_defs (ctx : Ctx.t) (defs : Sl.def list) : Ctx.t * Ml.typdef list =
   List.fold_left
     (fun (ctx, defs_ml) def ->
-      let ctx, def_ml_opt = compile_def ctx def in
-      match def_ml_opt with
-      | None -> (ctx, defs_ml)
-      | Some def_ml -> (ctx, defs_ml @ [ def_ml ]))
+      let ctx, typdefs_ml = compile_def ctx def in
+      (ctx, defs_ml @ typdefs_ml))
     (ctx, []) defs
 
 (* Spec *)

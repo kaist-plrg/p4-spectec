@@ -110,7 +110,8 @@ let compile_var_typ (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
                 (atom, typ))
               typfields
           in
-          compile_struct_typ typfields
+          (* wrap the unmarshaled body through the smart constructor *)
+          Ml.AppE (Ml.VarE ("mk_" ^ name), [ compile_struct_typ typfields ])
       | Il.VariantT _ ->
           let ctors = Ctx.find_ctors_full ctx id in
           let ctors =
@@ -120,7 +121,7 @@ let compile_var_typ (ctx : Ctx.t) (id : Sl.id) (targs : Sl.targ list)
                 (mixop, ctor_ml, typs))
               ctors
           in
-          compile_variant_typ name ctors)
+          Ml.AppE (Ml.VarE ("mk_" ^ name), [ compile_variant_typ name ctors ]))
   | Typdef.Extern -> Ml.AppE (Ml.LitE "Value.Get.extern", [ Ml.VarE "v" ])
 
 (* Tuples *)
@@ -176,8 +177,11 @@ let compile_body_typ (ctx : Ctx.t) (typ : Sl.typ) : Ml.expr =
   | Il.NumT _ -> compile_num_typ
   | Il.TextT -> compile_text_typ
   | Il.VarT (id, targs) -> compile_var_typ ctx id targs name
-  | Il.TupleT typs -> compile_tuple_typ name typs
-  | Il.IterT (typ_inner, iter) -> compile_iter_typ typ_inner iter
+  (* composites are wrapped: build the raw body, then wrap via the smart ctor *)
+  | Il.TupleT typs ->
+      Ml.AppE (Ml.VarE ("mk_" ^ name), [ compile_tuple_typ name typs ])
+  | Il.IterT (typ_inner, iter) ->
+      Ml.AppE (Ml.VarE ("mk_" ^ name), [ compile_iter_typ typ_inner iter ])
   | Il.FuncT _ -> Common.raise_unmatch "unmarshal_func"
 
 let compile (ctx : Ctx.t) (typ : Sl.typ) : Ml.funcdef =

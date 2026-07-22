@@ -53,6 +53,14 @@ let compile_dispatcher (name : string)
       with Unmatch msg_ -> Run.Fail (no_region, ..)
          | NoConverter tyname__ -> Run.Fail (no_region, ..)] *)
 
+(* Project field [i] of the registry's 4-tuple [(marshal, unmarshal, hash, eq)] *)
+
+let proj_of_4 (i : int) (expr_ml : Ml.expr) : Ml.expr =
+  let pats_ml =
+    List.init 4 (fun j -> if j = i then Ml.VarP "z__" else Ml.WildP)
+  in
+  Ml.LetE (Ml.TupleP pats_ml, expr_ml, Ml.VarE "z__")
+
 let compile_converter_binding (tparams_ml : string list) :
     (string * Ml.expr) list =
   tparams_ml
@@ -69,31 +77,40 @@ let compile_converter_binding (tparams_ml : string list) :
                ] )
          in
          let binding_converter_ml = (id_entry_ml, expr_lookup_ml) in
-         (* [let marshal__x, unmarshal__x = ..] *)
-         let id_marshal_ml = Interface.Converter.name_marshal tparam_ml in
-         let expr_marshal_ml =
-           let typ_marshal_ml =
-             Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t")
-           in
-           Ml.AnnotE
-             ( Ml.AppE
-                 ( Ml.LitE "Obj.obj",
-                   [ Ml.AppE (Ml.LitE "fst", [ Ml.VarE id_entry_ml ]) ] ),
-               typ_marshal_ml )
+         let binding_of (id_ml : string) (proj : int) (typ_ml : Ml.typ) :
+             string * Ml.expr =
+           ( id_ml,
+             Ml.AnnotE
+               ( Ml.AppE
+                   (Ml.LitE "Obj.obj", [ proj_of_4 proj (Ml.VarE id_entry_ml) ]),
+                 typ_ml ) )
          in
-         let binding_marshal_ml = (id_marshal_ml, expr_marshal_ml) in
-         let id_unmarshal_ml = Interface.Converter.name_unmarshal tparam_ml in
-         let expr_unmarshal_ml =
-           let typ_unmarshal_ml =
-             Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml)
-           in
-           Ml.AnnotE
-             ( Ml.AppE
-                 ( Ml.LitE "Obj.obj",
-                   [ Ml.AppE (Ml.LitE "snd", [ Ml.VarE id_entry_ml ]) ] ),
-               typ_unmarshal_ml )
+         (* [marshal__x]/[unmarshal__x]/[hash__x]/[eq__x] off the 4-tuple *)
+         let binding_marshal_ml =
+           binding_of
+             (Interface.Converter.name_marshal tparam_ml)
+             0
+             (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "Value.t"))
          in
-         let binding_unmarshal_ml = (id_unmarshal_ml, expr_unmarshal_ml) in
+         let binding_unmarshal_ml =
+           binding_of
+             (Interface.Converter.name_unmarshal tparam_ml)
+             1
+             (Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml))
+         in
+         let binding_hash_ml =
+           binding_of
+             (Interface.Converter.name_hash tparam_ml)
+             2
+             (Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "int"))
+         in
+         let binding_eq_ml =
+           binding_of
+             (Interface.Converter.name_eq tparam_ml)
+             3
+             (Ml.FuncT
+                (Ml.VarT tparam_ml, Ml.FuncT (Ml.VarT tparam_ml, Ml.BoolT)))
+         in
          (* [let typ__x = List.nth typs__ i] *)
          let id_typ_ml = Interface.Naming.name_typ tparam_ml in
          let expr_typ_ml =
@@ -106,6 +123,8 @@ let compile_converter_binding (tparams_ml : string list) :
            binding_converter_ml;
            binding_marshal_ml;
            binding_unmarshal_ml;
+           binding_hash_ml;
+           binding_eq_ml;
            binding_targs_ml;
          ])
   |> List.concat
@@ -123,6 +142,8 @@ let compile_func_arm_body (ctx : Ctx.t) (name : string) (tparams : string list)
           Ml.VarE (Interface.Converter.name_marshal tparam);
           Ml.VarE (Interface.Converter.name_unmarshal tparam);
           Ml.VarE (Interface.Naming.name_typ tparam);
+          Ml.VarE (Interface.Converter.name_hash tparam);
+          Ml.VarE (Interface.Converter.name_eq tparam);
         ])
       tparams_ml
   in
