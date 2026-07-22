@@ -133,7 +133,14 @@ let struct_rule_matches (frees : IdSet.t)
 
 let struct_rule_paths (rel_signature : Ol.Ast.rel_signature)
     (prems_path : prem list) (exps_output : exp list) : Ol.Ast.block =
-  let at = exps_output |> List.map Util.Source.at |> over_region in
+  let at =
+    match (exps_output, prems_path) with
+    | [], [] ->
+        let nottyp, _ = rel_signature in
+        nottyp.at
+    | [], _ -> prems_path |> List.map Util.Source.at |> over_region
+    | _ -> exps_output |> List.map Util.Source.at |> over_region
+  in
   let instr_res = Ol.Ast.ResultI (rel_signature, exps_output) $ at in
   [ struct_prems prems_path instr_res ]
 

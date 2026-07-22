@@ -56,4 +56,5 @@ and linearize_block (block : block) : Ll.Ast.block =
   | [ instr ] -> linearize_instr instr
   | _ ->
       let arms = List.map linearize_instr block in
-      [ Ll.Ast.TryI arms $$ (no_region, { iid = -1 }) ]
+      let at = block |> List.map Util.Source.at |> over_region in
+      [ Ll.Ast.TryI arms $$ (at, { iid = -1 }) ]
