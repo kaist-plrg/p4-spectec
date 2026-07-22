@@ -597,7 +597,7 @@ and infer_dot_exp (ctx : Ctx.t) (exp : exp) (atom : atom) :
     |> fun typfield_opt ->
     match typfield_opt with
     | Some (_, typ_il) -> Ok typ_il
-    | None -> fail exp.at "cannot infer type of field"
+    | None -> fail atom.at "cannot infer type of field"
   in
   let exp_il = Il.DotE (exp_il, atom) in
   Ok (ctx, exp_il, typ_il.it)
@@ -1079,15 +1079,7 @@ and elab_exp_variant (ctx : Ctx.t) (typ_il_expect : Il.typ)
               let id, targs_il = typorigin_il.it in
               Il.VarT (id, targs_il) $ typorigin_il.at
             in
-            let exp_il =
-              let atoms = Mixfix.atoms notexp_il in
-              let at =
-                match atoms with
-                | [] -> exp_list_region (Mixfix.args notexp_il)
-                | _ -> atoms |> List.map at |> over_region
-              in
-              Il.CaseE notexp_il $$ (at, typ_il.it)
-            in
+            let exp_il = Il.CaseE notexp_il $$ (exp.at, typ_il.it) in
             let+ exp_il = cast_exp ctx typ_il_expect typ_il exp_il in
             (ctx, exps_il @ [ exp_il ])
         | Fail _ -> (ctx, exps_il))
