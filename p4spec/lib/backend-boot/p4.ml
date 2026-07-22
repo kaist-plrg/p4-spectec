@@ -3,7 +3,7 @@ open Error
 open Util.Source
 
 module Make () : RUNNER = struct
-  module Spec_ = Backend_sim.Spec.Make ()
+  module Spec_ = Backend_sim.Spec.Make (Runtime.Valrep.V_value)
   module Placeholder = Backend_sim.Placeholder.Make (Spec_)
 
   module MakeExtern

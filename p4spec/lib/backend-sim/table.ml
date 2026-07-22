@@ -1,23 +1,23 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
   module Spec = struct
     module Func = Spec_Func
   end
 
   (* Match-action table interface *)
 
-  let find_table (value_arch : Value.t) (value_tableName : Value.t) : Value.t =
+  let find_table (value_arch : V.t) (value_tableName : V.t) : V.t =
     let find_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified =
-        Value.Make.text table_name_unqualified
-      in
+      let value_tableName_unqualified = V.Make.text table_name_unqualified in
       Spec.Func.find_object_unqualified_e value_arch value_tableName_unqualified
       |> Option.get
     in
-    let table_name = Value.Get.text value_tableName in
+    let table_name = V.Get.text value_tableName in
     match String.split_on_char '.' table_name with
     | [] -> assert false
     | [ table_name_unqualified ] ->
@@ -26,24 +26,22 @@ module Make (Spec_Func : Spec.Func.S) = struct
         let typ_objectId =
           Typ.Make.var ("nameIR" $ no_region) [] |> Typ.Make.list
         in
-        let values_name = List.map Value.Make.text names in
-        let value_objectId = Value.Make.list typ_objectId values_name in
+        let values_name = List.map V.Make.text names in
+        let value_objectId = V.Make.list typ_objectId values_name in
         match Spec.Func.find_object_qualified_e value_arch value_objectId with
         | Some value_table -> value_table
         | None ->
             let table_name_unqualified = names |> List.rev |> List.hd in
             find_table_unqualified table_name_unqualified)
 
-  let update_table (value_arch : Value.t) (value_tableName : Value.t)
-      (value_tableObject : Value.t) : Value.t =
+  let update_table (value_arch : V.t) (value_tableName : V.t)
+      (value_tableObject : V.t) : V.t =
     let update_table_unqualified table_name_unqualified =
-      let value_tableName_unqualified =
-        Value.Make.text table_name_unqualified
-      in
+      let value_tableName_unqualified = V.Make.text table_name_unqualified in
       Spec.Func.update_object_unqualified_e value_arch
         value_tableName_unqualified value_tableObject
     in
-    let table_name = Value.Get.text value_tableName in
+    let table_name = V.Get.text value_tableName in
     match String.split_on_char '.' table_name with
     | [] -> assert false
     | [ table_name_unqualified ] ->
@@ -52,8 +50,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
         let typ_objectId =
           Typ.Make.var ("nameIR" $ no_region) [] |> Typ.Make.list
         in
-        let values_name = List.map Value.Make.text names in
-        let value_objectId = Value.Make.list typ_objectId values_name in
+        let values_name = List.map V.Make.text names in
+        let value_objectId = V.Make.list typ_objectId values_name in
         if
           Spec.Func.find_object_qualified_e value_arch value_objectId
           |> Option.is_some
@@ -64,10 +62,10 @@ module Make (Spec_Func : Spec.Func.S) = struct
           let table_name_unqualified = names |> List.rev |> List.hd in
           update_table_unqualified table_name_unqualified
 
-  let add_entry (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableEntryPriorityInterface : Value.t)
-      (value_tableKeysetInterface : Value.t)
-      (value_tableActionInterface : Value.t) : Value.t =
+  let add_entry (value_ctx : V.t) (value_arch : V.t) (value_tableName : V.t)
+      (value_tableEntryPriorityInterface : V.t)
+      (value_tableKeysetInterface : V.t) (value_tableActionInterface : V.t) :
+      V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)
@@ -86,15 +84,14 @@ module Make (Spec_Func : Spec.Func.S) = struct
             |> List.filter_map
                  (fun
                    (value_nameIR_key, value_nameIR_matchKind, _value_typeIR) ->
-                   if Value.Get.text value_nameIR_matchKind = "selector" then
-                     None
+                   if V.Get.text value_nameIR_matchKind = "selector" then None
                    else Some value_nameIR_key)
           in
           let values_tableKeyInterface =
-            Value.Get.list value_tableKeysetInterface
+            V.Get.list value_tableKeysetInterface
           in
           let values_tableKeyValueInterface =
-            values_tableKeyInterface |> List.map Value.Get.tuple
+            values_tableKeyInterface |> List.map V.Get.tuple
             |> List.map (fun values -> List.nth values 1)
           in
           let typ_tableKeyInterface =
@@ -106,8 +103,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
               (fun value_nameIR_key value_tableKeyValueInterface ->
                 [ value_nameIR_key; value_tableKeyValueInterface ])
               values_nameIR_key values_tableKeyValueInterface
-            |> List.map (Value.Make.tuple typ_tableKeyInterface)
-            |> Value.Make.list typ_tableKeyInterfaceList
+            |> List.map (V.Make.tuple typ_tableKeyInterface)
+            |> V.Make.list typ_tableKeyInterfaceList
           in
           Spec.Func.tableObject_add_entry value_ctx value_tableObject
             value_tableEntryPriorityInterface value_tableKeysetInterface
@@ -117,9 +114,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
     (* Update arch with modified table object *)
     update_table value_arch value_tableName value_tableObject
 
-  let add_default_action (value_ctx : Value.t) (value_arch : Value.t)
-      (value_tableName : Value.t) (value_tableActionInterface : Value.t) :
-      Value.t =
+  let add_default_action (value_ctx : V.t) (value_arch : V.t)
+      (value_tableName : V.t) (value_tableActionInterface : V.t) : V.t =
     (* Lookup table object *)
     let value_tableObject = find_table value_arch value_tableName in
     (* Add entry to table object *)

@@ -29,9 +29,28 @@ module type CACHE = sig
   val cache_off : unit -> unit
 end
 
+(* Builtins, at an arbitrary value representation [V]. An interface owns its
+   builtin set + extensions; exposing them as a functor over [V] lets a consumer
+   obtain the same builtins at a second rep without reconstructing them from the
+   builtin library internals. *)
+
+module type BUILTINS = sig
+  type vt
+
+  val invoke : (vt -> unit) -> Id.t -> Typ.t list -> vt list -> vt
+  val init : unit -> unit
+  val checkpoint : unit -> int
+  val seff : int -> int -> bool
+end
+
 (* Interface for the interaction between SpecTec and the defined language *)
 
 module type INTERFACE = sig
+  (* The interface's builtins at any value rep; [call_builtin] is
+     [Builtins(Valrep.V_value).invoke]. *)
+
+  module Builtins (V : Valrep.SAFE) : BUILTINS with type vt = V.t
+
   (* Program parsing, into IL value *)
 
   val parse_program : string list -> string list -> parse_result

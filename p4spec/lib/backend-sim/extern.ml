@@ -5,14 +5,16 @@ open Error
 open Util.Source
 
 module type IMPL = sig
-  val eval_extern_init : Value.t list -> Value.t
-  val eval_extern_func_lctk_call : Value.t list -> Value.t list
-  val eval_extern_func_call : Value.t list -> Value.t list
-  val eval_extern_method_call : Value.t list -> Value.t list
-  val init_arch_state : Value.t
+  type vt
+
+  val eval_extern_init : vt list -> vt
+  val eval_extern_func_lctk_call : vt list -> vt list
+  val eval_extern_func_call : vt list -> vt list
+  val eval_extern_method_call : vt list -> vt list
+  val init_arch_state : vt
 end
 
-module Make (A : IMPL) : Run.EXTERN = struct
+module Make (V : Runtime.Valrep.UNSAFE) (A : IMPL with type vt = V.t) = struct
   let init_mode _ = ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after
@@ -25,27 +27,31 @@ module Make (A : IMPL) : Run.EXTERN = struct
 
   let eval_extern_rel (name : string) (values_input : Value.t list) :
       Run.rel_result =
+    let values_input = List.map V.of_value values_input in
     try
       Run.Pass
-        (match name with
-        | "ExternFunctionCall_eval_lctk" ->
-            A.eval_extern_func_lctk_call values_input
-        | "ExternFunctionCall_eval" -> A.eval_extern_func_call values_input
-        | "ExternMethodCall_eval" -> A.eval_extern_method_call values_input
-        | _ ->
-            error no_region
-              (Format.asprintf "unimplemented extern relation: %s" name))
+        (List.map V.to_value
+           (match name with
+           | "ExternFunctionCall_eval_lctk" ->
+               A.eval_extern_func_lctk_call values_input
+           | "ExternFunctionCall_eval" -> A.eval_extern_func_call values_input
+           | "ExternMethodCall_eval" -> A.eval_extern_method_call values_input
+           | _ ->
+               error no_region
+                 (Format.asprintf "unimplemented extern relation: %s" name)))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (values_input : Value.t list) : Run.func_result =
+    let values_input = List.map V.of_value values_input in
     try
       Run.Pass
-        (match name with
-        | "init_objectState" -> A.eval_extern_init values_input
-        | "init_archState" -> A.init_arch_state
-        | _ ->
-            error no_region
-              (Format.asprintf "unimplemented extern function: %s" name))
+        (V.to_value
+           (match name with
+           | "init_objectState" -> A.eval_extern_init values_input
+           | "init_archState" -> A.init_arch_state
+           | _ ->
+               error no_region
+                 (Format.asprintf "unimplemented extern function: %s" name)))
     with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
 end

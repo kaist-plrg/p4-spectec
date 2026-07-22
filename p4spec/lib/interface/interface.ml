@@ -40,15 +40,15 @@ module P4 = struct
 
   (* Builtins *)
 
-  module Builtin_P4_Ext = struct
-    (* dec $print_<X>(X) : text *)
+  (* dec $print_<X>(X) : text *)
 
-    let print (add : Value.t -> unit) (at : region) (targs : Typ.t list)
-        (values_input : Value.t list) : Value.t =
-      let _typ = Builtin.Extract.one at targs in
+  module Builtin_P4_Ext (V : Valrep.SAFE) = struct
+    let print (add : V.t -> unit) (at : region) (targs : Typ.t list)
+        (values_input : V.t list) : V.t =
+      let typ = Builtin.Extract.one at targs in
       let value = Builtin.Extract.one at values_input in
-      let text = !unparser value in
-      let value = Value.Make.text text in
+      let text = !unparser (V.marshal typ value) in
+      let value = V.Make.text text in
       add value;
       value
 
@@ -57,7 +57,14 @@ module P4 = struct
     let entries = [ ("print_", print) ]
   end
 
-  module Builtin_P4 = Builtin.Call.Make (Builtin_P4_Ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (Builtin_P4_Ext (V)) ()
+  end
+
+  module Builtin_P4 = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_P4.invoke
 
@@ -125,7 +132,14 @@ module SpecTec_IL = struct
 
   (* Builtins *)
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (F.No_ext) ()
+  end
+
+  module Builtin_SpecTec = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_SpecTec.invoke
 
@@ -174,7 +188,14 @@ module SpecTec_SL = struct
 
   (* Builtins *)
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (F.No_ext) ()
+  end
+
+  module Builtin_SpecTec = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_SpecTec.invoke
 

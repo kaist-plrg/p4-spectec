@@ -3,101 +3,111 @@ open Lang
 open Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Error
-open Util.Source
 
-(* Value set *)
+module Make (V : Valrep.SAFE) = struct
+  open Error
+  open Util.Source
 
-module VSet = Set.Make (Value)
+  let compare_v (typ : typ) (v_a : V.t) (v_b : V.t) : int =
+    Value.compare (V.marshal typ v_a) (V.marshal typ v_b)
 
-type set = VSet.t
+  let norm cmp xs = List.sort_uniq cmp xs
+  let mem cmp x ys = List.exists (fun y -> cmp x y = 0) ys
+  let inter cmp a b = List.filter (fun x -> mem cmp x b) a
+  let union cmp a b = norm cmp (a @ b)
+  let diff cmp a b = List.filter (fun x -> not (mem cmp x b)) a
+  let subset cmp a b = List.for_all (fun x -> mem cmp x b) a
 
-(* Conversion between meta-sets and OCaml lists *)
+  let equal cmp a b =
+    List.compare_lengths a b = 0 && List.for_all2 (fun x y -> cmp x y = 0) a b
 
-let mixop_set = Value.Mixops.of_string "`{ k }"
+  (* Conversion between meta-sets and OCaml lists *)
 
-let set_of_value (value : value) : set =
-  match value.it with
-  | CaseV valuecase when Mixfix.eq_mixop valuecase mixop_set -> (
-      match Mixfix.args valuecase with
-      | [ value_elements ] -> value_elements |> Value.Get.list |> VSet.of_list
-      | _ -> assert false)
-  | _ ->
-      error no_region
-        (Format.asprintf "expected a set, but got %s" (Value.to_string value))
+  let mixop_set = "`{ k }"
+  let typ_set = Typ.Make.var ("set" $ no_region) []
 
-let value_of_set (add : value -> unit) (typ_key : typ) (set : set) : value =
-  let values_element = VSet.elements set in
-  let typ_list = Typ.Make.list typ_key in
-  let value_elements = Value.Make.list typ_list values_element in
-  add value_elements;
-  let value =
-    let typ = Typ.Make.var ("set" $ no_region) [ typ_key ] in
-    let valuecase = Mixfix.fill mixop_set [ value_elements ] in
-    Value.Make.case typ valuecase
-  in
-  add value;
-  value
+  let set_of_value cmp (value : V.t) : V.t list =
+    match Mixfix.args (V.Get.case value typ_set) with
+    | [ value_elements ] -> value_elements |> V.Get.list |> norm cmp
+    | _ -> error no_region "expected a set, but got a different value"
 
-(* dec $intersect_set<K>(set<K>, set<K>) : set<K> *)
+  let value_of_set (add : V.t -> unit) (typ_key : typ) (set : V.t list) : V.t =
+    let typ_list = Typ.Make.list typ_key in
+    let value_elements = V.Make.list typ_list set in
+    add value_elements;
+    let value =
+      let typ = Typ.Make.var ("set" $ no_region) [ typ_key ] in
+      V.Make.(mixop_set <| [ value_elements ] <<| typ)
+    in
+    add value;
+    value
 
-let intersect_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let typ_key = Extract.one at targs in
-  let value_set_a, value_set_b = Extract.two at values_input in
-  let set_a = set_of_value value_set_a in
-  let set_b = set_of_value value_set_b in
-  VSet.inter set_a set_b |> value_of_set add typ_key
+  (* dec $intersect_set<K>(set<K>, set<K>) : set<K> *)
 
-(* dec $union_set<K>(set<K>, set<K>) : set<K> *)
+  let intersect_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_set_a, value_set_b = Extract.two at values_input in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    inter cmp set_a set_b |> value_of_set add typ_key
 
-let union_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let typ_key = Extract.one at targs in
-  let value_set_a, value_set_b = Extract.two at values_input in
-  let set_a = set_of_value value_set_a in
-  let set_b = set_of_value value_set_b in
-  VSet.union set_a set_b |> value_of_set add typ_key
+  (* dec $union_set<K>(set<K>, set<K>) : set<K> *)
 
-(* dec $unions_set<K>(set<K>* ) : set<K> *)
+  let union_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_set_a, value_set_b = Extract.two at values_input in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    union cmp set_a set_b |> value_of_set add typ_key
 
-let unions_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let typ_key = Extract.one at targs in
-  let value_sets = Extract.one at values_input in
-  let sets = value_sets |> Value.Get.list |> List.map set_of_value in
-  sets |> List.fold_left VSet.union VSet.empty |> value_of_set add typ_key
+  (* dec $unions_set<K>(set<K>* ) : set<K> *)
 
-(* dec $diff_set<K>(set<K>, set<K>) : set<K> *)
+  let unions_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_sets = Extract.one at values_input in
+    let sets = value_sets |> V.Get.list |> List.map (set_of_value cmp) in
+    sets |> List.fold_left (union cmp) [] |> value_of_set add typ_key
 
-let diff_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let typ_key = Extract.one at targs in
-  let value_set_a, value_set_b = Extract.two at values_input in
-  let set_a = set_of_value value_set_a in
-  let set_b = set_of_value value_set_b in
-  VSet.diff set_a set_b |> value_of_set add typ_key
+  (* dec $diff_set<K>(set<K>, set<K>) : set<K> *)
 
-(* dec $sub_set<K>(set<K>, set<K>) : bool *)
+  let diff_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_set_a, value_set_b = Extract.two at values_input in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    diff cmp set_a set_b |> value_of_set add typ_key
 
-let sub_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let _typ_key = Extract.one at targs in
-  let value_set_a, value_set_b = Extract.two at values_input in
-  let set_a = set_of_value value_set_a in
-  let set_b = set_of_value value_set_b in
-  let value = Value.Make.bool (VSet.subset set_a set_b) in
-  add value;
-  value
+  (* dec $sub_set<K>(set<K>, set<K>) : bool *)
 
-(* dec $eq_set<K>(set<K>, set<K>) : bool *)
+  let sub_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_set_a, value_set_b = Extract.two at values_input in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    let value = V.Make.bool (subset cmp set_a set_b) in
+    add value;
+    value
 
-let eq_set (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  let _typ_key = Extract.one at targs in
-  let value_set_a, value_set_b = Extract.two at values_input in
-  let set_a = set_of_value value_set_a in
-  let set_b = set_of_value value_set_b in
-  let value = Value.Make.bool (VSet.equal set_a set_b) in
-  add value;
-  value
+  (* dec $eq_set<K>(set<K>, set<K>) : bool *)
+
+  let eq_set (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    let typ_key = Extract.one at targs in
+    let cmp = compare_v typ_key in
+    let value_set_a, value_set_b = Extract.two at values_input in
+    let set_a = set_of_value cmp value_set_a in
+    let set_b = set_of_value cmp value_set_b in
+    let value = V.Make.bool (equal cmp set_a set_b) in
+    add value;
+    value
+end

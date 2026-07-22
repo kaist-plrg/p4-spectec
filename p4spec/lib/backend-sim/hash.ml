@@ -13,8 +13,6 @@
  * under the License.
  *)
 
-open Spec.Unpack
-
 [@@@ocamlformat "disable"]
 
 (* CRC16-ARC table *)
@@ -240,19 +238,27 @@ let compute_hash (algo : string) ?(value_init : Bigint.t = Bigint.zero)
   | "identity" -> value
   | _ -> Format.asprintf "(TODO: compute_hash) %s" algo |> failwith
 
-let package (values : Value.t list) : Bigint.t * Bigint.t =
-  values
-  |> List.map unpack_p4_precision_numberValue
-  |> List.map (fun (width, value) -> (width, of_two_complement value width))
-  |> List.fold_left
-       (fun (width_pack, value_pack) (width, value) ->
-         let width_pack = Bigint.(width_pack + width) in
-         let value_pack = shift_bitstring_left value_pack width in
-         let value_pack = Bigint.(value_pack + value) in
-         (width_pack, value_pack))
-       (Bigint.zero, Bigint.zero)
-  |> pad_right_to_16
+module Make (V : Runtime.Valrep.SAFE) = struct
+  module Unpack = Spec.Unpack.Make (V)
+  open Unpack
 
-let compute_checksum (algo : string) ?(value_init : Bigint.t = Bigint.zero)
-    (values : Value.t list) : Bigint.t =
-  values |> package |> compute_hash algo ~value_init
+  let package (values : V.t list) : Bigint.t * Bigint.t =
+    values
+    |> List.map unpack_p4_precision_numberValue
+    |> List.map (fun (width, value) -> (width, of_two_complement value width))
+    |> List.fold_left
+         (fun (width_pack, value_pack) (width, value) ->
+           let width_pack = Bigint.(width_pack + width) in
+           let value_pack = shift_bitstring_left value_pack width in
+           let value_pack = Bigint.(value_pack + value) in
+           (width_pack, value_pack))
+         (Bigint.zero, Bigint.zero)
+    |> pad_right_to_16
+
+  let compute_checksum (algo : string) ?(value_init : Bigint.t = Bigint.zero)
+      (values : V.t list) : Bigint.t =
+    values |> package |> compute_hash algo ~value_init
+
+  let adjust = adjust
+  let bitwise_neg = bitwise_neg
+end

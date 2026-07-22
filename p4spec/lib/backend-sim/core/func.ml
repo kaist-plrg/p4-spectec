@@ -1,17 +1,19 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-open Spec.Unpack
 open Error
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
+  module Unpack = Spec.Unpack.Make (V)
+  open Unpack
   (* Check a predicate @check in the parser; if the predicate is true do nothing,
      otherwise set the parser error to @toSignal, and transition to the `reject` state.
 
      extern void verify(in bool check, in error toSignal); *)
 
-  let verify (value_ctx : Value.t) (value_arch : Value.t) :
-      Value.t * Value.t * Value.t =
+  let verify (value_ctx : V.t) (value_arch : V.t) : V.t * V.t * V.t =
     (* Get "check" in context *)
     let value_check = Spec_Func.find_var_e_local value_ctx "check" in
     (* Get "toSignal" in context *)
@@ -21,11 +23,10 @@ module Make (Spec_Func : Spec.Func.S) = struct
     let value_callResult =
       if check then
         let typ = Typ.Make.var ("value" $ no_region) [] |> Typ.Make.opt in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.call_result)
       else
-        Value.Make.(
-          "REJECT errorValue" <| [ value_toSignal ] <<| "rejectResult")
+        V.Make.("REJECT errorValue" <| [ value_toSignal ] <<| Typs.call_result)
     in
     (value_ctx, value_arch, value_callResult)
 
@@ -42,7 +43,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
      extern bool static_assert(bool check); *)
 
-  let static_assert ~(message : bool) (value_ctx : Value.t) : Value.t =
+  let static_assert ~(message : bool) (value_ctx : V.t) : V.t =
     (* Get "check" in context *)
     let value_check = Spec_Func.find_var_value_t_local value_ctx "check" in
     (* Get "message" in context if present *)

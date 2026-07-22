@@ -1,98 +1,106 @@
+module Mixfix = Domain.Mixfix
+module Mixop = Domain.Mixop
 module Num = Lang.Xl.Num
 module Value = Runtime.Value
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 
-let first fs x = List.find_map (fun f -> f x) fs
+module Make (V : Runtime.Valrep.SAFE) = struct
+  type vt = V.t
 
-(* boolValue = `B bool *)
+  let first fs x = List.find_map (fun f -> f x) fs
 
-let unpack_p4_bool (value : Value.t) : bool =
-  Value.Get.(value |>> "`B bool" |> one |> bool)
+  (* boolValue = `B bool *)
 
-(* errorValue = ERROR `. id *)
-(* matchKindValue = MATCH_KIND `. id *)
-(* stringValue = stringLiteral *)
+  let unpack_p4_bool (value : vt) : bool =
+    V.Get.(value |>> "`B bool" |> one |> bool)
 
-let unpack_p4_string (value : Value.t) : string =
-  Value.Get.(value |>> "`\" text `\"" |> one |> text)
+  (* errorValue = ERROR `. id *)
+  (* matchKindValue = MATCH_KIND `. id *)
+  (* stringValue = stringLiteral *)
 
-(* D int *)
+  let unpack_p4_string (value : vt) : string =
+    V.Get.(value |>> "`\" text `\"" |> one |> text)
 
-(* nat W int *)
+  (* D int *)
 
-let unpack_p4_fixedBit (value : Value.t) : Bigint.t * Bigint.t =
-  Value.Get.(
-    value |>> "nat W int" |> two |> fun (value_width, value_int) ->
-    let width = value_width |> num |> Num.to_int in
-    let int = value_int |> num |> Num.to_int in
-    (width, int))
+  (* nat W int *)
 
-(* nat S int *)
-
-let unpack_p4_fixedInt (value : Value.t) : Bigint.t * Bigint.t =
-  Value.Get.(
-    value |>> "nat S int" |> two |> fun (value_width, value_int) ->
-    let width = value_width |> num |> Num.to_int in
-    let int = value_int |> num |> Num.to_int in
-    (width, int))
-
-(* nat `. nat V int *)
-
-let unpack_p4_variableBit (value : Value.t) : Bigint.t * Bigint.t * Bigint.t =
-  Value.Get.(
-    value |>> "nat `. nat V int" |> three
-    |> fun (value_width_max, value_width, value_int) ->
-    let width_max = value_width_max |> num |> Num.to_int in
-    let width = value_width |> num |> Num.to_int in
-    let int = value_int |> num |> Num.to_int in
-    (width_max, width, int))
-
-let unpack_p4_precision_numberValue (value : Value.t) : Bigint.t * Bigint.t =
-  try unpack_p4_fixedBit value
-  with _ -> (
-    try unpack_p4_fixedInt value
-    with _ ->
-      let _, width, int = unpack_p4_variableBit value in
+  let unpack_p4_fixedBit (value : vt) : Bigint.t * Bigint.t =
+    V.Get.(
+      value |>> "nat W int" |> two |> fun (value_width, value_int) ->
+      let width = value_width |> num |> Num.to_int in
+      let int = value_int |> num |> Num.to_int in
       (width, int))
 
-(* listValue = LIST `[ value* ] *)
+  (* nat S int *)
 
-(* tupleValue = TUPLE `( value* ) *)
+  let unpack_p4_fixedInt (value : vt) : Bigint.t * Bigint.t =
+    V.Get.(
+      value |>> "nat S int" |> two |> fun (value_width, value_int) ->
+      let width = value_width |> num |> Num.to_int in
+      let int = value_int |> num |> Num.to_int in
+      (width, int))
 
-let unpack_p4_tuple (value : Value.t) : Value.t list =
-  Value.Get.(value |>> "TUPLE `( value* )" |> one |> list)
+  (* nat `. nat V int *)
 
-(* headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ] *)
-(* structValue = STRUCT tid `{ fieldValue* } *)
-(* headerValue = HEADER tid `{ bool `; fieldValue* } *)
-(* headerUnionValue = HEADER_UNION tid `{ fieldValue* } *)
+  let unpack_p4_variableBit (value : vt) : Bigint.t * Bigint.t * Bigint.t =
+    V.Get.(
+      value |>> "nat `. nat V int" |> three
+      |> fun (value_width_max, value_width, value_int) ->
+      let width_max = value_width_max |> num |> Num.to_int in
+      let width = value_width |> num |> Num.to_int in
+      let int = value_int |> num |> Num.to_int in
+      (width_max, width, int))
 
-(* tid `. id *)
+  let unpack_p4_precision_numberValue (value : vt) : Bigint.t * Bigint.t =
+    let mixop, _ = Mixfix.split (V.Get.case value Typs.value) in
+    let canon s = Mixop.string_of_mixop (Value.Mixops.of_string s) in
+    let m = Mixop.string_of_mixop mixop in
+    if m = canon "nat W int" then unpack_p4_fixedBit value
+    else if m = canon "nat S int" then unpack_p4_fixedInt value
+    else
+      let _, width, int = unpack_p4_variableBit value in
+      (width, int)
 
-let unpack_p4_enum (value : Value.t) : string * string =
-  Value.Get.(
-    value |>> "tid `. id" |> two |> fun (value_tid, value_id) ->
-    let tid = value_tid |> text in
-    let id = value_id |> text in
-    (tid, id))
+  (* listValue = LIST `[ value* ] *)
 
-(* tid `. id `. value *)
+  (* tupleValue = TUPLE `( value* ) *)
 
-(* objectReferenceValue = `! oid *)
-(* defaultValue = DEFAULT *)
+  let unpack_p4_tuple (value : vt) : vt list =
+    V.Get.(value |>> "TUPLE `( value* )" |> one |> list)
 
-(* SEQ `( value* ) *)
+  (* headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ] *)
+  (* structValue = STRUCT tid `{ fieldValue* } *)
+  (* headerValue = HEADER tid `{ bool `; fieldValue* } *)
+  (* headerUnionValue = HEADER_UNION tid `{ fieldValue* } *)
 
-let unpack_p4_sequence (value : Value.t) : Value.t list =
-  Value.Get.(value |>> "SEQ `( value* )" |> one |> list)
+  (* tid `. id *)
 
-(* SEQ `( value* `, `... ) *)
-(* RECORD `{ fieldValue* } *)
-(* RECORD `{ fieldValue* `, `... } *)
-(* SET `{ value } *)
-(* SET `{ value `&&& value } *)
-(* SET `{ value `.. value } *)
-(* SET `{ `... } *)
-(* TABLE_ENUM tid `. id *)
-(* TABLE_STRUCT tid `{ fieldValue* } *)
+  let unpack_p4_enum (value : vt) : string * string =
+    V.Get.(
+      value |>> "tid `. id" |> two |> fun (value_tid, value_id) ->
+      let tid = value_tid |> text in
+      let id = value_id |> text in
+      (tid, id))
+
+  (* tid `. id `. value *)
+
+  (* objectReferenceValue = `! oid *)
+  (* defaultValue = DEFAULT *)
+
+  (* SEQ `( value* ) *)
+
+  let unpack_p4_sequence (value : vt) : vt list =
+    V.Get.(value |>> "SEQ `( value* )" |> one |> list)
+
+  (* SEQ `( value* `, `... ) *)
+  (* RECORD `{ fieldValue* } *)
+  (* RECORD `{ fieldValue* `, `... } *)
+  (* SET `{ value } *)
+  (* SET `{ value `&&& value } *)
+  (* SET `{ value `.. value } *)
+  (* SET `{ `... } *)
+  (* TABLE_ENUM tid `. id *)
+  (* TABLE_STRUCT tid `{ fieldValue* } *)
+end
