@@ -23,6 +23,7 @@ module Make (Entry : ENTRY) = struct
     mutable count : int; (* number of occupied slots *)
     mutable hand : int; (* eviction hand position *)
     mutable fill : int; (* next slot for sequential initial fill *)
+    mutable touched : int; (* one past the largest slot index ever written *)
   }
 
   let create ~(size : int) =
@@ -36,23 +37,26 @@ module Make (Entry : ENTRY) = struct
       count = 0;
       hand = 0;
       fill = 0;
+      touched = 0;
     }
 
   let size (cache : 'a t) : int = cache.count
 
-  let clear (cache : 'a t) : unit =
-    Table.clear cache.table;
-    Array.fill cache.occ 0 cache.capacity false;
-    cache.count <- 0;
-    cache.hand <- 0;
-    cache.fill <- 0
+  (* Remove every entry, visiting only the slots that were written *)
 
-  let reset (cache : 'a t) : unit =
-    Table.reset cache.table;
-    Array.fill cache.occ 0 cache.capacity false;
+  let empty (cache : 'a t) : unit =
+    for idx = 0 to cache.touched - 1 do
+      if cache.occ.(idx) then begin
+        Table.remove cache.table cache.clock.(idx).key;
+        cache.occ.(idx) <- false;
+        cache.clock.(idx).key <- Entry.default;
+        cache.clock.(idx).ref <- false
+      end
+    done;
     cache.count <- 0;
     cache.hand <- 0;
-    cache.fill <- 0
+    cache.fill <- 0;
+    cache.touched <- 0
 
   let find (cache : 'a t) (key : Entry.t) : 'a option =
     match Table.find_opt cache.table key with
@@ -61,7 +65,7 @@ module Make (Entry : ENTRY) = struct
         cache.clock.(idx).ref <- true;
         Some value
 
-  (* Advance the hand until a slot can be evicted; return its index. *)
+  (* Advance the hand until a slot can be evicted; return its index *)
 
   let evict (cache : 'a t) : int =
     let capacity = cache.capacity in
@@ -90,6 +94,7 @@ module Make (Entry : ENTRY) = struct
           if cache.count < cache.capacity then (
             let idx = cache.fill in
             cache.fill <- (cache.fill + 1) mod cache.capacity;
+            if idx + 1 > cache.touched then cache.touched <- idx + 1;
             idx)
           else evict cache
         in

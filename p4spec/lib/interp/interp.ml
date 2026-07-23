@@ -1,3 +1,3 @@
 module Inst = Inst
-module Interp_Il = Interp_il
+module Interp_Al = Interp_al
 module Interp_Sl = Interp_sl

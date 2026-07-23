@@ -60,11 +60,14 @@ module NanoP4 = struct
   let init (spec : Run.spec) : unit =
     let printer (value : Value.t) =
       match spec with
-      | IL spec_il ->
-          let henv = P4.Unparse.hints_of_spec_il spec_il in
+      | AL spec_al ->
+          let henv = P4.Unparse.hints_of_spec_al spec_al in
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | SL spec_sl ->
           let henv = P4.Unparse.hints_of_spec_sl spec_sl in
+          Format.asprintf "%a" (P4.Unparse.pp_value henv) value
+      | PL spec_pl ->
+          let henv = P4.Unparse.hints_of_spec_pl spec_pl in
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | Empty -> assert false
     in
@@ -142,11 +145,14 @@ module P4 = struct
   let init (spec : Run.spec) : unit =
     let printer (value : Value.t) =
       match spec with
-      | IL spec_il ->
-          let henv = P4.Unparse.hints_of_spec_il spec_il in
+      | AL spec_al ->
+          let henv = P4.Unparse.hints_of_spec_al spec_al in
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | SL spec_sl ->
           let henv = P4.Unparse.hints_of_spec_sl spec_sl in
+          Format.asprintf "%a" (P4.Unparse.pp_value henv) value
+      | PL spec_pl ->
+          let henv = P4.Unparse.hints_of_spec_pl spec_pl in
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | Empty -> assert false
     in
@@ -155,11 +161,11 @@ end
 
 (* SpecTec IL *)
 
-module SpecTec_IL = struct
+module SpecTec_AL = struct
   include Spectec.Common.Boot
   include Spectec.Common.Unboot
-  include Spectec.Ili.Boot
-  include Spectec.Ili.Unboot
+  include Spectec.Ali.Boot
+  include Spectec.Ali.Unboot
   include Spectec.Caches
 
   (* Program parsing *)
@@ -167,7 +173,7 @@ module SpecTec_IL = struct
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_files Run.IL_mode paths in
+      let value_spec = Spectec.Parse.parse_files Run.AL_mode paths in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -175,7 +181,7 @@ module SpecTec_IL = struct
 
   let parse_string (path : string) (str : string) : Run.parse_result =
     try
-      let value_spec = Spectec.Parse.parse_string Run.IL_mode path str in
+      let value_spec = Spectec.Parse.parse_string Run.AL_mode path str in
       Run.Pass value_spec
     with
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
@@ -184,7 +190,7 @@ module SpecTec_IL = struct
   (* Program unparsing *)
 
   let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_script |> Il.Print.string_of_spec
+    value_script |> unboot_script |> Al.Print.string_of_spec
 
   (* Builtins *)
 

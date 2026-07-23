@@ -112,9 +112,10 @@ rule InstDecl_non_objectInitializer_ok:
       p TC_0 |- constructorTargetIR `( argumentIR* )
               : constructorTypeIR `< `# typeId_inserted* > `( `# id_default* `# id_optional* )
   ---- ;; check instantiation convention
+  -- if typeArgumentIR_infer* = typeArgumentIR* ++ (`` typeId_inserted)*
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
-      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer* `# typeId_infer* >
                         `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; update the context with the instantiated object
@@ -314,9 +315,10 @@ rule InstDecl_objectInitializer_ok:
               : constructorTypeIR `< `# typeId_inserted* >
                   `( `# id_default* `# id_optional* )
   ---- ;; check instantiation convention
+  -- if typeArgumentIR_infer* = typeArgumentIR* ++ (`` typeId_inserted)*
   -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
   -- Inst_ok:
-      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* >
+      p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer* `# typeId_infer* >
                         `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
   ---- ;; object initializer can be specified for an extern object

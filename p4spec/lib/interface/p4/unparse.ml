@@ -44,8 +44,8 @@ let hints_of_deftyp (henv : HEnv.t) (tid : TId.t) (deftyp : Il.deftyp) : HEnv.t
 
 (* Definitions *)
 
-let hints_of_def_il (henv : HEnv.t) (def_il : Il.def) : HEnv.t =
-  match def_il.it with
+let hints_of_def_al (henv : HEnv.t) (def_al : Al.def) : HEnv.t =
+  match def_al.it with
   | TypD (id, _, deftyp, _) -> hints_of_deftyp henv id deftyp
   | _ -> henv
 
@@ -54,13 +54,22 @@ let hints_of_def_sl (henv : HEnv.t) (def_sl : Sl.def) : HEnv.t =
   | TypD (id, _, deftyp, _) -> hints_of_deftyp henv id deftyp
   | _ -> henv
 
+let hints_of_def_pl (henv : HEnv.t) (def_pl : Pl.def) : HEnv.t =
+  let open Pl in
+  match def_pl.Annot.node.it with
+  | TypD (id, _, deftyp) -> hints_of_deftyp henv id deftyp
+  | _ -> henv
+
 (* Spec *)
 
-let hints_of_spec_il (spec_il : Il.spec) : HEnv.t =
-  List.fold_left hints_of_def_il HEnv.empty spec_il
+let hints_of_spec_al (spec_al : Al.spec) : HEnv.t =
+  List.fold_left hints_of_def_al HEnv.empty spec_al
 
 let hints_of_spec_sl (spec_sl : Sl.spec) : HEnv.t =
   List.fold_left hints_of_def_sl HEnv.empty spec_sl
+
+let hints_of_spec_pl (spec_pl : Pl.spec) : HEnv.t =
+  List.fold_left hints_of_def_pl HEnv.empty spec_pl
 
 (* Unparsing *)
 
@@ -137,8 +146,12 @@ and pp_case_v (note : Il.vnote) (henv : HEnv.t) fmt (valuecase : Il.valuecase) :
 and pp_hint_case_v (henv : HEnv.t) (hint : Hints.Alter.t) fmt
     (values : Value.t list) : unit =
   let str =
-    Hints.Alter.alternate
-      ~base_atom:(fun atom -> F.asprintf "%a" pp_atom atom)
+    Hints.Alter.alternate ~empty:""
+      ~text:(fun s -> match s with "" -> None | s -> Some s)
+      ~atom:(fun (atom : Il.atom) -> F.asprintf "%a" pp_atom atom)
+      ~join:(fun (docs : string list) -> String.concat " " docs)
+      ~fuse:(fun (a : string) (b : string) -> a ^ b)
+      ~other:(fun (hintexp : El.exp) -> El.Print.string_of_exp hintexp)
       hint
       (fun value -> F.asprintf "%a" (pp_value henv) value)
       values

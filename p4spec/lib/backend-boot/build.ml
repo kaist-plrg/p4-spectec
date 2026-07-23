@@ -9,20 +9,22 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
   let (module Runner_target) =
     match level.interface with
     | P4_interface -> (module P4.Make () : Run.RUNNER)
-    | IL_interface ->
-        let module Interface_SpecTec = Interface.SpecTec_IL in
+    | AL_interface ->
+        let module Interface_SpecTec = Interface.SpecTec_AL in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
                   (Spectec.Make_null (Interface_SpecTec))
-                  (Interp_il.Interp.Make)
-                  (Interp_sl.Interp.Make) : Run.RUNNER)
+                  (Interp_al.Interp.Make)
+                  (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Run.RUNNER)
     | SL_interface ->
         let module Interface_SpecTec = Interface.SpecTec_SL in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
                   (Spectec.Make_null (Interface_SpecTec))
-                  (Interp_il.Interp.Make)
-                  (Interp_sl.Interp.Make) : Run.RUNNER)
+                  (Interp_al.Interp.Make)
+                  (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   (* Initialize the target runner, as an SL spec *)
   let spec =
@@ -39,15 +41,16 @@ let build_interm ?(cache = true) ?(det = false) ?(guard = false)
     match level.interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
-    | IL_interface -> (module Interface.SpecTec_IL : Spectec.INTERFACE_SPECTEC)
+    | AL_interface -> (module Interface.SpecTec_AL : Spectec.INTERFACE_SPECTEC)
     | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
   in
   let (module Runner) =
     (module Runner.Make.Make_nonrec
               (Interface_SpecTec)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
-              (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_al.Interp.Make)
+              (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   (* Initialize the runner, as an SL spec *)
   let spec =
@@ -65,25 +68,29 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
     match level.interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
-    | IL_interface -> (module Interface.SpecTec_IL : Spectec.INTERFACE_SPECTEC)
+    | AL_interface -> (module Interface.SpecTec_AL : Spectec.INTERFACE_SPECTEC)
     | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
   in
   let (module Booter) =
     (module Runner.Make.Make_nonrec
               (Interface_SpecTec)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
-              (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_al.Interp.Make)
+              (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   (* Initialize the booter, as mode *)
   let spec =
     match mode with
-    | IL_mode ->
-        let spec_il = Pass.elab [ level.layer.specdir ] in
-        (IL spec_il : Run.spec)
+    | AL_mode ->
+        let spec_al = Pass.algo [ level.layer.specdir ] in
+        (AL spec_al : Run.spec)
     | SL_mode ->
         let spec_sl = Pass.structure ~final:true [ level.layer.specdir ] in
         (SL spec_sl : Run.spec)
+    | PL_mode ->
+        let spec_pl = Pass.annotate [ level.layer.specdir ] in
+        (PL spec_pl : Run.spec)
     | Empty_mode -> assert false
   in
   Booter.init ~cache ~det ~guard spec;
@@ -128,24 +135,28 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     match interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
-    | IL_interface -> (module Interface.SpecTec_IL : Spectec.INTERFACE_SPECTEC)
+    | AL_interface -> (module Interface.SpecTec_AL : Spectec.INTERFACE_SPECTEC)
     | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
   in
   let (module Runner) =
     (module Runner.Make.Make_rec
               (Interface_SpecTec)
               (Spectec.Make_null (Interface_SpecTec))
-              (Interp_il.Interp.Make)
-              (Interp_sl.Interp.Make) : Run.RUNNER)
+              (Interp_al.Interp.Make)
+              (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   let spec =
     match mode with
-    | IL_mode ->
-        let spec_il = Pass.elab paths_spec in
-        (IL spec_il : Run.spec)
+    | AL_mode ->
+        let spec_al = Pass.algo paths_spec in
+        (AL spec_al : Run.spec)
     | SL_mode ->
         let spec_sl = Pass.structure ~final:true paths_spec in
         (SL spec_sl : Run.spec)
+    | PL_mode ->
+        let spec_pl = Pass.annotate paths_spec in
+        (PL spec_pl : Run.spec)
     | Empty_mode -> assert false
   in
   Runner.init ~cache ~det ~guard spec;

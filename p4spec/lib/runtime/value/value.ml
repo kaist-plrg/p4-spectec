@@ -102,9 +102,20 @@ let hash_of (v : value') : int =
             h := (!h * 31) + value_field.note.vhash)
           valuefields
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
-        h := (!h * 31) + Hashtbl.hash (Mixop.string_of_mixop mixop);
-        List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
+        let rec go = function
+          | Mixfix.Arg value -> h := (!h * 31) + value.note.vhash
+          | Mixfix.Atom atom -> h := (!h * 31) + Hashtbl.hash atom.it
+          | Mixfix.Brack (atom_l, mixfix, atom_r) ->
+              h := (!h * 31) + Hashtbl.hash atom_l.it;
+              go mixfix;
+              h := (!h * 31) + Hashtbl.hash atom_r.it
+          | Mixfix.Infix (mixfix_l, atom, mixfix_r) ->
+              go mixfix_l;
+              h := (!h * 31) + Hashtbl.hash atom.it;
+              go mixfix_r
+          | Mixfix.Seq mixfixes -> List.iter go mixfixes
+        in
+        go valuecase
     | TupleV values ->
         h := (!h * 31) + 1001;
         List.iter (fun value -> h := (!h * 31) + value.note.vhash) values
@@ -124,7 +135,15 @@ let hash_of (v : value') : int =
 (* Mixops *)
 
 module Mixops = struct
-  let of_string (s : string) : Mixop.t = Frontend.Parse.parse_mixop s
+  let cache : (string, Mixop.t) Hashtbl.t = Hashtbl.create 64
+
+  let of_string (s : string) : Mixop.t =
+    match Hashtbl.find_opt cache s with
+    | Some mixop -> mixop
+    | None ->
+        let mixop = Frontend.Parse.parse_mixop s in
+        Hashtbl.replace cache s mixop;
+        mixop
 
   let of_atoms_matrix (atoms_matrix : Atom.t list list) : Mixop.t =
     atoms_matrix
@@ -285,12 +304,13 @@ module Get = struct
       (case_default : value list -> 'a) : 'a =
     match value.it with
     | CaseV valuecase -> (
-        let mixop, values = Mixfix.split valuecase in
-        let cases =
-          List.map (fun (s_mixop, f) -> (Mixops.of_string s_mixop, f)) cases
-        in
+        let values = Mixfix.args valuecase in
         let f_opt =
-          List.find_opt (fun (m, _) -> Mixop.eq m mixop) cases |> Option.map snd
+          List.find_opt
+            (fun (s_mixop, _) ->
+              Mixfix.eq_mixop valuecase (Mixops.of_string s_mixop))
+            cases
+          |> Option.map snd
         in
         match f_opt with Some f -> f values | None -> case_default values)
     | _ -> case_default []
@@ -333,33 +353,32 @@ module Get = struct
   let ( |>> ) (value : t) (s_mixop : string) : value list =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
         let mixop_expect = Mixops.of_string s_mixop in
-        if Mixop.eq mixop mixop_expect then values
+        if Mixfix.eq_mixop valuecase mixop_expect then Mixfix.args valuecase
         else
           error no_region
             (Format.asprintf "expected case with %s, but got %s"
                (Mixop.string_of_mixop mixop_expect)
-               (Mixop.string_of_mixop mixop))
+               (Mixop.string_of_mixop (Mixfix.to_mixop valuecase)))
     | _ -> error no_region "not a case"
 
   let ( |>>! ) (value : t) (mixop_expect : Mixop.t) : value list =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
-        if Mixop.eq mixop mixop_expect then values
+        if Mixfix.eq_mixop valuecase mixop_expect then Mixfix.args valuecase
         else
           error no_region
             (Format.asprintf "expected case with %s, but got %s"
                (Mixop.string_of_mixop mixop_expect)
-               (Mixop.string_of_mixop mixop))
+               (Mixop.string_of_mixop (Mixfix.to_mixop valuecase)))
     | _ -> error no_region "not a case"
 
   let ( |>>? ) (value : t) (s_mixop : string) : value list option =
     match value.it with
     | CaseV valuecase ->
-        let mixop, values = Mixfix.split valuecase in
         let mixop_expect = Mixops.of_string s_mixop in
-        if Mixop.eq mixop mixop_expect then Some values else None
+        if Mixfix.eq_mixop valuecase mixop_expect then
+          Some (Mixfix.args valuecase)
+        else None
     | _ -> None
 end

@@ -100,7 +100,7 @@ and insert_dangle'' (instr : instr) : Sl.instr' =
       Sl.RuleI (id, notexp, inputs, iterinstrs, block)
   | ResultI (rel_signature, exps) -> Sl.ResultI (rel_signature, exps)
   | ReturnI exp -> Sl.ReturnI exp
-  | DebugI exp -> Sl.DebugI exp
+  | DebugI (exp, instr) -> Sl.DebugI (exp, insert_dangle' instr)
 
 (* Nop pass *)
 
@@ -155,7 +155,7 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
       Sl.RuleI (id, notexp, inputs, iterinstrs, block)
   | ResultI (rel_signature, exps) -> Sl.ResultI (rel_signature, exps)
   | ReturnI exp -> Sl.ReturnI exp
-  | DebugI exp -> Sl.DebugI exp
+  | DebugI (exp, instr) -> Sl.DebugI (exp, insert_nothing' instr)
 
 (* Instrumentation *)
 

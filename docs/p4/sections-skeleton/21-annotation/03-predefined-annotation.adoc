@@ -1,6 +1,6 @@
 === Predefined annotations
 
-// 1193
+// 1200
 Annotation names that start with lowercase letters are reserved for the
 standard library and architecture. This document pre-defines a set of
 "standard" annotations in <<sec-p4-reserved-annotations>>. We expect that this
@@ -11,7 +11,7 @@ annotations named like `@X_annotation`
 [#sec-optional-parameter-annotations]
 ==== Optional parameter annotations
 
-// 1194
+// 1201
 A parameter to a package, parser type, control type, extern method, extern
 function or extern object constructor can be annotated with `@optional` to
 indicate that the user does not need to provide a corresponding argument for
@@ -21,18 +21,18 @@ target-dependent.
 [#sec-table-action-annotations]
 ==== Annotations on the table action list
 
-// 1195
+// 1202
 The following two annotations can be used to give additional information to the
 compiler and control-plane about actions in a table. These annotations have no
 bodies.
 
-// 1196
+// 1203
 * `@tableonly`: actions with this annotation can only appear within the table,
   and never as default action.
 * `@defaultonly`: actions with this annotation can only appear in the default
   action, and never in the table.
 
-// 1197
+// 1204
 [source,p4]
 ----
 table t {
@@ -53,14 +53,14 @@ endif::[]
 [#sec-control-plane-api-annotations]
 ==== Control-plane API annotations
 
-// 1198
+// 1205
 The `@name` annotation directs the compiler to use a different local name when
 generating the external APIs used to manipulate a language element from the
 control plane. This annotation takes a local compile-time known value of type
 `string` (typically a string literal). In the following example, the
 fully-qualified name of the table is `c_inst.t1`.
 
-// 1199
+// 1206
 [source,p4]
 ----
 control c( /* parameters omitted */ )() {
@@ -70,7 +70,7 @@ control c( /* parameters omitted */ )() {
 c() c_inst;
 ----
 
-// 1200
+// 1207
 The `@hidden` annotation hides a controllable entity, e.g. a table, key,
 action, or extern, from the control plane. This effectively removes its
 fully-qualified name (<<sec-fully-qualified-names>>). This annotation does
@@ -83,7 +83,7 @@ endif::[]
 
 ===== Restrictions
 
-// 1201
+// 1208
 Each element may be annotated with at most one `@name` or `@hidden` annotation,
 and each control plane name must refer to at most one controllable entity. This
 is of special concern when using an absolute `@name` annotation: if a type
@@ -91,7 +91,7 @@ containing a `@name` annotation with an absolute pathname (i.e., one starting
 with a dot) is instantiated more than once, it will result in the same name
 referring to two controllable entities.
 
-// 1202
+// 1209
 [source,p4]
 ----
 control noargs();
@@ -104,7 +104,7 @@ control c() {
 top(c(), c()) main;
 ----
 
-// 1203
+// 1210
 Without the `@name` annotation, this program would produce two controllable
 entities with fully-qualified names `main.c1.t` and `main.c2.t`. However, the
 `@name(".foo.bar")` annotation renames table `t` in both instances to
@@ -113,7 +113,7 @@ which is illegal.
 
 ==== Concurrency control annotations
 
-// 1204
+// 1211
 The `@atomic` annotation, described in <<sec-concurrency-model>> can be used to
 enforce the atomic execution of a code block.
 
@@ -125,12 +125,12 @@ endif::[]
 [#sec-branch-annotations]
 ==== Branch prediction annotations
 
-// 1205
+// 1212
 The `@likely` and `@unlikely` annotation can be used on blocks that are used in
 `if`-`else` or `switch` statements to hint when a branch is likely or unlikely
 to be taken.
 
-// 1206
+// 1213
 [source.p4]
 ----
 if (error_failure) @unlikely {
@@ -148,7 +148,7 @@ switch(value) {
 }
 ----
 
-// 1207
+// 1214
 These annotations have no effect on the semantics of the program; they are just
 hints to help an optimizer. A warning may be issued if a `@likely` block is
 found to never execute or an `@unlikely` block will always execute, but is not
@@ -162,7 +162,7 @@ endif::[]
 [#sec-value-set-annotations]
 ==== Value set annotations
 
-// 1208
+// 1215
 The `@match` annotation, described in <<sec-select-expression>>, is used to
 specify a `match_kind` value other than the default `match_kind` of `exact` for
 a field of a `value_set`.
@@ -175,7 +175,7 @@ endif::[]
 [#sec-extern-annotations]
 ==== Extern function/method annotations
 
-// 1209
+// 1216
 Various annotations may appear on extern function and method declarations to
 describe limitations on the behavior and interactions of those functions. By
 default extern functions might have any effect on the environment of the P4
@@ -187,7 +187,7 @@ interact based on their names built into it), but these annotations provide a
 uniform way of describing certain well-defined interactions (or their absence),
 allowing architecture-independent analysis of P4 programs.
 
-// 1210
+// 1217
 * `@pure` - Describes a function that depends solely on its `in` parameter
   values, and has no effect other than returning a value, and copy-out behavior
   on its `out` and `inout` parameters. No hidden state is recorded between calls,
@@ -219,14 +219,14 @@ endif::[]
 [#sec-deprecated-anno]
 ==== Deprecated annotation
 
-// 1211
+// 1218
 The `deprecated` annotation has a required string argument that is a message
 that will be printed by a compiler when a program is using the deprecated
 construct. This is mostly useful for annotating library constructs, such as
 externs. The parameter must be a local compile-time known value of type
 `string`.
 
-// 1212
+// 1219
 [source,p4]
 ----
 #define DEPR_V1_2_2 "Deprecated in v1.2.2"
@@ -239,7 +239,7 @@ extern Checker {
 [#sec-nowarn-anno]
 ==== No warnings annotation
 
-// 1213
+// 1220
 The `noWarn` annotation has a required string argument that indicates a
 compiler warning that will be inhibited. For example `@noWarn("unused")` on a
 declaration will prevent a compiler warning if that declaration is not used.

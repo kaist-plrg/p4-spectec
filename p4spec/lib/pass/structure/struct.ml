@@ -1,7 +1,7 @@
 open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
-open Il
+open Al
 module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
 open Error
@@ -37,7 +37,7 @@ let struct_params_from_args (ctx : Ctx.t) (params : param list)
     (fun param arg_input ->
       let at = param.at in
       match (param.it, arg_input.it) with
-      | ExpP typ, ExpA exp -> Sl.ExpP (typ, exp) $ at
+      | Il.ExpP typ, Il.ExpA exp -> Sl.ExpP (typ, exp) $ at
       | DefP (id_def, tparams, params, typ), DefA id_def_arg
         when Id.eq id_def id_def_arg ->
           Sl.DefP (id_def, tparams, struct_params ctx params, typ) $ at
@@ -54,23 +54,20 @@ let rec internalize_iter ?(iterprems : iterprem list = []) (prem : prem) :
   | _ -> (prem, iterprems)
 
 let rec struct_prems (prems : prem list) (instr_ret : Ol.Ast.instr) :
-    Ol.Ast.instr list =
+    Ol.Ast.instr =
   let prems_internalized = List.map internalize_iter prems in
   struct_prems' prems_internalized instr_ret
 
 and struct_prems' (prems_internalized : (prem * iterprem list) list)
-    (instr_ret : Ol.Ast.instr) : Ol.Ast.instr list =
+    (instr_ret : Ol.Ast.instr) : Ol.Ast.instr =
   match prems_internalized with
-  | [] -> [ instr_ret ]
+  | [] -> instr_ret
   | (prem_h, iterprems_h) :: prems_internalized_t -> (
       let at = prem_h.at in
       match prem_h.it with
       | RulePr (id, notexp, inputs) ->
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          let instr_h =
-            Ol.Ast.RuleI (id, notexp, inputs, iterprems_h, instrs_t) $ at
-          in
-          [ instr_h ]
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.RuleI (id, notexp, inputs, iterprems_h, [ instr_t ]) $ at
       | IfPr exp ->
           let iterexps_h =
             List.map
@@ -79,9 +76,8 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
                 | _ -> error at "an if premise should not have bindings")
               iterprems_h
           in
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          let instr_h = Ol.Ast.IfI (exp, iterexps_h, instrs_t) $ at in
-          [ instr_h ]
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.IfI (exp, iterexps_h, [ instr_t ]) $ at
       | IfHoldPr (id, notexp) ->
           let iterexps_h =
             List.map
@@ -90,11 +86,8 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
                 | _ -> error at "an if holds premise should not have bindings")
               iterprems_h
           in
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          let instr_h =
-            Ol.Ast.HoldI (id, notexp, iterexps_h, instrs_t, []) $ at
-          in
-          [ instr_h ]
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.HoldI (id, notexp, iterexps_h, [ instr_t ], []) $ at
       | IfNotHoldPr (id, notexp) ->
           let iterexps_h =
             List.map
@@ -104,21 +97,14 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
                     error at "an if not holds premise should not have bindings")
               iterprems_h
           in
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          let instr_h =
-            Ol.Ast.HoldI (id, notexp, iterexps_h, [], instrs_t) $ at
-          in
-          [ instr_h ]
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.HoldI (id, notexp, iterexps_h, [], [ instr_t ]) $ at
       | LetPr (exp_l, exp_r) ->
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          let instr_h =
-            Ol.Ast.LetI (exp_l, exp_r, iterprems_h, instrs_t) $ at
-          in
-          [ instr_h ]
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.LetI (exp_l, exp_r, iterprems_h, [ instr_t ]) $ at
       | DebugPr exp ->
-          let instr_h = Ol.Ast.DebugI exp $ at in
-          let instrs_t = struct_prems' prems_internalized_t instr_ret in
-          instr_h :: instrs_t
+          let instr_t = struct_prems' prems_internalized_t instr_ret in
+          Ol.Ast.DebugI (exp, instr_t) $ at
       | _ -> assert false)
 
 (* Structuring rules *)
@@ -147,9 +133,16 @@ let struct_rule_matches (frees : IdSet.t)
 
 let struct_rule_paths (rel_signature : Ol.Ast.rel_signature)
     (prems_path : prem list) (exps_output : exp list) : Ol.Ast.block =
-  let at = exps_output |> List.map Util.Source.at |> over_region in
+  let at =
+    match (exps_output, prems_path) with
+    | [], [] ->
+        let nottyp, _ = rel_signature in
+        nottyp.at
+    | [], _ -> prems_path |> List.map Util.Source.at |> over_region
+    | _ -> exps_output |> List.map Util.Source.at |> over_region
+  in
   let instr_res = Ol.Ast.ResultI (rel_signature, exps_output) $ at in
-  struct_prems prems_path instr_res
+  [ struct_prems prems_path instr_res ]
 
 let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
     (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
@@ -165,7 +158,7 @@ let struct_rule_group (rel_signature : Ol.Ast.rel_signature)
     Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, block_path)
     $ id_rulegroup.at
   in
-  struct_prems prems_match instr_group
+  [ struct_prems prems_match instr_group ]
 
 let struct_else_group (rel_signature : Ol.Ast.rel_signature)
     (prems_match : prem list) (id_rulegroup : id) (exps_signature : exp list)
@@ -176,29 +169,28 @@ let struct_else_group (rel_signature : Ol.Ast.rel_signature)
     Ol.Ast.GroupI (id_rulegroup, rel_signature, exps_signature, block_path)
     $ id_rulegroup.at
   in
-  struct_prems prems_match instr_group
+  [ struct_prems prems_match instr_group ]
 
 (* Structuring clauses *)
 
-let struct_clause_path ((prems, exp_output) : prem list * exp) :
-    Ol.Ast.instr list =
+let struct_clause_path ((prems, exp_output) : prem list * exp) : Ol.Ast.block =
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
-  struct_prems prems instr_ret
+  [ struct_prems prems instr_ret ]
 
 let struct_elseclause_path ((prems, exp_output) : prem list * exp) :
-    Ol.Ast.instr list =
+    Ol.Ast.block =
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
-  struct_prems prems instr_ret
+  [ struct_prems prems instr_ret ]
 
 (* Structuring table rows *)
 
-let struct_tablerow_path ((prems, exp_output) : prem list * exp) :
-    Ol.Ast.instr list =
+let struct_tablerow_path ((prems, exp_output) : prem list * exp) : Ol.Ast.block
+    =
   let at = exp_output.at in
   let instr_ret = Ol.Ast.ReturnI exp_output $ at in
-  struct_prems prems instr_ret
+  [ struct_prems prems instr_ret ]
 
 (* Structuring definitions *)
 
@@ -248,8 +240,8 @@ and struct_defined_rel_def ~(final : bool) (ctx : Ctx.t) (at : region)
     (hints : hint list) : Sl.def =
   let frees =
     IdSet.union
-      (Il.Free.free_rulegroups rulegroups)
-      (Il.Free.free_elsegroup_opt elsegroup_opt)
+      (Al.Free.free_rulegroups rulegroups)
+      (Al.Free.free_elsegroup_opt elsegroup_opt)
   in
   let rulegroups, exps_match_group, prems_match_group =
     List.fold_left

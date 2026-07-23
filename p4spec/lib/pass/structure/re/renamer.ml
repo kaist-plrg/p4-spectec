@@ -236,9 +236,10 @@ and rename_instr (renamer : t) (instr : instr) : instr =
   | ReturnI exp ->
       let exp = rename_exp renamer exp in
       ReturnI exp $ at
-  | DebugI exp ->
+  | DebugI (exp, instr) ->
       let exp = rename_exp renamer exp in
-      DebugI exp $ at
+      let instr = rename_instr renamer instr in
+      DebugI (exp, instr) $ at
 
 and rename_instrs (renamer : t) (instrs : instr list) : instr list =
   List.map (rename_instr renamer) instrs

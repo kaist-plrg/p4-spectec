@@ -184,6 +184,24 @@ let elab_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let algo_command =
+  Core.Command.basic ~summary:"check algorithmic property of a P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
+     fun () ->
+       try
+         let spec_al = Pass.algo paths_spec in
+         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
     (let open Core.Command.Let_syntax in
@@ -209,7 +227,7 @@ let prose_command =
      in
      fun () ->
        try
-         let spec_pl = Pass.prosify paths_spec in
+         let spec_pl = Pass.annotate paths_spec in
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
@@ -245,10 +263,12 @@ let run_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      in
@@ -317,10 +337,12 @@ let sim_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      in
@@ -643,7 +665,7 @@ let splice_command =
            else List.combine paths_input paths_output
          in
          let spec = Pass.parse paths_spec in
-         let spec_pl = Pass.prosify paths_spec in
+         let spec_pl = Pass.annotate paths_spec in
          Backend_splice.Driver.splice_files spec spec_pl paths
        with
        | CommandError msg -> Format.printf "%s\n" msg
@@ -668,7 +690,7 @@ let parse_command =
      fun () ->
        try
          let _, (module Simulator) =
-           Backend_sim.Build.build ~final:true IL_mode paths_spec
+           Backend_sim.Build.build ~final:true AL_mode paths_spec
          in
          let value_program =
            match Simulator.Interface.parse_program includes_p4 [ path_p4 ] with
@@ -745,7 +767,7 @@ let p4_program_value_json_command =
      and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        let _, (module Simulator) =
-         Backend_sim.Build.build ~final:true IL_mode paths_spec
+         Backend_sim.Build.build ~final:true AL_mode paths_spec
        in
        try
          let value_program =
@@ -770,7 +792,7 @@ let unparse_json_value_command =
      fun () ->
        try
          let _, (module Simulator) =
-           Backend_sim.Build.build ~final:true IL_mode paths_spec
+           Backend_sim.Build.build ~final:true AL_mode paths_spec
          in
          let json = Yojson.Safe.from_file path_json in
          let value_result = Sl.value_of_yojson json in
@@ -790,6 +812,7 @@ let command =
     [
       (* Transformations *)
       ("elab", elab_command);
+      ("algo", algo_command);
       ("struct", struct_command);
       ("prose", prose_command);
       (* Execution *)

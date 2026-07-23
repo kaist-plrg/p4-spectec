@@ -73,8 +73,9 @@ rulegroup Stmt_ok/callStatement {
         p TC |- callableTargetIR `< eps > `( argumentIR* )
               : callableTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
+    -- if typeArgumentIR_infer* = (`` typeId_impl)*
     -- Call_ok:
-        p TC |- callableTypeIR `< eps `# typeId_impl* >
+        p TC |- callableTypeIR `< typeArgumentIR_infer* `# typeId_impl* >
                   `( argumentIR* `# id_default* `# id_optional* )
               : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     -- if $is_static_assert_callableTypeIR(callableTypeIR)
@@ -100,8 +101,9 @@ rulegroup Stmt_ok/callStatement {
         p TC |- callableTargetIR `< eps > `( argumentIR* )
               : callableTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
+    -- if typeArgumentIR_infer* = (`` typeId_impl)*
     -- Call_ok:
-        p TC |- callableTypeIR `< eps `# typeId_impl* >
+        p TC |- callableTypeIR `< typeArgumentIR_infer* `# typeId_impl* >
                   `( argumentIR* `# id_default* `# id_optional* )
               : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     -- if ~$is_static_assert_callableTypeIR(callableTypeIR)
@@ -125,9 +127,10 @@ rulegroup Stmt_ok/callStatement {
         p TC |- callableTargetIR `< typeArgumentIR* > `( argumentIR* )
               : callableTypeIR `< `# typeId_inserted* > `( `# id_default* `# id_optional* )
     ---- ;; check calling convention
+    -- if typeArgumentIR_infer* = typeArgumentIR* ++ (`` typeId_inserted)*
     -- if typeId_infer* = typeId_impl* ++ typeId_inserted*
     -- Call_ok:
-        p TC |- callableTypeIR `< typeArgumentIR* `# typeId_infer* >
+        p TC |- callableTypeIR `< typeArgumentIR_infer* `# typeId_infer* >
                   `( argumentIR* `# id_default* `# id_optional* )
               : typeIR_ret `< typeArgumentIR_inferred* > `( argumentIR_cast* )
     ---- ;; create IR
@@ -469,13 +472,22 @@ rulegroup ForCollectionExpr_ok/expression {
     -- if LIST `< typeIR_e > = $unroll_typeIR(typeIR_expression)
     -- Cast_impl: typeIR_e -> typeIR_var
 
+  rule ForCollectionExpr_ok/array:
+    TC typeIR_var |- expression : typedExpressionIR
+    ---- ;; check expression
+    -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
+    ---- ;; check array type
+    -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
+    -- if ARRAY typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
+    -- Type_alpha: typeIR_e ~~ typeIR_var
+
   rule ForCollectionExpr_ok/header-stack:
     TC typeIR_var |- expression : typedExpressionIR
     ---- ;; check expression
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     ---- ;; check header stack type
     -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
-    -- if typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
+    -- if HEADER_STACK typeIR_e `[ _ ] = $unroll_typeIR(typeIR_expression)
     -- Type_alpha: typeIR_e ~~ typeIR_var
 
 }

@@ -1,12 +1,12 @@
 [#sec-table-default-action]
 ==== Table default actions
 
-// 921
+// 928
 The default action for a table is an action that is invoked automatically by
 the match-action unit whenever the lookup table does not find a match for the
 supplied key.
 
-// 922
+// 929
 If present, the `default_action` property _must_ appear after the `action`
 property. It may be declared as `const`, indicating that it cannot be changed
 dynamically by the control-plane. The `default action` _must_ be one of the
@@ -14,17 +14,17 @@ actions that appear in the actions list. In particular, the expressions passed
 as `in`, `out`, or `inout` parameters must be syntactically identical to the
 expressions used in one of the elements of the `actions` list.
 
-// 923
+// 930
 For example, in the above `table` we could set the default action as follows
 (marking it also as constant):
 
-// 924
+// 931
 [source,p4]
 ----
 const default_action = Rewrite_smac(48w0xAA_BB_CC_DD_EE_FF);
 ----
 
-// 925
+// 932
 Note that the specified default action must supply arguments for the
 control-plane-bound parameters (i.e., the directionless parameters), since the
 action is synthesized at compilation time. The expressions supplied as
@@ -32,11 +32,11 @@ arguments for parameters with a direction (`in`, `inout`, or `out`) are
 evaluated when the action is invoked while the expressions supplied as
 arguments for directionless parameters are evaluated at compile time.
 
-// 926
+// 933
 Continuing the example from the previous section, the following are several
 legal and illegal specifications of default actions for the `table t`:
 
-// 927
+// 934
 [source,p4]
 ----
   default_action = a(5); // OK - no control-plane parameters

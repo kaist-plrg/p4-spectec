@@ -23,9 +23,6 @@ rulegroup ConstructorType_ok {
         = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-    ---- ;; check that the constructor type is well-formed
-    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-    -- ConstructorType_wf: B |- constructorTypeIR
 
   rule ConstructorType_ok/non-aliased-some-type:
     p TC |- (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* )
@@ -38,9 +35,6 @@ rulegroup ConstructorType_ok {
         = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-    ---- ;; check that the constructor type is well-formed
-    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-    -- ConstructorType_wf: B |- constructorTypeIR
 
   rule ConstructorType_ok/aliased:
     p TC |- (prefixedNameIR `< eps >) `( argumentIR* )
@@ -54,9 +48,6 @@ rulegroup ConstructorType_ok {
         = $find_constructorDef_overloaded_t(TC, `` nameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
-    ---- ;; check that the constructor type is well-formed
-    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_impl* })
-    -- ConstructorType_wf: B |- constructorTypeIR
 
 }
 
@@ -146,8 +137,7 @@ rulegroup Inst_ok {
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
     -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-    -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
-    -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+    -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
         = $subst_parameterIR(inference, parameterIR_aligned))*
@@ -180,8 +170,7 @@ rulegroup Inst_ok {
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
     -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
-    -- if (typeIR_inferred = $find_map<typeId, typeIR>(inference, typeId_infer))*
-    -- if typeArgumentIR_inferred* = typeArgumentIR* ++ typeIR_inferred*
+    -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
         = $subst_parameterIR(inference, parameterIR_aligned))*

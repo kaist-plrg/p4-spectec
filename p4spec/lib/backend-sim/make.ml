@@ -10,16 +10,21 @@ open Util.Source
 module Make
     (Interface : INTERFACE)
     (MakeArch : functor (Spec : Spec.S) -> ARCH)
-    (MakeInterp_IL : functor
+    (MakeInterp_AL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
       ()
-      -> INTERP_IL)
+      -> INTERP_AL)
     (MakeInterp_SL : functor
       (Interface : INTERFACE)
       (Extern : EXTERN)
       ()
-      -> INTERP_SL) : SIM = struct
+      -> INTERP_SL)
+    (MakeInterp_PL : functor
+      (Interface : INTERFACE)
+      (Extern : EXTERN)
+      ()
+      -> INTERP_PL) : SIM = struct
   (* Instantiations *)
   (* Spec_ is a trampoline to allow Arch/Table to call back into the Interp modules *)
 
@@ -27,13 +32,16 @@ module Make
   module Arch = MakeArch (Spec_)
   module Table = Table.Make (Spec_.Func)
 
-  module MakeExtern (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) : EXTERN =
-  struct
+  module MakeExtern
+      (Interp_AL : INTERP_AL)
+      (Interp_SL : INTERP_SL)
+      (Interp_PL : INTERP_PL) : EXTERN = struct
     let init_mode mode_ =
       let call_func name typs values =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_func name typs values
+        | AL_mode -> Interp_AL.eval_func name typs values
         | SL_mode -> Interp_SL.eval_func name typs values
+        | PL_mode -> Interp_PL.eval_func name typs values
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
@@ -41,8 +49,9 @@ module Make
       in
       let call_rel name values =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_rel name values
+        | AL_mode -> Interp_AL.eval_rel name values
         | SL_mode -> Interp_SL.eval_rel name values
+        | PL_mode -> Interp_PL.eval_rel name values
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
@@ -50,8 +59,9 @@ module Make
       in
       let call_pgm relname includes path =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_program relname includes path
+        | AL_mode -> Interp_AL.eval_program relname includes path
         | SL_mode -> Interp_SL.eval_program relname includes path
+        | PL_mode -> Interp_PL.eval_program relname includes path
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
@@ -76,8 +86,8 @@ module Make
   end
 
   include (
-    Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_IL)
-      (MakeInterp_SL) :
+    Runner.Make.Make_rec (Interface) (MakeExtern) (MakeInterp_AL)
+      (MakeInterp_SL) (MakeInterp_PL) :
         RUNNER)
 
   (* Logger *)

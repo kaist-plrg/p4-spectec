@@ -232,9 +232,10 @@ and replace_instr (replacer : t) (instr : instr) : instr =
   | ReturnI exp ->
       let exp = replace_exp replacer exp in
       ReturnI exp $ at
-  | DebugI exp ->
+  | DebugI (exp, instr) ->
       let exp = replace_exp replacer exp in
-      DebugI exp $ at
+      let instr = replace_instr replacer instr in
+      DebugI (exp, instr) $ at
 
 and replace_instrs (replacer : t) (instrs : instr list) : instr list =
   List.map (replace_instr replacer) instrs

@@ -37,7 +37,7 @@ and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
     (tparams_b : tparam list) (typs_params_b : typ list) (typ_b : typ) : bool =
   check
     (List.length tparams_a = List.length tparams_b)
-    no_region "type parameters do not match";
+    at "type parameters do not match";
   let tids_fresh, theta_a, theta_b =
     List.fold_left2
       (fun (tids_fresh, theta_a, theta_b) tparam_a tparam_b ->

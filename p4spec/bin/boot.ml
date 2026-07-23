@@ -5,12 +5,22 @@ open Util.Error
 
 let version = "0.1"
 
+(* Tune GC for the allocation-heavy meta-circular interpreter *)
+
+let () =
+  Gc.set
+    {
+      (Gc.get ()) with
+      Gc.minor_heap_size = 16 * 1024 * 1024;
+      Gc.space_overhead = 2000;
+    }
+
 exception CommandError of string
 
 (* Commands *)
 
 let elab_command =
-  Core.Command.basic ~summary:"parse and elaborate a P4 spec"
+  Core.Command.basic ~summary:"parse and elaborate a spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -25,8 +35,26 @@ let elab_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let algo_command =
+  Core.Command.basic ~summary:"check algorithmic property of a spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
+     fun () ->
+       try
+         let spec_al = Pass.algo paths_spec in
+         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let struct_command =
-  Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
+  Core.Command.basic ~summary:"insert structured control flow to a spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -42,7 +70,7 @@ let struct_command =
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
 let prose_command =
-  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
+  Core.Command.basic ~summary:"generate AsciiDoc prose from a spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -50,7 +78,7 @@ let prose_command =
      in
      fun () ->
        try
-         let spec_pl = Pass.prosify paths_spec in
+         let spec_pl = Pass.annotate paths_spec in
          Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
          ()
        with
@@ -81,17 +109,19 @@ let run_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      and interface =
        Command.Param.choose_one
          [
-           flag "ili" no_arg ~doc:"IL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_interface);
+           flag "ali" no_arg ~doc:"AL interface"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_interface);
            flag "sli" no_arg ~doc:"SL interface"
            |> map ~f:(fun b -> Core.Option.some_if b SL_interface);
          ]
@@ -205,8 +235,8 @@ let parse_command =
      and interface =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"IL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_interface);
+           flag "al" no_arg ~doc:"AL interface"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_interface);
            flag "sl" no_arg ~doc:"SL interface"
            |> map ~f:(fun b -> Core.Option.some_if b SL_interface);
          ]
@@ -252,6 +282,7 @@ let command_core =
     [
       (* Transformations *)
       ("elab", elab_command);
+      ("algo", algo_command);
       ("struct", struct_command);
       ("prose", prose_command);
       (* Execution *)

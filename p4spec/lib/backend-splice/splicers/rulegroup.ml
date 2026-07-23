@@ -62,16 +62,23 @@ end
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = Pl.id * Pl.id * Pl.rulegroup
+  type prose = Pl.instr
 
   module Value = struct
     type t = prose
 
     let render (values : t list) : string =
       values
-      |> List.map (fun value ->
-             let id_rel, _, rulegroup = value in
-             Pl.Render.render_rulegroup id_rel rulegroup)
+      |> List.map (fun (instr : Pl.instr) ->
+             (* collect_groups_instr only emits GroupI -- the splicer's
+                values are guaranteed to be rulegroups. *)
+             let id_rel =
+               match instr.node.it with
+               | GroupI (_, id_rel, _, _, _) -> id_rel
+               | _ -> assert false
+             in
+             Pl.Render.Backtrack.Label.set_namespace id_rel.it;
+             Pl.Render.render_group instr)
       |> String.concat "\n\n"
   end
 
@@ -79,28 +86,37 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let id_of_rel_title = function
-      | Pl.ProseRelTitle (`Hold (id_rel, _, _))
-      | Pl.ProseRelTitle (`Yield (id_rel, _, _, _, _))
-      | Pl.MathRelTitle (id_rel, _, _) ->
-          id_rel
+    let rec collect_instr (instr : Pl.instr) : Pl.instr list =
+      match instr.node.it with
+      | IfI (_, _, block_then, _) -> collect_block block_then
+      | HoldI (_, _, _, holdcase) -> (
+          match holdcase with
+          | BothH (block_hold, block_nothold) ->
+              collect_block block_hold @ collect_block block_nothold
+          | HoldH (block_hold, _) -> collect_block block_hold
+          | NotHoldH (block_nothold, _) -> collect_block block_nothold)
+      | CaseI (_, cases, _) ->
+          cases |> List.concat_map (fun (_, block) -> collect_block block)
+      | GroupI _ -> [ instr ]
+      | TryI arms -> arms |> List.concat_map collect_block
+      | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
+      | CheckLetSubI (_, _, _, block_then)
+      | CheckLetMatchI (_, _, _, block_then)
+      | OptionGetI (_, _, block_then) ->
+          collect_block block_then
 
-    let id_of_rulegroup_title = function
-      | Pl.ProseRuleTitle (`Hold (id_rulegroup, _, _))
-      | Pl.ProseRuleTitle (`Yield (id_rulegroup, _, _))
-      | Pl.MathRuleTitle (id_rulegroup, _, _) ->
-          id_rulegroup
+    and collect_block (block : Pl.block) : Pl.instr list =
+      block |> List.concat_map collect_instr
 
-    let init_def (def_pl : Pl.def) : (key * value) list =
-      match def_pl.it with
-      | RelD (rel_title, rulegroups) ->
-          let id_rel = id_of_rel_title rel_title in
-          rulegroups
-          |> List.map (fun rulegroup ->
-                 let rulegroup_title, _ = rulegroup in
-                 let id_rulegroup = id_of_rulegroup_title rulegroup_title in
-                 let value = (id_rel, id_rulegroup, rulegroup) in
-                 ((id_rel.it, id_rulegroup.it), value))
+    let init_def (def : Pl.def) : (key * value) list =
+      match def.node.it with
+      | RelD (id_rel, _, _, block, _) ->
+          block |> collect_block
+          |> List.filter_map (fun (instr : Pl.instr) ->
+                 match instr.node.it with
+                 | GroupI (id_rulegroup, _, _, _, _) ->
+                     Some ((id_rel.it, id_rulegroup.it), instr)
+                 | _ -> None)
       | _ -> []
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =

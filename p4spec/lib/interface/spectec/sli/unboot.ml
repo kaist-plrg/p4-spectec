@@ -238,9 +238,10 @@ and unboot_return_instr (at : region) (values : Value.t list) : Sl.instr =
 
 and unboot_debug_instr (at : region) (values : Value.t list) : Sl.instr =
   match values with
-  | [ value_exp ] ->
+  | [ value_exp; value_instr ] ->
       let exp = unboot_exp value_exp in
-      Sl.DebugI exp $$ (at, stub_instr_note)
+      let instr = unboot_instr value_instr in
+      Sl.DebugI (exp, instr) $$ (at, stub_instr_note)
   | _ -> error "@unboot_debug_instr"
 
 and unboot_instrs (value_instrs : Value.t) : Sl.instr list =

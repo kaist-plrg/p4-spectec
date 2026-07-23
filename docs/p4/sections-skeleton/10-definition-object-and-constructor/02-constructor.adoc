@@ -1,10 +1,10 @@
 [#sec-constructor]
 === Constructors
 
-// 615 - Modified
+// 622 - Modified
 Objects can be instantiated in three ways:
 
-// 616 - Modified
+// 623 - Modified
 * Using instantiations, described in <<sec-instantiation-declaration>>.
 * Using constructor call expressions, described in <<sec-constructor-call-expression>>.
 * Using direct type invocation statements, described in <<sec-direct-type-invocation>>.
@@ -14,15 +14,15 @@ Instantiations and constructor call expressions invoke constructors, which
 creates an object as a result. Direct application statements are syntactic
 sugar for instantiations of ``parser`` and ``control`` objects.
 
-// 617 - Modified
+// 624 - Modified
 Constructor invocation is similar to callable invocation; constructors can
 also be overloaded, and called using named arguments.
 
-// 618
+// 625
 The following example shows a constructor invocation for setting the
 target-dependent implementation property of a table:
 
-// 619
+// 626
 [source,p4]
 ----
 extern ActionProfile {
@@ -37,35 +37,35 @@ table tbl {
 [#sec-constructor-parameter]
 ==== Constructor parameters
 
-// 1006
+// 1013
 In order to support libraries of useful P4 components, ``extern``s, ``parser``s,
 ``control``s, and ``package``s can additionally be parameterized through the
 use of constructor parameters.
 
-// 1007
+// 1014
 Consider the parser declaration syntax:
 
-// 1008 - Modified
+// 1015 - Modified
 ${syntax: parserDeclaration constructorParameterListOpt}
 
-// 1009
+// 1016
 From this grammar fragment we infer that a ``parser`` declaration may have two
 sets of parameters:
 
-// 1010
+// 1017
 *	The runtime parser parameters (``parameterList``)
 *	Optional parser constructor parameters (``constructorParameterListOpt``)
 
-// 1011 - Modified
+// 1018 - Modified
 Because constructors are evaluated entirely at compilation time, all
 constructor arguments must be expressions that can be evaluated at compilation
 time. In consequence, constructor parameters must be directionless 
 (i.e., they cannot be ``in``, ``out``, or ``inout``).
 
-// 1012
+// 1019
 Consider the following example:
 
-// 1013
+// 1020
 [source,p4]
 ----
 parser GenericParser(packet_in b, out Packet_header p)
@@ -95,11 +95,11 @@ parser GenericParser(packet_in b, out Packet_header p)
 }
 ----
 
-// 1014
+// 1021
 When instantiating the `GenericParser` it is necessary to supply a value for
 the `udpSupport` parameter, as in the following example:
 
-// 1015
+// 1022
 [source,p4]
 ----
 // topParser is a GenericParser where udpSupport = false

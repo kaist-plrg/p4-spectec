@@ -15,54 +15,35 @@
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_il.expected run_pos_il.actual))
+    (diff run_pos_al.expected run_pos_al.actual))
    (ignore-outputs
     (diff run_pos_sl.expected run_pos_sl.actual))
    (ignore-outputs
-    (diff run_neg_il.expected run_neg_il.actual))
+    (diff run_neg_al.expected run_neg_al.actual))
    (ignore-outputs
     (diff run_neg_sl.expected run_neg_sl.actual)))))
-
-(test
- (name nano_test)
- (preprocess
-  (pps ppx_let))
- (modules nano_test)
- (libraries
-  test_common
-  p4spectec
-  core
-  core_kernel
-  core_unix
-  core_unix.command_unix)
- (action
-  (progn
-   (ignore-outputs
-    (diff run_pos_nano.expected run_pos_nano.actual))
-   (ignore-outputs
-    (diff run_neg_nano.expected run_neg_nano.actual)))))
 
 (rule
  (alias run)
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_il.expected run_pos_il.actual))
+    (diff run_pos_al.expected run_pos_al.actual))
    (ignore-outputs
     (diff run_pos_sl.expected run_pos_sl.actual))
    (ignore-outputs
-    (diff run_neg_il.expected run_neg_il.actual))
+    (diff run_neg_al.expected run_neg_al.actual))
    (ignore-outputs
     (diff run_neg_sl.expected run_neg_sl.actual)))))
 
 (rule
- (alias run-il)
+ (alias run-al)
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_il.expected run_pos_il.actual))
+    (diff run_pos_al.expected run_pos_al.actual))
    (ignore-outputs
-    (diff run_neg_il.expected run_neg_il.actual)))))
+    (diff run_neg_al.expected run_neg_al.actual)))))
 
 (rule
  (alias run-sl)
@@ -74,35 +55,35 @@
     (diff run_neg_sl.expected run_neg_sl.actual)))))
 
 (rule
- (alias run-nano)
+ (alias run-pl)
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_nano.expected run_pos_nano.actual))
+    (diff run_pos_pl.expected run_pos_pl.actual))
    (ignore-outputs
-    (diff run_neg_nano.expected run_neg_nano.actual)))))
+    (diff run_neg_pl.expected run_neg_pl.actual)))))
 
 (rule
  (alias run-det)
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_il.expected run_pos_il_det.actual))
+    (diff run_pos_al.expected run_pos_al_det.actual))
    (ignore-outputs
     (diff run_pos_sl.expected run_pos_sl_det.actual))
    (ignore-outputs
-    (diff run_neg_il.expected run_neg_il_det.actual))
+    (diff run_neg_al.expected run_neg_al_det.actual))
    (ignore-outputs
     (diff run_neg_sl.expected run_neg_sl_det.actual)))))
 
 (rule
- (alias run-il-det)
+ (alias run-al-det)
  (action
   (progn
    (ignore-outputs
-    (diff run_pos_il.expected run_pos_il_det.actual))
+    (diff run_pos_al.expected run_pos_al_det.actual))
    (ignore-outputs
-    (diff run_neg_il.expected run_neg_il_det.actual)))))
+    (diff run_neg_al.expected run_neg_al_det.actual)))))
 
 (rule
  (alias run-sl-det)
@@ -113,55 +94,88 @@
    (ignore-outputs
     (diff run_neg_sl.expected run_neg_sl_det.actual)))))
 
+(rule
+ (alias run-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff run_pos_pl.expected run_pos_pl_det.actual))
+   (ignore-outputs
+    (diff run_neg_pl.expected run_neg_pl_det.actual)))))
+
 ;; Rules to generate outputs (fast, no -det)
 
 (rule
- (target run_pos_il.actual)
+ (target run_pos_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
-   run_pos_il.actual
+   run_pos_al.actual
    (with-stderr-to
-    run_pos_il.err
+    run_pos_al.err
     (run
      ./test.exe
      run
-     -il
+     -al
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_inst
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_samples)))))
+     ../../../p4c/testdata/p4_16_samples)))))
 
 (rule
- (target run_neg_il.actual)
+ (target run_neg_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
-   run_neg_il.actual
+   run_neg_al.actual
    (with-stderr-to
-    run_neg_il.err
+    run_neg_al.err
     (run
      ./test.exe
      run
-     -il
+     -al
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_ok
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_errors
+     ../../../p4c/testdata/p4_16_errors
      -neg)))))
 
 (rule
  (target run_pos_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
    run_pos_sl.actual
@@ -172,59 +186,26 @@
      run
      -sl
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_inst
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_samples)))))
-
-(rule
- (target run_pos_nano.actual)
- (action
-  (with-stdout-to
-   run_pos_nano.actual
-   (with-stderr-to
-    run_pos_nano.err
-    (run
-     ./nano_test.exe
-     run
-     -sl
-     -s
-     ../../../../../nano-p4/spec
-     -rel
-     Program_ok
-     -i
-     ../../../../../nano-p4/include
-     -p4-dir
-     ../../../../../nano-p4/testdata/positive)))))
-
-(rule
- (target run_neg_nano.actual)
- (action
-  (with-stdout-to
-   run_neg_nano.actual
-   (with-stderr-to
-    run_neg_nano.err
-    (run
-     ./nano_test.exe
-     run
-     -sl
-     -s
-     ../../../../../nano-p4/spec
-     -rel
-     Program_ok
-     -i
-     ../../../../../nano-p4/include
-     -p4-dir
-     ../../../../../nano-p4/testdata/negative
-     -neg)))))
+     ../../../p4c/testdata/p4_16_samples)))))
 
 (rule
  (target run_neg_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
    run_neg_sl.actual
@@ -235,68 +216,153 @@
      run
      -sl
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_ok
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_errors
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target run_pos_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_pos_pl.actual
+   (with-stderr-to
+    run_pos_pl.err
+    (run
+     ./test.exe
+     run
+     -pl
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target run_neg_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_neg_pl.actual
+   (with-stderr-to
+    run_neg_pl.err
+    (run
+     ./test.exe
+     run
+     -pl
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
      -neg)))))
 
 ;; Rules to generate outputs (slow, with -det)
 
 (rule
- (target run_pos_il_det.actual)
+ (target run_pos_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
-   run_pos_il_det.actual
+   run_pos_al_det.actual
    (with-stderr-to
-    run_pos_il_det.err
+    run_pos_al_det.err
     (run
      ./test.exe
      run
-     -il
+     -al
      -det
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_inst
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_samples)))))
+     ../../../p4c/testdata/p4_16_samples)))))
 
 (rule
- (target run_neg_il_det.actual)
+ (target run_neg_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
-   run_neg_il_det.actual
+   run_neg_al_det.actual
    (with-stderr-to
-    run_neg_il_det.err
+    run_neg_al_det.err
     (run
      ./test.exe
      run
-     -il
+     -al
      -det
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_ok
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_errors
+     ../../../p4c/testdata/p4_16_errors
      -neg)))))
 
 (rule
  (target run_pos_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
    run_pos_sl_det.actual
@@ -308,18 +374,26 @@
      -sl
      -det
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_inst
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_samples)))))
+     ../../../p4c/testdata/p4_16_samples)))))
 
 (rule
  (target run_neg_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
  (action
   (with-stdout-to
    run_neg_sl_det.actual
@@ -331,13 +405,76 @@
      -sl
      -det
      -s
-     ../../../../../spec
+     ../../../spec
      -rel
      Program_ok
      -i
-     ../../../../../p4c/p4include
+     ../../../p4c/p4include
      -e
-     ../../../../../excludes/static
+     ../../../excludes/static
      -p4-dir
-     ../../../../../p4c/testdata/p4_16_errors
+     ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+(rule
+ (target run_pos_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_pos_pl_det.actual
+   (with-stderr-to
+    run_pos_pl_det.err
+    (run
+     ./test.exe
+     run
+     -pl
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target run_neg_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_neg_pl_det.actual
+   (with-stderr-to
+    run_neg_pl_det.err
+    (run
+     ./test.exe
+     run
+     -pl
+     -det
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p4-dir
+     ../../../p4c/testdata/p4_16_errors
      -neg)))))

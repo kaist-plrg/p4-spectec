@@ -1,0 +1,6 @@
+# forwarded packet (dst != ff:..): ingress rewrites src[15:0], update_checksum fixes ipv4 csum
+packet 0 000000000002 0000000000AA 0800 45000014 00010000 40060000 0A000001 0A000002
+expect 1 00000000000200000000101C08004500001400010000400666E10A0000010A000002
+
+# dst = ff:ff:ff:ff:ff:ff hits the const drop entry -> no output
+packet 0 FFFFFFFFFFFF 0000000000AA 0800 45000014 00010000 40060000 0A000001 0A000002

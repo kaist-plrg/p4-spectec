@@ -1,26 +1,26 @@
 [#sec-instantiation-declaration]
 === Instantiations
 
-// 681
+// 688
 Instantiations are similar to variable declarations, but are reserved for the
 types with constructors (``extern`` objects, ``control`` blocks, ``parser``s,
 and ``package``s):
 
-// 682 - Modified
+// 689 - Modified
 ${syntax: instantiation}
 
-// 683 - Modified
+// 690 - Modified
 An instantiation is written as a constructor invocation followed by a name.
 Instantiations are always executed at compilation time (Section
 <<sec-instantiation>>). The effect is to allocate an object with the specified
 name, and to bind it to the result of the constructor invocation. Note that
 instantiation arguments can be specified by name.
 
-// 684
+// 691
 For example, a hypothetical bank of counter objects can be instantiated as
 follows:
 
-// 685
+// 692
 [source,p4]
 ----
 // from target library
@@ -40,13 +40,13 @@ control c(/* parameters omitted */) {
 }
 ----
 
-// 692
+// 699
 A P4 program may not instantiate controls and parsers at the top-level. This
 restriction is designed to ensure that most state resides in the architecture
 itself, or is local to a ``parser`` or ``control``. For example, the following
 program is not valid:
 
-// 693
+// 700
 [source,p4]
 ----
 // Program
@@ -54,19 +54,19 @@ control c(/* parameters omitted */) { /* body omitted */ }
 c() c1;  // illegal top-level instantiation
 ----
 
-// 694
+// 701
 because control `c1` is instantiated at the top-level. Note that top-level
 declarations of constants and instantiations of extern objects are permitted.
 
 [#sec-instantiation-abstract-method]
 ==== Objects with abstract methods
 
-// 686
+// 693
 When instantiating an extern type that has ``abstract`` methods users have to
 supply implementations for all such methods. This is done using object
 initializers:
 
-// 687 - Modified
+// 694 - Modified
 ${syntax: objectInitializer objectDeclarationList objectDeclaration}
           
 // Added
@@ -75,19 +75,19 @@ In P4~IR~, object initializers have the syntax:
 // Added
 ${syntax: objectInitializerIR objectDeclarationListIR objectDeclarationIR}
 
-// 688
+// 695
 Abstract method implementations must use the same number of parameters, and the
 same parameter directions as those declared in the extern object declaration.
 Note that overloading of abstract methods is not allowed, thus an
 implementation could be matched to a declaration only with the method name.
 
-// 689 - Modified
+// 696 - Modified
 Abstract method implementations can only use the supplied arguments or refer to
 values that are in the same initializer block or the top-level scope. When
 calling another method of the same instance the `this` keyword is used to
 indicate the current object instance:
 
-// 690
+// 697
 [source,p4]
 ----
 // Instantiate a balancer
@@ -100,7 +100,7 @@ Balancer() b = {  // provide an implementation for the abstract methods
 }
 ----
 
-// 691
+// 698
 Abstract methods may be invoked by users explicitly, or they may be invoked by
 the target architecture. The architectural description has to specify when the
 abstract methods are invoked and what the meaning of their arguments and return

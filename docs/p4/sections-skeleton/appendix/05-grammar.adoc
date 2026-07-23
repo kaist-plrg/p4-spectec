@@ -2,26 +2,26 @@
 [#sec-grammar]
 == P4 grammar
 
-// 1263
+// 1270
 This is the grammar of P4~16~ written using the YACC/bison
 language. Absent from this grammar is the precedence of various
 operations.
 
-// 1264
+// 1271
 The grammar is actually ambiguous, so the lexer and the parser must
 collaborate for parsing the language. In particular, the lexer must be
 able to distinguish two kinds of identifiers:
 
-// 1265
+// 1272
 * Type names previously introduced (`TYPE_IDENTIFIER` tokens)
 * Regular identifiers (`IDENTIFIER` token)
 
-// 1266
+// 1273
 The parser has to use a symbol table to indicate to the lexer how to
 parse subsequent appearances of identifiers. For example, given the
 following program fragment:
 
-// 1267
+// 1274
 [source,p4]
 ----
 typedef bit<4> t;
@@ -30,10 +30,10 @@ t x;
 parser p(bit<8> b) { /* body omitted */ }
 ----
 
-// 1268
+// 1275
 The lexer has to return the following terminal kinds:
 
-// 1269
+// 1276
 [source,p4]
 ----
 t - TYPE_IDENTIFIER
@@ -43,20 +43,20 @@ p - TYPE_IDENTIFIER
 b - IDENTIFIER
 ----
 
-// 1270
+// 1277
 This grammar has been heavily influenced by limitations of the Bison
 parser generator tool.
 
-// 1271
+// 1278
 The `STRING_LITERAL` token corresponds to a string literal
 enclosed within double quotes, as described in <<sec-string-literals>>.
 
-// 1272
+// 1279
 All other terminals are uppercase spellings of the corresponding
 keywords. For example, `RETURN` is the terminal returned by the
 lexer when parsing the keyword return.
 
-// 1273 - Modified
+// 1280 - Modified
 ${syntax:
   trailingCommaOpt
   booleanLiteral
@@ -205,9 +205,10 @@ ${syntax:
   valueSetDeclaration
   parserTypeDeclaration
   parserBlockStatement
+  parserBlockElementStatement
+  parserBlockElementStatementList
   parserConditionalStatement
   parserStatement
-  parserStatementList
   parserState
   parserStateList
   parserLocalDeclaration

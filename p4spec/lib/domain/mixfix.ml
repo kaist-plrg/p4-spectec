@@ -123,17 +123,38 @@ let rec compare : type a b. compare_arg:(a -> b -> int) -> a t -> b t -> int =
         compare_mixfixes mixfixes_a mixfixes_b
     | _ -> Int.compare (tag mixfix_a) (tag mixfix_b)
 
-let eq ~(eq_arg : 'a -> 'b -> bool) (mixfix_a : 'a t) (mixfix_b : 'b t) =
-  compare
-    ~compare_arg:(fun arg_a arg_b -> if eq_arg arg_a arg_b then 0 else -1)
-    mixfix_a mixfix_b
-  = 0
+let rec eq : type a b. eq_arg:(a -> b -> bool) -> a t -> b t -> bool =
+ fun ~eq_arg mixfix_a mixfix_b ->
+  Obj.repr mixfix_a == Obj.repr mixfix_b
+  ||
+  match (mixfix_a, mixfix_b) with
+  | Arg arg_a, Arg arg_b -> eq_arg arg_a arg_b
+  | Atom atom_a, Atom atom_b -> Atom.eq atom_a.it atom_b.it
+  | Brack (atom_a_l, mixfix_a, atom_a_r), Brack (atom_b_l, mixfix_b, atom_b_r) ->
+      Atom.eq atom_a_l.it atom_b_l.it
+      && eq ~eq_arg mixfix_a mixfix_b
+      && Atom.eq atom_a_r.it atom_b_r.it
+  | ( Infix (mixfix_a_l, atom_a, mixfix_a_r),
+      Infix (mixfix_b_l, atom_b, mixfix_b_r) ) ->
+      Atom.eq atom_a.it atom_b.it
+      && eq ~eq_arg mixfix_a_l mixfix_b_l
+      && eq ~eq_arg mixfix_a_r mixfix_b_r
+  | Seq mixfixes_a, Seq mixfixes_b -> eqs ~eq_arg mixfixes_a mixfixes_b
+  | _ -> false
+
+and eqs : type a b. eq_arg:(a -> b -> bool) -> a t list -> b t list -> bool =
+ fun ~eq_arg mixfixes_a mixfixes_b ->
+  match (mixfixes_a, mixfixes_b) with
+  | [], [] -> true
+  | mixfix_a :: mixfixes_a, mixfix_b :: mixfixes_b ->
+      eq ~eq_arg mixfix_a mixfix_b && eqs ~eq_arg mixfixes_a mixfixes_b
+  | _ -> false
 
 let compare_mixop (mixfix_a : 'a t) (mixfix_b : 'b t) =
   compare ~compare_arg:(fun _ _ -> 0) mixfix_a mixfix_b
 
 let eq_mixop (mixfix_a : 'a t) (mixfix_b : 'b t) =
-  compare_mixop mixfix_a mixfix_b = 0
+  eq ~eq_arg:(fun _ _ -> true) mixfix_a mixfix_b
 
 (* Fold, map, and iter *)
 
@@ -283,22 +304,30 @@ let split (mixfix : 'a t) = (to_mixop mixfix, args mixfix)
 
 (* Rendering *)
 
+let assemble ~(empty : 'b) ~(space : 'b) ~(atom : atom -> 'b option)
+    ~(concat : 'b -> 'b -> 'b) (mixfix : 'b t) : 'b =
+  let join (pieces : 'b option list) : 'b option =
+    match List.filter_map Fun.id pieces with
+    | [] -> None
+    | piece :: pieces ->
+        Some
+          (List.fold_left
+             (fun acc piece -> concat (concat acc space) piece)
+             piece pieces)
+  in
+  let rec go = function
+    | Arg arg -> Some arg
+    | Atom atom' -> atom atom'
+    | Brack (atom_l, mixfix, atom_r) ->
+        join [ atom atom_l; go mixfix; atom atom_r ]
+    | Infix (mixfix_l, atom', mixfix_r) ->
+        join [ go mixfix_l; atom atom'; go mixfix_r ]
+    | Seq mixfixes -> join (List.map go mixfixes)
+  in
+  go mixfix |> Option.value ~default:empty
+
 let render ~(string_of_atom : atom -> string) ~(string_of_arg : 'a -> string)
     (mixfix : 'a t) =
-  let rec render' = function
-    | Arg arg -> string_of_arg arg
-    | Atom atom -> string_of_atom atom
-    | Brack (atom_l, mixfix, atom_r) ->
-        [ string_of_atom atom_l; render' mixfix; string_of_atom atom_r ]
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-    | Infix (mixfix_l, atom, mixfix_r) ->
-        [ render' mixfix_l; string_of_atom atom; render' mixfix_r ]
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-    | Seq mixfixes ->
-        mixfixes |> List.map render'
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-  in
-  render' mixfix
+  assemble ~empty:""
+    ~atom:(fun a -> match string_of_atom a with "" -> None | s -> Some s)
+    ~space:" " ~concat:( ^ ) (map string_of_arg mixfix)

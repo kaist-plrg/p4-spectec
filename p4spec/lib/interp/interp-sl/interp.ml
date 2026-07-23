@@ -12,9 +12,10 @@ open Envs
 module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
-open Error
-open Backtrace
-open Nondet
+open Interp_common.Error
+open Interp_common.Backtrace
+open Interp_common.Nondet
+module Flow = Interp_common.Flow
 module F = Format
 open Util.Source
 
@@ -397,7 +398,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | IterE (exp, iterexp) -> eval_iter_exp typ_note ctx exp iterexp
     with Backtrace backtrace ->
       back_nest exp.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
+        (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
         backtrace
 
   and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
@@ -1188,7 +1189,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           value_res
     with Backtrace backtrace ->
       back_nest arg.at
-        (F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
+        (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
         backtrace
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list =
@@ -1216,11 +1217,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | ResultI (rel_signature, exps) ->
           eval_result_instr ~tail ctx rel_signature exps
       | ReturnI exp -> eval_return_instr ~tail ctx exp
-      | DebugI exp -> eval_debug_instr ~tail ctx exp
+      | DebugI (exp, instr) -> eval_debug_instr ~tail ctx exp instr
     with Backtrace backtrace ->
       backtrace
       |> back_nest instr.at
-           (F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+           (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_block ~(tail : bool) (ctx : Ctx.t) (block : block) : Flow.t =
     if !Ctx.is_det then eval_block_deterministic ~tail ctx block
@@ -1388,7 +1389,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       with
       | Backtrace (Unmatch _) -> false
       | Backtrace backtrace ->
-          back_nest id.at "hold condition evaluation failed" backtrace
+          back_nest id.at (fun () -> "hold condition evaluation failed") backtrace
     in
     let value_res = Value.Make.bool hold in
     Hook.on_value value_res;
@@ -1852,9 +1853,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
+  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr) :
+      Flow.t =
     try
-      tail |> ignore;
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
       |> print_endline;
@@ -1862,7 +1863,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (if region = "" then "" else region ^ ": ")
       ^ Il.Print.string_of_value value
       |> print_endline;
-      Flow.Cont []
+      eval_instr ~tail ctx instr
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Invoke a relation *)
@@ -1923,7 +1924,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail values_tail
       with Backtrace backtrace ->
         Hook.on_rel_exit id;
-        back_nest id.at (F.asprintf "relation %s failed" id.it) backtrace
+        back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
     in
     loop id values_input
 
@@ -2030,7 +2031,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail targs_tail values_tail
       with Backtrace backtrace ->
         Hook.on_func_exit id;
-        back_nest id.at (F.asprintf "function %s failed" id.it) backtrace
+        back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
     in
     loop id targs values_input
 
@@ -2140,8 +2141,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Entry points for evaluation *)
 
   let clear () : unit =
-    CCache.reset !func_cache;
-    CCache.reset !rel_cache
+    CCache.empty !func_cache;
+    CCache.empty !rel_cache;
+    Hashtbl.clear sub_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try

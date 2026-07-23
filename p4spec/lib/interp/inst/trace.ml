@@ -39,7 +39,7 @@ let format_values (values : Value.t list) : string =
 let make ?(level = Simple) ?(fmt = Format.std_formatter) () =
   let depth = ref 0 in
   let indent () =
-    Format.sprintf "[%2d] %s" !depth (String.make (!depth * 2) ' ')
+    Format.sprintf "[%2d] %s" !depth (String.make (max 0 (!depth * 2)) ' ')
   in
   let module H : Handler.HANDLER = struct
     include Handler.Default

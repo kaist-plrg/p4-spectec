@@ -31,9 +31,7 @@ let string_of_mixop mixop = Il.Print.string_of_mixop mixop
 
 let string_of_iter iter = Il.Print.string_of_iter iter
 
-let string_of_iterexp iterexp =
-  let iter, _ = iterexp in
-  string_of_iter iter
+let string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
 
 let string_of_iterexps iterexps =
   iterexps |> List.map string_of_iterexp |> String.concat ""
@@ -322,9 +320,11 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
   | ReturnI exp ->
       let s_short = Format.asprintf "Return %s" (string_of_exp exp) in
       if short then s_short else Format.asprintf "%s%s" order s_short
-  | DebugI exp ->
+  | DebugI (exp, instr) ->
       let s_short = Format.asprintf "Debug: %s" (string_of_exp exp) in
-      if short then s_short else Format.asprintf "%s%s" order s_short
+      let s_instr = string_of_instr ~level ~index:(index + 1) instr in
+      if short then s_short
+      else Format.asprintf "%s%s\n\n%s" order s_short s_instr
 
 and string_of_block ?(level = 0) ?(index = 0) block =
   block
@@ -343,9 +343,7 @@ and string_of_elseblock_opt ?(level = 0) ?(index = 0) elseblock_opt =
   | None -> ""
   | Some elseblock -> "\n\n" ^ string_of_elseblock ~level ~index elseblock
 
-and string_of_iterinstr iterinstr =
-  let iter, _, _ = iterinstr in
-  string_of_iter iter
+and string_of_iterinstr iterinstr = Il.Print.string_of_iterprem iterinstr
 
 and string_of_iterinstrs iterinstrs =
   iterinstrs |> List.map string_of_iterinstr |> String.concat ""

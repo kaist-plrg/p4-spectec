@@ -18,7 +18,7 @@ type id = Sl.id
 
 type atom = Sl.atom
 
-(* Mixfix operatros *)
+(* Mixfix operators *)
 
 type mixop = Sl.mixop
 
@@ -35,177 +35,174 @@ type var = Sl.var
 type typ = Sl.typ
 type typ' = Sl.typ'
 
+type nottyp = Sl.nottyp
+type nottyp' = Sl.nottyp'
+
 type deftyp = Sl.deftyp
 type deftyp' = Sl.deftyp'
+
+type typfield = Sl.typfield
+type typcase = Sl.typcase
+
+(* Values *)
+
+type value = Sl.value
 
 (* Operators *)
 
 type unop = Sl.unop
 type binop = Sl.binop
 type cmpop = Sl.cmpop
-
 type optyp = Sl.optyp
-
-(* Call prose using hints *)
-
-and func_call = 
-  | ProseFuncCall of
-    [ `Check of id * Hints.Alter.t * Hints.Alter.t * targ list * arg list
-    | `Yield of id * Hints.Alter.t * targ list * arg list ]
-  | MathFuncCall of id * targ list * arg list
-
-and rel_call = 
-  | ProseRelCall of
-    [ `Hold of id * Hints.Alter.t * exp list
-    | `Yield of id * Hints.Alter.t * exp list * Hints.Alter.t * exp list ]
-  | MathRelCall of id * mixop * exp list
 
 (* Expressions *)
 
-and exp = (exp', typ') note_phrase
+type exp = ((exp', typ') note_phrase) Annot.t
 and exp' =
-  | BoolE of bool                                           (* bool *)
-  | NumE of num                                             (* num *)
-  | TextE of text                                           (* text *)
-  | VarE of id                                              (* id *)
-  | UnE of unop * optyp * exp                               (* unop exp *)
-  | BinE of binop * optyp * exp * exp                       (* exp binop exp *)
-  | CmpE of cmpop * optyp * exp * exp                       (* exp cmpop exp *)
-  | UpCastE of typ * exp                                    (* exp as typ *)
-  | DownCastE of typ * exp                                  (* exp as typ *)
-  | SubE of exp * typ                                       (* exp `<:` typ *)
-  | MatchE of exp * pattern                                 (* exp `matches` pattern *)
-  | TupleE of exp list                                      (* `(` exp* `)` *)
-  | CaseE of id * mixop * exp list * Hints.Alter.t option   (* notexp *)
-  | StrE of (atom * exp) list                               (* { (atom exp)* } *)
-  | OptE of exp option                                      (* exp? *)
-  | ListE of exp list                                       (* `[` exp* `]` *)
-  | ConsE of exp * exp                                      (* exp `::` exp *)
-  | CatE of exp * exp                                       (* exp `++` exp *)
-  | MemE of exp * exp                                       (* exp `<-` exp *)
-  | LenE of exp                                             (* `|` exp `|` *)
-  | DotE of exp * atom                                      (* exp.atom *)
-  | IdxE of exp * exp                                       (* exp `[` exp `]` *)
-  | SliceE of exp * exp * exp                               (* exp `[` exp `:` exp `]` *)
-  | UpdE of exp * path * exp                                (* exp `[` path `=` exp `]` *)
-  | CallE of func_call                                      (* func_call `<` targ* `>` `(` arg* `)` *)
-  | IterE of exp * iterexp                                  (* exp iterexp *)
+  | BoolE of bool
+  | NumE of num
+  | TextE of text
+  | VarE of id
+  | UnE of unop * optyp * exp
+  | BinE of binop * optyp * exp * exp
+  | CmpE of cmpop * optyp * exp * exp
+  | UpCastE of typ * exp
+  | DownCastE of typ * exp
+  | SubE of exp * typ
+  | MatchE of exp * pattern
+  | TupleE of exp list
+  | CaseE of notexp
+  | StrE of (atom * exp) list
+  | OptE of exp option
+  | ListE of exp list
+  | ConsE of exp * exp
+  | CatE of exp * exp
+  | MemE of exp * exp
+  | LenE of exp
+  | DotE of exp * atom
+  | IdxE of exp * exp
+  | SliceE of exp * exp * exp
+  | UpdE of exp * path * exp
+  | CallE of id * targ list * arg list
+  | IterE of exp * iterexp
 
-and notexp = mixop * exp list
+and notexp = exp Domain.Mixfix.t
 and iterexp = Sl.iterexp
 
 (* Patterns *)
 
 and pattern = Sl.pattern
 
-(* Paths *)
+(* Path *)
 
 and path = (path', typ') note_phrase
 and path' =
-  | RootP                       (* *)
-  | IdxP of path * exp          (* path `[` exp `]` *)
-  | SliceP of path * exp * exp  (* path `[` exp `:` exp `]` *)
-  | DotP of path * atom         (* path `.` atom *)
-
-(* Parameters *)
-
-and param = param' phrase
-and param' =
-  | ExpP of typ * exp     (* typ exp *)
-  | DefP of id            (* `$`id *)
+  | RootP
+  | IdxP of path * exp
+  | SliceP of path * exp * exp
+  | DotP of path * atom
 
 (* Type parameters *)
 
 and tparam = Sl.tparam
 
-(* Arguments *)
+(* Parameters *)
 
-and arg = arg' phrase
-and arg' =
-  | ExpA of exp (* exp *)
-  | DefA of id  (* `$`id *)
+and param = param' phrase
+and param' =
+  | ExpP of typ * exp
+  | DefP of id * tparam list * param list * typ
 
 (* Type arguments *)
 
 and targ = Sl.targ
 
+(* Arguments *)
+
+and arg = arg' phrase
+and arg' =
+  | ExpA of exp
+  | DefA of id
+
+(* Dangling *)
+
+type dangle = Sl.dangle
+
+(* Holding conditions *)
+
+and holdcase =
+  | BothH of block * block
+  | HoldH of block * dangle
+  | NotHoldH of block * dangle
+
+(* Case analysis *)
+
+and case = guard * block
+
+and guard =
+  | BoolG of bool
+  | CmpG of cmpop * optyp * exp
+  | SubG of typ
+  | MatchG of pattern
+  | MemG of exp
+  (* Shorthands *)
+  | CheckLetSubG of typ * exp
+  | CheckLetMatchG of pattern * exp
+
 (* Instructions *)
 
-type branch = If | ElseIf | Else
+and iid = Sl.iid
+and inote = Sl.inote
 
-type cond =
-  | ExpCond of exp
-  | RelCond of rel_call
-  | ForAllCond of cond * var list
-  | ForAnyCond of cond * var list
-
-type result =
-  | ProseResult of
-    [ `Hold | `Yield of Hints.Alter.t * exp list ]
-  | MathResult of exp list
-
-type instr = instr' phrase
+and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =
-  (* Iteration instructions *)
-  | ForEachI of var list * instr * var list
-  (* Branching instructions *)
-  | BranchI of branch * cond * block
-  | OtherwiseI of block
-  | CheckI of cond
-  (* Binding instructions *)
-  | LetI of exp * exp
-  | RuleI of rel_call
-  (* Result/Return instructions *)
-  | ResultI of result
+  | IfI of exp * iterexp list * block * dangle
+  | HoldI of id * notexp * iterexp list * holdcase
+  | CaseI of exp * case list * dangle
+  | GroupI of id * id * rel_signature * exp list * block
+  | TryI of arm list
+  | LetI of exp * exp * iterinstr list
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list
+  | ResultI of rel_signature * exp list
   | ReturnI of exp
+  | DebugI of exp
   (* Shorthands *)
-  | DestructI of (exp * string) list * exp
-  | CheckLetI of exp * exp
-  | OptionGetI of exp * exp
+  | DestructI of (string option * exp) list * exp
+  | CheckLetSubI of typ * exp * exp * block
+  | CheckLetMatchI of pattern * exp * exp * block
+  | OptionGetI of exp * exp * block
 
 and block = instr list
+and elseblock = instr list
+
+and arm = block
+
+and iterinstr = Sl.iterinstr
 
 (* Relations *)
 
-type rel_title =
-  | ProseRelTitle of
-    [ `Hold of id * Hints.Alter.t * exp list
-    | `Yield of id * Hints.Alter.t * exp list * Hints.Alter.t * exp list ]
-  | MathRelTitle of id * mixop * exp list
+and rel_signature = Sl.rel_signature
 
-type externrel = rel_title
+type externrel = id * rel_signature * exp list
 
-type rulegroup_title =
-  | ProseRuleTitle of
-    [ `Hold of id * Hints.Alter.t * exp list
-    | `Yield of id * Hints.Alter.t * exp list ]
-  | MathRuleTitle of id * mixop * exp list
-
-type rulegroup = rulegroup_title * block
-
-type rel = rel_title * rulegroup list
+type rel = id * rel_signature * exp list * block * elseblock option
 
 (* Functions *)
 
-type func_title =
-  | ProseFuncTitle of
-    [ `Check of id * Hints.Alter.t * param list
-    | `Yield of id * Hints.Alter.t * param list ]
-  | MathFuncTitle of id * tparam list * param list
+type externfunc = id * tparam list * param list * typ
 
-type externfunc = func_title
-
-type builtinfunc = func_title
+type builtinfunc = id * tparam list * param list * typ
 
 type tablerow = exp list * exp * block
 
-type tablefunc = func_title * tablerow list
+type tablefunc = id * param list * typ * tablerow list
 
-type func = func_title * block
+type definedfunc =
+  id * tparam list * param list * typ * block * elseblock option
 
 (* Definitions *)
 
-type def = def' phrase
+type def = (def' phrase) Annot.t
 and def' =
   | ExternTypD of id
   | TypD of id * tparam list * deftyp
@@ -215,7 +212,7 @@ and def' =
   | ExternDecD of externfunc
   | BuiltinDecD of builtinfunc
   | TableDecD of tablefunc
-  | FuncDecD of func
+  | FuncDecD of definedfunc
 
 (* Spec *)
 

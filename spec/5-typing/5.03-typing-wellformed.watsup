@@ -130,7 +130,13 @@ tbl def $nestable_list =
   | nameTypeIR => true
   | TYPEDEF _ typeIR => $nestable_list(typeIR)
   | newTypeIR => true
-  | dataTypeIR => true
+  | listTypeIR => true
+  | tupleTypeIR => true
+  | headerStackTypeIR => true
+  | structTypeIR => true
+  | headerTypeIR => true
+  | headerUnionTypeIR => true
+  | enumTypeIR => true
   | _ => false
 
 rule Type_wf/listTypeIR:
@@ -141,6 +147,9 @@ rule Type_wf/listTypeIR:
 tbl dec $nestable_tuple(typeIR) : bool
   hint(prose_true %0 "can be nested in a tuple type")
   hint(prose_false %0 "cannot be nested in a tuple type")
+tbl dec $nestable_array_in_tuple(typeIR) : bool
+  hint(prose_true %0 "can be used in an array nested in a tuple type")
+  hint(prose_false %0 "cannot be used in an array nested in a tuple type")
 
 tbl def $nestable_tuple =
   | BOOL => true
@@ -152,6 +161,7 @@ tbl def $nestable_tuple =
   | TYPEDEF _ typeIR => $nestable_tuple(typeIR)
   | newTypeIR => true
   | tupleTypeIR => true
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_tuple(typeIR)
   | headerStackTypeIR => true
   | structTypeIR => true
   | headerTypeIR => true
@@ -159,10 +169,46 @@ tbl def $nestable_tuple =
   | enumTypeIR => true
   | _ => false
 
+tbl def $nestable_array_in_tuple =
+  | BOOL => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | VARBIT `< _ > => true
+  | nameTypeIR => true
+  | TYPEDEF _ typeIR => $nestable_array_in_tuple(typeIR)
+  | newTypeIR => true
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_tuple(typeIR)
+  | structTypeIR => true
+  | enumTypeIR => true
+  | _ => false
+
 rule Type_wf/tupleTypeIR:
   B |- TUPLE `< typeIR* >
   -- if $nestable_tuple(typeIR)*
   -- (Type_wf: B |- typeIR)*
+  
+tbl dec $nestable_array(typeIR) : bool
+  hint(prose_true %0 "can be nested in an array type")
+  hint(prose_false %0 "cannot be nested in an array type")
+
+tbl def $nestable_array =
+  | BOOL => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | VARBIT `< _ > => true
+  | nameTypeIR => true
+  | TYPEDEF _ typeIR => $nestable_array(typeIR)
+  | newTypeIR => true
+  | arrayTypeIR => true
+  | structTypeIR => true
+  | enumTypeIR => true
+  | externObjectTypeIR => true
+  | _ => false
+
+rule Type_wf/arrayTypeIR:
+  B |- ARRAY typeIR `[ _ ]
+  -- if $nestable_array(typeIR)
+  -- Type_wf: B |- typeIR
 
 tbl dec $nestable_headerStack(typeIR) : bool
   hint(prose_true %0 "can be nested in a header stack type")
@@ -176,7 +222,7 @@ tbl def $nestable_headerStack =
   | _ => false
 
 rule Type_wf/headerStackTypeIR:
-  B |- typeIR `[ _ ]
+  B |- HEADER_STACK typeIR `[ _ ]
   -- if $nestable_headerStack(typeIR)
   -- Type_wf: B |- typeIR
 
@@ -198,6 +244,9 @@ tbl dec $nestable_header(typeIR) : bool
 tbl dec $nestable_struct_in_header(typeIR) : bool
   hint(prose_true %0 "can be used in a struct nested in a header type")
   hint(prose_false %0 "cannot be used in a struct nested in a header type")
+tbl dec $nestable_array_in_header(typeIR) : bool
+  hint(prose_true %0 "can be used in an array nested in a header type")
+  hint(prose_false %0 "cannot be used in an array nested in a header type")
 
 tbl def $nestable_header =
   | BOOL => true
@@ -210,6 +259,7 @@ tbl def $nestable_header =
   | ENUM _ `< _ > `{ _ } => true
   | STRUCT _ `< _ > `{ (_ typeIR_field _ `;)* } =>
       $forall_($nestable_struct_in_header(typeIR_field)*)
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_header(typeIR)
   | _ => false
 
 tbl def $nestable_struct_in_header =
@@ -222,6 +272,19 @@ tbl def $nestable_struct_in_header =
   | ENUM _ `< _ > `{ _ } => true
   | STRUCT _ `< _ > `{ (_ typeIR_field _ `;)* } =>
       $forall_($nestable_struct_in_header(typeIR_field)*)
+  | _ => false
+
+tbl def $nestable_array_in_header =
+  | BOOL => true
+  | INT `< _ > => true
+  | BIT `< _ > => true
+  | VARBIT `< _ > => true
+  | nameTypeIR => true
+  | TYPEDEF _ typeIR => $nestable_array_in_header(typeIR)
+  | newTypeIR => true
+  | ARRAY typeIR `[ _ ] => $nestable_array_in_header(typeIR)
+  | structTypeIR => true
+  | enumTypeIR => true
   | _ => false
 
 rule Type_wf/headerTypeIR:

@@ -103,11 +103,11 @@ let run_sim_test_driver mode det arch path_spec includes_p4 excludes_p4
   let excludes_by_subdir =
     Test.collect_excludes_by_subdir excludes_p4
     |> List.map (fun (label, entries) ->
-           (label, List.map (fun e -> "../../../../../" ^ e) entries))
+           (label, List.map (fun e -> "../../../" ^ e) entries))
   in
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let path_pairs =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
@@ -150,10 +150,12 @@ let sim_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"Run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"Run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      in
@@ -167,7 +169,7 @@ let cover_sim mode arch path_spec includes_p4 excludesdir testdirs_p4
     testdirs_stf patchdirs =
   let excludes =
     excludesdir |> Test.collect_excludes
-    |> List.map (fun exclude -> "../../../../../" ^ exclude)
+    |> List.map (fun exclude -> "../../../" ^ exclude)
   in
   let paths_p4, paths_stf =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs

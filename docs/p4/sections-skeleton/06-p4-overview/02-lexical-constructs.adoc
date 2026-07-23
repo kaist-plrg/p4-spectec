@@ -25,14 +25,14 @@ The lexer recognizes the following kinds of terminals:
 [#sec-identifiers]
 ==== Identifiers
 
-// 99
+// 100
 P4 identifiers may contain only letters, numbers, and the underscore character
 `+_+`, and must start with a letter or underscore. The special identifier
 consisting of a single underscore `+_+` is reserved to indicate a "don't care"
 value; its type may vary depending on the context. Certain keywords (e.g.,
 `apply`) can be used as identifiers if the context makes it unambiguous.
 
-// 100 - Modified
+// 101 - Modified
 ${syntax: identifier nonTypeName typeIdentifier typeName name}
 
 [#sec-literals]
@@ -44,7 +44,7 @@ ${syntax: identifier nonTypeName typeIdentifier typeName name}
 // Added
 ${syntax: booleanLiteral}
 
-// 105
+// 106
 There are two Boolean literal constants: `true` and `false`.
 
 ===== Integer literals
@@ -52,26 +52,26 @@ There are two Boolean literal constants: `true` and `false`.
 // Added
 ${syntax: integerLiteral}
 
-// 106
+// 107
 Integer literals are non-negative arbitrary-precision integers. By default,
 literals are represented in base 10. The following prefixes must be employed to
 specify the base explicitly:
 
-// 107
+// 108
 * `0x` or `0X` indicates base 16 (hexadecimal)
 * `0o` or `0O` indicates base 8 (octal)
 * `0d` or `0D` indicates base 10 (decimal)
 * `0b` or `0B` indicates base 2
 
-// 108
+// 109
 The width of a numeric literal in bits can be specified by an unsigned number
 prefix consisting of a number of bits and a signedness indicator:
 
-// 109
+// 110
 * `w` indicates unsigned numbers
 * `s` indicates signed numbers
 
-// 110
+// 111
 Note that a leading zero by itself does not indicate an octal (base 8)
 constant.  The underscore character is considered a digit within number
 literals but is ignored when computing the value of the parsed number. This
@@ -80,7 +80,7 @@ together. The underscore cannot be used in the width specification or as the
 first character of an integer literal. No comments or whitespaces are allowed
 within a literal. Here are some examples of numeric literals:
 
-// 111
+// 112
 [source,p4]
 ----
 32w255         // a 32-bit unsigned number with value 255
@@ -101,7 +101,7 @@ within a literal. Here are some examples of numeric literals:
 // Added
 ${syntax: stringLiteral}
 
-// 112
+// 113
 String literals are specified as an arbitrary sequence of 8-bit characters,
 enclosed within double quote characters `"` (ASCII code 34). Strings start with
 a double quote character and extend to the first double quote sign which is not
@@ -109,7 +109,7 @@ immediately preceded by an odd number of backslash characters (ASCII code 92).
 P4 does not make any validity checks on strings (i.e., it does not check that
 strings represent legal UTF-8 encodings).
 
-// 113
+// 114
 Since P4 does not allow strings to exist at runtime, string literals are
 generally passed unchanged through the P4 compiler to other third-party tools
 or compiler-backends. The compiler can, however, perform compile-time
@@ -119,15 +119,15 @@ string literals (excluding the quotes) is concatenated in the order they
 appear in the source code. There are no escape sequences that would be treated
 specially when strings are concatenated.
 
-// 114
+// 115
 The backends and other tools can define their own handling of escape sequences
 (e.g., how to specify Unicode characters, or handle unprintable ASCII
 characters).
 
-// 115
+// 116
 Here are 3 examples of string literals:
 
-// 116
+// 117
 [source,p4]
 ----
 "simple string"
@@ -136,11 +136,11 @@ Here are 3 examples of string literals:
 line terminator"
 ----
 
-// 117
+// 118
 Here is an example of concatenation expression and an equivalent string
 literal:
 
-// 118
+// 119
 [source,p4]
 ----
 "one string \" with a quote inside;" ++ (" " ++ "another string")
@@ -151,20 +151,20 @@ literal:
 [#sec-comments]
 ==== Comments
 
-// 101
+// 102
 P4 supports several kinds of comments:
 
-// 102
+// 103
 * Single-line comments, introduced by `//` and spanning to the end of line,
 * Multi-line comments, enclosed between `+/*+` and `+*/+`
 * Nested multi-line comments are not supported.
 * Javadoc-style comments, starting with `+/**+` and ending with `+*/+`
 
-// 103
+// 104
 Use of Javadoc-style comments is strongly encouraged for the tables and actions
 that are used to synthesize the interface with the control-plane.
 
-// 104
+// 105
 P4 treats comments as token separators and no comments are allowed within a
 token---e.g. `+bi/**/t+` is parsed as two tokens, `bi` and `t`, and not as a
 single token `bit`.
@@ -172,18 +172,18 @@ single token `bit`.
 [#sec-optional-trailing-commas]
 ==== Optional trailing commas
 
-// 119
+// 120
 The P4 grammar allows several kinds of comma-separated lists to end in an
 optional comma.
 
-// 120 - Modified
+// 121 - Modified
 ${syntax: trailingCommaOpt}
 
-// 121
+// 122
 For example, the following declarations are both legal, and have the same
 meaning:
 
-// 122
+// 123
 [source,p4]
 ----
 enum E {
@@ -195,10 +195,10 @@ enum E {
 }
 ----
 
-// 123
+// 124
 This is particularly useful in combination with preprocessor directives:
 
-// 124
+// 125
 [source,p4]
 ----
 enum E {

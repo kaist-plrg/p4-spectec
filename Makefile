@@ -6,9 +6,9 @@ NANO = nano-p4spectec
 
 .PHONY: build stat perf spec-test
 
-EXESPEC = p4spec/_build/default/bin/main.exe
-EXEBOOT = p4spec/_build/default/bin/boot.exe
-EXENANO = p4spec/_build/default/bin/nano.exe
+EXESPEC = _build/default/p4spec/bin/main.exe
+EXEBOOT = _build/default/p4spec/bin/boot.exe
+EXENANO = _build/default/p4spec/bin/nano.exe
 
 build:
 	rm -f ./$(SPEC)
@@ -81,14 +81,14 @@ endef
 # Fast tests (no -det)
 TEST_ALIASES := \
   speclang \
-  run run-il run-sl \
-  sim-il sim-sl \
-  sim-v1model-p4c-il sim-v1model-p4c-sl \
-  sim-v1model-p4testgen-il sim-v1model-p4testgen-sl \
-  sim-v1model-custom-il sim-v1model-custom-sl \
-  sim-ebpf-p4c-il sim-ebpf-p4c-sl \
-  sim-ebpf-p4testgen-il sim-ebpf-p4testgen-sl \
-  sim-psa-p4c-il sim-psa-p4c-sl \
+  run run-al run-sl run-pl \
+  sim-al sim-sl sim-pl \
+  sim-v1model-p4c-al sim-v1model-p4c-sl sim-v1model-p4c-pl \
+  sim-v1model-p4testgen-al sim-v1model-p4testgen-sl sim-v1model-p4testgen-pl \
+  sim-v1model-custom-al sim-v1model-custom-sl sim-v1model-custom-pl \
+  sim-ebpf-p4c-al sim-ebpf-p4c-sl sim-ebpf-p4c-pl \
+  sim-ebpf-p4testgen-al sim-ebpf-p4testgen-sl sim-ebpf-p4testgen-pl \
+  sim-psa-p4c-al sim-psa-p4c-sl sim-psa-p4c-pl \
   p4parse \
 	boot
 
@@ -96,16 +96,26 @@ $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
 
 # Det tests (slow, with -det)
 DET_ALIASES := \
-  run-det run-il-det run-sl-det \
-  sim-il-det sim-sl-det \
-  sim-v1model-p4c-il-det sim-v1model-p4c-sl-det \
-  sim-v1model-p4testgen-il-det sim-v1model-p4testgen-sl-det \
-  sim-v1model-custom-il-det sim-v1model-custom-sl-det \
-  sim-ebpf-p4c-il-det sim-ebpf-p4c-sl-det \
-  sim-ebpf-p4testgen-il-det sim-ebpf-p4testgen-sl-det \
-  sim-psa-p4c-il-det sim-psa-p4c-sl-det
+	micro-det \
+  run-det run-al-det run-sl-det \
+  sim-al-det sim-sl-det sim-pl-det \
+  sim-v1model-p4c-al-det sim-v1model-p4c-sl-det sim-v1model-p4c-pl-det \
+  sim-v1model-p4testgen-al-det sim-v1model-p4testgen-sl-det sim-v1model-p4testgen-pl-det \
+  sim-v1model-custom-al-det sim-v1model-custom-sl-det sim-v1model-custom-pl-det \
+  sim-ebpf-p4c-al-det sim-ebpf-p4c-sl-det sim-ebpf-p4c-pl-det \
+  sim-ebpf-p4testgen-al-det sim-ebpf-p4testgen-sl-det sim-ebpf-p4testgen-pl-det \
+  sim-psa-p4c-al-det sim-psa-p4c-sl-det sim-psa-p4c-pl-det
 
 $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
+
+# Micro tier: fast shallow coverage of every test category.
+.PHONY: test-micro
+test-micro:
+	echo "#### Running (dune build @speclang @micro @micro-det)"
+	opam switch 5.1.0
+	cd p4spec && opam exec -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
+	  (echo "####>" Failure running dune build @speclang @micro @micro-det. && \
+	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-fast
 test-fast:
@@ -127,7 +137,7 @@ test-all:
 test-all-det:
 	echo "#### Running all tests (with -det)"
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @speclang @p4parse @run-det @sim-il-det @sim-sl-det --profile=release && echo OK || \
+	cd p4spec && opam exec -- dune build @speclang @p4parse @run-det @sim-al-det @sim-sl-det --profile=release && echo OK || \
 	  (echo "####>" Failure running det tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 

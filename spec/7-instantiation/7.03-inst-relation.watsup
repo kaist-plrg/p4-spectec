@@ -101,14 +101,32 @@ relation ParserStmt_inst:
   hint(prose_out "context" %3
                  "and store" %4)
 
-relation ParserStmts_inst:
-  instContext store |- parserStatementIR*
-                     : instContext store parserStatementIR*
+relation ParserBlockElementStmt_inst:
+  instContext store |- parserBlockElementStatementIR
+                     : instContext store parserBlockElementStatementIR
   hint(input %0 %1 %2)
-  hint(prose_in "compile-time evaluation of" %2#", under context" %0
-                "and store" %1)
-  hint(prose_out "context" %3
-                 "and store" %4)
+  hint(prose_in "compile-time evaluation of" %2#
+                ", under context" %0#", and store" %1)
+  hint(prose_out "context" %3#
+                 ", store" %4#", and" %5)
+
+relation ParserBlockElementStmtList_inst:
+  instContext store |- parserBlockElementStatementListIR
+                     : instContext store parserBlockElementStatementIR*
+  hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#
+                ", under context" %0#", and store" %1)
+  hint(prose_out "context" %3#
+                 ", store" %4#", and" %5)
+
+relation ParserBlock_inst:
+  instContext store |- parserBlockStatementIR
+                     : instContext store parserBlockStatementIR
+  hint(input %0 %1 %2)
+  hint(prose_in "compile-time evaluation of" %2#
+                ", under context" %0#", and store" %1)
+  hint(prose_out "context" %3#
+                 ", store" %4#", and" %5)
 
 relation ParserState_inst:
   instContext store |- parserStateIR

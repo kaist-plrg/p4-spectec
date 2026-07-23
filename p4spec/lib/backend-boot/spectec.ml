@@ -34,8 +34,9 @@ end
 
 module Make_null
     (Interface_SpecTec : INTERFACE_SPECTEC)
-    (Interp_IL : Run.INTERP_IL)
-    (Interp_SL : Run.INTERP_SL) : Run.EXTERN = struct
+    (Interp_AL : Run.INTERP_AL)
+    (Interp_SL : Run.INTERP_SL)
+    (Interp_PL : Run.INTERP_PL) : Run.EXTERN = struct
   (* Mode initialization *)
 
   let call_func = ref (fun _ _ _ -> assert false)
@@ -43,8 +44,9 @@ module Make_null
   let init_mode mode_ =
     let call_func_ name typs values =
       (match mode_ with
-      | Run.IL_mode -> Interp_IL.eval_func name typs values
+      | Run.AL_mode -> Interp_AL.eval_func name typs values
       | Run.SL_mode -> Interp_SL.eval_func name typs values
+      | Run.PL_mode -> Interp_PL.eval_func name typs values
       | Run.Empty_mode -> assert false)
       |> function
       | Pass value -> value
@@ -214,8 +216,8 @@ module Make_parametric
 
     let cache_off () =
       cache.meta.enabled <- false;
-      CCache.reset cache.meta.func;
-      CCache.reset cache.meta.rel;
+      CCache.empty cache.meta.func;
+      CCache.empty cache.meta.rel;
       Interface_SpecTec.cache_disable_reset cache.interface
   end
 
@@ -445,6 +447,6 @@ module Make_parametric
 
   let clear () : unit =
     clear_cache_interface ();
-    CCache.clear cache.meta.func;
-    CCache.clear cache.meta.rel
+    CCache.empty cache.meta.func;
+    CCache.empty cache.meta.rel
 end

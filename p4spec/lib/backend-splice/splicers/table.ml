@@ -55,14 +55,15 @@ end
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = Pl.tablefunc
+  type prose = Pl.Annot.hints * Pl.tablefunc
 
   module Value = struct
     type t = prose
 
     let render (values : t list) : string =
       values
-      |> List.map (fun value -> Pl.Render.render_table_func_def value)
+      |> List.map (fun (hints, tablefunc) ->
+             Pl.Render.render_table_func_def hints tablefunc)
       |> String.concat "\n\n"
   end
 
@@ -70,18 +71,11 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let id_of_func_title = function
-      | Pl.ProseFuncTitle (`Check (id_def, _, _))
-      | Pl.ProseFuncTitle (`Yield (id_def, _, _))
-      | Pl.MathFuncTitle (id_def, _, _) ->
-          id_def
-
     let init_def (def : Pl.def) : (key * value) option =
-      match def.it with
+      match def.node.it with
       | TableDecD tablefunc ->
-          let func_title, _ = tablefunc in
-          let id = id_of_func_title func_title in
-          Some (id.it, tablefunc)
+          let id, _, _, _ = tablefunc in
+          Some (id.it, (def.hints, tablefunc))
       | _ -> None
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =

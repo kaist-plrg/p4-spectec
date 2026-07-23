@@ -108,7 +108,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4 path_p4 =
 let parser_test_driver includes_p4 excludes_p4 testdirs_p4 path_spec =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
