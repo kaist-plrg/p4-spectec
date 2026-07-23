@@ -42,19 +42,19 @@ let spec_of_paths (mode : Run.mode) (paths_spec : string list) : Run.spec =
   | ML_mode -> ML
   | Empty_mode -> assert false
 
-let spec_of_level (mode : Run.mode) (level : Config.level) : Run.spec =
-  spec_of_paths mode [ level.layer.specdir ]
+let spec_of_level (level : Config.level) : Run.spec =
+  spec_of_paths level.mode [ level.layer.specdir ]
 
 (* Building a tower *)
 
 let build_target ?(cache = true) ?(det = false) ?(guard = false)
-    (mode : Run.mode) (level : Config.level) =
+    (level : Config.level) =
   (* Create the target runner *)
   let (module Runner_target) =
     match level.interface with
     | P4_interface -> (module P4.Make () : Run.RUNNER)
     | IL_interface ->
-        let (module V) = valrep_of_mode_interface mode IL_interface in
+        let (module V) = valrep_of_mode_interface level.mode IL_interface in
         let module Interface_SpecTec = Interface.SpecTec_IL.Make (V) in
         let (module Interp_ml) = interp_ml_of_interface IL_interface in
         (module Runner.Make.Make_rec
@@ -64,7 +64,7 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
                   (Interp_sl.Interp.Make)
                   (Interp_ml.Make) : Run.RUNNER)
     | SL_interface ->
-        let (module V) = valrep_of_mode_interface mode SL_interface in
+        let (module V) = valrep_of_mode_interface level.mode SL_interface in
         let module Interface_SpecTec = Interface.SpecTec_SL.Make (V) in
         let (module Interp_ml) = interp_ml_of_interface SL_interface in
         (module Runner.Make.Make_rec
@@ -74,7 +74,7 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
                   (Interp_sl.Interp.Make)
                   (Interp_ml.Make) : Run.RUNNER)
   in
-  Runner_target.init ~cache ~det ~guard (spec_of_level mode level);
+  Runner_target.init ~cache ~det ~guard (spec_of_level level);
   (module Runner_target : Run.RUNNER)
 
 (* Build a non-target level (intermediate or boot) above [Runner_above],
@@ -83,9 +83,8 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
    spec (for [Inst.Hook.init_spec]), intermediate levels' callers discard it. *)
 
 let build_level ?(cache = true) ?(det = false) ?(guard = false)
-    (module Runner_above : Run.RUNNER) (mode : Run.mode) (level : Config.level)
-    =
-  let (module V) = valrep_of_mode_interface mode level.interface in
+    (module Runner_above : Run.RUNNER) (level : Config.level) =
+  let (module V) = valrep_of_mode_interface level.mode level.interface in
   let (module Interface_SpecTec) =
     match level.interface with
     | P4_interface ->
@@ -106,16 +105,14 @@ let build_level ?(cache = true) ?(det = false) ?(guard = false)
               (Interp_sl.Interp.Make)
               (Interp_ml.Make) : Run.RUNNER)
   in
-  let spec = spec_of_level mode level in
+  let spec = spec_of_level level in
   Runner.init ~cache ~det ~guard spec;
   (spec, (module Runner : Run.RUNNER))
 
 let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     (tower : Config.tower) =
   (* Build the target runner *)
-  let runner_target =
-    build_target ~cache ~det ~guard tower.mode tower.level_target
-  in
+  let runner_target = build_target ~cache ~det ~guard tower.level_target in
   (* Reverse the levels, so that we build levels from the target to boot *)
   let levels = tower.level_boot :: tower.levels_interm |> List.rev in
   let spec_boot = ref None in
@@ -126,9 +123,7 @@ let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     |> List.fold_left
          (fun ((module Runner_above : Run.RUNNER), runners) (last, level) ->
            let spec, (module Runner) =
-             build_level ~cache ~det ~guard
-               (module Runner_above)
-               tower.mode level
+             build_level ~cache ~det ~guard (module Runner_above) level
            in
            if last then (
              spec_boot := Some spec;
