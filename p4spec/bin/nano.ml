@@ -21,13 +21,12 @@ let elab_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let run_command =
+let check_command =
   Core.Command.basic
-    ~summary:"execute the nano-p4 spec against a nano-p4 program"
+    ~summary:"typecheck a nano-P4 program against the spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and includes_p4 = flag "-i" (listed string) ~doc:"Nano-P4 include paths"
      and path_p4 = flag "-p" (required string) ~doc:"Nano-P4 program"
      and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
@@ -79,7 +78,7 @@ let run_command =
          Inst.Hook.register handlers;
          Inst.Hook.init_spec spec_sim;
          let result =
-           Simulator.Interp.eval_program relname includes_p4 path_p4
+           Simulator.Interp.eval_program "Program_ok" includes_p4 path_p4
          in
          Inst.Hook.finish ();
          match result with
@@ -110,7 +109,7 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
-let sim_command =
+let eval_command =
   Core.Command.basic
     ~summary:"simulate nano switch with a nano-P4 program and P4 spec"
     (let open Core.Command.Let_syntax in
@@ -273,9 +272,9 @@ let command =
     ~summary:"nano-p4spectec: a language design framework for nano-P4"
     [
       ("elab", elab_command);
-      ("run", run_command);
+      ("check", check_command);
       ("parse", parse_command);
-      ("sim", sim_command);
+      ("eval", eval_command);
       ("test-check", test_check_command);
       ("test-eval", test_eval_command);
     ]
