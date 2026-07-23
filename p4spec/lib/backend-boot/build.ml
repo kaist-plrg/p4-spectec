@@ -13,6 +13,25 @@ let interp_ml_of_interface (interface : Config.interface) : (module INTERP_ML) =
   | Config.IL_interface -> (module Backend_ocaml_il.Interp_ml : INTERP_ML)
   | Config.SL_interface -> (module Backend_ocaml_sl.Interp_ml : INTERP_ML)
 
+(* The [Spectec.Make_null]/[Make_parametric] value representation: under
+   [ML_mode] the compiled interface's own native [V], matching what compiled
+   code reads/writes at the [Run.EXTERN] boundary; [Valrep.V_value] (the
+   interpreted representation) otherwise. *)
+
+let valrep_of_mode_interface (mode : Run.mode) (interface : Config.interface) :
+    (module Runtime.Valrep.VAL) =
+  match mode with
+  | Run.ML_mode -> (
+      match interface with
+      | Config.P4_interface ->
+          (module Backend_ocaml_p4.Val_native.V_native : Runtime.Valrep.VAL)
+      | Config.IL_interface ->
+          (module Backend_ocaml_il.Val_native.V_native : Runtime.Valrep.VAL)
+      | Config.SL_interface ->
+          (module Backend_ocaml_sl.Val_native.V_native : Runtime.Valrep.VAL))
+  | Run.IL_mode | Run.SL_mode | Run.Empty_mode ->
+      (module Runtime.Valrep.V_value : Runtime.Valrep.VAL)
+
 (* A [spec] value for [paths_spec]/[level], given an execution mode. [ML_mode]
    needs no parse/elaborate — the compiled code is already linked in. *)
 
@@ -35,24 +54,22 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
     match level.interface with
     | P4_interface -> (module P4.Make () : Run.RUNNER)
     | IL_interface ->
-        let module Interface_SpecTec =
-          Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
-        in
+        let (module V) = valrep_of_mode_interface mode IL_interface in
+        let module Interface_SpecTec = Interface.SpecTec_IL.Make (V) in
         let (module Interp_ml) = interp_ml_of_interface IL_interface in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
-                  (Spectec.Make_null (Interface_SpecTec))
+                  (Spectec.Make_null (V) (Interface_SpecTec))
                   (Interp_il.Interp.Make)
                   (Interp_sl.Interp.Make)
                   (Interp_ml.Make) : Run.RUNNER)
     | SL_interface ->
-        let module Interface_SpecTec =
-          Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
-        in
+        let (module V) = valrep_of_mode_interface mode SL_interface in
+        let module Interface_SpecTec = Interface.SpecTec_SL.Make (V) in
         let (module Interp_ml) = interp_ml_of_interface SL_interface in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
-                  (Spectec.Make_null (Interface_SpecTec))
+                  (Spectec.Make_null (V) (Interface_SpecTec))
                   (Interp_il.Interp.Make)
                   (Interp_sl.Interp.Make)
                   (Interp_ml.Make) : Run.RUNNER)
@@ -68,22 +85,23 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
 let build_level ?(cache = true) ?(det = false) ?(guard = false)
     (module Runner_above : Run.RUNNER) (mode : Run.mode) (level : Config.level)
     =
+  let (module V) = valrep_of_mode_interface mode level.interface in
   let (module Interface_SpecTec) =
     match level.interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
     | IL_interface ->
-        (module Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
-        : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
     | SL_interface ->
-        (module Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
-        : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
   in
   let (module Interp_ml) = interp_ml_of_interface level.interface in
   let (module Runner) =
     (module Runner.Make.Make_nonrec
               (Interface_SpecTec)
-              (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
+              (Spectec.Make_parametric (V) (Runner_above) (Interface_SpecTec))
               (Interp_il.Interp.Make)
               (Interp_sl.Interp.Make)
               (Interp_ml.Make) : Run.RUNNER)
@@ -127,22 +145,23 @@ let build_tower ?(cache = true) ?(det = false) ?(guard = false)
 
 let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     (interface : Config.interface) (paths_spec : string list) =
+  let (module V) = valrep_of_mode_interface mode interface in
   let (module Interface_SpecTec) =
     match interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
     | IL_interface ->
-        (module Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
-        : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_IL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
     | SL_interface ->
-        (module Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
-        : Spectec.INTERFACE_SPECTEC)
+        (module Interface.SpecTec_SL.Make (V) : Spectec.INTERFACE_SPECTEC
+          with type vt = V.t)
   in
   let (module Interp_ml) = interp_ml_of_interface interface in
   let (module Runner) =
     (module Runner.Make.Make_rec
               (Interface_SpecTec)
-              (Spectec.Make_null (Interface_SpecTec))
+              (Spectec.Make_null (V) (Interface_SpecTec))
               (Interp_il.Interp.Make)
               (Interp_sl.Interp.Make)
               (Interp_ml.Make) : Run.RUNNER)
