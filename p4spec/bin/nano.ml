@@ -119,8 +119,8 @@ let sim_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
          ]
