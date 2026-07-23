@@ -35,7 +35,9 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
     match level.interface with
     | P4_interface -> (module P4.Make () : Run.RUNNER)
     | IL_interface ->
-        let module Interface_SpecTec = Interface.SpecTec_IL in
+        let module Interface_SpecTec =
+          Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
+        in
         let (module Interp_ml) = interp_ml_of_interface IL_interface in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
@@ -44,7 +46,9 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
                   (Interp_sl.Interp.Make)
                   (Interp_ml.Make) : Run.RUNNER)
     | SL_interface ->
-        let module Interface_SpecTec = Interface.SpecTec_SL in
+        let module Interface_SpecTec =
+          Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
+        in
         let (module Interp_ml) = interp_ml_of_interface SL_interface in
         (module Runner.Make.Make_rec
                   (Interface_SpecTec)
@@ -68,8 +72,12 @@ let build_level ?(cache = true) ?(det = false) ?(guard = false)
     match level.interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
-    | IL_interface -> (module Interface.SpecTec_IL : Spectec.INTERFACE_SPECTEC)
-    | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
+    | IL_interface ->
+        (module Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
+        : Spectec.INTERFACE_SPECTEC)
+    | SL_interface ->
+        (module Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
+        : Spectec.INTERFACE_SPECTEC)
   in
   let (module Interp_ml) = interp_ml_of_interface level.interface in
   let (module Runner) =
@@ -123,8 +131,12 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     match interface with
     | P4_interface ->
         error_no_region "P4 interface not supported outside of target level"
-    | IL_interface -> (module Interface.SpecTec_IL : Spectec.INTERFACE_SPECTEC)
-    | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
+    | IL_interface ->
+        (module Interface.SpecTec_IL.Make (Runtime.Valrep.V_value)
+        : Spectec.INTERFACE_SPECTEC)
+    | SL_interface ->
+        (module Interface.SpecTec_SL.Make (Runtime.Valrep.V_value)
+        : Spectec.INTERFACE_SPECTEC)
   in
   let (module Interp_ml) = interp_ml_of_interface interface in
   let (module Runner) =
