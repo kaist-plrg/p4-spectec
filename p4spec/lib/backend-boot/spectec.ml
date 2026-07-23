@@ -12,6 +12,11 @@ open Util.Source
 let typ_funccache = Typ.Make.var ("funccache" $ no_region) []
 let typ_relcache = Typ.Make.var ("relcache" $ no_region) []
 
+(* [val*] witness for marshaling the meta-cache keys/values: [V.marshal] on it
+   routes through [marshal_typed]'s structural [IterT] arm. *)
+let typ_val = Typ.Make.var ("val" $ no_region) []
+let typ_val_star = Typ.Make.list typ_val
+
 (* Declared aliases [valres = res<val>] / [valsres = res<val*>], keyed by their
    alias name so [make_case_typed] resolves the OK ctor and payload shape. *)
 let typ_valres = Typ.Make.var ("valres" $ no_region) []
@@ -215,10 +220,6 @@ module Make_parametric
     (Runner : Run.RUNNER)
     (Interface_SpecTec : INTERFACE_SPECTEC with type vt = V.t)
     () : Run.EXTERN = struct
-  (* Mode initialization *)
-
-  let init_mode _ = ()
-
   (* Caches
    * a meta-cache for storing results of meta-relation and meta-meta-function calls
    * an interface cache for storing results of booting and unbooting values, types, and mixops *)
@@ -253,6 +254,15 @@ module Make_parametric
       CCache.reset cache.meta.rel;
       Interface_SpecTec.cache_disable_reset cache.interface
   end
+
+  (* Mode initialization. Called once per level, right after that level's own
+     [-no-cache] state is set, so this runs last and wins. Under [ML_mode] the
+     meta-cache key/value marshal walks the full native argument tree into a
+     fresh [Value.t] to hash it on every call - costlier than recomputing. IL/SL
+     pay nothing for the marshal (identity under [V_value]), so they keep it. *)
+
+  let init_mode (mode : Run.mode) : unit =
+    match mode with Run.ML_mode -> Cache.cache_off () | _ -> ()
 
   (* Threading extern calls to the runner *)
 
@@ -331,13 +341,13 @@ module Make_parametric
      native-shaped result instead of an interpreted [Value.t] that compiled
      code then misreads (see [Make_null] above).
 
-     The [value_valres]/[value_valsres] payload *extraction* below is a
-     different, still-open problem: [valres]/[valsres] are the parametric type
-     [res<X>] at [val]/[val*], and [V_native]'s generated [case_of_typed] has
-     no entry for parametric heads outside [set;pair;map]. Under [V_native] the
-     [V.Get.( |>>? )] below therefore raises; since this cache is a pure
-     optimization (a miss just recomputes, never a wrong answer), the failure
-     is caught and treated as "nothing to cache" rather than propagated. *)
+     [CCache] always stores genuine [Value.t] (shared, mode-agnostic, hashed
+     structurally), but the [val*] key/value here crossed the [EXTERN] wire,
+     which under [ML_mode]/[V_native] is [Obj.magic], not a real conversion. So
+     each is put through [V.marshal]/[V.unmarshal] on [typ_val_star] - identity
+     under [V_value], a real native-to-[Value.t] decode under [V_native] - before
+     it touches the [Hashtbl]. [|>>?] returns [Some]/[None] for OK-vs-FAIL, so a
+     genuine structural mismatch surfaces rather than being silently dropped. *)
 
   let typ_valres_ext = Typ.Make.var ("valres" $ no_region) []
   let typ_valsres_ext = Typ.Make.var ("valsres" $ no_region) []
@@ -355,13 +365,18 @@ module Make_parametric
             error_no_region "unexpected number of arguments to cache_find_func"
       in
       let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
+      let value_values_input =
+        value_values_input |> V.of_value |> V.marshal typ_val_star
+      in
       let cache_result =
         CCache.find cache.meta.func (id.it, [ value_values_input ])
       in
       (match cache_result with
       | Some value_value_output ->
           V.Make.(
-            "OK val" <| [ value_value_output |> V.of_value ] <<| typ_funccache)
+            "OK val"
+            <| [ value_value_output |> V.unmarshal typ_val ]
+            <<| typ_funccache)
       | None -> V.Make.("NONE" <| [] <<| typ_funccache))
       |> V.to_value
 
@@ -378,17 +393,18 @@ module Make_parametric
       in
       let seff = value_seff |> V.of_value |> V.Get.bool in
       (if not seff then
-         try
-           match
-             V.Get.((value_valres |> V.of_value) |>>? (mixop_ok_val, typ_valres_ext))
-           with
-           | Some [ value_value_output ] ->
-               let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
-               CCache.add cache.meta.func
-                 (id.it, [ value_values_input ])
-                 (value_value_output |> V.to_value)
-           | _ -> ()
-         with Failure _ -> ());
+         match
+           V.Get.((value_valres |> V.of_value) |>>? (mixop_ok_val, typ_valres_ext))
+         with
+         | Some [ value_value_output ] ->
+             let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
+             let value_values_input =
+               value_values_input |> V.of_value |> V.marshal typ_val_star
+             in
+             CCache.add cache.meta.func
+               (id.it, [ value_values_input ])
+               (value_value_output |> V.marshal typ_val)
+         | _ -> ());
       V.Make.bool true |> V.to_value
 
   let cache_find_rel (values_input : Value.t list) : Value.t =
@@ -402,13 +418,18 @@ module Make_parametric
             error_no_region "unexpected number of arguments to cache_find_rel"
       in
       let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
+      let value_values_input =
+        value_values_input |> V.of_value |> V.marshal typ_val_star
+      in
       let cache_result =
         CCache.find cache.meta.rel (id.it, [ value_values_input ])
       in
       (match cache_result with
       | Some value_values_output ->
           V.Make.(
-            "OK val*" <| [ value_values_output |> V.of_value ] <<| typ_relcache)
+            "OK val*"
+            <| [ value_values_output |> V.unmarshal typ_val_star ]
+            <<| typ_relcache)
       | None -> V.Make.("NONE" <| [] <<| typ_relcache))
       |> V.to_value
 
@@ -425,18 +446,19 @@ module Make_parametric
       in
       let seff = value_seff |> V.of_value |> V.Get.bool in
       (if not seff then
-         try
-           match
-             V.Get.(
-               (value_valsres |> V.of_value) |>>? (mixop_ok_vals, typ_valsres_ext))
-           with
-           | Some [ value_values_output ] ->
-               let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
-               CCache.add cache.meta.rel
-                 (id.it, [ value_values_input ])
-                 (value_values_output |> V.to_value)
-           | _ -> ()
-         with Failure _ -> ());
+         match
+           V.Get.(
+             (value_valsres |> V.of_value) |>>? (mixop_ok_vals, typ_valsres_ext))
+         with
+         | Some [ value_values_output ] ->
+             let id = value_id |> V.of_value |> Interface_SpecTec.unboot_id in
+             let value_values_input =
+               value_values_input |> V.of_value |> V.marshal typ_val_star
+             in
+             CCache.add cache.meta.rel
+               (id.it, [ value_values_input ])
+               (value_values_output |> V.marshal typ_val_star)
+         | _ -> ());
       V.Make.bool true |> V.to_value
 
   let cache_checkpoint (values_input : Value.t list) : Value.t =
