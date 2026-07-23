@@ -371,7 +371,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
     ---- ;; evaluate argument
     -- Argument_eval:
@@ -387,8 +387,9 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
+    -- if n_size = |value_element*|
     ---- ;; evaluate argument
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR
@@ -403,7 +404,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
     -- if value_element_updated* = value_front_invalidated* ++ value_back*
     -- if n_idx_updated = $min_nat([ n_size, $(n_idx + n_count) ])
     -- if headerStackValue_updated
-        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
         p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
@@ -419,8 +420,9 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
+    -- if n_size = |value_element*|
     ---- ;; evaluate argument
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR
@@ -431,7 +433,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-push-front {
     -- if (value_element_updated = $invalidate_value(value_element))*
     -- if n_idx_updated = $min_nat([ n_size, $(n_idx + n_count) ])
     -- if headerStackValue_updated
-        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
         p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
@@ -451,7 +453,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
     ---- ;; evaluate argument
     -- Argument_eval:
@@ -467,8 +469,9 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
+    -- if n_size = |value_element*|
     ---- ;; evaluate argument
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR
@@ -483,7 +486,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
     -- if value_element_updated* = value_front* ++ value_back_invalidated*
     -- if n_idx_updated = n_front
     -- if headerStackValue_updated
-        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
         p EC_1 ARCH_1 |- storageReference := headerStackValue_updated
@@ -499,8 +502,9 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
     ---- ;; read the value
     -- Lvalue_read: 
         p EC_0 ARCH_0 |- storageReference : headerStackValue
-    -- if HEADER_STACK `[ value_element* `(n_idx `; n_size) ]
+    -- if HEADER_STACK `[ value_element* `(n_idx) ]
         = headerStackValue
+    -- if n_size = |value_element*|
     ---- ;; evaluate argument
     -- Argument_eval:
         p EC_0 ARCH_0 |- argumentIR
@@ -511,7 +515,7 @@ rulegroup Call_eval/builtinMethodCallee-header-stack-pop-front {
     -- if (value_element_updated = $invalidate_value(value_element))*
     -- if n_idx_updated = $max_int([ 0, $(n_size - n_count) ])
     -- if headerStackValue_updated
-        = HEADER_STACK `[ value_element_updated* `(n_idx_updated `; n_size) ]
+        = HEADER_STACK `[ value_element_updated* `(n_idx_updated) ]
     ---- ;; write back the updated header stack
     -- Lvalue_write:
         p EC_1 ARCH_1 |- storageReference := headerStackValue_updated

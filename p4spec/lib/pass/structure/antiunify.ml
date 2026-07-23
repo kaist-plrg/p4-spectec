@@ -1,7 +1,7 @@
 open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
-open Il
+open Al
 open Error
 open Util.Source
 
@@ -24,7 +24,8 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
   let populate_exp_template_unequal () =
     match (exp_template.it, exp.it) with
     | VarE id_template, _ when UEnv.unified id_template uenv ->
-        let prem = LetPr (exp, exp_template) $ exp.at in
+        let at = over_region [ exp.at; exp_template.at ] in
+        let prem = Il.LetPr (exp, exp_template) $ at in
         [ prem ]
     | TupleE exps_template, TupleE exps ->
         populate_exps_templates uenv exps_template exps
@@ -40,9 +41,10 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
       when Il.Eq.eq_iter iter_template iter ->
+        let at = over_region [ exp.at; exp_template.at ] in
         let iterprem = (iter_template, vars_template, vars) in
-        let prem = LetPr (exp, exp_template) $ exp.at in
-        let prem = IterPr (prem, iterprem) $ exp.at in
+        let prem = Il.LetPr (exp, exp_template) $ at in
+        let prem = Il.IterPr (prem, iterprem) $ at in
         [ prem ]
     | _ ->
         Format.asprintf "cannot populate anti-unified expressions %s and %s"
@@ -79,19 +81,19 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
         let id_fresh = Fresh.id frees id_template in
         let frees = IdSet.add id_fresh frees in
         let uenv = UEnv.add id_template id_fresh uenv in
-        let exp_template = VarE id_fresh $$ (at, note) in
+        let exp_template = Il.VarE id_fresh $$ (at, note) in
         (frees, uenv, exp_template)
     | _, VarE id ->
         let id_fresh = Fresh.id frees id in
         let frees = IdSet.add id_fresh frees in
         let uenv = UEnv.add id id_fresh uenv in
-        let exp_template = VarE id_fresh $$ (at, note) in
+        let exp_template = Il.VarE id_fresh $$ (at, note) in
         (frees, uenv, exp_template)
     | TupleE exps_template, TupleE exps ->
         let frees, uenv, exps_template =
           antiunify_exps frees uenv exps_template exps
         in
-        let exp_template = TupleE exps_template $$ (at, note) in
+        let exp_template = Il.TupleE exps_template $$ (at, note) in
         (frees, uenv, exp_template)
     | CaseE notexp_template, CaseE notexp
       when Mixfix.eq_mixop notexp_template notexp ->
@@ -101,7 +103,7 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
           antiunify_exps frees uenv exps_template exps
         in
         let exp_template =
-          CaseE (Mixfix.fill mixop exps_template) $$ (at, note)
+          Il.CaseE (Mixfix.fill mixop exps_template) $$ (at, note)
         in
         (frees, uenv, exp_template)
     | StrE expfields_template, StrE expfields ->
@@ -112,7 +114,7 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
           antiunify_exps frees uenv exps_template exps
         in
         let expfields_template = List.combine atoms_template exps_template in
-        let exp_template = StrE expfields_template $$ (at, note) in
+        let exp_template = Il.StrE expfields_template $$ (at, note) in
         (frees, uenv, exp_template)
     | ( IterE (exp_template, (iter_template, vars_template)),
         IterE (exp, (iter, vars)) )
@@ -134,7 +136,7 @@ let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
                []
         in
         let exp_template =
-          IterE (exp_template, (iter_template, vars_template)) $$ (at, note)
+          Il.IterE (exp_template, (iter_template, vars_template)) $$ (at, note)
         in
         (frees, uenv, exp_template)
     | _ -> fail ()
@@ -213,7 +215,7 @@ let antiunify_arg (frees : IdSet.t) (uenv : UEnv.t) (arg_template : arg)
       let frees, uenv, exp_template =
         antiunify_exp frees uenv exp_template exp
       in
-      let arg_template = ExpA exp_template $ arg_template.at in
+      let arg_template = Il.ExpA exp_template $ arg_template.at in
       (frees, uenv, arg_template)
   | DefA id_template, DefA id when Il.Eq.eq_id id_template id ->
       (frees, uenv, arg_template)

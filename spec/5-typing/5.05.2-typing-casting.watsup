@@ -115,9 +115,14 @@ rulegroup Cast_expl_neq/sequenceTypeIR-non-default {
     SEQ `< typeIR_a* > -> TUPLE `< typeIR_b* >
     -- (Cast_expl: typeIR_a -> typeIR_b)*
 
+  rule Cast_expl_neq/arrayTypeIR:
+    SEQ `< typeIR_a* > -> ARRAY typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| = n_size)
+    -- (Cast_expl: typeIR_a -> typeIR_b)*
+
   rule Cast_expl_neq/headerStackTypeIR:
-    SEQ `< typeIR_a* > -> typeIR_b `[ n_size ]
-    -- if $(|typeIR_a*| <= n_size)
+    SEQ `< typeIR_a* > -> HEADER_STACK typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| = n_size)
     -- (Cast_expl: typeIR_a -> typeIR_b)*
 
   rule Cast_expl_neq/structTypeIR:
@@ -140,8 +145,14 @@ rulegroup Cast_expl_neq/sequenceTypeIR-default {
     -- (Cast_expl: typeIR_a -> typeIR_b_non_default)*
     -- if $is_defaultable_typeIR(typeIR_b_default)*
 
+  rule Cast_expl_neq/arrayTypeIR:
+    SEQ `< typeIR_a* `, `... > -> ARRAY typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| < n_size)
+    -- (Cast_expl: typeIR_a -> typeIR_b)*
+    -- if $is_defaultable_typeIR(typeIR_b)
+
   rule Cast_expl_neq/headerStackTypeIR:
-    SEQ `< typeIR_a* `, `... > -> typeIR_b `[ n_size ]
+    SEQ `< typeIR_a* `, `... > -> HEADER_STACK typeIR_b `[ n_size ]
     -- if $(|typeIR_a*| < n_size)
     -- (Cast_expl: typeIR_a -> typeIR_b)*
     -- if $is_defaultable_typeIR(typeIR_b)
@@ -288,9 +299,14 @@ rulegroup Cast_impl_neq/sequenceTypeIR-non-default {
     SEQ `< typeIR_a* > -> TUPLE `< typeIR_b* >
     -- (Cast_impl: typeIR_a -> typeIR_b)*
 
+  rule Cast_impl_neq/arrayTypeIR:
+    SEQ `< typeIR_a* > -> ARRAY typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| = n_size)
+    -- (Cast_impl: typeIR_a -> typeIR_b)*
+
   rule Cast_impl_neq/headerStackTypeIR:
-    SEQ `< typeIR_a* > -> typeIR_b `[ n_size ]
-    -- if $(|typeIR_a*| <= n_size)
+    SEQ `< typeIR_a* > -> HEADER_STACK typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| = n_size)
     -- (Cast_impl: typeIR_a -> typeIR_b)*
 
   rule Cast_impl_neq/structTypeIR:
@@ -317,8 +333,14 @@ rulegroup Cast_impl_neq/sequenceTypeIR-default {
     -- (Cast_impl: typeIR_a -> typeIR_b_non_default)*
     -- if $is_defaultable_typeIR(typeIR_b_default)*
 
+  rule Cast_impl_neq/arrayTypeIR:
+    SEQ `< typeIR_a* `, `... > -> ARRAY typeIR_b `[ n_size ]
+    -- if $(|typeIR_a*| < n_size)
+    -- (Cast_impl: typeIR_a -> typeIR_b)*
+    -- if $is_defaultable_typeIR(typeIR_b)
+
   rule Cast_impl_neq/headerStackTypeIR:
-    SEQ `< typeIR_a* `, `... > -> typeIR_b `[ n_size ]
+    SEQ `< typeIR_a* `, `... > -> HEADER_STACK typeIR_b `[ n_size ]
     -- if $(|typeIR_a*| < n_size)
     -- (Cast_impl: typeIR_a -> typeIR_b)*
     -- if $is_defaultable_typeIR(typeIR_b)

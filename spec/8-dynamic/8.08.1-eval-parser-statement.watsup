@@ -190,34 +190,6 @@ rulegroup ParserTransition_eval {
 ;; syntax parserStatementIR
 ;;
 
-;;; constantDeclarationIR
-
-rule ParserStmt_eval/constantDeclarationIR:
-  EC_0 ARCH |- constantDeclarationIR
-             : EC_1 ARCH `EMPTY
-  -- ConstDecl_eval:
-      LOCAL EC_0 |- constantDeclarationIR : EC_1
-
-;;; variableDeclarationIR
-
-rulegroup ParserStmt_eval/variableDeclarationIR {
-
-  rule ParserStmt_eval/reject:
-    EC_0 ARCH_0 |- variableDeclarationIR
-                 : EC_1 ARCH_1 rejectTransitionResult
-    -- VarDecl_eval:
-        LOCAL EC_0 ARCH_0 |- variableDeclarationIR
-                           : EC_1 ARCH_1 rejectTransitionResult
-
-  rule ParserStmt_eval/cont:
-    EC_0 ARCH_0 |- variableDeclarationIR
-                 : EC_1 ARCH_1 `EMPTY
-    -- VarDecl_eval:
-        LOCAL EC_0 ARCH_0 |- variableDeclarationIR
-                           : EC_1 ARCH_1 `EMPTY
-
-}
-
 ;;; emptyStatementIR
 
 rule ParserStmt_eval/emptyStatementIR:
@@ -274,11 +246,11 @@ rulegroup ParserStmt_eval/callStatementIR {
 ;;; parserBlockStatementIR
 
 rule ParserStmt_eval/parserBlockStatementIR:
-  EC_0 ARCH_0 |- annotationList `{ parserStatementListIR }
+  EC_0 ARCH_0 |- parserBlockStatementIR
                : EC_3 ARCH_1 parserStatementResult
   -- if EC_1 = $enter_e(EC_0)
-  -- ParserStmts_eval:
-      EC_1 ARCH_0 |- parserStatementListIR
+  -- ParserBlock_eval:
+      EC_1 ARCH_0 |- parserBlockStatementIR
                    : EC_2 ARCH_1 parserStatementResult
   -- if EC_3 = $exit_e(EC_2)
 
@@ -340,31 +312,85 @@ rulegroup ParserStmt_eval/parserConditionalStatementIR {
 
 
 ;;
-;; Parser statement list evaluation
-;;
-;; syntax parserStatementListIR
+;; Parser block statement instantiation
 ;;
 
-rulegroup ParserStmts_eval {
+;;
+;; syntax parserBlockElementStatementIR
+;;
 
-  rule ParserStmts_eval/nil:
+;;; constantDeclarationIR
+;;; variableDeclarationIR
+;;; parserStatementIR
+
+rulegroup ParserBlockElementStmt_eval {
+
+  rule ParserBlockElementStmt_eval/constantDeclarationIR:
+    EC_0 ARCH |- constantDeclarationIR
+               : EC_1 ARCH `EMPTY
+    -- ConstDecl_eval:
+        LOCAL EC_0 |- constantDeclarationIR : EC_1
+
+  rule ParserBlockElementStmt_eval/variableDeclarationIR-reject:
+    EC_0 ARCH_0 |- variableDeclarationIR
+                 : EC_1 ARCH_1 rejectTransitionResult
+    -- VarDecl_eval:
+        LOCAL EC_0 ARCH_0 |- variableDeclarationIR
+                           : EC_1 ARCH_1 rejectTransitionResult
+
+  rule ParserBlockElementStmt_eval/variableDeclarationIR-empty:
+    EC_0 ARCH_0 |- variableDeclarationIR
+                 : EC_1 ARCH_1 `EMPTY
+    -- VarDecl_eval:
+        LOCAL EC_0 ARCH_0 |- variableDeclarationIR
+                           : EC_1 ARCH_1 `EMPTY
+
+  rule ParserBlockElementStmt_eval/statementIR:
+    EC_0 ARCH_0 |- parserStatementIR
+                 : EC_1 ARCH_1 parserStatementResult
+    -- ParserStmt_eval:
+        EC_0 ARCH_0 |- parserStatementIR
+                     : EC_1 ARCH_1 parserStatementResult
+
+}
+
+;;
+;; syntax blockElementStatementListIR
+;;
+
+rulegroup ParserBlockElementStmtList_eval {
+
+  rule ParserBlockElementStmtList_eval/nil:
     EC ARCH |- eps : EC ARCH `EMPTY
 
-  rule ParserStmts_eval/cons-head-reject:
-    EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*
-                 : EC_1 ARCH_1 rejectTransitionResult
-    -- ParserStmt_eval:
-        EC_0 ARCH_0 |- parserStatementIR_h
-                     : EC_1 ARCH_1 rejectTransitionResult
+  rule ParserBlockElementStmtList_eval/cons-head-non-cont:
+    EC_0 ARCH_0 |- parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*
+                 : EC_1 ARCH_1 parserStatementResult
+    -- ParserBlockElementStmt_eval:
+        EC_0 ARCH_0 |- parserBlockElementStatementIR_h
+                     : EC_1 ARCH_1 parserStatementResult
+    -- if parserStatementResult =/= `EMPTY
 
-  rule ParserStmts_eval/cons-head-cont:
-    EC_0 ARCH_0 |- parserStatementIR_h :: parserStatementIR_t*
+  rule ParserBlockElementStmtList_eval/cons-head-cont:
+    EC_0 ARCH_0 |- parserBlockElementStatementIR_h :: parserBlockElementStatementIR_t*
                  : EC_2 ARCH_2 parserStatementResult
-    -- ParserStmt_eval:
-        EC_0 ARCH_0 |- parserStatementIR_h
+    -- ParserBlockElementStmt_eval:
+        EC_0 ARCH_0 |- parserBlockElementStatementIR_h
                      : EC_1 ARCH_1 `EMPTY
-    -- ParserStmts_eval:
-        EC_1 ARCH_1 |- parserStatementIR_t*
+    -- ParserBlockElementStmtList_eval:
+        EC_1 ARCH_1 |- parserBlockElementStatementIR_t*
                      : EC_2 ARCH_2 parserStatementResult
 
 }
+
+;;
+;; syntax parserBlockStatmentIR
+;;      = annotationList `{ parserBlockElementStatementListIR }
+;;
+
+rule ParserBlock_eval:
+  EC_0 ARCH_0 |- annotationList `{ parserBlockElementStatementListIR }
+               : EC_1 ARCH_1 parserStatementResult
+  -- ParserBlockElementStmtList_eval:
+      EC_0 ARCH_0 |- parserBlockElementStatementListIR
+                   : EC_1 ARCH_1 parserStatementResult

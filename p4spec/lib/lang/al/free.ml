@@ -1,0 +1,147 @@
+open Domain.Lib
+module Mixfix = Domain.Mixfix
+open Ast
+open Util.Source
+
+(* Identifier set *)
+
+type t = IdSet.t
+
+let empty = IdSet.empty
+let singleton = IdSet.singleton
+let ( + ) = IdSet.union
+
+(* Collect free identifiers *)
+
+(* Expressions *)
+
+let rec free_exp (exp : exp) : t =
+  match exp.it with
+  | BoolE _ | NumE _ | TextE _ -> empty
+  | VarE id -> singleton id
+  | UnE (_, _, exp) -> free_exp exp
+  | BinE (_, _, exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
+  | CmpE (_, _, exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
+  | UpCastE (_, exp) -> free_exp exp
+  | DownCastE (_, exp) -> free_exp exp
+  | SubE (exp, _) -> free_exp exp
+  | MatchE (exp, _) -> free_exp exp
+  | TupleE exps -> free_exps exps
+  | CaseE notexp -> free_exps (Mixfix.args notexp)
+  | StrE expfields -> expfields |> List.map snd |> free_exps
+  | OptE (Some exp) -> free_exp exp
+  | OptE None -> empty
+  | ListE exps -> free_exps exps
+  | ConsE (exp_h, exp_t) -> free_exp exp_h + free_exp exp_t
+  | CatE (exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
+  | MemE (exp_e, exp_s) -> free_exp exp_e + free_exp exp_s
+  | LenE exp -> free_exp exp
+  | DotE (exp, _) -> free_exp exp
+  | IdxE (exp_b, exp_i) -> free_exp exp_b + free_exp exp_i
+  | SliceE (exp_b, exp_l, exp_h) ->
+      free_exp exp_b + free_exp exp_l + free_exp exp_h
+  | UpdE (exp_b, path, exp_f) ->
+      free_exp exp_b + free_path path + free_exp exp_f
+  | CallE (_, _, args) -> free_args args
+  | IterE (exp, _) -> free_exp exp
+
+and free_exps (exps : exp list) : t =
+  exps |> List.map free_exp |> List.fold_left ( + ) empty
+
+(* Paths *)
+
+and free_path (path : path) : t =
+  match path.it with
+  | RootP -> empty
+  | IdxP (path, exp) -> free_path path + free_exp exp
+  | SliceP (path, exp_l, exp_h) ->
+      free_path path + free_exp exp_l + free_exp exp_h
+  | DotP (path, _) -> free_path path
+
+(* Arguments *)
+
+and free_arg (arg : arg) : t =
+  match arg.it with ExpA exp -> free_exp exp | DefA _ -> empty
+
+and free_args (args : arg list) : t =
+  args |> List.map free_arg |> List.fold_left ( + ) empty
+
+(* Premises *)
+
+let rec free_prem (prem : prem) : t =
+  match prem.it with
+  | RulePr (_, notexp, _) -> free_exps (Mixfix.args notexp)
+  | IfPr exp -> free_exp exp
+  | IfHoldPr (_, notexp) -> free_exps (Mixfix.args notexp)
+  | IfNotHoldPr (_, notexp) -> free_exps (Mixfix.args notexp)
+  | LetPr (exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
+  | IterPr (prem, _) -> free_prem prem
+  | DebugPr exp -> free_exp exp
+
+and free_prems (prems : prem list) : t =
+  prems |> List.map free_prem |> List.fold_left ( + ) empty
+
+(* Rules *)
+
+let free_rulematch (rulematch : rulematch) : t =
+  let exps_signature, exps_input, prems = rulematch in
+  free_exps exps_signature + free_exps exps_input + free_prems prems
+
+let free_rulepath (rulepath : rulepath) : t =
+  let _, prems, exps_output = rulepath in
+  free_prems prems + free_exps exps_output
+
+let free_rulepaths (rulepaths : rulepath list) : t =
+  rulepaths |> List.map free_rulepath |> List.fold_left ( + ) empty
+
+let free_rulegroup (rulegroup : rulegroup) : t =
+  let _, rulematch, rulepaths = rulegroup.it in
+  free_rulematch rulematch + free_rulepaths rulepaths
+
+let free_rulegroups (rulegroups : rulegroup list) : t =
+  rulegroups |> List.map free_rulegroup |> List.fold_left ( + ) empty
+
+let free_elsegroup (elsegroup : elsegroup) : t =
+  let _, rulematch, rulepath = elsegroup.it in
+  free_rulematch rulematch + free_rulepath rulepath
+
+let free_elsegroup_opt (elsegroup_opt : elsegroup option) : t =
+  match elsegroup_opt with
+  | Some elsegroup -> free_elsegroup elsegroup
+  | None -> empty
+
+(* Clauses *)
+
+let free_clause (clause : clause) : t =
+  let args, exp, prems = clause.it in
+  free_args args + free_exp exp + free_prems prems
+
+let free_clauses (clauses : clause list) : t =
+  clauses |> List.map free_clause |> List.fold_left ( + ) empty
+
+let free_elseclause (elseclause : elseclause) : t = free_clause elseclause
+
+let free_elseclause_opt (elseclause_opt : elseclause option) : t =
+  match elseclause_opt with
+  | Some elseclause -> free_elseclause elseclause
+  | None -> empty
+
+(* Table rows *)
+
+let free_tablerow (tablerow : tablerow) : t =
+  let _exps_signature, args, exp, prems = tablerow.it in
+  free_args args + free_exp exp + free_prems prems
+
+let free_tablerows (tablerows : tablerow list) : t =
+  tablerows |> List.map free_tablerow |> List.fold_left ( + ) empty
+
+(* Definitions *)
+
+let free_def (def : def) : t =
+  match def.it with
+  | RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
+      free_rulegroups rulegroups + free_elsegroup_opt elsegroup_opt
+  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | FuncDecD (_, _, _, _, clauses, elseclause_opt, _) ->
+      free_clauses clauses + free_elseclause_opt elseclause_opt
+  | _ -> empty

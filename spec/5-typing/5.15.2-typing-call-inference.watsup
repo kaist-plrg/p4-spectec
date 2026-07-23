@@ -69,7 +69,8 @@ def $infer'(constraint, parameterIR, `_) = constraint
 ;;;; Synthesized type resolution
 ;;
 
-def $resolve_inference(`{ (typeId `: typeIR)* }) = `{ (typeId `: typeIR_resolved)* }
+def $resolve_inference(`{ (typeId `: typeIR)* })
+  = `{ (typeId `: typeIR_resolved)* }
   -- if (typeIR_resolved = $resolve_inference'(typeIR))*
 
 def $resolve_inference'(typeIR) = typeIR_resolved
@@ -117,8 +118,14 @@ def $gen_constraint(
 
 def $gen_constraint(
     constraint,
-    typeIR_param `[ n_size ],
-    typeIR_arg `[ n_size ])
+    ARRAY typeIR_param `[ n_size ],
+    ARRAY typeIR_arg `[ n_size ])
+  = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+
+def $gen_constraint(
+    constraint,
+    HEADER_STACK typeIR_param `[ n_size ],
+    HEADER_STACK typeIR_arg `[ n_size ])
   = $gen_constraint(constraint, typeIR_param, typeIR_arg)
 
 def $gen_constraint(
@@ -264,8 +271,17 @@ def $merge_constraints(
 
 ;;
 ;;;; Constraint resolution
+;;;; Indeterminate constraints are resolved to BOOL
 ;;
 
-def $resolve_constraint(`{ (typeId `: infer)* })
-  = `{ (typeId `: typeIR)* }
-  -- if (KNOWN AS typeIR = infer)*
+def $resolve_constraint(`{ eps }) = `{ eps }
+def $resolve_constraint(`{ (typeId_h `: infer_h) :: (typeId_t `: infer_t)* })
+  = `{ (typeId_h `: typeIR_h) :: (typeId_t `: typeIR_t)* }
+  -- if KNOWN AS typeIR_h = infer_h
+  -- if `{ (typeId_t `: typeIR_t)* }
+      = $resolve_constraint(`{ (typeId_t `: infer_t)* })
+def $resolve_constraint(`{ (typeId_h `: infer_h) :: (typeId_t `: infer_t)* })
+  = `{ (typeId_h `: BOOL) :: (typeId_t `: typeIR_t)* }
+  -- if UNKNOWN = infer_h
+  -- if `{ (typeId_t `: typeIR_t)* }
+      = $resolve_constraint(`{ (typeId_t `: infer_t)* })

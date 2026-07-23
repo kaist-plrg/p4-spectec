@@ -99,7 +99,8 @@ let rec downstream_instr (defined : Defined.t) (instr : instr) : Used.t =
       Used.union used used_block
   | ResultI (_, exps) -> Used.init_exps defined exps
   | ReturnI exp -> Used.init_exp defined exp
-  | DebugI exp -> Used.init_exp defined exp
+  | DebugI (exp, instr) ->
+      Used.union (Used.init_exp defined exp) (downstream_instr defined instr)
 
 and downstream_block (defined : Defined.t) (block : block) : Used.t =
   match block with

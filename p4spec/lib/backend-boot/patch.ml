@@ -49,7 +49,7 @@ let parse_spec (layer_spec : Config.layer) (interface_spec : Config.interface) :
   let parse_spec =
     match interface_spec with
     | P4_interface -> assert false
-    | IL_interface -> Interface.SpecTec_IL.parse_program []
+    | AL_interface -> Interface.SpecTec_AL.parse_program []
     | SL_interface -> Interface.SpecTec_SL.parse_program []
   in
   match parse_spec [ layer_spec.specdir ] with
@@ -61,7 +61,7 @@ let parse_target (target : Config.target) (level_target : Config.level) :
   let parse_target =
     match level_target.interface with
     | P4_interface -> Interface.P4.parse_program
-    | IL_interface | SL_interface -> assert false
+    | AL_interface | SL_interface -> assert false
   in
   match parse_target target.includes [ target.path ] with
   | Run.Pass value_target -> value_target
@@ -76,10 +76,10 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
     (value_spec : Value.t) : Value.t =
   (* Find the relation in the spec *)
   let rel_meta = level_meta.layer.rel in
-  let defs = Interface.SpecTec_IL.unboot_script value_spec in
+  let defs = Interface.SpecTec_AL.unboot_script value_spec in
   let mixop_rel, inputs_rel =
     List.find_map
-      (fun (def : Il.def) ->
+      (fun (def : Al.def) ->
         match def.it with
         | RelD (id, nottyp, inputs, _, _, _) when id.it = rel_meta ->
             let mixop, _ = Mixfix.split nottyp.it in
@@ -137,11 +137,11 @@ let apply_il (level_meta : Config.level) (value_meta : Value.t)
     in
     let elseclause_opt = None in
     let hints = [] in
-    Il.FuncDecD (id, tparams, params, typ_ret, clauses, elseclause_opt, hints)
+    Al.FuncDecD (id, tparams, params, typ_ret, clauses, elseclause_opt, hints)
     $ no_region
   in
   (* Il.Print.string_of_def def |> print_endline; *)
-  let value_spec = defs @ [ def ] |> Interface.SpecTec_IL.boot_spec in
+  let value_spec = defs @ [ def ] |> Interface.SpecTec_AL.boot_spec in
   value_spec
 
 let apply_sl (level_meta : Config.level) (value_meta : Value.t)
@@ -218,7 +218,7 @@ let apply (level_meta : Config.level) (value_meta : Value.t)
     (level_spec : Config.level) (value_spec : Value.t) : Value.t =
   match level_spec.interface with
   | P4_interface -> assert false
-  | IL_interface -> apply_il level_meta value_meta value_spec
+  | AL_interface -> apply_il level_meta value_meta value_spec
   | SL_interface -> apply_sl level_meta value_meta value_spec
 
 let apply_target (target : Config.target) (level_target : Config.level)

@@ -1,12 +1,12 @@
 [#sec-parser-state-machine]
 === Parser state machine
 
-// 745
+// 752
 .Parser FSM structure.
 [#fig-parserstatemachine]
 image::parserstatemachine.png[width=150,align="center"]
 
-// 746
+// 753
 A P4 parser describes a state machine with one start state and two final
 states. The start state is always named `start`. The two final states are named
 `accept` (indicating successful parsing) and `reject` (indicating a parsing failure).
@@ -15,16 +15,16 @@ are distinct from the states provided by the programmer and are logically
 outside of the parser. <<fig-parserstatemachine>> illustrates the general
 structure of a parser state machine.
 
-// 759
+// 766
 The semantics of a P4 parser can be formulated in terms of an abstract machine
 that manipulates a `ParserModel` data structure. This section describes this
 abstract machine in pseudo-code.
 
-// 760 - Duplicated
+// 767 - Duplicated
 A parser starts execution in the `start` state and ends execution when one of
 the `reject` or `accept` states has been reached.
 
-// 761
+// 768
 [source,p4pseudo]
 ----
 ParserModel {
@@ -36,7 +36,7 @@ ParserModel {
 }
 ----
 
-// 762 - Duplicated
+// 769 - Duplicated
 An architecture must specify the behavior when the `accept` and `reject` states
 are reached. For example, an architecture may specify that all packets reaching
 the `reject` state are dropped without further processing. Alternatively, it
@@ -47,16 +47,16 @@ along with the error recorded.
 [#sec-sub-parser]
 ==== Sub-parsers
 
-// 844
+// 851
 P4 also allows parsers to invoke the services of other parsers, similar to
 subroutines. To invoke the services of another parser, the sub-parser must be
 first instantiated; the services of an instance are invoked by calling it using
 its `apply` method.
 
-// 845
+// 852
 The following example shows a sub-parser invocation:
 
-// 846
+// 853
 [source,p4]
 ----
 parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
@@ -69,10 +69,10 @@ parser caller(packet_in packet, out Headers h) {
 }
 ----
 
-// 847
+// 854
 The semantics of a sub-parser invocation can be described as follows:
 
-// 848
+// 855
 * The state invoking the sub-parser is split into two half-states at the parser
   invocation statement.
 * The top half includes a transition to the sub-parser `start` state.
@@ -81,19 +81,19 @@ The semantics of a sub-parser invocation can be described as follows:
 * The sub-parser's `reject` state is identified with the reject state of the
   current parser.
 
-// 849
+// 856
 .Semantics of invoking a sub-parser:  top: original program, bottom: equivalent program.
 [#fig-subparser]
 image::subparser.png[width=400,align="center"]
 
-// 850
+// 857
 <<fig-subparser>> shows a diagram of this process.
 
-// 851
+// 858
 Note that since P4 requires definitions to precede uses, it is impossible to
 create recursive (or mutually recursive) parsers.
 
-// 852
+// 859
 When a parser is instantiated, local instantiations of stateful objects are
 evaluated recursively. That is, each instantiation of a parser has a unique set
 of local parser value sets, extern objects, inner parser instances, etc. Thus,
@@ -102,7 +102,7 @@ copies of the same parser instance. Note however that local variables do not
 persist across invocations of the parser. This semantics also applies to direct
 invocation (see <<sec-direct-type-invocation>>).
 
-// 853
+// 860
 Architectures may impose (static or dynamic) constraints on the number of
 parser states that can be traversed for processing each packet. For example, a
 compiler for a specific target may reject parsers containing loops that cannot

@@ -133,13 +133,13 @@ let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
       let rulegroupids =
         List.map
           (fun rulegroup ->
-            let id, _, _ = rulegroup.it in
+            let id, _ = rulegroup.it in
             id)
           rulegroups
         @
         match elsegroup_opt with
         | Some elsegroup ->
-            let id, _, _ = elsegroup.it in
+            let id, _ = elsegroup.it in
             [ id ]
         | None -> []
       in
@@ -257,7 +257,7 @@ let add_defined_rel (ctx : t) (rid : RId.t) (nottyp_il : Il.nottyp)
 let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup_il : Il.rulegroup)
     : t =
   if not (bound_defined_rel ctx rid) then error_undef rid.at "relation" rid.it;
-  let rulegroupid, _, _ = rulegroup_il.it in
+  let rulegroupid, _ = rulegroup_il.it in
   if bound_rulegroup ctx rid rulegroupid then
     error_dup rulegroupid.at "rulegroup" rulegroupid.it;
   let nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =
@@ -271,7 +271,7 @@ let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup_il : Il.rulegroup)
 let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup_il : Il.elsegroup)
     : t =
   if not (bound_defined_rel ctx rid) then error_undef rid.at "relation" rid.it;
-  let rulegroupid, _, _ = elsegroup_il.it in
+  let rulegroupid, _ = elsegroup_il.it in
   if bound_rulegroup ctx rid rulegroupid then
     error_dup rulegroupid.at "rulegroup" rulegroupid.it;
   let nottyp_il, inputs, rulegroups_il, elsegroup_il_opt =

@@ -68,7 +68,7 @@ and boot_instr (instr : Sl.instr) : Value.t =
       boot_rule_instr at id notexp inputs iterinstrs block
   | ResultI ((nottyp, inputs), exps) -> boot_result_instr at nottyp inputs exps
   | ReturnI exp -> boot_return_instr at exp
-  | DebugI exp -> boot_debug_instr at exp
+  | DebugI (exp, instr) -> boot_debug_instr at exp instr
 
 and boot_if_instr (at : region) (exp : Sl.exp) (iterexps : Sl.iterexp list)
     (block : Sl.block) : Value.t =
@@ -203,9 +203,10 @@ and boot_return_instr (at : region) (exp : Sl.exp) : Value.t =
   let value_exp = boot_exp exp in
   Value.Make.(mop_return_instr <|! [ value_exp ] <<|! typ_instr <<<| at)
 
-and boot_debug_instr (at : region) (exp : Sl.exp) : Value.t =
+and boot_debug_instr (at : region) (exp : Sl.exp) (instr : Sl.instr) : Value.t =
   let value_exp = boot_exp exp in
-  Value.Make.(mop_debug_instr <|! [ value_exp ] <<|! typ_instr <<<| at)
+  let value_instr = boot_instr instr in
+  Value.Make.(mop_debug_instr <|! [ value_exp; value_instr ] <<|! typ_instr <<<| at)
 
 and boot_instrs (instrs : Sl.instr list) : Value.t =
   let values_instrs = List.map boot_instr instrs in

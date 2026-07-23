@@ -6,13 +6,16 @@ module Make () : RUNNER = struct
   module Spec_ = Backend_sim.Spec.Make ()
   module Placeholder = Backend_sim.Placeholder.Make (Spec_)
 
-  module MakeExtern (Interp_IL : INTERP_IL) (Interp_SL : INTERP_SL) : EXTERN =
-  struct
+  module MakeExtern
+      (Interp_AL : INTERP_AL)
+      (Interp_SL : INTERP_SL)
+      (Interp_PL : INTERP_PL) : EXTERN = struct
     let init_mode mode_ =
       let call_func name typs values =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_func name typs values
+        | AL_mode -> Interp_AL.eval_func name typs values
         | SL_mode -> Interp_SL.eval_func name typs values
+        | PL_mode -> Interp_PL.eval_func name typs values
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
@@ -20,8 +23,9 @@ module Make () : RUNNER = struct
       in
       let call_rel name values =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_rel name values
+        | AL_mode -> Interp_AL.eval_rel name values
         | SL_mode -> Interp_SL.eval_rel name values
+        | PL_mode -> Interp_PL.eval_rel name values
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
@@ -29,8 +33,9 @@ module Make () : RUNNER = struct
       in
       let call_pgm relname includes filename =
         (match mode_ with
-        | IL_mode -> Interp_IL.eval_program relname includes filename
+        | AL_mode -> Interp_AL.eval_program relname includes filename
         | SL_mode -> Interp_SL.eval_program relname includes filename
+        | PL_mode -> Interp_PL.eval_program relname includes filename
         | Empty_mode -> assert false)
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
@@ -55,7 +60,7 @@ module Make () : RUNNER = struct
   end
 
   include (
-    Runner.Make.Make_rec (Interface.P4) (MakeExtern) (Interp_il.Interp.Make)
-      (Interp_sl.Interp.Make) :
+    Runner.Make.Make_rec (Interface.P4) (MakeExtern) (Interp_al.Interp.Make)
+      (Interp_sl.Interp.Make) (Interp_pl.Interp.Make) :
         RUNNER)
 end

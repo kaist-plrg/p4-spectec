@@ -78,9 +78,9 @@ end
 
 module Prose = struct
   type prose =
-    | ExternP of Pl.func_title
-    | BuiltinP of Pl.func_title
-    | DefinedP of Pl.func_title
+    | ExternP of Pl.Annot.hints * Pl.externfunc
+    | BuiltinP of Pl.Annot.hints * Pl.builtinfunc
+    | DefinedP of Pl.Annot.hints * Pl.definedfunc
 
   module Value = struct
     type t = prose
@@ -88,13 +88,13 @@ module Prose = struct
     let render (values : t list) : string =
       values
       |> List.map (fun value ->
-             let func_title =
-               match value with
-               | ExternP func_title -> func_title
-               | BuiltinP func_title -> func_title
-               | DefinedP func_title -> func_title
-             in
-             Pl.Render.render_func_title func_title)
+             match value with
+             | ExternP (hints, externfunc) ->
+                 Pl.Render.render_extern_func_def hints externfunc
+             | BuiltinP (hints, builtinfunc) ->
+                 Pl.Render.render_builtin_func_def hints builtinfunc
+             | DefinedP (hints, (id_func, tparams, params, _, _, _)) ->
+                 Pl.Render.render_func_header hints id_func tparams params)
       |> String.concat "\n\n"
   end
 
@@ -102,26 +102,17 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let id_of_func_title = function
-      | Pl.ProseFuncTitle (`Check (id_def, _, _))
-      | Pl.ProseFuncTitle (`Yield (id_def, _, _))
-      | Pl.MathFuncTitle (id_def, _, _) ->
-          id_def
-
     let init_def (def_pl : Pl.def) : (key * value) option =
-      match def_pl.it with
-      | ExternDecD func_title ->
-          let id = id_of_func_title func_title in
-          let value = ExternP func_title in
-          Some (id.it, value)
-      | BuiltinDecD func_title ->
-          let id = id_of_func_title func_title in
-          let value = BuiltinP func_title in
-          Some (id.it, value)
-      | FuncDecD (func_title, _) ->
-          let id = id_of_func_title func_title in
-          let value = DefinedP func_title in
-          Some (id.it, value)
+      match def_pl.node.it with
+      | ExternDecD externfunc ->
+          let id, _, _, _ = externfunc in
+          Some (id.it, ExternP (def_pl.hints, externfunc))
+      | BuiltinDecD builtinfunc ->
+          let id, _, _, _ = builtinfunc in
+          Some (id.it, BuiltinP (def_pl.hints, builtinfunc))
+      | FuncDecD func ->
+          let id, _, _, _, _, _ = func in
+          Some (id.it, DefinedP (def_pl.hints, func))
       | _ -> None
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =

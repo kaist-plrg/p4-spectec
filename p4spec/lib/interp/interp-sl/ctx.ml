@@ -4,8 +4,8 @@ open Sl
 module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
-open Error
-open Backtrace
+open Interp_common.Error
+open Interp_common.Backtrace
 open Util.Source
 
 (* Error *)

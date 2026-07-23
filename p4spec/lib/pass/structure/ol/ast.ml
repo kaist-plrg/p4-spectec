@@ -25,7 +25,7 @@ and instr' =
   | RuleI of id * notexp * Hints.Input.t * iterinstr list * block
   | ResultI of rel_signature * exp list
   | ReturnI of exp
-  | DebugI of exp
+  | DebugI of exp * instr
 
 and block = instr list
 and elseblock = block

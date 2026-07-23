@@ -39,7 +39,7 @@ let mop_rule_instr =
 
 let mop_result_instr = Value.Mixops.of_string "RESULT typ* `-> typ* `: exp*"
 let mop_return_instr = Value.Mixops.of_string "RETURN exp"
-let mop_debug_instr = Value.Mixops.of_string "DEBUG exp"
+let mop_debug_instr = Value.Mixops.of_string "DEBUG exp instr"
 
 (* Rule structure *)
 

@@ -1,8 +1,8 @@
 module Run = Runtime.Dynamic_Runner.Signature
 
-(* Kind of interface, currently offering three: P4, SL, and IL *)
+(* Kind of interface, currently offering three: P4, SL, and AL *)
 
-type interface = P4_interface | IL_interface | SL_interface
+type interface = P4_interface | AL_interface | SL_interface
 
 (* Layers *)
 
@@ -23,8 +23,8 @@ type tower = {
 
 (* Load a tower from a JSON file.
    JSON schema:
-     { "mode": "il"|"sl",
-       "levels": [ { "specdir": "...", "rel": "...", "interface": "p4"|"il"|"sl" }, ... ] }
+     { "mode": "al"|"sl",
+       "levels": [ { "specdir": "...", "rel": "...", "interface": "p4"|"al"|"sl" }, ... ] }
    First level = boot, last = target, middle = intermediates.
    `target` is supplied separately (from CLI -p/-i flags). *)
 
@@ -33,7 +33,7 @@ let tower_of_file path target =
   let open Yojson.Basic.Util in
   let mode =
     match json |> member "mode" |> to_string with
-    | "il" -> Run.IL_mode
+    | "al" -> Run.AL_mode
     | "sl" -> Run.SL_mode
     | s -> failwith (Format.sprintf "tower: unknown mode %S" s)
   in
@@ -41,7 +41,7 @@ let tower_of_file path target =
     let interface =
       match json |> member "interface" |> to_string with
       | "p4" -> P4_interface
-      | "il" -> IL_interface
+      | "al" -> AL_interface
       | "sl" -> SL_interface
       | s -> failwith (Format.sprintf "tower: unknown interface %S" s)
     in

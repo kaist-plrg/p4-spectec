@@ -1,21 +1,21 @@
 [#sec-select-expression]
 === Parser select expression
 
-// 781
+// 788
 A `select` expression evaluates to a state. The syntax for a `select`
 expression is as follows:
 
-// 782 - Modified
+// 789 - Modified
 ${syntax: selectExpression selectCaseList selectCase}
 
-// 783 - Modified
+// 790 - Modified
 Each expression in the `expressionList` must have a set type, or a type that
 can be nested in a set type.
 
-// 785
+// 792
 In terms of the `ParserModel`, the meaning of a select expression:
 
-// 786
+// 793
 [source,p4]
 ----
 select(e) {
@@ -27,10 +27,10 @@ select(e) {
 }
 ----
 
-// 787
+// 794
 is defined in pseudo-code as:
 
-// 788
+// 795
 [source,p4pseudo]
 ----
 key = eval(e);
@@ -41,7 +41,7 @@ for (int i=0; i < n; i++) {
 verify(false, error.NoMatch);
 ----
 
-// 789
+// 796
 Some targets may require that all keyset expressions in a select expression be
 compile-time known values. Keysets are evaluated in order, from top to bottom
 as implied by the pseudo-code above; the first keyset that includes the value
@@ -54,19 +54,19 @@ ifndef::release[]
 NOTE: P4-SpecTec does not require that all keyset expressions be compile-time known.
 endif::[]
 
-// 790
+// 797
 Note that this implies that all cases after a `default` or `_` label are
 unreachable; the compiler should emit a warning if it detects unreachable
 cases. This constitutes an important difference between `select` expressions
 and the `switch` statements found in many programming languages since the
 keysets of a `select` expression may "overlap".
 
-// 791
+// 798
 The typical way to use a `select` expression is to compare the value of a
 recently-extracted header field against a set of values, as in the following
 example:
 
-// 792
+// 799
 [source,p4]
 ----
 header IPv4_h { bit<8> protocol; /* more fields omitted */ }
@@ -79,10 +79,10 @@ select (headers.ipv4.protocol) {
 }
 ----
 
-// 793
+// 800
 For example, to detect TCP reserved ports (< 1024) one could write:
 
-// 794
+// 801
 [source,p4]
 ----
 select (p.tcp.port) {
@@ -91,11 +91,11 @@ select (p.tcp.port) {
 }
 ----
 
-// 795
+// 802
 The expression `16w0 &&& 16w0xFC00` describes the set of 16-bit values whose
 most significant six bits are zero.
 
-// 796
+// 803
 Some targets may support parser value sets; see <<sec-value-set-object>>. Given
 a type `T` for the type parameter of the value set, the type of the value set
 is `set<T>`. The type of the value set must match to the type of all other
@@ -103,11 +103,11 @@ is `set<T>`. The type of the value set must match to the type of all other
 the compiler must raise an error. The type of the values in the set must be
 either bit<>, int<>, tuple, struct, or serializable `enum`.
 
-// 797
+// 804
 For example, to allow the control plane API to specify TCP reserved ports at
 runtime, one could write:
 
-// 798
+// 805
 [source,p4]
 ----
 struct vsk_t {
@@ -121,7 +121,7 @@ select (p.tcp.port) {
 }
 ----
 
-// 799
+// 806
 The above example allows the runtime API to populate up to 4 different
 ``keysetExpression``s in the `value_set`. If the `value_set` takes a struct as
 type parameter, the runtime API can use the struct field names to name the

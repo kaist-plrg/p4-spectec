@@ -72,7 +72,7 @@ let run_test_driver mode det neg path_spec relname includes_p4 excludes_p4
     testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
@@ -113,10 +113,12 @@ let run_command =
      and mode =
        Command.Param.choose_one
          [
-           flag "il" no_arg ~doc:"Run IL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b IL_mode);
+           flag "al" no_arg ~doc:"Run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"Run SL interpreter"
            |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"Run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
          ~if_nothing_chosen:(Default_to SL_mode)
      in
@@ -129,7 +131,7 @@ let run_command =
 let cover_run mode path_spec relname includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let paths_p4 =
     testdirs_p4

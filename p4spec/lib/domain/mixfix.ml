@@ -304,22 +304,30 @@ let split (mixfix : 'a t) = (to_mixop mixfix, args mixfix)
 
 (* Rendering *)
 
+let assemble ~(empty : 'b) ~(space : 'b) ~(atom : atom -> 'b option)
+    ~(concat : 'b -> 'b -> 'b) (mixfix : 'b t) : 'b =
+  let join (pieces : 'b option list) : 'b option =
+    match List.filter_map Fun.id pieces with
+    | [] -> None
+    | piece :: pieces ->
+        Some
+          (List.fold_left
+             (fun acc piece -> concat (concat acc space) piece)
+             piece pieces)
+  in
+  let rec go = function
+    | Arg arg -> Some arg
+    | Atom atom' -> atom atom'
+    | Brack (atom_l, mixfix, atom_r) ->
+        join [ atom atom_l; go mixfix; atom atom_r ]
+    | Infix (mixfix_l, atom', mixfix_r) ->
+        join [ go mixfix_l; atom atom'; go mixfix_r ]
+    | Seq mixfixes -> join (List.map go mixfixes)
+  in
+  go mixfix |> Option.value ~default:empty
+
 let render ~(string_of_atom : atom -> string) ~(string_of_arg : 'a -> string)
     (mixfix : 'a t) =
-  let rec render' = function
-    | Arg arg -> string_of_arg arg
-    | Atom atom -> string_of_atom atom
-    | Brack (atom_l, mixfix, atom_r) ->
-        [ string_of_atom atom_l; render' mixfix; string_of_atom atom_r ]
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-    | Infix (mixfix_l, atom, mixfix_r) ->
-        [ render' mixfix_l; string_of_atom atom; render' mixfix_r ]
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-    | Seq mixfixes ->
-        mixfixes |> List.map render'
-        |> List.filter (fun s -> s <> "")
-        |> String.concat " "
-  in
-  render' mixfix
+  assemble ~empty:""
+    ~atom:(fun a -> match string_of_atom a with "" -> None | s -> Some s)
+    ~space:" " ~concat:( ^ ) (map string_of_arg mixfix)

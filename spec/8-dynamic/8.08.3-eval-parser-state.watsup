@@ -8,21 +8,21 @@ rulegroup ParserState_eval {
     EC_0 ARCH_0 |- parserStateIR
                 : EC_1 ARCH_1 rejectTransitionResult
     -- if annotationList STATE nameIR
-            `{ parserStatementListIR transitionStatementIR }
+            `{ parserBlockElementStatementListIR transitionStatementIR }
         = parserStateIR
-    -- ParserStmts_eval:
-        EC_0 ARCH_0 |- parserStatementListIR
-                    : EC_1 ARCH_1 rejectTransitionResult
+    -- ParserBlockElementStmtList_eval:
+        EC_0 ARCH_0 |- parserBlockElementStatementListIR
+                     : EC_1 ARCH_1 rejectTransitionResult
 
   rule ParserState_eval/cont:
     EC_0 ARCH_0 |- parserStateIR
                  : EC_2 ARCH_2 transitionResult
     -- if annotationList STATE nameIR
-            `{ parserStatementListIR transitionStatementIR }
+            `{ parserBlockElementStatementListIR transitionStatementIR }
         = parserStateIR
-    -- ParserStmts_eval:
-        EC_0 ARCH_0 |- parserStatementListIR
-                    : EC_1 ARCH_1 `EMPTY
+    -- ParserBlockElementStmtList_eval:
+        EC_0 ARCH_0 |- parserBlockElementStatementListIR
+                     : EC_1 ARCH_1 `EMPTY
     -- ParserTransition_eval:
         EC_1 ARCH_1 |- transitionStatementIR
                     : EC_2 ARCH_2 transitionResult

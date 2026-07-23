@@ -19,6 +19,7 @@ the specification parser and the high-level architecture of the tool.
     - [Compiling the Project](#compiling-the-project)
     - [Additional Notes](#additional-notes)
   - [Docker builds](#docker-builds)
+  - [Nix Flake](#nix-flake)
 - [P4-SpecTec: A language specification framework for P4](#p4-spectec-a-language-specification-framework-for-p4)
   - [Processing the specification](#processing-the-specification)
   - [Generating the specification document](#generating-the-specification-document)
@@ -115,6 +116,30 @@ $ docker build -f p4spectec.dockerfile -t p4spectec:latest .
 # with p4c, for RQ3-b branch coverage measurement
 $ docker build -f p4spectec_p4c.dockerfile -t p4spectec_with_p4c:latest .
 ```
+
+### Nix Flake
+
+A `flake.nix` is provided for reproducible development environments via [Nix](https://nixos.org/).
+It sets up OCaml 5.1 and all project dependencies without requiring manual `opam` configuration.
+
+**Prerequisites:** Nix with flakes enabled. If you haven't enabled flakes, add this to `/etc/nix/nix.conf` or `~/.config/nix/nix.conf`:
+
+```
+experimental-features = nix-command flakes
+```
+
+**Enter the dev shell:**
+
+```shell
+$ nix develop
+```
+
+This drops you into a shell with OCaml 5.1, `dune`, `menhir`, `core`, and all other required packages available.
+It also includes development tooling: `ocaml-lsp-server`, `utop`, and `ocamlformat`.
+
+**Automatic shell activation with direnv:**
+
+Create a `.envrc` at the project root with `use flake`, then run `direnv allow` once to activate the dev shell automatically on `cd`.
 
 ## P4-SpecTec: A language specification framework for P4
 

@@ -25,7 +25,7 @@ let var_from_typ ?(wildcard = false) (metavars : typ TIdMap.t) (ids : IdSet.t)
              if
                Eq.eq_typ typ typ_alias
                && not (String.equal (Print.string_of_typ typ) tid.it)
-             then Some (tid, typ_alias, [])
+             then Some (tid.it $ at, typ_alias, [])
              else None)
     in
     match vars_alias with [ var_alias ] -> var_alias | _ -> var_from_typ'' typ

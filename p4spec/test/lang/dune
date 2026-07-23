@@ -1,4 +1,4 @@
-;; Elaboration, structuring, and prose tests for specification language
+;; Elaboration, structuring, and annotate tests for specification language
 
 (test
  (name test)
@@ -17,9 +17,11 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
-    (diff prose.expected prose.actual)))))
+    (diff annotate.expected annotate.actual)))))
 
 (rule
  (alias speclang)
@@ -28,35 +30,54 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
     (diff struct.expected struct.actual))
    (ignore-outputs
-    (diff prose.expected prose.actual)))))
+    (diff annotate.expected annotate.actual)))))
 
 ;; Rules to generate outputs
 
 (rule
  (target elab.actual)
+ (deps
+  (source_tree ../../../spec))
  (action
   (with-stdout-to
    elab.actual
    (with-stderr-to
     elab.err
-    (run ./test.exe elab -s ../../../../../spec)))))
+    (run ./test.exe elab -s ../../../spec)))))
+
+(rule
+ (target algo.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   algo.actual
+   (with-stderr-to
+    algo.err
+    (run ./test.exe algo -s ../../../spec)))))
 
 (rule
  (target struct.actual)
+ (deps
+  (source_tree ../../../spec))
  (action
   (with-stdout-to
    struct.actual
    (with-stderr-to
     struct.err
-    (run ./test.exe struct -s ../../../../../spec)))))
+    (run ./test.exe struct -s ../../../spec)))))
 
 (rule
- (target prose.actual)
+ (target annotate.actual)
+ (deps
+  (source_tree ../../../spec))
  (action
   (with-stdout-to
-   prose.actual
+   annotate.actual
    (with-stderr-to
-    prose.err
-    (run ./test.exe prose -s ../../../../../spec)))))
+    annotate.err
+    (run ./test.exe annotate -s ../../../spec)))))

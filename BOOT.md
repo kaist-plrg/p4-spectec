@@ -12,24 +12,24 @@ alongside the **tower abstraction** that builds the meta-circular stack of inter
 The standard use of P4-SpecTec is a two-level stack:
 
 ```
-OCaml IL/SL interpreter  ──runs──►  P4 static semantics spec
+OCaml AL/SL interpreter  ──runs──►  P4 static semantics spec
                                             │
                                             └──type-checks──►  P4 program
 ```
 
-The OCaml IL/SL interpreter is a general meta-interpreter: given any spec
+The OCaml AL/SL interpreter is a general meta-interpreter: given any spec
 written in the P4-SpecTec DSL, it can execute that spec.The P4 static semantics
 spec is simply one particular spec in this meta-language.
 
 ### Meta-circular interpretation: P4-SpecTec²
 
-Because the OCaml IL/SL interpreter is general-purpose, it can equally well
+Because the OCaml AL/SL interpreter is general-purpose, it can equally well
 interpret a spec that describes the *dynamic semantics of P4-SpecTec itself*
 — a spec we call **P4-SpecTec²** (read: P4-SpecTec-squared, or
 P4-SpecTec-in-P4-SpecTec). This gives a three-level stack:
 
 ```
-OCaml IL/SL interpreter  ──runs──►  P4-SpecTec² spec
+OCaml AL/SL interpreter  ──runs──►  P4-SpecTec² spec
                                             │
                                        ──runs──►  P4 static semantics spec
                                                         │
@@ -50,11 +50,11 @@ OCaml  ──►  P4-SpecTec²  ──►  P4-SpecTec²  ──►  P4 static se
 In principle, any number of intermediate layers can be inserted. Also note that
 we have multiple P4-SpecTec² specs. Because P4-SpecTec adopts a multi-stage
 compilation approach, each stage has its own spec. Currently, we have a spec
-for the IL stage and a spec for the SL stage. Thus, we may stack multiple
+for the AL stage and a spec for the SL stage. Thus, we may stack multiple
 versions of P4-SpecTec², each running a different stage's spec.
 
 ```
-OCaml  ──►  P4-SpecTec² (of SL)  ──►  P4-SpecTec² (of IL)  ──►  P4 static semantics  ──►  P4 program
+OCaml  ──►  P4-SpecTec² (of SL)  ──►  P4-SpecTec² (of AL)  ──►  P4 static semantics  ──►  P4 program
 ```
 
 ## The Tower Abstraction
@@ -66,7 +66,7 @@ levels sit in between.
 
 ```
   ┌──────────────────────────────────┐
-  │  Booter  (runs EntryIL / EntrySL)│  ← run on OCaml IL/SL interpreter
+  │  Booter  (runs Entry)            │  ← run on OCaml AL/SL interpreter
   ├──────────────────────────────────┤
   │  Intermediate  (optional, ...)   │
   ├──────────────────────────────────┤
@@ -78,7 +78,7 @@ Concretely, a tower is represented by the `Config.tower` record:
 
 ```ocaml
 type tower = {
-  mode        : mode;          (* IL_mode or SL_mode — how the booter's spec is loaded *)
+  mode        : mode;          (* AL_mode or SL_mode — how the booter's spec is loaded *)
   level_boot  : level;         (* outermost level, run directly on the OCaml interpreter *)
   levels_interm : level list;  (* zero or more intermediate levels, top to bottom *)
   level_target : level;        (* innermost level, runs the object-language spec *)
@@ -99,11 +99,11 @@ Each level is described by:
 |-------------|-----------------------------------------------------|
 | `specdir`   | Directory whose `.watsup` files define this level   |
 | `rel`       | Entry relation to evaluate at this level            |
-| `interface` | How programs at this level are parsed (`il`/`sl`/`p4`) |
+| `interface` | How programs at this level are parsed (`al`/`sl`/`p4`) |
 
-A tower also carries a global `mode` (`il` or `sl`) that determines whether the
-booter's own spec is loaded as an IL or SL spec. If the `mode` is set as `il`,
-the IL interpreter (in OCaml) runs the tower's boot level; if `mode` is `sl`,
+A tower also carries a global `mode` (`al` or `sl`) that determines whether the
+booter's own spec is loaded as an AL or SL spec. If the `mode` is set as `al`,
+the AL interpreter (in OCaml) runs the tower's boot level; if `mode` is `sl`,
 the SL interpreter runs the boot level.
 
 ### Runner modules
@@ -115,13 +115,13 @@ sub-modules:
 Runner
   ├── Interface   — language-specific I/O: parses and unparses programs,
   │                 provides native builtins (e.g. map lookup for P4,
-  │                 boot/unboot conversions for IL/SL specs)
-  ├── Interp      — the IL or SL interpreter that evaluates the level's spec
+  │                 boot/unboot conversions for AL/SL specs)
+  ├── Interp      — the AL or SL interpreter that evaluates the level's spec
   └── Extern      — supplies semantics for `extern` declarations in the spec
 ```
 
 The `Interface` module determines what *language* the level speaks. For a P4
-level it parses P4 programs; for an IL or SL level it parses SpecTec scripts
+level it parses P4 programs; for an AL or SL level it parses SpecTec scripts
 and provides the boot/unboot functions that convert between OCaml runtime values
 and their spec-level representations.
 
@@ -163,9 +163,9 @@ The three `extern` relations that flow across level boundaries are:
 
 ```json
 {
-  "mode": "il" | "sl",
+  "mode": "al" | "sl",
   "levels": [
-    { "specdir": "<dir>", "rel": "<rel>", "interface": "il" | "sl" | "p4" },
+    { "specdir": "<dir>", "rel": "<rel>", "interface": "al" | "sl" | "p4" },
     ...
   ]
 }
@@ -184,11 +184,11 @@ In `towers`, we define several example towers.
 
 | File          | Mode  | Boot interface | Intermediates | Target | Description                           |
 |---------------|-------|----------------|---------------|--------|---------------------------------------|
-| `il.json`     | `sl`  | `il`           | —             | `p4`   | Single IL meta-interpreter over P4    |
+| `al.json`     | `sl`  | `al`           | —             | `p4`   | Single AL meta-interpreter over P4    |
 | `sl.json`     | `sl`  | `sl`           | —             | `p4`   | Single SL meta-interpreter over P4    |
-| `il-il.json`  | `sl`  | `il`           | IL            | `p4`   | IL meta-interpreter over IL-over-P4   |
-| `il-sl.json`  | `sl`  | `il`           | SL            | `p4`   | IL meta-interpreter over SL-over-P4   |
-| `sl-il.json`  | `sl`  | `sl`           | IL            | `p4`   | SL meta-interpreter over IL-over-P4   |
+| `al-al.json`  | `sl`  | `al`           | AL            | `p4`   | AL meta-interpreter over AL-over-P4   |
+| `al-sl.json`  | `sl`  | `al`           | SL            | `p4`   | AL meta-interpreter over SL-over-P4   |
+| `sl-al.json`  | `sl`  | `sl`           | AL            | `p4`   | SL meta-interpreter over AL-over-P4   |
 | `sl-sl.json`  | `sl`  | `sl`           | SL            | `p4`   | SL meta-interpreter over SL-over-P4   |
 
 ---
@@ -199,7 +199,7 @@ In `towers`, we define several example towers.
 
 ```
 1.  build_target (level_target)
-      → creates a Runner for the target, either P4 or IL/SL depending on the target's interface
+      → creates a Runner for the target, either P4 or AL/SL depending on the target's interface
       → loads the target spec to the Runner's interpreter module for relays
 
 2.  for each intermediate level (target → boot order):
@@ -209,7 +209,7 @@ In `towers`, we define several example towers.
 
 3.  build_boot (Runner_above, mode, level_boot)
       → creates a Runner with Make_parametric(Runner_above) Extern
-      → loads the boot level's spec as IL (if mode=il) or SL (if mode=sl)
+      → loads the boot level's spec as AL (if mode=al) or SL (if mode=sl)
 ```
 
 The result is a chain of runners where each runner's `Extern` module holds a
@@ -218,14 +218,14 @@ are relayed upwards from the booter to the appropriate level where they are defi
 
 ---
 
-## The `il-sl.json` Tower
+## The `al-sl.json` Tower
 
 ```json
 {
   "mode": "sl",
   "levels": [
-    { "specdir": "spec-meta", "rel": "EntryIL", "interface": "il" },
-    { "specdir": "spec-meta", "rel": "EntrySL", "interface": "sl" },
+    { "specdir": "spec-meta/al", "rel": "Entry", "interface": "al" },
+    { "specdir": "spec-meta/sl", "rel": "Entry", "interface": "sl" },
     { "specdir": "spec",      "rel": "Program_ok", "interface": "p4" }
   ]
 }
@@ -234,9 +234,9 @@ are relayed upwards from the booter to the appropriate level where they are defi
 This builds a three-level tower:
 
 ```
-Level 0 (boot):   spec-meta/EntryIL   — IL interface, loaded as SL spec
-Level 1 (interm): spec-meta/EntrySL   — SL interface, loaded as SL spec
-Level 2 (target): spec/Program_ok     — P4 interface, loaded as SL spec
+Level 0 (boot):   spec-meta/al Entry    — AL interface, loaded as SL spec
+Level 1 (interm): spec-meta/sl Entry    — SL interface, loaded as SL spec
+Level 2 (target): spec/Program_ok       — P4 interface, loaded as SL spec
 ```
 
 ### Extern relay
@@ -252,17 +252,17 @@ def $add_var_t(GLOBAL, TC, id, varTypeIR) = TC'
 ```
 
 The semantics of a builtin function is interpreted at the intermediate level,
-running "spec-meta" in "sl" interface.
+running "spec-meta/sl" in "sl" interface.
 
 ```
-;; spec-meta/3-sl/5.7-eval-call-func.watsup
-rule CallSL_func/builtin:
-  CSL |- builtinFuncDefSL typ* val* : valres
-  -- if BUILTIN id _ _ = builtinFuncDefSL
+;; spec-meta/sl/5.6-eval-call-func.watsup
+rule Call_func_dispatch/builtin:
+  C |- builtinFuncDef typ* val* : valres
+  -- if BUILTIN id _ _ = builtinFuncDef
   -- Call_builtin_func:
       |- id `@ `< typ* > `( val* ) : valres
 
-;; spec-meta/1-common/4-relations.watsup
+;; spec-meta/common/4-relation.watsup
 extern relation Call_builtin_func:
   |- id `@ `< typ* > `( val* ) : res<val>
   hint(input %0 %1 %2)
@@ -270,17 +270,17 @@ extern relation Call_builtin_func:
 
 So, the builtin meta-function call at the target spec layer is relayed as an
 extern relation call in the intermediate layer. Now, the semantics of an extern
-relation is interpreted at the layer below, the boot level, running "spec-meta"
-in "il" interface.
+relation is interpreted at the layer below, the boot level, running "spec-meta/al"
+in "al" interface.
 
 ```
-;; spec-meta/2-il/5.8-eval-call-rel.watsup
-rule CallIL_rel/ext:
-  CIL |- (EXT id) val* : valsres
+;; spec-meta/al/5.7-eval-call-rel.watsup
+rule Call_rel_dispatch/ext:
+  C |- (EXT id) val* : valsres
   -- Call_extern_rel:
       |- id val* : valsres
 
-;; spec-meta/1-common/4-relations.watsup
+;; spec-meta/common/4-relation.watsup
 extern relation Call_extern_rel:
   |- id val* : res<val*>
   hint(input %0 %1)
@@ -418,12 +418,12 @@ The patch proceeds from the target upward:
 ```
 1. parse_target (prog.p4)         → value_target
 2. apply_target (level_target, value_target, level_interm_spec)
-     → synthetic main() in interm spec that calls EntrySL on value_target
+     → synthetic main() in interm spec that calls Entry on value_target
 3. apply_interm (level_interm, value_interm_script, level_boot_spec)
-     → synthetic main() in boot spec that calls EntryIL on value_interm_script
+     → synthetic main() in boot spec that calls Entry on value_interm_script
 ```
 
-The booter's `eval_rel "EntryIL"` receives the fully patched script as input
+The booter's `eval_rel "Entry"` receives the fully patched script as input
 and evaluates the whole tower without any further file I/O.
 
 ---
@@ -432,7 +432,7 @@ and evaluates the whole tower without any further file I/O.
 
 ```bash
 spectec-boot boot-n \
-  -tower towers/il-sl.json \
+  -tower towers/al-sl.json \
   -p     prog.p4 \
   -i     p4c/p4include
 ```

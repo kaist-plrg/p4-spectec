@@ -5,6 +5,11 @@ open Backend_boot.Config
 module Test = Util.Test
 module Filesys = Util.Filesys
 
+(* Tune GC for the allocation-heavy meta-circular interpreter *)
+
+let () =
+  Gc.set { (Gc.get ()) with Gc.minor_heap_size = 16 * 1024 * 1024 }
+
 (* Interpreter test *)
 
 let boot (module Booter : RUNNER) neg tower =
@@ -72,7 +77,7 @@ let boot_test (module Booter : RUNNER) neg stat tower excludes_p4 path_p4 =
 let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
   let excludes_p4 =
     excludes_p4 |> Test.collect_excludes
-    |> List.map (fun exclude_p4 -> "../../../../../" ^ exclude_p4)
+    |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
   let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
@@ -82,22 +87,34 @@ let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
     let target = { includes = includes_p4; path = "" } in
     Backend_boot.Config.tower_of_file path_tower target
   in
+  let prefix (level : level) =
+    { level with
+      layer = { level.layer with specdir = "../../../" ^ level.layer.specdir } }
+  in
+  let tower =
+    {
+      tower with
+      level_boot = prefix tower.level_boot;
+      levels_interm = List.map prefix tower.levels_interm;
+      level_target = prefix tower.level_target;
+    }
+  in
   let rel = tower.level_boot.layer.rel in
   let rel_p4 = tower.level_target.layer.rel in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
   let _, _, _, (module Booter) = Backend_boot.Build.build_tower ~det tower in
-  let stat =
+  let _, stat =
     List.fold_left
-      (fun stat path_p4 ->
+      (fun (idx, stat) path_p4 ->
         Format.asprintf "\n>>> Running boot test (%s/%s) on %s" rel rel_p4
           path_p4
         |> print_endline;
         let tower =
           { tower with target = { tower.target with path = path_p4 } }
         in
-        boot_test (module Booter) neg stat tower excludes_p4 path_p4)
-      empty_stat paths_p4
+        (idx + 1, boot_test (module Booter) neg stat tower excludes_p4 path_p4))
+      (0, empty_stat) paths_p4
   in
   log_stat (Format.asprintf "\nRunning boot test (%s/%s)" rel rel_p4) stat total
 

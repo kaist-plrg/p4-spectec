@@ -4,6 +4,7 @@ exception ParseError of region * string
 exception UnparseError of string
 exception RuntimeError of region * string
 exception ElabError of region * string
+exception AlgoError of region * string
 exception StructError of region * string
 exception ProseError of region * string
 exception BuiltinError of region * string
@@ -38,6 +39,11 @@ let warn_runtime (at : region) (msg : string) = warn at "runtime" msg
 
 let error_elab (at : region) (msg : string) = raise (ElabError (at, msg))
 let warn_elab (at : region) (msg : string) = warn at "elab" msg
+
+(* Algo errors *)
+
+let error_algo (at : region) (msg : string) = raise (AlgoError (at, msg))
+let warn_algo (at : region) (msg : string) = warn at "algo" msg
 
 (* Structuring errors *)
 

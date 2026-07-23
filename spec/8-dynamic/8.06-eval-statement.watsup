@@ -555,13 +555,21 @@ rulegroup ForCollectionExpr_eval/typedExpressionIR {
                            : EC_1 ARCH_1 (`` listValue)
     -- if LIST `[ value* ] = listValue
 
+  rule ForCollectionExpr_eval/array:
+    EC_0 ARCH_0 |- typedExpressionIR
+                 : EC_1 ARCH_1 (`` value*)
+    -- Expr_eval:
+        LOCAL EC_0 ARCH_0 |- typedExpressionIR
+                           : EC_1 ARCH_1 (`` arrayValue)
+  -- if ARRAY `[ value* ] = arrayValue
+
   rule ForCollectionExpr_eval/header-stack:
     EC_0 ARCH_0 |- typedExpressionIR
                  : EC_1 ARCH_1 (`` value*)
     -- Expr_eval:
         LOCAL EC_0 ARCH_0 |- typedExpressionIR
                            : EC_1 ARCH_1 (`` headerStackValue)
-  -- if HEADER_STACK `[ value* `( _ `; _ ) ] = headerStackValue
+  -- if HEADER_STACK `[ value* `( _ ) ] = headerStackValue
 
 }
 
