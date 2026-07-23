@@ -16,7 +16,7 @@ let back_failtraces (backtrace : backtrace) : failtrace list =
     | [] -> []
     | (at, msg) :: traces_t ->
         let failtraces = back_failtraces traces_t in
-        [ Failtrace (at, msg (), failtraces) ]
+        [ Failtrace (at, msg, failtraces) ]
   in
   match backtrace with Err traces | Unmatch traces -> back_failtraces traces
 

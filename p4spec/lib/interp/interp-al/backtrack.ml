@@ -12,23 +12,19 @@ type 'a backtrack =
 (* Backtracing *)
 
 let back_err (at : region) (msg : string) : 'a backtrack =
-  Err [ Failtrace (at, msg, []) ]
+  Err [ Failtrace (at, (fun () -> msg), []) ]
 
 let back_unmatch_silent : 'a backtrack = Unmatch []
 
 let back_unmatch (at : region) (msg : string) : 'a backtrack =
-  Unmatch [ Failtrace (at, msg, []) ]
+  Unmatch [ Failtrace (at, (fun () -> msg), []) ]
 
-let back_nest (at : region) (msg : string) (backtrack : 'a backtrack) :
+let back_nest (at : region) (msg : unit -> string) (backtrack : 'a backtrack) :
     'a backtrack =
   match backtrack with
   | Ok a -> Ok a
-  | Err failtraces ->
-      let failtrace = Failtrace (at, msg, failtraces) in
-      Err [ failtrace ]
-  | Unmatch failtraces ->
-      let failtrace = Failtrace (at, msg, failtraces) in
-      Unmatch [ failtrace ]
+  | Err failtraces -> Err [ Failtrace (at, msg, failtraces) ]
+  | Unmatch failtraces -> Unmatch [ Failtrace (at, msg, failtraces) ]
 
 (* Check *)
 

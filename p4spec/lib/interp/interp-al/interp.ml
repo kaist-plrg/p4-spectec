@@ -1113,7 +1113,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Err _ as backtrack -> backtrack
     | Unmatch _ as backtrack ->
         backtrack
-        |> back_nest id.at (F.asprintf "condition hold %s was not met" id.it)
+        |> back_nest id.at (fun () ->
+               F.asprintf "condition hold %s was not met" id.it)
 
   (* If-not-hold premise evaluation *)
 
@@ -1293,7 +1294,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     Hook.on_rel_exit id;
     result
-    |> back_nest id.at (F.asprintf "invocation of relation %s failed" id.it)
+    |> back_nest id.at (fun () ->
+           F.asprintf "invocation of relation %s failed" id.it)
 
   and invoke_extern_rel (ctx : Ctx.t) (id : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_input : value list) :
@@ -1333,9 +1335,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let id_rulepath, prems, exps_output = rulepath in
       do_backtrack_rulepath_inner ctx id_rulegroup rulematch id_rulepath prems
         exps_output ()
-      |> back_nest id.at
-           (F.asprintf "application of rule %s/%s/%s failed" id.it
-              id_rulegroup.it id_rulepath.it)
+      |> back_nest id.at (fun () ->
+             F.asprintf "application of rule %s/%s/%s failed" id.it
+               id_rulegroup.it id_rulepath.it)
     in
     (* Backtrack a rule group *)
     let do_backtrack_rulegroup (ctx : Ctx.t) (rulegroup : rulegroup) :
@@ -1424,10 +1426,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     Hook.on_func_exit id;
     result
-    |> back_nest id.at
-         (F.asprintf "invocation of function %s%s failed"
-            (Il.Print.string_of_defid id)
-            (Il.Print.string_of_targs targs))
+    |> back_nest id.at (fun () ->
+           F.asprintf "invocation of function %s%s failed"
+             (Il.Print.string_of_defid id)
+             (Il.Print.string_of_targs targs))
 
   and invoke_func_body (ctx : Ctx.t) (id : id) (func : Func.t)
       (targs : targ list) (values_input : value list) : value backtrack =
@@ -1493,9 +1495,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
              in
              (* Try evaluating the row *)
              backtrack_tablerow' ctx_local prems exp_output
-             |> back_nest id.at
-                  (F.asprintf "application of table row %s%s failed" id.it
-                     (Il.Print.string_of_args args_input))
+             |> back_nest id.at (fun () ->
+                    F.asprintf "application of table row %s%s failed" id.it
+                      (Il.Print.string_of_args args_input))
            in
            backtrack_tablerow)
     |> choose_sequential
@@ -1543,11 +1545,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         unit -> value backtrack =
      fun () ->
       do_backtrack_clause_inner ctx idx_clause clause ()
-      |> back_nest id.at
-           (F.asprintf "application of clause %s%s failed" id.it
-              (Il.Print.string_of_args
-                 (let args_input, _, _ = clause.it in
-                  args_input)))
+      |> back_nest id.at (fun () ->
+             F.asprintf "application of clause %s%s failed" id.it
+               (Il.Print.string_of_args
+                  (let args_input, _, _ = clause.it in
+                   args_input)))
     in
     let idxs_clause = clauses |> List.mapi (fun idx _ -> idx) in
     let backtracks_clause =
