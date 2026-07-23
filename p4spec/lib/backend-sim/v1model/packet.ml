@@ -1,72 +1,22 @@
 module Value = Runtime.Value
-open Spec.Pack
-open Spec.Unpack
 
 (* Packet clones *)
 
 module CloneInfo = struct
   type clone_type = I2E | E2E [@@deriving yojson]
   type t = clone_type * int * int [@@deriving yojson]
-
-  let of_value (value_clone_type, value_session, value_index) =
-    let clone_type =
-      match unpack_p4_enum value_clone_type |> snd with
-      | "I2E" -> I2E
-      | "E2E" -> E2E
-      | name ->
-          failwith ("Invalid enum value \"" ^ name ^ "\". Expected I2E or E2E")
-    in
-    let session =
-      unpack_p4_fixedBit value_session |> snd |> Bigint.to_int_exn
-    in
-    let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
-    (clone_type, session, index)
-
-  let to_value (clone_type, session, index) =
-    let value_clone_type =
-      match clone_type with
-      | I2E -> pack_p4_enum "CloneType" "I2E"
-      | E2E -> pack_p4_enum "CloneType" "E2E"
-    in
-    let value_session =
-      pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int session)
-    in
-    let value_index =
-      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
-    in
-    (value_clone_type, value_session, value_index)
 end
 
 (* Packet resubmissions *)
 
 module ResubmitInfo = struct
   type t = int [@@deriving yojson]
-
-  let of_value value_index : t =
-    let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
-    index
-
-  let to_value index =
-    let value_index =
-      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
-    in
-    value_index
 end
 
 (* Packet recirculations *)
 
 module RecirculateInfo = struct
   type t = int [@@deriving yojson]
-
-  let of_value value_index : t =
-    let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
-    index
-
-  let to_value index =
-    let value_index =
-      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
-    in
-    value_index
 end
 
 (* Actions on a packet *)
@@ -95,3 +45,58 @@ type t = {
   entrypoint : entrypoint;
 }
 [@@deriving yojson]
+
+(* Functor parmeterized over value representation *)
+
+module Make (V : Runtime.Valrep.SAFE) = struct
+  module Pack = Spec.Pack.Make (V)
+  module Unpack = Spec.Unpack.Make (V)
+  open Pack
+  open Unpack
+
+  module CloneInfo = struct
+    let of_value (value_clone_type, value_session, value_index) : CloneInfo.t =
+      let clone_type =
+        match unpack_p4_enum value_clone_type |> snd with
+        | "I2E" -> CloneInfo.I2E
+        | "E2E" -> CloneInfo.E2E
+        | name ->
+            failwith ("Invalid enum value \"" ^ name ^ "\". Expected I2E or E2E")
+      in
+      let session =
+        unpack_p4_fixedBit value_session |> snd |> Bigint.to_int_exn
+      in
+      let index = unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn in
+      (clone_type, session, index)
+
+    let to_value ((clone_type, session, index) : CloneInfo.t) =
+      let value_clone_type =
+        match clone_type with
+        | CloneInfo.I2E -> pack_p4_enum "CloneType" "I2E"
+        | CloneInfo.E2E -> pack_p4_enum "CloneType" "E2E"
+      in
+      let value_session =
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int session)
+      in
+      let value_index =
+        pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+      in
+      (value_clone_type, value_session, value_index)
+  end
+
+  module ResubmitInfo = struct
+    let of_value value_index : ResubmitInfo.t =
+      unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn
+
+    let to_value index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+  end
+
+  module RecirculateInfo = struct
+    let of_value value_index : RecirculateInfo.t =
+      unpack_p4_fixedBit value_index |> snd |> Bigint.to_int_exn
+
+    let to_value index =
+      pack_p4_fixedBit (Bigint.of_int 8) (Bigint.of_int index)
+  end
+end

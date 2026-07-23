@@ -1,6 +1,9 @@
 (* Thin functor shell + top-level program-dispatch entry for generated OCaml *)
 
-(* Top-level program dispatch *)
+(* Top-level program dispatch. The parsed [Value.t] is converted to the native
+   program type once via [unmarshal_program], then run typed through
+   [eval_rel_native] (which takes typed [Obj.t] boxed as [Value.t]) — so the
+   program is not re-unmarshalled on every relation call. *)
 
 let eval_program =
   {|
@@ -8,14 +11,27 @@ let eval_program (relname__ : string) (includes__ : string list)
     (path__ : string) : Run.program_result =
   match (!trampoline_cur__).interface.parse_program includes__ [path__] with
   | Run.Pass value_program -> (
-      match eval_rel relname__ [ value_program ] with
+      let value_program = unmarshal_program value_program in
+      match eval_rel_native relname__ [ value_program ] with
       | Run.Pass values_output -> Run.Pass values_output
       | Run.Fail (at, msg) -> Run.Fail (`Runtime (at, msg)))
   | Run.Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
 |}
 
+(* Convert the parsed program [Value.t] to its native typed representation once,
+   keyed on the program's spec type [tid_program]. The typed [Obj.t] is boxed as
+   [Value.t] ([Obj.magic]) so [eval_rel_native] can carry it. *)
+
+let unmarshal_program (tid_program : string) : string =
+  Printf.sprintf
+    {|
+let unmarshal_program (value : Value.t) : Value.t =
+  Obj.magic (unmarshal_typed (Typ.Make.var (%S $ no_region) []) value)
+|}
+    tid_program
+
 (* Thin [interp_ml.ml] shell.
-   Compiled code lives in the separate [spec_parts] library *)
+   Compiled code lives in the separate [spec_parts_<name>] library *)
 
 let make (name : string) : string =
   let module_name = Split.name_module name in
@@ -55,8 +71,12 @@ module Make
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_func name__ typs__ args__)
   let eval_rel name__ args__ =
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_rel name__ args__)
+  let eval_func_native name__ typs__ args__ =
+    with_trampoline trampoline (fun () -> %s.Dispatch.eval_func_native name__ typs__ args__)
+  let eval_rel_native name__ args__ =
+    with_trampoline trampoline (fun () -> %s.Dispatch.eval_rel_native name__ args__)
   let eval_program relname__ includes__ path__ =
     with_trampoline trampoline (fun () -> %s.Dispatch.eval_program relname__ includes__ path__)
 end
 |}
-    module_name module_name module_name module_name
+    module_name module_name module_name module_name module_name module_name

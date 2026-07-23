@@ -6,13 +6,7 @@ module Typ = Runtime.Type
 module Typdef = Typ.Typdef
 open Util.Source
 
-(* Collect: discovers every type needing marshal_T/unmarshal_T
-
-   [collect_types] does a BFS from every function/relation signature's param
-   and return types — e.g. [def $f(x : bool) : nat] enqueues [bool]/[nat],
-   then follows struct/variant fields transitively. [collect_targs] seeds a
-   few more: a ground type instantiating a *generic* callee, e.g.
-   [$rev<int>(..)] inside some other function's body. *)
+(* Collect: discovers every type needing marshal_T/unmarshal_T *)
 
 let rec enqueue_ground (enqueue : Sl.typ -> unit) (tparams : string list)
     (typ : Sl.typ) : unit =
@@ -135,6 +129,16 @@ let seed_from_signatures (enqueue : Sl.typ -> unit) (spec : Sl.spec) : unit =
       | _ -> ())
     spec
 
+(* Seed the BFS with every non-parametric named type the spec declares *)
+
+let seed_from_typedefs (enqueue : Sl.typ -> unit) (spec : Sl.spec) : unit =
+  List.iter
+    (fun (def : Sl.def) ->
+      match def.it with
+      | Sl.TypD (id, [], _, _) -> enqueue (Il.VarT (id, []) $ id.at)
+      | _ -> ())
+    spec
+
 (* Enqueue [typ]'s immediate structural children *)
 
 let expand_typ (ctx : Ctx.t) (enqueue : Sl.typ -> unit) (typ : Sl.typ) : unit =
@@ -181,6 +185,7 @@ let collect_types (ctx : Ctx.t) (spec : Sl.spec) : Sl.typ list =
       Queue.push typ queue)
   in
   seed_from_signatures enqueue spec;
+  seed_from_typedefs enqueue spec;
   collect_targs ctx ~enqueue spec;
   let result = ref [] in
   while not (Queue.is_empty queue) do

@@ -1,6 +1,6 @@
 (* Utilities for splitting the compiled ML code *)
 
-(* Bucketing for the split [spec_parts] library *)
+(* Bucketing for the split [spec_parts_<name>] library *)
 
 let count_loc (toplevel_ml : Ml.toplevel) : int =
   let s = Ml.Print.print_toplevel toplevel_ml in
@@ -24,7 +24,7 @@ let bucket (target : int) (toplevels_ml : Ml.toplevel list) :
   toplevels_ml_buckets
   @ if toplevel_ml_cur = [] then [] else [ List.rev toplevel_ml_cur ]
 
-(* Naming for the split [spec_parts] library *)
+(* Naming for the split [spec_parts_<name>] library *)
 
 let name_lib (name : string) : string =
   if name = "" then "spec_parts" else "spec_parts_" ^ name
@@ -35,7 +35,7 @@ let name_module (name : string) : string =
 let name_part_module (idx : int) : string = Printf.sprintf "Part_%03d" idx
 let name_part_file (idx : int) : string = Printf.sprintf "part_%03d.ml" idx
 
-(* Headers for the split [spec_parts] library *)
+(* Headers for the split [spec_parts_<name>] library *)
 
 let prelude_open_common : string =
   "[@@@warning \"-8-11-26-27-30-32-33-39\"]\n\

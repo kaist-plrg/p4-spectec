@@ -1,11 +1,18 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
-open Spec.Pack
-open Spec.Unpack
 open Error
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
+  module Pack = Spec.Pack.Make (V)
+  module Unpack = Spec.Unpack.Make (V)
+  module Hash = Hash.Make (V)
+  open Pack
+  open Unpack
+
   (* Extern objects *)
 
   (* Counter *)
@@ -43,8 +50,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Counter(bit<32> n_counters, PSA_CounterType_t type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
+      let values_arg = V.Get.list value_args in
       let value_size, value_type =
         match values_arg with
         | [ value_size; value_type ] -> (value_size, value_type)
@@ -71,8 +78,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
     (* void count(in S index); *)
 
-    let count (value_ctx : Value.t) (value_arch : Value.t) (counter : t) :
-        t * Value.t * Value.t * Value.t =
+    let count (value_ctx : V.t) (value_arch : V.t) (counter : t) :
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
@@ -95,8 +102,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
       (* Create call result *)
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter, value_ctx, value_arch, value_callResult)
   end
@@ -117,8 +124,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Meter(bit<32> n_meters, PSA_MeterType_t type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
+      let values_arg = V.Get.list value_args in
       let value_size, value_type =
         match values_arg with
         | [ value_size; value_type ] -> (value_size, value_type)
@@ -146,14 +153,14 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        PSA_MeterColor_t execute(in S index, in PSA_MeterColor_t color); *)
 
-    let execute_color_aware (value_ctx : Value.t) (value_arch : Value.t)
-        (meter : t) : t * Value.t * Value.t * Value.t =
+    let execute_color_aware (value_ctx : V.t) (value_arch : V.t)
+        (meter : t) : t * V.t * V.t * V.t =
       (* NOTE: returning GREEN for now *)
       let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_color_opt = Value.Make.opt typ (Some value_color) in
-        Value.Make.("RETURN value?" <| [ value_color_opt ] <<| "returnResult")
+        let value_color_opt = V.Make.opt typ (Some value_color) in
+        V.Make.("RETURN value?" <| [ value_color_opt ] <<| Typs.return_result)
       in
       (meter, value_ctx, value_arch, value_callResult)
 
@@ -163,14 +170,14 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        PSA_MeterColor_t execute(in S index); *)
 
-    let execute_color_blind (value_ctx : Value.t) (value_arch : Value.t)
-        (meter : t) : t * Value.t * Value.t * Value.t =
+    let execute_color_blind (value_ctx : V.t) (value_arch : V.t)
+        (meter : t) : t * V.t * V.t * V.t =
       (* NOTE: returning GREEN for now *)
       let value_color = pack_p4_enum "PSA_MeterColor_t" "GREEN" in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_color_opt = Value.Make.opt typ (Some value_color) in
-        Value.Make.("RETURN value?" <| [ value_color_opt ] <<| "returnResult")
+        let value_color_opt = V.Make.opt typ (Some value_color) in
+        V.Make.("RETURN value?" <| [ value_color_opt ] <<| Typs.return_result)
       in
       (meter, value_ctx, value_arch, value_callResult)
   end
@@ -195,8 +202,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Register(bit<32> size, T initial_value); *)
 
-    let init (value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_type_arg = Value.Get.list value_type_args in
+    let init (value_type_args : V.t) (value_args : V.t) : t =
+      let values_type_arg = V.Get.list value_type_args in
       let value_type =
         match values_type_arg with
         | [ value_type; _value_type_size ] -> value_type
@@ -207,7 +214,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let values_arg = Value.Get.list value_args in
+      let values_arg = V.Get.list value_args in
       let value_size, value_initial =
         match values_arg with
         | [ value_size ] -> (value_size, Spec_Func.default value_type)
@@ -221,36 +228,39 @@ module Make (Spec_Func : Spec.Func.S) = struct
       in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
+      let value_initial = V.marshal Typs.value value_initial in
       let values = List.init size (fun _ -> value_initial) in
-      { typ = value_type; values }
+      { typ = V.marshal Typs.type_ir value_type; values }
 
     (* T read(in S index); *)
 
-    let read (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
-        t * Value.t * Value.t * Value.t =
+    let read (value_ctx : V.t) (value_arch : V.t) (reg : t) :
+        t * V.t * V.t * V.t =
       let value_index_target = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
       let value =
         if index_target < List.length reg.values then
-          List.nth reg.values index_target
-        else Spec_Func.default reg.typ
+          V.unmarshal Typs.value (List.nth reg.values index_target)
+        else Spec_Func.default (V.unmarshal Typs.type_ir reg.typ)
       in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_opt = Value.Make.opt typ (Some value) in
-        Value.Make.("RETURN value?" <| [ value_opt ] <<| "returnResult")
+        let value_opt = V.Make.opt typ (Some value) in
+        V.Make.("RETURN value?" <| [ value_opt ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
 
     (* void write (in S index, in T value); *)
 
-    let write (value_ctx : Value.t) (value_arch : Value.t) (reg : t) :
-        t * Value.t * Value.t * Value.t =
+    let write (value_ctx : V.t) (value_arch : V.t) (reg : t) :
+        t * V.t * V.t * V.t =
       let value_index_target = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index_target = unpack_p4_fixedBit value_index_target in
       let index_target = Bigint.to_int_exn index_target in
-      let value_target = Spec_Func.find_var_e_local value_ctx "value" in
+      let value_target =
+        Spec_Func.find_var_e_local value_ctx "value" |> V.marshal Typs.value
+      in
       let values =
         List.mapi
           (fun idx value -> if idx = index_target then value_target else value)
@@ -259,8 +269,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let reg = { reg with values } in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (reg, value_ctx, value_arch, value_callResult)
   end
@@ -278,8 +288,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Hash(PSA_HashAlgorithm_t algo); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
+      let values_arg = V.Get.list value_args in
       let value_algo =
         match values_arg with
         | [ value_algo ] -> value_algo
@@ -303,8 +313,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        O get_hash<D>(in D data); *)
 
-    let get_hash (value_ctx : Value.t) (value_arch : Value.t) (hash : t) :
-        t * Value.t * Value.t * Value.t =
+    let get_hash (value_ctx : V.t) (value_arch : V.t) (hash : t) :
+        t * V.t * V.t * V.t =
       let values =
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
@@ -314,8 +324,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_result = Spec_Func.cast_op value_typ_O value_result in
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_result_opt = Value.Make.opt typ (Some value_result) in
-        Value.Make.("RETURN value?" <| [ value_result_opt ] <<| "returnResult")
+        let value_result_opt = V.Make.opt typ (Some value_result) in
+        V.Make.("RETURN value?" <| [ value_result_opt ] <<| Typs.return_result)
       in
       (hash, value_ctx, value_arch, value_callResult)
 
@@ -332,8 +342,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        O get_hash<T, D>(in T base, in D data, in T max); *)
 
-    let get_hash_adjust (value_ctx : Value.t) (value_arch : Value.t) (hash : t)
-        : t * Value.t * Value.t * Value.t =
+    let get_hash_adjust (value_ctx : V.t) (value_arch : V.t) (hash : t)
+        : t * V.t * V.t * V.t =
       let base =
         Spec_Func.find_var_e_local value_ctx "base" |> unpack_p4_fixedBit |> snd
       in
@@ -351,9 +361,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_callResult =
         let value_result_opt =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ (Some value_result)
+          V.Make.opt typ (Some value_result)
         in
-        Value.Make.("RETURN value?" <| [ value_result_opt ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_result_opt ] <<| Typs.return_result)
       in
       (hash, value_ctx, value_arch, value_callResult)
   end
@@ -379,7 +389,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        InternetChecksum(); *)
 
-    let init (_value_type_args : Value.t) (_value_args : Value.t) : t =
+    let init (_value_type_args : V.t) (_value_args : V.t) : t =
       Bigint.zero
 
     (* Reset internal state and prepare unit for computation. Every
@@ -390,12 +400,12 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void clear(); *)
 
-    let clear (value_ctx : Value.t) (value_arch : Value.t) (_checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let clear (value_ctx : V.t) (value_arch : V.t) (_checksum : t) :
+        t * V.t * V.t * V.t =
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (Bigint.zero, value_ctx, value_arch, value_callResult)
 
@@ -403,8 +413,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void add<T>(in T data); *)
 
-    let add (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let add (value_ctx : V.t) (value_arch : V.t) (checksum : t) :
+        t * V.t * V.t * V.t =
       let values =
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
@@ -415,9 +425,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -426,8 +436,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void subtract<T>(in T data); *)
 
-    let subtract (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let subtract (value_ctx : V.t) (value_arch : V.t) (checksum : t) :
+        t * V.t * V.t * V.t =
       let values =
         Spec_Func.find_var_e_local value_ctx "data" |> unpack_p4_tuple
       in
@@ -438,9 +448,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -448,17 +458,17 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        bit<16> get(); *)
 
-    let get (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let get (value_ctx : V.t) (value_arch : V.t) (checksum : t) :
+        t * V.t * V.t * V.t =
       let checksum = Hash.bitwise_neg checksum (Bigint.of_int 16) in
       let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
       let value_callResult =
         let value_checksum_opt =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ (Some value_checksum)
+          V.Make.opt typ (Some value_checksum)
         in
-        Value.Make.(
-          "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.(
+          "RETURN value?" <| [ value_checksum_opt ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -468,16 +478,16 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        bit<16> get_state(); *)
 
-    let get_state (value_ctx : Value.t) (value_arch : Value.t) (checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let get_state (value_ctx : V.t) (value_arch : V.t) (checksum : t) :
+        t * V.t * V.t * V.t =
       let value_checksum = pack_p4_fixedBit (Bigint.of_int 16) checksum in
       let value_callResult =
         let value_checksum_opt =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ (Some value_checksum)
+          V.Make.opt typ (Some value_checksum)
         in
-        Value.Make.(
-          "RETURN value?" <| [ value_checksum_opt ] <<| "returnResult")
+        V.Make.(
+          "RETURN value?" <| [ value_checksum_opt ] <<| Typs.return_result)
       in
       (checksum, value_ctx, value_arch, value_callResult)
 
@@ -488,8 +498,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void set_state(in bit<16> checksum_state); *)
 
-    let set_state (value_ctx : Value.t) (value_arch : Value.t) (_checksum : t) :
-        t * Value.t * Value.t * Value.t =
+    let set_state (value_ctx : V.t) (value_arch : V.t) (_checksum : t) :
+        t * V.t * V.t * V.t =
       let checksum_state =
         Spec_Func.find_var_e_local value_ctx "checksum_state"
         |> unpack_p4_fixedBit |> snd
@@ -497,9 +507,9 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (checksum_state, value_ctx, value_arch, value_callResult)
   end

@@ -1,57 +1,58 @@
 open Lang
 open Xl
 open Il
-module Value = Runtime.Value
 open Util.Source
 open Error
 
-(* Conversion between meta-numerics and OCaml numerics *)
+module Make (V : Valrep.SAFE) = struct
+  (* Conversion between meta-numerics and OCaml numerics *)
 
-let bigint_of_value (value : value) : Bigint.t =
-  value |> Value.Get.num |> Num.to_int
+  let bigint_of_value (value : V.t) : Bigint.t =
+    value |> V.Get.num |> Num.to_int
 
-let value_of_bigint (add : value -> unit) (n : Bigint.t) : value =
-  let value = Value.Make.nat n in
-  add value;
-  value
+  let value_of_bigint (add : V.t -> unit) (n : Bigint.t) : V.t =
+    let value = V.Make.nat n in
+    add value;
+    value
 
-(* dec $sum_nat(nat* ) : nat *)
+  (* dec $sum_nat(nat* ) : nat *)
 
-let sum_nat (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
-  in
-  let sum = List.fold_left Bigint.( + ) Bigint.zero values in
-  value_of_bigint add sum
+  let sum_nat (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let sum = List.fold_left Bigint.( + ) Bigint.zero values in
+    value_of_bigint add sum
 
-(* dec $max_nat(nat* ) : nat *)
+  (* dec $max_nat(nat* ) : nat *)
 
-let max_nat (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
-  in
-  let max =
-    match values with
-    | [] -> error at "max of empty list"
-    | hd :: tl -> List.fold_left Bigint.max hd tl
-  in
-  value_of_bigint add max
+  let max_nat (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let max =
+      match values with
+      | [] -> error at "max of empty list"
+      | hd :: tl -> List.fold_left Bigint.max hd tl
+    in
+    value_of_bigint add max
 
-(* dec $min_nat(nat* ) : nat *)
+  (* dec $min_nat(nat* ) : nat *)
 
-let min_nat (add : value -> unit) (at : region) (targs : targ list)
-    (values_input : value list) : value =
-  Extract.zero at targs;
-  let values =
-    Extract.one at values_input |> Value.Get.list |> List.map bigint_of_value
-  in
-  let min =
-    match values with
-    | [] -> error at "min of empty list"
-    | hd :: tl -> List.fold_left Bigint.min hd tl
-  in
-  value_of_bigint add min
+  let min_nat (add : V.t -> unit) (at : region) (targs : targ list)
+      (values_input : V.t list) : V.t =
+    Extract.zero at targs;
+    let values =
+      Extract.one at values_input |> V.Get.list |> List.map bigint_of_value
+    in
+    let min =
+      match values with
+      | [] -> error at "min of empty list"
+      | hd :: tl -> List.fold_left Bigint.min hd tl
+    in
+    value_of_bigint add min
+end

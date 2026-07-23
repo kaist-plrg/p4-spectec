@@ -1,10 +1,13 @@
 module Typ = Runtime.Type.Typ
-module Value = Runtime.Value
-open Spec.Unpack
 open Error
 open Util.Source
 
-module Make (Spec_Func : Spec.Func.S) = struct
+module Make
+    (V : Runtime.Valrep.SAFE)
+    (Spec_Func : Spec.Func.S with type vt = V.t) =
+struct
+  module Unpack = Spec.Unpack.Make (V)
+  open Unpack
   (* Extern objects *)
 
   (* CounterArray *)
@@ -12,7 +15,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
   module CounterArray = struct
     (* Type *)
 
-    type t = int list [@@deriving yojson]
+    type t = int array [@@deriving yojson]
 
     let pp fmt (_carr : t) = Format.fprintf fmt "counter array"
 
@@ -28,8 +31,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        CounterArray(bit<32> max_index, bool sparse); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
+    let init (_value_type_args : V.t) (value_args : V.t) : t =
+      let values_arg = V.Get.list value_args in
       let value_max_index, value_sparse =
         match values_arg with
         | [ value_max_index; value_sparse ] -> (value_max_index, value_sparse)
@@ -43,29 +46,26 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let _, max_index = unpack_p4_fixedBit value_max_index in
       let max_index = Bigint.to_int_exn max_index in
       let _sparse = unpack_p4_bool value_sparse in
-      List.init max_index (fun _ -> 0)
+      Array.init max_index (fun _ -> 0)
 
     (* Increment counter with specified index.
 
        void increment(in bit<32> index); *)
 
-    let increment (value_ctx : Value.t) (value_sto : Value.t)
-        (counter_array : t) : t * Value.t * Value.t * Value.t =
+    let increment (value_ctx : V.t) (value_sto : V.t) (counter_array : t) :
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
       let index_target = Bigint.to_int_exn index in
       (* Update counter *)
-      let counter_array =
-        List.mapi
-          (fun idx count -> if idx = index_target then count + 1 else count)
-          counter_array
-      in
+      if index_target >= 0 && index_target < Array.length counter_array then
+        counter_array.(index_target) <- counter_array.(index_target) + 1;
       (* Create call result *)
       let value_callResult =
         let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-        let value_eps = Value.Make.opt typ None in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        let value_eps = V.Make.opt typ None in
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter_array, value_ctx, value_sto, value_callResult)
 
@@ -73,8 +73,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        void add(in bit<32> index, in bit<32> value) *)
 
-    let add (value_ctx : Value.t) (value_sto : Value.t) (counter_array : t) :
-        t * Value.t * Value.t * Value.t =
+    let add (value_ctx : V.t) (value_sto : V.t) (counter_array : t) :
+        t * V.t * V.t * V.t =
       (* Get "index" *)
       let value_index = Spec_Func.find_var_e_local value_ctx "index" in
       let _, index = unpack_p4_fixedBit value_index in
@@ -83,19 +83,16 @@ module Make (Spec_Func : Spec.Func.S) = struct
       let value_value = Spec_Func.find_var_e_local value_ctx "value" in
       let _, value = unpack_p4_fixedBit value_value in
       let value = Bigint.to_int_exn value in
-      (* Update counter *)
-      let counter_array =
-        List.mapi
-          (fun idx count -> if idx = index_target then count + value else count)
-          counter_array
-      in
+      (* Update counter in place; index >= size leaves the array untouched. *)
+      if index_target >= 0 && index_target < Array.length counter_array then
+        counter_array.(index_target) <- counter_array.(index_target) + value;
       (* Create call result *)
       let value_callResult =
         let value_eps =
           let typ = Typ.Make.opt (Typ.Make.var ("value" $ no_region) []) in
-          Value.Make.opt typ None
+          V.Make.opt typ None
         in
-        Value.Make.("RETURN value?" <| [ value_eps ] <<| "returnResult")
+        V.Make.("RETURN value?" <| [ value_eps ] <<| Typs.return_result)
       in
       (counter_array, value_ctx, value_sto, value_callResult)
   end

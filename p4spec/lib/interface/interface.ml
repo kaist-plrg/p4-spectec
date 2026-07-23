@@ -40,15 +40,15 @@ module P4 = struct
 
   (* Builtins *)
 
-  module Builtin_P4_Ext = struct
-    (* dec $print_<X>(X) : text *)
+  (* dec $print_<X>(X) : text *)
 
-    let print (add : Value.t -> unit) (at : region) (targs : Typ.t list)
-        (values_input : Value.t list) : Value.t =
-      let _typ = Builtin.Extract.one at targs in
+  module Builtin_P4_Ext (V : Valrep.SAFE) = struct
+    let print (add : V.t -> unit) (at : region) (targs : Typ.t list)
+        (values_input : V.t list) : V.t =
+      let typ = Builtin.Extract.one at targs in
       let value = Builtin.Extract.one at values_input in
-      let text = !unparser value in
-      let value = Value.Make.text text in
+      let text = !unparser (V.marshal typ value) in
+      let value = V.Make.text text in
       add value;
       value
 
@@ -57,7 +57,14 @@ module P4 = struct
     let entries = [ ("print_", print) ]
   end
 
-  module Builtin_P4 = Builtin.Call.Make (Builtin_P4_Ext) ()
+  module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+    type vt = V.t
+
+    module F = Builtin.Call.Make_funcs (V)
+    include F.Make (Builtin_P4_Ext (V)) ()
+  end
+
+  module Builtin_P4 = Builtins (Valrep.V_value)
 
   let call_builtin = Builtin_P4.invoke
 
@@ -93,13 +100,18 @@ end
 (* SpecTec IL *)
 
 module SpecTec_IL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Ili.Boot
-  include Spectec.Ili.Unboot
-  include Spectec.Caches
+  (* Boot-time-only entry points used by backend-boot/patch.ml: they
+     process the spec itself (elaboration/patch input), never a runtime
+     value under whatever mode the meta-interpreter ends up running, so
+     they stay fixed to [Valrep.V_value] regardless of [Make]'s [V] *)
 
-  (* Program parsing *)
+  module Boot_value = Spectec.Ili.Boot.Make (Valrep.V_value)
+  module Unboot_value = Spectec.Ili.Unboot.Make (Valrep.V_value)
+
+  let boot_spec = Boot_value.boot_spec
+  let unboot_script = Unboot_value.unboot_script
+
+  (* Program parsing doesn't depend on the runtime value rep either *)
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
@@ -118,37 +130,94 @@ module SpecTec_IL = struct
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  (* Program unparsing *)
+  (* The mode-dependent boundary: which [V] the meta-interpreter uses for
+     runtime values is fixed at construction, so there is no runtime
+     [!cur_mode] branch with a bespoke [Obj.magic] in every function *)
 
-  let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_script |> Il.Print.string_of_spec
+  module Make (V : Runtime.Valrep.VAL) = struct
+    include Spectec.Caches
 
-  (* Builtins *)
+    let boot_spec = boot_spec
+    let unboot_script = unboot_script
+    let parse_program = parse_program
+    let parse_string = parse_string
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+    module Boot = Spectec.Ili.Boot.Make (V)
+    module Unboot = Spectec.Ili.Unboot.Make (V)
 
-  let call_builtin = Builtin_SpecTec.invoke
+    type vt = V.t
 
-  (* State management *)
+    (* [unparse_program] crosses [Value.t] -> [V] through [V.of_value] since
+       [Run.INTERFACE] fixes its argument at [Value.t] *)
 
-  let checkpoint = Builtin_SpecTec.checkpoint
-  let seff = Builtin_SpecTec.seff
+    let unparse_program (value_script : Value.t) : string =
+      Il.Print.string_of_spec (Unboot.unboot_script (V.of_value value_script))
 
-  (* Initialization *)
+    let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
 
-  let init (_spec : Run.spec) : unit = ()
+    let boot_values (values : Value.t list) : vt =
+      Boot.boot_values (values : Il.value list)
+
+    let unboot_id (value : vt) : Il.id = Unboot.unboot_id value
+    let unboot_typs (value : vt) : Typ.t list = Unboot.unboot_typs value
+    let unboot_values (value : vt) : Value.t list = Unboot.unboot_values value
+
+    (* Builtins *)
+
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+      type vt = V.t
+
+      module F = Builtin.Call.Make_funcs (V)
+      include F.Make (F.No_ext) ()
+    end
+
+    module Builtin_SpecTec = Builtins (V)
+
+    let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec.invoke
+        (fun v -> add (V.to_value v))
+        id typs
+        (List.map V.of_value values)
+      |> V.to_value
+
+    (* Fixed at [Valrep.V_value] regardless of this functor's own [V], for
+       callers whose [values] are already real [Value.t] from
+       [unboot_values]; [call_builtin] above would [V.of_value]-recast them
+       with no actual conversion *)
+
+    module Builtin_SpecTec_value = Builtins (Valrep.V_value)
+
+    let call_builtin_value (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec_value.invoke add id typs values
+
+    (* State management *)
+
+    let checkpoint = Builtin_SpecTec.checkpoint
+    let seff = Builtin_SpecTec.seff
+
+    (* Initialization: [V] already fixes the mode *)
+
+    let init (_ : Run.spec) : unit = ()
+  end
 end
 
 (* SpecTec SL *)
 
 module SpecTec_SL = struct
-  include Spectec.Common.Boot
-  include Spectec.Common.Unboot
-  include Spectec.Sli.Boot
-  include Spectec.Sli.Unboot
-  include Spectec.Caches
+  (* Boot-time-only entry points used by backend-boot/patch.ml: they
+     process the spec itself (elaboration/patch input), never a runtime
+     value under whatever mode the meta-interpreter ends up running, so
+     they stay fixed to [Valrep.V_value] regardless of [Make]'s [V] *)
 
-  (* Program parsing *)
+  module Boot_value = Spectec.Sli.Boot.Make (Valrep.V_value)
+  module Unboot_value = Spectec.Sli.Unboot.Make (Valrep.V_value)
+
+  let boot_spec = Boot_value.boot_spec
+  let unboot_script = Unboot_value.unboot_script
+
+  (* Program parsing doesn't depend on the runtime value rep either *)
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
@@ -167,23 +236,75 @@ module SpecTec_SL = struct
     | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
     | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
-  (* Program unparsing *)
+  (* The mode-dependent boundary: which [V] the meta-interpreter uses for
+     runtime values is fixed at construction, so there is no runtime
+     [!cur_mode] branch with a bespoke [Obj.magic] in every function *)
 
-  let unparse_program (value_script : Value.t) : string =
-    value_script |> unboot_script |> Sl.Print.string_of_spec
+  module Make (V : Runtime.Valrep.VAL) = struct
+    include Spectec.Caches
 
-  (* Builtins *)
+    let boot_spec = boot_spec
+    let unboot_script = unboot_script
+    let parse_program = parse_program
+    let parse_string = parse_string
 
-  module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()
+    module Boot = Spectec.Sli.Boot.Make (V)
+    module Unboot = Spectec.Sli.Unboot.Make (V)
 
-  let call_builtin = Builtin_SpecTec.invoke
+    type vt = V.t
 
-  (* State management *)
+    (* [unparse_program] crosses [Value.t] -> [V] through [V.of_value] since
+       [Run.INTERFACE] fixes its argument at [Value.t] *)
 
-  let checkpoint = Builtin_SpecTec.checkpoint
-  let seff = Builtin_SpecTec.seff
+    let unparse_program (value_script : Value.t) : string =
+      Sl.Print.string_of_spec (Unboot.unboot_script (V.of_value value_script))
 
-  (* Initialization *)
+    let boot_value (value : Value.t) : vt = Boot.boot_value (value : Il.value)
 
-  let init (_spec : Run.spec) : unit = ()
+    let boot_values (values : Value.t list) : vt =
+      Boot.boot_values (values : Il.value list)
+
+    let unboot_id (value : vt) : Il.id = Unboot.unboot_id value
+    let unboot_typs (value : vt) : Typ.t list = Unboot.unboot_typs value
+    let unboot_values (value : vt) : Value.t list = Unboot.unboot_values value
+
+    (* Builtins *)
+
+    module Builtins (V : Valrep.SAFE) : Run.BUILTINS with type vt = V.t = struct
+      type vt = V.t
+
+      module F = Builtin.Call.Make_funcs (V)
+      include F.Make (F.No_ext) ()
+    end
+
+    module Builtin_SpecTec = Builtins (V)
+
+    let call_builtin (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec.invoke
+        (fun v -> add (V.to_value v))
+        id typs
+        (List.map V.of_value values)
+      |> V.to_value
+
+    (* Fixed at [Valrep.V_value] regardless of this functor's own [V], for
+       callers whose [values] are already real [Value.t] from
+       [unboot_values]; [call_builtin] above would [V.of_value]-recast them
+       with no actual conversion *)
+
+    module Builtin_SpecTec_value = Builtins (Valrep.V_value)
+
+    let call_builtin_value (add : Value.t -> unit) (id : Domain.Lib.Id.t)
+        (typs : Typ.t list) (values : Value.t list) : Value.t =
+      Builtin_SpecTec_value.invoke add id typs values
+
+    (* State management *)
+
+    let checkpoint = Builtin_SpecTec.checkpoint
+    let seff = Builtin_SpecTec.seff
+
+    (* Initialization: [V] already fixes the mode *)
+
+    let init (_ : Run.spec) : unit = ()
+  end
 end
