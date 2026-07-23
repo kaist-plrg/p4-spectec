@@ -46,7 +46,11 @@ let make_opt_fold (ctx : Ctx.t) (ids_in_ml : Ml.id list)
   let expr_lambda_ml = Ml.FunE (pats_elem_ml, expr_inner_ml) in
   let id_fold_ml = Printf.sprintf "Option.fold_%d_%d" n_in n_out in
   let exprs_arg_ml =
-    expr_lambda_ml :: List.map (fun id_in_ml -> Ml.VarE id_in_ml) ids_in_ml
+    (* iteration guides are wrapped composites; fold over their bare bodies *)
+    expr_lambda_ml
+    :: List.map
+         (fun id_in_ml -> Ml.FieldE (Ml.VarE id_in_ml, "it"))
+         ids_in_ml
   in
   let expr_ml = Ml.AppE (Ml.VarE id_fold_ml, exprs_arg_ml) in
   (ctx, expr_ml)
@@ -64,7 +68,11 @@ let make_opt_forall (ctx : Ctx.t) (ids_in_ml : Ml.id list)
   let expr_lambda_ml = Ml.FunE (pats_elem_ml, expr_body_ml) in
   let id_forall_ml = Printf.sprintf "Option.for_all_%d" n_in in
   let exprs_arg_ml =
-    expr_lambda_ml :: List.map (fun id_in_ml -> Ml.VarE id_in_ml) ids_in_ml
+    (* iteration guides are wrapped composites; fold over their bare bodies *)
+    expr_lambda_ml
+    :: List.map
+         (fun id_in_ml -> Ml.FieldE (Ml.VarE id_in_ml, "it"))
+         ids_in_ml
   in
   (ctx, Ml.AppE (Ml.VarE id_forall_ml, exprs_arg_ml))
 
@@ -81,7 +89,11 @@ let make_list_fold (ctx : Ctx.t) (ids_in_ml : Ml.id list)
   let expr_lambda_ml = Ml.FunE (pats_elem_ml, expr_inner_ml) in
   let id_fold_ml = Printf.sprintf "List.fold_left_%d_%d" n_in n_out in
   let exprs_arg_ml =
-    expr_lambda_ml :: List.map (fun id_in_ml -> Ml.VarE id_in_ml) ids_in_ml
+    (* iteration guides are wrapped composites; fold over their bare bodies *)
+    expr_lambda_ml
+    :: List.map
+         (fun id_in_ml -> Ml.FieldE (Ml.VarE id_in_ml, "it"))
+         ids_in_ml
   in
   let expr_ml = Ml.AppE (Ml.VarE id_fold_ml, exprs_arg_ml) in
   (ctx, expr_ml)
@@ -98,6 +110,10 @@ let make_list_forall (ctx : Ctx.t) (ids_in_ml : Ml.id list)
   let expr_lambda_ml = Ml.FunE (pats_elem_ml, expr_body_ml) in
   let id_forall_ml = Printf.sprintf "List.for_all_%d" n_in in
   let exprs_arg_ml =
-    expr_lambda_ml :: List.map (fun id_in_ml -> Ml.VarE id_in_ml) ids_in_ml
+    (* iteration guides are wrapped composites; fold over their bare bodies *)
+    expr_lambda_ml
+    :: List.map
+         (fun id_in_ml -> Ml.FieldE (Ml.VarE id_in_ml, "it"))
+         ids_in_ml
   in
   (ctx, Ml.AppE (Ml.VarE id_forall_ml, exprs_arg_ml))

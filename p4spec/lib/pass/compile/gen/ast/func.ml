@@ -91,10 +91,18 @@ let compile_tparams (tparams_ml : Ml.tparam list) : Ml.param list =
       let id_unmarshal_ml = Interface.Converter.name_unmarshal tparam_ml in
       let typ_unmarshal_ml = Ml.FuncT (Ml.NameT "Value.t", Ml.VarT tparam_ml) in
       let id_typ_ml = Interface.Naming.name_typ tparam_ml in
+      let id_hash_ml = Interface.Converter.name_hash tparam_ml in
+      let typ_hash_ml = Ml.FuncT (Ml.VarT tparam_ml, Ml.NameT "int") in
+      let id_eq_ml = Interface.Converter.name_eq tparam_ml in
+      let typ_eq_ml =
+        Ml.FuncT (Ml.VarT tparam_ml, Ml.FuncT (Ml.VarT tparam_ml, Ml.BoolT))
+      in
       [
         (id_marshal_ml, Some typ_marshal_ml);
         (id_unmarshal_ml, Some typ_unmarshal_ml);
         (id_typ_ml, Some (Ml.NameT "Typ.t"));
+        (id_hash_ml, Some typ_hash_ml);
+        (id_eq_ml, Some typ_eq_ml);
       ])
     tparams_ml
 

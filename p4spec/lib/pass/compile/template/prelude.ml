@@ -16,6 +16,10 @@ open Util.Source
 
 exception Unmatch of string
 
+(* Incremental-hash folds for structural children of note-wrapped values *)
+let hash_list f xs = List.fold_left (fun h x -> (h * 31) + f x) 1 xs
+let hash_opt f = function None -> 0 | Some x -> 31 + f x
+
 |}
 
 (* Option prelude *)

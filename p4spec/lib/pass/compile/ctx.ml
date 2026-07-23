@@ -76,6 +76,14 @@ let find_ctor (ctx : t) (typ : Typ.t) (mixop : Mixop.t) : Ml.ctor =
         (Format.asprintf "%s is not a variant type"
            (Sl.Print.string_of_typ typ))
 
+(* Expand a typ through aliases to its underlying form, e.g. to name the
+   [mk_<t>] of the wrapped variant/record a construction really targets *)
+
+let expand_typ (ctx : t) (typ : Typ.t) : Typ.t =
+  Runtime.Type.Expand.expand_typ
+    (fun tid -> Typdefs.find_opt tid ctx.typdefs)
+    typ
+
 let find_typdef_opt (ctx : t) (id : TId.t) : Typdef.t option =
   Typdefs.find_opt id ctx.typdefs
 

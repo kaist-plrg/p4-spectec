@@ -81,16 +81,47 @@ let parametric_scrut_typ (head : string) : Ml.typ =
   | "res" -> Ml.AppT ("res", [ Ml.NameT "Obj.t" ])
   | _ -> Ml.AppT ("set", [ Ml.NameT "Obj.t" ])
 
+(* An element's hash dictionary via the [hash_typed] runtime dispatch, sound for
+   a wrapped (slot read) or primitive element unlike a blind slot read *)
+
+let elem_hash_dict (expr_elem_typ_ml : Ml.expr) : Ml.expr =
+  Ml.FunE
+    ( [ Ml.VarP "v__" ],
+      Ml.AppE (Ml.LitE "hash_typed", [ expr_elem_typ_ml; Ml.VarE "v__" ]) )
+
+(* [mk_<base>] and its per-element [typ] dictionaries for a parametric head;
+   [map] is [set] of pairs, so it wraps through [mk_set] over a pair element *)
+
+let parametric_mk (head : string) : string * Ml.expr list =
+  match head with
+  | "pair" ->
+      ("pair", [ Ml.LitE "(List.nth targs__ 0)"; Ml.LitE "(List.nth targs__ 1)" ])
+  | "res" -> ("res", [ Ml.LitE "(List.nth targs__ 0)" ])
+  | "map" ->
+      ("set", [ Ml.LitE "(Typ.Make.var (\"pair\" $ no_region) targs__)" ])
+  | _ -> ("set", [ Ml.LitE "(List.nth targs__ 0)" ])
+
 let make_parametric_arms (ctx : Ctx.t) : Ml.arm list =
   List.map
     (fun head ->
+      let base, exprs_elem_typ_ml = parametric_mk head in
+      let exprs_dict_ml =
+        List.concat_map
+          (fun expr_typ_ml -> [ expr_typ_ml; elem_hash_dict expr_typ_ml ])
+          exprs_elem_typ_ml
+      in
       let inner_arms =
         List.map
           (fun (mixop, ctor_ml, payload_typs) ->
             let canon = Mixop.string_of_mixop mixop in
             let args = List.mapi (fun i _ -> obj_obj_nth i) payload_typs in
+            let expr_wrapped_ml =
+              Ml.AppE
+                ( Ml.VarE ("mk_" ^ base),
+                  exprs_dict_ml @ [ Ml.VariantE (ctor_ml, args) ] )
+            in
             ( Ml.LitP (Printf.sprintf "%S" canon),
-              Ml.AppE (Ml.LitE "Obj.repr", [ Ml.VariantE (ctor_ml, args) ]) ))
+              Ml.AppE (Ml.LitE "Obj.repr", [ expr_wrapped_ml ]) ))
           (parametric_ctors ctx head)
       in
       let wild =
@@ -105,7 +136,10 @@ let make_parametric_arms (ctx : Ctx.t) : Ml.arm list =
               ] ) )
       in
       ( Ml.LitP (Printf.sprintf "%S" head),
-        Ml.MatchE (Ml.VarE "mixop", inner_arms @ [ wild ]) ))
+        Ml.LetE
+          ( Ml.VarP "targs__",
+            Ml.LitE "(match typ.it with Il.VarT (_, ts__) -> ts__ | _ -> [])",
+            Ml.MatchE (Ml.VarE "mixop", inner_arms @ [ wild ]) ) ))
     (parametric_heads_present ctx)
 
 let case_parametric_arms (ctx : Ctx.t) (pool : Constpool.t) :
@@ -135,9 +169,12 @@ let case_parametric_arms (ctx : Ctx.t) (pool : Constpool.t) :
           pool (parametric_ctors ctx head)
       in
       let scrut =
-        Ml.AnnotE
-          ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
-            parametric_scrut_typ head )
+        (* unwrap the note before matching the variant body *)
+        Ml.FieldE
+          ( Ml.AnnotE
+              ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
+                parametric_scrut_typ head ),
+            "it" )
       in
       (pool, (Ml.LitP (Printf.sprintf "%S" head), Ml.MatchE (scrut, inner_arms))))
     pool
@@ -161,7 +198,12 @@ let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
               in
               ( Ml.LitP (Printf.sprintf "%S" canon),
                 Ml.AppE
-                  (Ml.LitE "Obj.repr", [ Ml.VariantE (ctor_ml, arg_exprs) ]) ))
+                  ( Ml.LitE "Obj.repr",
+                    [
+                      Ml.AppE
+                        ( Ml.VarE ("mk_" ^ Names.var_of_id id),
+                          [ Ml.VariantE (ctor_ml, arg_exprs) ] );
+                    ] ) ))
             ctors
         in
         let inner_wild =
@@ -185,7 +227,7 @@ let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
         ( Ml.LitE "failwith",
           [
             Ml.BinopE
-              ("^", Ml.StrE "make_case_typed: unknown typ ", Ml.VarE "typ");
+              ("^", Ml.StrE "make_case_typed: unknown typ ", Ml.VarE "typname__");
           ] ) )
   in
   ( "make_case_typed",
@@ -196,15 +238,16 @@ let compile_make_case (ctx : Ctx.t) (variants : (Sl.id * Sl.typ) list) :
       ("typ", Some (Ml.NameT "Il.typ"));
     ],
     Some (Ml.NameT "Obj.t"),
+    (* keep [typ] (the Il.typ) unshadowed so parametric arms read its targs *)
     Ml.LetE
-      ( Ml.VarP "typ",
+      ( Ml.VarP "typname__",
         typename_of_expr,
         Ml.LetE
           ( Ml.VarP "mixop",
             Ml.AppE (Ml.LitE "Mixop.string_of_mixop", [ Ml.VarE "mixop" ]),
             Ml.MatchE
-              (Ml.VarE "typ", outer_arms @ make_parametric_arms ctx @ [ outer_wild ])
-          ) ) )
+              ( Ml.VarE "typname__",
+                outer_arms @ make_parametric_arms ctx @ [ outer_wild ] ) ) ) )
 
 let compile_case_of (ctx : Ctx.t) (pool : Constpool.t)
     (variants : (Sl.id * Sl.typ) list) : Constpool.t * Ml.funcdef =
@@ -236,9 +279,12 @@ let compile_case_of (ctx : Ctx.t) (pool : Constpool.t)
             pool ctors
         in
         let scrut =
-          Ml.AnnotE
-            ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
-              Type.compile_typ ~tparams:[] typ )
+          (* unwrap the note before matching the variant body *)
+          Ml.FieldE
+            ( Ml.AnnotE
+                ( Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]),
+                  Type.compile_typ ~tparams:[] typ ),
+              "it" )
         in
         (pool, (Ml.LitP (Printf.sprintf "%S" id.it), Ml.MatchE (scrut, inner_arms))))
       pool variants
@@ -330,3 +376,50 @@ let compile_marshal_dispatch (typs : Sl.typ list) : Ml.funcdef list =
       Some (Ml.NameT "Obj.t"),
       Ml.MatchE (scrut, unmarshal_arms @ [ wild "unmarshal_typed" ]) );
   ]
+
+(* [hash_typed]: runtime [Typ.t]-dispatched hash, for the boundary [make_case]'s
+   element hash dictionaries. A named type routes to its [hash_<name>] (a slot
+   read for a wrapped type); a primitive hashes directly. *)
+let compile_hash_dispatch (typs : Sl.typ list) : Ml.funcdef =
+  let keys =
+    List.filter_map
+      (fun (t : Sl.typ) ->
+        match t.it with
+        | Il.VarT (id, _) -> Some (id.it, Naming.name t)
+        | _ -> None)
+      typs
+    |> List.sort_uniq compare
+  in
+  let scrut = Ml.FieldE (Ml.VarE "typ", "it") in
+  let arms_var =
+    List.map
+      (fun (key, iname) ->
+        ( Ml.LitP (Printf.sprintf "Il.VarT ({ it = %S; _ }, _)" key),
+          Ml.AppE
+            (Ml.VarE ("hash_" ^ iname), [ Ml.AppE (Ml.LitE "Obj.obj", [ Ml.VarE "x" ]) ]) ))
+      keys
+  in
+  let arm_prim = Ml.AppE (Ml.LitE "Hashtbl.hash", [ Ml.VarE "x" ]) in
+  let arms_prim =
+    [
+      (Ml.LitP "Il.BoolT", arm_prim);
+      (Ml.LitP "Il.NumT _", arm_prim);
+      (Ml.LitP "Il.TextT", arm_prim);
+    ]
+  in
+  let wild =
+    ( Ml.WildP,
+      Ml.AppE
+        ( Ml.LitE "failwith",
+          [
+            Ml.BinopE
+              ( "^",
+                Ml.StrE "hash_typed: unknown type ",
+                Ml.AppE (Ml.LitE "Typ.to_string", [ Ml.VarE "typ" ]) );
+          ] ) )
+  in
+  ( "hash_typed",
+    [],
+    [ ("typ", Some (Ml.NameT "Typ.t")); ("x", Some (Ml.NameT "Obj.t")) ],
+    Some (Ml.NameT "int"),
+    Ml.MatchE (scrut, arms_var @ arms_prim @ [ wild ]) )

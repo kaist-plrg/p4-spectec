@@ -122,8 +122,10 @@ let print_binop (op : binop) = op
 (* Expressions *)
 
 let is_compound_expr = function
+  (* [AppE (_, [])] renders [f ()], still an application, so it needs parens in
+     a function or field position *)
   | MatchE _ | IfE _ | TryE _ | LetE _ | FunE _ | SeqE _ | AnnotE _ | CoerceE _
-  | AppE (_, _ :: _) ->
+  | AppE _ ->
       true
   | _ -> false
 
@@ -201,7 +203,13 @@ let rec print_expr ~level expr =
              fields)
       ^ " }"
   | FieldE (expr_rec, field) ->
-      print_expr ~level expr_rec ^ "." ^ print_field field
+      (* a compound record position (application, match) needs parens or the
+         projection binds to its last sub-token *)
+      let str_rec =
+        if is_compound_expr expr_rec then "(" ^ print_expr ~level expr_rec ^ ")"
+        else print_expr ~level expr_rec
+      in
+      str_rec ^ "." ^ print_field field
   | AppE (expr_fn, []) -> print_expr ~level expr_fn ^ " ()"
   | AppE (expr_fn, exprs_arg) ->
       let print_arg expr =
@@ -212,8 +220,13 @@ let rec print_expr ~level expr =
           ^ "\n" ^ Util.Print.indent level ^ ")"
         else "(" ^ print_expr ~level expr ^ ")"
       in
-      print_expr ~level expr_fn ^ " "
-      ^ String.concat " " (List.map print_arg exprs_arg)
+      (* a compound function position (lambda, let, match) needs parens or the
+         arguments bind inside its body *)
+      let str_fn =
+        if is_compound_expr expr_fn then "(" ^ print_expr ~level expr_fn ^ ")"
+        else print_expr ~level expr_fn
+      in
+      str_fn ^ " " ^ String.concat " " (List.map print_arg exprs_arg)
   | IfE (expr_cond, expr_then, expr_else_opt) ->
       let str_else =
         match expr_else_opt with
@@ -230,7 +243,9 @@ let rec print_expr ~level expr =
         let body_str = print_expr ~level:(level + 2) expr in
         let body_wrapped =
           match expr with
-          | MatchE _ | TryE _ ->
+          (* [LetE] ending in a bare match would otherwise swallow the following
+             arms into that inner match *)
+          | MatchE _ | TryE _ | LetE _ ->
               "\n"
               ^ indent (level + 2)
               ^ "begin\n"

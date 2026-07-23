@@ -65,6 +65,11 @@ let tvar (id : Id.t) = id.it |> sanitize |> String.lowercase_ascii
 
 let var_of_id (id : Id.t) = id.it |> sanitize
 
+(* Raw body type of a note-wrapped named type: [foo] wraps [foo'], mirroring
+   [value]/[value']; the prime cannot collide with any [var_of_id] output *)
+
+let body_of_id (id : Id.t) = var_of_id id ^ "'"
+
 let var_of_var (var_ : Var.t) =
   let id, iters = var_ in
   var_of_id

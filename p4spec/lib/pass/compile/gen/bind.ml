@@ -10,7 +10,7 @@ open Util.Source
 
 let compile_blk_footer (ctx_inner : Ctx.t) (ctx_outer : Ctx.t) (chain : Chain.t)
     (bindings : Binding.t list) : Ctx.t * Ml.expr =
-  let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+  let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
   let expr_bind_ml =
     let exprs_bind_ml =
       List.map (fun id_bind_ml -> Ml.VarE id_bind_ml) ids_bind_ml
@@ -69,7 +69,7 @@ and compile_var_binding ~(tparams : string list) (ctx : Ctx.t)
     (expr_stub_ml : Ml.expr) (id : id) (typ : typ) :
     Ctx.t * Binding.t list * Chain.t =
   let id_ml = Names.var_of_id id in
-  let binding = ((id, []), id_ml) in
+  let binding = ((id, []), id_ml, typ) in
   let is_struct_typ =
     match typ.it with
     | Il.VarT (tid, _) -> (
@@ -114,7 +114,8 @@ and compile_tuple_binding ~(tparams : string list) (ctx : Ctx.t)
   let chain_tuple =
     let pats_ml = List.map (fun id_stub_ml -> Ml.VarP id_stub_ml) ids_stub_ml in
     let pat_ml = Ml.TupleP pats_ml in
-    Chain.make_let pat_ml expr_stub_ml
+    (* destructure the unwrapped tuple body *)
+    Chain.make_let pat_ml (Ml.FieldE (expr_stub_ml, "it"))
   in
   (* Create chains for tuple elements *)
   let ctx, bindings, chain_elems =
@@ -126,7 +127,7 @@ and compile_tuple_binding ~(tparams : string list) (ctx : Ctx.t)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
-    let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+    let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_bind_ml
@@ -164,7 +165,8 @@ and compile_case_binding ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
     let ctor_ml = Ctx.find_ctor ctx typ_exp mixop in
     let pats_ml = List.map (fun id_stub_ml -> Ml.VarP id_stub_ml) ids_stub_ml in
     let pat_ml = Ml.VariantP (`Poly (ctor_ml, pats_ml)) in
-    Chain.make_match expr_stub_ml pat_ml
+    (* match the unwrapped variant body *)
+    Chain.make_match (Ml.FieldE (expr_stub_ml, "it")) pat_ml
   in
   (* Create chains for case elements *)
   let ctx, bindings, chain_elems =
@@ -176,7 +178,7 @@ and compile_case_binding ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
-    let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+    let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_bind_ml
@@ -223,7 +225,8 @@ and compile_opt_binding ~(tparams : string list) (ctx : Ctx.t)
         (* Create [match expr with Some expr_inner -> ...] *)
         let chain_some =
           let pat_then_ml = Ml.OptP (Some (Ml.VarP id_elem_ml)) in
-          Chain.make_match expr_stub_ml pat_then_ml
+          (* match the unwrapped option body *)
+          Chain.make_match (Ml.FieldE (expr_stub_ml, "it")) pat_then_ml
         in
         (* Create chain for option element *)
         let ctx, bindings, chain_then =
@@ -240,7 +243,8 @@ and compile_opt_binding ~(tparams : string list) (ctx : Ctx.t)
         (* Create [match expr with None -> ...] *)
         let chain_none =
           let pat_then_ml = Ml.OptP None in
-          Chain.make_match expr_stub_ml pat_then_ml
+          (* match the unwrapped option body *)
+          Chain.make_match (Ml.FieldE (expr_stub_ml, "it")) pat_then_ml
         in
         (* Finish nested block with bindings *)
         let ctx, expr_bind_ml =
@@ -250,7 +254,7 @@ and compile_opt_binding ~(tparams : string list) (ctx : Ctx.t)
   in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
-    let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+    let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_bind_ml
@@ -285,7 +289,8 @@ and compile_list_binding ~(tparams : string list) (ctx : Ctx.t)
   let chain_list =
     let pats_ml = List.map (fun id_stub_ml -> Ml.VarP id_stub_ml) ids_stub_ml in
     let pat_ml = Ml.ListP pats_ml in
-    Chain.make_let pat_ml expr_stub_ml
+    (* destructure the unwrapped list body *)
+    Chain.make_let pat_ml (Ml.FieldE (expr_stub_ml, "it"))
   in
   (* Create chains for list elements *)
   let ctx, bindings, chain_elems =
@@ -297,7 +302,7 @@ and compile_list_binding ~(tparams : string list) (ctx : Ctx.t)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
   (* Create [let (..._a, ..., ..._z) = ... in ...] *)
   let chain =
-    let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+    let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_bind_ml
@@ -326,11 +331,16 @@ and compile_cons_binding ~(tparams : string list) (ctx : Ctx.t)
   let ctx, id_h_stub_ml = Stub.OCaml.var ctx "h__" in
   let ctx, id_t_stub_ml = Stub.OCaml.var ctx "t__" in
   let expr_h_stub_ml = Ml.VarE id_h_stub_ml in
-  let expr_t_stub_ml = Ml.VarE id_t_stub_ml in
+  (* the tail is a fresh sub-list, so re-wrap it to the cons list type *)
+  let expr_t_stub_ml =
+    Wrap.compile_mk_wrap ~tparams ctx (exp_t.note $ exp_t.at)
+      (Ml.VarE id_t_stub_ml)
+  in
   (* Create [match expr with expr_h :: expr_t -> ...] *)
   let chain_cons =
     let pat_then_ml = Ml.ConsP (Ml.VarP id_h_stub_ml, Ml.VarP id_t_stub_ml) in
-    Chain.make_match expr_stub_ml pat_then_ml
+    (* match the unwrapped list body *)
+    Chain.make_match (Ml.FieldE (expr_stub_ml, "it")) pat_then_ml
   in
   (* Create chains for head and tail *)
   let ctx, bindings, chain_elems =
@@ -344,7 +354,7 @@ and compile_cons_binding ~(tparams : string list) (ctx : Ctx.t)
   let ctx, expr_bind_ml = compile_blk_footer ctx ctx_outer chain bindings in
   (* Create [let (..._ah, ..., ..._at, ...) = ... in ...] *)
   let chain =
-    let ids_bind_ml = List.map (fun (_, id_bind_ml) -> id_bind_ml) bindings in
+    let ids_bind_ml = List.map (fun (_, id_bind_ml, _) -> id_bind_ml) bindings in
     let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
     let pat_ml = Ml.TupleP pats_ml in
     Chain.make_let pat_ml expr_bind_ml
@@ -374,8 +384,10 @@ and compile_iter_opt_binding ~(tparams : string list) (ctx : Ctx.t)
   (* Create stub expression for option element *)
   let ctx, id_stub_iter_ml = Stub.OCaml.var ctx "elem_opt__" in
   let expr_stub_iter_ml = Ml.VarE id_stub_iter_ml in
-  (* Create [Option.map (fun expr_stub_inner -> ...) expr] *)
-  let chain_map = Chain.make_option_map expr_stub_ml id_stub_iter_ml in
+  (* Create [Option.map (fun expr_stub_inner -> ...) expr.it] *)
+  let chain_map =
+    Chain.make_option_map (Ml.FieldE (expr_stub_ml, "it")) id_stub_iter_ml
+  in
   (* Create chains for option element *)
   let ctx, bindings, chain_elem =
     compile_binding ~tparams ctx expr_stub_iter_ml exp
@@ -400,23 +412,28 @@ and compile_iter_opt_binding ~(tparams : string list) (ctx : Ctx.t)
         let id_split_ml = "Option.split" ^ string_of_int arity in
         (ctx, Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]))
   in
-  (* Create [let (..._ah, ..., ..._at, ...) = ... in ...] *)
-  let chain =
-    let ids_bind_ml =
-      List.map
-        (fun ((id, iters), _) -> Names.var_of_var (id, iters @ [ Il.Opt ]))
-        bindings
-    in
-    let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
-    let pat_ml = Ml.TupleP pats_ml in
-    Chain.make_let pat_ml expr_split_ml
+  (* Bind the raw split columns, then re-wrap each to its lifted option type *)
+  let ctx, ids_raw_ml = Stub.OCaml.vars ctx "opt_col__" (List.length bindings) in
+  let chain_split =
+    let pats_ml = List.map (fun id_raw_ml -> Ml.VarP id_raw_ml) ids_raw_ml in
+    Chain.make_let (Ml.TupleP pats_ml) expr_split_ml
   in
+  let chains_wrap =
+    List.map2
+      (fun ((id, iters), _, typ) id_raw_ml ->
+        let id_lift_ml = Names.var_of_var (id, iters @ [ Il.Opt ]) in
+        let typ_opt = Il.IterT (typ, Il.Opt) $ typ.at in
+        Chain.make_let (Ml.VarP id_lift_ml)
+          (Wrap.compile_mk_wrap ~tparams ctx typ_opt (Ml.VarE id_raw_ml)))
+      bindings ids_raw_ml
+  in
+  let chain = Chain.connect (chain_split :: chains_wrap) in
   (* Lift bindings *)
   let bindings_lift =
     List.map
-      (fun ((id, iters), _) ->
+      (fun ((id, iters), _, typ) ->
         let id_ml = Names.var_of_var (id, iters @ [ Il.Opt ]) in
-        ((id, iters @ [ Il.Opt ]), id_ml))
+        ((id, iters @ [ Il.Opt ]), id_ml, Il.IterT (typ, Il.Opt) $ typ.at))
       bindings
   in
   (ctx, bindings_lift, chain)
@@ -442,8 +459,10 @@ and compile_iter_list_binding ~(tparams : string list) (ctx : Ctx.t)
   (* Create stub expression for list element *)
   let ctx, id_stub_iter_ml = Stub.OCaml.var ctx "elem_list__" in
   let expr_stub_iter_ml = Ml.VarE id_stub_iter_ml in
-  (* Create [List.map (fun expr_stub_inner -> ...) expr] *)
-  let chain_map = Chain.make_list_map expr_stub_ml id_stub_iter_ml in
+  (* Create [List.map (fun expr_stub_inner -> ...) expr.it] *)
+  let chain_map =
+    Chain.make_list_map (Ml.FieldE (expr_stub_ml, "it")) id_stub_iter_ml
+  in
   (* Create chains for list element *)
   let ctx, bindings, chain_elem =
     compile_binding ~tparams ctx expr_stub_iter_ml exp
@@ -468,23 +487,28 @@ and compile_iter_list_binding ~(tparams : string list) (ctx : Ctx.t)
         let id_split_ml = "List.split" ^ string_of_int arity in
         (ctx, Ml.AppE (Ml.VarE id_split_ml, [ expr_bind_ml ]))
   in
-  (* Create [let (..._a, ..., ..._z) = ... in ...] *)
-  let chain =
-    let ids_bind_ml =
-      List.map
-        (fun ((id, iters), _) -> Names.var_of_var (id, iters @ [ Il.List ]))
-        bindings
-    in
-    let pats_ml = List.map (fun id_bind_ml -> Ml.VarP id_bind_ml) ids_bind_ml in
-    let pat_ml = Ml.TupleP pats_ml in
-    Chain.make_let pat_ml expr_split_ml
+  (* Bind the raw split columns, then re-wrap each to its lifted list type *)
+  let ctx, ids_raw_ml = Stub.OCaml.vars ctx "list_col__" (List.length bindings) in
+  let chain_split =
+    let pats_ml = List.map (fun id_raw_ml -> Ml.VarP id_raw_ml) ids_raw_ml in
+    Chain.make_let (Ml.TupleP pats_ml) expr_split_ml
   in
+  let chains_wrap =
+    List.map2
+      (fun ((id, iters), _, typ) id_raw_ml ->
+        let id_lift_ml = Names.var_of_var (id, iters @ [ Il.List ]) in
+        let typ_list = Il.IterT (typ, Il.List) $ typ.at in
+        Chain.make_let (Ml.VarP id_lift_ml)
+          (Wrap.compile_mk_wrap ~tparams ctx typ_list (Ml.VarE id_raw_ml)))
+      bindings ids_raw_ml
+  in
+  let chain = Chain.connect (chain_split :: chains_wrap) in
   (* Lift bindings *)
   let bindings_lift =
     List.map
-      (fun ((id, iters), _) ->
+      (fun ((id, iters), _, typ) ->
         let id_ml = Names.var_of_var (id, iters @ [ Il.List ]) in
-        ((id, iters @ [ Il.List ]), id_ml))
+        ((id, iters @ [ Il.List ]), id_ml, Il.IterT (typ, Il.List) $ typ.at))
       bindings
   in
   (ctx, bindings_lift, chain)
@@ -497,7 +521,7 @@ and compile_iter_binding ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
   with
   | Some var ->
       let id_ml = Names.var_of_var var in
-      let binding = (var, id_ml) in
+      let binding = (var, id_ml, typ_exp) in
       let chain = Chain.make_let (Ml.VarP id_ml) expr_stub_ml in
       (ctx, [ binding ], chain)
   | None -> (
@@ -511,6 +535,7 @@ and compile_iter_binding ~(tparams : string list) (ctx : Ctx.t) (typ_exp : typ)
 let compile ~(tparams : string list) (ctx : Ctx.t) (expr_stub_ml : Ml.expr)
     (exp : exp) : Ctx.t * Chain.t =
   let ctx, bindings, chain = compile_binding ~tparams ctx expr_stub_ml exp in
-  let vars, ids_ml = List.split bindings in
+  let vars = List.map (fun (var, _, _) -> var) bindings in
+  let ids_ml = List.map (fun (_, id_ml, _) -> id_ml) bindings in
   let ctx = Ctx.add_bindings ctx vars ids_ml in
   (ctx, chain)
