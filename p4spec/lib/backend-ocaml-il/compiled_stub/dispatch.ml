@@ -29,3 +29,20 @@ let eval_program (_relname : string) (_includes : string list) (_path : string)
 
 let unmarshal_program (_value : Value.t) : Value.t =
   failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
+
+(* Typed bridges re-exported by the real Dispatch from the generated parts.
+   Stubbed here so the [spec_parts_il] surface stays stable when the stub is in
+   place (`make build`), letting [Val_native] bind them. *)
+
+let marshal_typed (_typ : Typ.t) (_x : Obj.t) : Value.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
+
+let unmarshal_typed (_typ : Typ.t) (_v : Value.t) : Obj.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
+
+let case_of_typed (_x : Obj.t) (_typ : Lang.Il.typ) : Obj.t Domain.Mixfix.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
+
+let make_case_typed (_mixop : Lang.Il.mixop) (_args : Obj.t list)
+    (_typ : Lang.Il.typ) : Obj.t =
+  failwith "ML interpreter: run `make gen-ocaml-il` to generate it"
