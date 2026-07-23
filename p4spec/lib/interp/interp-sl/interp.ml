@@ -1282,7 +1282,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     |> List.fold_left
          (fun flow_pre (tail, instr) ->
            match flow_pre with
-           | Flow.Cont _ -> eval_instr ~tail ctx instr
+           | Flow.Cont traces_pre -> (
+               match eval_instr ~tail ctx instr with
+               | Flow.Cont traces_post ->
+                   (* Retain the deeper trace chain,
+                      to report the branch that progressed furthest *)
+                   let traces =
+                     if List.length traces_post >= List.length traces_pre then
+                       traces_post
+                     else traces_pre
+                   in
+                   Flow.Cont traces
+               | flow_post -> flow_post)
            | _ -> flow_pre)
          (Flow.Cont [])
 
@@ -1375,7 +1386,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block ~tail ctx block_then else Cont []
+    if cond then eval_block ~tail ctx block_then
+    else
+      let trace =
+          ( exp_cond.at,
+            fun () ->
+              F.asprintf "condition %s was not met"
+                (Sl.Print.string_of_exp exp_cond) )
+      in
+      Cont [ trace ]
 
   (* Hold instruction evaluation *)
 
@@ -1484,11 +1503,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           eval_block ~tail ctx block_not_hold)
     | HoldH (block_hold, dangle) ->
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
-        if cond then eval_block ~tail ctx block_hold else Cont []
+        if cond then eval_block ~tail ctx block_hold
+        else
+          let trace =
+            (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
+          in
+          Cont [ trace ]
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
-        if not cond then eval_block ~tail ctx block_not_hold else Cont []
+        if not cond then eval_block ~tail ctx block_not_hold
+        else
+          let trace =
+            ( id.at,
+              fun () -> F.asprintf "condition not-hold %s was not met" id.it )
+          in
+          Cont [ trace ]
 
   (* Case analysis instruction evaluation *)
 
@@ -1538,7 +1568,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Evaluate the matching case if any *)
     match block_opt with
     | Some block -> eval_block ~tail ctx block
-    | None -> Cont []
+    | None ->
+        let trace =
+          ( exp.at,
+            fun () ->
+              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp) )
+        in
+        Cont [ trace ]
 
   (* Group instruction evaluation *)
 
