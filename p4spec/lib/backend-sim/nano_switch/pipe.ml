@@ -39,7 +39,7 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     in
     Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
 
-  let eval_extern_func_lctk_call =
+  let eval_extern_func_lctk_call _ =
     error_no_region
       "eval_extern_func_lctk_call is not implemented for the nano-switch \
        simulator"
