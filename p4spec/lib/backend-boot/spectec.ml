@@ -11,7 +11,11 @@ open Util.Source
 
 let typ_funccache = Typ.Make.var ("funccache" $ no_region) []
 let typ_relcache = Typ.Make.var ("relcache" $ no_region) []
-let typ_valres = Typ.Make.var ("res" $ no_region) []
+
+(* Declared aliases [valres = res<val>] / [valsres = res<val*>], keyed by their
+   alias name so [make_case_typed] resolves the OK ctor and payload shape. *)
+let typ_valres = Typ.Make.var ("valres" $ no_region) []
+let typ_valsres = Typ.Make.var ("valsres" $ no_region) []
 
 (* A wrapper for SpecTec interfaces, providing apis for caching boot/unboots *)
 
@@ -315,7 +319,7 @@ module Make_parametric
     in
     let vt_output = Interface_SpecTec.boot_values values_output in
     let value_values_output_res =
-      V.Make.("OK val*" <| [ vt_output ] <<| typ_valres) |> V.to_value
+      V.Make.("OK val*" <| [ vt_output ] <<| typ_valsres) |> V.to_value
     in
     Interface_SpecTec.pop_cache ();
     [ value_values_output_res ]
