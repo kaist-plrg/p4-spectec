@@ -2,10 +2,10 @@ open Domain.Lib
 open Lang
 module Value = Runtime.Value
 module Dep = Runtime.Testgen_neg.Dep
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 module ICov = Coverage.Instr.Single
 
-type spec = Sim.spec
+type spec = Run.spec
 
 (* Handler signature *)
 

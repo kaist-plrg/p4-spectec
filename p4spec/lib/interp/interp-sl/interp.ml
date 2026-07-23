@@ -4,15 +4,12 @@ open Lib
 open Lang
 open Xl
 open Sl
-module ICov_single = Coverage.Instr.Single
-module ICov_multi = Coverage.Instr.Multi
-module DCov_single = Coverage.Dangling.Single
-module DCov_multi = Coverage.Dangling.Multi
 module Type = Runtime.Type
 module Typ = Type.Typ
+module CCache = Runtime.Dynamic.Caches.CallCache
 open Runtime.Dynamic_Sl
 open Envs
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
 open Interp_common.Error
@@ -24,136 +21,257 @@ open Util.Source
 
 (* Cache *)
 
-let func_cache = ref (Cache.Cache.create ~size:10000)
-let rel_cache = ref (Cache.Cache.create ~size:10000)
+(* Interpreter *)
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
+module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
+  Run.INTERP_SL = struct
+  (* Build context *)
+
+  module Ctx = Ctx.Make ()
+
+  (* Build caches *)
+
+  let func_cache = ref (CCache.create ~size:(256 * 1024))
+  let rel_cache = ref (CCache.create ~size:(256 * 1024))
+  let sub_cache = Hashtbl.create 4096
+
+  (* Cache toggle *)
+
+  let cache_enabled = ref false
+
+  module Cache = struct
+    let cache_on () =
+      cache_enabled := true;
+      Extern.Cache.cache_on ()
+
+    let cache_off () =
+      cache_enabled := false;
+      Extern.Cache.cache_off ()
+  end
+
+  (* Function/relation result *)
+
+  type func_result =
+    | Return of value
+    | Tailcall_func of id * targ list * value list
+
+  type rel_result = Result of value list | Tailcall_rel of id * value list
+
   (* Checkers *)
+
+  let check_guard = ref true
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
       unit =
-    let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
-    let typs = Mixfix.args nottyp.it in
-    let typs = List.map (fun i -> List.nth typs i) inputs in
-    check
-      (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typs values_input)
-      id_rel.at
-      (F.sprintf "relation input of %s does not match the expected type"
-         id_rel.it)
+    if not !check_guard then ()
+    else
+      let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
+      let typs = Mixfix.args nottyp.it in
+      let typs = List.map (fun i -> List.nth typs i) inputs in
+      check
+        (Value.Match.subs (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typs values_input)
+        id_rel.at
+        (F.sprintf "relation input of %s does not match the expected type"
+           id_rel.it)
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
       (inputs : Hints.Input.t) (values_output : value list) : unit =
-    let typs = Mixfix.args nottyp.it in
-    let typs =
-      typs
-      |> List.mapi (fun idx typ ->
-             if List.mem idx inputs then None else Some typ)
-      |> List.filter_map Fun.id
-    in
-    check
-      (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typs values_output)
-      id_rel.at
-      (F.sprintf "relation output of %s does not match the expected type"
-         id_rel.it)
+    if not !check_guard then ()
+    else
+      let typs = Mixfix.args nottyp.it in
+      let typs =
+        typs
+        |> List.mapi (fun idx typ ->
+               if List.mem idx inputs then None else Some typ)
+        |> List.filter_map Fun.id
+      in
+      check
+        (Value.Match.subs (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typs values_output)
+        id_rel.at
+        (F.sprintf "relation output of %s does not match the expected type"
+           id_rel.it)
 
   let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
       (values_input : value list) : unit =
-    let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
-    check
-      (List.length targs = List.length tparams)
-      id_func.at
-      (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
-    let tdenv_local =
-      List.fold_left2
-        (fun tdenv_local tparam targ ->
-          let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
-          TDEnv.add tparam td tdenv_local)
-        TDEnv.empty tparams targs
-    in
-    let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
-    check
-      (Value.Match.subs
-         (Ctx.find_typdef_opt ctx_local)
-         (Ctx.find_func_signature ctx_local)
-         typs_params values_input)
-      id_func.at
-      (F.sprintf "function argument of %s does not match the parameter type"
-         id_func.it)
+    if not !check_guard then ()
+    else
+      let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
+      check
+        (List.length targs = List.length tparams)
+        id_func.at
+        (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
+      let tdenv_local =
+        List.fold_left2
+          (fun tdenv_local tparam targ ->
+            let td = Type.Typdef.Defined ([], Il.PlainT targ $ targ.at) in
+            TDEnv.add tparam td tdenv_local)
+          TDEnv.empty tparams targs
+      in
+      let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
+      check
+        (Value.Match.subs
+           (Ctx.find_typdef_opt ctx_local)
+           (Ctx.find_func_signature ctx_local)
+           typs_params values_input)
+        id_func.at
+        (F.sprintf "function argument of %s does not match the parameter type"
+           id_func.it)
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
-    let theta = TIdMap.of_lists tparams targs in
-    let typ_output = Type.Subst.subst_typ theta typ_output in
-    check
-      (Value.Match.sub (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
-         typ_output value_output)
-      id_func.at
-      (F.sprintf "return value of function %s does not match the expected type"
-         id_func.it)
+    if not !check_guard then ()
+    else
+      let theta = TIdMap.of_lists tparams targs in
+      let typ_output = Type.Subst.subst_typ theta typ_output in
+      check
+        (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+           (Ctx.find_func_signature ctx)
+           typ_output value_output)
+        id_func.at
+        (F.sprintf
+           "return value of function %s does not match the expected type"
+           id_func.it)
+
+  (* Helper for checking if an expression is a simple iteration of a variable *)
+
+  let rec is_iter_var_exp (exp : exp) : Var.t option =
+    match exp.it with
+    | VarE id_exp -> Some (id_exp, [])
+    | IterE (exp_inner, iterexp) -> (
+        match is_iter_var_exp exp_inner with
+        | Some (id_var, iters_var) -> (
+            match iterexp with
+            | iter, [ var ] ->
+                let id_iter, _, iters_iter = var in
+                if Id.eq id_var id_iter && iters_var = iters_iter then
+                  Some (id_var, iters_var @ [ iter ])
+                else None
+            | _ -> None)
+        | None -> None)
+    | _ -> None
 
   (* Assignments *)
 
   (* Assigning a value to an expression *)
 
   let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
-    let typ_value = value.note.typ $ exp.at in
+    let typ_exp = exp.note $ exp.at in
     match (exp.it, value.it) with
-    | VarE id, _ -> Ctx.add_value ctx (id, []) value
+    | VarE id, _ -> assign_var_exp ctx id value
     | TupleE exps_inner, TupleV values_inner ->
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
-    | CaseE notexp, CaseV valuecase ->
-        let exps_inner = Mixfix.args notexp in
-        let values_inner = Mixfix.args valuecase in
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
+        assign_tuple_exp value ctx exps_inner values_inner
+    | CaseE notexp, CaseV valucase -> assign_case_exp value ctx notexp valucase
     | StrE expfields, StructV valuefields ->
-        let exps_inner = List.map snd expfields in
-        let values_inner = List.map snd valuefields in
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
-    | OptE exp_opt, OptV value_opt -> (
-        match (exp_opt, value_opt) with
-        | Some exp_inner, Some value_inner ->
-            let ctx = assign_exp ctx exp_inner value_inner in
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign;
-            ctx
-        | None, None -> ctx
-        | _ -> assert false)
+        assign_str_exp value ctx expfields valuefields
+    | OptE exp_opt, OptV value_opt -> assign_opt_exp value ctx exp_opt value_opt
     | ListE exps_inner, ListV values_inner ->
-        let ctx = assign_exps ctx exps_inner values_inner in
-        List.iter
-          (fun value_inner ->
-            Hook.on_value_dependency value_inner value Dep.Edges.Assign)
-          values_inner;
-        ctx
+        assign_list_exp value ctx exps_inner values_inner
     | ConsE (exp_h, exp_t), ListV values_inner ->
-        let value_h = List.hd values_inner in
-        let value_t = Value.Make.list typ_value (List.tl values_inner) in
-        Hook.on_value value_t;
-        let ctx = assign_exp ctx exp_h value_h in
-        Hook.on_value_dependency value_h value Dep.Edges.Assign;
-        let ctx = assign_exp ctx exp_t value_t in
-        Hook.on_value_dependency value_t value Dep.Edges.Assign;
+        assign_cons_exp value ctx exp_h exp_t values_inner
+    | IterE (exp_inner, iterexp), _ ->
+        assign_iter_exp typ_exp ctx exp_inner iterexp value
+    | _ ->
+        back_err exp.at
+          (F.asprintf "match failed %s <- %s"
+             (Sl.Print.string_of_exp exp)
+             (Sl.Print.string_of_value ~short:true value))
+
+  and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) : Ctx.t
+      =
+    check_back_err
+      (List.length exps = List.length values)
+      (over_region (List.map at exps))
+      (F.asprintf
+         "mismatch in number of expressions and values while assigning, \
+          expected %d value(s) but got %d"
+         (List.length exps) (List.length values));
+    List.fold_left2 assign_exp ctx exps values
+
+  and assign_var_exp (ctx : Ctx.t) (id : id) (value : value) : Ctx.t =
+    Ctx.add_value ctx (id, []) value
+
+  and assign_tuple_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_case_exp (value_outer : value) (ctx : Ctx.t) (notexp : notexp)
+      (valuecase : valuecase) : Ctx.t =
+    let exps = Mixfix.args notexp in
+    let values = Mixfix.args valuecase in
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_str_exp (value_outer : value) (ctx : Ctx.t)
+      (expfields : (atom * exp) list) (valuefields : (atom * value) list) :
+      Ctx.t =
+    let exps = List.map snd expfields in
+    let values = List.map snd valuefields in
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_opt_exp (value_outer : value) (ctx : Ctx.t) (exp_opt : exp option)
+      (value_opt : value option) : Ctx.t =
+    match (exp_opt, value_opt) with
+    | Some exp_inner, Some value_inner ->
+        let ctx = assign_exp ctx exp_inner value_inner in
+        Hook.on_value_dependency value_inner value_outer Dep.Edges.Assign;
         ctx
-    | IterE (_, (Opt, vars)), OptV None ->
+    | None, None -> ctx
+    | _ -> assert false
+
+  and assign_list_exp (value_outer : value) (ctx : Ctx.t) (exps : exp list)
+      (values : value list) : Ctx.t =
+    let ctx = assign_exps ctx exps values in
+    List.iter
+      (fun value -> Hook.on_value_dependency value value_outer Dep.Edges.Assign)
+      values;
+    ctx
+
+  and assign_cons_exp (value_outer : value) (ctx : Ctx.t) (exp_h : exp)
+      (exp_t : exp) (values : value list) : Ctx.t =
+    let value_h = List.hd values in
+    let value_t =
+      Value.Make.list (value_outer.note.typ $ exp_t.at) (List.tl values)
+    in
+    Hook.on_value value_t;
+    let ctx = assign_exp ctx exp_h value_h in
+    Hook.on_value_dependency value_h value_outer Dep.Edges.Assign;
+    let ctx = assign_exp ctx exp_t value_t in
+    Hook.on_value_dependency value_t value_outer Dep.Edges.Assign;
+    ctx
+
+  and assign_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    let value_opt = Value.Get.opt value in
+    match value_opt with
+    | Some value ->
+        (* Assign the value to the iterated expression *)
+        let ctx_sub = assign_exp ctx exp value in
+        (* Per iterated variable, make an option out of the value *)
+        List.fold_left
+          (fun ctx (id, typ, iters) ->
+            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
+            let value = Ctx.find_value ctx_sub (id, iters) in
+            let value_sub = Value.Make.opt typ (Some value) in
+            Hook.on_value value_sub;
+            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
+            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
+          ctx vars
+    | None ->
         (* Per iterated variable, make an option out of the value *)
         List.fold_left
           (fun ctx (id, typ, iters) ->
@@ -163,58 +281,39 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_sub value Dep.Edges.Assign;
             Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
           ctx vars
-    | IterE (exp, (Opt, vars)), OptV (Some value) ->
-        (* Assign the value to the iterated expression *)
-        let ctx = assign_exp ctx exp value in
-        (* Per iterated variable, make an option out of the value *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Il.Opt ]) in
-            let value = Ctx.find_value ctx (id, iters) in
-            let value_sub = Value.Make.opt typ (Some value) in
-            Hook.on_value value_sub;
-            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value ctx (id, iters @ [ Il.Opt ]) value_sub)
-          ctx vars
-    | IterE (exp, (List, vars)), ListV values ->
-        (* Map over the value list elements,
-           and assign each value to the iterated expression *)
-        let ctxs =
-          List.map
-            (fun value ->
-              let ctx_sub = Ctx.localize_clear ctx in
-              assign_exp ctx_sub exp value)
-            values
-        in
-        (* Per iterated variable, collect its elementwise value,
-           then make a sequence out of them *)
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Il.List ]) in
-            let values =
-              List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
-            in
-            let value_sub = Value.Make.list typ values in
-            Hook.on_value value_sub;
-            Hook.on_value_dependency value_sub value Dep.Edges.Assign;
-            Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
-          ctx vars
-    | _ ->
-        back_err exp.at
-          (F.asprintf "match failed %s <- %s"
-             (Sl.Print.string_of_exp exp)
-             (Sl.Print.string_of_value ~short:true value))
 
-  and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) : Ctx.t
-      =
-    if List.length exps <> List.length values then
-      back_err
-        (over_region (List.map at exps))
-        (F.asprintf
-           "mismatch in number of expressions and values while assigning, \
-            expected %d value(s) but got %d"
-           (List.length exps) (List.length values));
-    List.fold_left2 assign_exp ctx exps values
+  and assign_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list)
+      (value : value) : Ctx.t =
+    let values = Value.Get.list value in
+    (* Map over the value list elements,
+       and assign each value to the iterated expression *)
+    let ctx_sub = Ctx.localize_clear ctx in
+    let ctxs_sub = List.map (assign_exp ctx_sub exp) values in
+    (* Per iterated variable, collect its elementwise value,
+       then make a sequence out of them *)
+    List.fold_left
+      (fun ctx (id, typ, iters) ->
+        let typ = Typ.Make.iterate typ (iters @ [ Il.List ]) in
+        let values =
+          List.map (fun ctx_sub -> Ctx.find_value ctx_sub (id, iters)) ctxs_sub
+        in
+        let value_sub = Value.Make.list typ values in
+        Hook.on_value value_sub;
+        Hook.on_value_dependency value_sub value Dep.Edges.Assign;
+        Ctx.add_value ctx (id, iters @ [ Il.List ]) value_sub)
+      ctx vars
+
+  and assign_iter_exp (typ_exp : typ) (ctx : Ctx.t) (exp : exp)
+      (iterexp : iterexp) (value : value) : Ctx.t =
+    match
+      is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
+    with
+    | Some (id_var, iters_var) -> Ctx.add_value ctx (id_var, iters_var) value
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> assign_iter_exp_opt ctx exp vars value
+        | List -> assign_iter_exp_list ctx exp vars value)
 
   (* Assigning a value to a parameter *)
 
@@ -226,13 +325,13 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
-    if List.length params <> List.length values then
-      back_err
-        (over_region (List.map at params))
-        (F.asprintf
-           "mismatch in number of parameters and values while assigning, \
-            expected %d value(s) but got %d"
-           (List.length params) (List.length values));
+    check_back_err
+      (List.length params = List.length values)
+      (over_region (List.map at params))
+      (F.asprintf
+         "mismatch in number of parameters and values while assigning, \
+          expected %d value(s) but got %d"
+         (List.length params) (List.length values));
     List.fold_left2 (assign_param ctx_caller) ctx_callee params values
 
   and assign_param_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
@@ -265,88 +364,82 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
      Note that structs are invariant in SpecTec, so we do not need to check for subtyping *)
 
   let rec eval_exp (ctx : Ctx.t) (exp : exp) : value =
-    try eval_exp' ctx exp
+    try
+      let typ_note = exp.note $ exp.at in
+      match exp.it with
+      | BoolE b -> eval_bool_exp ctx b
+      | NumE n -> eval_num_exp ctx n
+      | TextE s -> eval_text_exp ctx s
+      | VarE id -> eval_var_exp ctx id
+      | UnE (unop, optyp, exp) -> eval_un_exp ctx unop optyp exp
+      | BinE (binop, optyp, exp_l, exp_r) ->
+          eval_bin_exp ctx binop optyp exp_l exp_r
+      | CmpE (cmpop, optyp, exp_l, exp_r) ->
+          eval_cmp_exp ctx cmpop optyp exp_l exp_r
+      | UpCastE (typ, exp) -> eval_upcast_exp ctx typ exp
+      | DownCastE (typ, exp) -> eval_downcast_exp ctx typ exp
+      | SubE (exp, typ) -> eval_sub_exp ctx exp typ
+      | MatchE (exp, pattern) -> eval_match_exp ctx exp pattern
+      | TupleE exps -> eval_tuple_exp typ_note ctx exps
+      | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
+      | StrE fields -> eval_str_exp typ_note ctx fields
+      | OptE exp_opt -> eval_opt_exp typ_note ctx exp_opt
+      | ListE exps -> eval_list_exp typ_note ctx exps
+      | ConsE (exp_h, exp_t) -> eval_cons_exp typ_note ctx exp_h exp_t
+      | CatE (exp_l, exp_r) -> eval_cat_exp typ_note ctx exp_l exp_r
+      | MemE (exp_e, exp_s) -> eval_mem_exp ctx exp_e exp_s
+      | LenE exp -> eval_len_exp ctx exp
+      | DotE (exp_b, atom) -> eval_dot_exp typ_note ctx exp_b atom
+      | IdxE (exp_b, exp_i) -> eval_idx_exp ctx exp_b exp_i
+      | SliceE (exp_b, exp_l, exp_h) ->
+          eval_slice_exp typ_note ctx exp_b exp_l exp_h
+      | UpdE (exp_b, path, exp_f) -> eval_upd_exp ctx exp_b path exp_f
+      | CallE (id, targs, args) -> eval_call_exp ctx id targs args
+      | IterE (exp, iterexp) -> eval_iter_exp typ_note ctx exp iterexp
     with Backtrace backtrace ->
       back_nest exp.at
         (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_exp exp))
         backtrace
-
-  and eval_exp' (ctx : Ctx.t) (exp : exp) : value =
-    let typ_note = exp.note $ exp.at in
-    match exp.it with
-    | BoolE b -> eval_bool_exp typ_note ctx b
-    | NumE n -> eval_num_exp typ_note ctx n
-    | TextE s -> eval_text_exp typ_note ctx s
-    | VarE id -> eval_var_exp typ_note ctx id
-    | UnE (unop, optyp, exp) -> eval_un_exp typ_note ctx unop optyp exp
-    | BinE (binop, optyp, exp_l, exp_r) ->
-        eval_bin_exp typ_note ctx binop optyp exp_l exp_r
-    | CmpE (cmpop, optyp, exp_l, exp_r) ->
-        eval_cmp_exp typ_note ctx cmpop optyp exp_l exp_r
-    | UpCastE (typ, exp) -> eval_upcast_exp typ_note ctx typ exp
-    | DownCastE (typ, exp) -> eval_downcast_exp typ_note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp typ_note ctx exp typ
-    | MatchE (exp, pattern) -> eval_match_exp typ_note ctx exp pattern
-    | TupleE exps -> eval_tuple_exp typ_note ctx exps
-    | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
-    | StrE fields -> eval_str_exp typ_note ctx fields
-    | OptE exp_opt -> eval_opt_exp typ_note ctx exp_opt
-    | ListE exps -> eval_list_exp typ_note ctx exps
-    | ConsE (exp_h, exp_t) -> eval_cons_exp typ_note ctx exp_h exp_t
-    | CatE (exp_l, exp_r) -> eval_cat_exp typ_note ctx exp_l exp_r
-    | MemE (exp_e, exp_s) -> eval_mem_exp typ_note ctx exp_e exp_s
-    | LenE exp -> eval_len_exp typ_note ctx exp
-    | DotE (exp_b, atom) -> eval_dot_exp typ_note ctx exp_b atom
-    | IdxE (exp_b, exp_i) -> eval_idx_exp typ_note ctx exp_b exp_i
-    | SliceE (exp_b, exp_l, exp_h) ->
-        eval_slice_exp typ_note ctx exp_b exp_l exp_h
-    | UpdE (exp_b, path, exp_f) -> eval_upd_exp typ_note ctx exp_b path exp_f
-    | CallE (id, targs, args) -> eval_call_exp typ_note ctx id targs args
-    | IterE (exp, iterexp) -> eval_iter_exp typ_note ctx exp iterexp
 
   and eval_exps (ctx : Ctx.t) (exps : exp list) : value list =
     List.map (eval_exp ctx) exps
 
   (* Boolean expression evaluation *)
 
-  and eval_bool_exp (_typ_note : typ) (ctx : Ctx.t) (b : bool) : value =
+  and eval_bool_exp (ctx : Ctx.t) (b : bool) : value =
     let value_res = Value.Make.bool b in
     Hook.on_value value_res;
-    if Hook.is_active () then
-      List.iter
-        (fun value_input ->
-          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input ctx);
+    List.iter
+      (fun value_input ->
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Numeric expression evaluation *)
 
-  and eval_num_exp (_typ_note : typ) (ctx : Ctx.t) (n : Num.t) : value =
+  and eval_num_exp (ctx : Ctx.t) (n : Num.t) : value =
     let value_res = Value.Make.num n in
     Hook.on_value value_res;
-    if Hook.is_active () then
-      List.iter
-        (fun value_input ->
-          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input ctx);
+    List.iter
+      (fun value_input ->
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Text expression evaluation *)
 
-  and eval_text_exp (_typ_note : typ) (ctx : Ctx.t) (s : string) : value =
+  and eval_text_exp (ctx : Ctx.t) (s : string) : value =
     let value_res = Value.Make.text s in
     Hook.on_value value_res;
-    if Hook.is_active () then
-      List.iter
-        (fun value_input ->
-          Hook.on_value_dependency value_res value_input Dep.Edges.Control)
-        (Ctx.find_values_input ctx);
+    List.iter
+      (fun value_input ->
+        Hook.on_value_dependency value_res value_input Dep.Edges.Control)
+      (Ctx.find_values_input ctx);
     value_res
 
   (* Variable expression evaluation *)
 
-  and eval_var_exp (_typ_note : typ) (ctx : Ctx.t) (id : id) : value =
-    Ctx.find_value ctx (id, [])
+  and eval_var_exp (ctx : Ctx.t) (id : id) : value = Ctx.find_value ctx (id, [])
 
   (* Unary expression evaluation *)
 
@@ -357,8 +450,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
   and eval_un_num (unop : Num.unop) (value : value) : value =
     value |> Value.Get.num |> Num.un unop |> Value.Make.num
 
-  and eval_un_exp (_typ_note : typ) (ctx : Ctx.t) (unop : unop) (_optyp : optyp)
-      (exp : exp) : value =
+  and eval_un_exp (ctx : Ctx.t) (unop : unop) (_optyp : optyp) (exp : exp) :
+      value =
     let value = eval_exp ctx exp in
     let value_res =
       match unop with
@@ -387,8 +480,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let num_r = Value.Get.num value_r in
     Value.Make.num (Num.bin binop num_l num_r)
 
-  and eval_bin_exp (_typ_note : typ) (ctx : Ctx.t) (binop : binop)
-      (_optyp : optyp) (exp_l : exp) (exp_r : exp) : value =
+  and eval_bin_exp (ctx : Ctx.t) (binop : binop) (_optyp : optyp) (exp_l : exp)
+      (exp_r : exp) : value =
     let value_l = eval_exp ctx exp_l in
     let value_r = eval_exp ctx exp_r in
     let value_res =
@@ -416,8 +509,8 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let num_r = Value.Get.num value_r in
     Value.Make.bool (Num.cmp cmpop num_l num_r)
 
-  and eval_cmp_exp (_typ_note : typ) (ctx : Ctx.t) (cmpop : cmpop)
-      (_optyp : optyp) (exp_l : exp) (exp_r : exp) : value =
+  and eval_cmp_exp (ctx : Ctx.t) (cmpop : cmpop) (_optyp : optyp) (exp_l : exp)
+      (exp_r : exp) : value =
     let value_l = eval_exp ctx exp_l in
     let value_r = eval_exp ctx exp_r in
     let value_res =
@@ -466,10 +559,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> back_err_upcast ())
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (upcast ctx typ) value_opt in
+            let value_res = Value.Make.opt typ value_opt in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_upcast ())
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (upcast ctx typ) values in
+            let value_res = Value.Make.list typ values in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_upcast ())
     | _ -> value
 
-  and eval_upcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp) :
-      value =
+  and eval_upcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : value =
     let value = eval_exp ctx exp in
     upcast ctx typ value
 
@@ -509,20 +619,36 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
             value_res
         | _ -> back_err_downcast ())
+    | IterT (typ, Opt) -> (
+        match value.it with
+        | OptV value_opt ->
+            let value_opt = Option.map (downcast ctx typ) value_opt in
+            let value_res = Value.Make.opt typ value_opt in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_downcast ())
+    | IterT (typ, List) -> (
+        match value.it with
+        | ListV values ->
+            let values = List.map (downcast ctx typ) values in
+            let value_res = Value.Make.list typ values in
+            Hook.on_value value_res;
+            Hook.on_value_dependency value_res value (Dep.Edges.Op (CastOp typ));
+            value_res
+        | _ -> back_err_downcast ())
     | _ -> value
 
-  and eval_downcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp)
-      : value =
+  and eval_downcast_exp (ctx : Ctx.t) (typ : typ) (exp : exp) : value =
     let value = eval_exp ctx exp in
     downcast ctx typ value
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value =
+  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
     let value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub (Ctx.find_typdef_opt ctx)
+      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
         typ value
     in
@@ -533,8 +659,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Pattern match check expression evaluation *)
 
-  and eval_match_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp)
-      (pattern : pattern) : value =
+  and eval_match_exp (ctx : Ctx.t) (exp : exp) (pattern : pattern) : value =
     let value = eval_exp ctx exp in
     let matches =
       match (pattern, value.it) with
@@ -662,8 +787,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Membership expression evaluation *)
 
-  and eval_mem_exp (_typ_note : typ) (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) :
-      value =
+  and eval_mem_exp (ctx : Ctx.t) (exp_e : exp) (exp_s : exp) : value =
     let value_e = eval_exp ctx exp_e in
     let value_s = eval_exp ctx exp_s in
     let values_s = Value.Get.list value_s in
@@ -675,7 +799,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Length expression evaluation *)
 
-  and eval_len_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) : value =
+  and eval_len_exp (ctx : Ctx.t) (exp : exp) : value =
     let value = eval_exp ctx exp in
     let len =
       match value.it with
@@ -707,8 +831,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   (* Index expression evaluation *)
 
-  and eval_idx_exp (_typ_note : typ) (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) :
-      value =
+  and eval_idx_exp (ctx : Ctx.t) (exp_b : exp) (exp_i : exp) : value =
     let value_b = eval_exp ctx exp_b in
     let value_i = eval_exp ctx exp_i in
     let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
@@ -974,17 +1097,39 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         Hook.on_value value;
         eval_update_path ctx value_b path value
 
-  and eval_upd_exp (_typ_note : typ) (ctx : Ctx.t) (exp_b : exp) (path : path)
-      (exp_f : exp) : value =
+  and eval_upd_exp (ctx : Ctx.t) (exp_b : exp) (path : path) (exp_f : exp) :
+      value =
     let value_b = eval_exp ctx exp_b in
     let value_f = eval_exp ctx exp_f in
     eval_update_path ctx value_b path value_f
 
   (* Function call expression evaluation *)
 
-  and eval_call_exp (_typ_note : typ) (ctx : Ctx.t) (id : id)
-      (targs : targ list) (args : arg list) : value =
-    invoke_func ctx id targs args
+  and resolve_targs (ctx : Ctx.t) (targs : targ list) : targ list =
+    match targs with
+    | [] -> []
+    | targs ->
+        let theta =
+          let tdenv_local =
+            match ctx.local with
+            | Empty | Rel _ -> TIdMap.empty
+            | Func { tdenv; _ } -> tdenv
+          in
+          TDEnv.fold
+            (fun tid typdef theta ->
+              match typdef with
+              | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
+                  TIdMap.add tid typ theta
+              | _ -> theta)
+            tdenv_local TIdMap.empty
+        in
+        List.map (Type.Subst.subst_typ theta) targs
+
+  and eval_call_exp (ctx : Ctx.t) (id : id) (targs : targ list)
+      (args : arg list) : value =
+    let targs = resolve_targs ctx targs in
+    let values_args = eval_args ctx args in
+    invoke_func ctx id targs values_args
 
   (* Iterated expression evaluation *)
 
@@ -1021,69 +1166,73 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and eval_iter_exp (typ_note : typ) (ctx : Ctx.t) (exp : exp)
       (iterexp : iterexp) : value =
-    let iter, vars = iterexp in
-    match iter with
-    | Opt -> eval_iter_exp_opt typ_note ctx exp vars
-    | List -> eval_iter_exp_list typ_note ctx exp vars
+    match
+      is_iter_var_exp (Il.IterE (exp, iterexp) $$ (typ_note.at, typ_note.it))
+    with
+    | Some var -> Ctx.find_value ctx var
+    | None -> (
+        let iter, vars = iterexp in
+        match iter with
+        | Opt -> eval_iter_exp_opt typ_note ctx exp vars
+        | List -> eval_iter_exp_list typ_note ctx exp vars)
 
   (* Argument evaluation *)
 
   and eval_arg (ctx : Ctx.t) (arg : arg) : value =
-    try eval_arg' ctx arg
+    try
+      match arg.it with
+      | ExpA exp -> eval_exp ctx exp
+      | DefA id ->
+          let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
+          let value_res = Value.Make.func id tparams typs_params typ in
+          Hook.on_value value_res;
+          value_res
     with Backtrace backtrace ->
       back_nest arg.at
         (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_arg arg))
         backtrace
-
-  and eval_arg' (ctx : Ctx.t) (arg : arg) : value =
-    match arg.it with
-    | ExpA exp -> eval_exp ctx exp
-    | DefA id ->
-        let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
-        let value_res = Value.Make.func id tparams typs_params typ in
-        Hook.on_value value_res;
-        value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list =
     List.map (eval_arg ctx) args
 
   (* Instruction evaluation *)
 
-  and eval_instr (ctx : Ctx.t) (instr : instr) : Flow.t =
+  and eval_instr ~(tail : bool) (ctx : Ctx.t) (instr : instr) : Flow.t =
     Hook.on_instr instr;
-    try eval_instr' ctx instr
+    try
+      let iid = instr.note.iid in
+      match instr.it with
+      | IfI (exp_cond, iterexps, block_then, dangle) ->
+          eval_if_instr ~tail iid ctx exp_cond iterexps block_then dangle
+      | HoldI (id, notexp, iterexps, holdcase) ->
+          eval_hold_instr ~tail iid ctx id notexp iterexps holdcase
+      | CaseI (exp, cases, dangle) ->
+          eval_case_instr ~tail iid ctx exp cases dangle
+      | GroupI (id_group, rel_signature, exps_group, block) ->
+          eval_group_instr ~tail ctx id_group rel_signature exps_group block
+      | LetI (exp_l, exp_r, iterinstrs, block) ->
+          eval_let_instr ~tail ctx exp_l exp_r iterinstrs block
+      | RuleI (id, notexp, inputs, iterinstrs, block) ->
+          eval_rule_instr ~tail ctx id notexp inputs iterinstrs block
+      | ResultI (rel_signature, exps) ->
+          eval_result_instr ~tail ctx rel_signature exps
+      | ReturnI exp -> eval_return_instr ~tail ctx exp
+      | DebugI (exp, instr) -> eval_debug_instr ~tail ctx exp instr
     with Backtrace backtrace ->
       backtrace
-      |> back_nest instr.at (fun () ->
-             F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+      |> back_nest instr.at
+           (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
-  and eval_instr' (ctx : Ctx.t) (instr : instr) : Flow.t =
-    let iid = instr.note.iid in
-    match instr.it with
-    | IfI (exp_cond, iterexps, block_then, dangle) ->
-        eval_if_instr iid ctx exp_cond iterexps block_then dangle
-    | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr iid ctx id notexp iterexps holdcase
-    | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
-    | GroupI (id_group, rel_signature, exps_group, block) ->
-        eval_group_instr ctx id_group rel_signature exps_group block
-    | LetI (exp_l, exp_r, iterinstrs, block) ->
-        eval_let_instr ctx exp_l exp_r iterinstrs block
-    | RuleI (id, notexp, inputs, iterinstrs, block) ->
-        eval_rule_instr ctx id notexp inputs iterinstrs block
-    | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
-    | ReturnI exp -> eval_return_instr ctx exp
-    | DebugI (exp, instr) -> eval_debug_instr ctx exp instr
+  and eval_block ~(tail : bool) (ctx : Ctx.t) (block : block) : Flow.t =
+    if !Ctx.is_det then eval_block_deterministic ~tail ctx block
+    else eval_block_sequential ~tail ctx block
 
-  and eval_block (ctx : Ctx.t) (block : block) : Flow.t =
-    if !Ctx.is_det then eval_block_deterministic ctx block
-    else eval_block_sequential ctx block
-
-  and eval_block_deterministic (ctx : Ctx.t) (block : block) : Flow.t =
+  and eval_block_deterministic ~(tail : bool) (ctx : Ctx.t) (block : block) :
+      Flow.t =
     let eval_instr_deterministic (flow_pre : Flow.t) (instr : instr) : Flow.t =
       let open Flow in
       try
-        let flow_post = eval_instr ctx instr in
+        let flow_post = eval_instr ~tail ctx instr in
         match flow_pre with
         | Cont traces_pre -> (
             match flow_post with
@@ -1093,12 +1242,30 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> nondet instr.at
-            | Ret _ -> back_err instr.at "cannot have both result and return")
+            | Ret _ -> back_err instr.at "cannot have both result and return"
+            | Tailcall_func _ | Tailcall_rel _ ->
+                back_err instr.at "cannot have both result and tail call")
         | Ret _ -> (
             match flow_post with
             | Cont _ -> flow_pre
             | Res _ -> back_err instr.at "cannot have both return and result"
-            | Ret _ -> nondet instr.at)
+            | Ret _ -> nondet instr.at
+            | Tailcall_func _ | Tailcall_rel _ ->
+                back_err instr.at "cannot have both return and tail call")
+        | Tailcall_func _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ -> back_err instr.at "cannot have both tail call and result"
+            | Ret _ -> back_err instr.at "cannot have both tail call and return"
+            | Tailcall_func _ | Tailcall_rel _ -> nondet instr.at)
+        | Tailcall_rel _ -> (
+            match flow_post with
+            | Cont _ -> flow_pre
+            | Res _ ->
+                back_err instr.at "cannot have both rel tail call and result"
+            | Ret _ ->
+                back_err instr.at "cannot have both rel tail call and return"
+            | Tailcall_func _ | Tailcall_rel _ -> nondet instr.at)
       with Backtrace (Unmatch _) -> flow_pre
     in
     try
@@ -1107,20 +1274,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         (Flow.Cont []) block
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
-  and eval_block_sequential (ctx : Ctx.t) (block : block) : Flow.t =
-    List.fold_left
-      (fun flow_pre instr ->
-        match flow_pre with
-        | Flow.Cont _ -> eval_instr ctx instr
-        | _ -> flow_pre)
-      (Flow.Cont []) block
+  and eval_block_sequential ~(tail : bool) (ctx : Ctx.t) (block : block) :
+      Flow.t =
+    block
+    |> List.mapi (fun idx instr ->
+           if idx = List.length block - 1 then (tail, instr) else (false, instr))
+    |> List.fold_left
+         (fun flow_pre (tail, instr) ->
+           match flow_pre with
+           | Flow.Cont _ -> eval_instr ~tail ctx instr
+           | _ -> flow_pre)
+         (Flow.Cont [])
 
-  and eval_elseblock_opt (ctx : Ctx.t) (flow : Flow.t)
+  and eval_elseblock_opt ~(tail : bool) (ctx : Ctx.t) (flow : Flow.t)
       (elseblock_opt : elseblock option) : Flow.t =
     match flow with
     | Flow.Cont traces -> (
         match elseblock_opt with
-        | Some block_else -> eval_block ctx block_else
+        | Some block_else -> eval_block ~tail ctx block_else
         | None -> Flow.Cont traces)
     | _ -> flow
 
@@ -1197,14 +1368,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterexps = List.rev iterexps in
     eval_if_cond_iter' ctx exp_cond iterexps
 
-  and eval_if_instr (iid : iid) (ctx : Ctx.t) (exp_cond : exp)
+  and eval_if_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (exp_cond : exp)
       (iterexps : iterexp list) (block_then : block) (dangle : dangle) : Flow.t
       =
     (* Evaluate the if condition and mark dangle *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block ctx block_then else Cont []
+    if cond then eval_block ~tail ctx block_then else Cont []
 
   (* Hold instruction evaluation *)
 
@@ -1218,9 +1389,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       with
       | Backtrace (Unmatch _) -> false
       | Backtrace backtrace ->
-          back_nest id.at
-            (fun () -> "hold condition evaluation failed")
-            backtrace
+          back_nest id.at (fun () -> "hold condition evaluation failed") backtrace
     in
     let value_res = Value.Make.bool hold in
     Hook.on_value value_res;
@@ -1296,8 +1465,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterexps = List.rev iterexps in
     eval_hold_cond_iter' ctx id notexp iterexps
 
-  and eval_hold_instr (iid : iid) (ctx : Ctx.t) (id : id) (notexp : notexp)
-      (iterexps : iterexp list) (holdcase : holdcase) : Flow.t =
+  and eval_hold_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (id : id)
+      (notexp : notexp) (iterexps : iterexp list) (holdcase : holdcase) : Flow.t
+      =
     (* Backup in case of failure *)
     Hook.backup ();
     (* Evaluate the hold condition *)
@@ -1306,17 +1476,17 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
        if the expected behavior is the relation not holding *)
     match holdcase with
     | BothH (block_hold, block_not_hold) ->
-        if cond then eval_block ctx block_hold
+        if cond then eval_block ~tail ctx block_hold
         else (
           Hook.restore ();
-          eval_block ctx block_not_hold)
+          eval_block ~tail ctx block_not_hold)
     | HoldH (block_hold, dangle) ->
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
-        if cond then eval_block ctx block_hold else Cont []
+        if cond then eval_block ~tail ctx block_hold else Cont []
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
-        if not cond then eval_block ctx block_not_hold else Cont []
+        if not cond then eval_block ~tail ctx block_not_hold else Cont []
 
   (* Case analysis instruction evaluation *)
 
@@ -1356,22 +1526,24 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     Hook.on_value value_cond;
     (block_match, value_cond)
 
-  and eval_case_instr (iid : iid) (ctx : Ctx.t) (exp : exp) (cases : case list)
-      (dangle : dangle) : Flow.t =
+  and eval_case_instr ~(tail : bool) (iid : iid) (ctx : Ctx.t) (exp : exp)
+      (cases : case list) (dangle : dangle) : Flow.t =
     (* Evaluate the matching case and mark dangle *)
     let block_opt, value_cond = eval_cases ctx exp cases in
     (if dangle then
        let matched = Option.is_some block_opt in
        Hook.on_instr_dangling (not matched) iid value_cond);
     (* Evaluate the matching case if any *)
-    match block_opt with Some block -> eval_block ctx block | None -> Cont []
+    match block_opt with
+    | Some block -> eval_block ~tail ctx block
+    | None -> Cont []
 
   (* Group instruction evaluation *)
 
-  and eval_group_instr (ctx : Ctx.t) (_id_group : id)
+  and eval_group_instr ~(tail : bool) (ctx : Ctx.t) (_id_group : id)
       (_rel_signature : rel_signature) (_exps_group : exp list)
       (block : instr list) : Flow.t =
-    eval_block ctx block
+    eval_block ~tail ctx block
 
   (* Let instruction evaluation *)
 
@@ -1507,11 +1679,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_let_iter' ctx exp_l exp_r iterinstrs
 
-  and eval_let_instr (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
+  and eval_let_instr ~(tail : bool) (ctx : Ctx.t) (exp_l : exp) (exp_r : exp)
       (iterinstrs : iterinstr list) (block : block) : Flow.t =
     try
       let ctx = eval_let_iter ctx exp_l exp_r iterinstrs in
-      eval_block ctx block
+      eval_block ~tail ctx block
     with Backtrace (Unmatch traces) -> Cont traces
 
   (* Rule instruction evaluation *)
@@ -1638,34 +1810,51 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let iterinstrs = List.rev iterinstrs in
     eval_rule_iter' ctx id notexp inputs iterinstrs
 
-  and eval_rule_instr (ctx : Ctx.t) (id : id) (notexp : notexp)
+  and eval_rule_instr ~(tail : bool) (ctx : Ctx.t) (id : id) (notexp : notexp)
       (inputs : Hints.Input.t) (iterinstrs : iterinstr list) (block : block) :
       Flow.t =
     try
-      let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
-      eval_block ctx block
+      match block with
+      | [ { it = ResultI (_, exps_result); _ } ] when tail && iterinstrs = [] ->
+          let exps = Mixfix.args notexp in
+          let exps_input, exps_output = Hints.Input.split inputs exps in
+          if Il.Eq.eq_exps exps_output exps_result then
+            let values_input = eval_exps ctx exps_input in
+            Flow.Tailcall_rel (id, values_input)
+          else
+            let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+            eval_block ~tail ctx block
+      | _ ->
+          let ctx = eval_rule_iter ctx id notexp inputs iterinstrs in
+          eval_block ~tail ctx block
     with Backtrace (Unmatch traces) -> Cont traces
 
   (* Result instruction evaluation *)
 
-  and eval_result_instr (ctx : Ctx.t) (_rel_signature : rel_signature)
-      (exps : exp list) : Flow.t =
+  and eval_result_instr ~(tail : bool) (ctx : Ctx.t)
+      (_rel_signature : rel_signature) (exps : exp list) : Flow.t =
     try
+      tail |> ignore;
       let values = eval_exps ctx exps in
       Flow.Res values
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Return instruction evaluation *)
 
-  and eval_return_instr (ctx : Ctx.t) (exp : exp) : Flow.t =
+  and eval_return_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) : Flow.t =
     try
-      let value = eval_exp ctx exp in
-      Flow.Ret value
+      match exp.it with
+      | Il.CallE (id, targs, args) when tail ->
+          let targs = resolve_targs ctx targs in
+          let values_args = eval_args ctx args in
+          Flow.Tailcall_func (id, targs, values_args)
+      | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr (ctx : Ctx.t) (exp : exp) (instr : instr) : Flow.t =
+  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr) :
+      Flow.t =
     try
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
@@ -1674,7 +1863,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (if region = "" then "" else region ^ ": ")
       ^ Il.Print.string_of_value value
       |> print_endline;
-      eval_instr ctx instr
+      eval_instr ~tail ctx instr
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Invoke a relation *)
@@ -1684,55 +1873,67 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list =
-    try
-      Hook.on_rel_enter id values_input;
-      let values_output = invoke_rel' ~internal ctx id values_input in
-      Hook.on_rel_exit id;
-      values_output
-    with Backtrace backtrace ->
-      Hook.on_rel_exit id;
-      back_nest id.at
-        (fun () -> F.asprintf "relation %s failed" id.it)
-        backtrace
-
-  and invoke_rel' ~(internal : bool) (ctx : Ctx.t) (id : id)
-      (values_input : value list) : value list =
-    let rel = Ctx.find_rel ctx id in
-    let invoke_rel'' () =
-      match rel with
-      | Rel.Extern (nottyp, inputs) ->
-          invoke_extern_rel ctx nottyp inputs id values_input
-      | Rel.Defined (_, exps_input, block, elseblock_opt) ->
-          invoke_defined_rel ctx id exps_input block elseblock_opt values_input
+    let rec loop id values_input =
+      try
+        Hook.on_rel_enter id values_input;
+        let rel = Ctx.find_rel ctx id in
+        let dispatch () =
+          match rel with
+          | Rel.Extern (nottyp, inputs) ->
+              let values_output =
+                invoke_extern_rel ctx nottyp inputs id values_input
+              in
+              Result values_output
+          | Rel.Defined (_, exps_input, block, elseblock_opt) ->
+              invoke_defined_rel ctx id exps_input block elseblock_opt
+                values_input
+        in
+        let result =
+          if !cache_enabled && not (is_extern_rel rel) then
+            let cache_result = CCache.find !rel_cache (id.it, values_input) in
+            match cache_result with
+            | Some values_output -> Result values_output
+            | None -> (
+                let checkpoint_before = Interface.checkpoint () in
+                let extern_checkpoint_before = Extern.checkpoint () in
+                let result = dispatch () in
+                match result with
+                | Result values_output ->
+                    let checkpoint_after = Interface.checkpoint () in
+                    let extern_checkpoint_after = Extern.checkpoint () in
+                    (* Cache if neither the interface nor the extern created a side-effect *)
+                    if
+                      (not (Interface.seff checkpoint_before checkpoint_after))
+                      && not
+                           (Extern.seff extern_checkpoint_before
+                              extern_checkpoint_after)
+                    then
+                      CCache.add !rel_cache (id.it, values_input) values_output;
+                    Result values_output
+                | Tailcall_rel _ -> result)
+          else (
+            if not internal then check_rel_inputs ctx id values_input;
+            dispatch ())
+        in
+        match result with
+        | Result values_output ->
+            Hook.on_rel_exit id;
+            values_output
+        | Tailcall_rel (id_tail, values_tail) ->
+            Hook.on_rel_exit id;
+            loop id_tail values_tail
+      with Backtrace backtrace ->
+        Hook.on_rel_exit id;
+        back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
     in
-    if Hook.is_cache_on () && not (is_extern_rel rel) then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
-      match cache_result with
-      | Some values_output -> values_output
-      | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
-          let values_output = invoke_rel'' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the relation does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
-          values_output)
-    else (
-      if not internal then check_rel_inputs ctx id values_input;
-      invoke_rel'' ())
+    loop id values_input
 
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
     let values_output =
-      try
-        match id.it with
-        | "ExternFunctionCall_eval_lctk" ->
-            Arch.eval_extern_func_lctk_call values_input
-        | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
-        | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_rel id.it values_input with
+      | Pass values -> values
+      | Fail (at, msg) -> back_unmatch at msg
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     List.iteri
@@ -1747,11 +1948,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (exps_input : exp list)
       (block : block) (elseblock_opt : elseblock option)
-      (values_input : value list) : value list =
+      (values_input : value list) : rel_result =
     let ctx_local = Ctx.localize_rule ctx id values_input in
     let ctx_local = assign_exps ctx_local exps_input values_input in
-    let flow = eval_block ctx_local block in
-    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    let flow =
+      let tail = Option.is_none elseblock_opt in
+      eval_block ~tail ctx_local block
+    in
+    let flow = eval_elseblock_opt ~tail:true ctx_local flow elseblock_opt in
     match flow with
     | Res values_output ->
         List.iteri
@@ -1762,8 +1966,11 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
                   (Dep.Edges.Rel (id, idx_arg)))
               values_output)
           values_input;
-        values_output
+        Result values_output
+    | Tailcall_rel (id, values) -> Tailcall_rel (id, values)
     | Ret _ -> back_err id.at "relation cannot return a value"
+    | Tailcall_func _ ->
+        back_err id.at "unexpected function tailcall in relation body"
     | Cont traces -> Unmatch traces |> back
 
   (* Invoke a function *)
@@ -1777,91 +1984,86 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
         match value_input.it with Il.FuncV _ -> true | _ -> false)
       values_input
 
-  and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
-      : value =
-    let targs =
-      match targs with
-      | [] -> []
-      | targs ->
-          let theta =
-            let tdenv_local =
-              match ctx.local with
-              | Empty | Rel _ -> TIdMap.empty
-              | Func { tdenv; _ } -> tdenv
-            in
-            TDEnv.fold
-              (fun tid typdef theta ->
-                match typdef with
-                | Type.Typdef.Defined ([], { it = Il.PlainT typ; _ }) ->
-                    TIdMap.add tid typ theta
-                | _ -> theta)
-              tdenv_local TIdMap.empty
-          in
-          List.map (Type.Subst.subst_typ theta) targs
-    in
-    let values_input = eval_args ctx args in
-    invoke_func_with_values ctx id targs values_input
-
-  and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+  and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
-    try
-      Hook.on_func_enter id values_input;
-      let cursor, func = Ctx.find_func ctx id in
-      let anon = cursor = Ctx.Local in
-      let invoke_func_with_values' () =
-        match func with
-        | Func.Extern (tparams, _, typ) ->
-            invoke_extern_func ctx id tparams targs values_input typ
-        | Func.Builtin (tparams, _, typ) ->
-            invoke_builtin_func ctx id tparams targs values_input typ
-        | Func.Table (params, _, tablerows) ->
-            invoke_table_func ctx id params tablerows values_input
-        | Func.Defined (tparams, params, _, block, elseblock_opt) ->
-            invoke_defined_func ctx id tparams params block elseblock_opt targs
-              values_input
-      in
-      let value_output =
-        if
-          Hook.is_cache_on () && (not anon)
-          && (not (is_extern_func func))
-          && not (is_high_order_func values_input)
-        then (
-          let cache_result =
-            Cache.Cache.find !func_cache (id.it, values_input)
-          in
-          match cache_result with
-          | Some value_output -> value_output
-          | None ->
-              let builtin_ctr_before = !Builtin.Fresh.ctr in
-              let value_output = invoke_func_with_values' () in
-              let builtin_ctr_after = !Builtin.Fresh.ctr in
-              (* Cache if the builtin function does not create a side-effect *)
-              if builtin_ctr_before = builtin_ctr_after then
-                Cache.Cache.add !func_cache (id.it, values_input) value_output;
-              value_output)
-        else (
-          if not internal then check_func_inputs ctx id targs values_input;
-          invoke_func_with_values' ())
-      in
-      Hook.on_func_exit id;
-      value_output
-    with Backtrace backtrace ->
-      Hook.on_func_exit id;
-      back_nest id.at
-        (fun () -> F.asprintf "function %s failed" id.it)
-        backtrace
+    let rec loop id targs values_input =
+      try
+        Hook.on_func_enter id values_input;
+        let cursor, func = Ctx.find_func ctx id in
+        let anon = cursor = Ctx.Local in
+        let result =
+          if
+            !cache_enabled && (not anon)
+            && (not (is_extern_func func))
+            && not (is_high_order_func values_input)
+          then
+            let cache_result = CCache.find !func_cache (id.it, values_input) in
+            match cache_result with
+            | Some value_output -> Return value_output
+            | None -> (
+                let checkpoint_before = Interface.checkpoint () in
+                let extern_checkpoint_before = Extern.checkpoint () in
+                let result = invoke_func_body ctx id func targs values_input in
+                match result with
+                | Return value_output ->
+                    let checkpoint_after = Interface.checkpoint () in
+                    let extern_checkpoint_after = Extern.checkpoint () in
+                    (* Cache if neither the interface nor the extern created a side-effect *)
+                    if
+                      (not (Interface.seff checkpoint_before checkpoint_after))
+                      && not
+                           (Extern.seff extern_checkpoint_before
+                              extern_checkpoint_after)
+                    then
+                      CCache.add !func_cache (id.it, values_input) value_output;
+                    Return value_output
+                | Tailcall_func _ -> result)
+          else (
+            if not internal then check_func_inputs ctx id targs values_input;
+            invoke_func_body ctx id func targs values_input)
+        in
+        match result with
+        | Return value_output ->
+            Hook.on_func_exit id;
+            value_output
+        | Tailcall_func (id_tail, targs_tail, values_tail) ->
+            Hook.on_func_exit id;
+            loop id_tail targs_tail values_tail
+      with Backtrace backtrace ->
+        Hook.on_func_exit id;
+        back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
+    in
+    loop id targs values_input
+
+  and invoke_func_body (ctx : Ctx.t) (id : id) (func : Func.t)
+      (targs : targ list) (values_input : value list) : func_result =
+    match func with
+    | Func.Extern (tparams, _, typ) ->
+        let value_output =
+          invoke_extern_func ctx id tparams targs values_input typ
+        in
+        Return value_output
+    | Func.Builtin (tparams, _, typ) ->
+        let value_output =
+          invoke_builtin_func ctx id tparams targs values_input typ
+        in
+        Return value_output
+    | Func.Table (params, _, tablerows) ->
+        let value_output =
+          invoke_table_func ctx id params tablerows values_input
+        in
+        Return value_output
+    | Func.Defined (tparams, params, _, block, elseblock_opt) ->
+        invoke_defined_func ctx id tparams params block elseblock_opt targs
+          values_input
 
   and invoke_extern_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
       =
     let value_output =
-      try
-        match id.it with
-        | "init_objectState" -> Arch.eval_extern_init values_input
-        | "init_archState" -> Arch.init_arch_state
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_func id.it [] values_input with
+      | Pass value -> value
+      | Fail (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri
@@ -1875,10 +2077,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
       =
     let value_output =
-      try
-        Builtin.Call.invoke
-          (fun value -> Hook.on_value value)
-          id targs values_input
+      try Interface.call_builtin Hook.on_value id targs values_input
       with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
@@ -1894,7 +2093,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block_sequential ctx_local instrs in
+    let flow = eval_block_sequential ~tail:true ctx_local instrs in
     match flow with
     | Ret value_output ->
         List.iteri
@@ -1907,7 +2106,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (params : param list) (block : block) (elseblock_opt : elseblock option)
-      (targs : targ list) (values_input : value list) : value =
+      (targs : targ list) (values_input : value list) : func_result =
     let tdenv_local =
       check
         (List.length targs = List.length tparams)
@@ -1920,33 +2119,36 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
     in
     let ctx_local = Ctx.localize_func ctx id values_input tdenv_local in
     let ctx_local = assign_params ctx ctx_local params values_input in
-    let flow = eval_block ctx_local block in
-    let flow = eval_elseblock_opt ctx_local flow elseblock_opt in
+    let flow =
+      let tail = Option.is_none elseblock_opt in
+      eval_block ~tail ctx_local block
+    in
+    let flow = eval_elseblock_opt ~tail:true ctx_local flow elseblock_opt in
     match flow with
-    | Ret value_output ->
+    | Flow.Tailcall_func (id, targs, values) -> Tailcall_func (id, targs, values)
+    | Flow.Ret value_output ->
         List.iteri
           (fun idx_arg value_input ->
             Hook.on_value_dependency value_output value_input
               (Dep.Edges.Func (id, idx_arg)))
           values_input;
-        value_output
-    | Res _ -> back_err id.at "relation cannot return a value"
-    | Cont traces -> Unmatch traces |> back
+        Return value_output
+    | Flow.Res _ -> back_err id.at "function cannot produce a relation result"
+    | Flow.Tailcall_rel _ ->
+        back_err id.at "function cannot produce a relation tail call"
+    | Flow.Cont traces -> Unmatch traces |> back
 
   (* Entry points for evaluation *)
 
   let clear () : unit =
-    Value.Fresh_.refresh ();
-    Cache.Cache.reset !func_cache;
-    Cache.Cache.reset !rel_cache
+    CCache.empty !func_cache;
+    CCache.empty !rel_cache;
+    Hashtbl.clear sub_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
       let ctx = Ctx.empty () in
-      let values_ouput =
-        invoke_rel ~internal:false ctx (relname $ no_region) values_input
-      in
-      values_ouput
+      invoke_rel ~internal:false ctx (relname $ no_region) values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
@@ -1956,54 +2158,51 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_SL = struct
       (values_input : value list) : value =
     try
       let ctx = Ctx.empty () in
-      let value_output =
-        invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
-          values_input
-      in
-      value_output
+      invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in
       error no_region msg
 
   let eval_program (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Sim.program_result =
+      (path_p4 : string) : Run.program_result =
     clear ();
     try
-      let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
-      Hook.on_program value_program;
-      let values_output = do_eval_rel relname [ value_program ] in
-      Sim.Pass values_output
+      let parse_result = Interface.parse_program includes_p4 [ path_p4 ] in
+      match parse_result with
+      | Pass value_program ->
+          Hook.on_program value_program;
+          let values_output = do_eval_rel relname [ value_program ] in
+          Run.Pass values_output
+      | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
-    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-        Sim.Fail (`Runtime (at, msg))
+    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+        Run.Fail (`Runtime (at, msg))
 
-  let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
+  let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
       let values_output = do_eval_rel relname values_input in
-      Sim.Pass values_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Pass values_output
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result =
+      (values_input : value list) : Run.func_result =
     clear ();
     try
       let value_output = do_eval_func funcname targs values_input in
-      Sim.Pass value_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Pass value_output
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
-    if cache then Hook.cache_on () else Hook.cache_off ();
-    let printer value =
-      let henv = Interface.Hint.hints_of_spec_sl spec in
-      Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
-    in
-    Builtin.Call.init printer;
+  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
+    if cache then Cache.cache_on () else Cache.cache_off ();
+    check_guard := guard;
     Ctx.init ~det spec
 end

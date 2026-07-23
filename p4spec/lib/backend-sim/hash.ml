@@ -13,7 +13,7 @@
  * under the License.
  *)
 
-open Interface.Unpack
+open Spec.Unpack
 
 [@@@ocamlformat "disable"]
 

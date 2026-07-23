@@ -127,22 +127,22 @@ let measure_coverage (cover : t) : int * int * float =
 
 (* Extension from single coverage *)
 
-let extend (cover : t) (filename_p4 : string) (cover_single : Single.t) : t =
+let extend (cover : t) (path_p4 : string) (cover_single : Single.t) : t =
   Cover.mapi
     (fun (iid : iid) (node : Node.t) ->
       let node_single = Single.Cover.find iid cover_single in
       match node.status with
-      | Hit filenames_p4 -> (
+      | Hit paths_p4 -> (
           match node_single.status with
           | Hit ->
-              let filenames_p4 = filename_p4 :: filenames_p4 in
-              { node with status = Hit filenames_p4 }
+              let paths_p4 = path_p4 :: paths_p4 in
+              { node with status = Hit paths_p4 }
           | _ -> node)
       | Miss -> (
           match node_single.status with
           | Hit ->
-              let filenames_p4 = [ filename_p4 ] in
-              { node with status = Hit filenames_p4 }
+              let paths_p4 = [ path_p4 ] in
+              { node with status = Hit paths_p4 }
           | _ -> node))
     cover
 

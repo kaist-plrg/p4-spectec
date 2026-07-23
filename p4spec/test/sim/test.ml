@@ -1,15 +1,16 @@
 open Test_common
 open Util.Error
-module Sim = Runtime.Sim.Simulator
+open Runtime.Sim.Signature
 module Test = Util.Test
 module Filesys = Util.Filesys
 
 (* Simulator test *)
 
-let run_sim (module Driver : Sim.DRIVER) includes_p4 filename_p4 filename_stf =
+let run_sim (module Simulator : SIM) includes_p4 path_p4 path_stf =
   let time_start = start () in
   try
-    (match Driver.run_stf_test includes_p4 filename_p4 filename_stf with
+    Simulator.clear ();
+    (match Simulator.run_stf_test includes_p4 path_p4 path_stf with
     | Pass -> ()
     | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
         raise (TestRunErr (msg, at, time_start)));
@@ -26,27 +27,27 @@ let incr_subdir label assoc =
         assoc
   | None -> (label, 1) :: assoc
 
-let find_exclude_subdir filename_p4 filename_stf excludes_by_subdir =
+let find_exclude_subdir path_p4 path_stf excludes_by_subdir =
   List.find_map
     (fun (label, entries) ->
       if
         List.exists
-          (fun e -> String.equal filename_p4 e || String.equal filename_stf e)
+          (fun e -> String.equal path_p4 e || String.equal path_stf e)
           entries
       then Some label
       else None)
     excludes_by_subdir
 
-let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
-    excludes_by_subdir is_patched filename_p4 filename_stf =
+let run_sim_test (module Simulator : SIM) stat includes_p4 excludes
+    excludes_by_subdir is_patched path_p4 path_stf =
   let stat =
     if is_patched then { stat with patch_run = stat.patch_run + 1 } else stat
   in
-  if Test.should_exclude_pair filename_p4 filename_stf excludes then (
-    let log = Format.asprintf "Excluding file: %s" filename_stf in
+  if Test.should_exclude_pair path_p4 path_stf excludes then (
+    let log = Format.asprintf "Excluding file: %s" path_stf in
     log |> print_endline;
     let exclude_by_subdir =
-      match find_exclude_subdir filename_p4 filename_stf excludes_by_subdir with
+      match find_exclude_subdir path_p4 path_stf excludes_by_subdir with
       | Some label -> incr_subdir label stat.exclude_by_subdir
       | None -> stat.exclude_by_subdir
     in
@@ -62,10 +63,10 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
   else
     try
       let time_start =
-        run_sim (module Driver) includes_p4 filename_p4 filename_stf
+        run_sim (module Simulator) includes_p4 path_p4 path_stf
       in
       let duration = stop time_start in
-      let log = Format.asprintf "Run success: %s" filename_stf in
+      let log = Format.asprintf "Run success: %s" path_stf in
       log |> print_endline;
       Format.eprintf "%s\n" log;
       Format.eprintf ">>> took %.6f seconds\n" duration;
@@ -73,8 +74,8 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
     with
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s" filename_stf |> print_endline;
-        Format.eprintf "Error on run: %s\n%s\n" filename_stf
+        Format.asprintf "Error on run: %s" path_stf |> print_endline;
+        Format.eprintf "Error on run: %s\n%s\n" path_stf
           (string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
@@ -86,9 +87,8 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
         }
     | TestUnknownErr time_start ->
         let duration = stop time_start in
-        Format.asprintf "Error on run: %s (unknown)" filename_stf
-        |> print_endline;
-        Format.eprintf "Error on run: %s (unknown)\n" filename_stf;
+        Format.asprintf "Error on run: %s (unknown)" path_stf |> print_endline;
+        Format.eprintf "Error on run: %s (unknown)\n" path_stf;
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with
@@ -98,7 +98,7 @@ let run_sim_test (module Driver : Sim.DRIVER) stat includes_p4 excludes
             (if is_patched then stat.patch_fail_run + 1 else stat.patch_fail_run);
         }
 
-let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+let run_sim_test_driver mode det arch path_spec includes_p4 excludes_p4
     testdirs_p4 testdirs_stf patchdirs =
   let excludes_by_subdir =
     Test.collect_excludes_by_subdir excludes_p4
@@ -109,26 +109,28 @@ let run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
     excludes_p4 |> Test.collect_excludes
     |> List.map (fun exclude_p4 -> "../../../" ^ exclude_p4)
   in
-  let filename_pairs =
+  let path_pairs =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
   in
-  let total = List.length filename_pairs in
+  let total = List.length path_pairs in
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
-  let _spec_sim, (module Driver) = driver ~det ~arch mode specdir in
+  let _spec_sim, (module Simulator) =
+    Backend_sim.Build.build ~det ~arch ~final:true mode [ path_spec ]
+  in
   let stat =
     List.fold_left
-      (fun stat (filename_p4, filename_stf, is_patched) ->
+      (fun stat (path_p4, path_stf, is_patched) ->
         Format.asprintf
           "\n>>> Running simulation test (%s) on %s with packet input %s" arch
-          filename_p4 filename_stf
+          path_p4 path_stf
         |> print_endline;
         run_sim_test
-          (module Driver : Sim.DRIVER)
-          stat includes_p4 excludes_p4 excludes_by_subdir is_patched filename_p4
-          filename_stf)
-      stat filename_pairs
+          (module Simulator : SIM)
+          stat includes_p4 excludes_p4 excludes_by_subdir is_patched path_p4
+          path_stf)
+      stat path_pairs
   in
   log_stat (Format.asprintf "\nRunning simulation test (%s)" arch) stat total
 
@@ -136,7 +138,7 @@ let sim_command =
   Core.Command.basic ~summary:"run simulation test"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
+     let%map path_spec = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
@@ -149,45 +151,45 @@ let sim_command =
        Command.Param.choose_one
          [
            flag "al" no_arg ~doc:"Run AL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `AL);
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
            flag "sl" no_arg ~doc:"Run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `SL);
+           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
            flag "pl" no_arg ~doc:"Run PL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b `PL);
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
          ]
-         ~if_nothing_chosen:(Default_to `SL)
+         ~if_nothing_chosen:(Default_to SL_mode)
      in
      fun () ->
-       run_sim_test_driver mode det arch specdir includes_p4 excludes_p4
+       run_sim_test_driver mode det arch path_spec includes_p4 excludes_p4
          testdirs_p4 testdirs_stf patchdirs)
 
 (* Coverage test *)
 
-let cover_sim mode arch specdir includes_p4 excludesdir testdirs_p4 testdirs_stf
-    patchdirs =
+let cover_sim mode arch path_spec includes_p4 excludesdir testdirs_p4
+    testdirs_stf patchdirs =
   let excludes =
     excludesdir |> Test.collect_excludes
     |> List.map (fun exclude -> "../../../" ^ exclude)
   in
-  let filenames_p4, filenames_stf =
+  let paths_p4, paths_stf =
     Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdirs
-    |> List.filter_map (fun (filename_p4, filename_stf, _) ->
-           if Test.should_exclude_pair filename_p4 filename_stf excludes then
-             None
-           else Some (filename_p4, filename_stf))
+    |> List.filter_map (fun (path_p4, path_stf, _) ->
+           if Test.should_exclude_pair path_p4 path_stf excludes then None
+           else Some (path_p4, path_stf))
     |> List.split
   in
   match mode with
-  | `Instr -> cover_sim_instr `SL specdir includes_p4 filenames_p4 filenames_stf
+  | `Instr ->
+      cover_sim_instr SL_mode [ path_spec ] includes_p4 paths_p4 paths_stf
   | `Dangling ->
-      cover_sim_dangling `SL specdir includes_p4 filenames_p4 filenames_stf
+      cover_sim_dangling SL_mode [ path_spec ] includes_p4 paths_p4 paths_stf
 
 let cover_sim_command =
   Core.Command.basic
     ~summary:"measure instruction coverage of the P4 spec when simulated"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map specdir = flag "-s" (required string) ~doc:"p4 spec directory"
+     let%map path_spec = flag "-s" (required string) ~doc:"p4 spec directory"
      and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
      and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
      and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"p4 test directories"
@@ -206,7 +208,7 @@ let cover_sim_command =
          ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
-       cover_sim mode arch specdir includes_p4 excludes_p4 testdirs_p4
+       cover_sim mode arch path_spec includes_p4 excludes_p4 testdirs_p4
          testdirs_stf patchdirs)
 
 let command =

@@ -1,0 +1,159 @@
+=== Instructions
+
+A function and relation body in the structured language is defined as a
+sequence of instructions organized into blocks. Instructions are the
+structured-language analog of the intermediate language's premises: they check
+conditions, bind variables, call relations, and control the flow of evaluation.
+Unlike the flat premise sequences of the IL, SL instructions are nested into
+blocks that carry explicit control-flow structure, making the semantics easier
+to read as executable code.
+
+${relation-title-prose: Eval_instr}
+
+Evaluating an instruction yields a `flow` as a result. A `flow` is one of: `OK`
+(the instruction succeeded; evaluation continues to the next instruction), `RES
+val*` (a result carrying output values; short-circuits out of the current
+block), `RET val` (a function return value; short-circuits out of the current
+block), or `FAIL` (the instruction did not succeed).
+
+${syntax: flow}
+
+If none of the below rules apply, the result is a `FAIL`.
+
+${rulegroup-prose: Eval_instr/fail}
+
+A sequence of instructions is evaluated as follows. Only `RES` and `RET` flows
+short-circuit evaluation: when any instruction in the sequence produces one of
+these, it is immediately propagated and no further instructions in the sequence
+are evaluated. An `OK` result causes evaluation to continue to the next
+instruction in the same (unchanged) context. A `FAIL` result is non-fatal:
+evaluation also continues to the next instruction in the same context, allowing
+subsequent instructions to handle the case.
+
+${relation-title-prose: Eval_instrs}
+${rulegroup-prose: Eval_instrs}
+
+A block is a sequence of instructions, and is evaluated as follows:
+
+${relation-title-prose: Eval_block}
+${rulegroup-prose: Eval_block}
+
+==== If instructions
+
+An if instruction evaluates a boolean expression and, if it is true, evaluates
+the consequent block. If the condition is false, the instruction produces
+`FAIL`. An iterated if instruction checks the condition in each of the
+sub-contexts produced by the iterator annotation, and succeeds only if the
+condition holds in all of them.
+
+${rulegroup-prose: Eval_instr/ifinstr}
+
+An if condition may be iterated, where the condition must evaluate to true for
+all sub-contexts of the iteration.
+
+${relation-title-prose: Eval_if_cond}
+${rulegroup-prose: Eval_if_cond}
+
+==== If-hold instructions
+
+An if-hold instruction invokes a named relation and branches on whether the
+call succeeds or fails. The hold case specifies a pair of blocks: one that is
+evaluated when the relation holds and one that is evaluated when it does not.
+This allows the semantics to express both positive and negative checks on
+relation outcomes within a single instruction.
+
+A relation without an output may be used as a condition.
+
+${rulegroup-prose: Eval_instr/ifhold}
+
+The condition is evaluated by evaluating the relation body for all sub-contexts
+of the iteration, and checking that the relation holds for all sub-contexts.
+
+${relation-title-prose: Eval_ifhold_cond}
+${rulegroup-prose: Eval_ifhold_cond}
+
+==== Case instructions
+
+A case instruction evaluates a scrutinee expression and dispatches to the first
+matching case alternative. Each case alternative pairs a guard with a
+consequent block; the guard is tested against the scrutinee value, and the
+first guard that matches determines which block is evaluated. If no guard
+matches, the instruction produces `FAIL`.
+
+${rulegroup-prose: Eval_instr/case}
+
+A matching case is selected as follows:
+
+${relation-title-prose: Eval_cases}
+${rulegroup-prose: Eval_cases}
+
+${relation-title-prose: Eval_case}
+${rulegroup-prose: Eval_case/hit}
+${rulegroup-prose: Eval_case/fail}
+
+==== Group instructions
+
+A group instruction is a named, typed wrapper around a block. It does not
+introduce any control-flow of its own; it simply evaluates its inner block and
+propagates the result. Groups serve as an intermediary form for the
+prose-generation backend, allowing the spliced prose to attach a name and type
+annotation to a block that would otherwise be anonymous.
+
+${rulegroup-prose: Eval_instr/group}
+
+==== Let instructions
+
+A let instruction evaluates a right-hand side expression and assigns the
+resulting value to a left-hand side pattern expression. The new variable
+bindings are visible only within the nested continuation block attached to the
+`LET` instruction; they do not extend to sibling instructions in the enclosing
+sequence. An iterated let instruction distributes the assignment element-wise
+across the iterated dimensions: each dimension of the right-hand side is
+evaluated in the corresponding sub-context, and the resulting bindings are
+collected into the context as optional or list-valued variables before
+evaluating the continuation block.
+
+${rulegroup-prose: Eval_instr/let}
+
+A let assignment may also be iterated. Iteration dimensions of the right-hand
+side are evaluated outside-in, reaching the innermost assignment, then the
+assigned contexts are collected inside-out to produce the final result.
+
+${relation-title-prose: Eval_let}
+${rulegroup-prose: Eval_let}
+${rulegroup-prose: Eval_let/fail}
+
+==== Relation call instructions
+
+A relation call instruction invokes a named relation with a sequence of input
+expressions and assigns the output values to output pattern expressions. Like
+the let instruction, the new variable bindings are visible only within the
+nested continuation block attached to the `REL` instruction. Iterated relation
+call instructions distribute the call element-wise across iterated dimensions,
+collecting the outputs before evaluating the continuation block.
+
+${rulegroup-prose: Eval_instr/rel}
+
+A relation call instruction is a mixture of a relation call and an assignment.
+
+${relation-title-prose: Eval_rel}
+${rulegroup-prose: Eval_rel}
+${rulegroup-prose: Eval_rel/fail}
+
+==== Result instructions
+
+A result instruction immediately terminates evaluation of the current function
+or relation body and returns the specified typed output values. It produces a
+`RES val*` flow that propagates outward through enclosing blocks, bypassing any
+remaining instructions.
+
+${rulegroup-prose: Eval_instr/result}
+
+==== Return instructions
+
+A return instruction immediately terminates evaluation of the current function
+body and returns the specified value to the caller. It produces a `RET val`
+flow that propagates outward through enclosing blocks, bypassing any remaining
+instructions.
+
+${rulegroup-prose: Eval_instr/return}

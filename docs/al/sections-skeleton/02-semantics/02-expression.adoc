@@ -1,0 +1,241 @@
+=== Expresssions
+
+An expression is evaluated under a context, producing either a value wrapped in
+`OK` or a `FAIL` result. The central evaluation relation is the following:
+
+${relation-title-prose: Eval_exp}
+
+If no rule was successfully applied, the evaluation fails:
+
+${rulegroup-prose: Eval_exp/fail}
+
+==== Boolean, number, and string literals
+
+Literal expressions evaluate to the constant value they denote.
+
+${rulegroup-prose: Eval_exp/literal}
+
+==== Variable references
+
+A variable reference evaluates by looking up the variable's binding in the local
+layer of the context. Only the local layer is searched; values are not looked
+up in the global layer.
+
+${rulegroup-prose: Eval_exp/variable}
+
+==== Operations
+
+===== Unary expressions
+
+A unary expression evaluates its operand and then applies the unary operator
+to the resulting value. `PLUS` coerces the operand to a non-negative number
+(`NAT`), and `MINUS` negates it; both operators work on arbitrary-precision
+mathematical numbers with no overflow or bit-width constraints.
+
+${rulegroup-prose: Eval_exp/unary}
+
+===== Binary expressions
+
+A binary expression evaluates both operands and applies the binary operator to
+the pair of resulting values. The numeric operators (`ADD`, `SUB`, `MUL`,
+`DIV`, `MOD`, `POW`) perform purely mathematical arithmetic on `NAT` and `INT`
+values, backed by arbitrary-precision integers with no overflow.
+
+${rulegroup-prose: Eval_exp/binary}
+
+===== Comparison expressions
+
+A comparison expression evaluates both operands and applies the comparison
+operator, producing a boolean value. Numeric-ordering operators (`LT`, `GT`,
+`LE`, `GE`) compare `NAT` and `INT` values by their mathematical ordering.
+Equality operators (`EQ`, `NE`) compare structural representations of any
+meta-type value; for example, `NAT 1 < NAT 2` and `STRUCT ... = STRUCT ...`
+are both valid comparisons.
+
+${rulegroup-prose: Eval_exp/compare}
+
+==== Casts
+
+===== Upcast expressions
+
+An upcast expression converts a value toward a more general type. The natural
+numbers are a subset of the integers, so `NAT` values can be upcast to `INT`.
+For user-defined alias types the alias is unfolded and the upcast is applied
+recursively. For all other types, the value is returned unchanged if it is
+already structurally compatible.
+
+${rulegroup-prose: Eval_exp/upcast}
+
+Upcasting is defined as follows:
+
+${func-prose: upcast}
+
+===== Downcast expressions
+
+A downcast expression converts a value toward a more specific type. An integer
+can be downcast to a natural number if its value is non-negative; otherwise the
+cast fails. For user-defined alias types the alias is unfolded and the downcast
+is applied recursively.
+
+${func-prose: downcast}
+
+Downcasting is defined as follows:
+
+${rulegroup-prose: Eval_exp/downcast}
+
+==== Runtime type tests
+
+A runtime type test evaluates its operand and checks whether the resulting
+value structurally matches the target type, returning a boolean without
+modifying the context. Natural numbers match `INT` unconditionally; integers
+match `NAT` only if non-negative; for user-defined types the typedef is
+consulted to check structural compatibility.
+
+${rulegroup-prose: Eval_exp/subtype}
+
+Runtime type tests are defined as follows:
+
+${func-prose: subtyp}
+${func-prose: subtyp'}
+${func-prose: subtyps}
+
+==== Match expressions
+
+A match expression evaluates its scrutinee and tests whether the result
+matches a given pattern, producing a boolean. The pattern forms check
+union-case constructors (`INJ`), list structure (`CONS` or `FIXED`/`NIL`), and
+option presence (`SOME`/`NONE`). No variables are bound regardless of the
+outcome; the context is unchanged.
+
+${rulegroup-prose: Eval_exp/match}
+
+==== Tuple expressions
+
+A tuple expression evaluates each of its component expressions in order and
+assembles the resulting values into a tuple value.
+
+${rulegroup-prose: Eval_exp/tuple}
+
+==== Case expressions
+
+A case expression evaluates its payload expression and wraps the result in the
+specified union-case constructor, tagging it with the case's mixop label.
+
+${rulegroup-prose: Eval_exp/case}
+
+==== Struct expressions
+
+A struct expression evaluates each of its field expressions and assembles the
+results into a struct value with named fields. Fields are evaluated
+independently and the resulting struct records each field's value under its
+name.
+
+${rulegroup-prose: Eval_exp/struct}
+
+==== Option expressions
+
+An option expression evaluates its inner expression when present and wraps the
+result in an optional value (`SOME`), or produces the absent value (`NONE`)
+when the expression is absent.
+
+${rulegroup-prose: Eval_exp/opt}
+
+==== List expressions
+
+A list expression evaluates each of its element expressions and assembles the
+resulting values into a list value in the same order.
+
+${rulegroup-prose: Eval_exp/list}
+
+==== Concatenation expressions
+
+A concatenation expression evaluates two list or string expressions and appends
+the second to the first, producing a single combined list or string value.
+
+${rulegroup-prose: Eval_exp/concat}
+
+==== Membership expressions
+
+A membership expression evaluates its element expression and tests whether the
+resulting value is a member of the list produced by the second operand.
+
+${rulegroup-prose: Eval_exp/mem}
+
+==== Length expressions
+
+A length expression evaluates its operand expression and returns the number of
+elements in the resulting list or string as a numeric value.
+
+${rulegroup-prose: Eval_exp/len}
+
+==== Accesses
+
+Structured values are accessed via paths. A path is evaluated under a context
+and a root value, threading through each access step to reach the targeted
+sub-value. The path evaluation relation is as follows:
+
+${relation-title-prose: Eval_path}
+
+${rulegroup-prose: Eval_path/root}
+${rulegroup-prose: Eval_path/dot}
+${rulegroup-prose: Eval_path/idx}
+${rulegroup-prose: Eval_path/slice}
+${rulegroup-prose: Eval_path/fail}
+
+===== Dot access expressions
+
+A dot access expression evaluates its base expression and follows the named
+field step in the resulting struct value to retrieve the field's value.
+
+${rulegroup-prose: Eval_exp/dot}
+
+===== Index access expressions
+
+An index access expression evaluates its base and index expressions, then
+retrieves the element at the computed position in the resulting list or string
+value.
+
+${rulegroup-prose: Eval_exp/idx}
+
+===== Slice access expressions
+
+A slice access expression evaluates its base, low, and high expressions, then
+extracts the contiguous sub-sequence from the resulting list or string value
+between the computed bounds.
+
+${rulegroup-prose: Eval_exp/slice}
+
+==== Update expressions
+
+Structured values can be non-destructively updated via paths. A path update is
+evaluated under a context, a root value, and a replacement value, threading
+through each access step to reach the target location and substituting the
+replacement at that point. The path update relation is as follows:
+
+${relation-title-prose: Eval_path_upd}
+
+${rulegroup-prose: Eval_path_upd/root}
+${rulegroup-prose: Eval_path_upd/dot}
+${rulegroup-prose: Eval_path_upd/idx}
+${rulegroup-prose: Eval_path_upd/slice}
+${rulegroup-prose: Eval_path_upd/fail}
+
+${rulegroup-prose: Eval_exp/upd}
+
+==== Function call expressions
+
+A function call expression evaluates each of its arguments and invokes the
+named function with the resulting values, producing the function's return
+value. The call is dispatched through the function call machinery described in
+the Functions section.
+
+${rulegroup-prose: Eval_exp/call}
+
+==== Iterator expressions
+
+An iterator expression applies a sub-expression element-wise across the values
+bound by an iterator annotation. The sub-expression is evaluated in each of the
+sub-contexts produced by the iterator, and the results are collected into an
+optional or list value matching the iterator's dimension.
+
+${rulegroup-prose: Eval_exp/iter}

@@ -1,0 +1,121 @@
+;; Type casts
+
+;;; Upcasts
+
+dec $upcast(ctx, typ, val) : res<val>
+  hint(prose_in %2 "upcasted to" %1 "under" %0)
+
+def $upcast(C, INT, INT i) = OK (INT i)
+def $upcast(C, INT, NAT n) = OK (INT n)
+def $upcast(C, INT, val) = FAIL
+  -- if ~(val <: num)
+
+def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
+  -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ' = $subst_typ(theta, typ)
+
+def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
+  -- if (OK val_upcast = $upcast(C, typ, val))*
+def $upcast(C, TUP typ*, val) = FAIL
+  -- if ~$is_tup(val)
+
+def $upcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_upcast?)
+  -- if (OK val_upcast = $upcast(C, typ, val))?
+def $upcast(C, ITER typ STAR, LIST val*) = OK (LIST val_upcast*)
+  -- if (OK val_upcast = $upcast(C, typ, val))*
+
+def $upcast(C, typ, val) = OK val
+    -- otherwise
+
+;;; Downcasts
+
+dec $downcast(ctx, typ, val) : res<val>
+  hint(prose_in %2 "downcasted to" %1 "under" %0)
+
+def $downcast(C, NAT, NAT n) = OK (NAT n)
+def $downcast(C, NAT, INT i) = OK (NAT n)
+    -- if n = i
+def $downcast(C, NAT, val) = FAIL
+    -- if ~(val <: num)
+
+def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
+    -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
+    -- if theta = `{ (tparam `: targ)* }
+    -- if typ' = $subst_typ(theta, typ)
+
+def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_downcast*)
+    -- (if OK val_downcast = $downcast(C, typ, val))*
+def $downcast(C, TUP typ*, val) = FAIL
+    -- if ~$is_tup(val)
+
+def $downcast(C, ITER typ QUEST, OPT val?) = OK (OPT val_downcast?)
+  -- if (OK val_downcast = $downcast(C, typ, val))?
+def $downcast(C, ITER typ STAR, LIST val*) = OK (LIST val_downcast*)
+  -- if (OK val_downcast = $downcast(C, typ, val))*
+
+def $downcast(C, typ, val) = OK val
+    -- otherwise
+
+;;; Value-type matching
+
+dec $subtyp(tdenv, typ, val) : bool
+  hint(prose_true %2 "matches type" %1 "under" %0)
+  hint(prose_false %2 "does not match type" %1 "under" %0)
+dec $subtyps(tdenv, typ*, val*) : bool
+  hint(prose_true "each of" %2 "matches each of type" %1 "under" %0)
+  hint(prose_false "some of" %2 "does not match each of type" %1 "under" %0)
+
+def $subtyp(tdenv, BOOL, BOOL b) = true
+def $subtyp(tdenv, NAT, NAT n) = true
+def $subtyp(tdenv, NAT, INT i) = $(i >= 0)
+def $subtyp(tdenv, INT, num) = true
+def $subtyp(tdenv, TEXT, TEXT t) = true
+
+def $subtyp(tdenv, VAR id targ*, EXT json) = true
+  -- if EXT = $find_map<id, typdef>(tdenv, id)
+
+def $subtyp(tdenv, VAR id targ*, val)
+  = $subtyp(tdenv, typ_subst, val)
+  -- if DEF tparam* `-> (ALIAS typ)
+      = $find_map<id, typdef>(tdenv, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if typ_subst = $subst_typ(theta, typ)
+
+def $subtyp(tdenv, VAR id targ*, INJ (mixop val*))
+  = $forall_($subtyp(tdenv, typ_case_found_subst, val)*)
+  -- if DEF tparam* `-> (VARIANT typcase*)
+      = $find_map<id, typdef>(tdenv, id)
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (mixop_case typ_case* = typcase)*
+  -- if mixop <- mixop_case*
+  -- if typ_case_found*
+      = $assoc_<mixop, typ*>(mixop, (mixop_case, typ_case*)*)
+  -- if typ_case_found_subst* = $subst_typ(theta, typ_case_found)*
+
+def $subtyp(tdenv, VAR id targ*, STR valfield*)
+  = $forall_($subtyp(tdenv, typ_field_subst, val_field)*)
+  -- if DEF tparam* `-> (STRUCT typfield*)
+      = $find_map<id, typdef>(tdenv, id)
+  -- if (atom typ_field = typfield)*
+  -- if (atom val_field = valfield)*
+  -- if theta = `{ (tparam `: targ)* }
+  -- if (typ_field_subst = $subst_typ(theta, typ_field))*
+
+def $subtyp(tdenv, TUP typ*, TUP val*)
+  = $forall_($subtyp(tdenv, typ, val)*)
+
+def $subtyp(tdenv, ITER typ QUEST, OPT val)
+  = $subtyp(tdenv, typ, val)
+def $subtyp(tdenv, ITER typ QUEST, OPT eps) = true
+
+def $subtyp(tdenv, ITER typ STAR, LIST val*)
+  = $forall_($subtyp(tdenv, typ, val)*)
+
+def $subtyp(tdenv, typ, val) = false
+    -- otherwise
+
+def $subtyps(tdenv, typ*, val*)
+  = $forall_($subtyp(tdenv, typ, val)*)
+def $subtyps(tdenv, typ*, val*) = false
+    -- otherwise

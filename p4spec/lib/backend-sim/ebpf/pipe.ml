@@ -1,17 +1,24 @@
-open Interface.Unpack
-open Interface.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
+open Spec.Unpack
 open Util.Source
 open Error
 
-module Make
-    (Interp_AL : Sim.INTERP_AL)
-    (Interp_SL : Sim.INTERP_SL)
-    (Interp_PL : Sim.INTERP_PL) : Sim.ARCH = struct
-  (* STF AST transformation *)
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* EBPF-specific externs *)
+
+  module Object = Object.Make (Spec.Func)
+
+  (* STF transformation *)
 
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =
@@ -284,10 +291,7 @@ module Make
       Spec.Rel.ebpf_parse value_ctx value_arch
     in
     let drop =
-      match flatten_case_v_opt value_parse_result with
-      | Some (_, [ "REJECT" ], [ _ ]) -> true
-      | Some _ -> false
-      | None -> assert false
+      Value.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
     in
     (value_ctx, value_arch, drop)
 
@@ -314,4 +318,12 @@ module Make
       let accept = unpack_p4_bool value_accept in
       if accept then (value_ctx, value_arch, [ rx ])
       else (value_ctx, value_arch, [])
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

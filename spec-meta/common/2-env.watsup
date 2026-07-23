@@ -1,0 +1,59 @@
+;; Value environment
+;; In the mechanization, the underlying types of variables are omitted
+
+syntax varr = id iter*
+
+syntax venv = map<varr, val>
+
+;; Type definition environment
+
+syntax typdef =
+  | PARAM
+  | EXT
+  | DEF tparam* `-> deftyp
+
+syntax tdenv = map<id, typdef>
+
+;; Type substitution environment
+
+syntax theta = map<id, typ>
+
+dec $extend_tdenv(tdenv, tdenv) : tdenv
+  hint(prose_in "the extension of" %0 "by" %1)
+def $extend_tdenv(tdenv_global, `{ eps }) = tdenv_global
+def $extend_tdenv(tdenv_global, `{ (id `: typdef)* })
+  = $adds_map<id, typdef>(tdenv_global, id*, typdef*)
+  -- otherwise
+
+dec $theta_of_tdenv(tdenv) : theta
+  hint(prose_in "the type substitution environment of" %0)
+def $theta_of_tdenv(`{ eps }) = $empty_map<id, typ>
+def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
+  = $add_map<id, typ>(theta_t, id_h, typ_h)
+  -- if typdef_h = DEF eps `-> (ALIAS typ_h)
+  -- if theta_t = $theta_of_tdenv(`{ (id_t `: typdef_t)* })
+def $theta_of_tdenv(`{ (id_h `: typdef_h) :: (id_t `: typdef_t)* })
+  = $theta_of_tdenv(`{ (id_t `: typdef_t)* })
+  -- if typdef_h = PARAM \/ typdef_h = EXT
+
+;; Iteration helper
+
+dec $is_iter_on_var(exp) : varr?
+  hint(prose_in "the iterated variable of" %0)
+def $is_iter_on_var(VAR id) = id eps
+def $is_iter_on_var(ITER exp iterexp)
+  = id (iter* ++ [ iter_outer ])
+  -- if id iter* = $is_iter_on_var(exp)
+  -- if iter_outer (id _ iter*) = iterexp
+def $is_iter_on_var(_) = eps
+  -- otherwise
+
+dec $iter_vari(vari, iter) : vari
+  hint(prose_in %0 "iterated by" %1)
+def $iter_vari(id typ iter*, iter_add)
+  = id typ (iter* ++ [ iter_add ])
+
+dec $iter_varr(varr, iter) : varr
+  hint(prose_in %0 "iterated by" %1)
+def $iter_varr(id iter*, iter_add)
+  = id (iter* ++ [ iter_add ])

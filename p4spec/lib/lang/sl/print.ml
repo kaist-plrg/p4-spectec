@@ -31,9 +31,7 @@ let string_of_mixop mixop = Il.Print.string_of_mixop mixop
 
 let string_of_iter iter = Il.Print.string_of_iter iter
 
-let string_of_iterexp iterexp =
-  let iter, _ = iterexp in
-  string_of_iter iter
+let string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
 
 let string_of_iterexps iterexps =
   iterexps |> List.map string_of_iterexp |> String.concat ""
@@ -345,9 +343,7 @@ and string_of_elseblock_opt ?(level = 0) ?(index = 0) elseblock_opt =
   | None -> ""
   | Some elseblock -> "\n\n" ^ string_of_elseblock ~level ~index elseblock
 
-and string_of_iterinstr iterinstr =
-  let iter, _, _ = iterinstr in
-  string_of_iter iter
+and string_of_iterinstr iterinstr = Il.Print.string_of_iterprem iterinstr
 
 and string_of_iterinstrs iterinstrs =
   iterinstrs |> List.map string_of_iterinstr |> String.concat ""

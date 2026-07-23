@@ -14,23 +14,29 @@ let with_lexbuf name lexbuf start =
 let parse_mixop str =
   let rec mixop_of_nottyp (nottyp : El.nottyp) =
     match nottyp.it with
-    | AtomT atom -> Mixop.Atom atom
+    | AtomT atom -> Mixfix.Atom atom
     | SeqT typs ->
         let mixops = List.map mixop_of_typ typs in
-        Mixop.Seq mixops
+        Mixfix.Seq mixops
     | InfixT (typ_l, atom, typ_r) ->
         let mixop_l = mixop_of_typ typ_l in
         let mixop_r = mixop_of_typ typ_r in
-        Mixop.Infix (mixop_l, atom, mixop_r)
+        Mixfix.Infix (mixop_l, atom, mixop_r)
     | BrackT (atom_l, typ, atom_r) ->
         let mixop = mixop_of_typ typ in
-        Mixop.Brack (atom_l, mixop, atom_r)
+        Mixfix.Brack (atom_l, mixop, atom_r)
   and mixop_of_typ (typ : El.typ) =
     match typ with
-    | PlainT _ -> Mixop.Arg ()
+    | PlainT _ -> Mixfix.Arg ()
     | NotationT nottyp -> mixop_of_nottyp nottyp
   in
-  let typ = Parser.check_typ Lexer.token (Lexing.from_string str) in
+  let lexbuf = Lexing.from_string str in
+  let typ =
+    try Parser.check_typ Lexer.token lexbuf
+    with Parser.Error ->
+      error (Lexer.region lexbuf)
+        (Format.asprintf "syntax error in mixop string: %s" str)
+  in
   mixop_of_typ typ
 
 let parse_file file =
@@ -41,3 +47,10 @@ let parse_file file =
       ~finally:(fun () -> close_in ic)
   with Sys_error msg ->
     error (Source.region_of_file file) ("i/o error: " ^ msg)
+
+let parse_string str =
+  let lexbuf = Lexing.from_string str in
+  try Parser.spec Lexer.token lexbuf
+  with Parser.Error ->
+    error (Lexer.region lexbuf)
+      (Format.asprintf "syntax error in spec string: %s" str)

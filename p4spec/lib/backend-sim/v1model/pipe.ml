@@ -1,18 +1,28 @@
-open Interface.Pack
-open Interface.Unpack
-open Interface.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
+open Spec.Pack
+open Spec.Unpack
 open State
 open Error
 open Util.Source
 
-module Make
-    (Interp_AL : Sim.INTERP_AL)
-    (Interp_SL : Sim.INTERP_SL)
-    (Interp_PL : Sim.INTERP_PL) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* V1Model-specific externs *)
+
+  module Func = Func.Make (Spec)
+  module Object = Object.Make (Spec)
+
+  (* STF transformation *)
+
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =
       Stf.Transform.Name.(
@@ -515,12 +525,13 @@ module Make
     let* value_parser_result = apply Spec.Rel.v1model_parser in
     let* value_ctx, value_arch, _ = get in
     let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ "REJECT" ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
-            "standard_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
+      Value.Get.(
+        value_parser_result |>>? "REJECT errorValue" |> function
+        | Some values ->
+            let value_error = one values in
+            Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+              "standard_metadata" "parser_error" value_error
+        | None -> value_ctx)
     in
     modify (fun (_, _, txs) -> (value_ctx, value_arch, txs))
 
@@ -570,7 +581,7 @@ module Make
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RESUBMIT *)
     let value_ctx =
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 6)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
@@ -591,15 +602,14 @@ module Make
     let value_ctx =
       let instance_type = match clone_type with I2E -> 1 | E2E -> 2 in
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32)
-          (Bigint.of_int instance_type)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int instance_type)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
     in
     let value_ctx =
       let value_egress_spec =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+        pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "egress_spec" value_egress_spec
@@ -615,7 +625,7 @@ module Make
     (* Set standard_metadata.instance_type as PKT_INSTANCE_TYPE_RECIRC *)
     let value_ctx =
       let value_instance_type =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 4)
+        pack_p4_fixedBit (Bigint.of_int 32) (Bigint.of_int 4)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "instance_type" value_instance_type
@@ -634,7 +644,7 @@ module Make
     in
     let value_ctx =
       let value_egress_spec =
-        Interface.Pack.pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
+        pack_p4_fixedBit (Bigint.of_int 9) (Bigint.of_int port)
       in
       Spec.Rel.lvalue_write_dot_global value_ctx value_arch "standard_metadata"
         "egress_spec" value_egress_spec
@@ -829,4 +839,12 @@ module Make
     let state_init = (value_ctx, value_arch, []) in
     let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
     (value_ctx, value_arch, List.rev txs)
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

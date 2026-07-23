@@ -4,7 +4,7 @@ open Sl
 module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
 module Dep = Runtime.Testgen_neg.Dep
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 module F = Format
 open Util.Source
 
@@ -18,9 +18,9 @@ exception Timeout
 
    (#) Loop
       1. For each danglings that were missed:
-          A. Identify close-miss filenames
-          B. Randomly sample N close-miss filenames
-          C. For each close-miss filename:
+          A. Identify close-miss paths
+          B. Randomly sample N close-miss paths
+          C. For each close-miss path:
               i. Run SL interpreter on the program
               ii. Fetch derivations, i.e., a set of close-ASTs for the dangling
               iii. For each close-AST:
@@ -54,72 +54,70 @@ let find_interesting (config : Config.t) (cover : DCov_single.t) :
 
 let update_hit_new' (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
-    (config : Config.t) (log : Logger.t) (filename_hit_p4 : string)
+    (config : Config.t) (log : Logger.t) (path_hit_p4 : string)
     (kind : Mutate.kind) (welltyped : bool) (iids_hit_new : IIdSet.t) : unit =
   F.asprintf
     "[F %d] [P %d] [S %d] [%s %d] [M %d] %s hits %s (COUNT %d) (%s) (%s)" fuel
-    iid idx_seed strategy idx_method idx_mutation filename_hit_p4
+    iid idx_seed strategy idx_method idx_mutation path_hit_p4
     (IIdSet.to_string iids_hit_new)
     (IIdSet.cardinal iids_hit_new)
     (Mutate.string_of_kind kind)
     (if IIdSet.mem iid iids_hit_new then "GOODHIT" else "BADHIT")
   |> Logger.mark config.modes.logmode log;
-  let oc = open_out_gen [ Open_append; Open_text ] 0o666 filename_hit_p4 in
+  let oc = open_out_gen [ Open_append; Open_text ] 0o666 path_hit_p4 in
   F.asprintf "\n// Covered iids %s\n" (IIdSet.to_string iids_hit_new)
   |> output_string oc;
   close_out oc;
   (* Update the set of covered danglings *)
-  Config.update_hit_seed config filename_hit_p4 welltyped iids_hit_new
+  Config.update_hit_seed config path_hit_p4 welltyped iids_hit_new
 
 let update_hit_new (fuel : int) (iid : iid) (idx_seed : int) (strategy : string)
     (idx_method : int) (idx_mutation : int) (config : Config.t) (log : Logger.t)
-    (filename_gen_p4 : string) (kind : Mutate.kind) (iids_hit_new : IIdSet.t) :
-    unit =
+    (path_gen_p4 : string) (kind : Mutate.kind) (iids_hit_new : IIdSet.t) : unit
+    =
   (* Re-run the SL interpreter to make sure of the new hits *)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+    Runner.run_program_with_dangling config.specenv.simulator
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      path_gen_p4
   in
   match program_result with
   | Pass _ when IIdSet.for_all (DCov_single.is_hit cover) iids_hit_new ->
-      let filename_hit_p4 =
-        Util.Filesys.cp filename_gen_p4 config.storage.dirname_welltyped_p4
+      let path_hit_p4 =
+        Util.Filesys.cp path_gen_p4 config.storage.dirname_welltyped_p4
       in
       update_hit_new' fuel iid idx_seed strategy idx_method idx_mutation config
-        log filename_hit_p4 kind true iids_hit_new
+        log path_hit_p4 kind true iids_hit_new
   | Fail (`Runtime _)
     when IIdSet.for_all (DCov_single.is_hit cover) iids_hit_new ->
-      let filename_hit_p4 =
-        Util.Filesys.cp filename_gen_p4 config.storage.dirname_illtyped_p4
+      let path_hit_p4 =
+        Util.Filesys.cp path_gen_p4 config.storage.dirname_illtyped_p4
       in
       update_hit_new' fuel iid idx_seed strategy idx_method idx_mutation config
-        log filename_hit_p4 kind false iids_hit_new
+        log path_hit_p4 kind false iids_hit_new
   | _ -> ()
 
 let update_close_miss_new' (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
-    (config : Config.t) (log : Logger.t) (filename_close_miss_p4 : string)
+    (config : Config.t) (log : Logger.t) (path_close_miss_p4 : string)
     (iids_close_miss_new : IIdSet.t) : unit =
   F.asprintf "[F %d] [P %d] [S %d] [%s %d] [M %d] %s close-misses %s" fuel iid
-    idx_seed strategy idx_method idx_mutation filename_close_miss_p4
+    idx_seed strategy idx_method idx_mutation path_close_miss_p4
     (IIdSet.to_string iids_close_miss_new)
   |> Logger.log config.modes.logmode log;
-  let oc =
-    open_out_gen [ Open_append; Open_text ] 0o666 filename_close_miss_p4
-  in
+  let oc = open_out_gen [ Open_append; Open_text ] 0o666 path_close_miss_p4 in
   F.asprintf "\n// Close-missed iids %s\n"
     (IIdSet.to_string iids_close_miss_new)
   |> output_string oc;
   close_out oc;
   (* Update the set of covered danglings *)
-  Config.update_close_miss_seed config filename_close_miss_p4
-    iids_close_miss_new
+  Config.update_close_miss_seed config path_close_miss_p4 iids_close_miss_new
 
 let update_close_miss_new (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
-    (config : Config.t) (log : Logger.t) (filename_gen_p4 : string)
+    (config : Config.t) (log : Logger.t) (path_gen_p4 : string)
     (iids_close_miss_new : IIdSet.t) : unit =
   (* Re-run the SL interpreter to make sure of the new close-misses *)
   (* Then copy the interesting test program to the output directory,
@@ -127,33 +125,33 @@ let update_close_miss_new (fuel : int) (iid : iid) (idx_seed : int)
   (* Then copy the interesting test program to the output directory
      and update the running coverage *)
   let program_result, cover =
-    Runner.run_program_with_dangling config.specenv.driver config.specenv.spec
-      config.specenv.relname config.specenv.includes_p4 filename_gen_p4
+    Runner.run_program_with_dangling config.specenv.simulator
+      config.specenv.spec config.specenv.relname config.specenv.includes_p4
+      path_gen_p4
   in
   match program_result with
   | Pass _
     when IIdSet.for_all (DCov_single.is_close_miss cover) iids_close_miss_new ->
-      let filename_close_miss_p4 =
-        Util.Filesys.cp filename_gen_p4 config.storage.dirname_close_miss_p4
+      let path_close_miss_p4 =
+        Util.Filesys.cp path_gen_p4 config.storage.dirname_close_miss_p4
       in
       update_close_miss_new' fuel iid idx_seed strategy idx_method idx_mutation
-        config log filename_close_miss_p4 iids_close_miss_new
+        config log path_close_miss_p4 iids_close_miss_new
   | _ -> ()
 
 let update_interesting (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
     (trials : int ref) (config : Config.t) (log : Logger.t)
-    (filename_gen_p4 : string) (kind : Mutate.kind) (value_program : value) :
-    unit =
+    (path_gen_p4 : string) (kind : Mutate.kind) (value_program : value) : unit =
   (* Evaluate the generated program to see if it is interesting *)
   let time_start = Unix.gettimeofday () in
   F.asprintf "[F %d] [P %d] [S %d] [%s %d] [M %d] [%d/%d] Evaluating %s" fuel
     iid idx_seed strategy idx_method idx_mutation !trials Config.trials_seed
-    filename_gen_p4
+    path_gen_p4
   |> Logger.log config.modes.logmode log;
   let welltyped, cover =
     let rel_result, cover =
-      Runner.run_program_internal_with_dangling config.specenv.driver
+      Runner.run_program_internal_with_dangling config.specenv.simulator
         config.specenv.spec config.specenv.relname value_program
     in
     match rel_result with Pass _ -> (true, cover) | Fail _ -> (false, cover)
@@ -162,7 +160,7 @@ let update_interesting (fuel : int) (iid : iid) (idx_seed : int)
   F.asprintf
     "[F %d] [P %d] [S %d] [%s %d] [M %d] [%d/%d] Evaluated %s (took %.2f)" fuel
     iid idx_seed strategy idx_method idx_mutation !trials Config.trials_seed
-    filename_gen_p4 (time_end -. time_start)
+    path_gen_p4 (time_end -. time_start)
   |> Logger.log config.modes.logmode log;
   (* Find newly hit or newly close-missing nodes *)
   let iids_hit_new, iids_close_miss_new = find_interesting config cover in
@@ -172,28 +170,28 @@ let update_interesting (fuel : int) (iid : iid) (idx_seed : int)
   | Relaxed ->
       if not (IIdSet.is_empty iids_hit_new) then
         update_hit_new fuel iid idx_seed strategy idx_method idx_mutation config
-          log filename_gen_p4 kind iids_hit_new
+          log path_gen_p4 kind iids_hit_new
   | Strict ->
       if IIdSet.mem iid iids_hit_new then
         update_hit_new fuel iid idx_seed strategy idx_method idx_mutation config
-          log filename_gen_p4 kind (IIdSet.singleton iid));
+          log path_gen_p4 kind (IIdSet.singleton iid));
   (* Collect the file if it is well-typed and covers a new close-miss dangling,
      then update the running coverage *)
   if welltyped && not (IIdSet.is_empty iids_close_miss_new) then
     update_close_miss_new fuel iid idx_seed strategy idx_method idx_mutation
-      config log filename_gen_p4 iids_close_miss_new
+      config log path_gen_p4 iids_close_miss_new
 
 (* Mutate an AST and generate a new program *)
 
 let classify_mutation' (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
     (trials : int ref) (config : Config.t) (log : Logger.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (comment_gen_p4 : string)
+    (dirname_gen_tmp : string) (path_p4 : string) (comment_gen_p4 : string)
     (kind : Mutate.kind) (value_source : value) (value_mutated : value)
     (value_program : value) : unit =
-  let filename_gen_p4 =
+  let path_gen_p4 =
     F.asprintf "%s/%s_F%dP%dS%d%s%dM%dT%d.p4" dirname_gen_tmp
-      (Util.Filesys.base ~suffix:".p4" filename_p4)
+      (Util.Filesys.base ~suffix:".p4" path_p4)
       fuel iid idx_seed
       (if strategy = "Derive" then "D"
        else if strategy = "Random" then "R"
@@ -206,18 +204,18 @@ let classify_mutation' (fuel : int) (iid : iid) (idx_seed : int)
       (Sl.Print.string_of_value value_mutated)
   in
   (* Write the mutated program to a file *)
-  let oc = open_out filename_gen_p4 in
+  let oc = open_out path_gen_p4 in
   F.asprintf "%s\n%s\n" comment_gen_p4 (config.specenv.printer value_program)
   |> output_string oc;
   close_out oc;
   (* Check if the mutated program is interesting, and if so, update *)
   update_interesting fuel iid idx_seed strategy idx_method idx_mutation trials
-    config log filename_gen_p4 kind value_program
+    config log path_gen_p4 kind value_program
 
 let classify_mutation (fuel : int) (iid : iid) (idx_seed : int)
     (strategy : string) (idx_method : int) (idx_mutation : int)
     (trials : int ref) (config : Config.t) (log : Logger.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (comment_gen_p4 : string)
+    (dirname_gen_tmp : string) (path_p4 : string) (comment_gen_p4 : string)
     (vdg : Dep.Graph.t) (kind : Mutate.kind) (value_source : value)
     (value_mutated : value) : unit =
   (* Reassemble the program with the mutated AST *)
@@ -226,7 +224,7 @@ let classify_mutation (fuel : int) (iid : iid) (idx_seed : int)
   (* Mutation may yield a syntactically ill-formed AST, so have a try block *)
   try
     classify_mutation' fuel iid idx_seed strategy idx_method idx_mutation trials
-      config log dirname_gen_tmp filename_p4 comment_gen_p4 kind value_source
+      config log dirname_gen_tmp path_p4 comment_gen_p4 kind value_source
       value_mutated value_program
   with Util.Error.UnparseError msg ->
     Logger.warn config.modes.logmode log
@@ -234,10 +232,10 @@ let classify_mutation (fuel : int) (iid : iid) (idx_seed : int)
 
 let fuzz_mutation (fuel : int) (iid : iid) (idx_seed : int) (strategy : string)
     (idx_method : int) (trials : int ref) (config : Config.t) (log : Logger.t)
-    (query : Query.t) (dirname_gen_tmp : string) (filename_p4 : string)
+    (query : Query.t) (dirname_gen_tmp : string) (path_p4 : string)
     (comment_gen_p4 : string) (vdg : Dep.Graph.t) (vid_source : vid) : unit =
   F.asprintf "[F %d] [P %d] [S %d] [%s %d]\n[File] %s\n" fuel iid idx_seed
-    strategy idx_method filename_p4
+    strategy idx_method path_p4
   |> Query.query query;
   (* Mutate the AST *)
   let mutations =
@@ -262,7 +260,7 @@ let fuzz_mutation (fuel : int) (iid : iid) (idx_seed : int) (strategy : string)
             (Mutate.string_of_kind kind)
         in
         classify_mutation fuel iid idx_seed strategy idx_method idx_mutation
-          trials config log dirname_gen_tmp filename_p4 comment_gen_p4 vdg kind
+          trials config log dirname_gen_tmp path_p4 comment_gen_p4 vdg kind
           value_source value_mutated))
     mutations
 
@@ -270,7 +268,7 @@ let fuzz_mutation (fuel : int) (iid : iid) (idx_seed : int) (strategy : string)
 
 let fuzz_derivations (fuel : int) (iid : iid) (idx_seed : int)
     (trials : int ref) (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (derivations_source : (vid * int) list) : unit =
   List.iteri
     (fun idx_derivation (vid_source, depth) ->
@@ -283,12 +281,12 @@ let fuzz_derivations (fuel : int) (iid : iid) (idx_seed : int)
         in
         let strategy = "Derive" in
         fuzz_mutation fuel iid idx_seed strategy idx_derivation trials config
-          log query dirname_gen_tmp filename_p4 comment_gen_p4 vdg vid_source)
+          log query dirname_gen_tmp path_p4 comment_gen_p4 vdg vid_source)
     derivations_source
 
 let fuzz_derivations_bounded (fuel : int) (iid : iid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (derivations_source : (vid * int) list) : unit =
   if derivations_source = [] then
     F.asprintf "[F %d] [P %d] [S %d] Skipping, no derivation found" fuel iid
@@ -305,14 +303,14 @@ let fuzz_derivations_bounded (fuel : int) (iid : iid) (idx_seed : int)
       !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover iid
     do
       fuzz_derivations fuel iid idx_seed trials config log query dirname_gen_tmp
-        filename_p4 vdg derivations_source
+        path_p4 vdg derivations_source
     done
 
 (* Fuzzing from a random value id *)
 
 let fuzz_randoms (fuel : int) (iid : iid) (idx_seed : int) (trials : int ref)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (vids_source : vid list) : unit =
   List.iteri
     (fun idx_random vid_source ->
@@ -324,12 +322,12 @@ let fuzz_randoms (fuel : int) (iid : iid) (idx_seed : int) (trials : int ref)
         in
         let strategy = "Random" in
         fuzz_mutation fuel iid idx_seed strategy idx_random trials config log
-          query dirname_gen_tmp filename_p4 comment_gen_p4 vdg vid_source)
+          query dirname_gen_tmp path_p4 comment_gen_p4 vdg vid_source)
     vids_source
 
 let fuzz_randoms_bounded (fuel : int) (iid : iid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (vids_source : vid list) : unit =
   F.asprintf
     "[F %d] [P %d] [S %d] Fuzzing from %d random values, until %d trials" fuel
@@ -340,15 +338,14 @@ let fuzz_randoms_bounded (fuel : int) (iid : iid) (idx_seed : int)
     !trials < Config.trials_seed && DCov_multi.is_miss config.seed.cover iid
   do
     fuzz_randoms fuel iid idx_seed trials config log query dirname_gen_tmp
-      filename_p4 vdg vids_source
+      path_p4 vdg vids_source
   done
 
 (* Fuzzing from a seed program *)
 
 let fuzz_seed_random (fuel : int) (iid : iid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t) : unit
-    =
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t) : unit =
   (* Randomly sample N vids from the program *)
   let vids_source =
     List.init vdg.root Fun.id
@@ -357,15 +354,15 @@ let fuzz_seed_random (fuel : int) (iid : iid) (idx_seed : int)
   in
   (* Mutate the ASTs and dump to file *)
   fuzz_randoms_bounded fuel iid idx_seed config log query dirname_gen_tmp
-    filename_p4 vdg vids_source
+    path_p4 vdg vids_source
 
 let fuzz_seed_deriving (fuel : int) (iid : iid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the dangling *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel iid
-    idx_seed filename_p4
+    idx_seed path_p4
   |> Logger.log config.modes.logmode log;
   let time_start = Unix.gettimeofday () in
   let derivations_source = Derive.derive_dangling iid vdg cover in
@@ -386,15 +383,15 @@ let fuzz_seed_deriving (fuel : int) (iid : iid) (idx_seed : int)
   in
   (* Mutate the close-ASTs and dump to file *)
   fuzz_derivations_bounded fuel iid idx_seed config log query dirname_gen_tmp
-    filename_p4 vdg derivations_source
+    path_p4 vdg derivations_source
 
 let fuzz_seed_hybrid (fuel : int) (iid : iid) (idx_seed : int)
     (config : Config.t) (log : Logger.t) (query : Query.t)
-    (dirname_gen_tmp : string) (filename_p4 : string) (vdg : Dep.Graph.t)
+    (dirname_gen_tmp : string) (path_p4 : string) (vdg : Dep.Graph.t)
     (cover : DCov_single.t) : unit =
   (* Derive closes-ASTs from the dangling *)
   F.asprintf "[F %d] [P %d] [S %d] Finding derivations from %s" fuel iid
-    idx_seed filename_p4
+    idx_seed path_p4
   |> Logger.log config.modes.logmode log;
   let time_start = Unix.gettimeofday () in
   let derivations_source = Derive.derive_dangling iid vdg cover in
@@ -417,17 +414,17 @@ let fuzz_seed_hybrid (fuel : int) (iid : iid) (idx_seed : int)
   match derivations_source with
   | [] ->
       fuzz_seed_random fuel iid idx_seed config log query dirname_gen_tmp
-        filename_p4 vdg
+        path_p4 vdg
   | _ ->
       fuzz_derivations_bounded fuel iid idx_seed config log query
-        dirname_gen_tmp filename_p4 vdg derivations_source
+        dirname_gen_tmp path_p4 vdg derivations_source
 
 let fuzz_seed (fuel : int) (iid : iid) (idx_seed : int) (config : Config.t)
     (log : Logger.t) (query : Query.t) (dirname_gen_tmp : string)
-    (filename_p4 : string) : unit =
+    (path_p4 : string) : unit =
   let time_start = Unix.gettimeofday () in
   F.asprintf "[F %d] [P %d] [S %d] Running SL interpreter on %s" fuel iid
-    idx_seed filename_p4
+    idx_seed path_p4
   |> Logger.log config.modes.logmode log;
   (* Construct the value dependency graph for deriving and hybrid modes *)
   let derive =
@@ -438,32 +435,32 @@ let fuzz_seed (fuel : int) (iid : iid) (idx_seed : int) (config : Config.t)
   (* Run SL interpreter on the program,
      and if it is well-typed, start generating tests from it *)
   let program_result, cover, vdg =
-    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.driver
+    Runner.run_program_with_dangling_and_vdg ~derive config.specenv.simulator
       config.specenv.spec config.specenv.relname config.specenv.includes_p4
-      filename_p4
+      path_p4
   in
   (match program_result with
   | Pass _ ->
       let time_end = Unix.gettimeofday () in
       F.asprintf
         "[F %d] [P %d] [S %d] SL interpreter succeeded on %s (took %.2f)" fuel
-        iid idx_seed filename_p4 (time_end -. time_start)
+        iid idx_seed path_p4 (time_end -. time_start)
       |> Logger.log config.modes.logmode log;
       (match config.modes.mutationmode with
       | Random ->
           fuzz_seed_random fuel iid idx_seed config log query dirname_gen_tmp
-            filename_p4 vdg
+            path_p4 vdg
       | Derive ->
           fuzz_seed_deriving fuel iid idx_seed config log query dirname_gen_tmp
-            filename_p4 vdg cover
+            path_p4 vdg cover
       | Hybrid ->
           fuzz_seed_hybrid fuel iid idx_seed config log query dirname_gen_tmp
-            filename_p4 vdg cover);
+            path_p4 vdg cover);
       Dep.Graph.G.reset vdg.nodes;
       Dep.Graph.G.reset vdg.edges
   | Fail _ ->
       F.asprintf "[F %d] [P %d] [S %d] SL interpreter failed on %s" fuel iid
-        idx_seed filename_p4
+        idx_seed path_p4
       |> Logger.log config.modes.logmode log);
   let total, hits, coverage = DCov_multi.measure_coverage config.seed.cover in
   F.asprintf "[F %d] [P %d] [S %d] Coverage %d/%d (%.2f%%)" fuel iid idx_seed
@@ -471,11 +468,11 @@ let fuzz_seed (fuel : int) (iid : iid) (idx_seed : int) (config : Config.t)
   |> Logger.log config.modes.logmode log
 
 let fuzz_seeds (fuel : int) (iid : iid) (config : Config.t) (log : Logger.t)
-    (query : Query.t) (dirname_gen_tmp : string) (filenames_p4 : string list) :
-    unit =
+    (query : Query.t) (dirname_gen_tmp : string) (paths_p4 : string list) : unit
+    =
   (* Fuzz from seed programs until the target dangling node is covered *)
   List.iteri
-    (fun idx_seed filename_p4 ->
+    (fun idx_seed path_p4 ->
       if DCov_multi.is_miss config.seed.cover iid then (
         let _ =
           Sys.set_signal Sys.sigalrm
@@ -483,19 +480,18 @@ let fuzz_seeds (fuel : int) (iid : iid) (config : Config.t) (log : Logger.t)
         in
         Unix.alarm Config.timeout_seed |> ignore;
         (try
-           fuzz_seed fuel iid idx_seed config log query dirname_gen_tmp
-             filename_p4
+           fuzz_seed fuel iid idx_seed config log query dirname_gen_tmp path_p4
          with Timeout ->
            F.asprintf "[F %d] [S %d] [P %d] Timeout on %s" fuel iid idx_seed
-             filename_p4
+             path_p4
            |> Logger.warn config.modes.logmode log);
         Unix.alarm 0 |> ignore))
-    filenames_p4
+    paths_p4
 
 (* Fuzzing from a target dangling node *)
 
 let fuzz_dangling (fuel : int) (iid : iid) (config : Config.t) (log : Logger.t)
-    (query : Query.t) (filenames_p4 : string list) : unit =
+    (query : Query.t) (paths_p4 : string list) : unit =
   F.asprintf "[F %d] [P %d] Targeting dangling %d" fuel iid iid
   |> Logger.log config.modes.logmode log;
   (* Create a directory for the generated programs *)
@@ -504,12 +500,10 @@ let fuzz_dangling (fuel : int) (iid : iid) (config : Config.t) (log : Logger.t)
     ^ string_of_int iid
   in
   Util.Filesys.mkdir dirname_gen_tmp;
-  (* Randomly sample N close-miss filenames *)
-  let filenames_p4 =
-    Rand.random_sample Config.samples_close_miss filenames_p4
-  in
+  (* Randomly sample N close-miss paths *)
+  let paths_p4 = Rand.random_sample Config.samples_close_miss paths_p4 in
   (* Generate tests from the files *)
-  (try fuzz_seeds fuel iid config log query dirname_gen_tmp filenames_p4
+  (try fuzz_seeds fuel iid config log query dirname_gen_tmp paths_p4
    with _ as err ->
      F.asprintf "[F %d] [P %d] Unexpected error occurred : %s" fuel iid
        (Printexc.to_string err)
@@ -526,8 +520,7 @@ let fuzz_danglings (fuel : int) (config : Config.t) (log : Logger.t)
       match branch.status with
       | Hit _ -> ()
       | Miss [] -> ()
-      | Miss filenames_p4 ->
-          fuzz_dangling fuel iid config log query filenames_p4)
+      | Miss paths_p4 -> fuzz_dangling fuel iid config log query paths_p4)
     iids
 
 (* Fuzzing in a loop with fuel *)
@@ -591,7 +584,7 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     (match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         "-e" ^ String.concat " " excludes_p4 ^ "-cold " ^ dirname_seed_p4
-    | Warm filename_boot -> " -warm " ^ filename_boot)
+    | Warm path_boot -> " -warm " ^ path_boot)
     (match modes.mutationmode with
     | Random -> " -random"
     | Derive -> ""
@@ -608,14 +601,14 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     match modes.bootmode with
     | Cold (excludes_p4, dirname_seed_p4) ->
         let cover_seed =
-          Boot.boot_cold specenv.driver specenv.spec relname includes_p4
+          Boot.boot_cold specenv.simulator specenv.spec relname includes_p4
             excludes_p4 dirname_seed_p4
         in
         (* Log the initial coverage for later use in warm boot *)
-        let filename_cov = dirname_gen ^ "/boot.coverage" in
-        DCov_multi.log ~filename_cov_opt:(Some filename_cov) cover_seed;
+        let path_cov = dirname_gen ^ "/boot.coverage" in
+        DCov_multi.log ~path_cov_opt:(Some path_cov) cover_seed;
         cover_seed
-    | Warm filename_boot -> Boot.boot_warm filename_boot
+    | Warm path_boot -> Boot.boot_warm path_boot
   in
   let seed = Config.init_seed cover_seed in
   (* Close the initial log *)
@@ -649,5 +642,5 @@ let fuzzer (fuel : int) (spec : spec) (relname : string)
   (* Call the main fuzzing loop *)
   let config = fuzz_loop fuel config in
   (* Log the final coverage *)
-  let filename_cov = config.storage.dirname_gen ^ "/final.coverage" in
-  DCov_multi.log ~filename_cov_opt:(Some filename_cov) config.seed.cover
+  let path_cov = config.storage.dirname_gen ^ "/final.coverage" in
+  DCov_multi.log ~path_cov_opt:(Some path_cov) config.seed.cover

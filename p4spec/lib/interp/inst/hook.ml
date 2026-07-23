@@ -4,13 +4,6 @@ module Value = Runtime.Value
 module Dep = Runtime.Testgen_neg.Dep
 open Handler
 
-(* Cache flag *)
-
-let cache = ref true
-let cache_on () = cache := true
-let cache_off () = cache := false
-let is_cache_on () = !cache
-
 (* Registered handlers *)
 
 let handlers : (module HANDLER) list ref = ref []

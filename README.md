@@ -26,6 +26,7 @@ the specification parser and the high-level architecture of the tool.
   - [Running the specification](#running-the-specification)
   - [Running the specification against packet inputs](#running-the-specification-against-packet-inputs)
   - [To initiate a fuzz loop generating (intentionally) ill-typed P4 programs](#to-initiate-a-fuzz-loop-generating-intentionally-ill-typed-p4-programs)
+- [Experimental: Meta-circular specification](#experimental-meta-circular-specification)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -239,6 +240,12 @@ In later runs with the same boot directory, you can use warm boot to skip the in
 ```shell
 $ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-file [BOOT_FILE].coverage
 ```
+
+## Experimental: Meta-circular specification
+
+Read [this document](BOOT.md) for how to apply meta-circular interpretation
+to the P4-SpecTec framework, intuitively, running the
+specification-of-specification on P4-SpecTec.
 
 ## Contributing
 

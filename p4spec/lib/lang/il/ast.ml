@@ -50,6 +50,8 @@ and typ' =
   | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
+(* Defined types *)
+
 and nottyp = nottyp' phrase
 [@@deriving yojson]
 and nottyp' = typ Mixfix.t
@@ -67,6 +69,11 @@ and typorigin' = id * targ list
 and typcase = nottyp * typorigin * hint list
 
 (* Values *)
+
+(* Invariant: vid is a globally unique identifier.
+   Consequently, equal vids imply structural equality. Breaking this invariant
+   would cause silent bugs in the implementation of value equality, since it
+   would cause id aliasing between structurally distinct values. *)
 
 and vid = int
 and vnote = { vid : vid; typ : typ'; vhash : int } [@@deriving yojson]
@@ -222,7 +229,7 @@ type def = def' phrase
 and def' =
   (* `extern` `syntax` id hint* *)
   | ExternTypD of id * hint list
-  (* `syntax` id `<` list(tparam, `,`) `>` `=` deftyp hint* *)
+  (* `syntax` id `<` list(tparam, `,`) `>` hint* `=` deftyp *)
   | TypD of id * tparam list * deftyp * hint list
   (* `var` id `:` typ hint* *)
   | VarD of id * typ * hint list

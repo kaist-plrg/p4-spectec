@@ -241,7 +241,7 @@ and analyze_rule_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
            |> Option.map (fun (typ_bound, iters_bound) ->
                   Typdim.sub (typ_bound, iters_bound) (typ, iters))
            |> Option.value ~default:false)
-    |> Iterctx.add_vars_bind venv
+    |> Iterctx.add_vars_bind (Dimension.infer_exps exps_output)
   in
   Iterctx.validate at iterctx;
   let prem = Iterctx.iterate_prem iterctx prem in

@@ -194,7 +194,7 @@ let struct_tablerow_path ((prems, exp_output) : prem list * exp) : Ol.Ast.block
 
 (* Structuring definitions *)
 
-let rec struct_def (ctx : Ctx.t) (def : def) : Sl.def =
+let rec struct_def ~(final : bool) (ctx : Ctx.t) (def : def) : Sl.def =
   let at = def.at in
   match def.it with
   | ExternTypD (id, hints) -> Sl.ExternTypD (id, hints) $ at
@@ -204,17 +204,17 @@ let rec struct_def (ctx : Ctx.t) (def : def) : Sl.def =
   | ExternRelD (id, nottyp, inputs, hints) ->
       struct_extern_rel_def ctx at id nottyp inputs hints
   | RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) ->
-      struct_defined_rel_def ctx at id nottyp inputs rulegroups elsegroup_opt
-        hints
+      struct_defined_rel_def ~final ctx at id nottyp inputs rulegroups
+        elsegroup_opt hints
   | ExternDecD (id, tparams, params, typ, hints) ->
       struct_extern_dec_def ctx at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def ctx at id tparams params typ hints
   | TableDecD (id, params, typ, tablerows, hints) ->
-      struct_table_dec_def ctx at id params tablerows typ hints
+      struct_table_dec_def ~final ctx at id params tablerows typ hints
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
-      struct_func_dec_def ctx at id tparams params typ clauses elseclause_opt
-        hints
+      struct_func_dec_def ~final ctx at id tparams params typ clauses
+        elseclause_opt hints
 
 (* Structuring relation definitions *)
 
@@ -234,9 +234,10 @@ and struct_extern_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
   let externrel = (id_rel, (nottyp, inputs), exps_match, hints) in
   Sl.ExternRelD externrel $ at
 
-and struct_defined_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
-    (nottyp : nottyp) (inputs : int list) (rulegroups : rulegroup list)
-    (elsegroup_opt : elsegroup option) (hints : hint list) : Sl.def =
+and struct_defined_rel_def ~(final : bool) (ctx : Ctx.t) (at : region)
+    (id_rel : id) (nottyp : nottyp) (inputs : int list)
+    (rulegroups : rulegroup list) (elsegroup_opt : elsegroup option)
+    (hints : hint list) : Sl.def =
   let frees =
     IdSet.union
       (Al.Free.free_rulegroups rulegroups)
@@ -309,7 +310,7 @@ and struct_defined_rel_def (ctx : Ctx.t) (at : region) (id_rel : id)
     | _ -> None
   in
   let block, elseblock_opt =
-    Optimize.optimize_with_else ctx.tdenv block elseblock_opt
+    Optimize.optimize_with_else ~final ctx.tdenv block elseblock_opt
   in
   let block, elseblock_opt = Totalize.totalize ctx.tdenv block elseblock_opt in
   let exps_match_unified, block, elseblock_opt =
@@ -336,8 +337,8 @@ and struct_builtin_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
   let builtinfunc = (id_dec, tparams, params, typ, hints) in
   Sl.BuiltinDecD builtinfunc $ at
 
-and struct_table_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
-    (params : param list) (tablerows : tablerow list) (typ : typ)
+and struct_table_dec_def ~(final : bool) (ctx : Ctx.t) (at : region)
+    (id_dec : id) (params : param list) (tablerows : tablerow list) (typ : typ)
     (hints : hint list) : Sl.def =
   let exps_signature_group, clauses =
     tablerows
@@ -352,7 +353,7 @@ and struct_table_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
   let blocks_tablerows =
     paths
     |> List.map struct_tablerow_path
-    |> List.map (Optimize.optimize_without_else ctx.tdenv)
+    |> List.map (Optimize.optimize_without_else ~final ctx.tdenv)
     |> List.map (Totalize.totalize_without_else ctx.tdenv)
     |> List.map Dangle.instrument_without_else
   in
@@ -367,8 +368,8 @@ and struct_table_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
   let tablefunc = (id_dec, params, typ, tablerows, hints) in
   Sl.TableDecD tablefunc $ at
 
-and struct_func_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
-    (tparams : tparam list) (params : param list) (typ : typ)
+and struct_func_dec_def ~(final : bool) (ctx : Ctx.t) (at : region)
+    (id_dec : id) (tparams : tparam list) (params : param list) (typ : typ)
     (clauses : clause list) (elseclause_opt : clause option) (hints : hint list)
     : Sl.def =
   let args_input, paths, path_else_opt =
@@ -385,7 +386,7 @@ and struct_func_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
         in
         let elseblock_opt = Option.map struct_elseclause_path path_else_opt in
         let block, elseblock_opt =
-          Optimize.optimize_with_else ctx.tdenv block elseblock_opt
+          Optimize.optimize_with_else ~final ctx.tdenv block elseblock_opt
         in
         let block, elseblock_opt =
           Totalize.totalize ctx.tdenv block elseblock_opt
@@ -400,9 +401,10 @@ and struct_func_dec_def (ctx : Ctx.t) (at : region) (id_dec : id)
   let func = (id_dec, tparams, params, typ, block, elseblock_opt, hints) in
   Sl.FuncDecD func $ at
 
-(* Entry point *)
+(* Entry point
+   If the final parameter is true, all group instructions are removed for optimization purposes *)
 
-let struct_spec (spec : spec) : Sl.spec =
+let struct_spec ~(final : bool) (spec : spec) : Sl.spec =
   let ctx = Ctx.init () in
   let ctx = Ctx.load_spec ctx spec in
-  List.map (struct_def ctx) spec
+  List.map (struct_def ~final ctx) spec

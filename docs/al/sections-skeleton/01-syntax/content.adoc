@@ -1,0 +1,225 @@
+== Syntax
+
+=== Identifiers
+
+Identifiers (`id`) are the basic naming unit of the language, used to name
+variables, types, functions, and relations throughout a specification. Atoms
+are indivisible symbolic constants that serve as constructor tags or literal
+markers in type and value definitions. Mixop fragments are the building blocks
+of mixfix operators, which interleave keyword components with syntactic
+arguments to form compound notational forms such as `if _ then _ else _`.
+
+${syntax: id atom mixop}
+
+=== Types
+
+The type system classifies expressions and values in the language. Numeric
+types (`numtyp`) distinguish natural numbers (`NAT`) and integers (`INT`).
+Literal types (`optyp`) extend numeric types with booleans (`BOOL`) and text
+strings (`TEXT`); these are the types of values that can be written as literals.
+Compound types (`typ`) include literal types, named user-defined types (`VAR`,
+applied to optional type arguments), tuples (`TUP`), and iterated types
+(`ITER`); lists and optional values are encoded as iterated types (`ITER typ
+STAR` and `ITER typ QUEST`, respectively). There is also an opaque function
+type (`FUNC`). Definition types (`deftyp`) describe the shape of user-defined
+type declarations: a type alias (`ALIAS`) names an existing type; a struct type
+(`STRUCT`) is a product of named fields (`typfield`); a variant type
+(`VARIANT`) is a sum of labeled alternatives (`typcase`).
+
+${syntax: numtyp optyp typ deftyp typfield typcase}
+
+=== Iterators
+
+An iterator (`iter`) marks a binding or expression as either optional (`?`) or
+list-valued (`*`). Iterators appear on expressions, premises, and arguments to
+express that a rule applies element-wise across a sequence or an optional
+value. The bound variable names track which dimensions participate in a given
+iteration step, and are used by the sub-context machinery to distribute and
+collect values across iterations.
+
+${syntax: iter}
+
+=== Variables
+
+A variable reference (`vari`) consists of an identifier, a type annotation,
+and zero or more iterator markers (`?` or `*`). The type annotation is present
+for disambiguation during elaboration: distinct occurrences of the same
+identifier with different types are treated as separate variables. The effective
+lookup key used at runtime is `varr = id iter*`, which retains the identifier
+and iterator markers but strips the type annotation.
+
+${syntax: vari}
+
+=== Operators
+
+Operators are the primitive computations applied to values in expressions. They
+are partitioned into unary, binary, and comparison forms according to their
+arity and the type of result they produce.
+
+${syntax: unop binop cmpop}
+
+==== Boolean operators
+
+Boolean unary operators include logical negation. Boolean binary operators
+include conjunction and disjunction. These operators are the building blocks of
+guard conditions used throughout the semantic rules.
+
+${syntax: boolunop boolbinop}
+
+==== Numeric operators
+
+Numeric unary operators include sign coercion (`PLUS`) and arithmetic negation
+(`MINUS`). Numeric binary operators include addition, subtraction,
+multiplication, division, modulo, and exponentiation.
+
+${syntax: numunop numbinop}
+
+==== Comparison operators
+
+Comparison operators consume two operands and produce a boolean result. Numeric
+comparison operators (`numcmpop`) apply to pairs of integers and provide the
+usual relational orderings. Polymorphic comparison operators (`polycmpop`)
+apply to any pair of values of a compatible type and provide structural
+equality and inequality tests.
+
+${syntax: numcmpop polycmpop}
+
+=== Values
+
+A value is the fully-evaluated result of an expression. Numeric values (`num`)
+are either a natural number (`NAT nat`) or an integer (`INT int`). Compound
+values (`val`) encompass all value forms: booleans, numeric values, text
+strings, struct values (`STR`), union-case injections (`INJ`), tuples (`TUP`),
+optional values (`OPT`), lists (`LIST`), function values (`FUNC id`), and
+external values (`EXT`) represented as opaque JSON. Struct values are assembled
+from named fields (`valfield`); injection values pair a constructor label with
+zero or more payload values (`valcase`).
+
+${syntax: num val valfield valcase}
+
+=== Expressions
+
+Expressions are the core computational terms of the language. They include
+literal constants, variable references, unary and binary operations,
+comparisons, type casts, runtime type tests, and constructors for tuples,
+structs, cases, options, and lists. Expressions also encompass path-based
+accesses and updates into structured values, function calls, and iterated
+forms. An iterator expression (`iterexp`) annotates an expression with an
+iterator dimension. Patterns extend expression syntax with destructuring forms
+used as assignment targets on the left-hand side of let premises.
+
+${syntax: exp expcase expfield iterexp}
+
+==== Patterns
+
+Patterns are used as the second argument of the `MATCH` expression, which
+checks whether a value has a particular shape and returns a boolean. List
+patterns (`listpattern`) test whether a list is non-empty (`CONS`), has exactly
+`n` elements (`FIXED n`), or is empty (`NIL`). Option patterns (`optpattern`)
+test whether an optional value is present (`SOME`) or absent (`NONE`). A
+pattern (`pattern`) additionally includes an injection match (`INJ mixop`) that
+tests whether a union-case value was constructed with a specific constructor
+label.
+
+${syntax: listpattern optpattern pattern}
+
+==== Paths
+
+A path (`path`) describes a chained sequence of accesses into a structured
+value: a dot projection to a named struct field, an index into a list by
+position, or a slice extracting a contiguous sub-sequence. Paths appear in both
+read access expressions and update expressions, where they identify the
+sub-value to be replaced.
+
+${syntax: path}
+
+=== Arguments
+
+Arguments are the actual values and functions supplied at a call site when
+invoking a function. A type argument (`targ`) instantiates a type parameter of
+a polymorphic function with a concrete type. A value argument (`arg`) is either
+an expression argument supplying a concrete value for an expression parameter,
+or a function argument passing a named function for a higher-order parameter.
+
+${syntax: targ arg}
+
+=== Parameters
+
+Parameters are the formal declarations in a function or relation signature,
+mirroring the argument forms on the call side. An expression parameter (`EXP`)
+binds a typed variable that will receive a value argument at the call site. A
+function parameter (`FUN`) binds a higher-order function name with its full
+type signature, to be supplied by a function argument.
+
+${syntax: tparam param}
+
+=== Premises
+
+A premise (`prem`) is a condition or binding step that guards or extends the
+context within a rule body. Relation premises (`REL`) invoke a named relation
+on input expressions and bind the output expressions to the results. If
+premises (`IF`) assert that a boolean expression evaluates to true; the rule
+fails if it evaluates to false. If-hold and if-not-hold premises
+(`IFHOLD`/`IFNOTHOLD`) assert that a relation call succeeds or fails without
+consuming its output. Let premises (`LET`) evaluate an expression and
+destructure the result into a pattern, extending the context with new bindings.
+Iterator premises (`ITER`) apply a premise element-wise across a sequence or
+optional value. Debug premises (`DEBUG`) emit a diagnostic value without
+affecting the context.
+
+${syntax: prem iterprem}
+
+=== Definitions
+
+A definition (`defn`) is a top-level declaration in a specification script.
+Definitions include external type declarations (`EXTTYP`), user-defined type
+definitions (`TYP`), external and user-defined relation declarations (`EXTREL`,
+`REL`), external and built-in function declarations (`EXTFUNC`, `BUILTINFUNC`),
+table functions (`TABLEFUNC`), and user-defined functions (`FUNC`). Each form
+binds a name in the global environment that may be referred to by subsequent
+definitions.
+
+${syntax: defn}
+
+==== Rules
+
+A user-defined relation body is organized as a collection of rule groups
+(`rulgroup`). Each rule group specifies a match head (`rulmatch`) consisting of
+input patterns and guarding premises, together with one or more rule paths
+(`rulpath`) that bind output variables and apply additional premises to
+determine the result. An else group (`elsgroup`) provides a single fallback
+path that applies when no earlier rule group's head matches. This structure
+supports the case analysis common in formal operational semantics.
+
+${syntax: rulgroup elsgroup rulmatch rulpath}
+
+==== Clauses
+
+A user-defined function body is organized as an ordered list of clauses
+(`clause`). Each clause specifies argument patterns and guarding premises; when
+the patterns match the actual arguments and all premises succeed, the clause's
+result expression is returned. An else clause (`elsclause`) acts as the final
+fallback when no earlier clause matches, typically encoding the default or
+error case.
+
+${syntax: clause elsclause}
+
+==== Table rows
+
+A table function body is organized as an ordered list of table rows (`tblrow`).
+Each row matches against the function arguments and, after evaluating its
+premises, returns a result expression. Table functions are a special form of
+user-defined function whose cases are presented in a flat tabular layout;
+semantically they behave identically to clause-based functions.
+
+${syntax: tblrow}
+
+=== Scripts
+
+A script (`script`) is a sequence of top-level definitions forming a complete
+specification module. Definitions are loaded in order, and each definition may
+reference only names that have been declared earlier in the same script or in
+previously loaded scripts. The script is the unit of input to the interpreter's
+loading phase.
+
+${syntax: script}

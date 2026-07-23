@@ -1,0 +1,98 @@
+=== Premises
+
+A rule and clause body in the internal language is a sequence of premises. Each
+premise either checks a condition, binds new variables, or invokes a relation.
+Premises are evaluated left to right; if any premise fails, the entire rule
+fails and the next rule group is tried. This sequential, backtracking model is
+the core control-flow mechanism of the IL.
+
+A rule premise is evaluated with the following relation:
+
+${relation-title-prose: Eval_prem}
+
+If no rule was successfully applied, the evaluation fails:
+
+${rulegroup-prose: Eval_prem/fail}
+
+A sequence of premises is evaluated as follows. Each premise is evaluated in
+the context produced by the preceding one, threading the accumulated variable
+bindings from left to right. If the head premise succeeds, evaluation continues
+with the tail; if it fails, the whole sequence fails.
+
+${relation-title-prose: Eval_prems}
+${rulegroup-prose: Eval_prems}
+
+==== Relation premises
+
+A relation premise invokes a named relation with a sequence of input
+expressions and binds the output values to a sequence of output expressions via
+assignment. The inputs are evaluated first under the current context; then the
+relation is called; then the outputs are assigned, extending the context with
+any new variable bindings introduced by the output patterns.
+
+${rulegroup-prose: Eval_prem/relpr}
+
+==== If premises
+
+An if premise checks that a boolean expression evaluates to `true` under the
+current context. If it evaluates to `false`, the premise fails and no context
+extension is produced. This is the primary guard mechanism for rule case
+analysis.
+
+${rulegroup-prose: Eval_prem/ifpr}
+
+==== If-hold premises
+
+An if-hold premise (or if-not-hold premise) invokes a named relation and checks
+whether the call succeeds or fails, without binding any output values. This is
+used to test whether a relation holds for given inputs as a side condition,
+without consuming its result. The context is left unchanged regardless of the
+outcome.
+
+${rulegroup-prose: Eval_prem/ifholdpr}
+
+==== Let premises
+
+A let premise evaluates a right-hand side expression and assigns the resulting
+value to a left-hand side pattern expression, extending the context with any
+variable bindings introduced by the pattern. It is the primary mechanism for
+introducing local variable bindings within a rule body.
+
+${rulegroup-prose: Eval_prem/letpr}
+
+==== Iterator premises
+
+Iterator premises apply a single premise element-wise across a collection of
+values. The iterprem annotation records which variables are bound by the outer
+context (the iteration range) and which variables are to be produced by the
+premise in each iteration step. After iterating, the collected bindings are
+merged back into the context as optional or list-valued variables.
+
+===== Optional iteration premises
+
+An optional iterator premise is annotated with `?`. If the optional range
+variable holds no value (`NONE`), the bound variables are set to absent without
+evaluating the body premise. If the range holds a value (`SOME`), a sub-context
+is created for that single element, the body premise is evaluated in it, and
+the resulting binding is wrapped in `SOME`.
+
+${rulegroup-prose: Eval_prem/iterpr-opt}
+
+===== List iteration premises
+
+A list iterator premise is annotated with `*`. If the range variable holds an
+empty list, the bound variables are set to empty lists without evaluating the
+body premise. If the range is non-empty, a sub-context is created for each
+element, the body premise is evaluated in each sub-context independently, and
+the resulting bindings are collected into lists.
+
+${rulegroup-prose: Eval_prem/iterpr-list}
+
+==== Debug premises
+
+A debug premise evaluates its expression and emits the resulting value to a
+diagnostic channel without modifying the context or affecting the success or
+failure of the enclosing rule. It is intended for tracing evaluation during
+specification development.
+
+${rulegroup-prose: Eval_prem/dbg}

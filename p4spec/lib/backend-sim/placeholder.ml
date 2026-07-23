@@ -1,14 +1,15 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
 open Error
 open Util.Source
 
-module Make
-    (Interp_AL : Sim.INTERP_AL)
-    (Interp_SL : Sim.INTERP_SL)
-    (Interp_PL : Sim.INTERP_PL) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+  end
+
   let transform_stf_stmt = Fun.id
 
   (* Extern calls *)
@@ -109,4 +110,12 @@ module Make
   let drive_pipe (_value_ctx : Value.t) (_value_arch : Value.t) (_rx : IO.rx) :
       Value.t * Value.t * IO.tx list =
     error_no_region "drive_pipe not implemented for the placeholder simulator"
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

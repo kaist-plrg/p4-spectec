@@ -1,17 +1,15 @@
 open Domain
+module Mixfix = Domain.Mixfix
 open Lib
 open Lang
 open Xl
 open Pl
-module ICov_single = Coverage.Instr.Single
-module ICov_multi = Coverage.Instr.Multi
-module DCov_single = Coverage.Dangling.Single
-module DCov_multi = Coverage.Dangling.Multi
 module Type = Runtime.Type
 module Typ = Type.Typ
+module CCache = Runtime.Dynamic.Caches.CallCache
 open Runtime.Dynamic_Pl
 open Envs
-module Sim = Runtime.Sim.Simulator
+module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
 open Interp_common.Error
@@ -21,12 +19,32 @@ module Flow = Interp_common.Flow
 module F = Format
 open Util.Source
 
-(* Cache *)
+module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
+  Run.INTERP_PL = struct
+  (* Build context *)
 
-let func_cache = ref (Cache.Cache.create ~size:10000)
-let rel_cache = ref (Cache.Cache.create ~size:10000)
+  module Ctx = Ctx.Make ()
 
-module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
+  (* Build caches *)
+
+  let func_cache = ref (CCache.create ~size:(256 * 1024))
+  let rel_cache = ref (CCache.create ~size:(256 * 1024))
+  let sub_cache = Hashtbl.create 4096
+
+  (* Cache toggle *)
+
+  let cache_enabled = ref false
+
+  module Cache = struct
+    let cache_on () =
+      cache_enabled := true;
+      Extern.Cache.cache_on ()
+
+    let cache_off () =
+      cache_enabled := false;
+      Extern.Cache.cache_off ()
+  end
+
   (* Checkers *)
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
@@ -88,7 +106,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
     let theta = TIdMap.of_lists tparams targs in
     let typ_output = Type.Subst.subst_typ theta typ_output in
     check
-      (Value.Match.sub (Ctx.find_typdef_opt ctx)
+      (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
          typ_output value_output)
       id_func.at
@@ -517,7 +535,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       value =
     let value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub (Ctx.find_typdef_opt ctx)
+      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
         typ value
     in
@@ -1397,12 +1415,15 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
             match flow_post with
             | Cont _ -> (ctx_pre, flow_pre)
             | Res _ -> nondet at
-            | Ret _ -> back_err at "cannot have both result and return")
+            | Ret _ -> back_err at "cannot have both result and return"
+            | Tailcall_func _ | Tailcall_rel _ -> assert false)
         | Ret _ -> (
             match flow_post with
             | Cont _ -> (ctx_pre, flow_pre)
             | Res _ -> back_err at "cannot have both return and result"
-            | Ret _ -> nondet at)
+            | Ret _ -> nondet at
+            | Tailcall_func _ | Tailcall_rel _ -> assert false)
+        | Tailcall_func _ | Tailcall_rel _ -> assert false
       with Backtrace (Unmatch _) -> (ctx_pre, flow_pre)
     in
     try
@@ -1755,7 +1776,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       (exp_r : exp) (block_inner : block) : Ctx.t * Flow.t =
     let value = eval_exp ctx exp_r in
     let sub =
-      Value.Match.sub (Ctx.find_typdef_opt ctx)
+      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
         typ_target value
     in
@@ -1836,17 +1857,21 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       | Rel.Defined (_, exps_input, instr, elseblock_opt) ->
           invoke_defined_rel ctx id exps_input instr elseblock_opt values_input
     in
-    if Hook.is_cache_on () && not (is_extern_rel rel) then (
-      let cache_result = Cache.Cache.find !rel_cache (id.it, values_input) in
+    if !cache_enabled && not (is_extern_rel rel) then (
+      let cache_result = CCache.find !rel_cache (id.it, values_input) in
       match cache_result with
       | Some values_output -> values_output
       | None ->
-          let builtin_ctr_before = !Builtin.Fresh.ctr in
+          let checkpoint_before = Interface.checkpoint () in
+          let extern_checkpoint_before = Extern.checkpoint () in
           let values_output = invoke_rel'' () in
-          let builtin_ctr_after = !Builtin.Fresh.ctr in
-          (* Cache if the relation does not create a side-effect *)
-          if builtin_ctr_before = builtin_ctr_after then
-            Cache.Cache.add !rel_cache (id.it, values_input) values_output;
+          let checkpoint_after = Interface.checkpoint () in
+          let extern_checkpoint_after = Extern.checkpoint () in
+          if
+            (not (Interface.seff checkpoint_before checkpoint_after))
+            && not
+                 (Extern.seff extern_checkpoint_before extern_checkpoint_after)
+          then CCache.add !rel_cache (id.it, values_input) values_output;
           values_output)
     else (
       if not internal then check_rel_inputs ctx id values_input;
@@ -1855,15 +1880,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
   and invoke_extern_rel (ctx : Ctx.t) (nottyp : nottyp) (inputs : Hints.Input.t)
       (id : id) (values_input : value list) : value list =
     let values_output =
-      try
-        match id.it with
-        | "ExternFunctionCall_eval_lctk" ->
-            Arch.eval_extern_func_lctk_call values_input
-        | "ExternFunctionCall_eval" -> Arch.eval_extern_func_call values_input
-        | "ExternMethodCall_eval" -> Arch.eval_extern_method_call values_input
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern relation %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_rel id.it values_input with
+      | Pass values_output -> values_output
+      | Fail (at, msg) -> back_err at msg
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     List.iteri
@@ -1901,6 +1920,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
         values_output
     | Ret _ -> back_err id.at "relation cannot return a value"
     | Cont traces -> Unmatch traces |> back
+    | Tailcall_func _ | Tailcall_rel _ -> assert false
 
   (* Invoke a function *)
 
@@ -1958,22 +1978,27 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       in
       let value_output =
         if
-          Hook.is_cache_on () && (not anon)
+          !cache_enabled && (not anon)
           && (not (is_extern_func func))
           && not (is_high_order_func values_input)
         then (
           let cache_result =
-            Cache.Cache.find !func_cache (id.it, values_input)
+            CCache.find !func_cache (id.it, values_input)
           in
           match cache_result with
           | Some value_output -> value_output
           | None ->
-              let builtin_ctr_before = !Builtin.Fresh.ctr in
+              let checkpoint_before = Interface.checkpoint () in
+              let extern_checkpoint_before = Extern.checkpoint () in
               let value_output = invoke_func_with_values' () in
-              let builtin_ctr_after = !Builtin.Fresh.ctr in
-              (* Cache if the builtin function does not create a side-effect *)
-              if builtin_ctr_before = builtin_ctr_after then
-                Cache.Cache.add !func_cache (id.it, values_input) value_output;
+              let checkpoint_after = Interface.checkpoint () in
+              let extern_checkpoint_after = Extern.checkpoint () in
+              if
+                (not (Interface.seff checkpoint_before checkpoint_after))
+                && not
+                     (Extern.seff extern_checkpoint_before
+                        extern_checkpoint_after)
+              then CCache.add !func_cache (id.it, values_input) value_output;
               value_output)
         else (
           if not internal then check_func_inputs ctx id targs values_input;
@@ -1991,13 +2016,9 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       (targs : targ list) (values_input : value list) (typ_output : typ) : value
       =
     let value_output =
-      try
-        match id.it with
-        | "init_objectState" -> Arch.eval_extern_init values_input
-        | "init_archState" -> Arch.init_arch_state
-        | _ ->
-            back_err id.at (F.asprintf "unimplemented extern function %s" id.it)
-      with Util.Error.ArchError (at, msg) -> back_unmatch at msg
+      match Extern.eval_extern_func id.it [] values_input with
+      | Pass value_output -> value_output
+      | Fail (at, msg) -> back_err at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri
@@ -2012,7 +2033,7 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       =
     let value_output =
       try
-        Builtin.Call.invoke
+        Interface.call_builtin
           (fun value -> Hook.on_value value)
           id targs values_input
       with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
@@ -2073,13 +2094,14 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
         value_output
     | Res _ -> back_err id.at "relation cannot return a value"
     | Cont traces -> Unmatch traces |> back
+    | Tailcall_func _ | Tailcall_rel _ -> assert false
 
   (* Entry points for evaluation *)
 
   let clear () : unit =
-    Value.Fresh_.refresh ();
-    Cache.Cache.reset !func_cache;
-    Cache.Cache.reset !rel_cache
+    CCache.empty !func_cache;
+    CCache.empty !rel_cache;
+    Hashtbl.clear sub_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
     try
@@ -2108,43 +2130,42 @@ module Make (Arch : Sim.ARCH) : Sim.INTERP_PL = struct
       error no_region msg
 
   let eval_program (relname : string) (includes_p4 : string list)
-      (filename_p4 : string) : Sim.program_result =
+      (filename_p4 : string) : Run.program_result =
     clear ();
     try
-      let value_program = Interface.Parse.parse_file includes_p4 filename_p4 in
+      let value_program =
+        match Interface.parse_program includes_p4 [ filename_p4 ] with
+        | Pass value_program -> value_program
+        | Fail (`Syntax (at, msg)) -> raise (Util.Error.ParseError (at, msg))
+      in
       Hook.on_program value_program;
       let values_output = do_eval_rel relname [ value_program ] in
-      Sim.Pass values_output
+      Run.Pass values_output
     with
-    | Util.Error.ParseError (at, msg) -> Sim.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-        Sim.Fail (`Runtime (at, msg))
+    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+        Run.Fail (`Runtime (at, msg))
 
-  let eval_rel (relname : string) (values_input : value list) : Sim.rel_result =
+  let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
       let values_output = do_eval_rel relname values_input in
-      Sim.Pass values_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Pass values_output
+    with Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
-      (values_input : value list) : Sim.func_result =
+      (values_input : value list) : Run.func_result =
     clear ();
     try
       let value_output = do_eval_func funcname targs values_input in
-      Sim.Pass value_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ArchError (at, msg) ->
-      Sim.Fail (at, msg)
+      Run.Pass value_output
+    with Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) (spec : spec) : unit =
-    if cache then Hook.cache_on () else Hook.cache_off ();
-    let printer value =
-      let henv = Interface.Hint.hints_of_spec_pl spec in
-      Format.asprintf "%a" (Interface.Unparse.pp_value henv) value
-    in
-    Builtin.Call.init printer;
+  let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) : unit =
+    if cache then Cache.cache_on () else Cache.cache_off ();
     Ctx.init ~det spec
 end

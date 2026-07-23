@@ -1,18 +1,27 @@
-open Interface.Unpack
-open Interface.Pack
-open Interface.Flatten
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module IO = Runtime.Sim.Io
-module Sim = Runtime.Sim.Simulator
+module Sim = Runtime.Sim.Signature
+open Spec.Unpack
+open Spec.Pack
 open State
 open Error
 open Util.Source
 
-module Make
-    (Interp_AL : Sim.INTERP_AL)
-    (Interp_SL : Sim.INTERP_SL)
-    (Interp_PL : Sim.INTERP_PL) : Sim.ARCH = struct
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* PSA-specific externs *)
+
+  module Object = Object.Make (Spec.Func)
+
+  (* STF transformation *)
+
   let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
     let transform_name name =
       Stf.Transform.Name.(
@@ -1036,12 +1045,13 @@ module Make
     let* value_parser_result = apply Spec.Rel.psa_ingress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ "REJECT" ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
-            "ingress_input_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
+      Value.Get.(
+        value_parser_result |>>? "REJECT errorValue" |> function
+        | Some values ->
+            let value_error = one values in
+            Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+              "ingress_input_metadata" "parser_error" value_error
+        | None -> value_ctx)
     in
     put (value_ctx, value_arch, txs)
 
@@ -1077,12 +1087,13 @@ module Make
     let* value_parser_result = apply Spec.Rel.psa_egress_parser in
     let* value_ctx, value_arch, txs = get in
     let value_ctx =
-      match flatten_case_v_opt value_parser_result with
-      | Some (_, [ "REJECT" ], [ value_error ]) ->
-          Spec.Rel.lvalue_write_dot_global value_ctx value_arch
-            "egress_input_metadata" "parser_error" value_error
-      | Some _ -> value_ctx
-      | None -> assert false
+      Value.Get.(
+        value_parser_result |>>? "REJECT errorValue" |> function
+        | Some values ->
+            let value_error = one values in
+            Spec.Rel.lvalue_write_dot_global value_ctx value_arch
+              "egress_input_metadata" "parser_error" value_error
+        | None -> value_ctx)
     in
     put (value_ctx, value_arch, txs)
 
@@ -1132,4 +1143,12 @@ module Make
     let state_init = (value_ctx, value_arch, []) in
     let _, (value_ctx, value_arch, txs) = State.run pipe state_init in
     (value_ctx, value_arch, List.rev txs)
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
 end

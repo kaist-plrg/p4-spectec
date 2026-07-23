@@ -45,7 +45,7 @@
      programs-parse-neg)))))
 
 (rule
- (target micro_run_pos_il.actual)
+ (target micro_run_pos_al.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -53,13 +53,13 @@
   ../run/test.exe)
  (action
   (with-stdout-to
-   micro_run_pos_il.actual
+   micro_run_pos_al.actual
    (with-stderr-to
-    micro_run_pos_il.err
+    micro_run_pos_al.err
     (run
      ../run/test.exe
      run
-     -il
+     -al
      -s
      ../../../spec
      -rel
@@ -95,7 +95,7 @@
      programs)))))
 
 (rule
- (target micro_run_neg_il.actual)
+ (target micro_run_neg_al.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -103,13 +103,13 @@
   ../run/test.exe)
  (action
   (with-stdout-to
-   micro_run_neg_il.actual
+   micro_run_neg_al.actual
    (with-stderr-to
-    micro_run_neg_il.err
+    micro_run_neg_al.err
     (run
      ../run/test.exe
      run
-     -il
+     -al
      -s
      ../../../spec
      -rel
@@ -147,7 +147,7 @@
      -neg)))))
 
 (rule
- (target micro_sim_v1model_il.actual)
+ (target micro_sim_v1model_al.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -155,13 +155,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_v1model_il.actual
+   micro_sim_v1model_al.actual
    (with-stderr-to
-    micro_sim_v1model_il.err
+    micro_sim_v1model_al.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -arch
      v1model
      -s
@@ -201,7 +201,7 @@
      sim-v1model)))))
 
 (rule
- (target micro_sim_ebpf_il.actual)
+ (target micro_sim_ebpf_al.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -209,13 +209,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_ebpf_il.actual
+   micro_sim_ebpf_al.actual
    (with-stderr-to
-    micro_sim_ebpf_il.err
+    micro_sim_ebpf_al.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -arch
      ebpf
      -s
@@ -255,7 +255,7 @@
      sim-ebpf)))))
 
 (rule
- (target micro_sim_psa_il.actual)
+ (target micro_sim_psa_al.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -263,13 +263,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_psa_il.actual
+   micro_sim_psa_al.actual
    (with-stderr-to
-    micro_sim_psa_il.err
+    micro_sim_psa_al.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -arch
      psa
      -s
@@ -308,10 +308,58 @@
      -stf-dir
      sim-psa)))))
 
+(rule
+ (target micro_boot_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../spec-meta)
+  (source_tree ../../../towers)
+  (source_tree ../../../p4c/p4include)
+  (source_tree programs)
+  ../boot/test.exe)
+ (action
+  (with-stdout-to
+   micro_boot_al.actual
+   (with-stderr-to
+    micro_boot_al.err
+    (run
+     ../boot/test.exe
+     boot
+     -tower
+     ../../../towers/al.json
+     -i
+     ../../../p4c/p4include
+     -p
+     programs)))))
+
+(rule
+ (target micro_boot_al_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../spec-meta)
+  (source_tree ../../../towers)
+  (source_tree ../../../p4c/p4include)
+  (source_tree programs-boot)
+  ../boot/test.exe)
+ (action
+  (with-stdout-to
+   micro_boot_al_al.actual
+   (with-stderr-to
+    micro_boot_al_al.err
+    (run
+     ../boot/test.exe
+     boot
+     -tower
+     ../../../towers/al-al.json
+     -i
+     ../../../p4c/p4include
+     -p
+     programs-boot)))))
+
 ;; -det variants
 
 (rule
- (target micro_run_pos_il_det.actual)
+ (target micro_run_pos_al_det.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -319,13 +367,13 @@
   ../run/test.exe)
  (action
   (with-stdout-to
-   micro_run_pos_il_det.actual
+   micro_run_pos_al_det.actual
    (with-stderr-to
-    micro_run_pos_il_det.err
+    micro_run_pos_al_det.err
     (run
      ../run/test.exe
      run
-     -il
+     -al
      -det
      -s
      ../../../spec
@@ -363,7 +411,7 @@
      programs)))))
 
 (rule
- (target micro_run_neg_il_det.actual)
+ (target micro_run_neg_al_det.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -371,13 +419,13 @@
   ../run/test.exe)
  (action
   (with-stdout-to
-   micro_run_neg_il_det.actual
+   micro_run_neg_al_det.actual
    (with-stderr-to
-    micro_run_neg_il_det.err
+    micro_run_neg_al_det.err
     (run
      ../run/test.exe
      run
-     -il
+     -al
      -det
      -s
      ../../../spec
@@ -417,7 +465,7 @@
      -neg)))))
 
 (rule
- (target micro_sim_v1model_il_det.actual)
+ (target micro_sim_v1model_al_det.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -425,13 +473,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_v1model_il_det.actual
+   micro_sim_v1model_al_det.actual
    (with-stderr-to
-    micro_sim_v1model_il_det.err
+    micro_sim_v1model_al_det.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -det
      -arch
      v1model
@@ -473,7 +521,7 @@
      sim-v1model)))))
 
 (rule
- (target micro_sim_ebpf_il_det.actual)
+ (target micro_sim_ebpf_al_det.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -481,13 +529,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_ebpf_il_det.actual
+   micro_sim_ebpf_al_det.actual
    (with-stderr-to
-    micro_sim_ebpf_il_det.err
+    micro_sim_ebpf_al_det.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -det
      -arch
      ebpf
@@ -529,7 +577,7 @@
      sim-ebpf)))))
 
 (rule
- (target micro_sim_psa_il_det.actual)
+ (target micro_sim_psa_al_det.actual)
  (deps
   (source_tree ../../../spec)
   (source_tree ../../../p4c/p4include)
@@ -537,13 +585,13 @@
   ../sim/test.exe)
  (action
   (with-stdout-to
-   micro_sim_psa_il_det.actual
+   micro_sim_psa_al_det.actual
    (with-stderr-to
-    micro_sim_psa_il_det.err
+    micro_sim_psa_al_det.err
     (run
      ../sim/test.exe
      sim
-     -il
+     -al
      -det
      -arch
      psa
@@ -861,35 +909,37 @@
   (progn
    (diff micro_parse_pos.expected micro_parse_pos.actual)
    (diff micro_parse_neg.expected micro_parse_neg.actual)
-   (diff micro_run_pos_il.expected micro_run_pos_il.actual)
+   (diff micro_run_pos_al.expected micro_run_pos_al.actual)
    (diff micro_run_pos_sl.expected micro_run_pos_sl.actual)
-   (diff micro_run_neg_il.expected micro_run_neg_il.actual)
+   (diff micro_run_neg_al.expected micro_run_neg_al.actual)
    (diff micro_run_neg_sl.expected micro_run_neg_sl.actual)
-   (diff micro_sim_v1model_il.expected micro_sim_v1model_il.actual)
+   (diff micro_sim_v1model_al.expected micro_sim_v1model_al.actual)
    (diff micro_sim_v1model_sl.expected micro_sim_v1model_sl.actual)
-   (diff micro_sim_ebpf_il.expected micro_sim_ebpf_il.actual)
+   (diff micro_sim_ebpf_al.expected micro_sim_ebpf_al.actual)
    (diff micro_sim_ebpf_sl.expected micro_sim_ebpf_sl.actual)
-   (diff micro_sim_psa_il.expected micro_sim_psa_il.actual)
+   (diff micro_sim_psa_al.expected micro_sim_psa_al.actual)
    (diff micro_sim_psa_sl.expected micro_sim_psa_sl.actual)
    (diff micro_run_pos_pl.expected micro_run_pos_pl.actual)
    (diff micro_run_neg_pl.expected micro_run_neg_pl.actual)
    (diff micro_sim_v1model_pl.expected micro_sim_v1model_pl.actual)
    (diff micro_sim_ebpf_pl.expected micro_sim_ebpf_pl.actual)
-   (diff micro_sim_psa_pl.expected micro_sim_psa_pl.actual))))
+   (diff micro_sim_psa_pl.expected micro_sim_psa_pl.actual)
+   (diff micro_boot_al.expected micro_boot_al.actual)
+   (diff micro_boot_al_al.expected micro_boot_al_al.actual))))
 
 (rule
  (alias micro-det)
  (action
   (progn
-   (diff micro_run_pos_il.expected micro_run_pos_il_det.actual)
+   (diff micro_run_pos_al.expected micro_run_pos_al_det.actual)
    (diff micro_run_pos_sl.expected micro_run_pos_sl_det.actual)
-   (diff micro_run_neg_il.expected micro_run_neg_il_det.actual)
+   (diff micro_run_neg_al.expected micro_run_neg_al_det.actual)
    (diff micro_run_neg_sl.expected micro_run_neg_sl_det.actual)
-   (diff micro_sim_v1model_il.expected micro_sim_v1model_il_det.actual)
+   (diff micro_sim_v1model_al.expected micro_sim_v1model_al_det.actual)
    (diff micro_sim_v1model_sl.expected micro_sim_v1model_sl_det.actual)
-   (diff micro_sim_ebpf_il.expected micro_sim_ebpf_il_det.actual)
+   (diff micro_sim_ebpf_al.expected micro_sim_ebpf_al_det.actual)
    (diff micro_sim_ebpf_sl.expected micro_sim_ebpf_sl_det.actual)
-   (diff micro_sim_psa_il.expected micro_sim_psa_il_det.actual)
+   (diff micro_sim_psa_al.expected micro_sim_psa_al_det.actual)
    (diff micro_sim_psa_sl.expected micro_sim_psa_sl_det.actual)
    (diff micro_run_pos_pl.expected micro_run_pos_pl_det.actual)
    (diff micro_run_neg_pl.expected micro_run_neg_pl_det.actual)

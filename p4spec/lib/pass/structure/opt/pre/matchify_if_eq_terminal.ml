@@ -8,16 +8,34 @@ open Util.Source
 let matchify_exp (exp : exp) : exp =
   let at, note = (exp.at, exp.note) in
   match exp.it with
+  (* x = None and None = x *)
   | CmpE (`EqOp, _, exp_l, { it = OptE None; _ }) ->
       Il.MatchE (exp_l, OptP `None) $$ (at, note)
+  | CmpE (`EqOp, _, { it = OptE None; _ }, exp_r) ->
+      Il.MatchE (exp_r, OptP `None) $$ (at, note)
+  (* x = [] and [] = x *)
+  | CmpE (`EqOp, _, exp_l, { it = ListE []; _ }) ->
+      Il.MatchE (exp_l, ListP `Nil) $$ (at, note)
+  | CmpE (`EqOp, _, { it = ListE []; _ }, exp_r) ->
+      Il.MatchE (exp_r, ListP `Nil) $$ (at, note)
+  (* x = TERM and TERM = x *)
   | CmpE (`EqOp, _, exp_l, { it = CaseE notexp; _ })
     when Mixfix.arity notexp = 0 ->
       Il.MatchE (exp_l, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
   | CmpE (`EqOp, _, { it = CaseE notexp; _ }, exp_r)
     when Mixfix.arity notexp = 0 ->
       Il.MatchE (exp_r, CaseP (Mixfix.to_mixop notexp)) $$ (at, note)
+  (* x != None and None != x *)
   | CmpE (`NeOp, _, exp_l, { it = OptE None; _ }) ->
       Il.MatchE (exp_l, OptP `Some) $$ (at, note)
+  | CmpE (`NeOp, _, { it = OptE None; _ }, exp_r) ->
+      Il.MatchE (exp_r, OptP `Some) $$ (at, note)
+  (* x != [] and [] != x *)
+  | CmpE (`NeOp, _, exp_l, { it = ListE []; _ }) ->
+      Il.MatchE (exp_l, ListP `Cons) $$ (at, note)
+  | CmpE (`NeOp, _, { it = ListE []; _ }, exp_r) ->
+      Il.MatchE (exp_r, ListP `Cons) $$ (at, note)
+  (* x != TERM and TERM != x *)
   | CmpE (`NeOp, _, exp_l, { it = CaseE notexp; _ })
     when Mixfix.arity notexp = 0 ->
       let exp =

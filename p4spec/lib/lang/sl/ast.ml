@@ -54,8 +54,8 @@ type vnote = Il.vnote
 type value = Il.value [@@deriving yojson]
 type value' = Il.value'
 
-type valuefield = atom * value [@@deriving yojson]
-type valuecase = mixop * value list [@@deriving yojson]
+type valuefield = Il.valuefield [@@deriving yojson]
+type valuecase = Il.valuecase [@@deriving yojson]
 
 (* Operators *)
 

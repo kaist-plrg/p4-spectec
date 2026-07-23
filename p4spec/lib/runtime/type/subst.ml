@@ -60,7 +60,8 @@ let subst_typs (theta : theta) (typs : typ list) : typ list =
 (* Variant types *)
 
 let subst_nottyp (theta : theta) (nottyp : nottyp) : nottyp =
-  Mixfix.map (subst_typ theta) nottyp.it $ nottyp.at
+  if TIdMap.is_empty theta then nottyp
+  else Mixfix.map (subst_typ theta) nottyp.it $ nottyp.at
 
 let subst_typcase (theta : theta) (typcase : typcase) : typcase =
   let nottyp, typorigin, hints = typcase in

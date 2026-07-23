@@ -14,6 +14,8 @@ type mixop = unit t
 
 exception Arity_mismatch of string
 
+(* Json serialization and deserialization *)
+
 let rec mixop_to_yojson = function
   | Arg () -> `List [ `String "Arg"; `Null ]
   | Atom atom -> `List [ `String "Atom"; atom_to_yojson atom ]
@@ -75,6 +77,8 @@ let rec mixop_of_yojson = function
       | Error _ as err -> err)
   | _ -> Error "Mixfix.mixop_of_yojson"
 
+(* Equality and comparison *)
+
 let compare_atom (atom_a : atom) (atom_b : atom) =
   Atom.compare atom_a.it atom_b.it
 
@@ -119,17 +123,40 @@ let rec compare : type a b. compare_arg:(a -> b -> int) -> a t -> b t -> int =
         compare_mixfixes mixfixes_a mixfixes_b
     | _ -> Int.compare (tag mixfix_a) (tag mixfix_b)
 
-let eq ~(eq_arg : 'a -> 'b -> bool) (mixfix_a : 'a t) (mixfix_b : 'b t) =
-  compare
-    ~compare_arg:(fun arg_a arg_b -> if eq_arg arg_a arg_b then 0 else -1)
-    mixfix_a mixfix_b
-  = 0
+let rec eq : type a b. eq_arg:(a -> b -> bool) -> a t -> b t -> bool =
+ fun ~eq_arg mixfix_a mixfix_b ->
+  Obj.repr mixfix_a == Obj.repr mixfix_b
+  ||
+  match (mixfix_a, mixfix_b) with
+  | Arg arg_a, Arg arg_b -> eq_arg arg_a arg_b
+  | Atom atom_a, Atom atom_b -> Atom.eq atom_a.it atom_b.it
+  | Brack (atom_a_l, mixfix_a, atom_a_r), Brack (atom_b_l, mixfix_b, atom_b_r) ->
+      Atom.eq atom_a_l.it atom_b_l.it
+      && eq ~eq_arg mixfix_a mixfix_b
+      && Atom.eq atom_a_r.it atom_b_r.it
+  | ( Infix (mixfix_a_l, atom_a, mixfix_a_r),
+      Infix (mixfix_b_l, atom_b, mixfix_b_r) ) ->
+      Atom.eq atom_a.it atom_b.it
+      && eq ~eq_arg mixfix_a_l mixfix_b_l
+      && eq ~eq_arg mixfix_a_r mixfix_b_r
+  | Seq mixfixes_a, Seq mixfixes_b -> eqs ~eq_arg mixfixes_a mixfixes_b
+  | _ -> false
+
+and eqs : type a b. eq_arg:(a -> b -> bool) -> a t list -> b t list -> bool =
+ fun ~eq_arg mixfixes_a mixfixes_b ->
+  match (mixfixes_a, mixfixes_b) with
+  | [], [] -> true
+  | mixfix_a :: mixfixes_a, mixfix_b :: mixfixes_b ->
+      eq ~eq_arg mixfix_a mixfix_b && eqs ~eq_arg mixfixes_a mixfixes_b
+  | _ -> false
 
 let compare_mixop (mixfix_a : 'a t) (mixfix_b : 'b t) =
   compare ~compare_arg:(fun _ _ -> 0) mixfix_a mixfix_b
 
 let eq_mixop (mixfix_a : 'a t) (mixfix_b : 'b t) =
-  compare_mixop mixfix_a mixfix_b = 0
+  eq ~eq_arg:(fun _ _ -> true) mixfix_a mixfix_b
+
+(* Fold, map, and iter *)
 
 let rec fold (f : 'acc -> 'a -> 'acc) (acc : 'acc) (mixfix : 'a t) =
   match mixfix with
@@ -139,14 +166,13 @@ let rec fold (f : 'acc -> 'a -> 'acc) (acc : 'acc) (mixfix : 'a t) =
   | Infix (mixfix_l, _, mixfix_r) -> fold f (fold f acc mixfix_l) mixfix_r
   | Seq mixfixes -> List.fold_left (fold f) acc mixfixes
 
-let iter (f : 'a -> unit) (mixfix : 'a t) =
-  fold
-    (fun () arg ->
-      f arg;
-      ())
-    () mixfix
-
-let arity (mixfix : 'a t) = fold (fun arity _ -> arity + 1) 0 mixfix
+let rec map (f : 'a -> 'b) = function
+  | Arg arg -> Arg (f arg)
+  | Atom atom -> Atom atom
+  | Brack (atom_l, mixfix, atom_r) -> Brack (atom_l, map f mixfix, atom_r)
+  | Infix (mixfix_l, atom, mixfix_r) ->
+      Infix (map f mixfix_l, atom, map f mixfix_r)
+  | Seq mixfixes -> Seq (List.map (map f) mixfixes)
 
 let rec map_atoms (f : atom -> atom) = function
   | Arg arg -> Arg arg
@@ -157,6 +183,13 @@ let rec map_atoms (f : atom -> atom) = function
       Infix (map_atoms f mixfix_l, f atom, map_atoms f mixfix_r)
   | Seq mixfixes -> Seq (List.map (map_atoms f) mixfixes)
 
+let iter (f : 'a -> unit) (mixfix : 'a t) =
+  fold
+    (fun () arg ->
+      f arg;
+      ())
+    () mixfix
+
 let iter_atoms (f : atom -> unit) (mixfix : 'a t) =
   ignore
     (map_atoms
@@ -164,6 +197,29 @@ let iter_atoms (f : atom -> unit) (mixfix : 'a t) =
          f atom;
          atom)
        mixfix)
+
+(* Conversion *)
+
+let to_string (mixfix : 'a t) =
+  let rec to_string' = function
+    | Arg _ -> "%"
+    | Atom atom -> Atom.render_atom atom.it
+    | Brack (atom_l, mixfix, atom_r) ->
+        Atom.render_atom atom_l.it ^ to_string' mixfix
+        ^ Atom.render_atom atom_r.it
+    | Infix (mixfix_l, atom, mixfix_r) ->
+        to_string' mixfix_l ^ Atom.render_atom atom.it ^ to_string' mixfix_r
+    | Seq mixfixes -> String.concat " " (List.map to_string' mixfixes)
+  in
+  "`" ^ to_string' mixfix ^ "`"
+
+let to_mixop (mixfix : 'a t) : mixop = map (fun _ -> ()) mixfix
+
+(* Arity *)
+
+let arity (mixfix : 'a t) = fold (fun arity _ -> arity + 1) 0 mixfix
+
+(* Atoms and args *)
 
 let rec atoms (mixfix : 'a t) =
   match mixfix with
@@ -176,6 +232,27 @@ let rec atoms (mixfix : 'a t) =
       List.fold_left
         (fun atoms_acc mixfix -> atoms_acc @ atoms mixfix)
         [] mixfixes
+
+type atom_internal = Atom_internal of atom | Arg_internal
+
+let atoms_matrix (mixfix : 'a t) =
+  let rec atoms (atoms_acc : atom_internal list) (mixfix : 'a t) =
+    match mixfix with
+    | Arg _ -> Arg_internal :: atoms_acc
+    | Atom atom -> Atom_internal atom :: atoms_acc
+    | Brack (atom_l, mixfix, atom_r) ->
+        Atom_internal atom_r :: atoms (Atom_internal atom_l :: atoms_acc) mixfix
+    | Infix (mixfix_l, atom, mixfix_r) ->
+        atoms (Atom_internal atom :: atoms atoms_acc mixfix_l) mixfix_r
+    | Seq mixfixes -> List.fold_left atoms atoms_acc mixfixes
+  in
+  let atoms_internal = List.rev (atoms [] mixfix) in
+  let rec split atoms_acc atoms_curr = function
+    | [] -> List.rev (List.rev atoms_curr :: atoms_acc)
+    | Arg_internal :: rest -> split (List.rev atoms_curr :: atoms_acc) [] rest
+    | Atom_internal atom :: rest -> split atoms_acc (atom :: atoms_curr) rest
+  in
+  split [] [] atoms_internal
 
 let args (mixfix : 'a t) =
   let rec args' args_rev = function
@@ -192,15 +269,7 @@ let args (mixfix : 'a t) =
   in
   args' [] mixfix
 
-let rec map (f : 'a -> 'b) = function
-  | Arg arg -> Arg (f arg)
-  | Atom atom -> Atom atom
-  | Brack (atom_l, mixfix, atom_r) -> Brack (atom_l, map f mixfix, atom_r)
-  | Infix (mixfix_l, atom, mixfix_r) ->
-      Infix (map f mixfix_l, atom, map f mixfix_r)
-  | Seq mixfixes -> Seq (List.map (map f) mixfixes)
-
-let to_mixop (mixfix : 'a t) : mixop = map (fun _ -> ()) mixfix
+(* Filling and splitting *)
 
 let fill (mixop : mixop) (args : 'a list) : 'a t =
   let rec fill' mixop args =
@@ -233,6 +302,8 @@ let fill (mixop : mixop) (args : 'a list) : 'a t =
 
 let split (mixfix : 'a t) = (to_mixop mixfix, args mixfix)
 
+(* Rendering *)
+
 let assemble ~(empty : 'b) ~(space : 'b) ~(atom : atom -> 'b option)
     ~(concat : 'b -> 'b -> 'b) (mixfix : 'b t) : 'b =
   let join (pieces : 'b option list) : 'b option =
@@ -260,16 +331,3 @@ let render ~(string_of_atom : atom -> string) ~(string_of_arg : 'a -> string)
   assemble ~empty:""
     ~atom:(fun a -> match string_of_atom a with "" -> None | s -> Some s)
     ~space:" " ~concat:( ^ ) (map string_of_arg mixfix)
-
-let to_string (mixfix : 'a t) =
-  let rec to_string' = function
-    | Arg _ -> "%"
-    | Atom atom -> Atom.render_atom atom.it
-    | Brack (atom_l, mixfix, atom_r) ->
-        Atom.render_atom atom_l.it ^ to_string' mixfix
-        ^ Atom.render_atom atom_r.it
-    | Infix (mixfix_l, atom, mixfix_r) ->
-        to_string' mixfix_l ^ Atom.render_atom atom.it ^ to_string' mixfix_r
-    | Seq mixfixes -> String.concat " " (List.map to_string' mixfixes)
-  in
-  "`" ^ to_string' mixfix ^ "`"

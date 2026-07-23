@@ -1,0 +1,56 @@
+;; Parameters
+
+syntax param =
+  | EXP typ exp
+  | FUN id `: tparam* param* `-> typ
+
+;; Instructions
+
+syntax block, holdcase, case
+
+syntax iterinstr = iter vari* vari*
+
+syntax instr =
+  | IF exp iterexp* block
+  | IFHOLD id `: exp* iterexp* holdcase
+  | CASE exp case*
+  | GROUP id exp* `: typ* `-> typ* `=  block
+  | LET exp `= exp iterinstr* block
+  | REL id `: exp* `-> exp* iterinstr* block
+  | RESULT typ* `-> typ* `: exp*
+  | RETURN exp
+  | DEBUG exp instr
+
+syntax block = instr*
+
+syntax holdcase =
+  | BOTH block block
+  | HOLD block
+  | NOTHOLD block
+
+syntax guard =
+  | BOOL bool
+  | CMP cmpop exp
+  | SUB typ
+  | MATCH pattern
+  | MEM exp
+
+syntax case = guard block
+
+;; Definitions
+
+syntax tblrow = exp* `= exp `- block
+
+syntax defn =
+  | EXTTYP id
+  | TYP id tparam* `= deftyp
+  | EXTREL id exp* `: typ* `-> typ*
+  | REL id exp* `: typ* `-> typ* `= block block?
+  | EXTFUNC id tparam* param* `: typ
+  | BUILTINFUNC id tparam* param* `: typ
+  | TABLEFUNC id param* `: typ `= tblrow*
+  | FUNC id tparam* param* `: typ `= block block?
+
+;; Scripts
+
+syntax script = defn*

@@ -1,0 +1,35 @@
+;; Relation environment
+
+syntax externRelDef =
+  | EXT id
+
+syntax definedRelDef =
+  | DEF exp* block block?
+
+syntax reldef =
+  | externRelDef
+  | definedRelDef
+
+syntax renv = map<id, reldef>
+
+;; Function environment
+
+syntax externFuncDef =
+  | EXT id
+
+syntax builtinFuncDef =
+  | BUILTIN id tparam* param*
+
+syntax tableFuncDef =
+  | TABLE param* `-> tblrow*
+
+syntax definedFuncDef =
+  | DEF tparam* param* `-> block block?
+
+syntax funcdef =
+  | externFuncDef
+  | builtinFuncDef
+  | tableFuncDef
+  | definedFuncDef
+
+syntax fenv = map<id, funcdef>

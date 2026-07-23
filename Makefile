@@ -1,16 +1,12 @@
 SPEC = p4spectec
-STAT = p4stat
-PERF = p4perf
-SPECTEST = p4spectec-test
+BOOT = spectec-boot
 
 # Compile
 
 .PHONY: build stat perf spec-test
 
 EXESPEC = _build/default/p4spec/bin/main.exe
-EXESTAT = _build/default/p4spec/bin/stat.exe
-EXEPERF = _build/default/p4spec/bin/perf.exe
-EXESPECTEST = _build/default/p4spec/bin/test.exe
+EXEBOOT = _build/default/p4spec/bin/boot.exe
 
 build:
 	rm -f ./$(SPEC)
@@ -18,21 +14,13 @@ build:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
+	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
-stat:
+boot:
 	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/stat.exe && echo
-	ln -f $(EXESTAT) ./$(STAT)
-
-perf:
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/perf.exe && echo
-	ln -f $(EXEPERF) ./$(PERF)
-
-spec-test:
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/test.exe && echo
-	ln -f $(EXESPECTEST) ./$(SPECTEST)
+	cd p4spec && opam exec -- dune build bin/boot.exe && echo
+	ln -f $(EXEBOOT) ./$(BOOT)
+	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
 release:
 	rm -f ./$(SPEC)
@@ -40,18 +28,30 @@ release:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
+	cd p4spec && opam exec -- dune build --profile=release bin/boot.exe && echo
+	ln -f $(EXEBOOT) ./$(BOOT)
 
 # Spec
 
-spec-draft:
-	cd docs && make draft && cd ..
-spec-draft-html:
-	cd docs && make draft-html && cd ..
+p4spec-draft:
+	cd docs/p4 && make draft && cd ../..
+p4spec-draft-html:
+	cd docs/p4 && make draft-html && cd ../..
 
-spec-release:
-	cd docs && make release && cd ..
-spec-release-html:
-	cd docs && make release-html && cd ..
+p4spec-release:
+	cd docs/p4 && make release && cd ../..
+p4spec-release-html:
+	cd docs/p4 && make release-html && cd ../..
+
+slspec:
+	cd docs/sl && make spec && cd ../..
+slspec-html:
+	cd docs/sl && make spec-html && cd ../..
+
+ilspec:
+	cd docs/il && make spec && cd ../..
+ilspec-html:
+	cd docs/il && make spec-html && cd ../..
 
 # Format
 
@@ -85,7 +85,8 @@ TEST_ALIASES := \
   sim-ebpf-p4c-al sim-ebpf-p4c-sl sim-ebpf-p4c-pl \
   sim-ebpf-p4testgen-al sim-ebpf-p4testgen-sl sim-ebpf-p4testgen-pl \
   sim-psa-p4c-al sim-psa-p4c-sl sim-psa-p4c-pl \
-  p4parse
+  p4parse \
+	boot
 
 $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))
 
@@ -118,14 +119,6 @@ test-fast:
 	opam switch 5.1.0
 	cd p4spec && opam exec -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
 	  (echo "####>" Failure running fast tests. && \
-	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
-
-.PHONY: test-pl
-test-pl:
-	echo "#### Running PL-only tests (sim-pl)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @run-pl @sim-pl --profile=release && echo OK || \
-	  (echo "####>" Failure running PL tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all
