@@ -92,7 +92,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %nonassoc TURNSTILE
 %nonassoc TILESTURN
 %right SQARROW SQARROW_STAR
-%left COLON SUB TILDE2
+%left COLON COLON_EQ SUB TILDE2
 %right EQ NEQ LANGLE RANGLE LANGLE_EQ RANGLE_EQ LANGLE_DASH
 %right COLON2
 %right ARROW ARROW_SUB
@@ -194,7 +194,7 @@ hintid : id { $1 }
 
 synid :
   | varid { ($1, []) }
-  | varid_langle_bind enter_scope comma_list(tparam) exit_scope RANGLE { ($1, $3) }
+  | varid_langle_bind enter_scope comma_list(tparam) RANGLE exit_scope { ($1, $3) }
 
 (* Atoms *)
 
@@ -745,8 +745,9 @@ rule_ :
 
 rules :
   | (* empty *) { [] }
+  | NL2 rules { $2 }
   | NL3 rules { $2 }
-  | NL2* rule NL2* rules { $2 :: $4 }
+  | rule rules { $1 :: $2 }
 
 (* Definitions *)
 
