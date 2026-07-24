@@ -1088,7 +1088,7 @@ forStatement:
     t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
     { "annotationList FOR `( typeRef name IN forCollectionExpression ) statement" <| [ al; t; n; e; b ] <<| "forStatement" <<<| (at $sloc) }
   | al = annotationList FOR L_PAREN
-    al_in = annotationList t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
+    al_in = annotationListNonEmpty t = typeRef n = name IN e = forCollectionExpression R_PAREN b = statement
     { "annotationList FOR `( annotationList typeRef name IN forCollectionExpression ) statement" <| [ al; al_in; t; n; e; b ] <<| "forStatement" <<<| (at $sloc) }
 ;
 
