@@ -23,6 +23,31 @@ let add (id : Id.t) (id_renamed : Id.t) (renamer : t) : t =
 let of_list (pairs : (Id.t * Id.t) list) : t = Rename.of_list pairs
 let filter (p : Id.t -> 'a -> bool) (renamer : t) : t = Rename.filter p renamer
 
+(* Capture avoidance *)
+
+let freshen_binders (renamer : t) (frees : IdSet.t) (block : block) : t =
+  let ids_collide =
+    renamer |> values
+    |> List.filter (fun id -> IdSet.mem id frees)
+    |> IdSet.of_list
+  in
+  let ids_avoid =
+    frees
+    |> IdSet.union (Ol.Free.free_block block)
+    |> IdSet.union (dom renamer)
+    |> IdSet.union (IdSet.of_list (values renamer))
+  in
+  let fresher, _ =
+    IdSet.fold
+      (fun id (fresher, ids_avoid) ->
+        let id_fresh = Il.Fresh.id ids_avoid id in
+        let fresher = add id id_fresh fresher in
+        let ids_avoid = IdSet.add id_fresh ids_avoid in
+        (fresher, ids_avoid))
+      ids_collide (empty, ids_avoid)
+  in
+  fresher
+
 (* Renaming *)
 
 (* Expressions *)
@@ -215,6 +240,9 @@ and rename_instr (renamer : t) (instr : instr) : instr =
       let exp_r = rename_exp renamer exp_r in
       let frees_l = Ol.Free.free_exp exp_l in
       let renamer = filter (fun id _ -> not (IdSet.mem id frees_l)) renamer in
+      let freshen = freshen_binders renamer frees_l block in
+      let exp_l = rename_exp freshen exp_l in
+      let renamer = Rename.fold add freshen renamer in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
       let block = rename_block renamer block in
       LetI (exp_l, exp_r, iterinstrs, block) $ at
@@ -226,6 +254,9 @@ and rename_instr (renamer : t) (instr : instr) : instr =
       let renamer =
         filter (fun id _ -> not (IdSet.mem id frees_output)) renamer
       in
+      let freshen = freshen_binders renamer frees_output block in
+      let exps_output = rename_exps freshen exps_output in
+      let renamer = Rename.fold add freshen renamer in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = rename_iterinstrs_bound renamer iterinstrs in
       let block = rename_block renamer block in
