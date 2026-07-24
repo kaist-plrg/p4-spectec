@@ -194,7 +194,7 @@ hintid : id { $1 }
 
 synid :
   | varid { ($1, []) }
-  | varid_langle_bind enter_scope comma_list(tparam) exit_scope RANGLE { ($1, $3) }
+  | varid_langle_bind enter_scope comma_list(tparam) RANGLE exit_scope { ($1, $3) }
 
 (* Atoms *)
 
