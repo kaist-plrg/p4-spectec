@@ -1847,7 +1847,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Il.CallE (id, targs, args) when tail ->
           let targs = resolve_targs ctx targs in
           let values_args = eval_args ctx args in
-          if is_high_order_func values_args then Flow.Ret (invoke_func ctx id targs values_args)
+          if is_local_func ctx id || is_high_order_func values_args then
+            Flow.Ret (invoke_func ctx id targs values_args)
           else Flow.Tailcall_func (id, targs, values_args)
       | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
@@ -1984,6 +1985,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (fun value_input ->
         match value_input.it with Il.FuncV _ -> true | _ -> false)
       values_input
+
+  and is_local_func (ctx : Ctx.t) (id : id) : bool =
+    let cursor, _ = Ctx.find_func ctx id in
+    cursor = Ctx.Local
 
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
