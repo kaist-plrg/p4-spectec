@@ -30,7 +30,6 @@ let string_of_mixop mixop = Il.Print.string_of_mixop mixop
 (* Iterators *)
 
 let string_of_iter iter = Il.Print.string_of_iter iter
-
 let string_of_iterexp iterexp = Il.Print.string_of_iterexp iterexp
 
 let string_of_iterexps iterexps =

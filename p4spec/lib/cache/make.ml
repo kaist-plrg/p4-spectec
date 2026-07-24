@@ -46,12 +46,11 @@ module Make (Entry : ENTRY) = struct
 
   let empty (cache : 'a t) : unit =
     for idx = 0 to cache.touched - 1 do
-      if cache.occ.(idx) then begin
+      if cache.occ.(idx) then (
         Table.remove cache.table cache.clock.(idx).key;
         cache.occ.(idx) <- false;
         cache.clock.(idx).key <- Entry.default;
-        cache.clock.(idx).ref <- false
-      end
+        cache.clock.(idx).ref <- false)
     done;
     cache.count <- 0;
     cache.hand <- 0;

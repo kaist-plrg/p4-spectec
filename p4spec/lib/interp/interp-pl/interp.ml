@@ -1982,9 +1982,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           && (not (is_extern_func func))
           && not (is_high_order_func values_input)
         then (
-          let cache_result =
-            CCache.find !func_cache (id.it, values_input)
-          in
+          let cache_result = CCache.find !func_cache (id.it, values_input) in
           match cache_result with
           | Some value_output -> value_output
           | None ->
@@ -2151,7 +2149,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2160,7 +2159,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
-    with Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    with
+    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   (* Initialization *)

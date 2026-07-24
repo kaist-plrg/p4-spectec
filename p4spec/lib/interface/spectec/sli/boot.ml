@@ -206,7 +206,8 @@ and boot_return_instr (at : region) (exp : Sl.exp) : Value.t =
 and boot_debug_instr (at : region) (exp : Sl.exp) (instr : Sl.instr) : Value.t =
   let value_exp = boot_exp exp in
   let value_instr = boot_instr instr in
-  Value.Make.(mop_debug_instr <|! [ value_exp; value_instr ] <<|! typ_instr <<<| at)
+  Value.Make.(
+    mop_debug_instr <|! [ value_exp; value_instr ] <<|! typ_instr <<<| at)
 
 and boot_instrs (instrs : Sl.instr list) : Value.t =
   let values_instrs = List.map boot_instr instrs in

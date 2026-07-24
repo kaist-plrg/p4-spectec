@@ -7,8 +7,7 @@ module Filesys = Util.Filesys
 
 (* Tune GC for the allocation-heavy meta-circular interpreter *)
 
-let () =
-  Gc.set { (Gc.get ()) with Gc.minor_heap_size = 16 * 1024 * 1024 }
+let () = Gc.set { (Gc.get ()) with Gc.minor_heap_size = 16 * 1024 * 1024 }
 
 (* Interpreter test *)
 
@@ -88,8 +87,10 @@ let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
     Backend_boot.Config.tower_of_file path_tower target
   in
   let prefix (level : level) =
-    { level with
-      layer = { level.layer with specdir = "../../../" ^ level.layer.specdir } }
+    {
+      level with
+      layer = { level.layer with specdir = "../../../" ^ level.layer.specdir };
+    }
   in
   let tower =
     {

@@ -103,8 +103,7 @@ let replace_call_exp ~(call_e_count : call_e_count) ?(iter_locals = IdSet.empty)
           iter_combined
       in
       let wrap_in_let body =
-        LetI (exp_new, exp_orig, iterinstrs, [ body ])
-        $$ (body.at, { iid = -1 })
+        LetI (exp_new, exp_orig, iterinstrs, [ body ]) $$ (body.at, { iid = -1 })
       in
       Some (wrap_in_let, exp_new_full, ids_used)
   | None -> None

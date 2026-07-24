@@ -1220,8 +1220,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | DebugI (exp, instr) -> eval_debug_instr ~tail ctx exp instr
     with Backtrace backtrace ->
       backtrace
-      |> back_nest instr.at
-           (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+      |> back_nest instr.at (fun () ->
+             F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_block ~(tail : bool) (ctx : Ctx.t) (block : block) : Flow.t =
     if !Ctx.is_det then eval_block_deterministic ~tail ctx block
@@ -1389,7 +1389,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       with
       | Backtrace (Unmatch _) -> false
       | Backtrace backtrace ->
-          back_nest id.at (fun () -> "hold condition evaluation failed") backtrace
+          back_nest id.at
+            (fun () -> "hold condition evaluation failed")
+            backtrace
     in
     let value_res = Value.Make.bool hold in
     Hook.on_value value_res;
@@ -1847,7 +1849,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Il.CallE (id, targs, args) when tail ->
           let targs = resolve_targs ctx targs in
           let values_args = eval_args ctx args in
-          if is_local_func ctx id || is_high_order_func values_args then
+          let cursor, _ = Ctx.find_func ctx id in
+          let anon = cursor = Ctx.Local in
+          if anon || is_high_order_func values_args then
             Flow.Ret (invoke_func ctx id targs values_args)
           else Flow.Tailcall_func (id, targs, values_args)
       | _ -> Flow.Ret (eval_exp ctx exp)
@@ -1855,8 +1859,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr) :
-      Flow.t =
+  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr)
+      : Flow.t =
     try
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
@@ -1926,7 +1930,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail values_tail
       with Backtrace backtrace ->
         Hook.on_rel_exit id;
-        back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
+        back_nest id.at
+          (fun () -> F.asprintf "relation %s failed" id.it)
+          backtrace
     in
     loop id values_input
 
@@ -1986,10 +1992,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         match value_input.it with Il.FuncV _ -> true | _ -> false)
       values_input
 
-  and is_local_func (ctx : Ctx.t) (id : id) : bool =
-    let cursor, _ = Ctx.find_func ctx id in
-    cursor = Ctx.Local
-
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
     let rec loop id targs values_input =
@@ -2037,7 +2039,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail targs_tail values_tail
       with Backtrace backtrace ->
         Hook.on_func_exit id;
-        back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
+        back_nest id.at
+          (fun () -> F.asprintf "function %s failed" id.it)
+          backtrace
     in
     loop id targs values_input
 

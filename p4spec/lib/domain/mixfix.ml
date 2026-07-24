@@ -130,7 +130,8 @@ let rec eq : type a b. eq_arg:(a -> b -> bool) -> a t -> b t -> bool =
   match (mixfix_a, mixfix_b) with
   | Arg arg_a, Arg arg_b -> eq_arg arg_a arg_b
   | Atom atom_a, Atom atom_b -> Atom.eq atom_a.it atom_b.it
-  | Brack (atom_a_l, mixfix_a, atom_a_r), Brack (atom_b_l, mixfix_b, atom_b_r) ->
+  | Brack (atom_a_l, mixfix_a, atom_a_r), Brack (atom_b_l, mixfix_b, atom_b_r)
+    ->
       Atom.eq atom_a_l.it atom_b_l.it
       && eq ~eq_arg mixfix_a mixfix_b
       && Atom.eq atom_a_r.it atom_b_r.it

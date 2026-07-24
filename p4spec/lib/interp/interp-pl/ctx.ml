@@ -111,7 +111,9 @@ module Make () = struct
         let rel = Rel.Extern rel_signature in
         add_rel_global id rel
     | RelD (id, rel_signature, exps_match, block, elseblock_opt) ->
-        let rel = Rel.Defined (rel_signature, exps_match, block, elseblock_opt) in
+        let rel =
+          Rel.Defined (rel_signature, exps_match, block, elseblock_opt)
+        in
         add_rel_global id rel
     | ExternDecD (id, tparams, params, typ) ->
         let func = Func.Extern (tparams, params, typ) in
@@ -147,7 +149,8 @@ module Make () = struct
   let find_values_input (ctx : t) : Value.t list =
     match find_values_input_opt ctx with
     | Some values_input -> values_input
-    | None -> back_err no_region "cannot find input values in empty local context"
+    | None ->
+        back_err no_region "cannot find input values in empty local context"
 
   (* Finders for values *)
 
@@ -235,9 +238,11 @@ module Make () = struct
 
   let find_func_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
-    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+    find_func_opt ctx fid
+    |> Option.map (fun (_, func) -> Func.get_signature func)
 
-  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ =
+  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
+      =
     match find_func_signature_opt ctx fid with
     | Some (tparams, typs, typ) -> (tparams, typs, typ)
     | None -> back_undef fid.at "function" fid.it
