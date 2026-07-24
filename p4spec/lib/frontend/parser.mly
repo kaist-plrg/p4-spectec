@@ -745,8 +745,9 @@ rule_ :
 
 rules :
   | (* empty *) { [] }
+  | NL2 rules { $2 }
   | NL3 rules { $2 }
-  | NL2* rule NL2* rules { $2 :: $4 }
+  | rule rules { $1 :: $2 }
 
 (* Definitions *)
 
