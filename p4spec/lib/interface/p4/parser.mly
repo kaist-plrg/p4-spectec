@@ -183,7 +183,7 @@
   (* >>>> Parser Declarations *)
   parserBlockElementStatement parserBlockElementStatementList parserBlockStatement 
   parserConditionalStatement
-  parserStatement parserStatementList parserState
+  parserStatement parserState
   parserStateList parserLocalDeclaration parserLocalDeclarationList parserDeclaration
   (* >> Control statements and declarations *)
   (* >>>> Table declarations *) constOpt
@@ -662,7 +662,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpression:
-	| e = memberAccessBase DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
+	| e = memberAccessBase DOT set_parent_namespace m = member clear_parent_namespace
 		{ "memberAccessBase `. member" <| [ e; m ] <<| "memberAccessExpression" <<<| (at $sloc) }
 ;
 
@@ -691,7 +691,7 @@ namedExpressionList:
 ;
 
 %inline memberAccessExpressionNonBrace:
-	| e = memberAccessBaseNonBrace DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
+	| e = memberAccessBaseNonBrace DOT set_parent_namespace m = member clear_parent_namespace
 		{ "memberAccessBaseNonBrace `. member" <| [ e; m ] <<| "memberAccessExpressionNonBrace" <<<| (at $sloc) }
 ;
 
@@ -936,7 +936,7 @@ argumentList:
 lvalue:
 	| e = referenceExpression
     { e }
-	| lv = lvalue DOT set_parent_namespace m = member clear_parent_namespace %prec DOT
+	| lv = lvalue DOT set_parent_namespace m = member clear_parent_namespace
 		{ "lvalue `. member" <| [ lv; m ] <<| "lvalue" <<<| (at $sloc) }
 	| lv = lvalue L_BRACKET i = expression R_BRACKET
 		{ "lvalue `[ expression ]" <| [ lv; i ] <<| "lvalue" <<<| (at $sloc) }
@@ -1447,13 +1447,6 @@ parserStatement:
   | s = parserBlockStatement
   | s = parserConditionalStatement
     { s }
-;
-
-parserStatementList:
-  | (* empty *)
-    { "`EMPTY" <| [] <<| "parserStatementList" <<<| (at $sloc) }
-  | sl = parserStatementList s = parserStatement
-    { "parserStatementList parserStatement" <| [ sl; s ] <<| "parserStatementList" <<<| (at $sloc) }
 ;
 
 parserState:
