@@ -92,7 +92,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %nonassoc TURNSTILE
 %nonassoc TILESTURN
 %right SQARROW SQARROW_STAR
-%left COLON SUB TILDE2
+%left COLON COLON_EQ SUB TILDE2
 %right EQ NEQ LANGLE RANGLE LANGLE_EQ RANGLE_EQ LANGLE_DASH
 %right COLON2
 %right ARROW ARROW_SUB
