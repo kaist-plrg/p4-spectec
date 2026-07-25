@@ -18,7 +18,7 @@ module Make () = struct
       (value_arch : Value.t) (name : string) : Value.t =
     let value_storageReference =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     match
       !call "Lvalue_read"
@@ -36,12 +36,12 @@ module Make () = struct
       (value_arch : Value.t) (name : string) (member : string) : Value.t =
     let value_prefixedNameIR =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     let value_storageReference =
       let value_memberIR = Value.Make.text member in
       Value.Make.(
-        "storageReference `. nameIR"
+        "storageReference '.' nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
         <<| "storageReference")
     in
@@ -63,7 +63,7 @@ module Make () = struct
       (value_arch : Value.t) (name : string) (value_val : Value.t) : Value.t =
     let value_prefixedNameIR =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     match
       !call "Lvalue_write"
@@ -77,12 +77,12 @@ module Make () = struct
       (value_val : Value.t) : Value.t =
     let value_prefixedNameIR =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     let value_storageReference =
       let value_memberIR = Value.Make.text member in
       Value.Make.(
-        "storageReference `. nameIR"
+        "storageReference '.' nameIR"
         <| [ value_prefixedNameIR; value_memberIR ]
         <<| "storageReference")
     in

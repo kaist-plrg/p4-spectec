@@ -10,8 +10,8 @@ open Util.Source
 
 type map = value list
 
-let mixop_pair = Value.Mixops.of_string "k `: v"
-let mixop_map = Value.Mixops.of_string "`{ k }"
+let mixop_pair = Value.Mixops.of_string "k ':' v"
+let mixop_map = Value.Mixops.of_string "`{ k `}"
 
 let rec map_find_opt key = function
   | [] -> None

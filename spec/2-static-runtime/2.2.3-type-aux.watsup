@@ -26,9 +26,9 @@ def $unroll_aliasType(typeIR) = typeIR
 dec $width_of_integerTypeIR(integerTypeIR) : nat?
   hint(prose_in "width of integer type" %0)
 def $width_of_integerTypeIR(INT) = eps
-def $width_of_integerTypeIR(INT `< n >) = n
-def $width_of_integerTypeIR(BIT `< n >) = n
-def $width_of_integerTypeIR(VARBIT `< n >) = n
+def $width_of_integerTypeIR(INT `< n `>) = n
+def $width_of_integerTypeIR(BIT `< n `>) = n
+def $width_of_integerTypeIR(VARBIT `< n `>) = n
 
 ;;
 ;; Checkers for type properties
@@ -46,14 +46,14 @@ tbl def $is_defaultable_typeIR =
   | integerTypeIR => true
   | TYPEDEF _ typeIR => $is_defaultable_typeIR(typeIR)
   | TYPE _ typeIR => $is_defaultable_typeIR(typeIR)
-  | TUPLE `< typeIR* > => $forall_($is_defaultable_typeIR(typeIR)*)
-  | ARRAY typeIR `[ _ ] => $is_defaultable_typeIR(typeIR)
-  | HEADER_STACK typeIR `[ _ ] => $is_defaultable_typeIR(typeIR)
-  | STRUCT _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
-  | HEADER _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
-  | HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_defaultable_typeIR(typeIR)*)
-  | ENUM _ `{ _ } => true
-  | ENUM _ `< typeIR > `{ _ } => $is_defaultable_typeIR(typeIR)
+  | TUPLE `< typeIR* `> => $forall_($is_defaultable_typeIR(typeIR)*)
+  | ARRAY typeIR `[ _ `] => $is_defaultable_typeIR(typeIR)
+  | HEADER_STACK typeIR `[ _ `] => $is_defaultable_typeIR(typeIR)
+  | STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | HEADER _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | ENUM _ `{ _ `} => true
+  | ENUM _ `< typeIR `> `{ _ `} => $is_defaultable_typeIR(typeIR)
   | _ => false
 
 ;;; Equals
@@ -63,7 +63,7 @@ tbl dec $is_equalable_typeIR(typeIR) : bool
   hint(prose_false %0 "does not support equality comparison")
 tbl def $is_equalable_typeIR =
   | VOID => false
-  | `` typeId => false
+  | _NAME typeId => false
   | TYPEDEF _ typeIR => $is_equalable_typeIR(typeIR)
   | externObjectTypeIR => false
   | parserObjectTypeIR => false

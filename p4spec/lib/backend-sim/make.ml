@@ -234,7 +234,7 @@ module Make
                            String.sub number 2 number_base_len
                          in
                          Value.Make.(
-                           "`HEX text"
+                           "_HEX text"
                            <| [ text number_base ]
                            <<| "tableKeyValueInterface")
                        else if String.starts_with ~prefix:"0b" number then
@@ -243,12 +243,12 @@ module Make
                            String.sub number 2 number_base_len
                          in
                          Value.Make.(
-                           "`BIN text"
+                           "_BIN text"
                            <| [ text number_base ]
                            <<| "tableKeyValueInterface")
                        else
                          Value.Make.(
-                           "`DEC text"
+                           "_DEC text"
                            <| [ text number ]
                            <<| "tableKeyValueInterface")
                    | Slash (prefix, mask) ->
@@ -256,7 +256,7 @@ module Make
                        let mask = Bigint.of_int (int_of_string mask) in
                        let value_mask = Value.Make.nat mask in
                        Value.Make.(
-                         "text `SLASH nat"
+                         "text _SLASH nat"
                          <| [ value_prefix; value_mask ]
                          <<| "tableKeyValueInterface")
                  in

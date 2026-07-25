@@ -4,8 +4,8 @@
 
 ;;; Continue evaluation
 
-syntax continueEmptyResult = `EMPTY
-syntax continueResult<X> = `` X
+syntax continueEmptyResult = _EMPTY
+syntax continueResult<X> = _CONT X
 
 ;;; Exit from evaluation
 
@@ -341,10 +341,10 @@ syntax calleeResult =
   | abortResult
 
 relation Callee_eval:
-  cursor evalContext arch |- callableTargetIR `< `_ > `( argumentListIR )
+  cursor evalContext arch |- callableTargetIR `< '_' `> `( argumentListIR `)
                            : evalContext arch calleeResult
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "finding callee" %3 `( %4 )#
+  hint(prose_in "finding callee" %3 `( %4 `)#
                 ", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %5#", state" %6#", and callee" %7)
 
@@ -355,8 +355,8 @@ syntax copyInArgumentResult =
 relation Copy_in_arg:
   arch |-
     cursor evalContext parameterIR
-    `@ cursor evalContext argumentIR
-  ~> arch evalContext evalContext `# copyInArgumentResult
+    '@' cursor evalContext argumentIR
+  ~> arch evalContext evalContext '#' copyInArgumentResult
   hint(input %0 %1 %2 %3 %4 %5 %6)
   hint(prose_in "copy-in from" %6 "at" %4 "of" %5
                 "to" %3 "in" %1 "at" %2#
@@ -373,8 +373,8 @@ syntax copyInResult =
 relation Copy_in:
   cursor arch |-
     cursor evalContext parameterListIR
-    `@ cursor evalContext argumentListIR
-  ~> arch evalContext evalContext `# copyInResult
+    '@' cursor evalContext argumentListIR
+  ~> arch evalContext evalContext '#' copyInResult
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "copy-in from" %7 "at" %5 "of" %6
                 "to" %4 "in" %2 "at" %3#
@@ -385,7 +385,7 @@ relation Copy_in:
                  "\n and copy-in result" %11)
 
 relation Copy_in_default:
-  parameterListIR `@ cursor evalContext
+  parameterListIR '@' cursor evalContext
   ~> evalContext
   hint(input %0 %1 %2)
   hint(prose_in "copying defaults for" %0#
@@ -395,7 +395,7 @@ relation Copy_in_default:
 relation Copy_out_argument:
   arch |-
      cursor evalContext parameterIR
-     `@ cursor evalContext storageReference?
+     '@' cursor evalContext storageReference?
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6)
   hint(prose_in "copy-out from" %4 "at" %2 "of" %3
@@ -406,7 +406,7 @@ relation Copy_out_argument:
 relation Copy_out:
   cursor arch |-
     cursor evalContext parameterListIR
-    `@ cursor evalContext storageReference?*
+    '@' cursor evalContext storageReference?*
   ~> evalContext
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "copy-out from" %4 "at" %2 "of" %3
@@ -415,24 +415,24 @@ relation Copy_out:
   hint(prose_out %8)
 
 relation Call_eval:
-  cursor evalContext arch |- callee `@ `< typeArgumentListIR >
-                                       `( argumentListIR )
+  cursor evalContext arch |- callee '@' `< typeArgumentListIR `>
+                                       `( argumentListIR `)
                            : evalContext arch callResult
   hint(input %0 %1 %2 %3 %4 %5)
-  hint(prose_in "calling" %3 `< %4 > `( %5 ) #", under context" %1 "and state" %2 "at" %0)
+  hint(prose_in "calling" %3 `< %4 `> `( %5 `) #", under context" %1 "and state" %2 "at" %0)
   hint(prose_out "context" %6#", state" %7#", and call result" %8)
 
 extern relation ExternFunctionCall_eval:
-  evalContext arch |- nameIR `( nameIR* )
+  evalContext arch |- nameIR `( nameIR* `)
                     : evalContext arch callResult
   hint(input %0 %1 %2 %3)
-  hint(prose_in "calling an extern function" %2 `( %3 ) #", under context" %0#", and state" %1)
+  hint(prose_in "calling an extern function" %2 `( %3 `) #", under context" %0#", and state" %1)
   hint(prose_out "context" %4#", state" %5#", and call result" %6)
 
 extern relation ExternMethodCall_eval:
-  evalContext arch |- objectId `. nameIR `( nameIR* )
+  evalContext arch |- objectId '.' nameIR `( nameIR* `)
                     : evalContext arch callResult
   hint(input %0 %1 %2 %3 %4)
-  hint(prose_in "calling an extern method" %3 `( %4 ) "on object"
+  hint(prose_in "calling an extern method" %3 `( %4 `) "on object"
                 %2#", under context" %0#", and state" %1)
   hint(prose_out "context" %5#", state" %6#", and call result" %7)

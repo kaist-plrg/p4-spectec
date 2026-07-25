@@ -42,7 +42,7 @@ rule ParserStmt_inst/directApplicationStatementIR:
       LOCAL IC STO_0 |- directApplicationStatementIR
                       : STO_1 constantDeclarationIR callStatementIR
   -- if parserBlockStatementIR
-      = `EMPTY `{ [ constantDeclarationIR, callStatementIR ] }
+      = _EMPTY `{ [ constantDeclarationIR, callStatementIR ] `}
 
 ;;; parserBlockStatementIR
 
@@ -64,17 +64,17 @@ rule ParserStmt_inst/parserBlockStatementIR:
 rulegroup ParserStmt_inst/parserConditionalStatementIR {
 
   rule ParserStmt_inst/non-else:
-    IC STO_0 |- IF `( typedExpressionIR_cond ) parserStatementIR_then
-              : IC STO_1 (IF `( typedExpressionIR_cond ) parserStatementIR_then_inst)
+    IC STO_0 |- IF `( typedExpressionIR_cond `) parserStatementIR_then
+              : IC STO_1 (IF `( typedExpressionIR_cond `) parserStatementIR_then_inst)
     -- ParserStmt_inst:
         IC STO_0 |- parserStatementIR_then
                   : IC_then STO_1 parserStatementIR_then_inst
 
   rule ParserStmt_inst/else:
-    IC STO_0 |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+    IC STO_0 |- IF `( typedExpressionIR_cond `) parserStatementIR_then
                 ELSE parserStatementIR_else
               : IC STO_2
-                  (IF `( typedExpressionIR_cond ) parserStatementIR_then_inst
+                  (IF `( typedExpressionIR_cond `) parserStatementIR_then_inst
                    ELSE parserStatementIR_else_inst)
     -- ParserStmt_inst:
         IC STO_0 |- parserStatementIR_then
@@ -147,8 +147,8 @@ rulegroup ParserBlockElementStmtList_inst {
 ;;;      = annotationList `{ parserBlockElementStatementListIR }
 
 rule ParserBlock_inst:
-  IC_0 STO_0 |- annotationList `{ parserBlockElementStatementListIR }
-              : IC_1 STO_1 (annotationList `{ parserBlockElementStatementListIR_inst })
+  IC_0 STO_0 |- annotationList `{ parserBlockElementStatementListIR `}
+              : IC_1 STO_1 (annotationList `{ parserBlockElementStatementListIR_inst `})
   -- ParserBlockElementStmtList_inst:
       IC_0 STO_0 |- parserBlockElementStatementListIR
                   : IC_1 STO_1 parserBlockElementStatementListIR_inst
