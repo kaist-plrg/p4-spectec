@@ -144,7 +144,10 @@ let is_upid (s : string) : bool =
        (function 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true | _ -> false)
        s
 
-(* payload is a lexer-produced object identifier, possibly a dotted name *)
+let is_operator atom s = match atom with Operator o -> String.equal o s | _ -> false
+
+(* Constructors *)
+
 let keyword (s : string) : t = Keyword s
 
 let tag (s : string) : t =
@@ -154,5 +157,3 @@ let operator (s : string) : t =
   if String.contains s '\'' || String.contains s '\n' then
     invalid_arg ("Atom.operator: unquotable operator: " ^ s)
   else Operator s
-
-let is_operator atom s = match atom with Operator o -> String.equal o s | _ -> false
