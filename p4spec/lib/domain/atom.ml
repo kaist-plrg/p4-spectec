@@ -1,345 +1,158 @@
+type upid = string [@@deriving yojson]
+type optext = string [@@deriving yojson]
+
 [@@@ocamlformat "disable"]
 
 type t =
-  | Atom of string                  (* atomid *)
-  | SilentAtom of string            (* `atomid *)
-  | Sub                             (* `<:` *)
-  | Sup                             (* `:>` *)
-  | Turnstile                       (* `|-` *)
-  | Tilesturn                       (* `-|` *)
-  | Tick                            (* ```` *)
-  | DoubleQuote                     (* ``''` *)
-  | Underscore                      (* ``_` *)
-  | Arrow of [ `Plain | `Tick ]     (* `->` or -> *)
-  | ArrowSub                        (* `->_` *)
-  | DoubleArrow                     (* ``=>` *)
-  | DoubleArrowSub                  (* ``=>_` *)
-  | DoubleArrowLong                 (* ``==>` *)
-  | SqArrow                         (* `~>` *)
-  | SqArrowStar                     (* `~>*` *)
-  | Dot of [ `Plain | `Tick ]       (* ``.` or . *)
-  | Dot2 of [ `Plain | `Tick ]      (* ``..` or .. *)
-  | Dot3 of [ `Plain | `Tick ]      (* ``...` or ... *)
-  | Comma                           (* ``,` *)
-  | Semicolon of [ `Plain | `Tick ] (* ``;` or ; *)
-  | Colon of [ `Plain | `Tick ]     (* `:` or : *)
-  | ColonEq of [ `Plain | `Tick ]   (* `:=` or := *)
-  | Hash                            (* ``#` *)
-  | Dollar                          (* ``$` *)
-  | At                              (* ``@` *)
-  | Quest                           (* ``?` *)
-  | Bang                            (* ``!` *)
-  | BangEq                          (* ``!=` *)
-  | Tilde                           (* ``~` *)
-  | Tilde2 of [ `Plain | `Tick ]    (* `~~` or ~~ *)
-  | LAngle of [ `Tick | `Tick2 ]    (* ``<` or ```<` *)
-  | LAngle2                         (* `<<` *)
-  | LAngleEq                        (* ``<=` *)
-  | LAngle2Eq                       (* `<<=` *)
-  | RAngle of [ `Plain | `Tick2 ]   (* > or ```>` *)
-  | RAngle2                         (* `>>` *)
-  | RAngleEq                        (* ``>=` *)
-  | RAngle2Eq                       (* `>>=` *)
-  | LParen                          (* ``(` *)
-  | RParen                          (* ``)` *)
-  | LBrack of [ `Tick | `Tick2 ]    (* ``[` or ```[` *)
-  | RBrack of [ `Plain | `Tick2 ]   (* ] or ```]` *)
-  | LBrace of [ `Tick | `Tick2 ]    (* ``{` or ```{` *)
-  | LBraceHashRBrace                (* `{#}` *)
-  | RBrace of [ `Plain | `Tick2 ]   (* } or ```}` *)
-  | Plus                            (* ``+` *)
-  | Plus2                           (* ``++` *)
-  | PlusEq                          (* ``+=` *)
-  | PlusColon                       (* ``+:` *)
-  | Minus                           (* ``-` *)
-  | MinusEq                         (* ``-=` *)
-  | Star                            (* ``*` *)
-  | StarEq                          (* ``*=` *)
-  | Slash                           (* ``/` *)
-  | SlashEq                         (* ``/=` *)
-  | Backslash                       (* ``\` *)
-  | Percent                         (* ``%` *)
-  | PercentEq                       (* ``%=` *)
-  | Eq                              (* ``=` *)
-  | Eq2                             (* `==` *)
-  | Amp                             (* ``&` *)
-  | Amp2                            (* ``&&` *)
-  | Amp3                            (* ``&&&` *)
-  | AmpEq                           (* ``&=` *)
-  | Up                              (* ``^` *)
-  | UpEq                            (* ``^=` *)
-  | Bar                             (* ``|` *)
-  | Bar2                            (* ``||` *)
-  | BarEq                           (* ``|=` *)
-  | SPlus                           (* ``|+|` *)
-  | SPlusEq                         (* ``|+|=` *)
-  | SMinus                          (* ``|-|` *)
-  | SMinusEq                        (* ``|-|=` *)
+  | Keyword of upid                 (* concrete object word: INT *)
+  | Tag of upid                     (* silent meta case label: _NUM *)
+  | Operator of optext              (* concrete operator: '+', '->', '#' *)
+  | Sub                             (* <: *)
+  | Sup                             (* :> *)
+  | Turnstile                       (* |- *)
+  | Tilesturn                       (* -| *)
+  | Arrow                           (* -> *)
+  | ArrowSub                        (* ->_ *)
+  | DoubleArrowSub                  (* =>_ *)
+  | DoubleArrowLong                 (* ==> *)
+  | SqArrow                         (* ~> *)
+  | SqArrowStar                     (* ~>* *)
+  | Dot                             (* . *)
+  | Dot2                            (* .. *)
+  | Dot3                            (* ... *)
+  | Semicolon                       (* ; *)
+  | Colon                           (* : *)
+  | ColonEq                         (* := *)
+  | Tilde2                          (* ~~ *)
+  | Backslash                       (* \ *)
+  | LAngle                          (* `< *)
+  | RAngle                          (* `> *)
+  | LParen                          (* `( *)
+  | RParen                          (* `) *)
+  | LBrack                          (* `[ *)
+  | RBrack                          (* `] *)
+  | LBrace                          (* `{ *)
+  | RBrace                          (* `} *)
 [@@deriving yojson]
 [@@@ocamlformat "enable"]
 
-let compare atom_a atom_b = compare atom_a atom_b
+let compare (atom_a : t) (atom_b : t) = Stdlib.compare atom_a atom_b
+let eq (atom_a : t) (atom_b : t) : bool = compare atom_a atom_b = 0
 
-let eq (atom_a : t) (atom_b : t) : bool =
-  match (atom_a, atom_b) with
-  | Atom id_a, Atom id_b | SilentAtom id_a, SilentAtom id_b ->
-      String.equal id_a id_b
-  | _ -> atom_a = atom_b
-
+(* Parse-faithful: round-trips through atom_of_string *)
 let string_of_atom = function
-  | Atom id -> id
-  | SilentAtom id -> "`" ^ id
+  | Keyword id -> id
+  | Tag id -> "_" ^ id
+  | Operator s -> "'" ^ s ^ "'"
   | Sub -> "<:"
   | Sup -> ":>"
   | Turnstile -> "|-"
   | Tilesturn -> "-|"
-  | Tick -> "``"
-  | DoubleQuote -> "`\""
-  | Underscore -> "`_"
-  | Arrow `Plain -> "->"
-  | Arrow `Tick -> "`->"
+  | Arrow -> "->"
   | ArrowSub -> "->_"
-  | DoubleArrow -> "`=>"
   | DoubleArrowSub -> "=>_"
   | DoubleArrowLong -> "==>"
   | SqArrow -> "~>"
   | SqArrowStar -> "~>*"
-  | Dot `Plain -> "."
-  | Dot `Tick -> "`."
-  | Dot2 `Plain -> ".."
-  | Dot2 `Tick -> "`.."
-  | Dot3 `Plain -> "..."
-  | Dot3 `Tick -> "`..."
-  | Comma -> "`,"
-  | Semicolon `Plain -> ";"
-  | Semicolon `Tick -> "`;"
-  | Colon `Plain -> ":"
-  | Colon `Tick -> "`:"
-  | ColonEq `Plain -> ":="
-  | ColonEq `Tick -> "`:="
-  | Hash -> "`#"
-  | Dollar -> "`$"
-  | At -> "`@"
-  | Quest -> "`?"
-  | Bang -> "`!"
-  | BangEq -> "`!="
-  | Tilde -> "`~"
-  | Tilde2 `Plain -> "~~"
-  | Tilde2 `Tick -> "`~~"
-  | LAngle `Tick -> "`<"
-  | LAngle `Tick2 -> "``<"
-  | LAngle2 -> "`<<"
-  | LAngleEq -> "`<="
-  | LAngle2Eq -> "`<<="
-  | RAngle `Plain -> ">"
-  | RAngle `Tick2 -> "``>"
-  | RAngle2 -> "`>>"
-  | RAngleEq -> "`>="
-  | RAngle2Eq -> "`>>="
-  | LParen -> "`("
-  | RParen -> ")"
-  | LBrack `Tick -> "`["
-  | LBrack `Tick2 -> "``["
-  | RBrack `Plain -> "]"
-  | RBrack `Tick2 -> "``]"
-  | LBrace `Tick -> "`{"
-  | LBrace `Tick2 -> "``{"
-  | LBraceHashRBrace -> "`{#}"
-  | RBrace `Plain -> "}"
-  | RBrace `Tick2 -> "``}"
-  | Plus -> "`+"
-  | Plus2 -> "`++"
-  | PlusEq -> "`+="
-  | PlusColon -> "`+:"
-  | Minus -> "`-"
-  | MinusEq -> "`-="
-  | Star -> "`*"
-  | StarEq -> "`*="
-  | Slash -> "`/"
-  | SlashEq -> "`/="
+  | Dot -> "."
+  | Dot2 -> ".."
+  | Dot3 -> "..."
+  | Semicolon -> ";"
+  | Colon -> ":"
+  | ColonEq -> ":="
+  | Tilde2 -> "~~"
   | Backslash -> "\\"
-  | Percent -> "`%"
-  | PercentEq -> "`%="
-  | Eq -> "`="
-  | Eq2 -> "`=="
-  | Amp -> "`&"
-  | Amp2 -> "`&&"
-  | Amp3 -> "`&&&"
-  | AmpEq -> "`&="
-  | Up -> "`^"
-  | UpEq -> "`^="
-  | Bar -> "`|"
-  | Bar2 -> "`||"
-  | BarEq -> "`|="
-  | SPlus -> "`|+|"
-  | SPlusEq -> "`|+|="
-  | SMinus -> "`|-|"
-  | SMinusEq -> "`|-|="
+  | LAngle -> "`<"
+  | RAngle -> "`>"
+  | LParen -> "`("
+  | RParen -> "`)"
+  | LBrack -> "`["
+  | RBrack -> "`]"
+  | LBrace -> "`{"
+  | RBrace -> "`}"
 
 let atom_of_string = function
   | "<:" -> Sub
   | ":>" -> Sup
   | "|-" -> Turnstile
   | "-|" -> Tilesturn
-  | "``" -> Tick
-  | "`\"" -> DoubleQuote
-  | "`_" -> Underscore
-  | "->" -> Arrow `Plain
-  | "`->" -> Arrow `Tick
+  | "->" -> Arrow
   | "->_" -> ArrowSub
-  | "`=>" -> DoubleArrow
   | "=>_" -> DoubleArrowSub
   | "==>" -> DoubleArrowLong
   | "~>" -> SqArrow
   | "~>*" -> SqArrowStar
-  | "." -> Dot `Plain
-  | "`." -> Dot `Tick
-  | ".." -> Dot2 `Plain
-  | "`.." -> Dot2 `Tick
-  | "..." -> Dot3 `Plain
-  | "`..." -> Dot3 `Tick
-  | "`," -> Comma
-  | ";" -> Semicolon `Plain
-  | "`;" -> Semicolon `Tick
-  | ":" -> Colon `Plain
-  | "`:" -> Colon `Tick
-  | ":=" -> ColonEq `Plain
-  | "`:=" -> ColonEq `Tick
-  | "`#" -> Hash
-  | "`$" -> Dollar
-  | "`@" -> At
-  | "`?" -> Quest
-  | "`!" -> Bang
-  | "`!=" -> BangEq
-  | "`~" -> Tilde
-  | "~~" -> Tilde2 `Plain
-  | "`~~" -> Tilde2 `Tick
-  | "`<" -> LAngle `Tick
-  | "``<" -> LAngle `Tick2
-  | "`<<" -> LAngle2
-  | "`<=" -> LAngleEq
-  | "`<<=" -> LAngle2Eq
-  | ">" -> RAngle `Plain
-  | "``>" -> RAngle `Tick2
-  | "`>>" -> RAngle2
-  | "`>=" -> RAngleEq
-  | "`>>=" -> RAngle2Eq
-  | "`(" -> LParen
-  | ")" -> RParen
-  | "`[" -> LBrack `Tick
-  | "``[" -> LBrack `Tick2
-  | "]" -> RBrack `Plain
-  | "``]" -> RBrack `Tick2
-  | "{" -> LBrace `Tick
-  | "``{" -> LBrace `Tick2
-  | "`{#}" -> LBraceHashRBrace
-  | "}" -> RBrace `Plain
-  | "``}" -> RBrace `Tick2
-  | "`+" -> Plus
-  | "`++" -> Plus2
-  | "`+=" -> PlusEq
-  | "`+:" -> PlusColon
-  | "`-" -> Minus
-  | "`-=" -> MinusEq
-  | "`*" -> Star
-  | "`*=" -> StarEq
-  | "`/" -> Slash
-  | "`/=" -> SlashEq
+  | "." -> Dot
+  | ".." -> Dot2
+  | "..." -> Dot3
+  | ";" -> Semicolon
+  | ":" -> Colon
+  | ":=" -> ColonEq
+  | "~~" -> Tilde2
   | "\\" -> Backslash
-  | "`%" -> Percent
-  | "`%=" -> PercentEq
-  | "`=" -> Eq
-  | "`==" -> Eq2
-  | "`&" -> Amp
-  | "`&&" -> Amp2
-  | "`&&&" -> Amp3
-  | "`&=" -> AmpEq
-  | "`^" -> Up
-  | "`^=" -> UpEq
-  | "`|" -> Bar
-  | "`||" -> Bar2
-  | "`|=" -> BarEq
-  | "`|+|" -> SPlus
-  | "`|+|=" -> SPlusEq
-  | "`|-|" -> SMinus
-  | "`|-|=" -> SMinusEq
-  | id when String.starts_with ~prefix:"`" id ->
-      SilentAtom (String.sub id 1 (String.length id - 1))
-  | id -> Atom id
+  | "`<" -> LAngle
+  | "`>" -> RAngle
+  | "`(" -> LParen
+  | "`)" -> RParen
+  | "`[" -> LBrack
+  | "`]" -> RBrack
+  | "`{" -> LBrace
+  | "`}" -> RBrace
+  | s when String.length s >= 2 && s.[0] = '\'' && s.[String.length s - 1] = '\'' ->
+      Operator (String.sub s 1 (String.length s - 2))
+  | s when String.length s >= 2 && s.[0] = '_' ->
+      Tag (String.sub s 1 (String.length s - 1))
+  | id -> Keyword id
 
+(* Lossy display glyph *)
 let render_atom = function
-  | Atom id -> id
-  | SilentAtom "EMPTY" -> "/* empty */"
-  | SilentAtom id -> "`" ^ id
+  | Keyword id -> id
+  | Tag "EMPTY" -> "/* empty */"
+  | Tag id -> "_" ^ id
+  | Operator s -> s
   | Sub -> "<:"
   | Sup -> ":>"
   | Turnstile -> "|-"
   | Tilesturn -> "-|"
-  | Tick -> "`"
-  | DoubleQuote -> "\""
-  | Underscore -> "_"
-  | Arrow _ -> "->"
+  | Arrow -> "->"
   | ArrowSub -> "->_"
-  | DoubleArrow -> "=>"
   | DoubleArrowSub -> "=>_"
   | DoubleArrowLong -> "==>"
   | SqArrow -> "~>"
   | SqArrowStar -> "~>*"
-  | Dot _ -> "."
-  | Dot2 _ -> ".."
-  | Dot3 _ -> "..."
-  | Comma -> ","
-  | Semicolon _ -> ";"
-  | Colon _ -> ":"
-  | ColonEq _ -> ":="
-  | Hash -> "#"
-  | Dollar -> "$"
-  | At -> "@"
-  | Quest -> "?"
-  | Bang -> "!"
-  | BangEq -> "!="
-  | Tilde -> "~"
-  | Tilde2 _ -> "~~"
-  | LAngle _ -> "<"
-  | LAngle2 -> "<<"
-  | LAngleEq -> "<="
-  | LAngle2Eq -> "<<="
-  | RAngle _ -> ">"
-  | RAngle2 -> ">>"
-  | RAngleEq -> ">="
-  | RAngle2Eq -> ">>="
+  | Dot -> "."
+  | Dot2 -> ".."
+  | Dot3 -> "..."
+  | Semicolon -> ";"
+  | Colon -> ":"
+  | ColonEq -> ":="
+  | Tilde2 -> "~~"
+  | Backslash -> "\\"
+  | LAngle -> "<"
+  | RAngle -> ">"
   | LParen -> "("
   | RParen -> ")"
-  | LBrack _ -> "["
-  | RBrack _ -> "]"
-  | LBrace _ -> "{"
-  | LBraceHashRBrace -> "{#}"
-  | RBrace _ -> "}"
-  | Plus -> "+"
-  | Plus2 -> "++"
-  | PlusEq -> "+="
-  | PlusColon -> "+:"
-  | Minus -> "-"
-  | MinusEq -> "-="
-  | Star -> "*"
-  | StarEq -> "*="
-  | Slash -> "/"
-  | SlashEq -> "/="
-  | Backslash -> "\\"
-  | Percent -> "%"
-  | PercentEq -> "%="
-  | Eq -> "="
-  | Eq2 -> "=="
-  | Amp -> "&"
-  | Amp2 -> "&&"
-  | Amp3 -> "&&&"
-  | AmpEq -> "&="
-  | Up -> "^"
-  | UpEq -> "^="
-  | Bar -> "|"
-  | Bar2 -> "||"
-  | BarEq -> "|="
-  | SPlus -> "|+|"
-  | SPlusEq -> "|+|="
-  | SMinus -> "|-|"
-  | SMinusEq -> "|-|="
+  | LBrack -> "["
+  | RBrack -> "]"
+  | LBrace -> "{"
+  | RBrace -> "}"
+
+let is_upid (s : string) : bool =
+  String.length s > 0
+  && (match s.[0] with 'A' .. 'Z' -> true | _ -> false)
+  && String.for_all
+       (function 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true | _ -> false)
+       s
+
+(* payload is a lexer-produced object identifier, possibly a dotted name *)
+let keyword (s : string) : t = Keyword s
+
+let tag (s : string) : t =
+  if is_upid s then Tag s else invalid_arg ("Atom.tag: expected upid: " ^ s)
+
+let operator (s : string) : t =
+  if String.contains s '\'' || String.contains s '\n' then
+    invalid_arg ("Atom.operator: unquotable operator: " ^ s)
+  else Operator s
+
+let is_operator atom s = match atom with Operator o -> String.equal o s | _ -> false
