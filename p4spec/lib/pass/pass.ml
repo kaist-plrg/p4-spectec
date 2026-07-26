@@ -1,30 +1,45 @@
-open Util.Source
-module Elaborate = Elaborate
-module Algo = Algo
-module Structure = Structure
-module Annotate = Annotate
-
 (* Errors *)
 
-type error = { at : region; msg : string }
+type error =
+  | ParseError of Frontend.Parse.error
+  | ElabError of Elaborate.error
+  | AlgoError of Algo.error
+  | StructError of Structure.error
+  | ProseError of Annotate.error
 
-let string_of_error { at; msg } = Util.Error.string_of_error at msg
-let to_region_msg { at; msg } = (at, msg)
+let to_region_msg = function
+  | ParseError e -> Frontend.Parse.to_region_msg e
+  | ElabError e -> Elaborate.to_region_msg e
+  | AlgoError e -> Algo.to_region_msg e
+  | StructError e -> Structure.to_region_msg e
+  | ProseError e -> Annotate.to_region_msg e
+
+let string_of_error e =
+  let at, msg = to_region_msg e in
+  Util.Error.string_of_error at msg
+
 let ( let* ) = Result.bind
 
-(* Surface a pass failure as an [error]. Anything else (bugs, Stdlib
-   exceptions) propagates untouched. *)
+(* Stages *)
 
-let guard f =
-  try Ok (f ())
-  with
-  | Util.Error.ParseError (at, msg)
-  | Util.Error.ElabError (at, msg)
-  | Util.Error.AlgoError (at, msg)
-  | Util.Error.StructError (at, msg)
-  | Util.Error.ProseError (at, msg)
-  ->
-    Error { at; msg }
+let parse_string str =
+  Frontend.Parse.parse_string str |> Result.map_error (fun e -> ParseError e)
+
+let parse_files paths =
+  Frontend.Parse.parse_files paths |> Result.map_error (fun e -> ParseError e)
+
+let elab_spec spec_el =
+  Elaborate.elab_spec spec_el |> Result.map_error (fun e -> ElabError e)
+
+let algo_spec spec_il =
+  Algo.algo_spec spec_il |> Result.map_error (fun e -> AlgoError e)
+
+let struct_spec ~final spec_al =
+  Structure.struct_spec ~final spec_al
+  |> Result.map_error (fun e -> StructError e)
+
+let annotate_spec spec_sl =
+  Annotate.annotate_spec spec_sl |> Result.map_error (fun e -> ProseError e)
 
 (* File expansion *)
 
@@ -38,9 +53,7 @@ let expand_spec filenames =
 
 (* Parsing *)
 
-let parse paths_spec =
-  guard (fun () ->
-      paths_spec |> expand_spec |> List.concat_map Frontend.Parse.parse_file)
+let parse paths_spec = paths_spec |> expand_spec |> parse_files
 
 (* Elaboration *)
 
@@ -51,7 +64,7 @@ let elab paths_spec =
   | Some spec -> Ok spec
   | None ->
       let* spec_el = parse paths_spec in
-      let* spec_il = guard (fun () -> Elaborate.Elab.elab_spec spec_el) in
+      let* spec_il = elab_spec spec_el in
       Hashtbl.replace cache_elab paths_spec spec_il;
       Ok spec_il
 
@@ -64,7 +77,7 @@ let algo paths_spec =
   | Some spec -> Ok spec
   | None ->
       let* spec_il = elab paths_spec in
-      let* spec_al = guard (fun () -> Algo.algo_spec spec_il) in
+      let* spec_al = algo_spec spec_il in
       Hashtbl.replace cache_algo paths_spec spec_al;
       Ok spec_al
 
@@ -77,9 +90,7 @@ let structure ~(final : bool) paths_spec =
   | Some spec -> Ok spec
   | None ->
       let* spec_al = algo paths_spec in
-      let* spec_sl =
-        guard (fun () -> Structure.Struct.struct_spec ~final spec_al)
-      in
+      let* spec_sl = struct_spec ~final spec_al in
       Hashtbl.replace structure_cache (final, paths_spec) spec_sl;
       Ok spec_sl
 
@@ -87,4 +98,4 @@ let structure ~(final : bool) paths_spec =
 
 let annotate paths_spec =
   let* spec_sl = structure ~final:false paths_spec in
-  guard (fun () -> Annotate.annotate_spec spec_sl)
+  annotate_spec spec_sl

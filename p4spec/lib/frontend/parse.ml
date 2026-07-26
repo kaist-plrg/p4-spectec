@@ -4,6 +4,12 @@ open Error
 module Source = Util.Source
 open Source
 
+(* Errors *)
+
+type error = { at : region; msg : string }
+
+let to_region_msg { at; msg } = (at, msg)
+
 let with_lexbuf name lexbuf start =
   let open Lexing in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name };
@@ -48,9 +54,14 @@ let parse_file file =
   with Sys_error msg ->
     error (Source.region_of_file file) ("i/o error: " ^ msg)
 
+let parse_files files =
+  try Ok (List.concat_map parse_file files)
+  with ParseError (at, msg) -> Error { at; msg }
+
 let parse_string str =
   let lexbuf = Lexing.from_string str in
-  try Parser.spec Lexer.token lexbuf
-  with Parser.Error ->
-    error (Lexer.region lexbuf)
-      (Format.asprintf "syntax error in spec string: %s" str)
+  try Ok (Parser.spec Lexer.token lexbuf) with
+  | Parser.Error ->
+      let at = Lexer.region lexbuf in
+      Error { at; msg = Format.asprintf "syntax error in spec string: %s" str }
+  | ParseError (at, msg) -> Error { at; msg }
