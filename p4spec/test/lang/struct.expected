@@ -3670,9 +3670,9 @@ def $write_value_from_bits'(value', n_var, (b)*{b <- b*})
 
                   1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
 
-                    1. (Let i be $int_to_bitstr((n_var as int), $bits_to_int_signed((b_h)*{b_h <- b_h*})))
+                    1. (Let i' be $int_to_bitstr((n_var as int), $bits_to_int_signed((b_h)*{b_h <- b_h*})))
 
-                      1. Return (((n_max `. n_var V i) as value), (b_t)*{b_t <- b_t*})
+                      1. Return (((n_max `. n_var V i') as value), (b_t)*{b_t <- b_t*})
 
               1. Else Dangling#546
 
@@ -12780,11 +12780,11 @@ def $lift_callableTargetIR_as_expression(callableTargetIR')
 
         1. Case (% matches pattern `` %`)
 
-          1. (Let (`` nameIR) be prefixedNameIR)
+          1. (Let (`` nameIR') be prefixedNameIR)
 
-            1. If ((nameIR =/= "this")), then
+            1. If ((nameIR' =/= "this")), then
 
-              1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR))
+              1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR'))
 
                 1. (Let member be $lift_nameIR_as_member(nameIR))
 
@@ -12794,9 +12794,9 @@ def $lift_callableTargetIR_as_expression(callableTargetIR')
 
         2. Case (% matches pattern `. %`)
 
-          1. (Let (`. nameIR) be prefixedNameIR)
+          1. (Let (`. nameIR') be prefixedNameIR)
 
-            1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR))
+            1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR'))
 
               1. (Let member be $lift_nameIR_as_member(nameIR))
 
@@ -13496,11 +13496,11 @@ def $lift_callableTargetIR_as_lvalue(callableTargetIR')
 
         1. Case (% matches pattern `` %`)
 
-          1. (Let (`` nameIR) be prefixedNameIR)
+          1. (Let (`` nameIR') be prefixedNameIR)
 
-            1. If ((nameIR =/= "this")), then
+            1. If ((nameIR' =/= "this")), then
 
-              1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR))
+              1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR'))
 
                 1. (Let member be $lift_nameIR_as_member(nameIR))
 
@@ -13510,9 +13510,9 @@ def $lift_callableTargetIR_as_lvalue(callableTargetIR')
 
         2. Case (% matches pattern `. %`)
 
-          1. (Let (`. nameIR) be prefixedNameIR)
+          1. (Let (`. nameIR') be prefixedNameIR)
 
-            1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR))
+            1. (Let nonTypeName be $lift_nameIR_as_nonTypeName(nameIR'))
 
               1. (Let member be $lift_nameIR_as_member(nameIR))
 
@@ -26579,9 +26579,9 @@ def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool)
 
 def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(typeIR, typeIR') : bool)
 
-1. (Let (_expressionIR `# (`( typeIR_l _ctk ))) be typedExpressionIR_l)
+1. (Let (_expressionIR `# (`( typeIR_l ctk ))) be typedExpressionIR_l)
 
-  1. (Let (_expressionIR' `# (`( typeIR_r _ctk' ))) be typedExpressionIR_r)
+  1. (Let (_expressionIR' `# (`( typeIR_r _ctk ))) be typedExpressionIR_r)
 
     1. Case analysis on $check(typeIR_l, typeIR_r)
 
@@ -26597,7 +26597,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(type
 
             1. (Let (ENUM _typeId `< typeIR_l_underlying > `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} }) be (typeIR as serializableEnumTypeIR))
 
-              1. (Let typedExpressionIR_l_cast be (((`( typeIR_l_underlying ) typedExpressionIR_l) as expressionIR) `# (`( typeIR_l_underlying _ctk' ))))
+              1. (Let typedExpressionIR_l_cast be (((`( typeIR_l_underlying ) typedExpressionIR_l) as expressionIR) `# (`( typeIR_l_underlying ctk ))))
 
                 1. Return $reduce_serenum_binary(typedExpressionIR_l_cast, typedExpressionIR_r, $check)
 
@@ -26609,7 +26609,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(type
 
               1. (Let (ENUM _typeId `< typeIR_r_underlying > `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} }) be (typeIR as serializableEnumTypeIR))
 
-                1. (Let typedExpressionIR_r_cast be (((`( typeIR_r_underlying ) typedExpressionIR_r) as expressionIR) `# (`( typeIR_r_underlying _ctk' ))))
+                1. (Let typedExpressionIR_r_cast be (((`( typeIR_r_underlying ) typedExpressionIR_r) as expressionIR) `# (`( typeIR_r_underlying _ctk ))))
 
                   1. Return $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r_cast, $check)
 
@@ -26639,9 +26639,9 @@ def $cast_unary(typedExpressionIR, typeIR_to)
 
 def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
-1. (Let (_expressionIR `# (`( typeIR_l _ctk ))) be typedExpressionIR_l)
+1. (Let (_expressionIR `# (`( typeIR_l ctk ))) be typedExpressionIR_l)
 
-  1. (Let (_expressionIR' `# (`( typeIR_r _ctk' ))) be typedExpressionIR_r)
+  1. (Let (_expressionIR' `# (`( typeIR_r _ctk ))) be typedExpressionIR_r)
 
     1. If (Type_alpha: typeIR_l ~~ typeIR_r) holds, then
 
@@ -26651,7 +26651,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
       1. If (Cast_impl: typeIR_l -> typeIR_r) holds, then
 
-        1. (Let typedExpressionIR_l_cast be (((`( typeIR_r ) typedExpressionIR_l) as expressionIR) `# (`( typeIR_r _ctk' ))))
+        1. (Let typedExpressionIR_l_cast be (((`( typeIR_r ) typedExpressionIR_l) as expressionIR) `# (`( typeIR_r ctk ))))
 
           1. Return ?((typedExpressionIR_l_cast, typedExpressionIR_r))
 
@@ -26659,7 +26659,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
         1. If (Cast_impl: typeIR_r -> typeIR_l) holds, then
 
-          1. (Let typedExpressionIR_r_cast be (((`( typeIR_l ) typedExpressionIR_r) as expressionIR) `# (`( typeIR_l _ctk' ))))
+          1. (Let typedExpressionIR_r_cast be (((`( typeIR_l ) typedExpressionIR_r) as expressionIR) `# (`( typeIR_l _ctk ))))
 
             1. Return ?((typedExpressionIR_l, typedExpressionIR_r_cast))
 
@@ -31611,9 +31611,9 @@ relation Expr_inst: p IC STO |- (expressionIR `# expressionNoteIR) : % %
 
               3. Case (% matches pattern `(%)`)
 
-                1. (Let (`( callableTargetIR )) be callableTargetIR)
+                1. (Let (`( callableTargetIR' )) be callableTargetIR)
 
-                  1. (Expr_inst: p IC STO |- (((callableTargetIR `< _typeArgumentListIR > `( _argumentListIR )) as expressionIR) `# expressionNoteIR) : STO_1 value)
+                  1. (Expr_inst: p IC STO |- (((callableTargetIR' `< _typeArgumentListIR > `( _argumentListIR )) as expressionIR) `# expressionNoteIR) : STO_1 value)
 
                     1. Result in: % % % |- % : STO_1 value
 
@@ -36193,9 +36193,9 @@ relation BlockElementStmtList_eval: EC ARCH |- (blockElementStatementIR)*{blockE
 
           1. (Let continueEmptyResult be (statementResult as continueEmptyResult))
 
-            1. (BlockElementStmtList_eval: EC_1 ARCH_1 |- (blockElementStatementIR_t)*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 ARCH_2 statementResult)
+            1. (BlockElementStmtList_eval: EC_1 ARCH_1 |- (blockElementStatementIR_t)*{blockElementStatementIR_t <- blockElementStatementIR_t*} : EC_2 ARCH_2 statementResult')
 
-              1. Result in: % % |- % : EC_2 ARCH_2 statementResult
+              1. Result in: % % |- % : EC_2 ARCH_2 statementResult'
 
         2. Else Dangling#11275
 
@@ -36407,9 +36407,9 @@ relation ParserBlockElementStmtList_eval: EC ARCH |- (parserBlockElementStatemen
 
           1. (Let continueEmptyResult be (parserStatementResult as continueEmptyResult))
 
-            1. (ParserBlockElementStmtList_eval: EC_1 ARCH_1 |- (parserBlockElementStatementIR_t)*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_2 ARCH_2 parserStatementResult)
+            1. (ParserBlockElementStmtList_eval: EC_1 ARCH_1 |- (parserBlockElementStatementIR_t)*{parserBlockElementStatementIR_t <- parserBlockElementStatementIR_t*} : EC_2 ARCH_2 parserStatementResult')
 
-              1. Result in: % % |- % : EC_2 ARCH_2 parserStatementResult
+              1. Result in: % % |- % : EC_2 ARCH_2 parserStatementResult'
 
         2. Else Dangling#11344
 
@@ -36466,9 +36466,9 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
                     2. Case (% matches pattern (_))
 
-                      1. (Let ?(nameIR_state) be (nameIR_state)?{nameIR_state <- nameIR_state?})
+                      1. (Let ?(nameIR_state') be (nameIR_state)?{nameIR_state <- nameIR_state?})
 
-                        1. (ParserTransition_eval: EC_2 ARCH_2 |- (TRANSITION (nameIR_state `;)) : EC_3 ARCH_3 transitionResult)
+                        1. (ParserTransition_eval: EC_2 ARCH_2 |- (TRANSITION (nameIR_state' `;)) : EC_3 ARCH_3 transitionResult)
 
                           1. Result in: % % |- % : EC_3 ARCH_3 transitionResult
 
@@ -38825,19 +38825,19 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
         2. If (((statementResult' = ((`EMPTY) as statementResult)) \/ (statementResult' = ((CONTINUE) as statementResult)))), then
 
-          1. (ForUpdateStmts_eval: EC_2 ARCH_2 |- forUpdateStatementListIR : EC_3 ARCH_3 statementResult')
+          1. (ForUpdateStmts_eval: EC_2 ARCH_2 |- forUpdateStatementListIR : EC_3 ARCH_3 statementResult'')
 
-            1. Case analysis on statementResult'
+            1. Case analysis on statementResult''
 
               1. Case (% has type exitResult)
 
-                1. (Let exitResult be (statementResult' as exitResult))
+                1. (Let exitResult be (statementResult'' as exitResult))
 
                   1. Result in: % % |- % % % : EC_3 ARCH_3 ((EXIT) as statementResult)
 
               2. Case (% has type continueEmptyResult)
 
-                1. (Let continueEmptyResult be (statementResult' as continueEmptyResult))
+                1. (Let continueEmptyResult be (statementResult'' as continueEmptyResult))
 
                   1. (ForThreeClauseStmt_eval: EC_3 ARCH_3 |- typedExpressionIR statementIR forUpdateStatementListIR : EC_4 ARCH_4 statementResult)
 
