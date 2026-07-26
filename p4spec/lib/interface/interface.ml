@@ -112,12 +112,11 @@ module SpecTec_AL = struct
         Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_string Run.AL_mode path str in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_string Run.AL_mode path str with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 
@@ -160,12 +159,11 @@ module SpecTec_SL = struct
         Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_string Run.SL_mode path str in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_string Run.SL_mode path str with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 

@@ -597,10 +597,19 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
 let annotate_defs (ctx : Ctx.t) (spec : spec) : Pl.spec =
   List.map (annotate_def ctx) spec
 
+(* Errors *)
+
+type error = { at : region; msg : string }
+
+let to_region_msg { at; msg } = (at, msg)
+
 (* Entry point *)
 
-let annotate_spec (spec : spec) : Pl.spec =
-  let ctx = Ctx.init () in
-  let ctx = Ctx.load_spec ctx spec in
-  spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
-  |> Stamp.stamp_defs
+let annotate_spec (spec : spec) : (Pl.spec, error) result =
+  try
+    let ctx = Ctx.init () in
+    let ctx = Ctx.load_spec ctx spec in
+    Ok
+      (spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
+     |> Stamp.stamp_defs)
+  with Error.ProseError (at, msg) -> Error { at; msg }

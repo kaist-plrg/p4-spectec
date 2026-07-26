@@ -3,10 +3,6 @@ open Source
 exception ParseError of region * string
 exception UnparseError of string
 exception RuntimeError of region * string
-exception ElabError of region * string
-exception AlgoError of region * string
-exception StructError of region * string
-exception ProseError of region * string
 exception BuiltinError of region * string
 exception InterpError of region * string
 exception ExternError of region * string
@@ -34,26 +30,6 @@ let error_unparse (msg : string) = raise (UnparseError msg)
 
 let error_runtime (at : region) (msg : string) = raise (RuntimeError (at, msg))
 let warn_runtime (at : region) (msg : string) = warn at "runtime" msg
-
-(* Elaboration errors *)
-
-let error_elab (at : region) (msg : string) = raise (ElabError (at, msg))
-let warn_elab (at : region) (msg : string) = warn at "elab" msg
-
-(* Algo errors *)
-
-let error_algo (at : region) (msg : string) = raise (AlgoError (at, msg))
-let warn_algo (at : region) (msg : string) = warn at "algo" msg
-
-(* Structuring errors *)
-
-let error_struct (at : region) (msg : string) = raise (StructError (at, msg))
-let warn_struct (at : region) (msg : string) = warn at "struct" msg
-
-(* Prosification errors *)
-
-let error_prose (at : region) (msg : string) = raise (ProseError (at, msg))
-let warn_prose (at : region) (msg : string) = warn at "prose" msg
 
 (* Builtin errors *)
 

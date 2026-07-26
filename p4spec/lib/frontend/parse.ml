@@ -4,6 +4,12 @@ open Error
 module Source = Util.Source
 open Source
 
+(* Errors *)
+
+type error = { at : region; msg : string }
+
+let to_region_msg { at; msg } = (at, msg)
+
 let with_lexbuf name lexbuf start =
   let open Lexing in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name };
@@ -40,17 +46,31 @@ let parse_mixop str =
   mixop_of_typ typ
 
 let parse_file file =
-  let ic = open_in file in
   try
+    let ic = open_in file in
     Fun.protect
       (fun () -> with_lexbuf file (Lexing.from_channel ic) Parser.spec)
       ~finally:(fun () -> close_in ic)
   with Sys_error msg ->
     error (Source.region_of_file file) ("i/o error: " ^ msg)
 
+(* A directory expands to its .watsup files. A plain path stands for itself. *)
+let expand_path path =
+  if Sys_unix.is_directory_exn path then
+    Util.Filesys.collect_files ~suffix:".watsup" path
+  else [ path ]
+
+let parse_files paths =
+  try
+    Ok (paths |> List.concat_map expand_path |> List.concat_map parse_file)
+  with
+  | ParseError (at, msg) -> Error { at; msg }
+  | Sys_error msg -> Error { at = no_region; msg }
+
 let parse_string str =
   let lexbuf = Lexing.from_string str in
-  try Parser.spec Lexer.token lexbuf
-  with Parser.Error ->
-    error (Lexer.region lexbuf)
-      (Format.asprintf "syntax error in spec string: %s" str)
+  try Ok (Parser.spec Lexer.token lexbuf) with
+  | Parser.Error ->
+      let at = Lexer.region lexbuf in
+      Error { at; msg = Format.asprintf "syntax error in spec string: %s" str }
+  | ParseError (at, msg) -> Error { at; msg }
