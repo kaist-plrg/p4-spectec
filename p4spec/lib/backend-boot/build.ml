@@ -1,10 +1,39 @@
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
 
+let ( let* ) = Result.bind
+
+let rec map_result f = function
+  | [] -> Ok []
+  | x :: xs ->
+      let* y = f x in
+      let* ys = map_result f xs in
+      Ok (y :: ys)
+
+(* Specs *)
+
+let structured_spec (paths_spec : string list) : (Run.spec, Pass.error) result =
+  let* spec_sl = Pass.structure ~final:true paths_spec in
+  Ok (SL spec_sl : Run.spec)
+
+let spec_of_mode (mode : Run.mode) (paths_spec : string list) :
+    (Run.spec, Pass.error) result =
+  match mode with
+  | AL_mode ->
+      let* spec_al = Pass.algo paths_spec in
+      Ok (AL spec_al : Run.spec)
+  | SL_mode ->
+      let* spec_sl = Pass.structure ~final:true paths_spec in
+      Ok (SL spec_sl : Run.spec)
+  | PL_mode ->
+      let* spec_pl = Pass.annotate paths_spec in
+      Ok (PL spec_pl : Run.spec)
+  | Empty_mode -> assert false
+
 (* Building a tower *)
 
 let build_target ?(cache = true) ?(det = false) ?(guard = false)
-    (level : Config.level) =
+    (level : Config.level) (spec : Run.spec) =
   (* Create the target runner *)
   let (module Runner_target) =
     match level.interface with
@@ -26,16 +55,12 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
                   (Interp_sl.Interp.Make)
                   (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  (* Initialize the target runner, as an SL spec *)
-  let spec =
-    let spec_sl = Pass.structure ~final:true [ level.layer.specdir ] in
-    (SL spec_sl : Run.spec)
-  in
   Runner_target.init ~cache ~det ~guard spec;
   (module Runner_target : Run.RUNNER)
 
 let build_interm ?(cache = true) ?(det = false) ?(guard = false)
-    (module Runner_above : Run.RUNNER) (level : Config.level) =
+    (module Runner_above : Run.RUNNER) (level : Config.level) (spec : Run.spec)
+    =
   (* Create the intermediate runner *)
   let (module Interface_SpecTec) =
     match level.interface with
@@ -52,16 +77,11 @@ let build_interm ?(cache = true) ?(det = false) ?(guard = false)
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  (* Initialize the runner, as an SL spec *)
-  let spec =
-    let spec_sl = Pass.structure ~final:true [ level.layer.specdir ] in
-    (SL spec_sl : Run.spec)
-  in
   Runner.init ~cache ~det ~guard spec;
   (module Runner : Run.RUNNER)
 
 let build_boot ?(cache = true) ?(det = false) ?(guard = false)
-    (module Runner_above : Run.RUNNER) (mode : Run.mode) (level : Config.level)
+    (module Runner_above : Run.RUNNER) (level : Config.level) (spec : Run.spec)
     =
   (* Create the booter *)
   let (module Interface_SpecTec) =
@@ -79,46 +99,43 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  (* Initialize the booter, as mode *)
-  let spec =
-    match mode with
-    | AL_mode ->
-        let spec_al = Pass.algo [ level.layer.specdir ] in
-        (AL spec_al : Run.spec)
-    | SL_mode ->
-        let spec_sl = Pass.structure ~final:true [ level.layer.specdir ] in
-        (SL spec_sl : Run.spec)
-    | PL_mode ->
-        let spec_pl = Pass.annotate [ level.layer.specdir ] in
-        (PL spec_pl : Run.spec)
-    | Empty_mode -> assert false
-  in
   Booter.init ~cache ~det ~guard spec;
-  (spec, (module Booter : Run.RUNNER))
+  (module Booter : Run.RUNNER)
 
 let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     (tower : Config.tower) =
   (* Build the target runner *)
-  let runner_target = build_target ~cache ~det ~guard tower.level_target in
+  let* spec_target = structured_spec [ tower.level_target.layer.specdir ] in
+  let runner_target =
+    build_target ~cache ~det ~guard tower.level_target spec_target
+  in
   (* Reverse the levels, so that we build levels from the target to boot *)
   let levels = tower.level_boot :: tower.levels_interm |> List.rev in
+  let n = List.length levels in
+  let* level_specs =
+    levels
+    |> List.mapi (fun idx level -> (idx = n - 1, level))
+    |> map_result (fun (is_boot, (level : Config.level)) ->
+           let* spec =
+             if is_boot then spec_of_mode tower.mode [ level.layer.specdir ]
+             else structured_spec [ level.layer.specdir ]
+           in
+           Ok (is_boot, level, spec))
+  in
   let spec_boot = ref None in
   let booter, runners_interm =
-    levels
-    |> List.mapi (fun idx level ->
-           if idx = List.length levels - 1 then (true, level) else (false, level))
+    level_specs
     |> List.fold_left
-         (fun ((module Runner_above : Run.RUNNER), runners) (last, level) ->
-           if not last then
+         (fun ((module Runner_above : Run.RUNNER), runners)
+              (is_boot, level, spec) ->
+           if not is_boot then
              let runner_interm =
-               build_interm ~cache ~det ~guard (module Runner_above) level
+               build_interm ~cache ~det ~guard (module Runner_above) level spec
              in
              (runner_interm, runner_interm :: runners)
            else
-             let spec, booter =
-               build_boot ~cache ~det ~guard
-                 (module Runner_above)
-                 tower.mode level
+             let booter =
+               build_boot ~cache ~det ~guard (module Runner_above) level spec
              in
              spec_boot := Some spec;
              (booter, runners))
@@ -127,7 +144,7 @@ let build_tower ?(cache = true) ?(det = false) ?(guard = false)
   let spec_boot =
     match !spec_boot with Some spec -> spec | None -> assert false
   in
-  (spec_boot, runner_target, runners_interm, booter)
+  Ok (spec_boot, runner_target, runners_interm, booter)
 
 let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     (interface : Config.interface) (paths_spec : string list) =
@@ -146,18 +163,6 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  let spec =
-    match mode with
-    | AL_mode ->
-        let spec_al = Pass.algo paths_spec in
-        (AL spec_al : Run.spec)
-    | SL_mode ->
-        let spec_sl = Pass.structure ~final:true paths_spec in
-        (SL spec_sl : Run.spec)
-    | PL_mode ->
-        let spec_pl = Pass.annotate paths_spec in
-        (PL spec_pl : Run.spec)
-    | Empty_mode -> assert false
-  in
+  let* spec = spec_of_mode mode paths_spec in
   Runner.init ~cache ~det ~guard spec;
-  (spec, (module Runner : Run.RUNNER))
+  Ok (spec, (module Runner : Run.RUNNER))

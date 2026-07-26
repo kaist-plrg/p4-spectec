@@ -4,6 +4,21 @@ open Util.Source
 
 let version = "0.1"
 
+let spec_of_mode (mode : mode) (paths_spec : string list) :
+    (spec, Pass.error) result =
+  match mode with
+  | AL_mode -> Result.map (fun s -> AL s) (Pass.algo paths_spec)
+  | SL_mode ->
+      Result.map (fun s -> SL s) (Pass.structure ~final:true paths_spec)
+  | PL_mode -> Result.map (fun s -> PL s) (Pass.annotate paths_spec)
+  | Empty_mode -> assert false
+
+let build_sim ?cache ?det ?guard ?(arch : string option) mode paths_spec =
+  match spec_of_mode mode paths_spec with
+  | Ok spec_sim ->
+      (spec_sim, Backend_sim.Build.build ?cache ?det ?guard ?arch spec_sim)
+  | Error e -> failwith (Pass.string_of_error e)
+
 (* Statistics *)
 
 type stat = {
@@ -147,9 +162,7 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
 
 let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
     paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -167,9 +180,7 @@ let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
 
 let cover_run_dangling ?(arch : string option) mode paths_spec relname
     includes_p4 paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -196,9 +207,7 @@ let cover_run_dangling ?(arch : string option) mode paths_spec relname
 
 let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
     paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -218,9 +227,7 @@ let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
 
 let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
     paths_p4 paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in

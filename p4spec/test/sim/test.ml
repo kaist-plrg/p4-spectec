@@ -116,9 +116,7 @@ let run_sim_test_driver mode det arch path_spec includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running simulation test (%s) on %d files\n" arch total
   |> print_endline;
-  let _spec_sim, (module Simulator) =
-    Backend_sim.Build.build ~det ~arch ~final:true mode [ path_spec ]
-  in
+  let _spec_sim, (module Simulator) = build_sim ~det ~arch mode [ path_spec ] in
   let stat =
     List.fold_left
       (fun stat (path_p4, path_stf, is_patched) ->

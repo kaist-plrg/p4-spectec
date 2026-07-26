@@ -104,7 +104,11 @@ let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
   let rel_p4 = tower.level_target.layer.rel in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let _, _, _, (module Booter) = Backend_boot.Build.build_tower ~det tower in
+  let _, _, _, (module Booter) =
+    match Backend_boot.Build.build_tower ~det tower with
+    | Ok r -> r
+    | Error e -> failwith (Pass.string_of_error e)
+  in
   let _, stat =
     List.fold_left
       (fun (idx, stat) path_p4 ->

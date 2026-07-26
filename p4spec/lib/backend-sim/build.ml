@@ -25,23 +25,9 @@ let gen_p4_placeholder () =
             (Interp_pl.Interp.Make) : Sim.SIM)
 
 let build ?(cache = true) ?(det = false) ?(guard = false)
-    ?(arch : string option) ~(final : bool) (mode : Sim.mode)
-    (paths_spec : string list) =
-  let spec_sim =
-    match mode with
-    | AL_mode ->
-        let spec_al = Pass.algo paths_spec in
-        (AL spec_al : Sim.spec)
-    | SL_mode ->
-        let spec_sl = Pass.structure ~final paths_spec in
-        (SL spec_sl : Sim.spec)
-    | PL_mode ->
-        let spec_pl = Pass.annotate paths_spec in
-        (PL spec_pl : Sim.spec)
-    | Empty_mode -> assert false
-  in
+    ?(arch : string option) (spec_sim : Sim.spec) =
   let (module Simulator) =
     match arch with Some arch -> gen_p4 arch | None -> gen_p4_placeholder ()
   in
   Simulator.init ~cache ~det ~guard spec_sim;
-  (spec_sim, (module Simulator : Sim.SIM))
+  (module Simulator : Sim.SIM)
