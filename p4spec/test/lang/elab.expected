@@ -10102,7 +10102,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w as value
     -- if (?(n_w) = $nat_of_integerValue(integerValue_w))
     -- if (typeIR = BIT `< n_w > as typeIR)
-    -- if (expressionNoteIR = `( typeIR ctk_base_reduced ))
+    -- if (ctk = $joins_ctk([ctk_base_reduced, ctk_l_reduced, ctk_w_reduced]))
+    -- if (expressionNoteIR = `( typeIR ctk ))
 
   rulegroup callExpression-callable
 
@@ -14036,7 +14037,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
 
-    rule offset: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_l `: typedExpressionIR_w ] as expressionIR `# _expressionNoteIR : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
+    rule offset: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_l `+: typedExpressionIR_w ] as expressionIR `# _expressionNoteIR : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_w : STO_3 value_w

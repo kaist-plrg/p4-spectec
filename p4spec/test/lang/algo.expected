@@ -16332,7 +16332,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if nat?{nat <- nat?} matches (_)
     -- let ?(n_w) = nat?{nat <- nat?}
     -- let typeIR = BIT `< n_w > as typeIR
-    -- let expressionNoteIR = `( typeIR ctk_base_reduced )
+    -- let ctk = $joins_ctk([ctk_base_reduced, ctk_l_reduced, ctk_w_reduced])
+    -- let expressionNoteIR = `( typeIR ctk )
     -- output: % % |- % : typedExpressionIR_base `[ typedExpressionIR_l_reduced `+: typedExpressionIR_w_reduced ] as expressionIR `# expressionNoteIR
 
   rulegroup callExpression-callable
@@ -23932,16 +23933,16 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
    match
 
-    (signature) p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR `: typedExpressionIR' ] as expressionIR `# _expressionNoteIR : % %
+    (signature) p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' ] as expressionIR `# _expressionNoteIR : % %
     p IC STO_0 |- expressionIR `# _expressionNoteIR : % %
     -- if expressionIR <: sliceAccessExpressionIR
     -- let typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' ] = expressionIR as sliceAccessExpressionIR
-    -- if sliceop matches `:`
 
    paths
 
     rulepath range
     -- let typedExpressionIR_hi = typedExpressionIR
+    -- if (sliceop = `:)
     -- let typedExpressionIR_lo = typedExpressionIR'
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
@@ -23950,6 +23951,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
     rulepath offset
     -- let typedExpressionIR_l = typedExpressionIR
+    -- if (sliceop = `+:)
     -- let typedExpressionIR_w = typedExpressionIR'
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l

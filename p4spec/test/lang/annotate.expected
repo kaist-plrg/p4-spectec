@@ -9989,7 +9989,8 @@ xref:Expr_ok[Typing ``expression~base~`` ``+`.+`` ``member``, under context ``TC
   ... Let!~type~ ``integerValue~w~`` be ``value``.
   ... Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].
   ... Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~w~`` ``+>+``.
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
+  ... Let ``ctk`` be <<joins_ctk,the join of ``+[+`` ``ctk~base_reduced~,`` ``ctk~l_reduced~,`` ``ctk~w_reduced~`` ``+]+``>>.
+  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``].
   ... Result in <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``+`+:+`` ``typedExpressionIR~w_reduced~`` ``+]+`` annotated with ``expressionNoteIR``>>.
 
 xref:Expr_ok[Typing ``callExpression``, under context ``TC`` at ``p``]:
@@ -15001,19 +15002,24 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+`.+`` `
  .. Let ``value`` be ``value~e~^{asterisk}^[n~index~]``.
  .. Result in store ``STO~2~`` and ``value``.
 
-<<Expr_inst,Compile-time evaluation of ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR`` ``+`:+`` ``typedExpressionIR'`` ``+]+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``>>:
+<<Expr_inst,Compile-time evaluation of ``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR`` ``sliceop`` ``typedExpressionIR'`` ``+]+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``>>:
 
-. Let store ``STO~1~`` and ``value~base~`` be
-* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
-. Let store ``STO~2~`` and ``value~hi~`` be
-* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC`` and store ``STO~1~`` at ``p``].
-. Let store ``STO~3~`` and ``value~lo~`` be
-* the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR'``, under context ``IC`` and store ``STO~2~`` at ``p``].
-. Try pass:[<strong id="bk-Expr_inst-3" class="bk-label">#3</strong>]:
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_inst-3-a"></span>+++
-  ... Result in store ``STO~3~`` and <<bitacc_range_op,``value~base~`` ``+`[+`` ``value~hi~`` ``+`:+`` ``value~lo~`` ``+]+``>>.
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_inst-3-b"></span>+++
-  ... Result in store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~hi~`` ``+`+:+`` ``value~lo~`` ``+]+``>>.
+. If ``sliceop`` matches pattern ``+`:+``:
+ .. Let store ``STO~1~`` and ``value~base~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
+ .. Let store ``STO~2~`` and ``value~hi~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC`` and store ``STO~1~`` at ``p``].
+ .. Let store ``STO~3~`` and ``value~lo~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR'``, under context ``IC`` and store ``STO~2~`` at ``p``].
+ .. Result in store ``STO~3~`` and <<bitacc_range_op,``value~base~`` ``+`[+`` ``value~hi~`` ``+`:+`` ``value~lo~`` ``+]+``>>.
+. Else:
+ .. Let store ``STO~1~`` and ``value~base~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
+ .. Let store ``STO~2~`` and ``value~l~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC`` and store ``STO~1~`` at ``p``].
+ .. Let store ``STO~3~`` and ``value~w~`` be
+ ** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR'``, under context ``IC`` and store ``STO~2~`` at ``p``].
+ .. Result in store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``+`+:+`` ``value~w~`` ``+]+``>>.
 
 xref:Expr_inst[Compile-time evaluation of ``prefixedNameIR`` ``+`<+`` ``typeArgumentListIR`` ``+>+`` ``+`(+`` ``argumentListIR`` ``+)+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``]:
 
