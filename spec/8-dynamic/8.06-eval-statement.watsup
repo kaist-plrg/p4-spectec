@@ -805,6 +805,18 @@ rulegroup SwitchCases_table_eval {
             switchCaseIR_t*,
             $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
 
+  rule SwitchCases_table_eval/cons-fallthrough-match-no-block:
+    id |- switchCaseIR_h :: switchCaseIR_t* : eps
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    ---- ;; if match
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    ---- ;; no following non-fallthrough case
+    -- if eps
+        = $filter_<switchCaseIR>(
+            switchCaseIR_t*,
+            $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
+
   rule SwitchCases_table_eval/cons-fallthrough-no-match:
     id |- switchCaseIR_h :: switchCaseIR_t* : blockStatementIR?
     ---- ;; if fallthrough
@@ -932,6 +944,22 @@ rulegroup SwitchCases_general_eval {
     -- if $match_switchLabelIR_general(value, value_label)
     ---- ;; take the closest non-fallthrough case
     -- if (_ `: blockStatementIR) :: _
+        = $filter_<switchCaseIR>(
+            switchCaseIR_t*,
+            $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)
+
+  rule SwitchCases_general_eval/cons-fallthrough-match-no-block:
+    LOCAL EC_0 ARCH_0 value |- (switchCaseIR_h :: switchCaseIR_t*)
+                             : EC_1 ARCH_1 eps
+    ---- ;; if fallthrough
+    -- if switchLabelIR_h `: = switchCaseIR_h
+    -- SwitchLabel_general_eval:
+        LOCAL EC_0 ARCH_0 |- switchLabelIR_h
+                           : EC_1 ARCH_1 (`` value_label)
+    ---- ;; if match
+    -- if $match_switchLabelIR_general(value, value_label)
+    ---- ;; no following non-fallthrough case
+    -- if eps
         = $filter_<switchCaseIR>(
             switchCaseIR_t*,
             $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*)

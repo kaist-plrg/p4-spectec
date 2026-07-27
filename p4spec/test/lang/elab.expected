@@ -17365,6 +17365,11 @@ relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
     -- if (_switchLabelIR `: blockStatementIR :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
 
+    rule cons-fallthrough-match-no-block: id |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : ?()
+    -- if (switchLabelIR_h `: = switchCaseIR_h)
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+
     rule cons-fallthrough-no-match: id |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- if (switchLabelIR_h `: = switchCaseIR_h)
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
@@ -17424,6 +17429,12 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 `` value_label as expressionResult
     -- if $match_switchLabelIR_general(value, value_label)
     -- if (_switchLabelIR `: blockStatementIR :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+
+    rule cons-fallthrough-match-no-block: LOCAL EC_0 ARCH_0 value |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_1 ARCH_1 ?()
+    -- if (switchLabelIR_h `: = switchCaseIR_h)
+    -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 `` value_label as expressionResult
+    -- if $match_switchLabelIR_general(value, value_label)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
 
     rule cons-fallthrough-no-match: LOCAL EC_0 ARCH_0 value |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 ARCH_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- if (switchLabelIR_h `: = switchCaseIR_h)

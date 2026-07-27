@@ -31455,58 +31455,69 @@ relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
 
    match
 
-    (signature) id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
-    id |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : %
+    (signature) id |- switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} : %
+    id |- switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} : %
 
    paths
 
     rulepath nil
-    -- if (switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} = [])
+    -- if (switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = [])
     -- output: % |- % : ?()
 
     rulepath cons-non-fallthrough-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% : %`
-    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% : %`
+    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR''''''
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
     -- output: % |- % : ?(blockStatementIR_h)
 
     rulepath cons-non-fallthrough-no-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% : %`
-    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% : %`
+    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR''''''
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
     -- SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- output: % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
     rulepath cons-fallthrough-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% :`
-    -- let switchLabelIR_h `: = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
-    -- let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*})
-    -- if switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches _ :: _
-    -- let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*}
-    -- if switchCaseIR'''''' matches `% : %`
-    -- let _switchLabelIR `: blockStatementIR = switchCaseIR''''''
+    -- let switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*})
+    -- if switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*} matches _ :: _
+    -- let switchCaseIR''''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*}
+    -- if switchCaseIR''''''' matches `% : %`
+    -- let _switchLabelIR `: blockStatementIR = switchCaseIR'''''''
     -- output: % |- % : ?(blockStatementIR)
 
+    rulepath cons-fallthrough-match-no-block
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+    -- output: % |- % : ?()
+
     rulepath cons-fallthrough-no-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% :`
-    -- let switchLabelIR_h `: = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
     -- SwitchCases_table_eval: id |- switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- output: % |- % : blockStatementIR?{blockStatementIR <- blockStatementIR?}
@@ -31582,23 +31593,23 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
 
    match
 
-    (signature) LOCAL EC_0 ARCH_0 value |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : % % %
-    p EC_0 ARCH_0 value |- switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} : % % %
+    (signature) LOCAL EC_0 ARCH_0 value |- switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} : % % %
+    p EC_0 ARCH_0 value |- switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} : % % %
     -- if p matches `LOCAL`
 
    paths
 
     rulepath nil
-    -- if (switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*} = [])
+    -- if (switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = [])
     -- output: % % % % |- % : EC_0 ARCH_0 ?()
 
     rulepath cons-non-fallthrough-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% : %`
-    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% : %`
+    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR''''''
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let `` value_label = expressionResult as continueResult<value>
@@ -31606,12 +31617,12 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
     -- output: % % % % |- % : EC_1 ARCH_1 ?(blockStatementIR_h)
 
     rulepath cons-non-fallthrough-no-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% : %`
-    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% : %`
+    -- let switchLabelIR_h `: blockStatementIR_h = switchCaseIR''''''
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let `` value_label = expressionResult as continueResult<value>
@@ -31620,30 +31631,44 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
     -- output: % % % % |- % : EC_2 ARCH_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
 
     rulepath cons-fallthrough-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% :`
-    -- let switchLabelIR_h `: = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let `` value_label = expressionResult as continueResult<value>
     -- if $match_switchLabelIR_general(value, value_label)
-    -- let switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*})
-    -- if switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*} matches _ :: _
-    -- let switchCaseIR'''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR'''''''*{switchCaseIR''''''' <- switchCaseIR'''''''*}
-    -- if switchCaseIR'''''' matches `% : %`
-    -- let _switchLabelIR `: blockStatementIR = switchCaseIR''''''
+    -- let switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*})
+    -- if switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*} matches _ :: _
+    -- let switchCaseIR''''''' :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = switchCaseIR''''''''*{switchCaseIR'''''''' <- switchCaseIR''''''''*}
+    -- if switchCaseIR''''''' matches `% : %`
+    -- let _switchLabelIR `: blockStatementIR = switchCaseIR'''''''
     -- output: % % % % |- % : EC_1 ARCH_1 ?(blockStatementIR)
 
+    rulepath cons-fallthrough-match-no-block
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
+    -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 expressionResult
+    -- if expressionResult <: continueResult<value>
+    -- let `` value_label = expressionResult as continueResult<value>
+    -- if $match_switchLabelIR_general(value, value_label)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+    -- output: % % % % |- % : EC_1 ARCH_1 ?()
+
     rulepath cons-fallthrough-no-match
-    -- let switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} = switchCaseIR'''*{switchCaseIR''' <- switchCaseIR'''*}
-    -- if switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*} matches _ :: _
-    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
-    -- let switchCaseIR''''' = switchCaseIR_h
-    -- if switchCaseIR''''' matches `% :`
-    -- let switchLabelIR_h `: = switchCaseIR'''''
+    -- let switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} = switchCaseIR''''*{switchCaseIR'''' <- switchCaseIR''''*}
+    -- if switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*} matches _ :: _
+    -- let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} = switchCaseIR'''''*{switchCaseIR''''' <- switchCaseIR'''''*}
+    -- let switchCaseIR'''''' = switchCaseIR_h
+    -- if switchCaseIR'''''' matches `% :`
+    -- let switchLabelIR_h `: = switchCaseIR''''''
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 expressionResult
     -- if expressionResult <: continueResult<value>
     -- let `` value_label = expressionResult as continueResult<value>
