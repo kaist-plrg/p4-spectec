@@ -281,7 +281,8 @@ and token = parse
   | "text" { TEXT }
   | "syntax" { SYNTAX }
   | "extern" { EXTERN }
-  | "tbl" { TABLE }
+  | "tbldec" { TABLEDEC }
+  | "tbldef" { TABLEDEF }
   | "relation" { RELATION }
   | "rulegroup" { RULEGROUP }
   | "rule" { RULE }

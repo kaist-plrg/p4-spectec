@@ -146,7 +146,7 @@ let log_def (cover : Multi.t) (def : def) : string =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD tablefunc -> "tbl def " ^ log_table_func cover tablefunc
+  | TableDecD tablefunc -> "tbldef " ^ log_table_func cover tablefunc
   | FuncDecD func -> "def " ^ log_defined_func cover func
 
 let log_defs (cover : Multi.t) (defs : def list) : string =

@@ -246,7 +246,7 @@ let string_of_def def =
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
   | TableDecD (defid, params, typ, tablerows, _) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_typ typ ^ " ="
       ^ string_of_tablerows tablerows
   | FuncDecD (defid, tparams, params, typ, clauses, elseclause_opt, _) ->

@@ -66,8 +66,8 @@ rule Expr_ok/defaultExpression:
 
 ;;;; `!
 
-tbl dec $compat_lnot(typeIR) : bool
-tbl def $compat_lnot =
+tbldec $compat_lnot(typeIR) : bool
+tbldef $compat_lnot =
   | BOOL => true
   | TYPEDEF _ typeIR => $compat_lnot(typeIR)
   | _ => false
@@ -87,8 +87,8 @@ rule Expr_ok/unaryExpression-lnot:
 
 ;;;; `~
 
-tbl dec $compat_bnot(typeIR) : bool
-tbl def $compat_bnot =
+tbldec $compat_bnot(typeIR) : bool
+tbldef $compat_bnot =
   | INT `< _ > => true
   | BIT `< _ > => true
   | TYPEDEF _ typeIR => $compat_bnot(typeIR)
@@ -109,8 +109,8 @@ rule Expr_ok/unaryExpression-bnot:
 
 ;;;; `+ | `-
 
-tbl dec $compat_uplusminus(typeIR) : bool
-tbl def $compat_uplusminus =
+tbldec $compat_uplusminus(typeIR) : bool
+tbldef $compat_uplusminus =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -958,10 +958,10 @@ rulegroup Expr_ok/memberAccessExpression-expression {
 ;;;; syntax indexAccessExpression =
 ;;;;; expression `[ expression ]
 
-tbl dec $compat_array_index(typeIR) : bool
+tbldec $compat_array_index(typeIR) : bool
   hint(prose_true %0 "can be used as an array index")
   hint(prose_false %0 "cannot be used as an array index")
-tbl def $compat_array_index =
+tbldef $compat_array_index =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -1114,10 +1114,10 @@ rulegroup Expr_ok/indexAccessExpression {
 ;;;; syntax sliceAccessExpression
 ;;;;; expression `[ expression sliceop expression ]
 
-tbl dec $compat_bitslice_base(typeIR) : bool
+tbldec $compat_bitslice_base(typeIR) : bool
   hint(prose_true %0 "can be used as a bitslice base")
   hint(prose_false %0 "cannot be used as a bitslice base")
-tbl def $compat_bitslice_base =
+tbldef $compat_bitslice_base =
   | INT => true
   | INT `< w > => $(w > 0)
   | BIT `< _ > => true
@@ -1125,10 +1125,10 @@ tbl def $compat_bitslice_base =
       => $compat_bitslice_base(typeIR)
   | _ => false
 
-tbl dec $compat_bitslice_range_index(typeIR) : bool
+tbldec $compat_bitslice_range_index(typeIR) : bool
   hint(prose_true %0 "can be used as a bitslice range index")
   hint(prose_false %0 "cannot be used as a bitslice range index")
-tbl def $compat_bitslice_range_index =
+tbldef $compat_bitslice_range_index =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -1136,10 +1136,10 @@ tbl def $compat_bitslice_range_index =
       => $compat_bitslice_range_index(typeIR)
   | _ => false
 
-tbl dec $compat_bitslice_offset_index(typeIR) : bool
+tbldec $compat_bitslice_offset_index(typeIR) : bool
   hint(prose_true %0 "can be used as an bitslice offset")
   hint(prose_false %0 "cannot be used as an bitslice offset")
-tbl def $compat_bitslice_offset_index =
+tbldef $compat_bitslice_offset_index =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -1147,10 +1147,10 @@ tbl def $compat_bitslice_offset_index =
       => $compat_bitslice_offset_index(typeIR)
   | _ => false
 
-tbl dec $compat_bitslice_offset_width(typeIR) : bool
+tbldec $compat_bitslice_offset_width(typeIR) : bool
   hint(prose_true %0 "can be used as an bitslice width")
   hint(prose_false %0 "cannot be used as an bitslice width")
-tbl def $compat_bitslice_offset_width =
+tbldef $compat_bitslice_offset_width =
   | INT => true
   | INT `< _ > => true
   | BIT `< _ > => true

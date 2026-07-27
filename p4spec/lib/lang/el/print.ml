@@ -287,14 +287,14 @@ let string_of_def def =
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
   | TableDecD (defid, params, plaintyp, _hints) ->
-      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      "tbldec " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
   | FuncDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
   | TableDefD (defid, tablerows) ->
-      "tbl def " ^ string_of_defid defid ^ " =\n  "
+      "tbldef " ^ string_of_defid defid ^ " =\n  "
       ^ string_of_tablerows tablerows
   | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams

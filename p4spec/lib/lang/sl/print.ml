@@ -433,7 +433,7 @@ let rec string_of_def def =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD tablefunc -> "tbl def " ^ string_of_table_func tablefunc
+  | TableDecD tablefunc -> "tbldef " ^ string_of_table_func tablefunc
   | FuncDecD func -> "def " ^ string_of_defined_func func
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
