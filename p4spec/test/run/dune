@@ -21,7 +21,11 @@
    (ignore-outputs
     (diff run_neg_al.expected run_neg_al.actual))
    (ignore-outputs
-    (diff run_neg_sl.expected run_neg_sl.actual)))))
+    (diff run_neg_sl.expected run_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_neg_sl.expected run_regression_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_pos_sl.expected run_regression_pos_sl.actual)))))
 
 (rule
  (alias run)
@@ -34,7 +38,11 @@
    (ignore-outputs
     (diff run_neg_al.expected run_neg_al.actual))
    (ignore-outputs
-    (diff run_neg_sl.expected run_neg_sl.actual)))))
+    (diff run_neg_sl.expected run_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_neg_sl.expected run_regression_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_pos_sl.expected run_regression_pos_sl.actual)))))
 
 (rule
  (alias run-al)
@@ -52,7 +60,11 @@
    (ignore-outputs
     (diff run_pos_sl.expected run_pos_sl.actual))
    (ignore-outputs
-    (diff run_neg_sl.expected run_neg_sl.actual)))))
+    (diff run_neg_sl.expected run_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_neg_sl.expected run_regression_neg_sl.actual))
+   (ignore-outputs
+    (diff run_regression_pos_sl.expected run_regression_pos_sl.actual)))))
 
 (rule
  (alias run-pl)
@@ -226,6 +238,57 @@
      -p4-dir
      ../../../p4c/testdata/p4_16_errors
      -neg)))))
+
+;; Regression corpus (testdata/regression): SL-only, one witness per fixed issue
+
+(rule
+ (target run_regression_neg_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_regression_neg_sl.actual
+   (with-stderr-to
+    run_regression_neg_sl.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -s
+     ../../../spec
+     -rel
+     Program_ok
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/neg
+     -neg)))))
+
+(rule
+ (target run_regression_pos_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   run_regression_pos_sl.actual
+   (with-stderr-to
+    run_regression_pos_sl.err
+    (run
+     ./test.exe
+     run
+     -sl
+     -s
+     ../../../spec
+     -rel
+     Program_inst
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/pos)))))
 
 (rule
  (target run_pos_pl.actual)
