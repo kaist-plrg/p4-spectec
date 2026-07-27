@@ -8962,7 +8962,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
   rulegroup memberAccessExpressionIR-typedExpressionIR
 
-    rule header-stack-size: p TC |- typedExpressionIR_base as memberAccessBaseIR `. nameIR as expressionIR `# _expressionNoteIR ~> D n_size as int as value
+    rule header-stack-size: p TC |- typedExpressionIR_base as memberAccessBaseIR `. nameIR as expressionIR `# _expressionNoteIR ~> 32 W n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK _typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
@@ -13983,7 +13983,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
   rulegroup memberAccessExpressionIR-typedExpressionIR
 
-    rule header-stack-size: p IC STO |- typedExpressionIR_base as memberAccessBaseIR `. nameIR as expressionIR `# _expressionNoteIR : STO D n_size as int as value
+    rule header-stack-size: p IC STO |- typedExpressionIR_base as memberAccessBaseIR `. nameIR as expressionIR `# _expressionNoteIR : STO 32 W n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK _typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
@@ -15442,7 +15442,7 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (HEADER_STACK `[ value_elem*{value_elem <- value_elem*} `( _nat ) ] = headerStackValue_base)
     -- if (nameIR = "size")
     -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
-    -- if (expressionResult = `` D n_size as int as value as expressionResult)
+    -- if (expressionResult = `` 32 W n_size as int as value as expressionResult)
 
     rule stack-last-out-of-bounds: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR `. nameIR as expressionIR `# `( typeIR_base _ctk ) : EC_1 ARCH_1 rejectTransitionResult as expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 `` headerStackValue_base as value as expressionResult
