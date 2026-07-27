@@ -653,6 +653,17 @@ def $cast_error(SET `< typeIR >, errorValue) = SET `{ $cast_op(typeIR, errorValu
 def $cast_op(typeIR, errorValue) = $cast_error(typeIR_unroll, errorValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
+;;; Cast from string
+
+dec $cast_string(typeIR, stringValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_string(STRING, stringValue) = stringValue
+
+def $cast_op(typeIR, stringValue) = $cast_string(typeIR_unroll, stringValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
 ;;; Cast from list
 
 dec $cast_list(typeIR, listValue) : value

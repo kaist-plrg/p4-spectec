@@ -6443,58 +6443,63 @@ def $cast_op(typeIR, value) : value =
   -- let errorValue = value as errorValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 3 : (typeIR, value) = $cast_list(typeIR_unroll, listValue)
+  clause 3 : (typeIR, value) = $cast_string(typeIR_unroll, stringValue)
+  -- if value <: stringValue
+  -- let stringValue = value as stringValue
+  -- let typeIR_unroll = $unroll_typeIR(typeIR)
+
+  clause 4 : (typeIR, value) = $cast_list(typeIR_unroll, listValue)
   -- if value <: listValue
   -- let listValue = value as listValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 4 : (typeIR, value) = $cast_array(typeIR_unroll, arrayValue)
+  clause 5 : (typeIR, value) = $cast_array(typeIR_unroll, arrayValue)
   -- if value <: arrayValue
   -- let arrayValue = value as arrayValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 5 : (typeIR, value) = $cast_header_stack(typeIR_unroll, headerStackValue)
+  clause 6 : (typeIR, value) = $cast_header_stack(typeIR_unroll, headerStackValue)
   -- if value <: headerStackValue
   -- let headerStackValue = value as headerStackValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 6 : (typeIR, value) = $cast_struct(typeIR_unroll, structValue)
+  clause 7 : (typeIR, value) = $cast_struct(typeIR_unroll, structValue)
   -- if value <: structValue
   -- let structValue = value as structValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 7 : (typeIR, value) = $cast_header(typeIR_unroll, headerValue)
+  clause 8 : (typeIR, value) = $cast_header(typeIR_unroll, headerValue)
   -- if value <: headerValue
   -- let headerValue = value as headerValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 8 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
+  clause 9 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 9 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
+  clause 10 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if value <: sequenceValue
   -- let sequenceValue = value as sequenceValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 10 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
+  clause 11 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
   -- if value <: recordValue
   -- let recordValue = value as recordValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 11 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
+  clause 12 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
   -- if value <: defaultValue
   -- let defaultValue = value as defaultValue
   -- if (defaultValue = DEFAULT)
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 12 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
+  clause 13 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 13 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
+  clause 14 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
   -- if value <: setValue
   -- let setValue = value as setValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
@@ -6823,6 +6828,13 @@ def $cast_error(typeIR, errorValue) : value =
   clause 1 : (typeIR', errorValue) = SET `{ $cast_op(typeIR, errorValue as value) } as value
   -- if typeIR' <: setTypeIR
   -- let SET `< typeIR > = typeIR' as setTypeIR
+
+def $cast_string(typeIR, stringValue) : value =
+
+  clause 0 : (typeIR, stringValue) = stringValue as value
+  -- if typeIR <: stringTypeIR
+  -- let stringTypeIR = typeIR as stringTypeIR
+  -- if (stringTypeIR = STRING)
 
 def $cast_list(typeIR, listValue) : value =
 
