@@ -29002,19 +29002,23 @@ relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch 
 
     rulepath reject
     -- let annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR } = parserStateIR
-    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
+    -- let EC_1 = $enter_e(EC_0)
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_0 |- parserBlockElementStatementListIR : EC_2 ARCH_1 parserStatementResult
     -- if parserStatementResult <: rejectTransitionResult
     -- let rejectTransitionResult = parserStatementResult as rejectTransitionResult
-    -- output: % % |- % : EC_1 ARCH_1 rejectTransitionResult as transitionResult
+    -- let EC_3 = $exit_e(EC_2)
+    -- output: % % |- % : EC_3 ARCH_1 rejectTransitionResult as transitionResult
 
     rulepath cont
     -- let annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR } = parserStateIR
-    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 parserStatementResult
+    -- let EC_1 = $enter_e(EC_0)
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_0 |- parserBlockElementStatementListIR : EC_2 ARCH_1 parserStatementResult
     -- if parserStatementResult <: continueEmptyResult
     -- let continueEmptyResult = parserStatementResult as continueEmptyResult
     -- if (continueEmptyResult = `EMPTY)
-    -- ParserTransition_eval: EC_1 ARCH_1 |- transitionStatementIR : EC_2 ARCH_2 transitionResult
-    -- output: % % |- % : EC_2 ARCH_2 transitionResult
+    -- ParserTransition_eval: EC_2 ARCH_1 |- transitionStatementIR : EC_3 ARCH_2 transitionResult
+    -- let EC_4 = $exit_e(EC_3)
+    -- output: % % |- % : EC_4 ARCH_2 transitionResult
 
 relation ParserState_trans: evalContext arch |- TRANSITION nameIR : evalContext arch transitionResult
 

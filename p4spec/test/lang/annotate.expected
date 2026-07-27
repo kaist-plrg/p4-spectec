@@ -17806,14 +17806,17 @@ xref:ParserState_eval[ParserState_eval]:
 xref:ParserState_eval[Evaluating parser state ``parserStateIR``, under context ``EC~0~``, and state ``ARCH~0~``]:
 
 . Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+`{+`` ``parserBlockElementStatementListIR`` ``transitionStatementIR`` ``+}+`` be ``parserStateIR``.
-. Let context ``EC~1~``, state ``ARCH~1~``, and ``parserStatementResult`` be
-* the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementListIR``, under context ``EC~0~``, and state ``ARCH~0~``].
+. Let ``EC~1~`` be xref:enter_e[``EC~0~`` with a new local frame].
+. Let context ``EC~2~``, state ``ARCH~1~``, and ``parserStatementResult`` be
+* the result of xref:ParserBlockElementStmtList_eval[runtime evaluation of ``parserBlockElementStatementListIR``, under context ``EC~1~``, and state ``ARCH~0~``].
 . If let ``rejectTransitionResult`` be ``parserStatementResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
+ .. Let ``EC~3~`` be xref:exit_e[``EC~2~`` with the innermost frame removed].
+ .. Result in context ``EC~3~``, state ``ARCH~1~``, and ``rejectTransitionResult``.
 . Else:
- .. Let context ``EC~2~``, state ``ARCH~2~``, and ``transitionResult`` be
- ** the result of xref:ParserTransition_eval[runtime evaluation of ``transitionStatementIR``, under context ``EC~1~`` and state ``ARCH~1~``].
- .. Result in context ``EC~2~``, state ``ARCH~2~``, and ``transitionResult``.
+ .. Let context ``EC~3~``, state ``ARCH~2~``, and ``transitionResult`` be
+ ** the result of xref:ParserTransition_eval[runtime evaluation of ``transitionStatementIR``, under context ``EC~2~`` and state ``ARCH~1~``].
+ .. Let ``EC~4~`` be xref:exit_e[``EC~3~`` with the innermost frame removed].
+ .. Result in context ``EC~4~``, state ``ARCH~2~``, and ``transitionResult``.
 
 xref:ParserState_trans[ParserState_trans]:
 
