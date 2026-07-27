@@ -20119,306 +20119,259 @@ tbl def $compat_uplusminus(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> false
 
-tbl def $compat_plusminusmult(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_plusminusmult(typeIR, typeIR) : bool =
 
-tbl def $compat_satplusminus(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 1 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 2 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_satplusminus(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 3 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_satplusminus(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 4 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
 
-tbl def $compat_divmod(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 2 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 3 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 4 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
 
-tbl def $compat_shift(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) INT as typeIR, INT `< _nat > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) INT as typeIR, BIT `< _nat > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) INT `< _nat > as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR = typeIR' as intTypeIR
-    -- if (intTypeIR = INT)
-  row 4 :
-    (signature) INT `< _nat > as typeIR, INT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
-  row 5 :
-    (signature) INT `< _nat > as typeIR, BIT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
-  row 6 :
-    (signature) BIT `< _nat > as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR = typeIR' as intTypeIR
-    -- if (intTypeIR = INT)
-  row 7 :
-    (signature) BIT `< _nat > as typeIR, INT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
-  row 8 :
-    (signature) BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
-  row 9 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_shift(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 10 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_shift(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 11 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
 
-tbl def $compat_compare(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_compare(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_compare(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 3 : (typeIR, typeIR_r) = $compat_plusminusmult(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
 
-tbl def $compat_bitwise(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 1 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 2 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_bitwise(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 3 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_bitwise(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 4 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 4 : (typeIR_l, typeIR) = $compat_plusminusmult(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
 
-tbl def $compat_concat(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) STRING as typeIR, STRING as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: stringTypeIR
-    -- let stringTypeIR = typeIR as stringTypeIR
-    -- if (stringTypeIR = STRING)
-    -- if typeIR' <: stringTypeIR
-    -- let stringTypeIR' = typeIR' as stringTypeIR
-    -- if (stringTypeIR' = STRING)
-  row 1 :
-    (signature) INT `< _nat > as typeIR, INT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) INT `< _nat > as typeIR, BIT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) BIT `< _nat > as typeIR, INT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
-  row 4 :
-    (signature) BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
-  row 5 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_concat(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 6 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_concat(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 7 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_satplusminus(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 2 : (typeIR, typeIR_r) = $compat_satplusminus(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 3 : (typeIR_l, typeIR) = $compat_satplusminus(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_divmod(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 2 : (typeIR, typeIR_r) = $compat_divmod(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 3 : (typeIR_l, typeIR) = $compat_divmod(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_shift(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
+
+  clause 1 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR = typeIR' as intTypeIR
+  -- if (intTypeIR = INT)
+
+  clause 4 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 5 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 6 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR = typeIR' as intTypeIR
+  -- if (intTypeIR = INT)
+
+  clause 7 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 8 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 9 : (typeIR, typeIR_r) = $compat_shift(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 10 : (typeIR_l, typeIR) = $compat_shift(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 11 : (_typeIR, _typeIR') = false
+
+def $compat_compare(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_compare(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_compare(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_bitwise(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 2 : (typeIR, typeIR_r) = $compat_bitwise(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 3 : (typeIR_l, typeIR) = $compat_bitwise(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_concat(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: stringTypeIR
+  -- let stringTypeIR = typeIR as stringTypeIR
+  -- if (stringTypeIR = STRING)
+  -- if typeIR' <: stringTypeIR
+  -- let stringTypeIR' = typeIR' as stringTypeIR
+  -- if (stringTypeIR' = STRING)
+
+  clause 1 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< _nat' > = typeIR' as fixedIntTypeIR
+
+  clause 4 : (typeIR, typeIR') = true
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< _nat' > = typeIR' as fixedBitTypeIR
+
+  clause 5 : (typeIR, typeIR_r) = $compat_concat(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 6 : (typeIR_l, typeIR) = $compat_concat(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 7 : (_typeIR, _typeIR') = false
 
 def $result_concat(typeIR, typeIR) : typeIR =
 
@@ -20463,29 +20416,25 @@ def $result_concat(typeIR, typeIR) : typeIR =
   -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
   -- if ~typeIR_l <: typedefTypeIR
 
-tbl def $compat_logical(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) BOOL as typeIR, BOOL as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: boolTypeIR
-    -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = BOOL)
-    -- if typeIR' <: boolTypeIR
-    -- let boolTypeIR' = typeIR' as boolTypeIR
-    -- if (boolTypeIR' = BOOL)
-  row 1 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_logical(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 2 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_logical(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 3 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_logical(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: boolTypeIR
+  -- let boolTypeIR = typeIR as boolTypeIR
+  -- if (boolTypeIR = BOOL)
+  -- if typeIR' <: boolTypeIR
+  -- let boolTypeIR' = typeIR' as boolTypeIR
+  -- if (boolTypeIR' = BOOL)
+
+  clause 1 : (typeIR, typeIR_r) = $compat_logical(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 2 : (typeIR_l, typeIR) = $compat_logical(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 3 : (_typeIR, _typeIR') = false
 
 tbl def $compat_array_index(typeIR) : bool =
   row 0 :
@@ -20908,43 +20857,37 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if $compat_range(typeIR_l, typeIR_r)
     -- output: % % |- % : typedExpressionIR_l_casted `.. typedExpressionIR_r_casted
 
-tbl def $compat_range(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_range(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_range(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_range(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_range(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_range(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 def $check_switchLabelIR_default(switchLabelIR*) : bool =
 
@@ -21627,43 +21570,37 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     rulepath dontcare
     -- output: % % |- % : `_
 
-tbl def $compat_mask(typeIR, typeIR) : bool =
-  row 0 :
-    (signature) INT as typeIR, INT as typeIR
-    (typeIR, typeIR') -> true
-    -- if typeIR <: intTypeIR
-    -- let intTypeIR = typeIR as intTypeIR
-    -- if (intTypeIR = INT)
-    -- if typeIR' <: intTypeIR
-    -- let intTypeIR' = typeIR' as intTypeIR
-    -- if (intTypeIR' = INT)
-  row 1 :
-    (signature) INT `< w_l > as typeIR, INT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< w_l > = typeIR as fixedIntTypeIR
-    -- if typeIR' <: fixedIntTypeIR
-    -- let INT `< w_r > = typeIR' as fixedIntTypeIR
-  row 2 :
-    (signature) BIT `< w_l > as typeIR, BIT `< w_r > as typeIR
-    (typeIR, typeIR') -> (w_l = w_r)
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< w_l > = typeIR as fixedBitTypeIR
-    -- if typeIR' <: fixedBitTypeIR
-    -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
-  row 3 :
-    (signature) TYPEDEF _typeId typeIR_l as typeIR, typeIR_r
-    (typeIR, typeIR_r) -> $compat_mask(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
-  row 4 :
-    (signature) typeIR_l, TYPEDEF _typeId typeIR_r as typeIR
-    (typeIR_l, typeIR) -> $compat_mask(typeIR_l, typeIR_r)
-    -- if typeIR <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
-  row 5 :
-    (signature) _typeIR, _typeIR'
-    (_typeIR, _typeIR') -> false
+def $compat_mask(typeIR, typeIR) : bool =
+
+  clause 0 : (typeIR, typeIR') = true
+  -- if typeIR <: intTypeIR
+  -- let intTypeIR = typeIR as intTypeIR
+  -- if (intTypeIR = INT)
+  -- if typeIR' <: intTypeIR
+  -- let intTypeIR' = typeIR' as intTypeIR
+  -- if (intTypeIR' = INT)
+
+  clause 1 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedIntTypeIR
+  -- let INT `< w_l > = typeIR as fixedIntTypeIR
+  -- if typeIR' <: fixedIntTypeIR
+  -- let INT `< w_r > = typeIR' as fixedIntTypeIR
+
+  clause 2 : (typeIR, typeIR') = (w_l = w_r)
+  -- if typeIR <: fixedBitTypeIR
+  -- let BIT `< w_l > = typeIR as fixedBitTypeIR
+  -- if typeIR' <: fixedBitTypeIR
+  -- let BIT `< w_r > = typeIR' as fixedBitTypeIR
+
+  clause 3 : (typeIR, typeIR_r) = $compat_mask(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_l = typeIR as typedefTypeIR
+
+  clause 4 : (typeIR_l, typeIR) = $compat_mask(typeIR_l, typeIR_r)
+  -- if typeIR <: typedefTypeIR
+  -- let TYPEDEF _typeId typeIR_r = typeIR as typedefTypeIR
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keysetExpressionIR
 

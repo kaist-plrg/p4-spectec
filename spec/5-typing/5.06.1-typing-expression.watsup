@@ -135,16 +135,15 @@ rule Expr_ok/unaryExpression-uplusminus:
 
 ;;;; `+ | `- | `*
 
-tbl dec $compat_plusminusmult(typeIR, typeIR) : bool
-tbl def $compat_plusminusmult =
-  | (INT, INT) => true
-  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_plusminusmult(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_plusminusmult(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_plusminusmult(typeIR, typeIR) : bool
+def $compat_plusminusmult(INT, INT) = true
+def $compat_plusminusmult(INT `< w_l >, INT `< w_r >) = $(w_l = w_r)
+def $compat_plusminusmult(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_plusminusmult(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_plusminusmult(typeIR_l, typeIR_r)
+def $compat_plusminusmult(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_plusminusmult(typeIR_l, typeIR_r)
+def $compat_plusminusmult(_, _) = false
 
 rule Expr_ok/binaryExpression-plusminusmult:
   p TC |- expression_l binop expression_r
@@ -173,15 +172,14 @@ rule Expr_ok/binaryExpression-plusminusmult:
 
 ;;;; `|+| | `|-|
 
-tbl dec $compat_satplusminus(typeIR, typeIR) : bool
-tbl def $compat_satplusminus =
-  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_satplusminus(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_satplusminus(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_satplusminus(typeIR, typeIR) : bool
+def $compat_satplusminus(INT `< w_l >, INT `< w_r >) = $(w_l = w_r)
+def $compat_satplusminus(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_satplusminus(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_satplusminus(typeIR_l, typeIR_r)
+def $compat_satplusminus(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_satplusminus(typeIR_l, typeIR_r)
+def $compat_satplusminus(_, _) = false
 
 rule Expr_ok/binaryExpression-satplusminus:
   p TC |- expression_l binop expression_r
@@ -210,15 +208,14 @@ rule Expr_ok/binaryExpression-satplusminus:
 
 ;;;; `/ | `%
 
-tbl dec $compat_divmod(typeIR, typeIR) : bool
-tbl def $compat_divmod =
-  | (INT, INT) => true
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_divmod(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_divmod(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_divmod(typeIR, typeIR) : bool
+def $compat_divmod(INT, INT) = true
+def $compat_divmod(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_divmod(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_divmod(typeIR_l, typeIR_r)
+def $compat_divmod(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_divmod(typeIR_l, typeIR_r)
+def $compat_divmod(_, _) = false
 
 rulegroup Expr_ok/binaryExpression-divmod {
 
@@ -284,22 +281,21 @@ rulegroup Expr_ok/binaryExpression-divmod {
 
 ;;;; `<< | `>>
 
-tbl dec $compat_shift(typeIR, typeIR) : bool
-tbl def $compat_shift =
-  | (INT, INT) => true
-  | (INT, INT `< _ >) => true
-  | (INT, BIT `< _ >) => true
-  | (INT `< _ >, INT) => true
-  | (INT `< _ >, INT `< _ >) => true
-  | (INT `< _ >, BIT `< _ >) => true
-  | (BIT `< _ >, INT) => true
-  | (BIT `< _ >, INT `< _ >) => true
-  | (BIT `< _ >, BIT `< _ >) => true
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_shift(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_shift(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_shift(typeIR, typeIR) : bool
+def $compat_shift(INT, INT) = true
+def $compat_shift(INT, INT `< _ >) = true
+def $compat_shift(INT, BIT `< _ >) = true
+def $compat_shift(INT `< _ >, INT) = true
+def $compat_shift(INT `< _ >, INT `< _ >) = true
+def $compat_shift(INT `< _ >, BIT `< _ >) = true
+def $compat_shift(BIT `< _ >, INT) = true
+def $compat_shift(BIT `< _ >, INT `< _ >) = true
+def $compat_shift(BIT `< _ >, BIT `< _ >) = true
+def $compat_shift(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_shift(typeIR_l, typeIR_r)
+def $compat_shift(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_shift(typeIR_l, typeIR_r)
+def $compat_shift(_, _) = false
 
 rulegroup Expr_ok/binaryExpression-shift {
 
@@ -387,16 +383,15 @@ rule Expr_ok/binaryExpression-equality:
 
 ;;;; `<= | `>= | ``< | ``>
 
-tbl dec $compat_compare(typeIR, typeIR) : bool
-tbl def $compat_compare =
-  | (INT, INT) => true
-  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_compare(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_compare(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_compare(typeIR, typeIR) : bool
+def $compat_compare(INT, INT) = true
+def $compat_compare(INT `< w_l >, INT `< w_r >) = $(w_l = w_r)
+def $compat_compare(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_compare(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_compare(typeIR_l, typeIR_r)
+def $compat_compare(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_compare(typeIR_l, typeIR_r)
+def $compat_compare(_, _) = false
 
 rule Expr_ok/binaryExpression-comparison:
   p TC |- expression_l binop expression_r
@@ -425,15 +420,14 @@ rule Expr_ok/binaryExpression-comparison:
 
 ;;;; `& | `^ | `|
 
-tbl dec $compat_bitwise(typeIR, typeIR) : bool
-tbl def $compat_bitwise =
-  | (INT `< w_l >, INT `< w_r >) => $(w_l = w_r)
-  | (BIT `< w_l >, BIT `< w_r >) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_bitwise(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_bitwise(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_bitwise(typeIR, typeIR) : bool
+def $compat_bitwise(INT `< w_l >, INT `< w_r >) = $(w_l = w_r)
+def $compat_bitwise(BIT `< w_l >, BIT `< w_r >) = $(w_l = w_r)
+def $compat_bitwise(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_bitwise(typeIR_l, typeIR_r)
+def $compat_bitwise(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_bitwise(typeIR_l, typeIR_r)
+def $compat_bitwise(_, _) = false
 
 rule Expr_ok/binaryExpression-bitwise:
   p TC |- expression_l binop expression_r
@@ -462,18 +456,17 @@ rule Expr_ok/binaryExpression-bitwise:
 
 ;;;; `++
 
-tbl dec $compat_concat(typeIR, typeIR) : bool
-tbl def $compat_concat =
-  | (STRING, STRING) => true
-  | (INT `< _ >, INT `< _ >) => true
-  | (INT `< _ >, BIT `< _ >) => true
-  | (BIT `< _ >, INT `< _ >) => true
-  | (BIT `< _ >, BIT `< _ >) => true
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_concat(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_concat(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_concat(typeIR, typeIR) : bool
+def $compat_concat(STRING, STRING) = true
+def $compat_concat(INT `< _ >, INT `< _ >) = true
+def $compat_concat(INT `< _ >, BIT `< _ >) = true
+def $compat_concat(BIT `< _ >, INT `< _ >) = true
+def $compat_concat(BIT `< _ >, BIT `< _ >) = true
+def $compat_concat(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_concat(typeIR_l, typeIR_r)
+def $compat_concat(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_concat(typeIR_l, typeIR_r)
+def $compat_concat(_, _) = false
 
 dec $result_concat(typeIR, typeIR) : typeIR
 
@@ -518,14 +511,13 @@ rule Expr_ok/binaryExpression-concat:
 
 ;;;; `&& | `||
 
-tbl dec $compat_logical(typeIR, typeIR) : bool
-tbl def $compat_logical =
-  | (BOOL, BOOL) => true
-  | (TYPEDEF _ typeIR_l, typeIR_r)
-      => $compat_logical(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r)
-      => $compat_logical(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_logical(typeIR, typeIR) : bool
+def $compat_logical(BOOL, BOOL) = true
+def $compat_logical(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_logical(typeIR_l, typeIR_r)
+def $compat_logical(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_logical(typeIR_l, typeIR_r)
+def $compat_logical(_, _) = false
 
 rule Expr_ok/binaryExpression-logical:
   p TC |- expression_l binop expression_r

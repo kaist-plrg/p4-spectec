@@ -12029,113 +12029,113 @@ tbl def $compat_uplusminus(typeIR) : bool =
   row 4 :
     (_typeIR) -> false
 
-tbl def $compat_plusminusmult(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 3 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-  row 4 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_plusminusmult(typeIR_l, typeIR_r)
-  row 5 :
-    (_typeIR, _typeIR') -> false
+def $compat_plusminusmult(typeIR, typeIR) : bool =
 
-tbl def $compat_satplusminus(typeIR, typeIR) : bool =
-  row 0 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 1 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_satplusminus(typeIR_l, typeIR_r)
-  row 3 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_satplusminus(typeIR_l, typeIR_r)
-  row 4 :
-    (_typeIR, _typeIR') -> false
+  clause 0 : (INT as typeIR, INT as typeIR) = true
 
-tbl def $compat_divmod(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_divmod(typeIR_l, typeIR_r)
-  row 3 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_divmod(typeIR_l, typeIR_r)
-  row 4 :
-    (_typeIR, _typeIR') -> false
+  clause 1 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
 
-tbl def $compat_shift(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (INT as typeIR, INT `< _nat > as typeIR) -> true
-  row 2 :
-    (INT as typeIR, BIT `< _nat > as typeIR) -> true
-  row 3 :
-    (INT `< _nat > as typeIR, INT as typeIR) -> true
-  row 4 :
-    (INT `< _nat > as typeIR, INT `< _nat' > as typeIR) -> true
-  row 5 :
-    (INT `< _nat > as typeIR, BIT `< _nat' > as typeIR) -> true
-  row 6 :
-    (BIT `< _nat > as typeIR, INT as typeIR) -> true
-  row 7 :
-    (BIT `< _nat > as typeIR, INT `< _nat' > as typeIR) -> true
-  row 8 :
-    (BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR) -> true
-  row 9 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_shift(typeIR_l, typeIR_r)
-  row 10 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_shift(typeIR_l, typeIR_r)
-  row 11 :
-    (_typeIR, _typeIR') -> false
+  clause 2 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
 
-tbl def $compat_compare(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 3 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_compare(typeIR_l, typeIR_r)
-  row 4 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_compare(typeIR_l, typeIR_r)
-  row 5 :
-    (_typeIR, _typeIR') -> false
+  clause 3 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_plusminusmult(typeIR_l, typeIR_r)
 
-tbl def $compat_bitwise(typeIR, typeIR) : bool =
-  row 0 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 1 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_bitwise(typeIR_l, typeIR_r)
-  row 3 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_bitwise(typeIR_l, typeIR_r)
-  row 4 :
-    (_typeIR, _typeIR') -> false
+  clause 4 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_plusminusmult(typeIR_l, typeIR_r)
 
-tbl def $compat_concat(typeIR, typeIR) : bool =
-  row 0 :
-    (STRING as typeIR, STRING as typeIR) -> true
-  row 1 :
-    (INT `< _nat > as typeIR, INT `< _nat' > as typeIR) -> true
-  row 2 :
-    (INT `< _nat > as typeIR, BIT `< _nat' > as typeIR) -> true
-  row 3 :
-    (BIT `< _nat > as typeIR, INT `< _nat' > as typeIR) -> true
-  row 4 :
-    (BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR) -> true
-  row 5 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_concat(typeIR_l, typeIR_r)
-  row 6 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_concat(typeIR_l, typeIR_r)
-  row 7 :
-    (_typeIR, _typeIR') -> false
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_satplusminus(typeIR, typeIR) : bool =
+
+  clause 0 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 1 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_satplusminus(typeIR_l, typeIR_r)
+
+  clause 3 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_satplusminus(typeIR_l, typeIR_r)
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_divmod(typeIR, typeIR) : bool =
+
+  clause 0 : (INT as typeIR, INT as typeIR) = true
+
+  clause 1 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_divmod(typeIR_l, typeIR_r)
+
+  clause 3 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_divmod(typeIR_l, typeIR_r)
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_shift(typeIR, typeIR) : bool =
+
+  clause 0 : (INT as typeIR, INT as typeIR) = true
+
+  clause 1 : (INT as typeIR, INT `< _nat > as typeIR) = true
+
+  clause 2 : (INT as typeIR, BIT `< _nat > as typeIR) = true
+
+  clause 3 : (INT `< _nat > as typeIR, INT as typeIR) = true
+
+  clause 4 : (INT `< _nat > as typeIR, INT `< _nat' > as typeIR) = true
+
+  clause 5 : (INT `< _nat > as typeIR, BIT `< _nat' > as typeIR) = true
+
+  clause 6 : (BIT `< _nat > as typeIR, INT as typeIR) = true
+
+  clause 7 : (BIT `< _nat > as typeIR, INT `< _nat' > as typeIR) = true
+
+  clause 8 : (BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR) = true
+
+  clause 9 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_shift(typeIR_l, typeIR_r)
+
+  clause 10 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_shift(typeIR_l, typeIR_r)
+
+  clause 11 : (_typeIR, _typeIR') = false
+
+def $compat_compare(typeIR, typeIR) : bool =
+
+  clause 0 : (INT as typeIR, INT as typeIR) = true
+
+  clause 1 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 3 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_compare(typeIR_l, typeIR_r)
+
+  clause 4 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_compare(typeIR_l, typeIR_r)
+
+  clause 5 : (_typeIR, _typeIR') = false
+
+def $compat_bitwise(typeIR, typeIR) : bool =
+
+  clause 0 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 1 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_bitwise(typeIR_l, typeIR_r)
+
+  clause 3 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_bitwise(typeIR_l, typeIR_r)
+
+  clause 4 : (_typeIR, _typeIR') = false
+
+def $compat_concat(typeIR, typeIR) : bool =
+
+  clause 0 : (STRING as typeIR, STRING as typeIR) = true
+
+  clause 1 : (INT `< _nat > as typeIR, INT `< _nat' > as typeIR) = true
+
+  clause 2 : (INT `< _nat > as typeIR, BIT `< _nat' > as typeIR) = true
+
+  clause 3 : (BIT `< _nat > as typeIR, INT `< _nat' > as typeIR) = true
+
+  clause 4 : (BIT `< _nat > as typeIR, BIT `< _nat' > as typeIR) = true
+
+  clause 5 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_concat(typeIR_l, typeIR_r)
+
+  clause 6 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_concat(typeIR_l, typeIR_r)
+
+  clause 7 : (_typeIR, _typeIR') = false
 
 def $result_concat(typeIR, typeIR) : typeIR =
 
@@ -12154,15 +12154,15 @@ def $result_concat(typeIR, typeIR) : typeIR =
   clause 6 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $result_concat(typeIR_l, typeIR_r)
   -- if ~typeIR_l <: typedefTypeIR
 
-tbl def $compat_logical(typeIR, typeIR) : bool =
-  row 0 :
-    (BOOL as typeIR, BOOL as typeIR) -> true
-  row 1 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_logical(typeIR_l, typeIR_r)
-  row 2 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_logical(typeIR_l, typeIR_r)
-  row 3 :
-    (_typeIR, _typeIR') -> false
+def $compat_logical(typeIR, typeIR) : bool =
+
+  clause 0 : (BOOL as typeIR, BOOL as typeIR) = true
+
+  clause 1 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_logical(typeIR_l, typeIR_r)
+
+  clause 2 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_logical(typeIR_l, typeIR_r)
+
+  clause 3 : (_typeIR, _typeIR') = false
 
 tbl def $compat_array_index(typeIR) : bool =
   row 0 :
@@ -12365,19 +12365,19 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- if (typeIR_r = $type_of_typedExpressionIR(typedExpressionIR_r_casted))
     -- if $compat_range(typeIR_l, typeIR_r)
 
-tbl def $compat_range(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 3 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_range(typeIR_l, typeIR_r)
-  row 4 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_range(typeIR_l, typeIR_r)
-  row 5 :
-    (_typeIR, _typeIR') -> false
+def $compat_range(typeIR, typeIR) : bool =
+
+  clause 0 : (INT as typeIR, INT as typeIR) = true
+
+  clause 1 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 3 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_range(typeIR_l, typeIR_r)
+
+  clause 4 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_range(typeIR_l, typeIR_r)
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 def $check_switchLabelIR_default(switchLabelIR*) : bool =
 
@@ -12721,19 +12721,19 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
 
     rule dontcare: TC typeIR_key |- `_ : `_
 
-tbl def $compat_mask(typeIR, typeIR) : bool =
-  row 0 :
-    (INT as typeIR, INT as typeIR) -> true
-  row 1 :
-    (INT `< w_l > as typeIR, INT `< w_r > as typeIR) -> (w_l = w_r)
-  row 2 :
-    (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) -> (w_l = w_r)
-  row 3 :
-    (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) -> $compat_mask(typeIR_l, typeIR_r)
-  row 4 :
-    (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) -> $compat_mask(typeIR_l, typeIR_r)
-  row 5 :
-    (_typeIR, _typeIR') -> false
+def $compat_mask(typeIR, typeIR) : bool =
+
+  clause 0 : (INT as typeIR, INT as typeIR) = true
+
+  clause 1 : (INT `< w_l > as typeIR, INT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 2 : (BIT `< w_l > as typeIR, BIT `< w_r > as typeIR) = (w_l = w_r)
+
+  clause 3 : (TYPEDEF _typeId typeIR_l as typeIR, typeIR_r) = $compat_mask(typeIR_l, typeIR_r)
+
+  clause 4 : (typeIR_l, TYPEDEF _typeId typeIR_r as typeIR) = $compat_mask(typeIR_l, typeIR_r)
+
+  clause 5 : (_typeIR, _typeIR') = false
 
 relation SelectCase_keyset_ok: typingContext typeIR* |- keysetExpression : keysetExpressionIR
 
