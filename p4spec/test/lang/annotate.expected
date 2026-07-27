@@ -17126,9 +17126,21 @@ xref:Lvalue_eval[Evaluating ``typedLvalueIR`` ``+`.+`` ``nameIR`` with note ``lv
     ..... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+`.+`` ``"StackOutOfBounds"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-B">else #1-B</a>]</sub>+++
     ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``rejectTransitionResult``.
    .... {empty}+++<span class="bk-arm-anchor" id="bk-Lvalue_eval-1-B"></span>+++
+    ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-C">else #1-C</a>]</sub>+++
+    ..... Check that ``nameIR`` is equal to ``"next"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-C">else #1-C</a>]</sub>+++
+    ..... Check that ``n~idx~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-C">else #1-C</a>]</sub>+++
+    ..... Let ``storageReferenceResult`` be ``storageReference`` ``+`.+`` ``nameIR``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-C">else #1-C</a>]</sub>+++
+    ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Lvalue_eval-1-C"></span>+++
+    ..... Check that ``nameIR`` is equal to ``"last"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-D">else #1-D</a>]</sub>+++
+    ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-D">else #1-D</a>]</sub>+++
+    ..... Check that ``n~idx~`` is less than ``1`` or ``n~idx~`` is greater than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-D">else #1-D</a>]</sub>+++
+    ..... Let ``rejectTransitionResult`` be ``+REJECT+`` ``+ERROR+`` ``+`.+`` ``"StackOutOfBounds"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1-D">else #1-D</a>]</sub>+++
+    ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``rejectTransitionResult``.
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Lvalue_eval-1-D"></span>+++
     ..... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
-    ..... Check that ``nameIR`` is equal to ``"next"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
-    ..... Check that ``n~idx~`` is less than ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
+    ..... Check that ``nameIR`` is equal to ``"last"``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
+    ..... Check that ``~n~idx~`` ``<`` ``1`` ``\/`` ``n~idx~`` ``>`` ``n~size~``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
     ..... Let ``storageReferenceResult`` be ``storageReference`` ``+`.+`` ``nameIR``.+++<sub class="bk-mark">[<a href="#bk-Lvalue_eval-1">fail #1</a>]</sub>+++
     ..... Result in context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult``.
  .. Else:
@@ -17196,12 +17208,20 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+`.+`` ``nameIR``, under co
  .. Result in value ``value``.
 . Else if let ``headerStackValue~base~`` be ``value~base~``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
- .. Check that ``nameIR`` is equal to ``"next"``.
- .. Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
- .. Check that ``n~idx~`` is less than ``n~size~``.
- .. Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
- .. Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
- .. Result in value ``value``.
+ .. If ``nameIR`` is equal to ``"next"``:
+  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
+  ... Check that ``n~idx~`` is less than ``n~size~``.
+  ... Check that ``n~idx~`` is less than the length of ``value~element~^{asterisk}^``.
+  ... Let ``value`` be ``value~element~^{asterisk}^[n~idx~]``.
+  ... Result in value ``value``.
+ .. Else if ``nameIR`` is equal to ``"last"``:
+  ... Let ``n~size~`` be the length of ``value~element~^{asterisk}^``.
+  ... Check that ``~n~idx~`` ``<`` ``1`` ``\/`` ``n~idx~`` ``>`` ``n~size~``.
+  ... Let ``i`` be ``n~idx~`` ``-`` ``1``.
+  ... Let!~type~ ``n~idx_last~`` be ``i``.
+  ... Check that ``n~idx_last~`` is less than the length of ``value~element~^{asterisk}^``.
+  ... Let ``value`` be ``value~element~^{asterisk}^[n~idx_last~]``.
+  ... Result in value ``value``.
 . Else if let ``structValue~base~`` be ``value~base~``:
  .. Let ``+STRUCT+`` ``++_++`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``structValue~base~``.
  .. Let ``value`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~field~,`` ``value~field~`` ``)^{asterisk}^``].
@@ -17281,12 +17301,20 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+`.+`` ``nameIR``,
 * the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
 . If let ``headerStackValue~base~`` be ``value'``:
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+`` be ``headerStackValue~base~``.
- .. Check that ``nameIR`` is equal to ``"next"``.
- .. Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
- .. Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`` ``1`` ``+)+`` ``+]+``.
- .. Let context ``EC~1~`` be
- ** the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
- .. Result in context ``EC~1~``.
+ .. If ``nameIR`` is equal to ``"next"``:
+  ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
+  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`` ``1`` ``+)+`` ``+]+``.
+  ... Let context ``EC~1~`` be
+  *** the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
+  ... Result in context ``EC~1~``.
+ .. Else if ``nameIR`` is equal to ``"last"``:
+  ... Let ``i`` be ``n~idx~`` ``-`` ``1``.
+  ... Let!~type~ ``n~idx_last~`` be ``i``.
+  ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx_last~]`` set to ``value``.
+  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+``.
+  ... Let context ``EC~1~`` be
+  *** the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
+  ... Result in context ``EC~1~``.
 . Else if let ``structValue~base~`` be ``value'``:
  .. Let ``+STRUCT+`` ``typeId`` ``+`{+`` ``fieldValue^{asterisk}^`` ``+}+`` be ``structValue~base~``.
  .. Let ``fieldValue~update~^{asterisk}^`` be ``xref:update_fieldValue[$update_fieldValue(fieldValue^{asterisk}^,`` ``nameIR,`` ``value)]``.

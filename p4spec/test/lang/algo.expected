@@ -27547,6 +27547,38 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- let storageReferenceResult = `` ?(storageReference `. nameIR) as storageReferenceResult
     -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
+    rulepath stack-last-out-of-bounds
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let `` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue = value' as headerStackValue
+    -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx ) ] = headerStackValue
+    -- if (nameIR = "last")
+    -- let n_size = |value_element*{value_element <- value_element*}|
+    -- if ((n_idx < 1) \/ (n_idx > n_size))
+    -- let rejectTransitionResult = REJECT ERROR `. "StackOutOfBounds"
+    -- output: % % % |- % : EC_1 ARCH_1 rejectTransitionResult as storageReferenceResult
+
+    rulepath stack-last-in-bounds
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
+    -- if storageReferenceResult' <: continueResult<storageReference?>
+    -- let `` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult' as continueResult<storageReference?>
+    -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
+    -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
+    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue = value' as headerStackValue
+    -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx ) ] = headerStackValue
+    -- let n_size = |value_element*{value_element <- value_element*}|
+    -- if (nameIR = "last")
+    -- if ~((n_idx < 1) \/ (n_idx > n_size))
+    -- let storageReferenceResult = `` ?(storageReference `. nameIR) as storageReferenceResult
+    -- output: % % % |- % : EC_1 ARCH_1 storageReferenceResult
+
     rulepath cont
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult'
     -- if storageReferenceResult' <: continueResult<storageReference?>
@@ -27710,6 +27742,21 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- if (n_idx < n_size)
     -- if (n_idx < |value_element*{value_element <- value_element*}|)
     -- let value = value_element*{value_element <- value_element*}[n_idx]
+    -- output: % % % |- % : value
+
+    rulepath stack-last
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue_base = value' as headerStackValue
+    -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx ) ] = headerStackValue_base
+    -- if (nameIR = "last")
+    -- let n_size = |value_element*{value_element <- value_element*}|
+    -- if ~((n_idx < 1) \/ (n_idx > n_size))
+    -- let i = (n_idx - 1)
+    -- if i <: nat
+    -- let n_idx_last = i as nat
+    -- if (n_idx_last < |value_element*{value_element <- value_element*}|)
+    -- let value = value_element*{value_element <- value_element*}[n_idx_last]
     -- output: % % % |- % : value
 
     rulepath struct
@@ -27882,6 +27929,20 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- if (nameIR = "next")
     -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value]
     -- let headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( (n_idx + 1) ) ]
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
+    -- output: % % % |- % := % : EC_1
+
+    rulepath stack-last
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
+    -- if value' <: headerStackValue
+    -- let headerStackValue_base = value' as headerStackValue
+    -- let HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx ) ] = headerStackValue_base
+    -- if (nameIR = "last")
+    -- let i = (n_idx - 1)
+    -- if i <: nat
+    -- let n_idx_last = i as nat
+    -- let value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx_last] = value]
+    -- let headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( n_idx ) ]
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
     -- output: % % % |- % := % : EC_1
 

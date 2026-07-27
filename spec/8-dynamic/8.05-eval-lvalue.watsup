@@ -54,6 +54,37 @@ rulegroup Lvalue_eval/memberAccess {
     -- if storageReferenceResult
         = `` (storageReference `. nameIR)
 
+  rule Lvalue_eval/stack-last-out-of-bounds:
+    p EC_0 ARCH_0 |- (typedLvalueIR `. nameIR) `# _
+                   : EC_1 ARCH_1 rejectTransitionResult
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                       : EC_1 ARCH_1 (`` storageReference)
+    -- Lvalue_read:
+        p EC_1 ARCH_1 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
+        = headerStackValue
+    -- if nameIR = "last"
+    -- if n_size = |value_element*|
+    -- if ($(n_idx < 1) \/ $(n_idx > n_size))
+    -- if rejectTransitionResult = REJECT (ERROR `. "StackOutOfBounds")
+
+  rule Lvalue_eval/stack-last-in-bounds:
+    p EC_0 ARCH_0 |- (typedLvalueIR `. nameIR) `# _
+                   : EC_1 ARCH_1 storageReferenceResult
+    -- Lvalue_eval:
+        p EC_0 ARCH_0 |- typedLvalueIR
+                       : EC_1 ARCH_1 (`` storageReference)
+    -- Lvalue_read:
+        p EC_1 ARCH_1 |- storageReference : headerStackValue
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
+        = headerStackValue
+    -- if n_size = |value_element*|
+    -- if nameIR = "last"
+    -- if ~($(n_idx < 1) \/ $(n_idx > n_size))
+    -- if storageReferenceResult
+        = `` (storageReference `. nameIR)
+
   rule Lvalue_eval/cont:
     p EC_0 ARCH_0 |- (typedLvalueIR `. nameIR) `# _
                    : EC_1 ARCH_1 storageReferenceResult
@@ -191,6 +222,19 @@ rulegroup Lvalue_read/memberAccess {
     -- if n_size = |value_element*|
     -- if $(n_idx < n_size)
     -- if value = value_element*[ n_idx ]
+
+  rule Lvalue_read/stack-last:
+    p EC_0 ARCH |- storageReference `. nameIR : value
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : headerStackValue_base
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
+        = headerStackValue_base
+    -- if nameIR = "last"
+    -- if n_size = |value_element*|
+    -- if ~($(n_idx < 1) \/ $(n_idx > n_size))
+    -- if n_idx_last = $(n_idx - 1)
+    -- if value = value_element*[ n_idx_last ]
 
   rule Lvalue_read/struct:
     p EC_0 ARCH |- storageReference `. nameIR : value
@@ -337,6 +381,22 @@ rulegroup Lvalue_write/memberAccess {
     -- if value_element_update* = value_element* [ [n_idx] = value ]
     -- if headerStackValue_base_update
         = HEADER_STACK `[ value_element_update* `( $(n_idx + 1) ) ]
+    -- Lvalue_write:
+        p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
+
+  rule Lvalue_write/stack-last:
+    p EC_0 ARCH |- (storageReference `. nameIR) := value : EC_1
+    ---- ;; read base value
+    -- Lvalue_read:
+        p EC_0 ARCH |- storageReference : headerStackValue_base
+    ---- ;; if the base value is a header stack
+    -- if HEADER_STACK `[ value_element* `( n_idx ) ]
+        = headerStackValue_base
+    -- if nameIR = "last"
+    -- if n_idx_last = $(n_idx - 1)
+    -- if value_element_update* = value_element* [ [n_idx_last] = value ]
+    -- if headerStackValue_base_update
+        = HEADER_STACK `[ value_element_update* `( n_idx ) ]
     -- Lvalue_write:
         p EC_0 ARCH |- storageReference := headerStackValue_base_update : EC_1
 
