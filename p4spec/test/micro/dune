@@ -946,6 +946,13 @@
 
 (rule
  (alias micro-det)
+ (deps
+  ../run/run_regression_neg_sl.expected
+  ../run/run_regression_neg_sl_det.actual
+  ../run/run_regression_pos_sl.expected
+  ../run/run_regression_pos_sl_det.actual
+  ../sim/sim_v1model_regression_sl.expected
+  ../sim/sim_v1model_regression_sl_det.actual)
  (action
   (progn
    (diff micro_run_pos_al.expected micro_run_pos_al_det.actual)
@@ -962,4 +969,14 @@
    (diff micro_run_neg_pl.expected micro_run_neg_pl_det.actual)
    (diff micro_sim_v1model_pl.expected micro_sim_v1model_pl_det.actual)
    (diff micro_sim_ebpf_pl.expected micro_sim_ebpf_pl_det.actual)
-   (diff micro_sim_psa_pl.expected micro_sim_psa_pl_det.actual))))
+   (diff micro_sim_psa_pl.expected micro_sim_psa_pl_det.actual)
+   ;; Regression corpus: reuse the run-sl-det/sim-sl-det targets (testdata/regression)
+   (diff
+    ../run/run_regression_neg_sl.expected
+    ../run/run_regression_neg_sl_det.actual)
+   (diff
+    ../run/run_regression_pos_sl.expected
+    ../run/run_regression_pos_sl_det.actual)
+   (diff
+    ../sim/sim_v1model_regression_sl.expected
+    ../sim/sim_v1model_regression_sl_det.actual))))
