@@ -1,6 +1,7 @@
 #include <core.p4>
 
-// Harness placeholder: keeps this dir non-empty (see task-1-report.md).
+// Permanent placeholder: the run/sim harness fails on an empty corpus dir;
+// do not remove.
 control C() {
     apply {
         bit<8> x = 8w1;
