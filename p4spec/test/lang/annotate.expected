@@ -12370,6 +12370,12 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 . Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
 . Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
 . Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``stringTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``errorTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``matchKindTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``intTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``listTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``simpleEnumTypeIR``.
 . Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+)+`` ``+`:+`` ``+INT+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
@@ -18143,7 +18149,15 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"setInvalid"`` 
   ... Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference`` ``+`.+`` ``"setInvalid"`` ``+`<+`` ``·`` ``+>+`` ``+`(+`` ``·`` ``+)+``.+++<sub class="bk-mark">[<a href="#bk-Callee_eval-5">fail #5</a>]</sub>+++
   ... Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
 
-xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``t`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+xref:Callee_eval[Finding callee ``typedExpressionIR~base~`` ``+`.+`` ``nameIR`` ``+`(+`` ``·`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+
+. Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR~base~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~base~``.
+. Let ``value'`` be ``xref:sizeof[$sizeof(typeIR~base~,`` ``nameIR)]``.
+. Let ``builtinSizeMethodCallee`` be ``+BUILTIN_SIZE_METHOD+`` ``value'``.
+. Result in context ``EC``, state ``ARCH``, and callee ``builtinSizeMethodCallee``.
+
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``nameIR`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
@@ -18157,11 +18171,11 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``t`` ``+`(+`` ``
  .. Let!~type~ ``+REF+`` ``objectId`` be ``value``.
  .. Let ``object`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
  .. Let!~type~ ``+EXTERN+`` ``++_++`` ``+`<+`` ``theta`` ``+>+`` ``+`{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``t`` ``+`(+`` ``argumentListIR`` ``+)+``].
+ .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentListIR`` ``+)+``].
  .. Let ``++_++`` ``+`:+`` ``externMethodDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
- .. Let!~type~ ``+EXTERN_METHOD+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
- .. Check that ``nameIR`` is equal to ``t``.
- .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``t`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR^?^`` ``+}+``.
+ .. Let!~type~ ``+EXTERN_METHOD+`` ``nameIR'`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
+ .. Check that ``nameIR'`` is equal to ``nameIR``.
+ .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR^?^`` ``+}+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"apply"`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
@@ -18676,6 +18690,12 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``.
 . Let ``fieldValue~valid~^{asterisk}^`` be xref:filter_[``fieldValue^{asterisk}^`` filtered by ``bool^{asterisk}^``].
 . Let ``b~valid~`` be ``fieldValue~valid~^{asterisk}^`` is equal to ``·``.
 . Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
+. Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
+
+xref:Call_eval[Calling ``builtinSizeMethodCallee`` ``+`<+`` ``·`` ``+>+`` ``+`(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
+
+. Let ``+BUILTIN_SIZE_METHOD+`` ``value`` be ``builtinSizeMethodCallee``.
+. Let ``returnResult`` be ``+RETURN+`` ``value``.
 . Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
 
 xref:Call_eval[Calling ``externMethodCallee`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:

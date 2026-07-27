@@ -586,6 +586,16 @@ rule Call_eval/builtinMethodCallee-header-union-isValid:
   -- if b_valid = (fieldValue_valid* = eps)
   -- if returnResult = RETURN (`B b_valid)
 
+;;;; syntax builtinSizeMethodCallee =
+;;;;   BUILTIN_SIZE_METHOD value
+
+rule Call_eval/builtinSizeMethodCallee:
+  p EC ARCH |- builtinSizeMethodCallee `@ `< eps > `( eps )
+             : EC ARCH returnResult
+  ---- ;; unpack the builtin size method callee
+  -- if BUILTIN_SIZE_METHOD value = builtinSizeMethodCallee
+  -- if returnResult = RETURN value
+
 ;;;; syntax externMethodCallee =
 ;;;;   EXTERN_METHOD objectId `. nameIR `< typeParameterListIR >
 ;;;;     `( parameterListIR `# id* )

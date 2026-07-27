@@ -19620,6 +19620,12 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
     -- if ~typeIR_base_unroll <: objectTypeIR
     -- if ~typeIR_base_unroll <: synthesizedTypeIR
+    -- if ~typeIR_base_unroll <: stringTypeIR
+    -- if ~typeIR_base_unroll <: errorTypeIR
+    -- if ~typeIR_base_unroll <: matchKindTypeIR
+    -- if ~typeIR_base_unroll <: intTypeIR
+    -- if ~typeIR_base_unroll <: listTypeIR
+    -- if ~typeIR_base_unroll <: simpleEnumTypeIR
     -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] ) `: INT as typeIR as methodTypeIR
     -- output: % % |- % `< % > `( % ) : methodTypeIR as callableTypeIR `< `# [] > `( `# [] `# [] )
 
@@ -23107,6 +23113,9 @@ syntax functionCallee =
 syntax builtinMethodCallee = 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
 
+syntax builtinSizeMethodCallee = 
+   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
+
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
 
@@ -23121,6 +23130,7 @@ syntax tableApplyMethodCallee =
 
 syntax methodCallee = 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
+   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
    | PARSER objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv } (from parserApplyMethodCallee) 
    | CONTROL objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR } (from controlApplyMethodCallee) 
@@ -23131,6 +23141,7 @@ syntax callee =
    | FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id* ) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) (from externFunctionCallee) 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
+   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
    | PARSER objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv } (from parserApplyMethodCallee) 
    | CONTROL objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR } (from controlApplyMethodCallee) 
@@ -29685,6 +29696,24 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< `_ > `( arg
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference `. "setInvalid" `< [] > `( [] )
     -- output: % % % |- % `< `_ > `( % ) : EC_1 ARCH_1 `` builtinMethodCallee as callee as calleeResult
 
+  rulegroup builtinSizeMethodCallee
+
+   match
+
+    (signature) p EC ARCH |- typedExpressionIR_base `. nameIR `< `_ > `( [] ) : % % %
+    p EC ARCH |- callableTargetIR `< `_ > `( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR_base `. nameIR = callableTargetIR
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath cont
+    -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
+    -- let _expressionIR `# `( typeIR_base _ctk ) = typedExpressionIR_base
+    -- let builtinSizeMethodCallee = BUILTIN_SIZE_METHOD $sizeof(typeIR_base, nameIR)
+    -- output: % % % |- % `< `_ > `( % ) : EC ARCH `` builtinSizeMethodCallee as callee as calleeResult
+
   rulegroup externMethodCallee
 
    match
@@ -30544,6 +30573,24 @@ relation Call_eval: cursor evalContext arch |- callee `@ `< typeArgumentListIR >
     -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $isValid_header(value_field)*{value_field <- value_field*})
     -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
     -- let returnResult = RETURN ?(`B b_valid as value)
+    -- output: % % % |- % `@ `< % > `( % ) : EC ARCH returnResult as callResult
+
+  rulegroup builtinSizeMethodCallee
+
+   match
+
+    (signature) p EC ARCH |- builtinSizeMethodCallee as callee `@ `< [] > `( [] ) : % % %
+    p EC ARCH |- callee `@ `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > `( argumentIR*{argumentIR <- argumentIR*} ) : % % %
+    -- if callee <: builtinSizeMethodCallee
+    -- let builtinSizeMethodCallee = callee as builtinSizeMethodCallee
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR*{argumentIR <- argumentIR*} matches []
+
+   paths
+
+    rulepath builtinSizeMethodCallee
+    -- let BUILTIN_SIZE_METHOD value = builtinSizeMethodCallee
+    -- let returnResult = RETURN ?(value)
     -- output: % % % |- % `@ `< % > `( % ) : EC ARCH returnResult as callResult
 
   rulegroup externMethodCallee

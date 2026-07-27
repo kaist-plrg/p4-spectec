@@ -192,6 +192,23 @@ rulegroup Callee_eval/builtinMethodCallee-header-setInvalid {
 
 }
 
+;;;; Builtin size method call
+
+rulegroup Callee_eval/builtinSizeMethodCallee {
+
+  rule Callee_eval/cont:
+    p EC ARCH |- (typedExpressionIR_base `. nameIR) `< `_ > `( eps )
+               : EC ARCH (`` builtinSizeMethodCallee)
+    ---- ;; if the method is min/maxSizeInBits/Bytes builtin
+    -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
+                      "maxSizeInBits", "maxSizeInBytes" ]
+    ---- ;; the size is derived from the receiver's static type
+    -- if _ `# `( typeIR_base _ ) = typedExpressionIR_base
+    -- if builtinSizeMethodCallee
+        = BUILTIN_SIZE_METHOD $sizeof(typeIR_base, nameIR)
+
+}
+
 ;;;; Extern method call
 
 rulegroup Callee_eval/externMethodCallee {
