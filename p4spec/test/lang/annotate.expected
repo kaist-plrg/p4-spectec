@@ -15581,9 +15581,18 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``instantiationIR``, under
 * the result of xref:InstDecl_inst[loading ``instantiationIR``, under context ``IC~0~`` and store ``STO`` at ``+BLOCK+``].
 . Result in context ``IC~1~``, store ``STO~1~``, and ``constantDeclarationIR``.
 
-xref:ControlLocalDecl_inst[Compile-time evaluation of ``variableDeclarationIR``, under context ``IC~0~``and store ``STO``]:
+xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``typeIR`` ``nameIR`` ``initializerOptIR`` ``+`;+``, under context ``IC~0~``and store ``STO``]:
 
-. Result in context ``IC~0~``, store ``STO``, and ``variableDeclarationIR``.
+. If let ``+`=+`` ``typedExpressionIR`` be ``initializerOptIR``:
+ .. If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] does not match pattern ``+DYN+``:
+  ... Let store ``STO~1~`` and ``value`` be
+  *** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
+  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``value`` is added to the ``+BLOCK+`` layer].
+  ... Result in context ``IC~1~``, store ``STO~1~``, and ``annotationList`` ``typeIR`` ``nameIR`` ``+`=+`` ``typedExpressionIR`` ``+`;+``.
+ .. Else:
+  ... Result in context ``IC~0~``, store ``STO``, and ``annotationList`` ``typeIR`` ``nameIR`` ``+`=+`` ``typedExpressionIR`` ``+`;+``.
+. Else:
+ .. Result in context ``IC~0~``, store ``STO``, and ``annotationList`` ``typeIR`` ``nameIR`` ``·`` ``+`;+``.
 
 xref:ControlLocalDecl_inst[Compile-time evaluation of ``actionDeclarationIR``, under context ``IC~0~``and store ``STO``]:
 

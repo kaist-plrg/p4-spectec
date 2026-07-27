@@ -22,10 +22,36 @@ rule ControlLocalDecl_inst/instantiationIR:
                         : IC_1 STO_1 constantDeclarationIR
 
 ;;; variableDeclarationIR
+;;; init-bound and init-unbound are disjoint on the initializer's
+;;; compile-time known-ness (ctk), as attached by typing: init-bound
+;;; matches LCTK/CTK, init-unbound matches DYN; the two guards partition
+;;; the closed `ctk` set, so exactly one rule ever applies
 
-rule ControlLocalDecl_inst/variableDeclarationIR:
-  IC STO |- variableDeclarationIR
-          : IC STO variableDeclarationIR
+rulegroup ControlLocalDecl_inst/variableDeclarationIR {
+
+  rule ControlLocalDecl_inst/variableDeclarationIR-init-bound:
+    IC_0 STO_0 |- annotationList typeIR nameIR (`= typedExpressionIR) `;
+                : IC_1 STO_1 (annotationList typeIR nameIR (`= typedExpressionIR) `;)
+    ---- ;; bind the initializer's value so a later declaration in the
+    ---- ;; same control (e.g. a table's size) can resolve this variable;
+    ---- ;; the declaration itself is unchanged, so it is still
+    ---- ;; re-evaluated fresh on every apply() at the dynamic phase
+    -- if DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR)
+    -- Expr_inst: LOCAL IC_0 STO_0 |- typedExpressionIR : STO_1 value
+    -- if IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value)
+
+  rule ControlLocalDecl_inst/variableDeclarationIR-init-unbound:
+    IC STO |- annotationList typeIR nameIR (`= typedExpressionIR) `;
+            : IC STO (annotationList typeIR nameIR (`= typedExpressionIR) `;)
+    ---- ;; initializer is dynamic (not compile-time known); defer to the
+    ---- ;; dynamic phase as before, without binding it for this pass
+    -- if DYN = $ctk_of_typedExpressionIR(typedExpressionIR)
+
+  rule ControlLocalDecl_inst/variableDeclarationIR-noinit:
+    IC STO |- annotationList typeIR nameIR eps `;
+            : IC STO (annotationList typeIR nameIR eps `;)
+
+}
 
 ;;; actionDeclarationIR
 

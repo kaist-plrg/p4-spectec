@@ -14468,7 +14468,15 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 
   rulegroup variableDeclarationIR
 
-    rule variableDeclarationIR: IC STO |- variableDeclarationIR as controlLocalDeclarationIR : IC STO ?(variableDeclarationIR as controlLocalDeclarationIR)
+    rule variableDeclarationIR-init-bound: IC_0 STO_0 |- annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR : IC_1 STO_1 ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
+    -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR))
+    -- Expr_inst: LOCAL IC_0 STO_0 |- typedExpressionIR : STO_1 value
+    -- if (IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value))
+
+    rule variableDeclarationIR-init-unbound: IC STO |- annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR : IC STO ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
+    -- if (DYN = $ctk_of_typedExpressionIR(typedExpressionIR))
+
+    rule variableDeclarationIR-noinit: IC STO |- annotationList typeIR nameIR ?() `; as controlLocalDeclarationIR : IC STO ?(annotationList typeIR nameIR ?() `; as controlLocalDeclarationIR)
 
   rulegroup actionDeclarationIR
 

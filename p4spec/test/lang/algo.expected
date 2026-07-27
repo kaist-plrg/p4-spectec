@@ -25060,15 +25060,38 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 
    match
 
-    (signature) IC STO |- variableDeclarationIR as controlLocalDeclarationIR : % % %
-    IC STO |- controlLocalDeclarationIR : % % %
+    (signature) IC' STO' |- annotationList typeIR nameIR initializerOptIR `; as controlLocalDeclarationIR : % % %
+    IC' STO' |- controlLocalDeclarationIR : % % %
     -- if controlLocalDeclarationIR <: variableDeclarationIR
-    -- let variableDeclarationIR = controlLocalDeclarationIR as variableDeclarationIR
+    -- let annotationList typeIR nameIR initializerOptIR `; = controlLocalDeclarationIR as variableDeclarationIR
 
    paths
 
-    rulepath variableDeclarationIR
-    -- output: % % |- % : IC STO ?(variableDeclarationIR as controlLocalDeclarationIR)
+    rulepath variableDeclarationIR-init-bound
+    -- let IC_0 = IC'
+    -- let STO_0 = STO'
+    -- let initializerOptIR' = initializerOptIR
+    -- if initializerOptIR' matches (_)
+    -- let ?(`= typedExpressionIR) = initializerOptIR'
+    -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR))
+    -- Expr_inst: LOCAL IC_0 STO_0 |- typedExpressionIR : STO_1 value
+    -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value)
+    -- output: % % |- % : IC_1 STO_1 ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
+
+    rulepath variableDeclarationIR-init-unbound
+    -- let IC = IC'
+    -- let STO = STO'
+    -- let initializerOptIR' = initializerOptIR
+    -- if initializerOptIR' matches (_)
+    -- let ?(`= typedExpressionIR) = initializerOptIR'
+    -- if (DYN = $ctk_of_typedExpressionIR(typedExpressionIR))
+    -- output: % % |- % : IC STO ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
+
+    rulepath variableDeclarationIR-noinit
+    -- let IC = IC'
+    -- let STO = STO'
+    -- if (initializerOptIR = ?())
+    -- output: % % |- % : IC STO ?(annotationList typeIR nameIR ?() `; as controlLocalDeclarationIR)
 
   rulegroup actionDeclarationIR
 
