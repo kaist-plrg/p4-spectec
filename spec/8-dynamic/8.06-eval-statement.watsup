@@ -36,9 +36,9 @@ rulegroup Stmt_eval/assignmentStatementIR {
         p EC_1 ARCH_1 |- typedExpressionIR
                        : EC_2 ARCH_2 abortResult
 
-  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-exit:
+  rule Stmt_eval/typedLvalueIR-cont-compound-typedExpressionIR-abort:
     p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;
-                   : EC_2 ARCH_2 EXIT
+                   : EC_2 ARCH_2 abortResult
     ---- ;; evaluate l-value
     -- Lvalue_eval:
         p EC_0 ARCH_0 |- typedLvalueIR
@@ -48,7 +48,7 @@ rulegroup Stmt_eval/assignmentStatementIR {
     ---- ;; evaluate expression
     -- Expr_eval:
         p EC_1 ARCH_1 |- typedExpressionIR
-                       : EC_2 ARCH_2 EXIT
+                       : EC_2 ARCH_2 abortResult
 
   rule Stmt_eval/typedLvalueIR-cont-eq-typedExpressionIR-cont:
     p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `;

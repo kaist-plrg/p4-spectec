@@ -286,6 +286,14 @@ rulegroup ParserStmt_eval/parserConditionalStatementIR {
         LOCAL EC ARCH |- typedExpressionIR_cond
                        : EC_cond ARCH_cond (`` (`B false))
 
+  rule ParserStmt_eval/else-reject:
+    EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
+                ELSE parserStatementIR_else
+             : EC_cond ARCH_cond rejectTransitionResult
+    -- Expr_eval:
+        LOCAL EC ARCH |- typedExpressionIR_cond
+                       : EC_cond ARCH_cond rejectTransitionResult
+
   rule ParserStmt_eval/else-cont-true:
     EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then
                 ELSE parserStatementIR_else

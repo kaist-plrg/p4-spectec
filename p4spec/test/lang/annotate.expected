@@ -17428,9 +17428,9 @@ xref:Stmt_eval[Runtime evaluation of ``typedLvalueIR`` ``assignop`` ``typedExpre
  .. Else:
   ... Let context ``EC~2~``, state ``ARCH~2~`` and ``expressionResult`` be
   *** the result of xref:Expr_eval[evaluating ``typedExpressionIR``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
-  ... If let ``exitResult`` be ``expressionResult``:
-   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``+EXIT+``.
-  ... Else if let ``value`` be ``expressionResult``:
+  ... If let ``abortResult`` be ``expressionResult``:
+   .... Result in context ``EC~2~``, state ``ARCH~2~``, and ``abortResult``.
+  ... Else:
    .... Let value ``value~lvalue~`` be
    **** the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~2~`` and state ``ARCH~2~`` at ``p``].
    .... Let ``binop`` be xref:option_get[*!*] xref:assignop_as_binop[the binary operator corresponding to ``assignop``].
@@ -17679,14 +17679,19 @@ xref:ParserStmt_eval[Runtime evaluation of ``parserConditionalStatementIR``, und
 . Else:
  .. Let context ``EC~cond~``, state ``ARCH~cond~`` and ``expressionResult`` be
  ** the result of xref:Expr_eval[evaluating ``typedExpressionIR~cond~``, under context ``EC~0~`` and state ``ARCH~0~`` at ``+LOCAL+``].
- .. If ``expressionResult`` is equal to ``+`B+`` ``true``:
-  ... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
-  *** the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
-  ... Result in context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
- .. Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
-  ... Let context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult`` be
-  *** the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~else~``, under context ``EC~cond~`` and state ``ARCH~cond~``].
-  ... Result in context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult``.
+ .. Try pass:[<strong id="bk-ParserStmt_eval-2" class="bk-label">#2</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-ParserStmt_eval-2-i"></span>+++
+   .... Let!~type~ ``rejectTransitionResult`` be ``expressionResult``.+++<sub class="bk-mark">[<a href="#bk-ParserStmt_eval-2-ii">else #2-ii</a>]</sub>+++
+   .... Result in context ``EC~cond~``, state ``ARCH~cond~``, and ``rejectTransitionResult``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-ParserStmt_eval-2-ii"></span>+++
+   .... If ``expressionResult`` is equal to ``+`B+`` ``true``:
+    ..... Let context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult`` be
+    ***** the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~then~``, under context ``EC~cond~`` and state ``ARCH~cond~``].+++<sub class="bk-mark">[<a href="#bk-ParserStmt_eval-2">fail #2</a>]</sub>+++
+    ..... Result in context ``EC~then~``, state ``ARCH~then~``, and ``parserStatementResult``.
+   .... Else if ``expressionResult`` is equal to ``+`B+`` ``false``:
+    ..... Let context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult`` be
+    ***** the result of xref:ParserStmt_eval[runtime evaluation of ``parserStatementIR~else~``, under context ``EC~cond~`` and state ``ARCH~cond~``].+++<sub class="bk-mark">[<a href="#bk-ParserStmt_eval-2">fail #2</a>]</sub>+++
+    ..... Result in context ``EC~else~``, state ``ARCH~else~``, and ``parserStatementResult``.
 
 xref:ParserBlockElementStmt_eval[ParserBlockElementStmt_eval]:
 

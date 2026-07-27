@@ -15979,10 +15979,10 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- if (assignop = `=)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult as expressionResult
 
-    rule typedLvalueIR-cont-compound-typedExpressionIR-exit: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `; as statementIR : EC_2 ARCH_2 EXIT as statementResult
+    rule typedLvalueIR-cont-compound-typedExpressionIR-abort: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `; as statementIR : EC_2 ARCH_2 abortResult as statementResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 `` ?(storageReference) as storageReferenceResult
     -- if (assignop =/= `=)
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 EXIT as expressionResult
+    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult as expressionResult
 
     rule typedLvalueIR-cont-eq-typedExpressionIR-cont: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR `; as statementIR : EC_3 ARCH_2 `EMPTY as statementResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 `` ?(storageReference) as storageReferenceResult
@@ -16190,6 +16190,9 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
 
     rule non-else-cont-false: EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then as parserStatementIR : EC_cond ARCH_cond `EMPTY as parserStatementResult
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond `` `B false as value as expressionResult
+
+    rule else-reject: EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then ELSE parserStatementIR_else as parserStatementIR : EC_cond ARCH_cond rejectTransitionResult as parserStatementResult
+    -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond rejectTransitionResult as expressionResult
 
     rule else-cont-true: EC ARCH |- IF `( typedExpressionIR_cond ) parserStatementIR_then ELSE parserStatementIR_else as parserStatementIR : EC_then ARCH_then parserStatementResult
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond `` `B true as value as expressionResult

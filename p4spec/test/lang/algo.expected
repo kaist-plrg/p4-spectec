@@ -28178,7 +28178,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let abortResult = expressionResult as abortResult
     -- output: % % % |- % : EC_2 ARCH_2 abortResult as statementResult
 
-    rulepath typedLvalueIR-cont-compound-typedExpressionIR-exit
+    rulepath typedLvalueIR-cont-compound-typedExpressionIR-abort
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
     -- if storageReferenceResult <: continueResult<storageReference?>
     -- let `` storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
@@ -28186,10 +28186,9 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
     -- if (assignop =/= `=)
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult
-    -- if expressionResult <: exitResult
-    -- let exitResult = expressionResult as exitResult
-    -- if (exitResult = EXIT)
-    -- output: % % % |- % : EC_2 ARCH_2 EXIT as statementResult
+    -- if expressionResult <: abortResult
+    -- let abortResult = expressionResult as abortResult
+    -- output: % % % |- % : EC_2 ARCH_2 abortResult as statementResult
 
     rulepath typedLvalueIR-cont-eq-typedExpressionIR-cont
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult
@@ -28753,6 +28752,15 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond expressionResult
     -- if (expressionResult = `` `B false as value as expressionResult)
     -- output: % % |- % : EC_cond ARCH_cond `EMPTY as parserStatementResult
+
+    rulepath else-reject
+    -- let parserConditionalStatementIR' = parserConditionalStatementIR
+    -- if parserConditionalStatementIR' matches `IF (%) % ELSE %`
+    -- let IF `( typedExpressionIR_cond ) parserStatementIR_then ELSE parserStatementIR_else = parserConditionalStatementIR'
+    -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond expressionResult
+    -- if expressionResult <: rejectTransitionResult
+    -- let rejectTransitionResult = expressionResult as rejectTransitionResult
+    -- output: % % |- % : EC_cond ARCH_cond rejectTransitionResult as parserStatementResult
 
     rulepath else-cont-true
     -- let parserConditionalStatementIR' = parserConditionalStatementIR
