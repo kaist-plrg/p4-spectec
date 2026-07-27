@@ -7048,6 +7048,29 @@ def $bitacc_range_replace_op(value, value, value, value) : value =
   -- let _nat W i_r = integerLiteral'
   -- let i = $bitacc_replace(i_b, i_h, i_l, i_r)
 
+  clause 1 : (value, value', value'', value''') = w S i as value
+  -- if value <: integerValue
+  -- let integerValue_b = value as integerValue
+  -- if value' <: integerValue
+  -- let integerValue_h = value' as integerValue
+  -- if value'' <: integerValue
+  -- let integerValue_l = value'' as integerValue
+  -- if value''' <: integerValue
+  -- let integerValue_r = value''' as integerValue
+  -- let integerValue = integerValue_b
+  -- if integerValue <: integerLiteral
+  -- let integerLiteral = integerValue as integerLiteral
+  -- if integerLiteral matches `% S %`
+  -- let w S i_b = integerLiteral
+  -- let i_h = $int_of_integerValue(integerValue_h)
+  -- let i_l = $int_of_integerValue(integerValue_l)
+  -- let integerValue' = integerValue_r
+  -- if integerValue' <: integerLiteral
+  -- let integerLiteral' = integerValue' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let _nat W i_r = integerLiteral'
+  -- let i = $bitacc_replace(i_b, i_h, i_l, i_r)
+
 def $bitacc_offset_replace_op(value, value, value, value) : value =
 
   clause 0 : (value, value', value'', value''') = w W i as value
@@ -7064,6 +7087,32 @@ def $bitacc_offset_replace_op(value, value, value, value) : value =
   -- let integerLiteral = integerValue as integerLiteral
   -- if integerLiteral matches `% W %`
   -- let w W i_b = integerLiteral
+  -- let i_l = $int_of_integerValue(integerValue_l)
+  -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_w)
+  -- if nat?{nat <- nat?} matches (_)
+  -- let ?(n_w) = nat?{nat <- nat?}
+  -- let i_h = ((i_l + n_w as int) - 1 as int)
+  -- let integerValue' = integerValue_r
+  -- if integerValue' <: integerLiteral
+  -- let integerLiteral' = integerValue' as integerLiteral
+  -- if integerLiteral' matches `% W %`
+  -- let _nat W i_r = integerLiteral'
+  -- let i = $bitacc_replace(i_b, i_h, i_l, i_r)
+
+  clause 1 : (value, value', value'', value''') = w S i as value
+  -- if value <: integerValue
+  -- let integerValue_b = value as integerValue
+  -- if value' <: integerValue
+  -- let integerValue_l = value' as integerValue
+  -- if value'' <: integerValue
+  -- let integerValue_w = value'' as integerValue
+  -- if value''' <: integerValue
+  -- let integerValue_r = value''' as integerValue
+  -- let integerValue = integerValue_b
+  -- if integerValue <: integerLiteral
+  -- let integerLiteral = integerValue as integerLiteral
+  -- if integerLiteral matches `% S %`
+  -- let w S i_b = integerLiteral
   -- let i_l = $int_of_integerValue(integerValue_l)
   -- let nat?{nat <- nat?} = $nat_of_integerValue(integerValue_w)
   -- if nat?{nat <- nat?} matches (_)
