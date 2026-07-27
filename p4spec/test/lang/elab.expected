@@ -11155,6 +11155,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableKeysProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableActionsProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty(tableProperty)*{tableProperty <- tableProperty*})| = 0)
+    -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (TBLC_0 = $empty_tableContext)
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- if (tablePropertyIR_default_action = `EMPTY ?() DEFAULT_ACTION `= `` "NoAction" ?() `( [] ) `; as tablePropertyIR)
@@ -11164,6 +11165,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableKeysProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableActionsProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
+    -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (TBLC_0 = $empty_tableContext)
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
 
@@ -13094,6 +13096,13 @@ def $is_tableDefaultActionProperty(tableProperty) : bool =
 
   clause 0 : (_annotationList _constOpt tableCustomName _initializer `;) = true
   -- if ("default_action" = $tableCustomName(tableCustomName))
+
+  clause -1 : (_tableProperty) = false
+
+def $is_tableLargestPriorityWinsProperty(tableProperty) : bool =
+
+  clause 0 : (_annotationList _constOpt tableCustomName _initializer `;) = true
+  -- if ("largest_priority_wins" = $tableCustomName(tableCustomName))
 
   clause -1 : (_tableProperty) = false
 
