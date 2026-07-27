@@ -10561,10 +10561,10 @@ xref:Block_ok[Typing ``annotationList`` ``+`{+`` ``blockElementStatementList`` `
 
 xref:Parameter_ok[Parameter_ok]:
 
-* Typing ``parameter``, under context ``TC`` at ``p``:
+* Typing ``parameter``, under context ``TC'``, with pre-list context ``TC`` at ``p``:
 * Result in context ``TC``, ``parameterIR``, and fresh type variables ``typeId^{asterisk}^``.
 
-xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under context ``TC~0~`` at ``p``]:
+xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under context ``TC~0~``, with pre-list context ``TC~pre~`` at ``p``]:
 
 . If ``initializerOpt`` matches pattern ``+`EMPTY+``:
  .. Let ``typeIR`` and fresh type variables ``typeId~fresh~^{asterisk}^`` be
@@ -10583,7 +10583,7 @@ xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``in
  .. Let ``B`` be xref:union_set[the union of the sets ``bound'`` and ``+`{+`` ``typeId~fresh~^{asterisk}^`` ``+}+``].
  .. If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B``]:
   ... Let ``typedExpressionIR~init~`` be
-  *** the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC~0~`` at ``p``].
+  *** the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC~pre~`` at ``p``].
   ... Let ``typeIR~init~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~init~``].
   ... If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] matches pattern ``+CTK+``:
    .... Let ``typedExpressionIR~init_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
@@ -10596,7 +10596,7 @@ xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``in
    .... Let ``typedExpressionIR~init_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
    .... Let ``nameIR`` be xref:name[the name of ``name``].
    .... Let ``value~init~`` be
-   **** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~init_cast~``, under context ``TC~0~`` at ``p``].
+   **** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~init_cast~``, under context ``TC~pre~`` at ``p``].
    .... Let ``parameterInitializerIR`` be ``+`=+`` ``+`VALUE+`` ``value~init~``.
    .... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
    .... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
@@ -10611,7 +10611,7 @@ xref:ParameterList_ok[Typing ``parameterList``, under context ``TC~0~`` at ``p``
 
 . Let ``parameter^{asterisk}^`` be xref:flatten_parameterList[``parameterList`` flattened].
 . Let context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of xref:Parameters_ok[typing ``parameter^{asterisk}^``, under context ``TC~0~`` at ``p``].
+* the result of xref:Parameters_ok[typing ``parameter^{asterisk}^``, under context ``TC~0~``, with pre-list context ``TC~0~`` at ``p``].
 . Result in context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
@@ -10623,7 +10623,7 @@ xref:ConstructorParameterListOpt_ok[Typing ``constructorParameterListOpt`` under
 
 . Let ``constructorParameter^{asterisk}^`` be xref:flatten_constructorParameterListOpt[``constructorParameterListOpt`` flattened].
 . Let context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of xref:Parameters_ok[typing ``constructorParameter^{asterisk}^``, under context ``TC~0~`` at ``+BLOCK+``].
+* the result of xref:Parameters_ok[typing ``constructorParameter^{asterisk}^``, under context ``TC~0~``, with pre-list context ``TC~0~`` at ``+BLOCK+``].
 . Result in context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:callableId_of_externMethodPrototype[Callable id of  ``externMethodPrototype``]
@@ -13073,18 +13073,18 @@ xref:is_concrete_extern_object''[$is_concrete_extern_object''(externMethodTypeDe
 
 xref:Parameters_ok[Parameters_ok]:
 
-* Typing ``parameter^{asterisk}^``, under context ``TC`` at ``p``:
+* Typing ``parameter^{asterisk}^``, under context ``TC'``, with pre-list context ``TC`` at ``p``:
 * Result in context ``TC``, ``parameterListIR``, and fresh type variables ``typeId^{asterisk}^``.
 
-xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC`` at ``p``]:
+xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC``, with pre-list context ``TC~pre~`` at ``p``]:
 
 . If ``parameter^{asterisk}^`` matches pattern ``[]``:
  .. Result in context ``TC``, ``·``, and fresh type variables ``·``.
 . Else:
  .. Let context ``TC~1~``, ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
- ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC`` at ``p``].
+ ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC``, with pre-list context ``TC~pre~`` at ``p``].
  .. Let context ``TC~2~``, ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
- ** the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC~1~`` at ``p``].
+ ** the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC~1~``, with pre-list context ``TC~pre~`` at ``p``].
  .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
  .. Result in context ``TC~2~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.

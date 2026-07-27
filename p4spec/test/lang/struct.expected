@@ -23513,7 +23513,7 @@ relation Block_ok: TC_0 |- (annotationList `{ blockElementStatementList }) : % %
 
     1. Result in: % |- % : TC_1 blockStatementIR
 
-relation Parameter_ok: p TC_0 |- (annotationList direction type name initializerOpt) : % % `# %
+relation Parameter_ok: p TC_pre TC_0 |- (annotationList direction type name initializerOpt) : % % `# %
 
 1. Case analysis on initializerOpt
 
@@ -23531,7 +23531,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
               1. (Let TC_1 be $add_parameter_t(p, TC_0, parameterIR))
 
-                1. Result in: % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
+                1. Result in: % % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
         1. Else Dangling#6870
 
@@ -23545,7 +23545,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
           1. If (Type_wf: B |- typeIR) holds, then
 
-            1. (Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init)
+            1. (Expr_ok: p TC_pre |- expression_init : typedExpressionIR_init)
 
               1. (Let typeIR_init be $type_of_typedExpressionIR(typedExpressionIR_init))
 
@@ -23567,7 +23567,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                                 1. (Let TC_1 be $add_parameter_t(p, TC_0, parameterIR))
 
-                                  1. Result in: % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
+                                  1. Result in: % % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
                       1. Else Dangling#6883
 
@@ -23581,7 +23581,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                           1. (Let nameIR be $name(name))
 
-                            1. (Expr_eval_lctk: p TC_0 |- typedExpressionIR_init_cast ~> value_init)
+                            1. (Expr_eval_lctk: p TC_pre |- typedExpressionIR_init_cast ~> value_init)
 
                               1. (Let parameterInitializerIR be ((`= `VALUE value_init) as parameterInitializerIR))
 
@@ -23589,7 +23589,7 @@ relation Parameter_ok: p TC_0 |- (annotationList direction type name initializer
 
                                   1. (Let TC_1 be $add_parameter_t(p, TC_0, parameterIR))
 
-                                    1. Result in: % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
+                                    1. Result in: % % % |- % : TC_1 parameterIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
                       1. Else Dangling#6891
 
@@ -23601,7 +23601,7 @@ relation ParameterList_ok: p TC_0 |- parameterList : % % `# %
 
 1. (Let (parameter)*{parameter <- parameter*} be $flatten_parameterList(parameterList))
 
-  1. (Parameters_ok: p TC_0 |- (parameter)*{parameter <- parameter*} : TC_1 parameterListIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*})
+  1. (Parameters_ok: p TC_0 TC_0 |- (parameter)*{parameter <- parameter*} : TC_1 parameterListIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*})
 
     1. Result in: % % |- % : TC_1 parameterListIR `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
@@ -23609,7 +23609,7 @@ relation ConstructorParameterListOpt_ok: TC_0 |- constructorParameterListOpt : %
 
 1. (Let (constructorParameter)*{constructorParameter <- constructorParameter*} be $flatten_constructorParameterListOpt(constructorParameterListOpt))
 
-  1. (Parameters_ok: (BLOCK) TC_0 |- (constructorParameter)*{constructorParameter <- constructorParameter*} : TC_1 (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*})
+  1. (Parameters_ok: (BLOCK) TC_0 TC_0 |- (constructorParameter)*{constructorParameter <- constructorParameter*} : TC_1 (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*})
 
     1. Result in: % |- % : TC_1 (constructorParameterIR)*{constructorParameterIR <- constructorParameterIR*} `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
@@ -27853,27 +27853,27 @@ def $is_concrete_extern_object''(externMethodTypeDefIR)
 
   1. Return false
 
-relation Parameters_ok: p TC |- (parameter)*{parameter <- parameter*} : % % `# %
+relation Parameters_ok: p TC_pre TC |- (parameter)*{parameter <- parameter*} : % % `# %
 
 1. Case analysis on (parameter)*{parameter <- parameter*}
 
   1. Case (% matches pattern [])
 
-    1. Result in: % % |- % : TC [] `# []
+    1. Result in: % % % |- % : TC [] `# []
 
   2. Case (% matches pattern _ :: _)
 
     1. (Let parameter_h :: (parameter_t)*{parameter_t <- parameter_t*} be (parameter)*{parameter <- parameter*})
 
-      1. (Parameter_ok: p TC |- parameter_h : TC_1 parameterIR_h `# (typeId_fresh_h)*{typeId_fresh_h <- typeId_fresh_h*})
+      1. (Parameter_ok: p TC_pre TC |- parameter_h : TC_1 parameterIR_h `# (typeId_fresh_h)*{typeId_fresh_h <- typeId_fresh_h*})
 
-        1. (Parameters_ok: p TC_1 |- (parameter_t)*{parameter_t <- parameter_t*} : TC_2 (parameterIR_t)*{parameterIR_t <- parameterIR_t*} `# (typeId_fresh_t)*{typeId_fresh_t <- typeId_fresh_t*})
+        1. (Parameters_ok: p TC_pre TC_1 |- (parameter_t)*{parameter_t <- parameter_t*} : TC_2 (parameterIR_t)*{parameterIR_t <- parameterIR_t*} `# (typeId_fresh_t)*{typeId_fresh_t <- typeId_fresh_t*})
 
           1. (Let (parameterIR)*{parameterIR <- parameterIR*} be parameterIR_h :: (parameterIR_t)*{parameterIR_t <- parameterIR_t*})
 
             1. (Let (typeId_fresh)*{typeId_fresh <- typeId_fresh*} be (typeId_fresh_h)*{typeId_fresh_h <- typeId_fresh_h*} ++ (typeId_fresh_t)*{typeId_fresh_t <- typeId_fresh_t*})
 
-              1. Result in: % % |- % : TC_2 (parameterIR)*{parameterIR <- parameterIR*} `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
+              1. Result in: % % % |- % : TC_2 (parameterIR)*{parameterIR <- parameterIR*} `# (typeId_fresh)*{typeId_fresh <- typeId_fresh*}
 
 relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
