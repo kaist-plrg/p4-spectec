@@ -2,6 +2,23 @@
 ;; Helpers
 ;;
 
+;;; Look up parameter values bound in the callee frame, in the order of
+;;; the given ids; an id absent from the frame (an omitted @optional
+;;; parameter) contributes no value, instead of getting stuck
+
+dec $find_boundValues(frame, id*) : value*
+
+def $find_boundValues(_, eps) = eps
+
+def $find_boundValues(frame, id_h :: id_t*)
+  = value_h :: value_t*
+  -- if value_h = $find_map<id, value>(frame, id_h)
+  -- if value_t* = $find_boundValues(frame, id_t*)
+
+def $find_boundValues(frame, id_h :: id_t*)
+  = $find_boundValues(frame, id_t*)
+  -- if eps = $find_map<id, value>(frame, id_h)
+
 ;;
 ;; Argument binding
 ;;
@@ -126,9 +143,10 @@ rule Constructor_call/externConstructorDef:
       IC_callee_3 |- externMethodPrototypeIR* : IC_callee_4
   ---- ;; create an extern object with the final callee context
   -- if `{ (callableId `: externMethodDef)* } = IC_callee_4.BLOCK.CALLABLE
-  ---- ;; initialize extern state
+  ---- ;; initialize extern state, in declaration order; an omitted
+  ---- ;; @optional parameter has no callee-frame binding and is skipped
   -- if (_ _ _ id_cparam _ = constructorParameterIR)*
-  -- if (value_cparam = $find_map<id, value>(IC_callee_4.BLOCK.FRAME, id_cparam))*
+  -- if value_cparam* = $find_boundValues(IC_callee_4.BLOCK.FRAME, id_cparam*)
   -- if objectState = $init_objectState(nameIR, typeArgumentIR*, value_cparam*)
   ---- ;; create extern object
   -- if theta_extern = IC_callee_4.BLOCK.TYPE

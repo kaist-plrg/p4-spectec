@@ -16163,21 +16163,7 @@ for each ``callableDef`` in ``callableDef^{asterisk}^``.
 --
 +
 for each ``constructorParameterIR`` in ``constructorParameterIR^{asterisk}^``.
-. Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``value^?^`` be xref:find_map[the value of ``id~cparam~`` in map ``IC~callee_4~.+BLOCK+.+FRAME+``].
---
-+
-for each ``id~cparam~`` in ``id~cparam~^{asterisk}^``.
-. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
-. Let ``value~cparam~^{asterisk}^`` be the list obtained by repeating:
-+
---
- ** Let ``value~cparam~`` be ``value^?^``.
---
-+
-for each ``value^?^`` in ``value^?^^{asterisk}^``.
+. Let ``value~cparam~^{asterisk}^`` be ``xref:find_boundValues[$find_boundValues(IC~callee_4~.+BLOCK+.+FRAME+,`` ``id~cparam~^{asterisk}^)]``.
 . Let ``objectState`` be xref:init_objectState[initialization of ``nameIR````+`<+`` ``typeArgumentIR^{asterisk}^`` ``+>+````+`(+`` ``value~cparam~^{asterisk}^`` ``+)+`` in the target].
 . Let ``theta~extern~`` be ``IC~callee_4~.+BLOCK+.+TYPE+``.
 . Let ``frame~extern~`` be ``IC~callee_4~.+BLOCK+.+FRAME+``.
@@ -16411,6 +16397,20 @@ xref:init_tableEntries[$init_tableEntries(tablePropertyIR^{asterisk}^)]
  .. {empty}+++<span class="bk-arm-anchor" id="bk-init_tableEntries-1-b"></span>+++
   ... Check that xref:filter_[``tablePropertyIR^{asterisk}^`` filtered by ``(`` ``tablePropertyIR`` ``has`` ``type`` ``tableEntriesPropertyIR`` ``)^{asterisk}^``] is an empty list.+++<sub class="bk-mark">[<a href="#bk-init_tableEntries-1">fail #1</a>]</sub>+++
   ... Return ``+`EMPTY+`` ``·`` ``+ENTRIES+`` ``+`=+`` ``+`{+`` ``·`` ``+}+``.
+
+xref:find_boundValues[$find_boundValues(frame, id^{asterisk}^)]
+
+. If ``id^{asterisk}^`` matches pattern ``[]``:
+ .. Return ``·``.
+. Else:
+ .. Try pass:[<strong id="bk-find_boundValues-1" class="bk-label">#1</strong>]:
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-find_boundValues-1-i"></span>+++
+   .... Let ``value~h~`` be xref:option_get[*!*] xref:find_map[the value of ``id~h~`` in map ``frame``].+++<sub class="bk-mark">[<a href="#bk-find_boundValues-1-ii">else #1-ii</a>]</sub>+++
+   .... Let ``value~t~^{asterisk}^`` be ``xref:find_boundValues[$find_boundValues(frame,`` ``id~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-find_boundValues-1-ii">else #1-ii</a>]</sub>+++
+   .... Return ``value~h~`` ``{two-colons}`` ``value~t~^{asterisk}^``.
+  ... {empty}+++<span class="bk-arm-anchor" id="bk-find_boundValues-1-ii"></span>+++
+   .... Check that xref:find_map[the value of ``id~h~`` in map ``frame``] is none.+++<sub class="bk-mark">[<a href="#bk-find_boundValues-1">fail #1</a>]</sub>+++
+   .... Return ``xref:find_boundValues[$find_boundValues(frame,`` ``id~t~^{asterisk}^)]``.
 
 xref:enter_e[``EC`` with a new local frame]
 
