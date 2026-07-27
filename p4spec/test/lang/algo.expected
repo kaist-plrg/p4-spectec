@@ -6939,6 +6939,66 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- if (|typeIR_field*{typeIR_field <- typeIR_field*}| = |value*{value <- value*}|)
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
+  clause 6 : (typeIR', sequenceValue) = TUPLE `( value_cast*{value_cast <- value_cast*} ) as value
+  -- if typeIR' <: tupleTypeIR
+  -- let TUPLE `< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} `, `... ) = sequenceValue
+  -- let (typeIR_given*{typeIR_given <- typeIR_given*}, typeIR_rest*{typeIR_rest <- typeIR_rest*}) = $partition_<typeIR>(typeIR*{typeIR <- typeIR*}, |value*{value <- value*}|)
+  -- if (|typeIR_given*{typeIR_given <- typeIR_given*}| = |value*{value <- value*}|)
+  -- (let value_given = $cast_op(typeIR_given, value))*{typeIR_given <- typeIR_given*, value <- value*, value_given -> value_given*}
+  -- (let value_rest = $default(typeIR_rest))*{typeIR_rest <- typeIR_rest*, value_rest -> value_rest*}
+  -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
+
+  clause 7 : (typeIR', sequenceValue) = ARRAY `[ value_cast*{value_cast <- value_cast*} ] as value
+  -- if typeIR' <: arrayTypeIR
+  -- let ARRAY typeIR `[ n_size ] = typeIR' as arrayTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} `, `... ) = sequenceValue
+  -- (let value_given = $cast_op(typeIR, value))*{value <- value*, value_given -> value_given*}
+  -- let i = (n_size - |value*{value <- value*}|)
+  -- if i <: nat
+  -- let n_rest = i as nat
+  -- let value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest)
+  -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
+
+  clause 8 : (typeIR', sequenceValue) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx ) ] as value
+  -- if typeIR' <: headerStackTypeIR
+  -- let HEADER_STACK typeIR `[ n_size ] = typeIR' as headerStackTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} `, `... ) = sequenceValue
+  -- (let value_given = $cast_op(typeIR, value))*{value <- value*, value_given -> value_given*}
+  -- let i = (n_size - |value*{value <- value*}|)
+  -- if i <: nat
+  -- let n_rest = i as nat
+  -- let value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest)
+  -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
+  -- let n_idx = |value*{value <- value*}|
+
+  clause 9 : (typeIR, sequenceValue) = STRUCT typeId `{ value_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  -- if typeIR <: structTypeIR
+  -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_field nameIR_field `;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as structTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} `, `... ) = sequenceValue
+  -- let (typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|)
+  -- if (|typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}| = |value*{value <- value*}|)
+  -- (let value_given = $cast_op(typeIR_field_given, value))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given -> value_given*}
+  -- (let value_rest = $default(typeIR_field_rest))*{typeIR_field_rest <- typeIR_field_rest*, value_rest -> value_rest*}
+  -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
+  -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_cast*{value_cast <- value_cast*}|)
+
+  clause 10 : (typeIR, sequenceValue) = HEADER typeId `{ true `; value_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  -- if typeIR <: headerTypeIR
+  -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_field nameIR_field `;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } = typeIR as headerTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} `, `... ) = sequenceValue
+  -- let (typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|)
+  -- if (|typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}| = |value*{value <- value*}|)
+  -- (let value_given = $cast_op(typeIR_field_given, value))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given -> value_given*}
+  -- (let value_rest = $default(typeIR_field_rest))*{typeIR_field_rest <- typeIR_field_rest*, value_rest -> value_rest*}
+  -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
+  -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_cast*{value_cast <- value_cast*}|)
+
 def $cast_record(typeIR, recordValue) : value =
 
   clause 0 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
@@ -6962,6 +7022,30 @@ def $cast_record(typeIR, recordValue) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
   -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field_cast*{value_field_cast <- value_field_cast*}|)
+
+  clause 2 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: structTypeIR
+  -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
+  -- if recordValue matches `RECORD {% , ...}`
+  -- let RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} `, `... } = recordValue
+  -- (let value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field `: value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast -> value_field_cast*}
+
+  clause 3 : (typeIR, recordValue) = HEADER typeId `{ true `; value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- if typeIR <: headerTypeIR
+  -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
+  -- if recordValue matches `RECORD {% , ...}`
+  -- let RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} `, `... } = recordValue
+  -- (let value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field `: value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast -> value_field_cast*}
+
+def $cast_record_field(typeIR, id, map<id, value>) : value =
+
+  clause 0 : (typeIR, id, `{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }) = $cast_op(typeIR, value_found)
+  -- let value?{value <- value?} = $find_map<id, value>(`{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }, id)
+  -- if value?{value <- value?} matches (_)
+  -- let ?(value_found) = value?{value <- value?}
+
+  clause 1 : (typeIR, id, `{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }) = $default(typeIR)
+  -- if (?() = $find_map<id, value>(`{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }, id))
 
 def $cast_default(typeIR, defaultValue) : value =
 

@@ -770,10 +770,50 @@ def $cast_sequence(
   = STRUCT typeId `{ (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
 def $cast_sequence(
-    HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* }, 
+    HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* },
     SEQ `( value* ))
   = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
   -- if (value_cast = $cast_op(typeIR_field, value))*
+
+;; Cast from sequence, default-filling the trailing fields left unlisted by `...`
+
+def $cast_sequence(TUPLE `< typeIR* >, SEQ `( value* `, `... ))
+  = TUPLE `( value_cast* )
+  -- if (typeIR_given*, typeIR_rest*) = $partition_<typeIR>(typeIR*, |value*|)
+  -- if (value_given = $cast_op(typeIR_given, value))*
+  -- if (value_rest = $default(typeIR_rest))*
+  -- if value_cast* = value_given* ++ value_rest*
+def $cast_sequence(ARRAY typeIR `[ n_size ], SEQ `( value* `, `... ))
+  = ARRAY `[ value_cast* ]
+  -- if (value_given = $cast_op(typeIR, value))*
+  -- if n_rest = $(n_size - |value*|)
+  -- if value_rest* = $repeat_<value>($default(typeIR), n_rest)
+  -- if value_cast* = value_given* ++ value_rest*
+def $cast_sequence(HEADER_STACK typeIR `[ n_size ], SEQ `( value* `, `... ))
+  = HEADER_STACK `[ value_cast* `( n_idx ) ]
+  -- if (value_given = $cast_op(typeIR, value))*
+  -- if n_rest = $(n_size - |value*|)
+  -- if value_rest* = $repeat_<value>($default(typeIR), n_rest)
+  -- if value_cast* = value_given* ++ value_rest*
+  -- if n_idx = |value*|
+def $cast_sequence(
+    STRUCT typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* },
+    SEQ `( value* `, `... ))
+  = STRUCT typeId `{ (value_cast nameIR_field `;)* }
+  -- if (typeIR_field_given*, typeIR_field_rest*)
+      = $partition_<typeIR>(typeIR_field*, |value*|)
+  -- if (value_given = $cast_op(typeIR_field_given, value))*
+  -- if (value_rest = $default(typeIR_field_rest))*
+  -- if value_cast* = value_given* ++ value_rest*
+def $cast_sequence(
+    HEADER typeId `< _ > `{ (_ typeIR_field nameIR_field `;)* },
+    SEQ `( value* `, `... ))
+  = HEADER typeId `{ true `; (value_cast nameIR_field `;)* }
+  -- if (typeIR_field_given*, typeIR_field_rest*)
+      = $partition_<typeIR>(typeIR_field*, |value*|)
+  -- if (value_given = $cast_op(typeIR_field_given, value))*
+  -- if (value_rest = $default(typeIR_field_rest))*
+  -- if value_cast* = value_given* ++ value_rest*
 
 def $cast_op(typeIR, sequenceValue) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -799,6 +839,34 @@ def $cast_record(
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
+
+;; Cast from record, default-filling the fields left unlisted by `...`
+
+dec $cast_record_field(typeIR, id, map<id, value>) : value
+  hint(testgen_ignore)
+
+def $cast_record_field(typeIR, id, `{ (id_field `: value_field)* })
+  = $cast_op(typeIR, value_found)
+  -- if value_found
+      = $find_map<id, value>(`{ (id_field `: value_field)* }, id)
+def $cast_record_field(typeIR, id, `{ (id_field `: value_field)* })
+  = $default(typeIR)
+  -- if eps = $find_map<id, value>(`{ (id_field `: value_field)* }, id)
+
+def $cast_record(
+    STRUCT typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
+    RECORD `{ (value_field nameIR_field `;)* `, `... })
+  = STRUCT typeId `{ (value_field_cast id_t_field `;)* }
+  -- if (value_field_cast
+      = $cast_record_field(typeIR_t_field, id_t_field,
+          `{ (nameIR_field `: value_field)* }))*
+def $cast_record(
+    HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
+    RECORD `{ (value_field nameIR_field `;)* `, `... })
+  = HEADER typeId `{ true `; (value_field_cast id_t_field `;)* }
+  -- if (value_field_cast
+      = $cast_record_field(typeIR_t_field, id_t_field,
+          `{ (nameIR_field `: value_field)* }))*
 
 def $cast_op(typeIR, recordValue) = $cast_record(typeIR_unroll, recordValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)

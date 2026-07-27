@@ -4607,6 +4607,37 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   clause 5 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_field nameIR_field `;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ `( value*{value <- value*} )) = HEADER typeId `{ true `; value_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
   -- (if (value_cast = $cast_op(typeIR_field, value)))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
+  clause 6 : (TUPLE `< typeIR*{typeIR <- typeIR*} > as typeIR, SEQ `( value*{value <- value*} `, `... )) = TUPLE `( value_cast*{value_cast <- value_cast*} ) as value
+  -- if ((typeIR_given*{typeIR_given <- typeIR_given*}, typeIR_rest*{typeIR_rest <- typeIR_rest*}) = $partition_<typeIR>(typeIR*{typeIR <- typeIR*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_given, value)))*{typeIR_given <- typeIR_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_rest)))*{typeIR_rest <- typeIR_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 7 : (ARRAY typeIR `[ n_size ] as typeIR, SEQ `( value*{value <- value*} `, `... )) = ARRAY `[ value_cast*{value_cast <- value_cast*} ] as value
+  -- (if (value_given = $cast_op(typeIR, value)))*{value <- value*, value_given <- value_given*}
+  -- if (n_rest as int = (n_size - |value*{value <- value*}|))
+  -- if (value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest))
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 8 : (HEADER_STACK typeIR `[ n_size ] as typeIR, SEQ `( value*{value <- value*} `, `... )) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx ) ] as value
+  -- (if (value_given = $cast_op(typeIR, value)))*{value <- value*, value_given <- value_given*}
+  -- if (n_rest as int = (n_size - |value*{value <- value*}|))
+  -- if (value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest))
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+  -- if (n_idx = |value*{value <- value*}|)
+
+  clause 9 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_field nameIR_field `;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ `( value*{value <- value*} `, `... )) = STRUCT typeId `{ value_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  -- if ((typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_field_given, value)))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_field_rest)))*{typeIR_field_rest <- typeIR_field_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 10 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_field nameIR_field `;*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} } as typeIR, SEQ `( value*{value <- value*} `, `... )) = HEADER typeId `{ true `; value_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} } as value
+  -- if ((typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_field_given, value)))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_field_rest)))*{typeIR_field_rest <- typeIR_field_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
 def $cast_record(typeIR, recordValue) : value =
 
   clause 0 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } as typeIR, RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }) = STRUCT typeId `{ value_field_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
@@ -4616,6 +4647,20 @@ def $cast_record(typeIR, recordValue) : value =
   clause 1 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } as typeIR, RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} }) = HEADER typeId `{ true `; value_field_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
   -- (if (?(value_field') = $find_map<id, value>(`{ nameIR_field `: value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} }, id_t_field)))*{id_t_field <- id_t_field*, value_field' <- value_field'*}
   -- (if (value_field_cast = $cast_op(typeIR_t_field, value_field')))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast <- value_field_cast*}
+
+  clause 2 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } as typeIR, RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} `, `... }) = STRUCT typeId `{ value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- (if (value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field `: value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} })))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast <- value_field_cast*}
+
+  clause 3 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } as typeIR, RECORD `{ value_field nameIR_field `;*{nameIR_field <- nameIR_field*, value_field <- value_field*} `, `... }) = HEADER typeId `{ true `; value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
+  -- (if (value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field `: value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} })))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast <- value_field_cast*}
+
+def $cast_record_field(typeIR, id, map<id, value>) : value =
+
+  clause 0 : (typeIR, id, `{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }) = $cast_op(typeIR, value_found)
+  -- if (?(value_found) = $find_map<id, value>(`{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }, id))
+
+  clause 1 : (typeIR, id, `{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }) = $default(typeIR)
+  -- if (?() = $find_map<id, value>(`{ id_field `: value_field*{id_field <- id_field*, value_field <- value_field*} }, id))
 
 def $cast_default(typeIR, defaultValue) : value =
 

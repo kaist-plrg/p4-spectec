@@ -3594,114 +3594,230 @@ xref:cast_sequence[``sequenceValue`` casted to type ``typeIR'``]
 for each ``value`` in ``value^{asterisk}^``.
  .. Return ``+LIST+`` ``+`[+`` ``value'^{asterisk}^`` ``+]+``.
 . Else if let ``+TUPLE+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+>+`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
- .. Let ``value''^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value''`` be xref:cast_op[``value`` casted to type ``typeIR``].
+   **** Let ``value''`` be xref:cast_op[``value`` casted to type ``typeIR``].
 --
 +
 for each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
- .. Return ``+TUPLE+`` ``+`(+`` ``value''^{asterisk}^`` ``+)+``.
+  ... Return ``+TUPLE+`` ``+`(+`` ``value''^{asterisk}^`` ``+)+``.
+ .. Else:
+  ... Let ``(`` ``typeIR~given~^{asterisk}^,`` ``typeIR~rest~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR^{asterisk}^,`` ``the`` ``length`` ``of`` ``value^{asterisk}^)]``.
+  ... Check that the length of ``typeIR~given~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value~given~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~given~`` be xref:cast_op[``value`` casted to type ``typeIR~given~``].
+--
++
+for each ``typeIR~given~`` in ``typeIR~given~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
+  ... Let ``value~rest~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~rest~`` be xref:default[the default value for type ``typeIR~rest~``].
+--
++
+for each ``typeIR~rest~`` in ``typeIR~rest~^{asterisk}^``.
+  ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
+  ... Return ``+TUPLE+`` ``+`(+`` ``value~cast~^{asterisk}^`` ``+)+``.
 . Else if let ``+ARRAY+`` ``typeIR`` ``+`[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR``].
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR``].
 --
 +
 for each ``value`` in ``value^{asterisk}^``.
- .. Return ``+ARRAY+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+]+``.
+  ... Return ``+ARRAY+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+]+``.
+ .. Else:
+  ... Let ``value~given~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~given~`` be xref:cast_op[``value`` casted to type ``typeIR``].
+--
++
+for each ``value`` in ``value^{asterisk}^``.
+  ... Let ``i`` be ``n~size~`` ``-`` ``the`` ``length`` ``of`` ``value^{asterisk}^``.
+  ... Let!~type~ ``n~rest~`` be ``i``.
+  ... Let ``value'''`` be xref:default[the default value for type ``typeIR``].
+  ... Let ``value~rest~^{asterisk}^`` be xref:repeat_[a list of ``n~rest~`` copies of ``value'''``].
+  ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
+  ... Return ``+ARRAY+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+]+``.
 . Else if let ``+HEADER_STACK+`` ``typeIR`` ``+`[+`` ``n~size~`` ``+]+`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR``].
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR``].
 --
 +
 for each ``value`` in ``value^{asterisk}^``.
- .. Let ``n~idx~`` be the length of ``value^{asterisk}^``.
- .. Return ``+HEADER_STACK+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+``.
+  ... Let ``n~idx~`` be the length of ``value^{asterisk}^``.
+  ... Return ``+HEADER_STACK+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+``.
+ .. Else:
+  ... Let ``value~given~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~given~`` be xref:cast_op[``value`` casted to type ``typeIR``].
+--
++
+for each ``value`` in ``value^{asterisk}^``.
+  ... Let ``i`` be ``n~size~`` ``-`` ``the`` ``length`` ``of`` ``value^{asterisk}^``.
+  ... Let!~type~ ``n~rest~`` be ``i``.
+  ... Let ``value''''`` be xref:default[the default value for type ``typeIR``].
+  ... Let ``value~rest~^{asterisk}^`` be xref:repeat_[a list of ``n~rest~`` copies of ``value''''``].
+  ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
+  ... Let ``n~idx~`` be the length of ``value^{asterisk}^``.
+  ... Return ``+HEADER_STACK+`` ``+`[+`` ``value~cast~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+)+`` ``+]+``.
 . Else if let ``+STRUCT+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
- .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~field~``].
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~field~``].
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
- .. Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``(`` ``typeIR~field_given~^{asterisk}^,`` ``typeIR~field_rest~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field~^{asterisk}^,`` ``the`` ``length`` ``of`` ``value^{asterisk}^)]``.
+  ... Check that the length of ``typeIR~field_given~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value~given~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~given~`` be xref:cast_op[``value`` casted to type ``typeIR~field_given~``].
+--
++
+for each ``typeIR~field_given~`` in ``typeIR~field_given~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
+  ... Let ``value~rest~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~rest~`` be xref:default[the default value for type ``typeIR~field_rest~``].
+--
++
+for each ``typeIR~field_rest~`` in ``typeIR~field_rest~^{asterisk}^``.
+  ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~cast~^{asterisk}^``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``.
- .. Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
- .. Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+)+`` be ``sequenceValue``:
+  ... Check that the length of ``typeIR~field~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~field~``].
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~field~``].
 --
 +
 for each ``typeIR~field~`` in ``typeIR~field~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
- .. Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``(`` ``typeIR~field_given~^{asterisk}^,`` ``typeIR~field_rest~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field~^{asterisk}^,`` ``the`` ``length`` ``of`` ``value^{asterisk}^)]``.
+  ... Check that the length of ``typeIR~field_given~^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... Let ``value~given~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~given~`` be xref:cast_op[``value`` casted to type ``typeIR~field_given~``].
+--
++
+for each ``typeIR~field_given~`` in ``typeIR~field_given~^{asterisk}^`` and ``value`` in ``value^{asterisk}^``.
+  ... Let ``value~rest~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~rest~`` be xref:default[the default value for type ``typeIR~field_rest~``].
+--
++
+for each ``typeIR~field_rest~`` in ``typeIR~field_rest~^{asterisk}^``.
+  ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~cast~^{asterisk}^``.
+  ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
 
 xref:cast_record[``recordValue`` casted to type ``typeIR``]
 
 . If let ``+STRUCT+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Let!~type~ ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
- .. Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be ``xref:cast_record_field[$cast_record_field(typeIR~t_field~,`` ``id~t_field~,`` ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+)]``.
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``.
+  ... Return ``+STRUCT+`` ``typeId`` ``+`{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
 . Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``++_++^{asterisk}^`` ``+>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``typeIR``:
- .. Let!~type~ ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``.
- .. Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
+ .. If let ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+`` be ``recordValue``:
+  ... Let ``value^?^^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].
 --
 +
 for each ``id~t_field~`` in ``id~t_field~^{asterisk}^``.
- .. Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... Let ``value~field'~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field'~`` be ``value^?^``.
+   **** Let ``value~field'~`` be ``value^?^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``.
- .. Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
 --
 +
 for each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``.
- .. Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
- .. Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+  ... Check that the length of ``nameIR~field~^{asterisk}^`` is equal to the length of ``value~field_cast~^{asterisk}^``.
+  ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~field_cast~`` ``nameIR~field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+ .. Else:
+  ... Let ``value~field_cast~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~field_cast~`` be ``xref:cast_record_field[$cast_record_field(typeIR~t_field~,`` ``id~t_field~,`` ``+`{+`` ``(`` ``nameIR~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+)]``.
+--
++
+for each ``id~t_field~`` in ``id~t_field~^{asterisk}^`` and ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^``.
+  ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+`;+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+`;+`` ``)^{asterisk}^`` ``+}+``.
+
+xref:cast_record_field[$cast_record_field(typeIR, id, +`{+ ( id~field~ +`:+ value~field~ )^{asterisk}^ +}+)]
+
+. Try pass:[<strong id="bk-cast_record_field-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_record_field-1-a"></span>+++
+  ... Let ``value~found~`` be xref:option_get[*!*] xref:find_map[the value of ``id`` in map ``+`{+`` ``(`` ``id~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``].+++<sub class="bk-mark">[<a href="#bk-cast_record_field-1-b">else #1-b</a>]</sub>+++
+  ... Return xref:cast_op[``value~found~`` casted to type ``typeIR``].
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-cast_record_field-1-b"></span>+++
+  ... Check that xref:find_map[the value of ``id`` in map ``+`{+`` ``(`` ``id~field~`` ``+`:+`` ``value~field~`` ``)^{asterisk}^`` ``+}+``] is none.+++<sub class="bk-mark">[<a href="#bk-cast_record_field-1">fail #1</a>]</sub>+++
+  ... Return xref:default[the default value for type ``typeIR``].
 
 xref:cast_default[``defaultValue`` casted to type ``typeIR``]
 
