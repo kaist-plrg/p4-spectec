@@ -829,7 +829,7 @@ dec $cast_record(typeIR, recordValue) : value
 def $cast_record(
     STRUCT typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
     RECORD `{ (value_field nameIR_field `;)* })
-  = STRUCT typeId `{ (value_field_cast nameIR_field `;)* }
+  = STRUCT typeId `{ (value_field_cast id_t_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
@@ -837,7 +837,7 @@ def $cast_record(
 def $cast_record(
     HEADER typeId `< _ > `{ (_ typeIR_t_field id_t_field `;)* },
     RECORD `{ (value_field nameIR_field `;)* })
-  = HEADER typeId `{ true `; (value_field_cast nameIR_field `;)* }
+  = HEADER typeId `{ true `; (value_field_cast id_t_field `;)* }
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field `: value_field)* }, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*

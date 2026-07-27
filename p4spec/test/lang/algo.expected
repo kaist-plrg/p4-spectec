@@ -7010,7 +7010,7 @@ def $cast_sequence(typeIR, sequenceValue) : value =
 
 def $cast_record(typeIR, recordValue) : value =
 
-  clause 0 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
+  clause 0 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: structTypeIR
   -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as structTypeIR
   -- if recordValue matches `RECORD {%}`
@@ -7019,9 +7019,8 @@ def $cast_record(typeIR, recordValue) : value =
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
-  -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field_cast*{value_field_cast <- value_field_cast*}|)
 
-  clause 1 : (typeIR, recordValue) = HEADER typeId `{ true `; value_field_cast nameIR_field `;*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} } as value
+  clause 1 : (typeIR, recordValue) = HEADER typeId `{ true `; value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: headerTypeIR
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR_t_field id_t_field `;*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} } = typeIR as headerTypeIR
   -- if recordValue matches `RECORD {%}`
@@ -7030,7 +7029,6 @@ def $cast_record(typeIR, recordValue) : value =
   -- (if value?{value <- value?} matches (_))*{value? <- value?*}
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
-  -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_field_cast*{value_field_cast <- value_field_cast*}|)
 
   clause 2 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast id_t_field `;*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} } as value
   -- if typeIR <: structTypeIR
