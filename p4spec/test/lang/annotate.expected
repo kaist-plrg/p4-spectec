@@ -17535,8 +17535,15 @@ xref:Stmt_eval[Runtime evaluation of ``forStatementIR``, under context ``EC`` an
   ... Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC`` from the ``+LOCAL+`` layer].
   ... Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].
   ... Let ``EC~3~`` be xref:add_var_e[``EC~2~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].
+  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
++
+--
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~subst~``].
+--
++
+for each ``value`` in ``value^{asterisk}^``.
   ... Let the updated evaluation context ``EC~4~``, state ``ARCH~2~``, and ``statementResult`` be
-  *** the result of xref:ForInStmt_eval[looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~3~`` and state ``ARCH~1~``].
+  *** the result of xref:ForInStmt_eval[looping over ``value~cast~^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~3~`` and state ``ARCH~1~``].
   ... Let ``EC~5~`` be xref:exit_e[``EC~4~`` with the innermost frame removed].
   ... Result in context ``EC~5~``, state ``ARCH~2~``, and ``statementResult``.
 . Else if let ``annotationList`` ``+FOR+`` ``+`(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR`` be ``forStatementIR``:

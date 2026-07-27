@@ -703,9 +703,11 @@ rulegroup Stmt_eval/forStatementIR-in {
     -- if typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
     -- if value_init = $default(typeIR_subst)
     -- if EC_3 = $add_var_e(LOCAL, EC_2, `` nameIR, value_init)
+    ---- ;; cast each element to the iterator type, as typing proved
+    -- if (value_cast = $cast_op(typeIR_subst, value))*
     ---- ;; evaluate loop
     -- ForInStmt_eval:
-        EC_3 ARCH_1 |- nameIR value* statementIR
+        EC_3 ARCH_1 |- nameIR value_cast* statementIR
                      : EC_4 ARCH_2 statementResult
     -- if EC_5 = $exit_e(EC_4)
 
