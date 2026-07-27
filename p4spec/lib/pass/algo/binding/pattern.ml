@@ -111,3 +111,25 @@ let find_missing (pattern_sets_total : PatternSets.t)
         (fun pattern_sets_total -> subtract pattern_sets_total pattern_sets)
         pattern_sets_total)
     [ pattern_sets_total ] pattern_sets_group
+
+(* Row refinement: meet of column partitions
+
+     $compat_table_exact_optional_key = | integerTypeIR => true | ...
+     $compat_table_lpm_ternary_range_key = | BIT `< _ > => true | ...
+
+
+   refine_rows splits the shared integerTypeIR row into
+
+     BIT `< _ >  and  INT | INT `< _ > | VARBIT `< _ > *)
+
+let refine_rows ~(total : PatternSet.t) (columns : PatternSet.t list list) :
+    PatternSet.t list =
+  let split_by (rows : PatternSet.t list) (pat : PatternSet.t) :
+      PatternSet.t list =
+    List.concat_map
+      (fun row ->
+        [ PatternSet.inter row pat; PatternSet.diff row pat ]
+        |> List.filter (fun s -> not (PatternSet.is_empty s)))
+      rows
+  in
+  List.fold_left (List.fold_left split_by) [ total ] columns
