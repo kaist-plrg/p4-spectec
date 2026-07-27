@@ -19171,9 +19171,9 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let nameIR = $name(name)
     -- let typedefTypeIR = TYPEDEF nameIR typeIR
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- let TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR)
+    -- let TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR)
     -- let typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR `;
-    -- output: % |- % : TC_1 typedefDeclarationIR as declarationIR
+    -- output: % |- % : TC_2 typedefDeclarationIR as declarationIR
 
     rulepath derivedTypeDeclaration-poly
     -- let typedef' = typedef
@@ -19194,9 +19194,9 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- let typeIR = $specialize_typeDefIR(typeDefIR, [])
     -- let typedefTypeIR = TYPEDEF nameIR typeIR
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- let TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR)
+    -- let TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR)
     -- let typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR `;
-    -- output: % |- % : TC_1 typedefDeclarationIR as declarationIR
+    -- output: % |- % : TC_2 typedefDeclarationIR as declarationIR
 
   rulegroup typedefDeclaration-newtype
 
@@ -25604,7 +25604,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- let typeIR = $typeIR_of_typeDefIR(typeDefIR)
     -- let aliasTypeDefIR = TYPEDEF nameIR typeIR as aliasTypeIR
-    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR as typeDefIR)
+    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, aliasTypeDefIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
     rulepath derivedTypeDeclaration-poly
@@ -25622,7 +25622,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- if (([], []) = $typeParameterListIR_of_typeDefIR(typeDefIR))
     -- let typeIR = $specialize_typeDefIR(typeDefIR, [])
     -- let typedefTypeIR = TYPEDEF nameIR typeIR
-    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, typedefTypeIR as typeDefIR)
+    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, typedefTypeIR as typeDefIR)
     -- output: % % |- % : IC_1 STO
 
   rulegroup typedefDeclarationIR-newtype

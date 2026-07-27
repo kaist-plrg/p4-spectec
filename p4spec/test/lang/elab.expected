@@ -11517,7 +11517,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_typedef))
     -- if (typedefDeclarationIR = annotationList TYPEDEF typeIR as typedefIR nameIR `;)
 
-    rule derivedTypeDeclaration-mono: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name `; as declaration : TC_1 typedefDeclarationIR as declarationIR
+    rule derivedTypeDeclaration-mono: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name `; as declaration : TC_2 typedefDeclarationIR as declarationIR
     -- Decl_ok: TC_0 |- derivedTypeDeclaration as declaration : TC_1 derivedTypeDeclarationIR as declarationIR
     -- if (`{ [typeId] } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(TC_0.GLOBAL.TYPE)))
     -- if (?(typeDefIR) = $find_typeDef_t(GLOBAL, TC_1, `` typeId))
@@ -11526,10 +11526,10 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (nameIR = $name(name))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR))
     -- if (typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR `;)
 
-    rule derivedTypeDeclaration-poly: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name `; as declaration : TC_1 typedefDeclarationIR as declarationIR
+    rule derivedTypeDeclaration-poly: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name `; as declaration : TC_2 typedefDeclarationIR as declarationIR
     -- Decl_ok: TC_0 |- derivedTypeDeclaration as declaration : TC_1 derivedTypeDeclarationIR as declarationIR
     -- if (`{ [typeId] } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(TC_0.GLOBAL.TYPE)))
     -- if (?(typeDefIR) = $find_typeDef_t(GLOBAL, TC_1, `` typeId))
@@ -11539,7 +11539,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (typeIR = $specialize_typeDefIR(typeDefIR, []))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR))
     -- if (typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR `;)
 
   rulegroup typedefDeclaration-newtype
@@ -14722,7 +14722,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if (typeIR = $typeIR_of_typeDefIR(typeDefIR))
     -- if (aliasTypeDefIR = TYPEDEF nameIR typeIR as aliasTypeIR)
-    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR as typeDefIR))
+    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, aliasTypeDefIR as typeDefIR))
 
     rule derivedTypeDeclaration-poly: IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR `; as declarationIR : IC_1 STO
     -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_local _STO
@@ -14732,7 +14732,7 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- if (([], []) = $typeParameterListIR_of_typeDefIR(typeDefIR))
     -- if (typeIR = $specialize_typeDefIR(typeDefIR, []))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
-    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, typedefTypeIR as typeDefIR))
 
   rulegroup typedefDeclarationIR-newtype
 
