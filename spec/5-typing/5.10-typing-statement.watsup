@@ -430,7 +430,9 @@ rule Stmt_ok/forStatement-three-clause:
       LOCAL TC_3 |- statement : TC_4 statementIR
   ---- ;; exit scope
   -- if TC_5 = $exit_t(TC_4)
-  -- if TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
+  ---- ;; a loop body may run zero times; it cannot guarantee a return
+  -- if TC_5' = $set_control_t(TC_5, TC_2.CONTROL)
+  -- if TC_6 = $set_loop_t(TC_5', TC_3.LOOP)
   ---- ;; create IR
   -- if forStatementIR
       = annotationList FOR `( forInitStatementIR* `; typedExpressionIR `;
@@ -534,7 +536,9 @@ rulegroup Stmt_ok/forStatement-in {
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     ---- ;; exit scope
     -- if TC_5 = $exit_t(TC_4)
-    -- if TC_6 = $set_loop_t(TC_5, TC_3.LOOP)
+    ---- ;; a loop body may run zero times; it cannot guarantee a return
+    -- if TC_5' = $set_control_t(TC_5, TC_2.CONTROL)
+    -- if TC_6 = $set_loop_t(TC_5', TC_3.LOOP)
     ---- ;; create IR
     -- if forStatementIR
         = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR )

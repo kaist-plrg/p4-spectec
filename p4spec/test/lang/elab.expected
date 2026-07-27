@@ -10474,7 +10474,8 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- if (TC_3 = $enter_loop_t(TC_2))
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- if (TC_5 = $exit_t(TC_4))
-    -- if (TC_6 = $set_loop_t(TC_5, TC_3.LOOP))
+    -- if (TC_5' = $set_control_t(TC_5, TC_2.CONTROL))
+    -- if (TC_6 = $set_loop_t(TC_5', TC_3.LOOP))
     -- if (forStatementIR = annotationList FOR `( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} `; typedExpressionIR `; forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} ) statementIR)
 
   rulegroup forStatement-in
@@ -10490,7 +10491,8 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- if (TC_3 = $enter_loop_t(TC_2))
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- if (TC_5 = $exit_t(TC_4))
-    -- if (TC_6 = $set_loop_t(TC_5, TC_3.LOOP))
+    -- if (TC_5' = $set_control_t(TC_5, TC_2.CONTROL))
+    -- if (TC_6 = $set_loop_t(TC_5', TC_3.LOOP))
     -- if (forStatementIR = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR)
 
     rule annotations: LOCAL TC_0 |- annotationList FOR `( annotationListNonEmpty type name IN forCollectionExpression ) statement as statement : TC_1 forStatementIR as statementIR
