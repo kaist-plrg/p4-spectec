@@ -18657,38 +18657,58 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``.
 
 xref:Call_eval[Calling ``externMethodCallee`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 
-. Let ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``nameIR`` ``+`<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR^?^`` ``+}+`` be ``externMethodCallee``.
-. Check that ``blockStatementIR^?^`` is none.
-. Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
-. Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
-. Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
-. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
-. Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+`:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``p~shared~`` be ``+GLOBAL+``.
-. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be
-* the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
-. If let ``abortResult`` be ``copyInResult``:
- .. Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+. Let ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``nameIR`` ``+`<+`` ``typeParameterIR^{asterisk}^`` ``+>+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR'^?^`` ``+}+`` be ``externMethodCallee``.
+. If let ``blockStatementIR`` be ``blockStatementIR'^?^``:
+ .. Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
+ .. Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
+ .. Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
+ .. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
+ .. Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+`:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``p~shared~`` be ``+GLOBAL+``.
+ .. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be
+ ** the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
+ .. If let ``abortResult`` be ``copyInResult``:
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+ .. Else:
+  ... Let ``EC~callee_5~`` be
+  *** the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_4~``].
+  ... Let context ``EC~callee_6~``, state ``ARCH~2~`` and result ``definedFunctionResult`` be
+  *** the result of xref:DefinedFunctionBody_eval[evaluating function body ``blockStatementIR``, under context ``EC~callee_5~`` and state ``ARCH~1~``].
+  ... Let ``EC~2~`` be
+  *** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_6~``, under state ``ARCH~2~`` at shared ``p~shared~``].
+  ... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``definedFunctionResult``.
 . Else:
- .. Let ``EC~callee_5~`` be
- ** the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_4~``].
- .. Let ``nameIR~param~^{asterisk}^`` be the list obtained by repeating:
+ .. Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
+ .. Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
+ .. Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
+ .. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
+ .. Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+`:+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+}+``.
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``p~shared~`` be ``+GLOBAL+``.
+ .. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be
+ ** the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
+ .. If let ``abortResult`` be ``copyInResult``:
+  ... Result in context ``EC~1~``, state ``ARCH~1~``, and call result ``abortResult``.
+ .. Else:
+  ... Let ``EC~callee_5~`` be
+  *** the result of xref:Copy_in_default[copying defaults for ``parameterIR~default~^{asterisk}^``, under context ``+LOCAL+`` and context ``EC~callee_4~``].
+  ... Let ``nameIR~param~^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``++_++`` ``++_++`` ``++_++`` ``nameIR~param~`` ``++_++`` be ``parameterIR``.
+   **** Let ``++_++`` ``++_++`` ``++_++`` ``nameIR~param~`` ``++_++`` be ``parameterIR``.
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
- .. Let context ``EC~callee_6~``, state ``ARCH~2~``, and call result ``callResult`` be
- ** the result of xref:ExternMethodCall_eval[calling an extern method ``nameIR`` ``+`(+`` ``nameIR~param~^{asterisk}^`` ``+)+`` on object ``objectId``, under context ``EC~callee_5~``, and state ``ARCH~1~``].
- .. If ``callResult`` has type ``rejectTransitionResult``:
-  ... Let ``rejectTransitionResult`` be ``callResult``.
-  ... Result in context ``EC~1~``, state ``ARCH~2~``, and call result ``rejectTransitionResult``.
- .. Else:
-  ... Let ``EC~2~`` be
-  *** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_6~``, under state ``ARCH~2~`` at shared ``p~shared~``].
-  ... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
+  ... Let context ``EC~callee_6~``, state ``ARCH~2~``, and call result ``callResult`` be
+  *** the result of xref:ExternMethodCall_eval[calling an extern method ``nameIR`` ``+`(+`` ``nameIR~param~^{asterisk}^`` ``+)+`` on object ``objectId``, under context ``EC~callee_5~``, and state ``ARCH~1~``].
+  ... If ``callResult`` has type ``rejectTransitionResult``:
+   .... Let ``rejectTransitionResult`` be ``callResult``.
+   .... Result in context ``EC~1~``, state ``ARCH~2~``, and call result ``rejectTransitionResult``.
+  ... Else:
+   .... Let ``EC~2~`` be
+   **** the result of xref:Copy_out[copy-out from ``parameterIR~aligned~^{asterisk}^`` at ``p`` of ``EC~1~`` to ``storageReference^?^^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_6~``, under state ``ARCH~2~`` at shared ``p~shared~``].
+   .... Result in context ``EC~2~``, state ``ARCH~2~``, and call result ``callResult``.
 
 xref:Call_eval[Calling ``parserApplyMethodCallee`` ``+`<+`` ``typeArgumentListIR`` ``+>+`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
 

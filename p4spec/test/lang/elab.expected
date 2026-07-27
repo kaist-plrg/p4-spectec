@@ -16915,6 +16915,29 @@ relation Call_eval: cursor evalContext arch |- callee `@ `< typeArgumentListIR >
 
   rulegroup externMethodCallee
 
+    rule copyin-abort-initializer: p EC_0 ARCH_0 |- externMethodCallee as callee `@ `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > `( argumentIR*{argumentIR <- argumentIR*} ) : EC_1 ARCH_1 abortResult as callResult
+    -- if (EXTERN_METHOD objectId `. nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} > `( parameterIR*{parameterIR <- parameterIR*} `# id_default*{id_default <- id_default*} `# id_optional*{id_optional <- id_optional*} ) `{ theta `; frame `; ?(blockStatementIR) } = externMethodCallee)
+    -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
+    -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
+    -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
+    -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR `: typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }])
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (p_shared = GLOBAL)
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} `@ LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 `# abortResult as copyInResult
+
+    rule copyin-cont-initializer: p EC_0 ARCH_0 |- externMethodCallee as callee `@ `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > `( argumentIR*{argumentIR <- argumentIR*} ) : EC_2 ARCH_2 definedFunctionResult as callResult
+    -- if (EXTERN_METHOD objectId `. nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} > `( parameterIR*{parameterIR <- parameterIR*} `# id_default*{id_default <- id_default*} `# id_optional*{id_optional <- id_optional*} ) `{ theta `; frame `; ?(blockStatementIR) } = externMethodCallee)
+    -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
+    -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
+    -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
+    -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR `: typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} }])
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (p_shared = GLOBAL)
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} `@ LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 `# `` storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} `@ LOCAL EC_callee_4 ~> EC_callee_5
+    -- DefinedFunctionBody_eval: EC_callee_5 ARCH_1 |- blockStatementIR : EC_callee_6 ARCH_2 definedFunctionResult
+    -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} `@ LOCAL EC_callee_6 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
+
     rule copyin-abort: p EC_0 ARCH_0 |- externMethodCallee as callee `@ `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > `( argumentIR*{argumentIR <- argumentIR*} ) : EC_1 ARCH_1 abortResult as callResult
     -- if (EXTERN_METHOD objectId `. nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} > `( parameterIR*{parameterIR <- parameterIR*} `# id_default*{id_default <- id_default*} `# id_optional*{id_optional <- id_optional*} ) `{ theta `; frame `; ?() } = externMethodCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
