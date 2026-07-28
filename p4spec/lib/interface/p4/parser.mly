@@ -1301,8 +1301,7 @@ typedef:
 	| t = typeRef
 		{ t }
 	| t = derivedTypeDeclaration
-		{ (* a derived type nested in a typedef also introduces its own name *)
-		  declare_type (id_of_declaration t) (has_type_params_declaration t);
+		{ declare_type (id_of_declaration t) (has_type_params_declaration t);
 		  t }
 ;
 

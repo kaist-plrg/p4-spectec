@@ -1112,6 +1112,28 @@ xref:is_assignable_typeIR[``typeIR''`` supports assignment]:
 
 |===
 
+xref:is_serializable_typeIR[``typeIR''`` has a defined size]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result 
+
+| +BOOL+ | true
+| +INT+ +`<+ ++_++ +>+ | true
+| +BIT+ +`<+ ++_++ +>+ | true
+| +VARBIT+ +`<+ ++_++ +>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +TYPE+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +ENUM+ ++_++ +`<+ typeIR +>+ +`{+ ++_++^{asterisk}^ +}+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +TUPLE+ +`<+ typeIR^{asterisk}^ +>+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +ARRAY+ typeIR +`[+ ++_++ +]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +HEADER_STACK+ typeIR +`[+ ++_++ +]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +STRUCT+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +HEADER+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +HEADER_UNION+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| ++_++ | false
+
+|===
+
 xref:typeId_of_typeDefIR[The name of ``typeDefIR``]
 
 . If let ``typeId`` be ``typeDefIR``:
@@ -10433,10 +10455,10 @@ xref:Stmt_ok[Typing ``annotationList`` ``+FOR+`` ``+`(+`` ``forInitStatementList
 . Let context ``TC~4~`` and ``statementIR`` be
 * the result of xref:Stmt_ok[typing ``statement``, under context ``TC~3~`` at ``+LOCAL+``].
 . Let ``TC~5~`` be xref:exit_t[``TC~4~`` with the innermost frame removed].
-. Let ``TC~5'~`` be xref:set_control_t[``TC~5~`` with control flow set to ``TC~2~.+CONTROL+``].
-. Let ``TC~6~`` be xref:set_loop_t[``TC~5'~`` with loop status set to ``TC~3~.+LOOP+``].
+. Let ``TC~6~`` be xref:set_control_t[``TC~5~`` with control flow set to ``TC~2~.+CONTROL+``].
+. Let ``TC~7~`` be xref:set_loop_t[``TC~6~`` with loop status set to ``TC~3~.+LOOP+``].
 . Let ``forStatementIR`` be ``annotationList`` ``+FOR+`` ``+`(+`` ``forInitStatementIR^{asterisk}^`` ``+`;+`` ``typedExpressionIR`` ``+`;+`` ``forUpdateStatementIR^{asterisk}^`` ``+)+`` ``statementIR``.
-. Result in context ``TC~6~`` and ``forStatementIR``.
+. Result in context ``TC~7~`` and ``forStatementIR``.
 
 xref:Stmt_ok[Typing ``forStatement``, under context ``TC`` at ``+LOCAL+``]:
 
@@ -10456,10 +10478,10 @@ xref:Stmt_ok[Typing ``forStatement``, under context ``TC`` at ``+LOCAL+``]:
   ... Let context ``TC~4~`` and ``statementIR`` be
   *** the result of xref:Stmt_ok[typing ``statement``, under context ``TC~3~`` at ``+LOCAL+``].
   ... Let ``TC~5~`` be xref:exit_t[``TC~4~`` with the innermost frame removed].
-  ... Let ``TC~5'~`` be xref:set_control_t[``TC~5~`` with control flow set to ``TC~2~.+CONTROL+``].
-  ... Let ``TC~6~`` be xref:set_loop_t[``TC~5'~`` with loop status set to ``TC~3~.+LOOP+``].
+  ... Let ``TC~6~`` be xref:set_control_t[``TC~5~`` with control flow set to ``TC~2~.+CONTROL+``].
+  ... Let ``TC~7~`` be xref:set_loop_t[``TC~6~`` with loop status set to ``TC~3~.+LOOP+``].
   ... Let ``forStatementIR`` be ``annotationList`` ``+FOR+`` ``+`(+`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR``.
-  ... Result in context ``TC~6~`` and ``forStatementIR``.
+  ... Result in context ``TC~7~`` and ``forStatementIR``.
 . Else if let ``annotationList`` ``+FOR+`` ``+`(+`` ``annotationListNonEmpty`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement`` be ``forStatement``:
  .. Let context ``TC~1~`` and ``statementIR`` be
  ** the result of xref:Stmt_ok[typing ``annotationList`` ``+FOR+`` ``+`(+`` ``type`` ``name`` ``+IN+`` ``forCollectionExpression`` ``+)+`` ``statement``, under context ``TC`` at ``+LOCAL+``].
@@ -11396,6 +11418,7 @@ xref:TableProperty_ok[Typing ``annotationList`` ``constOpt`` ``tableCustomName``
   ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
   ... Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
   ... Check that ``typeIR~unroll~`` has type ``integerTypeIR`` and ``typeIR~unroll~`` does not have type ``varBitTypeIR``.+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
+  ... Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] does not match pattern ``+DYN+``.+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
   ... Let ``constOptIR`` be xref:flatten_constOpt[the optional const qualifier in ``constOpt``].+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
   ... Let ``tablePropertyIR`` be ``annotationList`` ``constOptIR`` ``+CUSTOM+`` ``"size"`` ``+`=+`` ``typedExpressionIR`` ``+`;+``.+++<sub class="bk-mark">[<a href="#bk-TableProperty_ok-2-b">else #2-b</a>]</sub>+++
   ... Result in table context ``TBLC~0~`` and ``tablePropertyIR``.
@@ -12371,15 +12394,7 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 
 . Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``stringTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``errorTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``matchKindTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``intTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``listTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``simpleEnumTypeIR``.
+. Check that xref:is_serializable_typeIR[``typeIR~base~`` has a defined size].
 . Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+)+`` ``+`:+`` ``+INT+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
@@ -15603,18 +15618,9 @@ xref:ControlLocalDecl_inst[Compile-time evaluation of ``instantiationIR``, under
 * the result of xref:InstDecl_inst[loading ``instantiationIR``, under context ``IC~0~`` and store ``STO`` at ``+BLOCK+``].
 . Result in context ``IC~1~``, store ``STO~1~``, and ``constantDeclarationIR``.
 
-xref:ControlLocalDecl_inst[Compile-time evaluation of ``annotationList`` ``typeIR`` ``nameIR`` ``initializerOptIR`` ``+`;+``, under context ``IC~0~``and store ``STO``]:
+xref:ControlLocalDecl_inst[Compile-time evaluation of ``variableDeclarationIR``, under context ``IC~0~``and store ``STO``]:
 
-. If let ``+`=+`` ``typedExpressionIR`` be ``initializerOptIR``:
- .. If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``] does not match pattern ``+DYN+``:
-  ... Let store ``STO~1~`` and ``value`` be
-  *** the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC~0~`` and store ``STO`` at ``+LOCAL+``].
-  ... Let ``IC~1~`` be xref:add_var_i[``IC~0~`` where ``nameIR`` to ``value`` is added to the ``+BLOCK+`` layer].
-  ... Result in context ``IC~1~``, store ``STO~1~``, and ``annotationList`` ``typeIR`` ``nameIR`` ``+`=+`` ``typedExpressionIR`` ``+`;+``.
- .. Else:
-  ... Result in context ``IC~0~``, store ``STO``, and ``annotationList`` ``typeIR`` ``nameIR`` ``+`=+`` ``typedExpressionIR`` ``+`;+``.
-. Else:
- .. Result in context ``IC~0~``, store ``STO``, and ``annotationList`` ``typeIR`` ``nameIR`` ``·`` ``+`;+``.
+. Result in context ``IC~0~``, store ``STO``, and ``variableDeclarationIR``.
 
 xref:ControlLocalDecl_inst[Compile-time evaluation of ``actionDeclarationIR``, under context ``IC~0~``and store ``STO``]:
 
@@ -15977,24 +15983,24 @@ xref:Decl_inst[Loading ``annotationList`` ``+TYPEDEF+`` ``typedefIR`` ``nameIR``
  .. Let ``IC~1~`` be xref:add_typeDef_i[``IC~0~`` where ``nameIR`` to ``aliasTypeDefIR`` is added to the ``+GLOBAL+`` layer].
  .. Result in context ``IC~1~`` and store ``STO``.
 . Else:
- .. Let context ``IC~local~`` and store ``++_++`` be
+ .. Let context ``IC~1~`` and store ``++_++`` be
  ** the result of xref:Decl_inst[loading ``derivedTypeDeclarationIR``, under context ``IC~0~``, and store an empty store].
- .. Let ``set<typeId>`` be xref:dom_map[the domain of the map ``IC~local~.+GLOBAL+.+TYPE+``].
+ .. Let ``set<typeId>`` be xref:dom_map[the domain of the map ``IC~1~.+GLOBAL+.+TYPE+``].
  .. Let ``set<typeId>'`` be xref:dom_map[the domain of the map ``IC~0~.+GLOBAL+.+TYPE+``].
  .. Let ``+`{+`` ``typeId^{asterisk}^`` ``+}+`` be xref:diff_set[the difference of the sets ``set<typeId>`` and ``set<typeId>'``].
  .. Let!~type~ ``typeId~newtype~`` be ``typeId^{asterisk}^``.
- .. Let ``typeDefIR`` be xref:option_get[*!*] xref:find_typeDef_i[the type definition of ``+`.+`` ``typeId~newtype~`` from the ``+GLOBAL+`` layer of ``IC~local~``].
+ .. Let ``typeDefIR`` be xref:option_get[*!*] xref:find_typeDef_i[the type definition of ``+`.+`` ``typeId~newtype~`` from the ``+GLOBAL+`` layer of ``IC~1~``].
  .. If xref:is_monomorphic_typeDefIR[``typeDefIR`` is monomorphic]:
   ... Let ``typeIR`` be xref:typeIR_of_typeDefIR[the underlying type of ``typeDefIR``].
   ... Let ``aliasTypeDefIR`` be ``+TYPEDEF+`` ``nameIR`` ``typeIR``.
-  ... Let ``IC~1~`` be xref:add_typeDef_i[``IC~local~`` where ``nameIR`` to ``aliasTypeDefIR`` is added to the ``+GLOBAL+`` layer].
-  ... Result in context ``IC~1~`` and store ``STO``.
+  ... Let ``IC~2~`` be xref:add_typeDef_i[``IC~1~`` where ``nameIR`` to ``aliasTypeDefIR`` is added to the ``+GLOBAL+`` layer].
+  ... Result in context ``IC~2~`` and store ``STO``.
  .. Else:
   ... Check that ( ``·``, ``·`` ) is equal to xref:typeParameterListIR_of_typeDefIR[the type parameters of ``typeDefIR``].
   ... Let ``typeIR`` be xref:specialize_typeDefIR[``typeDefIR`` specialized by ``·``].
   ... Let ``typedefTypeIR`` be ``+TYPEDEF+`` ``nameIR`` ``typeIR``.
-  ... Let ``IC~1~`` be xref:add_typeDef_i[``IC~local~`` where ``nameIR`` to ``typedefTypeIR`` is added to the ``+GLOBAL+`` layer].
-  ... Result in context ``IC~1~`` and store ``STO``.
+  ... Let ``IC~2~`` be xref:add_typeDef_i[``IC~1~`` where ``nameIR`` to ``typedefTypeIR`` is added to the ``+GLOBAL+`` layer].
+  ... Result in context ``IC~2~`` and store ``STO``.
 
 xref:Decl_inst[Loading ``annotationList`` ``+TYPE+`` ``typeIR`` ``nameIR`` ``+`;+``, under context ``IC~0~``, and store ``STO``]:
 

@@ -118,7 +118,6 @@ rule InstDecl_non_objectInitializer_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer* `# typeId_infer* >
                         `( argumentIR* `# id_default* `# id_optional* )
                     : typeIR_object `< typeArgumentIR_inferred* > `( argumentIR_cast* )
-  ---- ;; constructed object may not contain an abstract method
   -- if $is_concrete_extern_object(typeIR_object)
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
@@ -997,7 +996,7 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
     ---- ;; if the type is monomorphic
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
-    ---- ;; create typedef and add to context, keeping the created type bound
+    ---- ;; create typedef and add to context
     -- if nameIR = $name(name)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
@@ -1020,7 +1019,7 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
     ---- ;; if the type is polymorphic, yet has no type parameters
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
     -- if (eps, eps) = $typeParameterListIR_of_typeDefIR(typeDefIR)
-    ---- ;; create typedef and add to context, keeping the created type bound
+    ---- ;; create typedef and add to context
     -- if nameIR = $name(name)
     -- if typeIR = $specialize_typeDefIR(typeDefIR, eps)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR

@@ -3581,6 +3581,77 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
+tbl def $is_serializable_typeIR(typeIR) : bool =
+  row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
+    (signature) INT `< _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedIntTypeIR
+    -- let INT `< _nat > = typeIR as fixedIntTypeIR
+  row 2 :
+    (signature) BIT `< _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
+  row 3 :
+    (signature) VARBIT `< _nat > as typeIR
+    (typeIR) -> true
+    -- if typeIR <: varBitTypeIR
+    -- let VARBIT `< _nat > = typeIR as varBitTypeIR
+  row 4 :
+    (signature) TYPEDEF _typeId typeIR as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
+  row 5 :
+    (signature) TYPE _typeId typeIR as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: newTypeIR
+    -- let TYPE _typeId typeIR = typeIR' as newTypeIR
+  row 6 :
+    (signature) ENUM _typeId `< typeIR > `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR > `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
+  row 7 :
+    (signature) TUPLE `< typeIR*{typeIR <- typeIR*} > as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: tupleTypeIR
+    -- let TUPLE `< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
+  row 8 :
+    (signature) ARRAY typeIR `[ _nat ] as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: arrayTypeIR
+    -- let ARRAY typeIR `[ _nat ] = typeIR' as arrayTypeIR
+  row 9 :
+    (signature) HEADER_STACK typeIR `[ _nat ] as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: headerStackTypeIR
+    -- let HEADER_STACK typeIR `[ _nat ] = typeIR' as headerStackTypeIR
+  row 10 :
+    (signature) STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
+  row 11 :
+    (signature) HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
+  row 12 :
+    (signature) HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: headerUnionTypeIR
+    -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
+  row 13 :
+    (signature) _typeIR
+    (_typeIR) -> false
+
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   clause 0 : (typeDefIR) = typeId
@@ -17060,10 +17131,10 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- let TC_3 = $enter_loop_t(TC_2)
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- let TC_5 = $exit_t(TC_4)
-    -- let TC_5' = $set_control_t(TC_5, TC_2.CONTROL)
-    -- let TC_6 = $set_loop_t(TC_5', TC_3.LOOP)
+    -- let TC_6 = $set_control_t(TC_5, TC_2.CONTROL)
+    -- let TC_7 = $set_loop_t(TC_6, TC_3.LOOP)
     -- let forStatementIR = annotationList FOR `( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} `; typedExpressionIR `; forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} ) statementIR
-    -- output: % % |- % : TC_6 forStatementIR as statementIR
+    -- output: % % |- % : TC_7 forStatementIR as statementIR
 
   rulegroup forStatement-in
 
@@ -17092,10 +17163,10 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- let TC_3 = $enter_loop_t(TC_2)
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- let TC_5 = $exit_t(TC_4)
-    -- let TC_5' = $set_control_t(TC_5, TC_2.CONTROL)
-    -- let TC_6 = $set_loop_t(TC_5', TC_3.LOOP)
+    -- let TC_6 = $set_control_t(TC_5, TC_2.CONTROL)
+    -- let TC_7 = $set_loop_t(TC_6, TC_3.LOOP)
     -- let forStatementIR = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR ) statementIR
-    -- output: % % |- % : TC_6 forStatementIR as statementIR
+    -- output: % % |- % : TC_7 forStatementIR as statementIR
 
     rulepath annotations
     -- let forStatement' = forStatement
@@ -18412,6 +18483,7 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR_unroll = $unroll_typeIR(typeIR)
     -- if (typeIR_unroll <: integerTypeIR /\ ~typeIR_unroll <: varBitTypeIR)
+    -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR))
     -- let constOptIR = $flatten_constOpt(constOpt)
     -- let tablePropertyIR = annotationList constOptIR CUSTOM "size" `= typedExpressionIR `; as tablePropertyIR
     -- output: % % |- % : TBLC tablePropertyIR
@@ -19621,15 +19693,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rulepath builtinMethodTypeIR-size
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
-    -- if ~typeIR_base_unroll <: objectTypeIR
-    -- if ~typeIR_base_unroll <: synthesizedTypeIR
-    -- if ~typeIR_base_unroll <: stringTypeIR
-    -- if ~typeIR_base_unroll <: errorTypeIR
-    -- if ~typeIR_base_unroll <: matchKindTypeIR
-    -- if ~typeIR_base_unroll <: intTypeIR
-    -- if ~typeIR_base_unroll <: listTypeIR
-    -- if ~typeIR_base_unroll <: simpleEnumTypeIR
+    -- if $is_serializable_typeIR(typeIR_base)
     -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] ) `: INT as typeIR as methodTypeIR
     -- output: % % |- % `< % > `( % ) : methodTypeIR as callableTypeIR `< `# [] > `( `# [] `# [] )
 
@@ -25083,38 +25147,15 @@ relation ControlLocalDecl_inst: instContext store |- controlLocalDeclarationIR :
 
    match
 
-    (signature) IC' STO' |- annotationList typeIR nameIR initializerOptIR `; as controlLocalDeclarationIR : % % %
-    IC' STO' |- controlLocalDeclarationIR : % % %
+    (signature) IC STO |- variableDeclarationIR as controlLocalDeclarationIR : % % %
+    IC STO |- controlLocalDeclarationIR : % % %
     -- if controlLocalDeclarationIR <: variableDeclarationIR
-    -- let annotationList typeIR nameIR initializerOptIR `; = controlLocalDeclarationIR as variableDeclarationIR
+    -- let variableDeclarationIR = controlLocalDeclarationIR as variableDeclarationIR
 
    paths
 
-    rulepath variableDeclarationIR-init-bound
-    -- let IC_0 = IC'
-    -- let STO_0 = STO'
-    -- let initializerOptIR' = initializerOptIR
-    -- if initializerOptIR' matches (_)
-    -- let ?(`= typedExpressionIR) = initializerOptIR'
-    -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR))
-    -- Expr_inst: LOCAL IC_0 STO_0 |- typedExpressionIR : STO_1 value
-    -- let IC_1 = $add_var_i(BLOCK, IC_0, nameIR, value)
-    -- output: % % |- % : IC_1 STO_1 ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
-
-    rulepath variableDeclarationIR-init-unbound
-    -- let IC = IC'
-    -- let STO = STO'
-    -- let initializerOptIR' = initializerOptIR
-    -- if initializerOptIR' matches (_)
-    -- let ?(`= typedExpressionIR) = initializerOptIR'
-    -- if (DYN = $ctk_of_typedExpressionIR(typedExpressionIR))
-    -- output: % % |- % : IC STO ?(annotationList typeIR nameIR ?(`= typedExpressionIR) `; as controlLocalDeclarationIR)
-
-    rulepath variableDeclarationIR-noinit
-    -- let IC = IC'
-    -- let STO = STO'
-    -- if (initializerOptIR = ?())
-    -- output: % % |- % : IC STO ?(annotationList typeIR nameIR ?() `; as controlLocalDeclarationIR)
+    rulepath variableDeclarationIR
+    -- output: % % |- % : IC STO ?(variableDeclarationIR as controlLocalDeclarationIR)
 
   rulegroup actionDeclarationIR
 
@@ -25617,36 +25658,36 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- let typedefIR' = typedefIR
     -- if typedefIR' <: derivedTypeDeclarationIR
     -- let derivedTypeDeclarationIR = typedefIR' as derivedTypeDeclarationIR
-    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_local _STO
-    -- let `{ typeId*{typeId <- typeId*} } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
+    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_1 _STO
+    -- let `{ typeId*{typeId <- typeId*} } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
     -- if typeId*{typeId <- typeId*} matches [ _/1 ]
     -- let [typeId_newtype] = typeId*{typeId <- typeId*}
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(GLOBAL, IC_local, `. typeId_newtype)
+    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(GLOBAL, IC_1, `. typeId_newtype)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- let typeIR = $typeIR_of_typeDefIR(typeDefIR)
     -- let aliasTypeDefIR = TYPEDEF nameIR typeIR as aliasTypeIR
-    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, aliasTypeDefIR as typeDefIR)
-    -- output: % % |- % : IC_1 STO
+    -- let IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, aliasTypeDefIR as typeDefIR)
+    -- output: % % |- % : IC_2 STO
 
     rulepath derivedTypeDeclaration-poly
     -- let typedefIR' = typedefIR
     -- if typedefIR' <: derivedTypeDeclarationIR
     -- let derivedTypeDeclarationIR = typedefIR' as derivedTypeDeclarationIR
-    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_local _STO
-    -- let `{ typeId*{typeId <- typeId*} } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
+    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_1 _STO
+    -- let `{ typeId*{typeId <- typeId*} } = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
     -- if typeId*{typeId <- typeId*} matches [ _/1 ]
     -- let [typeId_newtype] = typeId*{typeId <- typeId*}
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(GLOBAL, IC_local, `. typeId_newtype)
+    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(GLOBAL, IC_1, `. typeId_newtype)
     -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
     -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
     -- if (([], []) = $typeParameterListIR_of_typeDefIR(typeDefIR))
     -- let typeIR = $specialize_typeDefIR(typeDefIR, [])
     -- let typedefTypeIR = TYPEDEF nameIR typeIR
-    -- let IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, typedefTypeIR as typeDefIR)
-    -- output: % % |- % : IC_1 STO
+    -- let IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, typedefTypeIR as typeDefIR)
+    -- output: % % |- % : IC_2 STO
 
   rulegroup typedefDeclarationIR-newtype
 

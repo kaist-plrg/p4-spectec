@@ -505,42 +505,42 @@ rulegroup Decl_inst/typedefDeclarationIR-typedef {
 
   rule Decl_inst/derivedTypeDeclarationIR-monomorphic:
     IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR nameIR `;
-              : IC_1 STO
+              : IC_2 STO
     ---- ;; instantiate type declaration
     -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR
-                                     : IC_local _
+                                     : IC_1 _
     ---- ;; diff the local and global context to get the declared type id
     -- if `{ typeId_newtype }
         = $diff_set<typeId>(
-            $dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE),
+            $dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE),
             $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
     ---- ;; find the type definition
     -- if typeDefIR
-        = $find_typeDef_i(GLOBAL, IC_local, `. typeId_newtype)
+        = $find_typeDef_i(GLOBAL, IC_1, `. typeId_newtype)
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if typeIR = $typeIR_of_typeDefIR(typeDefIR)
     -- if aliasTypeDefIR = TYPEDEF nameIR typeIR
-    -- if IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, aliasTypeDefIR)
+    -- if IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, aliasTypeDefIR)
 
   rule Decl_inst/derivedTypeDeclaration-poly:
     IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR nameIR `;
-              : IC_1 STO
+              : IC_2 STO
     ---- ;; instantiate type declaration
     -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR
-                                     : IC_local _
+                                     : IC_1 _
     ---- ;; diff the local and global context to get the declared type id
     -- if `{ typeId_newtype }
         = $diff_set<typeId>(
-            $dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE),
+            $dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE),
             $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE))
     ---- ;; find the type definition
     -- if typeDefIR
-        = $find_typeDef_i(GLOBAL, IC_local, `. typeId_newtype)
+        = $find_typeDef_i(GLOBAL, IC_1, `. typeId_newtype)
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
     -- if (eps, eps) = $typeParameterListIR_of_typeDefIR(typeDefIR)
     -- if typeIR = $specialize_typeDefIR(typeDefIR, eps)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR
-    -- if IC_1 = $add_typeDef_i(GLOBAL, IC_local, nameIR, typedefTypeIR)
+    -- if IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, typedefTypeIR)
 
 }
 
