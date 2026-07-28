@@ -23,3 +23,7 @@ module IHEnv = MakeHIdEnv (Hints.Input)
 (* Definition environment *)
 
 module FEnv = MakeFIdEnv (Func)
+
+(* Table environment *)
+
+module TEnv = MakeFIdEnv (Table)

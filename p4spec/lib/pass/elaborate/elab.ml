@@ -1239,7 +1239,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
         (F.asprintf
            "table argument does not match the declared table parameter %s"
            (Id.to_string id_p));
-      (* A table is still registered as a `Func.Table` in this commit. *)
+      (* A table is registered in the peer table env, not among functions. *)
       let ctx = Ctx.add_table_func_dec ctx id_p params_il_p typ_il_p in
       let arg_il = Il.TableA id_a $ arg.at in
       (ctx, arg_il)
