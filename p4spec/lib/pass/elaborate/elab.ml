@@ -1188,6 +1188,11 @@ and elab_param (ctx : Ctx.t) (param : param) : Il.param =
       let params_il = List.map (elab_param ctx_local) params in
       let typ_il = elab_plaintyp ctx_local plaintyp in
       Il.DefP (id, tparams, params_il, typ_il) $ param.at
+  | TableP (id, params, plaintyp) ->
+      (* Tables are monomorphic: no type parameters. *)
+      let params_il = List.map (elab_param ctx) params in
+      let typ_il = elab_plaintyp ctx plaintyp in
+      Il.TableP (id, params_il, typ_il) $ param.at
 
 (* Elaboration of arguments: either as definition, or part of a call expression
 
@@ -1229,12 +1234,43 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
            (Id.to_string id_p));
       let arg_il = Il.DefA id_a $ arg.at in
       (ctx, arg_il)
+  | TableP (id_p, params_il_p, typ_il_p), TableA id_a when as_def ->
+      check (id_p.it = id_a.it) arg.at
+        (F.asprintf
+           "table argument does not match the declared table parameter %s"
+           (Id.to_string id_p));
+      (* A table is still registered as a `Func.Table` in this commit. *)
+      let ctx = Ctx.add_table_func_dec ctx id_p params_il_p typ_il_p in
+      let arg_il = Il.TableA id_a $ arg.at in
+      (ctx, arg_il)
+  | TableP (id_p, params_il_p, typ_il_p), TableA id_a ->
+      let params_il_a, typ_il_a, _ = Ctx.find_table_func ctx id_a in
+      let typs_params_il_p = Typ.Make.of_params_il params_il_p in
+      let typs_params_il_a = Typ.Make.of_params_il params_il_a in
+      (* Tables are monomorphic: compare signatures with empty tparams. *)
+      check
+        (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) arg.at [] typs_params_il_p
+           typ_il_p [] typs_params_il_a typ_il_a)
+        arg.at
+        (F.asprintf
+           "table argument does not match the declared table parameter %s"
+           (Id.to_string id_p));
+      let arg_il = Il.TableA id_a $ arg.at in
+      (ctx, arg_il)
   | ExpP _, DefA _ ->
       error arg.at
         "expected an expression argument, but got a function argument"
+  | ExpP _, TableA _ ->
+      error arg.at "expected an expression argument, but got a table argument"
   | DefP _, ExpA _ ->
       error arg.at
         "expected a function argument, but got an expression argument"
+  | DefP _, TableA _ ->
+      error arg.at "expected a function argument, but got a table argument"
+  | TableP _, ExpA _ ->
+      error arg.at "expected a table argument, but got an expression argument"
+  | TableP _, DefA _ ->
+      error arg.at "expected a table argument, but got a function argument"
 
 and elab_args ?(as_def = false) (at : region) (ctx : Ctx.t)
     (params_il : Il.param list) (args : arg list) : Ctx.t * Il.arg list =
@@ -1636,7 +1672,9 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
   check
     (List.for_all
        (fun (param_il : Il.param) ->
-         match param_il.it with ExpP _ -> true | DefP _ -> false)
+         match param_il.it with
+         | ExpP _ -> true
+         | DefP _ | TableP _ -> false)
        params_il)
     at "table cannot have function parameters";
   let typ_il = elab_plaintyp ctx plaintyp in

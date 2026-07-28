@@ -23,6 +23,16 @@ let rec boot_param (param : Sl.param) : Value.t =
         mop_def_param
         <|! [ value_id; value_tparams; value_params; value_typ ]
         <<|! typ_param <<<| at)
+  (* A table is still a `Func.t` in this commit: boot it as a def parameter. *)
+  | TableP (id, params, typ) ->
+      let value_id = boot_id id in
+      let value_tparams = boot_tparams [] in
+      let value_params = boot_params params in
+      let value_typ = boot_typ typ in
+      Value.Make.(
+        mop_def_param
+        <|! [ value_id; value_tparams; value_params; value_typ ]
+        <<|! typ_param <<<| at)
 
 and boot_params (params : Sl.param list) : Value.t =
   let values_params = List.map boot_param params in

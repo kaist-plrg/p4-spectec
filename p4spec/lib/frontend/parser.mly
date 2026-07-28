@@ -667,6 +667,10 @@ param_ :
     { DefP ($3, $5, [], $8) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp exit_scope
     { DefP ($3, $5, $7, $10) }
+  | TABLEDEF DOLLAR defid COLON plaintyp
+    { TableP ($3, [], $5) }
+  | TABLEDEF DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp exit_scope
+    { TableP ($3, $5, $8) }
 
 (* Type parameters *)
 
@@ -678,6 +682,7 @@ arg : arg_ { $1 @@@ $sloc }
 arg_ :
   | exp_bin { ExpA $1 }
   | DEF DOLLAR defid { DefA $3 }
+  | TABLEDEF DOLLAR defid { TableA $3 }
 
 (* Type arguments *)
 

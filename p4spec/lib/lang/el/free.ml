@@ -25,6 +25,8 @@ let rec free_tid_param (param : param) : TIdSet.t =
       TIdSet.of_list tparams
       |> TIdSet.union (free_tid_params params)
       |> TIdSet.union (free_tid_plaintyp plaintyp)
+  | TableP (_, params, plaintyp) ->
+      free_tid_params params |> TIdSet.union (free_tid_plaintyp plaintyp)
 
 and free_tid_params (params : param list) : TIdSet.t =
   params |> List.map free_tid_param |> List.fold_left TIdSet.union TIdSet.empty
@@ -93,7 +95,10 @@ and free_id_path (path : path) : IdSet.t =
 (* Arguments *)
 
 and free_id_arg (arg : arg) : IdSet.t =
-  match arg.it with ExpA exp -> free_id_exp exp | DefA _ -> IdSet.empty
+  match arg.it with
+  | ExpA exp -> free_id_exp exp
+  | DefA _ -> IdSet.empty
+  | TableA _ -> IdSet.empty
 
 and free_id_args (args : arg list) : IdSet.t =
   args |> List.map free_id_arg |> List.fold_left IdSet.union IdSet.empty

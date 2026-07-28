@@ -128,6 +128,8 @@ and param' =
   | ExpP of plaintyp
   (* `def` `$`id ` (`<` list(tparam, `,`) `>`)? (`(` list(param, `,`) `)`)? `:` plaintyp *)
   | DefP of id * tparam list * param list * plaintyp
+  (* `tbldef` `$`id (`(` list(param, `,`) `)`)? `:` plaintyp *)
+  | TableP of id * param list * plaintyp
 
 (* Type parameters *)
 
@@ -140,6 +142,7 @@ and arg = arg' phrase
 and arg' =
   | ExpA of exp   (* exp *)
   | DefA of id    (* `$`id *)
+  | TableA of id  (* `$`id *)
 
 (* Type arguments *)
 

@@ -57,6 +57,8 @@ let rec string_of_typ typ =
   | FuncT (tparams, typs, typ) ->
       string_of_tparams tparams ^ "(" ^ string_of_typs ", " typs ^ ") : "
       ^ string_of_typ typ
+  | TableT (typs, typ) ->
+      "(" ^ string_of_typs ", " typs ^ ") : " ^ string_of_typ typ
 
 and string_of_typs sep typs = String.concat sep (List.map string_of_typ typs)
 
@@ -249,6 +251,9 @@ and string_of_param param =
   | DefP (defid, tparams, params, typ) ->
       string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | TableP (defid, params, typ) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ
 
 and string_of_params params =
   match params with
@@ -271,6 +276,7 @@ and string_of_arg arg =
   match arg.it with
   | ExpA exp -> string_of_exp exp
   | DefA defid -> string_of_defid defid
+  | TableA defid -> "tbldef " ^ string_of_defid defid
 
 and string_of_args args =
   match args with

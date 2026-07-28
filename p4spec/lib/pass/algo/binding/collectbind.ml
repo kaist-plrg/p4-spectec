@@ -141,6 +141,7 @@ and collect_arg (ctx : Ctx.t) (arg : arg) : Bind.BEnv.t =
   match arg.it with
   | ExpA exp -> collect_exp ctx exp
   | DefA _ -> Bind.BEnv.empty
+  | TableA _ -> Bind.BEnv.empty
 
 and collect_args (ctx : Ctx.t) (args : arg list) : Bind.BEnv.t =
   match args with

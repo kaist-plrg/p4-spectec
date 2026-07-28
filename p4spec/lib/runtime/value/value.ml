@@ -203,6 +203,12 @@ module Make = struct
     FuncV id |> with_region at
     |> with_typ (Typ.Make.func tparams typs_params typ)
 
+  (* A table is still a `FuncV` at runtime in this commit; only its
+     sort/type (`TableT`) is distinct. *)
+  let table ?(at = no_region) (id : id) (typs_params : typ list) (typ : typ) :
+      value =
+    FuncV id |> with_region at |> with_typ (Typ.Make.table typs_params typ)
+
   let extern ?(at = no_region) (typ : typ) (json : Yojson.Safe.t) : value =
     ExternV json |> with_region at |> with_typ typ
 

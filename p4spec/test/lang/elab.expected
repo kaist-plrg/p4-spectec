@@ -9486,7 +9486,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
 
     rule unaryExpression-lnot: p TC |- `! expression as expression : `! typedExpressionIR_reduced as expressionIR `# expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, $compat_lnot))
+    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_lnot))
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (expressionNoteIR = `( typeIR_reduced ctk_reduced ))
@@ -9495,7 +9495,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
 
     rule unaryExpression-bnot: p TC |- `~ expression as expression : `~ typedExpressionIR_reduced as expressionIR `# expressionNoteIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, $compat_bnot))
+    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_bnot))
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (expressionNoteIR = `( typeIR_reduced ctk_reduced ))
@@ -9505,7 +9505,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     rule unaryExpression-uplusminus: p TC |- unop expression as expression : unop typedExpressionIR_reduced as expressionIR `# expressionNoteIR
     -- if ((unop = `+) \/ (unop = `-))
     -- Expr_ok: p TC |- expression : typedExpressionIR
-    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, $compat_uplusminus))
+    -- if (?(typedExpressionIR_reduced) = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_uplusminus))
     -- if (typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced))
     -- if (expressionNoteIR = `( typeIR_reduced ctk_reduced ))
@@ -9896,7 +9896,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (TUPLE `< typeIR_e*{typeIR_e <- typeIR_e*} > as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
@@ -9911,7 +9911,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ARRAY typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
@@ -9926,7 +9926,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ARRAY typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index =/= LCTK)
     -- if (ctk = $join_ctk(ctk_base, ctk_index))
@@ -9939,7 +9939,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (HEADER_STACK typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
@@ -9954,7 +9954,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (ctk_base = $ctk_of_typedExpressionIR(typedExpressionIR_base))
     -- if (typeIR_index = $type_of_typedExpressionIR(typedExpressionIR_index))
     -- if (ctk_index = $ctk_of_typedExpressionIR(typedExpressionIR_index))
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (HEADER_STACK typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (ctk_index =/= LCTK)
     -- if (ctk = $join_ctk(ctk_base, ctk_index))
@@ -9966,11 +9966,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
-    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base))
+    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, tbldef $compat_bitslice_base))
     -- if (typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced))
     -- if (ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced))
-    -- if (?(typedExpressionIR_hi_reduced) = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_range_index))
-    -- if (?(typedExpressionIR_lo_reduced) = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_range_index))
+    -- if (?(typedExpressionIR_hi_reduced) = $reduce_serenum_unary(typedExpressionIR_hi, tbldef $compat_bitslice_range_index))
+    -- if (?(typedExpressionIR_lo_reduced) = $reduce_serenum_unary(typedExpressionIR_lo, tbldef $compat_bitslice_range_index))
     -- if (typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced))
     -- if (ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced))
     -- if (typeIR_lo_reduced = $type_of_typedExpressionIR(typedExpressionIR_lo_reduced))
@@ -9990,11 +9990,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
-    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base))
+    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, tbldef $compat_bitslice_base))
     -- if (typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced))
     -- if (ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced))
-    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, $compat_bitslice_offset_index))
-    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, $compat_bitslice_offset_width))
+    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, tbldef $compat_bitslice_offset_index))
+    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, tbldef $compat_bitslice_offset_width))
     -- if (typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
     -- if (ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
     -- if (typeIR_w_reduced = $type_of_typedExpressionIR(typedExpressionIR_w_reduced))
@@ -10014,11 +10014,11 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression_base : typedExpressionIR_base
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
-    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, $compat_bitslice_base))
+    -- if (?(typedExpressionIR_base_reduced) = $reduce_serenum_unary(typedExpressionIR_base, tbldef $compat_bitslice_base))
     -- if (typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced))
     -- if (ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced))
-    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, $compat_bitslice_offset_index))
-    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, $compat_bitslice_offset_width))
+    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, tbldef $compat_bitslice_offset_index))
+    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, tbldef $compat_bitslice_offset_width))
     -- if (typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced))
     -- if (ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced))
     -- if (typeIR_w_reduced = $type_of_typedExpressionIR(typedExpressionIR_w_reduced))
@@ -10183,7 +10183,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if (ARRAY typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR `# `( typeIR_index ctk_index ) = typedExpressionIR_index)
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
@@ -10196,7 +10196,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if (ARRAY typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR `# `( typeIR_index ctk_index ) = typedExpressionIR_index)
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ctk_index =/= LCTK)
     -- if (typedLvalueIR = typedLvalueIR_base `[ typedExpressionIR_index_reduced ] `# `( typeIR ))
 
@@ -10206,7 +10206,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if (HEADER_STACK typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR `# `( typeIR_index ctk_index ) = typedExpressionIR_index)
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ctk_index = LCTK)
     -- Expr_eval_lctk: p TC |- typedExpressionIR_index_reduced ~> integerValue_index as value
     -- if (?(n_index) = $nat_of_integerValue(integerValue_index))
@@ -10219,7 +10219,7 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if (HEADER_STACK typeIR `[ n_size ] as typeIR = $unroll_typeIR(typeIR_base))
     -- Expr_ok: p TC |- expression_index : typedExpressionIR_index
     -- if (_expressionIR `# `( typeIR_index ctk_index ) = typedExpressionIR_index)
-    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, $compat_array_index))
+    -- if (?(typedExpressionIR_index_reduced) = $reduce_serenum_unary(typedExpressionIR_index, tbldef $compat_array_index))
     -- if (ctk_index =/= LCTK)
     -- if (typedLvalueIR = typedLvalueIR_base `[ typedExpressionIR_index_reduced ] `# `( typeIR ))
 
@@ -10231,8 +10231,8 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if $compat_bitslice_base(typeIR_base)
     -- Expr_ok: p TC |- expression_hi : typedExpressionIR_hi
     -- Expr_ok: p TC |- expression_lo : typedExpressionIR_lo
-    -- if (?(typedExpressionIR_hi_reduced) = $reduce_serenum_unary(typedExpressionIR_hi, $compat_bitslice_range_index))
-    -- if (?(typedExpressionIR_lo_reduced) = $reduce_serenum_unary(typedExpressionIR_lo, $compat_bitslice_range_index))
+    -- if (?(typedExpressionIR_hi_reduced) = $reduce_serenum_unary(typedExpressionIR_hi, tbldef $compat_bitslice_range_index))
+    -- if (?(typedExpressionIR_lo_reduced) = $reduce_serenum_unary(typedExpressionIR_lo, tbldef $compat_bitslice_range_index))
     -- if (_expressionIR `# `( typeIR_hi_reduced ctk_hi_reduced ) = typedExpressionIR_hi_reduced)
     -- if (_expressionIR' `# `( typeIR_lo_reduced ctk_lo_reduced ) = typedExpressionIR_lo_reduced)
     -- if (ctk_hi_reduced = LCTK)
@@ -10252,8 +10252,8 @@ relation Lvalue_ok: cursor typingContext |- lvalue : typedLvalueIR
     -- if $compat_bitslice_base(typeIR_base)
     -- Expr_ok: p TC |- expression_l : typedExpressionIR_l
     -- Expr_ok: p TC |- expression_w : typedExpressionIR_w
-    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, $compat_bitslice_offset_index))
-    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, $compat_bitslice_offset_width))
+    -- if (?(typedExpressionIR_l_reduced) = $reduce_serenum_unary(typedExpressionIR_l, tbldef $compat_bitslice_offset_index))
+    -- if (?(typedExpressionIR_w_reduced) = $reduce_serenum_unary(typedExpressionIR_w, tbldef $compat_bitslice_offset_width))
     -- if (_expressionIR `# `( typeIR_l_reduced ctk_l_reduced ) = typedExpressionIR_l_reduced)
     -- if (_expressionIR' `# `( typeIR_w_reduced ctk_w_reduced ) = typedExpressionIR_w_reduced)
     -- if (ctk_w_reduced = LCTK)
@@ -11903,19 +11903,19 @@ def $reduce_serenum(typedExpressionIR) : typedExpressionIR =
 
   clause -1 : (typedExpressionIR) = typedExpressionIR
 
-def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool) : typedExpressionIR? =
+def $reduce_serenum_unary(typedExpressionIR, tbldef $check(typeIR) : bool) : typedExpressionIR? =
 
-  clause 0 : (typedExpressionIR, $check) = ?(typedExpressionIR)
+  clause 0 : (typedExpressionIR, tbldef $check) = ?(typedExpressionIR)
   -- if (_expressionIR `# `( typeIR _ctk ) = typedExpressionIR)
   -- if $check(typeIR)
 
-  clause 1 : (typedExpressionIR, $check) = $reduce_serenum_unary(typedExpressionIR_cast, $check)
+  clause 1 : (typedExpressionIR, tbldef $check) = $reduce_serenum_unary(typedExpressionIR_cast, tbldef $check)
   -- if (_expressionIR `# `( typeIR ctk ) = typedExpressionIR)
   -- if ~$check(typeIR)
   -- if (ENUM _typeId `< typeIR_underlying > `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR = $unroll_typeIR(typeIR))
   -- if (typedExpressionIR_cast = `( typeIR_underlying ) typedExpressionIR as expressionIR `# `( typeIR_underlying ctk ))
 
-  clause -1 : (typedExpressionIR, $check) = ?()
+  clause -1 : (typedExpressionIR, tbldef $check) = ?()
 
 def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, typeIR) : bool) : (typedExpressionIR, typedExpressionIR)? =
 

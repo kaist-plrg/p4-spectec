@@ -21,6 +21,10 @@ let rec struct_param (ctx : Ctx.t) (frees : IdSet.t) (param : param) :
       let params = struct_params ctx params in
       let param = Sl.DefP (id_def, tparams, params, typ) $ at in
       (frees, param)
+  | TableP (id_def, params, typ) ->
+      let params = struct_params ctx params in
+      let param = Sl.TableP (id_def, params, typ) $ at in
+      (frees, param)
 
 and struct_params (ctx : Ctx.t) (params : param list) : Sl.param list =
   params
@@ -41,6 +45,9 @@ let struct_params_from_args (ctx : Ctx.t) (params : param list)
       | DefP (id_def, tparams, params, typ), DefA id_def_arg
         when Id.eq id_def id_def_arg ->
           Sl.DefP (id_def, tparams, struct_params ctx params, typ) $ at
+      | TableP (id_def, params, typ), TableA id_def_arg
+        when Id.eq id_def id_def_arg ->
+          Sl.TableP (id_def, struct_params ctx params, typ) $ at
       | _ -> assert false)
     params args_input
 

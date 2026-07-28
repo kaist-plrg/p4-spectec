@@ -61,7 +61,10 @@ and free_path (path : path) : t =
 (* Parameters *)
 
 and free_param (param : param) : t =
-  match param.it with ExpP (_, exp) -> free_exp exp | DefP _ -> empty
+  match param.it with
+  | ExpP (_, exp) -> free_exp exp
+  | DefP _ -> empty
+  | TableP _ -> empty
 
 and free_params (params : param list) : t =
   params |> List.map free_param |> List.fold_left ( + ) empty
@@ -69,7 +72,10 @@ and free_params (params : param list) : t =
 (* Arguments *)
 
 and free_arg (arg : arg) : t =
-  match arg.it with ExpA exp -> free_exp exp | DefA _ -> empty
+  match arg.it with
+  | ExpA exp -> free_exp exp
+  | DefA _ -> empty
+  | TableA _ -> empty
 
 and free_args (args : arg list) : t =
   args |> List.map free_arg |> List.fold_left ( + ) empty

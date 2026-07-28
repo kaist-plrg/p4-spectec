@@ -112,6 +112,7 @@ and param = param' phrase
 and param' =
   | ExpP of typ * exp
   | DefP of id * tparam list * param list * typ
+  | TableP of id * param list * typ
 
 (* Type arguments *)
 
@@ -123,6 +124,7 @@ and arg = arg' phrase
 and arg' =
   | ExpA of exp
   | DefA of id
+  | TableA of id
 
 (* Dangling *)
 

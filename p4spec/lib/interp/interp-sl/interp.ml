@@ -322,6 +322,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match param.it with
     | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
     | DefP (id, _, _, _) -> assign_param_def ctx_caller ctx_callee id value
+    (* A table is still a `FuncV` at runtime, so binding reuses the func path. *)
+    | TableP (id, _, _) -> assign_param_def ctx_caller ctx_callee id value
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
@@ -1185,6 +1187,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | DefA id ->
           let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
           let value_res = Value.Make.func id tparams typs_params typ in
+          Hook.on_value value_res;
+          value_res
+      | TableA id ->
+          let _, typs_params, typ = Ctx.find_func_signature ctx id in
+          let value_res = Value.Make.table id typs_params typ in
           Hook.on_value value_res;
           value_res
     with Backtrace backtrace ->

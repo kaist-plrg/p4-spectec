@@ -31,7 +31,10 @@ let check_shallow_exps (exps : exp list) : bool =
 (* Arguments *)
 
 let check_shallow_arg (arg : arg) : bool =
-  match arg.it with ExpA exp -> check_shallow_exp exp | DefA _ -> false
+  match arg.it with
+  | ExpA exp -> check_shallow_exp exp
+  | DefA _ -> false
+  | TableA _ -> false
 
 let check_shallow_args (args : arg list) : bool =
   List.for_all check_shallow_arg args

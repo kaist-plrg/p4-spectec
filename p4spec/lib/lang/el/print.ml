@@ -180,6 +180,9 @@ and string_of_param param =
       string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableP (defid, params, plaintyp) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
 
 and string_of_params params =
   match params with
@@ -202,6 +205,7 @@ and string_of_arg arg =
   match arg.it with
   | ExpA exp -> string_of_exp exp
   | DefA defid -> string_of_defid defid
+  | TableA defid -> "tbldef " ^ string_of_defid defid
 
 and string_of_args args =
   match args with

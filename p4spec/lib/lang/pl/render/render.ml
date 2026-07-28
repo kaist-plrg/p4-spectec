@@ -684,6 +684,7 @@ and code_of_param (param : param) : Adoc.code =
   match param.it with
   | ExpP (_, exp) -> code_of_exp exp
   | DefP (defid, _, _, _) -> defid |> string_of_defid |> Adoc.token
+  | TableP (defid, _, _) -> defid |> string_of_defid |> Adoc.token
 
 and code_of_params (params : param list) : Adoc.code =
   match params with
@@ -705,6 +706,8 @@ and prose_of_param (param : param) : Adoc.prose =
   match param.it with
   | ExpP (_, exp) -> prose_of_exp exp
   | DefP (defid, _, _, _) ->
+      defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
+  | TableP (defid, _, _) ->
       defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
 
 and prose_of_params (params : param list) : Adoc.prose =
@@ -732,6 +735,7 @@ and code_of_arg (arg : arg) : Adoc.code =
   match arg.it with
   | ExpA exp -> code_of_exp exp
   | DefA defid -> defid |> string_of_defid |> Adoc.token
+  | TableA defid -> defid |> string_of_defid |> Adoc.token
 
 and code_of_args (args : arg list) : Adoc.code =
   match args with
@@ -752,6 +756,7 @@ and prose_of_arg (arg : arg) : Adoc.prose =
   match arg.it with
   | ExpA exp -> prose_of_exp exp
   | DefA defid -> defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
+  | TableA defid -> defid |> string_of_defid |> Adoc.token |> Adoc.code_prose
 
 (* Case analysis *)
 

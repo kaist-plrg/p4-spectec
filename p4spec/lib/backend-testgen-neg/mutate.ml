@@ -119,6 +119,7 @@ and gen_from_typ' (depth : int) (tdenv : TDEnv.t) (texts : value' list)
       in
       ListV values_inner |> Option.some |> wrap_value_opt typ.it
   | FuncT _ -> None
+  | TableT _ -> None
 
 and gen_from_typs (depth : int) (tdenv : TDEnv.t) (texts : value' list)
     (typs : typ list) : value list option =

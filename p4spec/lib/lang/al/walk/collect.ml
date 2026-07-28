@@ -102,7 +102,10 @@ let default_collect_path (c : 'a collector) (path : path) : 'a =
   | DotP (path, _) -> collect_path c path
 
 let default_collect_arg (c : 'a collector) (arg : arg) : 'a =
-  match arg.it with ExpA exp -> collect_exp c exp | DefA _ -> c.default
+  match arg.it with
+  | ExpA exp -> collect_exp c exp
+  | DefA _ -> c.default
+  | TableA _ -> c.default
 
 let default_collect_prem (c : 'a collector) (prem : prem) : 'a =
   let ( $@ ) = c.compose in

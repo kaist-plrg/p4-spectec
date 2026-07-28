@@ -311,6 +311,7 @@ and annotate_arg (ctx : Ctx.t) (arg : arg) : Pl.arg =
       let exp_pl = annotate_exp ctx exp in
       Pl.ExpA exp_pl $ at
   | DefA id -> Pl.DefA id $ at
+  | TableA id -> Pl.TableA id $ at
 
 and annotate_args (ctx : Ctx.t) (args : arg list) : Pl.arg list =
   List.map (annotate_arg ctx) args
@@ -326,6 +327,9 @@ let rec annotate_param (ctx : Ctx.t) (param : param) : Pl.param =
   | DefP (id, tparams, params, typ) ->
       let params_pl = annotate_params ctx params in
       Pl.DefP (id, tparams, params_pl, typ) $ at
+  | TableP (id, params, typ) ->
+      let params_pl = annotate_params ctx params in
+      Pl.TableP (id, params_pl, typ) $ at
 
 and annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
   List.map (annotate_param ctx) params

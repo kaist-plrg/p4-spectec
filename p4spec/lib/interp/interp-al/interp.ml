@@ -268,6 +268,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match arg.it with
     | ExpA exp -> assign_arg_exp ctx_callee exp value
     | DefA id -> assign_arg_def ctx_caller ctx_callee id value
+    (* A table is still a `FuncV` at runtime, so binding reuses the func path. *)
+    | TableA id -> assign_arg_def ctx_caller ctx_callee id value
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
       (values : value list) : Ctx.t =
@@ -1048,6 +1050,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | DefA id ->
         let tparams, typs, typ = Ctx.find_func_signature ctx id in
         let value_res = Value.Make.func id tparams typs typ in
+        Ok value_res
+    | TableA id ->
+        let _, typs, typ = Ctx.find_func_signature ctx id in
+        let value_res = Value.Make.table id typs typ in
         Ok value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =

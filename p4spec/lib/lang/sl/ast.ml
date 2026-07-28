@@ -94,6 +94,7 @@ type param = param' phrase [@@deriving yojson]
 and param' =
   | ExpP of typ * exp
   | DefP of id * tparam list * param list * typ
+  | TableP of id * param list * typ
   [@@deriving yojson]
 
 (* Type arguments *)

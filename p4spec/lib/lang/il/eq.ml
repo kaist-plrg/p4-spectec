@@ -71,6 +71,8 @@ and eq_typ (typ_a : typ) (typ_b : typ) : bool =
   | FuncT (tparams_a, typs_a, typ_a), FuncT (tparams_b, typs_b, typ_b) ->
       eq_tparams tparams_a tparams_b
       && eq_typs typs_a typs_b && eq_typ typ_a typ_b
+  | TableT (typs_a, typ_a), TableT (typs_b, typ_b) ->
+      eq_typs typs_a typs_b && eq_typ typ_a typ_b
   | _ -> false
 
 and eq_typs (typs_a : typ list) (typs_b : typ list) : bool =
@@ -224,6 +226,7 @@ and eq_arg (arg_a : arg) (arg_b : arg) : bool =
   match (arg_a.it, arg_b.it) with
   | ExpA exp_a, ExpA exp_b -> eq_exp exp_a exp_b
   | DefA id_a, DefA id_b -> eq_id id_a id_b
+  | TableA id_a, TableA id_b -> eq_id id_a id_b
   | _ -> false
 
 and eq_args (args_a : arg list) (args_b : arg list) : bool =

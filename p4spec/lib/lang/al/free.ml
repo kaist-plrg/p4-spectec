@@ -61,7 +61,10 @@ and free_path (path : path) : t =
 (* Arguments *)
 
 and free_arg (arg : arg) : t =
-  match arg.it with ExpA exp -> free_exp exp | DefA _ -> empty
+  match arg.it with
+  | ExpA exp -> free_exp exp
+  | DefA _ -> empty
+  | TableA _ -> empty
 
 and free_args (args : arg list) : t =
   args |> List.map free_arg |> List.fold_left ( + ) empty

@@ -54,6 +54,7 @@ module Ids = struct
       f_DotP = (fun _ _ set_p _ -> set_p);
       f_ExpA = (fun _ set -> set);
       f_DefA = (fun _ _ -> empty);
+      f_TableA = (fun _ _ -> empty);
     }
 
   let free_exp (exp : exp) : t = fold_exp free_folder exp
@@ -148,6 +149,7 @@ module Vars = struct
       f_DotP = (fun _ _ set_p _ -> set_p);
       f_ExpA = (fun _ set -> set);
       f_DefA = (fun _ _ -> empty);
+      f_TableA = (fun _ _ -> empty);
     }
 
   let free_exp (exp : exp) : t = fold_exp free_folder exp

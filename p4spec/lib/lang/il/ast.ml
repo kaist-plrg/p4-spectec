@@ -48,6 +48,7 @@ and typ' =
   | TupleT of typ list                    (* `(` list(typ, `,`) `)` *)
   | IterT of typ * iter                   (* typ iter *)
   | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
+  | TableT of typ list * typ              (* `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
 (* Defined types *)
@@ -163,6 +164,8 @@ and param' =
   | ExpP of typ
   (* `def` `$`id ` (`<` list(tparam, `,`) `>`)? (`(` list(param, `,`) `)`)? `:` typ *)
   | DefP of id * tparam list * param list * typ
+  (* `tbldef` `$`id (`(` list(param, `,`) `)`)? `:` typ *)
+  | TableP of id * param list * typ
 
 (* Type parameters *)
 
@@ -175,6 +178,7 @@ and arg = arg' phrase
 and arg' =
   | ExpA of exp   (* exp *)
   | DefA of id    (* `$`id *)
+  | TableA of id  (* `$`id *)
 
 (* Type arguments *)
 

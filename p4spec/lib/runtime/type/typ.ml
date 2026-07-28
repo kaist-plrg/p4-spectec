@@ -46,12 +46,21 @@ module Make = struct
   let func (tparams : tparam list) (typs_params : typ list) (typ : typ) : typ =
     func' tparams typs_params typ $ no_region
 
+  let table' (typs_params : typ list) (typ : typ) : typ' =
+    TableT (typs_params, typ)
+
+  let table (typs_params : typ list) (typ : typ) : typ =
+    table' typs_params typ $ no_region
+
   let rec of_param_il (param : Il.param) : t =
     match param.it with
     | ExpP typ -> typ
     | DefP (_, tparams, params, typ) ->
         let typs_params = of_params_il params in
         func tparams typs_params typ
+    | TableP (_, params, typ) ->
+        let typs_params = of_params_il params in
+        table typs_params typ
 
   and of_params_il (params : Il.param list) : t list =
     List.map of_param_il params
@@ -62,6 +71,9 @@ module Make = struct
     | DefP (_, tparams, params, typ) ->
         let typs_params = of_params_sl params in
         func tparams typs_params typ
+    | TableP (_, params, typ) ->
+        let typs_params = of_params_sl params in
+        table typs_params typ
 
   and of_params_sl (params : Sl.param list) : t list =
     List.map of_param_sl params
@@ -72,6 +84,9 @@ module Make = struct
     | DefP (_, tparams, params, typ) ->
         let typs_params = of_params_pl params in
         func tparams typs_params typ
+    | TableP (_, params, typ) ->
+        let typs_params = of_params_pl params in
+        table typs_params typ
 
   and of_params_pl (params : Pl.param list) : t list =
     List.map of_param_pl params

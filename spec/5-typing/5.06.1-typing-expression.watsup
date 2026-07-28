@@ -79,7 +79,7 @@ rule Expr_ok/unaryExpression-lnot:
   ---- ;; check that the type is compatible
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_reduced
-      = $reduce_serenum_unary(typedExpressionIR, def $compat_lnot)
+      = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_lnot)
   ---- ;; create typed expression
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
   -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
@@ -101,7 +101,7 @@ rule Expr_ok/unaryExpression-bnot:
   ---- ;; check that the type is compatible
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_reduced
-      = $reduce_serenum_unary(typedExpressionIR, def $compat_bnot)
+      = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_bnot)
   ---- ;; create typed expression
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
   -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
@@ -125,7 +125,7 @@ rule Expr_ok/unaryExpression-uplusminus:
   ---- ;; check that the type is compatible
   ---- ;; while inserting implicit casts if necessary
   -- if typedExpressionIR_reduced
-      = $reduce_serenum_unary(typedExpressionIR, def $compat_uplusminus)
+      = $reduce_serenum_unary(typedExpressionIR, tbldef $compat_uplusminus)
   ---- ;; create typed expression
   -- if typeIR_reduced = $type_of_typedExpressionIR(typedExpressionIR_reduced)
   -- if ctk_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_reduced)
@@ -988,7 +988,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index
+            tbldef $compat_array_index
           )
     ---- ;; check that the base expression is a tuple
     ---- ;; then, index must be local compile-time known and in range
@@ -1017,7 +1017,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index)
+            tbldef $compat_array_index)
     ---- ;; check that the base expression is an array
     ---- ;; if the index is local compile-time known, then it must be in range
     -- if ARRAY typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
@@ -1045,7 +1045,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index)
+            tbldef $compat_array_index)
     ---- ;; check that the base expression is an array
     ---- ;; if the index is not local compile-time known, no range check is done
     -- if ARRAY typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
@@ -1071,7 +1071,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index)
+            tbldef $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is local compile-time known, then it must be in range
     -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
@@ -1099,7 +1099,7 @@ rulegroup Expr_ok/indexAccessExpression {
     -- if typedExpressionIR_index_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_index,
-            def $compat_array_index)
+            tbldef $compat_array_index)
     ---- ;; check that the base expression is a stack
     ---- ;; if the index is not local compile-time known, no range check is done
     -- if HEADER_STACK typeIR `[ n_size ] = $unroll_typeIR(typeIR_base)
@@ -1190,7 +1190,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_base_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_base,
-            def $compat_bitslice_base)
+            tbldef $compat_bitslice_base)
     ---- ;; fetch base annotation
     -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
     -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
@@ -1199,11 +1199,11 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_hi_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_hi,
-            def $compat_bitslice_range_index)
+            tbldef $compat_bitslice_range_index)
     -- if typedExpressionIR_lo_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_lo,
-            def $compat_bitslice_range_index)
+            tbldef $compat_bitslice_range_index)
     ---- ;; fetch index annotations
     -- if typeIR_hi_reduced = $type_of_typedExpressionIR(typedExpressionIR_hi_reduced)
     -- if ctk_hi_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_hi_reduced)
@@ -1237,7 +1237,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_base_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_base,
-            def $compat_bitslice_base)
+            tbldef $compat_bitslice_base)
     ---- ;; fetch base annotation
     -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
     -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
@@ -1246,11 +1246,11 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_l_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_l,
-            def $compat_bitslice_offset_index)
+            tbldef $compat_bitslice_offset_index)
     -- if typedExpressionIR_w_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_w,
-            def $compat_bitslice_offset_width)
+            tbldef $compat_bitslice_offset_width)
     ---- ;; fetch annotations
     -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
@@ -1284,7 +1284,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_base_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_base,
-            def $compat_bitslice_base)
+            tbldef $compat_bitslice_base)
     ---- ;; fetch base annotation
     -- if typeIR_base_reduced = $type_of_typedExpressionIR(typedExpressionIR_base_reduced)
     -- if ctk_base_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_base_reduced)
@@ -1293,11 +1293,11 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if typedExpressionIR_l_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_l,
-            def $compat_bitslice_offset_index)
+            tbldef $compat_bitslice_offset_index)
     -- if typedExpressionIR_w_reduced
         = $reduce_serenum_unary(
             typedExpressionIR_w,
-            def $compat_bitslice_offset_width)
+            tbldef $compat_bitslice_offset_width)
     ---- ;; fetch annotations
     -- if typeIR_l_reduced = $type_of_typedExpressionIR(typedExpressionIR_l_reduced)
     -- if ctk_l_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_l_reduced)
