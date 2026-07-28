@@ -91,22 +91,3 @@ tbl def $is_assignable_typeIR =
   | objectTypeIR => false
   | synthesizedTypeIR => false
   | _ => true
-
-tbl dec $is_serializable_typeIR(typeIR) : bool
-  hint(prose_true %0 "has a defined size")
-  hint(prose_false %0 "has no defined size")
-tbl def $is_serializable_typeIR =
-  | BOOL => true
-  | INT `< _ > => true
-  | BIT `< _ > => true
-  | VARBIT `< _ > => true
-  | TYPEDEF _ typeIR => $is_serializable_typeIR(typeIR)
-  | TYPE _ typeIR => $is_serializable_typeIR(typeIR)
-  | ENUM _ `< typeIR > `{ _ } => $is_serializable_typeIR(typeIR)
-  | TUPLE `< typeIR* > => $forall_($is_serializable_typeIR(typeIR)*)
-  | ARRAY typeIR `[ _ ] => $is_serializable_typeIR(typeIR)
-  | HEADER_STACK typeIR `[ _ ] => $is_serializable_typeIR(typeIR)
-  | STRUCT _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_serializable_typeIR(typeIR)*)
-  | HEADER _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_serializable_typeIR(typeIR)*)
-  | HEADER_UNION _ `< _ > `{ (_ typeIR _ `;)* } => $forall_($is_serializable_typeIR(typeIR)*)
-  | _ => false

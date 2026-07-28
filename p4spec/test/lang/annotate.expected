@@ -1112,28 +1112,6 @@ xref:is_assignable_typeIR[``typeIR''`` supports assignment]:
 
 |===
 
-xref:is_serializable_typeIR[``typeIR''`` has a defined size]:
-[cols="2", options="header"]
-|===
-| (``typeIR''``) | Result 
-
-| +BOOL+ | true
-| +INT+ +`<+ ++_++ +>+ | true
-| +BIT+ +`<+ ++_++ +>+ | true
-| +VARBIT+ +`<+ ++_++ +>+ | true
-| +TYPEDEF+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
-| +TYPE+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
-| +ENUM+ ++_++ +`<+ typeIR +>+ +`{+ ++_++^{asterisk}^ +}+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
-| +TUPLE+ +`<+ typeIR^{asterisk}^ +>+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
-| +ARRAY+ typeIR +`[+ ++_++ +]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
-| +HEADER_STACK+ typeIR +`[+ ++_++ +]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
-| +STRUCT+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
-| +HEADER+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
-| +HEADER_UNION+ ++_++ +`<+ ++_++^{asterisk}^ +>+ +`{+ ( ++_++ typeIR ++_++ +`;+ )^{asterisk}^ +}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
-| ++_++ | false
-
-|===
-
 xref:typeId_of_typeDefIR[The name of ``typeDefIR``]
 
 . If let ``typeId`` be ``typeDefIR``:
@@ -10583,46 +10561,43 @@ xref:Block_ok[Typing ``annotationList`` ``+`{+`` ``blockElementStatementList`` `
 
 xref:Parameter_ok[Parameter_ok]:
 
-* Typing ``parameter``, under context ``TC'``, with pre-list context ``TC`` at ``p``:
-* Result in context ``TC``, ``parameterIR``, and fresh type variables ``typeId^{asterisk}^``.
+* Typing ``parameter``, under context ``TC`` at ``p``:
+* Result in parameter ``parameterIR``, and fresh type variables ``typeId^{asterisk}^``.
 
-xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under context ``TC~0~``, with pre-list context ``TC~pre~`` at ``p``]:
+xref:Parameter_ok[Typing ``annotationList`` ``direction`` ``type`` ``name`` ``initializerOpt``, under context ``TC`` at ``p``]:
 
 . If ``initializerOpt`` matches pattern ``+`EMPTY+``:
  .. Let ``typeIR`` and fresh type variables ``typeId~fresh~^{asterisk}^`` be
- ** the result of xref:Type_ok[typing ``type``, under context ``TC~0~`` at ``p``].
- .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
+ ** the result of xref:Type_ok[typing ``type``, under context ``TC`` at ``p``].
+ .. Let ``bound`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
  .. Let ``B`` be xref:union_set[the union of the sets ``bound`` and ``+`{+`` ``typeId~fresh~^{asterisk}^`` ``+}+``].
  .. If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B``]:
   ... Let ``nameIR`` be xref:name[the name of ``name``].
   ... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``·``.
-  ... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
-  ... Result in context ``TC~1~``, ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
+  ... Result in parameter ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 . Else:
  .. Let ``typeIR`` and fresh type variables ``typeId~fresh~^{asterisk}^`` be
- ** the result of xref:Type_ok[typing ``type``, under context ``TC~0~`` at ``p``].
- .. Let ``bound'`` be xref:bound[bound type variables from the ``p`` layer of ``TC~0~``].
+ ** the result of xref:Type_ok[typing ``type``, under context ``TC`` at ``p``].
+ .. Let ``bound'`` be xref:bound[bound type variables from the ``p`` layer of ``TC``].
  .. Let ``B`` be xref:union_set[the union of the sets ``bound'`` and ``+`{+`` ``typeId~fresh~^{asterisk}^`` ``+}+``].
  .. If xref:Type_wf[``typeIR`` is a well-formed type, with bound type variables ``B``]:
   ... Let ``typedExpressionIR~init~`` be
-  *** the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC~pre~`` at ``p``].
+  *** the result of xref:Expr_ok[typing ``expression~init~``, under context ``TC`` at ``p``].
   ... Let ``typeIR~init~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~init~``].
   ... If xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] matches pattern ``+CTK+``:
    .... Let ``typedExpressionIR~init_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
    .... Let ``nameIR`` be xref:name[the name of ``name``].
    .... Let ``parameterInitializerIR`` be ``+`=+`` ``typedExpressionIR~init_cast~``.
    .... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
-   .... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
-   .... Result in context ``TC~1~``, ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
+   .... Result in parameter ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
   ... Else if xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~init~``] matches pattern ``+LCTK+``:
    .... Let ``typedExpressionIR~init_cast~`` be xref:option_get[*!*] xref:cast_unary[``typedExpressionIR~init~`` implicitly cast to ``typeIR``].
    .... Let ``nameIR`` be xref:name[the name of ``name``].
    .... Let ``value~init~`` be
-   **** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~init_cast~``, under context ``TC~pre~`` at ``p``].
+   **** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~init_cast~``, under context ``TC`` at ``p``].
    .... Let ``parameterInitializerIR`` be ``+`=+`` ``+`VALUE+`` ``value~init~``.
    .... Let ``parameterIR`` be ``annotationList`` ``direction`` ``typeIR`` ``nameIR`` ``parameterInitializerIR``.
-   .... Let ``TC~1~`` be xref:add_parameter_t[``parameterIR`` added to the ``p`` layer of ``TC~0~``].
-   .... Result in context ``TC~1~``, ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
+   .... Result in parameter ``parameterIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ParameterList_ok[ParameterList_ok]:
 
@@ -12394,7 +12369,9 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 
 . Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Check that xref:is_serializable_typeIR[``typeIR~base~`` has a defined size].
+. Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
+. Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
 . Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+)+`` ``+`:+`` ``+INT+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
@@ -13096,8 +13073,9 @@ xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC``, with 
 . If ``parameter^{asterisk}^`` matches pattern ``[]``:
  .. Result in context ``TC``, ``·``, and fresh type variables ``·``.
 . Else:
- .. Let context ``TC~1~``, ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
- ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC``, with pre-list context ``TC~pre~`` at ``p``].
+ .. Let parameter ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
+ ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC~pre~`` at ``p``].
+ .. Let ``TC~1~`` be xref:add_parameter_t[``parameterIR~h~`` added to the ``p`` layer of ``TC``].
  .. Let context ``TC~2~``, ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
  ** the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC~1~``, with pre-list context ``TC~pre~`` at ``p``].
  .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
@@ -17578,15 +17556,8 @@ xref:Stmt_eval[Runtime evaluation of ``forStatementIR``, under context ``EC`` an
   ... Let ``typeIR~subst~`` be xref:subst_type_e[``typeIR`` substituted by bound type variables in ``EC`` from the ``+LOCAL+`` layer].
   ... Let ``value~init~`` be xref:default[the default value for type ``typeIR~subst~``].
   ... Let ``EC~3~`` be xref:add_var_e[``EC~2~`` where ``nameIR`` to ``value~init~`` is added to the ``+LOCAL+`` layer].
-  ... Let ``value~cast~^{asterisk}^`` be the list obtained by repeating:
-+
---
-   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR~subst~``].
---
-+
-for each ``value`` in ``value^{asterisk}^``.
   ... Let the updated evaluation context ``EC~4~``, state ``ARCH~2~``, and ``statementResult`` be
-  *** the result of xref:ForInStmt_eval[looping over ``value~cast~^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~3~`` and state ``ARCH~1~``].
+  *** the result of xref:ForInStmt_eval[looping over ``value^{asterisk}^`` with loop variable ``nameIR`` and body ``statementIR``, under evaluation context ``EC~3~`` and state ``ARCH~1~``].
   ... Let ``EC~5~`` be xref:exit_e[``EC~4~`` with the innermost frame removed].
   ... Result in context ``EC~5~``, state ``ARCH~2~``, and ``statementResult``.
 . Else if let ``annotationList`` ``+FOR+`` ``+`(+`` ``annotationList~in~`` ``typeIR`` ``nameIR`` ``+IN+`` ``forCollectionExpressionIR`` ``+)+`` ``statementIR`` be ``forStatementIR``:
@@ -18168,15 +18139,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"setInvalid"`` 
   ... Let ``builtinMethodCallee`` be ``+BUILTIN_METHOD+`` ``storageReference`` ``+`.+`` ``"setInvalid"`` ``+`<+`` ``·`` ``+>+`` ``+`(+`` ``·`` ``+)+``.+++<sub class="bk-mark">[<a href="#bk-Callee_eval-5">fail #5</a>]</sub>+++
   ... Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``builtinMethodCallee``.
 
-xref:Callee_eval[Finding callee ``typedExpressionIR~base~`` ``+`.+`` ``nameIR`` ``+`(+`` ``·`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
-
-. Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
-. Let xref:expressionNoteIR[a pair of type ``typeIR~base~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~base~``.
-. Let ``value'`` be ``xref:sizeof[$sizeof(typeIR~base~,`` ``nameIR)]``.
-. Let ``builtinSizeMethodCallee`` be ``+BUILTIN_SIZE_METHOD+`` ``value'``.
-. Result in context ``EC``, state ``ARCH``, and callee ``builtinSizeMethodCallee``.
-
-xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``nameIR`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
+xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``t`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].
 . Let context ``EC~1~``, state ``ARCH~1~``, and result ``storageReferenceResult`` be
@@ -18190,11 +18153,11 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``nameIR`` ``+`(+
  .. Let!~type~ ``+REF+`` ``objectId`` be ``value``.
  .. Let ``object`` be xref:option_get[*!*] xref:find_object_e[the object ``objectId`` in ``ARCH~1~``].
  .. Let!~type~ ``+EXTERN+`` ``++_++`` ``+`<+`` ``theta`` ``+>+`` ``+`{+`` ``++_++`` ``frame`` ``externMethodDefEnv`` ``+}+`` be ``object``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentListIR`` ``+)+``].
+ .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``t`` ``+`(+`` ``argumentListIR`` ``+)+``].
  .. Let ``++_++`` ``+`:+`` ``externMethodDef`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` be xref:option_get[*!*] xref:find_overloaded[finding the item in ``externMethodDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_externMethodDef``].
- .. Let!~type~ ``+EXTERN_METHOD+`` ``nameIR'`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
- .. Check that ``nameIR'`` is equal to ``nameIR``.
- .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR^?^`` ``+}+``.
+ .. Let!~type~ ``+EXTERN_METHOD+`` ``nameIR`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+)+`` ``blockStatementIR^?^`` be ``externMethodDef``.
+ .. Check that ``nameIR`` is equal to ``t``.
+ .. Let ``externMethodCallee`` be ``+EXTERN_METHOD+`` ``objectId`` ``+`.+`` ``t`` ``+`<+`` ``typeParameterListIR`` ``+>+`` ``+`(+`` ``parameterListIR`` ``+`#+`` ``id~default~^{asterisk}^`` ``+`#+`` ``id~optional~^{asterisk}^`` ``+)+`` ``+`{+`` ``theta`` ``+`;+`` ``frame`` ``+`;+`` ``blockStatementIR^?^`` ``+}+``.
  .. Result in context ``EC~1~``, state ``ARCH~1~``, and callee ``externMethodCallee``.
 
 xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+`.+`` ``"apply"`` ``+`(+`` ``argumentListIR`` ``+)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
@@ -18709,12 +18672,6 @@ for each ``value~field~`` in ``value~field~^{asterisk}^``.
 . Let ``fieldValue~valid~^{asterisk}^`` be xref:filter_[``fieldValue^{asterisk}^`` filtered by ``bool^{asterisk}^``].
 . Let ``b~valid~`` be ``fieldValue~valid~^{asterisk}^`` is equal to ``·``.
 . Let ``returnResult`` be ``+RETURN+`` ``+`B+`` ``b~valid~``.
-. Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
-
-xref:Call_eval[Calling ``builtinSizeMethodCallee`` ``+`<+`` ``·`` ``+>+`` ``+`(+`` ``·`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:
-
-. Let ``+BUILTIN_SIZE_METHOD+`` ``value`` be ``builtinSizeMethodCallee``.
-. Let ``returnResult`` be ``+RETURN+`` ``value``.
 . Result in context ``EC~0~``, state ``ARCH~0~``, and call result ``returnResult``.
 
 xref:Call_eval[Calling ``externMethodCallee`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+)+``, under context ``EC~0~`` and state ``ARCH~0~`` at ``p``]:

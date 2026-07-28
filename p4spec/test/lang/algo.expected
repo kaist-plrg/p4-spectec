@@ -3581,77 +3581,6 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
-tbl def $is_serializable_typeIR(typeIR) : bool =
-  row 0 :
-    (signature) BOOL as typeIR
-    (typeIR) -> true
-    -- if typeIR <: boolTypeIR
-    -- let boolTypeIR = typeIR as boolTypeIR
-    -- if (boolTypeIR = BOOL)
-  row 1 :
-    (signature) INT `< _nat > as typeIR
-    (typeIR) -> true
-    -- if typeIR <: fixedIntTypeIR
-    -- let INT `< _nat > = typeIR as fixedIntTypeIR
-  row 2 :
-    (signature) BIT `< _nat > as typeIR
-    (typeIR) -> true
-    -- if typeIR <: fixedBitTypeIR
-    -- let BIT `< _nat > = typeIR as fixedBitTypeIR
-  row 3 :
-    (signature) VARBIT `< _nat > as typeIR
-    (typeIR) -> true
-    -- if typeIR <: varBitTypeIR
-    -- let VARBIT `< _nat > = typeIR as varBitTypeIR
-  row 4 :
-    (signature) TYPEDEF _typeId typeIR as typeIR
-    (typeIR') -> $is_serializable_typeIR(typeIR)
-    -- if typeIR' <: typedefTypeIR
-    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
-  row 5 :
-    (signature) TYPE _typeId typeIR as typeIR
-    (typeIR') -> $is_serializable_typeIR(typeIR)
-    -- if typeIR' <: newTypeIR
-    -- let TYPE _typeId typeIR = typeIR' as newTypeIR
-  row 6 :
-    (signature) ENUM _typeId `< typeIR > `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } as typeIR
-    (typeIR') -> $is_serializable_typeIR(typeIR)
-    -- if typeIR' <: serializableEnumTypeIR
-    -- let ENUM _typeId `< typeIR > `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} } = typeIR' as serializableEnumTypeIR
-  row 7 :
-    (signature) TUPLE `< typeIR*{typeIR <- typeIR*} > as typeIR
-    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
-    -- if typeIR' <: tupleTypeIR
-    -- let TUPLE `< typeIR*{typeIR <- typeIR*} > = typeIR' as tupleTypeIR
-  row 8 :
-    (signature) ARRAY typeIR `[ _nat ] as typeIR
-    (typeIR') -> $is_serializable_typeIR(typeIR)
-    -- if typeIR' <: arrayTypeIR
-    -- let ARRAY typeIR `[ _nat ] = typeIR' as arrayTypeIR
-  row 9 :
-    (signature) HEADER_STACK typeIR `[ _nat ] as typeIR
-    (typeIR') -> $is_serializable_typeIR(typeIR)
-    -- if typeIR' <: headerStackTypeIR
-    -- let HEADER_STACK typeIR `[ _nat ] = typeIR' as headerStackTypeIR
-  row 10 :
-    (signature) STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
-    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
-    -- if typeIR' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as structTypeIR
-  row 11 :
-    (signature) HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
-    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
-    -- if typeIR' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerTypeIR
-  row 12 :
-    (signature) HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } as typeIR
-    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
-    -- if typeIR' <: headerUnionTypeIR
-    -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} > `{ _annotationList typeIR _nameIR `;*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} } = typeIR' as headerUnionTypeIR
-  row 13 :
-    (signature) _typeIR
-    (_typeIR) -> false
-
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   clause 0 : (typeDefIR) = typeId
@@ -17311,35 +17240,34 @@ relation Block_ok: typingContext |- blockStatement : typingContext blockStatemen
     -- let blockStatementIR = annotationList `{ blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} }
     -- output: % |- % : TC_1 blockStatementIR
 
-relation Parameter_ok: cursor typingContext typingContext |- parameter : typingContext parameterIR `# typeId*
+relation Parameter_ok: cursor typingContext |- parameter : parameterIR `# typeId*
 
   rulegroup 
 
    match
 
-    (signature) p TC_pre TC_0 |- annotationList direction type name initializerOpt : % % `# %
-    p TC_pre TC_0 |- annotationList direction type name initializerOpt : % % `# %
+    (signature) p TC |- annotationList direction type name initializerOpt : % `# %
+    p TC |- annotationList direction type name initializerOpt : % `# %
 
    paths
 
     rulepath non-initializer
     -- if (initializerOpt = `EMPTY)
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- let B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- let B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
     -- if Type_wf: B |- typeIR holds
     -- let nameIR = $name(name)
     -- let parameterIR = annotationList direction typeIR nameIR ?()
-    -- let TC_1 = $add_parameter_t(p, TC_0, parameterIR)
-    -- output: % % % |- % : TC_1 parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- output: % % |- % : parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
     rulepath initializer-ctk
     -- let initializerOpt' = initializerOpt
     -- if initializerOpt' <: initializer
     -- let `= expression_init = initializerOpt' as initializer
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- let B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- let B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
     -- if Type_wf: B |- typeIR holds
-    -- Expr_ok: p TC_pre |- expression_init : typedExpressionIR_init
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- let typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if (CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
@@ -17348,28 +17276,26 @@ relation Parameter_ok: cursor typingContext typingContext |- parameter : typingC
     -- let nameIR = $name(name)
     -- let parameterInitializerIR = `= typedExpressionIR_init_cast as parameterInitializerIR
     -- let parameterIR = annotationList direction typeIR nameIR ?(parameterInitializerIR)
-    -- let TC_1 = $add_parameter_t(p, TC_0, parameterIR)
-    -- output: % % % |- % : TC_1 parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- output: % % |- % : parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
     rulepath initializer-lctk
     -- let initializerOpt' = initializerOpt
     -- if initializerOpt' <: initializer
     -- let `= expression_init = initializerOpt' as initializer
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- let B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- let B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} })
     -- if Type_wf: B |- typeIR holds
-    -- Expr_ok: p TC_pre |- expression_init : typedExpressionIR_init
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- let typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
     -- let typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} = $cast_unary(typedExpressionIR_init, typeIR)
     -- if typedExpressionIR?{typedExpressionIR <- typedExpressionIR?} matches (_)
     -- let ?(typedExpressionIR_init_cast) = typedExpressionIR?{typedExpressionIR <- typedExpressionIR?}
     -- let nameIR = $name(name)
-    -- Expr_eval_lctk: p TC_pre |- typedExpressionIR_init_cast ~> value_init
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
     -- let parameterInitializerIR = `= `VALUE value_init as parameterInitializerIR
     -- let parameterIR = annotationList direction typeIR nameIR ?(parameterInitializerIR)
-    -- let TC_1 = $add_parameter_t(p, TC_0, parameterIR)
-    -- output: % % % |- % : TC_1 parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- output: % % |- % : parameterIR `# typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 relation ParameterList_ok: cursor typingContext |- parameterList : typingContext parameterListIR `# typeId*
 
@@ -19693,7 +19619,9 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rulepath builtinMethodTypeIR-size
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- if $is_serializable_typeIR(typeIR_base)
+    -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
+    -- if ~typeIR_base_unroll <: objectTypeIR
+    -- if ~typeIR_base_unroll <: synthesizedTypeIR
     -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] ) `: INT as typeIR as methodTypeIR
     -- output: % % |- % `< % > `( % ) : methodTypeIR as callableTypeIR `< `# [] > `( `# [] `# [] )
 
@@ -20922,7 +20850,8 @@ relation Parameters_ok: cursor typingContext typingContext |- parameter* : typin
     -- let parameter'*{parameter' <- parameter'*} = parameter*{parameter <- parameter*}
     -- if parameter'*{parameter' <- parameter'*} matches _ :: _
     -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter'*{parameter' <- parameter'*}
-    -- Parameter_ok: p TC_pre TC_0 |- parameter_h : TC_1 parameterIR_h `# typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
+    -- Parameter_ok: p TC_pre |- parameter_h : parameterIR_h `# typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
+    -- let TC_1 = $add_parameter_t(p, TC_0, parameterIR_h)
     -- Parameters_ok: p TC_pre TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} `# typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- let parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}
     -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
@@ -23191,9 +23120,6 @@ syntax functionCallee =
 syntax builtinMethodCallee = 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
 
-syntax builtinSizeMethodCallee = 
-   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
-
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
 
@@ -23208,7 +23134,6 @@ syntax tableApplyMethodCallee =
 
 syntax methodCallee = 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
-   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
    | PARSER objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv } (from parserApplyMethodCallee) 
    | CONTROL objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR } (from controlApplyMethodCallee) 
@@ -23219,7 +23144,6 @@ syntax callee =
    | FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id* ) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) (from externFunctionCallee) 
    | BUILTIN_METHOD storageReference `. nameIR `< typeArgumentListIR > `( parameterListIR ) (from builtinMethodCallee) 
-   | BUILTIN_SIZE_METHOD value (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId `. nameIR `< typeParameterListIR > `( parameterListIR `# id* `# id* ) `{ theta `; frame `; blockStatementIR? } (from externMethodCallee) 
    | PARSER objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; parserLocalDeclarationListIR `; stateEnv } (from parserApplyMethodCallee) 
    | CONTROL objectId `. APPLY `( parameterListIR `# id* ) `{ theta `; frame `; controlLocalDeclarationListIR `; actionDefEnv `; controlBodyIR } (from controlApplyMethodCallee) 
@@ -28561,8 +28485,7 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- let typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR)
     -- let value_init = $default(typeIR_subst)
     -- let EC_3 = $add_var_e(LOCAL, EC_2, `` nameIR, value_init)
-    -- (let value_cast = $cast_op(typeIR_subst, value))*{value <- value*, value_cast -> value_cast*}
-    -- ForInStmt_eval: EC_3 ARCH_1 |- nameIR value_cast*{value_cast <- value_cast*} statementIR : EC_4 ARCH_2 statementResult
+    -- ForInStmt_eval: EC_3 ARCH_1 |- nameIR value*{value <- value*} statementIR : EC_4 ARCH_2 statementResult
     -- let EC_5 = $exit_e(EC_4)
     -- output: % % % |- % : EC_5 ARCH_2 statementResult
 
@@ -29751,24 +29674,6 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< `_ > `( arg
     -- let builtinMethodCallee = BUILTIN_METHOD storageReference `. "setInvalid" `< [] > `( [] )
     -- output: % % % |- % `< `_ > `( % ) : EC_1 ARCH_1 `` builtinMethodCallee as callee as calleeResult
 
-  rulegroup builtinSizeMethodCallee
-
-   match
-
-    (signature) p EC ARCH |- typedExpressionIR_base `. nameIR `< `_ > `( [] ) : % % %
-    p EC ARCH |- callableTargetIR `< `_ > `( argumentIR*{argumentIR <- argumentIR*} ) : % % %
-    -- if callableTargetIR matches `% . %`
-    -- let typedExpressionIR_base `. nameIR = callableTargetIR
-    -- if argumentIR*{argumentIR <- argumentIR*} matches []
-
-   paths
-
-    rulepath cont
-    -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
-    -- let _expressionIR `# `( typeIR_base _ctk ) = typedExpressionIR_base
-    -- let builtinSizeMethodCallee = BUILTIN_SIZE_METHOD $sizeof(typeIR_base, nameIR)
-    -- output: % % % |- % `< `_ > `( % ) : EC ARCH `` builtinSizeMethodCallee as callee as calleeResult
-
   rulegroup externMethodCallee
 
    match
@@ -30628,24 +30533,6 @@ relation Call_eval: cursor evalContext arch |- callee `@ `< typeArgumentListIR >
     -- let fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = $filter_<fieldValue>(fieldValue*{fieldValue <- fieldValue*}, $isValid_header(value_field)*{value_field <- value_field*})
     -- let b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = [])
     -- let returnResult = RETURN ?(`B b_valid as value)
-    -- output: % % % |- % `@ `< % > `( % ) : EC ARCH returnResult as callResult
-
-  rulegroup builtinSizeMethodCallee
-
-   match
-
-    (signature) p EC ARCH |- builtinSizeMethodCallee as callee `@ `< [] > `( [] ) : % % %
-    p EC ARCH |- callee `@ `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} > `( argumentIR*{argumentIR <- argumentIR*} ) : % % %
-    -- if callee <: builtinSizeMethodCallee
-    -- let builtinSizeMethodCallee = callee as builtinSizeMethodCallee
-    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
-    -- if argumentIR*{argumentIR <- argumentIR*} matches []
-
-   paths
-
-    rulepath builtinSizeMethodCallee
-    -- let BUILTIN_SIZE_METHOD value = builtinSizeMethodCallee
-    -- let returnResult = RETURN ?(value)
     -- output: % % % |- % `@ `< % > `( % ) : EC ARCH returnResult as callResult
 
   rulegroup externMethodCallee
