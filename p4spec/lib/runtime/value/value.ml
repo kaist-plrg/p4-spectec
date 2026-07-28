@@ -37,6 +37,7 @@ let rec compare (value_l : t) (value_r : t) =
       | ListV _ -> 8
       | FuncV _ -> 9
       | ExternV _ -> 10
+      | TableV _ -> 11
     in
     match (value_l.it, value_r.it) with
     | BoolV b_l, BoolV b_r -> Stdlib.compare b_l b_r
@@ -127,6 +128,7 @@ let hash_of (v : value') : int =
         h := (!h * 31) + 1009;
         h := (!h * 31) + value.note.vhash
     | FuncV id -> h := (!h * 31) + Hashtbl.hash id.it
+    | TableV id -> h := (!h * 31) + Hashtbl.hash id.it
     | ExternV json -> h := (!h * 31) + Hashtbl.hash json
   in
   go v;
@@ -203,11 +205,9 @@ module Make = struct
     FuncV id |> with_region at
     |> with_typ (Typ.Make.func tparams typs_params typ)
 
-  (* A table is still a `FuncV` at runtime in this commit; only its
-     sort/type (`TableT`) is distinct. *)
   let table ?(at = no_region) (id : id) (typs_params : typ list) (typ : typ) :
       value =
-    FuncV id |> with_region at |> with_typ (Typ.Make.table typs_params typ)
+    TableV id |> with_region at |> with_typ (Typ.Make.table typs_params typ)
 
   let extern ?(at = no_region) (typ : typ) (json : Yojson.Safe.t) : value =
     ExternV json |> with_region at |> with_typ typ
@@ -279,6 +279,9 @@ module Get = struct
 
   let func (value : t) : id =
     match value.it with FuncV id -> id | _ -> error no_region "not a function"
+
+  let table (value : t) : id =
+    match value.it with TableV id -> id | _ -> error no_region "not a table"
 
   let extern (value : t) : Yojson.Safe.t =
     match value.it with

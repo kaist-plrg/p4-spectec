@@ -37,6 +37,8 @@ module Make () = struct
     rtbl : RTbl.t;
     (* Map from function ids to functions *)
     ftbl : FTbl.t;
+    (* Map from table ids to tables *)
+    ttbl : TTbl.t;
   }
 
   (* Local layer *)
@@ -46,6 +48,8 @@ module Make () = struct
     tdenv : TDEnv.t;
     (* Map from function ids to functions *)
     fenv : FEnv.t;
+    (* Map from table ids to tables *)
+    tenv : TEnv.t;
     (* Map from variables to values *)
     venv : VEnv.t;
   }
@@ -62,7 +66,8 @@ module Make () = struct
     let tdtbl = TDTbl.create ~size:500 in
     let rtbl = RTbl.create ~size:500 in
     let ftbl = FTbl.create ~size:500 in
-    { tdtbl; rtbl; ftbl }
+    let ttbl = TTbl.create ~size:500 in
+    { tdtbl; rtbl; ftbl; ttbl }
 
   (* Adders for globals *)
 
@@ -80,6 +85,11 @@ module Make () = struct
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
       error_dup fid.at "function" fid.it;
     FTbl.add fid func global.ftbl
+
+  let add_table_global (fid : FId.t) (table : Table.t) : unit =
+    if TTbl.find_opt fid global.ttbl |> Option.is_some then
+      error_dup fid.at "table" fid.it;
+    TTbl.add fid table global.ttbl
 
   (* Global initializer *)
 
@@ -105,8 +115,7 @@ module Make () = struct
         let func = Func.Builtin (tparams, params, typ) in
         add_func_global id func
     | TableDecD (id, params, typ, tablerows, _) ->
-        let func = Func.Table (params, typ, tablerows) in
-        add_func_global id func
+        add_table_global id (params, typ, tablerows)
     | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, _) ->
         let func =
           Func.Defined (tparams, params, typ, clauses, elseclause_opt)
@@ -120,7 +129,12 @@ module Make () = struct
   (* Constructor *)
 
   let empty_local () : local =
-    { tdenv = TDEnv.empty; fenv = FEnv.empty; venv = VEnv.empty }
+    {
+      tdenv = TDEnv.empty;
+      fenv = FEnv.empty;
+      tenv = TEnv.empty;
+      venv = VEnv.empty;
+    }
 
   let empty : t = { global; local = empty_local () }
 
@@ -197,10 +211,28 @@ module Make () = struct
     | Some (cursor, func) -> (cursor, func)
     | None -> error_undef fid.at "function" fid.it
 
+  let find_table_opt (ctx : t) (fid : FId.t) : (cursor * Table.t) option =
+    match TEnv.find_opt fid ctx.local.tenv with
+    | Some table -> Some (Local, table)
+    | None ->
+        TTbl.find_opt fid ctx.global.ttbl
+        |> Option.map (fun table -> (Global, table))
+
+  let find_table (ctx : t) (fid : FId.t) : cursor * Table.t =
+    match find_table_opt ctx fid with
+    | Some (cursor, table) -> (cursor, table)
+    | None -> error_undef fid.at "table" fid.it
+
+  (* A table id resolves to a monomorphic signature (empty tparams). *)
   let find_func_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
-    find_func_opt ctx fid
-    |> Option.map (fun (_, func) -> Func.get_signature func)
+    match find_func_opt ctx fid with
+    | Some (_, func) -> Some (Func.get_signature func)
+    | None ->
+        find_table_opt ctx fid
+        |> Option.map (fun (_, table) ->
+               let typs, typ = Table.get_signature table in
+               ([], typs, typ))
 
   let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
       =
@@ -232,6 +264,14 @@ module Make () = struct
     if bound_func ctx fid then error_dup fid.at "function" fid.it;
     let fenv = FEnv.add fid func ctx.local.fenv in
     { ctx with local = { ctx.local with fenv } }
+
+  (* Adders for tables *)
+
+  let add_table (ctx : t) (fid : FId.t) (table : Table.t) : t =
+    if find_table_opt ctx fid |> Option.is_some then
+      error_dup fid.at "table" fid.it;
+    let tenv = TEnv.add fid table ctx.local.tenv in
+    { ctx with local = { ctx.local with tenv } }
 
   (* Constructors *)
 

@@ -236,8 +236,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match param.it with
     | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
     | DefP (id, _, _, _) -> assign_param_def ctx_caller ctx_callee id value
-    (* A table is still a `FuncV` at runtime, so binding reuses the func path. *)
-    | TableP (id, _, _) -> assign_param_def ctx_caller ctx_callee id value
+    | TableP (id, _, _) -> assign_param_table ctx_caller ctx_callee id value
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
@@ -262,6 +261,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | _ ->
         back_err id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
+             (Sl.Print.string_of_value ~short:true value)
+             id.it)
+
+  and assign_param_table (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
+      (value : value) : Ctx.t =
+    match value.it with
+    | TableV id_t ->
+        let _, table = Ctx.find_table ctx_caller id_t in
+        Ctx.add_table ctx_callee id table
+    | _ ->
+        back_err id.at
+          (F.asprintf "cannot assign a value %s to a table %s"
              (Sl.Print.string_of_value ~short:true value)
              id.it)
 
@@ -1937,7 +1948,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and is_high_order_func (values_input : value list) : bool =
     List.exists
       (fun value_input ->
-        match value_input.it with Il.FuncV _ -> true | _ -> false)
+        match value_input.it with
+        | Il.FuncV _ | Il.TableV _ -> true
+        | _ -> false)
       values_input
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
@@ -1969,24 +1982,33 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (targs : targ list) (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
-      let cursor, func = Ctx.find_func ctx id in
-      let anon = cursor = Ctx.Local in
-      let invoke_func_with_values' () =
-        match func with
-        | Func.Extern (tparams, _, typ) ->
-            invoke_extern_func ctx id tparams targs values_input typ
-        | Func.Builtin (tparams, _, typ) ->
-            invoke_builtin_func ctx id tparams targs values_input typ
-        | Func.Table (params, _, tablerows) ->
-            invoke_table_func ctx id params tablerows values_input
-        | Func.Defined (tparams, params, _, instr, elseblock_opt) ->
-            invoke_defined_func ctx id tparams params instr elseblock_opt targs
-              values_input
+      let cursor, is_extern, invoke_func_with_values' =
+        match Ctx.find_func_opt ctx id with
+        | Some (cursor, func) ->
+            let invoke () =
+              match func with
+              | Func.Extern (tparams, _, typ) ->
+                  invoke_extern_func ctx id tparams targs values_input typ
+              | Func.Builtin (tparams, _, typ) ->
+                  invoke_builtin_func ctx id tparams targs values_input typ
+              | Func.Defined (tparams, params, _, instr, elseblock_opt) ->
+                  invoke_defined_func ctx id tparams params instr elseblock_opt
+                    targs values_input
+            in
+            (cursor, is_extern_func func, invoke)
+        | None ->
+            (* Transitional: a table call is resolved through the table env.
+               A later elaborator change emits a distinct table-call node. *)
+            let cursor, (params, _, tablerows) = Ctx.find_table ctx id in
+            let invoke () =
+              invoke_table_func ctx id params tablerows values_input
+            in
+            (cursor, false, invoke)
       in
+      let anon = cursor = Ctx.Local in
       let value_output =
         if
-          !cache_enabled && (not anon)
-          && (not (is_extern_func func))
+          !cache_enabled && (not anon) && (not is_extern)
           && not (is_high_order_func values_input)
         then (
           let cache_result = CCache.find !func_cache (id.it, values_input) in

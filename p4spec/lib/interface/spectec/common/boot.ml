@@ -192,6 +192,7 @@ and boot_value (value : Il.value) : Value.t =
         | OptV value_opt -> boot_opt_value at value_opt
         | ListV values -> boot_list_value at values
         | FuncV id -> boot_func_value at id
+        | TableV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
       !add_boot_value_cache value value_value;

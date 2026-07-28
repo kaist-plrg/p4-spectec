@@ -90,6 +90,7 @@ and value' =
   | OptV of value option
   | ListV of value list
   | FuncV of id
+  | TableV of id
   | ExternV of Yojson.Safe.t
 [@@deriving yojson]
 

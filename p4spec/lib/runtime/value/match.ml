@@ -80,10 +80,9 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
             typs_params_t typ_ret_t tparams_v typs_params_v typ_ret_v
       | _ -> false)
   | TableT (typs_params_t, typ_ret_t) -> (
-      (* A table is still a `FuncV` at runtime; compare signatures with
-         empty tparams (tables are monomorphic). *)
+      (* Tables are monomorphic: compare signatures with empty tparams. *)
       match value.it with
-      | FuncV fid ->
+      | TableV fid ->
           let tparams_v, typs_params_v, typ_ret_v = find_func fid in
           Type.Equiv.equiv_functyp find_typdef_opt typ.at [] typs_params_t
             typ_ret_t tparams_v typs_params_v typ_ret_v

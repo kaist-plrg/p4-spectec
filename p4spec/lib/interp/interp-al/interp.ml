@@ -268,8 +268,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match arg.it with
     | ExpA exp -> assign_arg_exp ctx_callee exp value
     | DefA id -> assign_arg_def ctx_caller ctx_callee id value
-    (* A table is still a `FuncV` at runtime, so binding reuses the func path. *)
-    | TableA id -> assign_arg_def ctx_caller ctx_callee id value
+    | TableA id -> assign_arg_table ctx_caller ctx_callee id value
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
       (values : value list) : Ctx.t =
@@ -294,6 +293,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | _ ->
         error id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
+             (Il.Print.string_of_value ~short:true value)
+             id.it)
+
+  and assign_arg_table (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
+      (value : value) : Ctx.t =
+    match value.it with
+    | TableV id_t ->
+        let _, table = Ctx.find_table ctx_caller id_t in
+        Ctx.add_table ctx_callee id table
+    | _ ->
+        error id.at
+          (F.asprintf "cannot assign a value %s to a table %s"
              (Il.Print.string_of_value ~short:true value)
              id.it)
 
@@ -1393,19 +1404,30 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and is_high_order_func (values_input : value list) : bool =
     List.exists
       (fun value_input ->
-        match value_input.it with Il.FuncV _ -> true | _ -> false)
+        match value_input.it with
+        | Il.FuncV _ | Il.TableV _ -> true
+        | _ -> false)
       values_input
 
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
-    (* Find the function *)
-    let cursor, func = Ctx.find_func ctx id in
+    (* Find the callee, either a function or (transitionally) a table.
+       A later elaborator change emits a distinct table-call node. *)
+    let cursor, is_extern, invoke_body =
+      match Ctx.find_func_opt ctx id with
+      | Some (cursor, func) ->
+          let invoke () = invoke_func_body ctx id func targs values_input in
+          (cursor, is_extern_func func, invoke)
+      | None ->
+          let cursor, (_, _, tablerows) = Ctx.find_table ctx id in
+          let invoke () = invoke_table_func ctx id tablerows values_input in
+          (cursor, false, invoke)
+    in
     let anon = cursor = Ctx.Local in
     let result =
       if
-        !cache_enabled && (not anon)
-        && (not (is_extern_func func))
+        !cache_enabled && (not anon) && (not is_extern)
         && not (is_high_order_func values_input)
       then (
         let cache_result = CCache.find !func_cache (id.it, values_input) in
@@ -1414,9 +1436,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | None ->
             let checkpoint_before = Interface.checkpoint () in
             let extern_checkpoint_before = Extern.checkpoint () in
-            let* value_output =
-              invoke_func_body ctx id func targs values_input
-            in
+            let* value_output = invoke_body () in
             let checkpoint_after = Interface.checkpoint () in
             let extern_checkpoint_after = Extern.checkpoint () in
             (* Cache if neither the interface nor the extern created a side-effect *)
@@ -1428,7 +1448,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             Ok value_output)
       else (
         if not internal then check_func_inputs ctx id targs values_input;
-        invoke_func_body ctx id func targs values_input)
+        invoke_body ())
     in
     Hook.on_func_exit id;
     result
@@ -1444,8 +1464,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         invoke_extern_func ctx id tparams targs values_input typ
     | Func.Builtin (tparams, _, typ) ->
         invoke_builtin_func ctx id tparams targs values_input typ
-    | Func.Table (_, _, tablerows) ->
-        invoke_table_func ctx id tablerows values_input
     | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
         invoke_defined_func ctx id tparams clauses elseclause_opt targs
           values_input
