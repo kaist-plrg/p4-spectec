@@ -353,7 +353,6 @@ and boot_arg (arg : Il.arg) : Value.t =
   | DefA id ->
       let value_id = boot_id id in
       Value.Make.(mop_def_arg <|! [ value_id ] <<|! typ_arg <<<| at)
-  (* A table is still a `Func.t` in this commit: boot it as a def argument. *)
   | TableA id ->
       let value_id = boot_id id in
       Value.Make.(mop_def_arg <|! [ value_id ] <<|! typ_arg <<<| at)

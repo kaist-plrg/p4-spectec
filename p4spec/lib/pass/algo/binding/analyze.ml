@@ -626,14 +626,14 @@ let analyze_def (ctx : Ctx.t) (def : def) : Al.def =
       Al.ExternDecD (id, tparams, params, typ, hints) $ at
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       Al.BuiltinDecD (id, tparams, params, typ, hints) $ at
-  | TableDecD (id, params, typ, tablerows, hints) ->
-      let tablerows = analyze_tablerows ctx at params tablerows in
-      Al.TableDecD (id, params, typ, tablerows, hints) $ at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map (analyze_clause ctx) clauses in
       let elseclause_opt = Option.map (analyze_elseclause ctx) elseclause_opt in
       Al.FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
       $ at
+  | TableDecD (id, params, typ, tablerows, hints) ->
+      let tablerows = analyze_tablerows ctx at params tablerows in
+      Al.TableDecD (id, params, typ, tablerows, hints) $ at
 
 let analyze_spec (spec : spec) : Al.spec =
   let ctx = Ctx.init () in

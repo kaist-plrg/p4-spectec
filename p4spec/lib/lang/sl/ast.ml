@@ -223,10 +223,10 @@ and def' =
   | ExternDecD of externfunc
   (* `builtin` `dec` builtinfunc *)
   | BuiltinDecD of builtinfunc
-  (* `tbl` `dec` tablefunc *)
-  | TableDecD of tablefunc
   (* `dec` func *)
   | FuncDecD of definedfunc
+  (* `tbl` `dec` tablefunc *)
+  | TableDecD of tablefunc
 [@@deriving yojson]
 
 (* Spec *)

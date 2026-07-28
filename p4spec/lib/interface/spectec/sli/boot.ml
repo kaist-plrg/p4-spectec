@@ -23,7 +23,6 @@ let rec boot_param (param : Sl.param) : Value.t =
         mop_def_param
         <|! [ value_id; value_tparams; value_params; value_typ ]
         <<|! typ_param <<<| at)
-  (* A table is still a `Func.t` in this commit: boot it as a def parameter. *)
   | TableP (id, params, typ) ->
       let value_id = boot_id id in
       let value_tparams = boot_tparams [] in
@@ -261,10 +260,10 @@ let rec boot_def (def : Sl.def) : Value.t option =
       boot_extern_func_def at id tparams params typ |> wrap_some
   | BuiltinDecD (id, tparams, params, typ, _) ->
       boot_builtin_func_def at id tparams params typ |> wrap_some
-  | TableDecD (id, params, typ, tablerows, _) ->
-      boot_table_func_def at id params typ tablerows |> wrap_some
   | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
       boot_func_def at id tparams params typ block elseblock_opt |> wrap_some
+  | TableDecD (id, params, typ, tablerows, _) ->
+      boot_table_func_def at id params typ tablerows |> wrap_some
 
 and boot_extern_typ_def (at : region) (id : Sl.id) : Value.t =
   let value_id = boot_id id in

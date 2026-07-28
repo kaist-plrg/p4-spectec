@@ -650,7 +650,14 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (args : arg list) : (Ctx.t * Il.exp' * Il.typ') attempt =
-  let tparams_il, params_il, typ_il = Ctx.find_func_signature ctx id in
+  let tparams_il, params_il, typ_il =
+    match Ctx.find_func_signature_opt ctx id with
+    | Some signature -> signature
+    | None -> (
+        match Ctx.find_table_signature_opt ctx id with
+        | Some signature -> signature
+        | None -> Ctx.error_undef id.at "function" id.it)
+  in
   check
     (List.length targs = List.length tparams_il)
     id.at "type arguments do not match";
@@ -1189,7 +1196,6 @@ and elab_param (ctx : Ctx.t) (param : param) : Il.param =
       let typ_il = elab_plaintyp ctx_local plaintyp in
       Il.DefP (id, tparams, params_il, typ_il) $ param.at
   | TableP (id, params, plaintyp) ->
-      (* Tables are monomorphic: no type parameters. *)
       let params_il = List.map (elab_param ctx) params in
       let typ_il = elab_plaintyp ctx plaintyp in
       Il.TableP (id, params_il, typ_il) $ param.at
@@ -1226,7 +1232,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
       let typs_params_il_p = Typ.Make.of_params_il params_il_p in
       let typs_params_il_a = Typ.Make.of_params_il params_il_a in
       check
-        (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) arg.at tparams_il_p
+        (Equiv.equiv_arrowtyp (Ctx.find_typdef_opt ctx) arg.at tparams_il_p
            typs_params_il_p typ_il_p tparams_il_a typs_params_il_a typ_il_a)
         arg.at
         (F.asprintf
@@ -1239,17 +1245,16 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
         (F.asprintf
            "table argument does not match the declared table parameter %s"
            (Id.to_string id_p));
-      (* A table is registered in the peer table env, not among functions. *)
-      let ctx = Ctx.add_table_func_dec ctx id_p params_il_p typ_il_p in
+      let ctx = Ctx.add_table_dec ctx id_p params_il_p typ_il_p in
       let arg_il = Il.TableA id_a $ arg.at in
       (ctx, arg_il)
   | TableP (id_p, params_il_p, typ_il_p), TableA id_a ->
-      let params_il_a, typ_il_a, _ = Ctx.find_table_func ctx id_a in
+      let params_il_a, typ_il_a, _ = Ctx.find_table ctx id_a in
       let typs_params_il_p = Typ.Make.of_params_il params_il_p in
       let typs_params_il_a = Typ.Make.of_params_il params_il_a in
       (* Tables are monomorphic: compare signatures with empty tparams. *)
       check
-        (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) arg.at [] typs_params_il_p
+        (Equiv.equiv_arrowtyp (Ctx.find_typdef_opt ctx) arg.at [] typs_params_il_p
            typ_il_p [] typs_params_il_a typ_il_a)
         arg.at
         (F.asprintf
@@ -1491,14 +1496,14 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.def option =
       elab_extern_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | BuiltinDecD (id, tparams, params, plaintyp, hints) ->
       elab_builtin_dec_def ctx at id tparams params plaintyp hints |> wrap_some
-  | TableDecD (id, params, list_typ, hints) ->
-      elab_table_dec_def ctx at id params list_typ hints |> wrap_some
   | FuncDecD (id, tparams, params, plaintyp, hints) ->
       elab_func_dec_def ctx at id tparams params plaintyp hints |> wrap_some
-  | TableDefD (id, tablerows) ->
-      elab_table_def_def ctx at id tablerows |> wrap_none
+  | TableDecD (id, params, list_typ, hints) ->
+      elab_table_dec_def ctx at id params list_typ hints |> wrap_some
   | FuncDefD (id, tparams, args, exp, prems) ->
       elab_func_def ctx at id tparams args exp prems |> wrap_none
+  | TableDefD (id, tablerows) ->
+      elab_table_def_def ctx at id tablerows |> wrap_none
   | SepD -> ctx |> wrap_none
 
 and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.def list =
@@ -1679,7 +1684,7 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
     at "table cannot have function parameters";
   let typ_il = elab_plaintyp ctx plaintyp in
   check (typ_il.it = Il.BoolT) typ_il.at "table must return a boolean type";
-  let ctx = Ctx.add_table_func_dec ctx id params_il typ_il in
+  let ctx = Ctx.add_table_dec ctx id params_il typ_il in
   let def_il = Il.TableDecD (id, params_il, typ_il, [], hints) $ at in
   (ctx, def_il)
 
@@ -1726,9 +1731,9 @@ and elab_tablerows (ctx : Ctx.t) (at : region) (id : id)
 
 and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
     (tablerows : tablerow list) : Ctx.t =
-  let params_il, typ_il, _ = Ctx.find_table_func ctx id in
+  let params_il, typ_il, _ = Ctx.find_table ctx id in
   let tablerows_il = elab_tablerows ctx at id params_il typ_il tablerows in
-  Ctx.add_table_func_tablerows ctx id tablerows_il
+  Ctx.add_table_rows ctx id tablerows_il
 
 (* Elaboration of function definitions *)
 
@@ -1783,9 +1788,6 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
 
 let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
-  | Il.TableDecD (id, params_il, typ_il, [], hints) ->
-      let _, _, tablerows_il = Ctx.find_table_func ctx id in
-      Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
   | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], None, hints) ->
       let _, _, _, clauses_il, elseclause_il_opt =
         Ctx.find_defined_func ctx id
@@ -1793,8 +1795,11 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
       Il.FuncDecD
         (id, tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt, hints)
       $ def_il.at
-  | Il.TableDecD _ -> error def_il.at "table was already populated"
+  | Il.TableDecD (id, params_il, typ_il, [], hints) ->
+      let _, _, tablerows_il = Ctx.find_table ctx id in
+      Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
   | Il.FuncDecD _ -> error def_il.at "function was already populated"
+  | Il.TableDecD _ -> error def_il.at "table was already populated"
   | _ -> def_il
 
 let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
@@ -1802,12 +1807,12 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
   List.iter
     (fun def_il ->
       match def_il.it with
-      | Il.TableDecD (id, _, _, [], _) ->
-          warn def_il.at
-            (F.asprintf "table %s has no rows defined" (Id.to_string id))
       | Il.FuncDecD (id, _, _, _, [], None, _) ->
           warn def_il.at
             (F.asprintf "function %s has no clauses defined" (Id.to_string id))
+      | Il.TableDecD (id, _, _, [], _) ->
+          warn def_il.at
+            (F.asprintf "table %s has no rows defined" (Id.to_string id))
       | _ -> ())
     spec_il;
   spec_il

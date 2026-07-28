@@ -61,6 +61,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_input)
         id_rel.at
         (F.sprintf "relation input of %s does not match the expected type"
@@ -80,6 +81,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_output)
         id_rel.at
         (F.sprintf "relation output of %s does not match the expected type"
@@ -106,6 +108,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         (Value.Match.subs
            (Ctx.find_typdef_opt ctx_local)
            (Ctx.find_func_signature ctx_local)
+           (Ctx.find_table_signature ctx_local)
            typs_params values_input)
         id_func.at
         (F.sprintf "function argument of %s does not match the parameter type"
@@ -120,6 +123,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typ_output value_output)
         id_func.at
         (F.sprintf
@@ -567,6 +571,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
+        (Ctx.find_table_signature ctx)
         typ value
     in
     let value_res = Value.Make.bool sub in
@@ -1063,7 +1068,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let value_res = Value.Make.func id tparams typs typ in
         Ok value_res
     | TableA id ->
-        let _, typs, typ = Ctx.find_func_signature ctx id in
+        let _, typs, typ = Ctx.find_table_signature ctx id in
         let value_res = Value.Make.table id typs typ in
         Ok value_res
 
@@ -1412,8 +1417,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
-    (* Find the callee, either a function or (transitionally) a table.
-       A later elaborator change emits a distinct table-call node. *)
+    (* Find the callee *)
     let cursor, is_extern, invoke_body =
       match Ctx.find_func_opt ctx id with
       | Some (cursor, func) ->

@@ -213,8 +213,8 @@ and def' =
   | RelD of rel
   | ExternDecD of externfunc
   | BuiltinDecD of builtinfunc
-  | TableDecD of tablefunc
   | FuncDecD of definedfunc
+  | TableDecD of tablefunc
 
 (* Spec *)
 

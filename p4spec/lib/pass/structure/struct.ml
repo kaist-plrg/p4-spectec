@@ -217,11 +217,11 @@ let rec struct_def ~(final : bool) (ctx : Ctx.t) (def : def) : Sl.def =
       struct_extern_dec_def ctx at id tparams params typ hints
   | BuiltinDecD (id, tparams, params, typ, hints) ->
       struct_builtin_dec_def ctx at id tparams params typ hints
-  | TableDecD (id, params, typ, tablerows, hints) ->
-      struct_table_dec_def ~final ctx at id params tablerows typ hints
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       struct_func_dec_def ~final ctx at id tparams params typ clauses
         elseclause_opt hints
+  | TableDecD (id, params, typ, tablerows, hints) ->
+      struct_table_dec_def ~final ctx at id params tablerows typ hints
 
 (* Structuring relation definitions *)
 

@@ -71,6 +71,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_input)
         id_rel.at
         (F.sprintf "relation input of %s does not match the expected type"
@@ -90,6 +91,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_output)
         id_rel.at
         (F.sprintf "relation output of %s does not match the expected type"
@@ -116,6 +118,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         (Value.Match.subs
            (Ctx.find_typdef_opt ctx_local)
            (Ctx.find_func_signature ctx_local)
+           (Ctx.find_table_signature ctx_local)
            typs_params values_input)
         id_func.at
         (F.sprintf "function argument of %s does not match the parameter type"
@@ -130,6 +133,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typ_output value_output)
         id_func.at
         (F.sprintf
@@ -663,6 +667,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
+        (Ctx.find_table_signature ctx)
         typ value
     in
     let value_res = Value.Make.bool sub in
@@ -1201,7 +1206,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           Hook.on_value value_res;
           value_res
       | TableA id ->
-          let _, typs_params, typ = Ctx.find_func_signature ctx id in
+          let _, typs_params, typ = Ctx.find_table_signature ctx id in
           let value_res = Value.Make.table id typs_params typ in
           Hook.on_value value_res;
           value_res

@@ -299,8 +299,8 @@ let render_def def =
       render_rulegroup_def id_rel id_rulegroup rules
   | ExternDecD _ -> ""
   | BuiltinDecD _ -> ""
-  | TableDecD _ -> ""
   | FuncDecD _ -> ""
-  | TableDefD _ -> ""
+  | TableDecD _ -> ""
   | FuncDefD _ -> ""
+  | TableDefD _ -> ""
   | SepD -> "\n\n"

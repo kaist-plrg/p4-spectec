@@ -32,7 +32,7 @@ and equiv_nottyp (find_typdef_opt : TId.t -> Typdef.t option)
     (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
   Mixfix.eq ~eq_arg:(equiv_typ find_typdef_opt) nottyp_a.it nottyp_b.it
 
-and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
+and equiv_arrowtyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
     (tparams_a : tparam list) (typs_params_a : typ list) (typ_a : typ)
     (tparams_b : tparam list) (typs_params_b : typ list) (typ_b : typ) : bool =
   check

@@ -1524,8 +1524,8 @@ let id_of_def (def : def) : string option =
   | RelD (id, _, _, _, _)
   | ExternDecD (id, _, _, _)
   | BuiltinDecD (id, _, _, _)
-  | TableDecD (id, _, _, _)
-  | FuncDecD (id, _, _, _, _, _) ->
+  | FuncDecD (id, _, _, _, _, _)
+  | TableDecD (id, _, _, _) ->
       Some id.it
 
 let render_def (def : def) : string option =
@@ -1540,8 +1540,8 @@ let render_def (def : def) : string option =
       render_extern_func_def hints externfunc |> wrap_some
   | BuiltinDecD builtinfunc ->
       render_builtin_func_def hints builtinfunc |> wrap_some
-  | TableDecD tablefunc -> render_table_func_def hints tablefunc |> wrap_some
   | FuncDecD func -> render_defined_func_def hints func |> wrap_some
+  | TableDecD tablefunc -> render_table_func_def hints tablefunc |> wrap_some
 
 let render_defs (defs : def list) : string =
   defs |> List.filter_map render_def |> String.concat "\n\n"

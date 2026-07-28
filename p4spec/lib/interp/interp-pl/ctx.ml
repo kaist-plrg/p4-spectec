@@ -131,11 +131,11 @@ module Make () = struct
     | BuiltinDecD (id, tparams, params, typ) ->
         let func = Func.Builtin (tparams, params, typ) in
         add_func_global id func
-    | TableDecD (id, params, typ, tablerows) ->
-        add_table_global id (params, typ, tablerows)
     | FuncDecD (id, tparams, params, typ, block, elseblock_opt) ->
         let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
         add_func_global id func
+    | TableDecD (id, params, typ, tablerows) ->
+        add_table_global id (params, typ, tablerows)
 
   let init ~(det : bool) (spec : spec) : unit =
     is_det := det;
@@ -262,22 +262,29 @@ module Make () = struct
     | Some (cursor, table) -> (cursor, table)
     | None -> back_undef fid.at "table" fid.it
 
-  (* A table id resolves to a monomorphic signature (empty tparams). *)
   let find_func_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
-    match find_func_opt ctx fid with
-    | Some (_, func) -> Some (Func.get_signature func)
-    | None ->
-        find_table_opt ctx fid
-        |> Option.map (fun (_, table) ->
-               let typs, typ = Table.get_signature table in
-               ([], typs, typ))
+    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+
+  (* A table id resolves to a monomorphic signature (empty tparams). *)
+  let find_table_signature_opt (ctx : t) (fid : FId.t) :
+      (tparam list * typ list * typ) option =
+    find_table_opt ctx fid
+    |> Option.map (fun (_, table) ->
+           let typs, typ = Table.get_signature table in
+           ([], typs, typ))
 
   let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
       =
     match find_func_signature_opt ctx fid with
-    | Some (tparams, typs, typ) -> (tparams, typs, typ)
+    | Some signature -> signature
     | None -> back_undef fid.at "function" fid.it
+
+  let find_table_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
+      =
+    match find_table_signature_opt ctx fid with
+    | Some signature -> signature
+    | None -> back_undef fid.at "table" fid.it
 
   let bound_func (ctx : t) (fid : FId.t) : bool =
     find_func_opt ctx fid |> Option.is_some

@@ -516,14 +516,14 @@ let analyze_def (def : def) : def =
       let rulegroups = List.map analyze_rulegroup rulegroups in
       let elsegroup_opt = Option.map analyze_elsegroup elsegroup_opt in
       RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) $ def.at
-  | TableDecD (id, params, typ, tablerows, hints) ->
-      let tablerows = List.map analyze_tablerow tablerows in
-      TableDecD (id, params, typ, tablerows, hints) $ def.at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map analyze_clause clauses in
       let elseclause_opt = Option.map analyze_clause elseclause_opt in
       FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
       $ def.at
+  | TableDecD (id, params, typ, tablerows, hints) ->
+      let tablerows = List.map analyze_tablerow tablerows in
+      TableDecD (id, params, typ, tablerows, hints) $ def.at
   | _ -> def
 
 let analyze_spec (spec : spec) : spec = List.map analyze_def spec
