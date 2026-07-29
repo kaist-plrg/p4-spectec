@@ -77,7 +77,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token EQ NEQ UP BAR
 
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX EXTERN TABLEDEC TABLEDEF RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
+%token SYNTAX EXTERN TABLEDEC TABLEDEF TBLGROUP RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -731,6 +731,10 @@ tablerow :
     { let region = over_region [ pattern.at; body.at ] in
       (pattern, body) $ region }
 
+tablecol :
+  | TABLEDEC DOLLAR id = defid hints = hint*
+    { (id, hints) $ id.at }
+
 (* Hints *)
 
 hint :
@@ -815,6 +819,9 @@ def_ :
     { TableDecD (id, [], typ_ret, hints) }
   | TABLEDEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
     { TableDecD (id, params, typ_ret, hints) }
+  (* Table group declaration *)
+  | TBLGROUP DOLLAR id = defid_lparen param = param RPAREN COLON typ_ret = plaintyp hints = hint* LBRACE cols = tablecol* RBRACE
+    { TableGroupD (id, param, typ_ret, cols, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
     { FuncDecD ($3, [], [], $5, $6) }

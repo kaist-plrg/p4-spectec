@@ -297,6 +297,12 @@ let string_of_def def =
   | TableDecD (defid, params, plaintyp, _hints) ->
       "tbldec " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableGroupD (defid, param, plaintyp, cols, _hints) ->
+      "tblgroup " ^ string_of_defid defid ^ "(" ^ string_of_param param
+      ^ ") : " ^ string_of_plaintyp plaintyp ^ " {\n  "
+      ^ String.concat "\n  "
+          (List.map (fun col -> let id, _ = col.it in "tbldec " ^ id.it) cols)
+      ^ "\n}"
   | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems

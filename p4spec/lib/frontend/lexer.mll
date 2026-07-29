@@ -283,6 +283,7 @@ and token = parse
   | "extern" { EXTERN }
   | "tbldec" { TABLEDEC }
   | "tbldef" { TABLEDEF }
+  | "tblgroup" { TBLGROUP }
   | "relation" { RELATION }
   | "rulegroup" { RULEGROUP }
   | "rule" { RULE }

@@ -1500,6 +1500,7 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.def option =
       elab_func_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | TableDecD (id, params, list_typ, hints) ->
       elab_table_dec_def ctx at id params list_typ hints |> wrap_some
+  | TableGroupD _ -> error at "table groups are not yet elaborated"
   | FuncDefD (id, tparams, args, exp, prems) ->
       elab_func_def ctx at id tparams args exp prems |> wrap_none
   | TableDefD (id, tablerows) ->

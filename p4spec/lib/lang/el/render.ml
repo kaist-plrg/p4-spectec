@@ -301,6 +301,7 @@ let render_def def =
   | BuiltinDecD _ -> ""
   | FuncDecD _ -> ""
   | TableDecD _ -> ""
+  | TableGroupD _ -> ""
   | FuncDefD _ -> ""
   | TableDefD _ -> ""
   | SepD -> "\n\n"
