@@ -29,7 +29,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_max_index = List.assoc "max_index" args in
       let value_sparse = List.assoc "sparse" args in
       let _, max_index = unpack_p4_fixedBit value_max_index in

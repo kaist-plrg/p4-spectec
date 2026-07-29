@@ -60,7 +60,7 @@ module Make (Spec : Spec.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_size = List.assoc "size" args in
       let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
@@ -174,7 +174,7 @@ module Make (Spec : Spec.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_size = List.assoc "size" args in
       let value_default = Spec.Func.default value_type in
       let _, size = unpack_p4_fixedBit value_size in
@@ -307,7 +307,7 @@ module Make (Spec : Spec.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_type = List.assoc "type" args in
       let id_enum, id_type = unpack_p4_enum value_type in
       match (id_enum, id_type) with
@@ -390,7 +390,7 @@ module Make (Spec : Spec.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_type = List.assoc "type" args in
       let id_enum, id_type = unpack_p4_enum value_type in
       match (id_enum, id_type) with

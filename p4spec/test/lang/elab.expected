@@ -7608,6 +7608,14 @@ def $add_parameter_t(cursor, typingContext, parameterIR) : typingContext =
   -- if (varTypeIR = direction typeIR DYN ?())
   -- if (TC' = $add_var_t(cursor, TC, id, varTypeIR))
 
+def $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext =
+
+  clause 0 : (cursor, TC, []) = TC
+
+  clause 1 : (cursor, TC, parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}) = TC''
+  -- if (TC' = $add_parameter_t(cursor, TC, parameterIR_h))
+  -- if (TC'' = $add_parameters_t(cursor, TC', parameterIR_t*{parameterIR_t <- parameterIR_t*}))
+
 def $add_constructorParameter_t(typingContext, parameterIR) : typingContext =
 
   clause 0 : (TC, _annotationList direction typeIR id _parameterInitializerOptIR) = TC'
@@ -10601,9 +10609,10 @@ relation ParameterList_ok: cursor typingContext |- parameterList : typingContext
 
   rulegroup 
 
-    rule : p TC_0 |- parameterList : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    rule : p TC_0 |- parameterList : TC_1 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- if (parameter*{parameter <- parameter*} = $flatten_parameterList(parameterList))
-    -- Parameters_ok: p TC_0 TC_0 |- parameter*{parameter <- parameter*} : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: p TC_0 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (TC_1 = $add_parameters_t(p, TC_0, parameterIR*{parameterIR <- parameterIR*}))
 
 relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterListOpt : typingContext constructorParameterListIR '#' typeId*
 
@@ -10611,7 +10620,8 @@ relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterLi
 
     rule : TC_0 |- constructorParameterListOpt : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- if (constructorParameter*{constructorParameter <- constructorParameter*} = $flatten_constructorParameterListOpt(constructorParameterListOpt))
-    -- Parameters_ok: BLOCK TC_0 TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (TC_1 = $add_parameters_t(BLOCK, TC_0, constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}))
 
 def $callableId_of_externMethodPrototype(externMethodPrototype) : callableId =
 
@@ -12335,16 +12345,15 @@ def $is_concrete_extern_object''(externMethodTypeDefIR) : bool =
 
   clause -1 : (externMethodTypeDefIR) = false
 
-relation Parameters_ok: cursor typingContext typingContext |- parameter* : typingContext parameterListIR '#' typeId*
+relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR '#' typeId*
 
   rulegroup 
 
-    rule nil: p TC_pre TC |- [] : TC [] '#' []
+    rule nil: p TC |- [] : [] '#' []
 
-    rule cons: p TC_pre TC_0 |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Parameter_ok: p TC_pre |- parameter_h : parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
-    -- if (TC_1 = $add_parameter_t(p, TC_0, parameterIR_h))
-    -- Parameters_ok: p TC_pre TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
+    rule cons: p TC |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameter_ok: p TC |- parameter_h : parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
+    -- Parameters_ok: p TC |- parameter_t*{parameter_t <- parameter_t*} : parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- if (parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*})
     -- if (typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*})
 

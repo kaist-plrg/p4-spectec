@@ -3,17 +3,15 @@ module Value = Runtime.Value
 
 (* Unpacks an IL value representing a P4 value into an OCaml type *)
 
-let first fs x = List.find_map (fun f -> f x) fs
+(* Pair a list of parameter-name ids *)
 
-(* Pair a list of parameter-name ids with a list of argument values, so an
-   extern init can look its constructor arguments up by name rather than by
-   position. *)
-
-let named_args (value_ids : Value.t) (value_args : Value.t) :
+let assoc_args (value_ids : Value.t) (value_args : Value.t) :
     (string * Value.t) list =
   List.combine
     (List.map Value.Get.text (Value.Get.list value_ids))
     (Value.Get.list value_args)
+
+let first fs x = List.find_map (fun f -> f x) fs
 
 (* boolValue = `B bool *)
 
