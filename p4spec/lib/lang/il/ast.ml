@@ -224,6 +224,11 @@ and elseclause' = clause'
 and tablerow = tablerow' phrase
 and tablerow' = arg list * exp
 
+(* Table columns (a table group column: id, rows, hints) *)
+
+and tablecol = tablecol' phrase
+and tablecol' = id * tablerow list * hint list
+
 (* Hints *)
 
 and hint = El.hint
@@ -250,6 +255,8 @@ and def' =
   | FuncDecD of id * tparam list * param list * typ * clause list * elseclause option * hint list
   (* `table` `dec` id list(param, `,`) `:` typ hint* *)
   | TableDecD of id * param list * typ * tablerow list * hint list
+  (* `tblgroup` id `(` param `)` `:` typ hint* `{` tablecol* `}` *)
+  | TableGroupD of id * param * typ * tablecol list * hint list
 
 (* Spec *)
 

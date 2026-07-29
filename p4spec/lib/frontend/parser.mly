@@ -834,6 +834,8 @@ def_ :
   (* Table function body definition *)
   | TABLEDEF DOLLAR id = defid EQ body = table_body
     { TableDefD (id, body) }
+  | TABLEDEF DOLLAR gid = defid col = DOTID EQ body = table_body
+    { TableGroupDefD (gid, col @@@ $loc(col), body) }
   (* Function clause declaration *)
   | DEF DOLLAR defid EQ exp prem_list
     { FuncDefD ($3, [], [], $5, $6) }

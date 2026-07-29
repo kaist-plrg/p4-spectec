@@ -1500,7 +1500,10 @@ let rec elab_def (ctx : Ctx.t) (def : def) : Ctx.t * Il.def option =
       elab_func_dec_def ctx at id tparams params plaintyp hints |> wrap_some
   | TableDecD (id, params, list_typ, hints) ->
       elab_table_dec_def ctx at id params list_typ hints |> wrap_some
-  | TableGroupD _ -> error at "table groups are not yet elaborated"
+  | TableGroupD (id, param, plaintyp, cols, hints) ->
+      elab_table_group_dec_def ctx at id param plaintyp cols hints |> wrap_some
+  | TableGroupDefD (gid, cid, tablerows) ->
+      elab_table_group_def_def ctx at gid cid tablerows |> wrap_none
   | FuncDefD (id, tparams, args, exp, prems) ->
       elab_func_def ctx at id tparams args exp prems |> wrap_none
   | TableDefD (id, tablerows) ->
@@ -1736,6 +1739,37 @@ and elab_table_def_def (ctx : Ctx.t) (at : region) (id : id)
   let tablerows_il = elab_tablerows ctx at id params_il typ_il tablerows in
   Ctx.add_table_rows ctx id tablerows_il
 
+(* Elaboration of table group declarations and definitions *)
+
+and elab_table_group_dec_def (ctx : Ctx.t) (at : region) (id : id)
+    (param : param) (plaintyp : plaintyp) (tablecols : tablecol list)
+    (hints : hint list) : Ctx.t * Il.def =
+  let param_il = elab_param ctx param in
+  check
+    (match param_il.it with ExpP _ -> true | DefP _ | TableP _ -> false)
+    at "table group cannot have function parameters";
+  let typ_il = elab_plaintyp ctx plaintyp in
+  check (typ_il.it = Il.BoolT) typ_il.at "table group must return a boolean type";
+  let cols = List.map (fun (col : tablecol) -> col.it) tablecols in
+  check
+    (List.map fst cols |> List.map it |> distinct ( = ))
+    at "table group columns are not distinct";
+  let ctx = Ctx.add_group_dec ctx id param_il typ_il cols in
+  let tablecols_il =
+    List.map (fun (cid, hints) -> (cid, [], hints) $ cid.at) cols
+  in
+  let def_il = Il.TableGroupD (id, param_il, typ_il, tablecols_il, hints) $ at in
+  (ctx, def_il)
+
+and elab_table_group_def_def (ctx : Ctx.t) (at : region) (gid : id) (cid : id)
+    (tablerows : tablerow list) : Ctx.t =
+  let { Runtime.Static.Table.param; typ; cols; _ } = Ctx.find_group ctx gid in
+  check
+    (List.exists (fun (c, _) -> Id.eq c cid) cols)
+    cid.at "table group column is undefined";
+  let tablerows_il = elab_tablerows ctx at cid [ param ] typ tablerows in
+  Ctx.add_group_col_rows ctx gid cid tablerows_il
+
 (* Elaboration of function definitions *)
 
 and elab_func_def (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
@@ -1799,6 +1833,19 @@ let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   | Il.TableDecD (id, params_il, typ_il, [], hints) ->
       let _, _, tablerows_il = Ctx.find_table ctx id in
       Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
+  | Il.TableGroupD (id, param_il, typ_il, cols_il, hints) ->
+      let { Runtime.Static.Table.rows; _ } = Ctx.find_group ctx id in
+      let cols_il =
+        List.map
+          (fun (col_il : Il.tablecol) ->
+            let cid, _, chints = col_il.it in
+            let tablerows_il =
+              Domain.Lib.IdMap.find_opt cid rows |> Option.value ~default:[]
+            in
+            (cid, tablerows_il, chints) $ col_il.at)
+          cols_il
+      in
+      Il.TableGroupD (id, param_il, typ_il, cols_il, hints) $ def_il.at
   | Il.FuncDecD _ -> error def_il.at "function was already populated"
   | Il.TableDecD _ -> error def_il.at "table was already populated"
   | _ -> def_il

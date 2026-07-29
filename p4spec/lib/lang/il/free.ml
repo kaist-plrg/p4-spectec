@@ -143,4 +143,10 @@ let free_def (def : def) : t =
   | FuncDecD (_, _, _, _, clauses, elseclause_opt, _) ->
       free_clauses clauses + free_elseclause_opt elseclause_opt
   | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
+  | TableGroupD (_, _, _, cols, _) ->
+      cols
+      |> List.map (fun col ->
+             let _, tablerows, _ = col.it in
+             free_tablerows tablerows)
+      |> List.fold_left ( + ) empty
   | _ -> empty

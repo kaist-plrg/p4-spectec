@@ -42,6 +42,8 @@ type t = {
   fenv : FEnv.t;
   (* Map from table ids to tables *)
   tenv : TEnv.t;
+  (* Map from table group ids to groups *)
+  genv : Table.group IdMap.t;
 }
 
 (* Constructors *)
@@ -55,6 +57,7 @@ let empty : t =
     renv = REnv.empty;
     fenv = FEnv.empty;
     tenv = TEnv.empty;
+    genv = IdMap.empty;
   }
 
 let init () : t =
@@ -340,6 +343,38 @@ let add_table_rows (ctx : t) (fid : FId.t)
   let table = (params, plaintyp, tablerows) in
   let tenv = TEnv.add fid table ctx.tenv in
   { ctx with tenv }
+
+(* Table groups *)
+
+let find_group_opt (ctx : t) (gid : Id.t) : Table.group option =
+  IdMap.find_opt gid ctx.genv
+
+let find_group (ctx : t) (gid : Id.t) : Table.group =
+  match find_group_opt ctx gid with
+  | Some group -> group
+  | None -> error_undef gid.at "table group" gid.it
+
+let bound_group (ctx : t) (gid : Id.t) : bool =
+  find_group_opt ctx gid |> Option.is_some
+
+let add_group_dec (ctx : t) (gid : Id.t) (param_il : Il.param)
+    (typ_il : Il.typ) (cols : (Id.t * Il.hint list) list) : t =
+  if bound_group ctx gid then error_dup gid.at "table group" gid.it;
+  let group : Table.group =
+    { param = param_il; typ = typ_il; cols; rows = IdMap.empty }
+  in
+  let genv = IdMap.add gid group ctx.genv in
+  { ctx with genv }
+
+let add_group_col_rows (ctx : t) (gid : Id.t) (cid : Id.t)
+    (tablerows : Il.tablerow list) : t =
+  let group = find_group ctx gid in
+  if not (List.exists (fun (c, _) -> Id.eq c cid) group.cols) then
+    error_undef cid.at "table group column" cid.it;
+  if IdMap.mem cid group.rows then error_dup cid.at "table group column" cid.it;
+  let group = { group with rows = IdMap.add cid tablerows group.rows } in
+  let genv = IdMap.add gid group ctx.genv in
+  { ctx with genv }
 
 let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.clause) : t =
   if not (bound_func ctx fid) then error_undef clause.at "function" fid.it;

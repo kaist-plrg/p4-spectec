@@ -142,6 +142,7 @@ let free_id_def (def : def) : IdSet.t =
   match def.it with
   | RuleGroupD (_, _, rules) -> free_rules rules
   | TableDefD (_, tablerows) -> free_tablerows tablerows
+  | TableGroupDefD (_, _, tablerows) -> free_tablerows tablerows
   | FuncDefD (_, _, args, exp, prems) ->
       free_id_args args
       |> IdSet.union (free_id_exp exp)

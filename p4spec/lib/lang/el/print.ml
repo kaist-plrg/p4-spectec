@@ -294,20 +294,23 @@ let string_of_def def =
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | FuncDefD (defid, tparams, args, exp, prems) ->
+      "def " ^ string_of_defid defid ^ string_of_tparams tparams
+      ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
   | TableDecD (defid, params, plaintyp, _hints) ->
       "tbldec " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableDefD (defid, tablerows) ->
+      "tbldef " ^ string_of_defid defid ^ " =\n  "
+      ^ string_of_tablerows tablerows
   | TableGroupD (defid, param, plaintyp, cols, _hints) ->
       "tblgroup " ^ string_of_defid defid ^ "(" ^ string_of_param param
       ^ ") : " ^ string_of_plaintyp plaintyp ^ " {\n  "
       ^ String.concat "\n  "
           (List.map (fun col -> let id, _ = col.it in "tbldec " ^ id.it) cols)
       ^ "\n}"
-  | FuncDefD (defid, tparams, args, exp, prems) ->
-      "def " ^ string_of_defid defid ^ string_of_tparams tparams
-      ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
-  | TableDefD (defid, tablerows) ->
-      "tbldef " ^ string_of_defid defid ^ " =\n  "
+  | TableGroupDefD (gid, cid, tablerows) ->
+      "tbldef " ^ string_of_defid gid ^ "." ^ cid.it ^ " =\n  "
       ^ string_of_tablerows tablerows
   | SepD -> "\n\n"
 

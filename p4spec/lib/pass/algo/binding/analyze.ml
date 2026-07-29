@@ -634,6 +634,7 @@ let analyze_def (ctx : Ctx.t) (def : def) : Al.def =
   | TableDecD (id, params, typ, tablerows, hints) ->
       let tablerows = analyze_tablerows ctx at params tablerows in
       Al.TableDecD (id, params, typ, tablerows, hints) $ at
+  | TableGroupD _ -> failwith "table groups: algo binding not yet implemented"
 
 let analyze_spec (spec : spec) : Al.spec =
   let ctx = Ctx.init () in

@@ -443,6 +443,16 @@ let rec string_of_def def =
       "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
       ^ string_of_typ typ ^ " ="
       ^ string_of_tablerows tablerows
+  | TableGroupD (defid, param, typ, cols, _) ->
+      "tblgroup " ^ string_of_defid defid ^ "(" ^ string_of_param param ^ ")"
+      ^ " : " ^ string_of_typ typ
+      ^ String.concat ""
+          (List.map
+             (fun col ->
+               let cid, tablerows, _ = col.it in
+               "\n" ^ indent 1 ^ string_of_defid cid ^ " ="
+               ^ string_of_tablerows tablerows)
+             cols)
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 
