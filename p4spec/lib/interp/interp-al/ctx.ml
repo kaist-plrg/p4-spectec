@@ -197,7 +197,7 @@ module Make () = struct
   let bound_rel (ctx : t) (rid : RId.t) : bool =
     find_rel_opt ctx rid |> Option.is_some
 
-  (* Finders for definitions *)
+  (* Finders for functions *)
 
   let find_func_opt (ctx : t) (fid : FId.t) : (cursor * Func.t) option =
     match FEnv.find_opt fid ctx.local.fenv with
@@ -211,6 +211,21 @@ module Make () = struct
     | Some (cursor, func) -> (cursor, func)
     | None -> error_undef fid.at "function" fid.it
 
+  let find_func_signature_opt (ctx : t) (fid : FId.t) :
+      (tparam list * typ list * typ) option =
+    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+
+  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
+      =
+    match find_func_signature_opt ctx fid with
+    | Some signature -> signature
+    | None -> error_undef fid.at "function" fid.it
+
+  let bound_func (ctx : t) (fid : FId.t) : bool =
+    find_func_opt ctx fid |> Option.is_some
+
+  (* Finders for tables *)
+
   let find_table_opt (ctx : t) (fid : FId.t) : (cursor * Table.t) option =
     match TEnv.find_opt fid ctx.local.tenv with
     | Some table -> Some (Local, table)
@@ -223,11 +238,6 @@ module Make () = struct
     | Some (cursor, table) -> (cursor, table)
     | None -> error_undef fid.at "table" fid.it
 
-  let find_func_signature_opt (ctx : t) (fid : FId.t) :
-      (tparam list * typ list * typ) option =
-    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
-
-  (* A table id resolves to a monomorphic signature (empty tparams). *)
   let find_table_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
     find_table_opt ctx fid
@@ -235,20 +245,14 @@ module Make () = struct
            let typs, typ = Table.get_signature table in
            ([], typs, typ))
 
-  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
-      =
-    match find_func_signature_opt ctx fid with
-    | Some signature -> signature
-    | None -> error_undef fid.at "function" fid.it
-
   let find_table_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
       =
     match find_table_signature_opt ctx fid with
     | Some signature -> signature
     | None -> error_undef fid.at "table" fid.it
 
-  let bound_func (ctx : t) (fid : FId.t) : bool =
-    find_func_opt ctx fid |> Option.is_some
+  let bound_table (ctx : t) (fid : FId.t) : bool =
+    find_table_opt ctx fid |> Option.is_some
 
   (* Adders *)
 
@@ -275,8 +279,7 @@ module Make () = struct
   (* Adders for tables *)
 
   let add_table (ctx : t) (fid : FId.t) (table : Table.t) : t =
-    if find_table_opt ctx fid |> Option.is_some then
-      error_dup fid.at "table" fid.it;
+    if bound_table ctx fid then error_dup fid.at "table" fid.it;
     let tenv = TEnv.add fid table ctx.local.tenv in
     { ctx with local = { ctx.local with tenv } }
 
