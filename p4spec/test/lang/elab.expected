@@ -13626,7 +13626,7 @@ extern syntax objectState
 
 syntax externMethodDefEnv = map<callableId, externMethodDef>
 
-extern def $init_objectState(nameIR, typeIR*, value*) : objectState
+extern def $init_objectState(nameIR, typeIR*, id*, value*) : objectState
 
 syntax externObject = 
    | EXTERN typeId `< theta > `{ objectState frame externMethodDefEnv } (from externObject) 
@@ -14863,9 +14863,10 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- Copy_in_inst_default: STO_1 p IC `@ p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} : IC_callee_4
     -- if (`{ callableId `: externMethodDef as callableDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} } = IC_callee_4.BLOCK.CALLABLE)
-    -- (if (_annotationList' _direction' _typeIR' id_cparam _parameterInitializerOptIR' = constructorParameterIR))*{_annotationList' <- _annotationList'*, _direction' <- _direction'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, _typeIR' <- _typeIR'*, constructorParameterIR <- constructorParameterIR*, id_cparam <- id_cparam*}
-    -- if (value_cparam*{value_cparam <- value_cparam*} = $find_boundValues(IC_callee_4.BLOCK.FRAME, id_cparam*{id_cparam <- id_cparam*}))
-    -- if (objectState = $init_objectState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, value_cparam*{value_cparam <- value_cparam*}))
+    -- (if (_annotationList' _direction' _typeIR' id_default _parameterInitializerOptIR' = constructorParameterIR_default))*{_annotationList' <- _annotationList'*, _direction' <- _direction'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, _typeIR' <- _typeIR'*, constructorParameterIR_default <- constructorParameterIR_default*, id_default <- id_default*}
+    -- if (id_cparam*{id_cparam <- id_cparam*} = id_aligned*{id_aligned <- id_aligned*} ++ id_default*{id_default <- id_default*})
+    -- (if (?(value_cparam) = $find_map<id, value>(IC_callee_4.BLOCK.FRAME, id_cparam)))*{id_cparam <- id_cparam*, value_cparam <- value_cparam*}
+    -- if (objectState = $init_objectState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, id_cparam*{id_cparam <- id_cparam*}, value_cparam*{value_cparam <- value_cparam*}))
     -- if (theta_extern = IC_callee_4.BLOCK.TYPE)
     -- if (frame_extern = IC_callee_4.BLOCK.FRAME)
     -- if (externMethodDefEnv_extern = `{ callableId `: externMethodDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} })
@@ -15016,17 +15017,6 @@ def $init_tableEntries(tablePropertyListIR) : tableEntriesPropertyIR =
 
   clause 1 : (tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}) = `EMPTY ?() ENTRIES `= `{ [] }
   -- if ([] = $filter_<tablePropertyIR>(tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}, tablePropertyIR <: tableEntriesPropertyIR*{tablePropertyIR <- tablePropertyIR*}))
-
-def $find_boundValues(frame, id*) : value* =
-
-  clause 0 : (_frame, []) = []
-
-  clause 1 : (frame, id_h :: id_t*{id_t <- id_t*}) = value_h :: value_t*{value_t <- value_t*}
-  -- if (?(value_h) = $find_map<id, value>(frame, id_h))
-  -- if (value_t*{value_t <- value_t*} = $find_boundValues(frame, id_t*{id_t <- id_t*}))
-
-  clause 2 : (frame, id_h :: id_t*{id_t <- id_t*}) = $find_boundValues(frame, id_t*{id_t <- id_t*})
-  -- if (?() = $find_map<id, value>(frame, id_h))
 
 syntax globalEvalLayer = globalInstLayer
 

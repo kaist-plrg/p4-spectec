@@ -1,7 +1,6 @@
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Spec.Unpack
-open Error
 open Util.Source
 
 module Make (Spec_Func : Spec.Func.S) = struct
@@ -28,18 +27,11 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        CounterArray(bit<32> max_index, bool sparse); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_max_index, value_sparse =
-        match values_arg with
-        | [ value_max_index; value_sparse ] -> (value_max_index, value_sparse)
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "counter array constructor expects 2 arguments, but %d were \
-                  given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = named_args value_ids value_args in
+      let value_max_index = List.assoc "max_index" args in
+      let value_sparse = List.assoc "sparse" args in
       let _, max_index = unpack_p4_fixedBit value_max_index in
       let max_index = Bigint.to_int_exn max_index in
       let _sparse = unpack_p4_bool value_sparse in

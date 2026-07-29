@@ -72,17 +72,17 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
   (* Extern calls *)
 
   let eval_extern_init (values_input : Value.t list) : Value.t =
-    let value_name_extern, value_type_args, value_args =
+    let value_name_extern, value_type_args, value_ids, value_args =
       match values_input with
-      | [ value_name; value_type_args; value_args ] ->
-          (value_name, value_type_args, value_args)
+      | [ value_name; value_type_args; value_ids; value_args ] ->
+          (value_name, value_type_args, value_ids, value_args)
       | _ -> error_no_region "unexpected number of arguments to extern init"
     in
     let name_extern = Value.Get.text value_name_extern in
     match name_extern with
     | "CounterArray" ->
         let counter_array =
-          Object.CounterArray.init value_type_args value_args
+          Object.CounterArray.init value_type_args value_ids value_args
         in
         let counter_array = CounterArray counter_array in
         counter_array |> extern_to_yojson
