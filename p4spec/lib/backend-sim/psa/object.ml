@@ -45,7 +45,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_size = List.assoc "n_counters" args in
       let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
@@ -113,7 +113,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_size = List.assoc "n_meters" args in
       let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
@@ -196,7 +196,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_size = List.assoc "size" args in
       let value_initial =
         match List.assoc_opt "initial_value" args with
@@ -264,7 +264,7 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
     let init (_value_type_args : Value.t) (value_ids : Value.t)
         (value_args : Value.t) : t =
-      let args = named_args value_ids value_args in
+      let args = assoc_args value_ids value_args in
       let value_algo = List.assoc "algo" args in
       match unpack_p4_enum value_algo with
       | "PSA_HashAlgorithm_t", "IDENTITY" -> "identity"

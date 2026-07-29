@@ -79,30 +79,28 @@ rulegroup Parameter_ok {
 ;;
 
 relation Parameters_ok:
-  cursor typingContext typingContext |- parameter*
-                        : typingContext parameterListIR '#' typeId*
-  hint(input %0 %1 %2 %3)
-  hint(prose_in "typing" %3#", under context" %2#", with pre-list context" %1 "at" %0)
-  hint(prose_out "context" %4#"," %5#", and fresh type variables" %6)
+  cursor typingContext |- parameter*
+                        : parameterListIR '#' typeId*
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under context" %1 "at" %0)
+  hint(prose_out "parameters" %3#", and fresh type variables" %4)
 
 rulegroup Parameters_ok {
 
   rule Parameters_ok/nil:
-    p TC_pre TC |- eps : TC eps '#' eps
+    p TC |- eps : eps '#' eps
 
   rule Parameters_ok/cons:
-    p TC_pre TC_0 |- parameter_h :: parameter_t*
-            : TC_2 parameterIR* '#' typeId_fresh*
-    ---- ;; check the parameter under the pre-list context, so a default
-    ---- ;; cannot alias an earlier sibling parameter
+    p TC |- parameter_h :: parameter_t*
+          : parameterIR* '#' typeId_fresh*
+    ---- ;; every parameter is checked under the same context, so a default
+    ---- ;; cannot alias a sibling parameter
     -- Parameter_ok:
-        p TC_pre |- parameter_h
-                : parameterIR_h '#' typeId_fresh_h*
-    ---- ;; update the context with the checked parameter
-    -- if TC_1 = $add_parameter_t(p, TC_0, parameterIR_h)
+        p TC |- parameter_h
+              : parameterIR_h '#' typeId_fresh_h*
     -- Parameters_ok:
-        p TC_pre TC_1 |- parameter_t*
-                : TC_2 parameterIR_t* '#' typeId_fresh_t*
+        p TC |- parameter_t*
+              : parameterIR_t* '#' typeId_fresh_t*
     -- if parameterIR* = parameterIR_h :: parameterIR_t*
     -- if typeId_fresh* = typeId_fresh_h* ++ typeId_fresh_t*
 
@@ -110,11 +108,12 @@ rulegroup Parameters_ok {
 
 rule ParameterList_ok:
   p TC_0 |- parameterList
-          : TC_1 parameterListIR '#' typeId_fresh*
+          : TC_1 parameterIR* '#' typeId_fresh*
   -- if parameter* = $flatten_parameterList(parameterList)
   -- Parameters_ok:
-      p TC_0 TC_0 |- parameter*
-              : TC_1 parameterListIR '#' typeId_fresh*
+      p TC_0 |- parameter*
+              : parameterIR* '#' typeId_fresh*
+  -- if TC_1 = $add_parameters_t(p, TC_0, parameterIR*)
 
 ;;
 ;; Constructor list typing
@@ -128,5 +127,6 @@ rule ConstructorParameterListOpt_ok:
   -- if constructorParameter*
       = $flatten_constructorParameterListOpt(constructorParameterListOpt)
   -- Parameters_ok:
-      BLOCK TC_0 TC_0 |- constructorParameter*
-                  : TC_1 constructorParameterIR* '#' typeId_fresh*
+      BLOCK TC_0 |- constructorParameter*
+                  : constructorParameterIR* '#' typeId_fresh*
+  -- if TC_1 = $add_parameters_t(BLOCK, TC_0, constructorParameterIR*)

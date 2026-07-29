@@ -6842,6 +6842,15 @@ xref:add_parameter_t[``++_++`` ``direction`` ``typeIR`` ``id`` ``++_++`` added t
  .. Let ``TC'`` be xref:add_var_t[``TC`` where ``id`` to ``varTypeIR`` is added to the ``cursor`` layer].
  .. Return ``TC'``.
 
+xref:add_parameters_t[$add_parameters_t(cursor, TC, parameterIR^{asterisk}^)]
+
+. If ``parameterIR^{asterisk}^`` matches pattern ``[]``:
+ .. Return ``TC``.
+. Else:
+ .. Let ``TC'`` be xref:add_parameter_t[``parameterIR~h~`` added to the ``cursor`` layer of ``TC``].
+ .. Let ``TC''`` be ``xref:add_parameters_t[$add_parameters_t(cursor,`` ``TC',`` ``parameterIR~t~^{asterisk}^)]``.
+ .. Return ``TC''``.
+
 xref:add_constructorParameter_t[$add_constructorParameter_t(TC, ++_++ direction typeIR id ++_++)]
 
 . Let ``varTypeIR`` be ``direction`` ``typeIR`` ``+CTK+`` ``·``.
@@ -10629,9 +10638,10 @@ xref:ParameterList_ok[ParameterList_ok]:
 xref:ParameterList_ok[Typing ``parameterList``, under context ``TC~0~`` at ``p``]:
 
 . Let ``parameter^{asterisk}^`` be xref:flatten_parameterList[``parameterList`` flattened].
-. Let context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of xref:Parameters_ok[typing ``parameter^{asterisk}^``, under context ``TC~0~``, with pre-list context ``TC~0~`` at ``p``].
-. Result in context ``TC~1~``, ``parameterListIR``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Let parameters ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of xref:Parameters_ok[typing ``parameter^{asterisk}^``, under context ``TC~0~`` at ``p``].
+. Let ``TC~1~`` be ``xref:add_parameters_t[$add_parameters_t(p,`` ``TC~0~,`` ``parameterIR^{asterisk}^)]``.
+. Result in context ``TC~1~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
 
@@ -10641,8 +10651,9 @@ xref:ConstructorParameterListOpt_ok[ConstructorParameterListOpt_ok]:
 xref:ConstructorParameterListOpt_ok[Typing ``constructorParameterListOpt`` under context ``TC~0~``]:
 
 . Let ``constructorParameter^{asterisk}^`` be xref:flatten_constructorParameterListOpt[``constructorParameterListOpt`` flattened].
-. Let context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
-* the result of xref:Parameters_ok[typing ``constructorParameter^{asterisk}^``, under context ``TC~0~``, with pre-list context ``TC~0~`` at ``+BLOCK+``].
+. Let parameters ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of xref:Parameters_ok[typing ``constructorParameter^{asterisk}^``, under context ``TC~0~`` at ``+BLOCK+``].
+. Let ``TC~1~`` be ``xref:add_parameters_t[$add_parameters_t(+BLOCK+,`` ``TC~0~,`` ``constructorParameterIR^{asterisk}^)]``.
 . Result in context ``TC~1~``, ``constructorParameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:callableId_of_externMethodPrototype[Callable id of  ``externMethodPrototype``]
@@ -13085,22 +13096,21 @@ xref:is_concrete_extern_object''[$is_concrete_extern_object''(externMethodTypeDe
 
 xref:Parameters_ok[Parameters_ok]:
 
-* Typing ``parameter^{asterisk}^``, under context ``TC'``, with pre-list context ``TC`` at ``p``:
-* Result in context ``TC``, ``parameterListIR``, and fresh type variables ``typeId^{asterisk}^``.
+* Typing ``parameter^{asterisk}^``, under context ``TC`` at ``p``:
+* Result in parameters ``parameterListIR``, and fresh type variables ``typeId^{asterisk}^``.
 
-xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC``, with pre-list context ``TC~pre~`` at ``p``]:
+xref:Parameters_ok[Typing ``parameter^{asterisk}^``, under context ``TC`` at ``p``]:
 
 . If ``parameter^{asterisk}^`` matches pattern ``[]``:
- .. Result in context ``TC``, ``·``, and fresh type variables ``·``.
+ .. Result in parameters ``·``, and fresh type variables ``·``.
 . Else:
  .. Let parameter ``parameterIR~h~``, and fresh type variables ``typeId~fresh_h~^{asterisk}^`` be
- ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC~pre~`` at ``p``].
- .. Let ``TC~1~`` be xref:add_parameter_t[``parameterIR~h~`` added to the ``p`` layer of ``TC``].
- .. Let context ``TC~2~``, ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
- ** the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC~1~``, with pre-list context ``TC~pre~`` at ``p``].
+ ** the result of xref:Parameter_ok[typing ``parameter~h~``, under context ``TC`` at ``p``].
+ .. Let parameters ``parameterIR~t~^{asterisk}^``, and fresh type variables ``typeId~fresh_t~^{asterisk}^`` be
+ ** the result of xref:Parameters_ok[typing ``parameter~t~^{asterisk}^``, under context ``TC`` at ``p``].
  .. Let ``parameterIR^{asterisk}^`` be ``parameterIR~h~`` ``{two-colons}`` ``parameterIR~t~^{asterisk}^``.
  .. Let ``typeId~fresh~^{asterisk}^`` be ``typeId~fresh_h~^{asterisk}^`` concatenated with ``typeId~fresh_t~^{asterisk}^``.
- .. Result in context ``TC~2~``, ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
+ .. Result in parameters ``parameterIR^{asterisk}^``, and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:ForUpdateStmt_ok[ForUpdateStmt_ok]:
 
@@ -14609,7 +14619,7 @@ xref:parameterListIR_of_constructorDef[$parameterListIR_of_constructorDef(constr
 . Else:
  .. Return ``constructorParameterListIR``.
 
-xref:init_objectState[Initialization of ``nameIR````+`<+`` ``typeIR^{asterisk}^`` ``+`>+````+`(+`` ``id^{asterisk}^`` ``+`)+`` in the target]
+xref:init_objectState[Initialization of ``nameIR````+`<+`` ``typeIR^{asterisk}^`` ``+`>+````+`(+`` ``id^{asterisk}^`` ``+'='+`` ``value^{asterisk}^`` ``+`)+`` in the target]
 
 xref:empty_frame[$empty_frame]
 
@@ -16216,7 +16226,7 @@ for each ``id~cparam~`` in ``id~cparam~^{asterisk}^``.
 --
 +
 for each ``value^?^`` in ``value^?^^{asterisk}^``.
-. Let ``objectState`` be xref:init_objectState[initialization of ``nameIR````+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+````+`(+`` ``id~cparam~^{asterisk}^`` ``+`)+`` in the target].
+. Let ``objectState`` be xref:init_objectState[initialization of ``nameIR````+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+````+`(+`` ``id~cparam~^{asterisk}^`` ``+'='+`` ``value~cparam~^{asterisk}^`` ``+`)+`` in the target].
 . Let ``theta~extern~`` be ``IC~callee_4~.+BLOCK+.+TYPE+``.
 . Let ``frame~extern~`` be ``IC~callee_4~.+BLOCK+.+FRAME+``.
 . Let ``externMethodDefEnv~extern~`` be ``+`{+`` ``(`` ``callableId`` ``+':'+`` ``externMethodDef`` ``)^{asterisk}^`` ``+`}+``.

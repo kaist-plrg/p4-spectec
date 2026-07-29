@@ -11051,6 +11051,17 @@ def $add_parameter_t(cursor, typingContext, parameterIR) : typingContext =
   -- let varTypeIR = direction typeIR DYN ?()
   -- let TC' = $add_var_t(cursor, TC, id, varTypeIR)
 
+def $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext =
+
+  clause 0 : (cursor, TC, parameterIR*{parameterIR <- parameterIR*}) = TC
+  -- if parameterIR*{parameterIR <- parameterIR*} matches []
+
+  clause 1 : (cursor, TC, parameterIR*{parameterIR <- parameterIR*}) = TC''
+  -- if parameterIR*{parameterIR <- parameterIR*} matches _ :: _
+  -- let parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*} = parameterIR*{parameterIR <- parameterIR*}
+  -- let TC' = $add_parameter_t(cursor, TC, parameterIR_h)
+  -- let TC'' = $add_parameters_t(cursor, TC', parameterIR_t*{parameterIR_t <- parameterIR_t*})
+
 def $add_constructorParameter_t(typingContext, parameterIR) : typingContext =
 
   clause 0 : (TC, _annotationList direction typeIR id _parameterInitializerOptIR) = TC'
@@ -17381,8 +17392,9 @@ relation ParameterList_ok: cursor typingContext |- parameterList : typingContext
 
     rulepath 
     -- let parameter*{parameter <- parameter*} = $flatten_parameterList(parameterList)
-    -- Parameters_ok: p TC_0 TC_0 |- parameter*{parameter <- parameter*} : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- output: % % |- % : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: p TC_0 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- let TC_1 = $add_parameters_t(p, TC_0, parameterIR*{parameterIR <- parameterIR*})
+    -- output: % % |- % : TC_1 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterListOpt : typingContext constructorParameterListIR '#' typeId*
 
@@ -17397,7 +17409,8 @@ relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterLi
 
     rulepath 
     -- let constructorParameter*{constructorParameter <- constructorParameter*} = $flatten_constructorParameterListOpt(constructorParameterListOpt)
-    -- Parameters_ok: BLOCK TC_0 TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- let TC_1 = $add_parameters_t(BLOCK, TC_0, constructorParameterIR*{constructorParameterIR <- constructorParameterIR*})
     -- output: % |- % : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 def $callableId_of_externMethodPrototype(externMethodPrototype) : callableId =
@@ -20898,33 +20911,30 @@ def $is_concrete_extern_object''(externMethodTypeDefIR) : bool =
 
   clause -1 : (externMethodTypeDefIR) = false
 
-relation Parameters_ok: cursor typingContext typingContext |- parameter* : typingContext parameterListIR '#' typeId*
+relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR '#' typeId*
 
   rulegroup 
 
    match
 
-    (signature) p TC_pre TC' |- parameter*{parameter <- parameter*} : % % '#' %
-    p TC_pre TC' |- parameter*{parameter <- parameter*} : % % '#' %
+    (signature) p TC |- parameter*{parameter <- parameter*} : % '#' %
+    p TC |- parameter*{parameter <- parameter*} : % '#' %
 
    paths
 
     rulepath nil
-    -- let TC = TC'
     -- if (parameter*{parameter <- parameter*} = [])
-    -- output: % % % |- % : TC [] '#' []
+    -- output: % % |- % : [] '#' []
 
     rulepath cons
-    -- let TC_0 = TC'
     -- let parameter'*{parameter' <- parameter'*} = parameter*{parameter <- parameter*}
     -- if parameter'*{parameter' <- parameter'*} matches _ :: _
     -- let parameter_h :: parameter_t*{parameter_t <- parameter_t*} = parameter'*{parameter' <- parameter'*}
-    -- Parameter_ok: p TC_pre |- parameter_h : parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
-    -- let TC_1 = $add_parameter_t(p, TC_0, parameterIR_h)
-    -- Parameters_ok: p TC_pre TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
+    -- Parameter_ok: p TC |- parameter_h : parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
+    -- Parameters_ok: p TC |- parameter_t*{parameter_t <- parameter_t*} : parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- let parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}
     -- let typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
-    -- output: % % % |- % : TC_2 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- output: % % |- % : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
 relation ForUpdateStmt_ok: typingContext |- forUpdateStatement : forUpdateStatementIR
 
