@@ -30,7 +30,7 @@ let stub_nottyp (typs_input : Il.typ list) (typs_output : Il.typ list) :
     Il.nottyp =
   let s_mixop =
     (List.init (List.length typs_input) (fun _ -> "x") |> String.concat " ")
-    ^ " `-> "
+    ^ " '->' "
     ^ (List.init (List.length typs_output) (fun _ -> "y") |> String.concat " ")
   in
   let mixop = Value.Mixops.of_string s_mixop in
@@ -41,7 +41,7 @@ let stub_notexp (exps_input : Il.exp list) (exps_output : Il.exp list) :
     Il.notexp =
   let s_mixop =
     (List.init (List.length exps_input) (fun _ -> "x") |> String.concat " ")
-    ^ " `-> "
+    ^ " '->' "
     ^ (List.init (List.length exps_output) (fun _ -> "y") |> String.concat " ")
   in
   let mixop = Value.Mixops.of_string s_mixop in

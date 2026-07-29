@@ -29,13 +29,13 @@ rule V1Model_init_packet_in:
   ---- ;; initialize packet_in extern
   -- Extern_init: EC_0 ARCH_0 |- "packet_in" "packet_in" : ARCH_1
   ---- ;; add packet_in to context
-  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_in", REF "packet_in")
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, _BARE "packet_in", REF "packet_in")
   ---- ;; initialize packet_in state and update arch
   -- if externObject_packet_in = $find_object_e(ARCH_1, [ "packet_in" ])
-  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+  -- if EXTERN typeId `< theta `> `{ _ frame externMethodDefEnv `}
       = externObject_packet_in
   -- if externObject_packet_in_init
-      = EXTERN typeId `< theta > `{ objectState_packet_in frame externMethodDefEnv }
+      = EXTERN typeId `< theta `> `{ objectState_packet_in frame externMethodDefEnv `}
   -- if ARCH_2
       = $add_object_e(ARCH_1, [ "packet_in" ], externObject_packet_in_init)
 
@@ -48,13 +48,13 @@ rule V1Model_init_packet_out:
   ---- ;; initialize packet_out extern
   -- Extern_init: EC_0 ARCH_0 |- "packet_out" "packet_out" : ARCH_1
   ---- ;; add packet_out to context
-  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` "packet_out", REF "packet_out")
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, _BARE "packet_out", REF "packet_out")
   ---- ;; initialize packet_out state and update arch
   -- if externObject_packet_out = $find_object_e(ARCH_1, [ "packet_out" ])
-  -- if EXTERN typeId `< theta > `{ _ frame externMethodDefEnv }
+  -- if EXTERN typeId `< theta `> `{ _ frame externMethodDefEnv `}
       = externObject_packet_out
   -- if externObject_packet_out_init
-      = EXTERN typeId `< theta > `{ objectState_packet_out frame externMethodDefEnv }
+      = EXTERN typeId `< theta `> `{ objectState_packet_out frame externMethodDefEnv `}
   -- if ARCH_2
       = $add_object_e(ARCH_1, [ "packet_out" ], externObject_packet_out_init)
 
@@ -65,7 +65,7 @@ relation V1Model_init_globals:
 rule V1Model_init_globals:
   EC_0 ARCH |- i_port : EC_4
   ---- ;; hdr and meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -73,12 +73,12 @@ rule V1Model_init_globals:
   -- Var_init: EC_1 |- typeIR_meta "meta" : EC_2
   ---- ;; standard_metadata
   -- if typeDefIR_standard_metadata
-      = $find_typeDef_e(GLOBAL, EC_2, `` "standard_metadata_t")
+      = $find_typeDef_e(GLOBAL, EC_2, _BARE "standard_metadata_t")
   -- if typeIR_std_meta
       = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
   -- Var_init: EC_2 |- typeIR_std_meta "standard_metadata" : EC_3
   ---- ;; setup port
-  -- if storageReference_port = (`` "standard_metadata") `. "ingress_port"
+  -- if storageReference_port = (_BARE "standard_metadata") '.' "ingress_port"
   -- if value_port = 9 W i_port
   -- Lvalue_write:
       GLOBAL EC_3 ARCH |- storageReference_port := value_port : EC_4
@@ -90,53 +90,53 @@ rule V1Model_init_globals:
 dec $V1Model_setup_packet_in_argument(evalContext) : argumentIR
 def $V1Model_setup_packet_in_argument(EC) = argumentIR_packet_in
   -- if typeDefIR_packet_in
-      = $find_typeDef_e(GLOBAL, EC, `` "packet_in")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "packet_in")
   -- if typeIR_packet_in
       = $specialize_typeDefIR(typeDefIR_packet_in, eps)
   -- if argumentIR_packet_in
-      = (`. "packet_in") `# `( typeIR_packet_in CTK )
+      = ('.' "packet_in") '#' `( typeIR_packet_in CTK `)
 
 dec $V1Model_setup_packet_out_argument(evalContext) : argumentIR
 def $V1Model_setup_packet_out_argument(EC) = argumentIR_packet_out
   -- if typeDefIR_packet_out
-      = $find_typeDef_e(GLOBAL, EC, `` "packet_out")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "packet_out")
   -- if typeIR_packet_out
       = $specialize_typeDefIR(typeDefIR_packet_out, eps)
   -- if argumentIR_packet_out
-      = (`. "packet_out") `# `( typeIR_packet_out CTK )
+      = ('.' "packet_out") '#' `( typeIR_packet_out CTK `)
 
 dec $V1Model_setup_hdr_argument(arch) : argumentIR
 def $V1Model_setup_hdr_argument(ARCH) = argumentIR_hdr
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H") 
   -- if argumentIR_hdr
-      = (`. "hdr") `# `( typeIR_hdr DYN )
+      = ('.' "hdr") '#' `( typeIR_hdr DYN `)
 
 dec $V1Model_setup_meta_argument(arch) : argumentIR
 def $V1Model_setup_meta_argument(ARCH) = argumentIR_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M") 
   -- if argumentIR_meta
-      = (`. "meta") `# `( typeIR_meta DYN )
+      = ('.' "meta") '#' `( typeIR_meta DYN `)
 
 dec $V1Model_setup_standard_metadata_argument(evalContext) : argumentIR
 def $V1Model_setup_standard_metadata_argument(EC) = argumentIR_standard_metadata
   -- if typeDefIR_standard_metadata
-      = $find_typeDef_e(GLOBAL, EC, `` "standard_metadata_t")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "standard_metadata_t")
   -- if typeIR_std_meta
       = $specialize_typeDefIR(typeDefIR_standard_metadata, eps)
   -- if argumentIR_standard_metadata
-      = (`. "standard_metadata") `# `( typeIR_std_meta DYN )
+      = ('.' "standard_metadata") '#' `( typeIR_std_meta DYN `)
 
 dec $V1Model_setup_main_callee(evalContext, arch) : typedExpressionIR
 def $V1Model_setup_main_callee(EC, ARCH) = typedExpressionIR_main
   ---- ;; get package type definition
   -- if typeDefIR_package
-      = $find_typeDef_e(GLOBAL, EC, `` "V1Switch")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "V1Switch")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -144,7 +144,7 @@ def $V1Model_setup_main_callee(EC, ARCH) = typedExpressionIR_main
   -- if typeIR_package
       = $specialize_typeDefIR(typeDefIR_package, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_main
-      = (`` "main") `# `( typeIR_package CTK )
+      = (_BARE "main") '#' `( typeIR_package CTK `)
 
 dec $V1Model_setup_parser_callee(
     evalContext, arch, typedExpressionIR)
@@ -153,9 +153,9 @@ def $V1Model_setup_parser_callee(
     EC, ARCH, typedExpressionIR_main)
   = typedExpressionIR_parser
   ---- ;; get parser type definition
-  -- if typeDefIR_parser = $find_typeDef_e(GLOBAL, EC, `` "Parser")
+  -- if typeDefIR_parser = $find_typeDef_e(GLOBAL, EC, _BARE "Parser")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -163,7 +163,7 @@ def $V1Model_setup_parser_callee(
   -- if typeIR_parser
       = $specialize_typeDefIR(typeDefIR_parser, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_parser
-      = (typedExpressionIR_main `. "p") `# `( typeIR_parser CTK )
+      = (typedExpressionIR_main '.' "p") '#' `( typeIR_parser CTK `)
 
 dec $V1Model_setup_verify_callee(
     evalContext, arch, typedExpressionIR)
@@ -173,9 +173,9 @@ def $V1Model_setup_verify_callee(
   = typedExpressionIR_verify
   ---- ;; get parser type definition
   -- if typeDefIR_verify
-      = $find_typeDef_e(GLOBAL, EC, `` "VerifyChecksum")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "VerifyChecksum")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -183,7 +183,7 @@ def $V1Model_setup_verify_callee(
   -- if typeIR_verify
       = $specialize_typeDefIR(typeDefIR_verify, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_verify
-      = (typedExpressionIR_main `. "vr") `# `( typeIR_verify CTK )
+      = (typedExpressionIR_main '.' "vr") '#' `( typeIR_verify CTK `)
 
 dec $V1Model_setup_ingress_callee(
     evalContext, arch, typedExpressionIR)
@@ -193,9 +193,9 @@ def $V1Model_setup_ingress_callee(
   = typedExpressionIR_ingress
   ---- ;; get parser type definition
   -- if typeDefIR_ingress
-      = $find_typeDef_e(GLOBAL, EC, `` "Ingress")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "Ingress")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -203,7 +203,7 @@ def $V1Model_setup_ingress_callee(
   -- if typeIR_ingress
       = $specialize_typeDefIR(typeDefIR_ingress, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_ingress
-      = (typedExpressionIR_main `. "ig") `# `( typeIR_ingress CTK )
+      = (typedExpressionIR_main '.' "ig") '#' `( typeIR_ingress CTK `)
 
 dec $V1Model_setup_egress_callee(
     evalContext, arch, typedExpressionIR)
@@ -213,9 +213,9 @@ def $V1Model_setup_egress_callee(
   = typedExpressionIR_egress
   ---- ;; get parser type definition
   -- if typeDefIR_egress
-      = $find_typeDef_e(GLOBAL, EC, `` "Egress")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "Egress")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -223,7 +223,7 @@ def $V1Model_setup_egress_callee(
   -- if typeIR_egress
       = $specialize_typeDefIR(typeDefIR_egress, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_egress
-      = (typedExpressionIR_main `. "eg") `# `( typeIR_egress CTK )
+      = (typedExpressionIR_main '.' "eg") '#' `( typeIR_egress CTK `)
 
 dec $V1Model_setup_check_callee(
     evalContext, arch, typedExpressionIR)
@@ -233,9 +233,9 @@ def $V1Model_setup_check_callee(
   = typedExpressionIR_check
   ---- ;; get parser type definition
   -- if typeDefIR_check
-      = $find_typeDef_e(GLOBAL, EC, `` "ComputeChecksum")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "ComputeChecksum")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
@@ -243,7 +243,7 @@ def $V1Model_setup_check_callee(
   -- if typeIR_check
       = $specialize_typeDefIR(typeDefIR_check, [ typeIR_hdr, typeIR_meta ])
   -- if typedExpressionIR_check
-      = (typedExpressionIR_main `. "ck") `# `( typeIR_check CTK )
+      = (typedExpressionIR_main '.' "ck") '#' `( typeIR_check CTK `)
 
 dec $V1Model_setup_deparse_callee(
     evalContext, arch, typedExpressionIR)
@@ -253,16 +253,16 @@ def $V1Model_setup_deparse_callee(
   = typedExpressionIR_deparse
   ---- ;; get parser type definition
   -- if typeDefIR_deparse
-      = $find_typeDef_e(GLOBAL, EC, `` "Deparser")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "Deparser")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_hdr = $find_map<typeId, typeIR>(theta, "H")
   ---- ;; create callee
   -- if typeIR_deparse
       = $specialize_typeDefIR(typeDefIR_deparse, [ typeIR_hdr ])
   -- if typedExpressionIR_deparse
-      = (typedExpressionIR_main `. "dep") `# `( typeIR_deparse CTK )
+      = (typedExpressionIR_main '.' "dep") '#' `( typeIR_deparse CTK `)
 
 ;;
 ;; V1Model parser invocation
@@ -293,10 +293,10 @@ rulegroup V1Model_parser {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_p
         = $V1Model_setup_parser_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- if callableTargetIR = typedExpressionIR_p '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 
   rule V1Model_parser/reject:
     EC_0 ARCH_0 |- EC_1 ARCH_1 rejectTransitionResult
@@ -317,9 +317,9 @@ rulegroup V1Model_parser {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_p
         = $V1Model_setup_parser_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_p `. "apply"
+    -- if callableTargetIR = typedExpressionIR_p '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 rejectTransitionResult
 
 }
@@ -347,10 +347,10 @@ rulegroup V1Model_verify {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_vr
         = $V1Model_setup_verify_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_vr `. "apply"
+    -- if callableTargetIR = typedExpressionIR_vr '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 
   rule V1Model_verify/exit:
     EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
@@ -365,9 +365,9 @@ rulegroup V1Model_verify {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_vr
         = $V1Model_setup_verify_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_vr `. "apply"
+    -- if callableTargetIR = typedExpressionIR_vr '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 EXIT
 
 }
@@ -398,9 +398,9 @@ rulegroup V1Model_ingress {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_ig
         = $V1Model_setup_ingress_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- if callableTargetIR = typedExpressionIR_ig '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 EXIT
 
   rule V1Model_ingress/cont:
@@ -419,10 +419,10 @@ rulegroup V1Model_ingress {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_ig
         = $V1Model_setup_ingress_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_ig `. "apply"
+    -- if callableTargetIR = typedExpressionIR_ig '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 }
 
 ;;
@@ -451,10 +451,10 @@ rulegroup V1Model_egress {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_eg
         = $V1Model_setup_egress_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- if callableTargetIR = typedExpressionIR_eg '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 
   rule V1Model_egress/exit:
     EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
@@ -472,9 +472,9 @@ rulegroup V1Model_egress {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_eg
         = $V1Model_setup_egress_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_eg `. "apply"
+    -- if callableTargetIR = typedExpressionIR_eg '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 EXIT
 
 }
@@ -502,10 +502,10 @@ rulegroup V1Model_check {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_ck
         = $V1Model_setup_check_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_ck `. "apply"
+    -- if callableTargetIR = typedExpressionIR_ck '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 
   rule V1Model_check/exit:
     EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
@@ -520,9 +520,9 @@ rulegroup V1Model_check {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_ck
         = $V1Model_setup_check_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_ck `. "apply"
+    -- if callableTargetIR = typedExpressionIR_ck '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 EXIT
 
 }
@@ -550,10 +550,10 @@ rulegroup V1Model_deparse {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_dep
         = $V1Model_setup_deparse_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_dep `. "apply"
+    -- if callableTargetIR = typedExpressionIR_dep '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
-                            : EC_1 ARCH_1 `EMPTY
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
+                            : EC_1 ARCH_1 _EMPTY
 
   rule V1Model_deparse/exit:
     EC_0 ARCH_0 |- EC_1 ARCH_1 EXIT
@@ -568,9 +568,9 @@ rulegroup V1Model_deparse {
         = $V1Model_setup_main_callee(EC_0, ARCH_0)
     -- if typedExpressionIR_dep
         = $V1Model_setup_deparse_callee(EC_0, ARCH_0, typedExpressionIR_main)
-    -- if callableTargetIR = typedExpressionIR_dep `. "apply"
+    -- if callableTargetIR = typedExpressionIR_dep '.' "apply"
     -- Stmt_eval:
-        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps > `( argumentIR* ) `;
+        GLOBAL EC_0 ARCH_0 |- callableTargetIR `< eps `> `( argumentIR* `) ';'
                             : EC_1 ARCH_1 EXIT
 
 }
@@ -587,13 +587,13 @@ def $field_list_annotation_index(annotationList) = integerLiteral_fixbit
   -- if (integerLiteral? = $field_list_annotation_index'(annotation))*
   -- if integerLiteral_found = integerLiteral?*
   ---- ;; field list index is bit<8>
-  -- if integerLiteral_fixbit = $cast_op(BIT `< 8 >, integerLiteral_found)
+  -- if integerLiteral_fixbit = $cast_op(BIT `< 8 `>, integerLiteral_found)
 def $field_list_annotation_index(annotationList) = eps
   -- otherwise
 
-def $field_list_annotation_index'(`@ name `( annotationBody )) = integerLiteral
+def $field_list_annotation_index'('@' name `( annotationBody `)) = integerLiteral
   -- if "field_list" = $name(name)
-  -- if `EMPTY integerLiteral = annotationBody
+  -- if _EMPTY integerLiteral = annotationBody
 def $field_list_annotation_index'(annotation) = eps
   -- otherwise
 
@@ -608,7 +608,7 @@ def $fields_with_field_list_index(fieldTypeIR_h :: fieldTypeIR_t*, integerLitera
   -- if fieldTypeIR* = $fields_with_field_list_index(fieldTypeIR_t*, integerLiteral)
 def $fields_with_field_list_index(eps, integerLiteral) = eps
 
-def $field_has_field_list_index(annotationList typeIR nameIR `;, integerLiteral)
+def $field_has_field_list_index(annotationList typeIR nameIR ';', integerLiteral)
   = $bin_eq(integerLiteral, integerLiteral_found)
   -- if integerLiteral_found = $field_list_annotation_index(annotationList)
 def $field_has_field_list_index(_, _) = false
@@ -620,11 +620,11 @@ def $field_has_field_list_index(_, _) = false
 
 dec $V1Model_meta_fields_of_index(arch, integerLiteral) : nameIR*
 def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index) = nameIR_field*
-  -- if PACKAGE `< theta > `{ _ } = $find_object_e(ARCH, [ "main" ])
+  -- if PACKAGE `< theta `> `{ _ `} = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
-  -- if STRUCT _ `< _ > `{ fieldTypeIR* } = typeIR_meta
-  -- if (_ _ nameIR `;)* = fieldTypeIR*
-  -- if (_ _ nameIR_field `;)* = $fields_with_field_list_index(fieldTypeIR*, integerLiteral_index)
+  -- if STRUCT _ `< _ `> `{ fieldTypeIR* `} = typeIR_meta
+  -- if (_ _ nameIR ';')* = fieldTypeIR*
+  -- if (_ _ nameIR_field ';')* = $fields_with_field_list_index(fieldTypeIR*, integerLiteral_index)
 
 relation V1Model_copy_meta_fields:
   evalContext evalContext arch |- nameIR* : evalContext
@@ -637,7 +637,7 @@ rulegroup V1Model_copy_meta_fields {
 
   rule V1Model_copy_meta_fields/cons:
     EC_capture EC_0 ARCH |- (nameIR_h :: nameIR_t*) : EC_2
-    -- if storageReference_h = (`` "meta") `. nameIR_h
+    -- if storageReference_h = (_BARE "meta") '.' nameIR_h
     -- Lvalue_read: 
         GLOBAL EC_capture ARCH |- storageReference_h : value_h
     -- Lvalue_write:
@@ -653,7 +653,7 @@ relation V1Model_setup_preserved_meta_fields:
 
 rule V1Model_setup_preserved_meta_fields:
   EC_0 ARCH |- integerLiteral_index : EC_2
-  -- if PACKAGE `< theta > `{ _ } = $find_object_e(ARCH, [ "main" ])
+  -- if PACKAGE `< theta `> `{ _ `} = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_meta = $find_map<typeId, typeIR>(theta, "M")
   -- Var_init: EC_0 |- typeIR_meta "meta" : EC_1
   -- if nameIR_field*

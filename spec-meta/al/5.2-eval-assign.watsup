@@ -13,14 +13,14 @@ relation Assign_exps:
   hint(prose_out %3)
 
 relation Assign_arg:
-  ctx `/ ctx |- arg := val : ctx
+  ctx '/' ctx |- arg := val : ctx
   hint(input %0 %1 %2 %3)
   hint(prose_in "assigning" %2 "to" %1
                 "under caller" %1 "and callee" %0)
   hint(prose_out %4)
 
 relation Assign_args:
-  ctx `/ ctx  |- arg* := val* : ctx
+  ctx '/' ctx  |- arg* := val* : ctx
   hint(input %0 %1 %2 %3)
   hint(prose_in "assigning each of" %2 "to each of" %1
                 "under caller" %1 "and callee" %0)
@@ -119,11 +119,11 @@ rulegroup Assign_exps {
 ;;; Assigning to an argument
 
 rule Assign_arg/exp:
-  C_callee `/ _ |- EXP exp := val : C_callee'
+  C_callee '/' _ |- EXP exp := val : C_callee'
   -- Assign_exp: C_callee |- exp := val : C_callee'
 
 rule Assign_arg/fun:
-  C_callee `/ C_caller |- FUN id_callee := FUNC id_caller : C_callee'
+  C_callee '/' C_caller |- FUN id_callee := FUNC id_caller : C_callee'
   -- if (_, funcdef) = $find_func(C_caller, id_caller)
   -- if C_callee' = $add_func(C_callee, id_callee, funcdef)
 
@@ -132,11 +132,11 @@ rule Assign_arg/fun:
 rulegroup Assign_args {
 
   rule Assign_args/nil:
-    C_callee `/ _ |- eps := eps : C_callee
+    C_callee '/' _ |- eps := eps : C_callee
 
   rule Assign_args/cons:
-    C_callee `/ C_caller |- arg_h :: arg_t* := val_h :: val_t* : C_callee''
-    -- Assign_arg: C_callee `/ C_caller |- arg_h := val_h : C_callee'
-    -- Assign_args: C_callee' `/ C_caller |- arg_t* := val_t* : C_callee''
+    C_callee '/' C_caller |- arg_h :: arg_t* := val_h :: val_t* : C_callee''
+    -- Assign_arg: C_callee '/' C_caller |- arg_h := val_h : C_callee'
+    -- Assign_args: C_callee' '/' C_caller |- arg_t* := val_t* : C_callee''
 
 }

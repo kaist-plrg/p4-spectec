@@ -7,7 +7,7 @@
 ;;; IN
 
 rule Call_convention_expr_ok/in:
-  p TC actctxt |- (_ IN typeIR_param _ _) `@ typedExpressionIR_arg
+  p TC actctxt |- (_ IN typeIR_param _ _) '@' typedExpressionIR_arg
                 : typedExpressionIR_arg_cast
   ---- ;; may insert implicit casts for direction in
   -- if typedExpressionIR_arg_cast
@@ -16,7 +16,7 @@ rule Call_convention_expr_ok/in:
 ;;; OUT | INOUT
 
 rule Call_convention_expr_ok/out-inout:
-  p TC actctxt |- (_ direction typeIR_param _ _) `@ typedExpressionIR_arg
+  p TC actctxt |- (_ direction typeIR_param _ _) '@' typedExpressionIR_arg
                 : typedExpressionIR_arg
   -- if direction = OUT \/ direction = INOUT
   ---- ;; may not insert implicit casts for direction out or inout
@@ -32,14 +32,14 @@ rule Call_convention_expr_ok/out-inout:
 rulegroup Call_convention_expr_ok/directionless {
 
   rule Call_convention_expr_ok/action:
-    p TC ACTION |- (_ `EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+    p TC ACTION |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
                  : typedExpressionIR_arg_cast
     ---- ;; may insert implicit casts for directionless action argument
     -- if typedExpressionIR_arg_cast
         = $cast_unary(typedExpressionIR_arg, typeIR_param) 
     
   rule Call_convention_expr_ok/non-action:
-    p TC NOACTION |- (_ `EMPTY typeIR_param _ _) `@ typedExpressionIR_arg
+    p TC NOACTION |- (_ _EMPTY typeIR_param _ _) '@' typedExpressionIR_arg
                    : typedExpressionIR_arg_cast
     ---- ;; may insert implicit casts for directionless non-action argument
     -- if typedExpressionIR_arg_cast
@@ -59,26 +59,26 @@ rulegroup Call_convention_expr_ok/directionless {
 rulegroup Call_convention_arg_ok {
 
   rule Call_convention_arg_ok/typedExpression:
-    p TC actctxt |- parameterIR `@ typedExpressionIR
+    p TC actctxt |- parameterIR '@' typedExpressionIR
                   : typedExpressionIR_cast
     -- Call_convention_expr_ok:
-        p TC actctxt |- parameterIR `@ typedExpressionIR
+        p TC actctxt |- parameterIR '@' typedExpressionIR
                       : typedExpressionIR_cast
 
   rule Call_convention_arg_ok/nameIR-typedExpression:
-    p TC actctxt |- parameterIR `@ (nameIR `= typedExpressionIR)
-                  : (nameIR `= typedExpressionIR_cast)
+    p TC actctxt |- parameterIR '@' (nameIR '=' typedExpressionIR)
+                  : (nameIR '=' typedExpressionIR_cast)
     -- Call_convention_expr_ok:
-        p TC actctxt |- parameterIR `@ typedExpressionIR
+        p TC actctxt |- parameterIR '@' typedExpressionIR
                       : typedExpressionIR_cast
 
   rule Call_convention_arg_ok/nameIR-dontcare:
-    p TC actctxt |- parameterIR `@ (nameIR `= `_)
-                  : (nameIR `= `_)
+    p TC actctxt |- parameterIR '@' (nameIR '=' '_')
+                  : (nameIR '=' '_')
     -- if _ OUT _ _ _ = parameterIR
 
   rule Call_convention_arg_ok/dontcare:
-    p TC actctxt |- parameterIR `@ `_ : `_
+    p TC actctxt |- parameterIR '@' '_' : '_'
     -- if _ OUT _ _ _ = parameterIR
 
 }
@@ -90,17 +90,17 @@ rulegroup Call_convention_arg_ok {
 rulegroup Call_convention_ok {
 
   rule Call_convention_ok/nil:
-    p TC actctxt |- eps `@ eps : eps
+    p TC actctxt |- eps '@' eps : eps
 
   rule Call_convention_ok/cons:
     p TC actctxt |- (parameterIR_h :: parameterIR_t*)
-                      `@ (argumentIR_h :: argumentIR_t*)
+                      '@' (argumentIR_h :: argumentIR_t*)
                   : (argumentIR_h_cast :: argumentIR_t_cast*)
     -- Call_convention_arg_ok:
-        p TC actctxt |- parameterIR_h `@ argumentIR_h
+        p TC actctxt |- parameterIR_h '@' argumentIR_h
                       : argumentIR_h_cast
     -- Call_convention_ok:
-        p TC actctxt |- parameterIR_t* `@ argumentIR_t*
+        p TC actctxt |- parameterIR_t* '@' argumentIR_t*
                       : argumentIR_t_cast*
 
 }
